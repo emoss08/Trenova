@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping/accountingmappingdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
@@ -59,7 +59,7 @@ func (r *referenceRepository) Upsert(
 			obj.RemovedAt = nil
 		}
 
-		ro := accountingsyncdb.AccountingReferenceObjects
+		ro := accountingmappingdb.AccountingReferenceObjects
 		_, err := ro.Upsert(
 			ctx,
 			r.db.Keel(ctx),
@@ -118,7 +118,7 @@ func (r *referenceRepository) MarkRemoved(
 			return 0, nil
 		}
 
-		ro := accountingsyncdb.AccountingReferenceObjects
+		ro := accountingmappingdb.AccountingReferenceObjects
 		return ro.Where(
 			ro.ConnectionID.Eq(req.ConnectionID),
 			ro.Kind.Eq(req.Kind),
@@ -133,7 +133,7 @@ func (r *referenceRepository) MarkRemovedUnseen(
 	req *accountingmappingports.MarkAccountingReferenceRemovedRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		ro := accountingsyncdb.AccountingReferenceObjects
+		ro := accountingmappingdb.AccountingReferenceObjects
 		return ro.Where(
 			ro.ConnectionID.Eq(req.ConnectionID),
 			ro.Kind.Eq(req.Kind),
@@ -146,12 +146,12 @@ func (r *referenceRepository) MarkRemovedUnseen(
 func (r *referenceRepository) ListByKind(
 	ctx context.Context,
 	req *accountingmappingports.ListAccountingReferenceObjectsRequest,
-) ([]*accountingsync.AccountingReferenceObject, error) {
+) ([]*accountingmapping.AccountingReferenceObject, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*accountingsync.AccountingReferenceObject, error) {
-			ro := accountingsyncdb.AccountingReferenceObjects
+		func(ctx context.Context) ([]*accountingmapping.AccountingReferenceObject, error) {
+			ro := accountingmappingdb.AccountingReferenceObjects
 			return ro.Where(
 				ro.ConnectionID.Eq(req.ConnectionID),
 				ro.Kind.Eq(req.Kind),
@@ -166,18 +166,18 @@ func (r *referenceRepository) ListByKind(
 func (r *referenceRepository) Search(
 	ctx context.Context,
 	req *accountingmappingports.SearchAccountingReferenceObjectsRequest,
-) ([]*accountingsync.AccountingReferenceObject, error) {
+) ([]*accountingmapping.AccountingReferenceObject, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*accountingsync.AccountingReferenceObject, error) {
+		func(ctx context.Context) ([]*accountingmapping.AccountingReferenceObject, error) {
 			limit := req.Limit
 			if limit <= 0 {
 				limit = defaultReferenceSearch
 			}
 			limit = min(limit, maxReferenceSearch)
 
-			ro := accountingsyncdb.AccountingReferenceObjects
+			ro := accountingmappingdb.AccountingReferenceObjects
 			q := ro.Where(
 				ro.ConnectionID.Eq(req.ConnectionID),
 				ro.Kind.Eq(req.Kind),
@@ -201,16 +201,16 @@ func (r *referenceRepository) Search(
 func (r *referenceRepository) GetByExternalIDs(
 	ctx context.Context,
 	req *accountingmappingports.GetAccountingReferenceObjectsRequest,
-) ([]*accountingsync.AccountingReferenceObject, error) {
+) ([]*accountingmapping.AccountingReferenceObject, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*accountingsync.AccountingReferenceObject, error) {
+		func(ctx context.Context) ([]*accountingmapping.AccountingReferenceObject, error) {
 			if len(req.ExternalIDs) == 0 {
-				return []*accountingsync.AccountingReferenceObject{}, nil
+				return []*accountingmapping.AccountingReferenceObject{}, nil
 			}
 
-			ro := accountingsyncdb.AccountingReferenceObjects
+			ro := accountingmappingdb.AccountingReferenceObjects
 			return ro.Where(
 				ro.ConnectionID.Eq(req.ConnectionID),
 				ro.ExternalID.In(req.ExternalIDs...),
@@ -221,13 +221,13 @@ func (r *referenceRepository) GetByExternalIDs(
 }
 
 func usableReference() keel.Pred {
-	ro := accountingsyncdb.AccountingReferenceObjects
+	ro := accountingmappingdb.AccountingReferenceObjects
 	return keel.And(
 		ro.Active.IsTrue(),
 		ro.RemovedAt.IsNull(),
 		keel.Or(
 			ro.ItemType.IsNull(),
-			ro.ItemType.NotIn(accountingsync.ItemTypeCategory, accountingsync.ItemTypeGroup),
+			ro.ItemType.NotIn(accountingmapping.ItemTypeCategory, accountingmapping.ItemTypeGroup),
 		),
 	)
 }

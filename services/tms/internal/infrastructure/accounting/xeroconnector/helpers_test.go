@@ -11,7 +11,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/emoss08/trenova/shared/xero"
@@ -144,8 +145,8 @@ func newProvider(t *testing.T, cfg config.XeroConfig) *Provider {
 
 func tenantApp() *accountingconnectorports.AccountingApp {
 	return &accountingconnectorports.AccountingApp{
-		Source:               accountingsync.AppSourceTenant,
-		Environment:          accountingsync.AppEnvironmentProduction,
+		Source:               accountingconnection.AppSourceTenant,
+		Environment:          accountingprovider.AppEnvironmentProduction,
 		ClientID:             "tenant-id",
 		ClientSecret:         "tenant-secret",
 		WebhookVerifierToken: "tenant-webhook-key",

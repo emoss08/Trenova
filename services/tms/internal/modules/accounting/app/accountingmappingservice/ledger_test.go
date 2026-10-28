@@ -4,14 +4,16 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/glaccountportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/testutil/mocks/glaccountportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -39,11 +41,11 @@ func (h *harness) ledgerMode(t *testing.T) {
 	h.connections.mu.Lock()
 	defer h.connections.mu.Unlock()
 	row := h.connections.rows[h.conn.ID]
-	row.SyncMode = accountingsync.SyncModeLedger
-	row.LedgerGranularity = accountingsync.LedgerDetailed
+	row.SyncMode = accountingprovider.SyncModeLedger
+	row.LedgerGranularity = accountingconnection.LedgerDetailed
 }
 
-func (h *harness) seedMapping(mapping *accountingsync.AccountingMapping) {
+func (h *harness) seedMapping(mapping *accountingmapping.AccountingMapping) {
 	h.mappings.mu.Lock()
 	defer h.mappings.mu.Unlock()
 	mapping.ID = pulid.MustNew("acctm_")
@@ -58,8 +60,16 @@ func TestRescoreOffersEveryActiveGLAccountInLedgerMode(t *testing.T) {
 
 	h := newHarness(t)
 	h.ledgerMode(t)
-	cash := &glaccount.GLAccount{ID: pulid.MustNew("gla_"), AccountCode: "1000", Name: "Operating cash"}
-	fuel := &glaccount.GLAccount{ID: pulid.MustNew("gla_"), AccountCode: "5010", Name: "Fuel expense"}
+	cash := &glaccount.GLAccount{
+		ID:          pulid.MustNew("gla_"),
+		AccountCode: "1000",
+		Name:        "Operating cash",
+	}
+	fuel := &glaccount.GLAccount{
+		ID:          pulid.MustNew("gla_"),
+		AccountCode: "5010",
+		Name:        "Fuel expense",
+	}
 	accounts := glaccountportsmock.NewMockGLAccountRepository(t)
 	accounts.EXPECT().List(mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*glaccount.GLAccount]{
@@ -81,8 +91,16 @@ func TestRescoreOffersAnInactiveAccountThatCarriesEntries(t *testing.T) {
 
 	h := newHarness(t)
 	h.ledgerMode(t)
-	cash := &glaccount.GLAccount{ID: pulid.MustNew("gla_"), AccountCode: "1000", Name: "Operating cash"}
-	retired := journalentryports.LedgerAccount{ID: pulid.MustNew("gla_"), Code: "1050", Name: "Old payroll"}
+	cash := &glaccount.GLAccount{
+		ID:          pulid.MustNew("gla_"),
+		AccountCode: "1000",
+		Name:        "Operating cash",
+	}
+	retired := journalentryports.LedgerAccount{
+		ID:   pulid.MustNew("gla_"),
+		Code: "1050",
+		Name: "Old payroll",
+	}
 	accounts := glaccountportsmock.NewMockGLAccountRepository(t)
 	accounts.EXPECT().List(mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*glaccount.GLAccount]{
@@ -103,7 +121,8 @@ func TestRescoreOffersAnInactiveAccountThatCarriesEntries(t *testing.T) {
 	assert.Equal(t, "1050 (Old payroll)", row.TargetLabel)
 	cashRows := 0
 	for _, mapping := range h.mappings.rows {
-		if mapping.TargetType == accountingsync.TargetGLAccount && mapping.TrenovaObjectID == cash.ID {
+		if mapping.TargetType == accountingsync.TargetGLAccount &&
+			mapping.TrenovaObjectID == cash.ID {
 			cashRows++
 		}
 	}
@@ -142,30 +161,35 @@ func TestLedgerModeRequiresEveryAccountWithActivity(t *testing.T) {
 	controls.EXPECT().GetByOrgID(mock.Anything, h.tenant.OrgID).
 		Return(&tenant.AccountingControl{DefaultRevenueAccountID: revenue}, nil)
 	h.svc.accountingControls = controls
-	h.seedMapping(&accountingsync.AccountingMapping{
+	h.seedMapping(&accountingmapping.AccountingMapping{
 		TargetType:      accountingsync.TargetGLAccount,
 		TrenovaObjectID: ar,
 		ExternalID:      "qb-ar",
-		State:           accountingsync.MappingStateConfirmed,
+		State:           accountingmapping.MappingStateConfirmed,
 	})
-	h.seedMapping(&accountingsync.AccountingMapping{
+	h.seedMapping(&accountingmapping.AccountingMapping{
 		TargetType:      accountingsync.TargetGLAccount,
 		TrenovaObjectID: cash,
 		ExternalID:      "qb-bank",
-		State:           accountingsync.MappingStateProposed,
+		State:           accountingmapping.MappingStateProposed,
 	})
-	h.seedMapping(&accountingsync.AccountingMapping{
+	h.seedMapping(&accountingmapping.AccountingMapping{
 		TargetType: accountingsync.TargetAccountRole,
 		TrenovaKey: accountingsync.AccountRoleRevenue,
 		ExternalID: "qb-income",
-		State:      accountingsync.MappingStateConfirmed,
+		State:      accountingmapping.MappingStateConfirmed,
 	})
 
 	summary, err := h.svc.Summary(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
 	require.NoError(t, err)
 
 	assert.Equal(t, 3, summary.RequiredTotal)
-	assert.Equal(t, 2, summary.RequiredConfirmed, "receivables by its own mapping, revenue by its role")
+	assert.Equal(
+		t,
+		2,
+		summary.RequiredConfirmed,
+		"receivables by its own mapping, revenue by its role",
+	)
 	assert.False(t, summary.CanCompleteSetup, "cash is only proposed")
 	require.Len(t, ledger.asked, 1)
 	assert.Nil(t, ledger.asked[0].Since, "before a start date every account with activity counts")

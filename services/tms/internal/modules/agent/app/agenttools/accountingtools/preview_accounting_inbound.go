@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
@@ -42,7 +42,7 @@ func inboundChangeOptions() []toolpreview.Option {
 	}
 }
 
-func inboundChangeRecord(change *accountingsync.AccountingInboundChange) toolpreview.Record {
+func inboundChangeRecord(change *accountinginbound.AccountingInboundChange) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceAccountingSync,
 		ID:       change.ID,
@@ -96,7 +96,7 @@ func (t *ApplyAccountingInboundChangeTool) Preview(
 	change, err := toolpreview.Update(
 		inboundChangeRecord(plan.Change),
 		plan.Change,
-		func(applied *accountingsync.AccountingInboundChange) error {
+		func(applied *accountinginbound.AccountingInboundChange) error {
 			if cErr := applied.CanApply(); cErr != nil {
 				return cErr
 			}
@@ -131,7 +131,7 @@ func (t *IgnoreAccountingInboundChangeTool) Preview(
 	plan, err := changepreview.PlanUpdate(
 		inboundChangeRecord(change),
 		change,
-		func(ignored *accountingsync.AccountingInboundChange) error {
+		func(ignored *accountinginbound.AccountingInboundChange) error {
 			return ignored.Dismiss(params.Actor.UserID, req.Note, now)
 		},
 		inboundChangeOptions()...,

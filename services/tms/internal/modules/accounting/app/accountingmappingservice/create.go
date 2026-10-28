@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
@@ -31,7 +33,7 @@ const (
 	requestIDHashChars = 40
 )
 
-func creationRequestID(row *accountingsync.AccountingMapping) string {
+func creationRequestID(row *accountingmapping.AccountingMapping) string {
 	sum := sha256.Sum256([]byte(
 		row.ConnectionID.String() + "|" + row.ID.String() + "|" + strconv.FormatInt(
 			row.Version,
@@ -44,7 +46,7 @@ func creationRequestID(row *accountingsync.AccountingMapping) string {
 func (s *Service) CreateReferenceRecord(
 	ctx context.Context,
 	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	row, err := s.GetMapping(ctx, req.TenantInfo, req.MappingID)
 	if err != nil {
 		return nil, err
@@ -55,7 +57,7 @@ func (s *Service) CreateReferenceRecord(
 			string(row.ProviderKind),
 		)
 	}
-	if row.State == accountingsync.MappingStateConfirmed {
+	if row.State == accountingmapping.MappingStateConfirmed {
 		return nil, errortypes.NewBusinessError(
 			"{0} is already mapped to {1}; clear it first to create a new record",
 			row.TargetLabel,
@@ -93,7 +95,7 @@ func (s *Service) CreateReferenceRecord(
 		s.connectionService.ReportCallFailure(ctx, req.TenantInfo, row.ConnectionID, err)
 		return nil, errortypes.NewBusinessError(
 			"{0} did not create the record: {1}",
-			accountingsync.ProviderName(session.Connection.IntegrationType),
+			accountingprovider.ProviderName(session.Connection.IntegrationType),
 			stringutils.OneLine(err.Error(), maxReasonRunes),
 		).WithInternal(err)
 	}
@@ -101,7 +103,7 @@ func (s *Service) CreateReferenceRecord(
 	if err = s.references.Upsert(ctx, &accountingmappingports.UpsertAccountingReferenceObjectsRequest{
 		TenantInfo:   req.TenantInfo,
 		ConnectionID: row.ConnectionID,
-		Objects:      []*accountingsync.AccountingReferenceObject{created},
+		Objects:      []*accountingmapping.AccountingReferenceObject{created},
 		SeenAt:       timeutils.NowUnix(),
 	}); err != nil {
 		return nil, err
@@ -132,7 +134,7 @@ func (s *Service) CreateReferenceRecord(
 		ctx,
 		req.TenantInfo,
 		req.UserID,
-		[]*accountingsync.AccountingMapping{updated},
+		[]*accountingmapping.AccountingMapping{updated},
 	)
 	s.requeueMappingBlocked(ctx, req.TenantInfo, updated.ConnectionID)
 	return updated, nil
@@ -143,9 +145,9 @@ const maxReasonRunes = 300
 func (s *Service) confirmCreated(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	row *accountingsync.AccountingMapping,
-	choice *accountingsync.Choice,
-) (*accountingsync.AccountingMapping, error) {
+	row *accountingmapping.AccountingMapping,
+	choice *accountingmapping.Choice,
+) (*accountingmapping.AccountingMapping, error) {
 	row.Confirm(choice)
 	updated, err := s.mappings.Update(ctx, row)
 	if err == nil || !errortypes.IsVersionMismatchError(err) {
@@ -156,7 +158,7 @@ func (s *Service) confirmCreated(
 	if getErr != nil {
 		return nil, getErr
 	}
-	if current.State == accountingsync.MappingStateConfirmed {
+	if current.State == accountingmapping.MappingStateConfirmed {
 		return nil, errortypes.NewBusinessError(
 			"{0} was created, but {1} was mapped to {2} meanwhile; map it again if that is wrong",
 			choice.ExternalName,
@@ -171,20 +173,20 @@ func (s *Service) confirmCreated(
 func (s *Service) buildDraft(
 	ctx context.Context,
 	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
-	row *accountingsync.AccountingMapping,
+	row *accountingmapping.AccountingMapping,
 	creator accountingconnectorports.AccountingReferenceCreator,
 	createReq *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (string, error) {
 	switch row.ProviderKind {
-	case accountingsync.ReferenceKindItem:
+	case accountingprovider.ReferenceKindItem:
 		return s.itemDraft(ctx, req, row, creator, createReq)
-	case accountingsync.ReferenceKindCustomer:
+	case accountingprovider.ReferenceKindCustomer:
 		return s.customerDraft(ctx, req, row, creator, createReq)
-	case accountingsync.ReferenceKindVendor:
+	case accountingprovider.ReferenceKindVendor:
 		return s.vendorDraft(ctx, req, row, creator, createReq)
-	case accountingsync.ReferenceKindAccount,
-		accountingsync.ReferenceKindTerm,
-		accountingsync.ReferenceKindPaymentMethod:
+	case accountingprovider.ReferenceKindAccount,
+		accountingprovider.ReferenceKindTerm,
+		accountingprovider.ReferenceKindPaymentMethod:
 		return "", errortypes.NewBusinessError("This kind of record is not created from Trenova")
 	default:
 		return "", errortypes.NewBusinessError("This kind of record is not created from Trenova")
@@ -193,7 +195,7 @@ func (s *Service) buildDraft(
 
 func chosenName(
 	creator accountingconnectorports.AccountingReferenceCreator,
-	kind accountingsync.ReferenceKind,
+	kind accountingprovider.ReferenceKind,
 	override string,
 	fallbacks ...string,
 ) (string, error) {
@@ -208,7 +210,7 @@ func chosenName(
 func (s *Service) itemDraft(
 	ctx context.Context,
 	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
-	row *accountingsync.AccountingMapping,
+	row *accountingmapping.AccountingMapping,
 	creator accountingconnectorports.AccountingReferenceCreator,
 	createReq *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (string, error) {
@@ -224,7 +226,7 @@ func (s *Service) itemDraft(
 	if err != nil && !errortypes.IsNotFoundError(err) {
 		return "", err
 	}
-	if revenue == nil || revenue.State != accountingsync.MappingStateConfirmed {
+	if revenue == nil || revenue.State != accountingmapping.MappingStateConfirmed {
 		return "", errortypes.NewBusinessError(
 			"Confirm the revenue account first: a new item needs an income account",
 		)
@@ -247,7 +249,7 @@ func (s *Service) itemDraft(
 
 	name, err := chosenName(
 		creator,
-		accountingsync.ReferenceKindItem,
+		accountingprovider.ReferenceKindItem,
 		req.Name,
 		description,
 		row.TargetLabel,
@@ -268,7 +270,7 @@ func (s *Service) itemDraft(
 func (s *Service) customerDraft(
 	ctx context.Context,
 	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
-	row *accountingsync.AccountingMapping,
+	row *accountingmapping.AccountingMapping,
 	creator accountingconnectorports.AccountingReferenceCreator,
 	createReq *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (string, error) {
@@ -277,7 +279,7 @@ func (s *Service) customerDraft(
 		return "", err
 	}
 
-	name, err := chosenName(creator, accountingsync.ReferenceKindCustomer, req.Name, cus.Name)
+	name, err := chosenName(creator, accountingprovider.ReferenceKindCustomer, req.Name, cus.Name)
 	if err != nil {
 		return "", err
 	}
@@ -334,7 +336,7 @@ func (s *Service) CustomerParty(
 func (s *Service) vendorDraft(
 	ctx context.Context,
 	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
-	row *accountingsync.AccountingMapping,
+	row *accountingmapping.AccountingMapping,
 	creator accountingconnectorports.AccountingReferenceCreator,
 	createReq *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (string, error) {
@@ -348,7 +350,7 @@ func (s *Service) vendorDraft(
 
 	name, err := chosenName(
 		creator,
-		accountingsync.ReferenceKindVendor,
+		accountingprovider.ReferenceKindVendor,
 		req.Name,
 		carr.Name,
 		carr.DBAName,
@@ -396,7 +398,7 @@ func carrierParty(
 func (s *Service) driverDraft(
 	ctx context.Context,
 	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
-	row *accountingsync.AccountingMapping,
+	row *accountingmapping.AccountingMapping,
 	creator accountingconnectorports.AccountingReferenceCreator,
 	createReq *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (string, error) {
@@ -404,7 +406,12 @@ func (s *Service) driverDraft(
 	if err != nil {
 		return "", err
 	}
-	name, err := chosenName(creator, accountingsync.ReferenceKindVendor, req.Name, workerName(wrk))
+	name, err := chosenName(
+		creator,
+		accountingprovider.ReferenceKindVendor,
+		req.Name,
+		workerName(wrk),
+	)
 	if err != nil {
 		return "", err
 	}
@@ -509,7 +516,7 @@ func stateCountry(state *usstate.UsState) string {
 func (s *Service) duplicateNameError(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	row *accountingsync.AccountingMapping,
+	row *accountingmapping.AccountingMapping,
 	name string,
 	cause error,
 ) error {

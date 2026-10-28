@@ -11,6 +11,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -33,7 +36,7 @@ type sandbox struct {
 	account string
 	ref     netsuite.CompanyRef
 	grant   *accountingconnectorports.AccountingTokenGrant
-	facts   *accountingsync.CompanyFacts
+	facts   *accountingconnection.CompanyFacts
 	auth    accountingconnectorports.AccountingDocumentAuth
 }
 
@@ -63,8 +66,8 @@ func openSandbox(t *testing.T) *sandbox {
 
 	provider := newProvider(t, config.NetSuiteConfig{})
 	conn, err := provider.bind(&accountingconnectorports.AccountingApp{
-		Source:      accountingsync.AppSourceTenant,
-		Environment: accountingsync.AppEnvironmentProduction,
+		Source:      accountingconnection.AppSourceTenant,
+		Environment: accountingprovider.AppEnvironmentProduction,
 		ClientID:    sandboxEnv("CLIENT_ID"),
 	})
 	require.NoError(t, err)
@@ -131,7 +134,7 @@ func TestSandboxReadsEveryReferenceKind(t *testing.T) {
 	s := openSandbox(t)
 
 	pageSize := min(50, s.conn.MaxReferencePageSize())
-	for _, kind := range accountingsync.MustProfile(integration.TypeNetSuite).ReferenceKinds {
+	for _, kind := range accountingprovider.MustProfile(integration.TypeNetSuite).ReferenceKinds {
 		t.Run(string(kind), func(t *testing.T) {
 			page, err := s.conn.ListReference(
 				t.Context(),
@@ -161,7 +164,7 @@ func TestSandboxReadsChangesAndDocumentStates(t *testing.T) {
 			Payments:       true,
 			BillPayments:   true,
 			Documents:      true,
-			ReferenceKinds: accountingsync.MustProfile(integration.TypeNetSuite).ReferenceKinds,
+			ReferenceKinds: accountingprovider.MustProfile(integration.TypeNetSuite).ReferenceKinds,
 		},
 	)
 	require.NoError(t, err, "a SuiteQL table or column name in the change feed is wrong")
@@ -356,7 +359,7 @@ func TestSandboxInvoicePaymentLifecycle(t *testing.T) {
 		}
 	}
 	require.NotNil(t, readBack, "the payment did not come back through the change feed")
-	assert.Equal(t, accountingsync.InboundCustomerPayment, readBack.Kind)
+	assert.Equal(t, accountinginbound.InboundCustomerPayment, readBack.Kind)
 	assert.True(t, readBack.Amount.Equal(amount))
 	require.Len(t, readBack.Lines, 1)
 	assert.Equal(t, invoiceID, readBack.Lines[0].DocumentExternalID)

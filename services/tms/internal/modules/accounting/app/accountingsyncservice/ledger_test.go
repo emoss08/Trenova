@@ -4,6 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -33,14 +36,14 @@ func newLedgerAccounts() ledgerAccounts {
 }
 
 type ledgerMappings struct {
-	ar       *accountingsync.AccountingMapping
-	revenue  *accountingsync.AccountingMapping
-	customer *accountingsync.AccountingMapping
+	ar       *accountingmapping.AccountingMapping
+	revenue  *accountingmapping.AccountingMapping
+	customer *accountingmapping.AccountingMapping
 }
 
-func (h *harness) ledgerMode(granularity accountingsync.LedgerGranularity) {
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
-		conn.SyncMode = accountingsync.SyncModeLedger
+func (h *harness) ledgerMode(granularity accountingconnection.LedgerGranularity) {
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
+		conn.SyncMode = accountingprovider.SyncModeLedger
 		conn.LedgerGranularity = granularity
 	})
 	h.conn = h.connections.get(h.conn.ID)
@@ -51,10 +54,10 @@ func (h *harness) mapLedger(accts ledgerAccounts, customerID pulid.ID) ledgerMap
 		control.DefaultRevenueAccountID = accts.revenue
 		control.DefaultAPAccountID = accts.ap
 	})
-	h.references.account("qb-ar", accountingsync.AccountClassReceivable)
+	h.references.account("qb-ar", accountingmapping.AccountClassReceivable)
 	h.references.account("qb-income", "Income")
 	h.references.account("qb-bank", "Bank")
-	h.references.account("qb-ap", accountingsync.AccountClassPayable)
+	h.references.account("qb-ap", accountingmapping.AccountClassPayable)
 	return ledgerMappings{
 		ar:      h.confirm(glTarget(accts.ar, "GL account 1100 Accounts receivable"), "qb-ar"),
 		revenue: h.confirm(roleTarget(accountingsync.AccountRoleRevenue, "Revenue"), "qb-income"),
@@ -159,7 +162,7 @@ func TestEnqueueJournalQueuesOneRecordPerEntryForADetailedLedger(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDetailed)
+	h.ledgerMode(accountingconnection.LedgerDetailed)
 	accts := newLedgerAccounts()
 	journal := invoiceJournal(accts, pulid.MustNew("cus_"), "JE-1001", aprilTenth, 150_000)
 
@@ -185,27 +188,27 @@ func TestEnqueueJournalLeavesWhatTheLedgerDoesNotSend(t *testing.T) {
 	accts := newLedgerAccounts()
 	cases := []struct {
 		name   string
-		mode   accountingsync.SyncMode
+		mode   accountingprovider.SyncMode
 		mutate func(*journalentryports.LedgerJournal)
 	}{
-		{name: "a document connection", mode: accountingsync.SyncModeDocument},
+		{name: "a document connection", mode: accountingprovider.SyncModeDocument},
 		{
 			name: "a closing entry",
-			mode: accountingsync.SyncModeLedger,
+			mode: accountingprovider.SyncModeLedger,
 			mutate: func(j *journalentryports.LedgerJournal) {
 				j.EntryType = journalentry.EntryTypeClosing.String()
 			},
 		},
 		{
 			name: "an opening entry",
-			mode: accountingsync.SyncModeLedger,
+			mode: accountingprovider.SyncModeLedger,
 			mutate: func(j *journalentryports.LedgerJournal) {
 				j.EntryType = journalentry.EntryTypeOpening.String()
 			},
 		},
 		{
 			name: "an entry dated before the start date",
-			mode: accountingsync.SyncModeLedger,
+			mode: accountingprovider.SyncModeLedger,
 			mutate: func(j *journalentryports.LedgerJournal) {
 				j.AccountingDate = syncStartDate - 86_400
 			},
@@ -215,10 +218,10 @@ func TestEnqueueJournalLeavesWhatTheLedgerDoesNotSend(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			h := newHarness(t)
-			h.updateConnection(func(conn *accountingsync.AccountingConnection) {
+			h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 				conn.SyncMode = tc.mode
-				if tc.mode == accountingsync.SyncModeLedger {
-					conn.LedgerGranularity = accountingsync.LedgerDetailed
+				if tc.mode == accountingprovider.SyncModeLedger {
+					conn.LedgerGranularity = accountingconnection.LedgerDetailed
 				}
 			})
 			journal := invoiceJournal(accts, pulid.MustNew("cus_"), "JE-2", aprilTenth, 100)
@@ -237,7 +240,7 @@ func TestDocumentsAreNotQueuedForALedgerConnection(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDetailed)
+	h.ledgerMode(accountingconnection.LedgerDetailed)
 	customerID, _ := h.mappedCustomer("Acme Freight")
 	inv := h.postedInvoice(customerID, invoiceSpec{})
 
@@ -253,7 +256,7 @@ func TestDailySummaryQueuesTheDayAndAnUpdateForLaterEntries(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, withTimezone("America/Chicago"))
-	h.ledgerMode(accountingsync.LedgerDailySummary)
+	h.ledgerMode(accountingconnection.LedgerDailySummary)
 	chicago, err := time.LoadLocation("America/Chicago")
 	require.NoError(t, err)
 	evening := time.Date(2026, time.April, 10, 21, 0, 0, 0, chicago).Unix()
@@ -322,7 +325,7 @@ func TestDetailedJournalEntryIsSentWithAccountsAndTheCustomer(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDetailed)
+	h.ledgerMode(accountingconnection.LedgerDetailed)
 	accts := newLedgerAccounts()
 	customerID := pulid.MustNew("cus_")
 	mapped := h.mapLedger(accts, customerID)
@@ -382,7 +385,7 @@ func TestJournalLinePartyWinsOverTheEntrysSource(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDetailed)
+	h.ledgerMode(accountingconnection.LedgerDetailed)
 	accts := newLedgerAccounts()
 	customerID := pulid.MustNew("cus_")
 	h.mapLedger(accts, customerID)
@@ -405,7 +408,7 @@ func TestJournalEntryBlocksWhenAReceivableLineHasNoCustomer(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDetailed)
+	h.ledgerMode(accountingconnection.LedgerDetailed)
 	accts := newLedgerAccounts()
 	h.mapLedger(accts, pulid.MustNew("cus_"))
 	journal := invoiceJournal(accts, pulid.MustNew("cus_"), "JE-1003", aprilTenth, 5_000)
@@ -432,7 +435,7 @@ func TestJournalEntryBlocksOnAPartyOfTheWrongKind(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDetailed)
+	h.ledgerMode(accountingconnection.LedgerDetailed)
 	accts := newLedgerAccounts()
 	h.mapLedger(accts, pulid.MustNew("cus_"))
 	journal := invoiceJournal(accts, pulid.MustNew("cus_"), "JE-1004", aprilTenth, 5_000)
@@ -460,7 +463,7 @@ func TestJournalEntryWaitsForAnUnmappedCustomerToBeCreated(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDetailed)
+	h.ledgerMode(accountingconnection.LedgerDetailed)
 	accts := newLedgerAccounts()
 	h.mapLedger(accts, pulid.MustNew("cus_"))
 	newcomer := pulid.MustNew("cus_")
@@ -491,7 +494,7 @@ func TestJournalEntryBlocksOnAnUnmappedAccount(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDetailed)
+	h.ledgerMode(accountingconnection.LedgerDetailed)
 	accts := newLedgerAccounts()
 	customerID := pulid.MustNew("cus_")
 	h.mapLedger(accts, customerID)
@@ -517,7 +520,7 @@ func TestJournalEntryThatDoesNotBalanceIsBlocked(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDetailed)
+	h.ledgerMode(accountingconnection.LedgerDetailed)
 	accts := newLedgerAccounts()
 	customerID := pulid.MustNew("cus_")
 	h.mapLedger(accts, customerID)
@@ -544,7 +547,7 @@ func TestDailySummarySumsTheDayPerAccountAndCustomer(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDailySummary)
+	h.ledgerMode(accountingconnection.LedgerDailySummary)
 	accts := newLedgerAccounts()
 	acme := pulid.MustNew("cus_")
 	h.mapLedger(accts, acme)
@@ -610,7 +613,7 @@ func TestDailySummaryUpdateWaitsForTheDaysFirstSend(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDailySummary)
+	h.ledgerMode(accountingconnection.LedgerDailySummary)
 	accts := newLedgerAccounts()
 	customerID := pulid.MustNew("cus_")
 	h.mapLedger(accts, customerID)
@@ -643,7 +646,7 @@ func TestDailySummaryThatNowNetsToZeroDeletesTheProviderEntry(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDailySummary)
+	h.ledgerMode(accountingconnection.LedgerDailySummary)
 	accts := newLedgerAccounts()
 	customerID := pulid.MustNew("cus_")
 	h.mapLedger(accts, customerID)
@@ -694,7 +697,7 @@ func TestDailySummaryThatNetsToZeroSendsNothing(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDailySummary)
+	h.ledgerMode(accountingconnection.LedgerDailySummary)
 	accts := newLedgerAccounts()
 	customerID := pulid.MustNew("cus_")
 	h.mapLedger(accts, customerID)
@@ -721,7 +724,7 @@ func TestEnableSyncQueuesOpeningBalancesForTheLedgerOnce(t *testing.T) {
 
 	h := newHarness(t)
 	h.atStartDateStep()
-	h.ledgerMode(accountingsync.LedgerDetailed)
+	h.ledgerMode(accountingconnection.LedgerDetailed)
 	start := time.Date(2026, time.April, 1, 0, 0, 0, 0, time.UTC).Unix()
 
 	conn, err := h.svc.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
@@ -779,8 +782,8 @@ func TestEnableSyncRefusesOpeningBalancesAndAnUnchosenMode(t *testing.T) {
 	requireValidationField(t, err, "openingBalances")
 	assert.Empty(t, h.records.all())
 
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
-		conn.SetupStep = accountingsync.SetupStepMode
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
+		conn.SetupStep = accountingconnection.SetupStepMode
 	})
 	_, err = h.enableSync(t, syncStartDate, false)
 	require.Error(t, err)
@@ -791,7 +794,7 @@ func TestOpeningBalancesSendEveryBalanceBeforeTheStartDate(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDetailed)
+	h.ledgerMode(accountingconnection.LedgerDetailed)
 	accts := newLedgerAccounts()
 	acme := pulid.MustNew("cus_")
 	h.mapLedger(accts, acme)
@@ -873,7 +876,7 @@ func TestSafetyNetQueuesLedgerDaysOnceEach(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDailySummary)
+	h.ledgerMode(accountingconnection.LedgerDailySummary)
 	h.addCandidates(
 		accountingsync.SyncObjectJournalSummary,
 		accountingsync.SyncOperationCreate,
@@ -917,8 +920,8 @@ func TestChooseModeRecordsTheChoice(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
-		conn.SetupStep = accountingsync.SetupStepMode
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
+		conn.SetupStep = accountingconnection.SetupStepMode
 		conn.SyncEnabledAt = nil
 		conn.SyncStartDate = nil
 	})
@@ -927,17 +930,17 @@ func TestChooseModeRecordsTheChoice(t *testing.T) {
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
-		Mode:            accountingsync.SyncModeLedger,
-		Granularity:     accountingsync.LedgerDailySummary,
+		Mode:            accountingprovider.SyncModeLedger,
+		Granularity:     accountingconnection.LedgerDailySummary,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, accountingsync.SyncModeLedger, conn.SyncMode)
-	assert.Equal(t, accountingsync.LedgerDailySummary, conn.LedgerGranularity)
-	assert.Equal(t, accountingsync.SetupStepMappings, conn.SetupStep)
+	assert.Equal(t, accountingprovider.SyncModeLedger, conn.SyncMode)
+	assert.Equal(t, accountingconnection.LedgerDailySummary, conn.LedgerGranularity)
+	assert.Equal(t, accountingconnection.SetupStepMappings, conn.SetupStep)
 	assert.Equal(t, []pulid.ID{h.conn.ID}, h.mappings.rescored,
 		"the mappings are rebuilt so ledger mode asks for its GL accounts")
 	stored := h.connections.get(h.conn.ID)
-	assert.Equal(t, accountingsync.SyncModeLedger, stored.SyncMode)
+	assert.Equal(t, accountingprovider.SyncModeLedger, stored.SyncMode)
 	assert.Equal(t, "Chose to send journal entries to QuickBooks Online, summed by day",
 		h.audit.lastComment())
 
@@ -945,7 +948,7 @@ func TestChooseModeRecordsTheChoice(t *testing.T) {
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
-		Mode:            accountingsync.SyncModeLedger,
+		Mode:            accountingprovider.SyncModeLedger,
 	})
 	requireValidationField(t, err, "granularity")
 
@@ -953,7 +956,7 @@ func TestChooseModeRecordsTheChoice(t *testing.T) {
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
-		Mode:            accountingsync.SyncMode("Hybrid"),
+		Mode:            accountingprovider.SyncMode("Hybrid"),
 	})
 	requireValidationField(t, err, "mode")
 }
@@ -967,12 +970,12 @@ func TestChooseModeIsRefusedOnceSyncIsEnabled(t *testing.T) {
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
-		Mode:            accountingsync.SyncModeLedger,
-		Granularity:     accountingsync.LedgerDetailed,
+		Mode:            accountingprovider.SyncModeLedger,
+		Granularity:     accountingconnection.LedgerDetailed,
 	})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "fixed for this connection once sending starts")
-	assert.Equal(t, accountingsync.SyncModeDocument, h.connections.get(h.conn.ID).Mode())
+	assert.Equal(t, accountingprovider.SyncModeDocument, h.connections.get(h.conn.ID).Mode())
 }
 
 func (h *harness) postReversal(
@@ -1010,7 +1013,7 @@ func TestReopeningAFiscalYearIsNotSent(t *testing.T) {
 		t.Run(closeType.String(), func(t *testing.T) {
 			t.Parallel()
 			h := newHarness(t)
-			h.ledgerMode(accountingsync.LedgerDetailed)
+			h.ledgerMode(accountingconnection.LedgerDetailed)
 			closing := invoiceJournal(accts, pulid.MustNew("cus_"), "JE-CL", aprilTenth, 900)
 			closing.EntryType = closeType.String()
 			h.ledger.add(closing)
@@ -1030,7 +1033,7 @@ func TestReversalOfAnOrdinaryEntryIsSent(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDetailed)
+	h.ledgerMode(accountingconnection.LedgerDetailed)
 	accts := newLedgerAccounts()
 	customerID := pulid.MustNew("cus_")
 	h.mapLedger(accts, customerID)
@@ -1060,7 +1063,7 @@ func TestAQueuedReversalOfAFiscalCloseIsNotSent(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDetailed)
+	h.ledgerMode(accountingconnection.LedgerDetailed)
 	accts := newLedgerAccounts()
 	customerID := pulid.MustNew("cus_")
 	h.mapLedger(accts, customerID)
@@ -1089,7 +1092,7 @@ func TestDailySummaryUpdateFollowsTheLatestSendNotTheHighestRevision(t *testing.
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDailySummary)
+	h.ledgerMode(accountingconnection.LedgerDailySummary)
 	accts := newLedgerAccounts()
 	customerID := pulid.MustNew("cus_")
 	h.mapLedger(accts, customerID)
@@ -1128,7 +1131,7 @@ func TestDailySummaryUpdateWaitsOnALaterUpdateInFlight(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDailySummary)
+	h.ledgerMode(accountingconnection.LedgerDailySummary)
 	accts := newLedgerAccounts()
 	customerID := pulid.MustNew("cus_")
 	h.mapLedger(accts, customerID)
@@ -1157,7 +1160,7 @@ func TestDailySummaryUpdateKeepsTheDateTheDayWasSentOn(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.ledgerMode(accountingsync.LedgerDailySummary)
+	h.ledgerMode(accountingconnection.LedgerDailySummary)
 	accts := newLedgerAccounts()
 	customerID := pulid.MustNew("cus_")
 	h.mapLedger(accts, customerID)
@@ -1189,7 +1192,7 @@ func TestEnableSyncKeepsTheStartDateOnceOpeningBalancesAreSent(t *testing.T) {
 
 	h := newHarness(t)
 	h.atStartDateStep()
-	h.ledgerMode(accountingsync.LedgerDetailed)
+	h.ledgerMode(accountingconnection.LedgerDetailed)
 	start := time.Date(2026, time.April, 1, 0, 0, 0, 0, time.UTC).Unix()
 	_, err := h.svc.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
 		TenantInfo:      h.tenant,

@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
@@ -34,7 +34,7 @@ type accountingInboundOperator interface {
 	Get(
 		ctx context.Context,
 		req *accountinginboundports.GetAccountingInboundChangeRequest,
-	) (*accountingsync.AccountingInboundChange, error)
+	) (*accountinginbound.AccountingInboundChange, error)
 	PreviewApply(
 		ctx context.Context,
 		req *accountinginboundports.GetAccountingInboundChangeRequest,
@@ -43,17 +43,17 @@ type accountingInboundOperator interface {
 		ctx context.Context,
 		req *accountinginboundports.DecideAccountingInboundChangeRequest,
 		actor *permissionports.RequestActor,
-	) (*accountingsync.AccountingInboundChange, error)
+	) (*accountinginbound.AccountingInboundChange, error)
 	Ignore(
 		ctx context.Context,
 		req *accountinginboundports.DecideAccountingInboundChangeRequest,
 		actor *permissionports.RequestActor,
-	) (*accountingsync.AccountingInboundChange, error)
+	) (*accountinginbound.AccountingInboundChange, error)
 }
 
-func inboundLabel(change *accountingsync.AccountingInboundChange) string {
+func inboundLabel(change *accountinginbound.AccountingInboundChange) string {
 	noun := "Payment"
-	if change.Kind == accountingsync.InboundBillPayment {
+	if change.Kind == accountinginbound.InboundBillPayment {
 		noun = "Bill payment"
 	}
 	parts := []string{noun}
@@ -269,7 +269,7 @@ func (t *IgnoreAccountingInboundChangeTool) Target(
 func (t *IgnoreAccountingInboundChangeTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*accountinginboundports.DecideAccountingInboundChangeRequest, *accountingsync.AccountingInboundChange, error) {
+) (*accountinginboundports.DecideAccountingInboundChangeRequest, *accountinginbound.AccountingInboundChange, error) {
 	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}

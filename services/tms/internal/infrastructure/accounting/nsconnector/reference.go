@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 )
@@ -59,26 +60,26 @@ func (k partyKind) spec() *referenceSpec {
 	return &customerSpec
 }
 
-func partyKindOf(kind accountingsync.ReferenceKind) partyKind {
-	if kind == accountingsync.ReferenceKindVendor {
+func partyKindOf(kind accountingprovider.ReferenceKind) partyKind {
+	if kind == accountingprovider.ReferenceKindVendor {
 		return partyVendor
 	}
 	return partyCustomer
 }
 
-func referenceSpecOf(kind accountingsync.ReferenceKind) (*referenceSpec, error) {
+func referenceSpecOf(kind accountingprovider.ReferenceKind) (*referenceSpec, error) {
 	switch kind {
-	case accountingsync.ReferenceKindAccount:
+	case accountingprovider.ReferenceKindAccount:
 		return &accountSpec, nil
-	case accountingsync.ReferenceKindItem:
+	case accountingprovider.ReferenceKindItem:
 		return &itemSpec, nil
-	case accountingsync.ReferenceKindCustomer:
+	case accountingprovider.ReferenceKindCustomer:
 		return &customerSpec, nil
-	case accountingsync.ReferenceKindVendor:
+	case accountingprovider.ReferenceKindVendor:
 		return &vendorSpec, nil
-	case accountingsync.ReferenceKindTerm:
+	case accountingprovider.ReferenceKindTerm:
 		return &termSpec, nil
-	case accountingsync.ReferenceKindPaymentMethod:
+	case accountingprovider.ReferenceKindPaymentMethod:
 		return nil, errNoPaymentMethods
 	default:
 		return nil, fmt.Errorf("netsuite: unknown reference kind %q", kind)
@@ -93,9 +94,9 @@ func (c *Connector) ListReference(
 	ctx context.Context,
 	req *accountingconnectorports.AccountingReferencePageRequest,
 ) (*accountingconnectorports.AccountingReferencePage, error) {
-	if req.Kind == accountingsync.ReferenceKindPaymentMethod {
+	if req.Kind == accountingprovider.ReferenceKindPaymentMethod {
 		return &accountingconnectorports.AccountingReferencePage{
-			Objects: []*accountingsync.AccountingReferenceObject{},
+			Objects: []*accountingmapping.AccountingReferenceObject{},
 		}, nil
 	}
 	spec, err := referenceSpecOf(req.Kind)
@@ -129,7 +130,7 @@ func (c *Connector) ListReference(
 		return nil, err
 	}
 	out := &accountingconnectorports.AccountingReferencePage{
-		Objects: make([]*accountingsync.AccountingReferenceObject, 0, len(rows)),
+		Objects: make([]*accountingmapping.AccountingReferenceObject, 0, len(rows)),
 	}
 	for idx := range rows {
 		out.Objects = append(out.Objects, referenceObjectOf(req.Kind, &rows[idx]))
@@ -143,29 +144,29 @@ func (c *Connector) ListReference(
 }
 
 func referenceObjectOf(
-	kind accountingsync.ReferenceKind,
+	kind accountingprovider.ReferenceKind,
 	row *referenceRow,
-) *accountingsync.AccountingReferenceObject {
-	if kind == accountingsync.ReferenceKindAccount {
+) *accountingmapping.AccountingReferenceObject {
+	if kind == accountingprovider.ReferenceKindAccount {
 		return accountObjectOf(row)
 	}
-	if kind == accountingsync.ReferenceKindItem {
+	if kind == accountingprovider.ReferenceKindItem {
 		return itemObjectOf(row)
 	}
-	if kind == accountingsync.ReferenceKindTerm {
+	if kind == accountingprovider.ReferenceKindTerm {
 		return termObjectOf(row)
 	}
 	return partyObjectOf(kind, row)
 }
 
-func accountObjectOf(row *referenceRow) *accountingsync.AccountingReferenceObject {
+func accountObjectOf(row *referenceRow) *accountingmapping.AccountingReferenceObject {
 	name := row.AccountName.Value()
 	if name == "" {
 		name = row.FullName.Value()
 	}
 	class := AccountClassOf(row.AccountType.Value())
-	return &accountingsync.AccountingReferenceObject{
-		Kind:               accountingsync.ReferenceKindAccount,
+	return &accountingmapping.AccountingReferenceObject{
+		Kind:               accountingprovider.ReferenceKindAccount,
 		ExternalID:         row.ID.Value(),
 		Name:               name,
 		FullyQualifiedName: row.FullName.Value(),
@@ -178,42 +179,42 @@ func accountObjectOf(row *referenceRow) *accountingsync.AccountingReferenceObjec
 	}
 }
 
-func AccountClassOf(accountType string) accountingsync.AccountClass {
+func AccountClassOf(accountType string) accountingmapping.AccountClass {
 	switch strings.TrimSpace(accountType) {
 	case "Bank":
-		return accountingsync.AccountClassBank
+		return accountingmapping.AccountClassBank
 	case "AcctRec", "UnbilledRec":
-		return accountingsync.AccountClassReceivable
+		return accountingmapping.AccountClassReceivable
 	case "AcctPay":
-		return accountingsync.AccountClassPayable
+		return accountingmapping.AccountClassPayable
 	case "OthCurrAsset", "FixedAsset", "OthAsset", "DeferExpense":
-		return accountingsync.AccountClassAsset
+		return accountingmapping.AccountClassAsset
 	case "CredCard", "OthCurrLiab", "LongTermLiab", "DeferRevenue":
-		return accountingsync.AccountClassLiability
+		return accountingmapping.AccountClassLiability
 	case "Equity":
-		return accountingsync.AccountClassEquity
+		return accountingmapping.AccountClassEquity
 	case "Income":
-		return accountingsync.AccountClassIncome
+		return accountingmapping.AccountClassIncome
 	case "OthIncome":
-		return accountingsync.AccountClassOtherIncome
+		return accountingmapping.AccountClassOtherIncome
 	case "COGS":
-		return accountingsync.AccountClassCostOfSales
+		return accountingmapping.AccountClassCostOfSales
 	case "Expense":
-		return accountingsync.AccountClassExpense
+		return accountingmapping.AccountClassExpense
 	case "OthExpense":
-		return accountingsync.AccountClassOtherExpense
+		return accountingmapping.AccountClassOtherExpense
 	default:
 		return ""
 	}
 }
 
-func itemObjectOf(row *referenceRow) *accountingsync.AccountingReferenceObject {
+func itemObjectOf(row *referenceRow) *accountingmapping.AccountingReferenceObject {
 	name := row.DisplayName.Value()
 	if name == "" {
 		name = row.ItemID.Value()
 	}
-	return &accountingsync.AccountingReferenceObject{
-		Kind:                    accountingsync.ReferenceKindItem,
+	return &accountingmapping.AccountingReferenceObject{
+		Kind:                    accountingprovider.ReferenceKindItem,
 		ExternalID:              row.ID.Value(),
 		Name:                    name,
 		Number:                  row.ItemID.Value(),
@@ -226,14 +227,14 @@ func itemObjectOf(row *referenceRow) *accountingsync.AccountingReferenceObject {
 }
 
 func partyObjectOf(
-	kind accountingsync.ReferenceKind,
+	kind accountingprovider.ReferenceKind,
 	row *referenceRow,
-) *accountingsync.AccountingReferenceObject {
+) *accountingmapping.AccountingReferenceObject {
 	name := row.CompanyName.Value()
 	if name == "" {
 		name = row.EntityID.Value()
 	}
-	return &accountingsync.AccountingReferenceObject{
+	return &accountingmapping.AccountingReferenceObject{
 		Kind:              kind,
 		ExternalID:        row.ID.Value(),
 		Name:              name,
@@ -241,15 +242,15 @@ func partyObjectOf(
 		CompanyName:       row.CompanyName.Value(),
 		Email:             row.Email.Value(),
 		CurrencyCode:      strings.ToUpper(row.Currency.Value()),
-		Is1099:            kind == accountingsync.ReferenceKindVendor && row.Is1099.Value(),
+		Is1099:            kind == accountingprovider.ReferenceKindVendor && row.Is1099.Value(),
 		Active:            !row.Inactive.Value(),
 		ProviderUpdatedAt: unixOf(row.modified()),
 	}
 }
 
-func termObjectOf(row *referenceRow) *accountingsync.AccountingReferenceObject {
-	obj := &accountingsync.AccountingReferenceObject{
-		Kind:       accountingsync.ReferenceKindTerm,
+func termObjectOf(row *referenceRow) *accountingmapping.AccountingReferenceObject {
+	obj := &accountingmapping.AccountingReferenceObject{
+		Kind:       accountingprovider.ReferenceKindTerm,
 		ExternalID: row.ID.Value(),
 		Name:       row.Name.Value(),
 		Active:     !row.Inactive.Value(),
@@ -264,19 +265,19 @@ func termObjectOf(row *referenceRow) *accountingsync.AccountingReferenceObject {
 func (c *Connector) CreateReference(
 	ctx context.Context,
 	req *accountingconnectorports.AccountingCreateReferenceRequest,
-) (*accountingsync.AccountingReferenceObject, error) {
+) (*accountingmapping.AccountingReferenceObject, error) {
 	switch req.Kind {
-	case accountingsync.ReferenceKindItem:
+	case accountingprovider.ReferenceKindItem:
 		if req.Item == nil {
 			return nil, errItemDraftRequired
 		}
-	case accountingsync.ReferenceKindCustomer, accountingsync.ReferenceKindVendor:
+	case accountingprovider.ReferenceKindCustomer, accountingprovider.ReferenceKindVendor:
 		if req.Party == nil {
 			return nil, errPartyDraftRequired
 		}
-	case accountingsync.ReferenceKindAccount,
-		accountingsync.ReferenceKindTerm,
-		accountingsync.ReferenceKindPaymentMethod:
+	case accountingprovider.ReferenceKindAccount,
+		accountingprovider.ReferenceKindTerm,
+		accountingprovider.ReferenceKindPaymentMethod:
 		return nil, fmt.Errorf("netsuite: %s records are not created from Trenova", req.Kind)
 	default:
 		return nil, fmt.Errorf("netsuite: unknown reference kind %q", req.Kind)
@@ -288,7 +289,7 @@ func (c *Connector) CreateReference(
 	if err != nil {
 		return nil, err
 	}
-	if req.Kind == accountingsync.ReferenceKindItem {
+	if req.Kind == accountingprovider.ReferenceKindItem {
 		id, createErr := c.createItem(ctx, s, req.RequestID, req.Item)
 		if createErr != nil {
 			return nil, createErr
@@ -309,9 +310,9 @@ func (c *Connector) CreateReference(
 func readReference(
 	ctx context.Context,
 	s *session,
-	kind accountingsync.ReferenceKind,
+	kind accountingprovider.ReferenceKind,
 	id string,
-) (*accountingsync.AccountingReferenceObject, error) {
+) (*accountingmapping.AccountingReferenceObject, error) {
 	spec, err := referenceSpecOf(kind)
 	if err != nil {
 		return nil, err
@@ -373,7 +374,7 @@ func (c *Connector) createItem(
 	requestID string,
 	draft *accountingconnectorports.AccountingItemDraft,
 ) (string, error) {
-	name := c.SanitizeName(accountingsync.ReferenceKindItem, draft.Name)
+	name := c.SanitizeName(accountingprovider.ReferenceKindItem, draft.Name)
 	if name == "" {
 		return "", errNameRequired
 	}
@@ -505,8 +506,8 @@ func (c *Connector) IsDuplicateName(err error) bool {
 	return errors.Is(err, errDuplicateName) || netsuite.IsDuplicateExternalID(err)
 }
 
-func (c *Connector) SanitizeName(kind accountingsync.ReferenceKind, name string) string {
-	if kind == accountingsync.ReferenceKindItem {
+func (c *Connector) SanitizeName(kind accountingprovider.ReferenceKind, name string) string {
+	if kind == accountingprovider.ReferenceKindItem {
 		return cleanText(name, maxItemNameLength)
 	}
 	return cleanText(name, maxPartyNameLength)

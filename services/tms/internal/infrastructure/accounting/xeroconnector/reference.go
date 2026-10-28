@@ -7,7 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/xero"
@@ -45,20 +46,20 @@ func (c *Connector) ListReference(
 	}
 
 	switch req.Kind {
-	case accountingsync.ReferenceKindAccount:
+	case accountingprovider.ReferenceKindAccount:
 		accounts, listErr := client.Accounts(ctx, nil)
 		if listErr != nil {
 			return nil, listErr
 		}
 		c.codes.store(client.TenantID(), accounts)
 		out := &accountingconnectorports.AccountingReferencePage{
-			Objects: make([]*accountingsync.AccountingReferenceObject, 0, len(accounts)),
+			Objects: make([]*accountingmapping.AccountingReferenceObject, 0, len(accounts)),
 		}
 		for idx := range accounts {
 			out.Objects = append(out.Objects, accountObjectOf(&accounts[idx]))
 		}
 		return out, nil
-	case accountingsync.ReferenceKindItem:
+	case accountingprovider.ReferenceKindItem:
 		items, listErr := client.Items(ctx, nil)
 		if listErr != nil {
 			return nil, listErr
@@ -68,14 +69,18 @@ func (c *Connector) ListReference(
 			return nil, mapErr
 		}
 		return &accountingconnectorports.AccountingReferencePage{Objects: objects}, nil
-	case accountingsync.ReferenceKindCustomer, accountingsync.ReferenceKindVendor:
+	case accountingprovider.ReferenceKindCustomer, accountingprovider.ReferenceKindVendor:
 		page := max(req.StartPosition, 1)
 		contacts, listErr := client.Contacts(ctx, page, nil)
 		if listErr != nil {
 			return nil, listErr
 		}
 		out := &accountingconnectorports.AccountingReferencePage{
-			Objects: make([]*accountingsync.AccountingReferenceObject, 0, len(contacts.Contacts)),
+			Objects: make(
+				[]*accountingmapping.AccountingReferenceObject,
+				0,
+				len(contacts.Contacts),
+			),
 		}
 		for idx := range contacts.Contacts {
 			contact := &contacts.Contacts[idx]
@@ -87,7 +92,7 @@ func (c *Connector) ListReference(
 			out.NextStart = page + 1
 		}
 		return out, nil
-	case accountingsync.ReferenceKindTerm, accountingsync.ReferenceKindPaymentMethod:
+	case accountingprovider.ReferenceKindTerm, accountingprovider.ReferenceKindPaymentMethod:
 		return &accountingconnectorports.AccountingReferencePage{}, nil
 	default:
 		return nil, fmt.Errorf("xero: unknown reference kind %q", req.Kind)
@@ -98,8 +103,8 @@ func (c *Connector) itemObjects(
 	ctx context.Context,
 	client *xero.Client,
 	items []xero.Item,
-) ([]*accountingsync.AccountingReferenceObject, error) {
-	objects := make([]*accountingsync.AccountingReferenceObject, 0, len(items))
+) ([]*accountingmapping.AccountingReferenceObject, error) {
+	objects := make([]*accountingmapping.AccountingReferenceObject, 0, len(items))
 	for idx := range items {
 		item := &items[idx]
 		obj := itemObjectOf(item)
@@ -120,7 +125,7 @@ func (c *Connector) itemObjects(
 func (c *Connector) CreateReference(
 	ctx context.Context,
 	req *accountingconnectorports.AccountingCreateReferenceRequest,
-) (*accountingsync.AccountingReferenceObject, error) {
+) (*accountingmapping.AccountingReferenceObject, error) {
 	client, err := c.client(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     req.RealmID,
 		AccessToken: req.AccessToken,
@@ -130,13 +135,13 @@ func (c *Connector) CreateReference(
 	}
 
 	switch req.Kind {
-	case accountingsync.ReferenceKindItem:
+	case accountingprovider.ReferenceKindItem:
 		if req.Item == nil {
 			return nil, errItemDraftRequired
 		}
 		input := xero.ItemInput{
 			Code:        itemCode(req.Item),
-			Name:        c.SanitizeName(accountingsync.ReferenceKindItem, req.Item.Name),
+			Name:        c.SanitizeName(accountingprovider.ReferenceKindItem, req.Item.Name),
 			Description: stringutils.TruncateRunes(req.Item.Description, xero.MaxDescriptionLength),
 		}
 		if strings.TrimSpace(req.Item.IncomeAccountID) != "" {
@@ -158,7 +163,7 @@ func (c *Connector) CreateReference(
 		obj := itemObjectOf(created)
 		obj.IncomeAccountExternalID = req.Item.IncomeAccountID
 		return obj, nil
-	case accountingsync.ReferenceKindCustomer, accountingsync.ReferenceKindVendor:
+	case accountingprovider.ReferenceKindCustomer, accountingprovider.ReferenceKindVendor:
 		if req.Party == nil {
 			return nil, errPartyDraftRequired
 		}
@@ -167,9 +172,9 @@ func (c *Connector) CreateReference(
 			return nil, createErr
 		}
 		return contactObjectOf(req.Kind, created), nil
-	case accountingsync.ReferenceKindAccount,
-		accountingsync.ReferenceKindTerm,
-		accountingsync.ReferenceKindPaymentMethod:
+	case accountingprovider.ReferenceKindAccount,
+		accountingprovider.ReferenceKindTerm,
+		accountingprovider.ReferenceKindPaymentMethod:
 		return nil, fmt.Errorf("xero: %s records are not created from Trenova", req.Kind)
 	default:
 		return nil, fmt.Errorf("xero: unknown reference kind %q", req.Kind)
@@ -180,8 +185,8 @@ func (c *Connector) IsDuplicateName(err error) bool {
 	return xero.IsDuplicateNumber(err)
 }
 
-func (c *Connector) SanitizeName(kind accountingsync.ReferenceKind, name string) string {
-	if kind == accountingsync.ReferenceKindItem {
+func (c *Connector) SanitizeName(kind accountingprovider.ReferenceKind, name string) string {
+	if kind == accountingprovider.ReferenceKindItem {
 		return strings.TrimSpace(stringutils.OneLine(name, xero.MaxItemNameLength))
 	}
 	return strings.TrimSpace(stringutils.OneLine(name, xero.MaxContactNameLength))
@@ -217,21 +222,21 @@ func contactInputOf(draft *accountingconnectorports.AccountingPartyDraft) xero.C
 	return input
 }
 
-func contactHolds(contact *xero.Contact, kind accountingsync.ReferenceKind) bool {
+func contactHolds(contact *xero.Contact, kind accountingprovider.ReferenceKind) bool {
 	if !contact.IsCustomer && !contact.IsSupplier {
 		return true
 	}
-	if kind == accountingsync.ReferenceKindCustomer {
+	if kind == accountingprovider.ReferenceKindCustomer {
 		return contact.IsCustomer
 	}
 	return contact.IsSupplier
 }
 
 func contactObjectOf(
-	kind accountingsync.ReferenceKind,
+	kind accountingprovider.ReferenceKind,
 	contact *xero.Contact,
-) *accountingsync.AccountingReferenceObject {
-	out := &accountingsync.AccountingReferenceObject{
+) *accountingmapping.AccountingReferenceObject {
+	out := &accountingmapping.AccountingReferenceObject{
 		Kind:        kind,
 		ExternalID:  contact.ContactID,
 		Name:        contact.Name,
@@ -267,13 +272,13 @@ func primaryAddress(addresses []xero.Address) (*xero.Address, bool) {
 	return fallback, fallback != nil
 }
 
-func itemObjectOf(item *xero.Item) *accountingsync.AccountingReferenceObject {
+func itemObjectOf(item *xero.Item) *accountingmapping.AccountingReferenceObject {
 	name := item.Name
 	if name == "" {
 		name = item.Code
 	}
-	return &accountingsync.AccountingReferenceObject{
-		Kind:              accountingsync.ReferenceKindItem,
+	return &accountingmapping.AccountingReferenceObject{
+		Kind:              accountingprovider.ReferenceKindItem,
 		ExternalID:        item.ItemID,
 		Name:              name,
 		Number:            item.Code,
@@ -284,13 +289,13 @@ func itemObjectOf(item *xero.Item) *accountingsync.AccountingReferenceObject {
 	}
 }
 
-func accountObjectOf(account *xero.Account) *accountingsync.AccountingReferenceObject {
+func accountObjectOf(account *xero.Account) *accountingmapping.AccountingReferenceObject {
 	subType := account.SystemAccount
 	if subType == "" {
 		subType = account.BankAccountType
 	}
-	return &accountingsync.AccountingReferenceObject{
-		Kind:              accountingsync.ReferenceKindAccount,
+	return &accountingmapping.AccountingReferenceObject{
+		Kind:              accountingprovider.ReferenceKindAccount,
 		ExternalID:        account.AccountID,
 		Name:              account.Name,
 		Number:            account.Code,
@@ -304,37 +309,37 @@ func accountObjectOf(account *xero.Account) *accountingsync.AccountingReferenceO
 	}
 }
 
-var accountClasses = map[string]accountingsync.AccountClass{
-	"BANK":                    accountingsync.AccountClassBank,
-	"CURRENT":                 accountingsync.AccountClassAsset,
-	"FIXED":                   accountingsync.AccountClassAsset,
-	"INVENTORY":               accountingsync.AccountClassAsset,
-	"NONCURRENT":              accountingsync.AccountClassAsset,
-	"PREPAYMENT":              accountingsync.AccountClassAsset,
-	"CURRLIAB":                accountingsync.AccountClassLiability,
-	"LIABILITY":               accountingsync.AccountClassLiability,
-	"TERMLIAB":                accountingsync.AccountClassLiability,
-	"PAYGLIABILITY":           accountingsync.AccountClassLiability,
-	"SUPERANNUATIONLIABILITY": accountingsync.AccountClassLiability,
-	"WAGESPAYABLELIABILITY":   accountingsync.AccountClassLiability,
-	"EQUITY":                  accountingsync.AccountClassEquity,
-	"REVENUE":                 accountingsync.AccountClassIncome,
-	"SALES":                   accountingsync.AccountClassIncome,
-	"OTHERINCOME":             accountingsync.AccountClassOtherIncome,
-	"DIRECTCOSTS":             accountingsync.AccountClassCostOfSales,
-	"EXPENSE":                 accountingsync.AccountClassExpense,
-	"OVERHEADS":               accountingsync.AccountClassExpense,
-	"DEPRECIATN":              accountingsync.AccountClassExpense,
-	"SUPERANNUATIONEXPENSE":   accountingsync.AccountClassExpense,
-	"WAGESEXPENSE":            accountingsync.AccountClassExpense,
+var accountClasses = map[string]accountingmapping.AccountClass{
+	"BANK":                    accountingmapping.AccountClassBank,
+	"CURRENT":                 accountingmapping.AccountClassAsset,
+	"FIXED":                   accountingmapping.AccountClassAsset,
+	"INVENTORY":               accountingmapping.AccountClassAsset,
+	"NONCURRENT":              accountingmapping.AccountClassAsset,
+	"PREPAYMENT":              accountingmapping.AccountClassAsset,
+	"CURRLIAB":                accountingmapping.AccountClassLiability,
+	"LIABILITY":               accountingmapping.AccountClassLiability,
+	"TERMLIAB":                accountingmapping.AccountClassLiability,
+	"PAYGLIABILITY":           accountingmapping.AccountClassLiability,
+	"SUPERANNUATIONLIABILITY": accountingmapping.AccountClassLiability,
+	"WAGESPAYABLELIABILITY":   accountingmapping.AccountClassLiability,
+	"EQUITY":                  accountingmapping.AccountClassEquity,
+	"REVENUE":                 accountingmapping.AccountClassIncome,
+	"SALES":                   accountingmapping.AccountClassIncome,
+	"OTHERINCOME":             accountingmapping.AccountClassOtherIncome,
+	"DIRECTCOSTS":             accountingmapping.AccountClassCostOfSales,
+	"EXPENSE":                 accountingmapping.AccountClassExpense,
+	"OVERHEADS":               accountingmapping.AccountClassExpense,
+	"DEPRECIATN":              accountingmapping.AccountClassExpense,
+	"SUPERANNUATIONEXPENSE":   accountingmapping.AccountClassExpense,
+	"WAGESEXPENSE":            accountingmapping.AccountClassExpense,
 }
 
-func AccountClassOf(account *xero.Account) accountingsync.AccountClass {
+func AccountClassOf(account *xero.Account) accountingmapping.AccountClass {
 	switch {
 	case account.IsReceivable():
-		return accountingsync.AccountClassReceivable
+		return accountingmapping.AccountClassReceivable
 	case account.IsPayable():
-		return accountingsync.AccountClassPayable
+		return accountingmapping.AccountClassPayable
 	default:
 		return accountClasses[strings.ToUpper(strings.TrimSpace(account.Type))]
 	}

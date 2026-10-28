@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
@@ -44,7 +45,7 @@ func (f *fakeFindings) ListAttention(
 	_ context.Context,
 	req *accountingdriftports.ListAccountingDriftAttentionRequest,
 ) ([]accountingdriftports.AccountingDriftAttentionGroup, error) {
-	groups := map[accountingsync.DriftKind]*accountingdriftports.AccountingDriftAttentionGroup{}
+	groups := map[accountingdrift.DriftKind]*accountingdriftports.AccountingDriftAttentionGroup{}
 	out := []accountingdriftports.AccountingDriftAttentionGroup{}
 	for _, row := range f.all() {
 		if !row.IsOpen() || row.ConnectionID != req.ConnectionID ||
@@ -91,7 +92,7 @@ func TestAFindingOlderThanADayReachesWatchtowerUntilItResolves(t *testing.T) {
 	finish()
 	sourceID := watchtowersources.AccountingDriftAttentionSourceID(
 		h.conn,
-		accountingsync.DriftAmountMismatch,
+		accountingdrift.DriftAmountMismatch,
 	)
 	require.Contains(t, board.open, sourceID)
 	item := board.open[sourceID]

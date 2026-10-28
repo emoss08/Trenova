@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -19,7 +21,7 @@ func newCertificateHarness(t *testing.T) *harness {
 	t.Helper()
 	h := newHarness(t)
 	h.connector.typ = integration.TypeNetSuite
-	require.True(t, accountingsync.MustProfile(integration.TypeNetSuite).ClientCredentials)
+	require.True(t, accountingprovider.MustProfile(integration.TypeNetSuite).ClientCredentials)
 	return h
 }
 
@@ -56,7 +58,7 @@ func (h *harness) connectWithCertificate(
 	)
 }
 
-func (h *harness) certificateConnection(t *testing.T) *accountingsync.AccountingConnection {
+func (h *harness) certificateConnection(t *testing.T) *accountingconnection.AccountingConnection {
 	t.Helper()
 	h.prepareCertificate(t)
 	completion, err := h.connectWithCertificate(t, netSuiteRealm, testCertificateID)
@@ -67,9 +69,9 @@ func (h *harness) certificateConnection(t *testing.T) *accountingsync.Accounting
 
 func (h *harness) renewCertificate(
 	t *testing.T,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	certificateID string,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	t.Helper()
 	return h.svc.RenewCertificate(
 		t.Context(),
@@ -286,7 +288,7 @@ func TestCertificateConnectionTakesATokenPerAssertionAndNeverRefreshes(t *testin
 
 	checked, err := h.svc.CheckHealth(t.Context(), h.tenant, conn.ID)
 	require.NoError(t, err)
-	assert.Equal(t, accountingsync.ConnectionStatusConnected, checked.Status)
+	assert.Equal(t, accountingconnection.ConnectionStatusConnected, checked.Status)
 	assert.Empty(t, h.connector.refreshedWith)
 	cc := h.connector.clientCredentials()
 	require.Len(t, cc.assertions, 2)
@@ -320,7 +322,7 @@ func TestCertificateConnectionGoesRevokedWhenTheCertificateIsRefused(t *testing.
 
 	checked, err := h.svc.CheckHealth(t.Context(), h.tenant, conn.ID)
 	require.NoError(t, err)
-	assert.Equal(t, accountingsync.ConnectionStatusRevoked, checked.Status)
+	assert.Equal(t, accountingconnection.ConnectionStatusRevoked, checked.Status)
 	stored := h.connections.tokens[conn.ID]
 	assert.Empty(t, stored.access)
 	assert.Empty(t, stored.clientKey, "a refused key is not kept")
@@ -361,12 +363,12 @@ func TestRenewCertificateRestoresARevokedConnection(t *testing.T) {
 	h.connector.errCategories[errProvider] = accountingsync.ErrorCategoryRevoked
 	checked, err := h.svc.CheckHealth(t.Context(), h.tenant, conn.ID)
 	require.NoError(t, err)
-	require.Equal(t, accountingsync.ConnectionStatusRevoked, checked.Status)
+	require.Equal(t, accountingconnection.ConnectionStatusRevoked, checked.Status)
 
 	h.prepareCertificate(t)
 	renewed, err := h.renewCertificate(t, conn, testCertificateID)
 	require.NoError(t, err)
-	assert.Equal(t, accountingsync.ConnectionStatusConnected, renewed.Status)
+	assert.Equal(t, accountingconnection.ConnectionStatusConnected, renewed.Status)
 	stored := h.connections.tokens[conn.ID]
 	assert.NotEmpty(t, stored.clientKey)
 	assert.NotEmpty(t, stored.access)

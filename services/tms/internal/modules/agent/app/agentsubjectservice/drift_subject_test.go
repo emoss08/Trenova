@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -17,14 +18,14 @@ import (
 type fakeDriftRepo struct {
 	accountingdriftports.AccountingDriftFindingRepository
 
-	found  *accountingsync.AccountingDriftFinding
+	found  *accountingdrift.AccountingDriftFinding
 	lastID pulid.ID
 }
 
 func (f *fakeDriftRepo) GetByID(
 	_ context.Context,
 	req accountingdriftports.GetAccountingDriftFindingQuery,
-) (*accountingsync.AccountingDriftFinding, error) {
+) (*accountingdrift.AccountingDriftFinding, error) {
 	f.lastID = req.ID
 
 	return f.found, nil
@@ -34,13 +35,13 @@ func TestService_DescribesADriftFindingWithBothValuesAndItsFixes(t *testing.T) {
 	t.Parallel()
 
 	trenova, provider := int64(125_000), int64(120_000)
-	found := accountingsync.NewAccountingDriftFinding(&accountingsync.DriftObservation{
+	found := accountingdrift.NewAccountingDriftFinding(&accountingdrift.DriftObservation{
 		ConnectionID:       pulid.MustNew("acctc_"),
 		ObjectType:         accountingsync.SyncObjectInvoice,
 		ObjectID:           pulid.MustNew("inv_"),
 		ObjectNumber:       "INV-1042",
 		PartyName:          "Acme Foods",
-		Kind:               accountingsync.DriftAmountMismatch,
+		Kind:               accountingdrift.DriftAmountMismatch,
 		CurrencyCode:       "USD",
 		TrenovaMinor:       &trenova,
 		ProviderMinor:      &provider,

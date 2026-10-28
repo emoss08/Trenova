@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -83,39 +84,39 @@ type AccountingConnectionRepository interface {
 	GetByType(
 		ctx context.Context,
 		req GetAccountingConnectionRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	GetByID(
 		ctx context.Context,
 		req GetAccountingConnectionByIDRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	ListByTenant(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) ([]*accountingsync.AccountingConnection, error)
+	) ([]*accountingconnection.AccountingConnection, error)
 	ListHoldingRealm(
 		ctx context.Context,
 		req ListAccountingConnectionsByRealmRequest,
-	) ([]*accountingsync.AccountingConnection, error)
+	) ([]*accountingconnection.AccountingConnection, error)
 	ListDueForHealthCheck(
 		ctx context.Context,
 		req ListDueAccountingConnectionsRequest,
-	) ([]*accountingsync.AccountingConnection, error)
+	) ([]*accountingconnection.AccountingConnection, error)
 	LockByTypeWithTokens(
 		ctx context.Context,
 		req GetAccountingConnectionRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	LockWithTokens(
 		ctx context.Context,
 		req GetAccountingConnectionByIDRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	Create(
 		ctx context.Context,
-		entity *accountingsync.AccountingConnection,
-	) (*accountingsync.AccountingConnection, error)
+		entity *accountingconnection.AccountingConnection,
+	) (*accountingconnection.AccountingConnection, error)
 	Update(
 		ctx context.Context,
-		entity *accountingsync.AccountingConnection,
-	) (*accountingsync.AccountingConnection, error)
+		entity *accountingconnection.AccountingConnection,
+	) (*accountingconnection.AccountingConnection, error)
 	StoreTokens(ctx context.Context, req StoreAccountingTokensRequest) error
 	MarkWebhookReceived(ctx context.Context, req MarkAccountingWebhookRequest) (int64, error)
 	MarkReferenceRefresh(ctx context.Context, req MarkAccountingReferenceRefreshRequest) error
@@ -124,22 +125,22 @@ type AccountingConnectionRepository interface {
 	ListActive(
 		ctx context.Context,
 		req ListActiveAccountingConnectionsRequest,
-	) ([]*accountingsync.AccountingConnection, error)
+	) ([]*accountingconnection.AccountingConnection, error)
 }
 
 type AccountingOAuthState struct {
-	State           string                   `json:"state"`
-	IntegrationType integration.Type         `json:"integrationType"`
-	UserID          pulid.ID                 `json:"userId"`
-	OrganizationID  pulid.ID                 `json:"organizationId"`
-	BusinessUnitID  pulid.ID                 `json:"businessUnitId"`
-	CreatedAt       int64                    `json:"createdAt"`
-	AppSource       accountingsync.AppSource `json:"appSource"`
-	AppFingerprint  string                   `json:"appFingerprint"`
-	SealedGrant     string                   `json:"sealedGrant,omitempty"`
-	SealedVerifier  string                   `json:"sealedVerifier,omitempty"`
-	GrantRealmID    string                   `json:"grantRealmId,omitempty"`
-	Companies       []AccountingOAuthCompany `json:"companies,omitempty"`
+	State           string                         `json:"state"`
+	IntegrationType integration.Type               `json:"integrationType"`
+	UserID          pulid.ID                       `json:"userId"`
+	OrganizationID  pulid.ID                       `json:"organizationId"`
+	BusinessUnitID  pulid.ID                       `json:"businessUnitId"`
+	CreatedAt       int64                          `json:"createdAt"`
+	AppSource       accountingconnection.AppSource `json:"appSource"`
+	AppFingerprint  string                         `json:"appFingerprint"`
+	SealedGrant     string                         `json:"sealedGrant,omitempty"`
+	SealedVerifier  string                         `json:"sealedVerifier,omitempty"`
+	GrantRealmID    string                         `json:"grantRealmId,omitempty"`
+	Companies       []AccountingOAuthCompany       `json:"companies,omitempty"`
 }
 
 type AccountingOAuthCompany struct {
@@ -162,11 +163,11 @@ type AccountingPendingCertificateRepository interface {
 	GetByType(
 		ctx context.Context,
 		req GetAccountingConnectionRequest,
-	) (*accountingsync.AccountingPendingCertificate, error)
+	) (*accountingconnection.AccountingPendingCertificate, error)
 	Replace(
 		ctx context.Context,
-		entity *accountingsync.AccountingPendingCertificate,
-	) (*accountingsync.AccountingPendingCertificate, error)
+		entity *accountingconnection.AccountingPendingCertificate,
+	) (*accountingconnection.AccountingPendingCertificate, error)
 	Delete(ctx context.Context, req GetAccountingConnectionRequest) error
 }
 
@@ -174,21 +175,21 @@ type AccountingAppCredentialRepository interface {
 	GetByType(
 		ctx context.Context,
 		req GetAccountingAppCredentialRequest,
-	) (*accountingsync.AccountingAppCredential, error)
+	) (*accountingconnection.AccountingAppCredential, error)
 	Create(
 		ctx context.Context,
-		entity *accountingsync.AccountingAppCredential,
-	) (*accountingsync.AccountingAppCredential, error)
+		entity *accountingconnection.AccountingAppCredential,
+	) (*accountingconnection.AccountingAppCredential, error)
 	Update(
 		ctx context.Context,
-		entity *accountingsync.AccountingAppCredential,
-	) (*accountingsync.AccountingAppCredential, error)
+		entity *accountingconnection.AccountingAppCredential,
+	) (*accountingconnection.AccountingAppCredential, error)
 	Delete(ctx context.Context, req GetAccountingAppCredentialRequest) error
 	GetForWebhook(
 		ctx context.Context,
 		id pulid.ID,
 		integrationType integration.Type,
-	) (*accountingsync.AccountingAppCredential, error)
+	) (*accountingconnection.AccountingAppCredential, error)
 }
 
 type ListAccountingWebhookSubscriptionsRequest struct {
@@ -211,23 +212,23 @@ type AccountingWebhookSubscriptionRepository interface {
 	ListByConnection(
 		ctx context.Context,
 		req ListAccountingWebhookSubscriptionsRequest,
-	) ([]*accountingsync.AccountingWebhookSubscription, error)
+	) ([]*accountingconnection.AccountingWebhookSubscription, error)
 	ListByExternalIDs(
 		ctx context.Context,
 		integrationType integration.Type,
 		externalIDs []string,
-	) ([]*accountingsync.AccountingWebhookSubscription, error)
+	) ([]*accountingconnection.AccountingWebhookSubscription, error)
 	ListConnections(
 		ctx context.Context,
 		req ListWebhookSubscriptionConnectionsRequest,
-	) ([]*accountingsync.AccountingConnection, error)
+	) ([]*accountingconnection.AccountingConnection, error)
 	Create(
 		ctx context.Context,
-		entity *accountingsync.AccountingWebhookSubscription,
-	) (*accountingsync.AccountingWebhookSubscription, error)
+		entity *accountingconnection.AccountingWebhookSubscription,
+	) (*accountingconnection.AccountingWebhookSubscription, error)
 	Update(
 		ctx context.Context,
-		entity *accountingsync.AccountingWebhookSubscription,
-	) (*accountingsync.AccountingWebhookSubscription, error)
+		entity *accountingconnection.AccountingWebhookSubscription,
+	) (*accountingconnection.AccountingWebhookSubscription, error)
 	Delete(ctx context.Context, req DeleteAccountingWebhookSubscriptionRequest) error
 }

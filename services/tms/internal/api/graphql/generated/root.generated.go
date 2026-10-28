@@ -3,6 +3,12 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
@@ -714,68 +720,68 @@ type AccessorialChargeResolver interface {
 }
 
 type AccountingAppCredentialResolver interface {
-	HasWebhookVerifier(ctx context.Context, obj *accountingsync.AccountingAppCredential) (bool, error)
+	HasWebhookVerifier(ctx context.Context, obj *accountingconnection.AccountingAppCredential) (bool, error)
 }
 
 type AccountingAppSettingsResolver interface {
-	ActiveSource(ctx context.Context, obj *accountingconnectionports.AccountingAppSettings) (*accountingsync.AppSource, error)
-	InstanceEnvironment(ctx context.Context, obj *accountingconnectionports.AccountingAppSettings) (*accountingsync.AppEnvironment, error)
+	ActiveSource(ctx context.Context, obj *accountingconnectionports.AccountingAppSettings) (*accountingconnection.AppSource, error)
+	InstanceEnvironment(ctx context.Context, obj *accountingconnectionports.AccountingAppSettings) (*accountingprovider.AppEnvironment, error)
 }
 
 type AccountingConnectionResolver interface {
-	AppEnvironment(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.AppEnvironment, error)
-	LastErrorCategory(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.ErrorCategory, error)
-	LedgerGranularity(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.LedgerGranularity, error)
-	PausedBy(ctx context.Context, obj *accountingsync.AccountingConnection) (*tenant.User, error)
+	AppEnvironment(ctx context.Context, obj *accountingconnection.AccountingConnection) (*accountingprovider.AppEnvironment, error)
+	LastErrorCategory(ctx context.Context, obj *accountingconnection.AccountingConnection) (*accountingsync.ErrorCategory, error)
+	LedgerGranularity(ctx context.Context, obj *accountingconnection.AccountingConnection) (*accountingconnection.LedgerGranularity, error)
+	PausedBy(ctx context.Context, obj *accountingconnection.AccountingConnection) (*tenant.User, error)
 }
 
 type AccountingDriftFindingResolver interface {
-	PartyID(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*string, error)
-	TrenovaMinor(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*int, error)
-	ProviderMinor(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*int, error)
-	DifferenceMinor(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*int, error)
-	Resolution(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*accountingsync.DriftResolution, error)
-	FixObjectType(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*accountingsync.DriftFixObject, error)
-	FixObjectID(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*string, error)
-	Directions(ctx context.Context, obj *accountingsync.AccountingDriftFinding) ([]accountingsync.DriftDirection, error)
-	Pushed(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (bool, error)
-	ResolvedBy(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*tenant.User, error)
+	PartyID(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*string, error)
+	TrenovaMinor(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*int, error)
+	ProviderMinor(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*int, error)
+	DifferenceMinor(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*int, error)
+	Resolution(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*accountingdrift.DriftResolution, error)
+	FixObjectType(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*accountingdrift.DriftFixObject, error)
+	FixObjectID(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*string, error)
+	Directions(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) ([]accountingdrift.DriftDirection, error)
+	Pushed(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (bool, error)
+	ResolvedBy(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*tenant.User, error)
 }
 
 type AccountingDriftFixPreviewResolver interface {
-	Direction(ctx context.Context, obj *accountingdriftports.AccountingDriftFixPreview) (*accountingsync.DriftDirection, error)
-	FixObject(ctx context.Context, obj *accountingdriftports.AccountingDriftFixPreview) (*accountingsync.DriftFixObject, error)
+	Direction(ctx context.Context, obj *accountingdriftports.AccountingDriftFixPreview) (*accountingdrift.DriftDirection, error)
+	FixObject(ctx context.Context, obj *accountingdriftports.AccountingDriftFixPreview) (*accountingdrift.DriftFixObject, error)
 	Operation(ctx context.Context, obj *accountingdriftports.AccountingDriftFixPreview) (*accountingsync.SyncOperation, error)
 }
 
 type AccountingInboundChangeResolver interface {
-	Reason(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*accountingsync.InboundChangeReason, error)
-	PartyObjectID(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*string, error)
-	ReferenceNumber(ctx context.Context, obj *accountingsync.AccountingInboundChange) (string, error)
-	MethodName(ctx context.Context, obj *accountingsync.AccountingInboundChange) (string, error)
-	UnappliedMinor(ctx context.Context, obj *accountingsync.AccountingInboundChange) (int, error)
-	Lines(ctx context.Context, obj *accountingsync.AccountingInboundChange) ([]*accountingsync.InboundLine, error)
-	DecidedBy(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*tenant.User, error)
+	Reason(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (*accountinginbound.InboundChangeReason, error)
+	PartyObjectID(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (*string, error)
+	ReferenceNumber(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (string, error)
+	MethodName(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (string, error)
+	UnappliedMinor(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (int, error)
+	Lines(ctx context.Context, obj *accountinginbound.AccountingInboundChange) ([]*accountinginbound.InboundLine, error)
+	DecidedBy(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (*tenant.User, error)
 }
 
 type AccountingInboundLineResolver interface {
-	ObjectType(ctx context.Context, obj *accountingsync.InboundLine) (*accountingsync.SyncObjectType, error)
-	ObjectID(ctx context.Context, obj *accountingsync.InboundLine) (*string, error)
+	ObjectType(ctx context.Context, obj *accountinginbound.InboundLine) (*accountingsync.SyncObjectType, error)
+	ObjectID(ctx context.Context, obj *accountinginbound.InboundLine) (*string, error)
 }
 
 type AccountingMappingResolver interface {
-	TrenovaObjectID(ctx context.Context, obj *accountingsync.AccountingMapping) (*string, error)
-	Source(ctx context.Context, obj *accountingsync.AccountingMapping) (*accountingsync.MappingSource, error)
-	Required(ctx context.Context, obj *accountingsync.AccountingMapping) (bool, error)
-	Prechecked(ctx context.Context, obj *accountingsync.AccountingMapping) (bool, error)
-	Candidates(ctx context.Context, obj *accountingsync.AccountingMapping) ([]*accountingsync.MappingCandidate, error)
-	Matchers(ctx context.Context, obj *accountingsync.AccountingMapping) ([]*accountingsync.MatcherSignal, error)
-	ConfirmedBy(ctx context.Context, obj *accountingsync.AccountingMapping) (*tenant.User, error)
+	TrenovaObjectID(ctx context.Context, obj *accountingmapping.AccountingMapping) (*string, error)
+	Source(ctx context.Context, obj *accountingmapping.AccountingMapping) (*accountingmapping.MappingSource, error)
+	Required(ctx context.Context, obj *accountingmapping.AccountingMapping) (bool, error)
+	Prechecked(ctx context.Context, obj *accountingmapping.AccountingMapping) (bool, error)
+	Candidates(ctx context.Context, obj *accountingmapping.AccountingMapping) ([]*accountingmapping.MappingCandidate, error)
+	Matchers(ctx context.Context, obj *accountingmapping.AccountingMapping) ([]*accountingmapping.MatcherSignal, error)
+	ConfirmedBy(ctx context.Context, obj *accountingmapping.AccountingMapping) (*tenant.User, error)
 }
 
 type AccountingReferenceObjectResolver interface {
-	Label(ctx context.Context, obj *accountingsync.AccountingReferenceObject) (string, error)
-	Usable(ctx context.Context, obj *accountingsync.AccountingReferenceObject) (bool, error)
+	Label(ctx context.Context, obj *accountingmapping.AccountingReferenceObject) (string, error)
+	Usable(ctx context.Context, obj *accountingmapping.AccountingReferenceObject) (bool, error)
 }
 
 type AccountingSyncAttemptResolver interface {
@@ -1971,34 +1977,34 @@ type MutationResolver interface {
 	RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*accountingconnectionports.AccountingSyncStatus, error)
 	StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*accountingconnectionports.AccountingAuthorizationStart, error)
 	FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingconnectionports.AccountingAuthorizationCompletion, error)
-	ChooseAccountingCompany(ctx context.Context, input gqlmodel.ChooseAccountingCompanyInput) (*accountingsync.AccountingConnection, error)
+	ChooseAccountingCompany(ctx context.Context, input gqlmodel.ChooseAccountingCompanyInput) (*accountingconnection.AccountingConnection, error)
 	PrepareAccountingCertificate(ctx context.Context, input gqlmodel.PrepareAccountingCertificateInput) (*accountingconnectionports.AccountingPreparedCertificate, error)
 	ConnectAccountingWithCertificate(ctx context.Context, input gqlmodel.ConnectAccountingWithCertificateInput) (*accountingconnectionports.AccountingAuthorizationCompletion, error)
-	RenewAccountingCertificate(ctx context.Context, input gqlmodel.RenewAccountingCertificateInput) (*accountingsync.AccountingConnection, error)
-	DisconnectAccountingSystem(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
-	CheckAccountingConnection(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
-	ConfirmAccountingMappings(ctx context.Context, input []*gqlmodel.ConfirmAccountingMappingInput) ([]*accountingsync.AccountingMapping, error)
-	RejectAccountingMapping(ctx context.Context, id string) (*accountingsync.AccountingMapping, error)
-	SetAccountingMapping(ctx context.Context, input gqlmodel.SetAccountingMappingInput) (*accountingsync.AccountingMapping, error)
-	ClearAccountingMapping(ctx context.Context, id string) (*accountingsync.AccountingMapping, error)
-	CreateAccountingReferenceRecord(ctx context.Context, input gqlmodel.CreateAccountingReferenceRecordInput) (*accountingsync.AccountingMapping, error)
-	RefreshAccountingReferenceData(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
-	CompleteAccountingSetup(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
-	ChooseAccountingSyncMode(ctx context.Context, input gqlmodel.ChooseAccountingSyncModeInput) (*accountingsync.AccountingConnection, error)
-	EnableAccountingSync(ctx context.Context, input gqlmodel.EnableAccountingSyncInput) (*accountingsync.AccountingConnection, error)
-	UpdateAccountingSyncSettings(ctx context.Context, input gqlmodel.UpdateAccountingSyncSettingsInput) (*accountingsync.AccountingConnection, error)
-	PauseAccountingSync(ctx context.Context, input gqlmodel.PauseAccountingSyncInput) (*accountingsync.AccountingConnection, error)
-	ResumeAccountingSync(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
+	RenewAccountingCertificate(ctx context.Context, input gqlmodel.RenewAccountingCertificateInput) (*accountingconnection.AccountingConnection, error)
+	DisconnectAccountingSystem(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error)
+	CheckAccountingConnection(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error)
+	ConfirmAccountingMappings(ctx context.Context, input []*gqlmodel.ConfirmAccountingMappingInput) ([]*accountingmapping.AccountingMapping, error)
+	RejectAccountingMapping(ctx context.Context, id string) (*accountingmapping.AccountingMapping, error)
+	SetAccountingMapping(ctx context.Context, input gqlmodel.SetAccountingMappingInput) (*accountingmapping.AccountingMapping, error)
+	ClearAccountingMapping(ctx context.Context, id string) (*accountingmapping.AccountingMapping, error)
+	CreateAccountingReferenceRecord(ctx context.Context, input gqlmodel.CreateAccountingReferenceRecordInput) (*accountingmapping.AccountingMapping, error)
+	RefreshAccountingReferenceData(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error)
+	CompleteAccountingSetup(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error)
+	ChooseAccountingSyncMode(ctx context.Context, input gqlmodel.ChooseAccountingSyncModeInput) (*accountingconnection.AccountingConnection, error)
+	EnableAccountingSync(ctx context.Context, input gqlmodel.EnableAccountingSyncInput) (*accountingconnection.AccountingConnection, error)
+	UpdateAccountingSyncSettings(ctx context.Context, input gqlmodel.UpdateAccountingSyncSettingsInput) (*accountingconnection.AccountingConnection, error)
+	PauseAccountingSync(ctx context.Context, input gqlmodel.PauseAccountingSyncInput) (*accountingconnection.AccountingConnection, error)
+	ResumeAccountingSync(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error)
 	RetryAccountingSync(ctx context.Context, input gqlmodel.RetryAccountingSyncInput) (*gqlmodel.AccountingSyncActionResult, error)
 	ReleaseAccountingSync(ctx context.Context, input gqlmodel.ReleaseAccountingSyncInput) (*gqlmodel.AccountingSyncActionResult, error)
 	SkipAccountingSync(ctx context.Context, input gqlmodel.SkipAccountingSyncInput) (*accountingsync.AccountingSyncRecord, error)
 	RedateAccountingSync(ctx context.Context, id string) (*accountingsync.AccountingSyncRecord, error)
-	RequestAccountingBackfill(ctx context.Context, input gqlmodel.RequestAccountingBackfillInput) (*accountingsync.AccountingBackfill, error)
-	ChangeAccountingBackfill(ctx context.Context, input gqlmodel.ChangeAccountingBackfillInput) (*accountingsync.AccountingBackfill, error)
-	ApplyAccountingInboundChange(ctx context.Context, id string) (*accountingsync.AccountingInboundChange, error)
-	IgnoreAccountingInboundChange(ctx context.Context, input gqlmodel.IgnoreAccountingInboundChangeInput) (*accountingsync.AccountingInboundChange, error)
-	ResolveAccountingDrift(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error)
-	DismissAccountingDrift(ctx context.Context, input gqlmodel.DismissAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error)
+	RequestAccountingBackfill(ctx context.Context, input gqlmodel.RequestAccountingBackfillInput) (*accountingbackfill.AccountingBackfill, error)
+	ChangeAccountingBackfill(ctx context.Context, input gqlmodel.ChangeAccountingBackfillInput) (*accountingbackfill.AccountingBackfill, error)
+	ApplyAccountingInboundChange(ctx context.Context, id string) (*accountinginbound.AccountingInboundChange, error)
+	IgnoreAccountingInboundChange(ctx context.Context, input gqlmodel.IgnoreAccountingInboundChangeInput) (*accountinginbound.AccountingInboundChange, error)
+	ResolveAccountingDrift(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingdrift.AccountingDriftFinding, error)
+	DismissAccountingDrift(ctx context.Context, input gqlmodel.DismissAccountingDriftInput) (*accountingdrift.AccountingDriftFinding, error)
 	CheckAccountingDrift(ctx context.Context, integrationType integration.Type) (*accountingdriftports.AccountingDriftOverview, error)
 	DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*gqlmodel.AgentProposalDecisionResult, error)
 	DecideAgentPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*gqlmodel.AgentPlanDecisionResult, error)
@@ -2752,16 +2758,16 @@ type QueryResolver interface {
 	AccountingSyncRecord(ctx context.Context, id string) (*accountingsync.AccountingSyncRecord, error)
 	AccountingSyncAttempts(ctx context.Context, recordID string) ([]*accountingsync.AccountingSyncAttempt, error)
 	AccountingSyncObjectStates(ctx context.Context, objectIds []string, integrationType *integration.Type) ([]*accountingsyncports.AccountingSyncObjectState, error)
-	AccountingBackfills(ctx context.Context, integrationType integration.Type) ([]*accountingsync.AccountingBackfill, error)
+	AccountingBackfills(ctx context.Context, integrationType integration.Type) ([]*accountingbackfill.AccountingBackfill, error)
 	AccountingInboundOverview(ctx context.Context, integrationType integration.Type) (*accountinginboundports.AccountingInboundOverview, error)
 	AccountingInboundChangeTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingInboundChangeConnection, error)
-	AccountingInboundChange(ctx context.Context, id string) (*accountingsync.AccountingInboundChange, error)
+	AccountingInboundChange(ctx context.Context, id string) (*accountinginbound.AccountingInboundChange, error)
 	AccountingInboundApplyPreview(ctx context.Context, id string) (*accountinginboundports.AccountingInboundApplyPreview, error)
 	AccountingDriftOverview(ctx context.Context, integrationType integration.Type) (*accountingdriftports.AccountingDriftOverview, error)
 	AccountingDriftFindingTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingDriftFindingConnection, error)
-	AccountingDriftFinding(ctx context.Context, id string) (*accountingsync.AccountingDriftFinding, error)
+	AccountingDriftFinding(ctx context.Context, id string) (*accountingdrift.AccountingDriftFinding, error)
 	AccountingDriftFixPreview(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingdriftports.AccountingDriftFixPreview, error)
-	AccountingReferenceObjects(ctx context.Context, integrationType integration.Type, kind accountingsync.ReferenceKind, query *string, usableOnly *bool, limit *int) ([]*accountingsync.AccountingReferenceObject, error)
+	AccountingReferenceObjects(ctx context.Context, integrationType integration.Type, kind accountingprovider.ReferenceKind, query *string, usableOnly *bool, limit *int) ([]*accountingmapping.AccountingReferenceObject, error)
 	AccountingBriefing(ctx context.Context) (*accountingbriefports.AccountingBriefing, error)
 	ArAgingSummary(ctx context.Context, asOfDate *int) (*customerledgerports.ARAgingSummary, error)
 	ArOpenItems(ctx context.Context, customerID *string, asOfDate *int) ([]*customerledgerports.AROpenItem, error)

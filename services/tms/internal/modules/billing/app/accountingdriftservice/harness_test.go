@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
@@ -36,9 +37,9 @@ type harness struct {
 	controls *fakeControls
 	audit    *fakeAudit
 	kicks    *fakeDispatcher
-	other    *accountingsync.AccountingConnection
+	other    *accountingconnection.AccountingConnection
 	tenant   pagination.TenantInfo
-	conn     *accountingsync.AccountingConnection
+	conn     *accountingconnection.AccountingConnection
 	now      time.Time
 }
 
@@ -47,15 +48,15 @@ func newHarness(t *testing.T) *harness {
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	enabled := checkTime.Add(-90 * 24 * time.Hour).Unix()
 	start := enabled
-	conn := &accountingsync.AccountingConnection{
+	conn := &accountingconnection.AccountingConnection{
 		ID:                   pulid.MustNew("acctc_"),
 		OrganizationID:       tenantInfo.OrgID,
 		BusinessUnitID:       tenantInfo.BuID,
 		IntegrationType:      integration.TypeQuickBooksOnline,
-		Status:               accountingsync.ConnectionStatusConnected,
+		Status:               accountingconnection.ConnectionStatusConnected,
 		ExternalRealmID:      "123",
 		ExternalHomeCurrency: "USD",
-		SetupStep:            accountingsync.SetupStepComplete,
+		SetupStep:            accountingconnection.SetupStepComplete,
 		SyncStartDate:        &start,
 		SyncEnabledAt:        &enabled,
 		AutoSync:             true,
@@ -78,7 +79,7 @@ func newHarness(t *testing.T) *harness {
 		now:    checkTime,
 	}
 	h.connSvc = &fakeConnService{connections: h.conns, reader: h.reader}
-	h.other = &accountingsync.AccountingConnection{
+	h.other = &accountingconnection.AccountingConnection{
 		ID:             pulid.MustNew("acctc_"),
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
@@ -86,7 +87,7 @@ func newHarness(t *testing.T) *harness {
 	}
 	book := &bookEnqueuer{
 		records: h.records,
-		conns:   []*accountingsync.AccountingConnection{conn, h.other},
+		conns:   []*accountingconnection.AccountingConnection{conn, h.other},
 		at:      checkTime.Unix(),
 	}
 	h.perms = &fakePermissions{denied: map[string]bool{}}

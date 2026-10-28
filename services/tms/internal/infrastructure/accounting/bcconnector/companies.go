@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 )
@@ -143,7 +143,7 @@ type companyBooks struct {
 func (c *Connector) CompanyFacts(
 	ctx context.Context,
 	realmID, accessToken string,
-) (*accountingsync.CompanyFacts, error) {
+) (*accountingconnection.CompanyFacts, error) {
 	client, err := c.client(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     realmID,
 		AccessToken: accessToken,
@@ -207,7 +207,7 @@ func (c *Connector) companyName(
 	return "", nil
 }
 
-func (b *companyBooks) facts() *accountingsync.CompanyFacts {
+func (b *companyBooks) facts() *accountingconnection.CompanyFacts {
 	home := b.setup.LocalCurrencyCode
 	if home == "" {
 		home = b.info.CurrencyCode
@@ -217,7 +217,7 @@ func (b *companyBooks) facts() *accountingsync.CompanyFacts {
 		name = strings.TrimSpace(b.info.DisplayName)
 	}
 	periods := sortedPeriods(b.periods)
-	return &accountingsync.CompanyFacts{
+	return &accountingconnection.CompanyFacts{
 		CompanyName:          name,
 		LegalName:            b.info.DisplayName,
 		Country:              b.info.CountryRegionCode,

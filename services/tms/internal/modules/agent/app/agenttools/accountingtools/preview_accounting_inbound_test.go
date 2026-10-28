@@ -3,6 +3,7 @@ package accountingtools
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -24,7 +25,7 @@ func previewField(change *agent.RecordChange, path string) (agent.PreviewFieldCh
 func TestApplyAccountingInboundChange_PreviewShowsWhatItPosts(t *testing.T) {
 	t.Parallel()
 
-	change := proposedPayment(accountingsync.InboundStatusProposed)
+	change := proposedPayment(accountinginbound.InboundStatusProposed)
 	operator := newInboundOperator(change, &accountinginboundports.AccountingInboundApplyPreview{
 		CanApply:       true,
 		PaidAt:         1_790_208_000,
@@ -55,13 +56,13 @@ func TestApplyAccountingInboundChange_PreviewShowsWhatItPosts(t *testing.T) {
 	assert.Equal(t, "Proposed", status.Before)
 	assert.Equal(t, "Applied", status.After)
 	assert.Nil(t, operator.applied, "a preview posts nothing")
-	assert.Equal(t, change.Status, accountingsync.InboundStatusProposed)
+	assert.Equal(t, change.Status, accountinginbound.InboundStatusProposed)
 }
 
 func TestApplyAccountingInboundChange_PreviewWarnsWhenItNoLongerMatches(t *testing.T) {
 	t.Parallel()
 
-	change := proposedPayment(accountingsync.InboundStatusProposed)
+	change := proposedPayment(accountinginbound.InboundStatusProposed)
 	operator := newInboundOperator(change, &accountinginboundports.AccountingInboundApplyPreview{
 		Blocker: "INV-1001 was paid in Trenova after the payment was read.",
 	})
@@ -78,7 +79,7 @@ func TestApplyAccountingInboundChange_PreviewWarnsWhenItNoLongerMatches(t *testi
 func TestIgnoreAccountingInboundChange_PreviewShowsTheNote(t *testing.T) {
 	t.Parallel()
 
-	change := proposedPayment(accountingsync.InboundStatusProposed)
+	change := proposedPayment(accountinginbound.InboundStatusProposed)
 	operator := newInboundOperator(change, &accountinginboundports.AccountingInboundApplyPreview{})
 	tool := newIgnoreAccountingInboundChangeTool(operator)
 	params := syncParams(map[string]any{
@@ -101,7 +102,7 @@ func TestIgnoreAccountingInboundChange_PreviewShowsTheNote(t *testing.T) {
 func TestIgnoreAccountingInboundChange_PreviewWarnsOnAClosedPayment(t *testing.T) {
 	t.Parallel()
 
-	change := proposedPayment(accountingsync.InboundStatusApplied)
+	change := proposedPayment(accountinginbound.InboundStatusApplied)
 	operator := newInboundOperator(change, &accountinginboundports.AccountingInboundApplyPreview{})
 	tool := newIgnoreAccountingInboundChangeTool(operator)
 	params := syncParams(map[string]any{

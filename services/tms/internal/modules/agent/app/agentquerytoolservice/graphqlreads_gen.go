@@ -3,11 +3,12 @@
 package agentquerytoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
-	accountingsync "github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	fiscalperiod "github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	journalentry "github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	journalreversal "github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
@@ -217,7 +218,7 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: "accountingDriftFindingTable",
 		Node:      "AccountingDriftFinding",
 		Resource:  "accounting_sync",
-		Entity:    func() domaintypes.PostgresSearchable { return new(accountingsync.AccountingDriftFinding) },
+		Entity:    func() domaintypes.PostgresSearchable { return new(accountingdrift.AccountingDriftFinding) },
 		Variables: []graphQLVariable{
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
@@ -268,7 +269,7 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: "accountingInboundChangeTable",
 		Node:      "AccountingInboundChange",
 		Resource:  "accounting_sync",
-		Entity:    func() domaintypes.PostgresSearchable { return new(accountingsync.AccountingInboundChange) },
+		Entity:    func() domaintypes.PostgresSearchable { return new(accountinginbound.AccountingInboundChange) },
 		Variables: []graphQLVariable{
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},

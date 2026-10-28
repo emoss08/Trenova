@@ -3,7 +3,7 @@ package accountingconnectionservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -18,7 +18,7 @@ func newPKCEHarness(t *testing.T) *harness {
 	t.Helper()
 	h := newHarness(t)
 	h.connector.typ = integration.TypeNetSuite
-	require.True(t, accountingsync.MustProfile(integration.TypeNetSuite).PKCE)
+	require.True(t, accountingprovider.MustProfile(integration.TypeNetSuite).PKCE)
 	return h
 }
 

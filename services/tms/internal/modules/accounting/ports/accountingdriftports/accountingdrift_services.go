@@ -3,6 +3,7 @@ package accountingdriftports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -89,7 +90,7 @@ type AccountingDriftChecker interface {
 type ResolveAccountingDriftRequest struct {
 	TenantInfo pagination.TenantInfo
 	ID         pulid.ID
-	Direction  accountingsync.DriftDirection
+	Direction  accountingdrift.DriftDirection
 }
 
 type DismissAccountingDriftRequest struct {
@@ -99,9 +100,9 @@ type DismissAccountingDriftRequest struct {
 }
 
 type AccountingDriftFixPreview struct {
-	Finding         *accountingsync.AccountingDriftFinding
-	Direction       accountingsync.DriftDirection
-	FixObject       accountingsync.DriftFixObject
+	Finding         *accountingdrift.AccountingDriftFinding
+	Direction       accountingdrift.DriftDirection
+	FixObject       accountingdrift.DriftFixObject
 	Operation       accountingsync.SyncOperation
 	AmountMinor     int64
 	CurrencyCode    string
@@ -120,7 +121,7 @@ type AccountingDriftFixer interface {
 		ctx context.Context,
 		req *ResolveAccountingDriftRequest,
 		actor *permissionports.RequestActor,
-	) (*accountingsync.AccountingDriftFinding, error)
+	) (*accountingdrift.AccountingDriftFinding, error)
 	PreviewDismiss(
 		ctx context.Context,
 		req *DismissAccountingDriftRequest,
@@ -130,7 +131,7 @@ type AccountingDriftFixer interface {
 		ctx context.Context,
 		req *DismissAccountingDriftRequest,
 		actor *permissionports.RequestActor,
-	) (*accountingsync.AccountingDriftFinding, error)
+	) (*accountingdrift.AccountingDriftFinding, error)
 }
 
 type ListAccountingDriftFindingsRequest struct {
@@ -138,8 +139,8 @@ type ListAccountingDriftFindingsRequest struct {
 	Filter          *pagination.QueryOptions
 	Cursor          pagination.CursorInfo
 	IntegrationType integration.Type
-	Statuses        []accountingsync.DriftStatus
-	Kinds           []accountingsync.DriftKind
+	Statuses        []accountingdrift.DriftStatus
+	Kinds           []accountingdrift.DriftKind
 	ObjectTypes     []accountingsync.SyncObjectType
 	ObjectID        pulid.ID
 	Search          string
@@ -169,11 +170,11 @@ type AccountingDriftService interface {
 	List(
 		ctx context.Context,
 		req *ListAccountingDriftFindingsRequest,
-	) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error)
+	) (*pagination.CursorListResult[*accountingdrift.AccountingDriftFinding], error)
 	Get(
 		ctx context.Context,
 		req *GetAccountingDriftFindingRequest,
-	) (*accountingsync.AccountingDriftFinding, error)
+	) (*accountingdrift.AccountingDriftFinding, error)
 	CheckNow(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

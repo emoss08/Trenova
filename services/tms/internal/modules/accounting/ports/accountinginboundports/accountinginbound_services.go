@@ -3,6 +3,8 @@ package accountinginboundports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -47,9 +49,9 @@ type ListAccountingInboundChangesRequest struct {
 	Filter          *pagination.QueryOptions
 	Cursor          pagination.CursorInfo
 	IntegrationType integration.Type
-	Statuses        []accountingsync.InboundChangeStatus
-	Kinds           []accountingsync.InboundChangeKind
-	Reasons         []accountingsync.InboundChangeReason
+	Statuses        []accountinginbound.InboundChangeStatus
+	Kinds           []accountinginbound.InboundChangeKind
+	Reasons         []accountinginbound.InboundChangeReason
 	Search          string
 }
 
@@ -65,7 +67,7 @@ type AccountingInboundOverviewRequest struct {
 
 type AccountingInboundOverview struct {
 	ConnectionID  pulid.ID
-	Policy        accountingsync.InboundPaymentPolicy
+	Policy        accountingconnection.InboundPaymentPolicy
 	ChangesReadAt *int64
 	ChangesError  string
 	Summary       *AccountingInboundSummary
@@ -86,7 +88,7 @@ type AccountingInboundPostingLine struct {
 }
 
 type AccountingInboundApplyPreview struct {
-	Change         *accountingsync.AccountingInboundChange
+	Change         *accountinginbound.AccountingInboundChange
 	CanApply       bool
 	Blocker        string
 	PaidAt         int64
@@ -107,11 +109,11 @@ type AccountingInboundService interface {
 	List(
 		ctx context.Context,
 		req *ListAccountingInboundChangesRequest,
-	) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error)
+	) (*pagination.CursorListResult[*accountinginbound.AccountingInboundChange], error)
 	Get(
 		ctx context.Context,
 		req *GetAccountingInboundChangeRequest,
-	) (*accountingsync.AccountingInboundChange, error)
+	) (*accountinginbound.AccountingInboundChange, error)
 	Overview(
 		ctx context.Context,
 		req *AccountingInboundOverviewRequest,
@@ -124,12 +126,12 @@ type AccountingInboundService interface {
 		ctx context.Context,
 		req *DecideAccountingInboundChangeRequest,
 		actor *permissionports.RequestActor,
-	) (*accountingsync.AccountingInboundChange, error)
+	) (*accountinginbound.AccountingInboundChange, error)
 	Ignore(
 		ctx context.Context,
 		req *DecideAccountingInboundChangeRequest,
 		actor *permissionports.RequestActor,
-	) (*accountingsync.AccountingInboundChange, error)
+	) (*accountinginbound.AccountingInboundChange, error)
 }
 
 type AccountingChangePoller interface {

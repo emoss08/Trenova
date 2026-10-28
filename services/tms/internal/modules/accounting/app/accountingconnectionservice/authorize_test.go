@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -42,7 +42,7 @@ func (h *harness) completeWithChoice(
 func (h *harness) choose(
 	t *testing.T,
 	token, companyID string,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	t.Helper()
 	return h.svc.ChooseCompany(
 		t.Context(),
@@ -95,7 +95,7 @@ func TestChoosingACompanyConnectsItAndReleasesTheOthers(t *testing.T) {
 	conn, err := h.choose(t, completion.ChoiceToken, "2222")
 	require.NoError(t, err)
 	assert.Equal(t, "2222", conn.ExternalRealmID)
-	assert.Equal(t, accountingsync.ConnectionStatusConnected, conn.Status)
+	assert.Equal(t, accountingconnection.ConnectionStatusConnected, conn.Status)
 	assert.Equal(
 		t,
 		"refresh-1",
@@ -197,13 +197,13 @@ func TestConnectingASecondAccountingSystemIsRefused(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	other := &accountingsync.AccountingConnection{
+	other := &accountingconnection.AccountingConnection{
 		ID:              pulid.MustNew("acctc_"),
 		OrganizationID:  h.tenant.OrgID,
 		BusinessUnitID:  h.tenant.BuID,
 		IntegrationType: integration.TypeXero,
 		ExternalRealmID: "xero-tenant",
-		Status:          accountingsync.ConnectionStatusConnected,
+		Status:          accountingconnection.ConnectionStatusConnected,
 	}
 	h.connections.rows[other.ID] = other
 
@@ -218,7 +218,7 @@ func TestConnectingASecondAccountingSystemIsRefused(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, strings.Contains(err.Error(), "Disconnect Xero"), err.Error())
 
-	other.Status = accountingsync.ConnectionStatusDisconnected
+	other.Status = accountingconnection.ConnectionStatusDisconnected
 	h.connect(t)
 }
 

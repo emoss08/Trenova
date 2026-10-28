@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
@@ -138,12 +140,12 @@ func (h *harness) driverSettlement(
 }
 
 type payableMappings struct {
-	vendor  *accountingsync.AccountingMapping
-	apRole  *accountingsync.AccountingMapping
-	ptRole  *accountingsync.AccountingMapping
-	deposit *accountingsync.AccountingMapping
-	fuel    *accountingsync.AccountingMapping
-	escrow  *accountingsync.AccountingMapping
+	vendor  *accountingmapping.AccountingMapping
+	apRole  *accountingmapping.AccountingMapping
+	ptRole  *accountingmapping.AccountingMapping
+	deposit *accountingmapping.AccountingMapping
+	fuel    *accountingmapping.AccountingMapping
+	escrow  *accountingmapping.AccountingMapping
 }
 
 func carrierVendorTarget(carrierID pulid.ID) mappingTarget {
@@ -279,7 +281,7 @@ func (h *harness) syncedSettlementRecord(
 }
 
 func (h *harness) sendDriverSettlements(at int64) {
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 		enabled := at
 		conn.DriverSettlementsEnabledAt = &enabled
 	})
@@ -434,7 +436,7 @@ func TestCarrierBillIsBuiltFromTheJournalEntryWithoutThePayableLine(t *testing.T
 			err,
 			"every account the bill touches gets a GL account mapping row to review",
 		)
-		assert.Equal(t, accountingsync.MappingStateUnmatched, row.State)
+		assert.Equal(t, accountingmapping.MappingStateUnmatched, row.State)
 	}
 
 	requests := h.payables.requests()
@@ -808,7 +810,7 @@ func TestUnconfirmedGLAccountMappingFallsBackToTheRole(t *testing.T) {
 	settlement := h.carrierSettlement(accts)
 	h.mapCarrierBill(accts, settlement)
 	h.mappings.set(h.conn, glTarget(accts.pt, "GL account 5000 Purchased transportation"),
-		accountingsync.MappingStateProposed, "qb-proposed")
+		accountingmapping.MappingStateProposed, "qb-proposed")
 	h.enqueueSettlement(
 		t,
 		accountingsync.SyncObjectCarrierBill,
@@ -928,7 +930,7 @@ func TestUnmappedCarrierQueuesAVendorCreateAndTheBillWaits(t *testing.T) {
 	settlement := h.carrierSettlement(accts)
 	mapped := h.mapCarrierBill(accts, settlement)
 	vendorRow := h.mappings.set(h.conn, carrierVendorTarget(settlement.PartyID),
-		accountingsync.MappingStateUnmatched, "")
+		accountingmapping.MappingStateUnmatched, "")
 	record := h.enqueueSettlement(
 		t,
 		accountingsync.SyncObjectCarrierBill,
@@ -956,7 +958,7 @@ func TestUnmappedCarrierQueuesAVendorCreateAndTheBillWaits(t *testing.T) {
 	assert.Equal(t, 1, second.Synced)
 	require.Len(t, h.mappings.created, 1)
 	assert.Equal(t, vendorRow.ID, h.mappings.created[0].MappingID)
-	assert.Equal(t, accountingsync.MappingSourceCreatedInProvider, h.mappings.created[0].Source)
+	assert.Equal(t, accountingmapping.MappingSourceCreatedInProvider, h.mappings.created[0].Source)
 	assert.Equal(t, h.conn.ConnectedByID, h.mappings.created[0].UserID)
 	assert.Empty(
 		t,
@@ -991,7 +993,7 @@ func TestDuplicateVendorNameBlocksAsMapping(t *testing.T) {
 	h.mappings.set(
 		h.conn,
 		carrierVendorTarget(settlement.PartyID),
-		accountingsync.MappingStateUnmatched,
+		accountingmapping.MappingStateUnmatched,
 		"",
 	)
 	h.mappings.createErr = errortypes.NewBusinessError(
@@ -1036,7 +1038,12 @@ func TestVendorCreateThatFailsValidationBlocksAsValidation(t *testing.T) {
 	h := newHarness(t)
 	h.sendDriverSettlements(syncEnabledAt)
 	workerID := pulid.MustNew("wrk_")
-	h.mappings.set(h.conn, driverVendorTarget(workerID), accountingsync.MappingStateUnmatched, "")
+	h.mappings.set(
+		h.conn,
+		driverVendorTarget(workerID),
+		accountingmapping.MappingStateUnmatched,
+		"",
+	)
 	h.mappings.createErr = errortypes.NewBusinessError("The driver has no legal name")
 	h.enqueue(t, &accountingsyncports.AccountingSyncEnqueueRequest{
 		ObjectType:   accountingsync.SyncObjectDriverVendor,
@@ -1174,7 +1181,12 @@ func TestVendorUpdateWithoutAMappingSendsNothing(t *testing.T) {
 		carrierID,
 		accountingsync.SyncOperationUpdate,
 	)
-	h.mappings.set(h.conn, carrierVendorTarget(carrierID), accountingsync.MappingStateUnmatched, "")
+	h.mappings.set(
+		h.conn,
+		carrierVendorTarget(carrierID),
+		accountingmapping.MappingStateUnmatched,
+		"",
+	)
 
 	h.drain(t)
 
@@ -1239,7 +1251,7 @@ func TestUnmappedOwnerOperatorQueuesADriverVendorCreate(t *testing.T) {
 	settlement := h.driverSettlement(accts)
 	h.mapPayableRoles()
 	driverRow := h.mappings.set(h.conn, driverVendorTarget(settlement.PartyID),
-		accountingsync.MappingStateUnmatched, "")
+		accountingmapping.MappingStateUnmatched, "")
 	record := h.enqueueSettlement(
 		t,
 		accountingsync.SyncObjectDriverBill,
@@ -1469,7 +1481,7 @@ func TestBillPaymentFromANonDefaultBankAccountNeedsItsOwnMapping(t *testing.T) {
 	h.mapCarrierBill(accts, settlement)
 	h.syncedSettlementRecord(accountingsync.SyncObjectCarrierBill, settlement, "qb-bill-1", nil)
 	h.mappings.set(h.conn, glTarget(operating, "GL account 1010 Operating checking"),
-		accountingsync.MappingStateUnmatched, "")
+		accountingmapping.MappingStateUnmatched, "")
 	record := h.enqueueSettlement(
 		t,
 		accountingsync.SyncObjectCarrierBillPay,
@@ -1547,7 +1559,9 @@ func TestBillPaymentWithoutABillRecordQueuesTheBill(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) { conn.AutoSync = false })
+	h.updateConnection(
+		func(conn *accountingconnection.AccountingConnection) { conn.AutoSync = false },
+	)
 	accts := newPayableAccounts()
 	settlement := h.paidCarrierSettlement(accts)
 	h.mapCarrierBill(accts, settlement)
@@ -1607,7 +1621,7 @@ func TestBillPaymentForABillBeforeTheStartDateSendsNothing(t *testing.T) {
 		accountingsync.SyncOperationCreate,
 		settlement,
 	)
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 		moved := settledPosted + 1
 		conn.SyncStartDate = &moved
 	})

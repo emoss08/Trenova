@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/xero"
@@ -107,9 +110,9 @@ func changesRequest(cursor string) *accountingconnectorports.ReadAccountingChang
 		Payments:     true,
 		BillPayments: true,
 		Documents:    true,
-		ReferenceKinds: []accountingsync.ReferenceKind{
-			accountingsync.ReferenceKindAccount,
-			accountingsync.ReferenceKindCustomer,
+		ReferenceKinds: []accountingprovider.ReferenceKind{
+			accountingprovider.ReferenceKindAccount,
+			accountingprovider.ReferenceKindCustomer,
 		},
 	}
 }
@@ -166,7 +169,7 @@ func TestReadChangesMapsPaymentsDocumentsAndReferences(t *testing.T) {
 
 	require.Len(t, page.Payments, 3)
 	single := page.Payments[0]
-	assert.Equal(t, accountingsync.InboundCustomerPayment, single.Kind)
+	assert.Equal(t, accountinginbound.InboundCustomerPayment, single.Kind)
 	assert.Equal(t, accountingconnectorports.AccountingChangeUpsert, single.Operation)
 	assert.Equal(t, testPayment, single.ExternalID)
 	assert.Equal(t, testCustomer, single.PartyExternalID)
@@ -175,7 +178,7 @@ func TestReadChangesMapsPaymentsDocumentsAndReferences(t *testing.T) {
 	assert.Empty(t, single.CurrencyCode)
 	assert.True(t, single.Amount.Equal(dec("500")))
 	require.Len(t, single.Lines, 1)
-	assert.Equal(t, accountingsync.InboundDocInvoice, single.Lines[0].DocumentKind)
+	assert.Equal(t, accountinginbound.InboundDocInvoice, single.Lines[0].DocumentKind)
 
 	batch := page.Payments[1]
 	assert.Equal(t, testBatch, batch.ExternalID)
@@ -185,7 +188,7 @@ func TestReadChangesMapsPaymentsDocumentsAndReferences(t *testing.T) {
 	assert.Equal(t, time.Date(2026, 9, 29, 11, 10, 0, 0, time.UTC).Unix(), batch.ModifiedAt)
 
 	deleted := page.Payments[2]
-	assert.Equal(t, accountingsync.InboundBillPayment, deleted.Kind)
+	assert.Equal(t, accountinginbound.InboundBillPayment, deleted.Kind)
 	assert.Equal(t, accountingconnectorports.AccountingChangeDelete, deleted.Operation)
 	assert.Empty(t, deleted.Lines)
 
@@ -200,8 +203,8 @@ func TestReadChangesMapsPaymentsDocumentsAndReferences(t *testing.T) {
 	assert.Equal(t, accountingconnectorports.AccountingChangeDelete, page.Documents[2].Operation)
 
 	require.Len(t, page.References, 2)
-	assert.Equal(t, accountingsync.AccountClassIncome, page.References[0].Object.AccountClass)
-	assert.Equal(t, accountingsync.ReferenceKindCustomer, page.References[1].Object.Kind)
+	assert.Equal(t, accountingmapping.AccountClassIncome, page.References[0].Object.AccountClass)
+	assert.Equal(t, accountingprovider.ReferenceKindCustomer, page.References[1].Object.Kind)
 	assert.Equal(t, testCustomer, page.References[1].Object.ExternalID)
 }
 

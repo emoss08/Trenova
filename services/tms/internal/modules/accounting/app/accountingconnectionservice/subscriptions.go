@@ -6,7 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -30,7 +31,7 @@ var errNoNotificationURL = errors.New(
 
 type subscriptionKeeper struct {
 	svc        *Service
-	conn       *accountingsync.AccountingConnection
+	conn       *accountingconnection.AccountingConnection
 	tenant     pagination.TenantInfo
 	subscriber accountingconnectorports.AccountingWebhookSubscriber
 	auth       accountingconnectorports.AccountingDocumentAuth
@@ -54,7 +55,7 @@ func (s *Service) SyncWebhookSubscriptions(
 	conns, err := s.subscriptions.ListConnections(
 		ctx,
 		accountingconnectionports.ListWebhookSubscriptionConnectionsRequest{
-			IntegrationTypes: accountingsync.WebhookSubscriptionSystems(),
+			IntegrationTypes: accountingprovider.WebhookSubscriptionSystems(),
 			AfterID:          req.AfterID,
 			Limit:            limit,
 		},
@@ -79,7 +80,7 @@ func (s *Service) SyncWebhookSubscriptions(
 
 func (s *Service) keepSubscriptions(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	sweep *accountingconnectionports.AccountingSubscriptionSweep,
 ) error {
 	tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
@@ -129,15 +130,15 @@ func (s *Service) keepSubscriptions(
 
 func (s *Service) notificationURL(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	provider accountingconnectorports.AccountingProvider,
 ) (string, error) {
 	base, ok := notificationBase(provider)
 	if !ok {
 		return "", nil
 	}
-	profile := accountingsync.MustProfile(conn.IntegrationType)
-	if conn.AppSource != accountingsync.AppSourceTenant {
+	profile := accountingprovider.MustProfile(conn.IntegrationType)
+	if conn.AppSource != accountingconnection.AppSourceTenant {
 		return base + profile.WebhookPath(), nil
 	}
 	cred, found, err := s.tenantCredential(
@@ -156,9 +157,9 @@ func (s *Service) notificationURL(
 
 func (k *subscriptionKeeper) keep(
 	ctx context.Context,
-	rows []*accountingsync.AccountingWebhookSubscription,
+	rows []*accountingconnection.AccountingWebhookSubscription,
 ) error {
-	byResource := make(map[string]*accountingsync.AccountingWebhookSubscription, len(rows))
+	byResource := make(map[string]*accountingconnection.AccountingWebhookSubscription, len(rows))
 	for _, row := range rows {
 		byResource[row.Resource] = row
 	}
@@ -170,13 +171,13 @@ func (k *subscriptionKeeper) keep(
 		if !found {
 			created, err := k.svc.subscriptions.Create(
 				ctx,
-				&accountingsync.AccountingWebhookSubscription{
+				&accountingconnection.AccountingWebhookSubscription{
 					OrganizationID:  k.conn.OrganizationID,
 					BusinessUnitID:  k.conn.BusinessUnitID,
 					ConnectionID:    k.conn.ID,
 					IntegrationType: k.conn.IntegrationType,
 					Resource:        resource,
-					Status:          accountingsync.WebhookSubscriptionPending,
+					Status:          accountingconnection.WebhookSubscriptionPending,
 				},
 			)
 			if err != nil {
@@ -199,12 +200,12 @@ func (k *subscriptionKeeper) keep(
 
 func (k *subscriptionKeeper) keepOne(
 	ctx context.Context,
-	row *accountingsync.AccountingWebhookSubscription,
+	row *accountingconnection.AccountingWebhookSubscription,
 ) error {
 	switch {
 	case k.url == "":
 		return k.unavailable(ctx, row)
-	case row.Status == accountingsync.WebhookSubscriptionFailed && k.backingOff(row):
+	case row.Status == accountingconnection.WebhookSubscriptionFailed && k.backingOff(row):
 		return nil
 	case !row.Receives():
 		return k.subscribe(ctx, row)
@@ -219,20 +220,22 @@ func (k *subscriptionKeeper) keepOne(
 	}
 }
 
-func (k *subscriptionKeeper) backingOff(row *accountingsync.AccountingWebhookSubscription) bool {
+func (k *subscriptionKeeper) backingOff(
+	row *accountingconnection.AccountingWebhookSubscription,
+) bool {
 	return row.LastAttemptAt != nil &&
 		k.now-*row.LastAttemptAt < int64(failedSubscriptionBackoff/time.Second)
 }
 
 func (k *subscriptionKeeper) unavailable(
 	ctx context.Context,
-	row *accountingsync.AccountingWebhookSubscription,
+	row *accountingconnection.AccountingWebhookSubscription,
 ) error {
 	if row.IsHeld() {
 		k.unsubscribeQuietly(ctx, row)
 		row.Forget()
 	}
-	if row.Status == accountingsync.WebhookSubscriptionFailed &&
+	if row.Status == accountingconnection.WebhookSubscriptionFailed &&
 		row.LastError == errNoNotificationURL.Error() {
 		return nil
 	}
@@ -243,7 +246,7 @@ func (k *subscriptionKeeper) unavailable(
 
 func (k *subscriptionKeeper) subscribe(
 	ctx context.Context,
-	row *accountingsync.AccountingWebhookSubscription,
+	row *accountingconnection.AccountingWebhookSubscription,
 ) error {
 	if row.IsHeld() {
 		k.unsubscribeQuietly(ctx, row)
@@ -279,7 +282,7 @@ func (k *subscriptionKeeper) subscribe(
 
 func (k *subscriptionKeeper) renew(
 	ctx context.Context,
-	row *accountingsync.AccountingWebhookSubscription,
+	row *accountingconnection.AccountingWebhookSubscription,
 ) error {
 	clientState, err := k.svc.encryption.DecryptStringWithAAD(
 		row.ClientStateCiphertext,
@@ -317,7 +320,7 @@ func (k *subscriptionKeeper) renew(
 
 func (k *subscriptionKeeper) fail(
 	ctx context.Context,
-	row *accountingsync.AccountingWebhookSubscription,
+	row *accountingconnection.AccountingWebhookSubscription,
 	cause error,
 ) error {
 	row.Fail(cause.Error(), k.now)
@@ -329,7 +332,7 @@ func (k *subscriptionKeeper) fail(
 
 func (k *subscriptionKeeper) remove(
 	ctx context.Context,
-	row *accountingsync.AccountingWebhookSubscription,
+	row *accountingconnection.AccountingWebhookSubscription,
 ) error {
 	k.unsubscribeQuietly(ctx, row)
 	if err := k.svc.subscriptions.Delete(
@@ -347,7 +350,7 @@ func (k *subscriptionKeeper) remove(
 
 func (k *subscriptionKeeper) unsubscribeQuietly(
 	ctx context.Context,
-	row *accountingsync.AccountingWebhookSubscription,
+	row *accountingconnection.AccountingWebhookSubscription,
 ) {
 	if !row.IsHeld() {
 		return
@@ -365,8 +368,8 @@ func (k *subscriptionKeeper) unsubscribeQuietly(
 
 func (s *Service) dropSubscriptions(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
-	rows []*accountingsync.AccountingWebhookSubscription,
+	conn *accountingconnection.AccountingConnection,
+	rows []*accountingconnection.AccountingWebhookSubscription,
 	sweep *accountingconnectionports.AccountingSubscriptionSweep,
 ) error {
 	if len(rows) == 0 {
@@ -400,10 +403,10 @@ func (s *Service) dropSubscriptions(
 
 func (s *Service) releaseSubscriptions(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) {
 	if s.subscriptions == nil ||
-		!accountingsync.MustProfile(conn.IntegrationType).WebhookSubscriptions {
+		!accountingprovider.MustProfile(conn.IntegrationType).WebhookSubscriptions {
 		return
 	}
 	tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
@@ -430,11 +433,11 @@ func (s *Service) releaseSubscriptions(
 
 func (s *Service) subscriptionSummary(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	provider accountingconnectorports.AccountingProvider,
 ) (*accountingconnectionports.AccountingWebhookSubscriptionSummary, error) {
 	if s.subscriptions == nil ||
-		!accountingsync.MustProfile(conn.IntegrationType).WebhookSubscriptions {
+		!accountingprovider.MustProfile(conn.IntegrationType).WebhookSubscriptions {
 		return nil, nil //nolint:nilnil // the provider pushes its webhooks, so there is nothing to summarize
 	}
 	rows, err := s.subscriptions.ListByConnection(
@@ -456,19 +459,19 @@ func (s *Service) subscriptionSummary(
 	}
 	for _, row := range rows {
 		switch row.Status {
-		case accountingsync.WebhookSubscriptionActive:
+		case accountingconnection.WebhookSubscriptionActive:
 			summary.Active++
 			if row.ExpiresAt != nil &&
 				(summary.NextExpiryAt == nil || *row.ExpiresAt < *summary.NextExpiryAt) {
 				expires := *row.ExpiresAt
 				summary.NextExpiryAt = &expires
 			}
-		case accountingsync.WebhookSubscriptionFailed:
+		case accountingconnection.WebhookSubscriptionFailed:
 			summary.Failed++
 			if summary.LastError == "" {
 				summary.LastError = row.LastError
 			}
-		case accountingsync.WebhookSubscriptionPending:
+		case accountingconnection.WebhookSubscriptionPending:
 			summary.Pending++
 		}
 	}
@@ -487,7 +490,7 @@ func notificationBase(provider accountingconnectorports.AccountingProvider) (str
 	return base, true
 }
 
-func clientStateAAD(row *accountingsync.AccountingWebhookSubscription) encryptionservice.AAD {
+func clientStateAAD(row *accountingconnection.AccountingWebhookSubscription) encryptionservice.AAD {
 	return encryptionservice.AAD{
 		Purpose:        encryptionservice.PurposeAccountingWebhookState,
 		OrganizationID: row.OrganizationID,

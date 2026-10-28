@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -15,11 +15,11 @@ import (
 
 type fakeCertificates struct {
 	mu   sync.Mutex
-	rows map[string]*accountingsync.AccountingPendingCertificate
+	rows map[string]*accountingconnection.AccountingPendingCertificate
 }
 
 func newFakeCertificates() *fakeCertificates {
-	return &fakeCertificates{rows: map[string]*accountingsync.AccountingPendingCertificate{}}
+	return &fakeCertificates{rows: map[string]*accountingconnection.AccountingPendingCertificate{}}
 }
 
 func certificateKey(req accountingconnectionports.GetAccountingConnectionRequest) string {
@@ -29,7 +29,7 @@ func certificateKey(req accountingconnectionports.GetAccountingConnectionRequest
 func (f *fakeCertificates) GetByType(
 	_ context.Context,
 	req accountingconnectionports.GetAccountingConnectionRequest,
-) (*accountingsync.AccountingPendingCertificate, error) {
+) (*accountingconnection.AccountingPendingCertificate, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	row, ok := f.rows[certificateKey(req)]
@@ -42,8 +42,8 @@ func (f *fakeCertificates) GetByType(
 
 func (f *fakeCertificates) Replace(
 	_ context.Context,
-	entity *accountingsync.AccountingPendingCertificate,
-) (*accountingsync.AccountingPendingCertificate, error) {
+	entity *accountingconnection.AccountingPendingCertificate,
+) (*accountingconnection.AccountingPendingCertificate, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	clone := *entity

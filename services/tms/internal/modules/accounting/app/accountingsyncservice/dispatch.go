@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
@@ -26,13 +28,13 @@ var permissionResource = permission.ResourceAccountingSync.String()
 
 type pushSession struct {
 	tenant            pagination.TenantInfo
-	conn              *accountingsync.AccountingConnection
+	conn              *accountingconnection.AccountingConnection
 	writer            accountingconnectorports.AccountingDocumentWriter
 	journals          accountingconnectorports.AccountingJournalWriter
 	auth              accountingconnectorports.AccountingDocumentAuth
 	loc               *time.Location
 	providerName      string
-	profile           accountingsync.ProviderProfile
+	profile           accountingprovider.ProviderProfile
 	limits            accountingconnectorports.AccountingDocumentLimits
 	control           *tenant.AccountingControl
 	redatesToNextOpen bool
@@ -81,7 +83,7 @@ func blocked(
 
 func (s *Service) openSession(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) (*pushSession, error) {
 	tenantInfo := tenantOf(conn)
 	session, err := s.connService.Session(ctx, tenantInfo, conn.ID)
@@ -92,7 +94,7 @@ func (s *Service) openSession(
 	if !ok {
 		return nil, fmt.Errorf(
 			"%s cannot receive documents from Trenova",
-			accountingsync.ProviderName(conn.IntegrationType),
+			accountingprovider.ProviderName(conn.IntegrationType),
 		)
 	}
 
@@ -117,8 +119,8 @@ func (s *Service) openSession(
 			session.AccessToken,
 		),
 		loc:               loc,
-		providerName:      accountingsync.ProviderName(conn.IntegrationType),
-		profile:           accountingsync.MustProfile(conn.IntegrationType),
+		providerName:      accountingprovider.ProviderName(conn.IntegrationType),
+		profile:           accountingprovider.MustProfile(conn.IntegrationType),
 		limits:            writer.DocumentLimits(),
 		control:           control,
 		redatesToNextOpen: control.ClosedPeriodPostingPolicy == tenant.ClosedPeriodPostingPolicyPostToNextOpen,

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
@@ -31,7 +32,7 @@ func TestCompareRaisesTheKindEachDifferenceIs(t *testing.T) {
 		objectType accountingsync.SyncObjectType
 		trenova    accountingdriftports.AccountingDriftState
 		provider   *accountingconnectorports.AccountingDocumentState
-		kind       accountingsync.DriftKind
+		kind       accountingdrift.DriftKind
 		differs    bool
 	}{
 		{
@@ -45,7 +46,7 @@ func TestCompareRaisesTheKindEachDifferenceIs(t *testing.T) {
 			objectType: accountingsync.SyncObjectInvoice,
 			trenova:    accountingdriftports.AccountingDriftState{AmountMinor: 125_000},
 			provider:   found("1200.00", false),
-			kind:       accountingsync.DriftAmountMismatch,
+			kind:       accountingdrift.DriftAmountMismatch,
 			differs:    true,
 		},
 		{
@@ -68,7 +69,7 @@ func TestCompareRaisesTheKindEachDifferenceIs(t *testing.T) {
 			objectType: accountingsync.SyncObjectInvoice,
 			trenova:    accountingdriftports.AccountingDriftState{AmountMinor: 125_000},
 			provider:   &accountingconnectorports.AccountingDocumentState{ExternalID: "9"},
-			kind:       accountingsync.DriftDeletedInProvider,
+			kind:       accountingdrift.DriftDeletedInProvider,
 			differs:    true,
 		},
 		{
@@ -85,7 +86,7 @@ func TestCompareRaisesTheKindEachDifferenceIs(t *testing.T) {
 			objectType: accountingsync.SyncObjectCustomerPayment,
 			trenova:    accountingdriftports.AccountingDriftState{AmountMinor: 40_000},
 			provider:   found("400.00", true),
-			kind:       accountingsync.DriftVoidedInProvider,
+			kind:       accountingdrift.DriftVoidedInProvider,
 			differs:    true,
 		},
 		{
@@ -105,7 +106,7 @@ func TestCompareRaisesTheKindEachDifferenceIs(t *testing.T) {
 				Voided:      true,
 			},
 			provider: found("900.00", false),
-			kind:     accountingsync.DriftStatusMismatch,
+			kind:     accountingdrift.DriftStatusMismatch,
 			differs:  true,
 		},
 		{
@@ -149,7 +150,7 @@ func TestReconcileOpensAFindingWithBothValuesAndTheEditor(t *testing.T) {
 	open := h.findings.open()
 	require.Len(t, open, 1)
 	finding := open[0]
-	assert.Equal(t, accountingsync.DriftAmountMismatch, finding.Kind)
+	assert.Equal(t, accountingdrift.DriftAmountMismatch, finding.Kind)
 	assert.Equal(t, doc.record.ObjectID, finding.ObjectID)
 	assert.Equal(t, "DOC-101", finding.ObjectNumber)
 	assert.Equal(t, "101", finding.ExternalID)
@@ -202,8 +203,8 @@ func TestReconcileResolvesAFindingThatNoLongerDiffers(t *testing.T) {
 	assert.Equal(t, 1, result.Resolved)
 	require.Len(t, h.findings.all(), 1)
 	finding := h.findings.all()[0]
-	assert.Equal(t, accountingsync.DriftStatusResolved, finding.Status)
-	assert.Equal(t, accountingsync.DriftNoLongerDiffers, finding.Resolution)
+	assert.Equal(t, accountingdrift.DriftStatusResolved, finding.Status)
+	assert.Equal(t, accountingdrift.DriftNoLongerDiffers, finding.Resolution)
 }
 
 func TestReconcileReplacesAFindingWhoseKindChanged(t *testing.T) {
@@ -222,7 +223,7 @@ func TestReconcileReplacesAFindingWhoseKindChanged(t *testing.T) {
 	assert.Equal(t, 1, result.Opened)
 	open := h.findings.open()
 	require.Len(t, open, 1)
-	assert.Equal(t, accountingsync.DriftDeletedInProvider, open[0].Kind)
+	assert.Equal(t, accountingdrift.DriftDeletedInProvider, open[0].Kind)
 	assert.Equal(t, "Deleted", open[0].ProviderState)
 	assert.Nil(t, open[0].ProviderMinor)
 }
@@ -272,8 +273,8 @@ func TestReconcileResolvesAPushedFindingAsPushedOnceTheProviderMatches(t *testin
 	h.reconcile(t)
 
 	resolved := h.findings.all()[0]
-	assert.Equal(t, accountingsync.DriftStatusResolved, resolved.Status)
-	assert.Equal(t, accountingsync.DriftPushedTrenovaValue, resolved.Resolution)
+	assert.Equal(t, accountingdrift.DriftStatusResolved, resolved.Status)
+	assert.Equal(t, accountingdrift.DriftPushedTrenovaValue, resolved.Resolution)
 }
 
 func TestReconcileSkipsADocumentTheProviderDidNotAnswerFor(t *testing.T) {

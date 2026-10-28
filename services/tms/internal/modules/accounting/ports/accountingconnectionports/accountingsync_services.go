@@ -3,6 +3,8 @@ package accountingconnectionports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -13,10 +15,10 @@ import (
 type AccountingSyncStatus struct {
 	IntegrationType      integration.Type
 	ProviderName         string
-	Profile              accountingsync.ProviderProfile
+	Profile              accountingprovider.ProviderProfile
 	Available            bool
 	App                  *AccountingAppSettings
-	Connection           *accountingsync.AccountingConnection
+	Connection           *accountingconnection.AccountingConnection
 	WebhookSubscriptions *AccountingWebhookSubscriptionSummary
 	PendingCertificate   *AccountingPreparedCertificate
 }
@@ -45,19 +47,19 @@ type AccountingSubscriptionSweep struct {
 }
 
 type AccountingAppSettings struct {
-	ActiveSource         accountingsync.AppSource
+	ActiveSource         accountingconnection.AppSource
 	InstanceAppAvailable bool
-	InstanceEnvironment  accountingsync.AppEnvironment
+	InstanceEnvironment  accountingprovider.AppEnvironment
 	RedirectURL          string
 	WebhookPath          string
-	TenantApp            *accountingsync.AccountingAppCredential
+	TenantApp            *accountingconnection.AccountingAppCredential
 }
 
 type SaveAccountingAppRequest struct {
 	TenantInfo                pagination.TenantInfo
 	UserID                    pulid.ID
 	IntegrationType           integration.Type
-	Environment               accountingsync.AppEnvironment
+	Environment               accountingprovider.AppEnvironment
 	ClientID                  string
 	ClientSecret              string
 	WebhookVerifierToken      string
@@ -91,7 +93,7 @@ type CompleteAccountingAuthorizationRequest struct {
 }
 
 type AccountingAuthorizationCompletion struct {
-	Connection      *accountingsync.AccountingConnection
+	Connection      *accountingconnection.AccountingConnection
 	Companies       []accountingconnectorports.AccountingCompany
 	ChoiceToken     string
 	ChoiceExpiresAt int64
@@ -169,7 +171,7 @@ type AccountingConnectionService interface {
 	ChooseCompany(
 		ctx context.Context,
 		req *ChooseAccountingCompanyRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	PrepareCertificate(
 		ctx context.Context,
 		req *PrepareAccountingCertificateRequest,
@@ -181,16 +183,16 @@ type AccountingConnectionService interface {
 	RenewCertificate(
 		ctx context.Context,
 		req *RenewAccountingCertificateRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	Disconnect(
 		ctx context.Context,
 		req *DisconnectAccountingRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	CheckHealth(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		connectionID pulid.ID,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	CheckDue(ctx context.Context, limit int) (*AccountingHealthSweep, error)
 	SyncWebhookSubscriptions(
 		ctx context.Context,
@@ -213,7 +215,7 @@ type AccountingConnectionService interface {
 }
 
 type AccountingSession struct {
-	Connection  *accountingsync.AccountingConnection
+	Connection  *accountingconnection.AccountingConnection
 	AccessToken string
 	Connector   accountingconnectorports.AccountingConnector
 }

@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound/accountinginbounddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -53,13 +53,13 @@ func NewInboundChangeRepository(
 
 func (r *inboundChangeRepository) Create(
 	ctx context.Context,
-	entity *accountingsync.AccountingInboundChange,
-) (*accountingsync.AccountingInboundChange, error) {
+	entity *accountinginbound.AccountingInboundChange,
+) (*accountinginbound.AccountingInboundChange, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingInboundChange, error) {
-			err := accountingsyncdb.AccountingInboundChanges.Create(ctx, r.db.Keel(ctx), entity)
+		func(ctx context.Context) (*accountinginbound.AccountingInboundChange, error) {
+			err := accountinginbounddb.AccountingInboundChanges.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				return nil, fmt.Errorf("create accounting inbound change: %w", err)
 			}
@@ -71,14 +71,14 @@ func (r *inboundChangeRepository) Create(
 
 func (r *inboundChangeRepository) Update(
 	ctx context.Context,
-	entity *accountingsync.AccountingInboundChange,
-) (*accountingsync.AccountingInboundChange, error) {
+	entity *accountinginbound.AccountingInboundChange,
+) (*accountinginbound.AccountingInboundChange, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingInboundChange, error) {
+		func(ctx context.Context) (*accountinginbound.AccountingInboundChange, error) {
 			ov := entity.Version
-			err := accountingsyncdb.AccountingInboundChanges.Save(ctx, r.db.Keel(ctx), entity)
+			err := accountinginbounddb.AccountingInboundChanges.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				entity.Version = ov
 				return nil, inboundChangeErrors.Map(err, entity.ID.String())
@@ -92,12 +92,12 @@ func (r *inboundChangeRepository) Update(
 func (r *inboundChangeRepository) GetByID(
 	ctx context.Context,
 	req accountinginboundports.GetAccountingInboundChangeQuery,
-) (*accountingsync.AccountingInboundChange, error) {
+) (*accountinginbound.AccountingInboundChange, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingInboundChange, error) {
-			ic := accountingsyncdb.AccountingInboundChanges
+		func(ctx context.Context) (*accountinginbound.AccountingInboundChange, error) {
+			ic := accountinginbounddb.AccountingInboundChanges
 			q := ic.Where(ic.ID.Eq(req.ID))
 			if req.ForUpdate {
 				q = q.Lock(keel.ForUpdate)
@@ -116,16 +116,16 @@ func (r *inboundChangeRepository) GetByID(
 func (r *inboundChangeRepository) ListByExternalIDs(
 	ctx context.Context,
 	req *accountinginboundports.ListAccountingInboundChangesByExternalIDsRequest,
-) ([]*accountingsync.AccountingInboundChange, error) {
+) ([]*accountinginbound.AccountingInboundChange, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*accountingsync.AccountingInboundChange, error) {
+		func(ctx context.Context) ([]*accountinginbound.AccountingInboundChange, error) {
 			if len(req.ExternalIDs) == 0 {
-				return []*accountingsync.AccountingInboundChange{}, nil
+				return []*accountinginbound.AccountingInboundChange{}, nil
 			}
 
-			ic := accountingsyncdb.AccountingInboundChanges
+			ic := accountinginbounddb.AccountingInboundChanges
 			return ic.Where(
 				ic.ConnectionID.Eq(req.ConnectionID),
 				ic.Kind.Eq(req.Kind),
@@ -138,21 +138,21 @@ func (r *inboundChangeRepository) ListByExternalIDs(
 func (r *inboundChangeRepository) ListDetected(
 	ctx context.Context,
 	req *accountinginboundports.ListDetectedAccountingInboundChangesRequest,
-) ([]*accountingsync.AccountingInboundChange, error) {
+) ([]*accountinginbound.AccountingInboundChange, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*accountingsync.AccountingInboundChange, error) {
+		func(ctx context.Context) ([]*accountinginbound.AccountingInboundChange, error) {
 			limit := req.Limit
 			if limit <= 0 {
 				limit = defaultInboundBatch
 			}
 			limit = intutils.Clamp(limit, 1, maxInboundBatch)
 
-			ic := accountingsyncdb.AccountingInboundChanges
+			ic := accountinginbounddb.AccountingInboundChanges
 			return ic.Where(
 				ic.ConnectionID.Eq(req.ConnectionID),
-				ic.Status.Eq(accountingsync.InboundStatusDetected),
+				ic.Status.Eq(accountinginbound.InboundStatusDetected),
 				ic.DetectedAt.Lte(req.DetectedBefore),
 			).
 				Order(ic.DetectedAt.Asc(), ic.ID.Asc()).
@@ -165,7 +165,7 @@ func (r *inboundChangeRepository) ListDetected(
 func inboundListFilters(
 	req *accountinginboundports.ListAccountingInboundChangesConnectionRequest,
 ) []keel.Pred {
-	ic := accountingsyncdb.AccountingInboundChanges
+	ic := accountinginbounddb.AccountingInboundChanges
 	term := strings.TrimSpace(req.Search)
 
 	return []keel.Pred{
@@ -183,11 +183,11 @@ func inboundListFilters(
 func (r *inboundChangeRepository) ListConnection(
 	ctx context.Context,
 	req *accountinginboundports.ListAccountingInboundChangesConnectionRequest,
-) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error) {
+) (*pagination.CursorListResult[*accountinginbound.AccountingInboundChange], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*accountinginbound.AccountingInboundChange], error) {
 			if req.Filter != nil && len(req.Filter.Sort) == 0 {
 				req.Filter.Sort = []domaintypes.SortField{
 					{Field: inboundChangeDetectedSort, Direction: dbtype.SortDirectionDesc},
@@ -197,8 +197,8 @@ func (r *inboundChangeRepository) ListConnection(
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				accountingsyncdb.AccountingInboundChanges.Where(inboundListFilters(req)...),
-				&listquery.Request[accountingsync.AccountingInboundChange]{
+				accountinginbounddb.AccountingInboundChanges.Where(inboundListFilters(req)...),
+				&listquery.Request[accountinginbound.AccountingInboundChange]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 				},
@@ -221,19 +221,19 @@ func (r *inboundChangeRepository) Summarize(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountinginboundports.AccountingInboundSummary, error) {
-			ic := accountingsyncdb.AccountingInboundChanges
+			ic := accountinginbounddb.AccountingInboundChanges
 			summary, err := keel.IntoOne[accountinginboundports.AccountingInboundSummary](
 				ctx,
 				r.db.Keel(ctx),
 				ic.Pick(
-					keel.Count().Filter(ic.Status.Eq(accountingsync.InboundStatusDetected)),
-					keel.Count().Filter(ic.Status.Eq(accountingsync.InboundStatusProposed)),
+					keel.Count().Filter(ic.Status.Eq(accountinginbound.InboundStatusDetected)),
+					keel.Count().Filter(ic.Status.Eq(accountinginbound.InboundStatusProposed)),
 					keel.Count().Filter(keel.And(
-						ic.Status.Eq(accountingsync.InboundStatusApplied),
+						ic.Status.Eq(accountinginbound.InboundStatusApplied),
 						ic.DecidedAt.Gte(req.DecidedSince),
 					)),
 					keel.Count().Filter(keel.And(
-						ic.Status.Eq(accountingsync.InboundStatusIgnored),
+						ic.Status.Eq(accountinginbound.InboundStatusIgnored),
 						ic.DecidedAt.Gte(req.DecidedSince),
 					)),
 				).Where(ic.ConnectionID.Eq(req.ConnectionID)),
@@ -255,7 +255,7 @@ func (r *inboundChangeRepository) ListAttention(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]accountinginboundports.AccountingInboundAttentionGroup, error) {
-			ic := accountingsyncdb.AccountingInboundChanges
+			ic := accountinginbounddb.AccountingInboundChanges
 			groups, err := keel.Into[accountinginboundports.AccountingInboundAttentionGroup](
 				ctx,
 				r.db.Keel(ctx),
@@ -268,7 +268,7 @@ func (r *inboundChangeRepository) ListAttention(
 					).
 					Where(
 						ic.ConnectionID.Eq(req.ConnectionID),
-						ic.Status.Eq(accountingsync.InboundStatusProposed),
+						ic.Status.Eq(accountinginbound.InboundStatusProposed),
 						ic.DetectedAt.Lte(req.DetectedBefore),
 					).
 					Order(keel.Count().Desc(), ic.DetectedAt.Min().Asc()),

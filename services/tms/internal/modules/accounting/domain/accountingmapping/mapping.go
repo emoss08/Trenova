@@ -1,4 +1,4 @@
-package accountingsync
+package accountingmapping
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -46,28 +48,28 @@ func (s *MappingSignals) CandidateFingerprint() string {
 type AccountingMapping struct {
 	keel.Table `keel:"accounting_mappings"`
 
-	ID              pulid.ID          `json:"id"              keel:"id,pk,autoid:acctm_"`
-	BusinessUnitID  pulid.ID          `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID          `json:"organizationId"  keel:"organization_id,pk,tenant"`
-	ConnectionID    pulid.ID          `json:"connectionId"    keel:"connection_id"`
-	TargetType      MappingTargetType `json:"targetType"      keel:"target_type"`
-	TrenovaObjectID pulid.ID          `json:"trenovaObjectId" keel:"trenova_object_id,nullzero"`
-	TrenovaKey      string            `json:"trenovaKey"      keel:"trenova_key,nullzero"`
-	TargetLabel     string            `json:"targetLabel"     keel:"target_label"`
-	SearchLabel     string            `json:"-"               keel:"search_label"`
-	ProviderKind    ReferenceKind     `json:"providerKind"    keel:"provider_kind"`
-	ExternalID      string            `json:"externalId"      keel:"external_id,nullzero"`
-	ExternalName    string            `json:"externalName"    keel:"external_name,nullzero"`
-	State           MappingState      `json:"state"           keel:"state"`
-	Source          MappingSource     `json:"source"          keel:"source,nullzero"`
-	Confidence      *float64          `json:"confidence"      keel:"confidence"`
-	Reason          string            `json:"reason"          keel:"reason,nullzero"`
-	Signals         MappingSignals    `json:"signals"         keel:"signals,jsonb"`
-	ConfirmedByID   pulid.ID          `json:"confirmedById"   keel:"confirmed_by_id,nullzero"`
-	ConfirmedAt     *int64            `json:"confirmedAt"     keel:"confirmed_at"`
-	Version         int64             `json:"version"         keel:"version,version"`
-	CreatedAt       int64             `json:"createdAt"       keel:"created_at,autocreate"`
-	UpdatedAt       int64             `json:"updatedAt"       keel:"updated_at,autoupdate"`
+	ID              pulid.ID                         `json:"id"              keel:"id,pk,autoid:acctm_"`
+	BusinessUnitID  pulid.ID                         `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID                         `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	ConnectionID    pulid.ID                         `json:"connectionId"    keel:"connection_id"`
+	TargetType      accountingsync.MappingTargetType `json:"targetType"      keel:"target_type"`
+	TrenovaObjectID pulid.ID                         `json:"trenovaObjectId" keel:"trenova_object_id,nullzero"`
+	TrenovaKey      string                           `json:"trenovaKey"      keel:"trenova_key,nullzero"`
+	TargetLabel     string                           `json:"targetLabel"     keel:"target_label"`
+	SearchLabel     string                           `json:"-"               keel:"search_label"`
+	ProviderKind    accountingprovider.ReferenceKind `json:"providerKind"    keel:"provider_kind"`
+	ExternalID      string                           `json:"externalId"      keel:"external_id,nullzero"`
+	ExternalName    string                           `json:"externalName"    keel:"external_name,nullzero"`
+	State           MappingState                     `json:"state"           keel:"state"`
+	Source          MappingSource                    `json:"source"          keel:"source,nullzero"`
+	Confidence      *float64                         `json:"confidence"      keel:"confidence"`
+	Reason          string                           `json:"reason"          keel:"reason,nullzero"`
+	Signals         MappingSignals                   `json:"signals"         keel:"signals,jsonb"`
+	ConfirmedByID   pulid.ID                         `json:"confirmedById"   keel:"confirmed_by_id,nullzero"`
+	ConfirmedAt     *int64                           `json:"confirmedAt"     keel:"confirmed_at"`
+	Version         int64                            `json:"version"         keel:"version,version"`
+	CreatedAt       int64                            `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt       int64                            `json:"updatedAt"       keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
@@ -108,9 +110,12 @@ type Choice struct {
 func (m *AccountingMapping) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(m,
 		validation.Field(&m.ConnectionID, validation.Required.Error("Connection is required")),
-		validation.Field(&m.TargetType,
+		validation.Field(
+			&m.TargetType,
 			validation.Required.Error("Target type is required"),
-			domainvalidation.ValidEnum[MappingTargetType]("Target type is not recognized"),
+			domainvalidation.ValidEnum[accountingsync.MappingTargetType](
+				"Target type is not recognized",
+			),
 		),
 		validation.Field(&m.TrenovaObjectID, validation.By(func(any) error {
 			if m.TargetType.KeyedByObject() && m.TrenovaObjectID.IsNil() {
@@ -201,16 +206,7 @@ func (m *AccountingMapping) BeforeSave(_ context.Context) error {
 }
 
 func (m *AccountingMapping) IsRequired() bool {
-	return IsRequiredTarget(m.TargetType, m.TrenovaKey)
-}
-
-func IsRequiredTarget(target MappingTargetType, key string) bool {
-	for idx := range providerProfiles {
-		if providerProfiles[idx].IsRequiredTarget(target, key) {
-			return true
-		}
-	}
-	return false
+	return accountingprovider.IsRequiredTarget(m.TargetType, m.TrenovaKey)
 }
 
 func (m *AccountingMapping) Rescorable() bool {

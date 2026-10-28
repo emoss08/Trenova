@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
@@ -280,7 +282,7 @@ func (t *PauseAccountingSyncTool) Preview(
 	change, err := toolpreview.Update(
 		syncConnectionRecord(summary),
 		summary.Connection,
-		func(paused *accountingsync.AccountingConnection) error {
+		func(paused *accountingconnection.AccountingConnection) error {
 			paused.Pause(req.UserID, req.Reason, now)
 
 			return nil
@@ -311,7 +313,7 @@ func (t *ResumeAccountingSyncTool) Preview(
 	change, err := toolpreview.Update(
 		syncConnectionRecord(summary),
 		summary.Connection,
-		func(resumed *accountingsync.AccountingConnection) error {
+		func(resumed *accountingconnection.AccountingConnection) error {
 			resumed.Resume()
 
 			return nil
@@ -339,8 +341,8 @@ func waitingToSend(summary *accountingsyncports.AccountingSyncSummary) int {
 	)
 }
 
-func (p *backfillPlan) backfill() *accountingsync.AccountingBackfill {
-	return accountingsync.NewAccountingBackfill(&accountingsync.NewBackfillParams{
+func (p *backfillPlan) backfill() *accountingbackfill.AccountingBackfill {
+	return accountingbackfill.NewAccountingBackfill(&accountingbackfill.NewBackfillParams{
 		TenantInfo:    p.req.TenantInfo,
 		ConnectionID:  p.connection.ID,
 		RangeStart:    p.from,

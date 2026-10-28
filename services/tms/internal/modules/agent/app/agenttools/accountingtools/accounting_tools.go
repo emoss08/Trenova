@@ -3,7 +3,8 @@ package accountingtools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
@@ -28,7 +29,7 @@ type accountingConnectionChecker interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		connectionID pulid.ID,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 }
 
 type CheckAccountingConnectionTool struct {
@@ -113,7 +114,7 @@ func (t *CheckAccountingConnectionTool) Execute(
 func (t *CheckAccountingConnectionTool) connection(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -123,7 +124,7 @@ func (t *CheckAccountingConnectionTool) connection(
 		return nil, err
 	}
 	typ := integration.Type(system)
-	if !accountingsync.SupportsAccountingSync(typ) {
+	if !accountingprovider.SupportsAccountingSync(typ) {
 		return nil, agenttoolschema.ErrAccountingSystem()
 	}
 

@@ -4,6 +4,9 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
@@ -41,27 +44,27 @@ type accountingMappingWriter interface {
 	FindMapping(
 		ctx context.Context,
 		req *accountingmappingports.SetAccountingMappingRequest,
-	) (*accountingsync.AccountingMapping, error)
+	) (*accountingmapping.AccountingMapping, error)
 	GetReferenceObjects(
 		ctx context.Context,
 		req *accountingmappingports.GetAccountingReferenceObjectsRequest,
-	) ([]*accountingsync.AccountingReferenceObject, error)
+	) ([]*accountingmapping.AccountingReferenceObject, error)
 	Set(
 		ctx context.Context,
 		req *accountingmappingports.SetAccountingMappingRequest,
-	) (*accountingsync.AccountingMapping, error)
+	) (*accountingmapping.AccountingMapping, error)
 	Clear(
 		ctx context.Context,
 		req *accountingmappingports.AccountingMappingActionRequest,
-	) (*accountingsync.AccountingMapping, error)
+	) (*accountingmapping.AccountingMapping, error)
 	CreateReferenceRecord(
 		ctx context.Context,
 		req *accountingmappingports.CreateAccountingReferenceRecordRequest,
-	) (*accountingsync.AccountingMapping, error)
+	) (*accountingmapping.AccountingMapping, error)
 	RequestRefresh(
 		ctx context.Context,
 		req *accountingmappingports.AccountingSetupRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	Summary(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -70,7 +73,7 @@ type accountingMappingWriter interface {
 	GuardHistory(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-		row *accountingsync.AccountingMapping,
+		row *accountingmapping.AccountingMapping,
 		acknowledged bool,
 	) (int, error)
 }
@@ -117,7 +120,7 @@ func accountingSystemFrom(params map[string]any) (integration.Type, error) {
 		return "", err
 	}
 	typ := integration.Type(system)
-	if !accountingsync.SupportsAccountingSync(typ) {
+	if !accountingprovider.SupportsAccountingSync(typ) {
 		return "", agenttoolschema.ErrAccountingSystem()
 	}
 	return typ, nil
@@ -148,7 +151,7 @@ func mappingRequestFrom(
 		),
 		TrenovaObjectID: recordID,
 		TrenovaKey:      toolparams.OptionalString(params.Params, paramMappingKey),
-		Source:          accountingsync.MappingSourceAgent,
+		Source:          accountingmapping.MappingSourceAgent,
 	}
 	if err = req.ValidateTarget(); err != nil {
 		return nil, err
@@ -161,7 +164,7 @@ func findMapping(
 	tool agenttoolports.AgentTool,
 	mappings accountingMappingWriter,
 	params *agenttoolports.ToolExecuteParams,
-) (*accountingmappingports.SetAccountingMappingRequest, *accountingsync.AccountingMapping, error) {
+) (*accountingmappingports.SetAccountingMappingRequest, *accountingmapping.AccountingMapping, error) {
 	if err := toolguard.GuardExecute(tool, *params); err != nil {
 		return nil, nil, err
 	}
@@ -176,7 +179,7 @@ func findMapping(
 	return req, row, nil
 }
 
-func mappedLabel(row *accountingsync.AccountingMapping) string {
+func mappedLabel(row *accountingmapping.AccountingMapping) string {
 	if row.ExternalName == "" {
 		return "nothing"
 	}
@@ -265,7 +268,7 @@ func (t *SetAccountingMappingTool) Policy() agenttoolports.ToolPolicy {
 func (t *SetAccountingMappingTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*accountingmappingports.SetAccountingMappingRequest, *accountingsync.AccountingMapping, *accountingsync.AccountingReferenceObject, error) {
+) (*accountingmappingports.SetAccountingMappingRequest, *accountingmapping.AccountingMapping, *accountingmapping.AccountingReferenceObject, error) {
 	req, row, err := findMapping(ctx, t, t.mappings, params)
 	if err != nil {
 		return nil, nil, nil, err
@@ -370,12 +373,12 @@ func (t *ClearAccountingMappingTool) Policy() agenttoolports.ToolPolicy {
 func (t *ClearAccountingMappingTool) mapping(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	_, row, err := findMapping(ctx, t, t.mappings, params)
 	if err != nil {
 		return nil, err
 	}
-	if row.State == accountingsync.MappingStateUnmatched {
+	if row.State == accountingmapping.MappingStateUnmatched {
 		return nil, errortypes.NewBusinessError("{0} is not mapped", row.TargetLabel)
 	}
 	return row, nil
@@ -401,7 +404,7 @@ func (t *ClearAccountingMappingTool) Execute(
 		TenantInfo: toolparams.TenantFrom(params),
 		UserID:     params.Actor.UserID,
 		ID:         row.ID,
-		Source:     accountingsync.MappingSourceAgent,
+		Source:     accountingmapping.MappingSourceAgent,
 	})
 	return err
 }
@@ -463,7 +466,7 @@ func (t *CreateAccountingReferenceRecordTool) Policy() agenttoolports.ToolPolicy
 func (t *CreateAccountingReferenceRecordTool) mapping(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	_, row, err := findMapping(ctx, t, t.mappings, params)
 	if err != nil {
 		return nil, err
@@ -474,7 +477,7 @@ func (t *CreateAccountingReferenceRecordTool) mapping(
 			string(row.ProviderKind),
 		)
 	}
-	if row.State == accountingsync.MappingStateConfirmed {
+	if row.State == accountingmapping.MappingStateConfirmed {
 		return nil, errortypes.NewBusinessError(
 			"{0} is already mapped to {1}",
 			row.TargetLabel,
@@ -507,7 +510,7 @@ func (t *CreateAccountingReferenceRecordTool) Execute(
 			UserID:     params.Actor.UserID,
 			MappingID:  row.ID,
 			Name:       strings.TrimSpace(toolparams.OptionalString(params.Params, "name")),
-			Source:     accountingsync.MappingSourceAgent,
+			Source:     accountingmapping.MappingSourceAgent,
 		},
 	)
 	return err

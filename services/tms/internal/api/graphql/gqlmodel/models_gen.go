@@ -3,6 +3,11 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
@@ -735,7 +740,7 @@ type AccountingDriftFindingConnection struct {
 }
 
 type AccountingDriftFindingEdge struct {
-	Node   *accountingsync.AccountingDriftFinding `json:"node"`
+	Node   *accountingdrift.AccountingDriftFinding `json:"node"`
 	Cursor string                                 `json:"cursor"`
 }
 
@@ -748,7 +753,7 @@ type AccountingInboundChangeConnection struct {
 }
 
 type AccountingInboundChangeEdge struct {
-	Node   *accountingsync.AccountingInboundChange `json:"node"`
+	Node   *accountinginbound.AccountingInboundChange `json:"node"`
 	Cursor string                                  `json:"cursor"`
 }
 
@@ -762,19 +767,19 @@ type AccountingMappingConnection struct {
 
 // One mapping, and the accounting system records it could be set to.
 type AccountingMappingDetail struct {
-	Mapping *accountingsync.AccountingMapping `json:"mapping"`
+	Mapping *accountingmapping.AccountingMapping `json:"mapping"`
 	// Usable records of the kind the mapping maps to whose names match optionsQuery, best first, at most ten. Empty without optionsQuery.
-	Options []*accountingsync.AccountingReferenceObject `json:"options"`
+	Options []*accountingmapping.AccountingReferenceObject `json:"options"`
 }
 
 type AccountingMappingEdge struct {
-	Node   *accountingsync.AccountingMapping `json:"node"`
+	Node   *accountingmapping.AccountingMapping `json:"node"`
 	Cursor string                            `json:"cursor"`
 }
 
 type AccountingMappingFilterInput struct {
 	TargetTypes  []accountingsync.MappingTargetType `json:"targetTypes,omitempty"`
-	States       []accountingsync.MappingState      `json:"states,omitempty"`
+	States       []accountingmapping.MappingState      `json:"states,omitempty"`
 	RequiredOnly *bool                              `json:"requiredOnly,omitempty"`
 	// Matches the Trenova label or the chosen record's name.
 	Search *string `json:"search,omitempty"`
@@ -2486,9 +2491,9 @@ type ChooseAccountingCompanyInput struct {
 // Chooses what a connection sends, before its mappings.
 type ChooseAccountingSyncModeInput struct {
 	IntegrationType integration.Type        `json:"integrationType"`
-	Mode            accountingsync.SyncMode `json:"mode"`
+	Mode            accountingprovider.SyncMode `json:"mode"`
 	// Required in ledger mode.
-	Granularity *accountingsync.LedgerGranularity `json:"granularity,omitempty"`
+	Granularity *accountingconnection.LedgerGranularity `json:"granularity,omitempty"`
 }
 
 type ClockInput struct {
@@ -8400,7 +8405,7 @@ type RescindDisciplinaryActionInput struct {
 
 type ResolveAccountingDriftInput struct {
 	ID        string                        `json:"id"`
-	Direction accountingsync.DriftDirection `json:"direction"`
+	Direction accountingdrift.DriftDirection `json:"direction"`
 }
 
 type ResolveCarrierIntelEventInput struct {
@@ -8704,7 +8709,7 @@ type SafetyEventStatusInput struct {
 // The organization's own app keys. Leave the secret or verifier token out to keep the saved one.
 type SaveAccountingAppInput struct {
 	IntegrationType integration.Type              `json:"integrationType"`
-	Environment     accountingsync.AppEnvironment `json:"environment"`
+	Environment     accountingprovider.AppEnvironment `json:"environment"`
 	ClientID        string                        `json:"clientId"`
 	// Required the first time, and whenever the client ID or environment changes.
 	ClientSecret         *string `json:"clientSecret,omitempty"`
@@ -11606,7 +11611,7 @@ type UpdateAccountingSyncSettingsInput struct {
 	// Send owner-operator settlements as bills. Turning this on sends settlements posted from now on; a backfill reaches earlier ones.
 	DriverSettlements bool `json:"driverSettlements"`
 	// What happens to payments recorded in the accounting system. Left out, it stays as it is.
-	InboundPayments *accountingsync.InboundPaymentPolicy `json:"inboundPayments,omitempty"`
+	InboundPayments *accountingconnection.InboundPaymentPolicy `json:"inboundPayments,omitempty"`
 }
 
 // Changes to an agent's capabilities. Absent fields are left as they are.

@@ -3,7 +3,7 @@ package accountingconnectionservice
 import (
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -31,7 +31,7 @@ func (s *Service) newCodeVerifier(
 	stateHash string,
 	typ integration.Type,
 ) (challenge, sealed string, err error) {
-	if !accountingsync.MustProfile(typ).PKCE {
+	if !accountingprovider.MustProfile(typ).PKCE {
 		return "", "", nil
 	}
 	verifier, err := tokenutils.PKCEVerifier()
@@ -51,7 +51,7 @@ func (s *Service) openCodeVerifier(
 	stateHash string,
 	state *accountingconnectionports.AccountingOAuthState,
 ) (string, error) {
-	if !accountingsync.MustProfile(state.IntegrationType).PKCE {
+	if !accountingprovider.MustProfile(state.IntegrationType).PKCE {
 		return "", nil
 	}
 	if state.SealedVerifier == "" {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -19,7 +20,7 @@ import (
 )
 
 type fakeDriftOperator struct {
-	findings   map[pulid.ID]*accountingsync.AccountingDriftFinding
+	findings   map[pulid.ID]*accountingdrift.AccountingDriftFinding
 	refuse     error
 	resolved   *accountingdriftports.ResolveAccountingDriftRequest
 	dismissed  *accountingdriftports.DismissAccountingDriftRequest
@@ -28,7 +29,7 @@ type fakeDriftOperator struct {
 	overviewID pulid.ID
 }
 
-func (f *fakeDriftOperator) finding(id pulid.ID) (*accountingsync.AccountingDriftFinding, error) {
+func (f *fakeDriftOperator) finding(id pulid.ID) (*accountingdrift.AccountingDriftFinding, error) {
 	finding, ok := f.findings[id]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("Drift finding not found")
@@ -40,7 +41,7 @@ func (f *fakeDriftOperator) finding(id pulid.ID) (*accountingsync.AccountingDrif
 func (f *fakeDriftOperator) Get(
 	_ context.Context,
 	req *accountingdriftports.GetAccountingDriftFindingRequest,
-) (*accountingsync.AccountingDriftFinding, error) {
+) (*accountingdrift.AccountingDriftFinding, error) {
 	return f.finding(req.ID)
 }
 
@@ -60,7 +61,7 @@ func (f *fakeDriftOperator) PreviewResolve(
 	return &accountingdriftports.AccountingDriftFixPreview{
 		Finding:   finding,
 		Direction: req.Direction,
-		FixObject: accountingsync.DriftFixCreditMemo,
+		FixObject: accountingdrift.DriftFixCreditMemo,
 		Summary:   "Post a credit memo of 50.00 USD against INV-1001.",
 	}, nil
 }
@@ -69,7 +70,7 @@ func (f *fakeDriftOperator) Resolve(
 	_ context.Context,
 	req *accountingdriftports.ResolveAccountingDriftRequest,
 	actor *permissionports.RequestActor,
-) (*accountingsync.AccountingDriftFinding, error) {
+) (*accountingdrift.AccountingDriftFinding, error) {
 	f.resolved = req
 	f.lastActor = actor
 	return f.finding(req.ID)
@@ -98,7 +99,7 @@ func (f *fakeDriftOperator) Dismiss(
 	_ context.Context,
 	req *accountingdriftports.DismissAccountingDriftRequest,
 	actor *permissionports.RequestActor,
-) (*accountingsync.AccountingDriftFinding, error) {
+) (*accountingdrift.AccountingDriftFinding, error) {
 	f.dismissed = req
 	f.lastActor = actor
 	return f.finding(req.ID)
@@ -123,14 +124,14 @@ func (f *fakeDriftOperator) CheckNow(
 	return &accountingdriftports.AccountingDriftOverview{ConnectionID: f.overviewID}, nil
 }
 
-func openDriftFinding() *accountingsync.AccountingDriftFinding {
+func openDriftFinding() *accountingdrift.AccountingDriftFinding {
 	trenova, provider := int64(125_000), int64(120_000)
-	return accountingsync.NewAccountingDriftFinding(&accountingsync.DriftObservation{
+	return accountingdrift.NewAccountingDriftFinding(&accountingdrift.DriftObservation{
 		ConnectionID:  pulid.MustNew("acctc_"),
 		ObjectType:    accountingsync.SyncObjectInvoice,
 		ObjectID:      pulid.MustNew("inv_"),
 		ObjectNumber:  "INV-1001",
-		Kind:          accountingsync.DriftAmountMismatch,
+		Kind:          accountingdrift.DriftAmountMismatch,
 		CurrencyCode:  "USD",
 		TrenovaMinor:  &trenova,
 		ProviderMinor: &provider,
@@ -138,9 +139,9 @@ func openDriftFinding() *accountingsync.AccountingDriftFinding {
 	})
 }
 
-func newDriftOperator(finding *accountingsync.AccountingDriftFinding) *fakeDriftOperator {
+func newDriftOperator(finding *accountingdrift.AccountingDriftFinding) *fakeDriftOperator {
 	return &fakeDriftOperator{
-		findings:   map[pulid.ID]*accountingsync.AccountingDriftFinding{finding.ID: finding},
+		findings:   map[pulid.ID]*accountingdrift.AccountingDriftFinding{finding.ID: finding},
 		overviewID: finding.ConnectionID,
 	}
 }
@@ -165,7 +166,7 @@ func TestResolveAccountingDrift_PreviewsThenFixesAsTheApprover(t *testing.T) {
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, operator.resolved)
-	assert.Equal(t, accountingsync.DriftAdjustTrenova, operator.resolved.Direction)
+	assert.Equal(t, accountingdrift.DriftAdjustTrenova, operator.resolved.Direction)
 	assert.Equal(t, params.Actor.UserID, operator.lastActor.UserID)
 
 	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)

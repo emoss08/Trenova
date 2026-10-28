@@ -3,7 +3,8 @@ package accountingtools
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
@@ -17,7 +18,7 @@ import (
 func TestCheckAccountingConnection_PreviewMatchesWhatASuccessSaves(t *testing.T) {
 	t.Parallel()
 
-	status := connectedStatus(accountingsync.ConnectionStatusDegraded)
+	status := connectedStatus(accountingconnection.ConnectionStatusDegraded)
 	status.Connection.ConsecutiveFailures = 2
 	status.Connection.LastErrorMessage = "timeout"
 	before := *status.Connection
@@ -51,7 +52,7 @@ func TestCheckAccountingConnection_PreviewWarnsWhenNotConnected(t *testing.T) {
 	t.Parallel()
 
 	checker := &fakeAccountingChecker{
-		status: connectedStatus(accountingsync.ConnectionStatusRevoked),
+		status: connectedStatus(accountingconnection.ConnectionStatusRevoked),
 	}
 	tool := newCheckAccountingConnectionTool(checker).(*CheckAccountingConnectionTool)
 
@@ -75,7 +76,7 @@ func TestSetAccountingMapping_PreviewMatchesWhatIsSaved(t *testing.T) {
 
 	row := proposedCustomerMapping()
 	before := *row
-	writer := &fakeMappingWriter{row: row, refs: []*accountingsync.AccountingReferenceObject{
+	writer := &fakeMappingWriter{row: row, refs: []*accountingmapping.AccountingReferenceObject{
 		customerRef("51", "Acme Logistics LLC", true),
 	}}
 	tool := newSetAccountingMappingTool(writer).(*SetAccountingMappingTool)
@@ -111,7 +112,7 @@ func TestClearAccountingMapping_PreviewMatchesWhatIsSaved(t *testing.T) {
 	t.Parallel()
 
 	row := proposedCustomerMapping()
-	row.State = accountingsync.MappingStateConfirmed
+	row.State = accountingmapping.MappingStateConfirmed
 	before := *row
 	writer := &fakeMappingWriter{row: row}
 	tool := newClearAccountingMappingTool(writer).(*ClearAccountingMappingTool)
@@ -144,11 +145,11 @@ func TestAccountingMapping_PreviewWarnsWhenDocumentsWereAlreadySent(t *testing.T
 	t.Parallel()
 
 	row := proposedCustomerMapping()
-	row.State = accountingsync.MappingStateConfirmed
+	row.State = accountingmapping.MappingStateConfirmed
 	writer := &fakeMappingWriter{
 		row:  row,
 		used: 4,
-		refs: []*accountingsync.AccountingReferenceObject{
+		refs: []*accountingmapping.AccountingReferenceObject{
 			customerRef("51", "Acme Logistics LLC", true),
 		},
 	}
@@ -181,7 +182,7 @@ func TestCreateAccountingReferenceRecord_PreviewShowsTheRecordAndTheMapping(t *t
 	t.Parallel()
 
 	row := proposedCustomerMapping()
-	row.State = accountingsync.MappingStateUnmatched
+	row.State = accountingmapping.MappingStateUnmatched
 	row.ExternalName = ""
 	row.ExternalID = ""
 	before := *row
@@ -219,9 +220,9 @@ func TestRefreshAccountingReferenceData_PreviewNamesTheConnection(t *testing.T) 
 
 	writer := &fakeMappingWriter{summary: &accountingmappingports.AccountingMappingSummary{
 		ProviderName: "QuickBooks Online",
-		Connection: &accountingsync.AccountingConnection{
+		Connection: &accountingconnection.AccountingConnection{
 			ID:                  pulid.MustNew("acctc_"),
-			Status:              accountingsync.ConnectionStatusConnected,
+			Status:              accountingconnection.ConnectionStatusConnected,
 			ExternalCompanyName: "Acme Freight",
 		},
 	}}

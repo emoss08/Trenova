@@ -7,6 +7,9 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection/accountingconnectiondb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift/accountingdriftdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound/accountinginbounddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
@@ -113,7 +116,7 @@ var subjectTables = map[agent.SubjectType]subjectExists{
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectAccountingConnection: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := accountingsyncdb.AccountingConnections
+		t := accountingconnectiondb.AccountingConnections
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectAccountingSyncRecord: func(id pulid.ID, found *bool) keel.BatchItem {
@@ -121,11 +124,11 @@ var subjectTables = map[agent.SubjectType]subjectExists{
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectAccountingInbound: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := accountingsyncdb.AccountingInboundChanges
+		t := accountinginbounddb.AccountingInboundChanges
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectAccountingDrift: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := accountingsyncdb.AccountingDriftFindings
+		t := accountingdriftdb.AccountingDriftFindings
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectFormulaTemplate: func(id pulid.ID, found *bool) keel.BatchItem {

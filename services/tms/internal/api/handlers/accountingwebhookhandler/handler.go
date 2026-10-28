@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -49,8 +49,8 @@ func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 
 func (h *Handler) resolve(
 	c *gin.Context,
-) (*accountingsync.ProviderProfile, accountingconnectorports.AccountingProvider, bool) {
-	profile, ok := accountingsync.ProfileByWebhookSlug(strings.ToLower(c.Param("provider")))
+) (*accountingprovider.ProviderProfile, accountingconnectorports.AccountingProvider, bool) {
+	profile, ok := accountingprovider.ProfileByWebhookSlug(strings.ToLower(c.Param("provider")))
 	if !ok {
 		return nil, nil, false
 	}
@@ -74,7 +74,7 @@ func (h *Handler) handshake(c *gin.Context) {
 
 func (h *Handler) answerHandshake(
 	c *gin.Context,
-	profile *accountingsync.ProviderProfile,
+	profile *accountingprovider.ProviderProfile,
 	provider accountingconnectorports.AccountingProvider,
 ) bool {
 	raw, present := c.GetQuery(validationTokenParam)

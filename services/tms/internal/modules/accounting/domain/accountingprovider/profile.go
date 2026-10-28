@@ -1,9 +1,10 @@
-package accountingsync
+package accountingprovider
 
 import (
 	"slices"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 )
@@ -34,7 +35,7 @@ type ProviderProfile struct {
 	ReconnectWarning             time.Duration
 }
 
-const defaultReconnectWarning = 14 * 24 * time.Hour
+const DefaultReconnectWarning = 14 * 24 * time.Hour
 
 var providerProfiles = []ProviderProfile{
 	{
@@ -54,17 +55,17 @@ var providerProfiles = []ProviderProfile{
 			ReferenceKindPaymentMethod,
 		},
 		AccountRoles: []string{
-			AccountRoleAR,
-			AccountRoleRevenue,
-			AccountRoleDeposit,
-			AccountRoleWriteOff,
-			AccountRoleAP,
-			AccountRolePurchasedTransportation,
+			accountingsync.AccountRoleAR,
+			accountingsync.AccountRoleRevenue,
+			accountingsync.AccountRoleDeposit,
+			accountingsync.AccountRoleWriteOff,
+			accountingsync.AccountRoleAP,
+			accountingsync.AccountRolePurchasedTransportation,
 		},
 		RequiredAccountRoles: []string{
-			AccountRoleAR,
-			AccountRoleRevenue,
-			AccountRoleDeposit,
+			accountingsync.AccountRoleAR,
+			accountingsync.AccountRoleRevenue,
+			accountingsync.AccountRoleDeposit,
 		},
 		Environments: []AppEnvironment{
 			AppEnvironmentSandbox,
@@ -76,7 +77,7 @@ var providerProfiles = []ProviderProfile{
 		CallbackCarriesCompany:       true,
 		InboundPayments:              true,
 		RevokesTokens:                true,
-		ReconnectWarning:             defaultReconnectWarning,
+		ReconnectWarning:             DefaultReconnectWarning,
 	},
 	{
 		Type:            integration.TypeXero,
@@ -93,11 +94,11 @@ var providerProfiles = []ProviderProfile{
 			ReferenceKindVendor,
 		},
 		AccountRoles: []string{
-			AccountRoleDeposit,
-			AccountRolePurchasedTransportation,
+			accountingsync.AccountRoleDeposit,
+			accountingsync.AccountRolePurchasedTransportation,
 		},
 		RequiredAccountRoles: []string{
-			AccountRoleDeposit,
+			accountingsync.AccountRoleDeposit,
 		},
 		Environments: []AppEnvironment{
 			AppEnvironmentProduction,
@@ -110,7 +111,7 @@ var providerProfiles = []ProviderProfile{
 		CallbackCarriesCompany: false,
 		InboundPayments:        true,
 		RevokesTokens:          true,
-		ReconnectWarning:       defaultReconnectWarning,
+		ReconnectWarning:       DefaultReconnectWarning,
 	},
 	{
 		Type:            integration.TypeBusinessCentral,
@@ -128,11 +129,11 @@ var providerProfiles = []ProviderProfile{
 			ReferenceKindTerm,
 		},
 		AccountRoles: []string{
-			AccountRoleDeposit,
-			AccountRolePurchasedTransportation,
+			accountingsync.AccountRoleDeposit,
+			accountingsync.AccountRolePurchasedTransportation,
 		},
 		RequiredAccountRoles: []string{
-			AccountRoleDeposit,
+			accountingsync.AccountRoleDeposit,
 		},
 		Environments: []AppEnvironment{
 			AppEnvironmentProduction,
@@ -150,7 +151,7 @@ var providerProfiles = []ProviderProfile{
 			"drift page.",
 		WebhookSubscriptions: true,
 		RevokesTokens:        false,
-		ReconnectWarning:     defaultReconnectWarning,
+		ReconnectWarning:     DefaultReconnectWarning,
 	},
 	{
 		Type:            integration.TypeNetSuite,
@@ -168,11 +169,11 @@ var providerProfiles = []ProviderProfile{
 			ReferenceKindTerm,
 		},
 		AccountRoles: []string{
-			AccountRoleDeposit,
-			AccountRolePurchasedTransportation,
+			accountingsync.AccountRoleDeposit,
+			accountingsync.AccountRolePurchasedTransportation,
 		},
 		RequiredAccountRoles: []string{
-			AccountRoleDeposit,
+			accountingsync.AccountRoleDeposit,
 		},
 		Environments: []AppEnvironment{
 			AppEnvironmentProduction,
@@ -242,7 +243,7 @@ func ProfileByWebhookSlug(slug string) (ProviderProfile, bool) {
 func (p *ProviderProfile) ReconnectWarningSeconds() int {
 	warning := p.ReconnectWarning
 	if warning <= 0 {
-		warning = defaultReconnectWarning
+		warning = DefaultReconnectWarning
 	}
 	return int(warning / time.Second)
 }
@@ -251,20 +252,22 @@ func (p *ProviderProfile) Has(kind ReferenceKind) bool {
 	return slices.Contains(p.ReferenceKinds, kind)
 }
 
-func (p *ProviderProfile) KindFor(target MappingTargetType) ReferenceKind {
+func (p *ProviderProfile) KindFor(target accountingsync.MappingTargetType) ReferenceKind {
 	var kind ReferenceKind
 	switch target {
-	case TargetAccountRole, TargetGLAccount:
+	case accountingsync.TargetAccountRole, accountingsync.TargetGLAccount:
 		kind = ReferenceKindAccount
-	case TargetLineType, TargetAccessorialCharge, TargetItemRole:
+	case accountingsync.TargetLineType,
+		accountingsync.TargetAccessorialCharge,
+		accountingsync.TargetItemRole:
 		kind = p.LineKind
-	case TargetCustomer:
+	case accountingsync.TargetCustomer:
 		kind = ReferenceKindCustomer
-	case TargetCarrier, TargetDriver:
+	case accountingsync.TargetCarrier, accountingsync.TargetDriver:
 		kind = ReferenceKindVendor
-	case TargetPaymentTerm:
+	case accountingsync.TargetPaymentTerm:
 		kind = ReferenceKindTerm
-	case TargetPaymentMethod:
+	case accountingsync.TargetPaymentMethod:
 		kind = ReferenceKindPaymentMethod
 	}
 	if kind == "" || !p.Has(kind) {
@@ -273,7 +276,7 @@ func (p *ProviderProfile) KindFor(target MappingTargetType) ReferenceKind {
 	return kind
 }
 
-func (p *ProviderProfile) Offers(target MappingTargetType) bool {
+func (p *ProviderProfile) Offers(target accountingsync.MappingTargetType) bool {
 	return p.KindFor(target) != ""
 }
 
@@ -281,21 +284,24 @@ func (p *ProviderProfile) OffersRole(role string) bool {
 	return slices.Contains(p.AccountRoles, role)
 }
 
-func (p *ProviderProfile) OffersKey(target MappingTargetType, key string) bool {
+func (p *ProviderProfile) OffersKey(target accountingsync.MappingTargetType, key string) bool {
 	if !p.Offers(target) {
 		return false
 	}
-	if target == TargetAccountRole {
+	if target == accountingsync.TargetAccountRole {
 		return p.OffersRole(key)
 	}
 	return true
 }
 
-func (p *ProviderProfile) IsRequiredTarget(target MappingTargetType, key string) bool {
+func (p *ProviderProfile) IsRequiredTarget(
+	target accountingsync.MappingTargetType,
+	key string,
+) bool {
 	switch target { //nolint:exhaustive // only roles and the freight line are ever required
-	case TargetAccountRole:
+	case accountingsync.TargetAccountRole:
 		return slices.Contains(p.RequiredAccountRoles, key)
-	case TargetLineType:
+	case accountingsync.TargetLineType:
 		return p.Offers(target) && key == string(invoice.InvoiceLineTypeFreight)
 	default:
 		return false
@@ -336,13 +342,13 @@ func (p *ProviderProfile) SupportsMode(mode SyncMode) bool {
 }
 
 type TargetKey struct {
-	Type MappingTargetType
+	Type accountingsync.MappingTargetType
 	Key  string
 }
 
 func (p *ProviderProfile) RequiredTargets() []TargetKey {
 	keys := make([]TargetKey, 0, len(p.RequiredAccountRoles)+1)
-	for _, target := range AllMappingTargetTypes() {
+	for _, target := range accountingsync.AllMappingTargetTypes() {
 		for _, key := range target.Keys() {
 			if p.IsRequiredTarget(target, key) {
 				keys = append(keys, TargetKey{Type: target, Key: key})

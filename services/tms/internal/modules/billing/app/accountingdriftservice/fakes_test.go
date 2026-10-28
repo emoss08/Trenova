@@ -6,6 +6,8 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -20,11 +22,11 @@ import (
 type fakeConnections struct {
 	accountingconnectionports.AccountingConnectionRepository
 	mu     sync.Mutex
-	conn   *accountingsync.AccountingConnection
+	conn   *accountingconnection.AccountingConnection
 	checks []accountingconnectionports.SaveAccountingDriftCheckRequest
 }
 
-func (f *fakeConnections) current() *accountingsync.AccountingConnection {
+func (f *fakeConnections) current() *accountingconnection.AccountingConnection {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	out := *f.conn
@@ -34,7 +36,7 @@ func (f *fakeConnections) current() *accountingsync.AccountingConnection {
 func (f *fakeConnections) GetByID(
 	_ context.Context,
 	req accountingconnectionports.GetAccountingConnectionByIDRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	if req.ID != f.conn.ID {
 		return nil, errortypes.NewNotFoundError("Accounting connection not found")
 	}
@@ -231,28 +233,30 @@ func (f *fakeRecords) ListByObjects(
 type fakeFindings struct {
 	accountingdriftports.AccountingDriftFindingRepository
 	mu       sync.Mutex
-	rows     []*accountingsync.AccountingDriftFinding
+	rows     []*accountingdrift.AccountingDriftFinding
 	lastList *accountingdriftports.ListAccountingDriftFindingsConnectionRequest
 }
 
-func cloneFinding(f *accountingsync.AccountingDriftFinding) *accountingsync.AccountingDriftFinding {
+func cloneFinding(
+	f *accountingdrift.AccountingDriftFinding,
+) *accountingdrift.AccountingDriftFinding {
 	out := *f
-	out.Detail = append([]accountingsync.DriftLine{}, f.Detail...)
+	out.Detail = append([]accountingdrift.DriftLine{}, f.Detail...)
 	return &out
 }
 
-func (f *fakeFindings) all() []*accountingsync.AccountingDriftFinding {
+func (f *fakeFindings) all() []*accountingdrift.AccountingDriftFinding {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := make([]*accountingsync.AccountingDriftFinding, 0, len(f.rows))
+	out := make([]*accountingdrift.AccountingDriftFinding, 0, len(f.rows))
 	for _, row := range f.rows {
 		out = append(out, cloneFinding(row))
 	}
 	return out
 }
 
-func (f *fakeFindings) open() []*accountingsync.AccountingDriftFinding {
-	out := []*accountingsync.AccountingDriftFinding{}
+func (f *fakeFindings) open() []*accountingdrift.AccountingDriftFinding {
+	out := []*accountingdrift.AccountingDriftFinding{}
 	for _, row := range f.all() {
 		if row.IsOpen() {
 			out = append(out, row)
@@ -263,8 +267,8 @@ func (f *fakeFindings) open() []*accountingsync.AccountingDriftFinding {
 
 func (f *fakeFindings) Create(
 	_ context.Context,
-	entity *accountingsync.AccountingDriftFinding,
-) (*accountingsync.AccountingDriftFinding, error) {
+	entity *accountingdrift.AccountingDriftFinding,
+) (*accountingdrift.AccountingDriftFinding, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for _, row := range f.rows {
@@ -280,8 +284,8 @@ func (f *fakeFindings) Create(
 
 func (f *fakeFindings) Update(
 	_ context.Context,
-	entity *accountingsync.AccountingDriftFinding,
-) (*accountingsync.AccountingDriftFinding, error) {
+	entity *accountingdrift.AccountingDriftFinding,
+) (*accountingdrift.AccountingDriftFinding, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for idx, row := range f.rows {
@@ -297,7 +301,7 @@ func (f *fakeFindings) Update(
 func (f *fakeFindings) GetByID(
 	_ context.Context,
 	req accountingdriftports.GetAccountingDriftFindingQuery,
-) (*accountingsync.AccountingDriftFinding, error) {
+) (*accountingdrift.AccountingDriftFinding, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for _, row := range f.rows {
@@ -311,10 +315,10 @@ func (f *fakeFindings) GetByID(
 func (f *fakeFindings) ListOpen(
 	_ context.Context,
 	req *accountingdriftports.ListOpenAccountingDriftFindingsRequest,
-) ([]*accountingsync.AccountingDriftFinding, error) {
+) ([]*accountingdrift.AccountingDriftFinding, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := []*accountingsync.AccountingDriftFinding{}
+	out := []*accountingdrift.AccountingDriftFinding{}
 	for _, row := range f.rows {
 		if row.IsOpen() && row.ConnectionID == req.ConnectionID &&
 			slices.Contains(req.ObjectIDs, row.ObjectID) {

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 )
@@ -55,7 +55,7 @@ func subscriptionInput(
 func (c *Connector) Subscribe(
 	ctx context.Context,
 	req *accountingconnectorports.AccountingSubscribeRequest,
-) (*accountingsync.WebhookSubscriptionGrant, error) {
+) (*accountingconnection.WebhookSubscriptionGrant, error) {
 	client, err := c.client(req.Auth)
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func (c *Connector) Subscribe(
 func (c *Connector) RenewSubscription(
 	ctx context.Context,
 	req *accountingconnectorports.AccountingRenewSubscriptionRequest,
-) (*accountingsync.WebhookSubscriptionGrant, error) {
+) (*accountingconnection.WebhookSubscriptionGrant, error) {
 	client, err := c.client(req.Auth)
 	if err != nil {
 		return nil, err
@@ -112,8 +112,8 @@ func (c *Connector) IsSubscriptionGone(err error) bool {
 func (c *Connector) grantOf(
 	sub *businesscentral.Subscription,
 	notificationURL string,
-) *accountingsync.WebhookSubscriptionGrant {
-	grant := &accountingsync.WebhookSubscriptionGrant{
+) *accountingconnection.WebhookSubscriptionGrant {
+	grant := &accountingconnection.WebhookSubscriptionGrant{
 		ExternalID:      sub.ID,
 		NotificationURL: sub.NotificationURL,
 		ETag:            sub.ETag,

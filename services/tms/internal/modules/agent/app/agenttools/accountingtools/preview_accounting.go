@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
@@ -37,20 +39,22 @@ var mappingFields = []string{
 
 var mappingLabels = map[string]string{"externalName": "Mapped to"}
 
-func accountingConnectionRecord(conn *accountingsync.AccountingConnection) toolpreview.Record {
+func accountingConnectionRecord(
+	conn *accountingconnection.AccountingConnection,
+) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceAccountingIntegration,
 		ID:       conn.ID,
 		Label: fmt.Sprintf(
 			"%s for %s",
-			accountingsync.ProviderName(conn.IntegrationType),
+			accountingprovider.ProviderName(conn.IntegrationType),
 			conn.ExternalCompanyName,
 		),
 		Version: changepreview.PreviewVersion(conn.Version),
 	}
 }
 
-func mappingRecord(row *accountingsync.AccountingMapping) toolpreview.Record {
+func mappingRecord(row *accountingmapping.AccountingMapping) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceAccountingIntegration,
 		ID:       row.ID,
@@ -87,7 +91,7 @@ func (t *CheckAccountingConnectionTool) Preview(
 	change, err := toolpreview.Update(
 		accountingConnectionRecord(conn),
 		conn,
-		func(checked *accountingsync.AccountingConnection) error {
+		func(checked *accountingconnection.AccountingConnection) error {
 			checked.RecordSuccess(now)
 
 			return nil
@@ -103,7 +107,7 @@ func (t *CheckAccountingConnectionTool) Preview(
 		"Would check %s for %s now and record whether it answers. It is %s at the moment; "+
 			"shown is what is recorded when it answers, and a failure is recorded instead "+
 			"when it does not.",
-		accountingsync.ProviderName(conn.IntegrationType),
+		accountingprovider.ProviderName(conn.IntegrationType),
 		conn.ExternalCompanyName,
 		conn.Status,
 	), change)
@@ -152,7 +156,7 @@ func (t *SetAccountingMappingTool) Preview(
 	change, err := toolpreview.Update(
 		mappingRecord(row),
 		row,
-		func(mapped *accountingsync.AccountingMapping) error {
+		func(mapped *accountingmapping.AccountingMapping) error {
 			mapped.Confirm(choice)
 
 			return nil
@@ -199,7 +203,7 @@ func (t *ClearAccountingMappingTool) Preview(
 	plan, err := changepreview.PlanUpdate(
 		mappingRecord(row),
 		row,
-		func(cleared *accountingsync.AccountingMapping) error { return cleared.Clear() },
+		func(cleared *accountingmapping.AccountingMapping) error { return cleared.Clear() },
 		mappingOptions()...,
 	)
 	if err != nil {
@@ -247,7 +251,7 @@ func (t *CreateAccountingReferenceRecordTool) Preview(
 	choice := accountingmappingservice.CreatedReferenceChoice(
 		&accountingmappingservice.CreatedReference{
 			ExternalName:    name,
-			RequestedSource: accountingsync.MappingSourceAgent,
+			RequestedSource: accountingmapping.MappingSourceAgent,
 			IntegrationType: system,
 			ActorID:         params.Actor.UserID,
 			At:              timeutils.NowUnix(),
@@ -256,7 +260,7 @@ func (t *CreateAccountingReferenceRecordTool) Preview(
 	mapped, err := toolpreview.Update(
 		mappingRecord(row),
 		row,
-		func(confirmed *accountingsync.AccountingMapping) error {
+		func(confirmed *accountingmapping.AccountingMapping) error {
 			confirmed.Confirm(choice)
 
 			return nil
@@ -272,7 +276,7 @@ func (t *CreateAccountingReferenceRecordTool) Preview(
 			"the name to its own rules; it cannot be deleted from Trenova afterwards.",
 		strings.ToLower(string(row.ProviderKind)),
 		name,
-		accountingsync.ProviderName(system),
+		accountingprovider.ProviderName(system),
 		row.TargetLabel,
 	), created, mapped)
 	preview.Partial = true
@@ -282,7 +286,7 @@ func (t *CreateAccountingReferenceRecordTool) Preview(
 
 func (t *CreateAccountingReferenceRecordTool) requestedName(
 	params *agenttoolports.ToolExecuteParams,
-	row *accountingsync.AccountingMapping,
+	row *accountingmapping.AccountingMapping,
 ) string {
 	if name := strings.TrimSpace(toolparams.OptionalString(params.Params, "name")); name != "" {
 		return name

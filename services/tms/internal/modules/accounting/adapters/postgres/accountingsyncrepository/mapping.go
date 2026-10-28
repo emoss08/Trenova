@@ -7,8 +7,10 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping/accountingmappingdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -55,12 +57,12 @@ func NewMappingRepository(p MappingParams) accountingmappingports.AccountingMapp
 func (r *mappingRepository) ListByConnection(
 	ctx context.Context,
 	req *accountingmappingports.ListAccountingMappingsQuery,
-) ([]*accountingsync.AccountingMapping, error) {
+) ([]*accountingmapping.AccountingMapping, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*accountingsync.AccountingMapping, error) {
-			am := accountingsyncdb.AccountingMappings
+		func(ctx context.Context) ([]*accountingmapping.AccountingMapping, error) {
+			am := accountingmappingdb.AccountingMappings
 			return am.Where(
 				am.ConnectionID.Eq(req.ConnectionID),
 				keel.When(len(req.TargetTypes) > 0, am.TargetType.In(req.TargetTypes...)),
@@ -74,7 +76,7 @@ func (r *mappingRepository) ListByConnection(
 func mappingFilters(
 	req *accountingmappingports.ListAccountingMappingsConnectionRequest,
 ) []keel.Pred {
-	am := accountingsyncdb.AccountingMappings
+	am := accountingmappingdb.AccountingMappings
 	term := stringutils.NormalizeName(req.Search)
 
 	return []keel.Pred{
@@ -87,11 +89,11 @@ func mappingFilters(
 }
 
 func requiredTargets() keel.Pred {
-	am := accountingsyncdb.AccountingMappings
+	am := accountingmappingdb.AccountingMappings
 	var required []keel.Pred
 	for _, target := range accountingsync.AllMappingTargetTypes() {
 		for _, key := range target.Keys() {
-			if !accountingsync.IsRequiredTarget(target, key) {
+			if !accountingprovider.IsRequiredTarget(target, key) {
 				continue
 			}
 			required = append(required, keel.And(am.TargetType.Eq(target), am.TrenovaKey.Eq(key)))
@@ -103,11 +105,11 @@ func requiredTargets() keel.Pred {
 func (r *mappingRepository) ListConnection(
 	ctx context.Context,
 	req *accountingmappingports.ListAccountingMappingsConnectionRequest,
-) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error) {
+) (*pagination.CursorListResult[*accountingmapping.AccountingMapping], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*accountingmapping.AccountingMapping], error) {
 			if req.Filter != nil && len(req.Filter.Sort) == 0 {
 				req.Filter.Sort = []domaintypes.SortField{
 					{Field: mappingLabelField, Direction: dbtype.SortDirectionAsc},
@@ -117,8 +119,8 @@ func (r *mappingRepository) ListConnection(
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				accountingsyncdb.AccountingMappings.Where(mappingFilters(req)...),
-				&listquery.Request[accountingsync.AccountingMapping]{
+				accountingmappingdb.AccountingMappings.Where(mappingFilters(req)...),
+				&listquery.Request[accountingmapping.AccountingMapping]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 				},
@@ -136,12 +138,12 @@ func (r *mappingRepository) ListConnection(
 func (r *mappingRepository) GetByID(
 	ctx context.Context,
 	req accountingmappingports.GetAccountingMappingRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingMapping, error) {
-			entity, err := accountingsyncdb.AccountingMappings.Get(ctx, r.db.Keel(ctx), req.ID)
+		func(ctx context.Context) (*accountingmapping.AccountingMapping, error) {
+			entity, err := accountingmappingdb.AccountingMappings.Get(ctx, r.db.Keel(ctx), req.ID)
 			if err != nil {
 				return nil, mappingErrors.Map(err, req.ID.String())
 			}
@@ -154,16 +156,16 @@ func (r *mappingRepository) GetByID(
 func (r *mappingRepository) GetByIDs(
 	ctx context.Context,
 	req accountingmappingports.GetAccountingMappingsByIDsRequest,
-) ([]*accountingsync.AccountingMapping, error) {
+) ([]*accountingmapping.AccountingMapping, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*accountingsync.AccountingMapping, error) {
+		func(ctx context.Context) ([]*accountingmapping.AccountingMapping, error) {
 			if len(req.IDs) == 0 {
-				return []*accountingsync.AccountingMapping{}, nil
+				return []*accountingmapping.AccountingMapping{}, nil
 			}
 
-			am := accountingsyncdb.AccountingMappings
+			am := accountingmappingdb.AccountingMappings
 			return am.Where(am.ID.In(req.IDs...)).Limit(len(req.IDs)).List(ctx, r.db.Keel(ctx))
 		},
 	)
@@ -172,12 +174,12 @@ func (r *mappingRepository) GetByIDs(
 func (r *mappingRepository) GetByTarget(
 	ctx context.Context,
 	req *accountingmappingports.GetAccountingMappingByTargetRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingMapping, error) {
-			am := accountingsyncdb.AccountingMappings
+		func(ctx context.Context) (*accountingmapping.AccountingMapping, error) {
+			am := accountingmappingdb.AccountingMappings
 			key := am.TrenovaKey.Eq(req.TrenovaKey)
 			if req.TargetType.KeyedByObject() {
 				key = am.TrenovaObjectID.Eq(req.TrenovaObjectID)
@@ -199,10 +201,10 @@ func (r *mappingRepository) GetByTarget(
 
 func (r *mappingRepository) CreateMissing(
 	ctx context.Context,
-	entities []*accountingsync.AccountingMapping,
+	entities []*accountingmapping.AccountingMapping,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		am := accountingsyncdb.AccountingMappings
+		am := accountingmappingdb.AccountingMappings
 		created, err := am.CreateOrSkip(
 			ctx,
 			r.db.Keel(ctx),
@@ -224,10 +226,10 @@ func (r *mappingRepository) CreateMissing(
 
 func (r *mappingRepository) ApplyScoring(
 	ctx context.Context,
-	entities []*accountingsync.AccountingMapping,
+	entities []*accountingmapping.AccountingMapping,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		am := accountingsyncdb.AccountingMappings
+		am := accountingmappingdb.AccountingMappings
 		db := r.db.Keel(ctx)
 		var applied int64
 
@@ -236,7 +238,7 @@ func (r *mappingRepository) ApplyScoring(
 			affected, err := am.Where(
 				am.ID.Eq(entity.ID),
 				am.Version.Eq(entity.Version),
-				am.State.Ne(accountingsync.MappingStateConfirmed),
+				am.State.Ne(accountingmapping.MappingStateConfirmed),
 			).Update(
 				ctx,
 				db,
@@ -266,10 +268,10 @@ func (r *mappingRepository) ApplyScoring(
 
 func (r *mappingRepository) UpdateLabels(
 	ctx context.Context,
-	entities []*accountingsync.AccountingMapping,
+	entities []*accountingmapping.AccountingMapping,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		am := accountingsyncdb.AccountingMappings
+		am := accountingmappingdb.AccountingMappings
 		db := r.db.Keel(ctx)
 		for _, entity := range entities {
 			entity.SearchLabel = stringutils.NormalizeName(entity.TargetLabel)
@@ -289,14 +291,14 @@ func (r *mappingRepository) UpdateLabels(
 
 func (r *mappingRepository) Update(
 	ctx context.Context,
-	entity *accountingsync.AccountingMapping,
-) (*accountingsync.AccountingMapping, error) {
+	entity *accountingmapping.AccountingMapping,
+) (*accountingmapping.AccountingMapping, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingMapping, error) {
+		func(ctx context.Context) (*accountingmapping.AccountingMapping, error) {
 			ov := entity.Version
-			err := accountingsyncdb.AccountingMappings.Save(ctx, r.db.Keel(ctx), entity)
+			err := accountingmappingdb.AccountingMappings.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				entity.Version = ov
 				return nil, mappingErrors.Map(err, entity.ID.String())
@@ -316,7 +318,7 @@ func (r *mappingRepository) CountByState(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]accountingmappingports.AccountingMappingCount, error) {
-			am := accountingsyncdb.AccountingMappings
+			am := accountingmappingdb.AccountingMappings
 			counts, err := keel.Into[accountingmappingports.AccountingMappingCount](
 				ctx,
 				r.db.Keel(ctx),

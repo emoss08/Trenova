@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +14,7 @@ import (
 )
 
 func listRequest(
-	kind accountingsync.ReferenceKind,
+	kind accountingprovider.ReferenceKind,
 	realm string,
 ) *accountingconnectorports.AccountingReferencePageRequest {
 	return &accountingconnectorports.AccountingReferencePageRequest{
@@ -50,7 +52,7 @@ func TestListReferenceReadsAccountsKeysetByID(t *testing.T) {
 	assert.Equal(t, 1000, conn.MaxReferencePageSize())
 	page, err := conn.ListReference(
 		t.Context(),
-		listRequest(accountingsync.ReferenceKindAccount, testRef().String()),
+		listRequest(accountingprovider.ReferenceKindAccount, testRef().String()),
 	)
 	require.NoError(t, err)
 	require.Len(t, page.Objects, 4)
@@ -61,12 +63,12 @@ func TestListReferenceReadsAccountsKeysetByID(t *testing.T) {
 	assert.Equal(t, "Operating Account", bank.Name)
 	assert.Equal(t, "Cash : Operating Account", bank.FullyQualifiedName)
 	assert.Equal(t, "1000", bank.Number)
-	assert.Equal(t, accountingsync.AccountClassBank, bank.AccountClass)
+	assert.Equal(t, accountingmapping.AccountClassBank, bank.AccountClass)
 	assert.Equal(t, "9", bank.ParentExternalID)
 	assert.True(t, bank.Active)
 	require.NotNil(t, bank.ProviderUpdatedAt)
-	assert.Equal(t, accountingsync.AccountClassIncome, page.Objects[1].AccountClass)
-	assert.Equal(t, accountingsync.AccountClassCostOfSales, page.Objects[2].AccountClass)
+	assert.Equal(t, accountingmapping.AccountClassIncome, page.Objects[1].AccountClass)
+	assert.Equal(t, accountingmapping.AccountClassCostOfSales, page.Objects[2].AccountClass)
 	assert.False(t, page.Objects[3].Active, "a statistical account is not a line target")
 
 	call, ok := fake.query("FROM account a")
@@ -85,7 +87,7 @@ func TestListReferenceFiltersPartiesAndItemsBySubsidiary(t *testing.T) {
 
 	items, err := conn.ListReference(
 		t.Context(),
-		listRequest(accountingsync.ReferenceKindItem, testRef().String()),
+		listRequest(accountingprovider.ReferenceKindItem, testRef().String()),
 	)
 	require.NoError(t, err)
 	require.Len(t, items.Objects, 2)
@@ -97,7 +99,7 @@ func TestListReferenceFiltersPartiesAndItemsBySubsidiary(t *testing.T) {
 
 	customers, err := conn.ListReference(
 		t.Context(),
-		listRequest(accountingsync.ReferenceKindCustomer, testRef().String()),
+		listRequest(accountingprovider.ReferenceKindCustomer, testRef().String()),
 	)
 	require.NoError(t, err)
 	require.Len(t, customers.Objects, 2)
@@ -108,12 +110,12 @@ func TestListReferenceFiltersPartiesAndItemsBySubsidiary(t *testing.T) {
 
 	vendors, err := conn.ListReference(
 		t.Context(),
-		listRequest(accountingsync.ReferenceKindVendor, testRef().String()),
+		listRequest(accountingprovider.ReferenceKindVendor, testRef().String()),
 	)
 	require.NoError(t, err)
 	require.Len(t, vendors.Objects, 1)
 	assert.True(t, vendors.Objects[0].Is1099)
-	assert.Equal(t, accountingsync.ReferenceKindVendor, vendors.Objects[0].Kind)
+	assert.Equal(t, accountingprovider.ReferenceKindVendor, vendors.Objects[0].Kind)
 
 	for fragment, table := range map[string]string{
 		"FROM item i":     "itemsubsidiarymap",
@@ -132,7 +134,7 @@ func TestListReferenceFiltersPartiesAndItemsBySubsidiary(t *testing.T) {
 	conn = testConnector(t, plain)
 	_, err = conn.ListReference(
 		t.Context(),
-		listRequest(accountingsync.ReferenceKindCustomer, testAccount),
+		listRequest(accountingprovider.ReferenceKindCustomer, testAccount),
 	)
 	require.NoError(t, err)
 	call, ok := plain.query("FROM customer c")
@@ -148,7 +150,7 @@ func TestListReferenceReadsTermsAndSkipsPaymentMethods(t *testing.T) {
 	conn := testConnector(t, fake)
 	terms, err := conn.ListReference(
 		t.Context(),
-		listRequest(accountingsync.ReferenceKindTerm, testRef().String()),
+		listRequest(accountingprovider.ReferenceKindTerm, testRef().String()),
 	)
 	require.NoError(t, err)
 	require.Len(t, terms.Objects, 2)
@@ -158,13 +160,13 @@ func TestListReferenceReadsTermsAndSkipsPaymentMethods(t *testing.T) {
 
 	methods, err := conn.ListReference(
 		t.Context(),
-		listRequest(accountingsync.ReferenceKindPaymentMethod, testRef().String()),
+		listRequest(accountingprovider.ReferenceKindPaymentMethod, testRef().String()),
 	)
 	require.NoError(t, err)
 	assert.Empty(t, methods.Objects)
 	_, err = conn.ListReference(
 		t.Context(),
-		listRequest(accountingsync.ReferenceKind("Bogus"), testRef().String()),
+		listRequest(accountingprovider.ReferenceKind("Bogus"), testRef().String()),
 	)
 	require.Error(t, err)
 	assert.Equal(t, 1, len(fake.all()))
@@ -173,19 +175,19 @@ func TestListReferenceReadsTermsAndSkipsPaymentMethods(t *testing.T) {
 func TestAccountClassOfCoversNetSuiteAccountTypes(t *testing.T) {
 	t.Parallel()
 
-	for accountType, want := range map[string]accountingsync.AccountClass{
-		"Bank":         accountingsync.AccountClassBank,
-		"AcctRec":      accountingsync.AccountClassReceivable,
-		"UnbilledRec":  accountingsync.AccountClassReceivable,
-		"AcctPay":      accountingsync.AccountClassPayable,
-		"OthCurrAsset": accountingsync.AccountClassAsset,
-		"FixedAsset":   accountingsync.AccountClassAsset,
-		"CredCard":     accountingsync.AccountClassLiability,
-		"LongTermLiab": accountingsync.AccountClassLiability,
-		"Equity":       accountingsync.AccountClassEquity,
-		"OthIncome":    accountingsync.AccountClassOtherIncome,
-		"Expense":      accountingsync.AccountClassExpense,
-		"OthExpense":   accountingsync.AccountClassOtherExpense,
+	for accountType, want := range map[string]accountingmapping.AccountClass{
+		"Bank":         accountingmapping.AccountClassBank,
+		"AcctRec":      accountingmapping.AccountClassReceivable,
+		"UnbilledRec":  accountingmapping.AccountClassReceivable,
+		"AcctPay":      accountingmapping.AccountClassPayable,
+		"OthCurrAsset": accountingmapping.AccountClassAsset,
+		"FixedAsset":   accountingmapping.AccountClassAsset,
+		"CredCard":     accountingmapping.AccountClassLiability,
+		"LongTermLiab": accountingmapping.AccountClassLiability,
+		"Equity":       accountingmapping.AccountClassEquity,
+		"OthIncome":    accountingmapping.AccountClassOtherIncome,
+		"Expense":      accountingmapping.AccountClassExpense,
+		"OthExpense":   accountingmapping.AccountClassOtherExpense,
 		"NonPosting":   "",
 		"Stat":         "",
 	} {
@@ -194,7 +196,7 @@ func TestAccountClassOfCoversNetSuiteAccountTypes(t *testing.T) {
 }
 
 func createRequest(
-	kind accountingsync.ReferenceKind,
+	kind accountingprovider.ReferenceKind,
 ) *accountingconnectorports.AccountingCreateReferenceRequest {
 	return &accountingconnectorports.AccountingCreateReferenceRequest{
 		RealmID:     testRef().String(),
@@ -222,7 +224,7 @@ func TestCreateCustomerUpsertsByRequestIDWithTheSubsidiary(t *testing.T) {
 		return reply{}
 	}}
 	conn := testConnector(t, fake)
-	req := createRequest(accountingsync.ReferenceKindCustomer)
+	req := createRequest(accountingprovider.ReferenceKindCustomer)
 	req.Party = &accountingconnectorports.AccountingPartyDraft{
 		DisplayName:  "Northwind",
 		CompanyName:  "Northwind Logistics",
@@ -237,7 +239,7 @@ func TestCreateCustomerUpsertsByRequestIDWithTheSubsidiary(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "900", obj.ExternalID)
 	assert.Equal(t, "Northwind Logistics", obj.Name)
-	assert.Equal(t, accountingsync.ReferenceKindCustomer, obj.Kind)
+	assert.Equal(t, accountingprovider.ReferenceKindCustomer, obj.Kind)
 
 	check, ok := fake.query("UPPER(c.entityid)")
 	require.True(t, ok)
@@ -270,7 +272,7 @@ func TestCreatePartyRefusesADuplicateNameButResumesItsOwnRetry(t *testing.T) {
 		return reply{}
 	}}
 	conn := testConnector(t, fake)
-	req := createRequest(accountingsync.ReferenceKindVendor)
+	req := createRequest(accountingprovider.ReferenceKindVendor)
 	req.Party = &accountingconnectorports.AccountingPartyDraft{
 		DisplayName: "Swift Carriers LLC",
 		Is1099:      true,
@@ -307,7 +309,7 @@ func TestCreateItemFallsBackToANonInventorySaleItem(t *testing.T) {
 		return reply{}
 	}}
 	conn := testConnector(t, fake)
-	req := createRequest(accountingsync.ReferenceKindItem)
+	req := createRequest(accountingprovider.ReferenceKindItem)
 	req.Item = &accountingconnectorports.AccountingItemDraft{
 		Name:            "  Detention\n",
 		Description:     "Detention charges",
@@ -331,20 +333,23 @@ func TestCreateReferenceRefusesKindsNetSuiteDoesNotTakeFromTrenova(t *testing.T)
 
 	fake := &fakeNS{}
 	conn := testConnector(t, fake)
-	for _, kind := range []accountingsync.ReferenceKind{
-		accountingsync.ReferenceKindAccount,
-		accountingsync.ReferenceKindTerm,
-		accountingsync.ReferenceKindPaymentMethod,
-		accountingsync.ReferenceKind("Bogus"),
+	for _, kind := range []accountingprovider.ReferenceKind{
+		accountingprovider.ReferenceKindAccount,
+		accountingprovider.ReferenceKindTerm,
+		accountingprovider.ReferenceKindPaymentMethod,
+		accountingprovider.ReferenceKind("Bogus"),
 	} {
 		_, err := conn.CreateReference(t.Context(), createRequest(kind))
 		require.Error(t, err, kind)
 	}
-	_, err := conn.CreateReference(t.Context(), createRequest(accountingsync.ReferenceKindItem))
+	_, err := conn.CreateReference(t.Context(), createRequest(accountingprovider.ReferenceKindItem))
 	require.ErrorIs(t, err, errItemDraftRequired)
-	_, err = conn.CreateReference(t.Context(), createRequest(accountingsync.ReferenceKindCustomer))
+	_, err = conn.CreateReference(
+		t.Context(),
+		createRequest(accountingprovider.ReferenceKindCustomer),
+	)
 	require.ErrorIs(t, err, errPartyDraftRequired)
-	req := createRequest(accountingsync.ReferenceKindCustomer)
+	req := createRequest(accountingprovider.ReferenceKindCustomer)
 	req.Party = &accountingconnectorports.AccountingPartyDraft{DisplayName: " "}
 	_, err = conn.CreateReference(t.Context(), req)
 	require.ErrorIs(t, err, errNameRequired)
@@ -357,9 +362,13 @@ func TestSanitizeNameFitsNetSuiteLimits(t *testing.T) {
 
 	conn := testConnector(t, &fakeNS{})
 	long := strings.Repeat("x", 120)
-	assert.Len(t, conn.SanitizeName(accountingsync.ReferenceKindItem, long), maxItemNameLength)
-	assert.Len(t, conn.SanitizeName(accountingsync.ReferenceKindCustomer, long), maxPartyNameLength)
-	assert.Equal(t, "a b", conn.SanitizeName(accountingsync.ReferenceKindVendor, " a\tb "))
+	assert.Len(t, conn.SanitizeName(accountingprovider.ReferenceKindItem, long), maxItemNameLength)
+	assert.Len(
+		t,
+		conn.SanitizeName(accountingprovider.ReferenceKindCustomer, long),
+		maxPartyNameLength,
+	)
+	assert.Equal(t, "a b", conn.SanitizeName(accountingprovider.ReferenceKindVendor, " a\tb "))
 }
 
 func TestUpsertCustomerAndVendorPatchExistingRecords(t *testing.T) {

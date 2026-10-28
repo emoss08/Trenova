@@ -3,7 +3,7 @@ package accountinginboundports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -17,7 +17,7 @@ type GetAccountingInboundChangeQuery struct {
 type ListAccountingInboundChangesByExternalIDsRequest struct {
 	TenantInfo   pagination.TenantInfo
 	ConnectionID pulid.ID
-	Kind         accountingsync.InboundChangeKind
+	Kind         accountinginbound.InboundChangeKind
 	ExternalIDs  []string
 }
 
@@ -32,9 +32,9 @@ type ListAccountingInboundChangesConnectionRequest struct {
 	Filter       *pagination.QueryOptions
 	Cursor       pagination.CursorInfo
 	ConnectionID pulid.ID
-	Statuses     []accountingsync.InboundChangeStatus
-	Kinds        []accountingsync.InboundChangeKind
-	Reasons      []accountingsync.InboundChangeReason
+	Statuses     []accountinginbound.InboundChangeStatus
+	Kinds        []accountinginbound.InboundChangeKind
+	Reasons      []accountinginbound.InboundChangeReason
 	Search       string
 }
 
@@ -58,7 +58,7 @@ type ListAccountingInboundAttentionRequest struct {
 }
 
 type AccountingInboundAttentionGroup struct {
-	Reason           accountingsync.InboundChangeReason
+	Reason           accountinginbound.InboundChangeReason
 	Count            int
 	OldestDetectedAt int64
 	SampleID         pulid.ID
@@ -67,28 +67,28 @@ type AccountingInboundAttentionGroup struct {
 type AccountingInboundChangeRepository interface {
 	Create(
 		ctx context.Context,
-		entity *accountingsync.AccountingInboundChange,
-	) (*accountingsync.AccountingInboundChange, error)
+		entity *accountinginbound.AccountingInboundChange,
+	) (*accountinginbound.AccountingInboundChange, error)
 	Update(
 		ctx context.Context,
-		entity *accountingsync.AccountingInboundChange,
-	) (*accountingsync.AccountingInboundChange, error)
+		entity *accountinginbound.AccountingInboundChange,
+	) (*accountinginbound.AccountingInboundChange, error)
 	GetByID(
 		ctx context.Context,
 		req GetAccountingInboundChangeQuery,
-	) (*accountingsync.AccountingInboundChange, error)
+	) (*accountinginbound.AccountingInboundChange, error)
 	ListByExternalIDs(
 		ctx context.Context,
 		req *ListAccountingInboundChangesByExternalIDsRequest,
-	) ([]*accountingsync.AccountingInboundChange, error)
+	) ([]*accountinginbound.AccountingInboundChange, error)
 	ListDetected(
 		ctx context.Context,
 		req *ListDetectedAccountingInboundChangesRequest,
-	) ([]*accountingsync.AccountingInboundChange, error)
+	) ([]*accountinginbound.AccountingInboundChange, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAccountingInboundChangesConnectionRequest,
-	) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error)
+	) (*pagination.CursorListResult[*accountinginbound.AccountingInboundChange], error)
 	Summarize(
 		ctx context.Context,
 		req *SummarizeAccountingInboundChangesRequest,

@@ -11,6 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingsyncrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
@@ -66,22 +70,22 @@ func writeAccountingRows(
 		UserID: tenant.Actor.UserID,
 	}
 	now := timeutils.NowUnix()
-	conn := &accountingsync.AccountingConnection{
+	conn := &accountingconnection.AccountingConnection{
 		OrganizationID:  info.OrgID,
 		BusinessUnitID:  info.BuID,
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ExternalRealmID: "realm-" + label + pulid.MustNew("x_").String()[2:10],
 	}
-	conn.Connect(info.UserID, accountingsync.TokenGrant{
+	conn.Connect(info.UserID, accountingconnection.TokenGrant{
 		AccessTokenCiphertext:  "cipher-access",
 		AccessTokenExpiresAt:   now + 3600,
 		RefreshTokenCiphertext: "cipher-refresh",
 		RefreshTokenExpiresAt:  now + 8_640_000,
 	}, now)
-	conn.ApplyCompanyFacts(&accountingsync.CompanyFacts{
+	conn.ApplyCompanyFacts(&accountingconnection.CompanyFacts{
 		CompanyName: "Acme " + label, HomeCurrency: "USD",
 	})
-	conn.SetupStep = accountingsync.SetupStepComplete
+	conn.SetupStep = accountingconnection.SetupStepComplete
 	conn.SyncStartDate, conn.SyncEnabledAt = &now, &now
 	created, err := repos.connections.Create(ctx, conn)
 	require.NoError(t, err)
@@ -121,14 +125,14 @@ func writeAccountingRows(
 	trenova, provider := int64(10_000), int64(9_000)
 	for idx := range 3 {
 		finding, findErr := repos.findings.Create(ctx,
-			accountingsync.NewAccountingDriftFinding(&accountingsync.DriftObservation{
+			accountingdrift.NewAccountingDriftFinding(&accountingdrift.DriftObservation{
 				TenantInfo:    info,
 				ConnectionID:  created.ID,
 				ObjectType:    accountingsync.SyncObjectInvoice,
 				ObjectID:      pulid.MustNew("inv_"),
 				ObjectNumber:  label + "-INV-" + string(rune('1'+idx)),
 				PartyName:     "Acme Foods " + label,
-				Kind:          accountingsync.DriftAmountMismatch,
+				Kind:          accountingdrift.DriftAmountMismatch,
 				CurrencyCode:  "USD",
 				TrenovaMinor:  &trenova,
 				ProviderMinor: &provider,
@@ -138,9 +142,9 @@ func writeAccountingRows(
 		out.drift = append(out.drift, finding.ID.String())
 	}
 
-	var mappings []*accountingsync.AccountingMapping
+	var mappings []*accountingmapping.AccountingMapping
 	for _, key := range []string{"ARAccount", "RevenueAccount", "APAccount"} {
-		mappings = append(mappings, &accountingsync.AccountingMapping{
+		mappings = append(mappings, &accountingmapping.AccountingMapping{
 			ID:             pulid.MustNew("acctm_"),
 			OrganizationID: info.OrgID,
 			BusinessUnitID: info.BuID,
@@ -149,8 +153,8 @@ func writeAccountingRows(
 			TrenovaKey:     key,
 			TargetLabel:    key + " " + label,
 			SearchLabel:    key,
-			ProviderKind:   accountingsync.ReferenceKindAccount,
-			State:          accountingsync.MappingStateUnmatched,
+			ProviderKind:   accountingprovider.ReferenceKindAccount,
+			State:          accountingmapping.MappingStateUnmatched,
 		})
 	}
 	_, err = repos.mappings.CreateMissing(ctx, mappings)

@@ -3,7 +3,7 @@ package accountingconnectionservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -48,7 +48,7 @@ func (s *Service) receiveSubscribedWebhook(
 		return errWebhookUnverified()
 	}
 
-	owned := make([]*accountingsync.AccountingConnection, 0, len(verified))
+	owned := make([]*accountingconnection.AccountingConnection, 0, len(verified))
 	realms := make([]string, 0, len(verified))
 	for _, target := range verified {
 		conn, getErr := s.connections.GetByID(
@@ -105,7 +105,7 @@ func (s *Service) verifiedSubscriptions(
 	if err != nil {
 		return nil, err
 	}
-	byID := make(map[string]*accountingsync.AccountingWebhookSubscription, len(rows))
+	byID := make(map[string]*accountingconnection.AccountingWebhookSubscription, len(rows))
 	for _, row := range rows {
 		byID[row.ExternalSubscriptionID] = row
 	}
@@ -131,7 +131,7 @@ func (s *Service) verifiedSubscriptions(
 }
 
 func (s *Service) clientStateMatches(
-	row *accountingsync.AccountingWebhookSubscription,
+	row *accountingconnection.AccountingWebhookSubscription,
 	received string,
 ) bool {
 	held, err := s.encryption.DecryptStringWithAAD(row.ClientStateCiphertext, clientStateAAD(row))
@@ -140,5 +140,5 @@ func (s *Service) clientStateMatches(
 			zap.String("subscriptionId", row.ID.String()), zap.Error(err))
 		return false
 	}
-	return accountingsync.ClientStatesMatch(held, received)
+	return accountingconnection.ClientStatesMatch(held, received)
 }

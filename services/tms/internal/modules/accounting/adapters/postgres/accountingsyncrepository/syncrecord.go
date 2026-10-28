@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection/accountingconnectiondb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
@@ -729,7 +731,7 @@ func (r *syncRecordRepository) ListDueConnections(
 			}
 
 			sr := accountingsyncdb.AccountingSyncRecords
-			ac := accountingsyncdb.AccountingConnections
+			ac := accountingconnectiondb.AccountingConnections
 			due, err := keel.Into[accountingsyncports.AccountingSyncDueConnection](
 				ctx,
 				r.db.Keel(ctx),
@@ -744,7 +746,7 @@ func (r *syncRecordRepository) ListDueConnections(
 					Pick(sr.OrganizationID, sr.BusinessUnitID, sr.ConnectionID).
 					Where(
 						ac.Status.In(activeStatuses()...),
-						ac.SetupStep.Eq(accountingsync.SetupStepComplete),
+						ac.SetupStep.Eq(accountingconnection.SetupStepComplete),
 						ac.SyncStartDate.IsNotNull(),
 						ac.SyncEnabledAt.IsNotNull(),
 						ac.PausedAt.IsNull(),

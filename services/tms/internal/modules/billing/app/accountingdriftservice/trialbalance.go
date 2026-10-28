@@ -7,6 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -163,7 +167,7 @@ func (s *Service) reconcileTrialBalance(
 			compared = append(compared, account.id)
 		}
 	}
-	observed := make(map[pulid.ID]*accountingsync.DriftObservation, len(grouped))
+	observed := make(map[pulid.ID]*accountingdrift.DriftObservation, len(grouped))
 	for _, group := range grouped {
 		row, found := provider[group.externalID]
 		if obs := trialObservation(sess, group, row, found, currency, now); obs != nil {
@@ -216,7 +220,7 @@ func (s *Service) trialBalanceGate(
 }
 
 func (s *Service) trialWindow(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	now int64,
 	loc *time.Location,
 ) trialBalanceWindow {
@@ -342,10 +346,10 @@ func (s *Service) groupByProviderAccount(
 	if err != nil {
 		return nil, err
 	}
-	byAccount := make(map[pulid.ID]*accountingsync.AccountingMapping, len(mappings))
-	byRole := make(map[string]*accountingsync.AccountingMapping, 8)
+	byAccount := make(map[pulid.ID]*accountingmapping.AccountingMapping, len(mappings))
+	byRole := make(map[string]*accountingmapping.AccountingMapping, 8)
 	for _, mapping := range mappings {
-		if mapping.State != accountingsync.MappingStateConfirmed || mapping.ExternalID == "" {
+		if mapping.State != accountingmapping.MappingStateConfirmed || mapping.ExternalID == "" {
 			continue
 		}
 		if mapping.TargetType == accountingsync.TargetGLAccount {
@@ -410,7 +414,7 @@ func (s *Service) withoutRetainedEarnings(
 		&accountingmappingports.GetAccountingReferenceObjectsRequest{
 			TenantInfo:   sess.tenant,
 			ConnectionID: sess.conn.ID,
-			Kind:         accountingsync.ReferenceKindAccount,
+			Kind:         accountingprovider.ReferenceKindAccount,
 			ExternalIDs:  ids,
 		},
 	)
@@ -436,12 +440,12 @@ func trialObservation(
 	found bool,
 	currency string,
 	at int64,
-) *accountingsync.DriftObservation {
+) *accountingdrift.DriftObservation {
 	var trenovaMinor int64
-	detail := make([]accountingsync.DriftLine, 0, len(group.accounts))
+	detail := make([]accountingdrift.DriftLine, 0, len(group.accounts))
 	for _, account := range group.accounts {
 		trenovaMinor += account.netMinor
-		detail = append(detail, accountingsync.DriftLine{
+		detail = append(detail, accountingdrift.DriftLine{
 			ObjectType:   accountingsync.DriftObjectGLAccount,
 			ObjectID:     account.id,
 			ObjectNumber: account.label,
@@ -462,14 +466,14 @@ func trialObservation(
 	if name == "" {
 		name = group.externalID
 	}
-	return &accountingsync.DriftObservation{
+	return &accountingdrift.DriftObservation{
 		TenantInfo:    sess.tenant,
 		ConnectionID:  sess.conn.ID,
 		ObjectType:    accountingsync.DriftObjectGLAccount,
 		ObjectID:      group.accounts[0].id,
 		ObjectNumber:  name,
 		ExternalID:    group.externalID,
-		Kind:          accountingsync.DriftTrialBalanceMismatch,
+		Kind:          accountingdrift.DriftTrialBalanceMismatch,
 		CurrencyCode:  currency,
 		TrenovaMinor:  &trenovaMinor,
 		ProviderMinor: &providerMinor,

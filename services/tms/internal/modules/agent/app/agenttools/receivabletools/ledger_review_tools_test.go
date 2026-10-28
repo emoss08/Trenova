@@ -5,6 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
@@ -185,20 +188,20 @@ func TestCloseFiscalPeriod_ABlockedCloseIsAWouldFail(t *testing.T) {
 }
 
 type fakeMappingReviewer struct {
-	rows      []*accountingsync.AccountingMapping
+	rows      []*accountingmapping.AccountingMapping
 	guard     *agenttoolstest.WriteGuard
 	confirmed *accountingmappingports.ConfirmAccountingMappingsRequest
 	rejected  *accountingmappingports.AccountingMappingActionRequest
 }
 
-func proposedMapping(label, externalID, name string) *accountingsync.AccountingMapping {
-	return &accountingsync.AccountingMapping{
+func proposedMapping(label, externalID, name string) *accountingmapping.AccountingMapping {
+	return &accountingmapping.AccountingMapping{
 		ID:           pulid.MustNew("acctm_"),
 		TargetLabel:  label,
 		ExternalID:   externalID,
 		ExternalName: name,
-		State:        accountingsync.MappingStateProposed,
-		Source:       accountingsync.MappingSourceSuggested,
+		State:        accountingmapping.MappingStateProposed,
+		Source:       accountingmapping.MappingSourceSuggested,
 		Version:      2,
 	}
 }
@@ -210,7 +213,7 @@ func (f *fakeMappingReviewer) PlanConfirm(
 	plan := &accountingmappingports.AccountingMappingConfirmPlan{}
 	for _, row := range f.rows {
 		after := row.Clone()
-		after.Confirm(&accountingsync.Choice{
+		after.Confirm(&accountingmapping.Choice{
 			ExternalID:   row.ExternalID,
 			ExternalName: row.ExternalName,
 			Source:       req.Source,
@@ -230,7 +233,7 @@ func (f *fakeMappingReviewer) PlanConfirm(
 func (f *fakeMappingReviewer) Confirm(
 	_ context.Context,
 	req *accountingmappingports.ConfirmAccountingMappingsRequest,
-) ([]*accountingsync.AccountingMapping, error) {
+) ([]*accountingmapping.AccountingMapping, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -254,7 +257,7 @@ func (f *fakeMappingReviewer) PlanReject(
 func (f *fakeMappingReviewer) Reject(
 	_ context.Context,
 	req *accountingmappingports.AccountingMappingActionRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -268,7 +271,7 @@ func TestConfirmAccountingMappingProposals_ConfirmsWhatWasShownAsTheAgent(t *tes
 
 	ar := proposedMapping("Accounts receivable", "1", "Accounts Receivable (A/R)")
 	fuel := proposedMapping("Fuel surcharge", "91", "Fuel Surcharge")
-	reviewer := &fakeMappingReviewer{rows: []*accountingsync.AccountingMapping{ar, fuel},
+	reviewer := &fakeMappingReviewer{rows: []*accountingmapping.AccountingMapping{ar, fuel},
 		guard: &agenttoolstest.WriteGuard{}}
 	tool := accountingtools.NewConfirmAccountingMappingProposalsTool(reviewer)
 	params := agenttoolstest.ExecuteParams(
@@ -301,7 +304,7 @@ func TestConfirmAccountingMappingProposals_ConfirmsWhatWasShownAsTheAgent(t *tes
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, reviewer.confirmed)
-	assert.Equal(t, accountingsync.MappingSourceAgent, reviewer.confirmed.Source)
+	assert.Equal(t, accountingmapping.MappingSourceAgent, reviewer.confirmed.Source)
 	require.Len(t, reviewer.confirmed.Items, 2)
 	assert.Equal(t, "91", reviewer.confirmed.Items[1].ExternalID)
 
@@ -316,7 +319,7 @@ func TestConfirmAccountingMappingProposals_RefusesARepeatedMapping(t *testing.T)
 
 	ar := proposedMapping("Accounts receivable", "1", "A/R")
 	tool := accountingtools.NewConfirmAccountingMappingProposalsTool(&fakeMappingReviewer{
-		rows: []*accountingsync.AccountingMapping{ar},
+		rows: []*accountingmapping.AccountingMapping{ar},
 	})
 
 	require.Error(
@@ -340,7 +343,7 @@ func TestRejectAccountingMappingProposal_UnmatchesItAsTheAgent(t *testing.T) {
 	t.Parallel()
 
 	customer := proposedMapping("Acme Freight", "50", "Acme Freight LLC")
-	reviewer := &fakeMappingReviewer{rows: []*accountingsync.AccountingMapping{customer},
+	reviewer := &fakeMappingReviewer{rows: []*accountingmapping.AccountingMapping{customer},
 		guard: &agenttoolstest.WriteGuard{}}
 	tool := accountingtools.NewRejectAccountingMappingProposalTool(reviewer)
 	params := agenttoolstest.ExecuteParams(
@@ -363,12 +366,12 @@ func TestRejectAccountingMappingProposal_UnmatchesItAsTheAgent(t *testing.T) {
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, reviewer.rejected)
-	assert.Equal(t, accountingsync.MappingSourceAgent, reviewer.rejected.Source)
+	assert.Equal(t, accountingmapping.MappingSourceAgent, reviewer.rejected.Source)
 }
 
 type fakeSyncReleaser struct {
 	records  map[pulid.ID]*accountingsync.AccountingSyncRecord
-	backfill *accountingsync.AccountingBackfill
+	backfill *accountingbackfill.AccountingBackfill
 	guard    *agenttoolstest.WriteGuard
 	released *accountingsyncports.ReleaseAccountingSyncRequest
 	changed  *accountingsyncports.ChangeAccountingBackfillRequest
@@ -382,10 +385,10 @@ func (f *fakeSyncReleaser) Summary(
 	start := int64(1_780_000_000)
 	return &accountingsyncports.AccountingSyncSummary{
 		ProviderName: "QuickBooks Online",
-		Connection: &accountingsync.AccountingConnection{
+		Connection: &accountingconnection.AccountingConnection{
 			ID:            pulid.MustNew("acctc_"),
-			Status:        accountingsync.ConnectionStatusConnected,
-			SetupStep:     accountingsync.SetupStepComplete,
+			Status:        accountingconnection.ConnectionStatusConnected,
+			SetupStep:     accountingconnection.SetupStepComplete,
 			SyncStartDate: &start,
 			SyncEnabledAt: &start,
 		},
@@ -422,7 +425,7 @@ func (f *fakeSyncReleaser) Release(
 func (f *fakeSyncReleaser) ChangeBackfill(
 	_ context.Context,
 	req *accountingsyncports.ChangeAccountingBackfillRequest,
-) (*accountingsync.AccountingBackfill, error) {
+) (*accountingbackfill.AccountingBackfill, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -506,9 +509,9 @@ func TestReleaseAccountingSync_RefusesADocumentThatIsNotHeld(t *testing.T) {
 func TestChangeAccountingBackfill_ActsOnTheBackfillInProgress(t *testing.T) {
 	t.Parallel()
 
-	backfill := &accountingsync.AccountingBackfill{
+	backfill := &accountingbackfill.AccountingBackfill{
 		ID:     pulid.MustNew("acctbf_"),
-		Status: accountingsync.BackfillStatusRunning,
+		Status: accountingbackfill.BackfillStatusRunning,
 	}
 	sync := &fakeSyncReleaser{backfill: backfill, guard: &agenttoolstest.WriteGuard{}}
 	tool := accountingtools.NewChangeAccountingBackfillTool(sync)
@@ -540,9 +543,9 @@ func TestChangeAccountingBackfill_ActsOnTheBackfillInProgress(t *testing.T) {
 func TestChangeAccountingBackfill_RefusesAMoveTheBackfillCannotMake(t *testing.T) {
 	t.Parallel()
 
-	sync := &fakeSyncReleaser{backfill: &accountingsync.AccountingBackfill{
+	sync := &fakeSyncReleaser{backfill: &accountingbackfill.AccountingBackfill{
 		ID:     pulid.MustNew("acctbf_"),
-		Status: accountingsync.BackfillStatusRunning,
+		Status: accountingbackfill.BackfillStatusRunning,
 	}}
 	tool := accountingtools.NewChangeAccountingBackfillTool(sync)
 

@@ -3,6 +3,8 @@ package accountingmappingports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -12,14 +14,14 @@ import (
 type UpsertAccountingReferenceObjectsRequest struct {
 	TenantInfo   pagination.TenantInfo
 	ConnectionID pulid.ID
-	Objects      []*accountingsync.AccountingReferenceObject
+	Objects      []*accountingmapping.AccountingReferenceObject
 	SeenAt       int64
 }
 
 type MarkAccountingReferenceRemovedRequest struct {
 	TenantInfo   pagination.TenantInfo
 	ConnectionID pulid.ID
-	Kind         accountingsync.ReferenceKind
+	Kind         accountingprovider.ReferenceKind
 	SeenBefore   int64
 	At           int64
 }
@@ -27,7 +29,7 @@ type MarkAccountingReferenceRemovedRequest struct {
 type MarkAccountingReferencesRemovedRequest struct {
 	TenantInfo   pagination.TenantInfo
 	ConnectionID pulid.ID
-	Kind         accountingsync.ReferenceKind
+	Kind         accountingprovider.ReferenceKind
 	ExternalIDs  []string
 	At           int64
 }
@@ -35,14 +37,14 @@ type MarkAccountingReferencesRemovedRequest struct {
 type ListAccountingReferenceObjectsRequest struct {
 	TenantInfo   pagination.TenantInfo
 	ConnectionID pulid.ID
-	Kind         accountingsync.ReferenceKind
+	Kind         accountingprovider.ReferenceKind
 	UsableOnly   bool
 }
 
 type SearchAccountingReferenceObjectsRequest struct {
 	TenantInfo   pagination.TenantInfo
 	ConnectionID pulid.ID
-	Kind         accountingsync.ReferenceKind
+	Kind         accountingprovider.ReferenceKind
 	Query        string
 	UsableOnly   bool
 	Limit        int
@@ -51,7 +53,7 @@ type SearchAccountingReferenceObjectsRequest struct {
 type GetAccountingReferenceObjectsRequest struct {
 	TenantInfo   pagination.TenantInfo
 	ConnectionID pulid.ID
-	Kind         accountingsync.ReferenceKind
+	Kind         accountingprovider.ReferenceKind
 	ExternalIDs  []string
 }
 
@@ -65,15 +67,15 @@ type AccountingReferenceObjectRepository interface {
 	ListByKind(
 		ctx context.Context,
 		req *ListAccountingReferenceObjectsRequest,
-	) ([]*accountingsync.AccountingReferenceObject, error)
+	) ([]*accountingmapping.AccountingReferenceObject, error)
 	Search(
 		ctx context.Context,
 		req *SearchAccountingReferenceObjectsRequest,
-	) ([]*accountingsync.AccountingReferenceObject, error)
+	) ([]*accountingmapping.AccountingReferenceObject, error)
 	GetByExternalIDs(
 		ctx context.Context,
 		req *GetAccountingReferenceObjectsRequest,
-	) ([]*accountingsync.AccountingReferenceObject, error)
+	) ([]*accountingmapping.AccountingReferenceObject, error)
 }
 
 type ListAccountingMappingsQuery struct {
@@ -87,7 +89,7 @@ type ListAccountingMappingsConnectionRequest struct {
 	Cursor       pagination.CursorInfo
 	ConnectionID pulid.ID
 	TargetTypes  []accountingsync.MappingTargetType
-	States       []accountingsync.MappingState
+	States       []accountingmapping.MappingState
 	RequiredOnly bool
 	Search       string
 }
@@ -112,7 +114,7 @@ type GetAccountingMappingByTargetRequest struct {
 
 type AccountingMappingCount struct {
 	TargetType accountingsync.MappingTargetType
-	State      accountingsync.MappingState
+	State      accountingmapping.MappingState
 	Count      int
 }
 
@@ -120,30 +122,36 @@ type AccountingMappingRepository interface {
 	ListByConnection(
 		ctx context.Context,
 		req *ListAccountingMappingsQuery,
-	) ([]*accountingsync.AccountingMapping, error)
+	) ([]*accountingmapping.AccountingMapping, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAccountingMappingsConnectionRequest,
-	) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error)
+	) (*pagination.CursorListResult[*accountingmapping.AccountingMapping], error)
 	GetByID(
 		ctx context.Context,
 		req GetAccountingMappingRequest,
-	) (*accountingsync.AccountingMapping, error)
+	) (*accountingmapping.AccountingMapping, error)
 	GetByIDs(
 		ctx context.Context,
 		req GetAccountingMappingsByIDsRequest,
-	) ([]*accountingsync.AccountingMapping, error)
+	) ([]*accountingmapping.AccountingMapping, error)
 	GetByTarget(
 		ctx context.Context,
 		req *GetAccountingMappingByTargetRequest,
-	) (*accountingsync.AccountingMapping, error)
-	CreateMissing(ctx context.Context, entities []*accountingsync.AccountingMapping) (int64, error)
-	ApplyScoring(ctx context.Context, entities []*accountingsync.AccountingMapping) (int64, error)
-	UpdateLabels(ctx context.Context, entities []*accountingsync.AccountingMapping) error
+	) (*accountingmapping.AccountingMapping, error)
+	CreateMissing(
+		ctx context.Context,
+		entities []*accountingmapping.AccountingMapping,
+	) (int64, error)
+	ApplyScoring(
+		ctx context.Context,
+		entities []*accountingmapping.AccountingMapping,
+	) (int64, error)
+	UpdateLabels(ctx context.Context, entities []*accountingmapping.AccountingMapping) error
 	Update(
 		ctx context.Context,
-		entity *accountingsync.AccountingMapping,
-	) (*accountingsync.AccountingMapping, error)
+		entity *accountingmapping.AccountingMapping,
+	) (*accountingmapping.AccountingMapping, error)
 	CountByState(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

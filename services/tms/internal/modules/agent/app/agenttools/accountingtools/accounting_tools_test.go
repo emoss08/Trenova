@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -38,7 +38,7 @@ func (f *fakeAccountingChecker) CheckHealth(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	id pulid.ID,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -48,13 +48,13 @@ func (f *fakeAccountingChecker) CheckHealth(
 }
 
 func connectedStatus(
-	status accountingsync.ConnectionStatus,
+	status accountingconnection.ConnectionStatus,
 ) *accountingconnectionports.AccountingSyncStatus {
 	return &accountingconnectionports.AccountingSyncStatus{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ProviderName:    "QuickBooks Online",
 		Available:       true,
-		Connection: &accountingsync.AccountingConnection{
+		Connection: &accountingconnection.AccountingConnection{
 			ID:                  pulid.MustNew("acctc_"),
 			IntegrationType:     integration.TypeQuickBooksOnline,
 			Status:              status,
@@ -67,7 +67,7 @@ func TestCheckAccountingConnection_ChecksTheTenantsConnection(t *testing.T) {
 	t.Parallel()
 
 	checker := &fakeAccountingChecker{
-		status: connectedStatus(accountingsync.ConnectionStatusDegraded),
+		status: connectedStatus(accountingconnection.ConnectionStatusDegraded),
 	}
 	tool := newCheckAccountingConnectionTool(checker)
 	params := agenttoolstest.ExecuteParams(map[string]any{"system": "QuickBooksOnline"})
@@ -81,8 +81,8 @@ func TestCheckAccountingConnection_RefusesAConnectionThatNeedsAPerson(t *testing
 	t.Parallel()
 
 	for _, status := range []*accountingconnectionports.AccountingSyncStatus{
-		connectedStatus(accountingsync.ConnectionStatusRevoked),
-		connectedStatus(accountingsync.ConnectionStatusDisconnected),
+		connectedStatus(accountingconnection.ConnectionStatusRevoked),
+		connectedStatus(accountingconnection.ConnectionStatusDisconnected),
 		{IntegrationType: integration.TypeQuickBooksOnline, ProviderName: "QuickBooks Online"},
 	} {
 		checker := &fakeAccountingChecker{status: status}
@@ -111,7 +111,7 @@ func TestCheckAccountingConnection_RejectsUnknownSystems(t *testing.T) {
 	t.Parallel()
 
 	tool := newCheckAccountingConnectionTool(&fakeAccountingChecker{
-		status: connectedStatus(accountingsync.ConnectionStatusConnected),
+		status: connectedStatus(accountingconnection.ConnectionStatusConnected),
 	})
 	require.Error(
 		t,

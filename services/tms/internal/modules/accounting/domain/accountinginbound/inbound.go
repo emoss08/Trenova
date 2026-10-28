@@ -1,4 +1,4 @@
-package accountingsync
+package accountinginbound
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,13 +26,13 @@ const (
 )
 
 type InboundLine struct {
-	DocumentKind       InboundDocumentKind `json:"documentKind"`
-	DocumentExternalID string              `json:"documentExternalId"`
-	AmountMinor        int64               `json:"amountMinor"`
-	ObjectType         SyncObjectType      `json:"objectType,omitempty"`
-	ObjectID           pulid.ID            `json:"objectId,omitempty"`
-	ObjectNumber       string              `json:"objectNumber,omitempty"`
-	OpenMinor          int64               `json:"openMinor,omitempty"`
+	DocumentKind       InboundDocumentKind           `json:"documentKind"`
+	DocumentExternalID string                        `json:"documentExternalId"`
+	AmountMinor        int64                         `json:"amountMinor"`
+	ObjectType         accountingsync.SyncObjectType `json:"objectType,omitempty"`
+	ObjectID           pulid.ID                      `json:"objectId,omitempty"`
+	ObjectNumber       string                        `json:"objectNumber,omitempty"`
+	OpenMinor          int64                         `json:"openMinor,omitempty"`
 }
 
 func (l *InboundLine) Matched() bool {

@@ -3,6 +3,12 @@ package migrations
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -12,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
@@ -20,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
@@ -131,7 +137,7 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_accounting_connections_status",
-			values: stringsOf(accountingsync.AllConnectionStatuses()),
+			values: stringsOf(accountingconnection.AllConnectionStatuses()),
 		},
 		{
 			name:   "ck_accounting_connections_last_error_category",
@@ -139,39 +145,39 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_accounting_connections_setup_step",
-			values: stringsOf(accountingsync.AllSetupSteps()),
+			values: stringsOf(accountingconnection.AllSetupSteps()),
 		},
 		{
 			name:   "ck_accounting_reference_objects_kind",
-			values: stringsOf(accountingsync.AllReferenceKinds()),
+			values: stringsOf(accountingprovider.AllReferenceKinds()),
 		},
 		{
 			name:   "ck_accounting_reference_objects_account_class",
-			values: stringsOf(accountingsync.AllAccountClasses()),
+			values: stringsOf(accountingmapping.AllAccountClasses()),
 		},
 		{
 			name:   "ck_accounting_connections_integration_type",
-			values: stringsOf(accountingsync.AccountingSystems()),
+			values: stringsOf(accountingprovider.AccountingSystems()),
 		},
 		{
 			name:   "ck_accounting_app_credentials_integration_type",
-			values: stringsOf(accountingsync.AccountingSystems()),
+			values: stringsOf(accountingprovider.AccountingSystems()),
 		},
 		{
 			name:   "ck_accounting_connections_auth_method",
-			values: stringsOf(accountingsync.AllAuthMethods()),
+			values: stringsOf(accountingconnection.AllAuthMethods()),
 		},
 		{
 			name:   "ck_accounting_pending_certificates_integration_type",
-			values: stringsOf(accountingsync.ClientCredentialsSystems()),
+			values: stringsOf(accountingprovider.ClientCredentialsSystems()),
 		},
 		{
 			name:   "ck_accounting_webhook_subscriptions_status",
-			values: stringsOf(accountingsync.AllWebhookSubscriptionStatuses()),
+			values: stringsOf(accountingconnection.AllWebhookSubscriptionStatuses()),
 		},
 		{
 			name:   "ck_accounting_webhook_subscriptions_integration_type",
-			values: stringsOf(accountingsync.WebhookSubscriptionSystems()),
+			values: stringsOf(accountingprovider.WebhookSubscriptionSystems()),
 		},
 		{
 			name:   "ck_accounting_mappings_target_type",
@@ -179,15 +185,15 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_accounting_mappings_provider_kind",
-			values: stringsOf(accountingsync.AllReferenceKinds()),
+			values: stringsOf(accountingprovider.AllReferenceKinds()),
 		},
 		{
 			name:   "ck_accounting_mappings_state",
-			values: stringsOf(accountingsync.AllMappingStates()),
+			values: stringsOf(accountingmapping.AllMappingStates()),
 		},
 		{
 			name:   "ck_accounting_mappings_source",
-			values: stringsOf(accountingsync.AllMappingSources()),
+			values: stringsOf(accountingmapping.AllMappingSources()),
 		},
 		{
 			name:   "ck_accounting_sync_records_object_type",
@@ -219,11 +225,11 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_accounting_backfills_status",
-			values: stringsOf(accountingsync.AllBackfillStatuses()),
+			values: stringsOf(accountingbackfill.AllBackfillStatuses()),
 		},
 		{
 			name:   "ck_accounting_connections_inbound_payment_policy",
-			values: stringsOf(accountingsync.AllInboundPaymentPolicies()),
+			values: stringsOf(accountingconnection.AllInboundPaymentPolicies()),
 		},
 		{
 			name:   "ck_accounting_connections_changes_error_category",
@@ -231,15 +237,15 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_accounting_inbound_changes_kind",
-			values: stringsOf(accountingsync.AllInboundChangeKinds()),
+			values: stringsOf(accountinginbound.AllInboundChangeKinds()),
 		},
 		{
 			name:   "ck_accounting_inbound_changes_status",
-			values: stringsOf(accountingsync.AllInboundChangeStatuses()),
+			values: stringsOf(accountinginbound.AllInboundChangeStatuses()),
 		},
 		{
 			name:   "ck_accounting_inbound_changes_reason",
-			values: stringsOf(accountingsync.AllInboundChangeReasons()),
+			values: stringsOf(accountinginbound.AllInboundChangeReasons()),
 		},
 		{
 			name:   "ck_accounting_connections_drift_error_category",
@@ -251,15 +257,15 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_accounting_drift_findings_kind",
-			values: stringsOf(accountingsync.AllDriftKinds()),
+			values: stringsOf(accountingdrift.AllDriftKinds()),
 		},
 		{
 			name:   "ck_accounting_drift_findings_status",
-			values: stringsOf(accountingsync.AllDriftStatuses()),
+			values: stringsOf(accountingdrift.AllDriftStatuses()),
 		},
 		{
 			name:   "ck_accounting_drift_findings_resolution",
-			values: stringsOf(accountingsync.AllDriftResolutions()),
+			values: stringsOf(accountingdrift.AllDriftResolutions()),
 		},
 		{
 			name:   "ck_agent_definitions_template",

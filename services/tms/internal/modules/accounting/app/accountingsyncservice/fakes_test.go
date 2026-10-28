@@ -10,6 +10,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -42,8 +46,8 @@ func sameTenant(orgID, buID pulid.ID, tenantInfo pagination.TenantInfo) bool {
 }
 
 func cloneConnection(
-	conn *accountingsync.AccountingConnection,
-) *accountingsync.AccountingConnection {
+	conn *accountingconnection.AccountingConnection,
+) *accountingconnection.AccountingConnection {
 	out := *conn
 	return &out
 }
@@ -52,20 +56,20 @@ type fakeConnections struct {
 	accountingconnectionports.AccountingConnectionRepository
 
 	mu   sync.Mutex
-	rows map[pulid.ID]*accountingsync.AccountingConnection
+	rows map[pulid.ID]*accountingconnection.AccountingConnection
 }
 
 func newFakeConnections() *fakeConnections {
-	return &fakeConnections{rows: map[pulid.ID]*accountingsync.AccountingConnection{}}
+	return &fakeConnections{rows: map[pulid.ID]*accountingconnection.AccountingConnection{}}
 }
 
-func (f *fakeConnections) put(conn *accountingsync.AccountingConnection) {
+func (f *fakeConnections) put(conn *accountingconnection.AccountingConnection) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.rows[conn.ID] = cloneConnection(conn)
 }
 
-func (f *fakeConnections) get(id pulid.ID) *accountingsync.AccountingConnection {
+func (f *fakeConnections) get(id pulid.ID) *accountingconnection.AccountingConnection {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return cloneConnection(f.rows[id])
@@ -74,7 +78,7 @@ func (f *fakeConnections) get(id pulid.ID) *accountingsync.AccountingConnection 
 func (f *fakeConnections) GetByType(
 	_ context.Context,
 	req accountingconnectionports.GetAccountingConnectionRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for _, row := range f.rows {
@@ -89,7 +93,7 @@ func (f *fakeConnections) GetByType(
 func (f *fakeConnections) GetByID(
 	_ context.Context,
 	req accountingconnectionports.GetAccountingConnectionByIDRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if row, ok := f.rows[req.ID]; ok &&
@@ -102,16 +106,16 @@ func (f *fakeConnections) GetByID(
 func (f *fakeConnections) ListByTenant(
 	_ context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*accountingsync.AccountingConnection, error) {
+) ([]*accountingconnection.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := make([]*accountingsync.AccountingConnection, 0, len(f.rows))
+	out := make([]*accountingconnection.AccountingConnection, 0, len(f.rows))
 	for _, row := range f.rows {
 		if sameTenant(row.OrganizationID, row.BusinessUnitID, tenantInfo) {
 			out = append(out, cloneConnection(row))
 		}
 	}
-	slices.SortFunc(out, func(a, b *accountingsync.AccountingConnection) int {
+	slices.SortFunc(out, func(a, b *accountingconnection.AccountingConnection) int {
 		return cmp.Compare(a.ID.String(), b.ID.String())
 	})
 	return out, nil
@@ -119,8 +123,8 @@ func (f *fakeConnections) ListByTenant(
 
 func (f *fakeConnections) Update(
 	_ context.Context,
-	entity *accountingsync.AccountingConnection,
-) (*accountingsync.AccountingConnection, error) {
+	entity *accountingconnection.AccountingConnection,
+) (*accountingconnection.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	stored, ok := f.rows[entity.ID]
@@ -705,7 +709,9 @@ func (f *fakeRecords) ListAttempts(
 	return f.attemptsFor(req.SyncRecordID), nil
 }
 
-func cloneBackfill(backfill *accountingsync.AccountingBackfill) *accountingsync.AccountingBackfill {
+func cloneBackfill(
+	backfill *accountingbackfill.AccountingBackfill,
+) *accountingbackfill.AccountingBackfill {
 	out := *backfill
 	out.ObjectTypes = slices.Clone(backfill.ObjectTypes)
 	return &out
@@ -713,20 +719,20 @@ func cloneBackfill(backfill *accountingsync.AccountingBackfill) *accountingsync.
 
 type fakeBackfills struct {
 	mu   sync.Mutex
-	rows map[pulid.ID]*accountingsync.AccountingBackfill
+	rows map[pulid.ID]*accountingbackfill.AccountingBackfill
 }
 
 func newFakeBackfills() *fakeBackfills {
-	return &fakeBackfills{rows: map[pulid.ID]*accountingsync.AccountingBackfill{}}
+	return &fakeBackfills{rows: map[pulid.ID]*accountingbackfill.AccountingBackfill{}}
 }
 
-func (f *fakeBackfills) get(id pulid.ID) *accountingsync.AccountingBackfill {
+func (f *fakeBackfills) get(id pulid.ID) *accountingbackfill.AccountingBackfill {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return cloneBackfill(f.rows[id])
 }
 
-func (f *fakeBackfills) mutate(id pulid.ID, fn func(*accountingsync.AccountingBackfill)) {
+func (f *fakeBackfills) mutate(id pulid.ID, fn func(*accountingbackfill.AccountingBackfill)) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	fn(f.rows[id])
@@ -735,8 +741,8 @@ func (f *fakeBackfills) mutate(id pulid.ID, fn func(*accountingsync.AccountingBa
 
 func (f *fakeBackfills) Create(
 	_ context.Context,
-	entity *accountingsync.AccountingBackfill,
-) (*accountingsync.AccountingBackfill, error) {
+	entity *accountingbackfill.AccountingBackfill,
+) (*accountingbackfill.AccountingBackfill, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for _, row := range f.rows {
@@ -751,7 +757,7 @@ func (f *fakeBackfills) Create(
 func (f *fakeBackfills) GetByID(
 	_ context.Context,
 	req accountingsyncports.GetAccountingBackfillRequest,
-) (*accountingsync.AccountingBackfill, error) {
+) (*accountingbackfill.AccountingBackfill, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	row, ok := f.rows[req.ID]
@@ -764,7 +770,7 @@ func (f *fakeBackfills) GetByID(
 func (f *fakeBackfills) GetActive(
 	_ context.Context,
 	req accountingsyncports.AccountingSyncConnectionRequest,
-) (*accountingsync.AccountingBackfill, error) {
+) (*accountingbackfill.AccountingBackfill, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for _, row := range f.rows {
@@ -778,10 +784,10 @@ func (f *fakeBackfills) GetActive(
 func (f *fakeBackfills) ListByConnection(
 	_ context.Context,
 	req accountingsyncports.ListAccountingBackfillsRequest,
-) ([]*accountingsync.AccountingBackfill, error) {
+) ([]*accountingbackfill.AccountingBackfill, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := []*accountingsync.AccountingBackfill{}
+	out := []*accountingbackfill.AccountingBackfill{}
 	for _, row := range f.rows {
 		if row.ConnectionID == req.ConnectionID {
 			out = append(out, cloneBackfill(row))
@@ -792,8 +798,8 @@ func (f *fakeBackfills) ListByConnection(
 
 func (f *fakeBackfills) Update(
 	_ context.Context,
-	entity *accountingsync.AccountingBackfill,
-) (*accountingsync.AccountingBackfill, error) {
+	entity *accountingbackfill.AccountingBackfill,
+) (*accountingbackfill.AccountingBackfill, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	stored, ok := f.rows[entity.ID]
@@ -815,7 +821,7 @@ type vendorPartyCall struct {
 
 type fakeMappingStore struct {
 	mu          sync.Mutex
-	rows        map[string]*accountingsync.AccountingMapping
+	rows        map[string]*accountingmapping.AccountingMapping
 	created     []*accountingmappingports.CreateAccountingReferenceRecordRequest
 	createErr   error
 	parties     map[pulid.ID]*accountingconnectorports.AccountingPartyDraft
@@ -836,7 +842,7 @@ func (f fakeMappingService) Rescore(
 
 func newFakeMappingStore() *fakeMappingStore {
 	return &fakeMappingStore{
-		rows:    map[string]*accountingsync.AccountingMapping{},
+		rows:    map[string]*accountingmapping.AccountingMapping{},
 		parties: map[pulid.ID]*accountingconnectorports.AccountingPartyDraft{},
 	}
 }
@@ -852,17 +858,17 @@ func mappingIdentity(
 }
 
 func (f *fakeMappingStore) set(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	target mappingTarget,
-	state accountingsync.MappingState,
+	state accountingmapping.MappingState,
 	externalID string,
-) *accountingsync.AccountingMapping {
+) *accountingmapping.AccountingMapping {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	identity := mappingIdentity(conn.ID, target.TargetType, target.ObjectID, target.Key)
 	row, ok := f.rows[identity]
 	if !ok {
-		row = &accountingsync.AccountingMapping{
+		row = &accountingmapping.AccountingMapping{
 			ID:              pulid.MustNew("acctm_"),
 			OrganizationID:  conn.OrganizationID,
 			BusinessUnitID:  conn.BusinessUnitID,
@@ -884,13 +890,13 @@ func (f *fakeMappingStore) set(
 
 func (f *fakeMappingStore) ensure(
 	req *accountingmappingports.EnsureAccountingMappingRequest,
-) *accountingsync.AccountingMapping {
+) *accountingmapping.AccountingMapping {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	identity := mappingIdentity(req.ConnectionID, req.TargetType, req.ObjectID, req.Key)
 	row, ok := f.rows[identity]
 	if !ok {
-		row = &accountingsync.AccountingMapping{
+		row = &accountingmapping.AccountingMapping{
 			ID:              pulid.MustNew("acctm_"),
 			OrganizationID:  req.TenantInfo.OrgID,
 			BusinessUnitID:  req.TenantInfo.BuID,
@@ -900,7 +906,7 @@ func (f *fakeMappingStore) ensure(
 			TrenovaKey:      req.Key,
 			TargetLabel:     string(req.TargetType) + " " + req.Key,
 			ProviderKind:    profileKind(integration.TypeQuickBooksOnline, req.TargetType),
-			State:           accountingsync.MappingStateUnmatched,
+			State:           accountingmapping.MappingStateUnmatched,
 		}
 		f.rows[identity] = row
 	}
@@ -916,7 +922,7 @@ type fakeMappingRepo struct {
 func (f fakeMappingRepo) GetByTarget(
 	_ context.Context,
 	req *accountingmappingports.GetAccountingMappingByTargetRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	f.store.mu.Lock()
 	defer f.store.mu.Unlock()
 	identity := mappingIdentity(
@@ -941,14 +947,14 @@ type fakeMappingService struct {
 func (f fakeMappingService) EnsureMapping(
 	_ context.Context,
 	req *accountingmappingports.EnsureAccountingMappingRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	return f.store.ensure(req), nil
 }
 
 func (f fakeMappingService) CreateReferenceRecord(
 	_ context.Context,
 	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	f.store.mu.Lock()
 	defer f.store.mu.Unlock()
 	f.store.created = append(f.store.created, req)
@@ -957,7 +963,7 @@ func (f fakeMappingService) CreateReferenceRecord(
 	}
 	for _, row := range f.store.rows {
 		if row.ID == req.MappingID {
-			row.State = accountingsync.MappingStateConfirmed
+			row.State = accountingmapping.MappingStateConfirmed
 			row.ExternalID = "qb-created-" + row.TrenovaObjectID.String()
 			row.ExternalName = row.TargetLabel
 			row.Source = req.Source
@@ -1502,7 +1508,7 @@ func (f *fakeWatchtower) item(sourceID string) (watchtowerports.WatchtowerItemIn
 type fakeDispatcher struct {
 	mu         sync.Mutex
 	kicks      []pulid.ID
-	backfills  []*accountingsync.AccountingBackfill
+	backfills  []*accountingbackfill.AccountingBackfill
 	kickErr    error
 	backfilled error
 }
@@ -1520,7 +1526,7 @@ func (f *fakeDispatcher) Kick(
 
 func (f *fakeDispatcher) StartBackfill(
 	_ context.Context,
-	backfill *accountingsync.AccountingBackfill,
+	backfill *accountingbackfill.AccountingBackfill,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -1534,7 +1540,7 @@ func (f *fakeDispatcher) kicked() []pulid.ID {
 	return slices.Clone(f.kicks)
 }
 
-func (f *fakeDispatcher) started() []*accountingsync.AccountingBackfill {
+func (f *fakeDispatcher) started() []*accountingbackfill.AccountingBackfill {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return slices.Clone(f.backfills)
@@ -1741,10 +1747,10 @@ func (f *fakeRates) Convert(
 func profileKind(
 	typ integration.Type,
 	target accountingsync.MappingTargetType,
-) accountingsync.ReferenceKind {
+) accountingprovider.ReferenceKind {
 	if typ == "" {
 		typ = integration.TypeQuickBooksOnline
 	}
-	profile := accountingsync.MustProfile(typ)
+	profile := accountingprovider.MustProfile(typ)
 	return profile.KindFor(target)
 }

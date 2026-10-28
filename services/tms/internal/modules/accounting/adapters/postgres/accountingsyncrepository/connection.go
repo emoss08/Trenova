@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection/accountingconnectiondb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -47,28 +47,28 @@ func NewConnectionRepository(
 	}
 }
 
-func withoutTokens() *keel.Query[*accountingsync.AccountingConnection] {
-	ac := accountingsyncdb.AccountingConnections
+func withoutTokens() *keel.Query[*accountingconnection.AccountingConnection] {
+	ac := accountingconnectiondb.AccountingConnections
 	return ac.Omit(ac.AccessTokenCiphertext, ac.RefreshTokenCiphertext, ac.ClientKeyCiphertext)
 }
 
-func activeStatuses() []accountingsync.ConnectionStatus {
-	return []accountingsync.ConnectionStatus{
-		accountingsync.ConnectionStatusConnected,
-		accountingsync.ConnectionStatusDegraded,
-		accountingsync.ConnectionStatusFailing,
+func activeStatuses() []accountingconnection.ConnectionStatus {
+	return []accountingconnection.ConnectionStatus{
+		accountingconnection.ConnectionStatusConnected,
+		accountingconnection.ConnectionStatusDegraded,
+		accountingconnection.ConnectionStatusFailing,
 	}
 }
 
 func (r *connectionRepository) GetByType(
 	ctx context.Context,
 	req accountingconnectionports.GetAccountingConnectionRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
-			ac := accountingsyncdb.AccountingConnections
+		func(ctx context.Context) (*accountingconnection.AccountingConnection, error) {
+			ac := accountingconnectiondb.AccountingConnections
 			entity, err := withoutTokens().
 				Where(ac.IntegrationType.Eq(req.IntegrationType)).
 				One(ctx, r.db.Keel(ctx))
@@ -84,12 +84,12 @@ func (r *connectionRepository) GetByType(
 func (r *connectionRepository) GetByID(
 	ctx context.Context,
 	req accountingconnectionports.GetAccountingConnectionByIDRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
-			ac := accountingsyncdb.AccountingConnections
+		func(ctx context.Context) (*accountingconnection.AccountingConnection, error) {
+			ac := accountingconnectiondb.AccountingConnections
 			entity, err := withoutTokens().Where(ac.ID.Eq(req.ID)).One(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, connectionErrors.Map(err, req.ID.String())
@@ -103,12 +103,12 @@ func (r *connectionRepository) GetByID(
 func (r *connectionRepository) ListByTenant(
 	ctx context.Context,
 	_ pagination.TenantInfo,
-) ([]*accountingsync.AccountingConnection, error) {
+) ([]*accountingconnection.AccountingConnection, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*accountingsync.AccountingConnection, error) {
-			ac := accountingsyncdb.AccountingConnections
+		func(ctx context.Context) ([]*accountingconnection.AccountingConnection, error) {
+			ac := accountingconnectiondb.AccountingConnections
 			return withoutTokens().Order(ac.IntegrationType.Asc()).All(ctx, r.db.Keel(ctx))
 		},
 	)
@@ -117,7 +117,7 @@ func (r *connectionRepository) ListByTenant(
 func (r *connectionRepository) ListHoldingRealm(
 	ctx context.Context,
 	req accountingconnectionports.ListAccountingConnectionsByRealmRequest,
-) ([]*accountingsync.AccountingConnection, error) {
+) ([]*accountingconnection.AccountingConnection, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
 		"find every connection holding an accounting company, which spans tenants by design",
@@ -125,18 +125,18 @@ func (r *connectionRepository) ListHoldingRealm(
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*accountingsync.AccountingConnection, error) {
+		func(ctx context.Context) ([]*accountingconnection.AccountingConnection, error) {
 			if len(req.RealmIDs) == 0 {
-				return []*accountingsync.AccountingConnection{}, nil
+				return []*accountingconnection.AccountingConnection{}, nil
 			}
 
-			ac := accountingsyncdb.AccountingConnections
+			ac := accountingconnectiondb.AccountingConnections
 			return withoutTokens().
 				AllTenants().
 				Where(
 					ac.IntegrationType.Eq(req.IntegrationType),
 					ac.ExternalRealmID.In(req.RealmIDs...),
-					ac.Status.Ne(accountingsync.ConnectionStatusDisconnected),
+					ac.Status.Ne(accountingconnection.ConnectionStatusDisconnected),
 				).
 				All(ctx, r.db.Keel(ctx))
 		},
@@ -146,7 +146,7 @@ func (r *connectionRepository) ListHoldingRealm(
 func (r *connectionRepository) ListDueForHealthCheck(
 	ctx context.Context,
 	req accountingconnectionports.ListDueAccountingConnectionsRequest,
-) ([]*accountingsync.AccountingConnection, error) {
+) ([]*accountingconnection.AccountingConnection, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
 		"list accounting connections due a health check across every organization",
@@ -154,13 +154,13 @@ func (r *connectionRepository) ListDueForHealthCheck(
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*accountingsync.AccountingConnection, error) {
+		func(ctx context.Context) ([]*accountingconnection.AccountingConnection, error) {
 			limit := req.Limit
 			if limit <= 0 {
 				limit = defaultConnectionPage
 			}
 
-			ac := accountingsyncdb.AccountingConnections
+			ac := accountingconnectiondb.AccountingConnections
 			return withoutTokens().
 				AllTenants().
 				Where(
@@ -177,12 +177,12 @@ func (r *connectionRepository) ListDueForHealthCheck(
 func (r *connectionRepository) LockByTypeWithTokens(
 	ctx context.Context,
 	req accountingconnectionports.GetAccountingConnectionRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
-			ac := accountingsyncdb.AccountingConnections
+		func(ctx context.Context) (*accountingconnection.AccountingConnection, error) {
+			ac := accountingconnectiondb.AccountingConnections
 			entity, err := ac.Where(ac.IntegrationType.Eq(req.IntegrationType)).
 				Lock(keel.ForUpdate).
 				One(ctx, r.db.Keel(ctx))
@@ -198,12 +198,12 @@ func (r *connectionRepository) LockByTypeWithTokens(
 func (r *connectionRepository) LockWithTokens(
 	ctx context.Context,
 	req accountingconnectionports.GetAccountingConnectionByIDRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
-			ac := accountingsyncdb.AccountingConnections
+		func(ctx context.Context) (*accountingconnection.AccountingConnection, error) {
+			ac := accountingconnectiondb.AccountingConnections
 			entity, err := ac.Where(ac.ID.Eq(req.ID)).
 				Lock(keel.ForUpdate).
 				One(ctx, r.db.Keel(ctx))
@@ -218,13 +218,13 @@ func (r *connectionRepository) LockWithTokens(
 
 func (r *connectionRepository) Create(
 	ctx context.Context,
-	entity *accountingsync.AccountingConnection,
-) (*accountingsync.AccountingConnection, error) {
+	entity *accountingconnection.AccountingConnection,
+) (*accountingconnection.AccountingConnection, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
-			err := accountingsyncdb.AccountingConnections.Create(ctx, r.db.Keel(ctx), entity)
+		func(ctx context.Context) (*accountingconnection.AccountingConnection, error) {
+			err := accountingconnectiondb.AccountingConnections.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				return nil, connectionErrors.Map(err, entity.ID.String())
 			}
@@ -236,13 +236,13 @@ func (r *connectionRepository) Create(
 
 func (r *connectionRepository) Update(
 	ctx context.Context,
-	entity *accountingsync.AccountingConnection,
-) (*accountingsync.AccountingConnection, error) {
+	entity *accountingconnection.AccountingConnection,
+) (*accountingconnection.AccountingConnection, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
-			ac := accountingsyncdb.AccountingConnections
+		func(ctx context.Context) (*accountingconnection.AccountingConnection, error) {
+			ac := accountingconnectiondb.AccountingConnections
 			ov := entity.Version
 			err := ac.SaveExcept(
 				ctx,
@@ -270,7 +270,7 @@ func (r *connectionRepository) StoreTokens(
 	req accountingconnectionports.StoreAccountingTokensRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		ac := accountingsyncdb.AccountingConnections
+		ac := accountingconnectiondb.AccountingConnections
 		n, err := ac.Where(ac.ID.Eq(req.ID)).Update(
 			ctx,
 			r.db.Keel(ctx),
@@ -304,12 +304,12 @@ func (r *connectionRepository) MarkWebhookReceived(
 			return 0, nil
 		}
 
-		ac := accountingsyncdb.AccountingConnections
+		ac := accountingconnectiondb.AccountingConnections
 		return ac.AllTenants().
 			Where(
 				ac.IntegrationType.Eq(req.IntegrationType),
 				ac.ExternalRealmID.In(req.RealmIDs...),
-				ac.Status.Ne(accountingsync.ConnectionStatusDisconnected),
+				ac.Status.Ne(accountingconnection.ConnectionStatusDisconnected),
 			).
 			Update(
 				ctx,
@@ -329,7 +329,7 @@ func (r *connectionRepository) MarkReferenceRefresh(
 			return nil
 		}
 
-		ac := accountingsyncdb.AccountingConnections
+		ac := accountingconnectiondb.AccountingConnections
 		sets := []keel.Assignment{keepConnectionVersion()}
 		switch {
 		case req.StartedAt != nil:
@@ -361,7 +361,7 @@ func (r *connectionRepository) SaveChangeFeed(
 	req *accountingconnectionports.SaveAccountingChangeFeedRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		ac := accountingsyncdb.AccountingConnections
+		ac := accountingconnectiondb.AccountingConnections
 		sets := []keel.Assignment{
 			keepConnectionVersion(),
 			stringOrNull(ac.ChangesErrorCategory.StringCol, string(req.ErrorCategory)),
@@ -391,7 +391,7 @@ func (r *connectionRepository) SaveDriftCheck(
 	req *accountingconnectionports.SaveAccountingDriftCheckRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		ac := accountingsyncdb.AccountingConnections
+		ac := accountingconnectiondb.AccountingConnections
 		sets := []keel.Assignment{
 			keepConnectionVersion(),
 			stringOrNull(ac.DriftErrorCategory.StringCol, string(req.ErrorCategory)),
@@ -410,18 +410,18 @@ func (r *connectionRepository) SaveDriftCheck(
 func (r *connectionRepository) ListActive(
 	ctx context.Context,
 	req accountingconnectionports.ListActiveAccountingConnectionsRequest,
-) ([]*accountingsync.AccountingConnection, error) {
+) ([]*accountingconnection.AccountingConnection, error) {
 	ctx = dbscope.WithSystem(ctx, "list active accounting connections across every organization")
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*accountingsync.AccountingConnection, error) {
+		func(ctx context.Context) ([]*accountingconnection.AccountingConnection, error) {
 			limit := req.Limit
 			if limit <= 0 {
 				limit = defaultConnectionPage
 			}
 
-			ac := accountingsyncdb.AccountingConnections
+			ac := accountingconnectiondb.AccountingConnections
 			return withoutTokens().
 				AllTenants().
 				Where(
@@ -436,7 +436,7 @@ func (r *connectionRepository) ListActive(
 }
 
 func keepConnectionVersion() keel.Assignment {
-	ac := accountingsyncdb.AccountingConnections
+	ac := accountingconnectiondb.AccountingConnections
 	return ac.Version.ToExpr(ac.Version)
 }
 

@@ -4,14 +4,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -53,7 +55,7 @@ type harness struct {
 	events      *agenteventstest.Recorder
 	tenant      pagination.TenantInfo
 	userID      pulid.ID
-	conn        *accountingsync.AccountingConnection
+	conn        *accountingconnection.AccountingConnection
 }
 
 type harnessOption func(*harnessConfig)
@@ -140,38 +142,40 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 		Ledger:            h.ledger,
 		References:        h.references,
 		Rates:             h.rates,
-		Policy:            accountingcontrolpolicyservice.New(accountingcontrolpolicyservice.Params{Logger: zap.NewNop()}),
-		AuditService:      h.audit,
-		Enqueuer:          h.enqueuer,
-		Dispatcher:        dispatcher,
-		Publisher:         h.events,
-		Watchtower:        h.watchtower,
+		Policy: accountingcontrolpolicyservice.New(
+			accountingcontrolpolicyservice.Params{Logger: zap.NewNop()},
+		),
+		AuditService: h.audit,
+		Enqueuer:     h.enqueuer,
+		Dispatcher:   dispatcher,
+		Publisher:    h.events,
+		Watchtower:   h.watchtower,
 	})
 	return h
 }
 
-func syncingConnection(conn *accountingsync.AccountingConnection) {
+func syncingConnection(conn *accountingconnection.AccountingConnection) {
 	start := syncStartDate
 	enabled := syncEnabledAt
-	conn.SetupStep = accountingsync.SetupStepComplete
+	conn.SetupStep = accountingconnection.SetupStepComplete
 	conn.SyncStartDate = &start
 	conn.SyncEnabledAt = &enabled
 	conn.AutoSync = true
 }
 
 func (h *harness) addConnection(
-	configure func(*accountingsync.AccountingConnection),
-) *accountingsync.AccountingConnection {
-	conn := &accountingsync.AccountingConnection{
+	configure func(*accountingconnection.AccountingConnection),
+) *accountingconnection.AccountingConnection {
+	conn := &accountingconnection.AccountingConnection{
 		ID:                   pulid.MustNew("acctc_"),
 		OrganizationID:       h.tenant.OrgID,
 		BusinessUnitID:       h.tenant.BuID,
 		IntegrationType:      integration.TypeQuickBooksOnline,
-		Status:               accountingsync.ConnectionStatusConnected,
+		Status:               accountingconnection.ConnectionStatusConnected,
 		ExternalRealmID:      "9341452431742015",
-		AppSource:            accountingsync.AppSourceInstance,
+		AppSource:            accountingconnection.AppSourceInstance,
 		ExternalHomeCurrency: "USD",
-		SetupStep:            accountingsync.SetupStepMappings,
+		SetupStep:            accountingconnection.SetupStepMappings,
 		ConnectedByID:        h.userID,
 		ConnectedAt:          syncStartDate,
 	}
@@ -182,18 +186,25 @@ func (h *harness) addConnection(
 	return cloneConnection(conn)
 }
 
-func (h *harness) updateConnection(fn func(*accountingsync.AccountingConnection)) {
+func (h *harness) updateConnection(fn func(*accountingconnection.AccountingConnection)) {
 	h.connections.mu.Lock()
 	defer h.connections.mu.Unlock()
 	fn(h.connections.rows[h.conn.ID])
 }
 
-func (h *harness) confirm(target mappingTarget, externalID string) *accountingsync.AccountingMapping {
-	return h.mappings.set(h.conn, target, accountingsync.MappingStateConfirmed, externalID)
+func (h *harness) confirm(
+	target mappingTarget,
+	externalID string,
+) *accountingmapping.AccountingMapping {
+	return h.mappings.set(h.conn, target, accountingmapping.MappingStateConfirmed, externalID)
 }
 
 func customerTarget(customerID pulid.ID, name string) mappingTarget {
-	return mappingTarget{TargetType: accountingsync.TargetCustomer, ObjectID: customerID, Label: name}
+	return mappingTarget{
+		TargetType: accountingsync.TargetCustomer,
+		ObjectID:   customerID,
+		Label:      name,
+	}
 }
 
 func freightTarget() mappingTarget {
@@ -205,7 +216,11 @@ func freightTarget() mappingTarget {
 }
 
 func chargeTarget(chargeID pulid.ID) mappingTarget {
-	return mappingTarget{TargetType: accountingsync.TargetAccessorialCharge, ObjectID: chargeID, Label: "DET"}
+	return mappingTarget{
+		TargetType: accountingsync.TargetAccessorialCharge,
+		ObjectID:   chargeID,
+		Label:      "DET",
+	}
 }
 
 type invoiceSpec struct {
@@ -292,13 +307,21 @@ func (h *harness) enqueue(t *testing.T, req *accountingsyncports.AccountingSyncE
 	require.NoError(t, h.enqueuer.Enqueue(t.Context(), req))
 }
 
-func (h *harness) enqueueInvoice(t *testing.T, inv *invoice.Invoice) *accountingsync.AccountingSyncRecord {
+func (h *harness) enqueueInvoice(
+	t *testing.T,
+	inv *invoice.Invoice,
+) *accountingsync.AccountingSyncRecord {
 	t.Helper()
 	require.NoError(t, h.enqueuer.Enqueue(
 		t.Context(),
 		accountingsyncports.InvoiceSyncRequest(inv, accountingsync.PostedSourceEvent(inv.BillType)),
 	))
-	return h.only(t, accountingsync.SyncObjectTypeForBill(inv.BillType), inv.ID, accountingsync.SyncOperationCreate)
+	return h.only(
+		t,
+		accountingsync.SyncObjectTypeForBill(inv.BillType),
+		inv.ID,
+		accountingsync.SyncOperationCreate,
+	)
 }
 
 func (h *harness) only(
@@ -324,8 +347,14 @@ func (h *harness) drain(t *testing.T) *accountingsyncports.AccountingSyncDrainRe
 	return result
 }
 
-func (h *harness) syncedInvoiceRecord(inv *invoice.Invoice, externalID string) *accountingsync.AccountingSyncRecord {
-	req := accountingsyncports.InvoiceSyncRequest(inv, accountingsync.PostedSourceEvent(inv.BillType))
+func (h *harness) syncedInvoiceRecord(
+	inv *invoice.Invoice,
+	externalID string,
+) *accountingsync.AccountingSyncRecord {
+	req := accountingsyncports.InvoiceSyncRequest(
+		inv,
+		accountingsync.PostedSourceEvent(inv.BillType),
+	)
 	record := NewRecordFor(h.conn, req, inv.InvoiceDate)
 	record.MarkSynced(&accountingsync.SyncResult{ExternalID: externalID}, inv.InvoiceDate)
 	h.records.put(record)

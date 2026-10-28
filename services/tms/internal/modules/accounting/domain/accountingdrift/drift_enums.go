@@ -1,4 +1,8 @@
-package accountingsync
+package accountingdrift
+
+import (
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+)
 
 type DriftKind string
 
@@ -10,8 +14,6 @@ const (
 	DriftCustomerBalanceMismatch = DriftKind("CustomerBalanceMismatch")
 	DriftTrialBalanceMismatch    = DriftKind("TrialBalanceMismatch")
 )
-
-const DriftObjectGLAccount = SyncObjectType("GLAccount")
 
 func (k DriftKind) String() string { return string(k) }
 
@@ -135,24 +137,30 @@ const (
 
 func (o DriftFixObject) String() string { return string(o) }
 
-func DriftObjectTypes() []SyncObjectType {
-	return []SyncObjectType{
-		SyncObjectInvoice,
-		SyncObjectCreditMemo,
-		SyncObjectDebitMemo,
-		SyncObjectCustomerPayment,
-		SyncObjectCreditApplication,
-		SyncObjectCarrierBill,
-		SyncObjectCarrierBillPay,
-		SyncObjectDriverBill,
-		SyncObjectDriverBillPay,
+func DriftObjectTypes() []accountingsync.SyncObjectType {
+	return []accountingsync.SyncObjectType{
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncObjectCreditMemo,
+		accountingsync.SyncObjectDebitMemo,
+		accountingsync.SyncObjectCustomerPayment,
+		accountingsync.SyncObjectCreditApplication,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncObjectCarrierBillPay,
+		accountingsync.SyncObjectDriverBill,
+		accountingsync.SyncObjectDriverBillPay,
 	}
 }
 
-func DriftBalanceObjectTypes() []SyncObjectType {
-	return []SyncObjectType{SyncObjectInvoice, SyncObjectDebitMemo}
+func DriftBalanceObjectTypes() []accountingsync.SyncObjectType {
+	return []accountingsync.SyncObjectType{
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncObjectDebitMemo,
+	}
 }
 
-func DriftCreateOperations() []SyncOperation {
-	return []SyncOperation{SyncOperationCreate, SyncOperationRecreate}
+func DriftCreateOperations() []accountingsync.SyncOperation {
+	return []accountingsync.SyncOperation{
+		accountingsync.SyncOperationCreate,
+		accountingsync.SyncOperationRecreate,
+	}
 }

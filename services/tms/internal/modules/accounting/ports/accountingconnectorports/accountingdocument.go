@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/shopspring/decimal"
 )
@@ -16,7 +17,7 @@ type AccountingDocumentAuth struct {
 }
 
 func DocumentAuthFor(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	accessToken string,
 ) AccountingDocumentAuth {
 	return AccountingDocumentAuth{

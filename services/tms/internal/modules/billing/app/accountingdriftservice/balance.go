@@ -3,6 +3,7 @@ package accountingdriftservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
@@ -141,7 +142,7 @@ func (s *Service) compareBalances(
 	}
 
 	at := s.now().Unix()
-	observed := make(map[pulid.ID]*accountingsync.DriftObservation, len(ready))
+	observed := make(map[pulid.ID]*accountingdrift.DriftObservation, len(ready))
 	compared := make([]pulid.ID, 0, len(ready))
 	for _, customer := range ready {
 		obs := balanceObservation(sess, customer, provider, at)
@@ -198,9 +199,9 @@ func balanceObservation(
 	customer *customerBalance,
 	provider map[string]*accountingconnectorports.AccountingDocumentState,
 	at int64,
-) *accountingsync.DriftObservation {
+) *accountingdrift.DriftObservation {
 	var trenovaTotal, providerTotal int64
-	detail := make([]accountingsync.DriftLine, 0, len(customer.lines))
+	detail := make([]accountingdrift.DriftLine, 0, len(customer.lines))
 	for _, line := range customer.lines {
 		state := provider[string(line.ObjectType)+":"+line.ExternalID]
 		if state == nil || !state.Found || state.Voided || state.Balance == nil {
@@ -210,7 +211,7 @@ func balanceObservation(
 		trenovaTotal += line.OpenMinor
 		providerTotal += providerMinor
 		if providerMinor != line.OpenMinor {
-			detail = append(detail, accountingsync.DriftLine{
+			detail = append(detail, accountingdrift.DriftLine{
 				ObjectType:    line.ObjectType,
 				ObjectID:      line.ObjectID,
 				ObjectNumber:  line.Number,
@@ -222,7 +223,7 @@ func balanceObservation(
 	if trenovaTotal == providerTotal {
 		return nil
 	}
-	return &accountingsync.DriftObservation{
+	return &accountingdrift.DriftObservation{
 		TenantInfo:    sess.tenant,
 		ConnectionID:  sess.conn.ID,
 		ObjectType:    accountingsync.SyncObjectCustomer,
@@ -230,7 +231,7 @@ func balanceObservation(
 		ObjectNumber:  customer.name,
 		PartyID:       customer.id,
 		PartyName:     customer.name,
-		Kind:          accountingsync.DriftCustomerBalanceMismatch,
+		Kind:          accountingdrift.DriftCustomerBalanceMismatch,
 		CurrencyCode:  customer.currency,
 		TrenovaMinor:  &trenovaTotal,
 		ProviderMinor: &providerTotal,

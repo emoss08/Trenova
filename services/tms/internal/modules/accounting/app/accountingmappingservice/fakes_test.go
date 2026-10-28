@@ -6,6 +6,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -22,12 +25,12 @@ import (
 type fakeConnections struct {
 	accountingconnectionports.AccountingConnectionRepository
 	mu      sync.Mutex
-	rows    map[pulid.ID]*accountingsync.AccountingConnection
+	rows    map[pulid.ID]*accountingconnection.AccountingConnection
 	refresh []accountingconnectionports.MarkAccountingReferenceRefreshRequest
 }
 
-func newFakeConnections(conns ...*accountingsync.AccountingConnection) *fakeConnections {
-	f := &fakeConnections{rows: map[pulid.ID]*accountingsync.AccountingConnection{}}
+func newFakeConnections(conns ...*accountingconnection.AccountingConnection) *fakeConnections {
+	f := &fakeConnections{rows: map[pulid.ID]*accountingconnection.AccountingConnection{}}
 	for _, conn := range conns {
 		f.rows[conn.ID] = conn
 	}
@@ -37,7 +40,7 @@ func newFakeConnections(conns ...*accountingsync.AccountingConnection) *fakeConn
 func (f *fakeConnections) GetByType(
 	_ context.Context,
 	req accountingconnectionports.GetAccountingConnectionRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for _, row := range f.rows {
@@ -54,7 +57,7 @@ func (f *fakeConnections) GetByType(
 func (f *fakeConnections) GetByID(
 	_ context.Context,
 	req accountingconnectionports.GetAccountingConnectionByIDRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	row, ok := f.rows[req.ID]
@@ -67,8 +70,8 @@ func (f *fakeConnections) GetByID(
 
 func (f *fakeConnections) Update(
 	_ context.Context,
-	entity *accountingsync.AccountingConnection,
-) (*accountingsync.AccountingConnection, error) {
+	entity *accountingconnection.AccountingConnection,
+) (*accountingconnection.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	entity.Version++
@@ -104,16 +107,16 @@ func (f *fakeConnections) MarkReferenceRefresh(
 
 type fakeReferences struct {
 	mu      sync.Mutex
-	rows    []*accountingsync.AccountingReferenceObject
+	rows    []*accountingmapping.AccountingReferenceObject
 	seen    map[string]int64
-	removed []accountingsync.ReferenceKind
+	removed []accountingprovider.ReferenceKind
 }
 
-func newFakeReferences(refs ...*accountingsync.AccountingReferenceObject) *fakeReferences {
+func newFakeReferences(refs ...*accountingmapping.AccountingReferenceObject) *fakeReferences {
 	return &fakeReferences{rows: refs, seen: map[string]int64{}}
 }
 
-func refKey(kind accountingsync.ReferenceKind, externalID string) string {
+func refKey(kind accountingprovider.ReferenceKind, externalID string) string {
 	return string(kind) + "|" + externalID
 }
 
@@ -125,7 +128,7 @@ func (f *fakeReferences) Upsert(
 	defer f.mu.Unlock()
 	for _, obj := range req.Objects {
 		f.seen[refKey(obj.Kind, obj.ExternalID)] = req.SeenAt
-		idx := slices.IndexFunc(f.rows, func(r *accountingsync.AccountingReferenceObject) bool {
+		idx := slices.IndexFunc(f.rows, func(r *accountingmapping.AccountingReferenceObject) bool {
 			return r.Kind == obj.Kind && r.ExternalID == obj.ExternalID
 		})
 		copied := *obj
@@ -165,10 +168,10 @@ func (f *fakeReferences) MarkRemovedUnseen(
 func (f *fakeReferences) ListByKind(
 	_ context.Context,
 	req *accountingmappingports.ListAccountingReferenceObjectsRequest,
-) ([]*accountingsync.AccountingReferenceObject, error) {
+) ([]*accountingmapping.AccountingReferenceObject, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := make([]*accountingsync.AccountingReferenceObject, 0)
+	out := make([]*accountingmapping.AccountingReferenceObject, 0)
 	for _, row := range f.rows {
 		if row.Kind == req.Kind && (!req.UsableOnly || row.Usable()) {
 			out = append(out, row)
@@ -180,10 +183,10 @@ func (f *fakeReferences) ListByKind(
 func (f *fakeReferences) Search(
 	_ context.Context,
 	req *accountingmappingports.SearchAccountingReferenceObjectsRequest,
-) ([]*accountingsync.AccountingReferenceObject, error) {
+) ([]*accountingmapping.AccountingReferenceObject, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := make([]*accountingsync.AccountingReferenceObject, 0)
+	out := make([]*accountingmapping.AccountingReferenceObject, 0)
 	for _, row := range f.rows {
 		if row.Kind == req.Kind &&
 			strings.Contains(strings.ToLower(row.Name), strings.ToLower(req.Query)) {
@@ -196,10 +199,10 @@ func (f *fakeReferences) Search(
 func (f *fakeReferences) GetByExternalIDs(
 	_ context.Context,
 	req *accountingmappingports.GetAccountingReferenceObjectsRequest,
-) ([]*accountingsync.AccountingReferenceObject, error) {
+) ([]*accountingmapping.AccountingReferenceObject, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := make([]*accountingsync.AccountingReferenceObject, 0, len(req.ExternalIDs))
+	out := make([]*accountingmapping.AccountingReferenceObject, 0, len(req.ExternalIDs))
 	for _, row := range f.rows {
 		if row.Kind == req.Kind && slices.Contains(req.ExternalIDs, row.ExternalID) {
 			out = append(out, row)
@@ -211,10 +214,10 @@ func (f *fakeReferences) GetByExternalIDs(
 type fakeMappings struct {
 	ownerOperators []*worker.Worker
 	mu             sync.Mutex
-	rows           []*accountingsync.AccountingMapping
+	rows           []*accountingmapping.AccountingMapping
 }
 
-func cloneMapping(row *accountingsync.AccountingMapping) *accountingsync.AccountingMapping {
+func cloneMapping(row *accountingmapping.AccountingMapping) *accountingmapping.AccountingMapping {
 	out := *row
 	out.Signals.Candidates = slices.Clone(row.Signals.Candidates)
 	out.Signals.Matchers = slices.Clone(row.Signals.Matchers)
@@ -225,7 +228,7 @@ func cloneMapping(row *accountingsync.AccountingMapping) *accountingsync.Account
 func (f *fakeMappings) find(id pulid.ID) int {
 	return slices.IndexFunc(
 		f.rows,
-		func(r *accountingsync.AccountingMapping) bool { return r.ID == id },
+		func(r *accountingmapping.AccountingMapping) bool { return r.ID == id },
 	)
 }
 
@@ -233,7 +236,7 @@ func (f *fakeMappings) byTarget(
 	targetType accountingsync.MappingTargetType,
 	objectID pulid.ID,
 	key string,
-) *accountingsync.AccountingMapping {
+) *accountingmapping.AccountingMapping {
 	for _, row := range f.rows {
 		if row.TargetType == targetType && row.TrenovaObjectID == objectID &&
 			row.TrenovaKey == key {
@@ -246,10 +249,10 @@ func (f *fakeMappings) byTarget(
 func (f *fakeMappings) ListByConnection(
 	_ context.Context,
 	req *accountingmappingports.ListAccountingMappingsQuery,
-) ([]*accountingsync.AccountingMapping, error) {
+) ([]*accountingmapping.AccountingMapping, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := make([]*accountingsync.AccountingMapping, 0, len(f.rows))
+	out := make([]*accountingmapping.AccountingMapping, 0, len(f.rows))
 	for _, row := range f.rows {
 		if row.ConnectionID == req.ConnectionID {
 			out = append(out, cloneMapping(row))
@@ -261,10 +264,10 @@ func (f *fakeMappings) ListByConnection(
 func (f *fakeMappings) ListConnection(
 	_ context.Context,
 	req *accountingmappingports.ListAccountingMappingsConnectionRequest,
-) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error) {
+) (*pagination.CursorListResult[*accountingmapping.AccountingMapping], error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	items := make([]*accountingsync.AccountingMapping, 0)
+	items := make([]*accountingmapping.AccountingMapping, 0)
 	for _, row := range f.rows {
 		if row.ConnectionID != req.ConnectionID {
 			continue
@@ -277,13 +280,13 @@ func (f *fakeMappings) ListConnection(
 		}
 		items = append(items, cloneMapping(row))
 	}
-	return &pagination.CursorListResult[*accountingsync.AccountingMapping]{Items: items}, nil
+	return &pagination.CursorListResult[*accountingmapping.AccountingMapping]{Items: items}, nil
 }
 
 func (f *fakeMappings) GetByID(
 	_ context.Context,
 	req accountingmappingports.GetAccountingMappingRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	idx := f.find(req.ID)
@@ -296,10 +299,10 @@ func (f *fakeMappings) GetByID(
 func (f *fakeMappings) GetByIDs(
 	_ context.Context,
 	req accountingmappingports.GetAccountingMappingsByIDsRequest,
-) ([]*accountingsync.AccountingMapping, error) {
+) ([]*accountingmapping.AccountingMapping, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := make([]*accountingsync.AccountingMapping, 0, len(req.IDs))
+	out := make([]*accountingmapping.AccountingMapping, 0, len(req.IDs))
 	for _, row := range f.rows {
 		if row.OrganizationID == req.TenantInfo.OrgID && slices.Contains(req.IDs, row.ID) {
 			out = append(out, cloneMapping(row))
@@ -311,7 +314,7 @@ func (f *fakeMappings) GetByIDs(
 func (f *fakeMappings) GetByTarget(
 	_ context.Context,
 	req *accountingmappingports.GetAccountingMappingByTargetRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	row := f.byTarget(req.TargetType, req.TrenovaObjectID, req.TrenovaKey)
@@ -323,7 +326,7 @@ func (f *fakeMappings) GetByTarget(
 
 func (f *fakeMappings) CreateMissing(
 	_ context.Context,
-	entities []*accountingsync.AccountingMapping,
+	entities []*accountingmapping.AccountingMapping,
 ) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -342,7 +345,7 @@ func (f *fakeMappings) CreateMissing(
 
 func (f *fakeMappings) ApplyScoring(
 	_ context.Context,
-	entities []*accountingsync.AccountingMapping,
+	entities []*accountingmapping.AccountingMapping,
 ) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -350,7 +353,7 @@ func (f *fakeMappings) ApplyScoring(
 	for _, entity := range entities {
 		idx := f.find(entity.ID)
 		if idx < 0 || f.rows[idx].Version != entity.Version ||
-			f.rows[idx].State == accountingsync.MappingStateConfirmed {
+			f.rows[idx].State == accountingmapping.MappingStateConfirmed {
 			continue
 		}
 		row := cloneMapping(entity)
@@ -363,7 +366,7 @@ func (f *fakeMappings) ApplyScoring(
 
 func (f *fakeMappings) UpdateLabels(
 	_ context.Context,
-	entities []*accountingsync.AccountingMapping,
+	entities []*accountingmapping.AccountingMapping,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -377,8 +380,8 @@ func (f *fakeMappings) UpdateLabels(
 
 func (f *fakeMappings) Update(
 	_ context.Context,
-	entity *accountingsync.AccountingMapping,
-) (*accountingsync.AccountingMapping, error) {
+	entity *accountingmapping.AccountingMapping,
+) (*accountingmapping.AccountingMapping, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	idx := f.find(entity.ID)
@@ -424,14 +427,14 @@ func (f *fakeMappings) CountByState(
 	for key, count := range counts {
 		out = append(out, accountingmappingports.AccountingMappingCount{
 			TargetType: accountingsync.MappingTargetType(key[0]),
-			State:      accountingsync.MappingState(key[1]),
+			State:      accountingmapping.MappingState(key[1]),
 			Count:      count,
 		})
 	}
 	return out, nil
 }
 
-func (f *fakeMappings) get(id pulid.ID) *accountingsync.AccountingMapping {
+func (f *fakeMappings) get(id pulid.ID) *accountingmapping.AccountingMapping {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if idx := f.find(id); idx >= 0 {
@@ -443,12 +446,12 @@ func (f *fakeMappings) get(id pulid.ID) *accountingsync.AccountingMapping {
 type fakeConnector struct {
 	accountingconnectorports.AccountingConnector
 	mu         sync.Mutex
-	pages      map[accountingsync.ReferenceKind][][]*accountingsync.AccountingReferenceObject
+	pages      map[accountingprovider.ReferenceKind][][]*accountingmapping.AccountingReferenceObject
 	listErr    error
 	createErr  error
 	duplicate  bool
 	created    []*accountingconnectorports.AccountingCreateReferenceRequest
-	createdObj *accountingsync.AccountingReferenceObject
+	createdObj *accountingmapping.AccountingReferenceObject
 	onCreate   func()
 }
 
@@ -481,7 +484,7 @@ func (f *fakeConnector) ListReference(
 func (f *fakeConnector) CreateReference(
 	_ context.Context,
 	req *accountingconnectorports.AccountingCreateReferenceRequest,
-) (*accountingsync.AccountingReferenceObject, error) {
+) (*accountingmapping.AccountingReferenceObject, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.created = append(f.created, req)
@@ -496,7 +499,7 @@ func (f *fakeConnector) CreateReference(
 
 func (f *fakeConnector) IsDuplicateName(err error) bool { return f.duplicate && err != nil }
 
-func (f *fakeConnector) SanitizeName(_ accountingsync.ReferenceKind, name string) string {
+func (f *fakeConnector) SanitizeName(_ accountingprovider.ReferenceKind, name string) string {
 	return strings.TrimSpace(strings.ReplaceAll(name, ":", " "))
 }
 

@@ -3,7 +3,7 @@ package accountingtools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
@@ -36,7 +36,7 @@ type accountingDriftOperator interface {
 	Get(
 		ctx context.Context,
 		req *accountingdriftports.GetAccountingDriftFindingRequest,
-	) (*accountingsync.AccountingDriftFinding, error)
+	) (*accountingdrift.AccountingDriftFinding, error)
 	PreviewResolve(
 		ctx context.Context,
 		req *accountingdriftports.ResolveAccountingDriftRequest,
@@ -46,7 +46,7 @@ type accountingDriftOperator interface {
 		ctx context.Context,
 		req *accountingdriftports.ResolveAccountingDriftRequest,
 		actor *permissionports.RequestActor,
-	) (*accountingsync.AccountingDriftFinding, error)
+	) (*accountingdrift.AccountingDriftFinding, error)
 	PreviewDismiss(
 		ctx context.Context,
 		req *accountingdriftports.DismissAccountingDriftRequest,
@@ -56,7 +56,7 @@ type accountingDriftOperator interface {
 		ctx context.Context,
 		req *accountingdriftports.DismissAccountingDriftRequest,
 		actor *permissionports.RequestActor,
-	) (*accountingsync.AccountingDriftFinding, error)
+	) (*accountingdrift.AccountingDriftFinding, error)
 	Overview(
 		ctx context.Context,
 		req *accountingdriftports.AccountingDriftOverviewRequest,
@@ -68,7 +68,7 @@ type accountingDriftOperator interface {
 	) (*accountingdriftports.AccountingDriftOverview, error)
 }
 
-func driftLabel(finding *accountingsync.AccountingDriftFinding) string {
+func driftLabel(finding *accountingdrift.AccountingDriftFinding) string {
 	label := finding.ObjectNumber
 	if label == "" {
 		label = finding.PartyName
@@ -170,7 +170,7 @@ func (t *ResolveAccountingDriftTool) request(
 	if err != nil {
 		return nil, err
 	}
-	direction := accountingsync.DriftDirection(raw)
+	direction := accountingdrift.DriftDirection(raw)
 	if !direction.IsValid() {
 		return nil, errortypes.NewValidationError(
 			paramDriftDirection,

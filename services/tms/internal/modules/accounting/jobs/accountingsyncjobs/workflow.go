@@ -4,9 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
-
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -160,7 +159,7 @@ func refreshReference(
 		withFairness(&referenceActivityOptions, payload.OrganizationID),
 	)
 
-	for _, kind := range accountingsync.AllReferenceKinds() {
+	for _, kind := range accountingprovider.AllReferenceKinds() {
 		var pulled ReferenceKindResult
 		if err := workflow.ExecuteActivity(pullCtx, a.PullAccountingReferenceActivity, payload, kind).
 			Get(pullCtx, &pulled); err != nil {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -35,7 +37,7 @@ type ledgerEntry struct {
 	accountLabel    string
 	description     string
 	netMinor        int64
-	need            accountingsync.LedgerPartyNeed
+	need            accountingmapping.LedgerPartyNeed
 	party           journalentryports.LedgerParty
 }
 
@@ -507,7 +509,7 @@ func (s *Service) openingPartyAccounts(
 	}
 	accounts := make([]pulid.ID, 0, 2)
 	for accountID, externalID := range external {
-		if needs[externalID] != accountingsync.LedgerPartyNone {
+		if needs[externalID] != accountingmapping.LedgerPartyNone {
 			accounts = append(accounts, accountID)
 		}
 	}
@@ -544,7 +546,7 @@ func (s *Service) ledgerPartyNeeds(
 	ctx context.Context,
 	sess *pushSession,
 	external map[pulid.ID]string,
-) (map[string]accountingsync.LedgerPartyNeed, error) {
+) (map[string]accountingmapping.LedgerPartyNeed, error) {
 	ids := make([]string, 0, len(external))
 	seen := make(map[string]struct{}, len(external))
 	for _, externalID := range external {
@@ -554,7 +556,7 @@ func (s *Service) ledgerPartyNeeds(
 		seen[externalID] = struct{}{}
 		ids = append(ids, externalID)
 	}
-	needs := make(map[string]accountingsync.LedgerPartyNeed, len(ids))
+	needs := make(map[string]accountingmapping.LedgerPartyNeed, len(ids))
 	if len(ids) == 0 || s.references == nil {
 		return needs, nil
 	}
@@ -563,7 +565,7 @@ func (s *Service) ledgerPartyNeeds(
 		&accountingmappingports.GetAccountingReferenceObjectsRequest{
 			TenantInfo:   sess.tenant,
 			ConnectionID: sess.conn.ID,
-			Kind:         accountingsync.ReferenceKindAccount,
+			Kind:         accountingprovider.ReferenceKindAccount,
 			ExternalIDs:  ids,
 		},
 	)
@@ -600,7 +602,7 @@ func (s *Service) ledgerDocLines(
 		externalAccount := external[line.accountID]
 		need := needs[externalAccount]
 		party := journalentryports.LedgerParty{}
-		if need != accountingsync.LedgerPartyNone {
+		if need != accountingmapping.LedgerPartyNone {
 			party = line.party
 		}
 		if !req.sum {
@@ -657,7 +659,7 @@ func (s *Service) ledgerDocLines(
 		if entry.netMinor < 0 {
 			line.Posting = accountingconnectorports.AccountingJournalCredit
 		}
-		if entry.need != accountingsync.LedgerPartyNone {
+		if entry.need != accountingmapping.LedgerPartyNone {
 			if line.PartyKind, line.PartyExternalID, err = s.ledgerPartyRef(
 				ctx,
 				sess,
@@ -680,10 +682,10 @@ func (s *Service) ledgerPartyRef(
 	label string,
 	entry *ledgerEntry,
 ) (accountingconnectorports.AccountingJournalPartyKind, string, error) {
-	wanted := providerKindLabel(accountingsync.ReferenceKindCustomer)
+	wanted := providerKindLabel(accountingprovider.ReferenceKindCustomer)
 	kind := accountingconnectorports.AccountingJournalCustomer
-	if entry.need == accountingsync.LedgerPartyVendor {
-		wanted = providerKindLabel(accountingsync.ReferenceKindVendor)
+	if entry.need == accountingmapping.LedgerPartyVendor {
+		wanted = providerKindLabel(accountingprovider.ReferenceKindVendor)
 		kind = accountingconnectorports.AccountingJournalVendor
 	}
 	account := entry.accountLabel
@@ -701,13 +703,13 @@ func (s *Service) ledgerPartyRef(
 
 	var objectType accountingsync.SyncObjectType
 	switch {
-	case entry.need == accountingsync.LedgerPartyCustomer &&
+	case entry.need == accountingmapping.LedgerPartyCustomer &&
 		entry.party.Kind == journalentryports.LedgerPartyCustomer:
 		objectType = accountingsync.SyncObjectCustomer
-	case entry.need == accountingsync.LedgerPartyVendor &&
+	case entry.need == accountingmapping.LedgerPartyVendor &&
 		entry.party.Kind == journalentryports.LedgerPartyCarrier:
 		objectType = accountingsync.SyncObjectCarrierVendor
-	case entry.need == accountingsync.LedgerPartyVendor &&
+	case entry.need == accountingmapping.LedgerPartyVendor &&
 		entry.party.Kind == journalentryports.LedgerPartyDriver:
 		objectType = accountingsync.SyncObjectDriverVendor
 	default:

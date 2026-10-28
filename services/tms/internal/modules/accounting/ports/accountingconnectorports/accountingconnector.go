@@ -5,6 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 )
@@ -27,18 +30,18 @@ var ErrAccountingAppRejected = errors.New(
 )
 
 type AccountingApp struct {
-	Source               accountingsync.AppSource
-	Environment          accountingsync.AppEnvironment
+	Source               accountingconnection.AppSource
+	Environment          accountingprovider.AppEnvironment
 	ClientID             string
 	ClientSecret         string
 	WebhookVerifierToken string
 }
 
-func (a *AccountingApp) Identity() accountingsync.AppIdentity {
-	return accountingsync.AppIdentity{
+func (a *AccountingApp) Identity() accountingconnection.AppIdentity {
+	return accountingconnection.AppIdentity{
 		Source:      a.Source,
 		Environment: a.Environment,
-		Fingerprint: accountingsync.AppFingerprint(a.Environment, a.ClientID),
+		Fingerprint: accountingconnection.AppFingerprint(a.Environment, a.ClientID),
 	}
 }
 
@@ -82,7 +85,7 @@ type AccountingConnector interface {
 	CompanyFacts(
 		ctx context.Context,
 		realmID, accessToken string,
-	) (*accountingsync.CompanyFacts, error)
+	) (*accountingconnection.CompanyFacts, error)
 	VerifyApp(ctx context.Context) error
 	VerifyWebhook(signature string, body []byte) error
 	ClassifyError(err error) accountingsync.ErrorCategory
@@ -126,13 +129,13 @@ type AccountingConnectorRegistry interface {
 type AccountingReferencePageRequest struct {
 	RealmID       string
 	AccessToken   string
-	Kind          accountingsync.ReferenceKind
+	Kind          accountingprovider.ReferenceKind
 	StartPosition int
 	PageSize      int
 }
 
 type AccountingReferencePage struct {
-	Objects   []*accountingsync.AccountingReferenceObject
+	Objects   []*accountingmapping.AccountingReferenceObject
 	NextStart int
 }
 
@@ -159,7 +162,7 @@ type AccountingCreateReferenceRequest struct {
 	RealmID     string
 	AccessToken string
 	RequestID   string
-	Kind        accountingsync.ReferenceKind
+	Kind        accountingprovider.ReferenceKind
 	Item        *AccountingItemDraft
 	Party       *AccountingPartyDraft
 }
@@ -176,9 +179,9 @@ type AccountingReferenceCreator interface {
 	CreateReference(
 		ctx context.Context,
 		req *AccountingCreateReferenceRequest,
-	) (*accountingsync.AccountingReferenceObject, error)
+	) (*accountingmapping.AccountingReferenceObject, error)
 	IsDuplicateName(err error) bool
-	SanitizeName(kind accountingsync.ReferenceKind, name string) string
+	SanitizeName(kind accountingprovider.ReferenceKind, name string) string
 }
 
 type AccountingSubscribeRequest struct {
@@ -216,11 +219,11 @@ type AccountingWebhookSubscriber interface {
 	Subscribe(
 		ctx context.Context,
 		req *AccountingSubscribeRequest,
-	) (*accountingsync.WebhookSubscriptionGrant, error)
+	) (*accountingconnection.WebhookSubscriptionGrant, error)
 	RenewSubscription(
 		ctx context.Context,
 		req *AccountingRenewSubscriptionRequest,
-	) (*accountingsync.WebhookSubscriptionGrant, error)
+	) (*accountingconnection.WebhookSubscriptionGrant, error)
 	Unsubscribe(ctx context.Context, req *AccountingUnsubscribeRequest) error
 	IsSubscriptionGone(err error) bool
 }

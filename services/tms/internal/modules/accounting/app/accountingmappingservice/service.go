@@ -4,6 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnlookup"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
@@ -118,7 +121,7 @@ func (s *Service) connectionFor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	return accountingconnlookup.ByType(ctx, s.connections, tenantInfo, typ)
 }
 
@@ -127,7 +130,7 @@ func (s *Service) Summary(
 	tenantInfo pagination.TenantInfo,
 	integrationType integration.Type,
 ) (*accountingmappingports.AccountingMappingSummary, error) {
-	profile := accountingsync.MustProfile(integrationType)
+	profile := accountingprovider.MustProfile(integrationType)
 	summary := &accountingmappingports.AccountingMappingSummary{
 		IntegrationType: integrationType,
 		ProviderName:    profile.Name,
@@ -162,7 +165,7 @@ func (s *Service) Summary(
 			Cursor:       pagination.CursorInfo{Limit: pagination.MaxLimit},
 			ConnectionID: conn.ID,
 			RequiredOnly: true,
-			States:       []accountingsync.MappingState{accountingsync.MappingStateConfirmed},
+			States:       []accountingmapping.MappingState{accountingmapping.MappingStateConfirmed},
 		},
 	)
 	if err != nil {
@@ -201,11 +204,11 @@ func groupCounts(
 			continue
 		}
 		switch count.State {
-		case accountingsync.MappingStateUnmatched:
+		case accountingmapping.MappingStateUnmatched:
 			group.Unmatched += count.Count
-		case accountingsync.MappingStateProposed:
+		case accountingmapping.MappingStateProposed:
 			group.Proposed += count.Count
-		case accountingsync.MappingStateConfirmed:
+		case accountingmapping.MappingStateConfirmed:
 			group.Confirmed += count.Count
 		}
 	}
@@ -215,7 +218,7 @@ func groupCounts(
 func (s *Service) ListMappings(
 	ctx context.Context,
 	req *accountingmappingports.ListAccountingMappingsRequest,
-) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error) {
+) (*pagination.CursorListResult[*accountingmapping.AccountingMapping], error) {
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
@@ -238,7 +241,7 @@ func (s *Service) GetMapping(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	return s.mappings.GetByID(ctx, accountingmappingports.GetAccountingMappingRequest{
 		TenantInfo: tenantInfo,
 		ID:         id,
@@ -249,7 +252,7 @@ func (s *Service) GetMappingsByIDs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	ids []pulid.ID,
-) ([]*accountingsync.AccountingMapping, error) {
+) ([]*accountingmapping.AccountingMapping, error) {
 	return s.mappings.GetByIDs(ctx, accountingmappingports.GetAccountingMappingsByIDsRequest{
 		TenantInfo: tenantInfo,
 		IDs:        ids,
@@ -259,7 +262,7 @@ func (s *Service) GetMappingsByIDs(
 func (s *Service) FindMapping(
 	ctx context.Context,
 	req *accountingmappingports.SetAccountingMappingRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	if err := req.ValidateTarget(); err != nil {
 		return nil, err
 	}
@@ -282,7 +285,7 @@ func (s *Service) FindMapping(
 func (s *Service) SearchReference(
 	ctx context.Context,
 	req *accountingmappingports.SearchAccountingReferenceRequest,
-) ([]*accountingsync.AccountingReferenceObject, error) {
+) ([]*accountingmapping.AccountingReferenceObject, error) {
 	if !req.Kind.IsValid() {
 		return nil, errortypes.NewValidationError(
 			"kind",
@@ -307,7 +310,7 @@ func (s *Service) SearchReference(
 func (s *Service) GetReferenceObjects(
 	ctx context.Context,
 	req *accountingmappingports.GetAccountingReferenceObjectsRequest,
-) ([]*accountingsync.AccountingReferenceObject, error) {
+) ([]*accountingmapping.AccountingReferenceObject, error) {
 	return s.references.GetByExternalIDs(
 		ctx,
 		&accountingmappingports.GetAccountingReferenceObjectsRequest{
@@ -322,9 +325,9 @@ func (s *Service) GetReferenceObjects(
 func (s *Service) usableReference(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	mapping *accountingsync.AccountingMapping,
+	mapping *accountingmapping.AccountingMapping,
 	externalID string,
-) (*accountingsync.AccountingReferenceObject, error) {
+) (*accountingmapping.AccountingReferenceObject, error) {
 	refs, err := s.references.GetByExternalIDs(
 		ctx,
 		&accountingmappingports.GetAccountingReferenceObjectsRequest{
@@ -369,9 +372,9 @@ func (s *Service) usableReference(
 func (s *Service) Confirm(
 	ctx context.Context,
 	req *accountingmappingports.ConfirmAccountingMappingsRequest,
-) ([]*accountingsync.AccountingMapping, error) {
+) ([]*accountingmapping.AccountingMapping, error) {
 	if len(req.Items) == 0 {
-		return []*accountingsync.AccountingMapping{}, nil
+		return []*accountingmapping.AccountingMapping{}, nil
 	}
 	plan, err := s.PlanConfirm(ctx, req)
 	if err != nil {
@@ -448,14 +451,14 @@ func (s *Service) PlanConfirm(
 	now := timeutils.NowUnix()
 	plan := &accountingmappingports.AccountingMappingConfirmPlan{
 		Changes:   make([]*accountingmappingports.AccountingMappingChange, 0, len(rows)),
-		Confirmed: make([]*accountingsync.AccountingMapping, 0, len(rows)),
+		Confirmed: make([]*accountingmapping.AccountingMapping, 0, len(rows)),
 	}
 	for _, row := range rows {
-		if row.State == accountingsync.MappingStateConfirmed {
+		if row.State == accountingmapping.MappingStateConfirmed {
 			plan.Confirmed = append(plan.Confirmed, row)
 			continue
 		}
-		if row.State != accountingsync.MappingStateProposed {
+		if row.State != accountingmapping.MappingStateProposed {
 			return nil, errortypes.NewBusinessError(
 				"{0} has no proposed match to confirm; choose a record for it instead",
 				row.TargetLabel,
@@ -466,10 +469,10 @@ func (s *Service) PlanConfirm(
 		}
 		before := row.Clone()
 		source := row.Source
-		if req.Source == accountingsync.MappingSourceAgent {
-			source = accountingsync.MappingSourceAgent
+		if req.Source == accountingmapping.MappingSourceAgent {
+			source = accountingmapping.MappingSourceAgent
 		}
-		row.Confirm(&accountingsync.Choice{
+		row.Confirm(&accountingmapping.Choice{
 			ExternalID:   row.ExternalID,
 			ExternalName: row.ExternalName,
 			Source:       source,
@@ -506,7 +509,7 @@ func (s *Service) PlanReject(
 func (s *Service) Reject(
 	ctx context.Context,
 	req *accountingmappingports.AccountingMappingActionRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	change, err := s.PlanReject(ctx, req)
 	if err != nil {
 		return nil, err
@@ -525,7 +528,7 @@ func (s *Service) Reject(
 		ctx,
 		req.TenantInfo,
 		req.UserID,
-		[]*accountingsync.AccountingMapping{updated},
+		[]*accountingmapping.AccountingMapping{updated},
 	)
 	return updated, nil
 }
@@ -533,7 +536,7 @@ func (s *Service) Reject(
 func (s *Service) Set(
 	ctx context.Context,
 	req *accountingmappingports.SetAccountingMappingRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	row, err := s.FindMapping(ctx, req)
 	if err != nil {
 		return nil, err
@@ -571,7 +574,7 @@ func (s *Service) Set(
 		ctx,
 		req.TenantInfo,
 		req.UserID,
-		[]*accountingsync.AccountingMapping{updated},
+		[]*accountingmapping.AccountingMapping{updated},
 	)
 	s.requeueMappingBlocked(ctx, req.TenantInfo, updated.ConnectionID)
 	return updated, nil
@@ -580,7 +583,7 @@ func (s *Service) Set(
 func (s *Service) Clear(
 	ctx context.Context,
 	req *accountingmappingports.AccountingMappingActionRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	row, err := s.GetMapping(ctx, req.TenantInfo, req.ID)
 	if err != nil {
 		return nil, err
@@ -608,7 +611,7 @@ func (s *Service) Clear(
 		ctx,
 		req.TenantInfo,
 		req.UserID,
-		[]*accountingsync.AccountingMapping{updated},
+		[]*accountingmapping.AccountingMapping{updated},
 	)
 	return updated, nil
 }
@@ -616,7 +619,7 @@ func (s *Service) Clear(
 func (s *Service) RequestRefresh(
 	ctx context.Context,
 	req *accountingmappingports.AccountingSetupRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
@@ -624,7 +627,7 @@ func (s *Service) RequestRefresh(
 	if !conn.IsActive() {
 		return nil, errortypes.NewBusinessError(
 			"{0} is not connected. A person must connect it from the integrations page.",
-			accountingsync.ProviderName(conn.IntegrationType),
+			accountingprovider.ProviderName(conn.IntegrationType),
 		)
 	}
 	if s.refresher == nil {
@@ -641,7 +644,7 @@ func (s *Service) RequestRefresh(
 func (s *Service) CompleteSetup(
 	ctx context.Context,
 	req *accountingmappingports.AccountingSetupRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	summary, err := s.Summary(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
@@ -653,7 +656,7 @@ func (s *Service) CompleteSetup(
 			summary.ProviderName,
 		)
 	}
-	if conn.SetupStep != accountingsync.SetupStepMappings {
+	if conn.SetupStep != accountingconnection.SetupStepMappings {
 		return conn, nil
 	}
 	if !summary.CanCompleteSetup {
@@ -688,7 +691,7 @@ func (s *Service) CompleteSetup(
 }
 
 func (s *Service) logAudit(
-	row *accountingsync.AccountingMapping,
+	row *accountingmapping.AccountingMapping,
 	userID pulid.ID,
 	previous map[string]any,
 	comment string,
@@ -712,7 +715,7 @@ func (s *Service) publishInvalidation(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
-	rows []*accountingsync.AccountingMapping,
+	rows []*accountingmapping.AccountingMapping,
 ) {
 	if s.realtime == nil || len(rows) == 0 {
 		return
@@ -735,7 +738,7 @@ func (s *Service) publishInvalidation(
 
 func (s *Service) publishConnectionInvalidation(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	userID pulid.ID,
 ) {
 	if s.realtime == nil {

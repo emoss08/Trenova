@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnlookup"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
@@ -136,7 +136,7 @@ func (s *Service) connectionFor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	return accountingconnlookup.ByType(ctx, s.connections, tenantInfo, typ)
 }
 
@@ -144,7 +144,7 @@ func (s *Service) connectionByID(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	return s.connections.GetByID(ctx, accountingconnectionports.GetAccountingConnectionByIDRequest{
 		TenantInfo: tenantInfo,
 		ID:         id,

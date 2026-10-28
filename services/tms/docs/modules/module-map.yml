@@ -658,6 +658,12 @@ modules:
   accounting:
     level: 8
     domain:
+      - accountingbackfill
+      - accountingconnection
+      - accountingdrift
+      - accountinginbound
+      - accountingmapping
+      - accountingprovider
       - accountingsync
       - accounttype
       - fiscalclose

@@ -4,7 +4,8 @@ import (
 	"context"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -18,11 +19,11 @@ import (
 const appCredentialPrefix = "acctapp_"
 
 type webhookSender struct {
-	identity accountingsync.AppIdentity
+	identity accountingconnection.AppIdentity
 	tenant   *pagination.TenantInfo
 }
 
-func (w *webhookSender) owns(conn *accountingsync.AccountingConnection) bool {
+func (w *webhookSender) owns(conn *accountingconnection.AccountingConnection) bool {
 	if w.tenant != nil &&
 		(conn.OrganizationID != w.tenant.OrgID || conn.BusinessUnitID != w.tenant.BuID) {
 		return false
@@ -42,7 +43,7 @@ func (s *Service) ReceiveWebhook(
 	if err != nil {
 		return err
 	}
-	if accountingsync.MustProfile(req.IntegrationType).WebhookSubscriptions {
+	if accountingprovider.MustProfile(req.IntegrationType).WebhookSubscriptions {
 		return s.receiveSubscribedWebhook(ctx, provider, req)
 	}
 
@@ -72,7 +73,7 @@ func (s *Service) ReceiveWebhook(
 		return err
 	}
 
-	owned := make([]*accountingsync.AccountingConnection, 0, len(holders))
+	owned := make([]*accountingconnection.AccountingConnection, 0, len(holders))
 	verified := make([]string, 0, len(holders))
 	for _, holder := range holders {
 		if sender.owns(holder) {
@@ -204,7 +205,7 @@ func (s *Service) receiveLegacyWebhook(
 func (s *Service) recordWebhook(
 	ctx context.Context,
 	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
-	holders []*accountingsync.AccountingConnection,
+	holders []*accountingconnection.AccountingConnection,
 	verified []string,
 ) error {
 	if _, err := s.connections.MarkWebhookReceived(
@@ -224,7 +225,7 @@ func (s *Service) recordWebhook(
 
 func (s *Service) pollChanged(
 	ctx context.Context,
-	holders []*accountingsync.AccountingConnection,
+	holders []*accountingconnection.AccountingConnection,
 	verified []string,
 ) {
 	if s.poller == nil {
@@ -244,7 +245,7 @@ func (s *Service) pollChanged(
 
 func connectionScope(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) context.Context {
 	return dbscope.WithTenant(ctx, dbscope.Tenant{
 		OrganizationID: conn.OrganizationID,
@@ -255,7 +256,7 @@ func connectionScope(
 func (s *Service) verifiedRealms(
 	ctx context.Context,
 	provider accountingconnectorports.AccountingProvider,
-	holders []*accountingsync.AccountingConnection,
+	holders []*accountingconnection.AccountingConnection,
 	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
 ) []string {
 	byApp := make(map[string]bool, len(holders))

@@ -1,4 +1,4 @@
-package accountingsync
+package accountingconnection
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -18,69 +20,69 @@ import (
 type AccountingConnection struct {
 	keel.Table `keel:"accounting_connections"`
 
-	ID                            pulid.ID             `json:"id"                            keel:"id,pk,autoid:acctc_"`
-	BusinessUnitID                pulid.ID             `json:"businessUnitId"                keel:"business_unit_id,pk,tenant"`
-	OrganizationID                pulid.ID             `json:"organizationId"                keel:"organization_id,pk,tenant"`
-	IntegrationType               integration.Type     `json:"integrationType"               keel:"integration_type"`
-	Status                        ConnectionStatus     `json:"status"                        keel:"status"`
-	ExternalRealmID               string               `json:"externalRealmId"               keel:"external_realm_id"`
-	AppSource                     AppSource            `json:"appSource"                     keel:"app_source,nullzero"`
-	AppEnvironment                AppEnvironment       `json:"appEnvironment"                keel:"app_environment,nullzero"`
-	AppFingerprint                string               `json:"-"                             keel:"app_fingerprint,nullzero"`
-	AuthMethod                    AuthMethod           `json:"authMethod"                    keel:"auth_method,nullzero"`
-	ClientKeyCiphertext           string               `json:"-"                             keel:"client_key_ciphertext,nullzero"`
-	ClientCertificateID           string               `json:"clientCertificateId"           keel:"client_certificate_id,nullzero"`
-	ClientCertificateExpiresAt    *int64               `json:"clientCertificateExpiresAt"    keel:"client_certificate_expires_at"`
-	ExternalCompanyName           string               `json:"externalCompanyName"           keel:"external_company_name,nullzero"`
-	ExternalShortCode             string               `json:"externalShortCode"             keel:"external_short_code,nullzero"`
-	ExternalLegalName             string               `json:"externalLegalName"             keel:"external_legal_name,nullzero"`
-	ExternalCountry               string               `json:"externalCountry"               keel:"external_country,nullzero"`
-	ExternalHomeCurrency          string               `json:"externalHomeCurrency"          keel:"external_home_currency,nullzero"`
-	ExternalMultiCurrencyEnabled  bool                 `json:"externalMultiCurrencyEnabled"  keel:"external_multi_currency_enabled"`
-	ExternalBooksClosedThrough    *int64               `json:"externalBooksClosedThrough"    keel:"external_books_closed_through"`
-	AccessTokenCiphertext         string               `json:"-"                             keel:"access_token_ciphertext,nullzero"`
-	AccessTokenExpiresAt          int64                `json:"accessTokenExpiresAt"          keel:"access_token_expires_at"`
-	RefreshTokenCiphertext        string               `json:"-"                             keel:"refresh_token_ciphertext,nullzero"`
-	RefreshTokenExpiresAt         int64                `json:"refreshTokenExpiresAt"         keel:"refresh_token_expires_at"`
-	RefreshTokenAbsoluteExpiresAt int64                `json:"refreshTokenAbsoluteExpiresAt" keel:"refresh_token_absolute_expires_at"`
-	LastRefreshedAt               *int64               `json:"lastRefreshedAt"               keel:"last_refreshed_at"`
-	LastCheckedAt                 *int64               `json:"lastCheckedAt"                 keel:"last_checked_at"`
-	LastSuccessAt                 *int64               `json:"lastSuccessAt"                 keel:"last_success_at"`
-	LastFailureAt                 *int64               `json:"lastFailureAt"                 keel:"last_failure_at"`
-	ConsecutiveFailures           int                  `json:"consecutiveFailures"           keel:"consecutive_failures"`
-	LastErrorCategory             ErrorCategory        `json:"lastErrorCategory"             keel:"last_error_category,nullzero"`
-	LastErrorMessage              string               `json:"lastErrorMessage"              keel:"last_error_message,nullzero"`
-	LastWebhookAt                 *int64               `json:"lastWebhookAt"                 keel:"last_webhook_at"`
-	SetupStep                     SetupStep            `json:"setupStep"                     keel:"setup_step"`
-	ReferenceRefreshStartedAt     *int64               `json:"referenceRefreshStartedAt"     keel:"reference_refresh_started_at"`
-	ReferenceRefreshedAt          *int64               `json:"referenceRefreshedAt"          keel:"reference_refreshed_at"`
-	ReferenceRefreshError         string               `json:"referenceRefreshError"         keel:"reference_refresh_error,nullzero"`
-	SyncStartDate                 *int64               `json:"syncStartDate"                 keel:"sync_start_date"`
-	SyncEnabledAt                 *int64               `json:"syncEnabledAt"                 keel:"sync_enabled_at"`
-	AutoSync                      bool                 `json:"autoSync"                      keel:"auto_sync"`
-	DriverSettlementsEnabledAt    *int64               `json:"driverSettlementsEnabledAt"    keel:"driver_settlements_enabled_at"`
-	InboundPaymentPolicy          InboundPaymentPolicy `json:"inboundPaymentPolicy"          keel:"inbound_payment_policy,nullzero"`
-	SyncMode                      SyncMode             `json:"syncMode"                      keel:"sync_mode,nullzero"`
-	LedgerGranularity             LedgerGranularity    `json:"ledgerGranularity"             keel:"ledger_granularity,nullzero"`
-	LedgerOpeningBalancesSentAt   *int64               `json:"ledgerOpeningBalancesSentAt"   keel:"ledger_opening_balances_sent_at"`
-	ExternalFiscalYearStartMonth  int                  `json:"externalFiscalYearStartMonth"  keel:"external_fiscal_year_start_month,nullzero"`
-	ChangeCursor                  string               `json:"-"                             keel:"change_cursor,nullzero"`
-	ChangesReadAt                 *int64               `json:"changesReadAt"                 keel:"changes_read_at"`
-	ChangesErrorCategory          SyncErrorCategory    `json:"changesErrorCategory"          keel:"changes_error_category,nullzero"`
-	ChangesErrorMessage           string               `json:"changesErrorMessage"           keel:"changes_error_message,nullzero"`
-	DriftCheckedAt                *int64               `json:"driftCheckedAt"                keel:"drift_checked_at"`
-	DriftErrorCategory            SyncErrorCategory    `json:"driftErrorCategory"            keel:"drift_error_category,nullzero"`
-	DriftErrorMessage             string               `json:"driftErrorMessage"             keel:"drift_error_message,nullzero"`
-	PausedAt                      *int64               `json:"pausedAt"                      keel:"paused_at"`
-	PausedByID                    pulid.ID             `json:"pausedById"                    keel:"paused_by_id,nullzero"`
-	PausedReason                  string               `json:"pausedReason"                  keel:"paused_reason,nullzero"`
-	ConnectedByID                 pulid.ID             `json:"connectedById"                 keel:"connected_by_id,nullzero"`
-	ConnectedAt                   int64                `json:"connectedAt"                   keel:"connected_at"`
-	DisconnectedByID              pulid.ID             `json:"disconnectedById"              keel:"disconnected_by_id,nullzero"`
-	DisconnectedAt                *int64               `json:"disconnectedAt"                keel:"disconnected_at"`
-	Version                       int64                `json:"version"                       keel:"version,version"`
-	CreatedAt                     int64                `json:"createdAt"                     keel:"created_at,autocreate"`
-	UpdatedAt                     int64                `json:"updatedAt"                     keel:"updated_at,autoupdate"`
+	ID                            pulid.ID                          `json:"id"                            keel:"id,pk,autoid:acctc_"`
+	BusinessUnitID                pulid.ID                          `json:"businessUnitId"                keel:"business_unit_id,pk,tenant"`
+	OrganizationID                pulid.ID                          `json:"organizationId"                keel:"organization_id,pk,tenant"`
+	IntegrationType               integration.Type                  `json:"integrationType"               keel:"integration_type"`
+	Status                        ConnectionStatus                  `json:"status"                        keel:"status"`
+	ExternalRealmID               string                            `json:"externalRealmId"               keel:"external_realm_id"`
+	AppSource                     AppSource                         `json:"appSource"                     keel:"app_source,nullzero"`
+	AppEnvironment                accountingprovider.AppEnvironment `json:"appEnvironment"                keel:"app_environment,nullzero"`
+	AppFingerprint                string                            `json:"-"                             keel:"app_fingerprint,nullzero"`
+	AuthMethod                    AuthMethod                        `json:"authMethod"                    keel:"auth_method,nullzero"`
+	ClientKeyCiphertext           string                            `json:"-"                             keel:"client_key_ciphertext,nullzero"`
+	ClientCertificateID           string                            `json:"clientCertificateId"           keel:"client_certificate_id,nullzero"`
+	ClientCertificateExpiresAt    *int64                            `json:"clientCertificateExpiresAt"    keel:"client_certificate_expires_at"`
+	ExternalCompanyName           string                            `json:"externalCompanyName"           keel:"external_company_name,nullzero"`
+	ExternalShortCode             string                            `json:"externalShortCode"             keel:"external_short_code,nullzero"`
+	ExternalLegalName             string                            `json:"externalLegalName"             keel:"external_legal_name,nullzero"`
+	ExternalCountry               string                            `json:"externalCountry"               keel:"external_country,nullzero"`
+	ExternalHomeCurrency          string                            `json:"externalHomeCurrency"          keel:"external_home_currency,nullzero"`
+	ExternalMultiCurrencyEnabled  bool                              `json:"externalMultiCurrencyEnabled"  keel:"external_multi_currency_enabled"`
+	ExternalBooksClosedThrough    *int64                            `json:"externalBooksClosedThrough"    keel:"external_books_closed_through"`
+	AccessTokenCiphertext         string                            `json:"-"                             keel:"access_token_ciphertext,nullzero"`
+	AccessTokenExpiresAt          int64                             `json:"accessTokenExpiresAt"          keel:"access_token_expires_at"`
+	RefreshTokenCiphertext        string                            `json:"-"                             keel:"refresh_token_ciphertext,nullzero"`
+	RefreshTokenExpiresAt         int64                             `json:"refreshTokenExpiresAt"         keel:"refresh_token_expires_at"`
+	RefreshTokenAbsoluteExpiresAt int64                             `json:"refreshTokenAbsoluteExpiresAt" keel:"refresh_token_absolute_expires_at"`
+	LastRefreshedAt               *int64                            `json:"lastRefreshedAt"               keel:"last_refreshed_at"`
+	LastCheckedAt                 *int64                            `json:"lastCheckedAt"                 keel:"last_checked_at"`
+	LastSuccessAt                 *int64                            `json:"lastSuccessAt"                 keel:"last_success_at"`
+	LastFailureAt                 *int64                            `json:"lastFailureAt"                 keel:"last_failure_at"`
+	ConsecutiveFailures           int                               `json:"consecutiveFailures"           keel:"consecutive_failures"`
+	LastErrorCategory             accountingsync.ErrorCategory      `json:"lastErrorCategory"             keel:"last_error_category,nullzero"`
+	LastErrorMessage              string                            `json:"lastErrorMessage"              keel:"last_error_message,nullzero"`
+	LastWebhookAt                 *int64                            `json:"lastWebhookAt"                 keel:"last_webhook_at"`
+	SetupStep                     SetupStep                         `json:"setupStep"                     keel:"setup_step"`
+	ReferenceRefreshStartedAt     *int64                            `json:"referenceRefreshStartedAt"     keel:"reference_refresh_started_at"`
+	ReferenceRefreshedAt          *int64                            `json:"referenceRefreshedAt"          keel:"reference_refreshed_at"`
+	ReferenceRefreshError         string                            `json:"referenceRefreshError"         keel:"reference_refresh_error,nullzero"`
+	SyncStartDate                 *int64                            `json:"syncStartDate"                 keel:"sync_start_date"`
+	SyncEnabledAt                 *int64                            `json:"syncEnabledAt"                 keel:"sync_enabled_at"`
+	AutoSync                      bool                              `json:"autoSync"                      keel:"auto_sync"`
+	DriverSettlementsEnabledAt    *int64                            `json:"driverSettlementsEnabledAt"    keel:"driver_settlements_enabled_at"`
+	InboundPaymentPolicy          InboundPaymentPolicy              `json:"inboundPaymentPolicy"          keel:"inbound_payment_policy,nullzero"`
+	SyncMode                      accountingprovider.SyncMode       `json:"syncMode"                      keel:"sync_mode,nullzero"`
+	LedgerGranularity             LedgerGranularity                 `json:"ledgerGranularity"             keel:"ledger_granularity,nullzero"`
+	LedgerOpeningBalancesSentAt   *int64                            `json:"ledgerOpeningBalancesSentAt"   keel:"ledger_opening_balances_sent_at"`
+	ExternalFiscalYearStartMonth  int                               `json:"externalFiscalYearStartMonth"  keel:"external_fiscal_year_start_month,nullzero"`
+	ChangeCursor                  string                            `json:"-"                             keel:"change_cursor,nullzero"`
+	ChangesReadAt                 *int64                            `json:"changesReadAt"                 keel:"changes_read_at"`
+	ChangesErrorCategory          accountingsync.SyncErrorCategory  `json:"changesErrorCategory"          keel:"changes_error_category,nullzero"`
+	ChangesErrorMessage           string                            `json:"changesErrorMessage"           keel:"changes_error_message,nullzero"`
+	DriftCheckedAt                *int64                            `json:"driftCheckedAt"                keel:"drift_checked_at"`
+	DriftErrorCategory            accountingsync.SyncErrorCategory  `json:"driftErrorCategory"            keel:"drift_error_category,nullzero"`
+	DriftErrorMessage             string                            `json:"driftErrorMessage"             keel:"drift_error_message,nullzero"`
+	PausedAt                      *int64                            `json:"pausedAt"                      keel:"paused_at"`
+	PausedByID                    pulid.ID                          `json:"pausedById"                    keel:"paused_by_id,nullzero"`
+	PausedReason                  string                            `json:"pausedReason"                  keel:"paused_reason,nullzero"`
+	ConnectedByID                 pulid.ID                          `json:"connectedById"                 keel:"connected_by_id,nullzero"`
+	ConnectedAt                   int64                             `json:"connectedAt"                   keel:"connected_at"`
+	DisconnectedByID              pulid.ID                          `json:"disconnectedById"              keel:"disconnected_by_id,nullzero"`
+	DisconnectedAt                *int64                            `json:"disconnectedAt"                keel:"disconnected_at"`
+	Version                       int64                             `json:"version"                       keel:"version,version"`
+	CreatedAt                     int64                             `json:"createdAt"                     keel:"created_at,autocreate"`
+	UpdatedAt                     int64                             `json:"updatedAt"                     keel:"updated_at,autoupdate"`
 
 	Organization   *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit   *tenant.BusinessUnit `json:"businessUnit,omitempty"`
@@ -100,7 +102,7 @@ func (c *AccountingConnection) BeforeCreate(_ context.Context) error {
 		c.InboundPaymentPolicy = InboundPaymentsPropose
 	}
 	if c.SyncMode == "" {
-		c.SyncMode = SyncModeDocument
+		c.SyncMode = accountingprovider.SyncModeDocument
 	}
 	if c.ExternalFiscalYearStartMonth == 0 {
 		c.ExternalFiscalYearStartMonth = 1
@@ -138,7 +140,7 @@ func (c *AccountingConnection) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&c.IntegrationType,
 			validation.Required.Error("Integration type is required"),
 			validation.By(func(any) error {
-				if !SupportsAccountingSync(c.IntegrationType) {
+				if !accountingprovider.SupportsAccountingSync(c.IntegrationType) {
 					return validation.NewError(
 						"invalid",
 						"Integration type is not an accounting system",
@@ -159,8 +161,11 @@ func (c *AccountingConnection) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("App source is required"),
 			domainvalidation.ValidEnum[AppSource]("App source is not recognized"),
 		),
-		validation.Field(&c.AppEnvironment,
-			domainvalidation.ValidEnum[AppEnvironment]("App environment is not recognized"),
+		validation.Field(
+			&c.AppEnvironment,
+			domainvalidation.ValidEnum[accountingprovider.AppEnvironment](
+				"App environment is not recognized",
+			),
 		),
 		validation.Field(&c.AuthMethod,
 			domainvalidation.ValidEnum[AuthMethod]("Connection method is not recognized"),
@@ -173,8 +178,11 @@ func (c *AccountingConnection) Validate(multiErr *errortypes.MultiError) {
 			validation.Length(0, 100).Error("Certificate ID cannot be longer than 100 characters"),
 		),
 		validation.Field(&c.ExternalHomeCurrency, validation.Length(0, 3)),
-		validation.Field(&c.LastErrorCategory,
-			domainvalidation.ValidEnum[ErrorCategory]("Error category is not recognized"),
+		validation.Field(
+			&c.LastErrorCategory,
+			domainvalidation.ValidEnum[accountingsync.ErrorCategory](
+				"Error category is not recognized",
+			),
 		),
 		validation.Field(&c.ConnectedAt, validation.Required.Error("Connected time is required")),
 		validation.Field(&c.SetupStep,
@@ -193,7 +201,7 @@ func (c *AccountingConnection) Validate(multiErr *errortypes.MultiError) {
 		})),
 		validation.Field(&c.PausedReason, validation.Length(0, maxPausedReasonLength)),
 		validation.Field(&c.SyncMode,
-			domainvalidation.ValidEnum[SyncMode]("Sync mode is not recognized"),
+			domainvalidation.ValidEnum[accountingprovider.SyncMode]("Sync mode is not recognized"),
 		),
 		validation.Field(&c.LedgerGranularity,
 			domainvalidation.ValidEnum[LedgerGranularity]("Journal detail is not recognized"),
@@ -215,11 +223,6 @@ func (c *AccountingConnection) GetID() pulid.ID { return c.ID }
 func (c *AccountingConnection) GetOrganizationID() pulid.ID { return c.OrganizationID }
 
 func (c *AccountingConnection) GetBusinessUnitID() pulid.ID { return c.BusinessUnitID }
-
-func SupportsAccountingSync(typ integration.Type) bool {
-	_, ok := Profile(typ)
-	return ok
-}
 
 func (c *AccountingConnection) IsActive() bool {
 	return c.Status != ConnectionStatusDisconnected && c.Status != ConnectionStatusRevoked
@@ -264,9 +267,9 @@ func (c *AccountingConnection) AccessTokenExpiresWithin(now, window int64) bool 
 
 func (c *AccountingConnection) ReconnectWarningSeconds() int64 {
 	if c.UsesCertificate() {
-		return int64(defaultReconnectWarning / time.Second)
+		return int64(accountingprovider.DefaultReconnectWarning / time.Second)
 	}
-	profile := MustProfile(c.IntegrationType)
+	profile := accountingprovider.MustProfile(c.IntegrationType)
 	return int64(profile.ReconnectWarningSeconds())
 }
 
@@ -277,7 +280,7 @@ func (c *AccountingConnection) RefreshTokenNearAbsoluteExpiry(now int64) bool {
 
 type AppIdentity struct {
 	Source      AppSource
-	Environment AppEnvironment
+	Environment accountingprovider.AppEnvironment
 	Fingerprint string
 }
 
@@ -304,7 +307,7 @@ func (c *AccountingConnection) Connect(userID pulid.ID, grant TokenGrant, now in
 	c.DisconnectedByID = pulid.Nil
 	c.DisconnectedAt = nil
 	c.RefreshTokenAbsoluteExpiresAt = 0
-	profile := MustProfile(c.IntegrationType)
+	profile := accountingprovider.MustProfile(c.IntegrationType)
 	switch {
 	case c.UsesCertificate():
 		if c.ClientCertificateExpiresAt != nil {
@@ -354,7 +357,11 @@ func (c *AccountingConnection) RecordSuccess(now int64) {
 	}
 }
 
-func (c *AccountingConnection) RecordFailure(category ErrorCategory, message string, now int64) {
+func (c *AccountingConnection) RecordFailure(
+	category accountingsync.ErrorCategory,
+	message string,
+	now int64,
+) {
 	c.LastCheckedAt = &now
 	c.LastFailureAt = &now
 	c.LastErrorCategory = category
@@ -363,7 +370,7 @@ func (c *AccountingConnection) RecordFailure(category ErrorCategory, message str
 		return
 	}
 
-	if category == ErrorCategoryRevoked {
+	if category == accountingsync.ErrorCategoryRevoked {
 		c.Status = ConnectionStatusRevoked
 		c.AccessTokenCiphertext = ""
 		c.RefreshTokenCiphertext = ""
@@ -484,7 +491,7 @@ func (c *AccountingConnection) SetInboundPayments(policy InboundPaymentPolicy) {
 }
 
 func (c *AccountingConnection) ReadsPayments() bool {
-	profile := MustProfile(c.IntegrationType)
+	profile := accountingprovider.MustProfile(c.IntegrationType)
 	return profile.InboundPayments
 }
 
@@ -519,7 +526,10 @@ func (c *AccountingConnection) AdvanceChanges(cursor string, now int64) {
 	c.ChangesErrorMessage = ""
 }
 
-func (c *AccountingConnection) RecordChangesFailure(category SyncErrorCategory, message string) {
+func (c *AccountingConnection) RecordChangesFailure(
+	category accountingsync.SyncErrorCategory,
+	message string,
+) {
 	c.ChangesErrorCategory = category
 	c.ChangesErrorMessage = stringutils.TruncateRunes(message, maxChangesErrorMessage)
 }
@@ -534,7 +544,10 @@ func (c *AccountingConnection) FinishDriftCheck(now int64) {
 	c.DriftErrorMessage = ""
 }
 
-func (c *AccountingConnection) RecordDriftFailure(category SyncErrorCategory, message string) {
+func (c *AccountingConnection) RecordDriftFailure(
+	category accountingsync.SyncErrorCategory,
+	message string,
+) {
 	c.DriftErrorCategory = category
 	c.DriftErrorMessage = stringutils.TruncateRunes(message, maxChangesErrorMessage)
 }
@@ -555,19 +568,11 @@ func (c *AccountingConnection) RecordWebhook(now int64) {
 	c.LastWebhookAt = &now
 }
 
-func ProviderName(typ integration.Type) string {
-	return MustProfile(typ).Name
-}
-
-func SetupPath(typ integration.Type) string {
-	return "/admin/integrations?type=" + string(typ)
-}
-
 func (c *AccountingConnection) AgentErrorSummary() string {
 	if c.LastErrorCategory == "" {
 		return ""
 	}
-	if c.LastErrorCategory == ErrorCategoryUnknown {
+	if c.LastErrorCategory == accountingsync.ErrorCategoryUnknown {
 		return "The provider rejected the last call. Its own message is on the connection page."
 	}
 

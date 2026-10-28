@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
@@ -24,10 +27,10 @@ import (
 )
 
 type fixPlan struct {
-	finding     *accountingsync.AccountingDriftFinding
-	conn        *accountingsync.AccountingConnection
-	direction   accountingsync.DriftDirection
-	fixObject   accountingsync.DriftFixObject
+	finding     *accountingdrift.AccountingDriftFinding
+	conn        *accountingconnection.AccountingConnection
+	direction   accountingdrift.DriftDirection
+	fixObject   accountingdrift.DriftFixObject
 	operation   accountingsync.SyncOperation
 	amountMinor int64
 	document    *accountingsync.AccountingSyncRecord
@@ -70,11 +73,11 @@ func (s *Service) authorize(
 }
 
 func fixPermissions(
-	finding *accountingsync.AccountingDriftFinding,
-	direction accountingsync.DriftDirection,
+	finding *accountingdrift.AccountingDriftFinding,
+	direction accountingdrift.DriftDirection,
 ) []requiredPermission {
 	needed := []requiredPermission{{permission.ResourceAccountingSync, permission.OpUpdate}}
-	if direction != accountingsync.DriftAdjustTrenova {
+	if direction != accountingdrift.DriftAdjustTrenova {
 		return needed
 	}
 	if finding.ObjectType == accountingsync.SyncObjectCustomerPayment {
@@ -92,12 +95,12 @@ func fixPermissions(
 
 func fixError(err error) error {
 	switch {
-	case errors.Is(err, accountingsync.ErrDriftClosed):
+	case errors.Is(err, accountingdrift.ErrDriftClosed):
 		return errortypes.NewValidationError("status", errortypes.ErrInvalidOperation, err.Error())
-	case errors.Is(err, accountingsync.ErrDriftFixUnavailable),
-		errors.Is(err, accountingsync.ErrDriftExplainOnly):
+	case errors.Is(err, accountingdrift.ErrDriftFixUnavailable),
+		errors.Is(err, accountingdrift.ErrDriftExplainOnly):
 		return errortypes.NewValidationError("direction", errortypes.ErrInvalid, err.Error())
-	case errors.Is(err, accountingsync.ErrDriftNoteRequired):
+	case errors.Is(err, accountingdrift.ErrDriftNoteRequired):
 		return errortypes.NewValidationError("note", errortypes.ErrRequired, err.Error())
 	default:
 		return err
@@ -109,7 +112,7 @@ func (s *Service) findingByID(
 	tenant pagination.TenantInfo,
 	id pulid.ID,
 	forUpdate bool,
-) (*accountingsync.AccountingDriftFinding, error) {
+) (*accountingdrift.AccountingDriftFinding, error) {
 	return s.findings.GetByID(ctx, accountingdriftports.GetAccountingDriftFindingQuery{
 		TenantInfo: tenant,
 		ID:         id,
@@ -140,7 +143,7 @@ func (s *Service) Resolve(
 	ctx context.Context,
 	req *accountingdriftports.ResolveAccountingDriftRequest,
 	actor *permissionports.RequestActor,
-) (*accountingsync.AccountingDriftFinding, error) {
+) (*accountingdrift.AccountingDriftFinding, error) {
 	current, err := s.findingByID(ctx, req.TenantInfo, req.ID, false)
 	if err != nil {
 		return nil, err
@@ -149,7 +152,7 @@ func (s *Service) Resolve(
 		return nil, err
 	}
 
-	var updated *accountingsync.AccountingDriftFinding
+	var updated *accountingdrift.AccountingDriftFinding
 	var previous map[string]any
 	kick := false
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
@@ -162,7 +165,7 @@ func (s *Service) Resolve(
 		if txErr != nil {
 			return txErr
 		}
-		if plan.direction == accountingsync.DriftPushTrenovaValue {
+		if plan.direction == accountingdrift.DriftPushTrenovaValue {
 			kick, txErr = s.push(txCtx, plan, actor.UserID)
 		} else {
 			txErr = s.adjust(txCtx, plan, actor)
@@ -186,8 +189,8 @@ func (s *Service) Resolve(
 	return updated, nil
 }
 
-func resolveComment(direction accountingsync.DriftDirection) string {
-	if direction == accountingsync.DriftAdjustTrenova {
+func resolveComment(direction accountingdrift.DriftDirection) string {
+	if direction == accountingdrift.DriftAdjustTrenova {
 		return "Adjusted Trenova to match the accounting system"
 	}
 	return "Sent Trenova's value to the accounting system"
@@ -195,8 +198,8 @@ func resolveComment(direction accountingsync.DriftDirection) string {
 
 func (s *Service) plan(
 	ctx context.Context,
-	finding *accountingsync.AccountingDriftFinding,
-	direction accountingsync.DriftDirection,
+	finding *accountingdrift.AccountingDriftFinding,
+	direction accountingdrift.DriftDirection,
 ) (*fixPlan, error) {
 	if err := finding.CanFix(direction); err != nil {
 		return nil, fixError(err)
@@ -208,7 +211,7 @@ func (s *Service) plan(
 	if !conn.IsSyncing() {
 		return nil, errortypes.NewBusinessError(
 			"{0} is not syncing, so nothing can be sent to it or matched with it",
-			accountingsync.ProviderName(conn.IntegrationType),
+			accountingprovider.ProviderName(conn.IntegrationType),
 		)
 	}
 	records, err := s.records.ListByObjects(
@@ -228,25 +231,25 @@ func (s *Service) plan(
 			return nil, errortypes.NewBusinessError(
 				"{0} already has a change on its way to {1}. Fix it once that change is sent",
 				finding.ObjectNumber,
-				accountingsync.ProviderName(conn.IntegrationType),
+				accountingprovider.ProviderName(conn.IntegrationType),
 			)
 		}
 	}
 
 	plan := &fixPlan{finding: finding, conn: conn, direction: direction}
-	if direction == accountingsync.DriftPushTrenovaValue {
+	if direction == accountingdrift.DriftPushTrenovaValue {
 		return plan, planPush(plan, records)
 	}
 	return plan, s.planAdjust(ctx, plan)
 }
 
-func pushOperation(kind accountingsync.DriftKind) accountingsync.SyncOperation {
+func pushOperation(kind accountingdrift.DriftKind) accountingsync.SyncOperation {
 	switch kind {
-	case accountingsync.DriftDeletedInProvider, accountingsync.DriftVoidedInProvider:
+	case accountingdrift.DriftDeletedInProvider, accountingdrift.DriftVoidedInProvider:
 		return accountingsync.SyncOperationRecreate
-	case accountingsync.DriftStatusMismatch:
+	case accountingdrift.DriftStatusMismatch:
 		return accountingsync.SyncOperationVoid
-	case accountingsync.DriftAmountMismatch, accountingsync.DriftCustomerBalanceMismatch:
+	case accountingdrift.DriftAmountMismatch, accountingdrift.DriftCustomerBalanceMismatch:
 		return accountingsync.SyncOperationUpdate
 	default:
 		return accountingsync.SyncOperationUpdate
@@ -259,7 +262,7 @@ func planPush(plan *fixPlan, records []*accountingsync.AccountingSyncRecord) err
 		return errortypes.NewBusinessError(
 			"{0} was never sent to {1}, so there is nothing to send again",
 			plan.finding.ObjectNumber,
-			accountingsync.ProviderName(plan.conn.IntegrationType),
+			accountingprovider.ProviderName(plan.conn.IntegrationType),
 		)
 	}
 	plan.document = documents[0]
@@ -268,7 +271,7 @@ func planPush(plan *fixPlan, records []*accountingsync.AccountingSyncRecord) err
 	}
 	plan.revision++
 	plan.operation = pushOperation(plan.finding.Kind)
-	plan.fixObject = accountingsync.DriftFixSyncRecord
+	plan.fixObject = accountingdrift.DriftFixSyncRecord
 	return nil
 }
 
@@ -289,7 +292,7 @@ func (s *Service) planAdjust(ctx context.Context, plan *fixPlan) error {
 			)
 		}
 		plan.payment = payment
-		plan.fixObject = accountingsync.DriftFixPaymentReversal
+		plan.fixObject = accountingdrift.DriftFixPaymentReversal
 		plan.amountMinor = payment.AmountMinor
 		return nil
 	}
@@ -312,19 +315,19 @@ func (s *Service) planAdjust(ctx context.Context, plan *fixPlan) error {
 				inv.Number,
 			)
 		}
-		plan.fixObject = accountingsync.DriftFixInvoiceVoid
+		plan.fixObject = accountingdrift.DriftFixInvoiceVoid
 		plan.amountMinor = inv.TotalAmountMinor
 		return nil
 	}
 
 	if finding.DifferenceMinor == nil || *finding.DifferenceMinor == 0 {
-		return fixError(accountingsync.ErrDriftFixUnavailable)
+		return fixError(accountingdrift.ErrDriftFixUnavailable)
 	}
 	difference := *finding.DifferenceMinor
-	plan.fixObject = accountingsync.DriftFixDebitMemo
+	plan.fixObject = accountingdrift.DriftFixDebitMemo
 	plan.amountMinor = difference
 	if difference < 0 {
-		plan.fixObject = accountingsync.DriftFixCreditMemo
+		plan.fixObject = accountingdrift.DriftFixCreditMemo
 		plan.amountMinor = -difference
 	}
 	return nil
@@ -401,27 +404,27 @@ func (s *Service) adjust(
 }
 
 func (s *Service) adjustmentReason(plan *fixPlan) string {
-	provider := accountingsync.ProviderName(plan.conn.IntegrationType)
+	provider := accountingprovider.ProviderName(plan.conn.IntegrationType)
 	switch plan.fixObject {
-	case accountingsync.DriftFixInvoiceVoid:
+	case accountingdrift.DriftFixInvoiceVoid:
 		return "Voided to match " + provider + ", where " + plan.finding.ObjectNumber +
 			" was " + goneWord(plan.finding.Kind)
-	case accountingsync.DriftFixPaymentReversal:
+	case accountingdrift.DriftFixPaymentReversal:
 		return "Reversed to match " + provider + ", where payment " + plan.finding.ObjectNumber +
 			" was " + goneWord(plan.finding.Kind)
-	case accountingsync.DriftFixCreditMemo, accountingsync.DriftFixDebitMemo:
+	case accountingdrift.DriftFixCreditMemo, accountingdrift.DriftFixDebitMemo:
 		return "Brings " + plan.finding.ObjectNumber + " to its total in " + provider + ": " +
 			money.FormatMinor(*plan.finding.ProviderMinor, plan.finding.CurrencyCode) +
 			" instead of " + money.FormatMinor(*plan.finding.TrenovaMinor, plan.finding.CurrencyCode)
-	case accountingsync.DriftFixSyncRecord:
+	case accountingdrift.DriftFixSyncRecord:
 		return ""
 	default:
 		return ""
 	}
 }
 
-func goneWord(kind accountingsync.DriftKind) string {
-	if kind == accountingsync.DriftVoidedInProvider {
+func goneWord(kind accountingdrift.DriftKind) string {
+	if kind == accountingdrift.DriftVoidedInProvider {
 		return "voided"
 	}
 	return "deleted"
@@ -435,7 +438,7 @@ func (s *Service) runAdjustment(
 	tenant := plan.finding.TenantInfo()
 	reason := s.adjustmentReason(plan)
 	switch plan.fixObject {
-	case accountingsync.DriftFixPaymentReversal:
+	case accountingdrift.DriftFixPaymentReversal:
 		reversed, err := s.payments.Reverse(
 			ctx,
 			&customerpaymentports.ReverseCustomerPaymentRequest{
@@ -450,7 +453,7 @@ func (s *Service) runAdjustment(
 			return pulid.Nil, err
 		}
 		return reversed.ID, nil
-	case accountingsync.DriftFixInvoiceVoid:
+	case accountingdrift.DriftFixInvoiceVoid:
 		voided, err := s.invoices.VoidInvoice(ctx, &invoiceports.VoidInvoiceRequest{
 			InvoiceID:   plan.invoice.ID,
 			TenantInfo:  tenant,
@@ -467,12 +470,12 @@ func (s *Service) runAdjustment(
 			)
 		}
 		return plan.invoice.ID, nil
-	case accountingsync.DriftFixCreditMemo, accountingsync.DriftFixDebitMemo:
+	case accountingdrift.DriftFixCreditMemo, accountingdrift.DriftFixDebitMemo:
 		return s.postMemo(ctx, plan, reason, actor)
-	case accountingsync.DriftFixSyncRecord:
-		return pulid.Nil, fixError(accountingsync.ErrDriftFixUnavailable)
+	case accountingdrift.DriftFixSyncRecord:
+		return pulid.Nil, fixError(accountingdrift.ErrDriftFixUnavailable)
 	default:
-		return pulid.Nil, fixError(accountingsync.ErrDriftFixUnavailable)
+		return pulid.Nil, fixError(accountingdrift.ErrDriftFixUnavailable)
 	}
 }
 
@@ -484,7 +487,7 @@ func (s *Service) postMemo(
 ) (pulid.ID, error) {
 	tenant := plan.finding.TenantInfo()
 	billType := billingqueue.BillTypeDebitMemo
-	if plan.fixObject == accountingsync.DriftFixCreditMemo {
+	if plan.fixObject == accountingdrift.DriftFixCreditMemo {
 		billType = billingqueue.BillTypeCreditMemo
 	}
 	memo, err := s.invoices.CreateMemo(ctx, &invoiceports.CreateMemoRequest{
@@ -546,7 +549,9 @@ func (s *Service) reflect(
 	if err != nil {
 		return err
 	}
-	reason := "Made in Trenova to match " + accountingsync.ProviderName(plan.conn.IntegrationType) +
+	reason := "Made in Trenova to match " + accountingprovider.ProviderName(
+		plan.conn.IntegrationType,
+	) +
 		"; already there"
 	for _, record := range current {
 		if !record.Reflect(actorID, plan.finding.ExternalID, reason) {
@@ -561,7 +566,7 @@ func (s *Service) reflect(
 
 func (s *Service) kickDispatcher(
 	ctx context.Context,
-	finding *accountingsync.AccountingDriftFinding,
+	finding *accountingdrift.AccountingDriftFinding,
 ) {
 	if s.dispatcher == nil {
 		return

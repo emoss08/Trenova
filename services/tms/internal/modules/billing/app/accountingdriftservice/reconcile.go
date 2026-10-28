@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
@@ -18,7 +19,7 @@ import (
 type compareTally struct {
 	compared int
 	skipped  int
-	opened   []*accountingsync.AccountingDriftFinding
+	opened   []*accountingdrift.AccountingDriftFinding
 	updated  int
 	resolved int
 }
@@ -144,7 +145,7 @@ func (s *Service) changedRecords(
 	documents []accountingconnectorports.AccountingChangedDocument,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
 	ids := make([]string, 0, len(documents))
-	types := make([]accountingsync.SyncObjectType, 0, len(accountingsync.DriftObjectTypes()))
+	types := make([]accountingsync.SyncObjectType, 0, len(accountingdrift.DriftObjectTypes()))
 	seenType := make(map[accountingsync.SyncObjectType]struct{}, cap(types))
 	for idx := range documents {
 		if documents[idx].ExternalID == "" {
@@ -217,12 +218,12 @@ func (s *Service) compareRecords(
 	}
 
 	at := s.now().Unix()
-	base := &accountingsync.DriftObservation{
+	base := &accountingdrift.DriftObservation{
 		TenantInfo:   sess.tenant,
 		ConnectionID: sess.conn.ID,
 		At:           at,
 	}
-	observed := make(map[pulid.ID]*accountingsync.DriftObservation, len(comparisons))
+	observed := make(map[pulid.ID]*accountingdrift.DriftObservation, len(comparisons))
 	objectIDs := make([]pulid.ID, 0, len(comparisons))
 	for _, c := range comparisons {
 		objectIDs = append(objectIDs, c.record.ObjectID)
@@ -254,7 +255,7 @@ func (s *Service) applyObservations(
 	ctx context.Context,
 	sess *readSession,
 	objectIDs []pulid.ID,
-	observed map[pulid.ID]*accountingsync.DriftObservation,
+	observed map[pulid.ID]*accountingdrift.DriftObservation,
 	at int64,
 	tally *compareTally,
 ) error {
@@ -294,7 +295,7 @@ func (s *Service) applyObservations(
 		if obs == nil || matched[objectID] {
 			continue
 		}
-		created, createErr := s.findings.Create(ctx, accountingsync.NewAccountingDriftFinding(obs))
+		created, createErr := s.findings.Create(ctx, accountingdrift.NewAccountingDriftFinding(obs))
 		if createErr != nil {
 			return createErr
 		}
@@ -308,7 +309,7 @@ func (s *Service) recordsOf(
 	sess *readSession,
 	records []*accountingsync.AccountingSyncRecord,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
-	types := make([]accountingsync.SyncObjectType, 0, len(accountingsync.DriftObjectTypes()))
+	types := make([]accountingsync.SyncObjectType, 0, len(accountingdrift.DriftObjectTypes()))
 	seen := make(map[accountingsync.SyncObjectType]struct{}, cap(types))
 	ids := make([]pulid.ID, 0, len(records))
 	for _, record := range records {
@@ -445,7 +446,7 @@ func latestDocumentRecords(
 	order := make([]pulid.ID, 0, len(records))
 	for _, record := range records {
 		if record.Status != accountingsync.SyncStatusSynced || record.ExternalID == "" ||
-			!slices.Contains(accountingsync.DriftCreateOperations(), record.Operation) {
+			!slices.Contains(accountingdrift.DriftCreateOperations(), record.Operation) {
 			continue
 		}
 		current, seen := latest[record.ObjectID]

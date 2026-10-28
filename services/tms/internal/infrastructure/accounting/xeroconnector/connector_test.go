@@ -15,6 +15,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -48,8 +50,8 @@ func TestConfiguredInstanceAppIsProductionWithTheWebhookKey(t *testing.T) {
 	})
 	app, ok := provider.InstanceApp()
 	require.True(t, ok)
-	assert.Equal(t, accountingsync.AppSourceInstance, app.Source)
-	assert.Equal(t, accountingsync.AppEnvironmentProduction, app.Environment)
+	assert.Equal(t, accountingconnection.AppSourceInstance, app.Source)
+	assert.Equal(t, accountingprovider.AppEnvironmentProduction, app.Environment)
 	assert.Equal(t, "id", app.ClientID)
 	assert.Equal(t, "hook-key", app.WebhookVerifierToken)
 	assert.Equal(

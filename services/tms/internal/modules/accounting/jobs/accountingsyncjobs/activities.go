@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
@@ -126,7 +126,7 @@ func (a *Activities) MarkAccountingReferenceRefreshFinishedActivity(
 func (a *Activities) PullAccountingReferenceActivity(
 	ctx context.Context,
 	payload *RefreshReferencePayload,
-	kind accountingsync.ReferenceKind,
+	kind accountingprovider.ReferenceKind,
 ) (*ReferenceKindResult, error) {
 	pull, err := a.mappings.PullReference(ctx, payload.TenantInfo(), payload.ConnectionID, kind)
 	if err != nil {

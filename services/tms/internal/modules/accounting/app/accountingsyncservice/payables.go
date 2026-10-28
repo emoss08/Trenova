@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
@@ -47,7 +48,7 @@ func (s *Service) partyRef(
 	if err != nil {
 		return "", err
 	}
-	if row.State == accountingsync.MappingStateConfirmed && row.ExternalID != "" {
+	if row.State == accountingmapping.MappingStateConfirmed && row.ExternalID != "" {
 		res.used[row.ID] = struct{}{}
 		return row.ExternalID, nil
 	}
@@ -92,7 +93,7 @@ func (s *Service) pushParty(
 	}
 
 	if record.Operation == accountingsync.SyncOperationCreate {
-		if row.State == accountingsync.MappingStateConfirmed && row.ExternalID != "" {
+		if row.State == accountingmapping.MappingStateConfirmed && row.ExternalID != "" {
 			res.used[row.ID] = struct{}{}
 			return finishedResult(sess, record, &accountingconnectorports.AccountingDocumentResult{
 				ExternalID: row.ExternalID,
@@ -105,7 +106,7 @@ func (s *Service) pushParty(
 				TenantInfo: sess.tenant,
 				UserID:     sess.conn.ConnectedByID,
 				MappingID:  row.ID,
-				Source:     accountingsync.MappingSourceCreatedInProvider,
+				Source:     accountingmapping.MappingSourceCreatedInProvider,
 			},
 		)
 		if createErr != nil {
@@ -117,7 +118,7 @@ func (s *Service) pushParty(
 		}, nil, []string{created.ID.String()})
 	}
 
-	if row.State != accountingsync.MappingStateConfirmed || row.ExternalID == "" {
+	if row.State != accountingmapping.MappingStateConfirmed || row.ExternalID == "" {
 		return nil, &noopError{
 			reason: "The " + strings.ToLower(partyLabel(record.ObjectType)) +
 				" is not mapped, so there is nothing to update",
@@ -170,7 +171,7 @@ func (s *Service) upsertParty(
 func partyCreateError(
 	sess *pushSession,
 	objectType accountingsync.SyncObjectType,
-	row *accountingsync.AccountingMapping,
+	row *accountingmapping.AccountingMapping,
 	err error,
 ) error {
 	if errortypes.IsNotFoundError(err) {
@@ -283,7 +284,7 @@ func (s *Service) accountRef(
 	if err != nil {
 		return "", err
 	}
-	if row.State == accountingsync.MappingStateConfirmed && row.ExternalID != "" {
+	if row.State == accountingmapping.MappingStateConfirmed && row.ExternalID != "" {
 		res.used[row.ID] = struct{}{}
 		return row.ExternalID, nil
 	}

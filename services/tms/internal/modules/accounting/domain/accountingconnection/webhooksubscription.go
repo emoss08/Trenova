@@ -1,4 +1,4 @@
-package accountingsync
+package accountingconnection
 
 import (
 	"context"
@@ -38,16 +38,6 @@ func AllWebhookSubscriptionStatuses() []WebhookSubscriptionStatus {
 		WebhookSubscriptionActive,
 		WebhookSubscriptionFailed,
 	}
-}
-
-func WebhookSubscriptionSystems() []integration.Type {
-	systems := make([]integration.Type, 0, len(providerProfiles))
-	for idx := range providerProfiles {
-		if providerProfiles[idx].WebhookSubscriptions {
-			systems = append(systems, providerProfiles[idx].Type)
-		}
-	}
-	return systems
 }
 
 type AccountingWebhookSubscription struct {

@@ -5,7 +5,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -35,7 +36,7 @@ func (s *Service) provider(
 	typ integration.Type,
 ) (accountingconnectorports.AccountingProvider, error) {
 	provider, ok := s.connectors.For(typ)
-	if !ok || !accountingsync.SupportsAccountingSync(typ) {
+	if !ok || !accountingprovider.SupportsAccountingSync(typ) {
 		return nil, errortypes.NewValidationError(
 			"integrationType",
 			errortypes.ErrInvalid,
@@ -61,7 +62,7 @@ func errNoRedirect(provider string) error {
 }
 
 func appAAD(
-	cred *accountingsync.AccountingAppCredential,
+	cred *accountingconnection.AccountingAppCredential,
 	field string,
 ) encryptionservice.AAD {
 	return encryptionservice.AAD{
@@ -76,7 +77,7 @@ func (s *Service) tenantCredential(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
-) (*accountingsync.AccountingAppCredential, bool, error) {
+) (*accountingconnection.AccountingAppCredential, bool, error) {
 	cred, err := s.apps.GetByType(ctx, accountingconnectionports.GetAccountingAppCredentialRequest{
 		TenantInfo:      tenantInfo,
 		IntegrationType: typ,
@@ -92,7 +93,7 @@ func (s *Service) tenantCredential(
 }
 
 func (s *Service) openCredential(
-	cred *accountingsync.AccountingAppCredential,
+	cred *accountingconnection.AccountingAppCredential,
 ) (*accountingconnectorports.AccountingApp, error) {
 	secret, err := s.encryption.DecryptStringWithAAD(
 		cred.ClientSecretCiphertext,
@@ -102,7 +103,7 @@ func (s *Service) openCredential(
 		return nil, err
 	}
 	app := &accountingconnectorports.AccountingApp{
-		Source:       accountingsync.AppSourceTenant,
+		Source:       accountingconnection.AppSourceTenant,
 		Environment:  cred.Environment,
 		ClientID:     cred.ClientID,
 		ClientSecret: secret,
@@ -125,7 +126,7 @@ func (s *Service) appForTenant(
 	tenantInfo pagination.TenantInfo,
 	provider accountingconnectorports.AccountingProvider,
 ) (*accountingconnectorports.AccountingApp, error) {
-	name := accountingsync.ProviderName(provider.IntegrationType())
+	name := accountingprovider.ProviderName(provider.IntegrationType())
 	cred, found, err := s.tenantCredential(ctx, tenantInfo, provider.IntegrationType())
 	if err != nil {
 		return nil, err
@@ -149,11 +150,11 @@ func (s *Service) appForTenant(
 func (s *Service) appForConnection(
 	ctx context.Context,
 	provider accountingconnectorports.AccountingProvider,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) (*accountingconnectorports.AccountingApp, error) {
 	var app *accountingconnectorports.AccountingApp
 	switch conn.AppSource {
-	case accountingsync.AppSourceTenant:
+	case accountingconnection.AppSourceTenant:
 		cred, found, err := s.tenantCredential(
 			ctx,
 			pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID},
@@ -168,7 +169,7 @@ func (s *Service) appForConnection(
 		if app, err = s.openCredential(cred); err != nil {
 			return nil, err
 		}
-	case accountingsync.AppSourceInstance:
+	case accountingconnection.AppSourceInstance:
 		instance, ok := provider.InstanceApp()
 		if !ok {
 			return nil, errAppChanged
@@ -186,7 +187,7 @@ func (s *Service) appForConnection(
 func (s *Service) connectorFor(
 	ctx context.Context,
 	provider accountingconnectorports.AccountingProvider,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) (accountingconnectorports.AccountingConnector, error) {
 	app, err := s.appForConnection(ctx, provider, conn)
 	if err != nil {
@@ -201,7 +202,7 @@ func (s *Service) appSettings(
 	provider accountingconnectorports.AccountingProvider,
 ) (*accountingconnectionports.AccountingAppSettings, error) {
 	typ := provider.IntegrationType()
-	profile := accountingsync.MustProfile(typ)
+	profile := accountingprovider.MustProfile(typ)
 	settings := &accountingconnectionports.AccountingAppSettings{
 		RedirectURL: provider.RedirectURL(),
 		WebhookPath: profile.WebhookPath(),
@@ -209,7 +210,7 @@ func (s *Service) appSettings(
 	if instance, ok := provider.InstanceApp(); ok {
 		settings.InstanceAppAvailable = true
 		settings.InstanceEnvironment = instance.Environment
-		settings.ActiveSource = accountingsync.AppSourceInstance
+		settings.ActiveSource = accountingconnection.AppSourceInstance
 	}
 
 	cred, found, err := s.tenantCredential(ctx, tenantInfo, typ)
@@ -218,7 +219,7 @@ func (s *Service) appSettings(
 	}
 	if found {
 		settings.TenantApp = cred
-		settings.ActiveSource = accountingsync.AppSourceTenant
+		settings.ActiveSource = accountingconnection.AppSourceTenant
 		settings.WebhookPath = profile.AppWebhookPath(cred.ID.String())
 	}
 	return settings, nil
@@ -229,7 +230,7 @@ func validateSaveApp(req *accountingconnectionports.SaveAccountingAppRequest) er
 	if strings.TrimSpace(req.ClientID) == "" {
 		multiErr.Add("clientId", errortypes.ErrRequired, "Client ID is required")
 	}
-	profile := accountingsync.MustProfile(req.IntegrationType)
+	profile := accountingprovider.MustProfile(req.IntegrationType)
 	if !req.Environment.IsValid() || !profile.HasEnvironment(req.Environment) {
 		multiErr.Add(
 			"environment",
@@ -252,7 +253,7 @@ func validateSaveApp(req *accountingconnectionports.SaveAccountingAppRequest) er
 	return nil
 }
 
-func environmentList(environments []accountingsync.AppEnvironment) string {
+func environmentList(environments []accountingprovider.AppEnvironment) string {
 	names := make([]string, 0, len(environments))
 	for _, env := range environments {
 		names = append(names, string(env))
@@ -262,8 +263,8 @@ func environmentList(environments []accountingsync.AppEnvironment) string {
 
 type appChange struct {
 	req      *accountingconnectionports.SaveAccountingAppRequest
-	existing *accountingsync.AccountingAppCredential
-	conn     *accountingsync.AccountingConnection
+	existing *accountingconnection.AccountingAppCredential
+	conn     *accountingconnection.AccountingConnection
 	provider string
 }
 
@@ -271,14 +272,14 @@ func (c *appChange) guardActiveConnection() error {
 	if c.conn == nil || !c.conn.IsActive() {
 		return nil
 	}
-	if c.conn.AppSource != accountingsync.AppSourceTenant {
+	if c.conn.AppSource != accountingconnection.AppSourceTenant {
 		return errortypes.NewBusinessError(
 			"{0} company {1} is connected through this server's app. Disconnect it before switching to your own app.",
 			c.provider,
 			c.conn.ExternalCompanyName,
 		)
 	}
-	fingerprint := accountingsync.AppFingerprint(c.req.Environment, c.req.ClientID)
+	fingerprint := accountingconnection.AppFingerprint(c.req.Environment, c.req.ClientID)
 	if c.conn.AppFingerprint != fingerprint {
 		return errortypes.NewBusinessError(
 			"Disconnect {0} company {1} before changing the client ID or environment. Its authorization belongs to the app it was connected through; you can still replace the client secret or the webhook verifier token.",
@@ -293,7 +294,7 @@ func (s *Service) activeConnection(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	conn, err := s.connections.GetByType(
 		ctx,
 		accountingconnectionports.GetAccountingConnectionRequest{
@@ -313,11 +314,11 @@ func (s *Service) activeConnection(
 
 func (s *Service) sealCredential(
 	change *appChange,
-) (*accountingsync.AccountingAppCredential, error) {
+) (*accountingconnection.AccountingAppCredential, error) {
 	req := change.req
 	cred := change.existing
 	if cred == nil {
-		cred = &accountingsync.AccountingAppCredential{
+		cred = &accountingconnection.AccountingAppCredential{
 			ID:              pulid.MustNew("acctapp_"),
 			OrganizationID:  req.TenantInfo.OrgID,
 			BusinessUnitID:  req.TenantInfo.BuID,
@@ -374,9 +375,9 @@ func (s *Service) sealCredential(
 func (s *Service) verifyCredential(
 	ctx context.Context,
 	provider accountingconnectorports.AccountingProvider,
-	cred *accountingsync.AccountingAppCredential,
+	cred *accountingconnection.AccountingAppCredential,
 ) error {
-	name := accountingsync.ProviderName(provider.IntegrationType())
+	name := accountingprovider.ProviderName(provider.IntegrationType())
 	if provider.RedirectURL() == "" {
 		return errNoRedirect(name)
 	}
@@ -410,7 +411,7 @@ func (s *Service) prepareAppChange(
 	ctx context.Context,
 	req *accountingconnectionports.SaveAccountingAppRequest,
 ) (*appChange, error) {
-	change := &appChange{req: req, provider: accountingsync.ProviderName(req.IntegrationType)}
+	change := &appChange{req: req, provider: accountingprovider.ProviderName(req.IntegrationType)}
 	existing, found, err := s.tenantCredential(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
@@ -442,7 +443,7 @@ func (s *Service) SaveApp(
 	if err != nil {
 		return nil, err
 	}
-	name := accountingsync.ProviderName(req.IntegrationType)
+	name := accountingprovider.ProviderName(req.IntegrationType)
 
 	checked, err := s.prepareAppChange(ctx, req)
 	if err != nil {
@@ -456,7 +457,7 @@ func (s *Service) SaveApp(
 		return nil, err
 	}
 
-	var saved *accountingsync.AccountingAppCredential
+	var saved *accountingconnection.AccountingAppCredential
 	var previous map[string]any
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		current, prepErr := s.prepareAppChange(txCtx, req)
@@ -487,7 +488,7 @@ func (s *Service) SaveApp(
 	return s.Status(ctx, req.TenantInfo, req.IntegrationType)
 }
 
-func sameCredentialVersion(before, after *accountingsync.AccountingAppCredential) bool {
+func sameCredentialVersion(before, after *accountingconnection.AccountingAppCredential) bool {
 	if before == nil || after == nil {
 		return before == nil && after == nil
 	}
@@ -501,9 +502,9 @@ func (s *Service) RemoveApp(
 	if _, err := s.provider(req.IntegrationType); err != nil {
 		return nil, err
 	}
-	name := accountingsync.ProviderName(req.IntegrationType)
+	name := accountingprovider.ProviderName(req.IntegrationType)
 
-	var removed *accountingsync.AccountingAppCredential
+	var removed *accountingconnection.AccountingAppCredential
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		existing, found, getErr := s.tenantCredential(txCtx, req.TenantInfo, req.IntegrationType)
 		if getErr != nil || !found {
@@ -513,7 +514,8 @@ func (s *Service) RemoveApp(
 		if connErr != nil {
 			return connErr
 		}
-		if conn != nil && conn.IsActive() && conn.AppSource == accountingsync.AppSourceTenant {
+		if conn != nil && conn.IsActive() &&
+			conn.AppSource == accountingconnection.AppSourceTenant {
 			return errortypes.NewBusinessError(
 				"Disconnect {0} company {1} before removing the app it was connected through.",
 				name,
@@ -545,7 +547,7 @@ func (s *Service) RemoveApp(
 }
 
 func (s *Service) logAppAudit(
-	cred *accountingsync.AccountingAppCredential,
+	cred *accountingconnection.AccountingAppCredential,
 	userID pulid.ID,
 	previous map[string]any,
 	comment string,

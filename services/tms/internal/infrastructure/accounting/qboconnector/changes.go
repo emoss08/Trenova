@@ -7,7 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 )
@@ -287,8 +288,8 @@ func pageOf(
 	return page
 }
 
-func referenceKindOf(kind quickbooks.ReferenceKind) (accountingsync.ReferenceKind, bool) {
-	for _, candidate := range accountingsync.AllReferenceKinds() {
+func referenceKindOf(kind quickbooks.ReferenceKind) (accountingprovider.ReferenceKind, bool) {
+	for _, candidate := range accountingprovider.AllReferenceKinds() {
 		providerRef, err := providerKind(candidate)
 		if err == nil && providerRef == kind {
 			return candidate, true
@@ -310,20 +311,20 @@ func changeOperation(
 	}
 }
 
-func inboundDocumentKind(txnType string) accountingsync.InboundDocumentKind {
+func inboundDocumentKind(txnType string) accountinginbound.InboundDocumentKind {
 	switch quickbooks.TxnKind(txnType) {
 	case quickbooks.TxnInvoice:
-		return accountingsync.InboundDocInvoice
+		return accountinginbound.InboundDocInvoice
 	case quickbooks.TxnCreditMemo:
-		return accountingsync.InboundDocCreditMemo
+		return accountinginbound.InboundDocCreditMemo
 	case quickbooks.TxnBill:
-		return accountingsync.InboundDocBill
+		return accountinginbound.InboundDocBill
 	case quickbooks.TxnVendorCredit:
-		return accountingsync.InboundDocVendorCredit
+		return accountinginbound.InboundDocVendorCredit
 	case quickbooks.TxnPayment, quickbooks.TxnBillPayment:
-		return accountingsync.InboundDocOther
+		return accountinginbound.InboundDocOther
 	default:
-		return accountingsync.InboundDocOther
+		return accountinginbound.InboundDocOther
 	}
 }
 
@@ -343,7 +344,7 @@ func inboundPaymentOf(
 	payment *quickbooks.ChangedPayment,
 ) accountingconnectorports.AccountingInboundPayment {
 	return accountingconnectorports.AccountingInboundPayment{
-		Kind:              accountingsync.InboundCustomerPayment,
+		Kind:              accountinginbound.InboundCustomerPayment,
 		Operation:         changeOperation(&payment.ChangeMeta),
 		ExternalID:        payment.ID,
 		Number:            payment.ReferenceNumber,
@@ -367,7 +368,7 @@ func inboundBillPaymentOf(
 	payment *quickbooks.ChangedBillPayment,
 ) accountingconnectorports.AccountingInboundPayment {
 	return accountingconnectorports.AccountingInboundPayment{
-		Kind:              accountingsync.InboundBillPayment,
+		Kind:              accountinginbound.InboundBillPayment,
 		Operation:         changeOperation(&payment.ChangeMeta),
 		ExternalID:        payment.ID,
 		Number:            payment.DocNumber,

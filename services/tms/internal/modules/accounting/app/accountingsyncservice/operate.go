@@ -7,6 +7,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -56,7 +59,7 @@ func (s *Service) Summary(
 ) (*accountingsyncports.AccountingSyncSummary, error) {
 	summary := &accountingsyncports.AccountingSyncSummary{
 		IntegrationType: integrationType,
-		ProviderName:    accountingsync.ProviderName(integrationType),
+		ProviderName:    accountingprovider.ProviderName(integrationType),
 		Counts:          []accountingsyncports.AccountingSyncStatusCount{},
 		Attention:       []accountingsyncports.AccountingSyncAttentionGroup{},
 	}
@@ -198,7 +201,7 @@ func (s *Service) ObjectStates(
 			(req.IntegrationType != "" && conn.IntegrationType != req.IntegrationType) {
 			continue
 		}
-		providers[conn.ID] = accountingsync.ProviderName(conn.IntegrationType)
+		providers[conn.ID] = accountingprovider.ProviderName(conn.IntegrationType)
 	}
 	if len(providers) == 0 {
 		return states, nil
@@ -237,7 +240,7 @@ func (s *Service) ListBackfills(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	integrationType integration.Type,
-) ([]*accountingsync.AccountingBackfill, error) {
+) ([]*accountingbackfill.AccountingBackfill, error) {
 	conn, err := s.connectionFor(ctx, tenantInfo, integrationType)
 	if err != nil {
 		return nil, err
@@ -252,15 +255,15 @@ func (s *Service) ListBackfills(
 func (s *Service) UpdateSettings(
 	ctx context.Context,
 	req *accountingsyncports.UpdateAccountingSyncSettingsRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
 	}
-	if conn.SetupStep != accountingsync.SetupStepComplete {
+	if conn.SetupStep != accountingconnection.SetupStepComplete {
 		return nil, errortypes.NewBusinessError(
 			"Finish setting up {0} before changing how documents are sent",
-			accountingsync.ProviderName(conn.IntegrationType),
+			accountingprovider.ProviderName(conn.IntegrationType),
 		)
 	}
 
@@ -269,16 +272,17 @@ func (s *Service) UpdateSettings(
 			"inboundPayments",
 			errortypes.ErrInvalid,
 			"Choose whether payments recorded in {0} are ignored, proposed or applied",
-			accountingsync.ProviderName(conn.IntegrationType),
+			accountingprovider.ProviderName(conn.IntegrationType),
 		)
 	}
 
-	if req.InboundPayments != "" && req.InboundPayments != accountingsync.InboundPaymentsOff &&
+	if req.InboundPayments != "" &&
+		req.InboundPayments != accountingconnection.InboundPaymentsOff &&
 		!conn.ReadsPayments() {
 		return nil, errortypes.NewValidationError(
 			"inboundPayments",
 			errortypes.ErrInvalid,
-			accountingsync.MustProfile(conn.IntegrationType).InboundUnavailableReason,
+			accountingprovider.MustProfile(conn.IntegrationType).InboundUnavailableReason,
 		)
 	}
 
@@ -310,11 +314,14 @@ func (s *Service) UpdateSettings(
 
 type settingsSnapshot struct {
 	sendingDrivers bool
-	policy         accountingsync.InboundPaymentPolicy
+	policy         accountingconnection.InboundPaymentPolicy
 }
 
-func settingsComment(previous settingsSnapshot, conn *accountingsync.AccountingConnection) string {
-	provider := accountingsync.ProviderName(conn.IntegrationType)
+func settingsComment(
+	previous settingsSnapshot,
+	conn *accountingconnection.AccountingConnection,
+) string {
+	provider := accountingprovider.ProviderName(conn.IntegrationType)
 	switch {
 	case !previous.sendingDrivers && conn.SyncsDriverSettlements():
 		return "Started sending owner-operator settlements to " + provider
@@ -327,13 +334,16 @@ func settingsComment(previous settingsSnapshot, conn *accountingsync.AccountingC
 	}
 }
 
-func inboundPolicyComment(provider string, policy accountingsync.InboundPaymentPolicy) string {
+func inboundPolicyComment(
+	provider string,
+	policy accountingconnection.InboundPaymentPolicy,
+) string {
 	switch policy {
-	case accountingsync.InboundPaymentsApply:
+	case accountingconnection.InboundPaymentsApply:
 		return "Payments recorded in " + provider + " are now applied in Trenova automatically"
-	case accountingsync.InboundPaymentsOff:
+	case accountingconnection.InboundPaymentsOff:
 		return "Payments recorded in " + provider + " are no longer brought into Trenova"
-	case accountingsync.InboundPaymentsPropose:
+	case accountingconnection.InboundPaymentsPropose:
 		return "Payments recorded in " + provider + " now wait for someone to apply them"
 	default:
 		return "Changed how payments recorded in " + provider + " are handled"
@@ -343,12 +353,12 @@ func inboundPolicyComment(provider string, policy accountingsync.InboundPaymentP
 func (s *Service) EnableSync(
 	ctx context.Context,
 	req *accountingsyncports.EnableAccountingSyncRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
 	}
-	provider := accountingsync.ProviderName(conn.IntegrationType)
+	provider := accountingprovider.ProviderName(conn.IntegrationType)
 	if !conn.IsActive() {
 		return nil, errortypes.NewBusinessError(
 			"{0} is not connected. A person must connect it from the integrations page.",
@@ -356,19 +366,19 @@ func (s *Service) EnableSync(
 		)
 	}
 	switch conn.SetupStep {
-	case accountingsync.SetupStepMode:
+	case accountingconnection.SetupStepMode:
 		return nil, errortypes.NewBusinessError(
 			"Choose whether to send documents or journal entries first",
 		)
-	case accountingsync.SetupStepMappings:
+	case accountingconnection.SetupStepMappings:
 		return nil, errortypes.NewBusinessError("Confirm the required mappings first")
-	case accountingsync.SetupStepStartDate, accountingsync.SetupStepComplete:
+	case accountingconnection.SetupStepStartDate, accountingconnection.SetupStepComplete:
 	}
 	if req.OpeningBalances && !conn.SendsLedger() {
 		return nil, errortypes.NewValidationError(
 			"openingBalances",
 			errortypes.ErrInvalid,
-			accountingsync.ErrOpeningBalancesNeedLedger.Error(),
+			accountingconnection.ErrOpeningBalancesNeedLedger.Error(),
 		)
 	}
 	now := timeutils.NowUnix()
@@ -396,7 +406,7 @@ func (s *Service) EnableSync(
 
 	before := jsonutils.MustToJSON(conn)
 	hadOpeningBalances := conn.SentOpeningBalances()
-	conn.EnableSync(accountingsync.SyncSettings{
+	conn.EnableSync(accountingconnection.SyncSettings{
 		StartDate:         req.StartDate,
 		AutoSync:          req.AutoSync,
 		DriverSettlements: req.DriverSettlements,
@@ -408,7 +418,7 @@ func (s *Service) EnableSync(
 		return nil, multiErr
 	}
 
-	var updated *accountingsync.AccountingConnection
+	var updated *accountingconnection.AccountingConnection
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		if updated, txErr = s.connections.Update(txCtx, conn); txErr != nil {
@@ -449,7 +459,7 @@ func (s *Service) EnableSync(
 func (s *Service) Pause(
 	ctx context.Context,
 	req *accountingsyncports.PauseAccountingSyncRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	conn, err := s.syncingConnection(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
@@ -489,7 +499,7 @@ func (s *Service) Pause(
 func (s *Service) Resume(
 	ctx context.Context,
 	req *accountingsyncports.PauseAccountingSyncRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	conn, err := s.syncingConnection(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
@@ -523,7 +533,7 @@ func (s *Service) syncingConnection(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	integrationType integration.Type,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	conn, err := s.connectionFor(ctx, tenantInfo, integrationType)
 	if err != nil {
 		return nil, err
@@ -531,7 +541,7 @@ func (s *Service) syncingConnection(
 	if !conn.IsSyncing() {
 		return nil, errortypes.NewBusinessError(
 			"{0} is not sending documents yet; finish its setup first",
-			accountingsync.ProviderName(conn.IntegrationType),
+			accountingprovider.ProviderName(conn.IntegrationType),
 		)
 	}
 	return conn, nil
@@ -656,7 +666,7 @@ func (s *Service) PlanRedate(
 	if err != nil {
 		return nil, err
 	}
-	provider := accountingsync.ProviderName(conn.IntegrationType)
+	provider := accountingprovider.ProviderName(conn.IntegrationType)
 	label := documentLabel(record.ObjectType, record.ObjectNumber)
 	if record.Status != accountingsync.SyncStatusBlocked ||
 		record.ErrorCategory != accountingsync.SyncErrorClosedPeriod {
@@ -790,7 +800,7 @@ func (s *Service) Skip(
 func (s *Service) RequestBackfill(
 	ctx context.Context,
 	req *accountingsyncports.RequestAccountingBackfillRequest,
-) (*accountingsync.AccountingBackfill, error) {
+) (*accountingbackfill.AccountingBackfill, error) {
 	if s.dispatcher == nil {
 		return nil, errortypes.NewBusinessError(
 			"Background work is not available on this server, so a backfill cannot run",
@@ -830,7 +840,7 @@ func (s *Service) RequestBackfill(
 
 	backfill, err := s.backfills.Create(
 		ctx,
-		accountingsync.NewAccountingBackfill(&accountingsync.NewBackfillParams{
+		accountingbackfill.NewAccountingBackfill(&accountingbackfill.NewBackfillParams{
 			TenantInfo:    req.TenantInfo,
 			ConnectionID:  conn.ID,
 			RangeStart:    rangeStart,
@@ -843,7 +853,7 @@ func (s *Service) RequestBackfill(
 		if errors.Is(err, accountingsyncports.ErrAccountingBackfillActive) {
 			return nil, errortypes.NewBusinessError(
 				"A backfill is already running for {0}; pause or cancel it first",
-				accountingsync.ProviderName(conn.IntegrationType),
+				accountingprovider.ProviderName(conn.IntegrationType),
 			).WithInternal(err)
 		}
 		return nil, err
@@ -864,11 +874,15 @@ func (s *Service) RequestBackfill(
 }
 
 func BackfillTypes(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	requested []accountingsync.SyncObjectType,
 ) ([]accountingsync.SyncObjectType, error) {
-	allowed := make([]accountingsync.SyncObjectType, 0, len(accountingsync.BackfillObjectTypes()))
-	for _, typ := range accountingsync.BackfillObjectTypes() {
+	allowed := make(
+		[]accountingsync.SyncObjectType,
+		0,
+		len(accountingbackfill.BackfillObjectTypes()),
+	)
+	for _, typ := range accountingbackfill.BackfillObjectTypes() {
 		if !conn.Backfills(typ) {
 			continue
 		}
@@ -878,7 +892,7 @@ func BackfillTypes(
 					"objectTypes",
 					errortypes.ErrInvalid,
 					"Owner-operator settlements are not sent to {0}; turn them on first",
-					accountingsync.ProviderName(conn.IntegrationType),
+					accountingprovider.ProviderName(conn.IntegrationType),
 				)
 			}
 			continue
@@ -919,7 +933,7 @@ func joinTypes(types []accountingsync.SyncObjectType) string {
 func (s *Service) ChangeBackfill(
 	ctx context.Context,
 	req *accountingsyncports.ChangeAccountingBackfillRequest,
-) (*accountingsync.AccountingBackfill, error) {
+) (*accountingbackfill.AccountingBackfill, error) {
 	backfill, err := s.backfills.GetByID(ctx, accountingsyncports.GetAccountingBackfillRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
@@ -976,12 +990,12 @@ func (s *Service) ChangeBackfill(
 func (s *Service) ChooseMode(
 	ctx context.Context,
 	req *accountingsyncports.ChooseAccountingSyncModeRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
 	}
-	provider := accountingsync.ProviderName(conn.IntegrationType)
+	provider := accountingprovider.ProviderName(conn.IntegrationType)
 	if !conn.IsActive() {
 		return nil, errortypes.NewBusinessError(
 			"{0} is not connected. A person must connect it from the integrations page.",
@@ -991,11 +1005,11 @@ func (s *Service) ChooseMode(
 
 	before := jsonutils.MustToJSON(conn)
 	if err = conn.ChooseMode(req.Mode, req.Granularity); err != nil {
-		if errors.Is(err, accountingsync.ErrModeUnavailable) {
+		if errors.Is(err, accountingconnection.ErrModeUnavailable) {
 			return nil, errortypes.NewValidationError(
 				"mode",
 				errortypes.ErrInvalid,
-				accountingsync.MustProfile(conn.IntegrationType).LedgerUnavailableReason,
+				accountingprovider.MustProfile(conn.IntegrationType).LedgerUnavailableReason,
 			)
 		}
 		return nil, modeError(err)
@@ -1040,16 +1054,16 @@ func (s *Service) ChooseMode(
 
 func modeError(err error) error {
 	switch {
-	case errors.Is(err, accountingsync.ErrModeNotRecognized):
+	case errors.Is(err, accountingconnection.ErrModeNotRecognized):
 		return errortypes.NewValidationError("mode", errortypes.ErrInvalid, err.Error())
-	case errors.Is(err, accountingsync.ErrGranularityRequired):
+	case errors.Is(err, accountingconnection.ErrGranularityRequired):
 		return errortypes.NewValidationError("granularity", errortypes.ErrRequired, err.Error())
 	default:
 		return errortypes.NewBusinessError(err.Error())
 	}
 }
 
-func sentWhat(conn *accountingsync.AccountingConnection) string {
+func sentWhat(conn *accountingconnection.AccountingConnection) string {
 	if conn.SendsLedger() {
 		return "journal entries"
 	}
@@ -1058,7 +1072,7 @@ func sentWhat(conn *accountingsync.AccountingConnection) string {
 
 func (s *Service) enqueueOpeningBalances(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	now int64,
 ) error {
 	loc, err := s.orgLocation(ctx, tenantOf(conn))

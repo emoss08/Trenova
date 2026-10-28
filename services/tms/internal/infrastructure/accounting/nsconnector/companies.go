@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 )
@@ -103,7 +103,7 @@ func companyLabel(name string, ref netsuite.CompanyRef) string {
 func (c *Connector) CompanyFacts(
 	ctx context.Context,
 	realmID, accessToken string,
-) (*accountingsync.CompanyFacts, error) {
+) (*accountingconnection.CompanyFacts, error) {
 	s, err := c.open(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     realmID,
 		AccessToken: accessToken,
@@ -121,7 +121,7 @@ func (c *Connector) CompanyFacts(
 	return facts, nil
 }
 
-func readFacts(ctx context.Context, s *session) (*accountingsync.CompanyFacts, error) {
+func readFacts(ctx context.Context, s *session) (*accountingconnection.CompanyFacts, error) {
 	var company []subsidiaryRow
 	if _, err := s.client.Query(
 		ctx,
@@ -134,7 +134,7 @@ func readFacts(ctx context.Context, s *session) (*accountingsync.CompanyFacts, e
 		return nil, netsuite.ErrUnexpectedPayload
 	}
 	home := &company[0]
-	facts := &accountingsync.CompanyFacts{
+	facts := &accountingconnection.CompanyFacts{
 		CompanyName:  home.CompanyName.Value(),
 		LegalName:    home.LegalName.Value(),
 		Country:      strings.ToUpper(home.Country.Value()),

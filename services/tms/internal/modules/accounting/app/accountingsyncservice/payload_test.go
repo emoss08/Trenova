@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
@@ -43,7 +45,7 @@ func decimalEqual(t *testing.T, want string, got decimal.Decimal) {
 	assert.True(t, decimal.RequireFromString(want).Equal(got), "want %s, got %s", want, got)
 }
 
-func (h *harness) mappedCustomer(name string) (pulid.ID, *accountingsync.AccountingMapping) {
+func (h *harness) mappedCustomer(name string) (pulid.ID, *accountingmapping.AccountingMapping) {
 	customerID := pulid.MustNew("cus_")
 	return customerID, h.confirm(customerTarget(customerID, name), "qb-cust-"+name)
 }
@@ -199,12 +201,14 @@ func TestUnmappedCustomerQueuesACustomerCreateAndTheDocumentWaits(t *testing.T) 
 	t.Parallel()
 
 	h := newHarness(t)
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) { conn.AutoSync = false })
+	h.updateConnection(
+		func(conn *accountingconnection.AccountingConnection) { conn.AutoSync = false },
+	)
 	customerID := pulid.MustNew("cus_")
 	customerRow := h.mappings.set(
 		h.conn,
 		customerTarget(customerID, "Acme Freight"),
-		accountingsync.MappingStateUnmatched,
+		accountingmapping.MappingStateUnmatched,
 		"",
 	)
 	h.confirm(freightTarget(), "qb-item-freight")
@@ -243,7 +247,7 @@ func TestUnmappedCustomerQueuesACustomerCreateAndTheDocumentWaits(t *testing.T) 
 	assert.Equal(t, 1, second.Synced)
 	require.Len(t, h.mappings.created, 1)
 	assert.Equal(t, customerRow.ID, h.mappings.created[0].MappingID)
-	assert.Equal(t, accountingsync.MappingSourceCreatedInProvider, h.mappings.created[0].Source)
+	assert.Equal(t, accountingmapping.MappingSourceCreatedInProvider, h.mappings.created[0].Source)
 	createdCustomer := h.records.get(dependency.ID)
 	assert.Equal(t, accountingsync.SyncStatusSynced, createdCustomer.Status)
 	assert.Equal(t, "qb-created-"+customerID.String(), createdCustomer.ExternalID)
@@ -264,7 +268,7 @@ func TestDuplicateCustomerNameBlocksAsMappingAndRequeuesOnceMapped(t *testing.T)
 	h.mappings.set(
 		h.conn,
 		customerTarget(customerID, "Acme Freight"),
-		accountingsync.MappingStateUnmatched,
+		accountingmapping.MappingStateUnmatched,
 		"",
 	)
 	h.confirm(freightTarget(), "qb-item-freight")
@@ -348,7 +352,7 @@ func TestCurrencyIsSentWhenTheProviderHasMulticurrency(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 		conn.ExternalMultiCurrencyEnabled = true
 	})
 	h.rates.set("CAD", "USD", decimal.RequireFromString("0.7312"))
@@ -368,7 +372,7 @@ func TestDocumentDatedInAClosedPeriodBlocks(t *testing.T) {
 
 	h := newHarness(t)
 	closed := aprilTenth
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 		conn.ExternalBooksClosedThrough = &closed
 	})
 	customerID, _ := h.mappedCustomer("Acme")

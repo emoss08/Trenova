@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
@@ -48,7 +50,7 @@ type accountingMappingReviewer interface {
 	Confirm(
 		ctx context.Context,
 		req *accountingmappingports.ConfirmAccountingMappingsRequest,
-	) ([]*accountingsync.AccountingMapping, error)
+	) ([]*accountingmapping.AccountingMapping, error)
 	PlanReject(
 		ctx context.Context,
 		req *accountingmappingports.AccountingMappingActionRequest,
@@ -56,7 +58,7 @@ type accountingMappingReviewer interface {
 	Reject(
 		ctx context.Context,
 		req *accountingmappingports.AccountingMappingActionRequest,
-	) (*accountingsync.AccountingMapping, error)
+	) (*accountingmapping.AccountingMapping, error)
 }
 
 type accountingSyncReleaser interface {
@@ -85,7 +87,7 @@ type accountingBackfillChanger interface {
 	ChangeBackfill(
 		ctx context.Context,
 		req *accountingsyncports.ChangeAccountingBackfillRequest,
-	) (*accountingsync.AccountingBackfill, error)
+	) (*accountingbackfill.AccountingBackfill, error)
 }
 
 type releasePlan struct {
@@ -97,8 +99,8 @@ type releasePlan struct {
 type backfillChange struct {
 	req      *accountingsyncports.ChangeAccountingBackfillRequest
 	provider string
-	before   *accountingsync.AccountingBackfill
-	after    *accountingsync.AccountingBackfill
+	before   *accountingbackfill.AccountingBackfill
+	after    *accountingbackfill.AccountingBackfill
 }
 
 func mappingProposalsProperty() map[string]any {
@@ -169,7 +171,7 @@ func confirmMappingsRequest(
 		TenantInfo: toolparams.TenantFrom(*params),
 		UserID:     params.Actor.UserID,
 		Items:      items,
-		Source:     accountingsync.MappingSourceAgent,
+		Source:     accountingmapping.MappingSourceAgent,
 	}, nil
 }
 
@@ -253,7 +255,7 @@ func NewRejectAccountingMappingProposalTool(
 				TenantInfo: toolparams.TenantFrom(*params),
 				UserID:     params.Actor.UserID,
 				ID:         id,
-				Source:     accountingsync.MappingSourceAgent,
+				Source:     accountingmapping.MappingSourceAgent,
 			}, nil
 		},
 		Plan: func(

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
@@ -181,15 +183,15 @@ func changeTargets(req *accountingconnectorports.ReadAccountingChangesRequest) [
 	for _, kind := range req.ReferenceKinds {
 		var target changeTarget
 		switch kind {
-		case accountingsync.ReferenceKindAccount:
+		case accountingprovider.ReferenceKindAccount:
 			target = targetAccounts
-		case accountingsync.ReferenceKindItem:
+		case accountingprovider.ReferenceKindItem:
 			target = targetItems
-		case accountingsync.ReferenceKindCustomer:
+		case accountingprovider.ReferenceKindCustomer:
 			target = targetCustomers
-		case accountingsync.ReferenceKindVendor:
+		case accountingprovider.ReferenceKindVendor:
 			target = targetVendors
-		case accountingsync.ReferenceKindTerm, accountingsync.ReferenceKindPaymentMethod:
+		case accountingprovider.ReferenceKindTerm, accountingprovider.ReferenceKindPaymentMethod:
 			continue
 		default:
 			continue
@@ -340,7 +342,7 @@ func (c *changeCollector) readParties(
 	return nil
 }
 
-func (c *changeCollector) reference(obj *accountingsync.AccountingReferenceObject) {
+func (c *changeCollector) reference(obj *accountingmapping.AccountingReferenceObject) {
 	c.page.References = append(
 		c.page.References,
 		accountingconnectorports.AccountingChangedReference{

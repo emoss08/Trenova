@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
@@ -112,12 +113,12 @@ func changesRequest(cursor string) *accountingconnectorports.ReadAccountingChang
 		Payments:     true,
 		BillPayments: true,
 		Documents:    true,
-		ReferenceKinds: []accountingsync.ReferenceKind{
-			accountingsync.ReferenceKindAccount,
-			accountingsync.ReferenceKindItem,
-			accountingsync.ReferenceKindCustomer,
-			accountingsync.ReferenceKindVendor,
-			accountingsync.ReferenceKindTerm,
+		ReferenceKinds: []accountingprovider.ReferenceKind{
+			accountingprovider.ReferenceKindAccount,
+			accountingprovider.ReferenceKindItem,
+			accountingprovider.ReferenceKindCustomer,
+			accountingprovider.ReferenceKindVendor,
+			accountingprovider.ReferenceKindTerm,
 		},
 	}
 }
@@ -146,13 +147,13 @@ func TestReadChangesReadsDocumentsAndReferencesButNeverPayments(t *testing.T) {
 	}, page.Documents[2].ObjectTypes)
 
 	require.Len(t, page.References, 5)
-	kinds := make(map[accountingsync.ReferenceKind]int, 2)
+	kinds := make(map[accountingprovider.ReferenceKind]int, 2)
 	for _, ref := range page.References {
 		kinds[ref.Object.Kind]++
 		assert.False(t, ref.Deleted)
 	}
-	assert.Equal(t, 3, kinds[accountingsync.ReferenceKindAccount])
-	assert.Equal(t, 2, kinds[accountingsync.ReferenceKindCustomer])
+	assert.Equal(t, 3, kinds[accountingprovider.ReferenceKindAccount])
+	assert.Equal(t, 2, kinds[accountingprovider.ReferenceKindCustomer])
 
 	assert.Equal(t, "2026-10-06T12:04:59Z", page.NextCursor)
 	for _, call := range fake.all() {

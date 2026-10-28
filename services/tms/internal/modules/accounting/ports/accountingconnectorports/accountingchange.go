@@ -4,6 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/shopspring/decimal"
 )
@@ -29,17 +32,17 @@ type ReadAccountingChangesRequest struct {
 	Payments       bool
 	BillPayments   bool
 	Documents      bool
-	ReferenceKinds []accountingsync.ReferenceKind
+	ReferenceKinds []accountingprovider.ReferenceKind
 }
 
 type AccountingInboundLine struct {
-	DocumentKind       accountingsync.InboundDocumentKind
+	DocumentKind       accountinginbound.InboundDocumentKind
 	DocumentExternalID string
 	Amount             decimal.Decimal
 }
 
 type AccountingInboundPayment struct {
-	Kind              accountingsync.InboundChangeKind
+	Kind              accountinginbound.InboundChangeKind
 	Operation         AccountingChangeOperation
 	ExternalID        string
 	Number            string
@@ -59,7 +62,7 @@ type AccountingInboundPayment struct {
 }
 
 type AccountingChangedReference struct {
-	Object  *accountingsync.AccountingReferenceObject
+	Object  *accountingmapping.AccountingReferenceObject
 	Deleted bool
 }
 

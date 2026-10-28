@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -88,8 +90,8 @@ func New(p Params) (*Provider, error) {
 	}
 	if cfg.IsConfigured(&p.Config.App) {
 		provider.instance = &accountingconnectorports.AccountingApp{
-			Source:               accountingsync.AppSourceInstance,
-			Environment:          accountingsync.AppEnvironmentProduction,
+			Source:               accountingconnection.AppSourceInstance,
+			Environment:          accountingprovider.AppEnvironmentProduction,
 			ClientID:             strings.TrimSpace(cfg.ClientID),
 			ClientSecret:         strings.TrimSpace(cfg.ClientSecret),
 			WebhookVerifierToken: strings.TrimSpace(cfg.WebhookKey),
@@ -319,7 +321,7 @@ func (c *Connector) ReleaseCompanies(
 func (c *Connector) CompanyFacts(
 	ctx context.Context,
 	realmID, accessToken string,
-) (*accountingsync.CompanyFacts, error) {
+) (*accountingconnection.CompanyFacts, error) {
 	client, err := c.client(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     realmID,
 		AccessToken: accessToken,
@@ -337,7 +339,7 @@ func (c *Connector) CompanyFacts(
 		return nil, err
 	}
 
-	facts := &accountingsync.CompanyFacts{
+	facts := &accountingconnection.CompanyFacts{
 		CompanyName:          org.Name,
 		LegalName:            org.LegalName,
 		Country:              org.CountryCode,
@@ -425,6 +427,6 @@ func grantOf(token *xero.Token) *accountingconnectorports.AccountingTokenGrant {
 		AccessToken:     token.AccessToken,
 		RefreshToken:    token.RefreshToken,
 		AccessTokenTTL:  token.ExpiresIn,
-		RefreshTokenTTL: accountingsync.MustProfile(integration.TypeXero).RefreshTokenLifetime,
+		RefreshTokenTTL: accountingprovider.MustProfile(integration.TypeXero).RefreshTokenLifetime,
 	}
 }

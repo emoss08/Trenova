@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
@@ -315,13 +317,13 @@ func (e *Enqueuer) Destinations(
 func (e *Enqueuer) coveringConnections(
 	ctx context.Context,
 	req *accountingsyncports.AccountingSyncEnqueueRequest,
-) ([]*accountingsync.AccountingConnection, error) {
+) ([]*accountingconnection.AccountingConnection, error) {
 	conns, err := e.connections.ListByTenant(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, fmt.Errorf("accounting sync: list connections: %w", err)
 	}
 
-	covering := make([]*accountingsync.AccountingConnection, 0, len(conns))
+	covering := make([]*accountingconnection.AccountingConnection, 0, len(conns))
 	for _, conn := range conns {
 		include, includeErr := e.covers(ctx, req, conn)
 		if includeErr != nil {
@@ -336,7 +338,7 @@ func (e *Enqueuer) coveringConnections(
 }
 
 func NewRecordFor(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	req *accountingsyncports.AccountingSyncEnqueueRequest,
 	now int64,
 ) *accountingsync.AccountingSyncRecord {
@@ -365,7 +367,7 @@ func NewRecordFor(
 func (e *Enqueuer) covers(
 	ctx context.Context,
 	req *accountingsyncports.AccountingSyncEnqueueRequest,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) (bool, error) {
 	if !conn.IsSyncing() || !conn.Sends(req.ObjectType) {
 		return false, nil
@@ -396,7 +398,7 @@ func (e *Enqueuer) covers(
 		}
 		return false, err
 	}
-	return mapping.State == accountingsync.MappingStateConfirmed, nil
+	return mapping.State == accountingmapping.MappingStateConfirmed, nil
 }
 
 func (e *Enqueuer) kickAfterCommit(

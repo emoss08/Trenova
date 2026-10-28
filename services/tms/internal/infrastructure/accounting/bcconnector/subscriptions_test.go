@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,7 +49,7 @@ func TestSubscribeSendsTheClientStateItIsGiven(t *testing.T) {
 		ClientState:     "sealed-by-the-service",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, &accountingsync.WebhookSubscriptionGrant{
+	assert.Equal(t, &accountingconnection.WebhookSubscriptionGrant{
 		ExternalID:      testSubscription,
 		NotificationURL: testNotifyURL,
 		ETag:            `W/"JzE5OzI="`,

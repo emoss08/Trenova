@@ -4,6 +4,9 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
@@ -105,7 +108,7 @@ func (t *target) identity() string {
 	return string(t.TargetType) + "|" + t.Key
 }
 
-func mappingIdentity(m *accountingsync.AccountingMapping) string {
+func mappingIdentity(m *accountingmapping.AccountingMapping) string {
 	if m.TargetType.KeyedByObject() {
 		return string(m.TargetType) + "|" + m.TrenovaObjectID.String()
 	}
@@ -115,17 +118,17 @@ func mappingIdentity(m *accountingsync.AccountingMapping) string {
 func (s *Service) listTargets(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) ([]*target, error) {
 	all, err := s.allTargets(ctx, tenantInfo, conn.SendsLedger())
 	if err != nil {
 		return nil, err
 	}
-	profile := accountingsync.MustProfile(conn.IntegrationType)
+	profile := accountingprovider.MustProfile(conn.IntegrationType)
 	return offeredTargets(&profile, all), nil
 }
 
-func offeredTargets(profile *accountingsync.ProviderProfile, all []*target) []*target {
+func offeredTargets(profile *accountingprovider.ProviderProfile, all []*target) []*target {
 	offered := make([]*target, 0, len(all))
 	for _, t := range all {
 		if !profile.OffersKey(t.TargetType, t.Key) {

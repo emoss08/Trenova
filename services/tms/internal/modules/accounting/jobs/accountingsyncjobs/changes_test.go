@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -64,7 +64,7 @@ func (s *ChangesWorkflowSuite) TestReadsEveryPageThenEvaluatesAfterTheSettleTime
 	s.Equal(3, result.Recorded)
 	s.Equal(2, result.Proposed)
 	s.Equal(1, result.Applied)
-	s.GreaterOrEqual(evaluatedAt.Sub(readAt), accountingsync.InboundEvaluationSettle,
+	s.GreaterOrEqual(evaluatedAt.Sub(readAt), accountinginbound.InboundEvaluationSettle,
 		"a change is evaluated only once it has settled")
 }
 

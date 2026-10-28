@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -60,7 +62,7 @@ var _ accountingconnectorports.AccountingConnector = (*Connector)(nil)
 
 func New(p Params) (*Provider, error) {
 	qbo := p.Config.Accounting.QuickBooks
-	environment, ok := accountingsync.ParseAppEnvironment(qbo.GetEnvironment())
+	environment, ok := accountingprovider.ParseAppEnvironment(qbo.GetEnvironment())
 	if !ok {
 		return nil, fmt.Errorf("quickbooks: unknown environment %q", qbo.GetEnvironment())
 	}
@@ -75,7 +77,7 @@ func New(p Params) (*Provider, error) {
 	}
 	if qbo.IsConfigured(&p.Config.App) {
 		provider.instance = &accountingconnectorports.AccountingApp{
-			Source:               accountingsync.AppSourceInstance,
+			Source:               accountingconnection.AppSourceInstance,
 			Environment:          environment,
 			ClientID:             strings.TrimSpace(qbo.ClientID),
 			ClientSecret:         strings.TrimSpace(qbo.ClientSecret),
@@ -160,11 +162,11 @@ func (p *Provider) ClassifyError(err error) accountingsync.ErrorCategory {
 	return classifyError(err)
 }
 
-func apiEnvironment(environment accountingsync.AppEnvironment) (quickbooks.Environment, bool) {
+func apiEnvironment(environment accountingprovider.AppEnvironment) (quickbooks.Environment, bool) {
 	switch environment {
-	case accountingsync.AppEnvironmentSandbox:
+	case accountingprovider.AppEnvironmentSandbox:
 		return quickbooks.EnvironmentSandbox, true
-	case accountingsync.AppEnvironmentProduction:
+	case accountingprovider.AppEnvironmentProduction:
 		return quickbooks.EnvironmentProduction, true
 	default:
 		return "", false
@@ -253,7 +255,7 @@ func (c *Connector) ReleaseCompanies(
 func (c *Connector) CompanyFacts(
 	ctx context.Context,
 	realmID, accessToken string,
-) (*accountingsync.CompanyFacts, error) {
+) (*accountingconnection.CompanyFacts, error) {
 	client, err := quickbooks.New(c.env, realmID, accessToken, c.apiOpts...)
 	if err != nil {
 		return nil, err
@@ -268,7 +270,7 @@ func (c *Connector) CompanyFacts(
 		return nil, err
 	}
 
-	facts := &accountingsync.CompanyFacts{
+	facts := &accountingconnection.CompanyFacts{
 		CompanyName:          info.CompanyName,
 		LegalName:            info.LegalName,
 		Country:              info.Country,

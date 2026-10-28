@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -139,7 +139,7 @@ func PollAccountingChangesWorkflow(
 		if read.Recorded > 0 {
 			if err := workflow.Sleep(
 				ctx,
-				accountingsync.InboundEvaluationSettle+changesSettleMargin,
+				accountinginbound.InboundEvaluationSettle+changesSettleMargin,
 			); err != nil {
 				return result, err
 			}

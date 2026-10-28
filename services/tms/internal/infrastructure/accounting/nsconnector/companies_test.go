@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
@@ -111,7 +112,7 @@ func TestCompanyFactsReadsTheSubsidiaryBooks(t *testing.T) {
 	require.NoError(t, err)
 
 	closed := time.Date(2026, 5, 31, 23, 59, 59, 0, time.UTC).Unix()
-	assert.Equal(t, &accountingsync.CompanyFacts{
+	assert.Equal(t, &accountingconnection.CompanyFacts{
 		CompanyName:          "Acme Canada",
 		LegalName:            "Acme Freight Canada ULC",
 		Country:              "CA",

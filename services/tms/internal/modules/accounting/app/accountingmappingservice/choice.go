@@ -1,7 +1,8 @@
 package accountingmappingservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -9,15 +10,15 @@ import (
 
 func MappingChoice(
 	req *accountingmappingports.SetAccountingMappingRequest,
-	ref *accountingsync.AccountingReferenceObject,
+	ref *accountingmapping.AccountingReferenceObject,
 	at int64,
-) *accountingsync.Choice {
+) *accountingmapping.Choice {
 	source := req.Source
-	if source != accountingsync.MappingSourceAgent {
-		source = accountingsync.MappingSourceManual
+	if source != accountingmapping.MappingSourceAgent {
+		source = accountingmapping.MappingSourceManual
 	}
 
-	return &accountingsync.Choice{
+	return &accountingmapping.Choice{
 		ExternalID:   ref.ExternalID,
 		ExternalName: ref.Label(),
 		Source:       source,
@@ -30,23 +31,23 @@ func MappingChoice(
 type CreatedReference struct {
 	ExternalID      string
 	ExternalName    string
-	RequestedSource accountingsync.MappingSource
+	RequestedSource accountingmapping.MappingSource
 	IntegrationType integration.Type
 	ActorID         pulid.ID
 	At              int64
 }
 
-func CreatedReferenceChoice(created *CreatedReference) *accountingsync.Choice {
-	source := accountingsync.MappingSourceCreatedInProvider
-	if created.RequestedSource == accountingsync.MappingSourceAgent {
-		source = accountingsync.MappingSourceAgent
+func CreatedReferenceChoice(created *CreatedReference) *accountingmapping.Choice {
+	source := accountingmapping.MappingSourceCreatedInProvider
+	if created.RequestedSource == accountingmapping.MappingSourceAgent {
+		source = accountingmapping.MappingSourceAgent
 	}
 
-	return &accountingsync.Choice{
+	return &accountingmapping.Choice{
 		ExternalID:   created.ExternalID,
 		ExternalName: created.ExternalName,
 		Source:       source,
-		Reason:       "Created in " + accountingsync.ProviderName(created.IntegrationType),
+		Reason:       "Created in " + accountingprovider.ProviderName(created.IntegrationType),
 		ActorID:      created.ActorID,
 		At:           created.At,
 	}

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
@@ -320,7 +321,7 @@ func TestPausedConnectionHoldsTheDispatcher(t *testing.T) {
 	h := newHarness(t)
 	record := h.readyInvoice(t)
 	paused := time.Now().Unix()
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 		conn.PausedAt = &paused
 		conn.PausedReason = "Month-end close"
 	})
@@ -341,8 +342,8 @@ func TestDrainHoldsWhenTheConnectionCannotBeUsed(t *testing.T) {
 
 		h := newHarness(t)
 		h.readyInvoice(t)
-		h.updateConnection(func(conn *accountingsync.AccountingConnection) {
-			conn.Status = accountingsync.ConnectionStatusRevoked
+		h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
+			conn.Status = accountingconnection.ConnectionStatusRevoked
 		})
 
 		result := h.drain(t)

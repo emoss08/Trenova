@@ -6,6 +6,11 @@ import (
 	"sync"
 
 	"github.com/emoss08/keel/schema"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill/accountingbackfilldb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection/accountingconnectiondb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift/accountingdriftdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound/accountinginbounddb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping/accountingmappingdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype/accounttypedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
@@ -195,19 +200,19 @@ func All() []*schema.Table {
 		iamdb.AccessPoliciesSchema(),
 		accessorialchargedb.AccessorialChargesSchema(),
 		accounttypedb.AccountTypesSchema(),
-		accountingsyncdb.AccountingAppCredentialsSchema(),
-		accountingsyncdb.AccountingBackfillsSchema(),
+		accountingconnectiondb.AccountingAppCredentialsSchema(),
+		accountingbackfilldb.AccountingBackfillsSchema(),
 		accountingbriefdb.BriefsSchema(),
-		accountingsyncdb.AccountingConnectionsSchema(),
+		accountingconnectiondb.AccountingConnectionsSchema(),
 		tenantdb.AccountingControlsSchema(),
-		accountingsyncdb.AccountingDriftFindingsSchema(),
-		accountingsyncdb.AccountingInboundChangesSchema(),
-		accountingsyncdb.AccountingMappingsSchema(),
-		accountingsyncdb.AccountingPendingCertificatesSchema(),
-		accountingsyncdb.AccountingReferenceObjectsSchema(),
+		accountingdriftdb.AccountingDriftFindingsSchema(),
+		accountinginbounddb.AccountingInboundChangesSchema(),
+		accountingmappingdb.AccountingMappingsSchema(),
+		accountingconnectiondb.AccountingPendingCertificatesSchema(),
+		accountingmappingdb.AccountingReferenceObjectsSchema(),
 		accountingsyncdb.AccountingSyncAttemptsSchema(),
 		accountingsyncdb.AccountingSyncRecordsSchema(),
-		accountingsyncdb.AccountingWebhookSubscriptionsSchema(),
+		accountingconnectiondb.AccountingWebhookSubscriptionsSchema(),
 		shipmentdb.AdditionalChargesSchema(),
 		analysisdb.RunsSchema(),
 		tenantdb.AgentControlsSchema(),

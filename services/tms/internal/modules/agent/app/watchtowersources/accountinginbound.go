@@ -4,7 +4,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -19,8 +21,8 @@ const (
 )
 
 func AccountingInboundAttentionSourceID(
-	conn *accountingsync.AccountingConnection,
-	reason accountingsync.InboundChangeReason,
+	conn *accountingconnection.AccountingConnection,
+	reason accountinginbound.InboundChangeReason,
 ) string {
 	return conn.ID.String() + accountingInboundSuffix + string(reason)
 }
@@ -34,22 +36,22 @@ func paymentsLabel(count int) string {
 
 func inboundAttentionText(
 	provider string,
-	reason accountingsync.InboundChangeReason,
+	reason accountinginbound.InboundChangeReason,
 	count int,
 ) (severity watchtower.Severity, title, summary string) {
 	payments := paymentsLabel(count)
 	switch reason { //nolint:exhaustive // every other reason shares the general wording
-	case accountingsync.InboundReasonPolicyPropose:
+	case accountinginbound.InboundReasonPolicyPropose:
 		return watchtower.SeverityInfo,
 			payments + " recorded in " + provider + " wait to be applied in Trenova",
 			"Apply each one to post it against the documents it pays, or ignore it if it " +
 				"was entered in Trenova too."
-	case accountingsync.InboundReasonPeriodNotOpen:
+	case accountinginbound.InboundReasonPeriodNotOpen:
 		return watchtower.SeverityWarning,
 			payments + " recorded in " + provider + " fall in a period that is not open",
 			"Trenova does not post into a locked or closed period. Reopen the period, " +
 				"then apply them."
-	case accountingsync.InboundReasonApplyFailed:
+	case accountinginbound.InboundReasonApplyFailed:
 		return watchtower.SeverityWarning,
 			payments + " recorded in " + provider + " could not be applied",
 			"Trenova refused them when it tried. Open each one to see why."
@@ -62,13 +64,13 @@ func inboundAttentionText(
 }
 
 func DescribeAccountingInboundAttention(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	group *accountinginboundports.AccountingInboundAttentionGroup,
 ) (watchtowerports.WatchtowerItemInput, bool) {
 	if group == nil || group.Count <= 0 {
 		return watchtowerports.WatchtowerItemInput{}, false
 	}
-	provider := accountingsync.ProviderName(conn.IntegrationType)
+	provider := accountingprovider.ProviderName(conn.IntegrationType)
 	severity, title, summary := inboundAttentionText(provider, group.Reason, group.Count)
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenantOf(conn),
@@ -85,16 +87,16 @@ func DescribeAccountingInboundAttention(
 	}, true
 }
 
-func AccountingInboundAttentionReasons() []accountingsync.InboundChangeReason {
+func AccountingInboundAttentionReasons() []accountinginbound.InboundChangeReason {
 	out := make(
-		[]accountingsync.InboundChangeReason,
+		[]accountinginbound.InboundChangeReason,
 		0,
-		len(accountingsync.AllInboundChangeReasons()),
+		len(accountinginbound.AllInboundChangeReasons()),
 	)
-	for _, reason := range accountingsync.AllInboundChangeReasons() {
-		if reason != accountingsync.InboundReasonNotTrenovaDocument &&
-			reason != accountingsync.InboundReasonSentFromTrenova &&
-			reason != accountingsync.InboundReasonVoided {
+	for _, reason := range accountinginbound.AllInboundChangeReasons() {
+		if reason != accountinginbound.InboundReasonNotTrenovaDocument &&
+			reason != accountinginbound.InboundReasonSentFromTrenova &&
+			reason != accountinginbound.InboundReasonVoided {
 			out = append(out, reason)
 		}
 	}

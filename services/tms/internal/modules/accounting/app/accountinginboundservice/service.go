@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnlookup"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
@@ -132,7 +133,7 @@ func New(p Params) *Service {
 	}
 }
 
-func tenantOf(conn *accountingsync.AccountingConnection) pagination.TenantInfo {
+func tenantOf(conn *accountingconnection.AccountingConnection) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
 }
 
@@ -144,7 +145,7 @@ func (s *Service) connectionByID(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	return s.connections.GetByID(ctx, accountingconnectionports.GetAccountingConnectionByIDRequest{
 		TenantInfo: tenantInfo,
 		ID:         id,
@@ -155,14 +156,14 @@ func (s *Service) connectionFor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	return accountingconnlookup.ByType(ctx, s.connections, tenantInfo, typ)
 }
 
 func (s *Service) List(
 	ctx context.Context,
 	req *accountinginboundports.ListAccountingInboundChangesRequest,
-) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error) {
+) (*pagination.CursorListResult[*accountinginbound.AccountingInboundChange], error) {
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
@@ -189,7 +190,7 @@ func (s *Service) List(
 func (s *Service) Get(
 	ctx context.Context,
 	req *accountinginboundports.GetAccountingInboundChangeRequest,
-) (*accountingsync.AccountingInboundChange, error) {
+) (*accountinginbound.AccountingInboundChange, error) {
 	return s.changes.GetByID(ctx, accountinginboundports.GetAccountingInboundChangeQuery{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
@@ -228,14 +229,14 @@ func (s *Service) Ignore(
 	ctx context.Context,
 	req *accountinginboundports.DecideAccountingInboundChangeRequest,
 	actor *permissionports.RequestActor,
-) (*accountingsync.AccountingInboundChange, error) {
+) (*accountinginbound.AccountingInboundChange, error) {
 	if actor == nil || actor.UserID.IsNil() {
 		return nil, errortypes.NewAuthorizationError(
 			"Ignoring a payment from the accounting system requires an authenticated user",
 		)
 	}
 
-	var updated *accountingsync.AccountingInboundChange
+	var updated *accountinginbound.AccountingInboundChange
 	var previous map[string]any
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		change, err := s.changes.GetByID(
@@ -267,14 +268,14 @@ func (s *Service) Ignore(
 
 func decisionError(err error) error {
 	field := "status"
-	if err == accountingsync.ErrInboundNoteRequired { //nolint:errorlint // sentinel from the domain
+	if err == accountinginbound.ErrInboundNoteRequired { //nolint:errorlint // sentinel from the domain
 		field = "note"
 	}
 	return errortypes.NewValidationError(field, errortypes.ErrInvalid, err.Error())
 }
 
 func (s *Service) logAudit(
-	change *accountingsync.AccountingInboundChange,
+	change *accountinginbound.AccountingInboundChange,
 	userID pulid.ID,
 	previous map[string]any,
 	comment string,
@@ -299,7 +300,7 @@ func (s *Service) logAudit(
 
 func (s *Service) afterDecision(
 	ctx context.Context,
-	change *accountingsync.AccountingInboundChange,
+	change *accountinginbound.AccountingInboundChange,
 	actorID pulid.ID,
 ) {
 	s.publishInvalidation(ctx, change.TenantInfo(), actorID, change.ID)
@@ -311,7 +312,10 @@ func (s *Service) afterDecision(
 	s.refreshAttention(ctx, conn)
 }
 
-func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.AccountingConnection) {
+func (s *Service) refreshAttention(
+	ctx context.Context,
+	conn *accountingconnection.AccountingConnection,
+) {
 	if s.watchtower == nil {
 		return
 	}
@@ -329,7 +333,7 @@ func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.Acc
 		return
 	}
 	byReason := make(
-		map[accountingsync.InboundChangeReason]*accountinginboundports.AccountingInboundAttentionGroup,
+		map[accountinginbound.InboundChangeReason]*accountinginboundports.AccountingInboundAttentionGroup,
 		len(groups),
 	)
 	for idx := range groups {

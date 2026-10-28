@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
@@ -32,9 +34,11 @@ func newProvider(t *testing.T, qbo config.QuickBooksConfig) *Provider {
 	return provider
 }
 
-func tenantApp(environment accountingsync.AppEnvironment) *accountingconnectorports.AccountingApp {
+func tenantApp(
+	environment accountingprovider.AppEnvironment,
+) *accountingconnectorports.AccountingApp {
 	return &accountingconnectorports.AccountingApp{
-		Source:               accountingsync.AppSourceTenant,
+		Source:               accountingconnection.AppSourceTenant,
 		Environment:          environment,
 		ClientID:             "tenant-id",
 		ClientSecret:         "tenant-secret",
@@ -47,7 +51,7 @@ func newConnector(t *testing.T, qbo config.QuickBooksConfig) *Connector {
 	provider := newProvider(t, qbo)
 	app, ok := provider.InstanceApp()
 	if !ok {
-		environment, parsed := accountingsync.ParseAppEnvironment(qbo.GetEnvironment())
+		environment, parsed := accountingprovider.ParseAppEnvironment(qbo.GetEnvironment())
 		require.True(t, parsed)
 		app = tenantApp(environment)
 	}
@@ -77,8 +81,8 @@ func TestConfiguredInstanceAppBuildsAuthorizeURLWithDerivedRedirect(t *testing.T
 	})
 	app, ok := provider.InstanceApp()
 	require.True(t, ok)
-	assert.Equal(t, accountingsync.AppSourceInstance, app.Source)
-	assert.Equal(t, accountingsync.AppEnvironmentSandbox, app.Environment)
+	assert.Equal(t, accountingconnection.AppSourceInstance, app.Source)
+	assert.Equal(t, accountingprovider.AppEnvironmentSandbox, app.Environment)
 	assert.Equal(t,
 		"https://app.example.com/admin/integrations/quickbooks/callback",
 		provider.RedirectURL(),
@@ -114,7 +118,7 @@ func TestTenantAppBindsWithoutAnInstanceApp(t *testing.T) {
 	t.Parallel()
 
 	provider := newProvider(t, config.QuickBooksConfig{})
-	conn, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentProduction))
+	conn, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentProduction))
 	require.NoError(t, err)
 	raw, err := conn.AuthorizeURL(
 		accountingconnectorports.AccountingAuthorizeRequest{State: "state-2"},
@@ -127,13 +131,13 @@ func TestBindingReusesTheConnectorForTheSameKeys(t *testing.T) {
 	t.Parallel()
 
 	provider := newProvider(t, config.QuickBooksConfig{})
-	first, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentSandbox))
+	first, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
 	require.NoError(t, err)
-	second, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentSandbox))
+	second, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
 	require.NoError(t, err)
 	assert.Same(t, first, second)
 
-	rotated := tenantApp(accountingsync.AppEnvironmentSandbox)
+	rotated := tenantApp(accountingprovider.AppEnvironmentSandbox)
 	rotated.ClientSecret = "rotated"
 	third, err := provider.Bind(rotated)
 	require.NoError(t, err)
@@ -144,9 +148,9 @@ func TestBindingKeepsEachAppsEnvironment(t *testing.T) {
 	t.Parallel()
 
 	provider := newProvider(t, config.QuickBooksConfig{})
-	sandbox, err := provider.bind(tenantApp(accountingsync.AppEnvironmentSandbox))
+	sandbox, err := provider.bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
 	require.NoError(t, err)
-	production, err := provider.bind(tenantApp(accountingsync.AppEnvironmentProduction))
+	production, err := provider.bind(tenantApp(accountingprovider.AppEnvironmentProduction))
 	require.NoError(t, err)
 	assert.Equal(t, quickbooks.EnvironmentSandbox, sandbox.env)
 	assert.Equal(t, quickbooks.EnvironmentProduction, production.env)
@@ -166,7 +170,7 @@ func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 	provider, err := New(Params{Config: &config.Config{}, Logger: zap.NewNop()})
 	require.NoError(t, err)
 	assert.Empty(t, provider.RedirectURL())
-	conn, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentSandbox))
+	conn, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
 	require.NoError(t, err)
 	_, err = conn.AuthorizeURL(accountingconnectorports.AccountingAuthorizeRequest{State: "state"})
 	require.Error(t, err)
@@ -203,7 +207,7 @@ func verifyAppAgainst(t *testing.T, status int, body string) error {
 		quickbooks.WithBaseURL(server.URL),
 		quickbooks.WithHTTPClient(server.Client()),
 	}
-	conn, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentSandbox))
+	conn, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
 	require.NoError(t, err)
 	return conn.VerifyApp(t.Context())
 }
@@ -233,7 +237,7 @@ func TestVerifyWebhookUsesTheBoundAppsVerifier(t *testing.T) {
 	t.Parallel()
 
 	provider := newProvider(t, config.QuickBooksConfig{})
-	conn, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentSandbox))
+	conn, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
 	require.NoError(t, err)
 	body := []byte(`[]`)
 	mac := hmac.New(sha256.New, []byte("tenant-verifier"))

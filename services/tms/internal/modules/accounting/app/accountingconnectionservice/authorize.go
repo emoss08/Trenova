@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -40,7 +41,7 @@ type pendingGrant struct {
 
 type authorizedApp struct {
 	connector accountingconnectorports.AccountingConnector
-	identity  accountingsync.AppIdentity
+	identity  accountingconnection.AppIdentity
 	provider  string
 }
 
@@ -54,7 +55,7 @@ type companyConnect struct {
 
 func validateCompletion(
 	req *accountingconnectionports.CompleteAccountingAuthorizationRequest,
-	profile *accountingsync.ProviderProfile,
+	profile *accountingprovider.ProviderProfile,
 ) error {
 	multiErr := errortypes.NewMultiError()
 	if strings.TrimSpace(req.State) == "" {
@@ -88,7 +89,7 @@ func (s *Service) CompleteAuthorization(
 	if err != nil {
 		return nil, err
 	}
-	profile := accountingsync.MustProfile(req.IntegrationType)
+	profile := accountingprovider.MustProfile(req.IntegrationType)
 	if err = validateCompletion(req, &profile); err != nil {
 		return nil, err
 	}
@@ -277,7 +278,7 @@ func validateChoice(req *accountingconnectionports.ChooseAccountingCompanyReques
 func (s *Service) ChooseCompany(
 	ctx context.Context,
 	req *accountingconnectionports.ChooseAccountingCompanyRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
 		return nil, err
 	}
@@ -385,7 +386,7 @@ func (s *Service) authorizedApp(
 	owner *stateOwner,
 	state *accountingconnectionports.AccountingOAuthState,
 ) (*authorizedApp, error) {
-	name := accountingsync.ProviderName(owner.integrationType)
+	name := accountingprovider.ProviderName(owner.integrationType)
 	app, err := s.appForTenant(ctx, owner.tenantInfo, provider)
 	if err != nil {
 		return nil, err
@@ -409,7 +410,7 @@ func (s *Service) authorizedApp(
 func (s *Service) connectCompany(
 	ctx context.Context,
 	in *companyConnect,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	provider := in.app.provider
 	facts, err := in.app.connector.CompanyFacts(ctx, in.company.ID, in.grant.AccessToken)
 	if err != nil {
@@ -453,7 +454,7 @@ func (s *Service) connectCompany(
 		previous,
 		"Connected "+provider+" company "+conn.ExternalCompanyName,
 	)
-	s.afterHealthChange(ctx, accountingsync.ConnectionStatusDisconnected, conn, now)
+	s.afterHealthChange(ctx, accountingconnection.ConnectionStatusDisconnected, conn, now)
 	s.publishInvalidation(ctx, conn, in.owner.userID)
 	s.requestReferenceRefresh(ctx, conn)
 
@@ -545,8 +546,8 @@ type connectionSave struct {
 	owner       *stateOwner
 	realmID     string
 	grant       *accountingconnectorports.AccountingTokenGrant
-	facts       *accountingsync.CompanyFacts
-	app         accountingsync.AppIdentity
+	facts       *accountingconnection.CompanyFacts
+	app         accountingconnection.AppIdentity
 	provider    string
 	now         int64
 	certificate *heldCertificate
@@ -555,9 +556,9 @@ type connectionSave struct {
 func (s *Service) saveConnection(
 	ctx context.Context,
 	in *connectionSave,
-) (*accountingsync.AccountingConnection, map[string]any, error) {
+) (*accountingconnection.AccountingConnection, map[string]any, error) {
 	owner, grant, facts, provider, now := in.owner, in.grant, in.facts, in.provider, in.now
-	var conn *accountingsync.AccountingConnection
+	var conn *accountingconnection.AccountingConnection
 	var previous map[string]any
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		existing, lockErr := s.connections.LockByTypeWithTokens(
@@ -572,7 +573,7 @@ func (s *Service) saveConnection(
 		}
 
 		if existing == nil {
-			conn = &accountingsync.AccountingConnection{
+			conn = &accountingconnection.AccountingConnection{
 				ID:              pulid.MustNew("acctc_"),
 				OrganizationID:  owner.tenantInfo.OrgID,
 				BusinessUnitID:  owner.tenantInfo.BuID,
@@ -659,13 +660,13 @@ func (s *Service) ensureNoOtherSystem(
 	}
 	for _, conn := range conns {
 		if conn.IntegrationType == typ ||
-			conn.Status == accountingsync.ConnectionStatusDisconnected {
+			conn.Status == accountingconnection.ConnectionStatusDisconnected {
 			continue
 		}
 		return errortypes.NewBusinessError(
 			"Disconnect {0} before connecting {1}. Trenova syncs with one accounting system at a time.",
-			accountingsync.ProviderName(conn.IntegrationType),
-			accountingsync.ProviderName(typ),
+			accountingprovider.ProviderName(conn.IntegrationType),
+			accountingprovider.ProviderName(typ),
 		)
 	}
 	return nil

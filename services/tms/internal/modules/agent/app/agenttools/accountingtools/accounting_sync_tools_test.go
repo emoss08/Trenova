@@ -6,6 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
@@ -41,7 +44,7 @@ type fakeSyncOperator struct {
 	backfilled *accountingsyncports.RequestAccountingBackfillRequest
 
 	savedRecords  []*accountingsync.AccountingSyncRecord
-	savedBackfill *accountingsync.AccountingBackfill
+	savedBackfill *accountingbackfill.AccountingBackfill
 	guard         agenttoolstest.WriteGuard
 }
 
@@ -179,7 +182,7 @@ func (f *fakeSyncOperator) Redate(
 func (f *fakeSyncOperator) Pause(
 	_ context.Context,
 	req *accountingsyncports.PauseAccountingSyncRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -192,7 +195,7 @@ func (f *fakeSyncOperator) Pause(
 func (f *fakeSyncOperator) Resume(
 	_ context.Context,
 	req *accountingsyncports.PauseAccountingSyncRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -205,19 +208,21 @@ func (f *fakeSyncOperator) Resume(
 func (f *fakeSyncOperator) RequestBackfill(
 	_ context.Context,
 	req *accountingsyncports.RequestAccountingBackfillRequest,
-) (*accountingsync.AccountingBackfill, error) {
+) (*accountingbackfill.AccountingBackfill, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.backfilled = req
-	f.savedBackfill = accountingsync.NewAccountingBackfill(&accountingsync.NewBackfillParams{
-		TenantInfo:    req.TenantInfo,
-		ConnectionID:  f.summary.Connection.ID,
-		RangeStart:    *req.RangeStart,
-		RangeEnd:      *req.RangeEnd,
-		ObjectTypes:   req.ObjectTypes,
-		RequestedByID: req.UserID,
-	})
+	f.savedBackfill = accountingbackfill.NewAccountingBackfill(
+		&accountingbackfill.NewBackfillParams{
+			TenantInfo:    req.TenantInfo,
+			ConnectionID:  f.summary.Connection.ID,
+			RangeStart:    *req.RangeStart,
+			RangeEnd:      *req.RangeEnd,
+			ObjectTypes:   req.ObjectTypes,
+			RequestedByID: req.UserID,
+		},
+	)
 	return f.savedBackfill, nil
 }
 
@@ -226,11 +231,11 @@ func syncingSummary() *accountingsyncports.AccountingSyncSummary {
 	return &accountingsyncports.AccountingSyncSummary{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ProviderName:    "QuickBooks Online",
-		Connection: &accountingsync.AccountingConnection{
+		Connection: &accountingconnection.AccountingConnection{
 			ID:                  pulid.MustNew("acctc_"),
 			IntegrationType:     integration.TypeQuickBooksOnline,
-			Status:              accountingsync.ConnectionStatusConnected,
-			SetupStep:           accountingsync.SetupStepComplete,
+			Status:              accountingconnection.ConnectionStatusConnected,
+			SetupStep:           accountingconnection.SetupStepComplete,
 			ExternalCompanyName: "Acme Freight",
 			SyncStartDate:       &start,
 			SyncEnabledAt:       &enabled,
@@ -712,8 +717,8 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 		accountingsync.SyncObjectDriverBillPay,
 	}, operator.backfilled.ObjectTypes)
 
-	operator.summary.Connection.SyncMode = accountingsync.SyncModeLedger
-	operator.summary.Connection.LedgerGranularity = accountingsync.LedgerDailySummary
+	operator.summary.Connection.SyncMode = accountingprovider.SyncModeLedger
+	operator.summary.Connection.LedgerGranularity = accountingconnection.LedgerDailySummary
 	require.NoError(
 		t,
 		tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})),
@@ -724,7 +729,7 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 		operator.backfilled.ObjectTypes,
 		"a ledger connection backfills journal days, never documents",
 	)
-	operator.summary.Connection.SyncMode = accountingsync.SyncModeDocument
+	operator.summary.Connection.SyncMode = accountingprovider.SyncModeDocument
 	operator.summary.Connection.LedgerGranularity = ""
 
 	err := tool.Execute(t.Context(), syncParams(map[string]any{
@@ -760,8 +765,8 @@ func TestRequestAccountingBackfill_RefusesWhatCannotBeBackfilled(t *testing.T) {
 		require.Error(t, tool.Execute(t.Context(), syncParams(params)), params)
 	}
 
-	operator.summary.ActiveBackfill = &accountingsync.AccountingBackfill{
-		Status: accountingsync.BackfillStatusRunning,
+	operator.summary.ActiveBackfill = &accountingbackfill.AccountingBackfill{
+		Status: accountingbackfill.BackfillStatusRunning,
 	}
 	require.Error(
 		t,

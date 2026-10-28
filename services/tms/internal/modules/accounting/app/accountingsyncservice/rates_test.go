@@ -3,6 +3,7 @@ package accountingsyncservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -14,7 +15,7 @@ import (
 )
 
 func (h *harness) multicurrencyBooks() {
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 		conn.ExternalMultiCurrencyEnabled = true
 	})
 }
@@ -107,7 +108,7 @@ func TestBooksKeptInAnotherCurrencyThanTrenovaConvertToTheBooksCurrency(t *testi
 
 	h := newHarness(t)
 	h.multicurrencyBooks()
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 		conn.ExternalHomeCurrency = "EUR"
 	})
 	h.rates.set("CAD", "EUR", decimal.RequireFromString("0.6805"))

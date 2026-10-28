@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -43,7 +45,7 @@ const (
 
 type target struct {
 	TargetType  accountingsync.MappingTargetType
-	Kind        accountingsync.ReferenceKind
+	Kind        accountingprovider.ReferenceKind
 	ObjectID    pulid.ID
 	Key         string
 	Label       string
@@ -55,10 +57,10 @@ type target struct {
 }
 
 type candidateScore struct {
-	ref      *accountingsync.AccountingReferenceObject
+	ref      *accountingmapping.AccountingReferenceObject
 	score    float64
 	reason   string
-	matchers []accountingsync.MatcherSignal
+	matchers []accountingmapping.MatcherSignal
 }
 
 var roleSynonyms = map[string][]string{
@@ -147,30 +149,30 @@ var termSynonyms = map[string][]string{
 	string(customer.PaymentTermDueOnReceipt): {"Due on receipt", "Due upon receipt"},
 }
 
-var roleAccountClasses = map[string][]accountingsync.AccountClass{
-	accountingsync.AccountRoleAR: {accountingsync.AccountClassReceivable},
+var roleAccountClasses = map[string][]accountingmapping.AccountClass{
+	accountingsync.AccountRoleAR: {accountingmapping.AccountClassReceivable},
 	accountingsync.AccountRoleRevenue: {
-		accountingsync.AccountClassIncome,
-		accountingsync.AccountClassOtherIncome,
+		accountingmapping.AccountClassIncome,
+		accountingmapping.AccountClassOtherIncome,
 	},
 	accountingsync.AccountRoleDeposit: {
-		accountingsync.AccountClassBank,
-		accountingsync.AccountClassUndepositedFunds,
+		accountingmapping.AccountClassBank,
+		accountingmapping.AccountClassUndepositedFunds,
 	},
 	accountingsync.AccountRoleWriteOff: {
-		accountingsync.AccountClassExpense,
-		accountingsync.AccountClassOtherExpense,
+		accountingmapping.AccountClassExpense,
+		accountingmapping.AccountClassOtherExpense,
 	},
-	accountingsync.AccountRoleAP: {accountingsync.AccountClassPayable},
+	accountingsync.AccountRoleAP: {accountingmapping.AccountClassPayable},
 	accountingsync.AccountRolePurchasedTransportation: {
-		accountingsync.AccountClassCostOfSales,
-		accountingsync.AccountClassExpense,
+		accountingmapping.AccountClassCostOfSales,
+		accountingmapping.AccountClassExpense,
 	},
 }
 
-var lineAccountClasses = []accountingsync.AccountClass{
-	accountingsync.AccountClassIncome,
-	accountingsync.AccountClassOtherIncome,
+var lineAccountClasses = []accountingmapping.AccountClass{
+	accountingmapping.AccountClassIncome,
+	accountingmapping.AccountClassOtherIncome,
 }
 
 var dedicatedTypeRoles = map[string]struct{}{
@@ -179,11 +181,11 @@ var dedicatedTypeRoles = map[string]struct{}{
 	accountingsync.AccountRoleDeposit: {},
 }
 
-func eligibleForRole(role string, ref *accountingsync.AccountingReferenceObject) bool {
+func eligibleForRole(role string, ref *accountingmapping.AccountingReferenceObject) bool {
 	return slices.Contains(roleAccountClasses[role], ref.AccountClass)
 }
 
-func accountClassesFor(t *target) []accountingsync.AccountClass {
+func accountClassesFor(t *target) []accountingmapping.AccountClass {
 	switch t.TargetType { //nolint:exhaustive // only targets that pick an account have a class rule
 	case accountingsync.TargetAccountRole:
 		return roleAccountClasses[t.Key]
@@ -196,11 +198,11 @@ func accountClassesFor(t *target) []accountingsync.AccountClass {
 	}
 }
 
-func eligible(t *target, ref *accountingsync.AccountingReferenceObject) bool {
+func eligible(t *target, ref *accountingmapping.AccountingReferenceObject) bool {
 	if ref.Kind != t.Kind || !ref.Usable() {
 		return false
 	}
-	if ref.Kind != accountingsync.ReferenceKindAccount {
+	if ref.Kind != accountingprovider.ReferenceKindAccount {
 		return true
 	}
 	classes := accountClassesFor(t)
@@ -209,9 +211,9 @@ func eligible(t *target, ref *accountingsync.AccountingReferenceObject) bool {
 
 func score(
 	t *target,
-	refs []*accountingsync.AccountingReferenceObject,
+	refs []*accountingmapping.AccountingReferenceObject,
 	index *tokenIndex,
-) *accountingsync.Proposal {
+) *accountingmapping.Proposal {
 	pool := refs
 	if index != nil {
 		pool = index.candidates(t.Names, t.Identifiers...)
@@ -243,7 +245,7 @@ func score(
 				only.ref.Label(),
 				only.ref.AccountType,
 			)
-			only.matchers = append(only.matchers, accountingsync.MatcherSignal{
+			only.matchers = append(only.matchers, accountingmapping.MatcherSignal{
 				Matcher: matcherOnlyEligible,
 				Score:   scoreOnlyEligible,
 			})
@@ -257,18 +259,18 @@ func score(
 		return cmp.Compare(a.ref.Name, b.ref.Name)
 	})
 
-	proposal := &accountingsync.Proposal{
-		Source:     accountingsync.MappingSourceSuggested,
-		Candidates: make([]accountingsync.MappingCandidate, 0, accountingsync.MaxCandidates),
+	proposal := &accountingmapping.Proposal{
+		Source:     accountingmapping.MappingSourceSuggested,
+		Candidates: make([]accountingmapping.MappingCandidate, 0, accountingmapping.MaxCandidates),
 	}
 	for idx := range scored {
-		if len(proposal.Candidates) == accountingsync.MaxCandidates {
+		if len(proposal.Candidates) == accountingmapping.MaxCandidates {
 			break
 		}
 		if scored[idx].score <= 0 {
 			break
 		}
-		proposal.Candidates = append(proposal.Candidates, accountingsync.MappingCandidate{
+		proposal.Candidates = append(proposal.Candidates, accountingmapping.MappingCandidate{
 			ExternalID: scored[idx].ref.ExternalID,
 			Name:       scored[idx].ref.Label(),
 			Score:      round4(scored[idx].score),
@@ -282,7 +284,7 @@ func score(
 	}
 	best := scored[0]
 	proposal.Matchers = best.matchers
-	if best.score < accountingsync.ConfidentConfidence {
+	if best.score < accountingmapping.ConfidentConfidence {
 		proposal.Reason = "No confident match"
 		return proposal
 	}
@@ -294,13 +296,13 @@ func score(
 	return proposal
 }
 
-func scoreCandidate(t *target, ref *accountingsync.AccountingReferenceObject) candidateScore {
+func scoreCandidate(t *target, ref *accountingmapping.AccountingReferenceObject) candidateScore {
 	result := candidateScore{ref: ref}
 	consider := func(value float64, matcher, reason string) {
 		if value <= 0 {
 			return
 		}
-		result.matchers = append(result.matchers, accountingsync.MatcherSignal{
+		result.matchers = append(result.matchers, accountingmapping.MatcherSignal{
 			Matcher: matcher,
 			Score:   round4(value),
 		})
@@ -368,7 +370,7 @@ func scoreCandidate(t *target, ref *accountingsync.AccountingReferenceObject) ca
 
 func scoreParty(
 	t *target,
-	ref *accountingsync.AccountingReferenceObject,
+	ref *accountingmapping.AccountingReferenceObject,
 	consider func(float64, string, string),
 	result *candidateScore,
 ) {
@@ -396,7 +398,7 @@ func scoreParty(
 
 	if t.PostalCode != "" && ref.PostalCode != "" && result.score > 0 &&
 		normalizePostal(t.PostalCode) == normalizePostal(ref.PostalCode) {
-		result.matchers = append(result.matchers, accountingsync.MatcherSignal{
+		result.matchers = append(result.matchers, accountingmapping.MatcherSignal{
 			Matcher: matcherPostalCode,
 			Score:   postalCodeBonus,
 		})
@@ -447,13 +449,13 @@ func round4(value float64) float64 {
 }
 
 type tokenIndex struct {
-	refs     []*accountingsync.AccountingReferenceObject
+	refs     []*accountingmapping.AccountingReferenceObject
 	byToken  map[string][]int
 	byDigits map[string][]int
 	common   map[string]struct{}
 }
 
-func newTokenIndex(refs []*accountingsync.AccountingReferenceObject) *tokenIndex {
+func newTokenIndex(refs []*accountingmapping.AccountingReferenceObject) *tokenIndex {
 	index := &tokenIndex{
 		refs:     refs,
 		byToken:  make(map[string][]int),
@@ -487,7 +489,7 @@ func newTokenIndex(refs []*accountingsync.AccountingReferenceObject) *tokenIndex
 func (i *tokenIndex) candidates(
 	names []string,
 	identifiers ...string,
-) []*accountingsync.AccountingReferenceObject {
+) []*accountingmapping.AccountingReferenceObject {
 	hits := make(map[int]int)
 	for _, identifier := range identifiers {
 		for _, idx := range i.byDigits[stringutils.DigitsOnly(identifier)] {
@@ -517,7 +519,7 @@ func (i *tokenIndex) candidates(
 		ranked = ranked[:indexMaxCandidates]
 	}
 
-	out := make([]*accountingsync.AccountingReferenceObject, 0, len(ranked))
+	out := make([]*accountingmapping.AccountingReferenceObject, 0, len(ranked))
 	for _, idx := range ranked {
 		out = append(out, i.refs[idx])
 	}

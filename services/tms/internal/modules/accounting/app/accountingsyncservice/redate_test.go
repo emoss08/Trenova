@@ -4,9 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,7 @@ func TestRedateSendsTheDocumentOnTheFirstOpenDay(t *testing.T) {
 
 	h := newHarness(t, withTimezone("America/New_York"))
 	closed := aprilTenth
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 		conn.ExternalBooksClosedThrough = &closed
 	})
 	record := h.seedRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorClosedPeriod)
@@ -49,7 +50,7 @@ func TestRedateFollowsTrenovasClosedPeriodPolicy(t *testing.T) {
 
 	h := newHarness(t)
 	closed := aprilTenth
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 		conn.ExternalBooksClosedThrough = &closed
 	})
 	h.controls.set(func(control *tenant.AccountingControl) {
@@ -76,7 +77,7 @@ func TestRedateRefusesARecordNotHeldByAClosedPeriod(t *testing.T) {
 
 	h := newHarness(t)
 	closed := aprilTenth
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 		conn.ExternalBooksClosedThrough = &closed
 	})
 	for _, record := range []*accountingsync.AccountingSyncRecord{
@@ -116,7 +117,7 @@ func TestARedatedDocumentIsSentOnItsNewDateWithItsOwnDateInTheNote(t *testing.T)
 
 	h := newHarness(t)
 	closed := aprilTenth
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 		conn.ExternalBooksClosedThrough = &closed
 	})
 	customerID, _ := h.mappedCustomer("Acme")
@@ -147,7 +148,7 @@ func TestAClosedPeriodResolutionOffersTheFirstOpenDayOnlyUnderThatPolicy(t *test
 
 	h := newHarness(t)
 	closed := aprilTenth
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 		conn.ExternalBooksClosedThrough = &closed
 	})
 	h.controls.set(func(control *tenant.AccountingControl) {

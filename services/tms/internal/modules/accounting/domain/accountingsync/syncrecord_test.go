@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +17,10 @@ import (
 func queuedRecord(t *testing.T, awaitRelease bool) *accountingsync.AccountingSyncRecord {
 	t.Helper()
 	return accountingsync.NewAccountingSyncRecord(&accountingsync.NewSyncRecord{
-		TenantInfo:   pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: pulid.MustNew("org_"),
+			BuID:  pulid.MustNew("bu_"),
+		},
 		ConnectionID: pulid.MustNew("acctc_"),
 		Key: accountingsync.SyncRecordKey{
 			ObjectType: accountingsync.SyncObjectInvoice,
@@ -194,7 +198,12 @@ func TestMarkFailedRoutesEachCategory(t *testing.T) {
 			assert.Len(t, record.ErrorMessage, 2000)
 			assert.Equal(t, "Fix it", record.Resolution)
 			if tt.spent > 0 {
-				assert.Equal(t, tt.spent, record.AttemptCount, "waiting on the connection spends no attempt")
+				assert.Equal(
+					t,
+					tt.spent,
+					record.AttemptCount,
+					"waiting on the connection spends no attempt",
+				)
 			}
 		})
 	}
@@ -370,21 +379,24 @@ func TestSyncStatusPredicates(t *testing.T) {
 func TestBackfillWalksEachObjectTypeAndStops(t *testing.T) {
 	t.Parallel()
 
-	backfill := accountingsync.NewAccountingBackfill(&accountingsync.NewBackfillParams{
-		TenantInfo:   pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+	backfill := accountingbackfill.NewAccountingBackfill(&accountingbackfill.NewBackfillParams{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: pulid.MustNew("org_"),
+			BuID:  pulid.MustNew("bu_"),
+		},
 		ConnectionID: pulid.MustNew("acctc_"),
 		RangeStart:   now,
 		RangeEnd:     now - 10,
 	})
 	assert.Equal(t, now, backfill.RangeEnd, "an inverted range collapses to its start")
-	assert.Equal(t, accountingsync.BackfillObjectTypes(), backfill.ObjectTypes)
+	assert.Equal(t, accountingbackfill.BackfillObjectTypes(), backfill.ObjectTypes)
 	assert.Equal(t, accountingsync.SyncObjectInvoice, backfill.Cursor.ObjectType)
 
 	require.True(t, backfill.Start(now))
 	require.True(t, backfill.Start(now+5), "a restarted workflow keeps running")
 	assert.Equal(t, now, *backfill.StartedAt)
 
-	backfill.Advance(accountingsync.BackfillCursor{
+	backfill.Advance(accountingbackfill.BackfillCursor{
 		ObjectType: accountingsync.SyncObjectInvoice,
 		AfterAt:    now,
 		AfterID:    pulid.MustNew("inv_"),
@@ -397,13 +409,13 @@ func TestBackfillWalksEachObjectTypeAndStops(t *testing.T) {
 		assert.Zero(t, backfill.Cursor.AfterAt)
 		visited = append(visited, backfill.Cursor.ObjectType)
 	}
-	assert.Equal(t, accountingsync.BackfillObjectTypes(), visited)
+	assert.Equal(t, accountingbackfill.BackfillObjectTypes(), visited)
 
 	require.True(t, backfill.Pause())
 	assert.False(t, backfill.Start(now), "a paused backfill waits to be resumed")
 	require.True(t, backfill.Resume())
 	require.True(t, backfill.Cancel(now+9))
-	assert.Equal(t, accountingsync.BackfillStatusCancelled, backfill.Status)
+	assert.Equal(t, accountingbackfill.BackfillStatusCancelled, backfill.Status)
 	assert.False(t, backfill.Cancel(now+10))
 	assert.False(t, backfill.Resume())
 }
@@ -417,10 +429,17 @@ func TestReflectSkipsARecordTheProviderAlreadyHas(t *testing.T) {
 		Category: accountingsync.SyncErrorTransient,
 		Message:  "timeout",
 	}, now)
-	assert.False(t, record.Reflect(actor, "", "Made to match"), "it must name what it is reflected in")
+	assert.False(
+		t,
+		record.Reflect(actor, "", "Made to match"),
+		"it must name what it is reflected in",
+	)
 	assert.Empty(t, record.ReflectedIn())
 
-	require.True(t, record.Reflect(actor, "145", "Made in Trenova to match QuickBooks Online;\nalready there"))
+	require.True(
+		t,
+		record.Reflect(actor, "145", "Made in Trenova to match QuickBooks Online;\nalready there"),
+	)
 	assert.Equal(t, accountingsync.SyncStatusSkipped, record.Status)
 	assert.Equal(t, "145", record.ReflectedIn())
 	assert.Equal(t, actor, record.SkippedByID)

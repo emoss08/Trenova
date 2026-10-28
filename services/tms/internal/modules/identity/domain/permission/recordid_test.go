@@ -7,6 +7,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel/schema"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection/accountingconnectiondb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift/accountingdriftdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound/accountinginbounddb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping/accountingmappingdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
@@ -330,17 +334,17 @@ var kindMinters = map[permission.RecordKind]minter{
 	permission.KindWebWatch:           prefixed(agentextensiondb.WebWatchesSchema()),
 	permission.KindWatchtowerItem:     prefixed(watchtowerdb.ItemsSchema()),
 	permission.KindAccountingConnection: prefixed(
-		accountingsyncdb.AccountingConnectionsSchema(),
+		accountingconnectiondb.AccountingConnectionsSchema(),
 	),
-	permission.KindAccountingMapping: prefixed(accountingsyncdb.AccountingMappingsSchema()),
+	permission.KindAccountingMapping: prefixed(accountingmappingdb.AccountingMappingsSchema()),
 	permission.KindAccountingSyncRecord: prefixed(
 		accountingsyncdb.AccountingSyncRecordsSchema(),
 	),
 	permission.KindAccountingInboundChange: prefixed(
-		accountingsyncdb.AccountingInboundChangesSchema(),
+		accountinginbounddb.AccountingInboundChangesSchema(),
 	),
 	permission.KindAccountingDriftFinding: prefixed(
-		accountingsyncdb.AccountingDriftFindingsSchema(),
+		accountingdriftdb.AccountingDriftFindingsSchema(),
 	),
 	permission.KindCarrierIntelligenceEvent: prefixed(carrierinteldb.CarrierIntelEventsSchema()),
 	permission.KindInsurancePolicy:          prefixed(carrierdb.CarrierInsurancePoliciesSchema()),

@@ -8,6 +8,9 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -25,7 +28,7 @@ type mappingFixture struct {
 	db         *keel.DB
 	conn       *postgres.Connection
 	tenant     pagination.TenantInfo
-	connection *accountingsync.AccountingConnection
+	connection *accountingconnection.AccountingConnection
 	references accountingmappingports.AccountingReferenceObjectRepository
 	mappings   accountingmappingports.AccountingMappingRepository
 	userID     pulid.ID
@@ -59,9 +62,9 @@ func setupMappingFixture(t *testing.T) *mappingFixture {
 	}
 }
 
-func account(externalID, name, accountType string) *accountingsync.AccountingReferenceObject {
-	return &accountingsync.AccountingReferenceObject{
-		Kind:        accountingsync.ReferenceKindAccount,
+func account(externalID, name, accountType string) *accountingmapping.AccountingReferenceObject {
+	return &accountingmapping.AccountingReferenceObject{
+		Kind:        accountingprovider.ReferenceKindAccount,
 		ExternalID:  externalID,
 		Name:        name,
 		AccountType: accountType,
@@ -78,7 +81,7 @@ func TestReferenceRepository_UpsertRefreshesAndMarksUnseenRecordsRemoved(t *test
 			TenantInfo:   f.tenant,
 			ConnectionID: f.connection.ID,
 			SeenAt:       100,
-			Objects: []*accountingsync.AccountingReferenceObject{
+			Objects: []*accountingmapping.AccountingReferenceObject{
 				account("84", "Accounts Receivable (A/R)", "Accounts Receivable"),
 				account("79", "Freight Income", "Income"),
 			},
@@ -91,7 +94,7 @@ func TestReferenceRepository_UpsertRefreshesAndMarksUnseenRecordsRemoved(t *test
 			TenantInfo:   f.tenant,
 			ConnectionID: f.connection.ID,
 			SeenAt:       200,
-			Objects: []*accountingsync.AccountingReferenceObject{
+			Objects: []*accountingmapping.AccountingReferenceObject{
 				account("84", "Accounts Receivable", "Accounts Receivable"),
 			},
 		}),
@@ -102,7 +105,7 @@ func TestReferenceRepository_UpsertRefreshesAndMarksUnseenRecordsRemoved(t *test
 		&accountingmappingports.MarkAccountingReferenceRemovedRequest{
 			TenantInfo:   f.tenant,
 			ConnectionID: f.connection.ID,
-			Kind:         accountingsync.ReferenceKindAccount,
+			Kind:         accountingprovider.ReferenceKindAccount,
 			SeenBefore:   200,
 			At:           201,
 		},
@@ -115,12 +118,12 @@ func TestReferenceRepository_UpsertRefreshesAndMarksUnseenRecordsRemoved(t *test
 		&accountingmappingports.ListAccountingReferenceObjectsRequest{
 			TenantInfo:   f.tenant,
 			ConnectionID: f.connection.ID,
-			Kind:         accountingsync.ReferenceKindAccount,
+			Kind:         accountingprovider.ReferenceKindAccount,
 		},
 	)
 	require.NoError(t, err)
 	require.Len(t, all, 2)
-	byID := map[string]*accountingsync.AccountingReferenceObject{}
+	byID := map[string]*accountingmapping.AccountingReferenceObject{}
 	for _, obj := range all {
 		byID[obj.ExternalID] = obj
 	}
@@ -135,7 +138,7 @@ func TestReferenceRepository_UpsertRefreshesAndMarksUnseenRecordsRemoved(t *test
 		&accountingmappingports.ListAccountingReferenceObjectsRequest{
 			TenantInfo:   f.tenant,
 			ConnectionID: f.connection.ID,
-			Kind:         accountingsync.ReferenceKindAccount,
+			Kind:         accountingprovider.ReferenceKindAccount,
 			UsableOnly:   true,
 		},
 	)
@@ -149,7 +152,7 @@ func TestReferenceRepository_UpsertRefreshesAndMarksUnseenRecordsRemoved(t *test
 			TenantInfo:   f.tenant,
 			ConnectionID: f.connection.ID,
 			SeenAt:       300,
-			Objects: []*accountingsync.AccountingReferenceObject{
+			Objects: []*accountingmapping.AccountingReferenceObject{
 				account("79", "Freight Income", "Income"),
 			},
 		}),
@@ -159,7 +162,7 @@ func TestReferenceRepository_UpsertRefreshesAndMarksUnseenRecordsRemoved(t *test
 		&accountingmappingports.GetAccountingReferenceObjectsRequest{
 			TenantInfo:   f.tenant,
 			ConnectionID: f.connection.ID,
-			Kind:         accountingsync.ReferenceKindAccount,
+			Kind:         accountingprovider.ReferenceKindAccount,
 			ExternalIDs:  []string{"79"},
 		},
 	)
@@ -171,37 +174,37 @@ func TestReferenceRepository_UpsertRefreshesAndMarksUnseenRecordsRemoved(t *test
 func TestReferenceRepository_SearchSkipsUnusableItemsAndRanksPrefixMatchesFirst(t *testing.T) {
 	f := setupMappingFixture(t)
 
-	items := []*accountingsync.AccountingReferenceObject{
+	items := []*accountingmapping.AccountingReferenceObject{
 		{
-			Kind:       accountingsync.ReferenceKindItem,
+			Kind:       accountingprovider.ReferenceKindItem,
 			ExternalID: "1",
 			Name:       "Detention",
 			ItemType:   "Service",
 			Active:     true,
 		},
 		{
-			Kind:       accountingsync.ReferenceKindItem,
+			Kind:       accountingprovider.ReferenceKindItem,
 			ExternalID: "2",
 			Name:       "Truck detention charge",
 			ItemType:   "Service",
 			Active:     true,
 		},
 		{
-			Kind:       accountingsync.ReferenceKindItem,
+			Kind:       accountingprovider.ReferenceKindItem,
 			ExternalID: "3",
 			Name:       "Detention group",
 			ItemType:   "Category",
 			Active:     true,
 		},
 		{
-			Kind:       accountingsync.ReferenceKindItem,
+			Kind:       accountingprovider.ReferenceKindItem,
 			ExternalID: "4",
 			Name:       "Detention old",
 			ItemType:   "Service",
 			Active:     false,
 		},
 		{
-			Kind:       accountingsync.ReferenceKindItem,
+			Kind:       accountingprovider.ReferenceKindItem,
 			ExternalID: "5",
 			Name:       "Lumper",
 			ItemType:   "Service",
@@ -223,7 +226,7 @@ func TestReferenceRepository_SearchSkipsUnusableItemsAndRanksPrefixMatchesFirst(
 		&accountingmappingports.SearchAccountingReferenceObjectsRequest{
 			TenantInfo:   f.tenant,
 			ConnectionID: f.connection.ID,
-			Kind:         accountingsync.ReferenceKindItem,
+			Kind:         accountingprovider.ReferenceKindItem,
 			Query:        "Detention",
 			UsableOnly:   true,
 		},
@@ -238,7 +241,7 @@ func TestReferenceRepository_SearchSkipsUnusableItemsAndRanksPrefixMatchesFirst(
 		&accountingmappingports.SearchAccountingReferenceObjectsRequest{
 			TenantInfo:   f.tenant,
 			ConnectionID: f.connection.ID,
-			Kind:         accountingsync.ReferenceKindItem,
+			Kind:         accountingprovider.ReferenceKindItem,
 			Query:        "detention",
 		},
 	)
@@ -246,30 +249,30 @@ func TestReferenceRepository_SearchSkipsUnusableItemsAndRanksPrefixMatchesFirst(
 	assert.Len(t, withInactive, 4)
 }
 
-func roleRow(f *mappingFixture, key string) *accountingsync.AccountingMapping {
-	return &accountingsync.AccountingMapping{
+func roleRow(f *mappingFixture, key string) *accountingmapping.AccountingMapping {
+	return &accountingmapping.AccountingMapping{
 		OrganizationID: f.tenant.OrgID,
 		BusinessUnitID: f.tenant.BuID,
 		ConnectionID:   f.connection.ID,
 		TargetType:     accountingsync.TargetAccountRole,
 		TrenovaKey:     key,
 		TargetLabel:    key,
-		ProviderKind:   accountingsync.ReferenceKindAccount,
-		State:          accountingsync.MappingStateUnmatched,
+		ProviderKind:   accountingprovider.ReferenceKindAccount,
+		State:          accountingmapping.MappingStateUnmatched,
 	}
 }
 
 func TestMappingRepository_CreateMissingIsIdempotentPerTarget(t *testing.T) {
 	f := setupMappingFixture(t)
 
-	created, err := f.mappings.CreateMissing(f.ctx, []*accountingsync.AccountingMapping{
+	created, err := f.mappings.CreateMissing(f.ctx, []*accountingmapping.AccountingMapping{
 		roleRow(f, accountingsync.AccountRoleAR),
 		roleRow(f, accountingsync.AccountRoleRevenue),
 	})
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), created)
 
-	created, err = f.mappings.CreateMissing(f.ctx, []*accountingsync.AccountingMapping{
+	created, err = f.mappings.CreateMissing(f.ctx, []*accountingmapping.AccountingMapping{
 		roleRow(f, accountingsync.AccountRoleAR),
 		roleRow(f, accountingsync.AccountRoleDeposit),
 	})
@@ -291,20 +294,20 @@ func TestMappingRepository_TheDatabaseEnforcesTheStateInvariant(t *testing.T) {
 	f := setupMappingFixture(t)
 
 	bad := roleRow(f, accountingsync.AccountRoleAR)
-	bad.State = accountingsync.MappingStateProposed
-	_, err := f.mappings.CreateMissing(f.ctx, []*accountingsync.AccountingMapping{bad})
+	bad.State = accountingmapping.MappingStateProposed
+	_, err := f.mappings.CreateMissing(f.ctx, []*accountingmapping.AccountingMapping{bad})
 	require.Error(t, err, "a proposed row must name a QuickBooks record")
 
 	both := roleRow(f, accountingsync.AccountRoleAR)
 	both.TrenovaObjectID = pulid.MustNew("cus_")
-	_, err = f.mappings.CreateMissing(f.ctx, []*accountingsync.AccountingMapping{both})
+	_, err = f.mappings.CreateMissing(f.ctx, []*accountingmapping.AccountingMapping{both})
 	require.Error(t, err, "a row is keyed by a record or a value, never both")
 }
 
 func TestMappingRepository_ApplyScoringNeverOverwritesAConfirmedOrChangedRow(t *testing.T) {
 	f := setupMappingFixture(t)
 
-	_, err := f.mappings.CreateMissing(f.ctx, []*accountingsync.AccountingMapping{
+	_, err := f.mappings.CreateMissing(f.ctx, []*accountingmapping.AccountingMapping{
 		roleRow(f, accountingsync.AccountRoleAR),
 		roleRow(f, accountingsync.AccountRoleRevenue),
 		roleRow(f, accountingsync.AccountRoleDeposit),
@@ -318,15 +321,15 @@ func TestMappingRepository_ApplyScoringNeverOverwritesAConfirmedOrChangedRow(t *
 		},
 	)
 	require.NoError(t, err)
-	byKey := map[string]*accountingsync.AccountingMapping{}
+	byKey := map[string]*accountingmapping.AccountingMapping{}
 	for _, row := range rows {
 		byKey[row.TrenovaKey] = row
 	}
 
 	confirmedCopy := *byKey[accountingsync.AccountRoleAR]
-	confirmedCopy.Confirm(&accountingsync.Choice{
+	confirmedCopy.Confirm(&accountingmapping.Choice{
 		ExternalID: "84",
-		Source:     accountingsync.MappingSourceManual,
+		Source:     accountingmapping.MappingSourceManual,
 		ActorID:    f.userID,
 		At:         timeutils.NowUnix(),
 	})
@@ -339,14 +342,14 @@ func TestMappingRepository_ApplyScoringNeverOverwritesAConfirmedOrChangedRow(t *
 	require.NoError(t, err)
 
 	for _, key := range []string{accountingsync.AccountRoleAR, accountingsync.AccountRoleRevenue, accountingsync.AccountRoleDeposit} {
-		byKey[key].ApplyProposal(&accountingsync.Proposal{
+		byKey[key].ApplyProposal(&accountingmapping.Proposal{
 			ExternalID: "12",
-			Source:     accountingsync.MappingSourceSuggested,
+			Source:     accountingmapping.MappingSourceSuggested,
 			Confidence: 0.8,
 			Reason:     "Similar name",
 		})
 	}
-	applied, err := f.mappings.ApplyScoring(f.ctx, []*accountingsync.AccountingMapping{
+	applied, err := f.mappings.ApplyScoring(f.ctx, []*accountingmapping.AccountingMapping{
 		byKey[accountingsync.AccountRoleAR],
 		byKey[accountingsync.AccountRoleRevenue],
 		byKey[accountingsync.AccountRoleDeposit],
@@ -364,19 +367,19 @@ func TestMappingRepository_ApplyScoringNeverOverwritesAConfirmedOrChangedRow(t *
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, accountingsync.MappingStateConfirmed, ar.State)
+	assert.Equal(t, accountingmapping.MappingStateConfirmed, ar.State)
 	assert.Equal(t, "84", ar.ExternalID)
 
 	confirmedVersion := ar.Version
 	ar.TargetLabel = "Trade receivables"
-	require.NoError(t, f.mappings.UpdateLabels(f.ctx, []*accountingsync.AccountingMapping{ar}))
+	require.NoError(t, f.mappings.UpdateLabels(f.ctx, []*accountingmapping.AccountingMapping{ar}))
 	relabeled, err := f.mappings.GetByID(f.ctx, accountingmappingports.GetAccountingMappingRequest{
 		TenantInfo: f.tenant,
 		ID:         ar.ID,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "Trade receivables", relabeled.TargetLabel)
-	assert.Equal(t, accountingsync.MappingStateConfirmed, relabeled.State)
+	assert.Equal(t, accountingmapping.MappingStateConfirmed, relabeled.State)
 	assert.Equal(t, confirmedVersion, relabeled.Version, "a new label leaves the version alone")
 
 	revenue, err := f.mappings.GetByTarget(
@@ -389,7 +392,7 @@ func TestMappingRepository_ApplyScoringNeverOverwritesAConfirmedOrChangedRow(t *
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, accountingsync.MappingStateProposed, revenue.State)
+	assert.Equal(t, accountingmapping.MappingStateProposed, revenue.State)
 	assert.Equal(t, "12", revenue.ExternalID)
 	require.NotNil(t, revenue.Confidence)
 	assert.InDelta(t, 0.8, *revenue.Confidence, 1e-9)
@@ -398,17 +401,17 @@ func TestMappingRepository_ApplyScoringNeverOverwritesAConfirmedOrChangedRow(t *
 func TestMappingRepository_ListConnectionFiltersAndCounts(t *testing.T) {
 	f := setupMappingFixture(t)
 
-	customer := &accountingsync.AccountingMapping{
+	customer := &accountingmapping.AccountingMapping{
 		OrganizationID:  f.tenant.OrgID,
 		BusinessUnitID:  f.tenant.BuID,
 		ConnectionID:    f.connection.ID,
 		TargetType:      accountingsync.TargetCustomer,
 		TrenovaObjectID: pulid.MustNew("cus_"),
 		TargetLabel:     "Peak Distributing",
-		ProviderKind:    accountingsync.ReferenceKindCustomer,
-		State:           accountingsync.MappingStateUnmatched,
+		ProviderKind:    accountingprovider.ReferenceKindCustomer,
+		State:           accountingmapping.MappingStateUnmatched,
 	}
-	_, err := f.mappings.CreateMissing(f.ctx, []*accountingsync.AccountingMapping{
+	_, err := f.mappings.CreateMissing(f.ctx, []*accountingmapping.AccountingMapping{
 		roleRow(f, accountingsync.AccountRoleAR),
 		roleRow(f, accountingsync.AccountRoleAP),
 		customer,
@@ -448,7 +451,7 @@ func TestMappingRepository_ListConnectionFiltersAndCounts(t *testing.T) {
 	require.NoError(t, err)
 	total := 0
 	for _, count := range counts {
-		assert.Equal(t, accountingsync.MappingStateUnmatched, count.State)
+		assert.Equal(t, accountingmapping.MappingStateUnmatched, count.State)
 		total += count.Count
 	}
 	assert.Equal(t, 3, total)
@@ -464,7 +467,7 @@ func TestMappingRepository_OneTenantCannotReadOrWriteAnothersMappings(t *testing
 
 	_, err := f.mappings.CreateMissing(
 		f.ctx,
-		[]*accountingsync.AccountingMapping{roleRow(f, accountingsync.AccountRoleAR)},
+		[]*accountingmapping.AccountingMapping{roleRow(f, accountingsync.AccountRoleAR)},
 	)
 	require.NoError(t, err)
 	rows, err := f.mappings.ListByConnection(
@@ -500,7 +503,11 @@ func TestMappingRepository_OneTenantCannotReadOrWriteAnothersMappings(t *testing
 	hijack.OrganizationID = secondTenant.OrgID
 	hijack.BusinessUnitID = secondTenant.BuID
 	hijack.Confirm(
-		&accountingsync.Choice{ExternalID: "84", Source: accountingsync.MappingSourceManual, At: 1},
+		&accountingmapping.Choice{
+			ExternalID: "84",
+			Source:     accountingmapping.MappingSourceManual,
+			At:         1,
+		},
 	)
 	_, err = f.mappings.Update(f.ctx, &hijack)
 	require.Error(t, err, "an update scoped to another tenant touches nothing")
@@ -510,7 +517,7 @@ func TestMappingRepository_OneTenantCannotReadOrWriteAnothersMappings(t *testing
 		&accountingmappingports.ListAccountingReferenceObjectsRequest{
 			TenantInfo:   secondTenant,
 			ConnectionID: f.connection.ID,
-			Kind:         accountingsync.ReferenceKindAccount,
+			Kind:         accountingprovider.ReferenceKindAccount,
 		},
 	)
 	require.NoError(t, err)

@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection/accountingconnectiondb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -44,12 +44,12 @@ func NewAppCredentialRepository(
 func (r *appCredentialRepository) GetByType(
 	ctx context.Context,
 	req accountingconnectionports.GetAccountingAppCredentialRequest,
-) (*accountingsync.AccountingAppCredential, error) {
+) (*accountingconnection.AccountingAppCredential, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
-			ac := accountingsyncdb.AccountingAppCredentials
+		func(ctx context.Context) (*accountingconnection.AccountingAppCredential, error) {
+			ac := accountingconnectiondb.AccountingAppCredentials
 			entity, err := ac.Where(ac.IntegrationType.Eq(req.IntegrationType)).
 				One(ctx, r.db.Keel(ctx))
 			if err != nil {
@@ -65,7 +65,7 @@ func (r *appCredentialRepository) GetForWebhook(
 	ctx context.Context,
 	id pulid.ID,
 	integrationType integration.Type,
-) (*accountingsync.AccountingAppCredential, error) {
+) (*accountingconnection.AccountingAppCredential, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
 		"load the accounting app whose webhook was called before its tenant is known",
@@ -73,8 +73,8 @@ func (r *appCredentialRepository) GetForWebhook(
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
-			ac := accountingsyncdb.AccountingAppCredentials
+		func(ctx context.Context) (*accountingconnection.AccountingAppCredential, error) {
+			ac := accountingconnectiondb.AccountingAppCredentials
 			entity, err := ac.AllTenants().
 				Where(ac.ID.Eq(id), ac.IntegrationType.Eq(integrationType)).
 				First(ctx, r.db.Keel(ctx))
@@ -89,13 +89,17 @@ func (r *appCredentialRepository) GetForWebhook(
 
 func (r *appCredentialRepository) Create(
 	ctx context.Context,
-	entity *accountingsync.AccountingAppCredential,
-) (*accountingsync.AccountingAppCredential, error) {
+	entity *accountingconnection.AccountingAppCredential,
+) (*accountingconnection.AccountingAppCredential, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
-			err := accountingsyncdb.AccountingAppCredentials.Create(ctx, r.db.Keel(ctx), entity)
+		func(ctx context.Context) (*accountingconnection.AccountingAppCredential, error) {
+			err := accountingconnectiondb.AccountingAppCredentials.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			)
 			if err != nil {
 				return nil, appCredentialErrors.Map(err, entity.ID.String())
 			}
@@ -107,14 +111,14 @@ func (r *appCredentialRepository) Create(
 
 func (r *appCredentialRepository) Update(
 	ctx context.Context,
-	entity *accountingsync.AccountingAppCredential,
-) (*accountingsync.AccountingAppCredential, error) {
+	entity *accountingconnection.AccountingAppCredential,
+) (*accountingconnection.AccountingAppCredential, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
+		func(ctx context.Context) (*accountingconnection.AccountingAppCredential, error) {
 			ov := entity.Version
-			err := accountingsyncdb.AccountingAppCredentials.Save(ctx, r.db.Keel(ctx), entity)
+			err := accountingconnectiondb.AccountingAppCredentials.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				entity.Version = ov
 				return nil, appCredentialErrors.Map(err, entity.ID.String())
@@ -130,7 +134,7 @@ func (r *appCredentialRepository) Delete(
 	req accountingconnectionports.GetAccountingAppCredentialRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		ac := accountingsyncdb.AccountingAppCredentials
+		ac := accountingconnectiondb.AccountingAppCredentials
 		_, err := ac.Where(ac.IntegrationType.Eq(req.IntegrationType)).Delete(ctx, r.db.Keel(ctx))
 		return err
 	})

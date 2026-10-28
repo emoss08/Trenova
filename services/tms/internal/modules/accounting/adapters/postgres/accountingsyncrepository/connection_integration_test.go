@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -30,20 +31,22 @@ func newConnection(
 	userID pulid.ID,
 	realmID string,
 	now int64,
-) *accountingsync.AccountingConnection {
-	conn := &accountingsync.AccountingConnection{
+) *accountingconnection.AccountingConnection {
+	conn := &accountingconnection.AccountingConnection{
 		OrganizationID:  tenant.OrgID,
 		BusinessUnitID:  tenant.BuID,
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ExternalRealmID: realmID,
 	}
-	conn.Connect(userID, accountingsync.TokenGrant{
+	conn.Connect(userID, accountingconnection.TokenGrant{
 		AccessTokenCiphertext:  "cipher-access",
 		AccessTokenExpiresAt:   now + 3600,
 		RefreshTokenCiphertext: "cipher-refresh",
 		RefreshTokenExpiresAt:  now + 8_640_000,
 	}, now)
-	conn.ApplyCompanyFacts(&accountingsync.CompanyFacts{CompanyName: "Acme", HomeCurrency: "USD"})
+	conn.ApplyCompanyFacts(
+		&accountingconnection.CompanyFacts{CompanyName: "Acme", HomeCurrency: "USD"},
+	)
 	return conn
 }
 
@@ -93,7 +96,7 @@ func TestConnectionRepository_TokensAreReadOnlyUnderLockAndNeverOverwrittenByUpd
 		)
 		assert.Equal(t, "cipher-refresh", locked.RefreshTokenCiphertext)
 		assert.Equal(t, "Acme Renamed", locked.ExternalCompanyName)
-		assert.Equal(t, accountingsync.ConnectionStatusDegraded, locked.Status)
+		assert.Equal(t, accountingconnection.ConnectionStatusDegraded, locked.Status)
 		return nil
 	})
 	require.NoError(t, err)
@@ -290,7 +293,7 @@ func TestConnectionRepository_ReferenceRefreshRunsUntilItFinishesEitherWay(t *te
 
 	created, err := repo.Create(ctx, newConnection(tenant, data.User.ID, realm, now))
 	require.NoError(t, err)
-	get := func() *accountingsync.AccountingConnection {
+	get := func() *accountingconnection.AccountingConnection {
 		conn, getErr := repo.GetByID(
 			ctx,
 			accountingconnectionports.GetAccountingConnectionByIDRequest{
@@ -329,11 +332,11 @@ func TestConnectionRepository_ReferenceRefreshRunsUntilItFinishesEitherWay(t *te
 
 	finished := now + 20
 	mark(accountingconnectionports.MarkAccountingReferenceRefreshRequest{RefreshedAt: &finished})
-	running.SetupStep = accountingsync.SetupStepStartDate
+	running.SetupStep = accountingconnection.SetupStepStartDate
 	_, err = repo.Update(ctx, running)
 	require.NoError(t, err, "a copy read while the refresh ran still saves")
 	done := get()
-	assert.Equal(t, accountingsync.SetupStepStartDate, done.SetupStep)
+	assert.Equal(t, accountingconnection.SetupStepStartDate, done.SetupStep)
 	assert.Nil(t, done.ReferenceRefreshStartedAt)
 	require.NotNil(t, done.ReferenceRefreshedAt)
 	assert.Equal(t, finished, *done.ReferenceRefreshedAt)
@@ -354,7 +357,7 @@ func TestConnectionRepository_DriftCheckKeepsItsLastSuccessThroughAFailure(t *te
 
 	created, err := repo.Create(ctx, newConnection(tenant, data.User.ID, realm, now))
 	require.NoError(t, err)
-	get := func() *accountingsync.AccountingConnection {
+	get := func() *accountingconnection.AccountingConnection {
 		conn, getErr := repo.GetByID(
 			ctx,
 			accountingconnectionports.GetAccountingConnectionByIDRequest{

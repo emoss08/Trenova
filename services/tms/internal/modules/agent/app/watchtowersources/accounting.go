@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
@@ -99,32 +100,32 @@ func (s *AccountingSyncSource) Snapshot(
 	return items, nil
 }
 
-func AccountingConnectionHealthSourceID(conn *accountingsync.AccountingConnection) string {
+func AccountingConnectionHealthSourceID(conn *accountingconnection.AccountingConnection) string {
 	return conn.ID.String()
 }
 
-func AccountingReconnectSourceID(conn *accountingsync.AccountingConnection) string {
+func AccountingReconnectSourceID(conn *accountingconnection.AccountingConnection) string {
 	return conn.ID.String() + accountingReconnectSuffix
 }
 
 func DescribeAccountingConnectionHealth(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) (watchtowerports.WatchtowerItemInput, bool) {
-	provider := accountingsync.ProviderName(conn.IntegrationType)
+	provider := accountingprovider.ProviderName(conn.IntegrationType)
 
 	var severity watchtower.Severity
 	var title, summary string
 	switch conn.Status { //nolint:exhaustive // connected and disconnected raise nothing
-	case accountingsync.ConnectionStatusDegraded:
+	case accountingconnection.ConnectionStatusDegraded:
 		severity = watchtower.SeverityWarning
 		title = provider + " is not answering reliably"
 		summary = "The last check failed; Trenova keeps retrying. " + conn.LastErrorMessage
-	case accountingsync.ConnectionStatusFailing:
+	case accountingconnection.ConnectionStatusFailing:
 		severity = watchtower.SeverityCritical
 		title = provider + " connection is failing"
 		summary = "Several checks in a row failed, so nothing reaches your books until it recovers. " +
 			conn.LastErrorMessage
-	case accountingsync.ConnectionStatusRevoked:
+	case accountingconnection.ConnectionStatusRevoked:
 		severity = watchtower.SeverityCritical
 		title = provider + " access was revoked"
 		summary = "The authorization was revoked or expired. Reconnect " + provider +
@@ -153,20 +154,20 @@ func DescribeAccountingConnectionHealth(
 		SubjectType: agent.SubjectAccountingConnection,
 		SubjectID:   conn.ID,
 		EventKind:   agent.EventAccountingConnectionDegraded,
-		Path:        accountingsync.SetupPath(conn.IntegrationType),
+		Path:        accountingprovider.SetupPath(conn.IntegrationType),
 		OccurredAt:  occurredAt,
 	}, true
 }
 
 func DescribeAccountingReconnect(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	now int64,
 ) (watchtowerports.WatchtowerItemInput, bool) {
 	if !conn.IsActive() || !conn.RefreshTokenNearAbsoluteExpiry(now) {
 		return watchtowerports.WatchtowerItemInput{}, false
 	}
 
-	provider := accountingsync.ProviderName(conn.IntegrationType)
+	provider := accountingprovider.ProviderName(conn.IntegrationType)
 	expires := time.Unix(conn.RefreshTokenAbsoluteExpiresAt, 0).UTC().Format(reconnectDateLayout)
 	title := "Reconnect " + provider + " before its authorization expires"
 	summary := "The " + provider + " authorization expires on " + expires +
@@ -187,7 +188,7 @@ func DescribeAccountingReconnect(
 		SubjectType: agent.SubjectAccountingConnection,
 		SubjectID:   conn.ID,
 		EventKind:   agent.EventAccountingConnectionDegraded,
-		Path:        accountingsync.SetupPath(conn.IntegrationType),
+		Path:        accountingprovider.SetupPath(conn.IntegrationType),
 		OccurredAt:  conn.RefreshTokenAbsoluteExpiresAt - conn.ReconnectWarningSeconds(),
 	}, true
 }

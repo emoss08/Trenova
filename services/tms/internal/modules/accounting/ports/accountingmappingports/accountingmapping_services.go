@@ -4,6 +4,9 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -22,7 +25,7 @@ type AccountingMappingGroup struct {
 type AccountingMappingSummary struct {
 	IntegrationType   integration.Type
 	ProviderName      string
-	Connection        *accountingsync.AccountingConnection
+	Connection        *accountingconnection.AccountingConnection
 	Groups            []AccountingMappingGroup
 	RequiredTotal     int
 	RequiredConfirmed int
@@ -33,7 +36,7 @@ type ListAccountingMappingsRequest struct {
 	TenantInfo      pagination.TenantInfo
 	IntegrationType integration.Type
 	TargetTypes     []accountingsync.MappingTargetType
-	States          []accountingsync.MappingState
+	States          []accountingmapping.MappingState
 	RequiredOnly    bool
 	Search          string
 	Cursor          pagination.CursorInfo
@@ -42,7 +45,7 @@ type ListAccountingMappingsRequest struct {
 type SearchAccountingReferenceRequest struct {
 	TenantInfo      pagination.TenantInfo
 	IntegrationType integration.Type
-	Kind            accountingsync.ReferenceKind
+	Kind            accountingprovider.ReferenceKind
 	Query           string
 	UsableOnly      bool
 	Limit           int
@@ -54,27 +57,27 @@ type AccountingMappingConfirmation struct {
 }
 
 type AccountingMappingChange struct {
-	Before *accountingsync.AccountingMapping
-	After  *accountingsync.AccountingMapping
+	Before *accountingmapping.AccountingMapping
+	After  *accountingmapping.AccountingMapping
 }
 
 type AccountingMappingConfirmPlan struct {
 	Changes   []*AccountingMappingChange
-	Confirmed []*accountingsync.AccountingMapping
+	Confirmed []*accountingmapping.AccountingMapping
 }
 
 type ConfirmAccountingMappingsRequest struct {
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
 	Items      []AccountingMappingConfirmation
-	Source     accountingsync.MappingSource
+	Source     accountingmapping.MappingSource
 }
 
 type AccountingMappingActionRequest struct {
 	TenantInfo         pagination.TenantInfo
 	UserID             pulid.ID
 	ID                 pulid.ID
-	Source             accountingsync.MappingSource
+	Source             accountingmapping.MappingSource
 	AcknowledgeHistory bool
 }
 
@@ -87,7 +90,7 @@ type SetAccountingMappingRequest struct {
 	TrenovaObjectID    pulid.ID
 	TrenovaKey         string
 	ExternalID         string
-	Source             accountingsync.MappingSource
+	Source             accountingmapping.MappingSource
 	Reason             string
 	AcknowledgeHistory bool
 }
@@ -140,7 +143,7 @@ type CreateAccountingReferenceRecordRequest struct {
 	UserID     pulid.ID
 	MappingID  pulid.ID
 	Name       string
-	Source     accountingsync.MappingSource
+	Source     accountingmapping.MappingSource
 }
 
 type AccountingSetupRequest struct {
@@ -150,7 +153,7 @@ type AccountingSetupRequest struct {
 }
 
 type AccountingReferencePull struct {
-	Kind    accountingsync.ReferenceKind
+	Kind    accountingprovider.ReferenceKind
 	Fetched int
 	Removed int64
 }
@@ -172,68 +175,68 @@ type AccountingMappingService interface {
 	ListMappings(
 		ctx context.Context,
 		req *ListAccountingMappingsRequest,
-	) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error)
+	) (*pagination.CursorListResult[*accountingmapping.AccountingMapping], error)
 	GetMapping(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*accountingsync.AccountingMapping, error)
+	) (*accountingmapping.AccountingMapping, error)
 	GetMappingsByIDs(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		ids []pulid.ID,
-	) ([]*accountingsync.AccountingMapping, error)
+	) ([]*accountingmapping.AccountingMapping, error)
 	FindMapping(
 		ctx context.Context,
 		req *SetAccountingMappingRequest,
-	) (*accountingsync.AccountingMapping, error)
+	) (*accountingmapping.AccountingMapping, error)
 	SearchReference(
 		ctx context.Context,
 		req *SearchAccountingReferenceRequest,
-	) ([]*accountingsync.AccountingReferenceObject, error)
+	) ([]*accountingmapping.AccountingReferenceObject, error)
 	GetReferenceObjects(
 		ctx context.Context,
 		req *GetAccountingReferenceObjectsRequest,
-	) ([]*accountingsync.AccountingReferenceObject, error)
+	) ([]*accountingmapping.AccountingReferenceObject, error)
 	Confirm(
 		ctx context.Context,
 		req *ConfirmAccountingMappingsRequest,
-	) ([]*accountingsync.AccountingMapping, error)
+	) ([]*accountingmapping.AccountingMapping, error)
 	Reject(
 		ctx context.Context,
 		req *AccountingMappingActionRequest,
-	) (*accountingsync.AccountingMapping, error)
+	) (*accountingmapping.AccountingMapping, error)
 	Set(
 		ctx context.Context,
 		req *SetAccountingMappingRequest,
-	) (*accountingsync.AccountingMapping, error)
+	) (*accountingmapping.AccountingMapping, error)
 	Clear(
 		ctx context.Context,
 		req *AccountingMappingActionRequest,
-	) (*accountingsync.AccountingMapping, error)
+	) (*accountingmapping.AccountingMapping, error)
 	GuardHistory(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-		row *accountingsync.AccountingMapping,
+		row *accountingmapping.AccountingMapping,
 		acknowledged bool,
 	) (int, error)
 	CreateReferenceRecord(
 		ctx context.Context,
 		req *CreateAccountingReferenceRecordRequest,
-	) (*accountingsync.AccountingMapping, error)
+	) (*accountingmapping.AccountingMapping, error)
 	RequestRefresh(
 		ctx context.Context,
 		req *AccountingSetupRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	CompleteSetup(
 		ctx context.Context,
 		req *AccountingSetupRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	PullReference(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		connectionID pulid.ID,
-		kind accountingsync.ReferenceKind,
+		kind accountingprovider.ReferenceKind,
 	) (*AccountingReferencePull, error)
 	Rescore(
 		ctx context.Context,
@@ -260,7 +263,7 @@ type AccountingMappingService interface {
 	EnsureMapping(
 		ctx context.Context,
 		req *EnsureAccountingMappingRequest,
-	) (*accountingsync.AccountingMapping, error)
+	) (*accountingmapping.AccountingMapping, error)
 	CustomerParty(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

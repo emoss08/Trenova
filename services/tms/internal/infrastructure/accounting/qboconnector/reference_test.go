@@ -10,7 +10,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/emoss08/trenova/shared/restx"
@@ -56,7 +56,7 @@ func TestListReferenceTranslatesTermsIntoDomainObjects(t *testing.T) {
 		&accountingconnectorports.AccountingReferencePageRequest{
 			RealmID:       "123",
 			AccessToken:   "token",
-			Kind:          accountingsync.ReferenceKindTerm,
+			Kind:          accountingprovider.ReferenceKindTerm,
 			StartPosition: 1,
 			PageSize:      conn.MaxReferencePageSize(),
 		},
@@ -65,7 +65,7 @@ func TestListReferenceTranslatesTermsIntoDomainObjects(t *testing.T) {
 	require.Len(t, page.Objects, 1)
 
 	term := page.Objects[0]
-	assert.Equal(t, accountingsync.ReferenceKindTerm, term.Kind)
+	assert.Equal(t, accountingprovider.ReferenceKindTerm, term.Kind)
 	assert.Equal(t, "3", term.ExternalID)
 	assert.Equal(t, "Net 30", term.Name)
 	assert.Equal(t, "STANDARD", term.SubType)
@@ -105,7 +105,7 @@ func TestCreateReferenceCreatesAVendorWithTheRequestID(t *testing.T) {
 			RealmID:     "123",
 			AccessToken: "token",
 			RequestID:   "req-9",
-			Kind:        accountingsync.ReferenceKindVendor,
+			Kind:        accountingprovider.ReferenceKindVendor,
 			Party: &accountingconnectorports.AccountingPartyDraft{
 				DisplayName: "Swift Haul",
 				Is1099:      true,
@@ -113,7 +113,7 @@ func TestCreateReferenceCreatesAVendorWithTheRequestID(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, accountingsync.ReferenceKindVendor, vendor.Kind)
+	assert.Equal(t, accountingprovider.ReferenceKindVendor, vendor.Kind)
 	assert.Equal(t, "95", vendor.ExternalID)
 	assert.True(t, vendor.Is1099)
 	assert.Equal(t, true, body["Vendor1099"])
@@ -123,10 +123,10 @@ func TestCreateReferenceRefusesKindsTheBookkeeperOwns(t *testing.T) {
 	t.Parallel()
 
 	conn := newConnector(t, config.QuickBooksConfig{})
-	for _, kind := range []accountingsync.ReferenceKind{
-		accountingsync.ReferenceKindAccount,
-		accountingsync.ReferenceKindTerm,
-		accountingsync.ReferenceKindPaymentMethod,
+	for _, kind := range []accountingprovider.ReferenceKind{
+		accountingprovider.ReferenceKindAccount,
+		accountingprovider.ReferenceKindTerm,
+		accountingprovider.ReferenceKindPaymentMethod,
 	} {
 		_, err := conn.CreateReference(
 			t.Context(),
@@ -153,7 +153,7 @@ func TestConnectorRatesEveryAPICallPerRealm(t *testing.T) {
 	cfg := &config.Config{App: config.AppConfig{WebBaseURL: "https://app.example.com"}}
 	provider, err := New(Params{Config: cfg, Logger: zap.NewNop(), Limiter: limiter})
 	require.NoError(t, err)
-	conn, err := provider.bind(tenantApp(accountingsync.AppEnvironmentProduction))
+	conn, err := provider.bind(tenantApp(accountingprovider.AppEnvironmentProduction))
 	require.NoError(t, err)
 	conn.apiOpts = append(
 		conn.apiOpts,
@@ -166,7 +166,7 @@ func TestConnectorRatesEveryAPICallPerRealm(t *testing.T) {
 		&accountingconnectorports.AccountingReferencePageRequest{
 			RealmID:       "555",
 			AccessToken:   "token",
-			Kind:          accountingsync.ReferenceKindAccount,
+			Kind:          accountingprovider.ReferenceKindAccount,
 			StartPosition: 1,
 			PageSize:      10,
 		},
@@ -186,13 +186,13 @@ func TestSanitizeNameUsesEachKindsLimit(t *testing.T) {
 	}
 	assert.Len(
 		t,
-		conn.SanitizeName(accountingsync.ReferenceKindItem, string(long)),
+		conn.SanitizeName(accountingprovider.ReferenceKindItem, string(long)),
 		quickbooks.MaxItemNameLength,
 	)
-	assert.Len(t, conn.SanitizeName(accountingsync.ReferenceKindCustomer, string(long)), 300)
+	assert.Len(t, conn.SanitizeName(accountingprovider.ReferenceKindCustomer, string(long)), 300)
 	assert.Equal(
 		t,
 		"Fuel - Surcharge",
-		conn.SanitizeName(accountingsync.ReferenceKindItem, "Fuel:Surcharge"),
+		conn.SanitizeName(accountingprovider.ReferenceKindItem, "Fuel:Surcharge"),
 	)
 }

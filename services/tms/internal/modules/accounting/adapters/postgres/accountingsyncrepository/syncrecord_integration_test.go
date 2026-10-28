@@ -11,6 +11,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
@@ -31,7 +33,7 @@ type syncFixture struct {
 	db         *keel.DB
 	conn       *postgres.Connection
 	tenant     pagination.TenantInfo
-	connection *accountingsync.AccountingConnection
+	connection *accountingconnection.AccountingConnection
 	records    accountingsyncports.AccountingSyncRecordRepository
 	backfills  accountingsyncports.AccountingBackfillRepository
 	userID     pulid.ID
@@ -97,7 +99,7 @@ func (f *syncFixture) enqueue(
 
 func (f *syncFixture) updateConnection(
 	t *testing.T,
-	change func(*accountingsync.AccountingConnection),
+	change func(*accountingconnection.AccountingConnection),
 ) {
 	t.Helper()
 	connections := NewConnectionRepository(ConnectionParams{DB: f.conn, Logger: zap.NewNop()})
@@ -109,8 +111,11 @@ func (f *syncFixture) updateConnection(
 
 func (f *syncFixture) enableSync(t *testing.T) {
 	t.Helper()
-	f.updateConnection(t, func(c *accountingsync.AccountingConnection) {
-		c.EnableSync(accountingsync.SyncSettings{StartDate: f.now - 86_400, AutoSync: true}, f.now)
+	f.updateConnection(t, func(c *accountingconnection.AccountingConnection) {
+		c.EnableSync(
+			accountingconnection.SyncSettings{StartDate: f.now - 86_400, AutoSync: true},
+			f.now,
+		)
 	})
 }
 
@@ -501,12 +506,12 @@ func TestSyncRecordRepository_ListDueConnectionsSkipsConnectionsThatCannotSend(t
 	f.enableSync(t)
 	require.Len(t, listDue(), 1)
 
-	f.updateConnection(t, func(c *accountingsync.AccountingConnection) {
+	f.updateConnection(t, func(c *accountingconnection.AccountingConnection) {
 		c.Pause(f.userID, "month-end review", f.now)
 	})
 	assert.Empty(t, listDue(), "a paused connection is not woken")
 
-	f.updateConnection(t, func(c *accountingsync.AccountingConnection) {
+	f.updateConnection(t, func(c *accountingconnection.AccountingConnection) {
 		c.Resume()
 	})
 	due := listDue()
@@ -606,7 +611,7 @@ func TestBackfillRepository_OneActivePerConnection(t *testing.T) {
 
 	first, err := f.backfills.Create(
 		f.ctx,
-		accountingsync.NewAccountingBackfill(&accountingsync.NewBackfillParams{
+		accountingbackfill.NewAccountingBackfill(&accountingbackfill.NewBackfillParams{
 			TenantInfo:    f.tenant,
 			ConnectionID:  f.connection.ID,
 			RangeStart:    f.now - 86_400,
@@ -618,7 +623,7 @@ func TestBackfillRepository_OneActivePerConnection(t *testing.T) {
 
 	_, err = f.backfills.Create(
 		f.ctx,
-		accountingsync.NewAccountingBackfill(&accountingsync.NewBackfillParams{
+		accountingbackfill.NewAccountingBackfill(&accountingbackfill.NewBackfillParams{
 			TenantInfo:   f.tenant,
 			ConnectionID: f.connection.ID,
 			RangeStart:   f.now - 86_400,
@@ -633,10 +638,10 @@ func TestBackfillRepository_OneActivePerConnection(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, first.ID, active.ID)
-	assert.Equal(t, accountingsync.BackfillObjectTypes(), active.ObjectTypes)
+	assert.Equal(t, accountingbackfill.BackfillObjectTypes(), active.ObjectTypes)
 
 	require.True(t, active.Start(f.now))
-	active.Advance(accountingsync.BackfillCursor{
+	active.Advance(accountingbackfill.BackfillCursor{
 		ObjectType: accountingsync.SyncObjectInvoice,
 		AfterAt:    f.now - 10,
 		AfterID:    "inv_1",
@@ -650,7 +655,7 @@ func TestBackfillRepository_OneActivePerConnection(t *testing.T) {
 		ID:         first.ID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, accountingsync.BackfillStatusCompleted, stored.Status)
+	assert.Equal(t, accountingbackfill.BackfillStatusCompleted, stored.Status)
 	assert.Equal(t, pulid.ID("inv_1"), stored.Cursor.AfterID)
 	assert.Equal(t, 12, stored.EnqueuedCount)
 
@@ -662,7 +667,7 @@ func TestBackfillRepository_OneActivePerConnection(t *testing.T) {
 
 	_, err = f.backfills.Create(
 		f.ctx,
-		accountingsync.NewAccountingBackfill(&accountingsync.NewBackfillParams{
+		accountingbackfill.NewAccountingBackfill(&accountingbackfill.NewBackfillParams{
 			TenantInfo:   f.tenant,
 			ConnectionID: f.connection.ID,
 			RangeStart:   f.now - 86_400,
@@ -686,8 +691,8 @@ func TestConnectionRepository_SyncSettingsAndPauseRoundTrip(t *testing.T) {
 	f := setupSyncFixture(t)
 	connections := NewConnectionRepository(ConnectionParams{DB: f.conn, Logger: zap.NewNop()})
 
-	f.connection.SetupStep = accountingsync.SetupStepStartDate
-	f.connection.EnableSync(accountingsync.SyncSettings{StartDate: f.now - 86_400}, f.now)
+	f.connection.SetupStep = accountingconnection.SetupStepStartDate
+	f.connection.EnableSync(accountingconnection.SyncSettings{StartDate: f.now - 86_400}, f.now)
 	f.connection.Pause(f.userID, "Month-end close", f.now+1)
 	_, err := connections.Update(f.ctx, f.connection)
 	require.NoError(t, err)
@@ -708,7 +713,7 @@ func TestConnectionRepository_SyncSettingsAndPauseRoundTrip(t *testing.T) {
 	assert.Equal(t, f.userID, stored.PausedByID)
 
 	stored.Resume()
-	stored.SetupStep = accountingsync.SetupStepComplete
+	stored.SetupStep = accountingconnection.SetupStepComplete
 	stored.SyncStartDate = nil
 	_, err = connections.Update(f.ctx, stored)
 	require.Error(t, err, "the database refuses a finished setup without a start date")

@@ -5572,13 +5572,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/workspace/domain/integration.Type
   AccountingConnectionStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.ConnectionStatus
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.ConnectionStatus
   AccountingErrorCategory:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.ErrorCategory
   AccountingConnection:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AccountingConnection
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.AccountingConnection
     fields:
       lastErrorCategory:
         resolver: true
@@ -5597,7 +5597,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports.AccountingSyncStatus
   AccountingProviderProfile:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.ProviderProfile
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider.ProviderProfile
     fields:
       ledgerAvailable:
         fieldName: Ledger
@@ -5608,7 +5608,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports.AccountingPreparedCertificate
   AccountingAuthMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AuthMethod
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.AuthMethod
   AccountingWebhookSubscriptionSummary:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports.AccountingWebhookSubscriptionSummary
@@ -5623,10 +5623,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.SyncObjectType
   AccountingSyncMode:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.SyncMode
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider.SyncMode
   AccountingLedgerGranularity:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.LedgerGranularity
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.LedgerGranularity
   AccountingSyncOperation:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.SyncOperation
@@ -5644,7 +5644,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.SyncAttemptOutcome
   AccountingBackfillStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.BackfillStatus
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill.BackfillStatus
   AccountingBackfillAction:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingBackfillAction
@@ -5668,28 +5668,28 @@ models:
         resolver: true
   AccountingBackfill:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AccountingBackfill
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill.AccountingBackfill
   AccountingInboundPaymentPolicy:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.InboundPaymentPolicy
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.InboundPaymentPolicy
   AccountingInboundChangeKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.InboundChangeKind
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.InboundChangeKind
   AccountingInboundChangeStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.InboundChangeStatus
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.InboundChangeStatus
   AccountingInboundChangeReason:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.InboundChangeReason
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.InboundChangeReason
   AccountingInboundDocumentKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.InboundDocumentKind
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.InboundDocumentKind
   AccountingAppliedObjectType:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AppliedObjectType
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.AppliedObjectType
   AccountingInboundLine:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.InboundLine
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.InboundLine
     fields:
       objectType:
         resolver: true
@@ -5697,10 +5697,10 @@ models:
         resolver: true
   AccountingAppliedObject:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AppliedObject
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.AppliedObject
   AccountingInboundChange:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AccountingInboundChange
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.AccountingInboundChange
     fields:
       reason:
         resolver: true
@@ -5730,25 +5730,25 @@ models:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports.AccountingInboundApplyPreview
   AccountingDriftKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.DriftKind
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift.DriftKind
   AccountingDriftStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.DriftStatus
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift.DriftStatus
   AccountingDriftResolution:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.DriftResolution
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift.DriftResolution
   AccountingDriftDirection:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.DriftDirection
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift.DriftDirection
   AccountingDriftFixObject:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.DriftFixObject
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift.DriftFixObject
   AccountingDriftLine:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.DriftLine
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift.DriftLine
   AccountingDriftFinding:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AccountingDriftFinding
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift.AccountingDriftFinding
     fields:
       partyId:
         resolver: true
@@ -5812,13 +5812,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingSyncObjectState
   AccountingAppSource:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AppSource
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.AppSource
   AccountingAppEnvironment:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AppEnvironment
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider.AppEnvironment
   AccountingAppCredential:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AccountingAppCredential
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.AccountingAppCredential
     fields:
       hasWebhookVerifier:
         resolver: true
@@ -5834,22 +5834,22 @@ models:
         fieldName: RedirectURL
   AccountingSetupStep:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.SetupStep
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.SetupStep
   AccountingReferenceKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.ReferenceKind
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider.ReferenceKind
   AccountingMappingTargetType:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.MappingTargetType
   AccountingMappingState:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.MappingState
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping.MappingState
   AccountingMappingSource:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.MappingSource
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping.MappingSource
   AccountingReferenceObject:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AccountingReferenceObject
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping.AccountingReferenceObject
     fields:
       label:
         resolver: true
@@ -5857,13 +5857,13 @@ models:
         resolver: true
   AccountingMappingCandidate:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.MappingCandidate
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping.MappingCandidate
   AccountingMappingMatcher:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.MatcherSignal
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping.MatcherSignal
   AccountingMapping:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AccountingMapping
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping.AccountingMapping
     fields:
       trenovaObjectId:
         resolver: true

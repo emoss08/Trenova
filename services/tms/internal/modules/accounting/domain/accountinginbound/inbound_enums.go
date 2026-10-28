@@ -1,27 +1,8 @@
-package accountingsync
+package accountinginbound
 
-type InboundPaymentPolicy string
-
-const (
-	InboundPaymentsOff     = InboundPaymentPolicy("Off")
-	InboundPaymentsPropose = InboundPaymentPolicy("Propose")
-	InboundPaymentsApply   = InboundPaymentPolicy("Apply")
+import (
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 )
-
-func (p InboundPaymentPolicy) String() string { return string(p) }
-
-func (p InboundPaymentPolicy) IsValid() bool {
-	switch p {
-	case InboundPaymentsOff, InboundPaymentsPropose, InboundPaymentsApply:
-		return true
-	default:
-		return false
-	}
-}
-
-func AllInboundPaymentPolicies() []InboundPaymentPolicy {
-	return []InboundPaymentPolicy{InboundPaymentsOff, InboundPaymentsPropose, InboundPaymentsApply}
-}
 
 type InboundChangeKind string
 
@@ -41,18 +22,24 @@ func (k InboundChangeKind) IsValid() bool {
 	}
 }
 
-func (k InboundChangeKind) EchoObjectTypes() []SyncObjectType {
+func (k InboundChangeKind) EchoObjectTypes() []accountingsync.SyncObjectType {
 	if k == InboundBillPayment {
-		return []SyncObjectType{SyncObjectCarrierBillPay, SyncObjectDriverBillPay}
+		return []accountingsync.SyncObjectType{
+			accountingsync.SyncObjectCarrierBillPay,
+			accountingsync.SyncObjectDriverBillPay,
+		}
 	}
-	return []SyncObjectType{SyncObjectCustomerPayment, SyncObjectCreditApplication}
+	return []accountingsync.SyncObjectType{
+		accountingsync.SyncObjectCustomerPayment,
+		accountingsync.SyncObjectCreditApplication,
+	}
 }
 
-func (k InboundChangeKind) SyncObjectType() SyncObjectType {
+func (k InboundChangeKind) SyncObjectType() accountingsync.SyncObjectType {
 	if k == InboundBillPayment {
-		return SyncObjectCarrierBillPay
+		return accountingsync.SyncObjectCarrierBillPay
 	}
-	return SyncObjectCustomerPayment
+	return accountingsync.SyncObjectCustomerPayment
 }
 
 func AllInboundChangeKinds() []InboundChangeKind {
@@ -170,16 +157,22 @@ const (
 	InboundDocOther        = InboundDocumentKind("Other")
 )
 
-func (k InboundDocumentKind) SyncObjectTypes() []SyncObjectType {
+func (k InboundDocumentKind) SyncObjectTypes() []accountingsync.SyncObjectType {
 	switch k { //nolint:exhaustive // other kinds never name a Trenova document
 	case InboundDocInvoice:
-		return []SyncObjectType{SyncObjectInvoice, SyncObjectDebitMemo}
+		return []accountingsync.SyncObjectType{
+			accountingsync.SyncObjectInvoice,
+			accountingsync.SyncObjectDebitMemo,
+		}
 	case InboundDocCreditMemo:
-		return []SyncObjectType{SyncObjectCreditMemo}
+		return []accountingsync.SyncObjectType{accountingsync.SyncObjectCreditMemo}
 	case InboundDocDebitMemo:
-		return []SyncObjectType{SyncObjectDebitMemo}
+		return []accountingsync.SyncObjectType{accountingsync.SyncObjectDebitMemo}
 	case InboundDocBill, InboundDocVendorCredit:
-		return []SyncObjectType{SyncObjectCarrierBill, SyncObjectDriverBill}
+		return []accountingsync.SyncObjectType{
+			accountingsync.SyncObjectCarrierBill,
+			accountingsync.SyncObjectDriverBill,
+		}
 	default:
 		return nil
 	}

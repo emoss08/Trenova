@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnlookup"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -33,7 +35,7 @@ func (s *Service) Overview(
 func (s *Service) overviewOf(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) (*accountingdriftports.AccountingDriftOverview, error) {
 	summary, err := s.findings.Summarize(ctx, &accountingdriftports.SummarizeAccountingDriftRequest{
 		TenantInfo:    tenant,
@@ -49,7 +51,7 @@ func (s *Service) overviewOf(
 	}
 	return &accountingdriftports.AccountingDriftOverview{
 		ConnectionID:   conn.ID,
-		ProviderName:   accountingsync.ProviderName(conn.IntegrationType),
+		ProviderName:   accountingprovider.ProviderName(conn.IntegrationType),
 		CheckedAt:      conn.DriftCheckedAt,
 		CheckError:     conn.DriftErrorMessage,
 		ToleranceMinor: tolerance,
@@ -61,7 +63,7 @@ func (s *Service) overviewOf(
 func (s *Service) List(
 	ctx context.Context,
 	req *accountingdriftports.ListAccountingDriftFindingsRequest,
-) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error) {
+) (*pagination.CursorListResult[*accountingdrift.AccountingDriftFinding], error) {
 	conn, err := accountingconnlookup.ByType(
 		ctx,
 		s.connections,
@@ -94,7 +96,7 @@ func (s *Service) List(
 func (s *Service) Get(
 	ctx context.Context,
 	req *accountingdriftports.GetAccountingDriftFindingRequest,
-) (*accountingsync.AccountingDriftFinding, error) {
+) (*accountingdrift.AccountingDriftFinding, error) {
 	return s.findingByID(ctx, req.TenantInfo, req.ID, false)
 }
 
@@ -110,7 +112,7 @@ func (s *Service) CheckNow(
 	if !conn.ChecksDrift() {
 		return nil, errortypes.NewBusinessError(
 			"{0} is not syncing, so there is nothing to compare",
-			accountingsync.ProviderName(conn.IntegrationType),
+			accountingprovider.ProviderName(conn.IntegrationType),
 		)
 	}
 	if s.checker == nil {

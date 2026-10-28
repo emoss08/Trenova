@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
@@ -22,9 +24,9 @@ func changesRequest(cursor string) *accountingconnectorports.ReadAccountingChang
 		Payments:     true,
 		BillPayments: true,
 		Documents:    true,
-		ReferenceKinds: []accountingsync.ReferenceKind{
-			accountingsync.ReferenceKindCustomer,
-			accountingsync.ReferenceKindTerm,
+		ReferenceKinds: []accountingprovider.ReferenceKind{
+			accountingprovider.ReferenceKindCustomer,
+			accountingprovider.ReferenceKindTerm,
 		},
 	}
 }
@@ -68,7 +70,7 @@ func TestReadChangesReadsPaymentsBackWithTheirApplications(t *testing.T) {
 
 	require.Len(t, page.Payments, 1)
 	payment := page.Payments[0]
-	assert.Equal(t, accountingsync.InboundCustomerPayment, payment.Kind)
+	assert.Equal(t, accountinginbound.InboundCustomerPayment, payment.Kind)
 	assert.Equal(t, accountingconnectorports.AccountingChangeUpsert, payment.Operation)
 	assert.Equal(t, testPayment, payment.ExternalID)
 	assert.Equal(t, "PYMT-88", payment.Number)
@@ -84,12 +86,12 @@ func TestReadChangesReadsPaymentsBackWithTheirApplications(t *testing.T) {
 	assert.Equal(t, "Lee Ortega", payment.ModifiedBy)
 	assert.Equal(t, []accountingconnectorports.AccountingInboundLine{
 		{
-			DocumentKind:       accountingsync.InboundDocInvoice,
+			DocumentKind:       accountinginbound.InboundDocInvoice,
 			DocumentExternalID: testInvoice,
 			Amount:             decimal.NewFromInt(1250),
 		},
 		{
-			DocumentKind:       accountingsync.InboundDocInvoice,
+			DocumentKind:       accountinginbound.InboundDocInvoice,
 			DocumentExternalID: "1202",
 			Amount:             decimal.NewFromInt(200),
 		},
@@ -260,7 +262,7 @@ func TestReadChangesFinishesWithReferencesAndDeletes(t *testing.T) {
 	assert.False(t, page.References[0].Deleted)
 	deleted := page.References[2]
 	assert.True(t, deleted.Deleted)
-	assert.Equal(t, accountingsync.ReferenceKindCustomer, deleted.Object.Kind)
+	assert.Equal(t, accountingprovider.ReferenceKindCustomer, deleted.Object.Kind)
 	assert.Equal(t, "350", deleted.Object.ExternalID)
 
 	require.Len(t, page.Documents, 1)
@@ -364,29 +366,33 @@ func TestVendorPaymentsReadBackAsBillPayments(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, page.Payments, 1)
 	payment := page.Payments[0]
-	assert.Equal(t, accountingsync.InboundBillPayment, payment.Kind)
+	assert.Equal(t, accountinginbound.InboundBillPayment, payment.Kind)
 	assert.Equal(t, accountingconnectorports.AccountingChangeVoid, payment.Operation)
 	assert.Equal(t, testVendor, payment.PartyExternalID)
 	assert.True(t, payment.Amount.Equal(decimal.NewFromInt(900)))
 	assert.Equal(t, "CHK-1009", payment.ReferenceNumber)
 	require.Len(t, payment.Lines, 1)
-	assert.Equal(t, accountingsync.InboundDocBill, payment.Lines[0].DocumentKind)
+	assert.Equal(t, accountinginbound.InboundDocBill, payment.Lines[0].DocumentKind)
 	assert.Equal(t, testBill, payment.Lines[0].DocumentExternalID)
 }
 
 func TestInboundDocumentKindNamesNetSuiteTypes(t *testing.T) {
 	t.Parallel()
 
-	customer := accountingsync.InboundCustomerPayment
-	bill := accountingsync.InboundBillPayment
-	assert.Equal(t, accountingsync.InboundDocInvoice, inboundDocumentKind(customer, "Invoice"))
+	customer := accountinginbound.InboundCustomerPayment
+	bill := accountinginbound.InboundBillPayment
+	assert.Equal(t, accountinginbound.InboundDocInvoice, inboundDocumentKind(customer, "Invoice"))
 	assert.Equal(
 		t,
-		accountingsync.InboundDocCreditMemo,
+		accountinginbound.InboundDocCreditMemo,
 		inboundDocumentKind(customer, "Credit Memo"),
 	)
-	assert.Equal(t, accountingsync.InboundDocInvoice, inboundDocumentKind(customer, ""))
-	assert.Equal(t, accountingsync.InboundDocBill, inboundDocumentKind(bill, ""))
-	assert.Equal(t, accountingsync.InboundDocVendorCredit, inboundDocumentKind(bill, "Bill Credit"))
-	assert.Equal(t, accountingsync.InboundDocOther, inboundDocumentKind(customer, "Journal"))
+	assert.Equal(t, accountinginbound.InboundDocInvoice, inboundDocumentKind(customer, ""))
+	assert.Equal(t, accountinginbound.InboundDocBill, inboundDocumentKind(bill, ""))
+	assert.Equal(
+		t,
+		accountinginbound.InboundDocVendorCredit,
+		inboundDocumentKind(bill, "Bill Credit"),
+	)
+	assert.Equal(t, accountinginbound.InboundDocOther, inboundDocumentKind(customer, "Journal"))
 }

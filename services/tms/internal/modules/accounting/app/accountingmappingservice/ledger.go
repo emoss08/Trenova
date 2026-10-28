@@ -3,6 +3,8 @@ package accountingmappingservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
@@ -14,7 +16,7 @@ import (
 func (s *Service) ledgerRequirement(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	summary *accountingmappingports.AccountingMappingSummary,
 ) error {
 	var since *int64
@@ -50,7 +52,7 @@ func (s *Service) ledgerRequirement(
 	byAccount := make(map[pulid.ID]struct{}, len(mappings))
 	byRole := make(map[string]struct{}, 8)
 	for _, mapping := range mappings {
-		if mapping.State != accountingsync.MappingStateConfirmed || mapping.ExternalID == "" {
+		if mapping.State != accountingmapping.MappingStateConfirmed || mapping.ExternalID == "" {
 			continue
 		}
 		if mapping.TargetType == accountingsync.TargetGLAccount {

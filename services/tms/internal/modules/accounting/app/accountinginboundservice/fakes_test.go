@@ -7,6 +7,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
@@ -37,11 +41,11 @@ import (
 type fakeConnections struct {
 	accountingconnectionports.AccountingConnectionRepository
 	mu    sync.Mutex
-	conn  *accountingsync.AccountingConnection
+	conn  *accountingconnection.AccountingConnection
 	saves []accountingconnectionports.SaveAccountingChangeFeedRequest
 }
 
-func (f *fakeConnections) current() *accountingsync.AccountingConnection {
+func (f *fakeConnections) current() *accountingconnection.AccountingConnection {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	out := *f.conn
@@ -51,7 +55,7 @@ func (f *fakeConnections) current() *accountingsync.AccountingConnection {
 func (f *fakeConnections) GetByID(
 	_ context.Context,
 	req accountingconnectionports.GetAccountingConnectionByIDRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	if req.ID != f.conn.ID {
 		return nil, errortypes.NewNotFoundError("Accounting connection not found")
 	}
@@ -61,7 +65,7 @@ func (f *fakeConnections) GetByID(
 func (f *fakeConnections) GetByType(
 	_ context.Context,
 	_ accountingconnectionports.GetAccountingConnectionRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	return f.current(), nil
 }
 
@@ -275,33 +279,33 @@ func (f *fakeRecords) Update(
 type fakeChanges struct {
 	accountinginboundports.AccountingInboundChangeRepository
 	mu   sync.Mutex
-	rows []*accountingsync.AccountingInboundChange
+	rows []*accountinginbound.AccountingInboundChange
 }
 
 func cloneChange(
-	c *accountingsync.AccountingInboundChange,
-) *accountingsync.AccountingInboundChange {
+	c *accountinginbound.AccountingInboundChange,
+) *accountinginbound.AccountingInboundChange {
 	out := *c
-	out.Document.Lines = make([]*accountingsync.InboundLine, 0, len(c.Document.Lines))
+	out.Document.Lines = make([]*accountinginbound.InboundLine, 0, len(c.Document.Lines))
 	for _, line := range c.Document.Lines {
 		copied := *line
 		out.Document.Lines = append(out.Document.Lines, &copied)
 	}
-	out.AppliedObjects = append([]accountingsync.AppliedObject{}, c.AppliedObjects...)
+	out.AppliedObjects = append([]accountinginbound.AppliedObject{}, c.AppliedObjects...)
 	return &out
 }
 
-func (f *fakeChanges) all() []*accountingsync.AccountingInboundChange {
+func (f *fakeChanges) all() []*accountinginbound.AccountingInboundChange {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := make([]*accountingsync.AccountingInboundChange, 0, len(f.rows))
+	out := make([]*accountinginbound.AccountingInboundChange, 0, len(f.rows))
 	for _, row := range f.rows {
 		out = append(out, cloneChange(row))
 	}
 	return out
 }
 
-func (f *fakeChanges) byExternal(externalID string) *accountingsync.AccountingInboundChange {
+func (f *fakeChanges) byExternal(externalID string) *accountinginbound.AccountingInboundChange {
 	for _, row := range f.all() {
 		if row.ExternalID == externalID {
 			return row
@@ -310,7 +314,7 @@ func (f *fakeChanges) byExternal(externalID string) *accountingsync.AccountingIn
 	return nil
 }
 
-func (f *fakeChanges) put(change *accountingsync.AccountingInboundChange) {
+func (f *fakeChanges) put(change *accountinginbound.AccountingInboundChange) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.rows = append(f.rows, cloneChange(change))
@@ -318,16 +322,16 @@ func (f *fakeChanges) put(change *accountingsync.AccountingInboundChange) {
 
 func (f *fakeChanges) Create(
 	_ context.Context,
-	entity *accountingsync.AccountingInboundChange,
-) (*accountingsync.AccountingInboundChange, error) {
+	entity *accountinginbound.AccountingInboundChange,
+) (*accountinginbound.AccountingInboundChange, error) {
 	f.put(entity)
 	return entity, nil
 }
 
 func (f *fakeChanges) Update(
 	_ context.Context,
-	entity *accountingsync.AccountingInboundChange,
-) (*accountingsync.AccountingInboundChange, error) {
+	entity *accountinginbound.AccountingInboundChange,
+) (*accountinginbound.AccountingInboundChange, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for idx, row := range f.rows {
@@ -346,7 +350,7 @@ func (f *fakeChanges) Update(
 func (f *fakeChanges) GetByID(
 	_ context.Context,
 	req accountinginboundports.GetAccountingInboundChangeQuery,
-) (*accountingsync.AccountingInboundChange, error) {
+) (*accountinginbound.AccountingInboundChange, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for _, row := range f.rows {
@@ -361,8 +365,8 @@ func (f *fakeChanges) GetByID(
 func (f *fakeChanges) ListByExternalIDs(
 	_ context.Context,
 	req *accountinginboundports.ListAccountingInboundChangesByExternalIDsRequest,
-) ([]*accountingsync.AccountingInboundChange, error) {
-	out := []*accountingsync.AccountingInboundChange{}
+) ([]*accountinginbound.AccountingInboundChange, error) {
+	out := []*accountinginbound.AccountingInboundChange{}
 	for _, row := range f.all() {
 		if row.ConnectionID == req.ConnectionID && row.Kind == req.Kind &&
 			slices.Contains(req.ExternalIDs, row.ExternalID) {
@@ -375,11 +379,11 @@ func (f *fakeChanges) ListByExternalIDs(
 func (f *fakeChanges) ListDetected(
 	_ context.Context,
 	req *accountinginboundports.ListDetectedAccountingInboundChangesRequest,
-) ([]*accountingsync.AccountingInboundChange, error) {
-	out := []*accountingsync.AccountingInboundChange{}
+) ([]*accountinginbound.AccountingInboundChange, error) {
+	out := []*accountinginbound.AccountingInboundChange{}
 	for _, row := range f.all() {
 		if row.ConnectionID == req.ConnectionID &&
-			row.Status == accountingsync.InboundStatusDetected &&
+			row.Status == accountinginbound.InboundStatusDetected &&
 			row.DetectedAt <= req.DetectedBefore {
 			out = append(out, row)
 		}
@@ -391,11 +395,11 @@ func (f *fakeChanges) ListAttention(
 	_ context.Context,
 	req *accountinginboundports.ListAccountingInboundAttentionRequest,
 ) ([]accountinginboundports.AccountingInboundAttentionGroup, error) {
-	byReason := map[accountingsync.InboundChangeReason]*accountinginboundports.AccountingInboundAttentionGroup{}
-	order := []accountingsync.InboundChangeReason{}
+	byReason := map[accountinginbound.InboundChangeReason]*accountinginboundports.AccountingInboundAttentionGroup{}
+	order := []accountinginbound.InboundChangeReason{}
 	for _, row := range f.all() {
 		if row.ConnectionID != req.ConnectionID ||
-			row.Status != accountingsync.InboundStatusProposed ||
+			row.Status != accountinginbound.InboundStatusProposed ||
 			row.DetectedAt > req.DetectedBefore {
 			continue
 		}
@@ -421,8 +425,8 @@ func (f *fakeChanges) ListAttention(
 type fakeReferences struct {
 	accountingmappingports.AccountingReferenceObjectRepository
 	mu       sync.Mutex
-	upserted []*accountingsync.AccountingReferenceObject
-	removed  map[accountingsync.ReferenceKind][]string
+	upserted []*accountingmapping.AccountingReferenceObject
+	removed  map[accountingprovider.ReferenceKind][]string
 }
 
 func (f *fakeReferences) Upsert(
@@ -442,7 +446,7 @@ func (f *fakeReferences) MarkRemoved(
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.removed == nil {
-		f.removed = map[accountingsync.ReferenceKind][]string{}
+		f.removed = map[accountingprovider.ReferenceKind][]string{}
 	}
 	f.removed[req.Kind] = append(f.removed[req.Kind], req.ExternalIDs...)
 	return int64(len(req.ExternalIDs)), nil
@@ -450,14 +454,14 @@ func (f *fakeReferences) MarkRemoved(
 
 type fakeMappings struct {
 	accountingmappingports.AccountingMappingRepository
-	rows []*accountingsync.AccountingMapping
+	rows []*accountingmapping.AccountingMapping
 }
 
 func (f *fakeMappings) ListByConnection(
 	_ context.Context,
 	req *accountingmappingports.ListAccountingMappingsQuery,
-) ([]*accountingsync.AccountingMapping, error) {
-	out := []*accountingsync.AccountingMapping{}
+) ([]*accountingmapping.AccountingMapping, error) {
+	out := []*accountingmapping.AccountingMapping{}
 	for _, row := range f.rows {
 		if slices.Contains(req.TargetTypes, row.TargetType) {
 			out = append(out, row)
@@ -557,7 +561,7 @@ type fakeCustomerPayments struct {
 	customerpaymentports.CustomerPaymentService
 	mu        sync.Mutex
 	records   *fakeRecords
-	conn      *accountingsync.AccountingConnection
+	conn      *accountingconnection.AccountingConnection
 	posted    []postedPayment
 	credits   []appliedCredit
 	postErr   error
@@ -622,7 +626,7 @@ type paidSettlement struct {
 type fakeCarrierPayer struct {
 	mu      sync.Mutex
 	records *fakeRecords
-	conn    *accountingsync.AccountingConnection
+	conn    *accountingconnection.AccountingConnection
 	paid    []paidSettlement
 }
 

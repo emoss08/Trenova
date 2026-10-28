@@ -16,6 +16,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
@@ -32,23 +38,23 @@ import (
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
-func (r *AccountingAppCredentialResolver) HasWebhookVerifier(ctx context.Context, obj *accountingsync.AccountingAppCredential) (bool, error) {
+func (r *AccountingAppCredentialResolver) HasWebhookVerifier(ctx context.Context, obj *accountingconnection.AccountingAppCredential) (bool, error) {
 	return obj.HasWebhookVerifier(), nil
 }
 
-func (r *AccountingAppSettingsResolver) ActiveSource(ctx context.Context, obj *accountingconnectionports.AccountingAppSettings) (*accountingsync.AppSource, error) {
+func (r *AccountingAppSettingsResolver) ActiveSource(ctx context.Context, obj *accountingconnectionports.AccountingAppSettings) (*accountingconnection.AppSource, error) {
 	return stringutils.NilIfEmpty(obj.ActiveSource), nil
 }
 
-func (r *AccountingAppSettingsResolver) InstanceEnvironment(ctx context.Context, obj *accountingconnectionports.AccountingAppSettings) (*accountingsync.AppEnvironment, error) {
+func (r *AccountingAppSettingsResolver) InstanceEnvironment(ctx context.Context, obj *accountingconnectionports.AccountingAppSettings) (*accountingprovider.AppEnvironment, error) {
 	return stringutils.NilIfEmpty(obj.InstanceEnvironment), nil
 }
 
-func (r *AccountingConnectionResolver) AppEnvironment(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.AppEnvironment, error) {
+func (r *AccountingConnectionResolver) AppEnvironment(ctx context.Context, obj *accountingconnection.AccountingConnection) (*accountingprovider.AppEnvironment, error) {
 	return stringutils.NilIfEmpty(obj.AppEnvironment), nil
 }
 
-func (r *AccountingConnectionResolver) LastErrorCategory(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.ErrorCategory, error) {
+func (r *AccountingConnectionResolver) LastErrorCategory(ctx context.Context, obj *accountingconnection.AccountingConnection) (*accountingsync.ErrorCategory, error) {
 	if obj.LastErrorCategory == "" {
 		return nil, nil
 	}
@@ -57,11 +63,11 @@ func (r *AccountingConnectionResolver) LastErrorCategory(ctx context.Context, ob
 	return &category, nil
 }
 
-func (r *AccountingConnectionResolver) LedgerGranularity(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.LedgerGranularity, error) {
+func (r *AccountingConnectionResolver) LedgerGranularity(ctx context.Context, obj *accountingconnection.AccountingConnection) (*accountingconnection.LedgerGranularity, error) {
 	return stringutils.NilIfEmpty(obj.Granularity()), nil
 }
 
-func (r *AccountingConnectionResolver) PausedBy(ctx context.Context, obj *accountingsync.AccountingConnection) (*tenant.User, error) {
+func (r *AccountingConnectionResolver) PausedBy(ctx context.Context, obj *accountingconnection.AccountingConnection) (*tenant.User, error) {
 	if obj.PausedBy != nil {
 		return obj.PausedBy, nil
 	}
@@ -69,7 +75,7 @@ func (r *AccountingConnectionResolver) PausedBy(ctx context.Context, obj *accoun
 	return loaderfields.LoadUser(ctx, obj.PausedByID)
 }
 
-func (r *AccountingDriftFindingResolver) PartyID(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*string, error) {
+func (r *AccountingDriftFindingResolver) PartyID(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*string, error) {
 	if obj.PartyID.IsNil() {
 		return nil, nil
 	}
@@ -78,19 +84,19 @@ func (r *AccountingDriftFindingResolver) PartyID(ctx context.Context, obj *accou
 	return &id, nil
 }
 
-func (r *AccountingDriftFindingResolver) TrenovaMinor(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*int, error) {
+func (r *AccountingDriftFindingResolver) TrenovaMinor(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*int, error) {
 	return gqlscalar.IntPtr(obj.TrenovaMinor), nil
 }
 
-func (r *AccountingDriftFindingResolver) ProviderMinor(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*int, error) {
+func (r *AccountingDriftFindingResolver) ProviderMinor(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*int, error) {
 	return gqlscalar.IntPtr(obj.ProviderMinor), nil
 }
 
-func (r *AccountingDriftFindingResolver) DifferenceMinor(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*int, error) {
+func (r *AccountingDriftFindingResolver) DifferenceMinor(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*int, error) {
 	return gqlscalar.IntPtr(obj.DifferenceMinor), nil
 }
 
-func (r *AccountingDriftFindingResolver) Resolution(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*accountingsync.DriftResolution, error) {
+func (r *AccountingDriftFindingResolver) Resolution(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*accountingdrift.DriftResolution, error) {
 	if obj.Resolution == "" {
 		return nil, nil
 	}
@@ -99,7 +105,7 @@ func (r *AccountingDriftFindingResolver) Resolution(ctx context.Context, obj *ac
 	return &resolution, nil
 }
 
-func (r *AccountingDriftFindingResolver) FixObjectType(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*accountingsync.DriftFixObject, error) {
+func (r *AccountingDriftFindingResolver) FixObjectType(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*accountingdrift.DriftFixObject, error) {
 	if obj.FixObjectType == "" {
 		return nil, nil
 	}
@@ -108,7 +114,7 @@ func (r *AccountingDriftFindingResolver) FixObjectType(ctx context.Context, obj 
 	return &fix, nil
 }
 
-func (r *AccountingDriftFindingResolver) FixObjectID(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*string, error) {
+func (r *AccountingDriftFindingResolver) FixObjectID(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*string, error) {
 	if obj.FixObjectID.IsNil() {
 		return nil, nil
 	}
@@ -117,19 +123,19 @@ func (r *AccountingDriftFindingResolver) FixObjectID(ctx context.Context, obj *a
 	return &id, nil
 }
 
-func (r *AccountingDriftFindingResolver) Directions(ctx context.Context, obj *accountingsync.AccountingDriftFinding) ([]accountingsync.DriftDirection, error) {
+func (r *AccountingDriftFindingResolver) Directions(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) ([]accountingdrift.DriftDirection, error) {
 	if !obj.IsOpen() {
-		return []accountingsync.DriftDirection{}, nil
+		return []accountingdrift.DriftDirection{}, nil
 	}
 
 	return obj.Directions(), nil
 }
 
-func (r *AccountingDriftFindingResolver) Pushed(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (bool, error) {
+func (r *AccountingDriftFindingResolver) Pushed(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (bool, error) {
 	return obj.Pushed(), nil
 }
 
-func (r *AccountingDriftFindingResolver) ResolvedBy(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*tenant.User, error) {
+func (r *AccountingDriftFindingResolver) ResolvedBy(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*tenant.User, error) {
 	if obj.ResolvedBy != nil {
 		return obj.ResolvedBy, nil
 	}
@@ -137,7 +143,7 @@ func (r *AccountingDriftFindingResolver) ResolvedBy(ctx context.Context, obj *ac
 	return loaderfields.LoadUser(ctx, obj.ResolvedByID)
 }
 
-func (r *AccountingDriftFixPreviewResolver) Direction(ctx context.Context, obj *accountingdriftports.AccountingDriftFixPreview) (*accountingsync.DriftDirection, error) {
+func (r *AccountingDriftFixPreviewResolver) Direction(ctx context.Context, obj *accountingdriftports.AccountingDriftFixPreview) (*accountingdrift.DriftDirection, error) {
 	if obj.Direction == "" {
 		return nil, nil
 	}
@@ -146,7 +152,7 @@ func (r *AccountingDriftFixPreviewResolver) Direction(ctx context.Context, obj *
 	return &direction, nil
 }
 
-func (r *AccountingDriftFixPreviewResolver) FixObject(ctx context.Context, obj *accountingdriftports.AccountingDriftFixPreview) (*accountingsync.DriftFixObject, error) {
+func (r *AccountingDriftFixPreviewResolver) FixObject(ctx context.Context, obj *accountingdriftports.AccountingDriftFixPreview) (*accountingdrift.DriftFixObject, error) {
 	if obj.FixObject == "" {
 		return nil, nil
 	}
@@ -164,7 +170,7 @@ func (r *AccountingDriftFixPreviewResolver) Operation(ctx context.Context, obj *
 	return &operation, nil
 }
 
-func (r *AccountingInboundChangeResolver) Reason(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*accountingsync.InboundChangeReason, error) {
+func (r *AccountingInboundChangeResolver) Reason(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (*accountinginbound.InboundChangeReason, error) {
 	if obj.Reason == "" {
 		return nil, nil
 	}
@@ -173,7 +179,7 @@ func (r *AccountingInboundChangeResolver) Reason(ctx context.Context, obj *accou
 	return &reason, nil
 }
 
-func (r *AccountingInboundChangeResolver) PartyObjectID(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*string, error) {
+func (r *AccountingInboundChangeResolver) PartyObjectID(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (*string, error) {
 	if obj.PartyObjectID.IsNil() {
 		return nil, nil
 	}
@@ -182,23 +188,23 @@ func (r *AccountingInboundChangeResolver) PartyObjectID(ctx context.Context, obj
 	return &id, nil
 }
 
-func (r *AccountingInboundChangeResolver) ReferenceNumber(ctx context.Context, obj *accountingsync.AccountingInboundChange) (string, error) {
+func (r *AccountingInboundChangeResolver) ReferenceNumber(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (string, error) {
 	return obj.Document.ReferenceNumber, nil
 }
 
-func (r *AccountingInboundChangeResolver) MethodName(ctx context.Context, obj *accountingsync.AccountingInboundChange) (string, error) {
+func (r *AccountingInboundChangeResolver) MethodName(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (string, error) {
 	return obj.Document.MethodName, nil
 }
 
-func (r *AccountingInboundChangeResolver) UnappliedMinor(ctx context.Context, obj *accountingsync.AccountingInboundChange) (int, error) {
+func (r *AccountingInboundChangeResolver) UnappliedMinor(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (int, error) {
 	return int(obj.Document.UnappliedMinor), nil
 }
 
-func (r *AccountingInboundChangeResolver) Lines(ctx context.Context, obj *accountingsync.AccountingInboundChange) ([]*accountingsync.InboundLine, error) {
+func (r *AccountingInboundChangeResolver) Lines(ctx context.Context, obj *accountinginbound.AccountingInboundChange) ([]*accountinginbound.InboundLine, error) {
 	return obj.Document.Lines, nil
 }
 
-func (r *AccountingInboundChangeResolver) DecidedBy(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*tenant.User, error) {
+func (r *AccountingInboundChangeResolver) DecidedBy(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (*tenant.User, error) {
 	if obj.DecidedBy != nil {
 		return obj.DecidedBy, nil
 	}
@@ -206,7 +212,7 @@ func (r *AccountingInboundChangeResolver) DecidedBy(ctx context.Context, obj *ac
 	return loaderfields.LoadUser(ctx, obj.DecidedByID)
 }
 
-func (r *AccountingInboundLineResolver) ObjectType(ctx context.Context, obj *accountingsync.InboundLine) (*accountingsync.SyncObjectType, error) {
+func (r *AccountingInboundLineResolver) ObjectType(ctx context.Context, obj *accountinginbound.InboundLine) (*accountingsync.SyncObjectType, error) {
 	if obj.ObjectType == "" {
 		return nil, nil
 	}
@@ -215,7 +221,7 @@ func (r *AccountingInboundLineResolver) ObjectType(ctx context.Context, obj *acc
 	return &objectType, nil
 }
 
-func (r *AccountingInboundLineResolver) ObjectID(ctx context.Context, obj *accountingsync.InboundLine) (*string, error) {
+func (r *AccountingInboundLineResolver) ObjectID(ctx context.Context, obj *accountinginbound.InboundLine) (*string, error) {
 	if obj.ObjectID.IsNil() {
 		return nil, nil
 	}
@@ -224,11 +230,11 @@ func (r *AccountingInboundLineResolver) ObjectID(ctx context.Context, obj *accou
 	return &id, nil
 }
 
-func (r *AccountingMappingResolver) TrenovaObjectID(ctx context.Context, obj *accountingsync.AccountingMapping) (*string, error) {
+func (r *AccountingMappingResolver) TrenovaObjectID(ctx context.Context, obj *accountingmapping.AccountingMapping) (*string, error) {
 	return gqlid.IDPtr(obj.TrenovaObjectID), nil
 }
 
-func (r *AccountingMappingResolver) Source(ctx context.Context, obj *accountingsync.AccountingMapping) (*accountingsync.MappingSource, error) {
+func (r *AccountingMappingResolver) Source(ctx context.Context, obj *accountingmapping.AccountingMapping) (*accountingmapping.MappingSource, error) {
 	if obj.Source == "" {
 		return nil, nil
 	}
@@ -237,23 +243,23 @@ func (r *AccountingMappingResolver) Source(ctx context.Context, obj *accountings
 	return &source, nil
 }
 
-func (r *AccountingMappingResolver) Required(ctx context.Context, obj *accountingsync.AccountingMapping) (bool, error) {
+func (r *AccountingMappingResolver) Required(ctx context.Context, obj *accountingmapping.AccountingMapping) (bool, error) {
 	return obj.IsRequired(), nil
 }
 
-func (r *AccountingMappingResolver) Prechecked(ctx context.Context, obj *accountingsync.AccountingMapping) (bool, error) {
+func (r *AccountingMappingResolver) Prechecked(ctx context.Context, obj *accountingmapping.AccountingMapping) (bool, error) {
 	return obj.Prechecked(), nil
 }
 
-func (r *AccountingMappingResolver) Candidates(ctx context.Context, obj *accountingsync.AccountingMapping) ([]*accountingsync.MappingCandidate, error) {
+func (r *AccountingMappingResolver) Candidates(ctx context.Context, obj *accountingmapping.AccountingMapping) ([]*accountingmapping.MappingCandidate, error) {
 	return sliceutils.Pointers(obj.Signals.Candidates), nil
 }
 
-func (r *AccountingMappingResolver) Matchers(ctx context.Context, obj *accountingsync.AccountingMapping) ([]*accountingsync.MatcherSignal, error) {
+func (r *AccountingMappingResolver) Matchers(ctx context.Context, obj *accountingmapping.AccountingMapping) ([]*accountingmapping.MatcherSignal, error) {
 	return sliceutils.Pointers(obj.Signals.Matchers), nil
 }
 
-func (r *AccountingMappingResolver) ConfirmedBy(ctx context.Context, obj *accountingsync.AccountingMapping) (*tenant.User, error) {
+func (r *AccountingMappingResolver) ConfirmedBy(ctx context.Context, obj *accountingmapping.AccountingMapping) (*tenant.User, error) {
 	if obj.ConfirmedBy != nil {
 		return obj.ConfirmedBy, nil
 	}
@@ -261,11 +267,11 @@ func (r *AccountingMappingResolver) ConfirmedBy(ctx context.Context, obj *accoun
 	return loaderfields.LoadUser(ctx, obj.ConfirmedByID)
 }
 
-func (r *AccountingReferenceObjectResolver) Label(ctx context.Context, obj *accountingsync.AccountingReferenceObject) (string, error) {
+func (r *AccountingReferenceObjectResolver) Label(ctx context.Context, obj *accountingmapping.AccountingReferenceObject) (string, error) {
 	return obj.Label(), nil
 }
 
-func (r *AccountingReferenceObjectResolver) Usable(ctx context.Context, obj *accountingsync.AccountingReferenceObject) (bool, error) {
+func (r *AccountingReferenceObjectResolver) Usable(ctx context.Context, obj *accountingmapping.AccountingReferenceObject) (bool, error) {
 	return obj.Usable(), nil
 }
 
@@ -365,7 +371,7 @@ func (r *MutationResolver) FinishAccountingAuthorization(ctx context.Context, in
 	})
 }
 
-func (r *MutationResolver) ChooseAccountingCompany(ctx context.Context, input gqlmodel.ChooseAccountingCompanyInput) (*accountingsync.AccountingConnection, error) {
+func (r *MutationResolver) ChooseAccountingCompany(ctx context.Context, input gqlmodel.ChooseAccountingCompanyInput) (*accountingconnection.AccountingConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -383,7 +389,7 @@ func (r *MutationResolver) ChooseAccountingCompany(ctx context.Context, input gq
 	})
 }
 
-func (r *MutationResolver) DisconnectAccountingSystem(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error) {
+func (r *MutationResolver) DisconnectAccountingSystem(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -399,7 +405,7 @@ func (r *MutationResolver) DisconnectAccountingSystem(ctx context.Context, integ
 	})
 }
 
-func (r *MutationResolver) CheckAccountingConnection(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error) {
+func (r *MutationResolver) CheckAccountingConnection(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -417,7 +423,7 @@ func (r *MutationResolver) CheckAccountingConnection(ctx context.Context, integr
 	return r.AccountingConnections.CheckHealth(ctx, tenant, status.Connection.ID)
 }
 
-func (r *MutationResolver) ConfirmAccountingMappings(ctx context.Context, input []*gqlmodel.ConfirmAccountingMappingInput) ([]*accountingsync.AccountingMapping, error) {
+func (r *MutationResolver) ConfirmAccountingMappings(ctx context.Context, input []*gqlmodel.ConfirmAccountingMappingInput) ([]*accountingmapping.AccountingMapping, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -434,11 +440,11 @@ func (r *MutationResolver) ConfirmAccountingMappings(ctx context.Context, input 
 	})
 }
 
-func (r *MutationResolver) RejectAccountingMapping(ctx context.Context, id string) (*accountingsync.AccountingMapping, error) {
+func (r *MutationResolver) RejectAccountingMapping(ctx context.Context, id string) (*accountingmapping.AccountingMapping, error) {
 	return r.accountingMappingAction(ctx, id, r.AccountingMappingService.Reject)
 }
 
-func (r *MutationResolver) SetAccountingMapping(ctx context.Context, input gqlmodel.SetAccountingMappingInput) (*accountingsync.AccountingMapping, error) {
+func (r *MutationResolver) SetAccountingMapping(ctx context.Context, input gqlmodel.SetAccountingMappingInput) (*accountingmapping.AccountingMapping, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -453,16 +459,16 @@ func (r *MutationResolver) SetAccountingMapping(ctx context.Context, input gqlmo
 		UserID:     authCtx.UserID,
 		MappingID:  mappingID,
 		ExternalID: strings.TrimSpace(input.ExternalID),
-		Source:     accountingsync.MappingSourceManual,
+		Source:     accountingmapping.MappingSourceManual,
 		Reason:     strings.TrimSpace(gqlscalar.StringValue(input.Reason)),
 	})
 }
 
-func (r *MutationResolver) ClearAccountingMapping(ctx context.Context, id string) (*accountingsync.AccountingMapping, error) {
+func (r *MutationResolver) ClearAccountingMapping(ctx context.Context, id string) (*accountingmapping.AccountingMapping, error) {
 	return r.accountingMappingAction(ctx, id, r.AccountingMappingService.Clear)
 }
 
-func (r *MutationResolver) CreateAccountingReferenceRecord(ctx context.Context, input gqlmodel.CreateAccountingReferenceRecordInput) (*accountingsync.AccountingMapping, error) {
+func (r *MutationResolver) CreateAccountingReferenceRecord(ctx context.Context, input gqlmodel.CreateAccountingReferenceRecordInput) (*accountingmapping.AccountingMapping, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -480,7 +486,7 @@ func (r *MutationResolver) CreateAccountingReferenceRecord(ctx context.Context, 
 	})
 }
 
-func (r *MutationResolver) RefreshAccountingReferenceData(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error) {
+func (r *MutationResolver) RefreshAccountingReferenceData(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -493,7 +499,7 @@ func (r *MutationResolver) RefreshAccountingReferenceData(ctx context.Context, i
 	})
 }
 
-func (r *MutationResolver) CompleteAccountingSetup(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error) {
+func (r *MutationResolver) CompleteAccountingSetup(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -506,7 +512,7 @@ func (r *MutationResolver) CompleteAccountingSetup(ctx context.Context, integrat
 	})
 }
 
-func (r *MutationResolver) ChooseAccountingSyncMode(ctx context.Context, input gqlmodel.ChooseAccountingSyncModeInput) (*accountingsync.AccountingConnection, error) {
+func (r *MutationResolver) ChooseAccountingSyncMode(ctx context.Context, input gqlmodel.ChooseAccountingSyncModeInput) (*accountingconnection.AccountingConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -515,7 +521,7 @@ func (r *MutationResolver) ChooseAccountingSyncMode(ctx context.Context, input g
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	var granularity accountingsync.LedgerGranularity
+	var granularity accountingconnection.LedgerGranularity
 	if input.Granularity != nil {
 		granularity = *input.Granularity
 	}
@@ -528,7 +534,7 @@ func (r *MutationResolver) ChooseAccountingSyncMode(ctx context.Context, input g
 	})
 }
 
-func (r *MutationResolver) EnableAccountingSync(ctx context.Context, input gqlmodel.EnableAccountingSyncInput) (*accountingsync.AccountingConnection, error) {
+func (r *MutationResolver) EnableAccountingSync(ctx context.Context, input gqlmodel.EnableAccountingSyncInput) (*accountingconnection.AccountingConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -549,7 +555,7 @@ func (r *MutationResolver) EnableAccountingSync(ctx context.Context, input gqlmo
 	})
 }
 
-func (r *MutationResolver) UpdateAccountingSyncSettings(ctx context.Context, input gqlmodel.UpdateAccountingSyncSettingsInput) (*accountingsync.AccountingConnection, error) {
+func (r *MutationResolver) UpdateAccountingSyncSettings(ctx context.Context, input gqlmodel.UpdateAccountingSyncSettingsInput) (*accountingconnection.AccountingConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -568,7 +574,7 @@ func (r *MutationResolver) UpdateAccountingSyncSettings(ctx context.Context, inp
 	})
 }
 
-func (r *MutationResolver) PauseAccountingSync(ctx context.Context, input gqlmodel.PauseAccountingSyncInput) (*accountingsync.AccountingConnection, error) {
+func (r *MutationResolver) PauseAccountingSync(ctx context.Context, input gqlmodel.PauseAccountingSyncInput) (*accountingconnection.AccountingConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -582,7 +588,7 @@ func (r *MutationResolver) PauseAccountingSync(ctx context.Context, input gqlmod
 	})
 }
 
-func (r *MutationResolver) ResumeAccountingSync(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error) {
+func (r *MutationResolver) ResumeAccountingSync(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -677,7 +683,7 @@ func (r *MutationResolver) RedateAccountingSync(ctx context.Context, id string) 
 	})
 }
 
-func (r *MutationResolver) RequestAccountingBackfill(ctx context.Context, input gqlmodel.RequestAccountingBackfillInput) (*accountingsync.AccountingBackfill, error) {
+func (r *MutationResolver) RequestAccountingBackfill(ctx context.Context, input gqlmodel.RequestAccountingBackfillInput) (*accountingbackfill.AccountingBackfill, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -696,7 +702,7 @@ func (r *MutationResolver) RequestAccountingBackfill(ctx context.Context, input 
 	})
 }
 
-func (r *MutationResolver) ChangeAccountingBackfill(ctx context.Context, input gqlmodel.ChangeAccountingBackfillInput) (*accountingsync.AccountingBackfill, error) {
+func (r *MutationResolver) ChangeAccountingBackfill(ctx context.Context, input gqlmodel.ChangeAccountingBackfillInput) (*accountingbackfill.AccountingBackfill, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -714,7 +720,7 @@ func (r *MutationResolver) ChangeAccountingBackfill(ctx context.Context, input g
 	})
 }
 
-func (r *MutationResolver) ApplyAccountingInboundChange(ctx context.Context, id string) (*accountingsync.AccountingInboundChange, error) {
+func (r *MutationResolver) ApplyAccountingInboundChange(ctx context.Context, id string) (*accountinginbound.AccountingInboundChange, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -733,7 +739,7 @@ func (r *MutationResolver) ApplyAccountingInboundChange(ctx context.Context, id 
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) IgnoreAccountingInboundChange(ctx context.Context, input gqlmodel.IgnoreAccountingInboundChangeInput) (*accountingsync.AccountingInboundChange, error) {
+func (r *MutationResolver) IgnoreAccountingInboundChange(ctx context.Context, input gqlmodel.IgnoreAccountingInboundChangeInput) (*accountinginbound.AccountingInboundChange, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -753,7 +759,7 @@ func (r *MutationResolver) IgnoreAccountingInboundChange(ctx context.Context, in
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) ResolveAccountingDrift(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error) {
+func (r *MutationResolver) ResolveAccountingDrift(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingdrift.AccountingDriftFinding, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -773,7 +779,7 @@ func (r *MutationResolver) ResolveAccountingDrift(ctx context.Context, input gql
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) DismissAccountingDrift(ctx context.Context, input gqlmodel.DismissAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error) {
+func (r *MutationResolver) DismissAccountingDrift(ctx context.Context, input gqlmodel.DismissAccountingDriftInput) (*accountingdrift.AccountingDriftFinding, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -968,7 +974,7 @@ func (r *QueryResolver) AccountingSyncObjectStates(ctx context.Context, objectId
 	return orderedAccountingSyncStates(ids, states), nil
 }
 
-func (r *QueryResolver) AccountingBackfills(ctx context.Context, integrationType integration.Type) ([]*accountingsync.AccountingBackfill, error) {
+func (r *QueryResolver) AccountingBackfills(ctx context.Context, integrationType integration.Type) ([]*accountingbackfill.AccountingBackfill, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -1012,7 +1018,7 @@ func (r *QueryResolver) AccountingInboundChangeTable(ctx context.Context, integr
 	return accountingInboundConnectionToModel(result)
 }
 
-func (r *QueryResolver) AccountingInboundChange(ctx context.Context, id string) (*accountingsync.AccountingInboundChange, error) {
+func (r *QueryResolver) AccountingInboundChange(ctx context.Context, id string) (*accountinginbound.AccountingInboundChange, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -1079,7 +1085,7 @@ func (r *QueryResolver) AccountingDriftFindingTable(ctx context.Context, integra
 	return accountingDriftConnectionToModel(result)
 }
 
-func (r *QueryResolver) AccountingDriftFinding(ctx context.Context, id string) (*accountingsync.AccountingDriftFinding, error) {
+func (r *QueryResolver) AccountingDriftFinding(ctx context.Context, id string) (*accountingdrift.AccountingDriftFinding, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -1112,7 +1118,7 @@ func (r *QueryResolver) AccountingDriftFixPreview(ctx context.Context, input gql
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *QueryResolver) AccountingReferenceObjects(ctx context.Context, integrationType integration.Type, kind accountingsync.ReferenceKind, query *string, usableOnly *bool, limit *int) ([]*accountingsync.AccountingReferenceObject, error) {
+func (r *QueryResolver) AccountingReferenceObjects(ctx context.Context, integrationType integration.Type, kind accountingprovider.ReferenceKind, query *string, usableOnly *bool, limit *int) ([]*accountingmapping.AccountingReferenceObject, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -1162,7 +1168,7 @@ func (r *MutationResolver) ConnectAccountingWithCertificate(ctx context.Context,
 	})
 }
 
-func (r *MutationResolver) RenewAccountingCertificate(ctx context.Context, input gqlmodel.RenewAccountingCertificateInput) (*accountingsync.AccountingConnection, error) {
+func (r *MutationResolver) RenewAccountingCertificate(ctx context.Context, input gqlmodel.RenewAccountingCertificateInput) (*accountingconnection.AccountingConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
 	if err != nil {
 		return nil, err

@@ -3,7 +3,7 @@ package accountingtools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
@@ -50,7 +50,7 @@ func driftFindingOptions() []toolpreview.Option {
 	}
 }
 
-func driftFindingRecord(finding *accountingsync.AccountingDriftFinding) toolpreview.Record {
+func driftFindingRecord(finding *accountingdrift.AccountingDriftFinding) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceAccountingSync,
 		ID:       finding.ID,
@@ -60,7 +60,7 @@ func driftFindingRecord(finding *accountingsync.AccountingDriftFinding) toolprev
 }
 
 func applyDriftFix(
-	finding *accountingsync.AccountingDriftFinding,
+	finding *accountingdrift.AccountingDriftFinding,
 	fix *accountingdriftports.AccountingDriftFixPreview,
 	actorID pulid.ID,
 	now int64,
@@ -68,7 +68,7 @@ func applyDriftFix(
 	if err := finding.CanFix(fix.Direction); err != nil {
 		return err
 	}
-	if fix.Direction == accountingsync.DriftPushTrenovaValue {
+	if fix.Direction == accountingdrift.DriftPushTrenovaValue {
 		finding.MarkPushed(pulid.Nil, actorID)
 		return nil
 	}
@@ -91,7 +91,7 @@ func (t *ResolveAccountingDriftTool) Preview(
 	plan, err := changepreview.PlanUpdate(
 		driftFindingRecord(fix.Finding),
 		fix.Finding,
-		func(fixed *accountingsync.AccountingDriftFinding) error {
+		func(fixed *accountingdrift.AccountingDriftFinding) error {
 			return applyDriftFix(fixed, fix, params.Actor.UserID, now)
 		},
 		driftFindingOptions()...,
@@ -120,7 +120,7 @@ func (t *DismissAccountingDriftTool) Preview(
 	plan, err := changepreview.PlanUpdate(
 		driftFindingRecord(fix.Finding),
 		fix.Finding,
-		func(dismissed *accountingsync.AccountingDriftFinding) error {
+		func(dismissed *accountingdrift.AccountingDriftFinding) error {
 			return dismissed.Dismiss(params.Actor.UserID, req.Note, now)
 		},
 		driftFindingOptions()...,

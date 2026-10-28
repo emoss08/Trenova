@@ -5,6 +5,8 @@ package accountingsyncrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
@@ -25,11 +27,11 @@ import (
 func driftMinor(v int64) *int64 { return &v }
 
 func (f *syncFixture) driftFinding(
-	kind accountingsync.DriftKind,
+	kind accountingdrift.DriftKind,
 	objectID pulid.ID,
 	at int64,
-) *accountingsync.AccountingDriftFinding {
-	return accountingsync.NewAccountingDriftFinding(&accountingsync.DriftObservation{
+) *accountingdrift.AccountingDriftFinding {
+	return accountingdrift.NewAccountingDriftFinding(&accountingdrift.DriftObservation{
 		TenantInfo:    f.tenant,
 		ConnectionID:  f.connection.ID,
 		ObjectType:    accountingsync.SyncObjectInvoice,
@@ -51,18 +53,18 @@ func TestDriftFindingRepository_OneOpenFindingPerDocumentAndKind(t *testing.T) {
 
 	first, err := repo.Create(
 		f.ctx,
-		f.driftFinding(accountingsync.DriftAmountMismatch, invoiceID, f.now),
+		f.driftFinding(accountingdrift.DriftAmountMismatch, invoiceID, f.now),
 	)
 	require.NoError(t, err)
 	_, err = repo.Create(
 		f.ctx,
-		f.driftFinding(accountingsync.DriftAmountMismatch, invoiceID, f.now),
+		f.driftFinding(accountingdrift.DriftAmountMismatch, invoiceID, f.now),
 	)
 	require.Error(t, err, "a second open finding for the same document and kind is refused")
 
 	_, err = repo.Create(
 		f.ctx,
-		f.driftFinding(accountingsync.DriftVoidedInProvider, invoiceID, f.now),
+		f.driftFinding(accountingdrift.DriftVoidedInProvider, invoiceID, f.now),
 	)
 	require.NoError(t, err, "another kind on the same document is its own finding")
 
@@ -71,7 +73,7 @@ func TestDriftFindingRepository_OneOpenFindingPerDocumentAndKind(t *testing.T) {
 	require.NoError(t, err)
 	reopened, err := repo.Create(
 		f.ctx,
-		f.driftFinding(accountingsync.DriftAmountMismatch, invoiceID, f.now+20),
+		f.driftFinding(accountingdrift.DriftAmountMismatch, invoiceID, f.now+20),
 	)
 	require.NoError(t, err, "once resolved, the document may drift again")
 
@@ -120,22 +122,22 @@ func TestDriftFindingRepository_SummaryAttentionAndTable(t *testing.T) {
 	day := int64(86_400)
 	amountOld, err := repo.Create(
 		f.ctx,
-		f.driftFinding(accountingsync.DriftAmountMismatch, pulid.MustNew("inv_"), f.now-2*day),
+		f.driftFinding(accountingdrift.DriftAmountMismatch, pulid.MustNew("inv_"), f.now-2*day),
 	)
 	require.NoError(t, err)
 	_, err = repo.Create(
 		f.ctx,
-		f.driftFinding(accountingsync.DriftAmountMismatch, pulid.MustNew("inv_"), f.now-3*day),
+		f.driftFinding(accountingdrift.DriftAmountMismatch, pulid.MustNew("inv_"), f.now-3*day),
 	)
 	require.NoError(t, err)
 	_, err = repo.Create(
 		f.ctx,
-		f.driftFinding(accountingsync.DriftDeletedInProvider, pulid.MustNew("inv_"), f.now),
+		f.driftFinding(accountingdrift.DriftDeletedInProvider, pulid.MustNew("inv_"), f.now),
 	)
 	require.NoError(t, err)
 	resolved, err := repo.Create(
 		f.ctx,
-		f.driftFinding(accountingsync.DriftStatusMismatch, pulid.MustNew("inv_"), f.now-day),
+		f.driftFinding(accountingdrift.DriftStatusMismatch, pulid.MustNew("inv_"), f.now-day),
 	)
 	require.NoError(t, err)
 	require.True(t, resolved.Clear(f.now))
@@ -165,7 +167,7 @@ func TestDriftFindingRepository_SummaryAttentionAndTable(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, groups, 1, "only findings older than a day, and only open ones")
-	assert.Equal(t, accountingsync.DriftAmountMismatch, groups[0].Kind)
+	assert.Equal(t, accountingdrift.DriftAmountMismatch, groups[0].Kind)
 	assert.Equal(t, 2, groups[0].Count)
 	assert.Equal(t, f.now-3*day, groups[0].OldestDetectedAt)
 
@@ -178,8 +180,8 @@ func TestDriftFindingRepository_SummaryAttentionAndTable(t *testing.T) {
 			Filter:       &pagination.QueryOptions{TenantInfo: f.tenant},
 			Cursor:       cursor,
 			ConnectionID: f.connection.ID,
-			Statuses:     []accountingsync.DriftStatus{accountingsync.DriftStatusOpen},
-			Kinds:        []accountingsync.DriftKind{accountingsync.DriftAmountMismatch},
+			Statuses:     []accountingdrift.DriftStatus{accountingdrift.DriftStatusOpen},
+			Kinds:        []accountingdrift.DriftKind{accountingdrift.DriftAmountMismatch},
 		},
 	)
 	require.NoError(t, err)
@@ -439,7 +441,7 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	require.Len(t, memoStates, 1)
 	assert.Equal(t, int64(5_000), memoStates[0].AmountMinor, "a credit memo compares by its size")
 
-	for _, objectType := range accountingsync.DriftObjectTypes() {
+	for _, objectType := range accountingdrift.DriftObjectTypes() {
 		none, stateErr := source.ListStates(
 			ctx,
 			&accountingdriftports.ListAccountingDriftStatesRequest{
@@ -578,10 +580,10 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	require.NoError(t, err)
 	waitingOn(accountingsync.SyncObjectCreditApplication, application.ID)
 
-	change := accountingsync.NewAccountingInboundChange(&accountingsync.InboundObservation{
+	change := accountinginbound.NewAccountingInboundChange(&accountinginbound.InboundObservation{
 		TenantInfo:   tenant,
 		ConnectionID: connection.ID,
-		Kind:         accountingsync.InboundCustomerPayment,
+		Kind:         accountinginbound.InboundCustomerPayment,
 		ExternalID:   "301",
 		TxnDate:      dated,
 		AmountMinor:  1_000,

@@ -4,9 +4,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -48,11 +50,24 @@ func TestSafetyNetQueuesPostedDocumentsThatMissedAnEnqueuePoint(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	missedInvoices := h.addCandidates(accountingsync.SyncObjectInvoice, accountingsync.SyncOperationCreate, 2,
-		syncEnabledAt+10)
-	h.addCandidates(accountingsync.SyncObjectInvoice, accountingsync.SyncOperationCreate, 1, syncEnabledAt-10)
-	missedVoid := h.addCandidates(accountingsync.SyncObjectCustomerPayment, accountingsync.SyncOperationVoid, 1,
-		syncEnabledAt+20)
+	missedInvoices := h.addCandidates(
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncOperationCreate,
+		2,
+		syncEnabledAt+10,
+	)
+	h.addCandidates(
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncOperationCreate,
+		1,
+		syncEnabledAt-10,
+	)
+	missedVoid := h.addCandidates(
+		accountingsync.SyncObjectCustomerPayment,
+		accountingsync.SyncOperationVoid,
+		1,
+		syncEnabledAt+20,
+	)
 	queued := h.enqueueInvoice(t, h.postedInvoice(pulid.MustNew("cus_"), invoiceSpec{}))
 
 	result := h.safetyNet(t)
@@ -111,8 +126,12 @@ func TestSafetyNetPagesThroughEverything(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.addCandidates(accountingsync.SyncObjectInvoice, accountingsync.SyncOperationCreate, safetyNetPage+5,
-		syncEnabledAt+1)
+	h.addCandidates(
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncOperationCreate,
+		safetyNetPage+5,
+		syncEnabledAt+1,
+	)
 
 	result := h.safetyNet(t)
 
@@ -135,12 +154,17 @@ func TestSafetyNetOnAPausedConnectionQueuesWithoutWaking(t *testing.T) {
 
 	h := newHarness(t)
 	pausedAt := time.Now().Add(-48 * time.Hour).Unix()
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 		conn.PausedAt = &pausedAt
 		conn.PausedReason = "Year-end"
 	})
 	h.conn = h.connections.get(h.conn.ID)
-	h.addCandidates(accountingsync.SyncObjectInvoice, accountingsync.SyncOperationCreate, 1, syncEnabledAt+1)
+	h.addCandidates(
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncOperationCreate,
+		1,
+		syncEnabledAt+1,
+	)
 
 	result := h.safetyNet(t)
 
@@ -155,7 +179,12 @@ func TestSafetyNetSkipsAConnectionThatIsNotSyncing(t *testing.T) {
 
 	h := newHarness(t)
 	h.atStartDateStep()
-	h.addCandidates(accountingsync.SyncObjectInvoice, accountingsync.SyncOperationCreate, 1, syncEnabledAt+1)
+	h.addCandidates(
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncOperationCreate,
+		1,
+		syncEnabledAt+1,
+	)
 
 	result := h.safetyNet(t)
 
@@ -164,19 +193,28 @@ func TestSafetyNetSkipsAConnectionThatIsNotSyncing(t *testing.T) {
 	assert.Empty(t, h.records.all())
 }
 
-func (h *harness) newBackfill(t *testing.T, types ...accountingsync.SyncObjectType) *accountingsync.AccountingBackfill {
+func (h *harness) newBackfill(
+	t *testing.T,
+	types ...accountingsync.SyncObjectType,
+) *accountingbackfill.AccountingBackfill {
 	t.Helper()
-	backfill, err := h.svc.RequestBackfill(t.Context(), &accountingsyncports.RequestAccountingBackfillRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: h.conn.IntegrationType,
-		ObjectTypes:     types,
-	})
+	backfill, err := h.svc.RequestBackfill(
+		t.Context(),
+		&accountingsyncports.RequestAccountingBackfillRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: h.conn.IntegrationType,
+			ObjectTypes:     types,
+		},
+	)
 	require.NoError(t, err)
 	return backfill
 }
 
-func (h *harness) backfillStep(t *testing.T, id pulid.ID) *accountingsyncports.AccountingBackfillStepResult {
+func (h *harness) backfillStep(
+	t *testing.T,
+	id pulid.ID,
+) *accountingsyncports.AccountingBackfillStepResult {
 	t.Helper()
 	result, err := h.svc.BackfillStep(t.Context(), h.tenant, id)
 	require.NoError(t, err)
@@ -187,22 +225,44 @@ func TestBackfillPagesEachTypeAndSavesTheCursor(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	invoices := h.addCandidates(accountingsync.SyncObjectInvoice, accountingsync.SyncOperationCreate,
-		backfillPage+3, syncStartDate+100)
-	payments := h.addCandidates(accountingsync.SyncObjectCustomerPayment, accountingsync.SyncOperationCreate, 2,
-		syncStartDate+200)
-	h.addCandidates(accountingsync.SyncObjectInvoice, accountingsync.SyncOperationCreate, 1, syncEnabledAt+5)
-	backfill := h.newBackfill(t, accountingsync.SyncObjectInvoice, accountingsync.SyncObjectCustomerPayment)
+	invoices := h.addCandidates(
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncOperationCreate,
+		backfillPage+3,
+		syncStartDate+100,
+	)
+	payments := h.addCandidates(
+		accountingsync.SyncObjectCustomerPayment,
+		accountingsync.SyncOperationCreate,
+		2,
+		syncStartDate+200,
+	)
+	h.addCandidates(
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncOperationCreate,
+		1,
+		syncEnabledAt+5,
+	)
+	backfill := h.newBackfill(
+		t,
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncObjectCustomerPayment,
+	)
 
 	first := h.backfillStep(t, backfill.ID)
 
 	assert.Equal(t, backfillPage, first.Enqueued)
 	assert.False(t, first.Done)
 	saved := h.backfills.get(backfill.ID)
-	assert.Equal(t, accountingsync.BackfillStatusRunning, saved.Status)
+	assert.Equal(t, accountingbackfill.BackfillStatusRunning, saved.Status)
 	assert.NotNil(t, saved.StartedAt)
 	assert.Equal(t, accountingsync.SyncObjectInvoice, saved.Cursor.ObjectType)
-	assert.Equal(t, invoices[backfillPage-1].ObjectID, saved.Cursor.AfterID, "the cursor is saved after every page")
+	assert.Equal(
+		t,
+		invoices[backfillPage-1].ObjectID,
+		saved.Cursor.AfterID,
+		"the cursor is saved after every page",
+	)
 	assert.Equal(t, invoices[backfillPage-1].PostedAt, saved.Cursor.AfterAt)
 	assert.Equal(t, backfillPage, saved.EnqueuedCount)
 
@@ -220,16 +280,26 @@ func TestBackfillPagesEachTypeAndSavesTheCursor(t *testing.T) {
 	assert.Equal(t, 2, third.Enqueued)
 	assert.True(t, third.Done)
 	saved = h.backfills.get(backfill.ID)
-	assert.Equal(t, accountingsync.BackfillStatusCompleted, saved.Status)
+	assert.Equal(t, accountingbackfill.BackfillStatusCompleted, saved.Status)
 	assert.Equal(t, backfillPage+5, saved.EnqueuedCount)
 	for _, call := range h.records.candidateCalls {
 		require.NotNil(t, call.PostedBefore)
-		assert.Equal(t, syncEnabledAt, *call.PostedBefore, "the backfill stops where live enqueueing began")
+		assert.Equal(
+			t,
+			syncEnabledAt,
+			*call.PostedBefore,
+			"the backfill stops where live enqueueing began",
+		)
 		assert.Equal(t, syncStartDate, call.DatedFrom)
 		assert.Nil(t, call.PostedFrom)
 	}
 	for _, candidate := range append(invoices, payments...) {
-		record := h.only(t, candidate.ObjectType, candidate.ObjectID, accountingsync.SyncOperationCreate)
+		record := h.only(
+			t,
+			candidate.ObjectType,
+			candidate.ObjectID,
+			accountingsync.SyncOperationCreate,
+		)
 		assert.Equal(t, accountingsync.SyncSourceBackfill, record.SourceEvent)
 	}
 	assert.Len(t, h.records.all(), backfillPage+5)
@@ -238,24 +308,32 @@ func TestBackfillPagesEachTypeAndSavesTheCursor(t *testing.T) {
 func TestBackfillStepStopsWhenPausedOrFinished(t *testing.T) {
 	t.Parallel()
 
-	for _, status := range []accountingsync.BackfillStatus{
-		accountingsync.BackfillStatusPaused,
-		accountingsync.BackfillStatusCancelled,
-		accountingsync.BackfillStatusCompleted,
-		accountingsync.BackfillStatusFailed,
+	for _, status := range []accountingbackfill.BackfillStatus{
+		accountingbackfill.BackfillStatusPaused,
+		accountingbackfill.BackfillStatusCancelled,
+		accountingbackfill.BackfillStatusCompleted,
+		accountingbackfill.BackfillStatusFailed,
 	} {
 		t.Run(string(status), func(t *testing.T) {
 			t.Parallel()
 
 			h := newHarness(t)
-			h.addCandidates(accountingsync.SyncObjectInvoice, accountingsync.SyncOperationCreate, 3, syncStartDate+1)
+			h.addCandidates(
+				accountingsync.SyncObjectInvoice,
+				accountingsync.SyncOperationCreate,
+				3,
+				syncStartDate+1,
+			)
 			backfill := h.newBackfill(t)
-			h.backfills.mutate(backfill.ID, func(row *accountingsync.AccountingBackfill) { row.Status = status })
+			h.backfills.mutate(
+				backfill.ID,
+				func(row *accountingbackfill.AccountingBackfill) { row.Status = status },
+			)
 
 			result := h.backfillStep(t, backfill.ID)
 
 			assert.True(t, result.Stopped)
-			assert.Equal(t, status == accountingsync.BackfillStatusCompleted, result.Done)
+			assert.Equal(t, status == accountingbackfill.BackfillStatusCompleted, result.Done)
 			assert.Zero(t, result.Enqueued)
 			assert.Empty(t, h.records.all())
 		})
@@ -266,18 +344,23 @@ func TestBackfillStepStopsWhenChangedMidPage(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.addCandidates(accountingsync.SyncObjectInvoice, accountingsync.SyncOperationCreate, 3, syncStartDate+1)
+	h.addCandidates(
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncOperationCreate,
+		3,
+		syncStartDate+1,
+	)
 	backfill := h.newBackfill(t)
 	h.records.onCandidates = func() {
-		h.backfills.mutate(backfill.ID, func(row *accountingsync.AccountingBackfill) {
-			row.Status = accountingsync.BackfillStatusCancelled
+		h.backfills.mutate(backfill.ID, func(row *accountingbackfill.AccountingBackfill) {
+			row.Status = accountingbackfill.BackfillStatusCancelled
 		})
 	}
 
 	result := h.backfillStep(t, backfill.ID)
 
 	assert.True(t, result.Stopped)
-	assert.Equal(t, accountingsync.BackfillStatusCancelled, h.backfills.get(backfill.ID).Status,
+	assert.Equal(t, accountingbackfill.BackfillStatusCancelled, h.backfills.get(backfill.ID).Status,
 		"a cancel between pages is not overwritten")
 }
 
@@ -286,15 +369,15 @@ func TestBackfillFailsWhenTheConnectionStopsSyncing(t *testing.T) {
 
 	h := newHarness(t)
 	backfill := h.newBackfill(t)
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
-		conn.Status = accountingsync.ConnectionStatusRevoked
+	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
+		conn.Status = accountingconnection.ConnectionStatusRevoked
 	})
 
 	result := h.backfillStep(t, backfill.ID)
 
 	assert.True(t, result.Stopped)
 	saved := h.backfills.get(backfill.ID)
-	assert.Equal(t, accountingsync.BackfillStatusFailed, saved.Status)
+	assert.Equal(t, accountingbackfill.BackfillStatusFailed, saved.Status)
 	assert.Contains(t, saved.LastError, "QuickBooks Online")
 }
 
@@ -302,8 +385,15 @@ func TestBackfillHoldsRecordsForApprovalWhenAutoSyncIsOff(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.updateConnection(func(conn *accountingsync.AccountingConnection) { conn.AutoSync = false })
-	h.addCandidates(accountingsync.SyncObjectInvoice, accountingsync.SyncOperationCreate, 2, syncStartDate+1)
+	h.updateConnection(
+		func(conn *accountingconnection.AccountingConnection) { conn.AutoSync = false },
+	)
+	h.addCandidates(
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncOperationCreate,
+		2,
+		syncStartDate+1,
+	)
 	backfill := h.newBackfill(t, accountingsync.SyncObjectInvoice)
 
 	h.backfillStep(t, backfill.ID)

@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
@@ -28,7 +29,7 @@ func (s *Service) PullReference(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
-	kind accountingsync.ReferenceKind,
+	kind accountingprovider.ReferenceKind,
 ) (*accountingmappingports.AccountingReferencePull, error) {
 	if !kind.IsValid() {
 		return nil, fmt.Errorf("unknown reference kind %q", kind)
@@ -41,7 +42,7 @@ func (s *Service) PullReference(
 	if !ok {
 		return nil, errReferenceUnsupported
 	}
-	profile := accountingsync.MustProfile(session.Connection.IntegrationType)
+	profile := accountingprovider.MustProfile(session.Connection.IntegrationType)
 	if !profile.Has(kind) {
 		return &accountingmappingports.AccountingReferencePull{Kind: kind}, nil
 	}
@@ -120,9 +121,9 @@ func (s *Service) Rescore(
 	}
 	result := &accountingmappingports.AccountingRescoreResult{Targets: len(targets)}
 
-	fresh := make([]*accountingsync.AccountingMapping, 0, len(targets))
+	fresh := make([]*accountingmapping.AccountingMapping, 0, len(targets))
 	for _, t := range targets {
-		fresh = append(fresh, &accountingsync.AccountingMapping{
+		fresh = append(fresh, &accountingmapping.AccountingMapping{
 			OrganizationID:  tenantInfo.OrgID,
 			BusinessUnitID:  tenantInfo.BuID,
 			ConnectionID:    connectionID,
@@ -131,8 +132,8 @@ func (s *Service) Rescore(
 			TrenovaKey:      t.Key,
 			TargetLabel:     t.Label,
 			ProviderKind:    t.Kind,
-			State:           accountingsync.MappingStateUnmatched,
-			Signals:         accountingsync.MappingSignals{},
+			State:           accountingmapping.MappingStateUnmatched,
+			Signals:         accountingmapping.MappingSignals{},
 		})
 	}
 	if result.Created, err = s.mappings.CreateMissing(ctx, fresh); err != nil {
@@ -160,8 +161,8 @@ func (s *Service) Rescore(
 		byIdentity[t.identity()] = t
 	}
 
-	changed := make([]*accountingsync.AccountingMapping, 0, len(rows))
-	relabeled := make([]*accountingsync.AccountingMapping, 0)
+	changed := make([]*accountingmapping.AccountingMapping, 0, len(rows))
+	relabeled := make([]*accountingmapping.AccountingMapping, 0)
 	for _, row := range rows {
 		t, ok := byIdentity[mappingIdentity(row)]
 		if !ok {
@@ -188,9 +189,9 @@ func (s *Service) Rescore(
 
 func tallyRow(
 	result *accountingmappingports.AccountingRescoreResult,
-	row *accountingsync.AccountingMapping,
+	row *accountingmapping.AccountingMapping,
 ) {
-	if row.State == accountingsync.MappingStateProposed {
+	if row.State == accountingmapping.MappingStateProposed {
 		result.Proposed++
 	}
 	if row.NeedsModelReview() && len(result.NeedsModel) < maxModelTargets {
@@ -199,8 +200,8 @@ func tallyRow(
 }
 
 type referenceSet struct {
-	byKind  map[accountingsync.ReferenceKind][]*accountingsync.AccountingReferenceObject
-	indexes map[accountingsync.ReferenceKind]*tokenIndex
+	byKind  map[accountingprovider.ReferenceKind][]*accountingmapping.AccountingReferenceObject
+	indexes map[accountingprovider.ReferenceKind]*tokenIndex
 }
 
 func (s *Service) loadReferences(
@@ -209,10 +210,12 @@ func (s *Service) loadReferences(
 	connectionID pulid.ID,
 ) (*referenceSet, error) {
 	set := &referenceSet{
-		byKind:  make(map[accountingsync.ReferenceKind][]*accountingsync.AccountingReferenceObject),
-		indexes: make(map[accountingsync.ReferenceKind]*tokenIndex),
+		byKind: make(
+			map[accountingprovider.ReferenceKind][]*accountingmapping.AccountingReferenceObject,
+		),
+		indexes: make(map[accountingprovider.ReferenceKind]*tokenIndex),
 	}
-	for _, kind := range accountingsync.AllReferenceKinds() {
+	for _, kind := range accountingprovider.AllReferenceKinds() {
 		refs, err := s.references.ListByKind(
 			ctx,
 			&accountingmappingports.ListAccountingReferenceObjectsRequest{
@@ -225,8 +228,8 @@ func (s *Service) loadReferences(
 			return nil, err
 		}
 		set.byKind[kind] = refs
-		if kind == accountingsync.ReferenceKindCustomer ||
-			kind == accountingsync.ReferenceKindVendor {
+		if kind == accountingprovider.ReferenceKindCustomer ||
+			kind == accountingprovider.ReferenceKindVendor {
 			set.indexes[kind] = newTokenIndex(refs)
 		}
 	}
@@ -241,7 +244,7 @@ const (
 	rescoreRelabeled
 )
 
-func (r *referenceSet) rescore(row *accountingsync.AccountingMapping, t *target) rescoreOutcome {
+func (r *referenceSet) rescore(row *accountingmapping.AccountingMapping, t *target) rescoreOutcome {
 	labelChanged := row.TargetLabel != t.Label
 	row.TargetLabel = t.Label
 	proposalChanged := false
@@ -253,7 +256,7 @@ func (r *referenceSet) rescore(row *accountingsync.AccountingMapping, t *target)
 		}
 	}
 	switch {
-	case proposalChanged || (labelChanged && row.State != accountingsync.MappingStateConfirmed):
+	case proposalChanged || (labelChanged && row.State != accountingmapping.MappingStateConfirmed):
 		return rescoreChanged
 	case labelChanged:
 		return rescoreRelabeled

@@ -3,6 +3,7 @@ package accountingdriftports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,8 +25,8 @@ type ListAccountingDriftFindingsConnectionRequest struct {
 	Filter       *pagination.QueryOptions
 	Cursor       pagination.CursorInfo
 	ConnectionID pulid.ID
-	Statuses     []accountingsync.DriftStatus
-	Kinds        []accountingsync.DriftKind
+	Statuses     []accountingdrift.DriftStatus
+	Kinds        []accountingdrift.DriftKind
 	ObjectTypes  []accountingsync.SyncObjectType
 	ObjectID     pulid.ID
 	Search       string
@@ -53,7 +54,7 @@ type ListAccountingDriftAttentionRequest struct {
 }
 
 type AccountingDriftAttentionGroup struct {
-	Kind             accountingsync.DriftKind
+	Kind             accountingdrift.DriftKind
 	Count            int
 	OldestDetectedAt int64
 	SampleID         pulid.ID
@@ -62,24 +63,24 @@ type AccountingDriftAttentionGroup struct {
 type AccountingDriftFindingRepository interface {
 	Create(
 		ctx context.Context,
-		entity *accountingsync.AccountingDriftFinding,
-	) (*accountingsync.AccountingDriftFinding, error)
+		entity *accountingdrift.AccountingDriftFinding,
+	) (*accountingdrift.AccountingDriftFinding, error)
 	Update(
 		ctx context.Context,
-		entity *accountingsync.AccountingDriftFinding,
-	) (*accountingsync.AccountingDriftFinding, error)
+		entity *accountingdrift.AccountingDriftFinding,
+	) (*accountingdrift.AccountingDriftFinding, error)
 	GetByID(
 		ctx context.Context,
 		req GetAccountingDriftFindingQuery,
-	) (*accountingsync.AccountingDriftFinding, error)
+	) (*accountingdrift.AccountingDriftFinding, error)
 	ListOpen(
 		ctx context.Context,
 		req *ListOpenAccountingDriftFindingsRequest,
-	) ([]*accountingsync.AccountingDriftFinding, error)
+	) ([]*accountingdrift.AccountingDriftFinding, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAccountingDriftFindingsConnectionRequest,
-	) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error)
+	) (*pagination.CursorListResult[*accountingdrift.AccountingDriftFinding], error)
 	Summarize(
 		ctx context.Context,
 		req *SummarizeAccountingDriftRequest,

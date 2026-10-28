@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -11,9 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func acct(id, name, accountType string) *accountingsync.AccountingReferenceObject {
-	return &accountingsync.AccountingReferenceObject{
-		Kind:         accountingsync.ReferenceKindAccount,
+func acct(id, name, accountType string) *accountingmapping.AccountingReferenceObject {
+	return &accountingmapping.AccountingReferenceObject{
+		Kind:         accountingprovider.ReferenceKindAccount,
 		ExternalID:   id,
 		Name:         name,
 		AccountType:  accountType,
@@ -22,42 +24,42 @@ func acct(id, name, accountType string) *accountingsync.AccountingReferenceObjec
 	}
 }
 
-func classOf(accountType string) accountingsync.AccountClass {
+func classOf(accountType string) accountingmapping.AccountClass {
 	switch accountType {
 	case "Accounts Receivable":
-		return accountingsync.AccountClassReceivable
+		return accountingmapping.AccountClassReceivable
 	case "Accounts Payable":
-		return accountingsync.AccountClassPayable
+		return accountingmapping.AccountClassPayable
 	case "Bank":
-		return accountingsync.AccountClassBank
+		return accountingmapping.AccountClassBank
 	case "Income":
-		return accountingsync.AccountClassIncome
+		return accountingmapping.AccountClassIncome
 	case "Other Income":
-		return accountingsync.AccountClassOtherIncome
+		return accountingmapping.AccountClassOtherIncome
 	case "Cost of Goods Sold":
-		return accountingsync.AccountClassCostOfSales
+		return accountingmapping.AccountClassCostOfSales
 	case "Expense":
-		return accountingsync.AccountClassExpense
+		return accountingmapping.AccountClassExpense
 	case "Other Expense":
-		return accountingsync.AccountClassOtherExpense
+		return accountingmapping.AccountClassOtherExpense
 	default:
-		return accountingsync.AccountClassAsset
+		return accountingmapping.AccountClassAsset
 	}
 }
 
 func scoreQBO(
 	t *target,
-	refs []*accountingsync.AccountingReferenceObject,
+	refs []*accountingmapping.AccountingReferenceObject,
 	index *tokenIndex,
-) *accountingsync.Proposal {
-	profile := accountingsync.MustProfile(integration.TypeQuickBooksOnline)
+) *accountingmapping.Proposal {
+	profile := accountingprovider.MustProfile(integration.TypeQuickBooksOnline)
 	t.Kind = profile.KindFor(t.TargetType)
 	return score(t, refs, index)
 }
 
-func item(id, name, sku string) *accountingsync.AccountingReferenceObject {
-	return &accountingsync.AccountingReferenceObject{
-		Kind:       accountingsync.ReferenceKindItem,
+func item(id, name, sku string) *accountingmapping.AccountingReferenceObject {
+	return &accountingmapping.AccountingReferenceObject{
+		Kind:       accountingprovider.ReferenceKindItem,
 		ExternalID: id,
 		Name:       name,
 		Number:     sku,
@@ -66,8 +68,11 @@ func item(id, name, sku string) *accountingsync.AccountingReferenceObject {
 	}
 }
 
-func party(kind accountingsync.ReferenceKind, id, name, postal string) *accountingsync.AccountingReferenceObject {
-	return &accountingsync.AccountingReferenceObject{
+func party(
+	kind accountingprovider.ReferenceKind,
+	id, name, postal string,
+) *accountingmapping.AccountingReferenceObject {
+	return &accountingmapping.AccountingReferenceObject{
 		Kind:       kind,
 		ExternalID: id,
 		Name:       name,
@@ -76,13 +81,29 @@ func party(kind accountingsync.ReferenceKind, id, name, postal string) *accounti
 	}
 }
 
-func chartOfAccounts() []*accountingsync.AccountingReferenceObject {
-	return []*accountingsync.AccountingReferenceObject{
-		{Kind: accountingsync.ReferenceKindAccount, ExternalID: "84", Name: "Accounts Receivable (A/R)", Number: "1200", AccountType: "Accounts Receivable", AccountClass: accountingsync.AccountClassReceivable, Active: true},
+func chartOfAccounts() []*accountingmapping.AccountingReferenceObject {
+	return []*accountingmapping.AccountingReferenceObject{
+		{
+			Kind:         accountingprovider.ReferenceKindAccount,
+			ExternalID:   "84",
+			Name:         "Accounts Receivable (A/R)",
+			Number:       "1200",
+			AccountType:  "Accounts Receivable",
+			AccountClass: accountingmapping.AccountClassReceivable,
+			Active:       true,
+		},
 		acct("79", "Freight Income", "Income"),
 		acct("80", "Fuel Surcharge Income", "Income"),
 		acct("35", "Checking", "Bank"),
-		{Kind: accountingsync.ReferenceKindAccount, ExternalID: "4", Name: "Undeposited Funds", AccountType: "Other Current Asset", AccountSubType: "UndepositedFunds", AccountClass: accountingsync.AccountClassUndepositedFunds, Active: true},
+		{
+			Kind:           accountingprovider.ReferenceKindAccount,
+			ExternalID:     "4",
+			Name:           "Undeposited Funds",
+			AccountType:    "Other Current Asset",
+			AccountSubType: "UndepositedFunds",
+			AccountClass:   accountingmapping.AccountClassUndepositedFunds,
+			Active:         true,
+		},
 		acct("33", "Accounts Payable (A/P)", "Accounts Payable"),
 		acct("90", "Bad Debt", "Expense"),
 		acct("91", "Purchased Transportation", "Cost of Goods Sold"),
@@ -116,9 +137,14 @@ func TestScoreAccountRoleOnlyConsidersEligibleAccountTypes(t *testing.T) {
 
 	assert.Equal(t, "79", p.ExternalID)
 	for _, candidate := range p.Candidates {
-		assert.Contains(t, []string{"79", "80"}, candidate.ExternalID, "only income accounts are candidates")
+		assert.Contains(
+			t,
+			[]string{"79", "80"},
+			candidate.ExternalID,
+			"only income accounts are candidates",
+		)
 	}
-	assert.GreaterOrEqual(t, p.Confidence, accountingsync.ConfidentConfidence)
+	assert.GreaterOrEqual(t, p.Confidence, accountingmapping.ConfidentConfidence)
 }
 
 func TestScoreTheOnlyEligibleAccountIsConfident(t *testing.T) {
@@ -142,7 +168,7 @@ func TestScoreTheOnlyExpenseAccountIsNotProposedForAGenericRole(t *testing.T) {
 		TargetType: accountingsync.TargetAccountRole,
 		Key:        accountingsync.AccountRoleWriteOff,
 		Names:      roleSynonyms[accountingsync.AccountRoleWriteOff],
-	}, []*accountingsync.AccountingReferenceObject{acct("92", "Office Supplies", "Expense")}, nil)
+	}, []*accountingmapping.AccountingReferenceObject{acct("92", "Office Supplies", "Expense")}, nil)
 
 	assert.Empty(t, p.ExternalID)
 }
@@ -167,11 +193,17 @@ func TestScoreDepositRoleAcceptsBankOrUndepositedFunds(t *testing.T) {
 func TestScoreAccessorialMatchesTheSkuOrTheCodeAsName(t *testing.T) {
 	t.Parallel()
 
-	items := []*accountingsync.AccountingReferenceObject{
+	items := []*accountingmapping.AccountingReferenceObject{
 		item("12", "Detention", "DET"),
 		item("13", "Lumper Fee", ""),
 		item("14", "DRY", ""),
-		{Kind: accountingsync.ReferenceKindItem, ExternalID: "11", Name: "Accessorials", ItemType: "Category", Active: true},
+		{
+			Kind:       accountingprovider.ReferenceKindItem,
+			ExternalID: "11",
+			Name:       "Accessorials",
+			ItemType:   "Category",
+			Active:     true,
+		},
 	}
 
 	bySku := scoreQBO(&target{
@@ -210,23 +242,23 @@ func TestScoreNoConfidentMatchKeepsCandidatesButProposesNothing(t *testing.T) {
 		TargetType: accountingsync.TargetLineType,
 		Key:        "Memo",
 		Names:      lineTypeSynonyms["Memo"],
-	}, []*accountingsync.AccountingReferenceObject{
+	}, []*accountingmapping.AccountingReferenceObject{
 		item("1", "Hazmat Surcharge", ""),
 		item("2", "Tolls", ""),
 	}, nil)
 
 	assert.Empty(t, p.ExternalID)
 	assert.NotEmpty(t, p.Candidates)
-	assert.LessOrEqual(t, len(p.Candidates), accountingsync.MaxCandidates)
+	assert.LessOrEqual(t, len(p.Candidates), accountingmapping.MaxCandidates)
 }
 
 func TestScoreCustomerIgnoresLegalSuffixesAndUsesPostalCode(t *testing.T) {
 	t.Parallel()
 
-	customers := []*accountingsync.AccountingReferenceObject{
-		party(accountingsync.ReferenceKindCustomer, "58", "Peak Distributing LLC", "80202"),
-		party(accountingsync.ReferenceKindCustomer, "59", "Peak Distributing Inc", "10001"),
-		party(accountingsync.ReferenceKindCustomer, "60", "Summit Foods", "80202"),
+	customers := []*accountingmapping.AccountingReferenceObject{
+		party(accountingprovider.ReferenceKindCustomer, "58", "Peak Distributing LLC", "80202"),
+		party(accountingprovider.ReferenceKindCustomer, "59", "Peak Distributing Inc", "10001"),
+		party(accountingprovider.ReferenceKindCustomer, "60", "Summit Foods", "80202"),
 	}
 
 	p := scoreQBO(&target{
@@ -244,9 +276,15 @@ func TestScoreCustomerIgnoresLegalSuffixesAndUsesPostalCode(t *testing.T) {
 func TestScoreVendorMatchesAnMCNumberInTheAccountNumber(t *testing.T) {
 	t.Parallel()
 
-	vendors := []*accountingsync.AccountingReferenceObject{
-		{Kind: accountingsync.ReferenceKindVendor, ExternalID: "91", Name: "SH Logistics", Number: "MC-123456", Active: true},
-		party(accountingsync.ReferenceKindVendor, "92", "Swift Haul", ""),
+	vendors := []*accountingmapping.AccountingReferenceObject{
+		{
+			Kind:       accountingprovider.ReferenceKindVendor,
+			ExternalID: "91",
+			Name:       "SH Logistics",
+			Number:     "MC-123456",
+			Active:     true,
+		},
+		party(accountingprovider.ReferenceKindVendor, "92", "Swift Haul", ""),
 	}
 
 	p := scoreQBO(&target{
@@ -265,31 +303,82 @@ func TestScoreTermMatchesDueDays(t *testing.T) {
 	t.Parallel()
 
 	thirty, zero := 30, 0
-	terms := []*accountingsync.AccountingReferenceObject{
-		{Kind: accountingsync.ReferenceKindTerm, ExternalID: "3", Name: "Thirty days", DueDays: &thirty, Active: true},
-		{Kind: accountingsync.ReferenceKindTerm, ExternalID: "1", Name: "Upon receipt", DueDays: &zero, Active: true},
+	terms := []*accountingmapping.AccountingReferenceObject{
+		{
+			Kind:       accountingprovider.ReferenceKindTerm,
+			ExternalID: "3",
+			Name:       "Thirty days",
+			DueDays:    &thirty,
+			Active:     true,
+		},
+		{
+			Kind:       accountingprovider.ReferenceKindTerm,
+			ExternalID: "1",
+			Name:       "Upon receipt",
+			DueDays:    &zero,
+			Active:     true,
+		},
 	}
 
-	net30 := scoreQBO(&target{TargetType: accountingsync.TargetPaymentTerm, Key: "Net30", DueDays: &thirty}, terms, nil)
+	net30 := scoreQBO(
+		&target{TargetType: accountingsync.TargetPaymentTerm, Key: "Net30", DueDays: &thirty},
+		terms,
+		nil,
+	)
 	assert.Equal(t, "3", net30.ExternalID)
 	assert.InDelta(t, 0.98, net30.Confidence, 1e-9)
 
-	onReceipt := scoreQBO(&target{TargetType: accountingsync.TargetPaymentTerm, Key: "DueOnReceipt", DueDays: &zero}, terms, nil)
+	onReceipt := scoreQBO(
+		&target{TargetType: accountingsync.TargetPaymentTerm, Key: "DueOnReceipt", DueDays: &zero},
+		terms,
+		nil,
+	)
 	assert.Equal(t, "1", onReceipt.ExternalID)
 }
 
 func TestScorePaymentMethodUsesSynonyms(t *testing.T) {
 	t.Parallel()
 
-	methods := []*accountingsync.AccountingReferenceObject{
-		{Kind: accountingsync.ReferenceKindPaymentMethod, ExternalID: "1", Name: "Visa", Active: true},
-		{Kind: accountingsync.ReferenceKindPaymentMethod, ExternalID: "2", Name: "Check", Active: true},
-		{Kind: accountingsync.ReferenceKindPaymentMethod, ExternalID: "3", Name: "EFT", Active: true},
+	methods := []*accountingmapping.AccountingReferenceObject{
+		{
+			Kind:       accountingprovider.ReferenceKindPaymentMethod,
+			ExternalID: "1",
+			Name:       "Visa",
+			Active:     true,
+		},
+		{
+			Kind:       accountingprovider.ReferenceKindPaymentMethod,
+			ExternalID: "2",
+			Name:       "Check",
+			Active:     true,
+		},
+		{
+			Kind:       accountingprovider.ReferenceKindPaymentMethod,
+			ExternalID: "3",
+			Name:       "EFT",
+			Active:     true,
+		},
 	}
 
-	card := scoreQBO(&target{TargetType: accountingsync.TargetPaymentMethod, Key: "Card", Names: paymentMethodSynonyms["Card"]}, methods, nil)
+	card := scoreQBO(
+		&target{
+			TargetType: accountingsync.TargetPaymentMethod,
+			Key:        "Card",
+			Names:      paymentMethodSynonyms["Card"],
+		},
+		methods,
+		nil,
+	)
 	assert.Equal(t, "1", card.ExternalID)
-	ach := scoreQBO(&target{TargetType: accountingsync.TargetPaymentMethod, Key: "ACH", Names: paymentMethodSynonyms["ACH"]}, methods, nil)
+	ach := scoreQBO(
+		&target{
+			TargetType: accountingsync.TargetPaymentMethod,
+			Key:        "ACH",
+			Names:      paymentMethodSynonyms["ACH"],
+		},
+		methods,
+		nil,
+	)
 	assert.Equal(t, "3", ach.ExternalID)
 }
 
@@ -301,9 +390,23 @@ func TestScoreSkipsInactiveAndRemovedRecords(t *testing.T) {
 		TargetType: accountingsync.TargetAccountRole,
 		Key:        accountingsync.AccountRoleAR,
 		Names:      []string{"Accounts Receivable"},
-	}, []*accountingsync.AccountingReferenceObject{
-		{Kind: accountingsync.ReferenceKindAccount, ExternalID: "1", Name: "Accounts Receivable", AccountType: "Accounts Receivable", AccountClass: accountingsync.AccountClassReceivable},
-		{Kind: accountingsync.ReferenceKindAccount, ExternalID: "2", Name: "Accounts Receivable", AccountType: "Accounts Receivable", AccountClass: accountingsync.AccountClassReceivable, Active: true, RemovedAt: &removedAt},
+	}, []*accountingmapping.AccountingReferenceObject{
+		{
+			Kind:         accountingprovider.ReferenceKindAccount,
+			ExternalID:   "1",
+			Name:         "Accounts Receivable",
+			AccountType:  "Accounts Receivable",
+			AccountClass: accountingmapping.AccountClassReceivable,
+		},
+		{
+			Kind:         accountingprovider.ReferenceKindAccount,
+			ExternalID:   "2",
+			Name:         "Accounts Receivable",
+			AccountType:  "Accounts Receivable",
+			AccountClass: accountingmapping.AccountClassReceivable,
+			Active:       true,
+			RemovedAt:    &removedAt,
+		},
 	}, nil)
 
 	assert.Empty(t, p.ExternalID)
@@ -313,16 +416,32 @@ func TestScoreSkipsInactiveAndRemovedRecords(t *testing.T) {
 func TestTokenIndexNarrowsLargeListsWithoutLosingTheMatch(t *testing.T) {
 	t.Parallel()
 
-	customers := make([]*accountingsync.AccountingReferenceObject, 0, 5001)
+	customers := make([]*accountingmapping.AccountingReferenceObject, 0, 5001)
 	for idx := range 5000 {
-		customers = append(customers, party(accountingsync.ReferenceKindCustomer, fmt.Sprintf("c%d", idx), fmt.Sprintf("Customer %d Trucking", idx), ""))
+		customers = append(
+			customers,
+			party(
+				accountingprovider.ReferenceKindCustomer,
+				fmt.Sprintf("c%d", idx),
+				fmt.Sprintf("Customer %d Trucking", idx),
+				"",
+			),
+		)
 	}
-	customers = append(customers, party(accountingsync.ReferenceKindCustomer, "target", "Blue Ridge Produce", ""))
+	customers = append(
+		customers,
+		party(accountingprovider.ReferenceKindCustomer, "target", "Blue Ridge Produce", ""),
+	)
 
 	index := newTokenIndex(customers)
 	candidates := index.candidates([]string{"Blue Ridge Produce Co"})
 	require.NotEmpty(t, candidates)
-	assert.Less(t, len(candidates), 50, "common words like Customer and Trucking do not pull in every record")
+	assert.Less(
+		t,
+		len(candidates),
+		50,
+		"common words like Customer and Trucking do not pull in every record",
+	)
 
 	p := scoreQBO(&target{
 		TargetType: accountingsync.TargetCustomer,

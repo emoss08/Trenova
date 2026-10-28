@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -23,7 +27,7 @@ import (
 
 type readSession struct {
 	tenant pagination.TenantInfo
-	conn   *accountingsync.AccountingConnection
+	conn   *accountingconnection.AccountingConnection
 	reader accountingconnectorports.AccountingChangeReader
 	auth   accountingconnectorports.AccountingDocumentAuth
 	writer accountingconnectorports.AccountingDocumentWriter
@@ -48,7 +52,7 @@ func (s *Service) location(
 
 func (s *Service) openRead(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) (*readSession, error) {
 	tenant := tenantOf(conn)
 	session, err := s.connService.Session(ctx, tenant, conn.ID)
@@ -59,7 +63,7 @@ func (s *Service) openRead(
 	if !ok {
 		return nil, fmt.Errorf(
 			"%s does not report its changes to Trenova",
-			accountingsync.ProviderName(conn.IntegrationType),
+			accountingprovider.ProviderName(conn.IntegrationType),
 		)
 	}
 	writer, _ := session.Connector.(accountingconnectorports.AccountingDocumentWriter)
@@ -105,7 +109,7 @@ func (s *Service) PollChanges(
 	}
 
 	now := s.now()
-	profile := accountingsync.MustProfile(sess.conn.IntegrationType)
+	profile := accountingprovider.MustProfile(sess.conn.IntegrationType)
 	page, err := sess.reader.ReadChanges(
 		ctx,
 		&accountingconnectorports.ReadAccountingChangesRequest{
@@ -268,10 +272,10 @@ func (s *Service) applyReferences(
 	if len(changed) == 0 {
 		return 0, nil
 	}
-	upserts := make([]*accountingsync.AccountingReferenceObject, 0, len(changed))
+	upserts := make([]*accountingmapping.AccountingReferenceObject, 0, len(changed))
 	removed := make(
-		map[accountingsync.ReferenceKind][]string,
-		len(accountingsync.AllReferenceKinds()),
+		map[accountingprovider.ReferenceKind][]string,
+		len(accountingprovider.AllReferenceKinds()),
 	)
 	for _, ref := range changed {
 		if ref.Object == nil || ref.Object.ExternalID == "" {
@@ -315,7 +319,7 @@ func (s *Service) recordPayments(
 	at int64,
 ) (int, error) {
 	recorded := 0
-	for _, kind := range accountingsync.AllInboundChangeKinds() {
+	for _, kind := range accountinginbound.AllInboundChangeKinds() {
 		count, err := s.recordKind(ctx, sess, kind, paymentsOf(payments, kind), at)
 		if err != nil {
 			return 0, err
@@ -327,7 +331,7 @@ func (s *Service) recordPayments(
 
 func paymentsOf(
 	payments []accountingconnectorports.AccountingInboundPayment,
-	kind accountingsync.InboundChangeKind,
+	kind accountinginbound.InboundChangeKind,
 ) []*accountingconnectorports.AccountingInboundPayment {
 	out := make([]*accountingconnectorports.AccountingInboundPayment, 0, len(payments))
 	for idx := range payments {
@@ -341,7 +345,7 @@ func paymentsOf(
 func (s *Service) recordKind(
 	ctx context.Context,
 	sess *readSession,
-	kind accountingsync.InboundChangeKind,
+	kind accountinginbound.InboundChangeKind,
 	payments []*accountingconnectorports.AccountingInboundPayment,
 	at int64,
 ) (int, error) {
@@ -369,7 +373,7 @@ func (s *Service) recordKind(
 	if err != nil {
 		return 0, err
 	}
-	byID := make(map[string]*accountingsync.AccountingInboundChange, len(existing))
+	byID := make(map[string]*accountinginbound.AccountingInboundChange, len(existing))
 	for _, change := range existing {
 		byID[change.ExternalID] = change
 	}
@@ -396,7 +400,7 @@ func (s *Service) echoes(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	connectionID pulid.ID,
-	kind accountingsync.InboundChangeKind,
+	kind accountinginbound.InboundChangeKind,
 	ids []string,
 ) (map[string]bool, error) {
 	records, err := s.records.ListByExternalIDs(
@@ -421,8 +425,8 @@ func (s *Service) echoes(
 func (s *Service) recordOne(
 	ctx context.Context,
 	sess *readSession,
-	policy accountingsync.InboundPaymentPolicy,
-	change *accountingsync.AccountingInboundChange,
+	policy accountingconnection.InboundPaymentPolicy,
+	change *accountinginbound.AccountingInboundChange,
 	payment *accountingconnectorports.AccountingInboundPayment,
 	at int64,
 ) (bool, error) {
@@ -430,7 +434,10 @@ func (s *Service) recordOne(
 		if change == nil {
 			return false, nil
 		}
-		if !change.Supersede(accountingsync.InboundReasonVoided, removedResolution(sess, payment)) {
+		if !change.Supersede(
+			accountinginbound.InboundReasonVoided,
+			removedResolution(sess, payment),
+		) {
 			return false, nil
 		}
 		_, err := s.changes.Update(ctx, change)
@@ -444,10 +451,10 @@ func (s *Service) recordOne(
 		return false, nil
 	}
 	if change == nil {
-		if policy == accountingsync.InboundPaymentsOff {
+		if policy == accountingconnection.InboundPaymentsOff {
 			return false, nil
 		}
-		_, err = s.changes.Create(ctx, accountingsync.NewAccountingInboundChange(obs))
+		_, err = s.changes.Create(ctx, accountinginbound.NewAccountingInboundChange(obs))
 		return err == nil, err
 	}
 	if !change.Observe(obs) {
@@ -461,7 +468,7 @@ func (s *Service) observation(
 	sess *readSession,
 	payment *accountingconnectorports.AccountingInboundPayment,
 	at int64,
-) (*accountingsync.InboundObservation, error) {
+) (*accountinginbound.InboundObservation, error) {
 	txnDate, err := timeutils.ParseCalendarDate(payment.TxnDate, sess.loc)
 	if err != nil {
 		return nil, fmt.Errorf("payment date %q: %w", payment.TxnDate, err)
@@ -470,9 +477,9 @@ func (s *Service) observation(
 	if currency == "" {
 		currency = sess.conn.ExternalHomeCurrency
 	}
-	lines := make([]*accountingsync.InboundLine, 0, len(payment.Lines))
+	lines := make([]*accountinginbound.InboundLine, 0, len(payment.Lines))
 	for _, line := range payment.Lines {
-		lines = append(lines, &accountingsync.InboundLine{
+		lines = append(lines, &accountinginbound.InboundLine{
 			DocumentKind:       line.DocumentKind,
 			DocumentExternalID: line.DocumentExternalID,
 			AmountMinor:        money.MinorUnits(line.Amount),
@@ -494,7 +501,7 @@ func (s *Service) observation(
 			},
 		)
 	}
-	return &accountingsync.InboundObservation{
+	return &accountinginbound.InboundObservation{
 		TenantInfo:         sess.tenant,
 		ConnectionID:       sess.conn.ID,
 		Kind:               payment.Kind,
@@ -508,7 +515,7 @@ func (s *Service) observation(
 		CurrencyCode:       currency,
 		PartyExternalID:    payment.PartyExternalID,
 		PartyName:          payment.PartyName,
-		Document: accountingsync.InboundDocument{
+		Document: accountinginbound.InboundDocument{
 			ReferenceNumber:   payment.ReferenceNumber,
 			MethodExternalID:  payment.MethodExternalID,
 			MethodName:        payment.MethodName,
@@ -524,7 +531,7 @@ func removedResolution(
 	sess *readSession,
 	payment *accountingconnectorports.AccountingInboundPayment,
 ) string {
-	provider := accountingsync.ProviderName(sess.conn.IntegrationType)
+	provider := accountingprovider.ProviderName(sess.conn.IntegrationType)
 	if payment.Operation == accountingconnectorports.AccountingChangeDelete {
 		return "Deleted in " + provider + " before it was applied, so there is nothing to apply."
 	}

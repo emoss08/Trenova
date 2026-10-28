@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -53,7 +57,7 @@ var (
 
 	AccountingSystems = Source(
 		"integration.accountingSystem",
-		accountingsync.AccountingSystems(),
+		accountingprovider.AccountingSystems(),
 	)
 	FactoringFundingOutcomes = Source(
 		"factoring.fundingOutcome",
@@ -86,23 +90,23 @@ var (
 	)
 	BackfillObjectTypes = Source(
 		"accountingSync.backfillObjectType",
-		accountingsync.BackfillObjectTypes(),
+		accountingbackfill.BackfillObjectTypes(),
 	)
 	InboundChangeStatuses = Source(
 		"accountingSync.inboundChangeStatus",
-		accountingsync.AllInboundChangeStatuses(),
+		accountinginbound.AllInboundChangeStatuses(),
 	)
 	InboundChangeKinds = Source(
 		"accountingSync.inboundChangeKind",
-		accountingsync.AllInboundChangeKinds(),
+		accountinginbound.AllInboundChangeKinds(),
 	)
 	InboundChangeReasons = Source(
 		"accountingSync.inboundChangeReason",
-		accountingsync.AllInboundChangeReasons(),
+		accountinginbound.AllInboundChangeReasons(),
 	)
-	DriftStatuses    = Source("accountingSync.driftStatus", accountingsync.AllDriftStatuses())
-	DriftKinds       = Source("accountingSync.driftKind", accountingsync.AllDriftKinds())
-	DriftDirections  = Source("accountingSync.driftDirection", accountingsync.AllDriftDirections())
+	DriftStatuses    = Source("accountingSync.driftStatus", accountingdrift.AllDriftStatuses())
+	DriftKinds       = Source("accountingSync.driftKind", accountingdrift.AllDriftKinds())
+	DriftDirections  = Source("accountingSync.driftDirection", accountingdrift.AllDriftDirections())
 	DriftObjectTypes = Source(
 		"accountingSync.driftObjectType",
 		append(
@@ -110,7 +114,7 @@ var (
 				accountingsync.SyncObjectCustomer,
 				accountingsync.DriftObjectGLAccount,
 			},
-			accountingsync.DriftObjectTypes()...,
+			accountingdrift.DriftObjectTypes()...,
 		),
 	)
 )

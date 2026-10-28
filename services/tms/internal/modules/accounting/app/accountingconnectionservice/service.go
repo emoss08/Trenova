@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -148,8 +150,8 @@ func (s *Service) Status(
 
 	status := &accountingconnectionports.AccountingSyncStatus{
 		IntegrationType: typ,
-		ProviderName:    accountingsync.ProviderName(typ),
-		Profile:         accountingsync.MustProfile(typ),
+		ProviderName:    accountingprovider.ProviderName(typ),
+		Profile:         accountingprovider.MustProfile(typ),
 		Available:       settings.ActiveSource != "" && settings.RedirectURL != "",
 		App:             settings,
 	}
@@ -194,7 +196,7 @@ func (s *Service) StartAuthorization(
 	if err != nil {
 		return nil, err
 	}
-	name := accountingsync.ProviderName(req.IntegrationType)
+	name := accountingprovider.ProviderName(req.IntegrationType)
 	if provider.RedirectURL() == "" {
 		return nil, errNoRedirect(name)
 	}
@@ -257,7 +259,7 @@ func (s *Service) StartAuthorization(
 
 func (s *Service) requestReferenceRefresh(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) {
 	if s.refresher == nil {
 		return
@@ -272,10 +274,10 @@ func (s *Service) requestReferenceRefresh(
 }
 
 func (s *Service) connect(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	userID pulid.ID,
 	grant *accountingconnectorports.AccountingTokenGrant,
-	facts *accountingsync.CompanyFacts,
+	facts *accountingconnection.CompanyFacts,
 	now int64,
 ) error {
 	sealed, err := s.seal(conn, grant, now)
@@ -296,7 +298,7 @@ func (s *Service) connect(
 func (s *Service) Disconnect(
 	ctx context.Context,
 	req *accountingconnectionports.DisconnectAccountingRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	provider, err := s.provider(req.IntegrationType)
 	if err != nil {
 		return nil, err
@@ -314,7 +316,7 @@ func (s *Service) Disconnect(
 	}
 
 	now := timeutils.NowUnix()
-	var conn *accountingsync.AccountingConnection
+	var conn *accountingconnection.AccountingConnection
 	var previous map[string]any
 	var refreshCiphertext string
 	changed := false
@@ -330,7 +332,7 @@ func (s *Service) Disconnect(
 			return lockErr
 		}
 		conn = existing
-		if existing.Status == accountingsync.ConnectionStatusDisconnected {
+		if existing.Status == accountingconnection.ConnectionStatusDisconnected {
 			return nil
 		}
 
@@ -359,7 +361,7 @@ func (s *Service) Disconnect(
 		conn,
 		req.UserID,
 		previous,
-		"Disconnected "+accountingsync.ProviderName(
+		"Disconnected "+accountingprovider.ProviderName(
 			conn.IntegrationType,
 		)+" company "+conn.ExternalCompanyName,
 	)
@@ -372,7 +374,7 @@ func (s *Service) Disconnect(
 func (s *Service) revokeStored(
 	ctx context.Context,
 	provider accountingconnectorports.AccountingProvider,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	refreshCiphertext string,
 ) {
 	connector, err := s.connectorFor(ctx, provider, conn)
@@ -389,12 +391,12 @@ func (s *Service) revokeStored(
 }
 
 type tokenOutcome struct {
-	conn        *accountingsync.AccountingConnection
+	conn        *accountingconnection.AccountingConnection
 	connector   accountingconnectorports.AccountingConnector
 	accessToken string
 	failure     error
 	category    accountingsync.ErrorCategory
-	before      accountingsync.ConnectionStatus
+	before      accountingconnection.ConnectionStatus
 }
 
 func (s *Service) freshAccessToken(
@@ -459,7 +461,7 @@ func (s *Service) freshAccessToken(
 func (s *Service) renewAccessToken(
 	ctx, txCtx context.Context,
 	connector accountingconnectorports.AccountingConnector,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	now int64,
 ) error {
 	if conn.UsesCertificate() {
@@ -479,7 +481,7 @@ func (s *Service) renewAccessToken(
 func (s *Service) refresh(
 	ctx, txCtx context.Context,
 	connector accountingconnectorports.AccountingConnector,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	now int64,
 ) error {
 	refreshToken, err := s.open(conn, refreshTokenField, conn.RefreshTokenCiphertext)
@@ -503,7 +505,7 @@ func (s *Service) refresh(
 
 func (s *Service) recordFailure(
 	txCtx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	category accountingsync.ErrorCategory,
 	cause error,
 	now int64,
@@ -522,7 +524,7 @@ func (s *Service) CheckHealth(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	current, err := s.connections.GetByID(
 		ctx,
 		accountingconnectionports.GetAccountingConnectionByIDRequest{
@@ -555,7 +557,7 @@ func (s *Service) CheckHealth(
 		outcome.accessToken,
 	)
 
-	var conn *accountingsync.AccountingConnection
+	var conn *accountingconnection.AccountingConnection
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		locked, lockErr := s.connections.LockWithTokens(
 			txCtx,
@@ -606,7 +608,7 @@ func (s *Service) Session(
 	if err != nil {
 		return nil, err
 	}
-	provider := accountingsync.ProviderName(current.IntegrationType)
+	provider := accountingprovider.ProviderName(current.IntegrationType)
 	if !current.IsActive() {
 		return nil, errNotConnected(provider)
 	}
@@ -661,7 +663,7 @@ func (s *Service) ReportCallFailure(
 	}
 
 	now := timeutils.NowUnix()
-	var conn *accountingsync.AccountingConnection
+	var conn *accountingconnection.AccountingConnection
 	txErr := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		locked, lockErr := s.connections.LockWithTokens(
 			txCtx,
@@ -735,8 +737,8 @@ func (s *Service) CheckDue(
 
 func (s *Service) afterHealthChange(
 	ctx context.Context,
-	before accountingsync.ConnectionStatus,
-	conn *accountingsync.AccountingConnection,
+	before accountingconnection.ConnectionStatus,
+	conn *accountingconnection.AccountingConnection,
 	now int64,
 ) {
 	tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
@@ -782,7 +784,7 @@ func (s *Service) afterHealthChange(
 
 func (s *Service) resolveWatchtower(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) {
 	if s.watchtower == nil {
 		return
@@ -802,17 +804,17 @@ func (s *Service) resolveWatchtower(
 	)
 }
 
-func worsened(before, after accountingsync.ConnectionStatus) bool {
+func worsened(before, after accountingconnection.ConnectionStatus) bool {
 	return severityRank(after) > severityRank(before)
 }
 
-func severityRank(status accountingsync.ConnectionStatus) int {
+func severityRank(status accountingconnection.ConnectionStatus) int {
 	switch status { //nolint:exhaustive // connected and disconnected rank lowest
-	case accountingsync.ConnectionStatusDegraded:
+	case accountingconnection.ConnectionStatusDegraded:
 		return 1
-	case accountingsync.ConnectionStatusFailing:
+	case accountingconnection.ConnectionStatusFailing:
 		return 2
-	case accountingsync.ConnectionStatusRevoked:
+	case accountingconnection.ConnectionStatusRevoked:
 		return 3
 	default:
 		return 0
@@ -821,7 +823,7 @@ func severityRank(status accountingsync.ConnectionStatus) int {
 
 func (s *Service) syncIntegrationFlag(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) {
 	tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
 	enabled := conn.IsActive()
@@ -843,7 +845,7 @@ func (s *Service) syncIntegrationFlag(
 			OrganizationID: conn.OrganizationID,
 			BusinessUnitID: conn.BusinessUnitID,
 			Type:           conn.IntegrationType,
-			Name:           accountingsync.ProviderName(conn.IntegrationType),
+			Name:           accountingprovider.ProviderName(conn.IntegrationType),
 			Category:       integration.CategoryAccounting,
 			Enabled:        true,
 			EnabledByID:    conn.ConnectedByID,
@@ -862,7 +864,7 @@ func (s *Service) syncIntegrationFlag(
 }
 
 func (s *Service) logAudit(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	userID pulid.ID,
 	previous map[string]any,
 	comment string,
@@ -885,7 +887,7 @@ func (s *Service) logAudit(
 
 func (s *Service) publishInvalidation(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	userID pulid.ID,
 ) {
 	if s.realtime == nil {
@@ -920,7 +922,7 @@ func (s *Service) revokeQuietly(
 }
 
 func connectionAAD(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	field string,
 ) encryptionservice.AAD {
 	return encryptionservice.AAD{
@@ -932,18 +934,18 @@ func connectionAAD(
 }
 
 func (s *Service) seal(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	grant *accountingconnectorports.AccountingTokenGrant,
 	now int64,
-) (accountingsync.TokenGrant, error) {
+) (accountingconnection.TokenGrant, error) {
 	access, err := s.encryption.EncryptStringWithAAD(
 		grant.AccessToken,
 		connectionAAD(conn, accessTokenField),
 	)
 	if err != nil {
-		return accountingsync.TokenGrant{}, err
+		return accountingconnection.TokenGrant{}, err
 	}
-	sealed := accountingsync.TokenGrant{
+	sealed := accountingconnection.TokenGrant{
 		AccessTokenCiphertext: access,
 		AccessTokenExpiresAt:  now + int64(grant.AccessTokenTTL/time.Second),
 	}
@@ -958,13 +960,13 @@ func (s *Service) seal(
 		connectionAAD(conn, refreshTokenField),
 	)
 	if err != nil {
-		return accountingsync.TokenGrant{}, err
+		return accountingconnection.TokenGrant{}, err
 	}
 
 	refreshLifetime := int64(grant.RefreshTokenTTL / time.Second)
 	if refreshLifetime <= 0 {
 		refreshLifetime = int64(
-			accountingsync.MustProfile(conn.IntegrationType).RefreshTokenLifetime / time.Second,
+			accountingprovider.MustProfile(conn.IntegrationType).RefreshTokenLifetime / time.Second,
 		)
 	}
 	sealed.RefreshTokenCiphertext = refresh
@@ -973,14 +975,14 @@ func (s *Service) seal(
 }
 
 func (s *Service) open(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	field, ciphertext string,
 ) (string, error) {
 	return s.encryption.DecryptStringWithAAD(ciphertext, connectionAAD(conn, field))
 }
 
 func tokensOf(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	now int64,
 ) accountingconnectionports.StoreAccountingTokensRequest {
 	return accountingconnectionports.StoreAccountingTokensRequest{

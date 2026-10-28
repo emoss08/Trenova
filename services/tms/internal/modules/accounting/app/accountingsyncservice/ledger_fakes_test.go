@@ -5,6 +5,8 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -140,18 +142,18 @@ type fakeReferences struct {
 	accountingmappingports.AccountingReferenceObjectRepository
 
 	mu   sync.Mutex
-	rows map[string]*accountingsync.AccountingReferenceObject
+	rows map[string]*accountingmapping.AccountingReferenceObject
 }
 
 func newFakeReferences() *fakeReferences {
-	return &fakeReferences{rows: map[string]*accountingsync.AccountingReferenceObject{}}
+	return &fakeReferences{rows: map[string]*accountingmapping.AccountingReferenceObject{}}
 }
 
-func (f *fakeReferences) account(externalID string, class accountingsync.AccountClass) {
+func (f *fakeReferences) account(externalID string, class accountingmapping.AccountClass) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.rows[externalID] = &accountingsync.AccountingReferenceObject{
-		Kind:         accountingsync.ReferenceKindAccount,
+	f.rows[externalID] = &accountingmapping.AccountingReferenceObject{
+		Kind:         accountingprovider.ReferenceKindAccount,
 		ExternalID:   externalID,
 		Name:         externalID,
 		AccountClass: class,
@@ -162,10 +164,10 @@ func (f *fakeReferences) account(externalID string, class accountingsync.Account
 func (f *fakeReferences) GetByExternalIDs(
 	_ context.Context,
 	req *accountingmappingports.GetAccountingReferenceObjectsRequest,
-) ([]*accountingsync.AccountingReferenceObject, error) {
+) ([]*accountingmapping.AccountingReferenceObject, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := []*accountingsync.AccountingReferenceObject{}
+	out := []*accountingmapping.AccountingReferenceObject{}
 	for _, id := range req.ExternalIDs {
 		if ref, ok := f.rows[id]; ok && ref.Kind == req.Kind {
 			out = append(out, ref)

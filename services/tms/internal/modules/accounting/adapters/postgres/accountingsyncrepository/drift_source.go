@@ -7,6 +7,9 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound/accountinginbounddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -85,7 +88,7 @@ func latestSynced(
 ) []keel.Pred {
 	sr := accountingsyncdb.AccountingSyncRecords
 	newer := sr.As(newerRecordAlias)
-	creates := accountingsync.DriftCreateOperations()
+	creates := accountingdrift.DriftCreateOperations()
 
 	return []keel.Pred{
 		sr.ConnectionID.Eq(connectionID),
@@ -119,7 +122,7 @@ func (s *driftSource) ListRecords(
 			limit = intutils.Clamp(limit, 1, maxDriftBatch)
 
 			sr := accountingsyncdb.AccountingSyncRecords
-			entities, err := sr.Where(latestSynced(req.ConnectionID, accountingsync.DriftObjectTypes())...).
+			entities, err := sr.Where(latestSynced(req.ConnectionID, accountingdrift.DriftObjectTypes())...).
 				Where(
 					keel.Or(sr.DocumentDate.IsNull(), sr.DocumentDate.Gte(req.DatedFrom)),
 					keel.When(!req.AfterID.IsNil(), sr.ID.Gt(req.AfterID)),
@@ -326,7 +329,7 @@ func balanceDocuments(
 	inv := invoicedb.Invoices
 	return sr.Join(inv, inv.ID.EqCol(sr.ObjectID)).
 		Where(inv.InvoiceDate.Gte(req.DatedFrom)).
-		Where(latestSynced(req.ConnectionID, accountingsync.DriftBalanceObjectTypes())...)
+		Where(latestSynced(req.ConnectionID, accountingdrift.DriftBalanceObjectTypes())...)
 }
 
 func (s *driftSource) ListBalances(
@@ -430,13 +433,13 @@ func (s *driftSource) ListPendingCustomers(
 func waitingInbound(
 	req *accountingdriftports.ListAccountingDriftPendingCustomersRequest,
 ) keel.Projection {
-	ic := accountingsyncdb.AccountingInboundChanges
+	ic := accountinginbounddb.AccountingInboundChanges
 	return ic.Group(ic.PartyObjectID).
 		Pick(ic.PartyObjectID).
 		Where(
 			ic.ConnectionID.Eq(req.ConnectionID),
-			ic.Kind.Eq(accountingsync.InboundCustomerPayment),
-			ic.Status.In(accountingsync.InboundStatusDetected, accountingsync.InboundStatusProposed),
+			ic.Kind.Eq(accountinginbound.InboundCustomerPayment),
+			ic.Status.In(accountinginbound.InboundStatusDetected, accountinginbound.InboundStatusProposed),
 			ic.PartyObjectID.In(req.CustomerIDs...),
 		)
 }

@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection/accountingconnectiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
@@ -115,7 +115,7 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 	ust := usstatedb.UsStates
 	wrk := workerdb.Workers
 	integ := integrationdb.Integrations
-	ac := accountingsyncdb.AccountingConnections
+	ac := accountingconnectiondb.AccountingConnections
 	ep := edidb.EDIPartners
 	live := sp.Status.Ne(shipment.StatusCanceled)
 
@@ -186,7 +186,7 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 			Order(integ.Type.Asc()), &out.Integrations),
 		keel.IntoSlice(ac.
 			Pick(keel.CastText(ac.IntegrationType), keel.CastText(ac.Status)).
-			Where(ac.Status.Ne(accountingsync.ConnectionStatusDisconnected)).
+			Where(ac.Status.Ne(accountingconnection.ConnectionStatusDisconnected)).
 			Order(ac.IntegrationType.Asc()), &out.AccountingConnections),
 		keel.CountInto(ep.Where(ep.Status.Eq(domaintypes.StatusActive)), &out.EDIPartners),
 	}

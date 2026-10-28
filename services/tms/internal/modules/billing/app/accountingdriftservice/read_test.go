@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
@@ -18,7 +20,7 @@ import (
 func (f *fakeConnections) GetByType(
 	_ context.Context,
 	_ accountingconnectionports.GetAccountingConnectionRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	return f.current(), nil
 }
 
@@ -45,11 +47,13 @@ func (f *fakeFindings) Summarize(
 func (f *fakeFindings) ListConnection(
 	_ context.Context,
 	req *accountingdriftports.ListAccountingDriftFindingsConnectionRequest,
-) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error) {
+) (*pagination.CursorListResult[*accountingdrift.AccountingDriftFinding], error) {
 	f.mu.Lock()
 	f.lastList = req
 	f.mu.Unlock()
-	return &pagination.CursorListResult[*accountingsync.AccountingDriftFinding]{Items: f.all()}, nil
+	return &pagination.CursorListResult[*accountingdrift.AccountingDriftFinding]{
+		Items: f.all(),
+	}, nil
 }
 
 type fakeChecker struct {
@@ -95,8 +99,8 @@ func TestListScopesTheTableToTheConnection(t *testing.T) {
 	_, err := h.svc.List(t.Context(), &accountingdriftports.ListAccountingDriftFindingsRequest{
 		TenantInfo:      h.tenant,
 		IntegrationType: integration.TypeQuickBooksOnline,
-		Statuses:        []accountingsync.DriftStatus{accountingsync.DriftStatusOpen},
-		Kinds:           []accountingsync.DriftKind{accountingsync.DriftAmountMismatch},
+		Statuses:        []accountingdrift.DriftStatus{accountingdrift.DriftStatusOpen},
+		Kinds:           []accountingdrift.DriftKind{accountingdrift.DriftAmountMismatch},
 		ObjectID:        objectID,
 		Search:          "INV-1",
 	})
@@ -106,8 +110,8 @@ func TestListScopesTheTableToTheConnection(t *testing.T) {
 	require.NotNil(t, req)
 	assert.Equal(t, h.conn.ID, req.ConnectionID)
 	assert.Equal(t, h.tenant, req.Filter.TenantInfo)
-	assert.Equal(t, []accountingsync.DriftStatus{accountingsync.DriftStatusOpen}, req.Statuses)
-	assert.Equal(t, []accountingsync.DriftKind{accountingsync.DriftAmountMismatch}, req.Kinds)
+	assert.Equal(t, []accountingdrift.DriftStatus{accountingdrift.DriftStatusOpen}, req.Statuses)
+	assert.Equal(t, []accountingdrift.DriftKind{accountingdrift.DriftAmountMismatch}, req.Kinds)
 	assert.Equal(t, objectID, req.ObjectID)
 	assert.Equal(t, "INV-1", req.Search)
 }

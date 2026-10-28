@@ -1,6 +1,11 @@
 package agentquerytoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -225,8 +230,8 @@ func mappingGapsListSpec() graphQLListSpec {
 			fieldRequiredOnly: "Only the mappings setup cannot finish without.",
 		},
 		defaults: map[string]any{fieldMappingState: []any{
-			string(accountingsync.MappingStateUnmatched),
-			string(accountingsync.MappingStateProposed),
+			string(accountingmapping.MappingStateUnmatched),
+			string(accountingmapping.MappingStateProposed),
 		}},
 		resource: permission.ResourceAccountingIntegration,
 		shape:    mappingActions,
@@ -348,7 +353,7 @@ func withinTolerance(items []map[string]any, beside map[string]any) {
 	for _, item := range items {
 		kind, _ := item["kind"].(string)
 		difference, known := typeutils.IntOf(item["differenceMinor"])
-		within := known && accountingsync.DriftKind(kind).IsMoney()
+		within := known && accountingdrift.DriftKind(kind).IsMoney()
 		if difference < 0 {
 			difference = -difference
 		}
@@ -362,9 +367,9 @@ func withinTolerance(items []map[string]any, beside map[string]any) {
 func inboundActions(row map[string]any, _ map[string]struct{}, _ clock) {
 	status, _ := row[accountingStatusField].(string)
 	reason, _ := row["reason"].(string)
-	open := accountingsync.InboundChangeStatus(status).IsOpen()
-	row["canApply"] = open && status == string(accountingsync.InboundStatusProposed) &&
-		accountingsync.InboundChangeReason(reason).Applicable()
+	open := accountinginbound.InboundChangeStatus(status).IsOpen()
+	row["canApply"] = open && status == string(accountinginbound.InboundStatusProposed) &&
+		accountinginbound.InboundChangeReason(reason).Applicable()
 	row["canIgnore"] = open
 }
 
@@ -420,14 +425,14 @@ func syncMeaning(record map[string]any, provider string) string {
 // mappingActions says whether a mapping's record can be created in the
 // accounting system rather than chosen.
 func mappingActions(row map[string]any, _ map[string]struct{}, _ clock) {
-	kind := accountingsync.ReferenceKind(stringOf(row["providerKind"]))
+	kind := accountingprovider.ReferenceKind(stringOf(row["providerKind"]))
 	row["canCreateInAccountingSystem"] = kind.Creatable() &&
-		stringOf(row[fieldMappingState]) != string(accountingsync.MappingStateConfirmed)
+		stringOf(row[fieldMappingState]) != string(accountingmapping.MappingStateConfirmed)
 }
 
 // mappingSetupPath names the page where a person finishes setup.
 func mappingSetupPath(summary map[string]any) {
-	summary["setupPath"] = accountingsync.SetupPath(
+	summary["setupPath"] = accountingprovider.SetupPath(
 		integration.Type(stringOf(summary["integrationType"])))
 }
 
@@ -439,7 +444,7 @@ func connectionMeaning(record map[string]any, _ map[string]struct{}, _ clock) {
 	system := integration.Type(stringOf(record[argIntegrationType]))
 	provider := stringOf(record[accountingProviderField])
 	available, _ := record["available"].(bool)
-	record["setupPath"] = accountingsync.SetupPath(system)
+	record["setupPath"] = accountingprovider.SetupPath(system)
 	conn, connected := record[accountingConnectionField].(map[string]any)
 	if !connected {
 		record[accountingStatusField] = "NeverConnected"
@@ -447,7 +452,7 @@ func connectionMeaning(record map[string]any, _ map[string]struct{}, _ clock) {
 		record[accountingMeaningField] = connectionStatusMeaning(provider, "", available)
 		return
 	}
-	status := accountingsync.ConnectionStatus(stringOf(conn[accountingStatusField]))
+	status := accountingconnection.ConnectionStatus(stringOf(conn[accountingStatusField]))
 	conn["sending"] = connectionSending(conn, status)
 	record[accountingMeaningField] = connectionStatusMeaning(provider, status, available)
 	category := accountingsync.ErrorCategory(stringOf(conn["lastErrorCategory"]))
@@ -463,11 +468,11 @@ func connectionMeaning(record map[string]any, _ map[string]struct{}, _ clock) {
 
 // connectionSending is whether and how documents are sent, as the domain
 // decides it from the connection's state.
-func connectionSending(conn map[string]any, status accountingsync.ConnectionStatus) string {
-	active := status != accountingsync.ConnectionStatusDisconnected &&
-		status != accountingsync.ConnectionStatusRevoked
+func connectionSending(conn map[string]any, status accountingconnection.ConnectionStatus) string {
+	active := status != accountingconnection.ConnectionStatusDisconnected &&
+		status != accountingconnection.ConnectionStatusRevoked
 	syncing := active &&
-		stringOf(conn["setupStep"]) == string(accountingsync.SetupStepComplete) &&
+		stringOf(conn["setupStep"]) == string(accountingconnection.SetupStepComplete) &&
 		conn["syncStartDate"] != nil && conn["syncEnabledAt"] != nil
 	automatic, _ := conn["autoSync"].(bool)
 	switch {
@@ -484,20 +489,20 @@ func connectionSending(conn map[string]any, status accountingsync.ConnectionStat
 
 func connectionStatusMeaning(
 	provider string,
-	status accountingsync.ConnectionStatus,
+	status accountingconnection.ConnectionStatus,
 	available bool,
 ) string {
 	switch status {
-	case accountingsync.ConnectionStatusConnected:
+	case accountingconnection.ConnectionStatusConnected:
 		return provider + " is connected and answering."
-	case accountingsync.ConnectionStatusDegraded:
+	case accountingconnection.ConnectionStatusDegraded:
 		return "The last check failed; Trenova retries automatically."
-	case accountingsync.ConnectionStatusFailing:
+	case accountingconnection.ConnectionStatusFailing:
 		return "Several checks failed in a row; nothing reaches the books until it recovers."
-	case accountingsync.ConnectionStatusRevoked:
+	case accountingconnection.ConnectionStatusRevoked:
 		return "The authorization was revoked or expired. A person must reconnect " +
 			provider + "."
-	case accountingsync.ConnectionStatusDisconnected:
+	case accountingconnection.ConnectionStatusDisconnected:
 		return "Someone disconnected " + provider + " on purpose."
 	default:
 		if !available {

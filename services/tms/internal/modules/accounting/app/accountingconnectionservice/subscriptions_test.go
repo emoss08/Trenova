@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -37,8 +38,8 @@ type fakeSubscriber struct {
 	renewErr     error
 }
 
-func (f *fakeSubscriber) grant(id, url string) *accountingsync.WebhookSubscriptionGrant {
-	return &accountingsync.WebhookSubscriptionGrant{
+func (f *fakeSubscriber) grant(id, url string) *accountingconnection.WebhookSubscriptionGrant {
+	return &accountingconnection.WebhookSubscriptionGrant{
 		ExternalID:      id,
 		NotificationURL: url,
 		ETag:            "W/\"" + id + "\"",
@@ -48,7 +49,7 @@ func (f *fakeSubscriber) grant(id, url string) *accountingsync.WebhookSubscripti
 
 func (f *fakeSubscriber) subscribe(
 	req *accountingconnectorports.AccountingSubscribeRequest,
-) (*accountingsync.WebhookSubscriptionGrant, error) {
+) (*accountingconnection.WebhookSubscriptionGrant, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.subscribeErr != nil {
@@ -61,7 +62,7 @@ func (f *fakeSubscriber) subscribe(
 
 func (f *fakeSubscriber) renew(
 	req *accountingconnectorports.AccountingRenewSubscriptionRequest,
-) (*accountingsync.WebhookSubscriptionGrant, error) {
+) (*accountingconnection.WebhookSubscriptionGrant, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.renewErr != nil {
@@ -148,14 +149,14 @@ func (c *bcConnector) SubscriptionRenewWindow() time.Duration { return 24 * time
 func (c *bcConnector) Subscribe(
 	_ context.Context,
 	req *accountingconnectorports.AccountingSubscribeRequest,
-) (*accountingsync.WebhookSubscriptionGrant, error) {
+) (*accountingconnection.WebhookSubscriptionGrant, error) {
 	return c.sub.subscribe(req)
 }
 
 func (c *bcConnector) RenewSubscription(
 	_ context.Context,
 	req *accountingconnectorports.AccountingRenewSubscriptionRequest,
-) (*accountingsync.WebhookSubscriptionGrant, error) {
+) (*accountingconnection.WebhookSubscriptionGrant, error) {
 	return c.sub.renew(req)
 }
 
@@ -177,17 +178,17 @@ func (c *bcConnector) VerifyWebhook(string, []byte) error { return errProvider }
 
 type fakeSubscriptions struct {
 	mu   sync.Mutex
-	rows map[pulid.ID]*accountingsync.AccountingWebhookSubscription
+	rows map[pulid.ID]*accountingconnection.AccountingWebhookSubscription
 	conn *fakeConnections
 }
 
 func (f *fakeSubscriptions) ListByConnection(
 	_ context.Context,
 	req accountingconnectionports.ListAccountingWebhookSubscriptionsRequest,
-) ([]*accountingsync.AccountingWebhookSubscription, error) {
+) ([]*accountingconnection.AccountingWebhookSubscription, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := make([]*accountingsync.AccountingWebhookSubscription, 0, len(f.rows))
+	out := make([]*accountingconnection.AccountingWebhookSubscription, 0, len(f.rows))
 	for _, row := range f.rows {
 		if row.ConnectionID == req.ConnectionID && row.OrganizationID == req.TenantInfo.OrgID {
 			copied := *row
@@ -201,10 +202,10 @@ func (f *fakeSubscriptions) ListByExternalIDs(
 	_ context.Context,
 	typ integration.Type,
 	ids []string,
-) ([]*accountingsync.AccountingWebhookSubscription, error) {
+) ([]*accountingconnection.AccountingWebhookSubscription, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := make([]*accountingsync.AccountingWebhookSubscription, 0, len(ids))
+	out := make([]*accountingconnection.AccountingWebhookSubscription, 0, len(ids))
 	for _, row := range f.rows {
 		for _, id := range ids {
 			if row.IntegrationType == typ && row.ExternalSubscriptionID == id {
@@ -219,10 +220,10 @@ func (f *fakeSubscriptions) ListByExternalIDs(
 func (f *fakeSubscriptions) ListConnections(
 	_ context.Context,
 	req accountingconnectionports.ListWebhookSubscriptionConnectionsRequest,
-) ([]*accountingsync.AccountingConnection, error) {
+) ([]*accountingconnection.AccountingConnection, error) {
 	f.conn.mu.Lock()
 	defer f.conn.mu.Unlock()
-	out := make([]*accountingsync.AccountingConnection, 0, len(f.conn.rows))
+	out := make([]*accountingconnection.AccountingConnection, 0, len(f.conn.rows))
 	for _, conn := range f.conn.rows {
 		if conn.IntegrationType == integration.TypeBusinessCentral &&
 			(req.AfterID.IsNil() || conn.ID > req.AfterID) {
@@ -234,8 +235,8 @@ func (f *fakeSubscriptions) ListConnections(
 
 func (f *fakeSubscriptions) Create(
 	_ context.Context,
-	entity *accountingsync.AccountingWebhookSubscription,
-) (*accountingsync.AccountingWebhookSubscription, error) {
+	entity *accountingconnection.AccountingWebhookSubscription,
+) (*accountingconnection.AccountingWebhookSubscription, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	entity.ID = pulid.MustNew("acctwhs_")
@@ -246,8 +247,8 @@ func (f *fakeSubscriptions) Create(
 
 func (f *fakeSubscriptions) Update(
 	_ context.Context,
-	entity *accountingsync.AccountingWebhookSubscription,
-) (*accountingsync.AccountingWebhookSubscription, error) {
+	entity *accountingconnection.AccountingWebhookSubscription,
+) (*accountingconnection.AccountingWebhookSubscription, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if _, ok := f.rows[entity.ID]; !ok {
@@ -269,10 +270,10 @@ func (f *fakeSubscriptions) Delete(
 	return nil
 }
 
-func (f *fakeSubscriptions) all() []*accountingsync.AccountingWebhookSubscription {
+func (f *fakeSubscriptions) all() []*accountingconnection.AccountingWebhookSubscription {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := make([]*accountingsync.AccountingWebhookSubscription, 0, len(f.rows))
+	out := make([]*accountingconnection.AccountingWebhookSubscription, 0, len(f.rows))
 	for _, row := range f.rows {
 		copied := *row
 		out = append(out, &copied)
@@ -284,7 +285,7 @@ type bcHarness struct {
 	*harness
 	bc   *bcProvider
 	subs *fakeSubscriptions
-	conn *accountingsync.AccountingConnection
+	conn *accountingconnection.AccountingConnection
 }
 
 func newBCHarness(t *testing.T) *bcHarness {
@@ -296,7 +297,7 @@ func newBCHarness(t *testing.T) *bcHarness {
 		base:          "https://api.example.com/api/v1",
 	}
 	subs := &fakeSubscriptions{
-		rows: map[pulid.ID]*accountingsync.AccountingWebhookSubscription{},
+		rows: map[pulid.ID]*accountingconnection.AccountingWebhookSubscription{},
 		conn: h.connections,
 	}
 	h.svc = New(Params{
@@ -320,21 +321,21 @@ func newBCHarness(t *testing.T) *bcHarness {
 	return bh
 }
 
-func (h *bcHarness) seedConnection(t *testing.T) *accountingsync.AccountingConnection {
+func (h *bcHarness) seedConnection(t *testing.T) *accountingconnection.AccountingConnection {
 	t.Helper()
 	now := timeutils.NowUnix()
-	conn := &accountingsync.AccountingConnection{
+	conn := &accountingconnection.AccountingConnection{
 		ID:              pulid.MustNew("acctc_"),
 		OrganizationID:  h.tenant.OrgID,
 		BusinessUnitID:  h.tenant.BuID,
 		IntegrationType: integration.TypeBusinessCentral,
 		ExternalRealmID: bcRealm,
-		Status:          accountingsync.ConnectionStatusConnected,
-		AppSource:       accountingsync.AppSourceInstance,
+		Status:          accountingconnection.ConnectionStatusConnected,
+		AppSource:       accountingconnection.AppSourceInstance,
 		ConnectedAt:     now,
 	}
 	conn.BindApp(testInstanceApp.Identity())
-	conn.EnableSync(accountingsync.SyncSettings{StartDate: now}, now)
+	conn.EnableSync(accountingconnection.SyncSettings{StartDate: now}, now)
 	grant, err := h.svc.seal(conn, &accountingconnectorports.AccountingTokenGrant{
 		AccessToken:     "bc-access",
 		RefreshToken:    "bc-refresh",
@@ -394,7 +395,7 @@ func TestTheSweepSubscribesEveryResourceAndSealsItsSecret(t *testing.T) {
 	rows := h.subs.all()
 	require.Len(t, rows, 2)
 	for _, row := range rows {
-		assert.Equal(t, accountingsync.WebhookSubscriptionActive, row.Status)
+		assert.Equal(t, accountingconnection.WebhookSubscriptionActive, row.Status)
 		assert.Equal(
 			t,
 			"https://api.example.com/api/v1/webhooks/accounting/businesscentral/",
@@ -469,7 +470,7 @@ func TestWithoutAPublicAddressNothingSubscribes(t *testing.T) {
 
 	assert.Empty(t, h.bc.sub.created)
 	for _, row := range h.subs.all() {
-		assert.Equal(t, accountingsync.WebhookSubscriptionFailed, row.Status)
+		assert.Equal(t, accountingconnection.WebhookSubscriptionFailed, row.Status)
 		assert.Equal(t, errNoNotificationURL.Error(), row.LastError)
 	}
 	status, err := h.svc.Status(t.Context(), h.tenant, integration.TypeBusinessCentral)
@@ -487,7 +488,7 @@ func TestARefusedSubscriptionIsMarkedAndBacksOff(t *testing.T) {
 	sweep := h.sweep(t)
 	assert.Equal(t, 1, sweep.Failed)
 	for _, row := range h.subs.all() {
-		assert.Equal(t, accountingsync.WebhookSubscriptionFailed, row.Status)
+		assert.Equal(t, accountingconnection.WebhookSubscriptionFailed, row.Status)
 		assert.Equal(t, "handshake failed", row.LastError)
 	}
 
@@ -551,12 +552,12 @@ func TestANotificationOnAnotherAppsPathIsRefused(t *testing.T) {
 	h := newBCHarness(t)
 	h.sweep(t)
 	row := h.subs.all()[0]
-	other := &accountingsync.AccountingAppCredential{
+	other := &accountingconnection.AccountingAppCredential{
 		ID:              pulid.MustNew("acctapp_"),
 		OrganizationID:  pulid.MustNew("org_"),
 		BusinessUnitID:  pulid.MustNew("bu_"),
 		IntegrationType: integration.TypeBusinessCentral,
-		Environment:     accountingsync.AppEnvironmentProduction,
+		Environment:     accountingprovider.AppEnvironmentProduction,
 		ClientID:        "other-client",
 	}
 	sealed, err := h.encryption.EncryptStringWithAAD(
@@ -596,8 +597,10 @@ func TestDisconnectingReleasesTheSubscriptions(t *testing.T) {
 func TestTheProfileWithoutPaymentsForcesThePolicyOff(t *testing.T) {
 	t.Parallel()
 
-	conn := &accountingsync.AccountingConnection{IntegrationType: integration.TypeBusinessCentral}
-	conn.SetInboundPayments(accountingsync.InboundPaymentsApply)
-	assert.Equal(t, accountingsync.InboundPaymentsOff, conn.PaymentPolicy())
+	conn := &accountingconnection.AccountingConnection{
+		IntegrationType: integration.TypeBusinessCentral,
+	}
+	conn.SetInboundPayments(accountingconnection.InboundPaymentsApply)
+	assert.Equal(t, accountingconnection.InboundPaymentsOff, conn.PaymentPolicy())
 	assert.False(t, conn.ReadsPayments())
 }

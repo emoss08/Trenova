@@ -3,6 +3,8 @@ package watchtowersources
 import (
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -39,19 +41,22 @@ func AccountingSyncAttentionKey(group *accountingsyncports.AccountingSyncAttenti
 	return string(group.ErrorCategory)
 }
 
-func AccountingSyncAttentionSourceID(conn *accountingsync.AccountingConnection, key string) string {
+func AccountingSyncAttentionSourceID(
+	conn *accountingconnection.AccountingConnection,
+	key string,
+) string {
 	return conn.ID.String() + accountingSyncSuffix + key
 }
 
-func AccountingSyncPausedSourceID(conn *accountingsync.AccountingConnection) string {
+func AccountingSyncPausedSourceID(conn *accountingconnection.AccountingConnection) string {
 	return conn.ID.String() + accountingPausedSuffix
 }
 
-func AccountingSafetyNetSourceID(conn *accountingsync.AccountingConnection) string {
+func AccountingSafetyNetSourceID(conn *accountingconnection.AccountingConnection) string {
 	return conn.ID.String() + accountingSafetyNetSuffix
 }
 
-func tenantOf(conn *accountingsync.AccountingConnection) pagination.TenantInfo {
+func tenantOf(conn *accountingconnection.AccountingConnection) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
 }
 
@@ -63,7 +68,7 @@ func documentsLabel(count int) string {
 }
 
 func DescribeAccountingSyncAttention(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	key string,
 	groups []accountingsyncports.AccountingSyncAttentionGroup,
 ) (watchtowerports.WatchtowerItemInput, bool) {
@@ -85,7 +90,7 @@ func DescribeAccountingSyncAttention(
 		return watchtowerports.WatchtowerItemInput{}, false
 	}
 
-	provider := accountingsync.ProviderName(conn.IntegrationType)
+	provider := accountingprovider.ProviderName(conn.IntegrationType)
 	severity := watchtower.SeverityWarning
 	eventKind := agent.EventAccountingSyncBlocked
 	title := documentsLabel(total) + " blocked from " + provider
@@ -119,14 +124,14 @@ func DescribeAccountingSyncAttention(
 }
 
 func DescribeAccountingSyncPaused(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	now int64,
 ) (watchtowerports.WatchtowerItemInput, bool) {
 	if conn.PausedAt == nil || !conn.IsActive() || now-*conn.PausedAt < accountingPausedAfter {
 		return watchtowerports.WatchtowerItemInput{}, false
 	}
 
-	provider := accountingsync.ProviderName(conn.IntegrationType)
+	provider := accountingprovider.ProviderName(conn.IntegrationType)
 	summary := "Documents keep queuing but nothing is sent until sync resumes."
 	if conn.PausedReason != "" {
 		summary = "Paused: " + conn.PausedReason + ". " + summary
@@ -147,7 +152,7 @@ func DescribeAccountingSyncPaused(
 }
 
 func DescribeAccountingSafetyNet(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	found int,
 	at int64,
 ) (watchtowerports.WatchtowerItemInput, bool) {

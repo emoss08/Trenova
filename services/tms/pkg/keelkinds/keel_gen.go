@@ -4,6 +4,7 @@ package keelkinds
 
 import (
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -11,6 +12,117 @@ import (
 	pgvector "github.com/pgvector/pgvector-go"
 	"github.com/shopspring/decimal"
 )
+
+// AccountingproviderAppEnvironmentCol is a column of accountingprovider.AppEnvironment values.
+type AccountingproviderAppEnvironmentCol struct{ keel.StringCol }
+
+func (c AccountingproviderAppEnvironmentCol) Eq(v accountingprovider.AppEnvironment) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c AccountingproviderAppEnvironmentCol) Ne(v accountingprovider.AppEnvironment) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c AccountingproviderAppEnvironmentCol) Gt(v accountingprovider.AppEnvironment) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c AccountingproviderAppEnvironmentCol) Gte(v accountingprovider.AppEnvironment) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c AccountingproviderAppEnvironmentCol) Lt(v accountingprovider.AppEnvironment) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c AccountingproviderAppEnvironmentCol) Lte(v accountingprovider.AppEnvironment) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c AccountingproviderAppEnvironmentCol) IsDistinctFrom(v accountingprovider.AppEnvironment) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c AccountingproviderAppEnvironmentCol) Between(lo, hi accountingprovider.AppEnvironment) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c AccountingproviderAppEnvironmentCol) To(v accountingprovider.AppEnvironment) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c AccountingproviderAppEnvironmentCol) In(vs ...accountingprovider.AppEnvironment) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c AccountingproviderAppEnvironmentCol) NotIn(vs ...accountingprovider.AppEnvironment) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// AccountingproviderReferenceKindCol is a column of accountingprovider.ReferenceKind values.
+type AccountingproviderReferenceKindCol struct{ keel.StringCol }
+
+func (c AccountingproviderReferenceKindCol) Eq(v accountingprovider.ReferenceKind) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c AccountingproviderReferenceKindCol) Ne(v accountingprovider.ReferenceKind) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c AccountingproviderReferenceKindCol) Gt(v accountingprovider.ReferenceKind) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c AccountingproviderReferenceKindCol) Gte(v accountingprovider.ReferenceKind) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c AccountingproviderReferenceKindCol) Lt(v accountingprovider.ReferenceKind) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c AccountingproviderReferenceKindCol) Lte(v accountingprovider.ReferenceKind) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c AccountingproviderReferenceKindCol) IsDistinctFrom(v accountingprovider.ReferenceKind) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c AccountingproviderReferenceKindCol) Between(lo, hi accountingprovider.ReferenceKind) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c AccountingproviderReferenceKindCol) To(v accountingprovider.ReferenceKind) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c AccountingproviderReferenceKindCol) In(vs ...accountingprovider.ReferenceKind) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c AccountingproviderReferenceKindCol) NotIn(vs ...accountingprovider.ReferenceKind) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// AccountingproviderSyncModeCol is a column of accountingprovider.SyncMode values.
+type AccountingproviderSyncModeCol struct{ keel.StringCol }
+
+func (c AccountingproviderSyncModeCol) Eq(v accountingprovider.SyncMode) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c AccountingproviderSyncModeCol) Ne(v accountingprovider.SyncMode) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c AccountingproviderSyncModeCol) Gt(v accountingprovider.SyncMode) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c AccountingproviderSyncModeCol) Gte(v accountingprovider.SyncMode) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c AccountingproviderSyncModeCol) Lt(v accountingprovider.SyncMode) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c AccountingproviderSyncModeCol) Lte(v accountingprovider.SyncMode) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c AccountingproviderSyncModeCol) IsDistinctFrom(v accountingprovider.SyncMode) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c AccountingproviderSyncModeCol) Between(lo, hi accountingprovider.SyncMode) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c AccountingproviderSyncModeCol) To(v accountingprovider.SyncMode) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c AccountingproviderSyncModeCol) In(vs ...accountingprovider.SyncMode) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c AccountingproviderSyncModeCol) NotIn(vs ...accountingprovider.SyncMode) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
 
 // DecimalDecimalCol is a column of decimal.Decimal values.
 type DecimalDecimalCol struct{ keel.AnyCol }

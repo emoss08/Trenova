@@ -5,6 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
@@ -20,8 +23,8 @@ import (
 )
 
 type fakeMappingWriter struct {
-	row       *accountingsync.AccountingMapping
-	refs      []*accountingsync.AccountingReferenceObject
+	row       *accountingmapping.AccountingMapping
+	refs      []*accountingmapping.AccountingReferenceObject
 	summary   *accountingmappingports.AccountingMappingSummary
 	found     *accountingmappingports.SetAccountingMappingRequest
 	set       *accountingmappingports.SetAccountingMappingRequest
@@ -35,7 +38,7 @@ type fakeMappingWriter struct {
 func (f *fakeMappingWriter) GuardHistory(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	row *accountingsync.AccountingMapping,
+	row *accountingmapping.AccountingMapping,
 	acknowledged bool,
 ) (int, error) {
 	if f.used == 0 || acknowledged {
@@ -54,7 +57,7 @@ func (f *fakeMappingWriter) GuardHistory(
 func (f *fakeMappingWriter) FindMapping(
 	_ context.Context,
 	req *accountingmappingports.SetAccountingMappingRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	f.found = req
 	if f.row == nil {
 		return nil, errortypes.NewNotFoundError("Accounting mapping not found")
@@ -66,8 +69,8 @@ func (f *fakeMappingWriter) FindMapping(
 func (f *fakeMappingWriter) GetReferenceObjects(
 	_ context.Context,
 	req *accountingmappingports.GetAccountingReferenceObjectsRequest,
-) ([]*accountingsync.AccountingReferenceObject, error) {
-	out := make([]*accountingsync.AccountingReferenceObject, 0, 1)
+) ([]*accountingmapping.AccountingReferenceObject, error) {
+	out := make([]*accountingmapping.AccountingReferenceObject, 0, 1)
 	for _, ref := range f.refs {
 		if ref.Kind == req.Kind && len(req.ExternalIDs) == 1 &&
 			ref.ExternalID == req.ExternalIDs[0] {
@@ -80,7 +83,7 @@ func (f *fakeMappingWriter) GetReferenceObjects(
 func (f *fakeMappingWriter) Set(
 	_ context.Context,
 	req *accountingmappingports.SetAccountingMappingRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -96,7 +99,7 @@ func (f *fakeMappingWriter) Set(
 func (f *fakeMappingWriter) Clear(
 	_ context.Context,
 	req *accountingmappingports.AccountingMappingActionRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -110,7 +113,7 @@ func (f *fakeMappingWriter) Clear(
 func (f *fakeMappingWriter) CreateReferenceRecord(
 	_ context.Context,
 	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -135,7 +138,7 @@ func (f *fakeMappingWriter) CreateReferenceRecord(
 func (f *fakeMappingWriter) RequestRefresh(
 	_ context.Context,
 	req *accountingmappingports.AccountingSetupRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -151,23 +154,26 @@ func (f *fakeMappingWriter) Summary(
 	return f.summary, nil
 }
 
-func proposedCustomerMapping() *accountingsync.AccountingMapping {
-	return &accountingsync.AccountingMapping{
+func proposedCustomerMapping() *accountingmapping.AccountingMapping {
+	return &accountingmapping.AccountingMapping{
 		ID:              pulid.MustNew("acctm_"),
 		ConnectionID:    pulid.MustNew("acctc_"),
 		TargetType:      accountingsync.TargetCustomer,
 		TrenovaObjectID: pulid.MustNew("cus_"),
 		TargetLabel:     "Acme Logistics",
-		ProviderKind:    accountingsync.ReferenceKindCustomer,
-		State:           accountingsync.MappingStateProposed,
+		ProviderKind:    accountingprovider.ReferenceKindCustomer,
+		State:           accountingmapping.MappingStateProposed,
 		ExternalID:      "50",
 		ExternalName:    "Acme Logistics, Inc.",
 	}
 }
 
-func customerRef(externalID, name string, active bool) *accountingsync.AccountingReferenceObject {
-	return &accountingsync.AccountingReferenceObject{
-		Kind:       accountingsync.ReferenceKindCustomer,
+func customerRef(
+	externalID, name string,
+	active bool,
+) *accountingmapping.AccountingReferenceObject {
+	return &accountingmapping.AccountingReferenceObject{
+		Kind:       accountingprovider.ReferenceKindCustomer,
 		ExternalID: externalID,
 		Name:       name,
 		Active:     active,
@@ -178,7 +184,7 @@ func TestSetAccountingMapping_SetsAnExistingRecordAsTheAgent(t *testing.T) {
 	t.Parallel()
 
 	row := proposedCustomerMapping()
-	writer := &fakeMappingWriter{row: row, refs: []*accountingsync.AccountingReferenceObject{
+	writer := &fakeMappingWriter{row: row, refs: []*accountingmapping.AccountingReferenceObject{
 		customerRef("51", "Acme Logistics LLC", true),
 	}}
 	tool := newSetAccountingMappingTool(writer)
@@ -193,7 +199,7 @@ func TestSetAccountingMapping_SetsAnExistingRecordAsTheAgent(t *testing.T) {
 	require.NotNil(t, writer.set)
 	assert.Equal(t, row.ID, writer.set.MappingID)
 	assert.Equal(t, "51", writer.set.ExternalID)
-	assert.Equal(t, accountingsync.MappingSourceAgent, writer.set.Source)
+	assert.Equal(t, accountingmapping.MappingSourceAgent, writer.set.Source)
 	assert.Equal(t, "The LLC is the entity Acme invoices under.", writer.set.Reason)
 	assert.Equal(t, params.Actor.UserID, writer.set.UserID)
 }
@@ -202,7 +208,7 @@ func TestSetAccountingMapping_RefusesAnInventedOrInactiveRecord(t *testing.T) {
 	t.Parallel()
 
 	row := proposedCustomerMapping()
-	writer := &fakeMappingWriter{row: row, refs: []*accountingsync.AccountingReferenceObject{
+	writer := &fakeMappingWriter{row: row, refs: []*accountingmapping.AccountingReferenceObject{
 		customerRef("52", "Acme (old)", false),
 	}}
 	tool := newSetAccountingMappingTool(writer)
@@ -263,10 +269,10 @@ func TestClearAccountingMapping_RefusesAnUnmatchedMapping(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, writer.cleared)
 	assert.Equal(t, row.ID, writer.cleared.ID)
-	assert.Equal(t, accountingsync.MappingSourceAgent, writer.cleared.Source)
+	assert.Equal(t, accountingmapping.MappingSourceAgent, writer.cleared.Source)
 
 	writer.cleared = nil
-	writer.row.State = accountingsync.MappingStateUnmatched
+	writer.row.State = accountingmapping.MappingStateUnmatched
 	require.Error(t, tool.Execute(t.Context(), params))
 	assert.Nil(t, writer.cleared)
 }
@@ -286,15 +292,15 @@ func TestCreateAccountingReferenceRecord_OnlyCreatesWhatTrenovaMayCreate(t *test
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, writer.created)
 	assert.Equal(t, "Acme Logistics", writer.created.Name)
-	assert.Equal(t, accountingsync.MappingSourceAgent, writer.created.Source)
+	assert.Equal(t, accountingmapping.MappingSourceAgent, writer.created.Source)
 
 	writer.created = nil
-	writer.row.ProviderKind = accountingsync.ReferenceKindAccount
+	writer.row.ProviderKind = accountingprovider.ReferenceKindAccount
 	writer.row.TargetType = accountingsync.TargetAccountRole
 	require.Error(t, tool.Execute(t.Context(), params))
 
-	writer.row.ProviderKind = accountingsync.ReferenceKindCustomer
-	writer.row.State = accountingsync.MappingStateConfirmed
+	writer.row.ProviderKind = accountingprovider.ReferenceKindCustomer
+	writer.row.State = accountingmapping.MappingStateConfirmed
 	require.Error(t, tool.Execute(t.Context(), params))
 	assert.Nil(t, writer.created)
 }
@@ -311,9 +317,9 @@ func TestRefreshAccountingReferenceData_NeedsAConnection(t *testing.T) {
 	require.Error(t, tool.Execute(t.Context(), params))
 	assert.Nil(t, writer.refreshed)
 
-	writer.summary.Connection = &accountingsync.AccountingConnection{
+	writer.summary.Connection = &accountingconnection.AccountingConnection{
 		ID:                  pulid.MustNew("acctc_"),
-		Status:              accountingsync.ConnectionStatusConnected,
+		Status:              accountingconnection.ConnectionStatusConnected,
 		ExternalCompanyName: "Acme Freight",
 	}
 	require.NoError(t, tool.Execute(t.Context(), params))

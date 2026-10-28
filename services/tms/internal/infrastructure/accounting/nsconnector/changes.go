@@ -9,6 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
@@ -44,8 +47,8 @@ type targetInfo struct {
 	typeCode   string
 	recordType string
 	spec       *referenceSpec
-	reference  accountingsync.ReferenceKind
-	payment    accountingsync.InboundChangeKind
+	reference  accountingprovider.ReferenceKind
+	payment    accountinginbound.InboundChangeKind
 	objects    []accountingsync.SyncObjectType
 	limit      int
 }
@@ -68,7 +71,7 @@ var targetTable = []targetInfo{
 		typeCode:   typeCustomerPayment,
 		recordType: recordCustomerPayment,
 		spec:       &transactionSpec,
-		payment:    accountingsync.InboundCustomerPayment,
+		payment:    accountinginbound.InboundCustomerPayment,
 		limit:      paymentsPerRead,
 	},
 	{
@@ -76,7 +79,7 @@ var targetTable = []targetInfo{
 		typeCode:   typeVendorPayment,
 		recordType: recordVendorPayment,
 		spec:       &transactionSpec,
-		payment:    accountingsync.InboundBillPayment,
+		payment:    accountinginbound.InboundBillPayment,
 		limit:      paymentsPerRead,
 	},
 	{name: targetInvoices, typeCode: typeInvoice, spec: &transactionSpec, objects: salesObjects},
@@ -93,10 +96,14 @@ var targetTable = []targetInfo{
 		spec:     &transactionSpec,
 		objects:  billObjects,
 	},
-	{name: targetCustomers, spec: &customerSpec, reference: accountingsync.ReferenceKindCustomer},
-	{name: targetVendors, spec: &vendorSpec, reference: accountingsync.ReferenceKindVendor},
-	{name: targetItems, spec: &itemSpec, reference: accountingsync.ReferenceKindItem},
-	{name: targetAccounts, spec: &accountSpec, reference: accountingsync.ReferenceKindAccount},
+	{
+		name:      targetCustomers,
+		spec:      &customerSpec,
+		reference: accountingprovider.ReferenceKindCustomer,
+	},
+	{name: targetVendors, spec: &vendorSpec, reference: accountingprovider.ReferenceKindVendor},
+	{name: targetItems, spec: &itemSpec, reference: accountingprovider.ReferenceKindItem},
+	{name: targetAccounts, spec: &accountSpec, reference: accountingprovider.ReferenceKindAccount},
 	{name: targetDeleted},
 }
 
@@ -416,7 +423,7 @@ func (c *changeCollector) payment(
 }
 
 func inboundPaymentOf(
-	kind accountingsync.InboundChangeKind,
+	kind accountinginbound.InboundChangeKind,
 	row *transactionRow,
 	record *transactionRecord,
 ) accountingconnectorports.AccountingInboundPayment {
@@ -426,7 +433,7 @@ func inboundPaymentOf(
 		operation = accountingconnectorports.AccountingChangeVoid
 	}
 	total := record.Payment
-	if kind == accountingsync.InboundBillPayment || total.IsZero() {
+	if kind == accountinginbound.InboundBillPayment || total.IsZero() {
 		total = record.Total
 	}
 	if total.IsZero() {
@@ -481,25 +488,25 @@ func compactName(raw string) string {
 }
 
 func inboundDocumentKind(
-	kind accountingsync.InboundChangeKind,
+	kind accountinginbound.InboundChangeKind,
 	docType string,
-) accountingsync.InboundDocumentKind {
+) accountinginbound.InboundDocumentKind {
 	switch compactName(docType) {
 	case "invoice", "custinvc":
-		return accountingsync.InboundDocInvoice
+		return accountinginbound.InboundDocInvoice
 	case "creditmemo", "custcred":
-		return accountingsync.InboundDocCreditMemo
+		return accountinginbound.InboundDocCreditMemo
 	case "bill", "vendorbill", "vendbill":
-		return accountingsync.InboundDocBill
+		return accountinginbound.InboundDocBill
 	case "vendorcredit", "billcredit", "vendcred":
-		return accountingsync.InboundDocVendorCredit
+		return accountinginbound.InboundDocVendorCredit
 	case "":
-		if kind == accountingsync.InboundBillPayment {
-			return accountingsync.InboundDocBill
+		if kind == accountinginbound.InboundBillPayment {
+			return accountinginbound.InboundDocBill
 		}
-		return accountingsync.InboundDocInvoice
+		return accountinginbound.InboundDocInvoice
 	default:
-		return accountingsync.InboundDocOther
+		return accountinginbound.InboundDocOther
 	}
 }
 
@@ -627,7 +634,7 @@ func (c *changeCollector) deletedReference(name, id string) {
 	c.page.References = append(
 		c.page.References,
 		accountingconnectorports.AccountingChangedReference{
-			Object: &accountingsync.AccountingReferenceObject{
+			Object: &accountingmapping.AccountingReferenceObject{
 				Kind:       lookupTarget(name).reference,
 				ExternalID: id,
 			},

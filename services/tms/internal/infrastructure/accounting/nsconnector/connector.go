@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -92,8 +94,8 @@ func New(p Params) (*Provider, error) {
 	}
 	if cfg.IsConfigured(&p.Config.App) {
 		provider.instance = &accountingconnectorports.AccountingApp{
-			Source:       accountingsync.AppSourceInstance,
-			Environment:  accountingsync.AppEnvironmentProduction,
+			Source:       accountingconnection.AppSourceInstance,
+			Environment:  accountingprovider.AppEnvironmentProduction,
 			ClientID:     strings.TrimSpace(cfg.ClientID),
 			ClientSecret: strings.TrimSpace(cfg.ClientSecret),
 		}
@@ -316,7 +318,7 @@ func grantOf(token *netsuite.Token) *accountingconnectorports.AccountingTokenGra
 		AccessTokenTTL: token.ExpiresIn,
 	}
 	if token.RefreshToken != "" {
-		grant.RefreshTokenTTL = accountingsync.MustProfile(integration.TypeNetSuite).
+		grant.RefreshTokenTTL = accountingprovider.MustProfile(integration.TypeNetSuite).
 			RefreshTokenLifetime
 	}
 	return grant

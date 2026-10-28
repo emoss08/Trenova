@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection/accountingconnectiondb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -27,8 +27,8 @@ func newPendingCertificate(
 	userID pulid.ID,
 	key string,
 	now int64,
-) *accountingsync.AccountingPendingCertificate {
-	return &accountingsync.AccountingPendingCertificate{
+) *accountingconnection.AccountingPendingCertificate {
+	return &accountingconnection.AccountingPendingCertificate{
 		ID:                   pulid.MustNew("acctpc_"),
 		OrganizationID:       tenant.OrgID,
 		BusinessUnitID:       tenant.BuID,
@@ -74,7 +74,8 @@ func TestPendingCertificateRepository_ReplaceKeepsOnePerTenantAndSystem(t *testi
 	assert.Equal(t, "sealed-2", read.PrivateKeyCiphertext)
 	assert.Equal(t, now+5, read.PreparedAt)
 
-	count, err := accountingsyncdb.AccountingPendingCertificates.Where(keel.True()).Count(ctx, db)
+	count, err := accountingconnectiondb.AccountingPendingCertificates.Where(keel.True()).
+		Count(ctx, db)
 	require.NoError(t, err)
 	assert.EqualValues(t, 1, count)
 
@@ -140,22 +141,24 @@ func TestConnectionRepository_CertificateKeyIsATokenColumn(t *testing.T) {
 	now := timeutils.NowUnix()
 	expires := now + 2*365*24*60*60
 
-	conn := &accountingsync.AccountingConnection{
+	conn := &accountingconnection.AccountingConnection{
 		OrganizationID:  tenant.OrgID,
 		BusinessUnitID:  tenant.BuID,
 		IntegrationType: integration.TypeNetSuite,
 		ExternalRealmID: "1234567_SB1-s3",
 	}
-	conn.UseCertificate(accountingsync.ClientCertificate{
+	conn.UseCertificate(accountingconnection.ClientCertificate{
 		KeyCiphertext: "sealed-key",
 		CertificateID: "Zm9vYmFy",
 		ExpiresAt:     expires,
 	})
-	conn.Connect(data.User.ID, accountingsync.TokenGrant{
+	conn.Connect(data.User.ID, accountingconnection.TokenGrant{
 		AccessTokenCiphertext: "cipher-access",
 		AccessTokenExpiresAt:  now + 3600,
 	}, now)
-	conn.ApplyCompanyFacts(&accountingsync.CompanyFacts{CompanyName: "Peak", HomeCurrency: "USD"})
+	conn.ApplyCompanyFacts(
+		&accountingconnection.CompanyFacts{CompanyName: "Peak", HomeCurrency: "USD"},
+	)
 	created, err := repo.Create(ctx, conn)
 	require.NoError(t, err)
 
@@ -165,7 +168,7 @@ func TestConnectionRepository_CertificateKeyIsATokenColumn(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Empty(t, read.ClientKeyCiphertext, "the key is never read outside the token lock")
-	assert.Equal(t, accountingsync.AuthMethodClientCredentials, read.AuthMethod)
+	assert.Equal(t, accountingconnection.AuthMethodClientCredentials, read.AuthMethod)
 	assert.Equal(t, "Zm9vYmFy", read.ClientCertificateID)
 	require.NotNil(t, read.ClientCertificateExpiresAt)
 	assert.Equal(t, expires, *read.ClientCertificateExpiresAt)
@@ -217,14 +220,14 @@ func TestConnectionRepository_CertificateConnectionMustNameItsCertificate(t *tes
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
 
-	conn := &accountingsync.AccountingConnection{
+	conn := &accountingconnection.AccountingConnection{
 		OrganizationID:  tenant.OrgID,
 		BusinessUnitID:  tenant.BuID,
 		IntegrationType: integration.TypeNetSuite,
 		ExternalRealmID: "1234567",
-		AuthMethod:      accountingsync.AuthMethodClientCredentials,
+		AuthMethod:      accountingconnection.AuthMethodClientCredentials,
 	}
-	conn.Connect(data.User.ID, accountingsync.TokenGrant{AccessTokenCiphertext: "a"}, now)
+	conn.Connect(data.User.ID, accountingconnection.TokenGrant{AccessTokenCiphertext: "a"}, now)
 	_, err := repo.Create(ctx, conn)
 	require.Error(t, err, "the database refuses a certificate connection without a certificate")
 }

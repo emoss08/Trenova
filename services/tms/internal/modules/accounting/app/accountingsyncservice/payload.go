@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
@@ -349,10 +350,10 @@ func (s *Service) salesDocument(
 
 func setLineRef(
 	line *accountingconnectorports.AccountingDocumentLine,
-	kind accountingsync.ReferenceKind,
+	kind accountingprovider.ReferenceKind,
 	externalID string,
 ) {
-	if kind == accountingsync.ReferenceKindAccount {
+	if kind == accountingprovider.ReferenceKindAccount {
 		line.AccountExternalID = externalID
 		return
 	}
@@ -780,7 +781,7 @@ func (s *Service) paymentApplications(
 	}
 	kind := sess.profile.KindFor(accountingsync.TargetItemRole)
 	label := "The short-pay write-off item"
-	if kind == accountingsync.ReferenceKindAccount {
+	if kind == accountingprovider.ReferenceKindAccount {
 		label = "The short-pay write-off account"
 	}
 	writeOff, err := res.require(ctx, mappingTarget{
@@ -791,7 +792,7 @@ func (s *Service) paymentApplications(
 	if err != nil {
 		return err
 	}
-	if kind == accountingsync.ReferenceKindAccount {
+	if kind == accountingprovider.ReferenceKindAccount {
 		doc.ShortPayAccountExternalID = writeOff
 		return nil
 	}

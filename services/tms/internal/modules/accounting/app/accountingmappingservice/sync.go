@@ -4,6 +4,8 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
@@ -22,9 +24,9 @@ import (
 func (s *Service) historyUse(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	row *accountingsync.AccountingMapping,
+	row *accountingmapping.AccountingMapping,
 ) (int, error) {
-	if s.syncRecords == nil || row.State != accountingsync.MappingStateConfirmed {
+	if s.syncRecords == nil || row.State != accountingmapping.MappingStateConfirmed {
 		return 0, nil
 	}
 	usage, err := s.syncRecords.MappingUsage(
@@ -44,7 +46,7 @@ func (s *Service) historyUse(
 func (s *Service) GuardHistory(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	row *accountingsync.AccountingMapping,
+	row *accountingmapping.AccountingMapping,
 	acknowledged bool,
 ) (int, error) {
 	used, err := s.historyUse(ctx, tenantInfo, row)
@@ -112,7 +114,7 @@ func (s *Service) requeueMappingBlocked(
 func (s *Service) EnsureMapping(
 	ctx context.Context,
 	req *accountingmappingports.EnsureAccountingMappingRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	lookup := &accountingmappingports.GetAccountingMappingByTargetRequest{
 		TenantInfo:      req.TenantInfo,
 		ConnectionID:    req.ConnectionID,
@@ -135,7 +137,7 @@ func (s *Service) EnsureMapping(
 	if err != nil {
 		return nil, err
 	}
-	profile := accountingsync.MustProfile(conn.IntegrationType)
+	profile := accountingprovider.MustProfile(conn.IntegrationType)
 	if !profile.OffersKey(req.TargetType, req.Key) {
 		return nil, errortypes.NewValidationError(
 			"targetType",
@@ -149,7 +151,7 @@ func (s *Service) EnsureMapping(
 		return nil, err
 	}
 	t.Kind = profile.KindFor(t.TargetType)
-	if _, err = s.mappings.CreateMissing(ctx, []*accountingsync.AccountingMapping{{
+	if _, err = s.mappings.CreateMissing(ctx, []*accountingmapping.AccountingMapping{{
 		OrganizationID:  req.TenantInfo.OrgID,
 		BusinessUnitID:  req.TenantInfo.BuID,
 		ConnectionID:    req.ConnectionID,
@@ -158,8 +160,8 @@ func (s *Service) EnsureMapping(
 		TrenovaKey:      t.Key,
 		TargetLabel:     t.Label,
 		ProviderKind:    t.Kind,
-		State:           accountingsync.MappingStateUnmatched,
-		Signals:         accountingsync.MappingSignals{},
+		State:           accountingmapping.MappingStateUnmatched,
+		Signals:         accountingmapping.MappingSignals{},
 	}}); err != nil {
 		return nil, err
 	}

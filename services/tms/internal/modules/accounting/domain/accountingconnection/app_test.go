@@ -1,8 +1,9 @@
-package accountingsync
+package accountingconnection
 
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
@@ -12,26 +13,30 @@ import (
 func TestAppFingerprintSeparatesEnvironmentsAndIgnoresPadding(t *testing.T) {
 	t.Parallel()
 
-	sandbox := AppFingerprint(AppEnvironmentSandbox, "client")
+	sandbox := AppFingerprint(accountingprovider.AppEnvironmentSandbox, "client")
 	assert.Len(t, sandbox, appFingerprintLength)
-	assert.Equal(t, sandbox, AppFingerprint(AppEnvironmentSandbox, "  client "))
-	assert.NotEqual(t, sandbox, AppFingerprint(AppEnvironmentProduction, "client"))
-	assert.NotEqual(t, sandbox, AppFingerprint(AppEnvironmentSandbox, "other"))
+	assert.Equal(t, sandbox, AppFingerprint(accountingprovider.AppEnvironmentSandbox, "  client "))
+	assert.NotEqual(
+		t,
+		sandbox,
+		AppFingerprint(accountingprovider.AppEnvironmentProduction, "client"),
+	)
+	assert.NotEqual(t, sandbox, AppFingerprint(accountingprovider.AppEnvironmentSandbox, "other"))
 	assert.NotContains(t, sandbox, "client")
 }
 
 func TestParseAppEnvironment(t *testing.T) {
 	t.Parallel()
 
-	for input, want := range map[string]AppEnvironment{
-		"sandbox":      AppEnvironmentSandbox,
-		" Production ": AppEnvironmentProduction,
+	for input, want := range map[string]accountingprovider.AppEnvironment{
+		"sandbox":      accountingprovider.AppEnvironmentSandbox,
+		" Production ": accountingprovider.AppEnvironmentProduction,
 	} {
-		got, ok := ParseAppEnvironment(input)
+		got, ok := accountingprovider.ParseAppEnvironment(input)
 		require.True(t, ok, input)
 		assert.Equal(t, want, got)
 	}
-	_, ok := ParseAppEnvironment("staging")
+	_, ok := accountingprovider.ParseAppEnvironment("staging")
 	assert.False(t, ok)
 }
 
@@ -40,8 +45,8 @@ func TestConnectedThroughMatchesTheRecordedApp(t *testing.T) {
 
 	tenantApp := AppIdentity{
 		Source:      AppSourceTenant,
-		Environment: AppEnvironmentSandbox,
-		Fingerprint: AppFingerprint(AppEnvironmentSandbox, "tenant"),
+		Environment: accountingprovider.AppEnvironmentSandbox,
+		Fingerprint: AppFingerprint(accountingprovider.AppEnvironmentSandbox, "tenant"),
 	}
 	conn := &AccountingConnection{}
 	conn.BindApp(tenantApp)
@@ -49,7 +54,7 @@ func TestConnectedThroughMatchesTheRecordedApp(t *testing.T) {
 	assert.True(t, conn.ConnectedThrough(tenantApp))
 	assert.False(t, conn.ConnectedThrough(AppIdentity{
 		Source:      AppSourceTenant,
-		Fingerprint: AppFingerprint(AppEnvironmentSandbox, "rotated"),
+		Fingerprint: AppFingerprint(accountingprovider.AppEnvironmentSandbox, "rotated"),
 	}))
 	assert.False(t, conn.ConnectedThrough(AppIdentity{
 		Source:      AppSourceInstance,
@@ -63,18 +68,18 @@ func TestConnectionsFromBeforeAppsWereRecordedBelongToTheInstance(t *testing.T) 
 	legacy := &AccountingConnection{AppSource: AppSourceInstance}
 	assert.True(t, legacy.ConnectedThrough(AppIdentity{
 		Source:      AppSourceInstance,
-		Fingerprint: AppFingerprint(AppEnvironmentProduction, "instance"),
+		Fingerprint: AppFingerprint(accountingprovider.AppEnvironmentProduction, "instance"),
 	}))
 	assert.False(t, legacy.ConnectedThrough(AppIdentity{
 		Source:      AppSourceTenant,
-		Fingerprint: AppFingerprint(AppEnvironmentProduction, "tenant"),
+		Fingerprint: AppFingerprint(accountingprovider.AppEnvironmentProduction, "tenant"),
 	}))
 }
 
 func validCredential() *AccountingAppCredential {
 	cred := &AccountingAppCredential{
 		IntegrationType:        integration.TypeQuickBooksOnline,
-		Environment:            AppEnvironmentSandbox,
+		Environment:            accountingprovider.AppEnvironmentSandbox,
 		ClientID:               " ABcd-123_x.y ",
 		ClientSecretCiphertext: "sealed",
 	}
@@ -87,7 +92,11 @@ func TestAppCredentialStampTrimsAndFingerprints(t *testing.T) {
 
 	cred := validCredential()
 	assert.Equal(t, "ABcd-123_x.y", cred.ClientID)
-	assert.Equal(t, AppFingerprint(AppEnvironmentSandbox, "ABcd-123_x.y"), cred.Fingerprint)
+	assert.Equal(
+		t,
+		AppFingerprint(accountingprovider.AppEnvironmentSandbox, "ABcd-123_x.y"),
+		cred.Fingerprint,
+	)
 
 	multiErr := errortypes.NewMultiError()
 	cred.Validate(multiErr)
@@ -120,6 +129,10 @@ func TestAppCredentialValidation(t *testing.T) {
 func TestWebhookPathIsOnlyForAccountingSystems(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "/webhooks/accounting/quickbooks/", WebhookPath(integration.TypeQuickBooksOnline))
-	assert.Empty(t, WebhookPath(integration.TypeSamsara))
+	assert.Equal(
+		t,
+		"/webhooks/accounting/quickbooks/",
+		accountingprovider.WebhookPath(integration.TypeQuickBooksOnline),
+	)
+	assert.Empty(t, accountingprovider.WebhookPath(integration.TypeSamsara))
 }

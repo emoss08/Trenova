@@ -5,7 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -49,7 +50,7 @@ func errNoPendingCertificate(provider string) error {
 }
 
 func pendingKeyAAD(
-	pending *accountingsync.AccountingPendingCertificate,
+	pending *accountingconnection.AccountingPendingCertificate,
 ) encryptionservice.AAD {
 	return encryptionservice.AAD{
 		Purpose:        encryptionservice.PurposeAccountingClientKey,
@@ -66,8 +67,8 @@ func (s *Service) requireCertificates(
 	if err != nil {
 		return nil, err
 	}
-	if !accountingsync.MustProfile(typ).ClientCredentials || s.certificates == nil {
-		return nil, errCertificatesUnsupported(accountingsync.ProviderName(typ))
+	if !accountingprovider.MustProfile(typ).ClientCredentials || s.certificates == nil {
+		return nil, errCertificatesUnsupported(accountingprovider.ProviderName(typ))
 	}
 	return provider, nil
 }
@@ -113,7 +114,7 @@ func (s *Service) PrepareCertificate(
 	if err != nil {
 		return nil, err
 	}
-	name := accountingsync.ProviderName(req.IntegrationType)
+	name := accountingprovider.ProviderName(req.IntegrationType)
 	app, err := s.appForTenant(ctx, req.TenantInfo, provider)
 	if err != nil {
 		return nil, err
@@ -134,7 +135,7 @@ func (s *Service) PrepareCertificate(
 	}
 
 	now := timeutils.NowUnix()
-	pending := &accountingsync.AccountingPendingCertificate{
+	pending := &accountingconnection.AccountingPendingCertificate{
 		ID:              pulid.MustNew("acctpc_"),
 		OrganizationID:  req.TenantInfo.OrgID,
 		BusinessUnitID:  req.TenantInfo.BuID,
@@ -179,7 +180,7 @@ func (s *Service) heldPendingCertificate(
 	typ integration.Type,
 	certificateID string,
 ) (*heldCertificate, error) {
-	name := accountingsync.ProviderName(typ)
+	name := accountingprovider.ProviderName(typ)
 	pending, err := s.certificates.GetByType(
 		ctx,
 		accountingconnectionports.GetAccountingConnectionRequest{
@@ -234,7 +235,7 @@ func (s *Service) ConnectWithCertificate(
 	if err != nil {
 		return nil, err
 	}
-	name := accountingsync.ProviderName(req.IntegrationType)
+	name := accountingprovider.ProviderName(req.IntegrationType)
 	app, err := s.appForTenant(ctx, req.TenantInfo, provider)
 	if err != nil {
 		return nil, err
@@ -322,7 +323,7 @@ func (s *Service) ConnectWithCertificate(
 func (s *Service) RenewCertificate(
 	ctx context.Context,
 	req *accountingconnectionports.RenewAccountingCertificateRequest,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
 		return nil, err
 	}
@@ -343,8 +344,9 @@ func (s *Service) RenewCertificate(
 	if err != nil {
 		return nil, err
 	}
-	name := accountingsync.ProviderName(current.IntegrationType)
-	if !current.UsesCertificate() || current.Status == accountingsync.ConnectionStatusDisconnected {
+	name := accountingprovider.ProviderName(current.IntegrationType)
+	if !current.UsesCertificate() ||
+		current.Status == accountingconnection.ConnectionStatusDisconnected {
 		return nil, errortypes.NewBusinessError(
 			"Only a {0} connection made with a certificate can have its certificate renewed.",
 			name,
@@ -397,7 +399,7 @@ func (s *Service) RenewCertificate(
 }
 
 func (s *Service) useCertificate(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	held *heldCertificate,
 ) error {
 	sealed, err := s.encryption.EncryptStringWithAAD(
@@ -407,7 +409,7 @@ func (s *Service) useCertificate(
 	if err != nil {
 		return err
 	}
-	conn.UseCertificate(accountingsync.ClientCertificate{
+	conn.UseCertificate(accountingconnection.ClientCertificate{
 		KeyCiphertext: sealed,
 		CertificateID: held.certificateID,
 		ExpiresAt:     held.expiresAt,
@@ -418,10 +420,10 @@ func (s *Service) useCertificate(
 func (s *Service) tokenFromStoredCertificate(
 	ctx, txCtx context.Context,
 	connector accountingconnectorports.AccountingConnector,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	now int64,
 ) error {
-	cc, err := clientCredentialsOf(connector, accountingsync.ProviderName(conn.IntegrationType))
+	cc, err := clientCredentialsOf(connector, accountingprovider.ProviderName(conn.IntegrationType))
 	if err != nil {
 		return err
 	}
@@ -446,7 +448,7 @@ func (s *Service) tokenFromStoredCertificate(
 }
 
 func (s *Service) applyConnectMethod(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	certificate *heldCertificate,
 ) error {
 	if certificate == nil {
@@ -458,7 +460,7 @@ func (s *Service) applyConnectMethod(
 
 func (s *Service) consumePendingCertificate(
 	txCtx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	certificate *heldCertificate,
 ) error {
 	if certificate == nil || s.certificates == nil {
@@ -478,7 +480,7 @@ func (s *Service) pendingCertificate(
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
 ) (*accountingconnectionports.AccountingPreparedCertificate, error) {
-	if s.certificates == nil || !accountingsync.MustProfile(typ).ClientCredentials {
+	if s.certificates == nil || !accountingprovider.MustProfile(typ).ClientCredentials {
 		return nil, nil //nolint:nilnil // no certificate is waiting
 	}
 	pending, err := s.certificates.GetByType(
@@ -498,7 +500,7 @@ func (s *Service) pendingCertificate(
 }
 
 func preparedCertificateOf(
-	pending *accountingsync.AccountingPendingCertificate,
+	pending *accountingconnection.AccountingPendingCertificate,
 ) *accountingconnectionports.AccountingPreparedCertificate {
 	return &accountingconnectionports.AccountingPreparedCertificate{
 		IntegrationType: pending.IntegrationType,
@@ -517,9 +519,9 @@ type certificateRenewal struct {
 }
 
 type renewedCertificate struct {
-	conn     *accountingsync.AccountingConnection
+	conn     *accountingconnection.AccountingConnection
 	previous map[string]any
-	before   accountingsync.ConnectionStatus
+	before   accountingconnection.ConnectionStatus
 }
 
 func (s *Service) storeRenewedCertificate(
@@ -539,7 +541,7 @@ func (s *Service) storeRenewedCertificate(
 			return lockErr
 		}
 		if !locked.UsesCertificate() ||
-			locked.Status == accountingsync.ConnectionStatusDisconnected {
+			locked.Status == accountingconnection.ConnectionStatusDisconnected {
 			return errortypes.NewBusinessError(
 				"The {0} connection changed while the certificate was being checked. Try again.",
 				in.name,

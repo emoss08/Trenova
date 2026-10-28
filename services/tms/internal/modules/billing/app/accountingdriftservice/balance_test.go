@@ -3,6 +3,7 @@ package accountingdriftservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -73,7 +74,7 @@ func TestBalancesOpenAFindingListingTheDocumentsThatDiffer(t *testing.T) {
 	open := h.findings.open()
 	require.Len(t, open, 1)
 	finding := open[0]
-	assert.Equal(t, accountingsync.DriftCustomerBalanceMismatch, finding.Kind)
+	assert.Equal(t, accountingdrift.DriftCustomerBalanceMismatch, finding.Kind)
 	assert.Equal(t, accountingsync.SyncObjectCustomer, finding.ObjectType)
 	assert.Equal(t, customerID, finding.ObjectID)
 	assert.Equal(t, "Acme Freight", finding.PartyName)
@@ -202,5 +203,5 @@ func TestBalancesLeaveDocumentFindingsAlone(t *testing.T) {
 
 	open := h.findings.open()
 	require.Len(t, open, 1)
-	assert.Equal(t, accountingsync.DriftAmountMismatch, open[0].Kind)
+	assert.Equal(t, accountingdrift.DriftAmountMismatch, open[0].Kind)
 }

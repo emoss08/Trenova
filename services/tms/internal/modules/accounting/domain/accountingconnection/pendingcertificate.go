@@ -1,4 +1,4 @@
-package accountingsync
+package accountingconnection
 
 import (
 	"github.com/emoss08/keel"

@@ -26,7 +26,6 @@ debt:
   services/tms/internal/modules/accounting/app/accountingconnectionservice: 3903
   services/tms/internal/modules/accounting/app/accountingmappingservice: 3333
   services/tms/internal/modules/accounting/app/accountingsyncservice: 5609
-  services/tms/internal/modules/accounting/domain/accountingsync: 4704
   services/tms/internal/modules/agent/app/agentextensionservice: 3913
   services/tms/internal/modules/agent/app/agentmemoryservice: 3215
   services/tms/internal/modules/agent/app/agentqualityservice: 3360

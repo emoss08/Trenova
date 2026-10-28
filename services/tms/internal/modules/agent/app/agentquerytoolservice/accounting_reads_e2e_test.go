@@ -8,6 +8,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
@@ -36,24 +40,24 @@ type fakeAccountingDrift struct {
 func (f *fakeAccountingDrift) List(
 	_ context.Context,
 	req *accountingdriftports.ListAccountingDriftFindingsRequest,
-) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error) {
+) (*pagination.CursorListResult[*accountingdrift.AccountingDriftFinding], error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.list = req
 	difference := int64(-300)
 
-	return withEdges(&pagination.CursorListResult[*accountingsync.AccountingDriftFinding]{
-		Items: []*accountingsync.AccountingDriftFinding{{
+	return withEdges(&pagination.CursorListResult[*accountingdrift.AccountingDriftFinding]{
+		Items: []*accountingdrift.AccountingDriftFinding{{
 			ID:              pulid.MustNew("acctdf_"),
-			Kind:            accountingsync.DriftAmountMismatch,
-			Status:          accountingsync.DriftStatusOpen,
+			Kind:            accountingdrift.DriftAmountMismatch,
+			Status:          accountingdrift.DriftStatusOpen,
 			ObjectType:      accountingsync.SyncObjectInvoice,
 			ObjectID:        pulid.MustNew("inv_"),
 			ObjectNumber:    "INV-1042",
 			PartyName:       "Acme Foods",
 			CurrencyCode:    "USD",
 			DifferenceMinor: &difference,
-			Detail:          []accountingsync.DriftLine{},
+			Detail:          []accountingdrift.DriftLine{},
 		}},
 	}), nil
 }
@@ -159,17 +163,17 @@ type fakeAccountingMappings struct {
 	search *accountingmappingports.SearchAccountingReferenceRequest
 }
 
-func mappingFixture() *accountingsync.AccountingMapping {
+func mappingFixture() *accountingmapping.AccountingMapping {
 	confidence := 0.62
-	return &accountingsync.AccountingMapping{
+	return &accountingmapping.AccountingMapping{
 		ID:           pulid.MustNew("acctm_"),
 		TargetType:   accountingsync.MappingTargetType("Customer"),
 		TargetLabel:  "Acme Foods",
-		ProviderKind: accountingsync.ReferenceKindCustomer,
-		State:        accountingsync.MappingStateProposed,
+		ProviderKind: accountingprovider.ReferenceKindCustomer,
+		State:        accountingmapping.MappingStateProposed,
 		Confidence:   &confidence,
 		Reason:       "Same name and email",
-		Signals: accountingsync.MappingSignals{Candidates: []accountingsync.MappingCandidate{
+		Signals: accountingmapping.MappingSignals{Candidates: []accountingmapping.MappingCandidate{
 			{ExternalID: "58", Name: "Acme Foods Inc", Score: 0.62},
 		}},
 	}
@@ -178,13 +182,13 @@ func mappingFixture() *accountingsync.AccountingMapping {
 func (f *fakeAccountingMappings) ListMappings(
 	_ context.Context,
 	req *accountingmappingports.ListAccountingMappingsRequest,
-) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error) {
+) (*pagination.CursorListResult[*accountingmapping.AccountingMapping], error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.list = req
 
-	return withEdges(&pagination.CursorListResult[*accountingsync.AccountingMapping]{
-		Items: []*accountingsync.AccountingMapping{mappingFixture()},
+	return withEdges(&pagination.CursorListResult[*accountingmapping.AccountingMapping]{
+		Items: []*accountingmapping.AccountingMapping{mappingFixture()},
 	}), nil
 }
 
@@ -199,9 +203,9 @@ func (f *fakeAccountingMappings) Summary(
 		Groups: []accountingmappingports.AccountingMappingGroup{{
 			TargetType: accountingsync.MappingTargetType("Customer"), Proposed: 1,
 		}},
-		Connection: &accountingsync.AccountingConnection{
-			ID: pulid.MustNew("acctc_"), Status: accountingsync.ConnectionStatusConnected,
-			SetupStep: accountingsync.SetupStepComplete,
+		Connection: &accountingconnection.AccountingConnection{
+			ID: pulid.MustNew("acctc_"), Status: accountingconnection.ConnectionStatusConnected,
+			SetupStep: accountingconnection.SetupStepComplete,
 		},
 	}, nil
 }
@@ -209,7 +213,7 @@ func (f *fakeAccountingMappings) Summary(
 func (f *fakeAccountingMappings) FindMapping(
 	_ context.Context,
 	req *accountingmappingports.SetAccountingMappingRequest,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.find = req
@@ -220,12 +224,12 @@ func (f *fakeAccountingMappings) FindMapping(
 func (f *fakeAccountingMappings) SearchReference(
 	_ context.Context,
 	req *accountingmappingports.SearchAccountingReferenceRequest,
-) ([]*accountingsync.AccountingReferenceObject, error) {
+) ([]*accountingmapping.AccountingReferenceObject, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.search = req
 
-	return []*accountingsync.AccountingReferenceObject{{
+	return []*accountingmapping.AccountingReferenceObject{{
 		ID: pulid.MustNew("acctro_"), ExternalID: "58", Name: "Acme Foods Inc",
 	}}, nil
 }
@@ -243,11 +247,11 @@ func (fakeAccountingConnections) Status(
 	return &accountingconnectionports.AccountingSyncStatus{
 		IntegrationType: typ, ProviderName: "QuickBooks Online", Available: true,
 		App: &accountingconnectionports.AccountingAppSettings{},
-		Connection: &accountingsync.AccountingConnection{
+		Connection: &accountingconnection.AccountingConnection{
 			ID:                  pulid.MustNew("acctc_"),
-			Status:              accountingsync.ConnectionStatusConnected,
+			Status:              accountingconnection.ConnectionStatusConnected,
 			ExternalCompanyName: "Acme Freight LLC",
-			SetupStep:           accountingsync.SetupStepComplete,
+			SetupStep:           accountingconnection.SetupStepComplete,
 			SyncStartDate:       &start,
 			SyncEnabledAt:       &start,
 			ConsecutiveFailures: 2,
@@ -435,8 +439,8 @@ func TestAccountingMappingAndRecordReads_ThroughTheExecutor(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, mappings.list)
 	assert.True(t, mappings.list.RequiredOnly)
-	assert.Equal(t, []accountingsync.MappingState{
-		accountingsync.MappingStateUnmatched, accountingsync.MappingStateProposed,
+	assert.Equal(t, []accountingmapping.MappingState{
+		accountingmapping.MappingStateUnmatched, accountingmapping.MappingStateProposed,
 	}, mappings.list.States)
 	outcome, ok := pageRecord(data)
 	require.True(t, ok)
@@ -459,7 +463,7 @@ func TestAccountingMappingAndRecordReads_ThroughTheExecutor(t *testing.T) {
 	require.NotNil(t, mappings.find)
 	assert.Equal(t, customer, mappings.find.TrenovaObjectID)
 	require.NotNil(t, mappings.search)
-	assert.Equal(t, accountingsync.ReferenceKindCustomer, mappings.search.Kind)
+	assert.Equal(t, accountingprovider.ReferenceKindCustomer, mappings.search.Kind)
 	assert.True(t, mappings.search.UsableOnly)
 	record, ok := data.(map[string]any)
 	require.True(t, ok)

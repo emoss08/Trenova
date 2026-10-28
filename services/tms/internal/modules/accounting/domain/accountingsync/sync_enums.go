@@ -453,48 +453,6 @@ func AllSyncAttemptOutcomes() []SyncAttemptOutcome {
 	}
 }
 
-type BackfillStatus string
-
-const (
-	BackfillStatusQueued    = BackfillStatus("Queued")
-	BackfillStatusRunning   = BackfillStatus("Running")
-	BackfillStatusPaused    = BackfillStatus("Paused")
-	BackfillStatusCompleted = BackfillStatus("Completed")
-	BackfillStatusFailed    = BackfillStatus("Failed")
-	BackfillStatusCancelled = BackfillStatus("Cancelled")
-)
-
-func (s BackfillStatus) String() string { return string(s) }
-
-func (s BackfillStatus) IsValid() bool {
-	switch s {
-	case BackfillStatusQueued,
-		BackfillStatusRunning,
-		BackfillStatusPaused,
-		BackfillStatusCompleted,
-		BackfillStatusFailed,
-		BackfillStatusCancelled:
-		return true
-	default:
-		return false
-	}
-}
-
-func (s BackfillStatus) InProgress() bool {
-	return s == BackfillStatusQueued || s == BackfillStatusRunning || s == BackfillStatusPaused
-}
-
-func AllBackfillStatuses() []BackfillStatus {
-	return []BackfillStatus{
-		BackfillStatusQueued,
-		BackfillStatusRunning,
-		BackfillStatusPaused,
-		BackfillStatusCompleted,
-		BackfillStatusFailed,
-		BackfillStatusCancelled,
-	}
-}
-
 func SyncObjectTypeForBill(billType billingqueue.BillType) SyncObjectType {
 	switch billType {
 	case billingqueue.BillTypeCreditMemo:
@@ -546,3 +504,5 @@ func PostedSourceEvent(billType billingqueue.BillType) SyncSourceEvent {
 		return SyncSourceInvoicePosted
 	}
 }
+
+const DriftObjectGLAccount = SyncObjectType("GLAccount")

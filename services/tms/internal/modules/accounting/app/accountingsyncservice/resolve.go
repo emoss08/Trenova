@@ -4,6 +4,8 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,7 +28,7 @@ func (t mappingTarget) identity() string {
 type resolver struct {
 	s     *Service
 	sess  *pushSession
-	cache map[string]*accountingsync.AccountingMapping
+	cache map[string]*accountingmapping.AccountingMapping
 	used  map[pulid.ID]struct{}
 }
 
@@ -34,7 +36,7 @@ func newResolver(s *Service, sess *pushSession) *resolver {
 	return &resolver{
 		s:     s,
 		sess:  sess,
-		cache: make(map[string]*accountingsync.AccountingMapping, 8),
+		cache: make(map[string]*accountingmapping.AccountingMapping, 8),
 		used:  make(map[pulid.ID]struct{}, 8),
 	}
 }
@@ -42,7 +44,7 @@ func newResolver(s *Service, sess *pushSession) *resolver {
 func (r *resolver) mapping(
 	ctx context.Context,
 	target mappingTarget,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	identity := target.identity()
 	if cached, ok := r.cache[identity]; ok {
 		return cached, nil
@@ -69,7 +71,7 @@ func (r *resolver) require(ctx context.Context, target mappingTarget) (string, e
 	if err != nil {
 		return "", err
 	}
-	if row.State != accountingsync.MappingStateConfirmed || row.ExternalID == "" {
+	if row.State != accountingmapping.MappingStateConfirmed || row.ExternalID == "" {
 		return "", r.missing(row, target)
 	}
 	r.used[row.ID] = struct{}{}
@@ -81,7 +83,7 @@ func (r *resolver) optional(ctx context.Context, target mappingTarget) (string, 
 	if err != nil {
 		return "", err
 	}
-	if row.State != accountingsync.MappingStateConfirmed || row.ExternalID == "" {
+	if row.State != accountingmapping.MappingStateConfirmed || row.ExternalID == "" {
 		return "", nil
 	}
 	r.used[row.ID] = struct{}{}
@@ -89,7 +91,7 @@ func (r *resolver) optional(ctx context.Context, target mappingTarget) (string, 
 }
 
 func (r *resolver) missing(
-	row *accountingsync.AccountingMapping,
+	row *accountingmapping.AccountingMapping,
 	target mappingTarget,
 ) *accountingsync.SyncError {
 	label := target.Label
@@ -105,19 +107,19 @@ func (r *resolver) missing(
 	}
 }
 
-func providerKindLabel(kind accountingsync.ReferenceKind) string {
+func providerKindLabel(kind accountingprovider.ReferenceKind) string {
 	switch kind {
-	case accountingsync.ReferenceKindAccount:
+	case accountingprovider.ReferenceKindAccount:
 		return "account"
-	case accountingsync.ReferenceKindItem:
+	case accountingprovider.ReferenceKindItem:
 		return "item"
-	case accountingsync.ReferenceKindCustomer:
+	case accountingprovider.ReferenceKindCustomer:
 		return "customer"
-	case accountingsync.ReferenceKindVendor:
+	case accountingprovider.ReferenceKindVendor:
 		return "vendor"
-	case accountingsync.ReferenceKindTerm:
+	case accountingprovider.ReferenceKindTerm:
 		return "term"
-	case accountingsync.ReferenceKindPaymentMethod:
+	case accountingprovider.ReferenceKindPaymentMethod:
 		return "payment method"
 	default:
 		return "record"

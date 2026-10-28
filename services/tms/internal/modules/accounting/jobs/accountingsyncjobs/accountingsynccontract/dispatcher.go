@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -65,7 +65,7 @@ func (d *SyncDispatcher) Kick(
 
 func (d *SyncDispatcher) StartBackfill(
 	ctx context.Context,
-	backfill *accountingsync.AccountingBackfill,
+	backfill *accountingbackfill.AccountingBackfill,
 ) error {
 	if d.workflows == nil {
 		return errortypes.NewBusinessError(

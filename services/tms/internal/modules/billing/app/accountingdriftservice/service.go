@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -131,7 +134,7 @@ func New(p Params) *Service {
 
 type readSession struct {
 	tenant pagination.TenantInfo
-	conn   *accountingsync.AccountingConnection
+	conn   *accountingconnection.AccountingConnection
 	reader accountingconnectorports.AccountingDocumentReader
 	writer accountingconnectorports.AccountingDocumentWriter
 	ledger accountingconnectorports.AccountingLedgerReader
@@ -139,7 +142,7 @@ type readSession struct {
 	limit  int
 }
 
-func tenantOf(conn *accountingsync.AccountingConnection) pagination.TenantInfo {
+func tenantOf(conn *accountingconnection.AccountingConnection) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
 }
 
@@ -147,7 +150,7 @@ func (s *Service) connectionByID(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	return s.connections.GetByID(ctx, accountingconnectionports.GetAccountingConnectionByIDRequest{
 		TenantInfo: tenantInfo,
 		ID:         id,
@@ -156,7 +159,7 @@ func (s *Service) connectionByID(
 
 func (s *Service) openRead(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) (*readSession, error) {
 	tenant := tenantOf(conn)
 	session, err := s.connService.Session(ctx, tenant, conn.ID)
@@ -167,7 +170,7 @@ func (s *Service) openRead(
 	if !ok {
 		return nil, fmt.Errorf(
 			"%s cannot show Trenova the documents it holds",
-			accountingsync.ProviderName(conn.IntegrationType),
+			accountingprovider.ProviderName(conn.IntegrationType),
 		)
 	}
 	writer, _ := session.Connector.(accountingconnectorports.AccountingDocumentWriter)
@@ -197,7 +200,7 @@ func (s *Service) classify(sess *readSession, readErr error) *accountingsync.Syn
 
 func (s *Service) recordFailure(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	failure *accountingsync.SyncError,
 ) {
 	recorded := *conn
@@ -239,7 +242,10 @@ func (s *Service) FinishCheck(
 	return nil
 }
 
-func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.AccountingConnection) {
+func (s *Service) refreshAttention(
+	ctx context.Context,
+	conn *accountingconnection.AccountingConnection,
+) {
 	if s.watchtower == nil {
 		return
 	}
@@ -257,13 +263,13 @@ func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.Acc
 		return
 	}
 	byKind := make(
-		map[accountingsync.DriftKind]*accountingdriftports.AccountingDriftAttentionGroup,
+		map[accountingdrift.DriftKind]*accountingdriftports.AccountingDriftAttentionGroup,
 		len(groups),
 	)
 	for idx := range groups {
 		byKind[groups[idx].Kind] = &groups[idx]
 	}
-	for _, kind := range accountingsync.AllDriftKinds() {
+	for _, kind := range accountingdrift.AllDriftKinds() {
 		if item, open := watchtowersources.DescribeAccountingDriftAttention(
 			conn,
 			byKind[kind],
@@ -282,7 +288,7 @@ func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.Acc
 
 func (s *Service) refreshAttentionFor(
 	ctx context.Context,
-	finding *accountingsync.AccountingDriftFinding,
+	finding *accountingdrift.AccountingDriftFinding,
 ) {
 	conn, err := s.connectionByID(ctx, finding.TenantInfo(), finding.ConnectionID)
 	if err != nil {
@@ -295,7 +301,7 @@ func (s *Service) refreshAttentionFor(
 func (s *Service) announce(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	opened []*accountingsync.AccountingDriftFinding,
+	opened []*accountingdrift.AccountingDriftFinding,
 	budget int,
 ) int {
 	sent := 0

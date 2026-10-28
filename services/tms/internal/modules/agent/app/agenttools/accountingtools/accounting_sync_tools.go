@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
@@ -85,15 +87,15 @@ type accountingSyncOperator interface {
 	Pause(
 		ctx context.Context,
 		req *accountingsyncports.PauseAccountingSyncRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	Resume(
 		ctx context.Context,
 		req *accountingsyncports.PauseAccountingSyncRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	RequestBackfill(
 		ctx context.Context,
 		req *accountingsyncports.RequestAccountingBackfillRequest,
-	) (*accountingsync.AccountingBackfill, error)
+	) (*accountingbackfill.AccountingBackfill, error)
 }
 
 type accountingSyncPolicySpec struct {
@@ -968,7 +970,7 @@ func (t *RequestAccountingBackfillTool) ParamSchema() map[string]any {
 		paramBackfillTypes: jsonschemautils.DescribedArray(
 			"Only these kinds of document. Defaults to all of them.",
 			agenttoolschema.Enum("A document type.", agenttoolschema.BackfillObjectTypes),
-			len(accountingsync.BackfillObjectTypes()),
+			len(accountingbackfill.BackfillObjectTypes()),
 		),
 	}, ParamAccountingSystem)
 }
@@ -1006,7 +1008,7 @@ func optionalBackfillDay(
 
 type backfillPlan struct {
 	req        *accountingsyncports.RequestAccountingBackfillRequest
-	connection *accountingsync.AccountingConnection
+	connection *accountingconnection.AccountingConnection
 	provider   string
 	from       int64
 	to         int64
@@ -1041,7 +1043,7 @@ func (t *RequestAccountingBackfillTool) plan(
 		params.Params,
 		paramBackfillTypes,
 		func(typ accountingsync.SyncObjectType) bool {
-			return slices.Contains(accountingsync.BackfillObjectTypes(), typ)
+			return slices.Contains(accountingbackfill.BackfillObjectTypes(), typ)
 		},
 	)
 	if err != nil {

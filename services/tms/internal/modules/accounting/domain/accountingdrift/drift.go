@@ -1,4 +1,4 @@
-package accountingsync
+package accountingdrift
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,50 +25,50 @@ const (
 )
 
 type DriftLine struct {
-	ObjectType    SyncObjectType `json:"objectType"`
-	ObjectID      pulid.ID       `json:"objectId"`
-	ObjectNumber  string         `json:"objectNumber"`
-	TrenovaMinor  int64          `json:"trenovaMinor"`
-	ProviderMinor int64          `json:"providerMinor"`
+	ObjectType    accountingsync.SyncObjectType `json:"objectType"`
+	ObjectID      pulid.ID                      `json:"objectId"`
+	ObjectNumber  string                        `json:"objectNumber"`
+	TrenovaMinor  int64                         `json:"trenovaMinor"`
+	ProviderMinor int64                         `json:"providerMinor"`
 }
 
 // Documents Trenova sent to the accounting system that now differ there, with both values and how each was settled
 type AccountingDriftFinding struct {
 	keel.Table `keel:"accounting_drift_findings,report=Accounting,label=Drift Finding"`
 
-	ID                 pulid.ID        `json:"id"                 keel:"id,pk,autoid:acctdf_"`
-	BusinessUnitID     pulid.ID        `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID        `json:"organizationId"     keel:"organization_id,pk,tenant"`
-	ConnectionID       pulid.ID        `json:"connectionId"       keel:"connection_id"`
-	ObjectType         SyncObjectType  `json:"objectType"         keel:"object_type,label=Document Type"`
-	ObjectID           pulid.ID        `json:"objectId"           keel:"object_id,label=Document ID"`
-	ObjectNumber       string          `json:"objectNumber"       keel:"object_number,nullzero,label=Document Number"`
-	PartyID            pulid.ID        `json:"partyId"            keel:"party_id,nullzero"`
-	PartyName          string          `json:"partyName"          keel:"party_name,nullzero"`
-	ExternalID         string          `json:"externalId"         keel:"external_id,nullzero,label=ID in the Books"`
-	ExternalURL        string          `json:"externalUrl"        keel:"external_url,nullzero,label=Link in the Books"`
-	Kind               DriftKind       `json:"kind"               keel:"kind,label=Difference"`
-	CurrencyCode       string          `json:"currencyCode"       keel:"currency_code,label=Currency"`
-	TrenovaMinor       *int64          `json:"trenovaMinor"       keel:"trenova_minor,label=Trenova Value (Minor)"`
-	ProviderMinor      *int64          `json:"providerMinor"      keel:"provider_minor,label=Books Value (Minor)"`
-	DifferenceMinor    *int64          `json:"differenceMinor"    keel:"difference_minor,label=Difference (Minor)"`
-	TrenovaState       string          `json:"trenovaState"       keel:"trenova_state,nullzero,label=State in Trenova"`
-	ProviderState      string          `json:"providerState"      keel:"provider_state,nullzero,label=State in the Books"`
-	Detail             []DriftLine     `json:"detail"             keel:"detail,jsonb,noreport"`
-	ProviderModifiedAt *int64          `json:"providerModifiedAt" keel:"provider_modified_at,label=Changed in the Books At"`
-	ProviderModifiedBy string          `json:"providerModifiedBy" keel:"provider_modified_by,nullzero,label=Changed in the Books By"`
-	Status             DriftStatus     `json:"status"             keel:"status"`
-	Resolution         DriftResolution `json:"resolution"         keel:"resolution,nullzero"`
-	ResolutionNote     string          `json:"resolutionNote"     keel:"resolution_note,nullzero,label=Note"`
-	FixObjectType      DriftFixObject  `json:"fixObjectType"      keel:"fix_object_type,nullzero,label=Fixed With"`
-	FixObjectID        pulid.ID        `json:"fixObjectId"        keel:"fix_object_id,nullzero,label=Fix ID"`
-	ResolvedByID       pulid.ID        `json:"resolvedById"       keel:"resolved_by_id,nullzero"`
-	ResolvedAt         *int64          `json:"resolvedAt"         keel:"resolved_at"`
-	DetectedAt         int64           `json:"detectedAt"         keel:"detected_at"`
-	LastSeenAt         int64           `json:"lastSeenAt"         keel:"last_seen_at"`
-	Version            int64           `json:"version"            keel:"version,version"`
-	CreatedAt          int64           `json:"createdAt"          keel:"created_at,autocreate"`
-	UpdatedAt          int64           `json:"updatedAt"          keel:"updated_at,autoupdate"`
+	ID                 pulid.ID                      `json:"id"                 keel:"id,pk,autoid:acctdf_"`
+	BusinessUnitID     pulid.ID                      `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID                      `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	ConnectionID       pulid.ID                      `json:"connectionId"       keel:"connection_id"`
+	ObjectType         accountingsync.SyncObjectType `json:"objectType"         keel:"object_type,label=Document Type"`
+	ObjectID           pulid.ID                      `json:"objectId"           keel:"object_id,label=Document ID"`
+	ObjectNumber       string                        `json:"objectNumber"       keel:"object_number,nullzero,label=Document Number"`
+	PartyID            pulid.ID                      `json:"partyId"            keel:"party_id,nullzero"`
+	PartyName          string                        `json:"partyName"          keel:"party_name,nullzero"`
+	ExternalID         string                        `json:"externalId"         keel:"external_id,nullzero,label=ID in the Books"`
+	ExternalURL        string                        `json:"externalUrl"        keel:"external_url,nullzero,label=Link in the Books"`
+	Kind               DriftKind                     `json:"kind"               keel:"kind,label=Difference"`
+	CurrencyCode       string                        `json:"currencyCode"       keel:"currency_code,label=Currency"`
+	TrenovaMinor       *int64                        `json:"trenovaMinor"       keel:"trenova_minor,label=Trenova Value (Minor)"`
+	ProviderMinor      *int64                        `json:"providerMinor"      keel:"provider_minor,label=Books Value (Minor)"`
+	DifferenceMinor    *int64                        `json:"differenceMinor"    keel:"difference_minor,label=Difference (Minor)"`
+	TrenovaState       string                        `json:"trenovaState"       keel:"trenova_state,nullzero,label=State in Trenova"`
+	ProviderState      string                        `json:"providerState"      keel:"provider_state,nullzero,label=State in the Books"`
+	Detail             []DriftLine                   `json:"detail"             keel:"detail,jsonb,noreport"`
+	ProviderModifiedAt *int64                        `json:"providerModifiedAt" keel:"provider_modified_at,label=Changed in the Books At"`
+	ProviderModifiedBy string                        `json:"providerModifiedBy" keel:"provider_modified_by,nullzero,label=Changed in the Books By"`
+	Status             DriftStatus                   `json:"status"             keel:"status"`
+	Resolution         DriftResolution               `json:"resolution"         keel:"resolution,nullzero"`
+	ResolutionNote     string                        `json:"resolutionNote"     keel:"resolution_note,nullzero,label=Note"`
+	FixObjectType      DriftFixObject                `json:"fixObjectType"      keel:"fix_object_type,nullzero,label=Fixed With"`
+	FixObjectID        pulid.ID                      `json:"fixObjectId"        keel:"fix_object_id,nullzero,label=Fix ID"`
+	ResolvedByID       pulid.ID                      `json:"resolvedById"       keel:"resolved_by_id,nullzero"`
+	ResolvedAt         *int64                        `json:"resolvedAt"         keel:"resolved_at"`
+	DetectedAt         int64                         `json:"detectedAt"         keel:"detected_at"`
+	LastSeenAt         int64                         `json:"lastSeenAt"         keel:"last_seen_at"`
+	Version            int64                         `json:"version"            keel:"version,version"`
+	CreatedAt          int64                         `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64                         `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
@@ -85,7 +86,7 @@ func (f *AccountingDriftFinding) BeforeUpdate(_ context.Context) error {
 type DriftObservation struct {
 	TenantInfo         pagination.TenantInfo
 	ConnectionID       pulid.ID
-	ObjectType         SyncObjectType
+	ObjectType         accountingsync.SyncObjectType
 	ObjectID           pulid.ID
 	ObjectNumber       string
 	PartyID            pulid.ID
@@ -170,10 +171,11 @@ func (f *AccountingDriftFinding) Directions() []DriftDirection {
 }
 
 func (f *AccountingDriftFinding) adjustable() bool {
-	if f.ObjectType == SyncObjectInvoice || f.ObjectType == SyncObjectDebitMemo {
+	if f.ObjectType == accountingsync.SyncObjectInvoice ||
+		f.ObjectType == accountingsync.SyncObjectDebitMemo {
 		return f.Kind == DriftAmountMismatch || f.Kind.Gone()
 	}
-	return f.ObjectType == SyncObjectCustomerPayment && f.Kind.Gone()
+	return f.ObjectType == accountingsync.SyncObjectCustomerPayment && f.Kind.Gone()
 }
 
 func (f *AccountingDriftFinding) CanFix(direction DriftDirection) error {

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
@@ -53,7 +54,7 @@ func edited(externalID string) accountingconnectorports.AccountingChangedDocumen
 
 func TestPollAsksForDocumentsAndComparesTheOnesThatChanged(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	drift := withDrift(t, h)
 	h.connector.pages = append(h.connector.pages, &accountingconnectorports.AccountingChangePage{
 		Documents: []accountingconnectorports.AccountingChangedDocument{
@@ -83,7 +84,7 @@ func TestPollAsksForDocumentsAndComparesTheOnesThatChanged(t *testing.T) {
 
 func TestPollDoesNotAskForDocumentsWithoutADriftCheck(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 
 	h.poll(t)
 
@@ -93,7 +94,7 @@ func TestPollDoesNotAskForDocumentsWithoutADriftCheck(t *testing.T) {
 
 func TestPollKeepsItsCursorWhenTheDriftCompareFails(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	drift := withDrift(t, h)
 	drift.failed = errors.New("QuickBooks did not answer")
 	h.connector.pages = append(h.connector.pages, &accountingconnectorports.AccountingChangePage{

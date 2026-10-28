@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -267,22 +268,22 @@ type ListAccountingBackfillsRequest struct {
 type AccountingBackfillRepository interface {
 	Create(
 		ctx context.Context,
-		entity *accountingsync.AccountingBackfill,
-	) (*accountingsync.AccountingBackfill, error)
+		entity *accountingbackfill.AccountingBackfill,
+	) (*accountingbackfill.AccountingBackfill, error)
 	GetByID(
 		ctx context.Context,
 		req GetAccountingBackfillRequest,
-	) (*accountingsync.AccountingBackfill, error)
+	) (*accountingbackfill.AccountingBackfill, error)
 	GetActive(
 		ctx context.Context,
 		req AccountingSyncConnectionRequest,
-	) (*accountingsync.AccountingBackfill, error)
+	) (*accountingbackfill.AccountingBackfill, error)
 	ListByConnection(
 		ctx context.Context,
 		req ListAccountingBackfillsRequest,
-	) ([]*accountingsync.AccountingBackfill, error)
+	) ([]*accountingbackfill.AccountingBackfill, error)
 	Update(
 		ctx context.Context,
-		entity *accountingsync.AccountingBackfill,
-	) (*accountingsync.AccountingBackfill, error)
+		entity *accountingbackfill.AccountingBackfill,
+	) (*accountingbackfill.AccountingBackfill, error)
 }

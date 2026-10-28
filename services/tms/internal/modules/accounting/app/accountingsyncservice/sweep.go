@@ -4,6 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -88,7 +91,7 @@ func safetyNetKinds() []candidateKind {
 }
 
 func sweptSince(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	objectType accountingsync.SyncObjectType,
 ) (*int64, bool) {
 	if !conn.Backfills(objectType) {
@@ -108,7 +111,7 @@ func sweptSince(
 }
 
 func candidateRequest(
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	candidate *accountingsyncports.AccountingSyncCandidate,
 	source accountingsync.SyncSourceEvent,
 ) *accountingsyncports.AccountingSyncEnqueueRequest {
@@ -126,7 +129,7 @@ func candidateRequest(
 
 func (s *Service) enqueueCandidates(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	candidates []accountingsyncports.AccountingSyncCandidate,
 	source accountingsync.SyncSourceEvent,
 	loc *time.Location,
@@ -237,9 +240,9 @@ func (s *Service) BackfillStep(
 	if err != nil {
 		return nil, err
 	}
-	if !backfill.Status.InProgress() || backfill.Status == accountingsync.BackfillStatusPaused {
+	if !backfill.Status.InProgress() || backfill.Status == accountingbackfill.BackfillStatusPaused {
 		result.Stopped = true
-		result.Done = backfill.Status == accountingsync.BackfillStatusCompleted
+		result.Done = backfill.Status == accountingbackfill.BackfillStatusCompleted
 		return result, nil
 	}
 
@@ -249,7 +252,7 @@ func (s *Service) BackfillStep(
 		return nil, err
 	}
 	if !conn.IsSyncing() {
-		backfill.Fail(accountingsync.ProviderName(conn.IntegrationType)+" is not syncing", now)
+		backfill.Fail(accountingprovider.ProviderName(conn.IntegrationType)+" is not syncing", now)
 		if _, err = s.backfills.Update(ctx, backfill); err != nil {
 			return nil, err
 		}
@@ -302,7 +305,7 @@ func (s *Service) BackfillStep(
 		result.Enqueued = len(enqueued.Inserted)
 		result.Existing = enqueued.Existing
 		last := candidates[len(candidates)-1]
-		backfill.Advance(accountingsync.BackfillCursor{
+		backfill.Advance(accountingbackfill.BackfillCursor{
 			ObjectType: backfill.Cursor.ObjectType,
 			AfterAt:    last.PostedAt,
 			AfterID:    last.ObjectID,
@@ -365,7 +368,7 @@ func (s *Service) ListDueConnections(
 
 func (s *Service) skipBackfillType(
 	ctx context.Context,
-	backfill *accountingsync.AccountingBackfill,
+	backfill *accountingbackfill.AccountingBackfill,
 	result *accountingsyncports.AccountingBackfillStepResult,
 	now int64,
 ) (*accountingsyncports.AccountingBackfillStepResult, error) {

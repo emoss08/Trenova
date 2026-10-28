@@ -5,6 +5,8 @@ import (
 	"errors"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
@@ -32,7 +34,7 @@ const (
 )
 
 type blockedError struct {
-	reason     accountingsync.InboundChangeReason
+	reason     accountinginbound.InboundChangeReason
 	resolution string
 }
 
@@ -76,7 +78,7 @@ func (s *Service) Evaluate(
 		&accountinginboundports.ListDetectedAccountingInboundChangesRequest{
 			TenantInfo:     req.TenantInfo,
 			ConnectionID:   conn.ID,
-			DetectedBefore: s.now().Add(-accountingsync.InboundEvaluationSettle).Unix(),
+			DetectedBefore: s.now().Add(-accountinginbound.InboundEvaluationSettle).Unix(),
 			Limit:          limit,
 		},
 	)
@@ -92,18 +94,18 @@ func (s *Service) Evaluate(
 		}
 		result.Evaluated++
 		switch outcome {
-		case accountingsync.InboundStatusApplied:
+		case accountinginbound.InboundStatusApplied:
 			result.Applied++
-		case accountingsync.InboundStatusProposed:
+		case accountinginbound.InboundStatusProposed:
 			result.Proposed++
 			if firstProposed.IsNil() {
 				firstProposed = row.ID
 			}
-		case accountingsync.InboundStatusIgnored:
+		case accountinginbound.InboundStatusIgnored:
 			result.Ignored++
-		case accountingsync.InboundStatusSuperseded:
+		case accountinginbound.InboundStatusSuperseded:
 			result.Superseded++
-		case accountingsync.InboundStatusDetected:
+		case accountinginbound.InboundStatusDetected:
 		}
 	}
 	result.More = len(rows) == limit
@@ -124,7 +126,7 @@ func (s *Service) Evaluate(
 
 func echoTypes() []accountingsync.SyncObjectType {
 	out := make([]accountingsync.SyncObjectType, 0, 4)
-	for _, kind := range accountingsync.AllInboundChangeKinds() {
+	for _, kind := range accountinginbound.AllInboundChangeKinds() {
 		out = append(out, kind.EchoObjectTypes()...)
 	}
 	return out
@@ -132,11 +134,11 @@ func echoTypes() []accountingsync.SyncObjectType {
 
 func (s *Service) evaluateOne(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	id pulid.ID,
-) (accountingsync.InboundChangeStatus, error) {
+) (accountinginbound.InboundChangeStatus, error) {
 	autoApply := false
-	var outcome accountingsync.InboundChangeStatus
+	var outcome accountinginbound.InboundChangeStatus
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		change, err := s.changes.GetByID(
 			txCtx,
@@ -149,7 +151,7 @@ func (s *Service) evaluateOne(
 		if err != nil {
 			return err
 		}
-		if change.Status != accountingsync.InboundStatusDetected {
+		if change.Status != accountinginbound.InboundStatusDetected {
 			outcome = change.Status
 			return nil
 		}
@@ -162,12 +164,12 @@ func (s *Service) evaluateOne(
 			change.Ignore(p.reason, p.resolution, pulid.Nil, s.nowUnix())
 		case p.blocked():
 			change.Propose(p.reason, p.resolution)
-		case conn.PaymentPolicy() == accountingsync.InboundPaymentsApply:
+		case conn.PaymentPolicy() == accountingconnection.InboundPaymentsApply:
 			autoApply = true
-			outcome = accountingsync.InboundStatusDetected
+			outcome = accountinginbound.InboundStatusDetected
 			return nil
 		default:
-			change.Propose(accountingsync.InboundReasonPolicyPropose, proposeText(p))
+			change.Propose(accountinginbound.InboundReasonPolicyPropose, proposeText(p))
 		}
 		outcome = change.Status
 		_, err = s.changes.Update(txCtx, change)
@@ -211,11 +213,11 @@ func (s *Service) systemActor(
 
 func (s *Service) proposeAfterFailure(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	id pulid.ID,
 	applyErr error,
-) (*accountingsync.AccountingInboundChange, error) {
-	reason := accountingsync.InboundReasonApplyFailed
+) (*accountinginbound.AccountingInboundChange, error) {
+	reason := accountinginbound.InboundReasonApplyFailed
 	resolution := applyErr.Error()
 	var blocked *blockedError
 	switch {
@@ -226,7 +228,7 @@ func (s *Service) proposeAfterFailure(
 		return nil, applyErr
 	}
 
-	var updated *accountingsync.AccountingInboundChange
+	var updated *accountinginbound.AccountingInboundChange
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		change, err := s.changes.GetByID(
 			txCtx,
@@ -243,8 +245,8 @@ func (s *Service) proposeAfterFailure(
 			updated = change
 			return nil
 		}
-		if reason == accountingsync.InboundReasonNotTrenovaDocument ||
-			reason == accountingsync.InboundReasonSentFromTrenova {
+		if reason == accountinginbound.InboundReasonNotTrenovaDocument ||
+			reason == accountinginbound.InboundReasonSentFromTrenova {
 			change.Ignore(reason, resolution, pulid.Nil, s.nowUnix())
 		} else {
 			change.Propose(reason, resolution)
@@ -264,7 +266,7 @@ func (s *Service) Apply(
 	ctx context.Context,
 	req *accountinginboundports.DecideAccountingInboundChangeRequest,
 	actor *permissionports.RequestActor,
-) (*accountingsync.AccountingInboundChange, error) {
+) (*accountinginbound.AccountingInboundChange, error) {
 	if actor == nil || actor.UserID.IsNil() {
 		return nil, errortypes.NewAuthorizationError(
 			"Applying a payment from the accounting system requires an authenticated user",
@@ -305,8 +307,8 @@ type requiredPermission struct {
 	operation permission.Operation
 }
 
-func applyPermissions(change *accountingsync.AccountingInboundChange) []requiredPermission {
-	if change.Kind == accountingsync.InboundCustomerPayment {
+func applyPermissions(change *accountinginbound.AccountingInboundChange) []requiredPermission {
+	if change.Kind == accountinginbound.InboundCustomerPayment {
 		return []requiredPermission{{permission.ResourceCustomerPayment, permission.OpCreate}}
 	}
 	out := make([]requiredPermission, 0, 2)
@@ -329,7 +331,7 @@ func applyPermissions(change *accountingsync.AccountingInboundChange) []required
 
 func (s *Service) authorizeApply(
 	ctx context.Context,
-	change *accountingsync.AccountingInboundChange,
+	change *accountinginbound.AccountingInboundChange,
 	actor *permissionports.RequestActor,
 ) error {
 	for _, needed := range applyPermissions(change) {
@@ -358,14 +360,14 @@ func (s *Service) authorizeApply(
 
 func (s *Service) applyChange(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	id pulid.ID,
 	actor *permissionports.RequestActor,
 	byPerson bool,
-) (*accountingsync.AccountingInboundChange, error) {
+) (*accountinginbound.AccountingInboundChange, error) {
 	links := s.linkTarget(ctx, conn)
 
-	var updated *accountingsync.AccountingInboundChange
+	var updated *accountinginbound.AccountingInboundChange
 	var previous map[string]any
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		change, err := s.changes.GetByID(
@@ -385,7 +387,7 @@ func (s *Service) applyChange(
 				return decisionError(err)
 			}
 		} else if !change.Status.IsOpen() {
-			return decisionError(accountingsync.ErrInboundChangeClosed)
+			return decisionError(accountinginbound.ErrInboundChangeClosed)
 		}
 
 		p, err := s.plan(txCtx, conn, change)
@@ -420,12 +422,12 @@ func (s *Service) execute(
 	ctx context.Context,
 	p *postingPlan,
 	actor *permissionports.RequestActor,
-) ([]accountingsync.AppliedObject, error) {
+) ([]accountinginbound.AppliedObject, error) {
 	change := p.change
 	tenant := change.TenantInfo()
-	objects := make([]accountingsync.AppliedObject, 0, p.objectCount())
+	objects := make([]accountinginbound.AppliedObject, 0, p.objectCount())
 
-	if change.Kind == accountingsync.InboundBillPayment {
+	if change.Kind == accountinginbound.InboundBillPayment {
 		for _, settlement := range p.settlements {
 			req := &carriersettlementports.MarkSettlementPaidRequest{
 				TenantInfo:       tenant,
@@ -435,9 +437,9 @@ func (s *Service) execute(
 				PaidAt:           p.paidAt,
 			}
 			var err error
-			appliedType := accountingsync.AppliedCarrierSettlement
+			appliedType := accountinginbound.AppliedCarrierSettlement
 			if settlement.kind == accountingpayablesports.PayableDriver {
-				appliedType = accountingsync.AppliedDriverSettlement
+				appliedType = accountinginbound.AppliedDriverSettlement
 				_, err = s.driverPayer.MarkPaid(ctx, req, actor)
 			} else {
 				_, err = s.carrierPayer.MarkPaid(ctx, req, actor)
@@ -447,7 +449,7 @@ func (s *Service) execute(
 			}
 			objects = append(
 				objects,
-				accountingsync.AppliedObject{Type: appliedType, ID: settlement.id},
+				accountinginbound.AppliedObject{Type: appliedType, ID: settlement.id},
 			)
 		}
 		return objects, nil
@@ -473,8 +475,8 @@ func (s *Service) execute(
 		if err != nil {
 			return nil, err
 		}
-		objects = append(objects, accountingsync.AppliedObject{
-			Type: accountingsync.AppliedCustomerPayment,
+		objects = append(objects, accountinginbound.AppliedObject{
+			Type: accountinginbound.AppliedCustomerPayment,
 			ID:   payment.ID,
 		})
 	}
@@ -493,8 +495,8 @@ func (s *Service) execute(
 			return nil, err
 		}
 		for _, application := range applications {
-			objects = append(objects, accountingsync.AppliedObject{
-				Type: accountingsync.AppliedCreditMemoApplication,
+			objects = append(objects, accountinginbound.AppliedObject{
+				Type: accountinginbound.AppliedCreditMemoApplication,
 				ID:   application.ID,
 			})
 		}
@@ -502,7 +504,7 @@ func (s *Service) execute(
 	return objects, nil
 }
 
-func referenceOf(change *accountingsync.AccountingInboundChange) string {
+func referenceOf(change *accountinginbound.AccountingInboundChange) string {
 	reference := change.Document.ReferenceNumber
 	if reference == "" {
 		reference = change.ExternalNumber
@@ -510,15 +512,15 @@ func referenceOf(change *accountingsync.AccountingInboundChange) string {
 	return stringutils.TruncateRunes(reference, maxReferenceNumber)
 }
 
-func syncTypeOf(applied accountingsync.AppliedObjectType) accountingsync.SyncObjectType {
+func syncTypeOf(applied accountinginbound.AppliedObjectType) accountingsync.SyncObjectType {
 	switch applied {
-	case accountingsync.AppliedCustomerPayment:
+	case accountinginbound.AppliedCustomerPayment:
 		return accountingsync.SyncObjectCustomerPayment
-	case accountingsync.AppliedCreditMemoApplication:
+	case accountinginbound.AppliedCreditMemoApplication:
 		return accountingsync.SyncObjectCreditApplication
-	case accountingsync.AppliedCarrierSettlement:
+	case accountinginbound.AppliedCarrierSettlement:
 		return accountingsync.SyncObjectCarrierBillPay
-	case accountingsync.AppliedDriverSettlement:
+	case accountinginbound.AppliedDriverSettlement:
 		return accountingsync.SyncObjectDriverBillPay
 	default:
 		return ""
@@ -531,7 +533,7 @@ type linkTarget struct {
 
 func (s *Service) linkTarget(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) *linkTarget {
 	target := &linkTarget{
 		urlOf: func(accountingconnectorports.AccountingDocumentLink) string { return "" },
@@ -553,7 +555,7 @@ func (s *Service) linkTarget(
 func (s *Service) linkRecords(
 	ctx context.Context,
 	p *postingPlan,
-	objects []accountingsync.AppliedObject,
+	objects []accountinginbound.AppliedObject,
 	target *linkTarget,
 ) error {
 	change := p.change
@@ -622,12 +624,12 @@ func (s *Service) PreviewApply(
 		CashMinor: p.cashMinor,
 		Lines:     p.lines,
 	}
-	if change.Kind == accountingsync.InboundCustomerPayment {
+	if change.Kind == accountinginbound.InboundCustomerPayment {
 		preview.UnappliedMinor = max(change.AmountMinor-p.cashMinor, 0)
 	}
 	switch {
 	case !change.Status.IsOpen():
-		preview.Blocker = accountingsync.ErrInboundChangeClosed.Error()
+		preview.Blocker = accountinginbound.ErrInboundChangeClosed.Error()
 	case p.blocked():
 		preview.Blocker = p.resolution
 	default:

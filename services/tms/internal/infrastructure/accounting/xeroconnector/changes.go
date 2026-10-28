@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/xero"
@@ -178,13 +180,13 @@ func changeTargets(
 	for _, kind := range req.ReferenceKinds {
 		var target changeTarget
 		switch kind {
-		case accountingsync.ReferenceKindAccount:
+		case accountingprovider.ReferenceKindAccount:
 			target = targetAccounts
-		case accountingsync.ReferenceKindItem:
+		case accountingprovider.ReferenceKindItem:
 			target = targetItems
-		case accountingsync.ReferenceKindCustomer, accountingsync.ReferenceKindVendor:
+		case accountingprovider.ReferenceKindCustomer, accountingprovider.ReferenceKindVendor:
 			target = targetContacts
-		case accountingsync.ReferenceKindTerm, accountingsync.ReferenceKindPaymentMethod:
+		case accountingprovider.ReferenceKindTerm, accountingprovider.ReferenceKindPaymentMethod:
 			continue
 		default:
 			return nil, errors.New("xero: unknown reference kind " + string(kind))
@@ -482,9 +484,9 @@ func (c *changeCollector) document(doc *changedDocument) {
 }
 
 func (c *changeCollector) contact(contact *xero.Contact) {
-	for _, kind := range []accountingsync.ReferenceKind{
-		accountingsync.ReferenceKindCustomer,
-		accountingsync.ReferenceKindVendor,
+	for _, kind := range []accountingprovider.ReferenceKind{
+		accountingprovider.ReferenceKindCustomer,
+		accountingprovider.ReferenceKindVendor,
 	} {
 		if !slices.Contains(c.req.ReferenceKinds, kind) || !contactHolds(contact, kind) {
 			continue
@@ -542,21 +544,21 @@ func creditNoteObjectTypes(kind string) []accountingsync.SyncObjectType {
 }
 
 type inboundShape struct {
-	kind     accountingsync.InboundChangeKind
-	document accountingsync.InboundDocumentKind
+	kind     accountinginbound.InboundChangeKind
+	document accountinginbound.InboundDocumentKind
 }
 
 func inboundShapeOf(paymentType string) (inboundShape, bool) {
 	switch strings.ToUpper(paymentType) {
 	case xero.PaymentTypeReceivable:
 		return inboundShape{
-			kind:     accountingsync.InboundCustomerPayment,
-			document: accountingsync.InboundDocInvoice,
+			kind:     accountinginbound.InboundCustomerPayment,
+			document: accountinginbound.InboundDocInvoice,
 		}, true
 	case xero.PaymentTypePayable:
 		return inboundShape{
-			kind:     accountingsync.InboundBillPayment,
-			document: accountingsync.InboundDocBill,
+			kind:     accountinginbound.InboundBillPayment,
+			document: accountinginbound.InboundDocBill,
 		}, true
 	default:
 		return inboundShape{}, false
@@ -564,7 +566,7 @@ func inboundShapeOf(paymentType string) (inboundShape, bool) {
 }
 
 func (c *changeCollector) wants(shape inboundShape) bool {
-	if shape.kind == accountingsync.InboundCustomerPayment {
+	if shape.kind == accountinginbound.InboundCustomerPayment {
 		return c.req.Payments
 	}
 	return c.req.BillPayments

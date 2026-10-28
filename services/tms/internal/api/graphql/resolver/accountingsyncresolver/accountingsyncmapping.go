@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,13 +24,13 @@ func errAccountingNeedsAPerson() error {
 type accountingMappingActionFunc func(
 	context.Context,
 	*accountingmappingports.AccountingMappingActionRequest,
-) (*accountingsync.AccountingMapping, error)
+) (*accountingmapping.AccountingMapping, error)
 
 func (r *MutationResolver) accountingMappingAction(
 	ctx context.Context,
 	id string,
 	action accountingMappingActionFunc,
-) (*accountingsync.AccountingMapping, error) {
+) (*accountingmapping.AccountingMapping, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAccountingIntegration,
@@ -48,7 +48,7 @@ func (r *MutationResolver) accountingMappingAction(
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		ID:         mappingID,
-		Source:     accountingsync.MappingSourceManual,
+		Source:     accountingmapping.MappingSourceManual,
 	})
 }
 
@@ -69,7 +69,7 @@ func (r *QueryResolver) accountingMappingDetail(
 	}
 	detail := &gqlmodel.AccountingMappingDetail{
 		Mapping: mapping,
-		Options: []*accountingsync.AccountingReferenceObject{},
+		Options: []*accountingmapping.AccountingReferenceObject{},
 	}
 	if optionsQuery == "" {
 		return detail, nil
@@ -93,11 +93,11 @@ func (r *QueryResolver) accountingMappingDetail(
 }
 
 func accountingMappingConnectionToModel(
-	result *pagination.CursorListResult[*accountingsync.AccountingMapping],
+	result *pagination.CursorListResult[*accountingmapping.AccountingMapping],
 ) (*gqlmodel.AccountingMappingConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *accountingsync.AccountingMapping, cursor string) *gqlmodel.AccountingMappingEdge {
+		func(node *accountingmapping.AccountingMapping, cursor string) *gqlmodel.AccountingMappingEdge {
 			return &gqlmodel.AccountingMappingEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.AccountingMappingEdge) string { return edge.Cursor },

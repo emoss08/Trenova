@@ -3,6 +3,7 @@ package accountingsyncservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
@@ -16,11 +17,14 @@ import (
 	"go.uber.org/zap"
 )
 
-func tenantOf(conn *accountingsync.AccountingConnection) pagination.TenantInfo {
+func tenantOf(conn *accountingconnection.AccountingConnection) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
 }
 
-func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.AccountingConnection) {
+func (s *Service) refreshAttention(
+	ctx context.Context,
+	conn *accountingconnection.AccountingConnection,
+) {
 	if s.watchtower == nil {
 		return
 	}
@@ -57,7 +61,10 @@ func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.Acc
 	}
 }
 
-func (s *Service) refreshPaused(ctx context.Context, conn *accountingsync.AccountingConnection) {
+func (s *Service) refreshPaused(
+	ctx context.Context,
+	conn *accountingconnection.AccountingConnection,
+) {
 	if s.watchtower == nil {
 		return
 	}
@@ -78,7 +85,7 @@ func (s *Service) refreshPaused(ctx context.Context, conn *accountingsync.Accoun
 
 func (s *Service) reportSafetyNet(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	found int,
 ) {
 	if s.watchtower == nil || found == 0 {

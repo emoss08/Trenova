@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
@@ -156,14 +156,14 @@ func TestDriftWorkflowsAndSchedulesAreRegistered(t *testing.T) {
 
 type fakeActiveConnections struct {
 	accountingconnectionports.AccountingConnectionRepository
-	rows []*accountingsync.AccountingConnection
+	rows []*accountingconnection.AccountingConnection
 }
 
 func (f *fakeActiveConnections) ListActive(
 	_ context.Context,
 	req accountingconnectionports.ListActiveAccountingConnectionsRequest,
-) ([]*accountingsync.AccountingConnection, error) {
-	out := []*accountingsync.AccountingConnection{}
+) ([]*accountingconnection.AccountingConnection, error) {
+	out := []*accountingconnection.AccountingConnection{}
 	for _, row := range f.rows {
 		if row.ID.String() > req.AfterID.String() && len(out) < req.Limit {
 			out = append(out, row)
@@ -181,14 +181,14 @@ func (f *fakeDriftChecker) CheckNow(_ context.Context, _ pagination.TenantInfo, 
 	return nil
 }
 
-func driftConnections() (syncing, paused *accountingsync.AccountingConnection) {
+func driftConnections() (syncing, paused *accountingconnection.AccountingConnection) {
 	start, enabled, pausedAt := int64(1), int64(1), int64(2)
-	syncing = &accountingsync.AccountingConnection{
+	syncing = &accountingconnection.AccountingConnection{
 		ID:             pulid.MustNew("acctc_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
-		Status:         accountingsync.ConnectionStatusConnected,
-		SetupStep:      accountingsync.SetupStepComplete,
+		Status:         accountingconnection.ConnectionStatusConnected,
+		SetupStep:      accountingconnection.SetupStepComplete,
 		SyncStartDate:  &start,
 		SyncEnabledAt:  &enabled,
 	}
@@ -206,7 +206,7 @@ func TestKickAndWeeklyVisitOnlyConnectionsThatAreSyncing(t *testing.T) {
 	events := &agenteventstest.Recorder{}
 	a := NewActivities(ActivitiesParams{
 		ConnectionsRepository: &fakeActiveConnections{
-			rows: []*accountingsync.AccountingConnection{syncing, paused},
+			rows: []*accountingconnection.AccountingConnection{syncing, paused},
 		},
 		DriftChecker: checker,
 		Publisher:    events,

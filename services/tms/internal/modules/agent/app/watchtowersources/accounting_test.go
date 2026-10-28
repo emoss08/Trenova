@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -14,10 +14,10 @@ import (
 )
 
 func accountingConnection(
-	status accountingsync.ConnectionStatus,
-) *accountingsync.AccountingConnection {
+	status accountingconnection.ConnectionStatus,
+) *accountingconnection.AccountingConnection {
 	failed := int64(1_790_000_000)
-	return &accountingsync.AccountingConnection{
+	return &accountingconnection.AccountingConnection{
 		ID:                            pulid.MustNew("acctc_"),
 		OrganizationID:                pulid.MustNew("org_"),
 		BusinessUnitID:                pulid.MustNew("bu_"),
@@ -32,10 +32,10 @@ func accountingConnection(
 func TestDescribeAccountingConnectionHealth(t *testing.T) {
 	t.Parallel()
 
-	cases := map[accountingsync.ConnectionStatus]watchtower.Severity{
-		accountingsync.ConnectionStatusDegraded: watchtower.SeverityWarning,
-		accountingsync.ConnectionStatusFailing:  watchtower.SeverityCritical,
-		accountingsync.ConnectionStatusRevoked:  watchtower.SeverityCritical,
+	cases := map[accountingconnection.ConnectionStatus]watchtower.Severity{
+		accountingconnection.ConnectionStatusDegraded: watchtower.SeverityWarning,
+		accountingconnection.ConnectionStatusFailing:  watchtower.SeverityCritical,
+		accountingconnection.ConnectionStatusRevoked:  watchtower.SeverityCritical,
 	}
 	for status, severity := range cases {
 		conn := accountingConnection(status)
@@ -51,9 +51,9 @@ func TestDescribeAccountingConnectionHealth(t *testing.T) {
 		assert.Contains(t, item.Title, "QuickBooks Online")
 	}
 
-	for _, status := range []accountingsync.ConnectionStatus{
-		accountingsync.ConnectionStatusConnected,
-		accountingsync.ConnectionStatusDisconnected,
+	for _, status := range []accountingconnection.ConnectionStatus{
+		accountingconnection.ConnectionStatusConnected,
+		accountingconnection.ConnectionStatusDisconnected,
 	} {
 		_, open := DescribeAccountingConnectionHealth(accountingConnection(status))
 		assert.False(t, open, status)
@@ -63,7 +63,7 @@ func TestDescribeAccountingConnectionHealth(t *testing.T) {
 func TestDescribeAccountingReconnect(t *testing.T) {
 	t.Parallel()
 
-	conn := accountingConnection(accountingsync.ConnectionStatusConnected)
+	conn := accountingConnection(accountingconnection.ConnectionStatusConnected)
 	_, open := DescribeAccountingReconnect(conn, conn.RefreshTokenAbsoluteExpiresAt-30*24*60*60)
 	assert.False(t, open, "a month out is not yet worth raising")
 
@@ -73,7 +73,7 @@ func TestDescribeAccountingReconnect(t *testing.T) {
 	assert.Equal(t, AccountingReconnectSourceID(conn), item.SourceID)
 	assert.NotEqual(t, AccountingConnectionHealthSourceID(conn), item.SourceID)
 
-	conn.Status = accountingsync.ConnectionStatusRevoked
+	conn.Status = accountingconnection.ConnectionStatusRevoked
 	_, open = DescribeAccountingReconnect(conn, conn.RefreshTokenAbsoluteExpiresAt-7*24*60*60)
 	assert.False(t, open, "a revoked connection is already a health item")
 }
@@ -81,8 +81,9 @@ func TestDescribeAccountingReconnect(t *testing.T) {
 func TestDescribeAccountingReconnectNamesTheExpiryDate(t *testing.T) {
 	t.Parallel()
 
-	conn := accountingConnection(accountingsync.ConnectionStatusConnected)
-	conn.RefreshTokenAbsoluteExpiresAt = time.Date(2026, time.October, 20, 15, 0, 0, 0, time.UTC).Unix()
+	conn := accountingConnection(accountingconnection.ConnectionStatusConnected)
+	conn.RefreshTokenAbsoluteExpiresAt = time.Date(2026, time.October, 20, 15, 0, 0, 0, time.UTC).
+		Unix()
 
 	item, open := DescribeAccountingReconnect(conn, conn.RefreshTokenAbsoluteExpiresAt-24*60*60)
 	require.True(t, open)
@@ -94,9 +95,9 @@ func TestDescribeAccountingReconnectNamesTheExpiryDate(t *testing.T) {
 func TestDescribeAccountingReconnectAsksForANewCertificate(t *testing.T) {
 	t.Parallel()
 
-	conn := accountingConnection(accountingsync.ConnectionStatusConnected)
+	conn := accountingConnection(accountingconnection.ConnectionStatusConnected)
 	conn.IntegrationType = integration.TypeNetSuite
-	conn.UseCertificate(accountingsync.ClientCertificate{
+	conn.UseCertificate(accountingconnection.ClientCertificate{
 		KeyCiphertext: "sealed",
 		CertificateID: "cert-1",
 		ExpiresAt:     time.Date(2028, time.March, 1, 0, 0, 0, 0, time.UTC).Unix(),
@@ -115,9 +116,9 @@ func TestDescribeAccountingReconnectAsksForANewCertificate(t *testing.T) {
 func TestDescribeRevokedCertificateConnectionAsksForTheMapping(t *testing.T) {
 	t.Parallel()
 
-	conn := accountingConnection(accountingsync.ConnectionStatusRevoked)
+	conn := accountingConnection(accountingconnection.ConnectionStatusRevoked)
 	conn.IntegrationType = integration.TypeNetSuite
-	conn.AuthMethod = accountingsync.AuthMethodClientCredentials
+	conn.AuthMethod = accountingconnection.AuthMethodClientCredentials
 
 	item, open := DescribeAccountingConnectionHealth(conn)
 	require.True(t, open)

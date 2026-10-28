@@ -5,6 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -56,26 +60,26 @@ type harness struct {
 	refresher  *fakeRefresher
 	perms      *fakePermissions
 	tenant     pagination.TenantInfo
-	conn       *accountingsync.AccountingConnection
+	conn       *accountingconnection.AccountingConnection
 	system     *tenant.User
 	now        time.Time
 	customerID pulid.ID
 }
 
-func newHarness(t *testing.T, policy accountingsync.InboundPaymentPolicy) *harness {
+func newHarness(t *testing.T, policy accountingconnection.InboundPaymentPolicy) *harness {
 	t.Helper()
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	enabled := syncEnabledAt.Unix()
 	start := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC).Unix()
-	conn := &accountingsync.AccountingConnection{
+	conn := &accountingconnection.AccountingConnection{
 		ID:                   pulid.MustNew("acctc_"),
 		OrganizationID:       tenantInfo.OrgID,
 		BusinessUnitID:       tenantInfo.BuID,
 		IntegrationType:      integration.TypeQuickBooksOnline,
-		Status:               accountingsync.ConnectionStatusConnected,
+		Status:               accountingconnection.ConnectionStatusConnected,
 		ExternalRealmID:      "123",
 		ExternalHomeCurrency: "USD",
-		SetupStep:            accountingsync.SetupStepComplete,
+		SetupStep:            accountingconnection.SetupStepComplete,
 		SyncStartDate:        &start,
 		SyncEnabledAt:        &enabled,
 		AutoSync:             true,
@@ -197,7 +201,7 @@ func customerPayment(
 	lines ...accountingconnectorports.AccountingInboundLine,
 ) accountingconnectorports.AccountingInboundPayment {
 	return accountingconnectorports.AccountingInboundPayment{
-		Kind:             accountingsync.InboundCustomerPayment,
+		Kind:             accountinginbound.InboundCustomerPayment,
 		Operation:        accountingconnectorports.AccountingChangeUpsert,
 		ExternalID:       externalID,
 		Number:           "10442",
@@ -217,7 +221,7 @@ func customerPayment(
 
 func invoiceLine(externalID, value string) accountingconnectorports.AccountingInboundLine {
 	return accountingconnectorports.AccountingInboundLine{
-		DocumentKind:       accountingsync.InboundDocInvoice,
+		DocumentKind:       accountinginbound.InboundDocInvoice,
 		DocumentExternalID: externalID,
 		Amount:             amount(value),
 	}
@@ -225,7 +229,7 @@ func invoiceLine(externalID, value string) accountingconnectorports.AccountingIn
 
 func creditLine(externalID, value string) accountingconnectorports.AccountingInboundLine {
 	return accountingconnectorports.AccountingInboundLine{
-		DocumentKind:       accountingsync.InboundDocCreditMemo,
+		DocumentKind:       accountinginbound.InboundDocCreditMemo,
 		DocumentExternalID: externalID,
 		Amount:             amount(value),
 	}
@@ -249,7 +253,7 @@ func (h *harness) poll(
 
 func (h *harness) evaluate(t *testing.T) *accountinginboundports.AccountingInboundEvaluation {
 	t.Helper()
-	h.now = h.now.Add(accountingsync.InboundEvaluationSettle + time.Second)
+	h.now = h.now.Add(accountinginbound.InboundEvaluationSettle + time.Second)
 	result, err := h.svc.Evaluate(
 		t.Context(),
 		&accountinginboundports.EvaluateAccountingInboundRequest{
@@ -273,7 +277,7 @@ func (h *harness) person() *permissionports.RequestActor {
 
 func TestPollStartsTheFeedWhenSyncWasEnabledAndSavesTheNextCursor(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 
 	h.poll(t)
 
@@ -282,7 +286,11 @@ func TestPollStartsTheFeedWhenSyncWasEnabledAndSavesTheNextCursor(t *testing.T) 
 		"a new connection reads changes from when sync began, never history")
 	assert.True(t, h.connector.reads[0].Payments)
 	assert.True(t, h.connector.reads[0].BillPayments)
-	assert.ElementsMatch(t, accountingsync.AllReferenceKinds(), h.connector.reads[0].ReferenceKinds)
+	assert.ElementsMatch(
+		t,
+		accountingprovider.AllReferenceKinds(),
+		h.connector.reads[0].ReferenceKinds,
+	)
 	current := h.conns.current()
 	assert.Equal(t, "next", current.ChangeCursor)
 	require.NotNil(t, current.ChangesReadAt)
@@ -291,7 +299,7 @@ func TestPollStartsTheFeedWhenSyncWasEnabledAndSavesTheNextCursor(t *testing.T) 
 
 func TestPollHoldsWhilePausedOrNotSyncing(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	paused := pollTime.Unix()
 	h.conn.PausedAt = &paused
 
@@ -309,7 +317,7 @@ func TestPollHoldsWhilePausedOrNotSyncing(t *testing.T) {
 
 func TestPollRecordsAProviderPaymentAndSkipsOnesTrenovaSent(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	h.invoice("INV-1001", 125_050, 0, "145")
 	h.syncedDocument(
 		accountingsync.SyncObjectCustomerPayment,
@@ -327,7 +335,7 @@ func TestPollRecordsAProviderPaymentAndSkipsOnesTrenovaSent(t *testing.T) {
 	require.Len(t, changes, 1, "a payment Trenova pushed is not brought back")
 	change := changes[0]
 	assert.Equal(t, "301", change.ExternalID)
-	assert.Equal(t, accountingsync.InboundStatusDetected, change.Status)
+	assert.Equal(t, accountinginbound.InboundStatusDetected, change.Status)
 	assert.Equal(t, int64(125_050), change.AmountMinor)
 	assert.Equal(t, paidDay, change.TxnDate)
 	assert.Equal(t, "J Doe", change.ProviderModifiedBy)
@@ -337,7 +345,7 @@ func TestPollRecordsAProviderPaymentAndSkipsOnesTrenovaSent(t *testing.T) {
 
 func TestPollRecordsNothingForPaymentsWhenThePolicyIsOff(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsOff)
+	h := newHarness(t, accountingconnection.InboundPaymentsOff)
 	h.invoice("INV-1001", 125_050, 0, "145")
 
 	h.poll(t, customerPayment("301", "1250.50", invoiceLine("145", "1250.50")))
@@ -348,17 +356,17 @@ func TestPollRecordsNothingForPaymentsWhenThePolicyIsOff(t *testing.T) {
 
 func TestPollAppliesReferenceChangesAndAsksForARefreshWhenTheCursorExpired(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	h.connector.pages = []*accountingconnectorports.AccountingChangePage{{
 		References: []accountingconnectorports.AccountingChangedReference{
-			{Object: &accountingsync.AccountingReferenceObject{
-				Kind:       accountingsync.ReferenceKindCustomer,
+			{Object: &accountingmapping.AccountingReferenceObject{
+				Kind:       accountingprovider.ReferenceKindCustomer,
 				ExternalID: "58",
 				Name:       "Acme Foods Inc",
 			}},
 			{
-				Object: &accountingsync.AccountingReferenceObject{
-					Kind:       accountingsync.ReferenceKindVendor,
+				Object: &accountingmapping.AccountingReferenceObject{
+					Kind:       accountingprovider.ReferenceKindVendor,
 					ExternalID: "81",
 				},
 				Deleted: true,
@@ -379,14 +387,14 @@ func TestPollAppliesReferenceChangesAndAsksForARefreshWhenTheCursorExpired(t *te
 	assert.Equal(t, 2, result.References)
 	require.Len(t, h.references.upserted, 1)
 	assert.Equal(t, "Acme Foods Inc", h.references.upserted[0].Name)
-	assert.Equal(t, []string{"81"}, h.references.removed[accountingsync.ReferenceKindVendor],
+	assert.Equal(t, []string{"81"}, h.references.removed[accountingprovider.ReferenceKindVendor],
 		"a deleted record is marked removed, never overwritten with a blank one")
 	assert.Equal(t, 1, h.refresher.requested)
 }
 
 func TestPollSaysWhenTheReadCouldNotSeeDeletions(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	h.connector.pages = []*accountingconnectorports.AccountingChangePage{
 		{NextCursor: "first", DeletesUnread: true},
 		{NextCursor: "second"},
@@ -408,7 +416,7 @@ func TestPollSaysWhenTheReadCouldNotSeeDeletions(t *testing.T) {
 
 func TestPollRecordsAReadFailureAndKeepsTheCursor(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	h.conn.ChangeCursor = "kept"
 	h.connector.readErr = errors.New("token expired")
 
@@ -425,7 +433,7 @@ func TestPollRecordsAReadFailureAndKeepsTheCursor(t *testing.T) {
 
 func TestAVoidedProviderPaymentSupersedesItsProposal(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	h.invoice("INV-1001", 125_050, 0, "145")
 	h.poll(t, customerPayment("301", "1250.50", invoiceLine("145", "1250.50")))
 	h.evaluate(t)
@@ -435,13 +443,13 @@ func TestAVoidedProviderPaymentSupersedesItsProposal(t *testing.T) {
 	h.poll(t, voided)
 
 	change := h.changes.byExternal("301")
-	assert.Equal(t, accountingsync.InboundStatusSuperseded, change.Status)
-	assert.Equal(t, accountingsync.InboundReasonVoided, change.Reason)
+	assert.Equal(t, accountinginbound.InboundStatusSuperseded, change.Status)
+	assert.Equal(t, accountinginbound.InboundReasonVoided, change.Reason)
 }
 
 func TestEvaluationWaitsForTheChangeToSettleAndForPushesInFlight(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	h.invoice("INV-1001", 125_050, 0, "145")
 	h.poll(t, customerPayment("301", "1250.50", invoiceLine("145", "1250.50")))
 
@@ -472,12 +480,12 @@ func TestEvaluationWaitsForTheChangeToSettleAndForPushesInFlight(t *testing.T) {
 	waiting := h.evaluate(t)
 	assert.True(t, waiting.Waiting, "a push in flight may be this very payment")
 	assert.Zero(t, waiting.Evaluated)
-	assert.Equal(t, accountingsync.InboundStatusDetected, h.changes.byExternal("301").Status)
+	assert.Equal(t, accountinginbound.InboundStatusDetected, h.changes.byExternal("301").Status)
 }
 
 func TestProposePolicyProposesAMatchingPaymentAndRaisesTheEvent(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	inv := h.invoice("INV-1001", 125_050, 0, "145")
 	h.poll(t, customerPayment("301", "1250.50", invoiceLine("145", "1250.50")))
 
@@ -485,8 +493,8 @@ func TestProposePolicyProposesAMatchingPaymentAndRaisesTheEvent(t *testing.T) {
 
 	assert.Equal(t, 1, result.Proposed)
 	change := h.changes.byExternal("301")
-	assert.Equal(t, accountingsync.InboundStatusProposed, change.Status)
-	assert.Equal(t, accountingsync.InboundReasonPolicyPropose, change.Reason)
+	assert.Equal(t, accountinginbound.InboundStatusProposed, change.Status)
+	assert.Equal(t, accountinginbound.InboundReasonPolicyPropose, change.Reason)
 	assert.Equal(t, h.customerID, change.PartyObjectID)
 	assert.Equal(t, inv.ID, change.Document.Lines[0].ObjectID)
 	assert.Equal(t, "INV-1001", change.Document.Lines[0].ObjectNumber)
@@ -500,7 +508,7 @@ func TestProposePolicyProposesAMatchingPaymentAndRaisesTheEvent(t *testing.T) {
 
 func TestApplyPolicyPostsThePaymentAsTheSystemUserAndLinksItsRecord(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsApply)
+	h := newHarness(t, accountingconnection.InboundPaymentsApply)
 	inv := h.invoice("INV-1001", 125_050, 0, "145")
 	h.poll(t, customerPayment("301", "1250.50", invoiceLine("145", "1250.50")))
 
@@ -521,9 +529,9 @@ func TestApplyPolicyPostsThePaymentAsTheSystemUserAndLinksItsRecord(t *testing.T
 	assert.Equal(t, int64(125_050), posted.req.Applications[0].AppliedAmountMinor)
 
 	change := h.changes.byExternal("301")
-	assert.Equal(t, accountingsync.InboundStatusApplied, change.Status)
+	assert.Equal(t, accountinginbound.InboundStatusApplied, change.Status)
 	require.Len(t, change.AppliedObjects, 1)
-	assert.Equal(t, accountingsync.AppliedCustomerPayment, change.AppliedObjects[0].Type)
+	assert.Equal(t, accountinginbound.AppliedCustomerPayment, change.AppliedObjects[0].Type)
 
 	var linked *accountingsync.AccountingSyncRecord
 	for _, record := range h.records.all() {
@@ -541,12 +549,12 @@ func TestApplyPolicyPostsThePaymentAsTheSystemUserAndLinksItsRecord(t *testing.T
 
 func TestPaymentMethodFollowsTheConfirmedMapping(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsApply)
-	h.mappings.rows = []*accountingsync.AccountingMapping{{
+	h := newHarness(t, accountingconnection.InboundPaymentsApply)
+	h.mappings.rows = []*accountingmapping.AccountingMapping{{
 		TargetType: accountingsync.TargetPaymentMethod,
 		TrenovaKey: string(customerpayment.MethodACH),
 		ExternalID: "9",
-		State:      accountingsync.MappingStateConfirmed,
+		State:      accountingmapping.MappingStateConfirmed,
 	}}
 	h.invoice("INV-1001", 10_000, 0, "145")
 	paid := customerPayment("301", "100", invoiceLine("145", "100"))
@@ -562,7 +570,7 @@ func TestPaymentMethodFollowsTheConfirmedMapping(t *testing.T) {
 
 func TestCreditMemoLinesApplyTheCreditAndLinkEveryRecordAsCombined(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsApply)
+	h := newHarness(t, accountingconnection.InboundPaymentsApply)
 	inv := h.invoice("INV-1001", 125_050, 0, "145")
 	memo := h.creditMemo("CM-7", 7_500, "160")
 	h.poll(t, customerPayment("301", "1175.50",
@@ -606,37 +614,37 @@ func TestPaymentsThatDoNotMatchTrenovaAreProposedWithTheReason(t *testing.T) {
 		name    string
 		setup   func(h *harness)
 		payment accountingconnectorports.AccountingInboundPayment
-		reason  accountingsync.InboundChangeReason
-		status  accountingsync.InboundChangeStatus
+		reason  accountinginbound.InboundChangeReason
+		status  accountinginbound.InboundChangeStatus
 	}{
 		{
 			name:    "pays nothing Trenova sent",
 			setup:   func(*harness) {},
 			payment: customerPayment("301", "50", invoiceLine("999", "50")),
-			reason:  accountingsync.InboundReasonNotTrenovaDocument,
-			status:  accountingsync.InboundStatusIgnored,
+			reason:  accountinginbound.InboundReasonNotTrenovaDocument,
+			status:  accountinginbound.InboundStatusIgnored,
 		},
 		{
 			name:  "also pays a document Trenova did not send",
 			setup: func(h *harness) { h.invoice("INV-1001", 10_000, 0, "145") },
 			payment: customerPayment("301", "150",
 				invoiceLine("145", "100"), invoiceLine("999", "50")),
-			reason: accountingsync.InboundReasonUnknownDocument,
-			status: accountingsync.InboundStatusProposed,
+			reason: accountinginbound.InboundReasonUnknownDocument,
+			status: accountinginbound.InboundStatusProposed,
 		},
 		{
 			name:    "pays more than is open",
 			setup:   func(h *harness) { h.invoice("INV-1001", 10_000, 6_000, "145") },
 			payment: customerPayment("301", "50", invoiceLine("145", "50")),
-			reason:  accountingsync.InboundReasonOverpayment,
-			status:  accountingsync.InboundStatusProposed,
+			reason:  accountinginbound.InboundReasonOverpayment,
+			status:  accountinginbound.InboundStatusProposed,
 		},
 		{
 			name:    "pays an invoice already paid in Trenova",
 			setup:   func(h *harness) { h.invoice("INV-1001", 10_000, 10_000, "145") },
 			payment: customerPayment("301", "100", invoiceLine("145", "100")),
-			reason:  accountingsync.InboundReasonAlreadyPaid,
-			status:  accountingsync.InboundStatusProposed,
+			reason:  accountinginbound.InboundReasonAlreadyPaid,
+			status:  accountinginbound.InboundStatusProposed,
 		},
 		{
 			name: "is in another currency",
@@ -644,8 +652,8 @@ func TestPaymentsThatDoNotMatchTrenovaAreProposedWithTheReason(t *testing.T) {
 				h.invoice("INV-1001", 10_000, 0, "145").CurrencyCode = "CAD"
 			},
 			payment: customerPayment("301", "100", invoiceLine("145", "100")),
-			reason:  accountingsync.InboundReasonCurrencyMismatch,
-			status:  accountingsync.InboundStatusProposed,
+			reason:  accountinginbound.InboundReasonCurrencyMismatch,
+			status:  accountinginbound.InboundStatusProposed,
 		},
 		{
 			name: "pays two Trenova customers",
@@ -655,8 +663,8 @@ func TestPaymentsThatDoNotMatchTrenovaAreProposedWithTheReason(t *testing.T) {
 			},
 			payment: customerPayment("301", "200",
 				invoiceLine("145", "100"), invoiceLine("146", "100")),
-			reason: accountingsync.InboundReasonPartyMismatch,
-			status: accountingsync.InboundStatusProposed,
+			reason: accountinginbound.InboundReasonPartyMismatch,
+			status: accountinginbound.InboundStatusProposed,
 		},
 		{
 			name: "falls in a locked period",
@@ -665,8 +673,8 @@ func TestPaymentsThatDoNotMatchTrenovaAreProposedWithTheReason(t *testing.T) {
 				h.periods.status = fiscalperiod.StatusLocked
 			},
 			payment: customerPayment("301", "100", invoiceLine("145", "100")),
-			reason:  accountingsync.InboundReasonPeriodNotOpen,
-			status:  accountingsync.InboundStatusProposed,
+			reason:  accountinginbound.InboundReasonPeriodNotOpen,
+			status:  accountinginbound.InboundStatusProposed,
 		},
 		{
 			name: "has no fiscal period",
@@ -675,15 +683,15 @@ func TestPaymentsThatDoNotMatchTrenovaAreProposedWithTheReason(t *testing.T) {
 				h.periods.none = true
 			},
 			payment: customerPayment("301", "100", invoiceLine("145", "100")),
-			reason:  accountingsync.InboundReasonPeriodNotOpen,
-			status:  accountingsync.InboundStatusProposed,
+			reason:  accountinginbound.InboundReasonPeriodNotOpen,
+			status:  accountinginbound.InboundStatusProposed,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			h := newHarness(t, accountingsync.InboundPaymentsApply)
+			h := newHarness(t, accountingconnection.InboundPaymentsApply)
 			tc.setup(h)
 			h.poll(t, tc.payment)
 
@@ -701,7 +709,7 @@ func TestPaymentsThatDoNotMatchTrenovaAreProposedWithTheReason(t *testing.T) {
 
 func TestAPersonAppliesAProposalAsThemselves(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	h.invoice("INV-1001", 125_050, 0, "145")
 	h.poll(t, customerPayment("301", "1250.50", invoiceLine("145", "1250.50")))
 	h.evaluate(t)
@@ -717,7 +725,7 @@ func TestAPersonAppliesAProposalAsThemselves(t *testing.T) {
 		actor,
 	)
 	require.NoError(t, err)
-	assert.Equal(t, accountingsync.InboundStatusApplied, applied.Status)
+	assert.Equal(t, accountinginbound.InboundStatusApplied, applied.Status)
 	assert.Equal(t, actor.UserID, applied.DecidedByID)
 	require.Len(t, h.payments.posted, 1)
 	assert.Equal(t, actor.UserID, h.payments.posted[0].actor.UserID)
@@ -733,7 +741,7 @@ func TestAPersonAppliesAProposalAsThemselves(t *testing.T) {
 
 func TestApplyingAMismatchIsRefusedWithItsReason(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	h.invoice("INV-1001", 10_000, 6_000, "145")
 	h.poll(t, customerPayment("301", "50", invoiceLine("145", "50")))
 	h.evaluate(t)
@@ -750,13 +758,13 @@ func TestApplyingAMismatchIsRefusedWithItsReason(t *testing.T) {
 
 func TestAProposalBlockedByAClosedPeriodAppliesOnceItReopens(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsApply)
+	h := newHarness(t, accountingconnection.InboundPaymentsApply)
 	h.invoice("INV-1001", 10_000, 0, "145")
 	h.periods.status = fiscalperiod.StatusClosed
 	h.poll(t, customerPayment("301", "100", invoiceLine("145", "100")))
 	h.evaluate(t)
 	change := h.changes.byExternal("301")
-	require.Equal(t, accountingsync.InboundReasonPeriodNotOpen, change.Reason)
+	require.Equal(t, accountinginbound.InboundReasonPeriodNotOpen, change.Reason)
 
 	h.periods.status = fiscalperiod.StatusOpen
 	applied, err := h.svc.Apply(
@@ -768,12 +776,12 @@ func TestAProposalBlockedByAClosedPeriodAppliesOnceItReopens(t *testing.T) {
 		h.person(),
 	)
 	require.NoError(t, err)
-	assert.Equal(t, accountingsync.InboundStatusApplied, applied.Status)
+	assert.Equal(t, accountinginbound.InboundStatusApplied, applied.Status)
 }
 
 func TestAnApplyThePaymentServiceRefusesBecomesAProposal(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsApply)
+	h := newHarness(t, accountingconnection.InboundPaymentsApply)
 	h.invoice("INV-1001", 10_000, 0, "145")
 	h.payments.postErr = errortypes.NewValidationError(
 		"accountingControl",
@@ -785,14 +793,14 @@ func TestAnApplyThePaymentServiceRefusesBecomesAProposal(t *testing.T) {
 	h.evaluate(t)
 
 	change := h.changes.byExternal("301")
-	assert.Equal(t, accountingsync.InboundStatusProposed, change.Status)
-	assert.Equal(t, accountingsync.InboundReasonApplyFailed, change.Reason)
+	assert.Equal(t, accountinginbound.InboundStatusProposed, change.Status)
+	assert.Equal(t, accountinginbound.InboundReasonApplyFailed, change.Reason)
 	assert.Contains(t, change.Resolution, "default cash account")
 }
 
 func TestIgnoringNeedsANote(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	h.invoice("INV-1001", 10_000, 0, "145")
 	h.poll(t, customerPayment("301", "100", invoiceLine("145", "100")))
 	h.evaluate(t)
@@ -818,7 +826,7 @@ func TestIgnoringNeedsANote(t *testing.T) {
 		h.person(),
 	)
 	require.NoError(t, err)
-	assert.Equal(t, accountingsync.InboundStatusIgnored, ignored.Status)
+	assert.Equal(t, accountinginbound.InboundStatusIgnored, ignored.Status)
 	assert.Equal(t, "Entered in Trenova by hand already", ignored.Note)
 }
 
@@ -843,7 +851,7 @@ func billPayment(
 	billExternalID, lineAmount string,
 ) accountingconnectorports.AccountingInboundPayment {
 	return accountingconnectorports.AccountingInboundPayment{
-		Kind:            accountingsync.InboundBillPayment,
+		Kind:            accountinginbound.InboundBillPayment,
 		Operation:       accountingconnectorports.AccountingChangeUpsert,
 		ExternalID:      externalID,
 		Number:          "5521",
@@ -854,7 +862,7 @@ func billPayment(
 		MethodName:      "Check",
 		ReferenceNumber: "5521",
 		Lines: []accountingconnectorports.AccountingInboundLine{{
-			DocumentKind:       accountingsync.InboundDocBill,
+			DocumentKind:       accountinginbound.InboundDocBill,
 			DocumentExternalID: billExternalID,
 			Amount:             amount(lineAmount),
 		}},
@@ -863,7 +871,7 @@ func billPayment(
 
 func TestABillPaidInFullInTheBooksMarksTheSettlementPaidOnThatDay(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsApply)
+	h := newHarness(t, accountingconnection.InboundPaymentsApply)
 	settlementID := h.carrierBill("CS-1042", 98_000, "390")
 	h.poll(t, billPayment("410", "980", "390", "980"))
 
@@ -877,7 +885,7 @@ func TestABillPaidInFullInTheBooksMarksTheSettlementPaidOnThatDay(t *testing.T) 
 	assert.Equal(t, "5521", paid.PaymentReference)
 
 	change := h.changes.byExternal("410")
-	assert.Equal(t, accountingsync.InboundStatusApplied, change.Status)
+	assert.Equal(t, accountinginbound.InboundStatusApplied, change.Status)
 	for _, record := range h.records.all() {
 		if record.ObjectType == accountingsync.SyncObjectCarrierBillPay {
 			assert.Equal(t, accountingsync.SyncStatusSynced, record.Status)
@@ -888,20 +896,20 @@ func TestABillPaidInFullInTheBooksMarksTheSettlementPaidOnThatDay(t *testing.T) 
 
 func TestAPartialBillPaymentIsProposed(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsApply)
+	h := newHarness(t, accountingconnection.InboundPaymentsApply)
 	h.carrierBill("CS-1042", 98_000, "390")
 	h.poll(t, billPayment("410", "500", "390", "500"))
 
 	h.evaluate(t)
 
 	change := h.changes.byExternal("410")
-	assert.Equal(t, accountingsync.InboundReasonPartialBillPayment, change.Reason)
+	assert.Equal(t, accountinginbound.InboundReasonPartialBillPayment, change.Reason)
 	assert.Empty(t, h.carriers.paid)
 }
 
 func TestABillAlreadyPaidInTrenovaIsProposed(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsApply)
+	h := newHarness(t, accountingconnection.InboundPaymentsApply)
 	id := h.carrierBill("CS-1042", 98_000, "390")
 	paidAt := syncEnabledAt.Unix()
 	h.payables.rows[id].PaidAt = &paidAt
@@ -909,13 +917,13 @@ func TestABillAlreadyPaidInTrenovaIsProposed(t *testing.T) {
 
 	h.evaluate(t)
 
-	assert.Equal(t, accountingsync.InboundReasonAlreadyPaid, h.changes.byExternal("410").Reason)
+	assert.Equal(t, accountinginbound.InboundReasonAlreadyPaid, h.changes.byExternal("410").Reason)
 	assert.Empty(t, h.carriers.paid)
 }
 
 func TestProposalsOlderThanADayRaiseAWatchtowerItemPerReason(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	h.invoice("INV-1001", 10_000, 0, "145")
 	h.poll(t, customerPayment("301", "100", invoiceLine("145", "100")))
 	h.evaluate(t)
@@ -935,7 +943,7 @@ func TestProposalsOlderThanADayRaiseAWatchtowerItemPerReason(t *testing.T) {
 
 func TestApplyingNeedsPermissionToPostWhatThePaymentPays(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	h.invoice("INV-1001", 10_000, 0, "145")
 	h.poll(t, customerPayment("301", "100", invoiceLine("145", "100")))
 	h.evaluate(t)
@@ -949,12 +957,12 @@ func TestApplyingNeedsPermissionToPostWhatThePaymentPays(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthorizationError(err))
 	assert.Empty(t, h.payments.posted)
-	assert.Equal(t, accountingsync.InboundStatusProposed, h.changes.byExternal("301").Status)
+	assert.Equal(t, accountinginbound.InboundStatusProposed, h.changes.byExternal("301").Status)
 }
 
 func TestApplyingABillPaymentNeedsSettlementPermission(t *testing.T) {
 	t.Parallel()
-	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
 	h.carrierBill("CS-1042", 98_000, "390")
 	h.poll(t, billPayment("410", "980", "390", "980"))
 	h.evaluate(t)
