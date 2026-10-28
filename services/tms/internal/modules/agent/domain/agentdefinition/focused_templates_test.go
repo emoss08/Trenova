@@ -83,7 +83,7 @@ func TestTemplates_TheFocusedClerksTalkToAPersonAndOnlyPropose(t *testing.T) {
 			icon:       agentdefinition.IconGauge,
 		},
 		agentdefinition.TemplateReportAnalyst: {
-			dataAccess: agentdefinition.DataAccessInternal,
+			dataAccess: agentdefinition.DataAccessRestricted,
 			icon:       agentdefinition.IconCompass,
 		},
 	}

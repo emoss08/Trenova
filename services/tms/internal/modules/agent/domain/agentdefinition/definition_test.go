@@ -552,3 +552,15 @@ func TestApplyDefaults_KeepsTheCapsAlreadySet(t *testing.T) {
 
 	assert.Equal(t, 5, d.ToolDailyLimits["customer_send_email"])
 }
+
+func TestRoleDesksStartWithTheMorningBriefing(t *testing.T) {
+	t.Parallel()
+
+	for _, template := range []agentdefinition.Template{
+		agentdefinition.TemplateDispatchAssistant,
+		agentdefinition.TemplateBillingAssistant,
+		agentdefinition.TemplateComplianceAssistant,
+	} {
+		assert.Contains(t, template.StarterTools(), "insight_get_daily_briefing", template)
+	}
+}

@@ -16,15 +16,20 @@ const (
 
 	tractorsSummary = "List tractors (power units) narrowed by status, ownership, or a " +
 		"registration or lease date. Use it for questions about which units are out " +
-		"of service, coming due for plates, or free now (hasInProgressMove false)."
+		"of service, coming due for plates, or free now (hasInProgressMove false). " +
+		unitNumberNote
 	trailersSummary = "List trailers narrowed by status, ownership, or a registration, " +
 		"lease or inspection date, each with its equipment type (dry van, reefer, " +
 		"flatbed). Use it for questions about which trailers are out of service, " +
-		"overdue for inspection, or free now (hasInProgressMove false)."
+		"overdue for inspection, or free now (hasInProgressMove false). " + unitNumberNote
+	unitNumberNote      = "Name a unit by its unitNumber, never by its plate."
+	fieldUnitCode       = "code"
+	fieldUnitNumber     = "unitNumber"
 	noteEquipmentStatus = "The unit's standing, not whether it is free now: Available means " +
 		"it may be dispatched, OutOfService means it cannot, AtMaintenance means it is in " +
 		"the shop, and Sold means it has left the fleet. An Available unit may still be on " +
-		"a move in progress."
+		"a move in progress, and may still be booked for its next one: when the person " +
+		"names it, propose it and say what it is still finishing."
 	notePlateLapses    = "When the plate lapses."
 	noteLastInspection = "The last annual inspection."
 
@@ -97,6 +102,8 @@ func equipmentReadSpecs() []graphQLListSpec {
 				"available tractors",
 			},
 			resource: permission.ResourceTractor,
+			names:    map[string]string{fieldUnitCode: fieldUnitNumber},
+			presents: map[string]string{fieldUnitCode: fieldUnitNumber},
 			notes: map[string]string{
 				paramStatus:                 noteEquipmentStatus,
 				fieldRegistrationExpiryFrom: notePlateLapses,
@@ -111,6 +118,8 @@ func equipmentReadSpecs() []graphQLListSpec {
 			summary:      trailersSummary,
 			searchTerms:  []string{"find trailer by unit number", "available dry vans"},
 			resource:     permission.ResourceTrailer,
+			names:        map[string]string{fieldUnitCode: fieldUnitNumber},
+			presents:     map[string]string{fieldUnitCode: fieldUnitNumber},
 			notes: map[string]string{
 				paramStatus:                 noteEquipmentStatus,
 				fieldRegistrationExpiryFrom: notePlateLapses,

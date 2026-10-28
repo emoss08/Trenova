@@ -137,7 +137,13 @@ scenarios:
       Approving writes it in one transaction and nothing goes live: the partner and its AS2
       transport inactive, the transport with no credential from the guide, and the Lading
       project as a draft version with no active version until it is tested and certified.
+      edi_draft_connection cites every value to the guide's extracted text, so a server that
+      cannot read an attached PDF (no documentConversion) skips the case rather than failing
+      the agent: the model still reads the PDF itself, and the tool rightly refuses a draft it
+      cannot check.
     exclusive: acme-retail-edi
+    requires:
+      - documentText: true
     setup:
       - >
         delete from edi_communication_profiles where edi_partner_id in
@@ -203,6 +209,8 @@ scenarios:
       from 3.2 and lists only what changed (the coordinator, ISA13 now from 5000, MS1 now
       optional), never a second partner.
     exclusive: acme-retail-edi
+    requires:
+      - documentText: true
     steps:
       - say: "acme sent a new version of their guide, update what changed"
         attach: [../fixtures/attachments/edi-guide-acme-retail-v4.pdf]

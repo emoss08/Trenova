@@ -32,6 +32,11 @@ func workflows() []registry.WorkflowDefinition {
 			Description: "Replay one agent's sampled evaluation cases within budget, score them and finalize the run",
 		},
 		{
+			Name:        AgentSuiteJudgeWorkflowName,
+			Fn:          AgentSuiteJudgeWorkflow,
+			Description: "Wait for an unattended suite run's judge batch, keep each judgement, judge what it missed one case at a time and finalize the run",
+		},
+		{
 			Name:        ReconcileQualitySchedulesWorkflowName,
 			Fn:          ReconcileQualitySchedulesWorkflow,
 			Description: reconcileDescription,

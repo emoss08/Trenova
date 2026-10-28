@@ -538,6 +538,18 @@ func (p *Provider) CostForTask(t Task, usage TokenUsage) *decimal.Decimal {
 	return p.CostFor(usage)
 }
 
+var BatchDiscount = decimal.RequireFromString("0.5")
+
+func (p *Provider) BatchCostForTask(t Task, usage TokenUsage) *decimal.Decimal {
+	cost := p.CostForTask(t, usage)
+	if cost == nil {
+		return nil
+	}
+	discounted := cost.Mul(BatchDiscount)
+
+	return &discounted
+}
+
 // CacheReadPrice is what a cached prompt token costs per million: the price
 // entered for it, or the protocol's usual share of the input price.
 func (p *Provider) CacheReadPrice() *decimal.Decimal {

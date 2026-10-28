@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
@@ -89,10 +90,11 @@ func (s *Service) ListSuiteCases(
 }
 
 type CheckBudgetRequest struct {
-	TenantInfo pagination.TenantInfo      `json:"tenantInfo"`
-	DayStart   int64                      `json:"dayStart"`
-	MonthStart int64                      `json:"monthStart"`
-	Settings   agentquality.SuiteSettings `json:"settings"`
+	TenantInfo   pagination.TenantInfo      `json:"tenantInfo"`
+	DayStart     int64                      `json:"dayStart"`
+	MonthStart   int64                      `json:"monthStart"`
+	Settings     agentquality.SuiteSettings `json:"settings"`
+	CommittedUSD decimal.Decimal            `json:"committedUsd"`
 }
 
 func (s *Service) CheckBudget(
@@ -119,6 +121,7 @@ func (s *Service) CheckBudget(
 		MonthlySpent: monthly.CostUSD,
 		NightlyCap:   req.Settings.NightlyBudgetUSD,
 		MonthlyCap:   req.Settings.MonthlyBudgetUSD,
+		Committed:    req.CommittedUSD,
 	})
 
 	return &decision, nil
@@ -374,17 +377,8 @@ func (s *Service) JudgeCase(ctx context.Context, req *JudgeCaseRequest) (*Judged
 	if err != nil {
 		return nil, err
 	}
-	if evaluation.Judge != nil {
-		score := evaluation.Judge.Score
-
-		return &JudgedCase{Judged: true, Score: &score}, nil
-	}
-	if evaluation.Checks == nil || evaluation.EvalCaseID == nil ||
-		evaluation.Status != agent.EvaluationStatusCompleted {
-		return &JudgedCase{Note: "The case has no scored answer to judge."}, nil
-	}
-	if evaluation.Checks.HardFailure {
-		return &JudgedCase{Note: "A hard check failed; the judge does not override it."}, nil
+	if settled := settledJudgement(evaluation); settled != nil {
+		return settled, nil
 	}
 
 	evalCase, err := s.cases.GetByID(ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
@@ -395,21 +389,10 @@ func (s *Service) JudgeCase(ctx context.Context, req *JudgeCaseRequest) (*Judged
 		return nil, err
 	}
 
-	result, err := s.completion.CompleteStructured(ctx, &agentports.StructuredCompletionRequest{
-		TenantInfo:   req.TenantInfo,
-		Task:         aiprovider.TaskEvaluationJudge,
-		System:       judgeSystemPrompt,
-		Context:      judgeContext(evalCase, evaluation.Reply),
-		OutputSchema: judgeSchema(),
-		SchemaName:   judgeSchemaName,
-		MaxTokens:    judgeMaxTokens,
-		Attribution: aiusageports.AIUsageAttribution{
-			AgentDefinitionID: evaluation.AgentDefinitionID,
-			RunID:             evaluation.ID,
-			Purpose:           aiusageports.AIUsagePurposeEvaluation,
-			Feature:           aiusage.FeatureAgentEvaluation,
-		},
-	})
+	result, err := s.completion.CompleteStructured(
+		ctx,
+		judgeRequest(req.TenantInfo, evaluation, evalCase),
+	)
 	if errors.Is(err, agentports.ErrNoProviderConfigured) {
 		return &JudgedCase{Note: "No provider is assigned to the evaluation judge."}, nil
 	}
@@ -417,11 +400,67 @@ func (s *Service) JudgeCase(ctx context.Context, req *JudgeCaseRequest) (*Judged
 		return nil, fmt.Errorf("ask the judge: %w", err)
 	}
 
-	decoded, err := decodeJudgement(result.Text)
+	return s.recordJudgement(ctx, evaluation, result.Text, result.ModelIdentifier)
+}
+
+func settledJudgement(evaluation *agent.Evaluation) *JudgedCase {
+	if evaluation.Judge != nil {
+		score := evaluation.Judge.Score
+
+		return &JudgedCase{Judged: true, Score: &score}
+	}
+	if evaluation.Checks == nil || evaluation.EvalCaseID == nil ||
+		evaluation.Status != agent.EvaluationStatusCompleted {
+		return &JudgedCase{Note: "The case has no scored answer to judge."}
+	}
+	if evaluation.Checks.HardFailure {
+		return &JudgedCase{Note: "A hard check failed; the judge does not override it."}
+	}
+
+	return nil
+}
+
+func judgeAttribution(evaluation *agent.Evaluation) aiusageports.AIUsageAttribution {
+	return aiusageports.AIUsageAttribution{
+		AgentDefinitionID: evaluation.AgentDefinitionID,
+		RunID:             evaluation.ID,
+		Purpose:           aiusageports.AIUsagePurposeEvaluation,
+		Feature:           aiusage.FeatureAgentEvaluation,
+	}
+}
+
+func judgeRequest(
+	tenant pagination.TenantInfo,
+	evaluation *agent.Evaluation,
+	evalCase *agentquality.EvalCase,
+) *agentports.StructuredCompletionRequest {
+	return &agentports.StructuredCompletionRequest{
+		TenantInfo:   tenant,
+		Task:         aiprovider.TaskEvaluationJudge,
+		System:       judgeSystemPrompt,
+		Context:      judgeContext(evalCase, evaluation.Reply),
+		OutputSchema: judgeSchema(),
+		SchemaName:   judgeSchemaName,
+		MaxTokens:    judgeMaxTokens,
+		Attribution:  judgeAttribution(evaluation),
+	}
+}
+
+func (s *Service) recordJudgement(
+	ctx context.Context,
+	evaluation *agent.Evaluation,
+	text string,
+	model string,
+) (*JudgedCase, error) {
+	if settled := settledJudgement(evaluation); settled != nil {
+		return settled, nil
+	}
+
+	decoded, err := decodeJudgement(text)
 	if err != nil {
 		s.l.Warn("rejected a judgement that could not be read",
 			zap.String("evaluation", evaluation.ID.String()),
-			zap.String("model", result.ModelIdentifier),
+			zap.String("model", model),
 			zap.Error(err),
 		)
 
@@ -431,7 +470,7 @@ func (s *Service) JudgeCase(ctx context.Context, req *JudgeCaseRequest) (*Judged
 	verdict := &agent.JudgeVerdict{
 		Score:     decoded.Score,
 		Rationale: decoded.Rationale,
-		Model:     result.ModelIdentifier,
+		Model:     model,
 		JudgedAt:  s.now(),
 	}
 	final := applyJudgement(evaluation.Checks, verdict)

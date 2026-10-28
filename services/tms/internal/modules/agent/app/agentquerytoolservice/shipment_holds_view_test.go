@@ -78,7 +78,7 @@ func TestGetShipment_ListsTheHoldsInForce(t *testing.T) {
 	)
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{
-		"shipmentId": pulid.MustNew("shp_").String(),
+		"shipmentIds": []any{pulid.MustNew("shp_").String()},
 	}))
 	require.NoError(t, err)
 	active, ok := encodedDocument(t, result)["activeHolds"].([]any)
@@ -98,7 +98,7 @@ func TestGetShipment_ListsTheHoldsInForce(t *testing.T) {
 		&fakePermissions{allowed: false},
 	)
 	result, err = hidden.Query(t.Context(), testParams(map[string]any{
-		"shipmentId": pulid.MustNew("shp_").String(),
+		"shipmentIds": []any{pulid.MustNew("shp_").String()},
 	}))
 	require.NoError(t, err)
 	assert.Empty(t, encodedDocument(t, result)["activeHolds"])

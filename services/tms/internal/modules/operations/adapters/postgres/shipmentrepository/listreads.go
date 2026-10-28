@@ -120,3 +120,35 @@ func holdShipmentIDs(ids []pulid.ID) []pulid.ID {
 
 	return named[:min(len(named), maxActiveHoldShipments)]
 }
+
+type newestCommentReader struct {
+	db *postgres.Connection
+}
+
+func NewNewestCommentReader(p ListReadParams) shipmentports.NewestCommentReader {
+	return &newestCommentReader{db: p.DB}
+}
+
+func (r *newestCommentReader) NewestComments(
+	ctx context.Context,
+	req *shipmentports.NewestCommentsRequest,
+) ([]*shipment.ShipmentComment, error) {
+	ids := holdShipmentIDs(req.ShipmentIDs)
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.ShipmentComment, error) {
+		return newestCommentsQuery(ids).All(ctx, r.db.Keel(ctx))
+	})
+}
+
+func newestCommentsQuery(ids []pulid.ID) *keel.Query[*shipment.ShipmentComment] {
+	sc := shipmentdb.ShipmentComments
+
+	return sc.Where(sc.ShipmentID.In(ids...), sc.ParentCommentID.IsNull(), sc.DeletedAt.IsNull()).
+		DistinctOn(sc.ShipmentID).
+		Load(sc.User()).
+		Order(sc.ShipmentID.Asc(), sc.CreatedAt.Desc(), sc.ID.Desc()).
+		Limit(len(ids))
+}

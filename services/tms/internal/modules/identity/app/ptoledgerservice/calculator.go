@@ -3,6 +3,7 @@ package ptoledgerservice
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -154,6 +155,30 @@ func payPeriodEnds(spec *PayPeriodSpec, from, horizon time.Time) []time.Time {
 	return ends
 }
 
+func RolloverDue(key, cursor string) bool {
+	keyYear, keyPhase, keyKnown := rolloverPosition(key)
+	cursorYear, cursorPhase, cursorKnown := rolloverPosition(cursor)
+	if !keyKnown || !cursorKnown {
+		return key > cursor
+	}
+	if keyYear != cursorYear {
+		return keyYear > cursorYear
+	}
+
+	return keyPhase > cursorPhase
+}
+
+func rolloverPosition(key string) (year string, phase int, known bool) {
+	switch {
+	case strings.HasPrefix(key, periodKeyCarryover):
+		return strings.TrimPrefix(key, periodKeyCarryover), orderExpiryCarryover, true
+	case strings.HasPrefix(key, periodKeyExpiry):
+		return strings.TrimPrefix(key, periodKeyExpiry), orderExpiryCarried, true
+	default:
+		return "", 0, false
+	}
+}
+
 func Schedule(in CalcInput) []PlannedEntry {
 	loc := in.Loc
 	if loc == nil {
@@ -180,9 +205,9 @@ func Schedule(in CalcInput) []PlannedEntry {
 
 	for _, start := range yearStarts(in, hire, floor, horizon, loc) {
 		label := fmt.Sprintf("%d", start.Year())
-		carryKey := periodKeyCarryover + label
-		if carryKey > in.LastRolloverKey {
-			if in.Rule.CarryoverCapDays.Valid {
+		if in.Rule.CarryoverCapDays.Valid {
+			carryKey := periodKeyCarryover + label
+			if RolloverDue(carryKey, in.LastRolloverKey) {
 				plan = append(plan, PlannedEntry{
 					EntryType:   worker.PTOLedgerEntryExpiry,
 					PeriodKey:   carryKey,
@@ -190,17 +215,18 @@ func Schedule(in CalcInput) []PlannedEntry {
 					Deferred:    true,
 					Order:       orderExpiryCarryover,
 				})
-				if in.Rule.CarryoverExpiryDays > 0 {
-					expiresAt := start.AddDate(0, 0, int(in.Rule.CarryoverExpiryDays))
-					if !expiresAt.After(horizon) {
-						plan = append(plan, PlannedEntry{
-							EntryType:   worker.PTOLedgerEntryExpiry,
-							PeriodKey:   periodKeyExpiry + label,
-							EffectiveAt: expiresAt.Unix(),
-							Deferred:    true,
-							Order:       orderExpiryCarried,
-						})
-					}
+			}
+			expiryKey := periodKeyExpiry + label
+			if in.Rule.CarryoverExpiryDays > 0 && RolloverDue(expiryKey, in.LastRolloverKey) {
+				expiresAt := start.AddDate(0, 0, int(in.Rule.CarryoverExpiryDays))
+				if !expiresAt.After(horizon) {
+					plan = append(plan, PlannedEntry{
+						EntryType:   worker.PTOLedgerEntryExpiry,
+						PeriodKey:   expiryKey,
+						EffectiveAt: expiresAt.Unix(),
+						Deferred:    true,
+						Order:       orderExpiryCarried,
+					})
 				}
 			}
 		}

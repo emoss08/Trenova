@@ -103,4 +103,7 @@ type AIUsageRecord struct {
 	AdvisorCostUSD          *decimal.Decimal `json:"advisorCostUsd"          keel:"advisor_cost_usd"`
 
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	// Batched is an attempt the provider answered through its batch API, at the
+	// batch discount: CostUSD is already discounted.
+	Batched bool `json:"batched" keel:"batched"`
 }

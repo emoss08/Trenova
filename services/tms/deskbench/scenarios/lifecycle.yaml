@@ -47,10 +47,13 @@ scenarios:
           executed: true
           db:
             - sql: >
-                select status from shipments where customer_id =
+                select case when status in ('New', 'Delayed') then 'entered' else status::text end
+                from shipments where customer_id =
                 (select id from customers where code = 'ACME') order by created_at desc limit 1
-              equals: New
-              note: the new Acme load saved as New
+              equals: entered
+              note: >
+                the new Acme load saved and not yet moving; a load entered after it ran has
+                passed its windows, so with auto-delay on (production's default) it is Delayed
       - say: "put david park on it with trc-001 and a dry van"
         expect:
           proposals: [{ tool: dispatch_assign_move }]

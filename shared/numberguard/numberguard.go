@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/emoss08/trenova/shared/mdtable"
 	"github.com/shopspring/decimal"
 )
 
@@ -135,8 +136,22 @@ func (c citation) readIn(supported []decimal.Decimal) bool {
 	return false
 }
 
-// maxWorkingOperands bounds the figures of a reply that are paired up.
-const maxWorkingOperands = 16
+// The bounds of the working a prose may show.
+const (
+	// maxWorkingOperands bounds the figures of a prose that are paired up: at
+	// most 120 pairs, 600 values a step.
+	maxWorkingOperands = 16
+	// maxWorkingSteps is how many steps of working Derived follows. A figure
+	// the prose works out in the first step is an operand of the second:
+	// "$1,240 for the miles plus $150 for the tarp, $1,390" adds a product of
+	// two read figures to a third.
+	maxWorkingSteps = 2
+	// minListedTerms is the fewest amounts a list or a table column adds up.
+	minListedTerms = 2
+	// minSentenceTerms is the fewest amounts one sentence adds up; two are
+	// already a pair of the working.
+	minSentenceTerms = 3
+)
 
 // Worked is what the figures prose states work out to in one step: the sum,
 // difference, product and each quotient of every pair of them that supported
@@ -145,17 +160,162 @@ const maxWorkingOperands = 16
 // shows its working; the person can follow it and the guard checks the
 // result, so a result that is wrong is still unsupported.
 func Worked(prose string, supported []decimal.Decimal) []decimal.Decimal {
+	return worked(extractNumbers(prose), supported, 1)
+}
+
+// Derived is Worked followed for maxWorkingSteps, and the totals of the
+// amounts prose lists: each list's and each table column's amounts, and those
+// of one sentence. Every operand is a figure the prose itself states, so the
+// person can follow each step and the guard checks each result; a result whose
+// sides the prose leaves out is not derived, however its sides were read
+// (DB-186). It is bounded by the prose, never by the size of supported: at
+// most maxWorkingOperands operands, maxWorkingSteps steps, and one total per
+// list, column and sentence.
+func Derived(prose string, supported []decimal.Decimal) []decimal.Decimal {
+	derived := worked(extractNumbers(prose), supported, maxWorkingSteps)
+	known := slices.Concat(supported, derived)
+
+	return append(derived, totals(prose, known)...)
+}
+
+// worked is the working over the cited figures, steps deep: each step pairs
+// every cited figure supported holds or an earlier step worked out.
+func worked(cited []citation, supported []decimal.Decimal, steps int) []decimal.Decimal {
 	operands := make([]decimal.Decimal, 0, maxWorkingOperands)
-	for _, cited := range extractNumbers(prose) {
-		if len(operands) == maxWorkingOperands {
+	known := supported
+	var combined []decimal.Decimal
+	for range steps {
+		before := len(operands)
+		for _, figure := range cited {
+			if len(operands) == maxWorkingOperands {
+				break
+			}
+			if !slices.ContainsFunc(operands, figure.value.Equal) && figure.readIn(known) {
+				operands = append(operands, figure.value)
+			}
+		}
+		if len(operands) == before {
 			break
 		}
-		if cited.readIn(supported) && !slices.ContainsFunc(operands, cited.value.Equal) {
-			operands = append(operands, cited.value)
+		combined = Combinations(operands)
+		known = combined
+	}
+
+	return combined
+}
+
+// totals is the sum of each run of list items' amounts, of each table
+// column's, and of each sentence's when it states minSentenceTerms or more.
+// An item's amount is the first money figure it states that is not a rate;
+// one that known does not hold is left out of the sum, and is caught on its
+// own.
+func totals(prose string, known []decimal.Decimal) []decimal.Decimal {
+	sums := make([]decimal.Decimal, 0, 4)
+	add := func(amounts []decimal.Decimal, least int) {
+		if len(amounts) >= least {
+			sums = append(sums, decimal.Sum(decimal.Zero, amounts...))
 		}
 	}
 
-	return Combinations(operands)
+	listed := make([]decimal.Decimal, 0, 8)
+	for line := range strings.SplitSeq(prose, "\n") {
+		trimmed := strings.TrimSpace(line)
+		switch {
+		case trimmed == "":
+		case listItem(trimmed):
+			if amount, ok := firstAmount(line, known); ok {
+				listed = append(listed, amount)
+			}
+		default:
+			add(listed, minListedTerms)
+			listed = listed[:0]
+		}
+	}
+	add(listed, minListedTerms)
+
+	for _, table := range mdtable.Find(prose) {
+		for column := range table.Header {
+			amounts := make([]decimal.Decimal, 0, len(table.Rows))
+			for _, row := range table.Rows {
+				if column >= len(row) {
+					continue
+				}
+				if amount, ok := firstAmount(row[column], known); ok {
+					amounts = append(amounts, amount)
+				}
+			}
+			add(amounts, minListedTerms)
+		}
+	}
+
+	for _, sentence := range Sentences(prose) {
+		amounts := make([]decimal.Decimal, 0, 4)
+		for _, figure := range extractNumbers(sentence) {
+			if figure.amount() && figure.readIn(known) {
+				amounts = append(amounts, figure.value)
+			}
+		}
+		add(amounts, minSentenceTerms)
+	}
+
+	return sums
+}
+
+// amount reports whether the citation is an amount of money, not a rate.
+func (c citation) amount() bool {
+	return c.money && !c.rate && !c.percent
+}
+
+// firstAmount is the first amount text states, when known holds it.
+func firstAmount(text string, known []decimal.Decimal) (decimal.Decimal, bool) {
+	for _, figure := range extractNumbers(text) {
+		if figure.amount() {
+			return figure.value, figure.readIn(known)
+		}
+	}
+
+	return decimal.Zero, false
+}
+
+// listItem reports whether a trimmed line is a markdown list item: "- ", "* ",
+// "+ ", "1. " or "1) ".
+func listItem(trimmed string) bool {
+	if len(trimmed) < 2 {
+		return false
+	}
+	if strings.ContainsRune("-*+", rune(trimmed[0])) {
+		return trimmed[1] == ' '
+	}
+	digits := 0
+	for digits < len(trimmed) && trimmed[digits] >= '0' && trimmed[digits] <= '9' {
+		digits++
+	}
+
+	return digits > 0 && digits+1 < len(trimmed) &&
+		(trimmed[digits] == '.' || trimmed[digits] == ')') && trimmed[digits+1] == ' '
+}
+
+// Sentences is text split at each line break and at each ., ! or ? that a
+// space or the end follows, so the point inside "$3.89" stays in its figure.
+func Sentences(text string) []string {
+	sentences := make([]string, 0, 8)
+	for line := range strings.SplitSeq(text, "\n") {
+		start := 0
+		for idx := 0; idx < len(line); idx++ {
+			if !strings.ContainsRune(".!?", rune(line[idx])) {
+				continue
+			}
+			if idx+1 == len(line) || line[idx+1] == ' ' || line[idx+1] == '\t' {
+				sentences = append(sentences, line[start:idx+1])
+				start = idx + 1
+			}
+		}
+		if strings.TrimSpace(line[start:]) != "" {
+			sentences = append(sentences, line[start:])
+		}
+	}
+
+	return sentences
 }
 
 // Combinations is the sum, difference, product and each quotient of every

@@ -75,6 +75,8 @@ type Conversation struct {
 	formula  *formulaState
 	palette  bool
 	CodeMode codemode.Override
+
+	needsText bool
 }
 
 func (s *Session) Open(ctx context.Context, req OpenConversation) (*Conversation, error) {

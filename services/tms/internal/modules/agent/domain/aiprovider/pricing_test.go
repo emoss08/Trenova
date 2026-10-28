@@ -197,3 +197,24 @@ func TestTokenUsage_PromptTokens(t *testing.T) {
 	assert.Equal(t, 175, usage.PromptTokens(KindAnthropicMessages))
 	assert.Equal(t, 100, usage.PromptTokens(KindOpenAIResponses))
 }
+
+func TestProvider_BatchCostForTask_HalvesEveryTokenPrice(t *testing.T) {
+	t.Parallel()
+
+	sonnet := &Provider{
+		Kind:                 KindAnthropicMessages,
+		Model:                "claude-sonnet-5-5",
+		InputCostPerMillion:  money("2"),
+		OutputCostPerMillion: money("10"),
+	}
+	usage := TokenUsage{Input: 1_000_000, Output: 100_000, CacheRead: 1_000_000}
+
+	full := sonnet.CostForTask(TaskEvaluationJudge, usage)
+	batched := sonnet.BatchCostForTask(TaskEvaluationJudge, usage)
+	require.NotNil(t, full)
+	require.NotNil(t, batched)
+	assert.True(t, batched.Equal(full.Div(decimal.NewFromInt(2))), batched.String())
+
+	assert.Nil(t, (&Provider{}).BatchCostForTask(TaskEvaluationJudge, usage),
+		"an unpriced provider stays unpriced in a batch")
+}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
@@ -17,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 // telematicsReader is the slice of the telematics service the tracking tools
@@ -83,26 +83,25 @@ func newGetShipmentTrackingTool(
 func (t *getShipmentTrackingTool) Name() string { return "shipment_get_tracking" }
 
 func (t *getShipmentTrackingTool) Description() string {
-	return "Where a shipment is and whether it will be on time: each stop's window, actual " +
-		"arrival and lateness, the tractor's last position, and an arrival estimate. It " +
-		"also shows who is on each move with what truck and the driver's remaining " +
-		"hours. A late or overdue stop's lateBy says how far past its window it is the way " +
-		"to say it (\"22h 00m\", \"3d 0h\"), not in minutes. " +
-		"Each open stop carries its projected arrival, slack and verdict, worked out " +
-		"from the truck's position, the carrier's check calls or the last departure with " +
-		"routed drive time, dwell and the driver's hours; estimate.basis says what it rests " +
-		"on and estimate.inputStale says when that is old. Call it an estimate and never a " +
-		"promise. Start here for any \"where is\", \"is it " +
-		"late\" or \"when will it arrive\" question; shipment_get has the commercial " +
-		"detail instead."
+	return "Where shipments are and whether each will be on time; pass every load you want " +
+		"tracked in one call, up to 25. One load comes with each stop's window, actual " +
+		"arrival and lateness, the tractor's last position, who is on each move with what " +
+		"truck and the driver's remaining hours; several come as a table of each load's " +
+		"next stop, projected arrival, verdict, driver, position and flags. A late or " +
+		"overdue stop's lateBy says how far past its window it is the way to say it " +
+		"(\"22h 00m\"). The estimate is worked out from the truck's position, check calls " +
+		"or the last departure with drive time and hours; estimate.basis says what it rests " +
+		"on and inputStale says when that is old. Call it an estimate, never a promise. " +
+		"Start here for \"where is\", \"is it late\" or \"when will it arrive\"; " +
+		"shipment_get has the commercial detail."
 }
 
 func (t *getShipmentTrackingTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			paramShipmentID: shipmentRefProperty(),
-			paramProNumber:  proNumberProperty(),
+			paramShipmentIDs: shipmentRefsProperty(),
+			paramProNumber:   proNumberProperty(),
 		},
 		"additionalProperties": false,
 	}
@@ -112,18 +111,11 @@ func (t *getShipmentTrackingTool) SearchTerms() []string {
 	return []string{"track", "where is", "eta", "on time", "running late"}
 }
 
-func shipmentRefProperty() map[string]any {
-	return agenttoolschema.OfResource(map[string]any{
-		toolschema.KeyType: toolschema.TypeString,
-		toolschema.KeyDescription: "The shipment's id, from shipment_list, the page you are " +
-			"on, or this run's subject. Give this or proNumber.",
-	}, permission.ResourceShipment)
-}
-
 func proNumberProperty() map[string]any {
 	return map[string]any{
-		toolschema.KeyType:        toolschema.TypeString,
-		toolschema.KeyDescription: "The PRO number, when that is what the person gave you.",
+		toolschema.KeyType: toolschema.TypeString,
+		toolschema.KeyDescription: "The PRO number, when that is what the person gave you " +
+			"for one load.",
 	}
 }
 
@@ -141,16 +133,58 @@ func (t *getShipmentTrackingTool) Query(
 		return nil, err
 	}
 
+	ids, pro, err := shipmentRefs(params.Params)
+	if err != nil {
+		return nil, err
+	}
 	tenant := tenantOf(params)
-	sp, err := loadShipment(ctx, t.shipments, tenant, params.Params)
+	if len(ids) > 1 {
+		entities, missing, loadErr := loadShipments(ctx, t.shipments, tenant, ids,
+			shipmentports.ShipmentOptions{ExpandShipmentDetails: true, IncludeCustomer: true})
+		if loadErr != nil {
+			return nil, loadErr
+		}
+		snapshots, snapErr := t.snapshots(ctx, params, entities)
+		if snapErr != nil {
+			return nil, snapErr
+		}
+
+		return trackingTable(snapshots, missing), nil
+	}
+
+	var id pulid.ID
+	if len(ids) == 1 {
+		id = ids[0]
+	}
+	sp, err := loadShipment(ctx, t.shipments, tenant, id, pro)
+	if err != nil {
+		return nil, err
+	}
+	snapshots, err := t.snapshots(ctx, params, []*shipment.Shipment{sp})
 	if err != nil {
 		return nil, err
 	}
 
-	moveIDs := make([]pulid.ID, 0, len(sp.Moves))
-	for _, move := range sp.Moves {
-		if move != nil {
-			moveIDs = append(moveIDs, move.ID)
+	return snapshots[0], nil
+}
+
+func (t *getShipmentTrackingTool) snapshots(
+	ctx context.Context,
+	params *agentports.QueryToolParams,
+	entities []*shipment.Shipment,
+) ([]*shipmenttracking.Snapshot, error) {
+	if len(entities) == 0 {
+		return []*shipmenttracking.Snapshot{}, nil
+	}
+	tenant := tenantOf(params)
+	moveIDs := make([]pulid.ID, 0, len(entities)*2)
+	shipmentIDs := make([]pulid.ID, 0, len(entities))
+	for _, sp := range entities {
+		shipmentIDs = append(shipmentIDs, sp.ID)
+		for _, move := range sp.Moves {
+			if move != nil {
+				moveIDs = append(moveIDs, move.ID)
+			}
 		}
 	}
 
@@ -170,62 +204,56 @@ func (t *getShipmentTrackingTool) Query(
 		}
 	}
 
-	positions, err := t.positions(ctx, tenant, tractorIDs)
+	positions, err := t.positions(ctx, tenant, sliceutils.Dedupe(tractorIDs))
 	if err != nil {
 		return nil, err
 	}
-	hos, err := t.hours(ctx, tenant, workerIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	etas, err := t.stopEtas.ListByShipmentIDs(ctx, tenant, []pulid.ID{sp.ID})
+	hos, err := t.hours(ctx, tenant, sliceutils.Dedupe(workerIDs))
 	if err != nil {
 		return nil, err
 	}
 
-	return shipmenttracking.Build(shipmenttracking.Input{
-		Shipment:    sp,
-		Assignments: assignments,
-		Positions:   positions,
-		HOS:         hos,
-		StopETAs:    stopeta.IndexByStop(etas),
-		Now:         clockFor(params).Now,
-		Timezone:    params.Timezone,
-	}), nil
+	etas, err := t.stopEtas.ListByShipmentIDs(ctx, tenant, shipmentIDs)
+	if err != nil {
+		return nil, err
+	}
+	byStop := stopeta.IndexByStop(etas)
+
+	now := clockFor(params).Now
+	snapshots := make([]*shipmenttracking.Snapshot, 0, len(entities))
+	for _, sp := range entities {
+		snapshots = append(snapshots, shipmenttracking.Build(shipmenttracking.Input{
+			Shipment:    sp,
+			Assignments: assignments,
+			Positions:   positions,
+			HOS:         hos,
+			StopETAs:    byStop,
+			Now:         now,
+			Timezone:    params.Timezone,
+		}))
+	}
+
+	return snapshots, nil
 }
 
-// loadShipment reads the shipment by id, or by PRO number when that is what was
-// given; a PRO that matches more than one record is refused with the
-// candidates, because guessing between two loads is how the wrong customer
-// gets a call.
 func loadShipment(
 	ctx context.Context,
 	shipments shipmentports.ShipmentRepository,
 	tenant pagination.TenantInfo,
-	params map[string]any,
+	id pulid.ID,
+	pro string,
 ) (*shipment.Shipment, error) {
 	options := shipmentports.ShipmentOptions{
 		ExpandShipmentDetails: true,
 		IncludeCustomer:       true,
 	}
 
-	if raw := optionalString(params, "shipmentId"); raw != "" {
-		id, err := pulid.Parse(raw)
-		if err != nil {
-			return nil, fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", err)
-		}
-
+	if id.IsNotNil() {
 		return shipments.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 			ID:              id,
 			TenantInfo:      tenant,
 			ShipmentOptions: options,
 		})
-	}
-
-	pro := optionalString(params, "proNumber")
-	if pro == "" {
-		return nil, fmt.Errorf("give shipmentId or proNumber")
 	}
 
 	result, err := shipments.List(ctx, &shipmentports.ListShipmentsRequest{
@@ -246,7 +274,7 @@ func loadShipment(
 		if strings.EqualFold(item.ProNumber, pro) {
 			if exact != nil {
 				return nil, fmt.Errorf(
-					"more than one shipment carries PRO %q; use shipmentId to say which", pro,
+					"more than one shipment carries PRO %q; use shipmentIds to say which", pro,
 				)
 			}
 			exact = item

@@ -85,6 +85,8 @@ fails it, fix it in the same change if it is small, or name it in your report.
 - An expensive GraphQL field declares its cost; never raise the global ceiling to fit one query.
 - Model calls go through the completion router
   (`internal/infrastructure/agentcompletion/completionrouter`), which meters them; a new feature
-  never calls a provider SDK on its own.
+  never calls a provider SDK on its own. Model work nobody waits on goes through
+  `agentports.BatchCompletionService` at the provider's batch discount, falling back to one
+  call at a time on `ErrBatchUnsupported`.
 - Measure before and after when a change targets performance (`EXPLAIN (ANALYZE, BUFFERS)` on
   the query, a benchmark for a hot function) and put the numbers in the PR.

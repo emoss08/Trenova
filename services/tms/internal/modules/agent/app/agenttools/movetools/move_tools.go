@@ -64,7 +64,10 @@ func (t *RecordStopActualTool) Description() string {
 		"it. Get the move and stop ids from shipment_get, and only record what you were " +
 		"actually told happened — never infer an arrival from a departure, or the " +
 		"reverse. When you are told both (\"got there 5:50, left 7:05\"), record them " +
-		"in one call: action Arrive with occurredAt and departedAt."
+		"in one call: action Arrive with occurredAt and departedAt. A departure needs the " +
+		"stop's arrival first; when you were told only that the load is done (\"mark it " +
+		"done\") or only when it left a stop, record the stops you have both times for and " +
+		"mark the move Completed with dispatch_set_move_status rather than guess a time."
 }
 
 func (t *RecordStopActualTool) ParamSchema() map[string]any {

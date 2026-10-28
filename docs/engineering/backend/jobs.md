@@ -32,6 +32,11 @@ in [module-architecture.md](../module-architecture.md). Agent work has its own r
   (`WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE`, `CONFLICT_POLICY_USE_EXISTING`) make a duplicate
   start a no-op.
 - Long-running loops continue-as-new before history grows large; carry only the state needed.
+- **A long wait on someone else is its own workflow.** A step that waits hours on a provider
+  (a Message Batch) inside a serial parent hands the wait to a child started with
+  `PARENT_CLOSE_POLICY_ABANDON` and returns, carrying only the handle; the child polls on
+  `workflow.Sleep` with backoff under a deadline and finishes the work
+  (`agentqualityjobs.AgentSuiteJudgeWorkflow`).
 
 ## Activities
 
@@ -39,7 +44,10 @@ in [module-architecture.md](../module-architecture.md). Agent work has its own r
   activity sets `HeartbeatTimeout` and heartbeats (`temporaltype.HeartbeatEvery`).
 - **Every activity is idempotent**: it will be retried after it has partly succeeded. Use
   natural keys and unique indexes, `INSERT … ON CONFLICT`, conditional updates on `version` or
-  status, and idempotency keys on outbound calls.
+  status, and idempotency keys on outbound calls. A row recorded from something read again on
+  retry takes an id derived from what it records (`pulid.Derived`) and is written with
+  `CreateOrSkip`. An outbound call with no idempotency key that must not run twice (a batch
+  submission) runs with `MaximumAttempts: 1` and a fallback path.
 - An error that will never succeed on retry (validation, not found, refused) is
   `temporaltype.NewNonRetryableError` or `ToDomainRefusal`.
 - Activities take IDs and load current state; never pass a whole entity through history.

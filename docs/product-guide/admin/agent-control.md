@@ -470,7 +470,10 @@ Keywords: AI quality, agent score, regression, satisfaction, thumbs down, golden
 6. In **Suite runs**, each run shows its **Status**, **Cases asked** and **Quality score**. Select
    a run to read its **Score**, **Change**, **Cost** and **What changed**, with a square for every
    case: red ones scored below the bar. **See the cases** lists what each case scored; select a
-   case to read the reply and the judge's note. **Back to suite runs** returns to the runs.
+   case to read the reply and the judge's note. **Back to suite runs** returns to the runs. A
+   run from the nightly sweep has its answers judged together in a batch, at half the price,
+   so it can stay running for up to a day after its cases are asked; a run you start with
+   **Run suite now** is judged at once.
 7. **Worst rated** lists the answers people rated down in the last 30 days, most disliked first.
    Select one to read **The question**, **The answer** and **What they said**. Select
    **Add to golden set** to score the agent against it every night, **Write a memory** to tell

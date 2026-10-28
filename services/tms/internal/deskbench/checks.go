@@ -244,8 +244,10 @@ func artifactLinkChecks(turns []*TurnRecord) []CheckResult {
 }
 
 // artifactCorrections is the link corrections that cost the person a restart:
-// a reply asked again, and a reply placed after that. A left-out artifact
-// named by a closing sentence, with nothing asked again, is not one.
+// a reply asked again, and a reply placed after that. A link the runtime mends
+// without asking again (a left-out artifact, or one standing apart from any
+// sentence moved into the reply's own) is a place_artifacts alone, and is not
+// one.
 func artifactCorrections(events []Event) []string {
 	if !slices.ContainsFunc(events, func(event Event) bool {
 		data, ok := event.Data.(map[string]any)

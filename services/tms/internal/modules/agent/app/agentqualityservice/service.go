@@ -63,6 +63,7 @@ type Params struct {
 	Runtime       *agentruntime.Service
 	Audit         auditports.AuditService
 	Completion    agentports.CompletionService            `optional:"true"`
+	Batches       agentports.BatchCompletionService       `optional:"true"`
 	Watchtower    watchtowerports.WatchtowerProjector     `optional:"true"`
 	Notifications *notificationservice.Service            `optional:"true"`
 	Scheduler     agentqualityports.AgentQualityScheduler `optional:"true"`
@@ -84,6 +85,7 @@ type Service struct {
 	runtime       fingerprinter
 	audit         auditports.AuditService
 	completion    agentports.CompletionService
+	batches       agentports.BatchCompletionService
 	watchtower    watchtowerports.WatchtowerProjector
 	notifier      regressionNotifier
 	scheduler     agentqualityports.AgentQualityScheduler
@@ -116,6 +118,7 @@ func New(p Params) *Service {
 		runtime:       runtime,
 		audit:         p.Audit,
 		completion:    p.Completion,
+		batches:       p.Batches,
 		watchtower:    p.Watchtower,
 		notifier:      notifier,
 		scheduler:     p.Scheduler,

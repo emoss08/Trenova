@@ -223,13 +223,13 @@ func (s *Service) postPlanned(
 		actor: actor,
 		rule:  &capRule,
 		onApplied: func(bal *worker.WorkerPTOBalance) {
-			advanceCursor(bal, planned, rule)
+			AdvanceCursor(bal, planned, rule)
 		},
 	}
 
 	if planned.Deferred {
 		params.resolve = func(bal *worker.WorkerPTOBalance) (decimal.Decimal, bool) {
-			return resolveExpiry(bal, planned, rule)
+			return ResolveExpiry(bal, planned, rule)
 		}
 	}
 
@@ -263,7 +263,7 @@ func (s *Service) payPeriodFor(
 	return nil, nil //nolint:nilnil // no rule accrues per pay period
 }
 
-func resolveExpiry(
+func ResolveExpiry(
 	bal *worker.WorkerPTOBalance,
 	planned PlannedEntry,
 	rule *worker.PTOPolicyRule,
@@ -289,7 +289,7 @@ func resolveExpiry(
 	}
 }
 
-func advanceCursor(bal *worker.WorkerPTOBalance, planned PlannedEntry, rule *worker.PTOPolicyRule) {
+func AdvanceCursor(bal *worker.WorkerPTOBalance, planned PlannedEntry, rule *worker.PTOPolicyRule) {
 	switch {
 	case strings.HasPrefix(planned.PeriodKey, periodKeyCarryover):
 		bal.LastRolloverKey = planned.PeriodKey
@@ -305,7 +305,7 @@ func advanceCursor(bal *worker.WorkerPTOBalance, planned PlannedEntry, rule *wor
 		bal.AccruedYTDDays = decimal.Zero
 		bal.UsedYTDDays = decimal.Zero
 	case strings.HasPrefix(planned.PeriodKey, periodKeyExpiry):
-		if planned.PeriodKey > bal.LastRolloverKey {
+		if RolloverDue(planned.PeriodKey, bal.LastRolloverKey) {
 			bal.LastRolloverKey = planned.PeriodKey
 		}
 		bal.CarriedDays = decimal.Zero
@@ -330,7 +330,7 @@ func (s *Service) advanceCursorOnly(
 			return decimal.Zero, false
 		},
 		onApplied: func(bal *worker.WorkerPTOBalance) {
-			advanceCursor(bal, planned, rule)
+			AdvanceCursor(bal, planned, rule)
 		},
 	})
 	if errors.Is(err, ErrCapped) {

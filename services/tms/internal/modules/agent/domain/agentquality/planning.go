@@ -216,30 +216,45 @@ type BudgetInput struct {
 	MonthlySpent decimal.Decimal
 	NightlyCap   decimal.Decimal
 	MonthlyCap   decimal.Decimal
+	Committed    decimal.Decimal
 }
 
 type BudgetDecision struct {
 	Stop   bool
 	Reason string
+	Room   decimal.Decimal
 }
 
 func CheckBudget(in BudgetInput) BudgetDecision {
-	if !in.NightlySpent.LessThan(in.NightlyCap) {
+	committed := decimal.Max(in.Committed, decimal.Zero)
+	nightly := in.NightlySpent.Add(committed)
+	monthly := in.MonthlySpent.Add(committed)
+	if !nightly.LessThan(in.NightlyCap) {
 		return BudgetDecision{
 			Stop: true,
 			Reason: "Tonight's evaluation budget of $" + in.NightlyCap.StringFixed(2) +
-				" is spent ($" + in.NightlySpent.StringFixed(2) + ").",
+				" is spent ($" + in.NightlySpent.StringFixed(2) + committedNote(committed) + ").",
 		}
 	}
-	if !in.MonthlySpent.LessThan(in.MonthlyCap) {
+	if !monthly.LessThan(in.MonthlyCap) {
 		return BudgetDecision{
 			Stop: true,
 			Reason: "This month's evaluation budget of $" + in.MonthlyCap.StringFixed(2) +
-				" is spent ($" + in.MonthlySpent.StringFixed(2) + ").",
+				" is spent ($" + in.MonthlySpent.StringFixed(2) + committedNote(committed) + ").",
 		}
 	}
 
-	return BudgetDecision{}
+	return BudgetDecision{
+		Room: decimal.Min(in.NightlyCap.Sub(nightly), in.MonthlyCap.Sub(monthly)),
+	}
+}
+
+func committedNote(committed decimal.Decimal) string {
+	if !committed.IsPositive() {
+		return ""
+	}
+
+	return ", and $" + committed.StringFixed(2) + " held for judge batches still running"
 }
 
 func DescribeChanges(changes []agent.FingerprintChange) string {

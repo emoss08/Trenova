@@ -30,9 +30,11 @@ func ptrOf[T any](v T) *T { return &v }
 type fakeTrackingShipments struct {
 	shipmentports.ShipmentRepository
 
-	byID    map[pulid.ID]*shipment.Shipment
-	listed  []*shipment.Shipment
-	lastGet *shipmentports.GetShipmentByIDRequest
+	byID     map[pulid.ID]*shipment.Shipment
+	listed   []*shipment.Shipment
+	lastGet  *shipmentports.GetShipmentByIDRequest
+	lastList *shipmentports.ListShipmentsRequest
+	lists    int
 }
 
 func (f *fakeTrackingShipments) GetByID(
@@ -49,8 +51,11 @@ func (f *fakeTrackingShipments) GetByID(
 
 func (f *fakeTrackingShipments) List(
 	_ context.Context,
-	_ *shipmentports.ListShipmentsRequest,
+	req *shipmentports.ListShipmentsRequest,
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
+	f.lastList = req
+	f.lists++
+
 	return &pagination.CursorListResult[*shipment.Shipment]{Items: f.listed}, nil
 }
 
@@ -206,7 +211,7 @@ func TestGetShipmentTracking_ComposesStopsAssignmentPositionAndHours(t *testing.
 	}}}
 	tool := newGetShipmentTrackingTool(shipments, board, feed, etas)
 
-	params := testParams(map[string]any{"shipmentId": sp.ID.String()})
+	params := testParams(map[string]any{"shipmentIds": []any{sp.ID.String()}})
 	params.Timezone = "America/Chicago"
 	result, err := tool.Query(t.Context(), params)
 	require.NoError(t, err)
@@ -269,7 +274,68 @@ func TestGetShipmentTracking_FindsAShipmentByExactProNumber(t *testing.T) {
 
 	_, err = tool.Query(t.Context(), testParams(map[string]any{}))
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "shipmentId or proNumber")
+	assert.Contains(t, err.Error(), "shipmentIds or proNumber")
+}
+
+/*
+The load monitor read the board, then tracked each late load in its own call:
+nine calls before it judged a single service failure, and its twelve-call budget
+spent. Every load it names now comes back in one call, from one read of each
+source for all of them.
+*/
+func TestGetShipmentTracking_TracksEveryLoadNamedInOneReadOfEachSource(t *testing.T) {
+	t.Parallel()
+
+	first, firstMove := trackedShipment()
+	second, secondMove := trackedShipment()
+	second.ProNumber = "S67890"
+	missing := pulid.MustNew("shp_")
+	shipments := &fakeTrackingShipments{listed: []*shipment.Shipment{second, first}}
+	board := &fakeBoardMoves{}
+	etas := &fakeStopEtaReader{}
+	tool := newGetShipmentTrackingTool(shipments, board, &fakeTelematics{}, etas)
+
+	result, err := tool.Query(t.Context(), testParams(map[string]any{
+		"shipmentIds": []any{first.ID.String(), second.ID.String(), missing.String()},
+	}))
+	require.NoError(t, err)
+
+	table, ok := result.(*trackingOutcome)
+	require.True(t, ok)
+	require.Len(t, table.Items, 2)
+	assert.Equal(t, "S12345", table.Items[0].ProNumber, "rows come in the order named")
+	assert.Equal(t, "S67890", table.Items[1].ProNumber)
+	assert.NotEmpty(t, table.Items[0].Summary)
+	require.NotNil(t, table.Items[0].NextStop)
+	assert.Contains(t, table.Note, missing.String())
+
+	assert.Equal(t, 1, shipments.lists, "one read for every load")
+	require.NotNil(t, shipments.lastList)
+	assert.ElementsMatch(t, []pulid.ID{first.ID, second.ID, missing},
+		shipments.lastList.ShipmentOptions.IDs)
+	assert.True(t, shipments.lastList.ShipmentOptions.ExpandShipmentDetails)
+	require.NotNil(t, board.filter)
+	assert.ElementsMatch(t, []pulid.ID{secondMove.ID, firstMove.ID}, board.filter.MoveIDs)
+	assert.ElementsMatch(t, []pulid.ID{second.ID, first.ID}, etas.requested)
+}
+
+func TestGetShipmentTracking_RefusesMoreLoadsThanOneCallReads(t *testing.T) {
+	t.Parallel()
+
+	tool := newGetShipmentTrackingTool(&fakeTrackingShipments{}, &fakeBoardMoves{},
+		&fakeTelematics{}, &fakeStopEtaReader{})
+	ids := make([]any, 0, maxShipmentReads+1)
+	for range maxShipmentReads + 1 {
+		ids = append(ids, pulid.MustNew("shp_").String())
+	}
+
+	_, err := tool.Query(t.Context(), testParams(map[string]any{"shipmentIds": ids}))
+	require.ErrorContains(t, err, "more than 25 ids")
+
+	_, err = tool.Query(t.Context(), testParams(map[string]any{
+		"shipmentIds": []any{pulid.MustNew("shp_").String()}, "proNumber": "S1",
+	}))
+	require.ErrorContains(t, err, "not both")
 }
 
 type fakeBoard struct {

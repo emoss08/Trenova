@@ -477,7 +477,7 @@ retitled `[bench] …` like any other, so `desk clean` finds it. The palette sen
 its search found that the question names as `mentions`; give them on the step to test that
 path, or leave them out to test Nova finding the record itself.
 
-Every step also checks that each of its turns finished, that no artifact link restarted its reply (a left-out artifact the runtime names at the end without asking again is not counted), and that the grounding guard did not
+Every step also checks that each of its turns finished, that no artifact link restarted its reply (a link the runtime mends without asking again, a left-out artifact or one standing apart from any sentence moved into the reply's own sentence, is a `place_artifacts` with no `relink_artifacts` and is not counted), and that the grounding guard did not
 have to rewrite or annotate its reply ("reply grounded without a correction": a reply that named
 what a filed change does not hold, or stated money or a percentage nothing the conversation read;
 the detail lists the figures and fields). A decide step takes `decide: approve`
@@ -524,7 +524,15 @@ requires:
   - extension: BrowserUse        # the extension enabled with an API key (Exa, Parallel, BrowserUse)
   - emailProfile: Notifications  # an active profile assigned to this purpose or to General
   - ediLading: ACMEMFG           # the partner (by code) has an active Lading version
+  - documentText: true           # the server reads an attached file's text
 ```
+
+`documentText` is checked when the step attaches its file, since no row says whether the
+document converter runs: a file the server could not read for that reason (no
+`documentConversion`, or document extraction unavailable) skips the case with "needs …" instead
+of grading the agent on a tool that rightly refuses unread text. A scenario without it still runs
+on an unread file, because the model reads a PDF itself; the EDI guide scenarios need it, since
+`edi_draft_connection` checks every citation against the extracted pages.
 
 `emailProfile` names the purpose the tool sends under, because that is how a send picks its
 profile (assigned to the purpose, else to General; `is_default` plays no part):

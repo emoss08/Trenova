@@ -14,6 +14,7 @@ const (
 	toolListWorkerCredentials  = "worker_list_credentials"
 	toolListInsights           = "insight_list"
 	toolGetInsight             = "insight_get"
+	toolGetDailyBriefing       = "insight_get_daily_briefing"
 	toolGetWorkerHOS           = "worker_get_hos"
 	toolListEmailProfiles      = "inbox_list_email_profiles"
 	toolListAccessorialCharges = "masterdata_list_accessorial_charges"
@@ -35,6 +36,7 @@ func (t Template) StarterTools() []string {
 	switch t {
 	case TemplateDispatchAssistant:
 		return []string{
+			toolGetDailyBriefing,
 			toolShipmentList,
 			toolGetWorker,
 			toolListWorkers,
@@ -93,6 +95,7 @@ func (t Template) StarterTools() []string {
 		}
 	case TemplateBillingAssistant:
 		return []string{
+			toolGetDailyBriefing,
 			toolShipmentGet,
 			toolShipmentList,
 			"billing_list_transfer_candidates",
@@ -146,6 +149,7 @@ func (t Template) StarterTools() []string {
 		}
 	case TemplateComplianceAssistant:
 		return []string{
+			toolGetDailyBriefing,
 			toolGetWorker,
 			toolListWorkers,
 			toolListWorkerCredentials,
@@ -340,6 +344,7 @@ func (t Template) StarterTools() []string {
 			"carrier_resolve_intelligence_event",
 			"carrier_vet",
 			"carrier_set_monitoring",
+			"carrier_set_status",
 			"carrier_record_intelligence_review",
 		}
 	case TemplateIntakeDesk:
@@ -478,6 +483,7 @@ func (t Template) StarterTools() []string {
 			toolListFormulaTemplates,
 			toolGetFormulaTemplate,
 			"masterdata_list_commodities",
+			"masterdata_create_commodity",
 			toolListAccessorialCharges,
 			toolShipmentList,
 			toolRateQuote,

@@ -104,3 +104,18 @@ func TestActiveHoldsQuery_ReadsTheHoldsInForceForThePage(t *testing.T) {
 	}
 	assert.Len(t, holdShipmentIDs(many), maxActiveHoldShipments)
 }
+
+func TestNewestCommentsQuery_TakesEachShipmentsNewestTopLevelComment(t *testing.T) {
+	t.Parallel()
+
+	first, second := pulid.MustNew("shp_"), pulid.MustNew("shp_")
+	sql, args := keeltest.Render(t, newestCommentsQuery([]pulid.ID{first, second}))
+
+	assert.Contains(t, sql, "DISTINCT ON (")
+	assert.Contains(t, sql, `"shipment_id") `)
+	assert.Contains(t, sql, `"parent_comment_id" IS NULL`)
+	assert.Contains(t, sql, `"deleted_at" IS NULL`)
+	assert.Contains(t, sql, `"created_at" DESC`)
+	assert.Contains(t, sql, "LIMIT 2")
+	assert.Contains(t, args, []string{first.String(), second.String()})
+}
