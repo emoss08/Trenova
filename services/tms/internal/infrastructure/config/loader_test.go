@@ -691,9 +691,19 @@ func TestSetDefaults(t *testing.T) {
 		l.configureViper()
 
 		assert.Equal(t, true, l.viper.GetBool("security.rateLimit.enabled"))
-		assert.Equal(t, 60, l.viper.GetInt("security.rateLimit.requestsPerMinute"))
-		assert.Equal(t, 10, l.viper.GetInt("security.rateLimit.burstSize"))
 		assert.Equal(t, "1m", l.viper.GetString("security.rateLimit.cleanupInterval"))
+		for _, scope := range []string{"anonymous", "apiKey", "tenant", "publicToken"} {
+			prefix := "security.rateLimit." + scope
+			assert.False(t, l.viper.GetBool(prefix+".disabled"), scope)
+			assert.Zero(t, l.viper.GetInt(prefix+".requestsPerMinute"), scope)
+			assert.Zero(t, l.viper.GetInt(prefix+".burstSize"), scope)
+		}
+
+		cfg := RateLimitConfig{Enabled: l.viper.GetBool("security.rateLimit.enabled")}
+		assert.Equal(t, RateLimitScopePolicy{Enabled: true, RequestsPerMinute: 300, BurstSize: 60},
+			cfg.ScopePolicy(RateLimitScopeAnonymous))
+		assert.Equal(t, RateLimitScopePolicy{Enabled: true, RequestsPerMinute: 60, BurstSize: 20},
+			cfg.ScopePolicy(RateLimitScopePublicToken))
 	})
 
 	t.Run("logging defaults", func(t *testing.T) {
@@ -1098,8 +1108,9 @@ security:
     tokenName: "csrf_token"
     headerName: "X-CSRF-Token"
   rateLimit:
-    requestsPerMinute: 60
-    burstSize: 10
+    anonymous:
+      requestsPerMinute: 60
+      burstSize: 10
   encryption:
     key: "short"
 logging:
@@ -1456,4 +1467,45 @@ func TestRecoveryCodePepperKeyIsStableAndKeyedByThePepper(t *testing.T) {
 	derived, err := fromSession.RecoveryCodePepperKey()
 	require.NoError(t, err)
 	assert.NotEqual(t, first, derived)
+}
+
+func TestSelfHostConfigFileLoads(t *testing.T) {
+	configDir := t.TempDir()
+	contents, err := os.ReadFile(filepath.Join("../../../../../deploy/selfhost/config", "config.yaml"))
+	require.NoError(t, err, "the self-host config must exist")
+	require.NoError(t, os.WriteFile(filepath.Join(configDir, "config.yaml"), contents, 0o600))
+
+	for key, value := range map[string]string{
+		"TRENOVA_APP_VERSION":                     "1.0.0",
+		"TRENOVA_APP_WEBBASEURL":                  "https://tms.example.com",
+		"TRENOVA_APP_PROBLEMTYPEBASEURI":          "https://tms.example.com/problems/",
+		"TRENOVA_SERVER_CORS_ALLOWEDORIGINS":      "https://tms.example.com",
+		"TRENOVA_SECURITY_CSRF_TRUSTEDORIGINS":    "https://tms.example.com",
+		"TRENOVA_SECURITY_PASSWORDRESET_BASEURL":  "https://tms.example.com",
+		"TRENOVA_PORTAL_BASEURL":                  "https://tms.example.com/dash",
+		"TRENOVA_REPORTING_DELIVERYLINKBASEURL":   "https://tms.example.com",
+		"TRENOVA_DATABASE_PASSWORD":               "0f6d2a8c4e1b7395d0a2c4e6f8b1d3a5",
+		"TRENOVA_CACHE_PASSWORD":                  "6b8d0f2a4c6e8b0d2f4a6c8e0b2d4f6a",
+		"TRENOVA_SEARCH_MEILISEARCH_APIKEY":       "9a1c3e5b7d9f1a3c5e7b9d1f3a5c7e9b",
+		"TRENOVA_STORAGE_PUBLICENDPOINT":          "https://files.example.com",
+		"TRENOVA_STORAGE_SECRETKEY":               "3e5a7c9b1d3f5a7c9e1b3d5f7a9c1e3b",
+		"TRENOVA_SECURITY_SESSION_SECRET":         "c4e6a8b0d2f4c6e8a0b2d4f6c8e0a2b4d6f8a0c2",
+		"TRENOVA_SECURITY_ENCRYPTION_KEY":         "7f1e3d5c7b9a1f3e5d7c9b1a3f5e7d9c1b3a5f7e9d1c3b5a7f9e1d3c5b7a9f1e",
+		"TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER": stagedRecoveryCodePepper,
+		"TRENOVA_SYSTEM_SYSTEMUSERPASSWORD":       "a2c4e6b8d0f2a4c6e8b0d2f4a6c8e0b2",
+	} {
+		t.Setenv(key, value)
+	}
+
+	l := NewLoader(WithConfigPath(configDir), WithEnvironment(EnvProduction))
+
+	cfg, err := l.Load()
+
+	require.NoError(t, err, "the config self-hosters run as shipped must load")
+	require.NotNil(t, cfg)
+	assert.Equal(t, EnvProduction, cfg.App.Env)
+	assert.Equal(t,
+		RateLimitScopePolicy{Enabled: true, RequestsPerMinute: 10, BurstSize: 5},
+		cfg.Security.RateLimit.ScopePolicy(RateLimitScopePublicToken),
+	)
 }

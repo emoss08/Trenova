@@ -25,8 +25,6 @@ platform:
   mode: self_hosted
   referenceDataStewards: []
   instanceId: ""
-  controlPlane:
-    enabled: false
 
 server:
   host: 0.0.0.0
@@ -171,10 +169,7 @@ security:
     enabled: true
     store: redis
     failureMode: local
-    requestsPerMinute: 60
-    burstSize: 20
     anonymous: { requestsPerMinute: 60, burstSize: 20 }
-    user: { requestsPerMinute: 600, burstSize: 60 }
     apiKey: { requestsPerMinute: 300, burstSize: 30 }
     tenant: { requestsPerMinute: 6000, burstSize: 600 }
     publicToken: { requestsPerMinute: 10, burstSize: 5 }
