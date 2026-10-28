@@ -90,9 +90,10 @@ func (t Tone) Severity() int {
 		return 2
 	case ToneInfo:
 		return 1
-	default:
-		return 0
+	case ToneOK:
 	}
+
+	return 0
 }
 
 type Order string

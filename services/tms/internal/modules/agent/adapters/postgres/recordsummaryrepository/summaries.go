@@ -212,18 +212,18 @@ func (r *Repository) read(
 	ids []pulid.ID,
 	now int64,
 ) (map[pulid.ID]board.Summary, error) {
-	switch resource {
-	case permission.ResourceShipment:
+	if resource == permission.ResourceShipment {
 		return r.shipments(ctx, ids, now)
-	case permission.ResourceInvoice:
+	}
+	if resource == permission.ResourceInvoice {
 		return r.invoices(ctx, ids, now)
-	case permission.ResourceJournalEntry:
+	}
+	if resource == permission.ResourceJournalEntry {
 		return r.entries(ctx, ids, now)
-	default:
 	}
 	query, ok := plain[resource]
 	if !ok {
-		return nil, nil
+		return map[pulid.ID]board.Summary{}, nil
 	}
 	rows, err := keel.Into[summaryRow](ctx, r.db.Keel(ctx), query(ids))
 	if err != nil {
@@ -263,9 +263,12 @@ func (r *Repository) shipments(
 	for _, row := range rows {
 		route := byShipment[row.ID]
 		slices.SortFunc(route, func(a, b stopRow) int {
-			return cmp.Or(cmp.Compare(a.MoveSequence, b.MoveSequence), cmp.Compare(a.Sequence, b.Sequence))
+			return cmp.Or(
+				cmp.Compare(a.MoveSequence, b.MoveSequence),
+				cmp.Compare(a.Sequence, b.Sequence),
+			)
 		})
-		measures := map[board.Measure]board.RowMeasure{}
+		measures := make(map[board.Measure]board.RowMeasure, 2)
 		if row.Revenue.Valid {
 			measures[board.MeasureRevenue] = board.RowMeasure{
 				Measure: board.MeasureRevenue,
@@ -401,12 +404,11 @@ func (r *Repository) invoices(
 		case row.DueDate != nil:
 			due.At = *row.DueDate
 		}
-		measures := map[board.Measure]board.RowMeasure{
-			board.MeasureAmountDue: due,
-			board.MeasureTotal: {
-				Measure: board.MeasureTotal,
-				Value:   money(row.TotalMinor, row.Currency),
-			},
+		measures := make(map[board.Measure]board.RowMeasure, 3)
+		measures[board.MeasureAmountDue] = due
+		measures[board.MeasureTotal] = board.RowMeasure{
+			Measure: board.MeasureTotal,
+			Value:   money(row.TotalMinor, row.Currency),
 		}
 		if row.InvoiceDate > 0 {
 			measures[board.MeasureAge] = board.RowMeasure{
@@ -450,17 +452,17 @@ func (r *Repository) entries(
 			pending.State = board.MeasureOpen
 			pending.Tone = board.ToneWarn
 		}
+		measures := make(map[board.Measure]board.RowMeasure, 2)
+		measures[board.MeasureAmount] = board.RowMeasure{
+			Measure: board.MeasureAmount,
+			Value:   money(row.Debit, ""),
+		}
+		measures[board.MeasurePendingFor] = pending
 		out[row.ID] = board.Summary{
 			Label:    strings.TrimSpace(row.Label),
 			Subtitle: strings.TrimSpace(row.Subtitle),
 			Status:   row.Status,
-			Measures: map[board.Measure]board.RowMeasure{
-				board.MeasureAmount: {
-					Measure: board.MeasureAmount,
-					Value:   money(row.Debit, ""),
-				},
-				board.MeasurePendingFor: pending,
-			},
+			Measures: measures,
 		}
 	}
 

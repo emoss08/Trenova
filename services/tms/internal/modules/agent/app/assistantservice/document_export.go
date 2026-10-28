@@ -34,7 +34,7 @@ func (s *Service) ExportDocument(
 	artifactID pulid.ID,
 	format string,
 ) (*agentports.ArtifactFile, error) {
-	if doc, isBoard, err := s.boardDocument(ctx, req, artifactID); isBoard {
+	if doc, isBoard, err := s.boardDocument(ctx, &req, artifactID); isBoard {
 		if err != nil {
 			return nil, err
 		}

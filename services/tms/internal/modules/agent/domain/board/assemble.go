@@ -165,62 +165,75 @@ func commonKind(kinds []SourceKind) SourceKind {
 	return kinds[0]
 }
 
-func aggregate(source *FigureSource, reads *Reads) (*Value, Tone) {
-	set := source.Records
-	if !reads.Readable[set.Resource] {
+func aggregate(source *FigureSource, reads *Reads) (value *Value, tone Tone) {
+	if !reads.Readable[source.Records.Resource] {
 		return nil, ""
 	}
-	values := make([]RowMeasure, 0, len(set.IDs))
-	readable := 0
+	values, readable := measured(source, reads)
+	if source.Aggregate == AggregateSum || source.Aggregate == AggregateMax {
+		value = combined(source, values)
+	} else {
+		value = counted(source, values, readable)
+	}
+	if value == nil {
+		return nil, ""
+	}
+	if source.Measure.Adverse() && value.Number.IsPositive() {
+		return value, ToneWarn
+	}
+
+	return value, ""
+}
+
+func measured(source *FigureSource, reads *Reads) (values []RowMeasure, readable int) {
+	set := source.Records
+	values = make([]RowMeasure, 0, len(set.IDs))
 	for _, id := range set.IDs {
 		summary, ok := reads.summary(set.Resource, id)
 		if !ok {
 			continue
 		}
 		readable++
-		if measure, measured := summary.Measures[source.Measure]; measured {
+		if measure, has := summary.Measures[source.Measure]; has {
 			values = append(values, measure)
 		}
 	}
 
-	switch source.Aggregate {
-	case AggregateSum, AggregateMax:
-		if len(values) == 0 {
-			return &Value{Kind: source.Measure.Kind(), Number: decimal.Zero}, ""
-		}
-		currency := values[0].Value.Currency
-		total := values[0].Value.Number
-		for _, measure := range values[1:] {
-			if measure.Value.Currency != currency {
-				return nil, ""
-			}
-			if source.Aggregate == AggregateSum {
-				total = total.Add(measure.Value.Number)
-			} else if measure.Value.Number.GreaterThan(total) {
-				total = measure.Value.Number
-			}
-		}
-		value := &Value{Kind: source.Measure.Kind(), Number: total, Currency: currency}
-		if source.Measure.Adverse() && total.IsPositive() {
-			return value, ToneWarn
-		}
-		return value, ""
-	default:
-		count := readable
-		if source.Measure != "" {
-			count = 0
-			for _, measure := range values {
-				if measure.Value.Number.IsPositive() {
-					count++
-				}
-			}
-		}
-		value := &Value{Kind: ValueCount, Number: decimal.NewFromInt(int64(count))}
-		if source.Measure.Adverse() && count > 0 {
-			return value, ToneWarn
-		}
-		return value, ""
+	return values, readable
+}
+
+func combined(source *FigureSource, values []RowMeasure) *Value {
+	if len(values) == 0 {
+		return &Value{Kind: source.Measure.Kind(), Number: decimal.Zero}
 	}
+	currency := values[0].Value.Currency
+	total := values[0].Value.Number
+	for _, measure := range values[1:] {
+		if measure.Value.Currency != currency {
+			return nil
+		}
+		if source.Aggregate == AggregateSum {
+			total = total.Add(measure.Value.Number)
+		} else if measure.Value.Number.GreaterThan(total) {
+			total = measure.Value.Number
+		}
+	}
+
+	return &Value{Kind: source.Measure.Kind(), Number: total, Currency: currency}
+}
+
+func counted(source *FigureSource, values []RowMeasure, readable int) *Value {
+	count := readable
+	if source.Measure != "" {
+		count = 0
+		for _, measure := range values {
+			if measure.Value.Number.IsPositive() {
+				count++
+			}
+		}
+	}
+
+	return &Value{Kind: ValueCount, Number: decimal.NewFromInt(int64(count))}
 }
 
 func analysisFigure(read *AnalysisRead, index int) *Value {
@@ -253,14 +266,15 @@ func valueOf(raw any, kind analysis.ValueKind, currency string) *Value {
 		return &Value{Kind: ValueCount, Number: number}
 	case analysis.ValuePercent:
 		return &Value{Kind: ValuePercent, Number: number}
-	default:
-		return &Value{Kind: ValueNumber, Number: number}
+	case analysis.ValueText, analysis.ValueNumber, analysis.ValueDate, analysis.ValueDateTime,
+		analysis.ValueBool:
 	}
+
+	return &Value{Kind: ValueNumber, Number: number}
 }
 
-func rowsOf(set *RecordSet, reads *Reads) ([]Row, int) {
-	rows := make([]Row, 0, len(set.IDs))
-	readable := 0
+func rowsOf(set *RecordSet, reads *Reads) (rows []Row, readable int) {
+	rows = make([]Row, 0, len(set.IDs))
 	for _, id := range set.IDs {
 		row := Row{Resource: set.Resource, ID: id}
 		if summary, ok := reads.summary(set.Resource, id); ok {
@@ -333,7 +347,8 @@ func assembleCompare(block *FilledBlock, spec *Block, reads *Reads) {
 		Count:    len(spec.Records.IDs),
 	}
 	read := reads.Analyses[spec.Analysis]
-	if read == nil || spec.Index >= len(read.Display.Tables) || !reads.Readable[spec.Records.Resource] {
+	if read == nil || spec.Index >= len(read.Display.Tables) ||
+		!reads.Readable[spec.Records.Resource] {
 		block.State = StateUnreadable
 		return
 	}

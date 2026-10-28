@@ -10,13 +10,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/docrender"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func (s *Service) boardDocument(
 	ctx context.Context,
-	req agentports.GetThreadRequest,
+	req *agentports.GetThreadRequest,
 	artifactID pulid.ID,
 ) (*docrender.Document, bool, error) {
 	if s.boards == nil || s.artifacts == nil {
@@ -26,12 +27,18 @@ func (s *Service) boardDocument(
 		ID:         artifactID,
 		TenantInfo: req.TenantInfo,
 	})
-	if err != nil || artifact.Kind != assistantartifact.KindBoard {
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, false, nil
+		}
+		return nil, true, err
+	}
+	if artifact.Kind != assistantartifact.KindBoard {
 		return nil, false, nil
 	}
 
 	card, err := s.boards.Card(ctx, &agentports.BoardCardRequest{
-		Thread:     req,
+		Thread:     *req,
 		ArtifactID: artifactID,
 		Actor: &permissionports.RequestActor{
 			PrincipalType:  permissionports.PrincipalTypeUser,

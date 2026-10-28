@@ -40,162 +40,166 @@ const showBoardDescription = "Lay out your answer to a question that spans sever
 const unboardableRefusal = "There is nowhere to show a board from here. Answer in your reply " +
 	"instead."
 
-func showBoardSpec() kernelports.ToolSpec {
-	recordIDs := func(description string) map[string]any {
-		return map[string]any{
-			toolschema.KeyType:        toolschema.TypeArray,
-			toolschema.KeyItems:       map[string]any{toolschema.KeyType: toolschema.TypeString},
-			toolschema.KeyDescription: description,
-		}
+const (
+	boardPropType    = "type"
+	boardPropTitle   = "title"
+	boardPropLabel   = "label"
+	boardPropRecords = "records"
+	boardPropMetric  = "metric"
+	boardPropMeasure = "measure"
+	boardPropTone    = "tone"
+	boardPropDetail  = "detail"
+	boardPropID      = "boardId"
+	boardAnalysisRef = "The artifactId of an analysis this conversation kept."
+)
+
+func schemaText(description string) map[string]any {
+	return map[string]any{
+		toolschema.KeyType:        toolschema.TypeString,
+		toolschema.KeyDescription: description,
 	}
-	text := func(description string) map[string]any {
-		return map[string]any{
-			toolschema.KeyType:        toolschema.TypeString,
-			toolschema.KeyDescription: description,
-		}
+}
+
+func schemaPosition(description string) map[string]any {
+	return map[string]any{
+		toolschema.KeyType:        toolschema.TypeInteger,
+		toolschema.KeyMinimum:     1,
+		toolschema.KeyDescription: description,
 	}
-	position := func(description string) map[string]any {
-		return map[string]any{
-			toolschema.KeyType:        toolschema.TypeInteger,
-			toolschema.KeyMinimum:     1,
-			toolschema.KeyDescription: description,
-		}
+}
+
+func schemaRecordIDs(description string) map[string]any {
+	return map[string]any{
+		toolschema.KeyType:        toolschema.TypeArray,
+		toolschema.KeyItems:       map[string]any{toolschema.KeyType: toolschema.TypeString},
+		toolschema.KeyDescription: description,
 	}
-	tone := map[string]any{
-		toolschema.KeyType: toolschema.TypeString,
-		toolschema.KeyEnum: []string{
-			string(board.ToneBad), string(board.ToneWarn), string(board.ToneInfo),
-			string(board.ToneOK),
-		},
+}
+
+func schemaList(most int, items map[string]any) map[string]any {
+	return map[string]any{
+		toolschema.KeyType:     toolschema.TypeArray,
+		toolschema.KeyMaxItems: most,
+		toolschema.KeyItems:    items,
 	}
-	measure := text("What to measure each record by. A shipment: lateness or revenue. An " +
+}
+
+func schemaEnum(values ...string) map[string]any {
+	return map[string]any{toolschema.KeyType: toolschema.TypeString, toolschema.KeyEnum: values}
+}
+
+func schemaObject(properties map[string]any, required ...string) map[string]any {
+	return map[string]any{
+		toolschema.KeyType:                 toolschema.TypeObject,
+		toolschema.KeyProperties:           properties,
+		toolschema.KeyRequired:             required,
+		toolschema.KeyAdditionalProperties: false,
+	}
+}
+
+func boardToneSchema() map[string]any {
+	return schemaEnum(
+		string(board.ToneBad), string(board.ToneWarn), string(board.ToneInfo), string(board.ToneOK),
+	)
+}
+
+func boardMeasureSchema() map[string]any {
+	return schemaText("What to measure each record by. A shipment: lateness or revenue. An " +
 		"invoice: amountDue, total or age. A journal entry: amount or pendingFor.")
-	metric := map[string]any{
+}
+
+func boardMetricSchema() map[string]any {
+	return map[string]any{
 		toolschema.KeyType:        toolschema.TypeString,
 		toolschema.KeyEnum:        board.MetricKeys(),
 		toolschema.KeyDescription: "A figure Trenova keeps for the whole organization.",
 	}
+}
 
-	figure := map[string]any{
-		toolschema.KeyType: toolschema.TypeObject,
-		toolschema.KeyProperties: map[string]any{
-			"label":   text("What the figure is, in a few words, with no number in it."),
-			"metric":  metric,
-			"records": recordIDs("The records the figure adds up."),
-			"measure": measure,
-			"aggregate": map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyEnum: []string{
-					string(board.AggregateCount), string(board.AggregateSum),
-					string(board.AggregateMax),
-				},
-				toolschema.KeyDescription: "count (the records, or those whose measure is " +
-					"above zero), sum or max of the measure. Defaults to count.",
-			},
-			"analysis": text("The artifactId of an analysis this conversation kept."),
-			"figure":   position("The analysis figure's position, from 1."),
-		},
-		toolschema.KeyRequired:             []string{"label"},
-		toolschema.KeyAdditionalProperties: false,
-	}
-	check := map[string]any{
-		toolschema.KeyType: toolschema.TypeObject,
-		toolschema.KeyProperties: map[string]any{
-			"title":   text("What the check is, in a line."),
-			"tone":    tone,
-			"detail":  text("One more line, with no number in it."),
-			"records": recordIDs("The records the check counts."),
-			"metric":  metric,
-		},
-		toolschema.KeyRequired:             []string{"title", "tone"},
-		toolschema.KeyAdditionalProperties: false,
-	}
-	compareRow := map[string]any{
-		toolschema.KeyType: toolschema.TypeObject,
-		toolschema.KeyProperties: map[string]any{
-			"column": text("The analysis table's column."),
-			"label":  text("What the row reads as, when the column's name is not plain."),
-			"better": map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyEnum: []string{string(board.BetterHigher), string(board.BetterLower)},
-			},
-		},
-		toolschema.KeyRequired:             []string{"column"},
-		toolschema.KeyAdditionalProperties: false,
+func boardFigureSchema() map[string]any {
+	aggregate := schemaEnum(
+		string(board.AggregateCount), string(board.AggregateSum), string(board.AggregateMax),
+	)
+	aggregate[toolschema.KeyDescription] = "count (the records, or those whose measure is " +
+		"above zero), sum or max of the measure. Defaults to count."
+
+	return schemaObject(map[string]any{
+		boardPropLabel:   schemaText("What the figure is, in a few words, with no number in it."),
+		boardPropMetric:  boardMetricSchema(),
+		boardPropRecords: schemaRecordIDs("The records the figure adds up."),
+		boardPropMeasure: boardMeasureSchema(),
+		"aggregate":      aggregate,
+		"analysis":       schemaText(boardAnalysisRef),
+		"figure":         schemaPosition("The analysis figure's position, from 1."),
+	}, boardPropLabel)
+}
+
+func boardCheckSchema() map[string]any {
+	return schemaObject(map[string]any{
+		boardPropTitle:   schemaText("What the check is, in a line."),
+		boardPropTone:    boardToneSchema(),
+		boardPropDetail:  schemaText("One more line, with no number in it."),
+		boardPropRecords: schemaRecordIDs("The records the check counts."),
+		boardPropMetric:  boardMetricSchema(),
+	}, boardPropTitle, boardPropTone)
+}
+
+func boardCompareRowSchema() map[string]any {
+	return schemaObject(map[string]any{
+		"column":       schemaText("The analysis table's column."),
+		boardPropLabel: schemaText("What the row reads as, when the column's name is not plain."),
+		"better":       schemaEnum(string(board.BetterHigher), string(board.BetterLower)),
+	}, "column")
+}
+
+func boardBlockSchema() map[string]any {
+	half := map[string]any{
+		toolschema.KeyType:        toolschema.TypeBoolean,
+		toolschema.KeyDescription: "Half the width: two half blocks in a row share a line.",
 	}
 
-	block := map[string]any{
-		toolschema.KeyType: toolschema.TypeObject,
-		toolschema.KeyProperties: map[string]any{
-			"type": map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyEnum: blockTypeNames(),
-			},
-			"title": text("The block's heading, in a few words."),
-			"half": map[string]any{
-				toolschema.KeyType: toolschema.TypeBoolean,
-				toolschema.KeyDescription: "Half the width: two half blocks in a row share " +
-					"a line.",
-			},
-			"figures": map[string]any{
-				toolschema.KeyType:     toolschema.TypeArray,
-				toolschema.KeyMaxItems: board.MaxFigures,
-				toolschema.KeyItems:    figure,
-			},
-			"records": recordIDs("records, compare and note: the record ids."),
-			"measure": measure,
-			"order": map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyEnum: []string{string(board.OrderMeasure), string(board.OrderGiven)},
-			},
-			"analysis": text("The artifactId of an analysis this conversation kept."),
-			"artifact": text("table: the artifactId of a table this conversation kept."),
-			"table":    position("The analysis table's position, from 1."),
-			"chart":    position("The analysis chart's position, from 1."),
-			"key":      text("compare: the analysis table's column that holds the record ids."),
-			"rows": map[string]any{
-				toolschema.KeyType:     toolschema.TypeArray,
-				toolschema.KeyMaxItems: board.MaxCompareRows,
-				toolschema.KeyItems:    compareRow,
-			},
-			"limit":  position("table and timeline: how many rows or entries to show."),
-			"record": text("timeline: the id of the record whose history to show."),
-			"checks": map[string]any{
-				toolschema.KeyType:     toolschema.TypeArray,
-				toolschema.KeyMaxItems: board.MaxChecks,
-				toolschema.KeyItems:    check,
-			},
-			"of":     position("meter: the position of the checks block it measures."),
-			"metric": metric,
-			"text":   text("prose and note: the words."),
-			"tone":   tone,
-		},
-		toolschema.KeyRequired:             []string{"type"},
-		toolschema.KeyAdditionalProperties: false,
-	}
+	return schemaObject(map[string]any{
+		boardPropType:    schemaEnum(blockTypeNames()...),
+		boardPropTitle:   schemaText("The block's heading, in a few words."),
+		"half":           half,
+		"figures":        schemaList(board.MaxFigures, boardFigureSchema()),
+		boardPropRecords: schemaRecordIDs("records, compare and note: the record ids."),
+		boardPropMeasure: boardMeasureSchema(),
+		"order":          schemaEnum(string(board.OrderMeasure), string(board.OrderGiven)),
+		"analysis":       schemaText(boardAnalysisRef),
+		"artifact":       schemaText("table: the artifactId of a table this conversation kept."),
+		"table":          schemaPosition("The analysis table's position, from 1."),
+		"chart":          schemaPosition("The analysis chart's position, from 1."),
+		"key": schemaText(
+			"compare: the analysis table's column that holds the record ids.",
+		),
+		"rows":          schemaList(board.MaxCompareRows, boardCompareRowSchema()),
+		"limit":         schemaPosition("table and timeline: how many rows or entries to show."),
+		"record":        schemaText("timeline: the id of the record whose history to show."),
+		"checks":        schemaList(board.MaxChecks, boardCheckSchema()),
+		"of":            schemaPosition("meter: the position of the checks block it measures."),
+		boardPropMetric: boardMetricSchema(),
+		"text":          schemaText("prose and note: the words."),
+		boardPropTone:   boardToneSchema(),
+	}, boardPropType)
+}
+
+func showBoardSpec() kernelports.ToolSpec {
+	blocks := schemaList(board.MaxBlocks, boardBlockSchema())
+	blocks[toolschema.KeyMinItems] = 1
 
 	return kernelports.ToolSpec{
 		Name:        showBoardName,
 		Description: showBoardDescription,
-		Parameters: map[string]any{
-			toolschema.KeyType: toolschema.TypeObject,
-			toolschema.KeyProperties: map[string]any{
-				"title": text("What the board answers, in a few words and in sentence case: " +
-					"\"Six late shipments on the Dallas lanes\"."),
-				"verdict": text("The answer in one or two sentences, citing the blocks it " +
-					"rests on as [words][n]."),
-				"blocks": map[string]any{
-					toolschema.KeyType:     toolschema.TypeArray,
-					toolschema.KeyMinItems: 1,
-					toolschema.KeyMaxItems: board.MaxBlocks,
-					toolschema.KeyItems:    block,
-				},
-				"boardId": text("The artifactId of a board you showed earlier in this " +
-					"conversation, to replace it with this one. Leave it out for a new board."),
-			},
-			toolschema.KeyRequired:             []string{"title", "verdict", "blocks"},
-			toolschema.KeyAdditionalProperties: false,
-		},
+		Parameters: schemaObject(map[string]any{
+			boardPropTitle: schemaText("What the board answers, in a few words and in sentence " +
+				"case: \"Six late shipments on the Dallas lanes\"."),
+			"verdict": schemaText("The answer in one or two sentences, citing the blocks it " +
+				"rests on as [words][n]."),
+			"blocks": blocks,
+			boardPropID: schemaText("The artifactId of a board you showed earlier in this " +
+				"conversation, to replace it with this one. Leave it out for a new board."),
+		}, boardPropTitle, "verdict", "blocks"),
 	}
 }
 
@@ -211,14 +215,14 @@ func blockTypeNames() []string {
 func boardStepOutcome(arguments map[string]any) toolOutcome {
 	fields := make(map[string]any, len(arguments))
 	for key, value := range arguments {
-		if key != "boardId" {
+		if key != boardPropID {
 			fields[key] = value
 		}
 	}
 	parsed, problems := board.Parse(fields)
 
 	var revises pulid.ID
-	if raw := strings.TrimSpace(stringArg(arguments, "boardId")); raw != "" {
+	if raw := strings.TrimSpace(stringArg(arguments, boardPropID)); raw != "" {
 		id, err := pulid.Parse(raw)
 		if err != nil {
 			problems = append(problems, "boardId is not an id a show_board result gave you")
@@ -226,7 +230,9 @@ func boardStepOutcome(arguments map[string]any) toolOutcome {
 		revises = id
 	}
 	if len(problems) > 0 {
-		return failedOutcome("Tool %q was not run: %s.", showBoardName, strings.Join(problems, "; "))
+		return failedOutcome(
+			"Tool %q was not run: %s.", showBoardName, strings.Join(problems, "; "),
+		)
 	}
 
 	return toolOutcome{

@@ -35,9 +35,10 @@ func FormatValue(value *Value) string {
 		return FormatDuration(value.Number.IntPart())
 	case ValueText:
 		return value.Text
-	default:
-		return floatutils.FormatGrouped(number, numberDecimals)
+	case ValueNumber:
 	}
+
+	return floatutils.FormatGrouped(number, numberDecimals)
 }
 
 func FormatDuration(seconds int64) string {
@@ -102,9 +103,10 @@ func SourcePhrase(source *Source) string {
 		return "the checks above"
 	case SourceMixed:
 		return "several sources"
-	default:
-		return ""
+	case SourceNone:
 	}
+
+	return ""
 }
 
 func strconvQuote(title string) string {

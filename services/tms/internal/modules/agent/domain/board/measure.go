@@ -29,44 +29,56 @@ const (
 	ValueText     = ValueKind("text")
 )
 
-var resourceMeasures = map[permission.Resource][]Measure{
-	permission.ResourceShipment:     {MeasureLateness, MeasureRevenue},
-	permission.ResourceInvoice:      {MeasureAmountDue, MeasureTotal, MeasureAge},
-	permission.ResourceJournalEntry: {MeasureAmount, MeasurePendingFor},
-	permission.ResourceCarrier:      nil,
-	permission.ResourceCustomer:     nil,
-	permission.ResourceWorker:       nil,
-	permission.ResourceTractor:      nil,
-	permission.ResourceTrailer:      nil,
-	permission.ResourceLocation:     nil,
+type resourceMeasure struct {
+	resource permission.Resource
+	measures []Measure
+}
+
+var resourceMeasures = []resourceMeasure{
+	{resource: permission.ResourceShipment, measures: []Measure{MeasureLateness, MeasureRevenue}},
+	{
+		resource: permission.ResourceInvoice,
+		measures: []Measure{MeasureAmountDue, MeasureTotal, MeasureAge},
+	},
+	{
+		resource: permission.ResourceJournalEntry,
+		measures: []Measure{MeasureAmount, MeasurePendingFor},
+	},
+	{resource: permission.ResourceCarrier},
+	{resource: permission.ResourceCustomer},
+	{resource: permission.ResourceWorker},
+	{resource: permission.ResourceTractor},
+	{resource: permission.ResourceTrailer},
+	{resource: permission.ResourceLocation},
 }
 
 func Resources() []permission.Resource {
-	return []permission.Resource{
-		permission.ResourceShipment,
-		permission.ResourceInvoice,
-		permission.ResourceJournalEntry,
-		permission.ResourceCarrier,
-		permission.ResourceCustomer,
-		permission.ResourceWorker,
-		permission.ResourceTractor,
-		permission.ResourceTrailer,
-		permission.ResourceLocation,
+	resources := make([]permission.Resource, 0, len(resourceMeasures))
+	for idx := range resourceMeasures {
+		resources = append(resources, resourceMeasures[idx].resource)
 	}
+
+	return resources
 }
 
 func Supports(resource permission.Resource) bool {
-	_, ok := resourceMeasures[resource]
-
-	return ok
+	return slices.ContainsFunc(resourceMeasures, func(entry resourceMeasure) bool {
+		return entry.resource == resource
+	})
 }
 
 func MeasuresOf(resource permission.Resource) []Measure {
-	return resourceMeasures[resource]
+	for idx := range resourceMeasures {
+		if resourceMeasures[idx].resource == resource {
+			return resourceMeasures[idx].measures
+		}
+	}
+
+	return nil
 }
 
 func (m Measure) Of(resource permission.Resource) bool {
-	return slices.Contains(resourceMeasures[resource], m)
+	return slices.Contains(MeasuresOf(resource), m)
 }
 
 func (m Measure) Kind() ValueKind {

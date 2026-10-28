@@ -62,7 +62,8 @@ func writeBlock(sb *strings.Builder, block *FilledBlock, location *time.Location
 	case BlockNote:
 		writeNote(sb, block)
 		return
-	default:
+	case BlockFigures, BlockRecords, BlockCompare, BlockTable, BlockChart, BlockTimeline,
+		BlockChecks, BlockMeter:
 	}
 
 	sb.WriteString("\n## ")
@@ -100,7 +101,7 @@ func writeBlock(sb *strings.Builder, block *FilledBlock, location *time.Location
 		writeChecks(sb, block.Checks)
 	case BlockMeter:
 		writeMeter(sb, block.Meter)
-	default:
+	case BlockProse, BlockNote:
 	}
 }
 
@@ -283,9 +284,10 @@ func checkGroup(tone Tone) string {
 		return "Needs a look"
 	case ToneInfo:
 		return "Worth knowing"
-	default:
-		return "Clear"
+	case ToneOK:
 	}
+
+	return "All clear"
 }
 
 func writeMeter(sb *strings.Builder, meter *FilledMeter) {
@@ -319,9 +321,10 @@ func NoteLabel(tone Tone) string {
 		return "Blocks it"
 	case ToneWarn:
 		return "Worth acting on"
-	default:
-		return "What I'd do"
+	case ToneInfo, ToneOK:
 	}
+
+	return "What I'd do"
 }
 
 func EventSentence(event *Event) string {

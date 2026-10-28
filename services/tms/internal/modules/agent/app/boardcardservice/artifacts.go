@@ -85,7 +85,8 @@ func analysisOf(artifact *assistantartifact.Artifact) (*board.AnalysisRead, bool
 
 func tableOf(artifact *assistantartifact.Artifact) (*board.TableRead, bool) {
 	var payload tableViewPayload
-	if err := jsonutils.Convert(artifact.Payload, &payload); err != nil || len(payload.Columns) == 0 {
+	if err := jsonutils.Convert(artifact.Payload, &payload); err != nil ||
+		len(payload.Columns) == 0 {
 		return nil, false
 	}
 	table := analysis.Table{
@@ -122,9 +123,13 @@ func kindOf(display assistantartifact.DisplayType) analysis.ValueKind {
 		return analysis.ValueDate
 	case assistantartifact.DisplayDateTime:
 		return analysis.ValueDateTime
-	default:
-		return analysis.ValueText
+	case assistantartifact.DisplayText, assistantartifact.DisplayLongText,
+		assistantartifact.DisplayEnum, assistantartifact.DisplayStatus,
+		assistantartifact.DisplayBoolean, assistantartifact.DisplayFlag,
+		assistantartifact.DisplayMetrics, assistantartifact.DisplayLinks:
 	}
+
+	return analysis.ValueText
 }
 
 func cellOf(display assistantartifact.DisplayType, value any) any {
@@ -156,19 +161,8 @@ func (s *Service) checkArtifacts(ctx context.Context, req *agentports.BoardFillR
 					"name it by the artifactId its result gave you", at)
 			}
 		}
-		for figure := range block.Figures {
-			source := &block.Figures[figure]
-			if source.Analysis.IsNil() {
-				continue
-			}
-			display, err := s.analysisFor(ctx, req, source.Analysis, at)
-			if err != nil {
-				return err
-			}
-			if source.Index >= len(display.Figures) {
-				return mistake("block %d asks for figure %d of an analysis that showed %d",
-					at, source.Index+1, len(display.Figures))
-			}
+		if err := s.checkFigures(ctx, req, block, at); err != nil {
+			return err
 		}
 		if block.Analysis.IsNil() {
 			continue
@@ -177,24 +171,55 @@ func (s *Service) checkArtifacts(ctx context.Context, req *agentports.BoardFillR
 		if err != nil {
 			return err
 		}
-		switch block.Type {
-		case board.BlockChart:
-			if block.Index >= len(display.Charts) {
-				return mistake("block %d asks for chart %d of an analysis that drew %d",
-					at, block.Index+1, len(display.Charts))
-			}
-		case board.BlockTable, board.BlockCompare:
-			if block.Index >= len(display.Tables) {
-				return mistake("block %d asks for table %d of an analysis that showed %d",
-					at, block.Index+1, len(display.Tables))
-			}
-			if block.Type == board.BlockCompare {
-				if err = checkCompare(block, &display.Tables[block.Index], at); err != nil {
-					return err
-				}
-			}
-		default:
+		if err = checkAnalysisBlock(block, display, at); err != nil {
+			return err
 		}
+	}
+
+	return nil
+}
+
+func (s *Service) checkFigures(
+	ctx context.Context,
+	req *agentports.BoardFillRequest,
+	block *board.Block,
+	at int,
+) error {
+	for figure := range block.Figures {
+		source := &block.Figures[figure]
+		if source.Analysis.IsNil() {
+			continue
+		}
+		display, err := s.analysisFor(ctx, req, source.Analysis, at)
+		if err != nil {
+			return err
+		}
+		if source.Index >= len(display.Figures) {
+			return mistake("block %d asks for figure %d of an analysis that showed %d",
+				at, source.Index+1, len(display.Figures))
+		}
+	}
+
+	return nil
+}
+
+func checkAnalysisBlock(block *board.Block, display *analysis.Display, at int) error {
+	switch block.Type {
+	case board.BlockChart:
+		if block.Index >= len(display.Charts) {
+			return mistake("block %d asks for chart %d of an analysis that drew %d",
+				at, block.Index+1, len(display.Charts))
+		}
+	case board.BlockTable, board.BlockCompare:
+		if block.Index >= len(display.Tables) {
+			return mistake("block %d asks for table %d of an analysis that showed %d",
+				at, block.Index+1, len(display.Tables))
+		}
+		if block.Type == board.BlockCompare {
+			return checkCompare(block, &display.Tables[block.Index], at)
+		}
+	case board.BlockFigures, board.BlockRecords, board.BlockTimeline, board.BlockChecks,
+		board.BlockMeter, board.BlockProse, board.BlockNote:
 	}
 
 	return nil

@@ -32,7 +32,9 @@ func (s *Service) readEvents(
 			continue
 		}
 		if !checked {
-			allowed, err := s.allowed(ctx, req.Actor, permission.ResourceAuditLog, permission.OpRead)
+			allowed, err := s.allowed(
+				ctx, req.Actor, permission.ResourceAuditLog, permission.OpRead,
+			)
 			if err != nil {
 				return err
 			}
