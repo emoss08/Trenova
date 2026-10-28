@@ -9383,6 +9383,7 @@
   "Soft cap percent must be at least 1": "El porcentaje del límite flexible debe ser al menos 1",
   "Soft-closed: subledger postings are blocked, manual journal entries are still allowed.": "Cierre parcial: las contabilizaciones de los libros auxiliares están bloqueadas, pero aún se permiten asientos de diario manuales.",
   "Sold": "Vendido",
+  "Some of the selected pay events are no longer accrued; they were settled or voided by a concurrent request": "Algunos de los eventos de pago seleccionados ya no están acumulados; otra solicitud simultánea los liquidó o anuló",
   "Some selected pay events are no longer payable — they may be settled, held, or voided. Refresh and try again.": "Algunos eventos de pago seleccionados ya no son pagaderos: pueden estar liquidados, retenidos o anulados. Actualice y vuelva a intentarlo.",
   "Some shipments are no longer approved and unbilled": "Algunos envíos ya no están aprobados y sin facturar",
   "Some shipments were invoiced elsewhere while this invoice was being created": "Algunos envíos se facturaron en otro lugar mientras se creaba esta factura",

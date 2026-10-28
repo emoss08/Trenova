@@ -26506,6 +26506,7 @@
   "Some moves were never broken down by jurisdiction": "部分運程從未依管轄區拆分",
   "Some moves within this shipment have been completed, but not all.": "本運單部分運程已完成，但尚未全部完成。",
   "Some of the advance has been recovered; the rest is withheld from future settlements.": "部分預支已追回；其餘將自後續結算中扣除。",
+  "Some of the selected pay events are no longer accrued; they were settled or voided by a concurrent request": "部分所選的薪酬事件已不再處於應計狀態；它們已被並行請求結算或作廢",
   "Some of what this changes is hidden by your data access.": "部分變更內容因您的資料存取權限而隱藏。",
   "Some selected pay events are no longer payable — they may be settled, held, or voided. Refresh and try again.": "部分選取的薪酬事件已不可付款 — 可能已結算、暫扣或作廢。請重新整理後再試一次。",
   "Some shipments are no longer approved and unbilled": "部分運單已不再是已核准且未開票的狀態",

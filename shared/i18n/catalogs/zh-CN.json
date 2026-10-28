@@ -9383,6 +9383,7 @@
   "Soft cap percent must be at least 1": "软上限百分比至少须为 1",
   "Soft-closed: subledger postings are blocked, manual journal entries are still allowed.": "已软关闭：子分类账过账被阻止，仍允许手动日记账分录。",
   "Sold": "已售出",
+  "Some of the selected pay events are no longer accrued; they were settled or voided by a concurrent request": "部分所选的薪酬事件已不再处于应计状态；它们已被并发请求结算或作废",
   "Some selected pay events are no longer payable — they may be settled, held, or voided. Refresh and try again.": "部分选中的薪酬事件已不可付款 — 可能已结算、暂扣或作废。请刷新后再试一次。",
   "Some shipments are no longer approved and unbilled": "部分运单已不再是已批准且未开票的状态",
   "Some shipments were invoiced elsewhere while this invoice was being created": "创建此发票期间，部分运单已在其他地方开票",

@@ -11,9 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/zap"
 )
 
@@ -403,12 +405,13 @@ func (r *payEventRepository) MarkSettled(
 	settlementID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		eventIDs = sliceutils.Dedupe(eventIDs)
 		if len(eventIDs) == 0 {
 			return nil
 		}
 
 		pe := driversettlementdb.PayEvents
-		_, err := pe.Where(
+		rows, err := pe.Where(
 			pe.ID.In(eventIDs...),
 			pe.Status.Eq(driversettlement.PayEventStatusAccrued),
 		).Update(
@@ -419,6 +422,13 @@ func (r *payEventRepository) MarkSettled(
 		)
 		if err != nil {
 			return fmt.Errorf("mark pay events settled: %w", err)
+		}
+		if rows != int64(len(eventIDs)) {
+			return errortypes.NewValidationError(
+				"payEventIds",
+				errortypes.ErrInvalidOperation,
+				"Some of the selected pay events are no longer accrued; they were settled or voided by a concurrent request",
+			)
 		}
 
 		return nil

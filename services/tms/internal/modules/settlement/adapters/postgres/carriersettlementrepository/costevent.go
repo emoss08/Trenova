@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/zap"
 )
 
@@ -331,6 +332,7 @@ func (r *costEventRepository) MarkAttached(
 	settlementID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		eventIDs = sliceutils.Dedupe(eventIDs)
 		if len(eventIDs) == 0 {
 			return nil
 		}
@@ -348,7 +350,7 @@ func (r *costEventRepository) MarkAttached(
 		if err != nil {
 			return fmt.Errorf("mark carrier cost events attached: %w", err)
 		}
-		if rows == 0 {
+		if rows != int64(len(eventIDs)) {
 			return errortypes.NewValidationError(
 				"costEventIds",
 				errortypes.ErrInvalidOperation,

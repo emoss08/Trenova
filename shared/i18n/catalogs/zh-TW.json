@@ -9383,6 +9383,7 @@
   "Soft cap percent must be at least 1": "軟性上限百分比至少須為 1",
   "Soft-closed: subledger postings are blocked, manual journal entries are still allowed.": "已軟結帳：明細分類帳過帳已封鎖，仍可輸入人工日記帳分錄。",
   "Sold": "已售出",
+  "Some of the selected pay events are no longer accrued; they were settled or voided by a concurrent request": "部分所選的薪酬事件已不再處於應計狀態；它們已被並行請求結算或作廢",
   "Some selected pay events are no longer payable — they may be settled, held, or voided. Refresh and try again.": "部分選取的薪酬事件已不可付款 — 可能已結算、暫扣或作廢。請重新整理後再試一次。",
   "Some shipments are no longer approved and unbilled": "部分運單已不再是已核准且未開票的狀態",
   "Some shipments were invoiced elsewhere while this invoice was being created": "建立此發票期間，部分運單已在其他地方開票",
