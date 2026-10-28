@@ -1,5 +1,9 @@
 name: trenova
 
+# Every published port is bound to 127.0.0.1: these services run with
+# development credentials and must not be reachable from the rest of the
+# network the machine is on.
+
 services:
     db:
         build:
@@ -7,7 +11,7 @@ services:
             dockerfile: deploy/Dockerfile.postgres
         container_name: db
         ports:
-            - "5432:5432"
+            - "127.0.0.1:5432:5432"
         environment:
             POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
             POSTGRES_USER: ${DB_USER:-postgres}
@@ -43,7 +47,7 @@ services:
         image: redis:8
         container_name: redis
         ports:
-            - "6379:6379"
+            - "127.0.0.1:6379:6379"
         command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
         restart: always
         volumes:
@@ -66,7 +70,7 @@ services:
         image: redis/redisinsight:3.8
         container_name: redis-insight
         ports:
-            - "5540:5540"
+            - "127.0.0.1:5540:5540"
         restart: always
         volumes:
             - redisinsight_data:/data
@@ -98,8 +102,8 @@ services:
         volumes:
             - minio_data:/data
         ports:
-            - 9000:9000 # API
-            - 9001:9001 # Console
+            - "127.0.0.1:9000:9000" # API
+            - "127.0.0.1:9001:9001" # Console
         restart: always
         deploy:
             resources:
@@ -116,7 +120,7 @@ services:
         image: getmeili/meilisearch:v1.16
         container_name: meilisearch
         ports:
-            - "7700:7700"
+            - "127.0.0.1:7700:7700"
         environment:
             - MEILI_MASTER_KEY=CErP8m5HUQUTaporAjiCsNNazOoACqS2bw3IGRsi94I
         volumes:
@@ -170,7 +174,7 @@ services:
             - --api-timeout=30s
             - --api-disable-health-check-logging=true
         ports:
-            - "3009:3000"
+            - "127.0.0.1:3009:3000"
         read_only: true
         tmpfs:
             # Chromium needs writable scratch and a writable home: its crashpad
@@ -328,11 +332,11 @@ services:
             - --search-attribute=TrenovaThreadId=Keyword
             - --search-attribute=TrenovaAgentDefinitionId=Keyword
         ports:
-            - "7233:7233"
+            - "127.0.0.1:7233:7233"
             # Reading a stuck reply's history is most of how this work gets
             # debugged, so the UI comes up with the server rather than behind a
             # profile.
-            - "8233:8233"
+            - "127.0.0.1:8233:8233"
         restart: unless-stopped
         # Every closed run stays in memory until its namespace's retention lets it
         # go, and a turn's history carries one Update per stream poll. Under 1G
@@ -366,7 +370,7 @@ services:
         volumes:
             - ../deploy/gtc/sinks.yaml:/config/sinks.yaml:ro
         ports:
-            - "8095:8080"
+            - "127.0.0.1:8095:8080"
         depends_on:
             db:
                 condition: service_healthy
@@ -382,7 +386,7 @@ services:
         profiles:
             - clamav
         ports:
-            - "3310:3310"
+            - "127.0.0.1:3310:3310"
         volumes:
             - clamav_data:/var/lib/clamav
         restart: unless-stopped
@@ -401,7 +405,7 @@ services:
         profiles:
             - samsara-sim
         ports:
-            - "8091:8091"
+            - "127.0.0.1:8091:8091"
         volumes:
             - samsara_sim_data:/app/data
         restart: unless-stopped
