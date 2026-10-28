@@ -3089,6 +3089,7 @@
   "Customer payment is required": "El pago del cliente es obligatorio",
   "Customer payment posting and applications": "Contabilización y aplicación de los pagos de clientes",
   "Customer payment posting requires an authenticated user": "La contabilización del pago del cliente requiere un usuario autenticado",
+  "Customer payments can post only to an open accounting period": "Los pagos de clientes solo pueden contabilizarse en un período contable abierto",
   "Customer payments only support invoices and debit memos in this slice": "Los pagos de clientes solo admiten facturas y notas de débito en este segmento",
   "Customer purchase order number.": "Número de orden de compra del cliente.",
   "Customer records, their status, preferences and the updates sent to them.": "Registros de clientes, su estado, sus preferencias y las actualizaciones que se les envían.",

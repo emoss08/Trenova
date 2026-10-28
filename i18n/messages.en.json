@@ -71708,6 +71708,15 @@
       "routes/customer-payments"
     ]
   },
+  "Customer payments can post only to an open accounting period": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Customer payments only support invoices and debit memos in this slice": {
     "sites": 2,
     "scope": [

@@ -7666,6 +7666,7 @@
   "Customer payment posting requires an authenticated user": "La contabilización del pago del cliente requiere un usuario autenticado",
   "Customer payment reversed": "Pago de cliente revertido",
   "Customer payments": "Pagos de clientes",
+  "Customer payments can post only to an open accounting period": "Los pagos de clientes solo pueden contabilizarse en un período contable abierto",
   "Customer payments only support invoices and debit memos in this slice": "Los pagos de clientes solo admiten facturas y notas de débito en este segmento",
   "Customer portals": "Portales de clientes",
   "Customer praise": "Elogio del cliente",

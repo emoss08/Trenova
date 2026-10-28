@@ -3089,6 +3089,7 @@
   "Customer payment is required": "客戶付款為必填",
   "Customer payment posting and applications": "客戶付款過帳與沖抵",
   "Customer payment posting requires an authenticated user": "客戶付款過帳須由已驗證的使用者執行",
+  "Customer payments can post only to an open accounting period": "客戶付款只能過帳到開放的會計期間",
   "Customer payments only support invoices and debit memos in this slice": "此範圍的客戶付款僅支援發票與借項通知單",
   "Customer purchase order number.": "客戶採購單號。",
   "Customer records, their status, preferences and the updates sent to them.": "客戶記錄、其狀態、偏好及寄給他們的更新。",

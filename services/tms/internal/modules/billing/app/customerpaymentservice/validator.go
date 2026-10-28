@@ -130,6 +130,9 @@ func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // lega
 		)
 		return nil, nil, me
 	}
+	if refuseUnpostablePeriod(me, period, control) {
+		return nil, nil, me
+	}
 
 	resolvedInvoices := make([]*invoice.Invoice, 0, len(entity.Applications))
 	var totalApplied int64
@@ -310,6 +313,9 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 		)
 		return nil, nil, me
 	}
+	if refuseUnpostablePeriod(me, period, control) {
+		return nil, nil, me
+	}
 
 	seenInvoices := make(map[invoiceKey]struct{}, len(applications))
 	resolvedInvoices := make([]*invoice.Invoice, 0, len(applications))
@@ -452,6 +458,9 @@ func (v *Validator) ValidateReverse( //nolint:funlen // legacy workflow
 		)
 		return nil, nil, me
 	}
+	if refuseUnpostablePeriod(me, period, control) {
+		return nil, nil, me
+	}
 	invoices := make([]*invoice.Invoice, 0, len(payment.Applications))
 	for idx, app := range payment.Applications {
 		if app == nil {
@@ -485,4 +494,28 @@ func requireAccountField(me *errortypes.MultiError, id pulid.ID, field, message 
 	if id.IsNil() {
 		me.Add(field, errortypes.ErrRequired, message)
 	}
+}
+
+func refuseUnpostablePeriod(
+	me *errortypes.MultiError,
+	period *fiscalperiod.FiscalPeriod,
+	control *tenant.AccountingControl,
+) bool {
+	switch period.Status {
+	case fiscalperiod.StatusOpen:
+		return false
+	case fiscalperiod.StatusLocked:
+		if control == nil ||
+			control.LockedPeriodPostingPolicy != tenant.LockedPeriodPostingPolicyBlockSubledgerAllowManualJe {
+			return false
+		}
+	case fiscalperiod.StatusInactive, fiscalperiod.StatusClosed, fiscalperiod.StatusPermanentlyClosed:
+	}
+	me.Add(
+		"accountingDate",
+		errortypes.ErrInvalidOperation,
+		"Customer payments can post only to an open accounting period",
+	)
+
+	return true
 }

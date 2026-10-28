@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -39,6 +40,7 @@ type paymentWorld struct {
 	invoices            map[pulid.ID]*invoice.Invoice
 	postings            []journalentryports.CreateJournalPostingParams
 	writes              int
+	periodStatus        fiscalperiod.Status
 	svc                 *Service
 }
 
@@ -100,6 +102,7 @@ func newPaymentWorld(
 			AccountingBasis:               tenant.AccountingBasisAccrual,
 			RevenueRecognitionPolicy:      tenant.RevenueRecognitionOnInvoicePost,
 			JournalPostingMode:            tenant.JournalPostingModeAutomatic,
+			LockedPeriodPostingPolicy:     tenant.LockedPeriodPostingPolicyBlockSubledgerAllowManualJe,
 			DefaultCashAccountID:          pulid.MustNew("gla_"),
 			DefaultUnappliedCashAccountID: pulid.MustNew("gla_"),
 			DefaultARAccountID:            pulid.MustNew("gla_"),
@@ -108,7 +111,17 @@ func newPaymentWorld(
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, mock.Anything).
-		Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), FiscalYearID: pulid.MustNew("fy_")}, nil).
+		RunAndReturn(func(context.Context, fiscalperiodports.GetPeriodByDateRequest) (*fiscalperiod.FiscalPeriod, error) {
+			status := w.periodStatus
+			if status == "" {
+				status = fiscalperiod.StatusOpen
+			}
+			return &fiscalperiod.FiscalPeriod{
+				ID:           pulid.MustNew("fp_"),
+				FiscalYearID: pulid.MustNew("fy_"),
+				Status:       status,
+			}, nil
+		}).
 		Maybe()
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	journalRepo.EXPECT().
@@ -285,6 +298,50 @@ func TestApplyUnapplied_AShortPayAloneWritesNoZeroLine(t *testing.T) {
 	assert.Equal(t, int64(200), debit)
 	assert.Equal(t, debit, credit)
 	assert.Equal(t, debit, w.postings[0].TotalDebit)
+}
+
+func TestPaymentsPostOnlyToAnOpenPeriod(t *testing.T) {
+	t.Parallel()
+
+	refused := []fiscalperiod.Status{
+		fiscalperiod.StatusInactive,
+		fiscalperiod.StatusLocked,
+		fiscalperiod.StatusClosed,
+		fiscalperiod.StatusPermanentlyClosed,
+	}
+	for _, status := range refused {
+		t.Run(string(status), func(t *testing.T) {
+			t.Parallel()
+
+			payment := postedPayment(10000, 15000, &customerpayment.Application{
+				ID: pulid.MustNew("cpapp_"), InvoiceID: pulid.MustNew("inv_"), AppliedAmountMinor: 10000,
+			})
+			target := openInvoiceFor(payment, 6000, 0)
+			w := newPaymentWorld(t, payment, target)
+			w.periodStatus = status
+
+			_, err := w.svc.ApplyUnapplied(t.Context(), &customerpaymentports.ApplyCustomerPaymentRequest{
+				PaymentID:      payment.ID,
+				AccountingDate: 200,
+				Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
+					{InvoiceID: target.ID, AppliedAmountMinor: 1000},
+				},
+				TenantInfo: w.tenantInfo,
+			}, w.actor)
+			require.Error(t, err, "applying cash into a %s period", status)
+
+			_, err = w.svc.Reverse(t.Context(), &customerpaymentports.ReverseCustomerPaymentRequest{
+				PaymentID:      payment.ID,
+				AccountingDate: 300,
+				Reason:         "Cheque bounced",
+				TenantInfo:     w.tenantInfo,
+			}, w.actor)
+			require.Error(t, err, "reversing into a %s period", status)
+
+			assert.Zero(t, w.writes, "nothing is written to a period that does not take postings")
+			assert.Empty(t, w.postings)
+		})
+	}
 }
 
 func TestPreviewApplyUnapplied_RefusesWhatApplyRefuses(t *testing.T) {
