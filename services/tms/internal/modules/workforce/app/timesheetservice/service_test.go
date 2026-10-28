@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
+
 	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -405,6 +407,51 @@ func TestRecordEntry_RefusedOnceTheWeekIsSubmitted(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "already been Submitted")
+}
+
+// A manager scoped to their own team is authorized for the worker the request
+// names. The entry being corrected must be that worker's, or naming a team
+// member would let them rewrite anyone's punches.
+func TestRecordEntry_RefusesAnEntryOfAnotherWorker(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeTimesheetRepo{
+		sheet: openSheet(),
+		entries: []*worker.TimeClockEntry{{
+			ID:          "tce_theirs",
+			WorkerID:    "wrk_2",
+			ClockedInAt: mondayAt(8),
+		}},
+	}
+
+	_, err := newService(repo, employee()).RecordEntry(
+		t.Context(),
+		&timesheetservice.RecordEntryRequest{
+			ID:           "tce_theirs",
+			WorkerID:     "wrk_1",
+			ClockedInAt:  mondayAt(6),
+			ClockedOutAt: mondayAt(18),
+			Reason:       "Missed punch",
+			TenantInfo:   tenant(),
+		},
+	)
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsNotFoundError(err), "%v", err)
+}
+
+func TestEntryWorkerID_NamesTheWorkerTheEntryBelongsTo(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeTimesheetRepo{
+		sheet:   openSheet(),
+		entries: []*worker.TimeClockEntry{{ID: "tce_1", WorkerID: "wrk_2"}},
+	}
+
+	workerID, err := newService(repo, employee()).EntryWorkerID(t.Context(), tenant(), "tce_1")
+
+	require.NoError(t, err)
+	assert.Equal(t, pulid.ID("wrk_2"), workerID, "a team scope is checked against the punch's own worker")
 }
 
 func TestDeleteEntry_NeedsAReason(t *testing.T) {

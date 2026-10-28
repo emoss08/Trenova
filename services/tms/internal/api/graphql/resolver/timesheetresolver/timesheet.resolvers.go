@@ -85,6 +85,13 @@ func (r *MutationResolver) DeleteTimeEntry(ctx context.Context, input gqlmodel.D
 	if err != nil {
 		return false, base.InvalidIDError("id", "Entry is invalid")
 	}
+	workerID, err := r.TimesheetService.EntryWorkerID(ctx, base.TenantInfo(authCtx), entryID)
+	if err != nil {
+		return false, err
+	}
+	if _, _, err = r.RequireTimesheetWorkerScope(ctx, permission.OpDelete, workerID.String()); err != nil {
+		return false, err
+	}
 
 	if err = r.TimesheetService.DeleteEntry(ctx, &timesheetservice.DeleteEntryRequest{
 		ID:         entryID,

@@ -396,6 +396,12 @@ func (s *Service) RecordEntry(
 		if err != nil {
 			return nil, err
 		}
+		if existing.WorkerID != req.WorkerID {
+			return nil, errortypes.NewNotFoundError(
+				"{0} not found within your organization",
+				"TimeClockEntry",
+			)
+		}
 		snapshot := *existing
 		previous = &snapshot
 		entity = existing
@@ -481,6 +487,22 @@ type DeleteEntryRequest struct {
 	Reason     string
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
+}
+
+func (s *Service) EntryWorkerID(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entryID pulid.ID,
+) (pulid.ID, error) {
+	entry, err := s.repo.GetEntryByID(ctx, &workerports.GetTimeClockEntryByIDRequest{
+		ID:         entryID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return pulid.Nil, err
+	}
+
+	return entry.WorkerID, nil
 }
 
 func (s *Service) DeleteEntry(ctx context.Context, req *DeleteEntryRequest) error {
