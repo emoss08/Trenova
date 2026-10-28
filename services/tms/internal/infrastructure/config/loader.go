@@ -354,7 +354,7 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("temporal.tls.clientKeyPath", "")
 
 	// Database defaults
-	l.viper.SetDefault("database.sslMode", "prefer")
+	l.viper.SetDefault("database.sslMode", "require")
 	l.viper.SetDefault("database.queryLog", "errors")
 	l.viper.SetDefault("database.maxOpenConns", 100)
 	l.viper.SetDefault("database.connMaxLifetime", "1h")

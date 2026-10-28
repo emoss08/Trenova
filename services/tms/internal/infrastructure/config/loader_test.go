@@ -613,7 +613,7 @@ func TestSetDefaults(t *testing.T) {
 		_ = l.determineEnvironment()
 		l.configureViper()
 
-		assert.Equal(t, "prefer", l.viper.GetString("database.sslMode"))
+		assert.Equal(t, "require", l.viper.GetString("database.sslMode"))
 		assert.Equal(t, 100, l.viper.GetInt("database.maxOpenConns"))
 		assert.Equal(t, "1h", l.viper.GetString("database.connMaxLifetime"))
 		assert.Equal(t, "10m", l.viper.GetString("database.connMaxIdleTime"))
@@ -1469,11 +1469,16 @@ func TestRecoveryCodePepperKeyIsStableAndKeyedByThePepper(t *testing.T) {
 	assert.NotEqual(t, first, derived)
 }
 
-func TestSelfHostConfigFileLoads(t *testing.T) {
+func loadSelfHostConfig(t *testing.T, edit func(string) string) (*Config, error) {
+	t.Helper()
+
 	configDir := t.TempDir()
 	contents, err := os.ReadFile(filepath.Join("../../../../../deploy/selfhost/config", "config.yaml"))
 	require.NoError(t, err, "the self-host config must exist")
-	require.NoError(t, os.WriteFile(filepath.Join(configDir, "config.yaml"), contents, 0o600))
+	require.NoError(
+		t,
+		os.WriteFile(filepath.Join(configDir, "config.yaml"), []byte(edit(string(contents))), 0o600),
+	)
 
 	for key, value := range map[string]string{
 		"TRENOVA_APP_VERSION":                     "1.0.0",
@@ -1497,9 +1502,11 @@ func TestSelfHostConfigFileLoads(t *testing.T) {
 		t.Setenv(key, value)
 	}
 
-	l := NewLoader(WithConfigPath(configDir), WithEnvironment(EnvProduction))
+	return NewLoader(WithConfigPath(configDir), WithEnvironment(EnvProduction)).Load()
+}
 
-	cfg, err := l.Load()
+func TestSelfHostConfigFileLoads(t *testing.T) {
+	cfg, err := loadSelfHostConfig(t, func(contents string) string { return contents })
 
 	require.NoError(t, err, "the config self-hosters run as shipped must load")
 	require.NotNil(t, cfg)
@@ -1508,4 +1515,15 @@ func TestSelfHostConfigFileLoads(t *testing.T) {
 		RateLimitScopePolicy{Enabled: true, RequestsPerMinute: 10, BurstSize: 5},
 		cfg.Security.RateLimit.ScopePolicy(RateLimitScopePublicToken),
 	)
+}
+
+// A config that leaves the database's sslMode out gets the default, and the
+// default has to be a mode the config itself accepts.
+func TestAConfigWithoutAnSSLModeLoadsWithTLSRequired(t *testing.T) {
+	cfg, err := loadSelfHostConfig(t, func(contents string) string {
+		return strings.Replace(contents, "  sslMode: require\n", "", 1)
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, "require", cfg.Database.SSLMode)
 }
