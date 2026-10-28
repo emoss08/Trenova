@@ -33,9 +33,9 @@ func setCurrent(
 ) {
 	t.Helper()
 
-	epoch, err := repo.Epoch(t.Context(), key.OrgID)
+	epoch, err := repo.Epoch(t.Context(), key.UserID, key.OrgID)
 	require.NoError(t, err)
-	perms.Epoch = epoch
+	epoch.Stamp(perms)
 	require.NoError(t, repo.Set(t.Context(), key, perms, ttl))
 }
 
@@ -201,9 +201,61 @@ func TestPermissionCacheRepository_ServesOnlyTheCurrentEpoch_Integration(t *test
 	require.NoError(t, err)
 	assert.Nil(t, retrieved, "without an epoch nothing cached is trusted")
 
-	epoch, err := repo.Epoch(ctx, orgID)
+	epoch, err := repo.Epoch(ctx, userID, orgID)
 	require.NoError(t, err)
-	assert.NotEqual(t, fresh.Epoch, epoch, "a reseeded epoch never matches an entry from before")
+	assert.NotEqual(
+		t,
+		fresh.Epoch,
+		epoch.Organization,
+		"a reseeded epoch never matches an entry from before",
+	)
+}
+
+// A check that read the epoch before a user's roles changed, and computed
+// their grants from the roles as they were, finishes after the change has
+// cleared the cache. What it writes back is the old grants, and it must not
+// be served for the rest of the entry's life.
+func TestPermissionCacheRepository_RefusesGrantsComputedBeforeAUserChanged_Integration(
+	t *testing.T,
+) {
+	repo, _, cleanup := setupTestCacheRepository(t)
+	defer cleanup()
+
+	ctx := t.Context()
+	key := cacheKey(pulid.MustNew("usr_"), pulid.MustNew("org_"))
+
+	before, err := repo.Epoch(ctx, key.UserID, key.OrgID)
+	require.NoError(t, err)
+
+	require.NoError(t, repo.Delete(ctx, key.UserID, key.OrgID))
+
+	stale := &permissionports.CachedPermissions{
+		MaxSensitivity: string(permission.SensitivityRestricted),
+		Resources:      map[string]*permissionports.CachedResourcePermission{},
+	}
+	before.Stamp(stale)
+	require.NoError(t, repo.Set(ctx, key, stale, 5*time.Minute))
+
+	retrieved, err := repo.Get(ctx, key)
+	require.NoError(t, err)
+	assert.Nil(t, retrieved, "grants computed before the change are not served")
+
+	fresh := &permissionports.CachedPermissions{
+		Resources: map[string]*permissionports.CachedResourcePermission{},
+	}
+	setCurrent(t, repo, key, fresh, 5*time.Minute)
+	retrieved, err = repo.Get(ctx, key)
+	require.NoError(t, err)
+	assert.NotNil(t, retrieved, "grants computed after the change are")
+
+	other := cacheKey(pulid.MustNew("usr_"), key.OrgID)
+	setCurrent(t, repo, other, &permissionports.CachedPermissions{
+		Resources: map[string]*permissionports.CachedResourcePermission{},
+	}, 5*time.Minute)
+	require.NoError(t, repo.Delete(ctx, key.UserID, key.OrgID))
+	retrieved, err = repo.Get(ctx, other)
+	require.NoError(t, err)
+	assert.NotNil(t, retrieved, "one user's change leaves the others' entries alone")
 }
 
 func TestPermissionCacheRepository_TTL_Integration(t *testing.T) {

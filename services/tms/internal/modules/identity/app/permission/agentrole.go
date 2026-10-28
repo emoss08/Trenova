@@ -53,7 +53,12 @@ func (e *engine) checkAgentBatch(
 ) error {
 	policies := e.newAccessPolicySource(req.OrganizationID, req.BusinessUnitID)
 	for i, check := range req.Checks {
-		result, err := e.checkAgentPermission(ctx, batchCheckRequest(req, check), time.Now(), policies)
+		result, err := e.checkAgentPermission(
+			ctx,
+			batchCheckRequest(req, check),
+			time.Now(),
+			policies,
+		)
 		if err != nil {
 			return err
 		}
@@ -84,13 +89,13 @@ func (e *engine) agentRolePermissions(
 		return agentRoleOrNil(cached), nil
 	}
 
-	epoch, epochErr := e.cacheRepo.Epoch(ctx, req.OrganizationID)
+	epoch, epochErr := e.cacheRepo.Epoch(ctx, req.PrincipalID, req.OrganizationID)
 	perms, err := e.computeAgentRolePermissions(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	if epochErr == nil {
-		perms.Epoch = epoch
+		epoch.Stamp(perms)
 		if cacheErr := e.cacheRepo.Set(ctx, key, perms, cacheTTL); cacheErr != nil {
 			e.l.Warn("failed to cache agent role permissions", zap.Error(cacheErr))
 		}

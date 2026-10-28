@@ -18,7 +18,9 @@ import (
 const (
 	permissionCachePrefix  = "perms:v5"
 	permissionEpochPrefix  = "perms:epoch"
+	userEpochPrefix        = "perms:uepoch"
 	grantFingerprintPrefix = 16
+	userEpochTTL           = 24 * time.Hour
 )
 
 type PermissionCacheRepositoryParams struct {
@@ -60,6 +62,7 @@ func (r *permissionCacheRepository) Get(
 	pipe := r.client.Pipeline()
 	entryCmd := pipe.HGet(ctx, r.getPermissionKey(key.UserID, key.OrgID), key.Variant)
 	epochCmd := pipe.Get(ctx, r.getEpochKey(key.OrgID))
+	userEpochCmd := pipe.Get(ctx, r.getUserEpochKey(key.UserID, key.OrgID))
 	if _, err := pipe.Exec(ctx); err != nil && !errors.Is(err, redis.Nil) {
 		log.Error("failed to get permissions from cache", zap.Error(err))
 		return nil, err
@@ -83,13 +86,20 @@ func (r *permissionCacheRepository) Get(
 		return nil, err
 	}
 
+	userEpoch, err := userEpochOf(userEpochCmd)
+	if err != nil {
+		log.Error("failed to read the user's permission epoch", zap.Error(err))
+		return nil, err
+	}
+
 	perms := new(permissionports.CachedPermissions)
 	if err = sonic.Unmarshal(raw, perms); err != nil {
 		log.Error("failed to decode cached permissions", zap.Error(err))
 		return nil, err
 	}
 
-	if perms.Epoch != epoch {
+	current := permissionports.CacheEpoch{Organization: epoch, User: userEpoch}
+	if !current.Current(perms) {
 		return nil, nil //nolint:nilnil // an entry from an earlier epoch is stale
 	}
 
@@ -134,7 +144,12 @@ func (r *permissionCacheRepository) Delete(ctx context.Context, userID, orgID pu
 		zap.String("orgID", orgID.String()),
 	)
 
-	if err := r.client.Del(ctx, r.getPermissionKey(userID, orgID)).Err(); err != nil {
+	userEpochKey := r.getUserEpochKey(userID, orgID)
+	pipe := r.client.TxPipeline()
+	pipe.Incr(ctx, userEpochKey)
+	pipe.Expire(ctx, userEpochKey, userEpochTTL)
+	pipe.Del(ctx, r.getPermissionKey(userID, orgID))
+	if _, err := pipe.Exec(ctx); err != nil {
 		log.Error("failed to delete permissions from cache", zap.Error(err))
 		return err
 	}
@@ -142,33 +157,53 @@ func (r *permissionCacheRepository) Delete(ctx context.Context, userID, orgID pu
 	return nil
 }
 
-func (r *permissionCacheRepository) Epoch(ctx context.Context, orgID pulid.ID) (int64, error) {
-	key := r.getEpochKey(orgID)
+func (r *permissionCacheRepository) Epoch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+) (permissionports.CacheEpoch, error) {
+	log := r.l.With(
+		zap.String("operation", "Epoch"),
+		zap.String("userID", userID.String()),
+		zap.String("orgID", orgID.String()),
+	)
 
+	userEpoch, err := userEpochOf(r.client.Get(ctx, r.getUserEpochKey(userID, orgID)))
+	if err != nil {
+		log.Error("failed to read the user's permission epoch", zap.Error(err))
+		return permissionports.CacheEpoch{}, err
+	}
+
+	key := r.getEpochKey(orgID)
 	epoch, err := r.client.Get(ctx, key).Int64()
 	if err == nil {
-		return epoch, nil
+		return permissionports.CacheEpoch{Organization: epoch, User: userEpoch}, nil
 	}
 	if !errors.Is(err, redis.Nil) {
-		r.l.Error(
-			"failed to read permission epoch",
-			zap.String("orgID", orgID.String()),
-			zap.Error(err),
-		)
-		return 0, err
+		log.Error("failed to read permission epoch", zap.Error(err))
+		return permissionports.CacheEpoch{}, err
 	}
 
 	seed := time.Now().UnixNano()
 	if err = r.client.SetNX(ctx, key, seed, 0).Err(); err != nil {
-		r.l.Error(
-			"failed to seed permission epoch",
-			zap.String("orgID", orgID.String()),
-			zap.Error(err),
-		)
-		return 0, err
+		log.Error("failed to seed permission epoch", zap.Error(err))
+		return permissionports.CacheEpoch{}, err
 	}
 
-	return r.client.Get(ctx, key).Int64()
+	epoch, err = r.client.Get(ctx, key).Int64()
+	if err != nil {
+		return permissionports.CacheEpoch{}, err
+	}
+
+	return permissionports.CacheEpoch{Organization: epoch, User: userEpoch}, nil
+}
+
+func userEpochOf(cmd *redis.StringCmd) (int64, error) {
+	epoch, err := cmd.Int64()
+	if errors.Is(err, redis.Nil) {
+		return 0, nil
+	}
+
+	return epoch, err
 }
 
 func (r *permissionCacheRepository) InvalidateOrganization(
@@ -193,4 +228,8 @@ func (r *permissionCacheRepository) getPermissionKey(userID, orgID pulid.ID) str
 
 func (r *permissionCacheRepository) getEpochKey(orgID pulid.ID) string {
 	return fmt.Sprintf("%s:%s", permissionEpochPrefix, orgID.String())
+}
+
+func (r *permissionCacheRepository) getUserEpochKey(userID, orgID pulid.ID) string {
+	return fmt.Sprintf("%s:%s:%s", userEpochPrefix, userID.String(), orgID.String())
 }

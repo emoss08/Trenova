@@ -172,25 +172,25 @@ func (_c *MockPermissionCacheRepository_Get_Call) RunAndReturn(run func(ctx cont
 }
 
 // Epoch provides a mock function for the type MockPermissionCacheRepository
-func (_mock *MockPermissionCacheRepository) Epoch(ctx context.Context, orgID pulid.ID) (int64, error) {
-	ret := _mock.Called(ctx, orgID)
+func (_mock *MockPermissionCacheRepository) Epoch(ctx context.Context, userID pulid.ID, orgID pulid.ID) (permissionports.CacheEpoch, error) {
+	ret := _mock.Called(ctx, userID, orgID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Epoch")
 	}
 
-	var r0 int64
+	var r0 permissionports.CacheEpoch
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (int64, error)); ok {
-		return returnFunc(ctx, orgID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) (permissionports.CacheEpoch, error)); ok {
+		return returnFunc(ctx, userID, orgID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) int64); ok {
-		r0 = returnFunc(ctx, orgID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) permissionports.CacheEpoch); ok {
+		r0 = returnFunc(ctx, userID, orgID)
 	} else {
-		r0 = ret.Get(0).(int64)
+		r0 = ret.Get(0).(permissionports.CacheEpoch)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
-		r1 = returnFunc(ctx, orgID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, userID, orgID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -204,12 +204,13 @@ type MockPermissionCacheRepository_Epoch_Call struct {
 
 // Epoch is a helper method to define mock.On call
 //   - ctx context.Context
+//   - userID pulid.ID
 //   - orgID pulid.ID
-func (_e *MockPermissionCacheRepository_Expecter) Epoch(ctx any, orgID any) *MockPermissionCacheRepository_Epoch_Call {
-	return &MockPermissionCacheRepository_Epoch_Call{Call: _e.mock.On("Epoch", ctx, orgID)}
+func (_e *MockPermissionCacheRepository_Expecter) Epoch(ctx any, userID any, orgID any) *MockPermissionCacheRepository_Epoch_Call {
+	return &MockPermissionCacheRepository_Epoch_Call{Call: _e.mock.On("Epoch", ctx, userID, orgID)}
 }
 
-func (_c *MockPermissionCacheRepository_Epoch_Call) Run(run func(ctx context.Context, orgID pulid.ID)) *MockPermissionCacheRepository_Epoch_Call {
+func (_c *MockPermissionCacheRepository_Epoch_Call) Run(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID)) *MockPermissionCacheRepository_Epoch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -219,20 +220,25 @@ func (_c *MockPermissionCacheRepository_Epoch_Call) Run(run func(ctx context.Con
 		if args[1] != nil {
 			arg1 = args[1].(pulid.ID)
 		}
+		var arg2 pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].(pulid.ID)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
 }
 
-func (_c *MockPermissionCacheRepository_Epoch_Call) Return(n int64, err error) *MockPermissionCacheRepository_Epoch_Call {
-	_c.Call.Return(n, err)
+func (_c *MockPermissionCacheRepository_Epoch_Call) Return(cacheEpoch permissionports.CacheEpoch, err error) *MockPermissionCacheRepository_Epoch_Call {
+	_c.Call.Return(cacheEpoch, err)
 	return _c
 }
 
-func (_c *MockPermissionCacheRepository_Epoch_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID) (int64, error)) *MockPermissionCacheRepository_Epoch_Call {
+func (_c *MockPermissionCacheRepository_Epoch_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID) (permissionports.CacheEpoch, error)) *MockPermissionCacheRepository_Epoch_Call {
 	_c.Call.Return(run)
 	return _c
 }

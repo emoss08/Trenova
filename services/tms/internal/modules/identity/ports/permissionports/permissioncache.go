@@ -22,7 +22,22 @@ type CachedPermissions struct {
 	Checksum       string                               `json:"checksum"`
 	ExpiresAt      int64                                `json:"expiresAt"`
 	Epoch          int64                                `json:"epoch"`
+	UserEpoch      int64                                `json:"userEpoch"`
 	AgentRoleID    string                               `json:"agentRoleId,omitempty"`
+}
+
+type CacheEpoch struct {
+	Organization int64
+	User         int64
+}
+
+func (e CacheEpoch) Stamp(perms *CachedPermissions) {
+	perms.Epoch = e.Organization
+	perms.UserEpoch = e.User
+}
+
+func (e CacheEpoch) Current(perms *CachedPermissions) bool {
+	return perms.Epoch == e.Organization && perms.UserEpoch == e.User
 }
 
 type PermissionCacheKey struct {
@@ -40,7 +55,7 @@ type PermissionCacheRepository interface {
 		ttl time.Duration,
 	) error
 	Delete(ctx context.Context, userID, orgID pulid.ID) error
-	Epoch(ctx context.Context, orgID pulid.ID) (int64, error)
+	Epoch(ctx context.Context, userID, orgID pulid.ID) (CacheEpoch, error)
 	InvalidateOrganization(ctx context.Context, orgID pulid.ID) error
 }
 

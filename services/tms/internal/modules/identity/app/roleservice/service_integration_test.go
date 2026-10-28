@@ -92,8 +92,12 @@ func (p *integrationPermCacheRepo) InvalidateByRole(
 	return nil
 }
 
-func (p *integrationPermCacheRepo) Epoch(context.Context, pulid.ID) (int64, error) {
-	return 0, nil
+func (p *integrationPermCacheRepo) Epoch(
+	context.Context,
+	pulid.ID,
+	pulid.ID,
+) (permissionports.CacheEpoch, error) {
+	return permissionports.CacheEpoch{}, nil
 }
 
 func (p *integrationPermCacheRepo) InvalidateOrganization(
@@ -399,12 +403,15 @@ func seedActorRole(
 		require.NoError(t, permissiondb.ResourcePermissions.CreateMany(f.ctx, f.db, grants))
 	}
 
-	require.NoError(t, permissiondb.UserRoleAssignments.Create(f.ctx, f.db, &permission.UserRoleAssignment{
-		UserID:         f.actorID(),
-		OrganizationID: f.orgID(),
-		RoleID:         actorRole.ID,
-		AssignedAt:     timeutils.NowUnix(),
-	}))
+	require.NoError(
+		t,
+		permissiondb.UserRoleAssignments.Create(f.ctx, f.db, &permission.UserRoleAssignment{
+			UserID:         f.actorID(),
+			OrganizationID: f.orgID(),
+			RoleID:         actorRole.ID,
+			AssignedAt:     timeutils.NowUnix(),
+		}),
+	)
 
 	return actorRole.ID
 }

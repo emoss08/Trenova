@@ -62,19 +62,23 @@ func (p *testPermCacheRepo) Get(
 	return &perms, nil
 }
 
-func (p *testPermCacheRepo) Epoch(ctx context.Context, orgID pulid.ID) (int64, error) {
+func (p *testPermCacheRepo) Epoch(
+	ctx context.Context,
+	_, orgID pulid.ID,
+) (permissionports.CacheEpoch, error) {
 	key := p.epochKey(orgID)
 	epoch, err := p.client.Get(ctx, key).Int64()
 	if err == nil {
-		return epoch, nil
+		return permissionports.CacheEpoch{Organization: epoch}, nil
 	}
 	if err != redis.Nil {
-		return 0, err
+		return permissionports.CacheEpoch{}, err
 	}
 	if err = p.client.SetNX(ctx, key, time.Now().UnixNano(), 0).Err(); err != nil {
-		return 0, err
+		return permissionports.CacheEpoch{}, err
 	}
-	return p.client.Get(ctx, key).Int64()
+	epoch, err = p.client.Get(ctx, key).Int64()
+	return permissionports.CacheEpoch{Organization: epoch}, err
 }
 
 func (p *testPermCacheRepo) epochKey(orgID pulid.ID) string {
@@ -140,12 +144,15 @@ type integrationEnv struct {
 func (env *integrationEnv) addMembership(t *testing.T, userID pulid.ID) {
 	t.Helper()
 
-	require.NoError(t, tenantdb.OrganizationMemberships.Create(env.ctx, env.db, &tenant.OrganizationMembership{
-		UserID:         userID,
-		BusinessUnitID: env.data.BusinessUnit.ID,
-		OrganizationID: env.data.Organization.ID,
-		IsDefault:      true,
-	}))
+	require.NoError(
+		t,
+		tenantdb.OrganizationMemberships.Create(env.ctx, env.db, &tenant.OrganizationMembership{
+			UserID:         userID,
+			BusinessUnitID: env.data.BusinessUnit.ID,
+			OrganizationID: env.data.Organization.ID,
+			IsDefault:      true,
+		}),
+	)
 }
 
 func seedIntegrationData(t *testing.T, env *integrationEnv) *integrationTestData {
@@ -159,18 +166,24 @@ func seedIntegrationData(t *testing.T, env *integrationEnv) *integrationTestData
 		MaxSensitivity: permission.SensitivityInternal,
 	}
 	require.NoError(t, permissiondb.Roles.Create(env.ctx, env.db, role))
-	require.NoError(t, permissiondb.ResourcePermissions.Create(env.ctx, env.db, &permission.ResourcePermission{
-		RoleID:     role.ID,
-		Resource:   "shipment",
-		Operations: []permission.Operation{permission.OpRead, permission.OpCreate},
-		DataScope:  permission.DataScopeOrganization,
-	}))
-	require.NoError(t, permissiondb.UserRoleAssignments.Create(env.ctx, env.db, &permission.UserRoleAssignment{
-		UserID:         userID,
-		OrganizationID: env.data.Organization.ID,
-		RoleID:         role.ID,
-		AssignedAt:     timeutils.NowUnix(),
-	}))
+	require.NoError(
+		t,
+		permissiondb.ResourcePermissions.Create(env.ctx, env.db, &permission.ResourcePermission{
+			RoleID:     role.ID,
+			Resource:   "shipment",
+			Operations: []permission.Operation{permission.OpRead, permission.OpCreate},
+			DataScope:  permission.DataScopeOrganization,
+		}),
+	)
+	require.NoError(
+		t,
+		permissiondb.UserRoleAssignments.Create(env.ctx, env.db, &permission.UserRoleAssignment{
+			UserID:         userID,
+			OrganizationID: env.data.Organization.ID,
+			RoleID:         role.ID,
+			AssignedAt:     timeutils.NowUnix(),
+		}),
+	)
 
 	return &integrationTestData{
 		ctx:    env.ctx,

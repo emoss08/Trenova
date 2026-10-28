@@ -36,7 +36,10 @@ func allRolesKey(userID, orgID pulid.ID) permissionports.PermissionCacheKey {
 	}
 }
 
-func activeRolesKey(ctx context.Context, userID, orgID pulid.ID) permissionports.PermissionCacheKey {
+func activeRolesKey(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+) permissionports.PermissionCacheKey {
 	return permissionports.PermissionCacheKey{
 		UserID:  userID,
 		OrgID:   orgID,
@@ -44,7 +47,7 @@ func activeRolesKey(ctx context.Context, userID, orgID pulid.ID) permissionports
 	}
 }
 
-const testEpoch int64 = 7
+var testEpoch = permissionports.CacheEpoch{Organization: 7, User: 3}
 
 func setupTestEngine(
 	t *testing.T,
@@ -53,7 +56,9 @@ func setupTestEngine(
 
 	roleRepo := permissionportsmock.NewMockRoleRepository(t)
 	cacheRepo := permissionportsmock.NewMockPermissionCacheRepository(t)
-	cacheRepo.On("Epoch", mock.Anything, mock.Anything).Return(testEpoch, nil).Maybe()
+	cacheRepo.On("Epoch", mock.Anything, mock.Anything, mock.Anything).
+		Return(testEpoch, nil).
+		Maybe()
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	logger := zap.NewNop()
 
@@ -375,6 +380,41 @@ func TestCheck_NoRoles(t *testing.T) {
 
 	userRepo.AssertExpectations(t)
 	roleRepo.AssertExpectations(t)
+	cacheRepo.AssertExpectations(t)
+}
+
+// The entry a check caches carries the epochs it read before computing, so a
+// role change that lands while it computes leaves the entry stale rather than
+// serving the old grants until it expires.
+func TestCheck_StampsTheEpochsReadBeforeComputing(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, cacheRepo, _ := setupTestEngine(t)
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*permission.UserRoleAssignment{}, nil)
+	cacheRepo.On(
+		"Set",
+		ctx,
+		allRolesKey(userID, orgID),
+		mock.MatchedBy(func(perms *permissionports.CachedPermissions) bool {
+			return perms.Epoch == testEpoch.Organization && perms.UserEpoch == testEpoch.User
+		}),
+		cacheTTL,
+	).Return(nil).Once()
+
+	_, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
+		UserID:         userID,
+		OrganizationID: orgID,
+		Resource:       "shipment",
+		Operation:      permission.OpRead,
+	})
+
+	require.NoError(t, err)
 	cacheRepo.AssertExpectations(t)
 }
 
@@ -971,7 +1011,8 @@ func TestGetResourcePermissionsBatch_ReadsThePermissionsOnce(t *testing.T) {
 		},
 	}, nil).Once()
 	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
-		Return(nil).Once()
+		Return(nil).
+		Once()
 
 	details, err := eng.GetResourcePermissionsBatch(
 		ctx, userID, orgID, []string{"shipment", "customer", "shipment", "not_a_resource"},
