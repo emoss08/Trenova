@@ -85,6 +85,33 @@ func TestSelectOptionsRequestFromInput_MapsPaginationFiltersAndIDs(t *testing.T)
 	assert.Equal(t, filters, req.Filters)
 }
 
+// Each resource's options look ids up one record at a time, so the list a
+// caller may send is bounded like a page.
+func TestSelectOptionsRequestFromInput_RefusesMoreIDsThanAPage(t *testing.T) {
+	t.Parallel()
+
+	ids := make([]string, 0, pagination.MaxLimit+1)
+	for range pagination.MaxLimit + 1 {
+		ids = append(ids, pulid.MustNew("tr_").String())
+	}
+	auth := testGraphQLAuthContext(pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_"))
+
+	_, err := selectOptionsRequestFromInput(
+		gqlmodel.SelectOptionsInput{Resource: gqlmodel.SelectOptionResourceTrailer, Ids: ids},
+		auth,
+		SelectOptionRegistryEntry{},
+	)
+	require.Error(t, err)
+
+	req, err := selectOptionsRequestFromInput(
+		gqlmodel.SelectOptionsInput{Resource: gqlmodel.SelectOptionResourceTrailer, Ids: ids[:pagination.MaxLimit]},
+		auth,
+		SelectOptionRegistryEntry{},
+	)
+	require.NoError(t, err)
+	assert.Len(t, req.IDs, pagination.MaxLimit)
+}
+
 func TestSelectOptions_InitialResourcesDoNotRequireResourcePermission(t *testing.T) {
 	t.Parallel()
 

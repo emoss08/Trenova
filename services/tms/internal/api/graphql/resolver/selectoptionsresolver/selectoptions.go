@@ -42,6 +42,14 @@ func selectOptionsRequestFromInput(
 	authCtx *authctx.AuthContext,
 	entry SelectOptionRegistryEntry,
 ) (*SelectOptionsRequest, error) {
+	if len(input.Ids) > pagination.MaxLimit {
+		return nil, errortypes.NewValidationError(
+			"ids",
+			errortypes.ErrInvalid,
+			"At most {0}",
+			pagination.MaxLimit,
+		)
+	}
 	ids, err := entry.IDs(input.Ids)
 	if err != nil {
 		return nil, err
