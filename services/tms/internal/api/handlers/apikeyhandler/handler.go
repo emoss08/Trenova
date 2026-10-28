@@ -225,8 +225,9 @@ func (h *Handler) update(c *gin.Context) {
 	}
 
 	result, svcErr := h.apiKeyService.UpdateAPIKey(c.Request.Context(), pagination.TenantInfo{
-		OrgID: authCtx.OrganizationID,
-		BuID:  authCtx.BusinessUnitID,
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
 	}, apiKeyID, req)
 	if svcErr != nil {
 		h.eh.HandleError(c, svcErr)
@@ -262,8 +263,9 @@ func (h *Handler) rotate(c *gin.Context) {
 	}
 
 	result, svcErr := h.apiKeyService.RotateAPIKey(c.Request.Context(), pagination.TenantInfo{
-		OrgID: authCtx.OrganizationID,
-		BuID:  authCtx.BusinessUnitID,
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
 	}, apiKeyID)
 	if svcErr != nil {
 		h.eh.HandleError(c, svcErr)

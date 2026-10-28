@@ -3,6 +3,7 @@ package apikeyservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	permissiondomain "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -104,4 +105,37 @@ func TestUpdateAPIKey_RefusesGrantsBeyondTheEditor(t *testing.T) {
 
 	require.Error(t, err)
 	repo.AssertNotCalled(t, "UpdateWithPermissions", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestRotateAPIKey_RefusesAKeyThatHoldsMoreThanTheRotator(t *testing.T) {
+	t.Parallel()
+
+	svc, repo := newTestService(t)
+	svc.engine = actorHolding(t, permissiondomain.ResourceCustomer, permissiondomain.OpRead)
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  pulid.MustNew("org_"),
+		BuID:   pulid.MustNew("bu_"),
+		UserID: pulid.MustNew("usr_"),
+	}
+	keyID := pulid.MustNew("ak_")
+	adminsKey := &apikey.Key{
+		ID:             keyID,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		Name:           "Administrator's sync",
+		KeyPrefix:      "trv_admin",
+		Status:         apikey.StatusActive,
+		CreatedByID:    pulid.MustNew("usr_"),
+		Permissions: []*apikey.Permission{{
+			Resource:   permissiondomain.ResourceRole.String(),
+			Operations: []permissiondomain.Operation{permissiondomain.OpUpdate},
+			DataScope:  permissiondomain.DataScopeOrganization,
+		}},
+	}
+	repo.EXPECT().GetByID(mock.Anything, tenantInfo, keyID).Return(adminsKey, nil)
+
+	_, err := svc.RotateAPIKey(t.Context(), tenantInfo, keyID)
+
+	require.Error(t, err, "rotating hands out a token with the key's grants, so it is a grant")
+	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
 }

@@ -217,8 +217,15 @@ func TestAPIKeyHandlerRotateAndRevokeSuccess(t *testing.T) {
 	}
 
 	repo.EXPECT().
+		GetByID(mock.Anything, pagination.TenantInfo{
+			OrgID:  sharedtestutil.TestOrgID,
+			BuID:   sharedtestutil.TestBuID,
+			UserID: sharedtestutil.TestUserID,
+		}, keyID).
+		Return(key, nil).Once()
+	repo.EXPECT().
 		GetByID(mock.Anything, pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}, keyID).
-		Return(key, nil).Twice()
+		Return(key, nil).Once()
 	repo.EXPECT().Update(mock.Anything, mock.AnythingOfType("*apikey.Key")).Return(nil).Twice()
 
 	rotateCtx := sharedtestutil.NewGinTestContext().

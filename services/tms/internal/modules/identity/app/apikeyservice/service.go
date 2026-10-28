@@ -265,8 +265,15 @@ func (s *Service) RotateAPIKey(
 	if err != nil {
 		return nil, err
 	}
-
 	before := s.mapAPIKeyResponse(key)
+	if err = s.validateWithinActor(
+		ctx,
+		tenantInfo.UserID,
+		tenantInfo.OrgID,
+		before.Permissions,
+	); err != nil {
+		return nil, err
+	}
 
 	generated, err := apikey.GenerateAPIKeySecret()
 	if err != nil {
