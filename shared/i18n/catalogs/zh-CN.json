@@ -1761,6 +1761,7 @@
   "At most 50 phrases": "最多 50 个词句",
   "At most 500 cases can be required": "最多只能要求 500 个用例",
   "At most 8 edges are allowed": "最多允许 8 个分界点",
+  "At most {0}": "最多 {0}",
   "At most {0} characters are kept": "最多保留 {0} 个字符",
   "At most {0} documents can be looked up at a time": "一次最多可查询 {0} 份单据",
   "At most {0} extra request fields": "最多 {0} 个额外请求字段",

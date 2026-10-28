@@ -1761,6 +1761,7 @@
   "At most 50 phrases": "Como máximo 50 frases",
   "At most 500 cases can be required": "Se pueden exigir como máximo 500 casos",
   "At most 8 edges are allowed": "Se permiten como máximo 8 límites",
+  "At most {0}": "Como máximo {0}",
   "At most {0} characters are kept": "Se conservan como máximo {0} caracteres",
   "At most {0} documents can be looked up at a time": "Se pueden consultar como máximo {0} documentos a la vez",
   "At most {0} extra request fields": "Como máximo {0} campos de solicitud adicionales",

@@ -35994,11 +35994,13 @@
     ]
   },
   "At most {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "api/graphql",
       "apps/web/types",
       "packages/shared/lib"
     ]
@@ -83746,7 +83748,7 @@
     ]
   },
   "Document lineage does not belong to the selected resource": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -83755,7 +83757,7 @@
     ]
   },
   "Document lineage does not have a current version": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -83764,7 +83766,7 @@
     ]
   },
   "Document lineage not found within your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -351218,7 +351220,7 @@
     ]
   },
   "{0} not found within your organization": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
