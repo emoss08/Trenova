@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -336,12 +337,12 @@ func (s *Service) RevokeAPIKey(
 }
 
 type AllowedResourceCategory struct {
-	Category  string                                  `json:"category"`
-	Resources []*permissioncatalog.ResourceDefinition `json:"resources"`
+	Category  string                               `json:"category"`
+	Resources []*permissionspec.ResourceDefinition `json:"resources"`
 }
 
 func (s *Service) GetAllowedResources(ctx context.Context) []AllowedResourceCategory {
-	categoryMap := make(map[string][]*permissioncatalog.ResourceDefinition)
+	categoryMap := make(map[string][]*permissionspec.ResourceDefinition)
 
 	for resource, allowedOps := range runtimePolicy {
 		def, ok := s.registry.Get(resource)
@@ -349,7 +350,7 @@ func (s *Service) GetAllowedResources(ctx context.Context) []AllowedResourceCate
 			continue
 		}
 
-		filtered := &permissioncatalog.ResourceDefinition{
+		filtered := &permissionspec.ResourceDefinition{
 			Resource:           def.Resource,
 			DisplayName:        i18n.T(ctx, def.DisplayName),
 			Description:        i18n.T(ctx, def.Description),
@@ -379,7 +380,7 @@ func (s *Service) GetAllowedResources(ctx context.Context) []AllowedResourceCate
 	result := make([]AllowedResourceCategory, 0, len(categories))
 	for _, cat := range categories {
 		resources := categoryMap[cat]
-		slices.SortFunc(resources, func(a, b *permissioncatalog.ResourceDefinition) int {
+		slices.SortFunc(resources, func(a, b *permissionspec.ResourceDefinition) int {
 			return strings.Compare(a.DisplayName, b.DisplayName)
 		})
 		result = append(result, AllowedResourceCategory{
@@ -586,7 +587,7 @@ func (s *Service) validateWithinActor(
 }
 
 func resourceSupportsOperation(
-	def *permissioncatalog.ResourceDefinition,
+	def *permissionspec.ResourceDefinition,
 	operation permission.Operation,
 ) bool {
 	for _, opDef := range def.Operations {

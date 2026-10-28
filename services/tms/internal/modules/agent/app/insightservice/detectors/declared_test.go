@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detectors"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 )
@@ -75,7 +76,7 @@ func TestEveryDetectorDeclaresEveryKindItsFindingsName(t *testing.T) {
 				t,
 				slices.ContainsFunc(
 					def.Operations,
-					func(op permissioncatalog.OperationDefinition) bool {
+					func(op permissionspec.OperationDefinition) bool {
 						return op.Operation == d.Operation()
 					},
 				),

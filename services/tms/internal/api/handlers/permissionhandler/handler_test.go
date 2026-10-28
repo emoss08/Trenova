@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/scopepolicytest"
@@ -30,17 +31,17 @@ func setupPermissionHandler(
 	logger := zap.NewNop()
 
 	registry := permissioncatalog.NewEmptyRegistry()
-	_ = registry.Register(&permissioncatalog.ResourceDefinition{
+	_ = registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    "test_resource",
 		DisplayName: "Test Resource",
 		Category:    "test",
 	})
-	_ = registry.Register(&permissioncatalog.ResourceDefinition{
+	_ = registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    "test_owned",
 		DisplayName: "Test Owned",
 		Category:    "test",
-		Scopes: []permissioncatalog.ScopeSupport{
-			{Scope: permission.DataScopeOwn, EnforcedBy: permissioncatalog.ScopeEnforcedByDatabase},
+		Scopes: []permissionspec.ScopeSupport{
+			{Scope: permission.DataScopeOwn, EnforcedBy: permissionspec.ScopeEnforcedByDatabase},
 		},
 	})
 
@@ -370,15 +371,15 @@ func TestPermissionHandler_GetAvailableResources_TranslatesAndFollowsTheRail(t *
 	t.Parallel()
 
 	registry := permissioncatalog.NewEmptyRegistry()
-	require.NoError(t, registry.Register(&permissioncatalog.ResourceDefinition{
+	require.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    "invoice",
 		DisplayName: "Invoice",
 		Category:    "Billing",
-		Operations: []permissioncatalog.OperationDefinition{
+		Operations: []permissionspec.OperationDefinition{
 			{Operation: permission.OpRead, DisplayName: "View"},
 		},
 	}))
-	require.NoError(t, registry.Register(&permissioncatalog.ResourceDefinition{
+	require.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    "assistant",
 		DisplayName: "Desk",
 		Category:    "Desk",

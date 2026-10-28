@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/routeaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -210,7 +211,7 @@ func setupIntegrationEngine(t *testing.T) (*engine, *integrationEnv, *redis.Clie
 		cacheRepo:     cacheRepo,
 		userRepo:      userrepository.New(userrepository.Params{DB: conn, Logger: zap.NewNop()}),
 		registry:      permissioncatalog.NewRegistry(),
-		routeRegistry: permissioncatalog.NewRouteRegistry(),
+		routeRegistry: routeaccess.NewRouteRegistry(),
 		metrics:       metricsRegistry,
 		l:             zap.NewNop().Named("test.permission-engine"),
 	}

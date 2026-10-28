@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -54,7 +55,9 @@ func TestTemplateGrants_MergeBundlesAndKeepTheWidestScope(t *testing.T) {
 	t.Parallel()
 
 	reg := NewRegistry()
-	grants := reg.TemplateGrants(JobTemplate{Bundles: []string{"hr.team", "hr.workers"}})
+	grants := reg.TemplateGrants(
+		permissionspec.JobTemplate{Bundles: []string{"hr.team", "hr.workers"}},
+	)
 
 	idx := slices.IndexFunc(grants, func(rp *permission.ResourcePermission) bool {
 		return rp.Resource == permission.ResourceWorker.String()
@@ -75,7 +78,7 @@ func TestTemplateGrants_MergeBundlesAndKeepTheWidestScope(t *testing.T) {
 		worker.Operations,
 	)
 
-	teamOnly := reg.TemplateGrants(JobTemplate{Bundles: []string{"hr.team"}})
+	teamOnly := reg.TemplateGrants(permissionspec.JobTemplate{Bundles: []string{"hr.team"}})
 	idx = slices.IndexFunc(teamOnly, func(rp *permission.ResourcePermission) bool {
 		return rp.Resource == permission.ResourceWorker.String()
 	})
@@ -157,20 +160,24 @@ func TestTemplateGrants_ReadEverythingSkipsWhatTheTemplateExcepts(t *testing.T) 
 	t.Parallel()
 
 	reg := NewRegistry()
-	grants := reg.TemplateGrants(JobTemplate{
+	grants := reg.TemplateGrants(permissionspec.JobTemplate{
 		ReadEverything: true,
 		ReadExcept:     []permission.Resource{permission.ResourceWorkerLeave},
 	})
 
 	assert.Nil(t, leaveOperations(grants))
-	assert.Len(t, grants, len(reg.TemplateGrants(JobTemplate{ReadEverything: true}))-1)
+	assert.Len(
+		t,
+		grants,
+		len(reg.TemplateGrants(permissionspec.JobTemplate{ReadEverything: true}))-1,
+	)
 }
 
 func TestTemplateGrants_ReadEverythingReadsEveryReadableKind(t *testing.T) {
 	t.Parallel()
 
 	reg := NewRegistry()
-	grants := reg.TemplateGrants(JobTemplate{ReadEverything: true})
+	grants := reg.TemplateGrants(permissionspec.JobTemplate{ReadEverything: true})
 
 	readable := 0
 	for _, def := range reg.All() {

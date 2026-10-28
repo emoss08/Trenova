@@ -4,31 +4,26 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 )
 
-type ScopeEnforcement string
-
-const (
-	ScopeEnforcedByApplication ScopeEnforcement = "application"
-	ScopeEnforcedByDatabase    ScopeEnforcement = "database"
-)
-
-type ScopeSupport struct {
-	Scope      permission.DataScope `json:"scope"`
-	EnforcedBy ScopeEnforcement     `json:"enforcedBy"`
-}
-
-func (r *Registry) scopeSupport(resource string, scope permission.DataScope) (ScopeSupport, bool) {
+func (r *Registry) scopeSupport(
+	resource string,
+	scope permission.DataScope,
+) (permissionspec.ScopeSupport, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	def, ok := r.resources[resource]
 	if !ok {
-		return ScopeSupport{}, false
+		return permissionspec.ScopeSupport{}, false
 	}
-	idx := slices.IndexFunc(def.Scopes, func(s ScopeSupport) bool { return s.Scope == scope })
+	idx := slices.IndexFunc(
+		def.Scopes,
+		func(s permissionspec.ScopeSupport) bool { return s.Scope == scope },
+	)
 	if idx < 0 {
-		return ScopeSupport{}, false
+		return permissionspec.ScopeSupport{}, false
 	}
 	return def.Scopes[idx], true
 }
@@ -45,7 +40,7 @@ func (r *Registry) ScopeEnforced(
 	if !ok {
 		return false
 	}
-	return support.EnforcedBy != ScopeEnforcedByDatabase || databaseEnforcing
+	return support.EnforcedBy != permissionspec.ScopeEnforcedByDatabase || databaseEnforcing
 }
 
 func (r *Registry) ScopeDeclared(resource string, scope permission.DataScope) bool {
@@ -58,7 +53,7 @@ func (r *Registry) ScopeDeclared(resource string, scope permission.DataScope) bo
 
 func (r *Registry) EnforcedByDatabase(resource string, scope permission.DataScope) bool {
 	support, ok := r.scopeSupport(resource, scope)
-	return ok && support.EnforcedBy == ScopeEnforcedByDatabase
+	return ok && support.EnforcedBy == permissionspec.ScopeEnforcedByDatabase
 }
 
 func (r *Registry) EnforceableScopes(
@@ -80,8 +75,8 @@ func (r *Registry) DatabaseScopedResources() []string {
 
 	resources := make([]string, 0, 4)
 	for name, def := range r.resources {
-		if slices.ContainsFunc(def.Scopes, func(s ScopeSupport) bool {
-			return s.EnforcedBy == ScopeEnforcedByDatabase
+		if slices.ContainsFunc(def.Scopes, func(s permissionspec.ScopeSupport) bool {
+			return s.EnforcedBy == permissionspec.ScopeEnforcedByDatabase
 		}) {
 			resources = append(resources, name)
 		}
@@ -96,7 +91,10 @@ func (r *Registry) ResourcesDeclaring(scope permission.DataScope) []string {
 
 	resources := make([]string, 0, 8)
 	for name, def := range r.resources {
-		if slices.ContainsFunc(def.Scopes, func(s ScopeSupport) bool { return s.Scope == scope }) {
+		if slices.ContainsFunc(
+			def.Scopes,
+			func(s permissionspec.ScopeSupport) bool { return s.Scope == scope },
+		) {
 			resources = append(resources, name)
 		}
 	}

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -127,7 +128,7 @@ func TestTemplateGrants_ReadOnlyReadsNoKindGrantedOnItsOwn(t *testing.T) {
 	t.Parallel()
 
 	reg := NewRegistry()
-	idx := slices.IndexFunc(JobTemplates(), func(template JobTemplate) bool {
+	idx := slices.IndexFunc(JobTemplates(), func(template permissionspec.JobTemplate) bool {
 		return template.ID == "read_only"
 	})
 	require.GreaterOrEqual(t, idx, 0)

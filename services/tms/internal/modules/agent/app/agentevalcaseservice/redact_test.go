@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -60,11 +61,11 @@ func testRegistry(t *testing.T) *permissioncatalog.Registry {
 	t.Helper()
 
 	registry := permissioncatalog.NewEmptyRegistry()
-	require.NoError(t, registry.Register(&permissioncatalog.ResourceDefinition{
+	require.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    resourceCustomer.String(),
 		DisplayName: "Customer",
 		Category:    "Test",
-		Operations:  []permissioncatalog.OperationDefinition{{Operation: permission.OpRead}},
+		Operations:  []permissionspec.OperationDefinition{{Operation: permission.OpRead}},
 		FieldSensitivities: map[string]permission.FieldSensitivity{
 			"name":                permission.SensitivityPublic,
 			"creditLimit":         permission.SensitivityRestricted,
@@ -76,11 +77,11 @@ func testRegistry(t *testing.T) *permissioncatalog.Registry {
 		},
 		DefaultSensitivity: permission.SensitivityInternal,
 	}))
-	require.NoError(t, registry.Register(&permissioncatalog.ResourceDefinition{
+	require.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    resourceLedger.String(),
 		DisplayName: "Ledger",
 		Category:    "Test",
-		Operations:  []permissioncatalog.OperationDefinition{{Operation: permission.OpRead}},
+		Operations:  []permissionspec.OperationDefinition{{Operation: permission.OpRead}},
 		FieldSensitivities: map[string]permission.FieldSensitivity{
 			"id": permission.SensitivityPublic,
 		},

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +19,7 @@ func TestSensitiveTools_NamesToolsOnRestrictedResources(t *testing.T) {
 		"worker_pay": permission.SensitivityConfidential,
 		"api_key":    permission.SensitivityRestricted,
 	} {
-		assert.NoError(t, registry.Register(&permissioncatalog.ResourceDefinition{
+		assert.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 			Resource:           resource.String(),
 			DisplayName:        resource.String(),
 			DefaultSensitivity: sensitivity,
@@ -43,7 +44,7 @@ func TestAnySensitive_OrsItsRules(t *testing.T) {
 	t.Parallel()
 
 	registry := permissioncatalog.NewEmptyRegistry()
-	assert.NoError(t, registry.Register(&permissioncatalog.ResourceDefinition{
+	assert.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:           "worker_pay",
 		DisplayName:        "worker_pay",
 		DefaultSensitivity: permission.SensitivityConfidential,

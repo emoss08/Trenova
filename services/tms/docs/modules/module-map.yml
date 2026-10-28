@@ -28,16 +28,33 @@ modules:
   identity:
     level: 1
     domain:
+      - accountingperms
+      - adminperms
+      - agentperms
       - apikey
+      - billingperms
+      - carrierperms
+      - complianceperms
+      - dispatchbundles
+      - financebundles
+      - fleetperms
       - iam
       - instancebootstrap
       - onboarding
+      - payrollperms
       - permission
       - permissioncatalog
+      - permissionspec
+      - platformbundles
       - platformplan
+      - reportperms
+      - routeaccess
       - session
+      - shipmentperms
       - subscription
       - tenant
+      - workerperms
+      - workforcebundles
     service:
       - accountingcontrolpolicyservice
       - accountingcontrolservice

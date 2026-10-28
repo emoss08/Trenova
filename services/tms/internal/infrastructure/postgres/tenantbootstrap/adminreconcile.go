@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -95,7 +96,7 @@ func planAdminGrants(
 	}
 
 	definitions := registry.All()
-	slices.SortFunc(definitions, func(a, b *permissioncatalog.ResourceDefinition) int {
+	slices.SortFunc(definitions, func(a, b *permissionspec.ResourceDefinition) int {
 		if a.Resource < b.Resource {
 			return -1
 		}

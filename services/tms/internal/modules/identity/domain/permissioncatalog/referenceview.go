@@ -1,6 +1,10 @@
 package permissioncatalog
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+)
 
 // referenceBookkeeping is part of every kind's reference view: a record's id,
 // its tenant and its revision say nothing about its content.
@@ -13,8 +17,8 @@ var referenceBookkeeping = []string{
 	"updatedAt",
 }
 
-func (d *ResourceDefinition) inReferenceView(field string) bool {
-	return slices.Contains(referenceBookkeeping, field) || slices.Contains(d.ReferenceView, field)
+func inReferenceView(def *permissionspec.ResourceDefinition, field string) bool {
+	return slices.Contains(referenceBookkeeping, field) || slices.Contains(def.ReferenceView, field)
 }
 
 // InReferenceView reports whether a field of a kind is in its reference view:
@@ -27,7 +31,7 @@ func (r *Registry) InReferenceView(resource, field string) bool {
 	if !ok {
 		return slices.Contains(referenceBookkeeping, field)
 	}
-	return def.inReferenceView(field)
+	return inReferenceView(def, field)
 }
 
 // ReferenceView is every field of a kind's reference view, sorted.

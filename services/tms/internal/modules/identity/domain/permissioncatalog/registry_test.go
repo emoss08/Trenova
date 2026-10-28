@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,12 +31,12 @@ func TestRegistry_Register(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	def := &ResourceDefinition{
+	def := &permissionspec.ResourceDefinition{
 		Resource:    "test_resource",
 		DisplayName: "Test Resource",
 		Description: "A test resource",
 		Category:    "Testing",
-		Operations: []OperationDefinition{
+		Operations: []permissionspec.OperationDefinition{
 			{Operation: permission.OpRead, DisplayName: "Read", Description: "Read access"},
 			{Operation: permission.OpCreate, DisplayName: "Create", Description: "Create access"},
 		},
@@ -51,7 +52,7 @@ func TestRegistry_Register_DuplicateFails(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	def := &ResourceDefinition{
+	def := &permissionspec.ResourceDefinition{
 		Resource:    "test_resource",
 		DisplayName: "Test Resource",
 	}
@@ -68,7 +69,7 @@ func TestRegistry_Get(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	def := &ResourceDefinition{
+	def := &permissionspec.ResourceDefinition{
 		Resource:    "test_resource",
 		DisplayName: "Test Resource",
 	}
@@ -88,14 +89,14 @@ func TestRegistry_GetChildren(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	parent := &ResourceDefinition{
+	parent := &permissionspec.ResourceDefinition{
 		Resource: "shipment",
 	}
-	child1 := &ResourceDefinition{
+	child1 := &permissionspec.ResourceDefinition{
 		Resource:       "shipment_move",
 		ParentResource: "shipment",
 	}
-	child2 := &ResourceDefinition{
+	child2 := &permissionspec.ResourceDefinition{
 		Resource:       "shipment_stop",
 		ParentResource: "shipment",
 	}
@@ -118,10 +119,10 @@ func TestRegistry_GetEffectiveResource(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	parent := &ResourceDefinition{
+	parent := &permissionspec.ResourceDefinition{
 		Resource: "shipment",
 	}
-	child := &ResourceDefinition{
+	child := &permissionspec.ResourceDefinition{
 		Resource:       "shipment_move",
 		ParentResource: "shipment",
 	}
@@ -139,8 +140,8 @@ func TestRegistry_All(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	def1 := &ResourceDefinition{Resource: "resource1"}
-	def2 := &ResourceDefinition{Resource: "resource2"}
+	def1 := &permissionspec.ResourceDefinition{Resource: "resource1"}
+	def2 := &permissionspec.ResourceDefinition{Resource: "resource2"}
 
 	require.NoError(t, reg.Register(def1))
 	require.NoError(t, reg.Register(def2))
@@ -154,7 +155,7 @@ func TestRegistry_GetFieldSensitivity(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	def := &ResourceDefinition{
+	def := &permissionspec.ResourceDefinition{
 		Resource:           "worker",
 		DefaultSensitivity: permission.SensitivityInternal,
 		FieldSensitivities: map[string]permission.FieldSensitivity{
@@ -175,9 +176,9 @@ func TestRegistry_GetOperationsForResource(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	def := &ResourceDefinition{
+	def := &permissionspec.ResourceDefinition{
 		Resource: "shipment",
-		Operations: []OperationDefinition{
+		Operations: []permissionspec.OperationDefinition{
 			{Operation: permission.OpRead},
 			{Operation: permission.OpCreate},
 			{Operation: permission.OpUpdate},
@@ -200,7 +201,7 @@ func TestRegistry_ExpandCompositeOperation(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	def := &ResourceDefinition{
+	def := &permissionspec.ResourceDefinition{
 		Resource: "shipment",
 		CompositeOps: map[string][]permission.Operation{
 			"manage": {
@@ -241,7 +242,7 @@ func TestRegistry_HasResource(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	def := &ResourceDefinition{Resource: "shipment"}
+	def := &permissionspec.ResourceDefinition{Resource: "shipment"}
 	require.NoError(t, reg.Register(def))
 
 	assert.True(t, reg.HasResource("shipment"))
@@ -253,9 +254,9 @@ func TestRegistry_GetByCategory(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	def1 := &ResourceDefinition{Resource: "shipment", Category: "Operations"}
-	def2 := &ResourceDefinition{Resource: "invoice", Category: "Billing"}
-	def3 := &ResourceDefinition{Resource: "customer", Category: "Operations"}
+	def1 := &permissionspec.ResourceDefinition{Resource: "shipment", Category: "Operations"}
+	def2 := &permissionspec.ResourceDefinition{Resource: "invoice", Category: "Billing"}
+	def3 := &permissionspec.ResourceDefinition{Resource: "customer", Category: "Operations"}
 
 	require.NoError(t, reg.Register(def1))
 	require.NoError(t, reg.Register(def2))
@@ -276,9 +277,9 @@ func TestRegistry_GetCategories(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	def1 := &ResourceDefinition{Resource: "shipment", Category: "Operations"}
-	def2 := &ResourceDefinition{Resource: "invoice", Category: "Billing"}
-	def3 := &ResourceDefinition{Resource: "customer", Category: "Operations"}
+	def1 := &permissionspec.ResourceDefinition{Resource: "shipment", Category: "Operations"}
+	def2 := &permissionspec.ResourceDefinition{Resource: "invoice", Category: "Billing"}
+	def3 := &permissionspec.ResourceDefinition{Resource: "customer", Category: "Operations"}
 
 	require.NoError(t, reg.Register(def1))
 	require.NoError(t, reg.Register(def2))
@@ -302,7 +303,7 @@ func TestRegistry_Register_EmptyResourceName(t *testing.T) {
 	t.Parallel()
 
 	reg := NewEmptyRegistry()
-	err := reg.Register(&ResourceDefinition{
+	err := reg.Register(&permissionspec.ResourceDefinition{
 		Resource: "",
 	})
 	require.Error(t, err)
@@ -313,7 +314,7 @@ func TestRegistry_Register_DefaultSensitivity(t *testing.T) {
 	t.Parallel()
 
 	reg := NewEmptyRegistry()
-	def := &ResourceDefinition{
+	def := &permissionspec.ResourceDefinition{
 		Resource: "test_resource",
 	}
 	err := reg.Register(def)
@@ -330,10 +331,10 @@ func TestRegistry_Count(t *testing.T) {
 	reg := NewEmptyRegistry()
 	assert.Equal(t, 0, reg.Count())
 
-	_ = reg.Register(&ResourceDefinition{Resource: "r1"})
+	_ = reg.Register(&permissionspec.ResourceDefinition{Resource: "r1"})
 	assert.Equal(t, 1, reg.Count())
 
-	_ = reg.Register(&ResourceDefinition{Resource: "r2"})
+	_ = reg.Register(&permissionspec.ResourceDefinition{Resource: "r2"})
 	assert.Equal(t, 2, reg.Count())
 }
 
@@ -633,7 +634,7 @@ func TestRegistry_GetFieldSensitivity_EmptyField(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	def := &ResourceDefinition{
+	def := &permissionspec.ResourceDefinition{
 		Resource:           "test",
 		DefaultSensitivity: permission.SensitivityRestricted,
 		FieldSensitivities: map[string]permission.FieldSensitivity{
@@ -741,102 +742,6 @@ func TestRegistry_RegisterAll_AllResourcesHaveValidSensitivity(t *testing.T) {
 	}
 }
 
-func TestRouteRegistry_Match_EmptyPath(t *testing.T) {
-	t.Parallel()
-
-	rr := NewRouteRegistry()
-	_, ok := rr.Match("")
-	assert.False(t, ok)
-}
-
-func TestRouteRegistry_Get_EmptyPath(t *testing.T) {
-	t.Parallel()
-
-	rr := NewRouteRegistry()
-	_, ok := rr.Get("")
-	assert.False(t, ok)
-}
-
-func TestRouteRegistry_GetByCategory_EmptyCategory(t *testing.T) {
-	t.Parallel()
-
-	rr := NewRouteRegistry()
-	routes := rr.GetByCategory("")
-	assert.Empty(t, routes)
-}
-
-func TestRouteRegistry_ComputeAccess_NilPermissions(t *testing.T) {
-	t.Parallel()
-
-	rr := NewEmptyRouteRegistry()
-	_ = rr.Register(&RouteDefinition{
-		Path:      "/test",
-		MatchType: RouteMatchExact,
-		Requirements: []RouteRequirement{
-			{Resource: permission.ResourceUser, Operation: permission.OpRead},
-		},
-	})
-
-	access := rr.ComputeAccess(nil)
-	assert.False(t, access["/test"])
-}
-
-func TestRouteRegistry_ConcurrentAccess(t *testing.T) {
-	t.Parallel()
-
-	rr := NewRouteRegistry()
-
-	var wg sync.WaitGroup
-	for range 10 {
-		wg.Go(func() {
-			_ = rr.All()
-			_ = rr.Count()
-			_, _ = rr.Match("/admin/users")
-			_, _ = rr.Get("/admin/users")
-			_ = rr.GetByCategory("Administration")
-			_ = rr.ComputeAccess(map[string]uint32{
-				string(permission.ResourceUser): permission.ClientOpRead,
-			})
-		})
-	}
-	wg.Wait()
-}
-
-func TestRouteRegistry_RegisterAll_AllRoutesHaveRequirements(t *testing.T) {
-	t.Parallel()
-
-	rr := NewRouteRegistry()
-
-	all := rr.All()
-	for _, def := range all {
-		assert.NotEmpty(t, def.Requirements, "route %s should have requirements", def.Path)
-		assert.NotEmpty(t, def.DisplayName, "route %s should have a display name", def.Path)
-		assert.NotEmpty(t, def.Category, "route %s should have a category", def.Path)
-	}
-}
-
-func TestRouteRegistry_RegisterAll_CategoriesExist(t *testing.T) {
-	t.Parallel()
-
-	rr := NewRouteRegistry()
-
-	expectedCategories := []string{
-		"Administration", "Equipment", "Workers", "Operations",
-		"Billing", "Customers", "Locations", "Commodities",
-		"Accounting", "Reporting",
-	}
-
-	allRoutes := rr.All()
-	categorySet := make(map[string]bool)
-	for _, def := range allRoutes {
-		categorySet[def.Category] = true
-	}
-
-	for _, cat := range expectedCategories {
-		assert.True(t, categorySet[cat], "route registry should have category %s", cat)
-	}
-}
-
 func TestRegistry_EveryResourceSitsInACategoryTheRoleEditorOrders(t *testing.T) {
 	t.Parallel()
 
@@ -858,10 +763,22 @@ func TestRegistry_GetCategoriesFollowsTheModuleRail(t *testing.T) {
 	assert.Equal(t, CategoryOrder(), NewRegistry().GetCategories())
 
 	reg := NewEmptyRegistry()
-	require.NoError(t, reg.Register(&ResourceDefinition{Resource: "b", Category: "Zeta"}))
-	require.NoError(t, reg.Register(&ResourceDefinition{Resource: "a", Category: "Billing"}))
-	require.NoError(t, reg.Register(&ResourceDefinition{Resource: "c", Category: "Alpha"}))
-	require.NoError(t, reg.Register(&ResourceDefinition{Resource: "d", Category: "Desk"}))
+	require.NoError(
+		t,
+		reg.Register(&permissionspec.ResourceDefinition{Resource: "b", Category: "Zeta"}),
+	)
+	require.NoError(
+		t,
+		reg.Register(&permissionspec.ResourceDefinition{Resource: "a", Category: "Billing"}),
+	)
+	require.NoError(
+		t,
+		reg.Register(&permissionspec.ResourceDefinition{Resource: "c", Category: "Alpha"}),
+	)
+	require.NoError(
+		t,
+		reg.Register(&permissionspec.ResourceDefinition{Resource: "d", Category: "Desk"}),
+	)
 	assert.Equal(t, []string{"Desk", "Billing", "Alpha", "Zeta"}, reg.GetCategories())
 }
 

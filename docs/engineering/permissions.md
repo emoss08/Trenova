@@ -20,16 +20,18 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
 
 | Piece | Where |
 |---|---|
-| Registry: every resource, its operations and field sensitivities | `internal/modules/identity/domain/permission/resources_*.go` |
+| Registry: every resource, its operations and field sensitivities | `permissioncatalog.Registry`, filled from one package per area (`internal/modules/identity/domain/<area>perms`, such as `billingperms`), each built from the `permissionspec` definition types |
 | Engine (one port, used by REST, GraphQL, services and agent tools) | `internal/modules/identity/app/permission/engine.go` |
 | Delegation check ("cannot grant what you do not hold") | `permissionports.EffectivePermissions.DelegationViolation` |
 | Change notifier (cache epoch + realtime) | `internal/modules/identity/app/permissionchange` |
 | Administrator role reconcile | `internal/infrastructure/postgres/tenantbootstrap/adminreconcile.go` |
-| Declared-permission lints (REST, GraphQL, web client, route registry, agent tools) | `internal/api/permissionlint`, `internal/api/graphql/authzlint`, `permission/routeregistry_test.go`, `agenttoolpolicy/validate.go` |
+| Declared-permission lints (REST, GraphQL, web client, route registry, agent tools) | `internal/api/permissionlint`, `internal/api/graphql/authzlint`, `permissioncatalog/routerequirements_test.go`, `agenttoolpolicy/validate.go` |
 
 ## Adding a resource or an operation
 
-1. Declare it in the registry (`resources_*.go`). A check that names an operation the
+1. Declare it in the registry, in the `Resources()` of its area's `<area>perms`
+   package (a new area is a new package, collected in `permissioncatalog`'s
+   `registerAll`). A check that names an operation the
    registry does not declare can never pass, because no role can be granted it, so
    every place that names a permission is held to `Registry.Declares`:
    - REST handlers, GraphQL resolvers and middleware
@@ -90,7 +92,7 @@ Data most readers of the parent have no business seeing (medical, leave, discipl
 compensation) is a resource with no parent, granted on its own through the bundles for the
 jobs that need it. Worker read reaches none of these, a record of one that a worker carries
 is a linked record gated by its own read, and the Read-only template excepts each
-(`ownGrantKinds` in `bundles_catalog.go`):
+(`ownGrantKinds` in `permissioncatalog/jobtemplates.go`):
 
 | Kind | Granted by | Templates |
 |---|---|---|
@@ -146,7 +148,8 @@ view's name and filters never reach someone who cannot open the table it is abou
 ## Bundles and job templates
 
 A role is composed from **capability bundles** rather than from 180 resources one at a
-time. A bundle (`permission/bundles_catalog.go`) is a named set of grants for one job to be
+time. A bundle (one of the `<area>bundles` packages, such as `dispatchbundles`, collected in
+`permissioncatalog/bundles.go`; job templates are in `permissioncatalog/jobtemplates.go`) is a named set of grants for one job to be
 done, such as "Dispatch board" or "Post invoices", and a **job template** (Dispatcher,
 Billing clerk, Accountant, Driver manager, Read-only and others) is a list of bundles with
 a field sensitivity ceiling. `GET /permissions/bundles` returns both, each grant with the

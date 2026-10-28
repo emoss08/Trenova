@@ -7,49 +7,30 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingperms"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/adminperms"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentperms"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingperms"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carrierperms"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/complianceperms"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/fleetperms"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/payrollperms"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/reportperms"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentperms"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/workerperms"
 )
-
-const (
-	fieldGLAccountID     = "glAccountId"
-	fieldPostedBatchID   = "postedBatchId"
-	fieldUpdatedByID     = "updatedById"
-	fieldCancelledByID   = "cancelledById"
-	fieldStartDate       = "startDate"
-	fieldEndDate         = "endDate"
-	fieldRejectionReason = "rejectionReason"
-)
-
-type OperationDefinition struct {
-	Operation   permission.Operation   `json:"operation"`
-	DisplayName string                 `json:"displayName"`
-	Description string                 `json:"description"`
-	Implies     []permission.Operation `json:"implies"`
-}
-
-type ResourceDefinition struct {
-	Resource           string                                 `json:"resource"`
-	DisplayName        string                                 `json:"displayName"`
-	Description        string                                 `json:"description"`
-	Category           string                                 `json:"category"`
-	Operations         []OperationDefinition                  `json:"operations"`
-	CompositeOps       map[string][]permission.Operation      `json:"compositeOps,omitempty"`
-	ParentResource     string                                 `json:"parentResource,omitempty"`
-	FieldSensitivities map[string]permission.FieldSensitivity `json:"fieldSensitivities,omitempty"`
-	DefaultSensitivity permission.FieldSensitivity            `json:"defaultSensitivity"`
-	Scopes             []ScopeSupport                         `json:"scopes,omitempty"`
-	ReferenceView      []string                               `json:"referenceView,omitempty"`
-}
 
 type Registry struct {
 	mu        sync.RWMutex
-	resources map[string]*ResourceDefinition
+	resources map[string]*permissionspec.ResourceDefinition
 	children  map[string][]string
 }
 
 func NewRegistry() *Registry {
 	r := &Registry{
-		resources: make(map[string]*ResourceDefinition),
+		resources: make(map[string]*permissionspec.ResourceDefinition),
 		children:  make(map[string][]string),
 	}
 	r.registerAll()
@@ -58,12 +39,12 @@ func NewRegistry() *Registry {
 
 func NewEmptyRegistry() *Registry {
 	return &Registry{
-		resources: make(map[string]*ResourceDefinition),
+		resources: make(map[string]*permissionspec.ResourceDefinition),
 		children:  make(map[string][]string),
 	}
 }
 
-func (r *Registry) Register(def *ResourceDefinition) error {
+func (r *Registry) Register(def *permissionspec.ResourceDefinition) error {
 	if def.Resource == "" {
 		return errors.New("resource name is required")
 	}
@@ -89,7 +70,7 @@ func (r *Registry) Register(def *ResourceDefinition) error {
 	return nil
 }
 
-func (r *Registry) Get(resource string) (*ResourceDefinition, bool) {
+func (r *Registry) Get(resource string) (*permissionspec.ResourceDefinition, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -114,11 +95,11 @@ func (r *Registry) GetEffectiveResource(resource string) string {
 	return resource
 }
 
-func (r *Registry) All() []*ResourceDefinition {
+func (r *Registry) All() []*permissionspec.ResourceDefinition {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	result := make([]*ResourceDefinition, 0, len(r.resources))
+	result := make([]*permissionspec.ResourceDefinition, 0, len(r.resources))
 	for _, def := range r.resources {
 		result = append(result, def)
 	}
@@ -136,7 +117,7 @@ func (r *Registry) GetFieldSensitivity(resource, field string) permission.FieldS
 	if sens, sensOK := def.FieldSensitivities[field]; sensOK {
 		return sens
 	}
-	if def.inReferenceView(field) {
+	if inReferenceView(def, field) {
 		return permission.SensitivityInternal
 	}
 	return def.DefaultSensitivity
@@ -203,11 +184,11 @@ func (r *Registry) Count() int {
 	return len(r.resources)
 }
 
-func (r *Registry) GetByCategory(category string) []*ResourceDefinition {
+func (r *Registry) GetByCategory(category string) []*permissionspec.ResourceDefinition {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	var result []*ResourceDefinition
+	var result []*permissionspec.ResourceDefinition
 	for _, def := range r.resources {
 		if def.Category == category {
 			result = append(result, def)
@@ -278,26 +259,20 @@ func (r *Registry) GetCategories() []string {
 	return append(result, rest...)
 }
 
-// registerAll loads every resource the system knows about. Each call is the
-// whole of one category's table and lives in its own file beside it; two of
-// them, the rate and recurring-earning tables, are reached through the billing
-// and settlement categories they belong with rather than from here.
 func (r *Registry) registerAll() {
-	r.registerAdministrationResources()
-	r.registerEquipmentResources()
-	r.registerFuelAndIFTAResources()
-	r.registerWorkerResources()
-	r.registerOperationsResources()
-	r.registerBillingResources()
-	r.registerCustomerResources()
-	r.registerCarrierResources()
-	r.registerLocationResources()
-	r.registerCommodityResources()
-	r.registerAccountingResources()
-	r.registerSettlementResources()
-	r.registerComplianceResources()
-	r.registerReferenceDataResources()
-	r.registerReportingResources()
-	r.registerCommunicationResources()
-	r.registerProtectedFieldResources()
+	for _, def := range slices.Concat(
+		adminperms.Resources(),
+		fleetperms.Resources(),
+		workerperms.Resources(),
+		shipmentperms.Resources(),
+		billingperms.Resources(),
+		agentperms.Resources(),
+		carrierperms.Resources(),
+		accountingperms.Resources(),
+		payrollperms.Resources(),
+		complianceperms.Resources(),
+		reportperms.Resources(),
+	) {
+		_ = r.Register(def)
+	}
 }

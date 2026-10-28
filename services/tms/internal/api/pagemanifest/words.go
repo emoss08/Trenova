@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -208,7 +209,7 @@ func RenderWords(schema *ast.Schema, registry *permissioncatalog.Registry) (stri
 		return "", err
 	}
 	defs := registry.All()
-	slices.SortFunc(defs, func(a, b *permissioncatalog.ResourceDefinition) int {
+	slices.SortFunc(defs, func(a, b *permissionspec.ResourceDefinition) int {
 		return strings.Compare(a.Resource, b.Resource)
 	})
 

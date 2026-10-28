@@ -215,7 +215,7 @@ linters:
       # and job template catalog declares labels and descriptions, which the
       # i18n extractor reads only as literals in their Label and Description
       # fields: a constant would take the copy out of the catalogs.
-      - path: internal/modules/identity/domain/permission/(resources_.*|referenceview|bundles_catalog)\.go
+      - path: internal/modules/identity/domain/([a-z]+perms|[a-z]+bundles|permissioncatalog)/
         linters:
           - goconst
     paths:

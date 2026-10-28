@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -207,7 +208,7 @@ type resourceCategoryResponse struct {
 }
 
 type resourceResponse struct {
-	*permissioncatalog.ResourceDefinition
+	*permissionspec.ResourceDefinition
 	EnforceableScopes []permission.DataScope `json:"enforceableScopes"`
 }
 
@@ -369,13 +370,13 @@ func (h *Handler) bundleGrant(
 
 func translatedDefinition(
 	ctx context.Context,
-	def *permissioncatalog.ResourceDefinition,
-) *permissioncatalog.ResourceDefinition {
+	def *permissionspec.ResourceDefinition,
+) *permissionspec.ResourceDefinition {
 	translated := *def
 	translated.DisplayName = i18n.T(ctx, def.DisplayName)
 	translated.Description = i18n.T(ctx, def.Description)
 	translated.Category = i18n.T(ctx, def.Category)
-	translated.Operations = make([]permissioncatalog.OperationDefinition, len(def.Operations))
+	translated.Operations = make([]permissionspec.OperationDefinition, len(def.Operations))
 	for i, op := range def.Operations {
 		op.DisplayName = i18n.T(ctx, op.DisplayName)
 		op.Description = i18n.T(ctx, op.Description)

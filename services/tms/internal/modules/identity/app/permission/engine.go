@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/routeaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -66,7 +67,7 @@ type Params struct {
 	AgentRoles          permissionports.AgentRoleSource           `optional:"true"`
 	Delegated           permissionports.DelegatedPermissionSource `optional:"true"`
 	Registry            *permissioncatalog.Registry
-	RouteRegistry       *permissioncatalog.RouteRegistry
+	RouteRegistry       *routeaccess.RouteRegistry
 	Metrics             *metrics.Registry
 	Logger              *zap.Logger
 }
@@ -82,7 +83,7 @@ type engine struct {
 	agentRoles    permissionports.AgentRoleSource
 	delegated     permissionports.DelegatedPermissionSource
 	registry      *permissioncatalog.Registry
-	routeRegistry *permissioncatalog.RouteRegistry
+	routeRegistry *routeaccess.RouteRegistry
 	metrics       *metrics.Registry
 	l             *zap.Logger
 }

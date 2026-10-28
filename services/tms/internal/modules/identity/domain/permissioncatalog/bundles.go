@@ -3,50 +3,43 @@ package permissioncatalog
 import (
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dispatchbundles"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/financebundles"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformbundles"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/workforcebundles"
 )
 
-type BundleGrant struct {
-	Resource   permission.Resource    `json:"resource"`
-	Operations []permission.Operation `json:"operations"`
-	Scope      permission.DataScope   `json:"scope,omitempty"`
-}
+var capabilityBundles = slices.Concat(
+	dispatchbundles.All(),
+	financebundles.All(),
+	workforcebundles.All(),
+	platformbundles.All(),
+)
 
-type Bundle struct {
-	ID          string        `json:"id"`
-	Module      string        `json:"module"`
-	Label       string        `json:"label"`
-	Description string        `json:"description"`
-	Grants      []BundleGrant `json:"grants"`
-}
-
-type JobTemplate struct {
-	ID             string                      `json:"id"`
-	Label          string                      `json:"label"`
-	Description    string                      `json:"description"`
-	Bundles        []string                    `json:"bundles"`
-	MaxSensitivity permission.FieldSensitivity `json:"maxSensitivity"`
-	ReadEverything bool                        `json:"readEverything,omitempty"`
-	ReadExcept     []permission.Resource       `json:"readExcept,omitempty"`
-}
-
-func Bundles() []Bundle {
+func Bundles() []permissionspec.Bundle {
 	return slices.Clone(capabilityBundles)
 }
 
-func JobTemplates() []JobTemplate {
+func JobTemplates() []permissionspec.JobTemplate {
 	return slices.Clone(jobTemplates)
 }
 
-func BundleByID(id string) (Bundle, bool) {
-	idx := slices.IndexFunc(capabilityBundles, func(b Bundle) bool { return b.ID == id })
+func BundleByID(id string) (permissionspec.Bundle, bool) {
+	idx := slices.IndexFunc(
+		capabilityBundles,
+		func(b permissionspec.Bundle) bool { return b.ID == id },
+	)
 	if idx < 0 {
-		return Bundle{}, false
+		return permissionspec.Bundle{}, false
 	}
 	return capabilityBundles[idx], true
 }
 
-func (r *Registry) TemplateGrants(template JobTemplate) []*permission.ResourcePermission {
+func (r *Registry) TemplateGrants(
+	template permissionspec.JobTemplate,
+) []*permission.ResourcePermission {
 	byResource := make(map[string]*permission.ResourcePermission)
 	order := make([]string, 0, 32)
 	add := func(resource string, ops []permission.Operation, scope permission.DataScope) {

@@ -68,6 +68,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/workerptoservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/routeaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -147,7 +148,7 @@ func SharedOptions() fx.Option {
 			roleservice.New,
 			pageaccessservice.New,
 			permissioncatalog.NewRegistry,
-			permissioncatalog.NewRouteRegistry,
+			routeaccess.NewRouteRegistry,
 			roleassignmentservice.New,
 			tenanttimezone.New,
 			passwordresetservice.New,

@@ -5,11 +5,13 @@ import (
 	"encoding/hex"
 	"slices"
 	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 )
 
 func (r *Registry) GrantFingerprint() string {
 	defs := r.All()
-	slices.SortFunc(defs, func(a, b *ResourceDefinition) int {
+	slices.SortFunc(defs, func(a, b *permissionspec.ResourceDefinition) int {
 		return strings.Compare(a.Resource, b.Resource)
 	})
 

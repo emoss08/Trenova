@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/routeaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -70,7 +71,7 @@ func setupTestEngine(
 		cacheRepo:     cacheRepo,
 		userRepo:      userRepo,
 		registry:      permissioncatalog.NewRegistry(),
-		routeRegistry: permissioncatalog.NewRouteRegistry(),
+		routeRegistry: routeaccess.NewRouteRegistry(),
 		metrics:       metricsRegistry,
 		l:             logger.Named("test.permission-engine"),
 	}

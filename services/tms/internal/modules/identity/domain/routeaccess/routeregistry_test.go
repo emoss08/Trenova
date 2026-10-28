@@ -1,0 +1,887 @@
+package routeaccess
+
+import (
+	"sync"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestNewRouteRegistry(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+	require.NotNil(t, rr)
+	assert.True(t, rr.Count() > 0)
+}
+
+func TestNewEmptyRouteRegistry(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+	require.NotNil(t, rr)
+	assert.Equal(t, 0, rr.Count())
+}
+
+func TestRouteRegistry_Register(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		def       *RouteDefinition
+		expectErr bool
+		errMsg    string
+	}{
+		{
+			name: "valid exact route",
+			def: &RouteDefinition{
+				Path:      "/test/path",
+				MatchType: RouteMatchExact,
+				Requirements: []RouteRequirement{
+					{Resource: permission.ResourceUser, Operation: permission.OpRead},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name: "valid prefix route",
+			def: &RouteDefinition{
+				Path:      "/api/v1/:id",
+				MatchType: RouteMatchPrefix,
+				Requirements: []RouteRequirement{
+					{Resource: permission.ResourceUser, Operation: permission.OpRead},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name: "valid pattern route",
+			def: &RouteDefinition{
+				Path:      "/resources/:id/edit",
+				MatchType: RouteMatchPattern,
+				Requirements: []RouteRequirement{
+					{Resource: permission.ResourceUser, Operation: permission.OpUpdate},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name: "empty path",
+			def: &RouteDefinition{
+				Path:      "",
+				MatchType: RouteMatchExact,
+				Requirements: []RouteRequirement{
+					{Resource: permission.ResourceUser, Operation: permission.OpRead},
+				},
+			},
+			expectErr: true,
+			errMsg:    "route path is required",
+		},
+		{
+			name: "no requirements",
+			def: &RouteDefinition{
+				Path:         "/empty/reqs",
+				MatchType:    RouteMatchExact,
+				Requirements: []RouteRequirement{},
+			},
+			expectErr: true,
+			errMsg:    "at least one route requirement is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			rr := NewEmptyRouteRegistry()
+			err := rr.Register(tt.def)
+
+			if tt.expectErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestRouteRegistry_Register_DuplicateExact(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+
+	def := &RouteDefinition{
+		Path:      "/users",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+	}
+
+	err := rr.Register(def)
+	require.NoError(t, err)
+
+	err = rr.Register(def)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already registered")
+}
+
+func TestRouteRegistry_Match(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/users",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+		DisplayName: "Users List",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/users/:id",
+		MatchType: RouteMatchPattern,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+		DisplayName: "User Details",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/users/:id/edit",
+		MatchType: RouteMatchPattern,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpUpdate},
+		},
+		DisplayName: "Edit User",
+	})
+
+	tests := []struct {
+		name        string
+		path        string
+		found       bool
+		displayName string
+	}{
+		{"exact match", "/users", true, "Users List"},
+		{"pattern match single param", "/users/abc123", true, "User Details"},
+		{"pattern match with suffix", "/users/abc123/edit", true, "Edit User"},
+		{"no match", "/unknown", false, ""},
+		{"partial no match", "/user", false, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			def, ok := rr.Match(tt.path)
+			assert.Equal(t, tt.found, ok)
+			if tt.found {
+				assert.Equal(t, tt.displayName, def.DisplayName)
+			}
+		})
+	}
+}
+
+func TestRouteRegistry_Match_PrefixRoutes(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/api/:version/resources",
+		MatchType: RouteMatchPrefix,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+		DisplayName: "API Resources",
+	})
+
+	def, ok := rr.Match("/api/v1/resources")
+	assert.True(t, ok)
+	assert.Equal(t, "API Resources", def.DisplayName)
+
+	_, ok = rr.Match("/api/v2/other")
+	assert.False(t, ok)
+}
+
+func TestRouteRegistry_Get(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/exact",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+		DisplayName: "Exact Route",
+	})
+
+	def, ok := rr.Get("/exact")
+	assert.True(t, ok)
+	assert.Equal(t, "Exact Route", def.DisplayName)
+
+	_, ok = rr.Get("/nonexistent")
+	assert.False(t, ok)
+}
+
+func TestRouteRegistry_All(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/exact",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/pattern/:id",
+		MatchType: RouteMatchPattern,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/prefix/:ver/stuff",
+		MatchType: RouteMatchPrefix,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+	})
+
+	all := rr.All()
+	assert.Len(t, all, 3)
+}
+
+func TestRouteRegistry_GetByCategory(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/admin/users",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+		Category: "Administration",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/admin/roles",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceRole, Operation: permission.OpRead},
+		},
+		Category: "Administration",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/admin/users/:id",
+		MatchType: RouteMatchPattern,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+		Category: "Administration",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/billing/invoices",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceInvoice, Operation: permission.OpRead},
+		},
+		Category: "Billing",
+	})
+
+	adminRoutes := rr.GetByCategory("Administration")
+	assert.Len(t, adminRoutes, 3)
+
+	billingRoutes := rr.GetByCategory("Billing")
+	assert.Len(t, billingRoutes, 1)
+
+	unknownRoutes := rr.GetByCategory("Unknown")
+	assert.Empty(t, unknownRoutes)
+}
+
+func TestRouteRegistry_Count(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+	assert.Equal(t, 0, rr.Count())
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/a",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+	})
+	assert.Equal(t, 1, rr.Count())
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/b/:id",
+		MatchType: RouteMatchPattern,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+	})
+	assert.Equal(t, 2, rr.Count())
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/c/:ver/x",
+		MatchType: RouteMatchPrefix,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+	})
+	assert.Equal(t, 3, rr.Count())
+}
+
+func TestRouteRegistry_ComputeAccess(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/users",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/users/new",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpCreate},
+		},
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/invoices",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceInvoice, Operation: permission.OpRead},
+		},
+	})
+
+	t.Run("user with read permission", func(t *testing.T) {
+		t.Parallel()
+
+		permissions := map[string]uint32{
+			string(permission.ResourceUser): permission.ClientOpRead,
+		}
+
+		access := rr.ComputeAccess(permissions)
+		assert.True(t, access["/users"])
+		assert.False(t, access["/users/new"])
+		assert.False(t, access["/invoices"])
+	})
+
+	t.Run("user with read and create", func(t *testing.T) {
+		t.Parallel()
+
+		permissions := map[string]uint32{
+			string(permission.ResourceUser): permission.ClientOpRead | permission.ClientOpCreate,
+		}
+
+		access := rr.ComputeAccess(permissions)
+		assert.True(t, access["/users"])
+		assert.True(t, access["/users/new"])
+		assert.False(t, access["/invoices"])
+	})
+
+	t.Run("user with all permissions", func(t *testing.T) {
+		t.Parallel()
+
+		permissions := map[string]uint32{
+			string(permission.ResourceUser):    permission.ClientOpRead | permission.ClientOpCreate,
+			string(permission.ResourceInvoice): permission.ClientOpRead,
+		}
+
+		access := rr.ComputeAccess(permissions)
+		assert.True(t, access["/users"])
+		assert.True(t, access["/users/new"])
+		assert.True(t, access["/invoices"])
+	})
+
+	t.Run("empty permissions", func(t *testing.T) {
+		t.Parallel()
+
+		permissions := map[string]uint32{}
+
+		access := rr.ComputeAccess(permissions)
+		assert.False(t, access["/users"])
+		assert.False(t, access["/users/new"])
+		assert.False(t, access["/invoices"])
+	})
+}
+
+func TestRouteRegistry_ComputeAccess_WithOrCombinator(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/dashboard",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceReport, Operation: permission.OpRead, Combinator: "or"},
+			{
+				Resource:   permission.ResourceDashboard,
+				Operation:  permission.OpRead,
+				Combinator: "or",
+			},
+		},
+	})
+
+	t.Run("has first resource", func(t *testing.T) {
+		t.Parallel()
+
+		permissions := map[string]uint32{
+			string(permission.ResourceReport): permission.ClientOpRead,
+		}
+
+		access := rr.ComputeAccess(permissions)
+		assert.True(t, access["/dashboard"])
+	})
+
+	t.Run("has second resource", func(t *testing.T) {
+		t.Parallel()
+
+		permissions := map[string]uint32{
+			string(permission.ResourceDashboard): permission.ClientOpRead,
+		}
+
+		access := rr.ComputeAccess(permissions)
+		assert.True(t, access["/dashboard"])
+	})
+
+	t.Run("has neither resource", func(t *testing.T) {
+		t.Parallel()
+
+		permissions := map[string]uint32{
+			string(permission.ResourceUser): permission.ClientOpRead,
+		}
+
+		access := rr.ComputeAccess(permissions)
+		assert.False(t, access["/dashboard"])
+	})
+}
+
+func TestRouteRegistry_ComputeAccess_WithAndCombinator(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/admin/special",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+			{Resource: permission.ResourceRole, Operation: permission.OpRead},
+		},
+	})
+
+	t.Run("has both permissions", func(t *testing.T) {
+		t.Parallel()
+
+		permissions := map[string]uint32{
+			string(permission.ResourceUser): permission.ClientOpRead,
+			string(permission.ResourceRole): permission.ClientOpRead,
+		}
+
+		access := rr.ComputeAccess(permissions)
+		assert.True(t, access["/admin/special"])
+	})
+
+	t.Run("has only first", func(t *testing.T) {
+		t.Parallel()
+
+		permissions := map[string]uint32{
+			string(permission.ResourceUser): permission.ClientOpRead,
+		}
+
+		access := rr.ComputeAccess(permissions)
+		assert.False(t, access["/admin/special"])
+	})
+
+	t.Run("has only second", func(t *testing.T) {
+		t.Parallel()
+
+		permissions := map[string]uint32{
+			string(permission.ResourceRole): permission.ClientOpRead,
+		}
+
+		access := rr.ComputeAccess(permissions)
+		assert.False(t, access["/admin/special"])
+	})
+}
+
+func TestRouteRegistry_ComputeAccess_PatternAndPrefixRoutes(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/items/:id",
+		MatchType: RouteMatchPattern,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceCommodity, Operation: permission.OpRead},
+		},
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/api/:ver/items",
+		MatchType: RouteMatchPrefix,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceCommodity, Operation: permission.OpRead},
+		},
+	})
+
+	t.Run("has permission", func(t *testing.T) {
+		t.Parallel()
+
+		permissions := map[string]uint32{
+			string(permission.ResourceCommodity): permission.ClientOpRead,
+		}
+
+		access := rr.ComputeAccess(permissions)
+		assert.True(t, access["/items/:id"])
+		assert.True(t, access["/api/:ver/items"])
+	})
+
+	t.Run("no permission", func(t *testing.T) {
+		t.Parallel()
+
+		permissions := map[string]uint32{}
+		access := rr.ComputeAccess(permissions)
+		assert.False(t, access["/items/:id"])
+		assert.False(t, access["/api/:ver/items"])
+	})
+}
+
+func TestRouteRegistry_ComputeAccess_EmptyRequirements(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+
+	rr.mu.Lock()
+	rr.routes["/open"] = &RouteDefinition{
+		Path:         "/open",
+		MatchType:    RouteMatchExact,
+		Requirements: []RouteRequirement{},
+	}
+	rr.mu.Unlock()
+
+	permissions := map[string]uint32{}
+	access := rr.ComputeAccess(permissions)
+	assert.True(t, access["/open"])
+}
+
+func TestRouteRegistry_RegisterAll_RoutesExist(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+
+	expectedRoutes := []string{
+		"/admin/users",
+		"/admin/roles",
+		"/equipment/tractors",
+		"/equipment/trailers",
+		"/workers",
+		"/shipments",
+		"/billing/invoices",
+		"/customers",
+		"/locations",
+		"/commodities",
+		"/accounting/gl-accounts",
+		"/reports",
+		"/dashboard",
+	}
+
+	for _, path := range expectedRoutes {
+		def, ok := rr.Match(path)
+		assert.True(t, ok, "expected route %s to be registered", path)
+		if ok {
+			assert.NotEmpty(t, def.DisplayName, "route %s should have a display name", path)
+			assert.NotEmpty(t, def.Category, "route %s should have a category", path)
+		}
+	}
+}
+
+func TestRouteRegistry_PatternMatchWithParams(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+
+	tests := []struct {
+		name  string
+		path  string
+		found bool
+	}{
+		{"user detail with uuid", "/admin/users/550e8400-e29b-41d4-a716-446655440000", true},
+		{"user edit", "/admin/users/abc123/edit", true},
+		{"tractor detail", "/equipment/tractors/xyz789", true},
+		{"shipment detail", "/shipments/ship-001", true},
+		{"unknown nested path", "/unknown/abc/def", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, ok := rr.Match(tt.path)
+			assert.Equal(t, tt.found, ok)
+		})
+	}
+}
+
+func TestRouteRegistry_Match_PrioritizesExactOverPattern(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/users/new",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpCreate},
+		},
+		DisplayName: "Create User",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/users/:id",
+		MatchType: RouteMatchPattern,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+		DisplayName: "User Details",
+	})
+
+	def, ok := rr.Match("/users/new")
+	require.True(t, ok)
+	assert.Equal(t, "Create User", def.DisplayName)
+}
+
+func TestRouteRegistry_GetByCategory_PrefixRoutes(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/api/:ver/admin",
+		MatchType: RouteMatchPrefix,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+		Category: "Admin",
+	})
+
+	routes := rr.GetByCategory("Admin")
+	assert.Len(t, routes, 1)
+}
+
+func TestRouteRegistry_HasHazmatSegregationRuleRoute(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+
+	def, ok := rr.Get("/organization/hazmat-segregation-rules")
+	require.True(t, ok)
+	assert.Equal(t, "Hazmat Segregation Rules", def.DisplayName)
+	require.Len(t, def.Requirements, 1)
+	assert.Equal(t, permission.ResourceHazmatSegregationRule, def.Requirements[0].Resource)
+	assert.Equal(t, permission.OpRead, def.Requirements[0].Operation)
+}
+
+func TestRouteRegistry_HasShipmentControlsRoute(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+
+	def, ok := rr.Get("/admin/shipment-controls")
+	require.True(t, ok)
+	assert.Equal(t, "Shipment Controls", def.DisplayName)
+	require.Len(t, def.Requirements, 1)
+	assert.Equal(t, permission.ResourceShipmentControl, def.Requirements[0].Resource)
+	assert.Equal(t, permission.OpRead, def.Requirements[0].Operation)
+}
+
+func TestRouteRegistry_HasDispatchConsoleRoute(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+
+	def, ok := rr.Get("/dispatch/console")
+	require.True(t, ok)
+	assert.Equal(t, "Dispatch Console", def.DisplayName)
+	assert.Equal(t, "Operations", def.Category)
+	assert.Equal(t, RouteMatchExact, def.MatchType)
+	require.Len(t, def.Requirements, 1)
+	assert.Equal(t, permission.ResourceShipmentMove, def.Requirements[0].Resource)
+	assert.Equal(t, permission.OpRead, def.Requirements[0].Operation)
+}
+
+func TestRouteRegistry_HasCarrierSettlementRoutes(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+
+	tests := []struct {
+		path        string
+		displayName string
+		resource    permission.Resource
+	}{
+		{
+			"/carrier-settlements/workspace",
+			"Settlement Workspace",
+			permission.ResourceCarrierSettlement,
+		},
+		{
+			"/carrier-settlements/settlements",
+			"Carrier Settlements",
+			permission.ResourceCarrierSettlement,
+		},
+		{
+			"/carrier-settlements/batches",
+			"Settlement Batches",
+			permission.ResourceCarrierSettlement,
+		},
+		{
+			"/carrier-settlements/cost-events",
+			"Carrier Cost Events",
+			permission.ResourceCarrierSettlement,
+		},
+		{
+			"/carrier-settlements/invoice-matching",
+			"Invoice Matching",
+			permission.ResourceCarrierInvoiceMatch,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			t.Parallel()
+
+			def, ok := rr.Get(tt.path)
+			require.True(t, ok, "expected route %s to be registered", tt.path)
+			assert.Equal(t, tt.displayName, def.DisplayName)
+			assert.Equal(t, "Carrier Settlements", def.Category)
+			assert.Equal(t, RouteMatchExact, def.MatchType)
+			require.Len(t, def.Requirements, 1)
+			assert.Equal(t, tt.resource, def.Requirements[0].Resource)
+			assert.Equal(t, permission.OpRead, def.Requirements[0].Operation)
+		})
+	}
+}
+
+func TestRouteRegistry_Match_EmptyPath(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+	_, ok := rr.Match("")
+	assert.False(t, ok)
+}
+
+func TestRouteRegistry_Get_EmptyPath(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+	_, ok := rr.Get("")
+	assert.False(t, ok)
+}
+
+func TestRouteRegistry_GetByCategory_EmptyCategory(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+	routes := rr.GetByCategory("")
+	assert.Empty(t, routes)
+}
+
+func TestRouteRegistry_ComputeAccess_NilPermissions(t *testing.T) {
+	t.Parallel()
+
+	rr := NewEmptyRouteRegistry()
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/test",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceUser, Operation: permission.OpRead},
+		},
+	})
+
+	access := rr.ComputeAccess(nil)
+	assert.False(t, access["/test"])
+}
+
+func TestRouteRegistry_ConcurrentAccess(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+
+	var wg sync.WaitGroup
+	for range 10 {
+		wg.Go(func() {
+			_ = rr.All()
+			_ = rr.Count()
+			_, _ = rr.Match("/admin/users")
+			_, _ = rr.Get("/admin/users")
+			_ = rr.GetByCategory("Administration")
+			_ = rr.ComputeAccess(map[string]uint32{
+				string(permission.ResourceUser): permission.ClientOpRead,
+			})
+		})
+	}
+	wg.Wait()
+}
+
+func TestRouteRegistry_RegisterAll_AllRoutesHaveRequirements(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+
+	all := rr.All()
+	for _, def := range all {
+		assert.NotEmpty(t, def.Requirements, "route %s should have requirements", def.Path)
+		assert.NotEmpty(t, def.DisplayName, "route %s should have a display name", def.Path)
+		assert.NotEmpty(t, def.Category, "route %s should have a category", def.Path)
+	}
+}
+
+func TestRouteRegistry_RegisterAll_CategoriesExist(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+
+	expectedCategories := []string{
+		"Administration", "Equipment", "Workers", "Operations",
+		"Billing", "Customers", "Locations", "Commodities",
+		"Accounting", "Reporting",
+	}
+
+	allRoutes := rr.All()
+	categorySet := make(map[string]bool)
+	for _, def := range allRoutes {
+		categorySet[def.Category] = true
+	}
+
+	for _, cat := range expectedCategories {
+		assert.True(t, categorySet[cat], "route registry should have category %s", cat)
+	}
+}
