@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension/agentextensiondb"
@@ -38,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
@@ -72,14 +74,21 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment/employmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit/permitdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet/timesheetdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist/workerchecklistdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential/workercredentialdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot/workerdotdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave/workerleavedb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview/workerreviewdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety/workersafetydb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule/workerscheduledb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining/workertrainingdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email/emaildb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert/tablechangealertdb"
-
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -100,99 +109,149 @@ func prefixed(table *schema.Table) minter {
 }
 
 var minters = map[permission.Resource]minter{
-	permission.ResourceShipment:                  prefixed(shipmentdb.ShipmentsSchema()),
-	permission.ResourceShipmentMove:              prefixed(shipmentdb.ShipmentMovesSchema()),
-	permission.ResourceShipmentComment:           prefixed(shipmentdb.ShipmentCommentsSchema()),
-	permission.ResourceOrder:                     prefixed(orderdb.OrdersSchema()),
-	permission.ResourceRecurringShipment:         prefixed(recurringshipmentdb.RecurringShipmentsSchema()),
-	permission.ResourceServiceFailure:            prefixed(servicefailuredb.ServiceFailuresSchema()),
-	permission.ResourceCustomer:                  prefixed(customerdb.CustomersSchema()),
-	permission.ResourceFactoringCompany:          prefixed(factoringcompanydb.FactoringCompaniesSchema()),
-	permission.ResourceCarrier:                   prefixed(carrierdb.CarriersSchema()),
-	permission.ResourceLocation:                  prefixed(locationdb.LocationsSchema()),
-	permission.ResourceWorker:                    prefixed(workerdb.WorkersSchema()),
-	permission.ResourceTractor:                   prefixed(tractordb.TractorsSchema()),
-	permission.ResourceTrailer:                   prefixed(trailerdb.TrailersSchema()),
-	permission.ResourceCommodity:                 prefixed(commoditydb.CommoditiesSchema()),
-	permission.ResourceHazardousMaterial:         prefixed(hazardousmaterialdb.HazardousMaterialsSchema()),
-	permission.ResourceDocument:                  prefixed(documentdb.DocumentsSchema()),
-	permission.ResourceInvoice:                   prefixed(invoicedb.InvoicesSchema()),
-	permission.ResourceInvoiceDispute:            prefixed(invoicedb.InvoiceDisputesSchema()),
-	permission.ResourceFactoringAgreement:        prefixed(factoringdb.AgreementsSchema()),
-	permission.ResourceFactoringNoa:              prefixed(factoringdb.NoasSchema()),
-	permission.ResourceFactoringSubmission:       prefixed(factoringdb.SubmissionsSchema()),
-	permission.ResourceFactoringReserve:          prefixed(factoringdb.ReserveEntriesSchema()),
-	permission.ResourceFactoringRemittance:       prefixed(factoringdb.RemittancesSchema()),
-	permission.ResourceInvoiceRun:                prefixed(invoicerundb.InvoiceRunsSchema()),
-	permission.ResourceRateAgreement:             prefixed(rateagreementdb.RateAgreementsSchema()),
-	permission.ResourceCustomerPayment:           prefixed(customerpaymentdb.PaymentsSchema()),
-	permission.ResourceReport:                    prefixed(reportdb.ReportDefinitionsSchema()),
-	permission.ResourceDashboard:                 prefixed(reportdb.DashboardsSchema()),
-	permission.ResourceWorkerCredential:          prefixed(workerdb.WorkerCredentialsSchema()),
-	permission.ResourceWorkerTraining:            prefixed(workerdb.WorkerTrainingRecordsSchema()),
-	permission.ResourceWorkerSafetyEvent:         prefixed(workerdb.WorkerSafetyEventsSchema()),
-	permission.ResourcePerformanceReview:         prefixed(workerdb.PerformanceReviewsSchema()),
-	permission.ResourceWorkerInjury:              prefixed(workerdb.WorkerInjuriesSchema()),
-	permission.ResourceWorkerLeave:               prefixed(workerdb.WorkerLeaveCasesSchema()),
-	permission.ResourceDriverSettlement:          prefixed(driversettlementdb.SettlementsSchema()),
-	permission.ResourceSettlementDispute:         prefixed(driversettlementdb.DisputesSchema()),
-	permission.ResourceCaptureBatch:              prefixed(capturedb.CaptureBatchesSchema()),
-	permission.ResourceOrganization:              prefixed(tenantdb.OrganizationsSchema()),
-	permission.ResourceUser:                      prefixed(tenantdb.UsersSchema()),
-	permission.ResourceAgentRun:                  prefixed(agentdb.AgentRunsSchema()),
-	permission.ResourceAgentMemory:               prefixed(agentdb.MemoriesSchema()),
-	permission.ResourceInsight:                   prefixed(insightdb.InsightsSchema()),
-	permission.ResourceTableChangeAlert:          prefixed(tablechangealertdb.TCASubscriptionsSchema()),
-	permission.ResourceEmailProfile:              prefixed(emaildb.ProfilesSchema()),
-	permission.ResourceInboundMessage:            prefixed(inboundmessagedb.InboundMessagesSchema()),
-	permission.ResourceInboundMailbox:            prefixed(inboundmessagedb.MailboxesSchema()),
-	permission.ResourceShipmentStop:              prefixed(shipmentdb.StopsSchema()),
-	permission.ResourceShipmentHold:              prefixed(shipmentdb.ShipmentHoldsSchema()),
-	permission.ResourceHoldReason:                prefixed(holdreasondb.HoldReasonsSchema()),
-	permission.ResourceServiceFailureReasonCode:  prefixed(servicefailuredb.ReasonCodesSchema()),
-	permission.ResourcePermit:                    prefixed(permitdb.PermitsSchema()),
-	permission.ResourceServiceType:               prefixed(servicetypedb.ServiceTypesSchema()),
-	permission.ResourceShipmentType:              prefixed(shipmenttypedb.ShipmentTypesSchema()),
-	permission.ResourceDocumentType:              prefixed(documenttypedb.DocumentTypesSchema()),
-	permission.ResourceEquipmentType:             prefixed(equipmenttypedb.EquipmentTypesSchema()),
-	permission.ResourceEquipmentManufacturer:     prefixed(equipmentmanufacturerdb.EquipmentManufacturersSchema()),
-	permission.ResourceFleetCode:                 prefixed(fleetcodedb.FleetCodesSchema()),
-	permission.ResourceLocationCategory:          prefixed(locationcategorydb.LocationCategoriesSchema()),
-	permission.ResourceCarrierCapacityPosting:    prefixed(carriercapacitydb.PostingsSchema()),
-	permission.ResourceRateConfirmation:          prefixed(rateconfirmationdb.RateConfirmationsSchema()),
-	permission.ResourceCarrierSettlement:         prefixed(carriersettlementdb.CarrierSettlementsSchema()),
-	permission.ResourceCarrierInvoiceMatch:       prefixed(carriersettlementdb.InvoiceMatchesSchema()),
-	permission.ResourceRoutingGuide:              prefixed(tenderdb.RoutingGuidesSchema()),
-	permission.ResourceTender:                    prefixed(tenderdb.TendersSchema()),
-	permission.ResourceAccessorialCharge:         prefixed(accessorialchargedb.AccessorialChargesSchema()),
-	permission.ResourceFormulaTemplate:           prefixed(formulatemplatedb.FormulaTemplatesSchema()),
-	permission.ResourceFormulaLibrary:            prefixed(formulalibrarydb.FormulaLibrariesSchema()),
-	permission.ResourceRateMatrix:                prefixed(ratematrixdb.RateMatrixesSchema()),
-	permission.ResourceGeneralLedgerAccount:      prefixed(glaccountdb.GLAccountsSchema()),
-	permission.ResourceFiscalPeriod:              prefixed(fiscalperioddb.FiscalPeriodsSchema()),
-	permission.ResourceManualJournal:             prefixed(manualjournaldb.RequestsSchema()),
-	permission.ResourceJournalEntry:              prefixed(journalentrydb.JournalEntriesSchema()),
-	permission.ResourceBankReceipt:               prefixed(bankreceiptdb.BankReceiptsSchema()),
-	permission.ResourceBankReceiptWorkItem:       prefixed(bankreceiptworkitemdb.WorkItemsSchema()),
-	permission.ResourcePayCode:                   prefixed(driverpaydb.PayCodesSchema()),
-	permission.ResourcePayAdvance:                prefixed(driverpaydb.PayAdvancesSchema()),
-	permission.ResourceEscrowAccount:             prefixed(driverpaydb.EscrowAccountsSchema()),
-	permission.ResourceRecurringDeduction:        prefixed(driverpaydb.RecurringDeductionsSchema()),
-	permission.ResourceRecurringEarning:          prefixed(driverpaydb.RecurringEarningsSchema()),
-	permission.ResourceDriverExpense:             prefixed(driverpaydb.ExpensesSchema()),
-	permission.ResourceFuelCard:                  prefixed(fuelpurchasedb.FuelCardsSchema()),
-	permission.ResourceFuelPurchase:              prefixed(fuelpurchasedb.FuelPurchasesSchema()),
-	permission.ResourceFuelPurchaseImport:        prefixed(fuelpurchasedb.ImportBatchesSchema()),
-	permission.ResourceWorkerPTO:                 prefixed(workerdb.WorkerPTOsSchema()),
-	permission.ResourceWorkerChecklist:           prefixed(workerdb.WorkerChecklistsSchema()),
-	permission.ResourceWorkerChecklistTemplate:   prefixed(workerdb.WorkerChecklistTemplatesSchema()),
-	permission.ResourceWorkerCredentialType:      prefixed(workerdb.WorkerCredentialTypesSchema()),
-	permission.ResourceWorkerRecognition:         prefixed(workerdb.WorkerRecognitionsSchema()),
-	permission.ResourceWorkerDOTTest:             prefixed(workerdb.WorkerDOTTestsSchema()),
-	permission.ResourceTrainingCourse:            prefixed(workerdb.TrainingCoursesSchema()),
-	permission.ResourcePerformanceReviewTemplate: prefixed(workerdb.PerformanceReviewTemplatesSchema()),
-	permission.ResourceShiftTemplate:             prefixed(workerdb.ShiftTemplatesSchema()),
-	permission.ResourceShiftSwap:                 prefixed(workerdb.ShiftSwapRequestsSchema()),
+	permission.ResourceShipment:        prefixed(shipmentdb.ShipmentsSchema()),
+	permission.ResourceShipmentMove:    prefixed(shipmentdb.ShipmentMovesSchema()),
+	permission.ResourceShipmentComment: prefixed(shipmentdb.ShipmentCommentsSchema()),
+	permission.ResourceOrder:           prefixed(orderdb.OrdersSchema()),
+	permission.ResourceRecurringShipment: prefixed(
+		recurringshipmentdb.RecurringShipmentsSchema(),
+	),
+	permission.ResourceServiceFailure: prefixed(
+		servicefailuredb.ServiceFailuresSchema(),
+	),
+	permission.ResourceCustomer: prefixed(customerdb.CustomersSchema()),
+	permission.ResourceFactoringCompany: prefixed(
+		factoringcompanydb.FactoringCompaniesSchema(),
+	),
+	permission.ResourceCarrier:   prefixed(carrierdb.CarriersSchema()),
+	permission.ResourceLocation:  prefixed(locationdb.LocationsSchema()),
+	permission.ResourceWorker:    prefixed(workerdb.WorkersSchema()),
+	permission.ResourceTractor:   prefixed(tractordb.TractorsSchema()),
+	permission.ResourceTrailer:   prefixed(trailerdb.TrailersSchema()),
+	permission.ResourceCommodity: prefixed(commoditydb.CommoditiesSchema()),
+	permission.ResourceHazardousMaterial: prefixed(
+		hazardousmaterialdb.HazardousMaterialsSchema(),
+	),
+	permission.ResourceDocument:            prefixed(documentdb.DocumentsSchema()),
+	permission.ResourceInvoice:             prefixed(invoicedb.InvoicesSchema()),
+	permission.ResourceInvoiceDispute:      prefixed(invoicedb.InvoiceDisputesSchema()),
+	permission.ResourceFactoringAgreement:  prefixed(factoringdb.AgreementsSchema()),
+	permission.ResourceFactoringNoa:        prefixed(factoringdb.NoasSchema()),
+	permission.ResourceFactoringSubmission: prefixed(factoringdb.SubmissionsSchema()),
+	permission.ResourceFactoringReserve:    prefixed(factoringdb.ReserveEntriesSchema()),
+	permission.ResourceFactoringRemittance: prefixed(factoringdb.RemittancesSchema()),
+	permission.ResourceInvoiceRun:          prefixed(invoicerundb.InvoiceRunsSchema()),
+	permission.ResourceRateAgreement:       prefixed(rateagreementdb.RateAgreementsSchema()),
+	permission.ResourceCustomerPayment:     prefixed(customerpaymentdb.PaymentsSchema()),
+	permission.ResourceReport:              prefixed(reportdb.ReportDefinitionsSchema()),
+	permission.ResourceDashboard:           prefixed(reportdb.DashboardsSchema()),
+	permission.ResourceWorkerCredential: prefixed(
+		workercredentialdb.WorkerCredentialsSchema(),
+	),
+	permission.ResourceWorkerTraining: prefixed(
+		workertrainingdb.WorkerTrainingRecordsSchema(),
+	),
+	permission.ResourceWorkerSafetyEvent: prefixed(
+		workersafetydb.WorkerSafetyEventsSchema(),
+	),
+	permission.ResourcePerformanceReview: prefixed(
+		workerreviewdb.PerformanceReviewsSchema(),
+	),
+	permission.ResourceWorkerInjury:      prefixed(workersafetydb.WorkerInjuriesSchema()),
+	permission.ResourceWorkerLeave:       prefixed(workerleavedb.WorkerLeaveCasesSchema()),
+	permission.ResourceDriverSettlement:  prefixed(driversettlementdb.SettlementsSchema()),
+	permission.ResourceSettlementDispute: prefixed(driversettlementdb.DisputesSchema()),
+	permission.ResourceCaptureBatch:      prefixed(capturedb.CaptureBatchesSchema()),
+	permission.ResourceOrganization:      prefixed(tenantdb.OrganizationsSchema()),
+	permission.ResourceUser:              prefixed(tenantdb.UsersSchema()),
+	permission.ResourceAgentRun:          prefixed(agentdb.AgentRunsSchema()),
+	permission.ResourceAgentMemory:       prefixed(agentdb.MemoriesSchema()),
+	permission.ResourceInsight:           prefixed(insightdb.InsightsSchema()),
+	permission.ResourceTableChangeAlert: prefixed(
+		tablechangealertdb.TCASubscriptionsSchema(),
+	),
+	permission.ResourceEmailProfile: prefixed(emaildb.ProfilesSchema()),
+	permission.ResourceInboundMessage: prefixed(
+		inboundmessagedb.InboundMessagesSchema(),
+	),
+	permission.ResourceInboundMailbox:           prefixed(inboundmessagedb.MailboxesSchema()),
+	permission.ResourceShipmentStop:             prefixed(shipmentdb.StopsSchema()),
+	permission.ResourceShipmentHold:             prefixed(shipmentdb.ShipmentHoldsSchema()),
+	permission.ResourceHoldReason:               prefixed(holdreasondb.HoldReasonsSchema()),
+	permission.ResourceServiceFailureReasonCode: prefixed(servicefailuredb.ReasonCodesSchema()),
+	permission.ResourcePermit:                   prefixed(permitdb.PermitsSchema()),
+	permission.ResourceServiceType:              prefixed(servicetypedb.ServiceTypesSchema()),
+	permission.ResourceShipmentType:             prefixed(shipmenttypedb.ShipmentTypesSchema()),
+	permission.ResourceDocumentType:             prefixed(documenttypedb.DocumentTypesSchema()),
+	permission.ResourceEquipmentType:            prefixed(equipmenttypedb.EquipmentTypesSchema()),
+	permission.ResourceEquipmentManufacturer: prefixed(
+		equipmentmanufacturerdb.EquipmentManufacturersSchema(),
+	),
+	permission.ResourceFleetCode: prefixed(fleetcodedb.FleetCodesSchema()),
+	permission.ResourceLocationCategory: prefixed(
+		locationcategorydb.LocationCategoriesSchema(),
+	),
+	permission.ResourceCarrierCapacityPosting: prefixed(carriercapacitydb.PostingsSchema()),
+	permission.ResourceRateConfirmation: prefixed(
+		rateconfirmationdb.RateConfirmationsSchema(),
+	),
+	permission.ResourceCarrierSettlement: prefixed(
+		carriersettlementdb.CarrierSettlementsSchema(),
+	),
+	permission.ResourceCarrierInvoiceMatch: prefixed(
+		carriersettlementdb.InvoiceMatchesSchema(),
+	),
+	permission.ResourceRoutingGuide: prefixed(tenderdb.RoutingGuidesSchema()),
+	permission.ResourceTender:       prefixed(tenderdb.TendersSchema()),
+	permission.ResourceAccessorialCharge: prefixed(
+		accessorialchargedb.AccessorialChargesSchema(),
+	),
+	permission.ResourceFormulaTemplate: prefixed(
+		formulatemplatedb.FormulaTemplatesSchema(),
+	),
+	permission.ResourceFormulaLibrary: prefixed(
+		formulalibrarydb.FormulaLibrariesSchema(),
+	),
+	permission.ResourceRateMatrix:           prefixed(ratematrixdb.RateMatrixesSchema()),
+	permission.ResourceGeneralLedgerAccount: prefixed(glaccountdb.GLAccountsSchema()),
+	permission.ResourceFiscalPeriod:         prefixed(fiscalperioddb.FiscalPeriodsSchema()),
+	permission.ResourceManualJournal:        prefixed(manualjournaldb.RequestsSchema()),
+	permission.ResourceJournalEntry:         prefixed(journalentrydb.JournalEntriesSchema()),
+	permission.ResourceBankReceipt:          prefixed(bankreceiptdb.BankReceiptsSchema()),
+	permission.ResourceBankReceiptWorkItem:  prefixed(bankreceiptworkitemdb.WorkItemsSchema()),
+	permission.ResourcePayCode:              prefixed(driverpaydb.PayCodesSchema()),
+	permission.ResourcePayAdvance:           prefixed(driverpaydb.PayAdvancesSchema()),
+	permission.ResourceEscrowAccount:        prefixed(driverpaydb.EscrowAccountsSchema()),
+	permission.ResourceRecurringDeduction:   prefixed(driverpaydb.RecurringDeductionsSchema()),
+	permission.ResourceRecurringEarning:     prefixed(driverpaydb.RecurringEarningsSchema()),
+	permission.ResourceDriverExpense:        prefixed(driverpaydb.ExpensesSchema()),
+	permission.ResourceFuelCard:             prefixed(fuelpurchasedb.FuelCardsSchema()),
+	permission.ResourceFuelPurchase:         prefixed(fuelpurchasedb.FuelPurchasesSchema()),
+	permission.ResourceFuelPurchaseImport:   prefixed(fuelpurchasedb.ImportBatchesSchema()),
+	permission.ResourceWorkerPTO:            prefixed(workerdb.WorkerPTOsSchema()),
+	permission.ResourceWorkerChecklist: prefixed(
+		workerchecklistdb.WorkerChecklistsSchema(),
+	),
+	permission.ResourceWorkerChecklistTemplate: prefixed(
+		workerchecklistdb.WorkerChecklistTemplatesSchema(),
+	),
+	permission.ResourceWorkerCredentialType: prefixed(
+		workercredentialdb.WorkerCredentialTypesSchema(),
+	),
+	permission.ResourceWorkerRecognition: prefixed(
+		workersafetydb.WorkerRecognitionsSchema(),
+	),
+	permission.ResourceWorkerDOTTest: prefixed(workerdotdb.WorkerDOTTestsSchema()),
+	permission.ResourceTrainingCourse: prefixed(
+		workertrainingdb.TrainingCoursesSchema(),
+	),
+	permission.ResourcePerformanceReviewTemplate: prefixed(
+		workerreviewdb.PerformanceReviewTemplatesSchema(),
+	),
+	permission.ResourceShiftTemplate: prefixed(workerscheduledb.ShiftTemplatesSchema()),
+	permission.ResourceShiftSwap: prefixed(
+		workerscheduledb.ShiftSwapRequestsSchema(),
+	),
 	permission.ResourceJournalReversal: func(context.Context) (pulid.ID, error) {
 		return pulid.MustNew(journalreversal.IDPrefix), nil
 	},
@@ -243,66 +302,90 @@ func TestResource_Noun(t *testing.T) {
 }
 
 var kindMinters = map[permission.RecordKind]minter{
-	permission.KindEmploymentVerification:   prefixed(workerdb.WorkerEmploymentVerificationsSchema()),
-	permission.KindClearinghouseQuery:       prefixed(workerdb.WorkerClearinghouseQueriesSchema()),
-	permission.KindDOTRandomPool:            prefixed(workerdb.DOTRandomPoolsSchema()),
-	permission.KindDOTRandomDraw:            prefixed(workerdb.DOTRandomDrawsSchema()),
-	permission.KindDOTRandomSelection:       prefixed(workerdb.DOTRandomDrawEntriesSchema()),
-	permission.KindAIAuditEvent:             prefixed(aiauditdb.AIAuditEventsSchema()),
-	permission.KindAIAuditExport:            prefixed(aiauditdb.AIAuditExportsSchema()),
-	permission.KindAssistantThread:          prefixed(conversationdb.ThreadsSchema()),
-	permission.KindWait:                     prefixed(agentwaitdb.WaitsSchema()),
-	permission.KindPortalSite:               prefixed(agentextensiondb.PortalSitesSchema()),
-	permission.KindPortalRun:                prefixed(agentextensiondb.PortalRunsSchema()),
-	permission.KindAnalysisRun:              prefixed(analysisdb.RunsSchema()),
-	permission.KindWebWatch:                 prefixed(agentextensiondb.WebWatchesSchema()),
-	permission.KindWatchtowerItem:           prefixed(watchtowerdb.ItemsSchema()),
-	permission.KindAccountingConnection:     prefixed(accountingsyncdb.AccountingConnectionsSchema()),
-	permission.KindAccountingMapping:        prefixed(accountingsyncdb.AccountingMappingsSchema()),
-	permission.KindAccountingSyncRecord:     prefixed(accountingsyncdb.AccountingSyncRecordsSchema()),
-	permission.KindAccountingInboundChange:  prefixed(accountingsyncdb.AccountingInboundChangesSchema()),
-	permission.KindAccountingDriftFinding:   prefixed(accountingsyncdb.AccountingDriftFindingsSchema()),
+	permission.KindEmploymentVerification: prefixed(
+		employmentdb.WorkerEmploymentVerificationsSchema(),
+	),
+	permission.KindClearinghouseQuery: prefixed(
+		workerdotdb.WorkerClearinghouseQueriesSchema(),
+	),
+	permission.KindDOTRandomPool:      prefixed(workerdotdb.DOTRandomPoolsSchema()),
+	permission.KindDOTRandomDraw:      prefixed(workerdotdb.DOTRandomDrawsSchema()),
+	permission.KindDOTRandomSelection: prefixed(workerdotdb.DOTRandomDrawEntriesSchema()),
+	permission.KindAIAuditEvent:       prefixed(aiauditdb.AIAuditEventsSchema()),
+	permission.KindAIAuditExport:      prefixed(aiauditdb.AIAuditExportsSchema()),
+	permission.KindAssistantThread:    prefixed(conversationdb.ThreadsSchema()),
+	permission.KindWait:               prefixed(agentwaitdb.WaitsSchema()),
+	permission.KindPortalSite:         prefixed(agentextensiondb.PortalSitesSchema()),
+	permission.KindPortalRun:          prefixed(agentextensiondb.PortalRunsSchema()),
+	permission.KindAnalysisRun:        prefixed(analysisdb.RunsSchema()),
+	permission.KindWebWatch:           prefixed(agentextensiondb.WebWatchesSchema()),
+	permission.KindWatchtowerItem:     prefixed(watchtowerdb.ItemsSchema()),
+	permission.KindAccountingConnection: prefixed(
+		accountingsyncdb.AccountingConnectionsSchema(),
+	),
+	permission.KindAccountingMapping: prefixed(accountingsyncdb.AccountingMappingsSchema()),
+	permission.KindAccountingSyncRecord: prefixed(
+		accountingsyncdb.AccountingSyncRecordsSchema(),
+	),
+	permission.KindAccountingInboundChange: prefixed(
+		accountingsyncdb.AccountingInboundChangesSchema(),
+	),
+	permission.KindAccountingDriftFinding: prefixed(
+		accountingsyncdb.AccountingDriftFindingsSchema(),
+	),
 	permission.KindCarrierIntelligenceEvent: prefixed(carrierinteldb.CarrierIntelEventsSchema()),
 	permission.KindInsurancePolicy:          prefixed(carrierdb.CarrierInsurancePoliciesSchema()),
 	permission.KindCarrierAssignment:        prefixed(shipmentdb.CarrierAssignmentsSchema()),
 	permission.KindAdditionalCharge:         prefixed(shipmentdb.AdditionalChargesSchema()),
-	permission.KindBillingTransferRun:       prefixed(billingtransferdb.BillingTransferRunsSchema()),
-	permission.KindDetentionOccurrence:      prefixed(detentiondb.DetentionOccurrencesSchema()),
-	permission.KindTenderOffer:              prefixed(tenderdb.TenderOffersSchema()),
-	permission.KindOrderCharge:              prefixed(orderdb.OrderChargesSchema()),
-	permission.KindBillingQueueItem:         prefixed(billingqueuedb.BillingQueueItemsSchema()),
-	permission.KindInvoiceLine:              prefixed(invoicedb.InvoiceLinesSchema()),
-	permission.KindInvoiceAdjustment:        prefixed(invoiceadjustmentdb.InvoiceAdjustmentsSchema()),
-	permission.KindInvoiceRunGroup:          prefixed(invoicerundb.InvoiceRunGroupsSchema()),
-	permission.KindInvoiceRunItem:           prefixed(invoicerundb.InvoiceRunGroupItemsSchema()),
-	permission.KindCreditMemoApplication:    prefixed(customerpaymentdb.CreditMemoApplicationsSchema()),
-	permission.KindRateAgreementLane:        prefixed(rateagreementdb.RateAgreementRulesSchema()),
-	permission.KindRateImport:               prefixed(rateimportdb.RateImportBatchesSchema()),
-	permission.KindFuelIndex:                prefixed(fuelsurchargedb.FuelIndexesSchema()),
-	permission.KindFuelIndexPrice:           prefixed(fuelsurchargedb.FuelIndexPricesSchema()),
-	permission.KindReportRun:                prefixed(reportdb.ReportRunsSchema()),
-	permission.KindReportSchedule:           prefixed(reportdb.ReportSchedulesSchema()),
-	permission.KindEDIPartner:               prefixed(edidb.EDIPartnersSchema()),
-	permission.KindEDIInboundFile:           prefixed(edidb.EDIInboundFilesSchema()),
-	permission.KindEDITransfer:              prefixed(edidb.EDITransfersSchema()),
-	permission.KindEDIMessage:               prefixed(edidb.EDIMessagesSchema()),
-	permission.KindEDIShipmentLink:          prefixed(edidb.ShipmentLinksSchema()),
-	permission.KindEDITenderChange:          prefixed(edidb.TenderChangesSchema()),
-	permission.KindEDITransferChange:        prefixed(edidb.TransferChangesSchema()),
-	permission.KindEDICarrierInvoice:        prefixed(edidb.CarrierInvoicesSchema()),
-	permission.KindScannedDocument:          prefixed(capturedb.CaptureItemsSchema()),
-	permission.KindIFTAJurisdiction:         prefixed(iftadb.JurisdictionsSchema()),
-	permission.KindIFTAReturn:               prefixed(iftadb.ReturnsSchema()),
-	permission.KindIFTAMileageEntry:         prefixed(iftadb.JurisdictionMileageEntriesSchema()),
-	permission.KindUSState:                  prefixed(usstatedb.UsStatesSchema()),
-	permission.KindPayEvent:                 prefixed(driversettlementdb.PayEventsSchema()),
-	permission.KindPayProfile:               prefixed(driverpaydb.PayProfilesSchema()),
-	permission.KindPayAssignment:            prefixed(driverpaydb.WorkerPayAssignmentsSchema()),
-	permission.KindPayrollExport:            prefixed(workerdb.PayrollExportsSchema()),
-	permission.KindShiftAssignment:          prefixed(workerdb.WorkerShiftAssignmentsSchema()),
-	permission.KindChecklistItem:            prefixed(workerdb.WorkerChecklistItemsSchema()),
-	permission.KindSafetyViolation:          prefixed(workerdb.WorkerSafetyViolationsSchema()),
-	permission.KindLeaveDay:                 prefixed(workerdb.WorkerLeaveEntriesSchema()),
+	permission.KindBillingTransferRun: prefixed(
+		billingtransferdb.BillingTransferRunsSchema(),
+	),
+	permission.KindDetentionOccurrence: prefixed(detentiondb.DetentionOccurrencesSchema()),
+	permission.KindTenderOffer:         prefixed(tenderdb.TenderOffersSchema()),
+	permission.KindOrderCharge:         prefixed(orderdb.OrderChargesSchema()),
+	permission.KindBillingQueueItem:    prefixed(billingqueuedb.BillingQueueItemsSchema()),
+	permission.KindInvoiceLine:         prefixed(invoicedb.InvoiceLinesSchema()),
+	permission.KindInvoiceAdjustment: prefixed(
+		invoiceadjustmentdb.InvoiceAdjustmentsSchema(),
+	),
+	permission.KindInvoiceRunGroup: prefixed(invoicerundb.InvoiceRunGroupsSchema()),
+	permission.KindInvoiceRunItem:  prefixed(invoicerundb.InvoiceRunGroupItemsSchema()),
+	permission.KindCreditMemoApplication: prefixed(
+		customerpaymentdb.CreditMemoApplicationsSchema(),
+	),
+	permission.KindRateAgreementLane: prefixed(rateagreementdb.RateAgreementRulesSchema()),
+	permission.KindRateImport:        prefixed(rateimportdb.RateImportBatchesSchema()),
+	permission.KindFuelIndex:         prefixed(fuelsurchargedb.FuelIndexesSchema()),
+	permission.KindFuelIndexPrice:    prefixed(fuelsurchargedb.FuelIndexPricesSchema()),
+	permission.KindReportRun:         prefixed(reportdb.ReportRunsSchema()),
+	permission.KindReportSchedule:    prefixed(reportdb.ReportSchedulesSchema()),
+	permission.KindEDIPartner:        prefixed(edidb.EDIPartnersSchema()),
+	permission.KindEDIInboundFile:    prefixed(edidb.EDIInboundFilesSchema()),
+	permission.KindEDITransfer:       prefixed(edidb.EDITransfersSchema()),
+	permission.KindEDIMessage:        prefixed(edidb.EDIMessagesSchema()),
+	permission.KindEDIShipmentLink:   prefixed(edidb.ShipmentLinksSchema()),
+	permission.KindEDITenderChange:   prefixed(edidb.TenderChangesSchema()),
+	permission.KindEDITransferChange: prefixed(edidb.TransferChangesSchema()),
+	permission.KindEDICarrierInvoice: prefixed(edidb.CarrierInvoicesSchema()),
+	permission.KindScannedDocument:   prefixed(capturedb.CaptureItemsSchema()),
+	permission.KindIFTAJurisdiction:  prefixed(iftadb.JurisdictionsSchema()),
+	permission.KindIFTAReturn:        prefixed(iftadb.ReturnsSchema()),
+	permission.KindIFTAMileageEntry:  prefixed(iftadb.JurisdictionMileageEntriesSchema()),
+	permission.KindUSState:           prefixed(usstatedb.UsStatesSchema()),
+	permission.KindPayEvent:          prefixed(driversettlementdb.PayEventsSchema()),
+	permission.KindPayProfile:        prefixed(driverpaydb.PayProfilesSchema()),
+	permission.KindPayAssignment:     prefixed(driverpaydb.WorkerPayAssignmentsSchema()),
+	permission.KindPayrollExport:     prefixed(timesheetdb.PayrollExportsSchema()),
+	permission.KindShiftAssignment: prefixed(
+		workerscheduledb.WorkerShiftAssignmentsSchema(),
+	),
+	permission.KindChecklistItem: prefixed(
+		workerchecklistdb.WorkerChecklistItemsSchema(),
+	),
+	permission.KindSafetyViolation: prefixed(
+		workersafetydb.WorkerSafetyViolationsSchema(),
+	),
+	permission.KindLeaveDay: prefixed(workerleavedb.WorkerLeaveEntriesSchema()),
 }
 
 // A declared kind's prefix is held to the domain's as a resource's is: a

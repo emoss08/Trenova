@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview/workerreviewdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -61,7 +61,7 @@ func (r *repository) ListTemplates(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*workerreview.PerformanceReviewTemplate], error) {
-			t := workerdb.PerformanceReviewTemplates
+			t := workerreviewdb.PerformanceReviewTemplates
 			q := t.Where(keel.When(req.Status != "", t.Status.Eq(domaintypes.Status(req.Status))))
 			result, err := listquery.Connection(ctx, r.db.Keel(ctx), q,
 				&listquery.Request[workerreview.PerformanceReviewTemplate]{
@@ -86,7 +86,7 @@ func (r *repository) ListActiveTemplates(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*workerreview.PerformanceReviewTemplate, error) {
-			t := workerdb.PerformanceReviewTemplates
+			t := workerreviewdb.PerformanceReviewTemplates
 			entities, err := t.Where(t.Status.Eq(domaintypes.StatusActive)).
 				Order(t.IsDefault.Desc(), t.Name.Asc()).
 				All(ctx, r.db.Keel(ctx))
@@ -108,7 +108,7 @@ func (r *repository) TemplateSelectOptions(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*workerreview.PerformanceReviewTemplate], error) {
-			t := workerdb.PerformanceReviewTemplates
+			t := workerreviewdb.PerformanceReviewTemplates
 			q := t.Pick(
 				t.ID,
 				t.Code,
@@ -147,7 +147,11 @@ func (r *repository) GetTemplateByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerreview.PerformanceReviewTemplate, error) {
-			entity, err := workerdb.PerformanceReviewTemplates.Get(ctx, r.db.Keel(ctx), req.ID)
+			entity, err := workerreviewdb.PerformanceReviewTemplates.Get(
+				ctx,
+				r.db.Keel(ctx),
+				req.ID,
+			)
 			if err != nil {
 				return nil, templateErrors.Map(err, req.ID.String())
 			}
@@ -162,7 +166,7 @@ func (r *repository) TemplateCodeExists(
 	req *workerports.ReviewTemplateCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		t := workerdb.PerformanceReviewTemplates
+		t := workerreviewdb.PerformanceReviewTemplates
 		exists, err := t.Where(
 			t.Code.Lower().Eq(strings.ToLower(req.Code)),
 			keel.When(req.ExcludeID.IsNotNil(), t.ID.Ne(req.ExcludeID)),
@@ -184,7 +188,7 @@ func (r *repository) CreateTemplate(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerreview.PerformanceReviewTemplate, error) {
-			err := workerdb.PerformanceReviewTemplates.Create(ctx, r.db.Keel(ctx), entity)
+			err := workerreviewdb.PerformanceReviewTemplates.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to create review template", zap.Error(err))
 				return nil, templateErrors.Map(err, entity.ID.String())
@@ -203,7 +207,7 @@ func (r *repository) UpdateTemplate(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerreview.PerformanceReviewTemplate, error) {
-			err := workerdb.PerformanceReviewTemplates.Save(ctx, r.db.Keel(ctx), entity)
+			err := workerreviewdb.PerformanceReviewTemplates.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update review template", zap.Error(err))
 				return nil, templateErrors.Map(err, entity.ID.String())
@@ -220,7 +224,7 @@ func (r *repository) ClearDefaultTemplate(
 	exceptID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		t := workerdb.PerformanceReviewTemplates
+		t := workerreviewdb.PerformanceReviewTemplates
 		_, err := t.Where(
 			t.IsDefault.IsTrue(),
 			keel.When(exceptID.IsNotNil(), t.ID.Ne(exceptID)),
@@ -239,7 +243,7 @@ func (r *repository) CountReviewsByTemplate(
 	req *workerports.CountReviewsByTemplateRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		rv := workerdb.PerformanceReviews
+		rv := workerreviewdb.PerformanceReviews
 		count, err := rv.Where(
 			rv.TemplateID.Eq(req.TemplateID),
 			keel.When(req.OpenOnly, rv.Status.In(openReviewStatuses...)),
@@ -262,7 +266,7 @@ func (r *repository) CountReviewsByTemplateIDs(
 			return map[pulid.ID]int{}, nil
 		}
 
-		rv := workerdb.PerformanceReviews
+		rv := workerreviewdb.PerformanceReviews
 		rows, err := keel.Into[templateCount](ctx, r.db.Keel(ctx), rv.
 			Group(rv.TemplateID).
 			Pick(rv.TemplateID, keel.Count()).
@@ -291,7 +295,7 @@ func (r *repository) CountReviews(
 	req *workerports.CountPerformanceReviewsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		rv := workerdb.PerformanceReviews
+		rv := workerreviewdb.PerformanceReviews
 		count, err := rv.Where(keel.When(len(req.Statuses) > 0, rv.Status.In(req.Statuses...))).
 			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -311,7 +315,7 @@ func (r *repository) ListReviews(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*workerreview.PerformanceReview, error) {
-			rv := workerdb.PerformanceReviews
+			rv := workerreviewdb.PerformanceReviews
 			loads := append(
 				listquery.When(req.IncludeTemplate, rv.Template()),
 				listquery.When(req.IncludeReviewer, rv.Reviewer())...,
@@ -339,7 +343,7 @@ func (r *repository) GetReviewByID(
 	req *workerports.GetPerformanceReviewByIDRequest,
 ) (*workerreview.PerformanceReview, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerreview.PerformanceReview, error) {
-		rv := workerdb.PerformanceReviews
+		rv := workerreviewdb.PerformanceReviews
 		loads := make([]keel.Loader, 0, 3)
 		loads = append(loads, listquery.When(req.IncludeTemplate, rv.Template())...)
 		loads = append(loads, listquery.When(req.IncludeWorker, rv.Worker())...)
@@ -362,7 +366,7 @@ func (r *repository) CreateReview(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerreview.PerformanceReview, error) {
-			if err := workerdb.PerformanceReviews.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerreviewdb.PerformanceReviews.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to create performance review", zap.Error(err))
 				return nil, reviewErrors.Map(err, entity.ID.String())
 			}
@@ -380,7 +384,7 @@ func (r *repository) UpdateReview(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerreview.PerformanceReview, error) {
-			if err := workerdb.PerformanceReviews.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerreviewdb.PerformanceReviews.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to update performance review", zap.Error(err))
 				return nil, reviewErrors.Map(err, entity.ID.String())
 			}
@@ -395,7 +399,7 @@ func (r *repository) DeleteReview(
 	req *workerports.GetPerformanceReviewByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		err := workerdb.PerformanceReviews.DeleteRow(
+		err := workerreviewdb.PerformanceReviews.DeleteRow(
 			ctx,
 			r.db.Keel(ctx),
 			&workerreview.PerformanceReview{ID: req.ID},

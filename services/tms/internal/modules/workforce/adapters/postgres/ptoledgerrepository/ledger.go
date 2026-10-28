@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto/ptodb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -45,14 +46,14 @@ func sumOrZero(e keel.Expr) keel.NumericExpr {
 }
 
 func balanceQuery(key *workerports.PTOBalanceKey) *keel.Query[*pto.WorkerPTOBalance] {
-	b := workerdb.WorkerPTOBalances
+	b := ptodb.WorkerPTOBalances
 
 	return b.Where(b.WorkerID.Eq(key.WorkerID), b.PTOType.Eq(key.PTOType))
 }
 
 func (r *repository) EnsureBalance(ctx context.Context, key *workerports.PTOBalanceKey) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		b := workerdb.WorkerPTOBalances
+		b := ptodb.WorkerPTOBalances
 		_, err := b.CreateOrSkip(ctx, r.db.Keel(ctx), []*pto.WorkerPTOBalance{{
 			OrganizationID: key.TenantInfo.OrgID,
 			BusinessUnitID: key.TenantInfo.BuID,
@@ -101,7 +102,7 @@ func (r *repository) ListBalances(
 	req *workerports.ListPTOBalancesRequest,
 ) ([]*pto.WorkerPTOBalance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*pto.WorkerPTOBalance, error) {
-		b := workerdb.WorkerPTOBalances
+		b := ptodb.WorkerPTOBalances
 		entities, err := b.Where(b.WorkerID.Eq(req.WorkerID)).
 			Order(b.PTOType.Asc()).
 			All(ctx, r.db.Keel(ctx))
@@ -119,7 +120,7 @@ func (r *repository) ListOrgBalances(
 	_ pagination.TenantInfo,
 ) ([]*pto.WorkerPTOBalance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*pto.WorkerPTOBalance, error) {
-		b := workerdb.WorkerPTOBalances
+		b := ptodb.WorkerPTOBalances
 		entities, err := b.Query().
 			Load(b.Worker()).
 			Order(b.WorkerID.Asc(), b.PTOType.Asc()).
@@ -138,7 +139,7 @@ func (r *repository) UpdateBalance(
 	entity *pto.WorkerPTOBalance,
 ) (*pto.WorkerPTOBalance, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pto.WorkerPTOBalance, error) {
-		if err := workerdb.WorkerPTOBalances.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := ptodb.WorkerPTOBalances.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update PTO balance", zap.Error(err))
 			return nil, balanceErrors.Map(err, entity.ID.String())
 		}
@@ -152,7 +153,7 @@ func (r *repository) InsertEntry(
 	entry *pto.WorkerPTOLedgerEntry,
 ) (*pto.WorkerPTOLedgerEntry, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pto.WorkerPTOLedgerEntry, error) {
-		if err := workerdb.WorkerPTOLedgerEntries.Create(ctx, r.db.Keel(ctx), entry); err != nil {
+		if err := ptodb.WorkerPTOLedgerEntries.Create(ctx, r.db.Keel(ctx), entry); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, workerports.ErrDuplicatePTOLedgerEntry
 			}
@@ -165,7 +166,7 @@ func (r *repository) InsertEntry(
 }
 
 func entryFilter(req *workerports.ListPTOLedgerRequest) []keel.Pred {
-	e := workerdb.WorkerPTOLedgerEntries
+	e := ptodb.WorkerPTOLedgerEntries
 
 	return []keel.Pred{
 		keel.When(req.WorkerID.IsNotNil(), e.WorkerID.Eq(req.WorkerID)),
@@ -187,7 +188,7 @@ func (r *repository) ListEntries(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*pto.WorkerPTOLedgerEntry], error) {
-			e := workerdb.WorkerPTOLedgerEntries
+			e := ptodb.WorkerPTOLedgerEntries
 			result, err := listquery.Connection(ctx, r.db.Keel(ctx), e.Where(entryFilter(req)...),
 				&listquery.Request[pto.WorkerPTOLedgerEntry]{
 					Filter: req.Filter,
@@ -218,7 +219,7 @@ func (r *repository) SumEntries(
 	key *workerports.PTOBalanceKey,
 ) (decimal.Decimal, int64, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (decimal.Decimal, int64, error) {
-		e := workerdb.WorkerPTOLedgerEntries
+		e := ptodb.WorkerPTOLedgerEntries
 		row, err := keel.IntoOne[sumRow](ctx, r.db.Keel(ctx), e.
 			Pick(sumOrZero(e.AmountDays.Sum()), keel.Count()).
 			Where(e.WorkerID.Eq(key.WorkerID), e.PTOType.Eq(key.PTOType)))
@@ -259,7 +260,7 @@ func (r *repository) HasEntry(
 	req *workerports.HasPTOLedgerEntryRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		e := workerdb.WorkerPTOLedgerEntries
+		e := ptodb.WorkerPTOLedgerEntries
 		exists, err := e.Where(e.SourcePTOID.Eq(req.SourcePTOID), e.EntryType.Eq(req.EntryType)).
 			Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -284,7 +285,7 @@ func (r *repository) Summary(
 ) (*workerports.PTOBalanceSummary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerports.PTOBalanceSummary, error) {
 		db := r.db.Keel(ctx)
-		b := workerdb.WorkerPTOBalances
+		b := ptodb.WorkerPTOBalances
 		balances, err := keel.IntoOne[summaryRow](ctx, db, b.Pick(
 			b.WorkerID.CountDistinct(),
 			sumOrZero(b.BalanceDays.Sum()),
@@ -306,7 +307,7 @@ func (r *repository) Summary(
 		}
 
 		w := workerdb.Workers
-		a := workerdb.WorkerPTOPolicyAssignments
+		a := ptodb.WorkerPTOPolicyAssignments
 		unassigned, err := w.Where(
 			w.Status.Eq(domaintypes.StatusActive),
 			keel.NotExists(a.Where(a.WorkerID.EqCol(w.ID), a.EffectiveTo.IsNull())),

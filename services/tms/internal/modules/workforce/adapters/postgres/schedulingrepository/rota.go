@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave/workerleavedb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule/workerscheduledb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"go.uber.org/zap"
@@ -44,7 +46,7 @@ func rosterQuery(req *workerports.RotaQuery) *keel.Query[*worker.Worker] {
 func rotaWorkersQuery(req *workerports.RotaQuery) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	fc := w.FleetCode()
-	sa := workerdb.WorkerShiftAssignments
+	sa := workerscheduledb.WorkerShiftAssignments
 
 	return w.LeftJoin(sa,
 		sa.WorkerID.EqCol(w.ID),
@@ -120,7 +122,7 @@ func (r *repository) RotaLeaveRanges(
 	req *workerports.RotaQuery,
 ) ([]workerports.RotaRangeRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.RotaRangeRow, error) {
-		c := workerdb.WorkerLeaveCases
+		c := workerleavedb.WorkerLeaveCases
 		rows, err := keel.Into[workerports.RotaRangeRow](ctx, r.db.Keel(ctx), c.
 			Pick(c.WorkerID, c.StartsAt, c.EndsAt.Coalesce(int64(0))).
 			Where(

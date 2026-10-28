@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist/workerchecklistdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential/workercredentialdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -85,9 +87,9 @@ func (s *WorkerChecklistSeed) loadLookups(
 	db *keel.DB,
 	refs *checklistSeedRefs,
 ) error {
-	types, err := workerdb.WorkerCredentialTypes.AllTenants().Where(
-		workerdb.WorkerCredentialTypes.OrganizationID.Eq(refs.orgID),
-		workerdb.WorkerCredentialTypes.BusinessUnitID.Eq(refs.buID),
+	types, err := workercredentialdb.WorkerCredentialTypes.AllTenants().Where(
+		workercredentialdb.WorkerCredentialTypes.OrganizationID.Eq(refs.orgID),
+		workercredentialdb.WorkerCredentialTypes.BusinessUnitID.Eq(refs.buID),
 	).All(ctx, db)
 	if err != nil {
 		return fmt.Errorf("load credential types: %w", err)
@@ -267,19 +269,19 @@ func (s *WorkerChecklistSeed) ensureTemplate(
 	sr *seed.Run,
 	template *workerchecklist.WorkerChecklistTemplate,
 ) (*workerchecklist.WorkerChecklistTemplate, error) {
-	existing, err := workerdb.WorkerChecklistTemplates.AllTenants().
-		Load(workerdb.WorkerChecklistTemplates.Items()).
+	existing, err := workerchecklistdb.WorkerChecklistTemplates.AllTenants().
+		Load(workerchecklistdb.WorkerChecklistTemplates.Items()).
 		Where(
-			workerdb.WorkerChecklistTemplates.OrganizationID.Eq(template.OrganizationID),
-			workerdb.WorkerChecklistTemplates.BusinessUnitID.Eq(template.BusinessUnitID),
-			workerdb.WorkerChecklistTemplates.Code.Eq(template.Code),
+			workerchecklistdb.WorkerChecklistTemplates.OrganizationID.Eq(template.OrganizationID),
+			workerchecklistdb.WorkerChecklistTemplates.BusinessUnitID.Eq(template.BusinessUnitID),
+			workerchecklistdb.WorkerChecklistTemplates.Code.Eq(template.Code),
 		).
 		First(ctx, db)
 	if err == nil {
 		return existing, nil
 	}
 
-	if err = workerdb.WorkerChecklistTemplates.Create(ctx, db, template); err != nil {
+	if err = workerchecklistdb.WorkerChecklistTemplates.Create(ctx, db, template); err != nil {
 		return nil, err
 	}
 	for i, item := range template.Items {
@@ -288,7 +290,7 @@ func (s *WorkerChecklistSeed) ensureTemplate(
 		item.BusinessUnitID = template.BusinessUnitID
 		item.SortOrder = int32(i) //nolint:gosec // item counts are tiny
 	}
-	if err = workerdb.WorkerChecklistTemplateItems.CreateMany(ctx, db, template.Items); err != nil {
+	if err = workerchecklistdb.WorkerChecklistTemplateItems.CreateMany(ctx, db, template.Items); err != nil {
 		return nil, err
 	}
 	return template, nil
@@ -313,7 +315,7 @@ func (s *WorkerChecklistSeed) openForRecentHires(
 
 		startedAt := refs.now - int64(3+index*4)*checklistSeedDay
 		checklist := template.Instantiate(wrk.ID, startedAt, refs.adminID, pulid.Nil)
-		if err := workerdb.WorkerChecklists.Create(ctx, db, checklist); err != nil {
+		if err := workerchecklistdb.WorkerChecklists.Create(ctx, db, checklist); err != nil {
 			return fmt.Errorf("insert checklist for %s: %w", wrk.ID, err)
 		}
 		for i, item := range checklist.Items {
@@ -328,7 +330,7 @@ func (s *WorkerChecklistSeed) openForRecentHires(
 				item.CompletedByID = refs.adminID
 			}
 		}
-		if err := workerdb.WorkerChecklistItems.CreateMany(ctx, db, checklist.Items); err != nil {
+		if err := workerchecklistdb.WorkerChecklistItems.CreateMany(ctx, db, checklist.Items); err != nil {
 			return fmt.Errorf("insert checklist items for %s: %w", wrk.ID, err)
 		}
 	}

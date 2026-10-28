@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment/employmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -39,7 +39,7 @@ func New(p Params) workerports.WorkerEmploymentEventRepository {
 }
 
 func eventLoads(includeDocument, includeActors bool) []keel.Loader {
-	e := workerdb.WorkerEmploymentEvents
+	e := employmentdb.WorkerEmploymentEvents
 
 	return append(
 		listquery.When(includeDocument, e.Document()),
@@ -50,7 +50,7 @@ func eventLoads(includeDocument, includeActors bool) []keel.Loader {
 func listQuery(
 	req *workerports.ListWorkerEmploymentEventsRequest,
 ) *keel.Query[*employment.WorkerEmploymentEvent] {
-	e := workerdb.WorkerEmploymentEvents
+	e := employmentdb.WorkerEmploymentEvents
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultPageSize
@@ -97,7 +97,7 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*employment.WorkerEmploymentEvent, error) {
-			e := workerdb.WorkerEmploymentEvents
+			e := employmentdb.WorkerEmploymentEvents
 			entity, err := e.Where(e.ID.Eq(req.ID)).
 				Load(eventLoads(req.IncludeDocument, req.IncludeActors)...).
 				One(ctx, r.db.Keel(ctx))
@@ -118,7 +118,7 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*employment.WorkerEmploymentEvent, error) {
-			if err := workerdb.WorkerEmploymentEvents.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := employmentdb.WorkerEmploymentEvents.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to create worker employment event", zap.Error(err))
 				return nil, eventErrors.Map(err, entity.ID.String())
 			}
@@ -136,7 +136,7 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*employment.WorkerEmploymentEvent, error) {
-			if err := workerdb.WorkerEmploymentEvents.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := employmentdb.WorkerEmploymentEvents.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to update worker employment event", zap.Error(err))
 				return nil, eventErrors.Map(err, entity.ID.String())
 			}

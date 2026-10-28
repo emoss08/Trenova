@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave/workerleavedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/internal/testutil/workerteamtest"
@@ -34,7 +34,7 @@ func TestCasesNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 
 	requestedAt := int64(1_700_000_000)
 	for _, wrk := range []*worker.Worker{team.Direct, team.ViaFleet, team.Outsider} {
-		err := workerdb.WorkerLeaveCases.Create(ctx, db, &workerleave.WorkerLeaveCase{
+		err := workerleavedb.WorkerLeaveCases.Create(ctx, db, &workerleave.WorkerLeaveCase{
 			ID:                       pulid.MustNew("wlc_"),
 			OrganizationID:           data.Organization.ID,
 			BusinessUnitID:           data.BusinessUnit.ID,

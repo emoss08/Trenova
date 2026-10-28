@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule/workerscheduledb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -73,7 +73,7 @@ func (r *repository) ListTemplates(
 	req *workerports.ListShiftTemplatesRequest,
 ) ([]*workerschedule.ShiftTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*workerschedule.ShiftTemplate, error) {
-		t := workerdb.ShiftTemplates
+		t := workerscheduledb.ShiftTemplates
 		entities, err := t.Where(keel.When(req.ActiveOnly, t.Status.Eq(domaintypes.StatusActive))).
 			Order(t.Name.Asc()).
 			Limit(limitOr(req.Limit, defaultTemplatePageSize)).
@@ -92,7 +92,7 @@ func (r *repository) GetTemplateByID(
 	req *workerports.GetShiftTemplateByIDRequest,
 ) (*workerschedule.ShiftTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerschedule.ShiftTemplate, error) {
-		entity, err := workerdb.ShiftTemplates.Get(ctx, r.db.Keel(ctx), req.ID)
+		entity, err := workerscheduledb.ShiftTemplates.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, templateErrors.Map(err, req.ID.String())
 		}
@@ -106,7 +106,7 @@ func (r *repository) CreateTemplate(
 	entity *workerschedule.ShiftTemplate,
 ) (*workerschedule.ShiftTemplate, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*workerschedule.ShiftTemplate, error) {
-		if err := workerdb.ShiftTemplates.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := workerscheduledb.ShiftTemplates.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create shift template", zap.Error(err))
 			return nil, templateErrors.Map(err, entity.ID.String())
 		}
@@ -120,7 +120,7 @@ func (r *repository) UpdateTemplate(
 	entity *workerschedule.ShiftTemplate,
 ) (*workerschedule.ShiftTemplate, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*workerschedule.ShiftTemplate, error) {
-		if err := workerdb.ShiftTemplates.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := workerscheduledb.ShiftTemplates.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update shift template", zap.Error(err))
 			return nil, templateErrors.Map(err, entity.ID.String())
 		}
@@ -135,7 +135,7 @@ func (r *repository) CountTemplateAssignments(
 	templateID pulid.ID,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		a := workerdb.WorkerShiftAssignments
+		a := workerscheduledb.WorkerShiftAssignments
 		total, err := a.Where(a.ShiftTemplateID.Eq(templateID), a.EffectiveTo.IsNull()).
 			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -156,7 +156,7 @@ func (r *repository) CountTemplateAssignmentsByIDs(
 			return map[pulid.ID]int{}, nil
 		}
 
-		a := workerdb.WorkerShiftAssignments
+		a := workerscheduledb.WorkerShiftAssignments
 		rows, err := keel.Into[templateCount](ctx, r.db.Keel(ctx), a.
 			Group(a.ShiftTemplateID).
 			Pick(a.ShiftTemplateID, keel.Count()).
@@ -183,7 +183,7 @@ func (r *repository) ListAssignments(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*workerschedule.WorkerShiftAssignment, error) {
-			a := workerdb.WorkerShiftAssignments
+			a := workerscheduledb.WorkerShiftAssignments
 			var activeAt keel.Pred
 			if req.ActiveAt > 0 {
 				activeAt = keel.And(
@@ -218,7 +218,7 @@ func (r *repository) GetAssignmentByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerschedule.WorkerShiftAssignment, error) {
-			entity, err := workerdb.WorkerShiftAssignments.Get(ctx, r.db.Keel(ctx), req.ID)
+			entity, err := workerscheduledb.WorkerShiftAssignments.Get(ctx, r.db.Keel(ctx), req.ID)
 			if err != nil {
 				return nil, assignmentErrors.Map(err, req.ID.String())
 			}
@@ -236,7 +236,7 @@ func (r *repository) CreateAssignment(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerschedule.WorkerShiftAssignment, error) {
-			if err := workerdb.WorkerShiftAssignments.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerscheduledb.WorkerShiftAssignments.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to create shift assignment", zap.Error(err))
 				return nil, assignmentErrors.Map(err, entity.ID.String())
 			}
@@ -254,7 +254,7 @@ func (r *repository) UpdateAssignment(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerschedule.WorkerShiftAssignment, error) {
-			if err := workerdb.WorkerShiftAssignments.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerscheduledb.WorkerShiftAssignments.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to update shift assignment", zap.Error(err))
 				return nil, assignmentErrors.Map(err, entity.ID.String())
 			}
@@ -272,7 +272,7 @@ func (r *repository) ListPreferences(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*workerschedule.WorkerAvailabilityPreference, error) {
-			p := workerdb.WorkerAvailabilityPreferences
+			p := workerscheduledb.WorkerAvailabilityPreferences
 			// An empty worker reads the whole roster's stated availability,
 			// which is what the rota needs: seven rows a worker at most, so
 			// one read beats one per line on the board.
@@ -301,7 +301,7 @@ func (r *repository) UpsertPreference(
 		r.db,
 		func(ctx context.Context) (*workerschedule.WorkerAvailabilityPreference, error) {
 			db := r.db.Keel(ctx)
-			p := workerdb.WorkerAvailabilityPreferences
+			p := workerscheduledb.WorkerAvailabilityPreferences
 			_, err := p.Upsert(ctx, db, []*workerschedule.WorkerAvailabilityPreference{entity},
 				keel.OnConflict(p.OrganizationID, p.BusinessUnitID, p.WorkerID, p.DayOfWeek).
 					Update(p.Preference, p.Note))
@@ -324,7 +324,7 @@ func (r *repository) UpsertPreference(
 func swapsQuery(
 	req *workerports.ListShiftSwapsRequest,
 ) *keel.Query[*workerschedule.ShiftSwapRequest] {
-	s := workerdb.ShiftSwapRequests
+	s := workerscheduledb.ShiftSwapRequests
 
 	return s.Where(
 		keel.When(req.WorkerID.IsNotNil(), keel.Or(
@@ -369,7 +369,7 @@ func (r *repository) GetSwapByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerschedule.ShiftSwapRequest, error) {
-			entity, err := workerdb.ShiftSwapRequests.Get(ctx, r.db.Keel(ctx), req.ID)
+			entity, err := workerscheduledb.ShiftSwapRequests.Get(ctx, r.db.Keel(ctx), req.ID)
 			if err != nil {
 				return nil, swapErrors.Map(err, req.ID.String())
 			}
@@ -387,7 +387,7 @@ func (r *repository) CreateSwap(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerschedule.ShiftSwapRequest, error) {
-			if err := workerdb.ShiftSwapRequests.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerscheduledb.ShiftSwapRequests.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to create shift swap", zap.Error(err))
 				return nil, swapErrors.Map(err, entity.ID.String())
 			}
@@ -405,7 +405,7 @@ func (r *repository) UpdateSwap(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerschedule.ShiftSwapRequest, error) {
-			if err := workerdb.ShiftSwapRequests.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerscheduledb.ShiftSwapRequests.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to update shift swap", zap.Error(err))
 				return nil, swapErrors.Map(err, entity.ID.String())
 			}

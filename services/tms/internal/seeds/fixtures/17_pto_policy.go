@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto/ptodb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -184,16 +185,16 @@ func (s *PTOPolicySeed) ensurePolicy(
 	refs *ptoSeedRefs,
 	policy *pto.PTOPolicy,
 ) (*pto.PTOPolicy, error) {
-	existing, err := workerdb.PTOPolicies.AllTenants().Load(workerdb.PTOPolicies.Rules()).Where(
-		workerdb.PTOPolicies.OrganizationID.Eq(refs.orgID),
-		workerdb.PTOPolicies.BusinessUnitID.Eq(refs.buID),
-		workerdb.PTOPolicies.Code.Eq(policy.Code),
+	existing, err := ptodb.PTOPolicies.AllTenants().Load(ptodb.PTOPolicies.Rules()).Where(
+		ptodb.PTOPolicies.OrganizationID.Eq(refs.orgID),
+		ptodb.PTOPolicies.BusinessUnitID.Eq(refs.buID),
+		ptodb.PTOPolicies.Code.Eq(policy.Code),
 	).First(ctx, db)
 	if err == nil {
 		return existing, s.syncRuleFollowOns(ctx, db, existing, policy)
 	}
 
-	if err = workerdb.PTOPolicies.Create(ctx, db, policy); err != nil {
+	if err = ptodb.PTOPolicies.Create(ctx, db, policy); err != nil {
 		return nil, err
 	}
 	for i, rule := range policy.Rules {
@@ -203,7 +204,7 @@ func (s *PTOPolicySeed) ensurePolicy(
 		rule.SortOrder = int32(i) //nolint:gosec // rule counts are tiny
 	}
 	if len(policy.Rules) > 0 {
-		if err = workerdb.PTOPolicyRules.CreateMany(ctx, db, policy.Rules); err != nil {
+		if err = ptodb.PTOPolicyRules.CreateMany(ctx, db, policy.Rules); err != nil {
 			return nil, err
 		}
 	}
@@ -224,7 +225,7 @@ func (s *PTOPolicySeed) syncRuleFollowOns(
 		}
 		rule.Tiers = want.Tiers
 		rule.OnTermination = want.TerminationAction()
-		pr := workerdb.PTOPolicyRules
+		pr := ptodb.PTOPolicyRules
 		if err := pr.Save(ctx, db, rule, pr.Tiers, pr.OnTermination); err != nil {
 			return fmt.Errorf("sync rule %s: %w", rule.PTOType, err)
 		}
@@ -256,11 +257,11 @@ func (s *PTOPolicySeed) enrolWorker(
 	policy *pto.PTOPolicy,
 	wrk *worker.Worker,
 ) error {
-	exists, err := workerdb.WorkerPTOPolicyAssignments.AllTenants().Where(
-		workerdb.WorkerPTOPolicyAssignments.OrganizationID.Eq(refs.orgID),
-		workerdb.WorkerPTOPolicyAssignments.BusinessUnitID.Eq(refs.buID),
-		workerdb.WorkerPTOPolicyAssignments.WorkerID.Eq(wrk.ID),
-		workerdb.WorkerPTOPolicyAssignments.EffectiveTo.IsNull(),
+	exists, err := ptodb.WorkerPTOPolicyAssignments.AllTenants().Where(
+		ptodb.WorkerPTOPolicyAssignments.OrganizationID.Eq(refs.orgID),
+		ptodb.WorkerPTOPolicyAssignments.BusinessUnitID.Eq(refs.buID),
+		ptodb.WorkerPTOPolicyAssignments.WorkerID.Eq(wrk.ID),
+		ptodb.WorkerPTOPolicyAssignments.EffectiveTo.IsNull(),
 	).Exists(ctx, db)
 	if err != nil || exists {
 		return err
@@ -285,7 +286,7 @@ func (s *PTOPolicySeed) enrolWorker(
 		AssignedByID:   refs.adminID,
 		Note:           "Seeded default policy",
 	}
-	if err = workerdb.WorkerPTOPolicyAssignments.Create(ctx, db, assignment); err != nil {
+	if err = ptodb.WorkerPTOPolicyAssignments.Create(ctx, db, assignment); err != nil {
 		return err
 	}
 
@@ -301,7 +302,7 @@ func (s *PTOPolicySeed) enrolWorker(
 			WorkerID:       wrk.ID,
 			PTOType:        rule.PTOType,
 		}
-		if err = workerdb.WorkerPTOBalances.Create(ctx, db, bal); err != nil {
+		if err = ptodb.WorkerPTOBalances.Create(ctx, db, bal); err != nil {
 			return err
 		}
 
@@ -383,11 +384,11 @@ func (s *PTOPolicySeed) enrolWorker(
 			entry.PTOType = rule.PTOType
 		}
 		if len(entries) > 0 {
-			if err = workerdb.WorkerPTOLedgerEntries.CreateMany(ctx, db, entries); err != nil {
+			if err = ptodb.WorkerPTOLedgerEntries.CreateMany(ctx, db, entries); err != nil {
 				return err
 			}
 		}
-		if err = workerdb.WorkerPTOBalances.Save(ctx, db, bal); err != nil {
+		if err = ptodb.WorkerPTOBalances.Save(ctx, db, bal); err != nil {
 			return err
 		}
 	}

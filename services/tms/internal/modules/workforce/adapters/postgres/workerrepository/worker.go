@@ -17,7 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential/workercredentialdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersyncdrift"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersyncdrift/workersyncdriftdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -160,7 +162,7 @@ func (r *repository) List(
 // case. A code that names none is refused rather than read as every worker
 // lacking it.
 func (r *repository) credentialTypeID(ctx context.Context, code string) (pulid.ID, error) {
-	t := workerdb.WorkerCredentialTypes
+	t := workercredentialdb.WorkerCredentialTypes
 	kind, err := t.Where(t.Code.Lower().Eq(strings.ToLower(code))).One(ctx, r.db.Keel(ctx))
 	if errors.Is(err, keel.ErrNotFound) {
 		return pulid.Nil, errortypes.NewValidationError(
@@ -180,7 +182,7 @@ func (r *repository) credentialTypeID(ctx context.Context, code string) (pulid.I
 // validCredential is a worker's active credential of a type that has not
 // expired, through the index on the worker's active credential of each type.
 func validCredential(typeID pulid.ID, now int64) *keel.Query[*workercredential.WorkerCredential] {
-	c := workerdb.WorkerCredentials
+	c := workercredentialdb.WorkerCredentials
 
 	return c.Where(
 		c.WorkerID.EqCol(workerdb.Workers.ID),
@@ -350,7 +352,7 @@ func (r *repository) ReplaceWorkerSyncDrifts(
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
-		d := workerdb.WorkerSyncDrifts
+		d := workersyncdriftdb.WorkerSyncDrifts
 		if _, err := d.Where(keel.True()).Delete(ctx, db); err != nil {
 			return dberror.MapRetryableTransactionError(err, syncDriftBusyMessage)
 		}
@@ -389,7 +391,7 @@ func (r *repository) ListWorkerSyncDrifts(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]workerports.WorkerSyncDriftRecord, error) {
-			d := workerdb.WorkerSyncDrifts
+			d := workersyncdriftdb.WorkerSyncDrifts
 			models, err := d.Query().
 				Order(d.DetectedAt.Desc(), d.WorkerName.Asc()).
 				All(ctx, r.db.Keel(ctx))

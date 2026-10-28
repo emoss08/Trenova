@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety/workersafetydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,7 +24,7 @@ import (
 // inspection result both record one, and an inspection that put a driver out
 // of service sets both, so the OR is what stops it being counted twice.
 func outOfServiceCount() keel.Agg {
-	e := workerdb.WorkerSafetyEvents
+	e := workersafetydb.WorkerSafetyEvents
 
 	return keel.Count().Filter(keel.Or(
 		e.OutOfService.IsTrue(),
@@ -55,7 +56,7 @@ func eventScope(
 	req *workerports.FleetSafetyRequest,
 	since int64,
 ) *keel.Query[*workersafety.WorkerSafetyEvent] {
-	e := workerdb.WorkerSafetyEvents
+	e := workersafetydb.WorkerSafetyEvents
 	w := workerdb.Workers
 
 	return e.Join(w, w.ID.EqCol(e.WorkerID)).Where(
@@ -147,7 +148,7 @@ func (r *repository) FleetKinds(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]workerports.FleetSafetyKindRow, error) {
-			e := workerdb.WorkerSafetyEvents
+			e := workersafetydb.WorkerSafetyEvents
 			since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
 			rows, err := keel.Into[workerports.FleetSafetyKindRow](ctx, r.db.Keel(ctx),
 				eventScope(req, since).
@@ -174,7 +175,7 @@ func (r *repository) FleetKinds(
 // months, 1 inside a year, 2 out to the two-year look-back. The weights
 // themselves stay in the domain, where they can be tested without a database.
 func csaBucketExpr(now int64) keel.Int64Expr {
-	e := workerdb.WorkerSafetyEvents
+	e := workersafetydb.WorkerSafetyEvents
 
 	return keel.CaseInt64().
 		When(e.OccurredAt.Gte(timeutils.AddMonthsUTC(now, -6)), keel.Int64(0)).
@@ -185,8 +186,8 @@ func csaBucketExpr(now int64) keel.Int64Expr {
 func fleetBasicsQuery(
 	req *workerports.FleetSafetyRequest,
 ) *keel.Query[*workersafety.WorkerSafetyEvent] {
-	e := workerdb.WorkerSafetyEvents
-	v := workerdb.WorkerSafetyViolations
+	e := workersafetydb.WorkerSafetyEvents
+	v := workersafetydb.WorkerSafetyViolations
 	since := timeutils.AddMonthsUTC(req.Now, -workersafety.SafetyPointsRetentionMonths)
 	bucket := csaBucketExpr(req.Now)
 
@@ -236,8 +237,8 @@ func (r *repository) FleetEventBasics(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]workerports.FleetSafetyEventBasicRow, error) {
-			e := workerdb.WorkerSafetyEvents
-			v := workerdb.WorkerSafetyViolations
+			e := workersafetydb.WorkerSafetyEvents
+			v := workersafetydb.WorkerSafetyViolations
 			since := timeutils.AddMonthsUTC(req.Now, -workersafety.SafetyPointsRetentionMonths)
 			bucket := csaBucketExpr(req.Now)
 
@@ -266,7 +267,7 @@ func (r *repository) FleetEventBasics(
 func fleetTrendQuery(
 	req *workerports.FleetSafetyRequest,
 ) *keel.Query[*workersafety.WorkerSafetyEvent] {
-	e := workerdb.WorkerSafetyEvents
+	e := workersafetydb.WorkerSafetyEvents
 	since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
 	period := keel.Epoch(
 		keel.DateTrunc("month", keel.ToTimestamp(e.OccurredAt).AtTimeZone(keel.Text("UTC"))),
@@ -317,7 +318,7 @@ func (r *repository) FleetTrend(
 func fleetRankingQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
-	e := workerdb.WorkerSafetyEvents
+	e := workersafetydb.WorkerSafetyEvents
 	fc := w.FleetCode()
 	since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
 

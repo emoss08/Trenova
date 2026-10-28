@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining/workertrainingdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -61,7 +61,7 @@ func New(p Params) workerports.WorkerTrainingRepository {
 }
 
 func courseOrder() []keel.Order {
-	c := workerdb.TrainingCourses
+	c := workertrainingdb.TrainingCourses
 	return []keel.Order{c.SortOrder.Asc(), c.Name.Asc()}
 }
 
@@ -73,7 +73,7 @@ func (r *repository) ListCourses(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*workertraining.TrainingCourse], error) {
-			c := workerdb.TrainingCourses
+			c := workertrainingdb.TrainingCourses
 			q := c.Where(
 				keel.When(req.Status != "", c.Status.Eq(domaintypes.Status(req.Status))),
 				keel.When(
@@ -105,7 +105,7 @@ func (r *repository) ListActiveCourses(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*workertraining.TrainingCourse, error) {
-			c := workerdb.TrainingCourses
+			c := workertrainingdb.TrainingCourses
 			entities, err := c.Where(c.Status.Eq(domaintypes.StatusActive)).
 				Order(courseOrder()...).
 				All(ctx, r.db.Keel(ctx))
@@ -127,7 +127,7 @@ func (r *repository) CourseSelectOptions(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*workertraining.TrainingCourse], error) {
-			c := workerdb.TrainingCourses
+			c := workertrainingdb.TrainingCourses
 			q := c.Pick(
 				c.ID,
 				c.Code,
@@ -167,7 +167,7 @@ func (r *repository) GetCourseByID(
 	req *workerports.GetTrainingCourseByIDRequest,
 ) (*workertraining.TrainingCourse, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workertraining.TrainingCourse, error) {
-		entity, err := workerdb.TrainingCourses.Get(ctx, r.db.Keel(ctx), req.ID)
+		entity, err := workertrainingdb.TrainingCourses.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, courseErrors.Map(err, req.ID.String())
 		}
@@ -181,7 +181,7 @@ func (r *repository) CourseCodeExists(
 	req *workerports.TrainingCourseCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		c := workerdb.TrainingCourses
+		c := workertrainingdb.TrainingCourses
 		exists, err := c.Where(
 			c.Code.Lower().Eq(strings.ToLower(req.Code)),
 			keel.When(req.ExcludeID.IsNotNil(), c.ID.Ne(req.ExcludeID)),
@@ -200,7 +200,7 @@ func (r *repository) CreateCourse(
 	entity *workertraining.TrainingCourse,
 ) (*workertraining.TrainingCourse, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*workertraining.TrainingCourse, error) {
-		if err := workerdb.TrainingCourses.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := workertrainingdb.TrainingCourses.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create training course", zap.Error(err))
 			return nil, courseErrors.Map(err, entity.ID.String())
 		}
@@ -214,7 +214,7 @@ func (r *repository) UpdateCourse(
 	entity *workertraining.TrainingCourse,
 ) (*workertraining.TrainingCourse, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*workertraining.TrainingCourse, error) {
-		if err := workerdb.TrainingCourses.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := workertrainingdb.TrainingCourses.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update training course", zap.Error(err))
 			return nil, courseErrors.Map(err, entity.ID.String())
 		}
@@ -228,7 +228,7 @@ func (r *repository) CountRecordsByCourse(
 	req *workerports.CountTrainingRecordsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		tr := workerdb.WorkerTrainingRecords
+		tr := workertrainingdb.WorkerTrainingRecords
 		count, err := tr.Where(
 			tr.CourseID.Eq(req.CourseID),
 			keel.When(req.OpenOnly, tr.Status.In(openTrainingStatuses...)),
@@ -251,7 +251,7 @@ func (r *repository) CountRecordsByCourseIDs(
 			return map[pulid.ID]int{}, nil
 		}
 
-		tr := workerdb.WorkerTrainingRecords
+		tr := workertrainingdb.WorkerTrainingRecords
 		rows, err := keel.Into[courseCount](ctx, r.db.Keel(ctx), tr.
 			Group(tr.CourseID).
 			Pick(tr.CourseID, keel.Count()).
@@ -281,7 +281,7 @@ func (r *repository) ListForWorker(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*workertraining.WorkerTrainingRecord, error) {
-			tr := workerdb.WorkerTrainingRecords
+			tr := workertrainingdb.WorkerTrainingRecords
 			loads := make([]keel.Loader, 0, 4)
 			loads = append(loads, listquery.When(req.IncludeCourse, tr.Course())...)
 			loads = append(loads, listquery.When(req.IncludeDocument, tr.Document())...)
@@ -314,7 +314,7 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workertraining.WorkerTrainingRecord, error) {
-			tr := workerdb.WorkerTrainingRecords
+			tr := workertrainingdb.WorkerTrainingRecords
 			loads := make([]keel.Loader, 0, 3)
 			loads = append(loads, listquery.When(req.IncludeCourse, tr.Course())...)
 			loads = append(loads, listquery.When(req.IncludeWorker, tr.Worker().Profile())...)
@@ -338,7 +338,7 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workertraining.WorkerTrainingRecord, error) {
-			if err := workerdb.WorkerTrainingRecords.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workertrainingdb.WorkerTrainingRecords.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to create worker training record", zap.Error(err))
 				return nil, recordErrors.Map(err, entity.ID.String())
 			}
@@ -356,7 +356,7 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workertraining.WorkerTrainingRecord, error) {
-			if err := workerdb.WorkerTrainingRecords.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workertrainingdb.WorkerTrainingRecords.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to update worker training record", zap.Error(err))
 				return nil, recordErrors.Map(err, entity.ID.String())
 			}
@@ -371,7 +371,7 @@ func reminderQuery(
 	req *workerports.ListTrainingRemindersRequest,
 	window keel.Pred,
 ) *keel.Query[*workertraining.WorkerTrainingRecord] {
-	tr := workerdb.WorkerTrainingRecords
+	tr := workertrainingdb.WorkerTrainingRecords
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultReminderPageSize
@@ -414,7 +414,7 @@ func (r *repository) ListDue(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*workertraining.WorkerTrainingRecord, error) {
-			tr := workerdb.WorkerTrainingRecords
+			tr := workertrainingdb.WorkerTrainingRecords
 			grace, horizon := reminderWindow(req)
 			window := keel.And(
 				tr.Status.In(openTrainingStatuses...),
@@ -446,7 +446,7 @@ func (r *repository) ListExpiring(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*workertraining.WorkerTrainingRecord, error) {
-			tr := workerdb.WorkerTrainingRecords
+			tr := workertrainingdb.WorkerTrainingRecords
 			grace, horizon := reminderWindow(req)
 			window := keel.And(
 				tr.Status.Eq(workertraining.TrainingStatusCompleted),

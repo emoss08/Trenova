@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential/workercredentialdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -274,8 +275,8 @@ func (r *metricsRepository) CustomerEmptyMiles(
 func expiringCredentialsQuery(
 	req insightports.ExpiringCredentialsRequest,
 ) *keel.Query[*workercredential.WorkerCredential] {
-	wcred := workerdb.WorkerCredentials
-	wct := workerdb.WorkerCredentialTypes
+	wcred := workercredentialdb.WorkerCredentials
+	wct := workercredentialdb.WorkerCredentialTypes
 	wrk := workerdb.Workers
 
 	return wcred.Join(wct, wct.ID.EqCol(wcred.CredentialTypeID)).

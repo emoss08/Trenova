@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining/workertrainingdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -163,13 +164,13 @@ func (s *WorkerTrainingSeed) ensureCourses(
 	refs *trainingSeedRefs,
 ) error {
 	rows := s.catalog(refs)
-	if _, err := workerdb.TrainingCourses.CreateOrSkip(ctx, db, rows); err != nil {
+	if _, err := workertrainingdb.TrainingCourses.CreateOrSkip(ctx, db, rows); err != nil {
 		return err
 	}
 
-	existing, err := workerdb.TrainingCourses.AllTenants().Where(
-		workerdb.TrainingCourses.OrganizationID.Eq(refs.orgID),
-		workerdb.TrainingCourses.BusinessUnitID.Eq(refs.buID),
+	existing, err := workertrainingdb.TrainingCourses.AllTenants().Where(
+		workertrainingdb.TrainingCourses.OrganizationID.Eq(refs.orgID),
+		workertrainingdb.TrainingCourses.BusinessUnitID.Eq(refs.buID),
 	).All(ctx, db)
 	if err != nil {
 		return err
@@ -399,7 +400,7 @@ func (s *WorkerTrainingSeed) seedWorker(
 			continue
 		}
 
-		if err := workerdb.WorkerTrainingRecords.Create(ctx, db, entity); err != nil {
+		if err := workertrainingdb.WorkerTrainingRecords.Create(ctx, db, entity); err != nil {
 			return err
 		}
 	}
@@ -413,10 +414,10 @@ func (s *WorkerTrainingSeed) hasRecord(
 	wrk *worker.Worker,
 	course *workertraining.TrainingCourse,
 ) (bool, error) {
-	return workerdb.WorkerTrainingRecords.AllTenants().Where(
-		workerdb.WorkerTrainingRecords.OrganizationID.Eq(refs.orgID),
-		workerdb.WorkerTrainingRecords.BusinessUnitID.Eq(refs.buID),
-		workerdb.WorkerTrainingRecords.WorkerID.Eq(wrk.ID),
-		workerdb.WorkerTrainingRecords.CourseID.Eq(course.ID),
+	return workertrainingdb.WorkerTrainingRecords.AllTenants().Where(
+		workertrainingdb.WorkerTrainingRecords.OrganizationID.Eq(refs.orgID),
+		workertrainingdb.WorkerTrainingRecords.BusinessUnitID.Eq(refs.buID),
+		workertrainingdb.WorkerTrainingRecords.WorkerID.Eq(wrk.ID),
+		workertrainingdb.WorkerTrainingRecords.CourseID.Eq(course.ID),
 	).Exists(ctx, db)
 }

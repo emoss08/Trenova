@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment/employmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -60,7 +61,7 @@ func (s *WorkerEmploymentEventSeed) Run(ctx context.Context, sr *seed.Run) error
 			event.BusinessUnitID = org.BusinessUnitID
 			event.WorkerID = wrk.ID
 		}
-		inserted, insertErr := workerdb.WorkerEmploymentEvents.CreateOrSkip(ctx, db, events)
+		inserted, insertErr := employmentdb.WorkerEmploymentEvents.CreateOrSkip(ctx, db, events)
 		if insertErr != nil {
 			return fmt.Errorf("insert employment events for %s: %w", wrk.ID, insertErr)
 		}

@@ -310,32 +310,32 @@ func (s *Service) publish(ctx context.Context, key workerports.PTOBalanceKey, ac
 func (s *Service) PostUsage(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	pto *worker.WorkerPTO,
+	leave *worker.WorkerPTO,
 	actor Actor,
 ) (*pto.WorkerPTOLedgerEntry, error) {
-	if !pto.Days.IsPositive() {
+	if !leave.Days.IsPositive() {
 		return nil, nil
 	}
-	resolved, err := s.ResolvePolicy(ctx, tenantInfo, pto.WorkerID, pto.StartDate)
+	resolved, err := s.ResolvePolicy(ctx, tenantInfo, leave.WorkerID, leave.StartDate)
 	if err != nil {
 		return nil, err
 	}
-	if resolved.RuleFor(pto.Type) == nil {
+	if resolved.RuleFor(leave.Type) == nil {
 		return nil, nil
 	}
 
 	entry, err := s.post(ctx, postParams{
 		key: workerports.PTOBalanceKey{
 			TenantInfo: tenantInfo,
-			WorkerID:   pto.WorkerID,
-			PTOType:    pto.Type,
+			WorkerID:   leave.WorkerID,
+			PTOType:    leave.Type,
 		},
 		actor: actor,
 		entry: &pto.WorkerPTOLedgerEntry{
 			EntryType:    pto.PTOLedgerEntryUsage,
-			AmountDays:   pto.Days.Neg(),
-			EffectiveAt:  pto.StartDate,
-			SourcePTOID:  pto.ID,
+			AmountDays:   leave.Days.Neg(),
+			EffectiveAt:  leave.StartDate,
+			SourcePTOID:  leave.ID,
 			AssignmentID: resolved.Assignment.ID,
 			PTOPolicyID:  resolved.Policy.ID,
 		},
@@ -349,33 +349,33 @@ func (s *Service) PostUsage(
 func (s *Service) PostReversal(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	pto *worker.WorkerPTO,
+	leave *worker.WorkerPTO,
 	actor Actor,
 ) (*pto.WorkerPTOLedgerEntry, error) {
 	hasUsage, err := s.ledgerRepo.HasEntry(ctx, &workerports.HasPTOLedgerEntryRequest{
 		TenantInfo:  tenantInfo,
-		SourcePTOID: pto.ID,
+		SourcePTOID: leave.ID,
 		EntryType:   pto.PTOLedgerEntryUsage,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if !hasUsage || !pto.Days.IsPositive() {
+	if !hasUsage || !leave.Days.IsPositive() {
 		return nil, nil
 	}
 
 	entry, err := s.post(ctx, postParams{
 		key: workerports.PTOBalanceKey{
 			TenantInfo: tenantInfo,
-			WorkerID:   pto.WorkerID,
-			PTOType:    pto.Type,
+			WorkerID:   leave.WorkerID,
+			PTOType:    leave.Type,
 		},
 		actor: actor,
 		entry: &pto.WorkerPTOLedgerEntry{
 			EntryType:   pto.PTOLedgerEntryReversal,
-			AmountDays:  pto.Days,
+			AmountDays:  leave.Days,
 			EffectiveAt: time.Now().Unix(),
-			SourcePTOID: pto.ID,
+			SourcePTOID: leave.ID,
 		},
 	})
 	if errors.Is(err, workerports.ErrDuplicatePTOLedgerEntry) {

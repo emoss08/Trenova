@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview/workerreviewdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety/workersafetydb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -119,17 +121,17 @@ func (s *WorkerSafetySeed) ensureTemplate(
 			},
 		},
 	}
-	if _, err := workerdb.PerformanceReviewTemplates.CreateOrSkip(
+	if _, err := workerreviewdb.PerformanceReviewTemplates.CreateOrSkip(
 		ctx,
 		db,
 		[]*workerreview.PerformanceReviewTemplate{template},
 	); err != nil {
 		return err
 	}
-	existing, err := workerdb.PerformanceReviewTemplates.AllTenants().Where(
-		workerdb.PerformanceReviewTemplates.OrganizationID.Eq(refs.orgID),
-		workerdb.PerformanceReviewTemplates.BusinessUnitID.Eq(refs.buID),
-		workerdb.PerformanceReviewTemplates.Code.Eq(template.Code),
+	existing, err := workerreviewdb.PerformanceReviewTemplates.AllTenants().Where(
+		workerreviewdb.PerformanceReviewTemplates.OrganizationID.Eq(refs.orgID),
+		workerreviewdb.PerformanceReviewTemplates.BusinessUnitID.Eq(refs.buID),
+		workerreviewdb.PerformanceReviewTemplates.Code.Eq(template.Code),
 	).First(ctx, db)
 	if err != nil {
 		return err
@@ -160,18 +162,18 @@ func (s *WorkerSafetySeed) seedWorker(
 	index int,
 ) error {
 	events := s.eventsFor(refs, wrk, index)
-	if err := workerdb.WorkerSafetyEvents.CreateMany(ctx, db, events); err != nil {
+	if err := workersafetydb.WorkerSafetyEvents.CreateMany(ctx, db, events); err != nil {
 		return err
 	}
 	actions := s.actionsFor(refs, wrk, index, events)
-	if err := workerdb.WorkerDisciplinaryActions.CreateMany(ctx, db, actions); err != nil {
+	if err := workersafetydb.WorkerDisciplinaryActions.CreateMany(ctx, db, actions); err != nil {
 		return err
 	}
-	if err := workerdb.WorkerRecognitions.CreateMany(ctx, db, s.recognitionsFor(refs, wrk, index)); err != nil {
+	if err := workersafetydb.WorkerRecognitions.CreateMany(ctx, db, s.recognitionsFor(refs, wrk, index)); err != nil {
 		return err
 	}
 	if review := s.reviewFor(refs, wrk, index); review != nil {
-		if err := workerdb.PerformanceReviews.Create(ctx, db, review); err != nil {
+		if err := workerreviewdb.PerformanceReviews.Create(ctx, db, review); err != nil {
 			return err
 		}
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation/approvaldelegationdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -162,7 +163,7 @@ func (r *repository) ListDelegations(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*approvaldelegation.ApprovalDelegation, error) {
-			ad := workerdb.ApprovalDelegations
+			ad := approvaldelegationdb.ApprovalDelegations
 			var active keel.Pred
 			if req.ActiveAt > 0 {
 				active = keel.And(
@@ -202,7 +203,7 @@ func (r *repository) GetDelegationByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*approvaldelegation.ApprovalDelegation, error) {
-			entity, err := workerdb.ApprovalDelegations.Get(ctx, r.db.Keel(ctx), req.ID)
+			entity, err := approvaldelegationdb.ApprovalDelegations.Get(ctx, r.db.Keel(ctx), req.ID)
 			if err != nil {
 				return nil, approvalDelegationErrors.Map(err, req.ID.String())
 			}
@@ -220,7 +221,7 @@ func (r *repository) CreateDelegation(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*approvaldelegation.ApprovalDelegation, error) {
-			if err := workerdb.ApprovalDelegations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := approvaldelegationdb.ApprovalDelegations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to create approval delegation", zap.Error(err))
 				return nil, approvalDelegationErrors.Map(err, entity.ID.String())
 			}
@@ -238,7 +239,7 @@ func (r *repository) UpdateDelegation(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*approvaldelegation.ApprovalDelegation, error) {
-			if err := workerdb.ApprovalDelegations.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := approvaldelegationdb.ApprovalDelegations.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to update approval delegation", zap.Error(err))
 				return nil, approvalDelegationErrors.Map(err, entity.ID.String())
 			}

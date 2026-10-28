@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/keel/seed"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot/workerdotdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 
@@ -47,7 +47,7 @@ func (s *DOTRandomPoolSeed) Run(ctx context.Context, sr *seed.Run) error {
 		IsDefault:           true,
 		IncludedDriverTypes: []string{},
 	}
-	if err = workerdb.DOTRandomPools.Create(ctx, db, pool); err != nil {
+	if err = workerdotdb.DOTRandomPools.Create(ctx, db, pool); err != nil {
 		return fmt.Errorf("insert the random testing pool: %w", err)
 	}
 

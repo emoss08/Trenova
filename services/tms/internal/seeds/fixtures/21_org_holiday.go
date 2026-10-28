@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto/ptodb"
 )
 
 type OrgHolidaySeed struct {
@@ -126,7 +126,7 @@ func (s *OrgHolidaySeed) calendar() []seededHoliday {
 }
 
 func (s *OrgHolidaySeed) ensure(ctx context.Context, db *keel.DB, entity *pto.OrgHoliday) error {
-	h := workerdb.OrgHolidays
+	h := ptodb.OrgHolidays
 	_, err := h.CreateOrSkip(
 		ctx,
 		db,

@@ -49,6 +49,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist/workerchecklistdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential/workercredentialdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave/workerleavedb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety/workersafetydb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule/workerscheduledb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining/workertrainingdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -277,19 +283,19 @@ var sources = map[permission.Resource]source{
 		return t.Pick(t.ID, labelText(t.Code)).Where(t.ID.In(ids...))
 	},
 	permission.ResourceShiftTemplate: func(ids []pulid.ID) projection {
-		t := workerdb.ShiftTemplates
+		t := workerscheduledb.ShiftTemplates
 		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
 	permission.ResourceTrainingCourse: func(ids []pulid.ID) projection {
-		t := workerdb.TrainingCourses
+		t := workertrainingdb.TrainingCourses
 		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
 	permission.ResourceWorkerChecklistTemplate: func(ids []pulid.ID) projection {
-		t := workerdb.WorkerChecklistTemplates
+		t := workerchecklistdb.WorkerChecklistTemplates
 		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
 	permission.ResourceWorkerCredentialType: func(ids []pulid.ID) projection {
-		t := workerdb.WorkerCredentialTypes
+		t := workercredentialdb.WorkerCredentialTypes
 		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
 }
@@ -312,7 +318,7 @@ var ownedSources = map[permission.Resource]ownedSource{
 	},
 	permission.ResourceWorkerLeave: {
 		query: func(ids []pulid.ID) projection {
-			t := workerdb.WorkerLeaveCases
+			t := workerleavedb.WorkerLeaveCases
 			return t.Pick(t.ID, t.WorkerID, labelText(t.LeaveType)).Where(t.ID.In(ids...))
 		},
 		owner: permission.ResourceWorker,
@@ -326,7 +332,7 @@ var ownedSources = map[permission.Resource]ownedSource{
 	},
 	permission.ResourceWorkerSafetyEvent: {
 		query: func(ids []pulid.ID) projection {
-			t := workerdb.WorkerSafetyEvents
+			t := workersafetydb.WorkerSafetyEvents
 			return t.Pick(t.ID, t.WorkerID, labelText(t.Kind)).Where(t.ID.In(ids...))
 		},
 		owner: permission.ResourceWorker,

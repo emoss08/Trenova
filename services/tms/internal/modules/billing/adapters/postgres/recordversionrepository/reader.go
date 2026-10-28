@@ -51,8 +51,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment/employmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit/permitdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet/timesheetdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist/workerchecklistdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential/workercredentialdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot/workerdotdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave/workerleavedb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview/workerreviewdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety/workersafetydb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule/workerscheduledb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining/workertrainingdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert/tablechangealertdb"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -102,11 +112,11 @@ var lookups = map[permission.Resource]lookup{
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceWorkerSchedule: by(func(id pulid.ID) keel.Projection {
-		t := workerdb.WorkerShiftAssignments
+		t := workerscheduledb.WorkerShiftAssignments
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceShiftSwap: by(func(id pulid.ID) keel.Projection {
-		t := workerdb.ShiftSwapRequests
+		t := workerscheduledb.ShiftSwapRequests
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceCarrier: by(func(id pulid.ID) keel.Projection {
@@ -335,76 +345,76 @@ var lookups = map[permission.Resource]lookup{
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceWorkerDOTTest: by(func(id pulid.ID) keel.Projection {
-		t := workerdb.WorkerDOTTests
+		t := workerdotdb.WorkerDOTTests
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceDOTRandomPool: {kinds: map[string]lookup{
 		"drdraw_": by(func(id pulid.ID) keel.Projection {
-			t := workerdb.DOTRandomDraws
+			t := workerdotdb.DOTRandomDraws
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 		"drde_": by(func(id pulid.ID) keel.Projection {
-			t := workerdb.DOTRandomDrawEntries
+			t := workerdotdb.DOTRandomDrawEntries
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 	}},
 	permission.ResourceWorkerSafetyEvent: {kinds: map[string]lookup{
 		"wsev_": by(func(id pulid.ID) keel.Projection {
-			t := workerdb.WorkerSafetyEvents
+			t := workersafetydb.WorkerSafetyEvents
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 		"wsvi_": by(func(id pulid.ID) keel.Projection {
-			t := workerdb.WorkerSafetyViolations
+			t := workersafetydb.WorkerSafetyViolations
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 	}},
 	permission.ResourceWorkerRecognition: by(func(id pulid.ID) keel.Projection {
-		t := workerdb.WorkerRecognitions
+		t := workersafetydb.WorkerRecognitions
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceWorkerLeave: {kinds: map[string]lookup{
 		"wlc_": by(func(id pulid.ID) keel.Projection {
-			t := workerdb.WorkerLeaveCases
+			t := workerleavedb.WorkerLeaveCases
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 		"wle_": by(func(id pulid.ID) keel.Projection {
-			t := workerdb.WorkerLeaveEntries
+			t := workerleavedb.WorkerLeaveEntries
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 	}},
 	permission.ResourceWorkerTraining: by(func(id pulid.ID) keel.Projection {
-		t := workerdb.WorkerTrainingRecords
+		t := workertrainingdb.WorkerTrainingRecords
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceWorkerChecklist: {kinds: map[string]lookup{
 		"wcl_": by(func(id pulid.ID) keel.Projection {
-			t := workerdb.WorkerChecklists
+			t := workerchecklistdb.WorkerChecklists
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 		"wcli_": by(func(id pulid.ID) keel.Projection {
-			t := workerdb.WorkerChecklistItems
+			t := workerchecklistdb.WorkerChecklistItems
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 	}},
 	permission.ResourcePerformanceReview: by(func(id pulid.ID) keel.Projection {
-		t := workerdb.PerformanceReviews
+		t := workerreviewdb.PerformanceReviews
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceQualification: by(func(id pulid.ID) keel.Projection {
-		t := workerdb.WorkerEmploymentVerifications
+		t := employmentdb.WorkerEmploymentVerifications
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceWorkerCredential: by(func(id pulid.ID) keel.Projection {
-		t := workerdb.WorkerCredentials
+		t := workercredentialdb.WorkerCredentials
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceWorkerInjury: by(func(id pulid.ID) keel.Projection {
-		t := workerdb.WorkerInjuries
+		t := workersafetydb.WorkerInjuries
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceTimesheet: {kinds: map[string]lookup{
 		"pxb_": by(func(id pulid.ID) keel.Projection {
-			t := workerdb.PayrollExports
+			t := timesheetdb.PayrollExports
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 	}},

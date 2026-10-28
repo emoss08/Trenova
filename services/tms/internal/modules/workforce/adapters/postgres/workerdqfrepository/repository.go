@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment/employmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -53,7 +54,7 @@ func limitOr(requested, fallback int) int {
 }
 
 func verificationLoads(includeWorker, includeDocument bool) []keel.Loader {
-	v := workerdb.WorkerEmploymentVerifications
+	v := employmentdb.WorkerEmploymentVerifications
 
 	return append(
 		listquery.When(includeWorker, v.Worker()),
@@ -62,7 +63,7 @@ func verificationLoads(includeWorker, includeDocument bool) []keel.Loader {
 }
 
 func verificationOrder() []keel.Order {
-	v := workerdb.WorkerEmploymentVerifications
+	v := employmentdb.WorkerEmploymentVerifications
 	return []keel.Order{v.EmployedTo.Desc().NullsLast(), v.CreatedAt.Desc()}
 }
 
@@ -74,7 +75,7 @@ func (r *repository) ListVerifications(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*employment.WorkerEmploymentVerification, error) {
-			v := workerdb.WorkerEmploymentVerifications
+			v := employmentdb.WorkerEmploymentVerifications
 			entities, err := v.Where(
 				keel.When(req.WorkerID.IsNotNil(), v.WorkerID.Eq(req.WorkerID)),
 				keel.When(req.OutstandingOnly, v.Status.In(
@@ -108,7 +109,7 @@ func (r *repository) ListVerificationsByWorkerIDs(
 				return map[pulid.ID][]*employment.WorkerEmploymentVerification{}, nil
 			}
 
-			v := workerdb.WorkerEmploymentVerifications
+			v := employmentdb.WorkerEmploymentVerifications
 			entities, err := v.Where(v.WorkerID.In(req.WorkerIDs...)).
 				Load(verificationLoads(req.IncludeWorker, req.IncludeDocument)...).
 				Order(verificationOrder()...).
@@ -137,7 +138,7 @@ func (r *repository) GetVerificationByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*employment.WorkerEmploymentVerification, error) {
-			v := workerdb.WorkerEmploymentVerifications
+			v := employmentdb.WorkerEmploymentVerifications
 			entity, err := v.Where(v.ID.Eq(req.ID)).
 				Load(verificationLoads(false, req.IncludeDocument)...).
 				One(ctx, r.db.Keel(ctx))
@@ -158,7 +159,7 @@ func (r *repository) CreateVerification(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*employment.WorkerEmploymentVerification, error) {
-			err := workerdb.WorkerEmploymentVerifications.Create(ctx, r.db.Keel(ctx), entity)
+			err := employmentdb.WorkerEmploymentVerifications.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to create employment verification", zap.Error(err))
 				return nil, verificationErrors.Map(err, entity.ID.String())
@@ -177,7 +178,7 @@ func (r *repository) UpdateVerification(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*employment.WorkerEmploymentVerification, error) {
-			err := workerdb.WorkerEmploymentVerifications.Save(ctx, r.db.Keel(ctx), entity)
+			err := employmentdb.WorkerEmploymentVerifications.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update employment verification", zap.Error(err))
 				return nil, verificationErrors.Map(err, entity.ID.String())
@@ -193,7 +194,7 @@ func (r *repository) DeleteVerification(
 	req *workerports.GetEmploymentVerificationByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		err := workerdb.WorkerEmploymentVerifications.DeleteRow(
+		err := employmentdb.WorkerEmploymentVerifications.DeleteRow(
 			ctx,
 			r.db.Keel(ctx),
 			&employment.WorkerEmploymentVerification{ID: req.ID},

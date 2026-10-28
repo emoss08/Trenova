@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential/workercredentialdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -101,13 +102,13 @@ func (s *WorkerCredentialSeed) ensureTypes(
 		row.IsSystem = true
 		row.RequiredForDriverTypes = []worker.DriverType{}
 	}
-	if _, err := workerdb.WorkerCredentialTypes.CreateOrSkip(ctx, db, rows); err != nil {
+	if _, err := workercredentialdb.WorkerCredentialTypes.CreateOrSkip(ctx, db, rows); err != nil {
 		return err
 	}
 
-	existing, err := workerdb.WorkerCredentialTypes.AllTenants().Where(
-		workerdb.WorkerCredentialTypes.OrganizationID.Eq(refs.orgID),
-		workerdb.WorkerCredentialTypes.BusinessUnitID.Eq(refs.buID),
+	existing, err := workercredentialdb.WorkerCredentialTypes.AllTenants().Where(
+		workercredentialdb.WorkerCredentialTypes.OrganizationID.Eq(refs.orgID),
+		workercredentialdb.WorkerCredentialTypes.BusinessUnitID.Eq(refs.buID),
 	).All(ctx, db)
 	if err != nil {
 		return err
@@ -292,7 +293,7 @@ func (s *WorkerCredentialSeed) seedWorker(
 			entity.VerifiedByID = refs.adminID
 		}
 
-		inserted, err := workerdb.WorkerCredentials.CreateOrSkip(
+		inserted, err := workercredentialdb.WorkerCredentials.CreateOrSkip(
 			ctx,
 			db,
 			[]*workercredential.WorkerCredential{entity},
@@ -330,10 +331,10 @@ func (s *WorkerCredentialSeed) deriveCompliance(
 	refs *credentialSeedRefs,
 	wrk *worker.Worker,
 ) error {
-	credentials, err := workerdb.WorkerCredentials.AllTenants().Where(
-		workerdb.WorkerCredentials.WorkerID.Eq(wrk.ID),
-		workerdb.WorkerCredentials.OrganizationID.Eq(refs.orgID),
-		workerdb.WorkerCredentials.BusinessUnitID.Eq(refs.buID),
+	credentials, err := workercredentialdb.WorkerCredentials.AllTenants().Where(
+		workercredentialdb.WorkerCredentials.WorkerID.Eq(wrk.ID),
+		workercredentialdb.WorkerCredentials.OrganizationID.Eq(refs.orgID),
+		workercredentialdb.WorkerCredentials.BusinessUnitID.Eq(refs.buID),
 	).All(ctx, db)
 	if err != nil {
 		return fmt.Errorf("load credentials: %w", err)

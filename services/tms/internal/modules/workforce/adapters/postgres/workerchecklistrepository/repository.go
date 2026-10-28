@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist/workerchecklistdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -55,13 +55,13 @@ func New(p Params) workerports.WorkerChecklistRepository {
 }
 
 func templateItems() keel.Loader {
-	it := workerdb.WorkerChecklistTemplates.Items()
+	it := workerchecklistdb.WorkerChecklistTemplates.Items()
 
 	return it.Order(it.SortOrder.Asc()).Load(it.CredentialType(), it.DocumentType())
 }
 
 func checklistItems() keel.Loader {
-	it := workerdb.WorkerChecklists.Items()
+	it := workerchecklistdb.WorkerChecklists.Items()
 
 	return it.Order(it.SortOrder.Asc()).Load(
 		it.CompletedBy(),
@@ -72,7 +72,7 @@ func checklistItems() keel.Loader {
 }
 
 func templateFilter(req *workerports.ListChecklistTemplatesRequest) []keel.Pred {
-	t := workerdb.WorkerChecklistTemplates
+	t := workerchecklistdb.WorkerChecklistTemplates
 
 	return []keel.Pred{
 		keel.When(req.Status != "", t.Status.Eq(domaintypes.Status(req.Status))),
@@ -89,7 +89,7 @@ func (r *repository) ListTemplates(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*workerchecklist.WorkerChecklistTemplate], error) {
-			t := workerdb.WorkerChecklistTemplates
+			t := workerchecklistdb.WorkerChecklistTemplates
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
@@ -122,7 +122,7 @@ func (r *repository) ListActiveTemplates(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*workerchecklist.WorkerChecklistTemplate, error) {
-			t := workerdb.WorkerChecklistTemplates
+			t := workerchecklistdb.WorkerChecklistTemplates
 			entities, err := t.Where(t.Status.Eq(domaintypes.StatusActive)).
 				Load(templateItems()).
 				Order(t.Name.Asc()).
@@ -145,7 +145,7 @@ func (r *repository) GetTemplateByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerchecklist.WorkerChecklistTemplate, error) {
-			t := workerdb.WorkerChecklistTemplates
+			t := workerchecklistdb.WorkerChecklistTemplates
 			entity, err := t.Where(t.ID.Eq(req.ID)).
 				Load(listquery.When(req.IncludeItems, templateItems())...).
 				One(ctx, r.db.Keel(ctx))
@@ -166,7 +166,7 @@ func (r *repository) GetDefaultTemplate(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerchecklist.WorkerChecklistTemplate, error) {
-			t := workerdb.WorkerChecklistTemplates
+			t := workerchecklistdb.WorkerChecklistTemplates
 			entity, err := t.Where(
 				t.Trigger.Eq(req.Trigger),
 				t.IsDefault.IsTrue(),
@@ -189,7 +189,7 @@ func (r *repository) TemplateCodeExists(
 	req *workerports.ChecklistTemplateCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		t := workerdb.WorkerChecklistTemplates
+		t := workerchecklistdb.WorkerChecklistTemplates
 		exists, err := t.Where(
 			t.Code.Lower().Eq(strings.ToLower(req.Code)),
 			keel.When(req.ExcludeID.IsNotNil(), t.ID.Ne(req.ExcludeID)),
@@ -234,7 +234,7 @@ func (r *repository) insertTemplateItems(
 		return nil
 	}
 
-	return workerdb.WorkerChecklistTemplateItems.CreateMany(ctx, r.db.Keel(ctx), items)
+	return workerchecklistdb.WorkerChecklistTemplateItems.CreateMany(ctx, r.db.Keel(ctx), items)
 }
 
 func (r *repository) CreateTemplate(
@@ -271,7 +271,7 @@ func (r *repository) createTemplate(
 		}
 	}
 
-	if err := workerdb.WorkerChecklistTemplates.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+	if err := workerchecklistdb.WorkerChecklistTemplates.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 		return err
 	}
 
@@ -314,11 +314,11 @@ func (r *repository) updateTemplate(
 	}
 
 	db := r.db.Keel(ctx)
-	if err := workerdb.WorkerChecklistTemplates.Save(ctx, db, entity); err != nil {
+	if err := workerchecklistdb.WorkerChecklistTemplates.Save(ctx, db, entity); err != nil {
 		return err
 	}
 
-	it := workerdb.WorkerChecklistTemplateItems
+	it := workerchecklistdb.WorkerChecklistTemplateItems
 	if _, err := it.Where(it.TemplateID.Eq(entity.ID)).Delete(ctx, db); err != nil {
 		return err
 	}
@@ -331,7 +331,7 @@ func (r *repository) ClearDefaultTemplate(
 	req *workerports.ClearDefaultChecklistTemplateRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		t := workerdb.WorkerChecklistTemplates
+		t := workerchecklistdb.WorkerChecklistTemplates
 		_, err := t.Where(
 			t.Trigger.Eq(req.Trigger),
 			t.IsDefault.IsTrue(),
@@ -351,7 +351,7 @@ func (r *repository) CountOpenChecklists(
 	req *workerports.CountOpenChecklistsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		c := workerdb.WorkerChecklists
+		c := workerchecklistdb.WorkerChecklists
 		count, err := c.Where(
 			c.Status.Eq(workerchecklist.ChecklistStatusOpen),
 			keel.When(req.WorkerID.IsNotNil(), c.WorkerID.Eq(req.WorkerID)),
@@ -375,7 +375,7 @@ func (r *repository) CountOpenChecklistsByTemplateIDs(
 			return map[pulid.ID]int{}, nil
 		}
 
-		c := workerdb.WorkerChecklists
+		c := workerchecklistdb.WorkerChecklists
 		rows, err := keel.Into[templateCount](ctx, r.db.Keel(ctx), c.
 			Group(c.TemplateID).
 			Pick(c.TemplateID, keel.Count()).
@@ -403,7 +403,7 @@ func (r *repository) ListForWorker(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*workerchecklist.WorkerChecklist, error) {
-			c := workerdb.WorkerChecklists
+			c := workerchecklistdb.WorkerChecklists
 			entities, err := c.Where(
 				c.WorkerID.Eq(req.WorkerID),
 				keel.When(!req.IncludeClosed, c.Status.Eq(workerchecklist.ChecklistStatusOpen)),
@@ -430,7 +430,7 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerchecklist.WorkerChecklist, error) {
-			c := workerdb.WorkerChecklists
+			c := workerchecklistdb.WorkerChecklists
 			entity, err := c.Where(c.ID.Eq(req.ID)).
 				Load(c.StartedBy()).
 				Load(listquery.When(req.IncludeItems, checklistItems())...).
@@ -452,7 +452,7 @@ func (r *repository) GetItemByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerchecklist.WorkerChecklistItem, error) {
-			entity, err := workerdb.WorkerChecklistItems.Get(ctx, r.db.Keel(ctx), req.ID)
+			entity, err := workerchecklistdb.WorkerChecklistItems.Get(ctx, r.db.Keel(ctx), req.ID)
 			if err != nil {
 				return nil, itemErrors.Map(err, req.ID.String())
 			}
@@ -485,7 +485,7 @@ func (r *repository) Create(
 
 func (r *repository) create(ctx context.Context, entity *workerchecklist.WorkerChecklist) error {
 	db := r.db.Keel(ctx)
-	if err := workerdb.WorkerChecklists.Create(ctx, db, entity); err != nil {
+	if err := workerchecklistdb.WorkerChecklists.Create(ctx, db, entity); err != nil {
 		return err
 	}
 
@@ -500,7 +500,7 @@ func (r *repository) create(ctx context.Context, entity *workerchecklist.WorkerC
 		item.SortOrder = int32(i)
 	}
 
-	return workerdb.WorkerChecklistItems.CreateMany(ctx, db, entity.Items)
+	return workerchecklistdb.WorkerChecklistItems.CreateMany(ctx, db, entity.Items)
 }
 
 func (r *repository) Update(
@@ -511,7 +511,7 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerchecklist.WorkerChecklist, error) {
-			if err := workerdb.WorkerChecklists.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerchecklistdb.WorkerChecklists.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to update worker checklist", zap.Error(err))
 				return nil, checklistErrors.Map(err, entity.ID.String())
 			}
@@ -528,7 +528,7 @@ func (r *repository) UpdateItems(
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
 		for _, item := range items {
-			if err := workerdb.WorkerChecklistItems.Save(ctx, db, item); err != nil {
+			if err := workerchecklistdb.WorkerChecklistItems.Save(ctx, db, item); err != nil {
 				return itemErrors.Map(err, item.ID.String())
 			}
 		}

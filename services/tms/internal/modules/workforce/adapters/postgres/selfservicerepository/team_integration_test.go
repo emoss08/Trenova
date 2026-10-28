@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange/profilechangedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/internal/testutil/workerteamtest"
@@ -28,7 +28,7 @@ func TestChangeRequestsNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 	ctx = data.Ctx(ctx)
 
 	for _, wrk := range []*worker.Worker{team.Direct, team.ViaFleet, team.Outsider} {
-		err := workerdb.WorkerProfileChangeRequests.Create(
+		err := profilechangedb.WorkerProfileChangeRequests.Create(
 			ctx,
 			db,
 			&profilechange.WorkerProfileChangeRequest{

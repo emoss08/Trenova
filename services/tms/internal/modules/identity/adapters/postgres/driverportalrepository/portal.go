@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation/portalinvitationdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -79,7 +80,7 @@ func (r *portalAccessRepository) CreateInvitation(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*portalinvitation.PortalInvitation, error) {
-			if err := workerdb.PortalInvitations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := portalinvitationdb.PortalInvitations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 				return nil, fmt.Errorf(
 					"create portal invitation: %w",
 					invitationErrors.Map(err, entity.ID.String()),
@@ -98,7 +99,7 @@ func (r *portalAccessRepository) UpdateInvitation(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*portalinvitation.PortalInvitation, error) {
-			if err := workerdb.PortalInvitations.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := portalinvitationdb.PortalInvitations.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 				return nil, invitationErrors.Map(err, entity.ID.String())
 			}
 			return entity, nil
@@ -114,7 +115,7 @@ func (r *portalAccessRepository) GetInvitationByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*portalinvitation.PortalInvitation, error) {
-			pi := workerdb.PortalInvitations
+			pi := portalinvitationdb.PortalInvitations
 			entity, err := pi.Where(pi.ID.Eq(req.ID)).Load(pi.Worker()).One(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, invitationErrors.Map(err, req.ID.String())
@@ -133,7 +134,7 @@ func (r *portalAccessRepository) GetInvitationByTokenHash(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*portalinvitation.PortalInvitation, error) {
-			pi := workerdb.PortalInvitations
+			pi := portalinvitationdb.PortalInvitations
 			entity, err := pi.AllTenants().
 				Where(pi.TokenHash.Eq(tokenHash)).
 				Load(pi.Worker().Organization()).
@@ -154,7 +155,7 @@ func (r *portalAccessRepository) GetPendingInvitationForWorker(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*portalinvitation.PortalInvitation, error) {
-			pi := workerdb.PortalInvitations
+			pi := portalinvitationdb.PortalInvitations
 			entity, err := pi.Where(
 				pi.WorkerID.Eq(req.WorkerID),
 				pi.Status.Eq(portalinvitation.PortalInvitationStatusPending),
@@ -177,7 +178,7 @@ func (r *portalAccessRepository) ListInvitations(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*portalinvitation.PortalInvitation, error) {
-			pi := workerdb.PortalInvitations
+			pi := portalinvitationdb.PortalInvitations
 			items, err := pi.Where(keel.When(!req.WorkerID.IsNil(), pi.WorkerID.Eq(req.WorkerID))).
 				Load(pi.InvitedBy()).
 				Order(pi.CreatedAt.Desc()).
@@ -307,7 +308,7 @@ func (r *portalAccessRepository) ActivatePortalAccess(
 			return nil, err
 		}
 
-		pi := workerdb.PortalInvitations
+		pi := portalinvitationdb.PortalInvitations
 		now := timeutils.NowUnix()
 		invitation.Status = portalinvitation.PortalInvitationStatusAccepted
 		invitation.AcceptedAt = &now
@@ -334,7 +335,7 @@ func (r *portalAccessRepository) lockInvitation(
 	ctx context.Context,
 	ref *portalinvitation.PortalInvitation,
 ) (*portalinvitation.PortalInvitation, error) {
-	pi := workerdb.PortalInvitations
+	pi := portalinvitationdb.PortalInvitations
 	invitation, err := pi.Where(pi.ID.Eq(ref.ID)).
 		Lock(keel.ForUpdate).
 		One(ctx, r.db.Keel(ctx))
@@ -479,7 +480,7 @@ func (r *portalAccessRepository) RevokePortalAccess(
 			return workerErrors.Map(err, workerID.String())
 		}
 
-		pi := workerdb.PortalInvitations
+		pi := portalinvitationdb.PortalInvitations
 		if _, err = pi.Where(
 			pi.WorkerID.Eq(workerID),
 			pi.Status.Eq(portalinvitation.PortalInvitationStatusPending),

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation/portalinvitationdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -59,7 +60,7 @@ func TestActivatePortalAccessRefusesASeatPastTheQuota(t *testing.T) {
 		ExpiresAt:   time.Now().Add(time.Hour).Unix(),
 		InvitedByID: data.User.ID,
 	}
-	require.NoError(t, workerdb.PortalInvitations.Create(tenantCtx, db, invitation))
+	require.NoError(t, portalinvitationdb.PortalInvitations.Create(tenantCtx, db, invitation))
 
 	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &portalAccessRepository{
