@@ -348,9 +348,9 @@ function carriersCard(state) {
 }
 
 const ENTRIES = [
-  ["je_board_0118", "JE-2610-0118", "Accrue October fuel, Pilot and Love’s", "48210.00", 3],
-  ["je_board_0121", "JE-2610-0121", "Reclass detention revenue to accessorials", "6375.00", 2],
-  ["je_board_0124", "JE-2610-0124", "Driver advance write-off, M. Ortiz", "1200.00", 1],
+  ["je_board_0118", "JE-2610-0118", "Accrue October fuel, Pilot and Love’s", 3],
+  ["je_board_0121", "JE-2610-0121", "Reclass detention revenue to accessorials", 2],
+  ["je_board_0124", "JE-2610-0124", "Driver advance write-off, M. Ortiz", 1],
 ];
 const INVOICES = [
   ["inv_board_0042", "INV-2610-0042", "Acme Foods", "2930.50", 12],
@@ -361,7 +361,7 @@ const INVOICES = [
 
 function closeCard(state) {
   const day = 86400;
-  const entries = ENTRIES.map(([id, label, memo, amount, days]) =>
+  const entries = ENTRIES.map(([id, label, memo, days]) =>
     record("journal_entry", id, label, memo, "Pending", {
       measure: "pendingFor",
       value: dur(days * day),
