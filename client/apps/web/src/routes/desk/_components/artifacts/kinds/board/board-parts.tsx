@@ -313,12 +313,12 @@ function RowBody({ row, furthest, now }: { row: DeskBoardRow; furthest: number; 
       {track ? (
         <span className={cn("dk-bd-behind", toneClass(reading.tone))}>
           <span>
-            <span>{reading.against}</span>
+            <span title={reading.against}>{reading.against}</span>
             <b>{reading.standing}</b>
           </span>
           <span className="dk-bd-track">
             <i
-              className={cn(reading.held && "dk-bd-held")}
+              className={cn(reading.held && "dk-bd-held", reading.projected && "dk-bd-projected")}
               style={{ width: `${Math.round(reading.fraction * 100)}%` }}
             />
           </span>

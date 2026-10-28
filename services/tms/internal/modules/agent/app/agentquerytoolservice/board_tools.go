@@ -112,8 +112,9 @@ func (t *getDispatchBoardTool) Description() string {
 		"and every driver with availability, hours remaining and last position. Urgency " +
 		"is Late, Now, Today, Tomorrow or Planned, and each move shows who covers it and " +
 		"its pickup and delivery windows. This is the one call for \"what is late\", " +
-		"\"what is uncovered\" and \"who is free\". Urgency follows the pickup window, " +
-		"so each late move's lateTo says whether it is late to pick up or to deliver, " +
+		"\"what is uncovered\" and \"who is free\". Urgency follows the move's next stop: " +
+		"the pickup window until it is picked up, then the delivery window. Each late " +
+		"move's lateTo says whether it is late to pick up or to deliver, " +
 		"and lateBy how long past the window's close it is, the way to say it; " +
 		"check shipment_get_tracking on a late move " +
 		"before acting on it, since arrivals are sometimes recorded late. A rundown or " +
@@ -229,9 +230,9 @@ func boardViewOf(board *dispatchconsoleservice.Board, timezone string) boardView
 	}
 
 	view.Note = fmt.Sprintf(
-		"%d moves and %d drivers in the window. Urgency counts: %s. Urgency follows the "+
-			"pickup window, so a move already picked up reads Late too; lateTo says what "+
-			"each is late to do: %d late to pick up, %d late to deliver.%s",
+		"%d moves and %d drivers in the window. Urgency counts: %s. Urgency follows each "+
+			"move's next stop, the pickup until it is picked up and then the delivery; "+
+			"lateTo says what each is late to do: %d late to pick up, %d late to deliver.%s",
 		len(view.Moves), len(view.Drivers), countsText(view.Counts),
 		late.pickUp, late.deliver, late.delayedText(),
 	)

@@ -115,6 +115,7 @@ type artifactRecorder struct {
 	emit      kernelports.AssistantStreamEmitter
 	recorded  []*assistantartifact.Artifact
 	readBy    *agentIdentity
+	agentRead bool
 	// svc reads what an artifact needs beyond the tool's result: the agent
 	// a document is credited to, the pages an extraction was read from.
 	svc *Service
@@ -312,7 +313,26 @@ func (r *artifactRecorder) author() string {
 	return r.svc.agentName(r.ctx, agentports.GetThreadRequest{
 		ID:         r.thread.ID,
 		TenantInfo: r.tenant,
-	}, r.thread)
+	}, r.agentThread())
+}
+
+func (r *artifactRecorder) agentThread() *conversation.Thread {
+	if r.thread.AgentDefinitionID.IsNotNil() || r.agentRead || r.svc == nil ||
+		r.svc.conversations == nil || r.reader == nil {
+		return r.thread
+	}
+	r.agentRead = true
+	thread, err := r.svc.conversations.GetThread(r.ctx, agentports.GetThreadRequest{
+		ID:         r.thread.ID,
+		UserID:     r.reader.UserID,
+		TenantInfo: r.tenant,
+	})
+	if err != nil || thread == nil {
+		return r.thread
+	}
+	r.thread.AgentDefinitionID = thread.AgentDefinitionID
+
+	return r.thread
 }
 
 // adopt takes on artifacts kept earlier in the turn, where the tools that made

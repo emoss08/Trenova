@@ -3516,6 +3516,33 @@
       "go/other"
     ]
   },
+  "A batch id is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A batch needs at least one request": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A batch takes at most {0} requests": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A bill for freight (210)": {
     "sites": 2,
     "scope": [
@@ -36167,7 +36194,7 @@
     ]
   },
   "At {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -77617,6 +77644,15 @@
       "routes/shipment"
     ]
   },
+  "Delivered {0} at {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Delivered {0}. Record the factor's funding once its report or remittance arrives.": {
     "sites": 1,
     "scope": [
@@ -87462,7 +87498,7 @@
     ]
   },
   "Due {0}": {
-    "sites": 11,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -87473,6 +87509,15 @@
       "routes/desk",
       "routes/ifta-return",
       "routes/shipment-tracking-public"
+    ]
+  },
+  "Due {0} at {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Due {0} · last {1}": {
@@ -98635,6 +98680,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Every request in a batch needs an id": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Every required course is already open or current.": {
@@ -218596,6 +218650,15 @@
       "go/other"
     ]
   },
+  "Request id {0} appears twice in one batch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Request is required": {
     "sites": 55,
     "scope": [
@@ -260299,6 +260362,15 @@
     ]
   },
   "The AI provider that started this call no longer exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The AI provider that took this batch no longer exists": {
     "sites": 1,
     "scope": [
       "go"
@@ -306621,6 +306693,15 @@
       "routes/desk"
     ]
   },
+  "Wait for an unattended suite run's judge batch, keep each judgement, judge what it missed one case at a time and finalize the run": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Wait for attachments to finish uploading": {
     "sites": 1,
     "scope": [
@@ -328890,6 +328971,15 @@
       "packages/shared/lib"
     ]
   },
+  "estimated {0} late": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "event is a step of a flow test": {
     "sites": 2,
     "scope": [
@@ -331179,6 +331269,15 @@
     ]
   },
   "not billable · notice not sent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "not estimated": {
     "sites": 1,
     "scope": [
       "ts"

@@ -53,11 +53,36 @@ func summarizeTender(entity *tender.Tender) *MoveTenderSummary {
 }
 
 func urgencyFor(move *shipmentports.BoardMove, now int64) UrgencyBucket {
+	if arrived(move.OriginActualArrive) {
+		return deliveryUrgency(move, now)
+	}
 	if move.OriginWindowStart <= 0 {
 		return UrgencyPlanned
 	}
 
-	delta := move.OriginWindowStart - now
+	return bucketFor(move.OriginWindowStart - now)
+}
+
+func deliveryUrgency(move *shipmentports.BoardMove, now int64) UrgencyBucket {
+	if arrived(move.DestinationActualArrive) || move.DestinationWindowStart <= 0 {
+		return UrgencyPlanned
+	}
+	closes := move.DestinationWindowStart
+	if move.DestinationWindowEnd != nil && *move.DestinationWindowEnd > closes {
+		closes = *move.DestinationWindowEnd
+	}
+	if closes < now {
+		return UrgencyLate
+	}
+
+	return bucketFor(max(move.DestinationWindowStart-now, 0))
+}
+
+func arrived(at *int64) bool {
+	return at != nil && *at > 0
+}
+
+func bucketFor(delta int64) UrgencyBucket {
 	switch {
 	case delta < 0:
 		return UrgencyLate

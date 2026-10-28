@@ -24,8 +24,9 @@ const showBoardDescription = "Lay out your answer to a question that spans sever
 	"explains a set of records, a close or a lane, and would otherwise be a long reply. You " +
 	"write only the words: the title, a verdict of one or two sentences, prose and at most two " +
 	"notes. Every number, status, row and count is read by Trenova from what each block names " +
-	"when the person opens the board, so never write a figure in the words: point at the block " +
-	"that shows it. Name only records your tools returned in this conversation, by their ids. " +
+	"when the person opens the board, so never write a figure in the words (a duration, an " +
+	"amount, a percentage or a count is refused; record numbers, times of day and dates are " +
+	"fine): point at the block that shows it. Name only records your tools returned in this conversation, by their ids. " +
 	"Cite a block in the verdict or in prose as [words][n], n being the block's position from " +
 	"1; only blocks that read data can be cited. Blocks: figures (1 to 4 figures, each a " +
 	"metric, records with a measure and how to add them up, or an analysis figure); records " +
@@ -35,7 +36,10 @@ const showBoardDescription = "Lay out your answer to a question that spans sever
 	"(an analysis chart); timeline (one record's history); checks (up to 12, each with a tone " +
 	"and the records it counts or a metric); meter (the checks of a checks block, or a " +
 	"percentage metric); prose; note (bad, warn, info or ok). To revise a board you showed, " +
-	"pass its boardId with the whole new board; the earlier one is kept as a version."
+	"pass its boardId with the whole new board; the earlier one is kept as a version. Write " +
+	"plain sentences: no markdown, no bold, no headings, no lists. A prose block is one " +
+	"paragraph of at most 600 characters; to say more, use another block. A note needs a " +
+	"title, what it says in a line, and at most 400 characters of text."
 
 const unboardableRefusal = "There is nowhere to show a board from here. Answer in your reply " +
 	"instead."
@@ -58,6 +62,13 @@ func schemaText(description string) map[string]any {
 		toolschema.KeyType:        toolschema.TypeString,
 		toolschema.KeyDescription: description,
 	}
+}
+
+func schemaWords(most int, description string) map[string]any {
+	words := schemaText(description)
+	words[toolschema.KeyMaxLength] = most
+
+	return words
 }
 
 func schemaPosition(description string) map[string]any {
@@ -104,8 +115,9 @@ func boardToneSchema() map[string]any {
 }
 
 func boardMeasureSchema() map[string]any {
-	return schemaText("What to measure each record by. A shipment: lateness or revenue. An " +
-		"invoice: amountDue, total or age. A journal entry: amount or pendingFor.")
+	return schemaText("What to measure each record by. A shipment: lateness (past its next " +
+		"window, or estimated to miss one still open) or revenue. An invoice: amountDue, total " +
+		"or age. A journal entry: amount or pendingFor.")
 }
 
 func boardMetricSchema() map[string]any {
@@ -121,10 +133,12 @@ func boardFigureSchema() map[string]any {
 		string(board.AggregateCount), string(board.AggregateSum), string(board.AggregateMax),
 	)
 	aggregate[toolschema.KeyDescription] = "count (the records, or those whose measure is " +
-		"above zero), sum or max of the measure. Defaults to count."
+		"above zero), sum or max of the measure. Defaults to count. Lateness only an " +
+		"estimate projects is shown on its row and left out of figures."
 
 	return schemaObject(map[string]any{
-		boardPropLabel:   schemaText("What the figure is, in a few words, with no number in it."),
+		boardPropLabel: schemaWords(board.MaxLabelRunes,
+			"What the figure is, in a few words, with no number in it."),
 		boardPropMetric:  boardMetricSchema(),
 		boardPropRecords: schemaRecordIDs("The records the figure adds up."),
 		boardPropMeasure: boardMeasureSchema(),
@@ -136,9 +150,10 @@ func boardFigureSchema() map[string]any {
 
 func boardCheckSchema() map[string]any {
 	return schemaObject(map[string]any{
-		boardPropTitle:   schemaText("What the check is, in a line."),
-		boardPropTone:    boardToneSchema(),
-		boardPropDetail:  schemaText("One more line, with no number in it."),
+		boardPropTitle: schemaWords(board.MaxCheckTitleRunes, "What the check is, in a line."),
+		boardPropTone:  boardToneSchema(),
+		boardPropDetail: schemaWords(board.MaxCheckDetailRunes,
+			"One more line, with no number in it."),
 		boardPropRecords: schemaRecordIDs("The records the check counts."),
 		boardPropMetric:  boardMetricSchema(),
 	}, boardPropTitle, boardPropTone)
@@ -146,9 +161,10 @@ func boardCheckSchema() map[string]any {
 
 func boardCompareRowSchema() map[string]any {
 	return schemaObject(map[string]any{
-		"column":       schemaText("The analysis table's column."),
-		boardPropLabel: schemaText("What the row reads as, when the column's name is not plain."),
-		"better":       schemaEnum(string(board.BetterHigher), string(board.BetterLower)),
+		"column": schemaText("The analysis table's column."),
+		boardPropLabel: schemaWords(board.MaxLabelRunes,
+			"What the row reads as, when the column's name is not plain."),
+		"better": schemaEnum(string(board.BetterHigher), string(board.BetterLower)),
 	}, "column")
 }
 
@@ -159,8 +175,9 @@ func boardBlockSchema() map[string]any {
 	}
 
 	return schemaObject(map[string]any{
-		boardPropType:    schemaEnum(blockTypeNames()...),
-		boardPropTitle:   schemaText("The block's heading, in a few words."),
+		boardPropType: schemaEnum(blockTypeNames()...),
+		boardPropTitle: schemaWords(board.MaxNoteTitleRunes, "The block's heading, in a few "+
+			"words: at most 60 characters. A note must have one: what it says, in a line."),
 		"half":           half,
 		"figures":        schemaList(board.MaxFigures, boardFigureSchema()),
 		boardPropRecords: schemaRecordIDs("records, compare and note: the record ids."),
@@ -179,8 +196,9 @@ func boardBlockSchema() map[string]any {
 		"checks":        schemaList(board.MaxChecks, boardCheckSchema()),
 		"of":            schemaPosition("meter: the position of the checks block it measures."),
 		boardPropMetric: boardMetricSchema(),
-		"text":          schemaText("prose and note: the words."),
-		boardPropTone:   boardToneSchema(),
+		"text": schemaWords(board.MaxProseRunes, "prose: one paragraph of plain sentences, "+
+			"at most 600 characters. note: at most 400 characters."),
+		boardPropTone: boardToneSchema(),
 	}, boardPropType)
 }
 
@@ -192,10 +210,11 @@ func showBoardSpec() kernelports.ToolSpec {
 		Name:        showBoardName,
 		Description: showBoardDescription,
 		Parameters: schemaObject(map[string]any{
-			boardPropTitle: schemaText("What the board answers, in a few words and in sentence " +
-				"case: \"Six late shipments on the Dallas lanes\"."),
-			"verdict": schemaText("The answer in one or two sentences, citing the blocks it " +
-				"rests on as [words][n]."),
+			boardPropTitle: schemaWords(board.MaxTitleRunes, "What the board answers, in a few "+
+				"words and in sentence case: \"Six late shipments on the Dallas lanes\"."),
+			"verdict": schemaWords(board.MaxVerdictRunes, "The answer in one or two short "+
+				"sentences, citing the blocks it rests on as [words][n]. Leave the detail to "+
+				"the blocks."),
 			"blocks": blocks,
 			boardPropID: schemaText("The artifactId of a board you showed earlier in this " +
 				"conversation, to replace it with this one. Leave it out for a new board."),
@@ -253,12 +272,6 @@ func (t *Turn) showBoard(arguments map[string]any) toolOutcome {
 			"conversation returned. Read them first, or leave them out; never write an id from "+
 			"memory.", showBoardName, strings.Join(unread, ", "))
 	}
-	if figures := readFinding(t, boardWords(&request.Board)).figures; len(figures) > 0 {
-		return failedOutcome("Tool %q was not run: its words state %s, which nothing this "+
-			"conversation read. The board shows its figures from its blocks; write the words "+
-			"without numbers and cite the block that shows them.",
-			showBoardName, strings.Join(figures, ", "))
-	}
 
 	return outcome
 }
@@ -289,24 +302,6 @@ func (t *Turn) unreadRecords(refs map[permission.Resource][]pulid.ID) []string {
 	slices.Sort(unread)
 
 	return unread
-}
-
-func boardWords(shown *board.Board) string {
-	words := make([]string, 0, len(shown.Blocks)+2)
-	words = append(words, shown.Title, board.PlainText(shown.Verdict))
-	for idx := range shown.Blocks {
-		block := &shown.Blocks[idx]
-		words = append(words, block.Title, board.PlainText(block.Text))
-		for figure := range block.Figures {
-			words = append(words, block.Figures[figure].Label)
-		}
-		for check := range block.Checks {
-			words = append(words, block.Checks[check].Title, block.Checks[check].Detail)
-		}
-	}
-
-	return strings.Join(slices.DeleteFunc(words, func(word string) bool { return word == "" }),
-		"\n")
 }
 
 func boardContent(shown *agentports.ShownArtifact) string {

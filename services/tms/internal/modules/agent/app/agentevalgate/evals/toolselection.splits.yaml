@@ -10,7 +10,7 @@ strata:
       mode: chat
     heldOut:
       - bill the statement customer's open period now instead of waiting for month end
-      - credit and rebill posted invoice 3302 for the corrected weight
+      - catch me up on this morning's summary
       - drop shipment 4412 from the proposed invoice run, it is not ready to bill
       - issue a $100 goodwill credit to Acme with no shipment behind it
       - post draft invoice 1042
@@ -59,8 +59,6 @@ strata:
       - close the safety event now that the brakes are fixed
       - deny the shift swap between Carla and Ben, we need coverage that day
       - import the carrier we found in sourcing by its DOT number
-      - put Maria on the early shift pattern from Monday
-      - record the driver's new medical card
       - what shift schedule is the driver on
   - stratum:
       desk: Credential desk
@@ -185,7 +183,6 @@ strata:
     heldOut:
       - add a new reefer trailer to the fleet
       - alert me whenever a customer is put on credit hold
-      - discard the blank scanned page
       - dismiss the weather item on the watchtower feed
       - show the scanned paperwork waiting in capture intake
       - the trailer was dropped at another yard, locate it there
@@ -196,7 +193,6 @@ strata:
     heldOut:
       - approve the Acme rate agreement so it starts pricing
       - cancel the journal reversal, the entry was right
-      - catch me up on this morning's summary
       - find the journal entry for invoice 1042
       - generate the payroll export for the last two weeks
       - how do I set up a rate matrix in Trenova
@@ -277,6 +273,7 @@ strata:
       - approve the driver's PTO request
       - change Ana's pending time-off request to three days instead of two
       - correct the fine amount on Mark's safety event
+      - delete the duplicate injury case on the OSHA log
       - draw this quarter's random drug and alcohol testing round
       - finalize the draft random testing round so the selections stand
       - fix the end date on Rita's leave case and add the doctor's note

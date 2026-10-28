@@ -108,6 +108,7 @@ func (r *repository) ListBoardMoves(
 				dest.loc.Longitude,
 				zero(dest.stop.ScheduledWindowStart),
 				dest.stop.ScheduledWindowEnd,
+				dest.stop.ActualArrival,
 				text(asn.ID),
 				text(asn.PrimaryWorkerID),
 				keel.CaseString().

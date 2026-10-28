@@ -36,6 +36,8 @@ const (
 	MeasureLate      = MeasureState("late")
 	MeasureHeld      = MeasureState("held")
 	MeasureOnTime    = MeasureState("onTime")
+	MeasureProjected = MeasureState("projected")
+	MeasureDue       = MeasureState("due")
 	MeasureDelivered = MeasureState("delivered")
 	MeasureOpen      = MeasureState("open")
 	MeasureSettled   = MeasureState("settled")
@@ -70,6 +72,7 @@ type RowMeasure struct {
 	Value   Value        `json:"value"`
 	State   MeasureState `json:"state,omitempty"`
 	At      int64        `json:"at,omitempty"`
+	Place   string       `json:"place,omitempty"`
 	Tone    Tone         `json:"tone,omitempty"`
 }
 

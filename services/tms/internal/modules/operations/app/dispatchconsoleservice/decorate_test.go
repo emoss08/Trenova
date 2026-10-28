@@ -43,6 +43,48 @@ func TestUrgencyFor(t *testing.T) {
 	}
 }
 
+func TestUrgencyFor_APickedUpMoveFollowsItsDelivery(t *testing.T) {
+	t.Parallel()
+
+	pickedUp := testNow - 6*secondsPerHour
+	at := func(v int64) *int64 { return &v }
+	cases := []struct {
+		name   string
+		move   shipmentports.BoardMove
+		expect UrgencyBucket
+	}{
+		{"on the road, delivery later today", shipmentports.BoardMove{
+			OriginWindowStart: testNow - 8*secondsPerHour, OriginActualArrive: at(pickedUp),
+			DestinationWindowStart: testNow + 10*secondsPerHour,
+		}, UrgencyToday},
+		{"on the road, delivery window open", shipmentports.BoardMove{
+			OriginWindowStart: testNow - 8*secondsPerHour, OriginActualArrive: at(pickedUp),
+			DestinationWindowStart: testNow - secondsPerHour,
+			DestinationWindowEnd:   at(testNow + secondsPerHour),
+		}, UrgencyNow},
+		{"on the road, delivery window closed", shipmentports.BoardMove{
+			OriginWindowStart: testNow - 8*secondsPerHour, OriginActualArrive: at(pickedUp),
+			DestinationWindowStart: testNow - 3*secondsPerHour,
+			DestinationWindowEnd:   at(testNow - secondsPerHour),
+		}, UrgencyLate},
+		{"arrived at delivery", shipmentports.BoardMove{
+			OriginWindowStart: testNow - 8*secondsPerHour, OriginActualArrive: at(pickedUp),
+			DestinationWindowStart:  testNow - 3*secondsPerHour,
+			DestinationActualArrive: at(testNow - 2*secondsPerHour),
+		}, UrgencyPlanned},
+		{"picked up, delivery unscheduled", shipmentports.BoardMove{
+			OriginWindowStart: testNow - 8*secondsPerHour, OriginActualArrive: at(pickedUp),
+		}, UrgencyPlanned},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tc.expect, urgencyFor(&tc.move, testNow))
+		})
+	}
+}
+
 func TestDecorateMove_MarksCoverage(t *testing.T) {
 	t.Parallel()
 

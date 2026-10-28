@@ -103,7 +103,15 @@ const LATE = [
     "held",
     5 * HOUR,
   ],
-  ["shp_board_0423", "S2610-0423", "Dallas, TX → Texarkana, AR", "Delayed", 95, "late", HOUR],
+  [
+    "shp_board_0423",
+    "S2610-0423",
+    "Dallas, TX → Texarkana, AR",
+    "InTransit",
+    25,
+    "projected",
+    -HOUR,
+  ],
 ];
 
 function lateRows(state) {
@@ -113,6 +121,7 @@ function lateRows(state) {
       value: dur((moved(state) ? Math.max(0, minutes - 90) : minutes) * MIN),
       state: moved(state) && minutes <= 110 ? "delivered" : standing,
       at: state.anchor - dueAgo,
+      place: lane.split(" → ").at(-1),
       tone: moved(state) && minutes <= 110 ? "" : "warn",
     }),
   );
@@ -367,6 +376,7 @@ function closeCard(state) {
       value: dur(days * day),
       state: "pending",
       at: state.anchor - days * day,
+      place: "",
       tone: "warn",
     }),
   );
@@ -376,6 +386,7 @@ function closeCard(state) {
       value: usd(amount),
       state: "open",
       at: state.anchor + days * day,
+      place: "",
       tone: "",
     }),
   );

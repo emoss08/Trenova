@@ -5,10 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -236,4 +238,58 @@ func TestExportDocument_PrintsABoardAsItReadsNow(t *testing.T) {
 	require.Len(t, boards.asked, 1)
 	assert.Equal(t, req.UserID, boards.asked[0].Actor.UserID)
 	assert.Equal(t, req.TenantInfo.OrgID, boards.asked[0].Actor.OrganizationID)
+}
+
+func TestArtifactRecorder_CreditsABoardToTheConversationsAgent(t *testing.T) {
+	t.Parallel()
+
+	agentID := pulid.MustNew("agdef_")
+	repo := &stubArtifactRepo{}
+	svc := &Service{
+		logger:    zap.NewNop(),
+		artifacts: repo,
+		boards:    &stubBoards{},
+		definitions: &delegateDefinitions{byID: map[pulid.ID]*agentdefinition.Definition{
+			agentID: {ID: agentID, Name: "Dispatch desk"},
+		}},
+	}
+	thread := &conversation.Thread{ID: pulid.MustNew("athr_")}
+	svc.conversations = &stubConversationRepo{
+		thread: &conversation.Thread{ID: thread.ID, AgentDefinitionID: agentID},
+	}
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	recorder := svc.newArtifactRecorder(t.Context(), thread, tenant, testActor(), nil)
+
+	_, err := recorder.observe(shownBoard(t, pulid.Nil))
+	require.NoError(t, err)
+
+	require.Len(t, repo.upserts, 1)
+	payload, err := board.PayloadOf(repo.upserts[0].Payload)
+	require.NoError(t, err)
+	assert.Equal(t, "Dispatch desk", payload.Author)
+}
+
+func TestArtifactRecorder_CreditsTheAssistantWhenTheConversationCannotBeRead(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubArtifactRepo{}
+	svc := &Service{
+		logger:        zap.NewNop(),
+		artifacts:     repo,
+		boards:        &stubBoards{},
+		definitions:   &delegateDefinitions{},
+		conversations: &stubConversationRepo{getErr: errortypes.NewNotFoundError("gone")},
+	}
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	recorder := svc.newArtifactRecorder(
+		t.Context(), &conversation.Thread{ID: pulid.MustNew("athr_")}, tenant, testActor(), nil,
+	)
+
+	_, err := recorder.observe(shownBoard(t, pulid.Nil))
+	require.NoError(t, err)
+
+	require.Len(t, repo.upserts, 1)
+	payload, err := board.PayloadOf(repo.upserts[0].Payload)
+	require.NoError(t, err)
+	assert.Equal(t, "Assistant", payload.Author)
 }

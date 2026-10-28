@@ -155,6 +155,7 @@ func rowsToModel(rows []board.Row) []*gqlmodel.DeskBoardRow {
 				Measure: string(measure.Measure),
 				Value:   valueToModel(&measure.Value),
 				State:   string(measure.State),
+				Place:   measure.Place,
 				Tone:    string(measure.Tone),
 			}
 			if measure.At > 0 {

@@ -84,7 +84,7 @@ func TestEquipmentLists_NameEachUnitByItsUnitNumber(t *testing.T) {
 			require.NotEmpty(t, filters)
 			assert.Equal(t, "code", filters[0]["field"], "the unit number narrows by the code")
 
-			outcome := asMap(t, result)
+			outcome := encodedDocument(t, result)
 			row := objectAt(t, outcome["items"], 0)
 			assert.Equal(t, "1285", row["unitNumber"])
 			assert.NotContains(t, row, "code")

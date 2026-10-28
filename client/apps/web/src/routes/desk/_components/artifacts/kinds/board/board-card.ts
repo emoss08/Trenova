@@ -181,6 +181,8 @@ export type MeasureReading = {
   fraction: number;
   /** The record waits at a stop rather than on the road. */
   held: boolean;
+  /** The lateness is the estimate's, for a window still open. */
+  projected: boolean;
 };
 
 function seconds(value: DeskBoardValue): number {
@@ -199,56 +201,63 @@ export function measureReading(
   const at = measure.at ?? 0;
   const value = measure.value.kind === "duration" ? seconds(measure.value) : 0;
   const fraction = furthest > 0 ? Math.min(1, value / furthest) : 0;
-  const base = { tone, fraction, held: false };
+  const base = { tone, fraction, held: false, projected: false };
+
+  const moment = at ? cardMomentAfter(now, at) : "";
+  const due = () => {
+    if (!moment) return measure.place ? t("At {0}", measure.place) : "";
+    return measure.place ? t("Due {0} at {1}", moment, measure.place) : t("Due {0}", moment);
+  };
+  const delivered = () => {
+    if (!moment) return t("Delivered");
+    return measure.place
+      ? t("Delivered {0} at {1}", moment, measure.place)
+      : t("Delivered {0}", moment);
+  };
 
   switch (measure.measure) {
     case "lateness":
       switch (measure.state) {
         case "late":
-          return {
-            ...base,
-            against: at ? t("Due {0}", cardMomentAfter(now, at)) : "",
-            standing: t("{0} behind", amount),
-          };
+          return { ...base, against: due(), standing: t("{0} behind", amount) };
         case "held":
+          return { ...base, held: true, against: due(), standing: t("{0} at the stop", amount) };
+        case "projected":
           return {
             ...base,
-            held: true,
-            against: at ? t("Due {0}", cardMomentAfter(now, at)) : "",
-            standing: t("{0} at the stop", amount),
+            projected: true,
+            against: due(),
+            standing: t("estimated {0} late", amount),
           };
+        case "due":
+          return { ...base, fraction: 0, against: due(), standing: t("not estimated") };
         case "delivered":
           return {
             ...base,
             fraction: 0,
-            against: at ? t("Delivered {0}", cardMomentAfter(now, at)) : t("Delivered"),
+            against: delivered(),
             standing: value > 0 ? t("{0} late", amount) : t("on time"),
           };
         default:
-          return {
-            ...base,
-            fraction: 0,
-            against: at ? t("Due {0}", cardMomentAfter(now, at)) : "",
-            standing: t("on time"),
-          };
+          return { ...base, fraction: 0, against: due(), standing: t("on time") };
       }
     case "amountDue":
       return {
         ...base,
         fraction: 0,
-        against: at ? t("Due {0}", cardMomentAfter(now, at)) : "",
+        against: moment ? t("Due {0}", moment) : "",
         standing: measure.state === "settled" ? t("paid") : t("{0} due", amount),
       };
     case "pendingFor":
       return {
         ...base,
-        against: at ? t("Since {0}", cardMomentAfter(now, at)) : "",
+        against: moment ? t("Since {0}", moment) : "",
         standing: measure.state === "settled" ? t("settled") : t("waiting {0}", amount),
       };
     case "age":
       return {
         ...base,
-        against: at ? t("Dated {0}", cardMomentAfter(now, at)) : "",
+        against: moment ? t("Dated {0}", moment) : "",
         standing: t("{0} old", amount),
       };
     default:

@@ -17838,8 +17838,16 @@ div.dk-bd-row:not(.dk-gone):hover {
   font: 400 11px var(--dk-plex);
   color: var(--dsk-subtle);
 }
+.dk-bd-behind > span > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .dk-bd-behind > span b {
+  flex: none;
   font-weight: 500;
+  white-space: nowrap;
   color: var(--dsk-warn-fg);
 }
 .dk-bd-track {
@@ -17859,6 +17867,11 @@ div.dk-bd-row:not(.dk-gone):hover {
     var(--dsk-warn) 0 3px,
     color-mix(in oklab, var(--dsk-warn) 55%, transparent) 3px 6px
   );
+}
+/* an estimate that runs past a window still open: outlined, not yet happened */
+.dk-bd-track > i.dk-bd-projected {
+  background: color-mix(in oklab, var(--dsk-warn) 14%, transparent);
+  box-shadow: inset 0 0 0 1px var(--dsk-warn);
 }
 .dk-bd-track > i.dk-bd-held {
   background: repeating-linear-gradient(
