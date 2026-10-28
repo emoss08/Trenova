@@ -1,19 +1,22 @@
 package organizationhandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/app/organizationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/app/organizationservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -210,6 +213,17 @@ func setupOrganizationHandler(
 ) *organizationhandler.Handler {
 	t.Helper()
 
+	return setupOrganizationHandlerWithEngine(t, repo, storageClient, &mocks.AllowAllPermissionEngine{})
+}
+
+func setupOrganizationHandlerWithEngine(
+	t *testing.T,
+	repo *tenantportsmock.MockOrganizationRepository,
+	storageClient kernelports.Client,
+	engine permissionports.PermissionEngine,
+) *organizationhandler.Handler {
+	t.Helper()
+
 	logger := zap.NewNop()
 
 	cfg := &config.Config{
@@ -238,7 +252,7 @@ func setupOrganizationHandler(
 	})
 
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
-		PermissionEngine: &mocks.AllowAllPermissionEngine{},
+		PermissionEngine: engine,
 		ErrorHandler:     errorHandler,
 	})
 
@@ -686,4 +700,48 @@ func TestOrganizationHandler_Update_RejectsForeignBusinessUnit(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusForbidden, ginCtx.ResponseCode())
+}
+
+// The Microsoft and Okta routes write an identity provider. Organization
+// update edits the profile; it must not let someone point sign-in at an
+// issuer they run and sign in as any member.
+func TestOrganizationHandler_SSORoutesNeedIdentityProviderAccess(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		method string
+		path   string
+	}{
+		{method: http.MethodGet, path: "/microsoft-sso"},
+		{method: http.MethodPut, path: "/microsoft-sso"},
+		{method: http.MethodGet, path: "/okta-sso"},
+		{method: http.MethodPut, path: "/okta-sso"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.method+tc.path, func(t *testing.T) {
+			t.Parallel()
+
+			repo := tenantportsmock.NewMockOrganizationRepository(t)
+			handler := setupOrganizationHandlerWithEngine(t, repo, &mockStorageClient{},
+				&mocks.DenyResourcesPermissionEngine{
+					Denied: []string{permission.ResourceIdentityProvider.String()},
+				})
+
+			ginCtx := testutil.NewGinTestContext().
+				WithMethod(tc.method).
+				WithPath("/api/v1/organizations/" + testutil.TestOrgID.String() + tc.path).
+				WithDefaultAuthContext()
+			if tc.method == http.MethodPut {
+				ginCtx = ginCtx.WithJSONBody(map[string]any{
+					"enabled":       true,
+					"oidcIssuerUrl": "https://attacker.example",
+				})
+			}
+
+			handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+			ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+			assert.Equal(t, http.StatusForbidden, ginCtx.ResponseCode())
+		})
+	}
 }

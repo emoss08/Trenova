@@ -215,7 +215,7 @@ func (r *repository) upsertIdentityProvider(ctx context.Context, cfg *tenant.SSO
 		Enabled:           cfg.Enabled,
 		EnforceSSO:        cfg.EnforceSSO,
 		AutoProvision:     cfg.AutoProvision,
-		AllowFederatedMFA: true,
+		AllowFederatedMFA: cfg.AllowFederatedMFA,
 		AllowedDomains:    cfg.AllowedDomains,
 		AttributeMap:      cfg.AttributeMap,
 		OIDCIssuerURL:     cfg.OIDCIssuerURL,

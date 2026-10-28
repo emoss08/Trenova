@@ -71,26 +71,16 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
 		h.deleteLogo,
 	)
-	api.GET(
-		"/:id/microsoft-sso",
-		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpRead),
-		h.getMicrosoftSSOConfig,
+	identityProvider := permission.ResourceIdentityProvider.String()
+	readProvider := h.pm.RequirePermission(identityProvider, permission.OpRead)
+	upsertProvider := h.pm.RequireAllPermissions(
+		middleware.PermissionCheck{Resource: identityProvider, Operation: permission.OpCreate},
+		middleware.PermissionCheck{Resource: identityProvider, Operation: permission.OpUpdate},
 	)
-	api.PUT(
-		"/:id/microsoft-sso",
-		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
-		h.upsertMicrosoftSSOConfig,
-	)
-	api.GET(
-		"/:id/okta-sso",
-		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpRead),
-		h.getOktaSSOConfig,
-	)
-	api.PUT(
-		"/:id/okta-sso",
-		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
-		h.upsertOktaSSOConfig,
-	)
+	api.GET("/:id/microsoft-sso", readProvider, h.getMicrosoftSSOConfig)
+	api.PUT("/:id/microsoft-sso", upsertProvider, h.upsertMicrosoftSSOConfig)
+	api.GET("/:id/okta-sso", readProvider, h.getOktaSSOConfig)
+	api.PUT("/:id/okta-sso", upsertProvider, h.upsertOktaSSOConfig)
 }
 
 func (h *Handler) selectOptions(c *gin.Context) {
