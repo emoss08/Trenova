@@ -936,3 +936,69 @@ func TestATurnThatNarrowsItsToolsStillCarriesTheScriptTool(t *testing.T) {
 		"a fan-out question shows itself only after the first read, so the tool is there from the start",
 	)
 }
+
+// A read the turn reached from another desk through find_tools is in the
+// script's index, as the model may call it: find_tools said fuel_list_purchases
+// was callable here, and a script that could not see it guessed its name three
+// times.
+func TestScriptIndexHoldsWhatTheTurnReached(t *testing.T) {
+	t.Parallel()
+
+	held := queryTool("shipment_list", map[string]any{}, nil)
+	reached := queryTool("fuel_list_purchases", map[string]any{}, nil)
+	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{held, reached}, nil, nil)
+	h.req.Definition.ToolNames = []string{"shipment_list"}
+
+	names := func(broker *scriptBroker) []string {
+		out := make([]string, 0, len(broker.Index()))
+		for _, entry := range broker.Index() {
+			out = append(out, entry.Name)
+		}
+		return out
+	}
+	own := h.rt.newScriptBroker(t.Context(), &scriptBrokerParams{
+		req: h.req, parentKey: "p", parentCallID: "c", taint: &agent.RunTaint{},
+	})
+	assert.Equal(t, []string{"shipment_list"}, names(own))
+
+	reaching := h.rt.newScriptBroker(t.Context(), &scriptBrokerParams{
+		req: h.req, parentKey: "p", parentCallID: "c", taint: &agent.RunTaint{},
+		reach: map[string]agent.AutonomyTier{"fuel_list_purchases": agent.TierAutoExecute},
+	})
+	assert.Equal(t, []string{"fuel_list_purchases", "shipment_list"}, names(reaching))
+}
+
+// A script that stopped on an error before it read anything is not one of
+// the turn's scripts, up to as many again: three that named a read wrongly
+// once spent the budget, and the fourth, which only asked what it could
+// read, was refused.
+func TestATurnLeavesOutScriptsThatReadNothing(t *testing.T) {
+	t.Parallel()
+
+	script := func(id string) llmports.ToolCall {
+		return llmports.ToolCall{ID: id, Name: codemode.ToolRunScript, Arguments: map[string]any{
+			"title": "Fuel spend", "code": "trenova.fuel.list()",
+		}}
+	}
+	calls := []llmports.ToolCall{
+		script("s1"), script("s2"), script("s3"), script("s4"), script("s5"),
+	}
+	messages := make([]conversation.Message, 0, len(calls))
+	for _, call := range calls {
+		messages = append(messages, conversation.Message{
+			Role: conversation.RoleAssistant,
+			ToolCalls: []conversation.ToolCallRecord{
+				{ID: call.ID, Name: call.Name, Arguments: call.Arguments},
+			},
+		})
+	}
+	turn := &Turn{result: &agentruntimeports.RunResult{Messages: messages}}
+	for idx := range 3 {
+		turn.noteContinuable(&calls[idx], &toolOutcome{unread: true})
+	}
+
+	assert.Equal(t, 1, turn.scriptPosition(&calls[3]), "three scripts that read nothing are free")
+
+	turn.noteContinuable(&calls[3], &toolOutcome{unread: true})
+	assert.Equal(t, 2, turn.scriptPosition(&calls[4]), "a fourth is counted")
+}

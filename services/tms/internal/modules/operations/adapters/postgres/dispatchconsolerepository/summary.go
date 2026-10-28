@@ -155,6 +155,7 @@ type moveUrgency struct {
 
 func urgencyOf(now int64) moveUrgency {
 	pickupStart := zero(origin.stop.ScheduledWindowStart)
+	pickupEnd := zero(origin.stop.ScheduledWindowEnd)
 	deliveryStart := zero(destination.stop.ScheduledWindowStart)
 	deliveryEnd := zero(destination.stop.ScheduledWindowEnd)
 
@@ -164,6 +165,8 @@ func urgencyOf(now int64) moveUrgency {
 		zero(destination.stop.ActualArrival).Lte(0),
 		deliveryStart.Gt(0),
 	)
+	pickupClosed := keel.And(pickupStart.Lt(now), pickupEnd.Lt(now))
+	pickupOpen := keel.Or(pickupStart.Gte(now), pickupEnd.Gte(now))
 	deliveryClosed := keel.And(deliveryStart.Lt(now), deliveryEnd.Lt(now))
 	deliveryOpen := keel.Or(deliveryStart.Gte(now), deliveryEnd.Gte(now))
 	soon := now + shipmentports.UrgencyNowSeconds
@@ -171,15 +174,15 @@ func urgencyOf(now int64) moveUrgency {
 
 	return moveUrgency{
 		overdue: keel.Or(
-			keel.And(toPickUp, pickupStart.Lt(now)),
+			keel.And(toPickUp, pickupClosed),
 			keel.And(toDeliver, deliveryClosed),
 		),
 		dueNow: keel.Or(
-			keel.And(toPickUp, pickupStart.Gte(now), pickupStart.Lte(soon)),
+			keel.And(toPickUp, pickupOpen, pickupStart.Lte(soon)),
 			keel.And(toDeliver, deliveryOpen, deliveryStart.Lte(soon)),
 		),
 		dueToday: keel.Or(
-			keel.And(toPickUp, pickupStart.Gt(soon), pickupStart.Lte(today)),
+			keel.And(toPickUp, pickupOpen, pickupStart.Gt(soon), pickupStart.Lte(today)),
 			keel.And(toDeliver, deliveryOpen, deliveryStart.Gt(soon), deliveryStart.Lte(today)),
 		),
 	}

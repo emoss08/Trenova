@@ -14,12 +14,13 @@ import { usePendingValue } from "@trenova/shared/hooks/use-pending-value";
 import { formatUnixMonthDay } from "@trenova/shared/lib/date";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { DeskTip } from "@/components/desk-chat/desk-tip";
 import { StreamedText } from "@/components/streamed-text";
 import type { ChapterEntry } from "./chapter-work";
+import { chapterTitleKey, hasStreamed, markStreamed } from "./chapter-title-stream";
 import "./desk-chapters.css";
 
 /** The longest title the server keeps for a chapter. */
@@ -67,15 +68,24 @@ export function DeskChapterHeading({
   const saved = entry.chapter.startSequence !== null;
   // A title the model has just written types itself in, as the briefing
   // does: when the heading first shows moments after it was named, and when
-  // the model names it again while it is on screen. A title the person typed,
-  // and one that was there before the page opened, shows whole.
+  // the model names it again while it is on screen. It does so once per page:
+  // the heading is drawn again when its turn is saved, and typing the title in
+  // a second time read as the title being written afresh. A title the person
+  // typed, and one that was there before the page opened, shows whole.
+  const titleKey = chapterTitleKey(chapter.id, chapter.title);
   const [streaming, setStreaming] = useState(() => ({
     title: chapter.title,
-    animate: Date.now() / 1000 - chapter.updatedAt < FRESH_TITLE_SECONDS,
+    animate: !hasStreamed(titleKey) && Date.now() / 1000 - chapter.updatedAt < FRESH_TITLE_SECONDS,
   }));
   if (streaming.title !== chapter.title) {
-    setStreaming({ title: chapter.title, animate: chapter.titleSource !== "Person" });
+    setStreaming({
+      title: chapter.title,
+      animate: chapter.titleSource !== "Person" && !hasStreamed(titleKey),
+    });
   }
+  useEffect(() => {
+    markStreamed(titleKey);
+  }, [titleKey]);
 
   const edit = () => {
     settled.current = false;

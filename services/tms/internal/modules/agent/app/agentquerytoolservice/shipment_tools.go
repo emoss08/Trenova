@@ -312,6 +312,7 @@ const (
 	shipmentListName         = "shipment_list"
 	defaultShipmentWordLimit = 10
 	paramOnHold              = "onHold"
+	paramLate                = "late"
 	paramHoldReasonCodes     = "holdReasonCodes"
 	maxHoldReasonCodes       = 10
 )
@@ -365,10 +366,7 @@ func newShipmentListTool(
 		parties:      parties,
 		list:         list,
 		filterFields: agenttoolschema.Derived(shipmentListName+".filterField", fields),
-		columns: agenttoolschema.Derived(shipmentListName+".column",
-			slices.DeleteFunc(columnsOf([]shipmentRow{{}}), func(name string) bool {
-				return name == recordIDField
-			})),
+		columns:      list.columns,
 	}
 }
 
@@ -393,7 +391,8 @@ func (t *shipmentListTool) Description() string {
 		"things narrows to any of them. With no words and no filters it lists the newest. " +
 		"Each row has the first pickup, the final stop, who drives each move, what it carries " +
 		"and the holds in force, each with its note, when it started and the holdId " +
-		"shipment_release_hold takes, so onHold lists held loads and why in one call. For " +
+		"shipment_release_hold takes, so onHold lists held loads and why in one call, and late " +
+		"lists the loads behind schedule by their stops, whatever their status. For " +
 		"more, pass every load you need to shipment_get at once."
 }
 
@@ -417,9 +416,17 @@ func (t *shipmentListTool) ParamSchema() map[string]any {
 				toolschema.KeyItems: agenttoolschema.Enum("", listShipmentStatuses),
 				toolschema.KeyDescription: "Only shipments in these statuses, all in one call; " +
 					"omit for every status. Not picked up yet is New, PartiallyAssigned and " +
-					"Assigned; on the road is InTransit and Delayed. A load the person calls " +
-					"late or running behind is Delayed. There is no Delivered: a delivered load " +
-					"is Completed, ReadyToInvoice or Invoiced.",
+					"Assigned; on the road is InTransit and Delayed. For a load the person " +
+					"calls late or running behind, pass late rather than Delayed, which only " +
+					"some late loads carry. There is no Delivered: a delivered load is " +
+					"Completed, ReadyToInvoice or Invoiced.",
+			},
+			paramLate: map[string]any{
+				toolschema.KeyType: toolschema.TypeBoolean,
+				toolschema.KeyDescription: "true lists only shipments running late now: a stop " +
+					"not yet reached whose window has closed, the loads behind schedule. " +
+					"Delayed is a status a person sets, and a late load may not carry it; " +
+					"this reads the stops. Combine with status, words and filters.",
 			},
 			paramOnHold: map[string]any{
 				toolschema.KeyType: toolschema.TypeBoolean,
@@ -496,6 +503,11 @@ func (t *shipmentListTool) Query(
 		return nil, err
 	}
 
+	var lateAt int64
+	if optionalBool(params.Params, paramLate) {
+		lateAt = clockFor(params).Now
+	}
+
 	readsHolds := t.readsHolds(ctx, params)
 	if held.set() && !readsHolds {
 		return nil, &graphqlreadports.ReadRefusedError{
@@ -506,7 +518,7 @@ func (t *shipmentListTool) Query(
 
 	var result any
 	query := optionalString(params.Params, paramQuery)
-	if query == "" && !held.set() {
+	if query == "" && !held.set() && lateAt == 0 {
 		result, err = t.list.Query(ctx, withStatusFilter(params, statuses))
 	} else {
 		result, err = t.searchWords(ctx, &wordSearch{
@@ -514,6 +526,7 @@ func (t *shipmentListTool) Query(
 			query:    query,
 			statuses: statuses,
 			held:     held,
+			lateAt:   lateAt,
 		})
 	}
 	if err != nil {
@@ -733,9 +746,11 @@ type wordSearch struct {
 	query    string
 	statuses []shipment.Status
 	held     shipmentHoldFilter
-	window   cursorWindow
-	filters  []domaintypes.FieldFilter
-	sorting  []domaintypes.SortField
+	// lateAt keeps the shipments running late at that instant, when set.
+	lateAt  int64
+	window  cursorWindow
+	filters []domaintypes.FieldFilter
+	sorting []domaintypes.SortField
 }
 
 func (s *wordSearch) options() shipmentports.ShipmentOptions {
@@ -746,6 +761,7 @@ func (s *wordSearch) options() shipmentports.ShipmentOptions {
 		IncludeCommodities: true,
 	}
 	s.held.apply(&options)
+	options.LateAt = s.lateAt
 
 	return options
 }
@@ -924,6 +940,9 @@ func (t *shipmentListTool) search(
 	criteria.Text(search.query)
 	criteria.Field(paramStatus, statusNames(search.statuses))
 	search.held.describe(criteria)
+	if search.lateAt > 0 {
+		criteria.Field(paramLate, "running late: a stop past its window with no arrival")
+	}
 
 	result, err := t.repo.List(ctx, &shipmentports.ListShipmentsRequest{
 		Filter: &pagination.QueryOptions{

@@ -43,6 +43,9 @@ type scriptBroker struct {
 	writeNames    map[string]struct{}
 	scriptStepKey string
 	outbox        *scriptoutbox.Outbox
+	// reach is what the turn reached beyond the agent's own tools, each read
+	// dispatched on its tier as the model's own call of it would be.
+	reach map[string]agent.AutonomyTier
 
 	mu       sync.Mutex
 	callID   string
@@ -64,6 +67,7 @@ type scriptBrokerParams struct {
 	// writes lets the script prepare changes, which the code-mode gate
 	// allows only for a model the batch-write bench earned it for.
 	writes bool
+	reach  map[string]agent.AutonomyTier
 }
 
 func (s *Service) newScriptBroker(ctx context.Context, p *scriptBrokerParams) *scriptBroker {
@@ -81,9 +85,10 @@ func (s *Service) newScriptBroker(ctx context.Context, p *scriptBrokerParams) *s
 		afterExternal: p.afterExternal,
 		callID:        p.parentCallID,
 		limits:        codemode.LimitsFor(codemode.MinSeconds, codemode.MinCalls),
+		reach:         p.reach,
 	}
 	broker.slots = make(chan struct{}, broker.limits.Concurrent)
-	broker.index = s.scriptIndex(ctx, p.req)
+	broker.index = s.scriptIndex(ctx, p.req, p.reach)
 	broker.writeNames = map[string]struct{}{}
 	if p.writes {
 		broker.scriptStepKey = scope
@@ -102,12 +107,14 @@ func (s *Service) newScriptBroker(ctx context.Context, p *scriptBrokerParams) *s
 }
 
 // scriptIndex is every read the turn holds that a script may call, with the
-// schema the model reads for it, in name order.
+// schema the model reads for it, in name order: the agent's own and those the
+// turn reached from other desks through find_tools, which the model may call.
 func (s *Service) scriptIndex(
 	ctx context.Context,
 	req *agentruntimeports.RunRequest,
+	reach map[string]agent.AutonomyTier,
 ) []codemode.Read {
-	held := s.heldTools(req.Definition)
+	held := slices.Concat(s.heldTools(req.Definition), beyondNames(reach))
 	candidates := make([]string, 0, len(held))
 	for _, name := range held {
 		tool, ok := s.queryTools.Get(name)
@@ -204,6 +211,7 @@ func (b *scriptBroker) Read(ctx context.Context, call codemode.Call) codemode.Re
 		ordinal:       call.Seq,
 		taint:         b.taint,
 		afterExternal: b.afterExternal,
+		beyond:        b.reach[call.Tool],
 		caller:        aitrace.CallerScript,
 		callIndex:     call.Seq,
 	})

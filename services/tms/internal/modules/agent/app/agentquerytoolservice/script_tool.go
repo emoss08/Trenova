@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -322,6 +324,13 @@ func (a *scriptAnswer) ScriptCompleted() bool {
 
 func (a *scriptAnswer) ScriptContinuation() codemode.Continuation { return a.continuation }
 
+// ScriptReadNothing reports a script that stopped on an error before it read
+// a record, a dataset or a file.
+func (a *scriptAnswer) ScriptReadNothing() bool {
+	return a.Status == string(scriptports.Errored) && len(a.Calls) == 0 &&
+		len(a.Refusals) == 0 && len(a.Datasets) == 0
+}
+
 func (t *runScriptTool) Query(
 	ctx context.Context,
 	params *agenttoolports.QueryToolParams,
@@ -369,6 +378,7 @@ func (t *runScriptTool) Query(
 	markScriptSpan(ctx, &summary, outcome)
 
 	answer := scriptAnswerOf(title, outcome, &summary)
+	answer.Note += missingReadNote(answer.Error, params.Broker.Index())
 	answer.attachments = resolved.attachments
 	answer.Datasets = datasetAnswers(resolved.datasets)
 	if err = t.keepAnalysis(ctx, &analysisRecord{
@@ -776,4 +786,55 @@ func batchNote(answer *scriptAnswer, batch *codemode.Batch) string {
 	default:
 		return scriptBatchFiledNote
 	}
+}
+
+// missingReadPattern is the error a script raises naming a read it may not
+// call: trenova.fuel when the turn holds no fuel read, or trenova.worker.lists.
+var missingReadPattern = regexp.MustCompile(
+	`'_(?:Trenova|Namespace)' object has no attribute '([^']+)'`)
+
+// missingReadsListed bounds the reads a note names, so an agent holding
+// every read still gets a note it can read.
+const missingReadsListed = 30
+
+// missingReadNote names the reads a script may call when it named one it may
+// not. Told only "'_Trenova' object has no attribute 'fuel'", Haiku guessed
+// two more spellings of the same read and spent the turn's scripts finding
+// out the read was not in the script at all.
+func missingReadNote(failure *codemode.ScriptError, index []codemode.Read) string {
+	if failure == nil || failure.Name != "AttributeError" {
+		return ""
+	}
+	match := missingReadPattern.FindStringSubmatch(failure.Value)
+	if match == nil {
+		return ""
+	}
+	missing := strings.ToLower(match[1])
+	near := make([]string, 0, len(index))
+	rest := make([]string, 0, len(index))
+	for idx := range index {
+		space, verb, _ := strings.Cut(index[idx].Name, "_")
+		dotted := "trenova." + space + "." + verb
+		if strings.Contains(strings.ToLower(index[idx].Name), missing) {
+			near = append(near, dotted)
+			continue
+		}
+		rest = append(rest, dotted)
+	}
+	listed := slices.Concat(near, rest)
+	more := ""
+	if len(listed) > missingReadsListed {
+		more = fmt.Sprintf(" and %d more (trenova.tools() lists them)",
+			len(listed)-missingReadsListed)
+		listed = listed[:missingReadsListed]
+	}
+	if len(listed) == 0 {
+		return fmt.Sprintf(" The script may call no read named %q: it holds no reads at all, "+
+			"so answer with discrete calls.", match[1])
+	}
+
+	return fmt.Sprintf(" No read is named %q here. The reads this script may call are %s%s; "+
+		"a read is trenova.<namespace>.<rest of its tool name>, so fuel_list_purchases is "+
+		"trenova.fuel.list_purchases. Use one of these names rather than guessing another.",
+		match[1], strings.Join(listed, ", "), more)
 }

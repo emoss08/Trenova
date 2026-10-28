@@ -38,6 +38,9 @@ type ShipmentOptions struct {
 	QuickFilters     []shipment.QuickFilterSpec `form:"-" json:"-" query:"-"`
 	Timezone         string                     `form:"-" json:"-" query:"-"`
 	QuickFilterBasis *ShipmentQuickFilterBasis  `form:"-" json:"-" query:"-"`
+	// LateAt, when set, keeps the shipments running late at that instant:
+	// a stop not yet reached whose window closed before it.
+	LateAt int64 `form:"-" json:"-" query:"-"`
 }
 
 func (o *ShipmentOptions) HasActivityWindow() bool {

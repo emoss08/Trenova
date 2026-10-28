@@ -48,6 +48,7 @@ func (s *Service) runScriptTool(
 		taint:         p.taint,
 		afterExternal: p.afterExternal,
 		writes:        decision.Writes,
+		reach:         p.gate.reach,
 	})
 	outcome := s.runQueryToolWith(
 		ctx,
@@ -58,6 +59,7 @@ func (s *Service) runScriptTool(
 	)
 	if !outcome.failed {
 		outcome.continuation = scriptContinuation(outcome.data)
+		outcome.unread = scriptReadNothing(outcome.data)
 	}
 	marks := broker.taintMarks()
 	outcome.taint = append(outcome.taint, marks...)
@@ -185,6 +187,12 @@ func continuationRefusal(call *llmports.ToolCall, gate scriptGate) (toolOutcome,
 		"Tool %q was not run: continues names no script of this turn that ran to the end, or "+
 			"one another call already continued. Send the whole script without continues.",
 		call.Name), true
+}
+
+func scriptReadNothing(data any) bool {
+	unread, ok := data.(codemode.Unread)
+
+	return ok && unread.ScriptReadNothing()
 }
 
 func scriptCompleted(data any) bool {

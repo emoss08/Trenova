@@ -2229,6 +2229,29 @@ newest of each status) cannot, and are left to the fence. A type that embeds
 `searchOutcome` with `resume` set declares its own `CutPage` (`gatedOutcome`), or the cut
 would drop its fields.
 
+The dispatch board reads its moves due-first (`DispatchBoardFilter.DueFirst`: by when each
+move's next stop is due, the pickup's window until it is picked up, then the delivery's close), so
+the furthest behind lead and a page of them is the most urgent page; it pages by offset under the
+cursor contract and cuts like a list (`boardView`). Late means one thing everywhere: a stop not
+yet reached whose window has closed, the pickup until the load is picked up and then the delivery
+(`urgencyFor`, the summary's `urgencyOf`, the board's `lateAt` and `shipment_list`'s
+`latePredicate`); a stop inside its window is due now. The board once called a pickup late when its
+window opened while the shipment list counted closed windows, so the same question got two counts.
+`late` lists only the moves late now
+(`DispatchBoardFilter.LateAt`, in the query, so the page holds late moves and no others) and leaves
+the drivers out unless `drivers` asks for them; the summary still counts every move in the window.
+Asked what was late, the board once listed the earliest forty pickups and the agent answered from
+seven of them. `shipment_list` takes `late` too: shipments with a stop not yet reached whose
+window has closed (`ShipmentOptions.LateAt`, through the open-stop index), whatever their status,
+since Delayed is a status a person sets and most late loads never carry it.
+
+A list call's `fields` (`agentports.ListFieldsParam`) narrows only the model's copy of the rows
+(`narrowRows`, inside `encodeModelDocument`, which `fitPage` uses too): each keeps its id, the
+columns named and whatever the list works out beside its `columns`. The list itself, and so the
+table beside the conversation and its later pages, keeps every column, and a script's read is
+never narrowed. A model's first page also asks the list for its total (`firstPage`), so a count
+across the whole list comes from the first call.
+
 What the model reads also leaves out what says nothing (`trimRecord`, `saysNothing`): an
 empty text, a date-named field holding zero, and a reference id beside the record it names
 carrying the same id (`fleetCodeId` beside `fleetCode`). A count that ends like a date
@@ -2368,7 +2391,9 @@ still keeps half the stretch and summarizes by chapter title (`snapToChapter`); 
 `chapterId` reads only that chapter's messages, is named after it and may go to the same agent;
 Desk search has a `chap` kind that opens the conversation at the chapter (`?c=`); the downloaded
 transcript heads each chapter. The client draws the heading and rail
-(`routes/desk/_components/chapters/`), finds the chapter in view from `data-chapter-turn`
+(`routes/desk/_components/chapters/`; a title the model just wrote types itself in once per page,
+`chapter-title-stream.ts`, since a heading is drawn again when its turn is saved and typing it in
+again read as the title regenerating), finds the chapter in view from `data-chapter-turn`
 (`useChapterNav`), and counts each chapter's work from the lists it already holds, by time.
 
 A conversation holds at most `conversation.MaxChaptersPerThread` (200) chapters, which bounds

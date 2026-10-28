@@ -91,6 +91,7 @@ func newListEquipmentTypesTool(
 
 	return newListTool(listSpec{
 		name:         toolListEquipmentTypes,
+		row:          codedRow{},
 		entityPlural: "equipment types",
 		summary:      equipmentTypesSummary,
 		resource:     permission.ResourceEquipmentType,
@@ -125,6 +126,7 @@ func newListEquipmentTypesTool(
 func newListFleetCodesTool(repo fleetcodeports.FleetCodeRepository) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListFleetCodes,
+		row:          codedRow{},
 		entityPlural: "fleet codes",
 		summary:      fleetCodesSummary,
 		resource:     permission.ResourceFleetCode,
@@ -156,6 +158,7 @@ func newListServiceTypesTool(
 ) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolMasterdataListServiceTypes,
+		row:          codedRow{},
 		entityPlural: "service types",
 		summary:      serviceTypesSummary,
 		resource:     permission.ResourceServiceType,
@@ -187,6 +190,7 @@ func newListShipmentTypesTool(
 ) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListShipmentTypes,
+		row:          codedRow{},
 		entityPlural: "shipment types",
 		summary:      shipmentTypesSummary,
 		resource:     permission.ResourceShipmentType,
@@ -227,6 +231,7 @@ type commodityRow struct {
 func newListCommoditiesTool(repo commodityports.CommodityRepository) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListCommodities,
+		row:          commodityRow{},
 		entityPlural: pluralCommodities,
 		summary:      commoditiesSummary,
 		resource:     permission.ResourceCommodity,
@@ -287,6 +292,7 @@ func newListHazardousMaterialsTool(
 ) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListHazardousMaterials,
+		row:          hazmatRow{},
 		entityPlural: "hazardous materials",
 		summary:      hazardousMaterialsSummary,
 		resource:     permission.ResourceHazardousMaterial,
@@ -345,6 +351,7 @@ func newListAccessorialChargesTool(
 ) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListAccessorialCharges,
+		row:          accessorialRow{},
 		entityPlural: "accessorial charges",
 		summary:      accessorialChargesSummary,
 		resource:     permission.ResourceAccessorialCharge,
@@ -389,6 +396,7 @@ func newListDocumentTypesTool(
 ) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListDocumentTypes,
+		row:          codedRow{},
 		entityPlural: "document types",
 		summary:      documentTypesSummary,
 		resource:     permission.ResourceDocumentType,
@@ -430,6 +438,7 @@ func newListLocationCategoriesTool(
 ) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListLocationCategories,
+		row:          codedRow{},
 		entityPlural: "location categories",
 		summary:      locationCategoriesSummary,
 		resource:     permission.ResourceLocationCategory,
@@ -488,6 +497,7 @@ func newListInvoicesTool(
 ) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "invoice_list",
+		row:          invoiceRow{},
 		entityPlural: "invoices",
 		summary: "List invoices narrowed by customer, status, whether they are paid or " +
 			"disputed, the amount, or the invoice and due dates. It answers what is unpaid, " +
@@ -585,6 +595,7 @@ type carrierRow struct {
 func newListCarriersTool(repo carrierports.CarrierRepository) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolCarrierList,
+		row:          carrierRow{},
 		entityPlural: pluralCarriers,
 		summary:      carriersSummary,
 		resource:     permission.ResourceCarrier,
@@ -653,6 +664,7 @@ func newListHoldReasonsTool(
 ) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListHoldReasons,
+		row:          holdReasonRow{},
 		entityPlural: "hold reasons",
 		summary:      holdReasonsSummary,
 		resource:     permission.ResourceHoldReason,

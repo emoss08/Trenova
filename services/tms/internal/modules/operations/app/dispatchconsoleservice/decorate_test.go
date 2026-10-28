@@ -26,7 +26,7 @@ func TestUrgencyFor(t *testing.T) {
 		windowStart int64
 		expect      UrgencyBucket
 	}{
-		{"already open and uncovered", testNow - 3600, UrgencyLate},
+		{"past an appointment with no window end", testNow - 3600, UrgencyLate},
 		{"within four hours", testNow + 2*secondsPerHour, UrgencyNow},
 		{"later today", testNow + 12*secondsPerHour, UrgencyToday},
 		{"tomorrow", testNow + 36*secondsPerHour, UrgencyTomorrow},
@@ -41,6 +41,27 @@ func TestUrgencyFor(t *testing.T) {
 			assert.Equal(t, tc.expect, got)
 		})
 	}
+}
+
+// A pickup is late once its window has closed, as a delivery is: inside its
+// window it is due now. The board called an open pickup window Late while the
+// shipment list's late read only closed ones, so the same question got two
+// counts.
+func TestUrgencyFor_APickupIsLateOnlyOnceItsWindowCloses(t *testing.T) {
+	t.Parallel()
+
+	at := func(v int64) *int64 { return &v }
+	open := shipmentports.BoardMove{
+		OriginWindowStart: testNow - secondsPerHour,
+		OriginWindowEnd:   at(testNow + secondsPerHour),
+	}
+	assert.Equal(t, UrgencyNow, urgencyFor(&open, testNow))
+
+	closed := shipmentports.BoardMove{
+		OriginWindowStart: testNow - 3*secondsPerHour,
+		OriginWindowEnd:   at(testNow - secondsPerHour),
+	}
+	assert.Equal(t, UrgencyLate, urgencyFor(&closed, testNow))
 }
 
 func TestUrgencyFor_APickedUpMoveFollowsItsDelivery(t *testing.T) {

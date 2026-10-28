@@ -201,6 +201,8 @@ const SUBJECT_KEYS = [
   "dataset",
   "page",
   "question",
+  "withoutCredential",
+  "credentialTypeCode",
   "query",
   "search",
   "shipmentId",

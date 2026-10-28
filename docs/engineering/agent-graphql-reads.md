@@ -623,13 +623,17 @@ page too long for a model to read whole and resumes it at the first row it left 
 takes that row's cursor (see "An oversized tool result" in [agent-runtime.md](agent-runtime.md)).
 A resolver that leaves an edge's cursor empty is not refused; its pages are only never cut.
 
-A list takes `fields`, the columns of each row it reads besides the id
+A list takes `fields`, the columns of each row the model reads besides the id
 (`agenttoolschema.Derived("<tool>.column", …)`, the operation's selected top-level fields under
-the names a row shows them by). Rows keep their id, the columns named, and what the spec's
-`shape` works out beside the columns (a worker's `dispatchable`), and `columns` names only what
-they carry. `fields` is outside the cursor scope, since it never changes which rows a page
-holds. A worker row with its profile is about 900 characters; names and statuses alone fit ten
-times as many rows in a result. `shipment_list` takes it too (`projectOutcome`).
+the names a row shows them by). The list returns every column whatever the call names; the
+runtime narrows the model's copy (`agentruntime.narrowRows`): each row keeps its id, the columns
+named and what the spec's `shape` works out beside the columns (a worker's `dispatchable`, which
+the spec lists in `derived` so `fields` may name it; Haiku asked for it and was refused twice), and
+`columns` names only what is left. The person's table is drawn from the list, so it and its later
+pages keep every column: narrowing the list itself left "show me the inactive drivers" a table of
+names. `fields` is outside the cursor scope, since it never changes which rows a page holds. A
+worker row with its profile is about 900 characters; names and statuses alone fit ten times as
+many rows in a result. The repository lists take it too, from the row their spec names (`listSpec.row`).
 
 So a model sees the same shape whichever path a list reads through. A cursor sent with changed
 filters, query or sort, an altered cursor, or one the tool never returned is refused before the
@@ -639,11 +643,16 @@ read with `errStaleCursor` ("call it again without after"), and `offset` with
 and compares them.
 
 A person's table pages the same list again through the Desk's rows endpoint (see "A table that
-pages" in [desk-artifacts.md](desk-artifacts.md)), with the cursors the tool handed out. Only that
-read sets `QueryToolParams.IncludeTotal`, which sends `includeTotalCount: true` and returns the
-connection's `totalCount` as `total`, with `totalEstimated: true` when `totalCountExact` says
-it is the planner's estimate; the model's reads never pay for the count, and the
-parameter is not in any tool's schema.
+pages" in [desk-artifacts.md](desk-artifacts.md)), with the cursors the tool handed out.
+`QueryToolParams.IncludeTotal` sends `includeTotalCount: true` and returns the connection's
+`totalCount` as `total`, with `totalEstimated: true` when `totalCountExact` says it is the
+planner's estimate. The rows endpoint sets it when the table counts, and the runtime sets it for a
+model's first page (`firstPage` in `dispatch.go`): the count is exact up to
+`pagination.ExactTotalUpTo` and estimated past it, so its cost follows the size of the answer, and
+"how many inactive drivers" is answered from the first page rather than by paging to the end or a
+script. The models' reads used to skip it, and an agent told "50 of more" could only say "at least
+50". Every operation a paged list reads declares `$includeTotalCount` and selects `totalCount` and
+`totalCountExact` under it; the parameter is in no tool's schema.
 
 A root that takes neither a table input nor its own `first` and `after`, but a bespoke input that
 holds them (`InboundMessagesInput`, `CaptureBatchesInput`), pages inside that input

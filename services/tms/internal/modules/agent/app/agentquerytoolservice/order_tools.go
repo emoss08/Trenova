@@ -80,6 +80,7 @@ func newListOrdersTool(
 ) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "order_list",
+		row:          orderRow{},
 		entityPlural: "orders",
 		searchTerms:  []string{"po number", "order number"},
 		summary: "List customer orders, the commercial record that groups one or more " +

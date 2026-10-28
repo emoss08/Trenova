@@ -248,6 +248,7 @@ type shipmentRow struct {
 func shipmentListSpec(repo shipmentports.ShipmentRepository) listSpec {
 	return listSpec{
 		name:         shipmentListName,
+		row:          shipmentRow{},
 		entityPlural: "shipments",
 		summary: "Shipments by status, billing state, dates or charges, such as picking up " +
 			"today.",
@@ -434,6 +435,7 @@ func newListTractorsTool(
 ) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListTractors,
+		row:          equipmentRow{},
 		entityPlural: pluralTractors,
 		summary:      tractorsSummary,
 		searchTerms: []string{
@@ -499,6 +501,7 @@ func newListTrailersTool(repo trailerports.TrailerRepository) agenttoolports.Age
 
 	return newListTool(listSpec{
 		name:         toolListTrailers,
+		row:          equipmentRow{},
 		entityPlural: pluralTrailers,
 		summary:      trailersSummary,
 		searchTerms: []string{
@@ -556,6 +559,7 @@ type customerRow struct {
 func newListCustomersTool(repo customerports.CustomerRepository) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolCustomerList,
+		row:          customerRow{},
 		entityPlural: pluralCustomers,
 		summary:      customersSummary,
 		resource:     permission.ResourceCustomer,
@@ -602,6 +606,7 @@ type locationRow struct {
 func newListLocationsTool(repo locationports.LocationRepository) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolLocationList,
+		row:          locationRow{},
 		entityPlural: pluralLocations,
 		summary:      locationsSummary,
 		resource:     permission.ResourceLocation,

@@ -135,4 +135,25 @@ func TestGetBoardSummary_CountsMovesByTheirNextStop(t *testing.T) {
 	later := summaryWithDelivery(now+10*3600, now+11*3600)
 	assert.Equal(t, [3]int{0, 0, 1},
 		[3]int{later.OverdueMoves, later.DueNowMoves, later.DueTodayMoves})
+
+	// Not picked up, the pickup's window decides, by the same rule: due now
+	// while it is open, overdue once it has closed.
+	pickup := func(opens, closes int64) *shipmentports.BoardSummary {
+		t.Helper()
+		_, updateErr := stp.Where(stp.ID.Eq(first.ID)).Update(ctx, db,
+			stp.ScheduledWindowStart.To(opens),
+			stp.ScheduledWindowEnd.To(closes),
+			stp.ActualArrival.To(0),
+		)
+		require.NoError(t, updateErr)
+
+		return summaryWithDelivery(now+10*3600, now+11*3600)
+	}
+	openPickup := pickup(now-3600, now+3600)
+	assert.Equal(t, [3]int{0, 1, 0},
+		[3]int{openPickup.OverdueMoves, openPickup.DueNowMoves, openPickup.DueTodayMoves},
+		"a pickup window already open is due now, not late")
+	closedPickup := pickup(now-7200, now-3600)
+	assert.Equal(t, [3]int{1, 0, 0},
+		[3]int{closedPickup.OverdueMoves, closedPickup.DueNowMoves, closedPickup.DueTodayMoves})
 }

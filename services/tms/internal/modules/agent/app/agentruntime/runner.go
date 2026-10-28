@@ -664,23 +664,44 @@ func (t *Turn) dispatchCall(call *llmports.ToolCall, completionText string) Disp
 		ProviderID:           t.result.ProviderID,
 		ScriptContinues:      continues,
 		ScriptPosition:       t.scriptPosition(call),
+		ScriptReach:          t.scriptReach(call),
 	}
+}
+
+// scriptReach is what the turn reached beyond the agent's own tools, for the
+// call that runs a script. find_tools told the model a read from another desk
+// was callable here, and the script, which saw only the agent's own, had no
+// such name: Haiku guessed three spellings of the fuel read and spent the
+// turn's scripts on them.
+func (t *Turn) scriptReach(call *llmports.ToolCall) map[string]agent.AutonomyTier {
+	if call.Name != codemode.ToolRunScript || len(t.beyond) == 0 {
+		return nil
+	}
+
+	return maps.Clone(t.beyond)
 }
 
 // scriptPosition is how many calls to the script tool the turn has made up to
 // and including this one, zero for any other tool. A call that continues a
-// script is not counted: it finishes what that script began.
+// script is not counted: it finishes what that script began. Nor is an
+// earlier script that stopped on an error before it read anything, up to
+// ScriptsPerTurn of them: correcting a read's name is not another analysis.
 func (t *Turn) scriptPosition(call *llmports.ToolCall) int {
 	if call.Name != codemode.ToolRunScript {
 		return 0
 	}
-	position := 0
+	position, unread := 0, 0
 	for idx := range t.result.Messages {
 		for _, made := range t.result.Messages[idx].ToolCalls {
 			if made.Name != codemode.ToolRunScript {
 				continue
 			}
-			if !t.finishes(made.ID) {
+			counted := !t.finishes(made.ID)
+			if made.ID != call.ID && t.unread[made.ID] {
+				unread++
+				counted = unread > codemode.ScriptsPerTurn
+			}
+			if counted {
 				position++
 			}
 			if made.ID == call.ID {
@@ -778,6 +799,12 @@ func (t *Turn) scriptArguments(id string) map[string]any {
 
 // noteContinuable keeps a script a later call of the turn may continue.
 func (t *Turn) noteContinuable(call *llmports.ToolCall, outcome *toolOutcome) {
+	if outcome.unread && call.ID != "" {
+		if t.unread == nil {
+			t.unread = make(map[string]bool, 1)
+		}
+		t.unread[call.ID] = true
+	}
 	if outcome.continuation == codemode.ContinueNone || call.ID == "" {
 		return
 	}

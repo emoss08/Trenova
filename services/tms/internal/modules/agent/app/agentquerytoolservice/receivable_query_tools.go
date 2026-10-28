@@ -471,6 +471,7 @@ func newListInvoiceRunsTool(
 
 	return newListTool(listSpec{
 		name:         "invoice_list_runs",
+		row:          invoiceRunRow{},
 		entityPlural: "invoice runs",
 		summary: "List invoice runs, the reviewable batches of consolidated invoices for a " +
 			"billing period, by status, number or period. Open one with invoice_get_run to " +

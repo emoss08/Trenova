@@ -52,6 +52,12 @@ func summarizeTender(entity *tender.Tender) *MoveTenderSummary {
 	return summary
 }
 
+// urgencyFor reads a move's urgency from its next stop: the pickup until it
+// is picked up, then the delivery. A stop is Late once its window has closed
+// with no arrival, and Now while its window is open, the same rule for a
+// pickup as for a delivery: a truck inside its pickup window is due, not
+// late, and calling it late made the board, the shipment list and the
+// answer built from them count late loads three ways.
 func urgencyFor(move *shipmentports.BoardMove, now int64) UrgencyBucket {
 	if arrived(move.OriginActualArrive) {
 		return deliveryUrgency(move, now)
@@ -59,19 +65,28 @@ func urgencyFor(move *shipmentports.BoardMove, now int64) UrgencyBucket {
 	if move.OriginWindowStart <= 0 {
 		return UrgencyPlanned
 	}
+	if windowClose(move.OriginWindowStart, move.OriginWindowEnd) < now {
+		return UrgencyLate
+	}
 
-	return bucketFor(move.OriginWindowStart - now)
+	return bucketFor(max(move.OriginWindowStart-now, 0))
+}
+
+// windowClose is when a window closes: its end, or its start when it has
+// none.
+func windowClose(start int64, end *int64) int64 {
+	if end != nil && *end > start {
+		return *end
+	}
+
+	return start
 }
 
 func deliveryUrgency(move *shipmentports.BoardMove, now int64) UrgencyBucket {
 	if arrived(move.DestinationActualArrive) || move.DestinationWindowStart <= 0 {
 		return UrgencyPlanned
 	}
-	closes := move.DestinationWindowStart
-	if move.DestinationWindowEnd != nil && *move.DestinationWindowEnd > closes {
-		closes = *move.DestinationWindowEnd
-	}
-	if closes < now {
+	if windowClose(move.DestinationWindowStart, move.DestinationWindowEnd) < now {
 		return UrgencyLate
 	}
 

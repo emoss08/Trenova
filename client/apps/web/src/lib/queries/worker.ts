@@ -24,6 +24,7 @@ import {
   fetchWorkerHos,
   fetchWorkerStanding,
 } from "@/lib/graphql/worker-card";
+import { fetchWorkerCredentialTypeChoices } from "@/lib/graphql/worker-credential";
 
 type WorkerPTOConnection = {
   edges?: Array<{ node: unknown }>;
@@ -114,6 +115,10 @@ export const worker = createQueryKeys("worker", {
   credentials: (workerId: string) => ({
     queryKey: ["credentials", workerId],
     queryFn: ({ signal }) => fetchWorkerCredentials(workerId, { signal }),
+  }),
+  credentialTypeChoices: () => ({
+    queryKey: ["credential-type-choices"],
+    queryFn: ({ signal }) => fetchWorkerCredentialTypeChoices({ signal }),
   }),
   ptoHistory: (workerId: string) => ({
     queryKey: ["pto-history", workerId],

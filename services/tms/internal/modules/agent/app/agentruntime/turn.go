@@ -75,6 +75,9 @@ type Turn struct {
 	// its own call id, with the id of the script it continues.
 	continuable map[string]codemode.Continuation
 	continuing  map[string]string
+	// unread are the turn's scripts that stopped on an error before they
+	// read anything, which the turn's script count leaves out.
+	unread map[string]bool
 	// callIDs is every tool call id the conversation holds, so a provider
 	// that reuses one is given a fresh id rather than a clash.
 	callIDs map[string]struct{}
@@ -199,6 +202,10 @@ type DispatchCall struct {
 	ProviderID      pulid.ID        `json:"providerId,omitempty"`
 	ScriptPosition  int             `json:"scriptPosition,omitempty"`
 	ScriptContinues map[string]any  `json:"scriptContinues,omitempty"`
+	// ScriptReach is, for the call that runs a script, the reads the turn
+	// reached beyond the agent's own through find_tools, each with its tier:
+	// the script may call them as the model may.
+	ScriptReach map[string]agent.AutonomyTier `json:"scriptReach,omitempty"`
 }
 
 // ToolOutcome is what one tool call came to.
@@ -229,6 +236,9 @@ type ToolOutcome struct {
 	// Continuation is how a later call of the turn may continue the script
 	// the call ran.
 	Continuation codemode.Continuation `json:"continuation,omitempty"`
+	// Unread is a script that stopped on an error before it read anything,
+	// which the turn's script count leaves out.
+	Unread bool `json:"unread,omitempty"`
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
@@ -253,6 +263,7 @@ func (o toolOutcome) exported() ToolOutcome {
 		SavedMemory:    o.saved,
 		Shown:          o.shown,
 		Continuation:   o.continuation,
+		Unread:         o.unread,
 		Data:           o.data,
 		RanWith:        o.ranWith,
 	}
@@ -275,6 +286,7 @@ func (o ToolOutcome) internal() toolOutcome {
 		saved:          o.SavedMemory,
 		shown:          o.Shown,
 		continuation:   o.Continuation,
+		unread:         o.Unread,
 		data:           o.Data,
 		ranWith:        o.RanWith,
 	}
@@ -1082,6 +1094,7 @@ func (s *Service) DispatchStep(
 			providerID: call.ProviderID,
 			position:   call.ScriptPosition,
 			continues:  call.ScriptContinues,
+			reach:      call.ScriptReach,
 		},
 	})
 	outcome.summary = summarizeOutcome(call.Call, outcome)

@@ -164,8 +164,13 @@ from a script when `ToolPolicy.CallableFromScript()` holds:
 
 It must also not be an extension tool (web, portal or the script tool itself), and
 not one of the tools that read pasted partner text (`ReadsExternalContent`). Reads another
-desk's agents hold, which a conversation reaches through `find_tools`, are not in the index: a
-script calls only what its own agent holds. Each entry carries the tool's name, its
+desk's agents hold, which the turn reached through `find_tools`, are in the index too
+(`DispatchCall.ScriptReach`, the turn's reach, sent only with the call that runs a script), and the
+broker dispatches each on its tier as the model's own call of it would be: find_tools told the
+model `fuel_list_purchases` was callable here, the script left it out, and Haiku spent the turn's
+three scripts guessing its name. A script that names a read it may not call gets the reads it may
+call in its result's note (`missingReadNote`), nearest first, with how a tool's name becomes
+`trenova.<namespace>.<rest>`. Each entry carries the tool's name, its
 description and its parameter schema (`toolschema.ForModel`). Scripts therefore write against
 the same schemas the model reads for discrete calls, and anything that becomes a tool is in
 the SDK the moment it is registered. The cached prefix does not change, because the index is
@@ -417,11 +422,14 @@ cannot raise one. The values are `codemode.DefaultLimits()` and the constants in
 | Result | 64 KB | the runner | dropped and refused, `result` |
 | Memory | 256 MiB | Monty's memory limit (`MemoryError`, which a script cannot catch); past a margin, `monty-alloc` exits the module; the instance's pages are capped at 1 GiB | `Stopped`, `memory` |
 | Host calls | the read limit for reads; 20,000 for paging datasets in and showing | the module | `Stopped`, `calls` |
-| Scripts per turn | 3, not counting a continuation that shows what a script left unshown (§4.3) | `runScriptTool`, from `DispatchCall.ScriptPosition` | the call is refused |
+| Scripts per turn | 3, not counting a continuation that shows what a script left unshown (§4.3), nor, up to three of them, a script that stopped on an error before its first read (`codemode.Unread`) | `runScriptTool`, from `DispatchCall.ScriptPosition` | the call is refused |
 | Scripts running at once | 8 per worker | `pkg/scriptvm`'s slots (`DefaultMaxConcurrent`), so a worker's script memory stays near 8 × 256 MiB | the script waits up to 10 s for a slot (`DefaultQueueWait`), then `Failed`: too many scripts are running |
 
-One script spends one call of the turn's tool budget, and its reads are counted against its own
-limits. The per-turn ceiling is therefore 3 × 60 reads, run at most 8 at a time.
+Every limit is a constant in `domain/codemode/limits.go`; `scriptrunner` applies
+`codemode.DefaultLimits()` to every run, and no organization or agent setting changes them. A list
+read from a script pages at the list's own bound, which for the GraphQL lists is the server's (100,
+`pagination.MaxLimit`), so sixty reads reach the 5,000-row limit. One script spends one call of the
+turn's tool budget, and its reads are counted against its own limits. The per-turn ceiling is therefore 3 × 60 reads, run at most 8 at a time.
 `TestBrokerSemaphoreBoundsConcurrentDispatches` holds the bound.
 
 **Latency** is recorded for the bench to judge: `brokerMs` is how long the broker's dispatch

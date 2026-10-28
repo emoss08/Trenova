@@ -1,6 +1,7 @@
 import { assistantChapterSchema } from "@/types/assistant";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { resetStreamedTitles } from "../chapter-title-stream";
 import type { ChapterEntry } from "../chapter-work";
 import { DeskChapterHeading, type ChapterActions } from "../desk-chapter-heading";
 
@@ -12,6 +13,7 @@ vi.mock("motion/react", async (importOriginal) => ({
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  resetStreamedTitles();
 });
 
 function entry(overrides: Partial<ChapterEntry["chapter"]> = {}, number = 2): ChapterEntry {
@@ -109,6 +111,48 @@ describe("DeskChapterHeading", () => {
     });
 
     expect(heading).toHaveTextContent("Acme invoice dispute");
+  });
+
+  // The heading is drawn under the live turn, then again among the saved
+  // messages once the turn is saved, moments after the model named it. Typing
+  // the title in again there read as the title being written afresh.
+  it("types a title in once, and shows it whole when the heading is drawn again", () => {
+    vi.useFakeTimers();
+    const fresh = entry({
+      title: "Acme invoice dispute",
+      updatedAt: Math.floor(Date.now() / 1000),
+    });
+    const first = renderHeading(fresh, actions());
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+    });
+    first.unmount();
+
+    renderHeading(fresh, actions());
+
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Acme invoice dispute");
+  });
+
+  it("types in a new title the model gives a chapter already on screen", () => {
+    vi.useFakeTimers();
+    const given = actions();
+    const view = renderHeading(entry({ title: "Acme invoice dispute" }), given);
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Acme invoice dispute");
+
+    view.rerender(
+      <DeskChapterHeading
+        entry={entry({ title: "Acme short-pay on INV-1042", version: 4 })}
+        actions={given}
+        timezone="America/Chicago"
+      />,
+    );
+
+    const heading = screen.getByRole("heading", { level: 2 });
+    expect(heading).not.toHaveTextContent("Acme short-pay on INV-1042");
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+    });
+    expect(heading).toHaveTextContent("Acme short-pay on INV-1042");
   });
 
   it("shows a title from before the page opened whole at once", () => {

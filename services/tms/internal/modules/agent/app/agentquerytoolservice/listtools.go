@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -69,6 +70,10 @@ type listSpec struct {
 	queryNote    string
 	resource     permission.Resource
 	fields       []listField
+	// row is a zero value of the row the list returns, whose columns a call
+	// may name in fields for what the model reads. A list without one takes
+	// no fields.
+	row any
 	// config is the entity's computed field configuration. A curated field that
 	// no longer maps to a column is dropped silently by the query builder, so it
 	// is checked here and refused loudly instead.
@@ -122,6 +127,7 @@ type listTool struct {
 	fields      agenttoolschema.EnumSource[string]
 	operators   agenttoolschema.EnumSource[string]
 	sortable    agenttoolschema.EnumSource[string]
+	columns     agenttoolschema.EnumSource[string]
 	description string
 }
 
@@ -150,8 +156,21 @@ func buildListTool(spec *listSpec) *listTool {
 		fields:      agenttoolschema.Derived(spec.name+".field", resource.FieldNames()),
 		operators:   agenttoolschema.Derived(spec.name+".operator", operators),
 		sortable:    agenttoolschema.Derived(spec.name+".sortBy", resource.SortableNames()),
+		columns:     agenttoolschema.Derived(spec.name+".column", rowColumns(spec.row)),
 		description: buildListDescription(*spec),
 	}
+}
+
+// rowColumns are the columns of a list's row but the id, which every row
+// keeps: what a call may name in fields.
+func rowColumns(row any) []string {
+	if row == nil {
+		return nil
+	}
+
+	return slices.DeleteFunc(columnsOf([]any{row}), func(name string) bool {
+		return name == recordIDField
+	})
 }
 
 // catalogResource is the one place a list spec becomes a catalogued resource,
@@ -256,6 +275,9 @@ func (t *listTool) ParamSchema() map[string]any {
 	}
 	for name, property := range t.pagingSchema() {
 		properties[name] = property
+	}
+	if len(t.columns.Names()) > 1 {
+		properties[paramFields] = fieldsSchema(t.columns)
 	}
 
 	return map[string]any{

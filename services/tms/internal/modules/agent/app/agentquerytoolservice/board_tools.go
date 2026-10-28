@@ -210,8 +210,10 @@ func (t *getDispatchBoardTool) ParamSchema() map[string]any {
 		},
 		paramBoardLate: map[string]any{
 			"type": "boolean",
-			"description": "Only the moves late now: past the pickup window with no arrival, " +
-				"or past the delivery window's close once picked up. Default false.",
+			"description": "Only the moves late now: past the pickup window's close with no " +
+				"arrival, or past the delivery window's close once picked up, the same rule as " +
+				"shipment_list's late. A move inside its window is due now, not late. Default " +
+				"false.",
 		},
 		paramBoardDrivers: map[string]any{
 			"type": "boolean",
@@ -350,16 +352,15 @@ const (
 )
 
 // lateness is what a move is late to do at now, and how many seconds past the
-// window's close it is: pick up, when its pickup window has opened with no
+// window's close it is: pick up, when its pickup window has closed with no
 // arrival recorded, or deliver, when it was picked up and its delivery
-// window has closed. A move picked up and still inside its delivery window
-// is not late, whatever its pickup-based urgency says. A pickup window still
-// open is not past its close yet, so it has no seconds.
+// window has closed. A move inside its pickup window is due, not late, as
+// the board's urgency and the shipment list's late both read it.
 func lateness(move *shipmentports.BoardMove, now int64) (lateTo string, lateSeconds int64) {
 	if move.OriginActualArrive == nil || *move.OriginActualArrive <= 0 {
-		if move.OriginWindowStart > 0 && move.OriginWindowStart < now {
-			pickupClose := closeOf(move.OriginWindowStart, move.OriginWindowEnd)
-			return lateToPickUp, max(now-pickupClose, 0)
+		pickupClose := closeOf(move.OriginWindowStart, move.OriginWindowEnd)
+		if move.OriginWindowStart > 0 && pickupClose < now {
+			return lateToPickUp, now - pickupClose
 		}
 
 		return "", 0

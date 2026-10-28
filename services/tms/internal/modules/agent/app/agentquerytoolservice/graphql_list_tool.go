@@ -30,7 +30,11 @@ const (
 	graphQLVerbList   = "list"
 	graphQLParamQuery = "query"
 	graphQLListLimit  = 25
-	graphQLListMost   = 50
+	// graphQLListMost is the server's own page bound (pagination.MaxLimit).
+	// A model's read of a page too long for it is cut to the rows that fit,
+	// so the bound is what a script reads a page at a time: at 50 its sixty
+	// reads stopped at 3,000 rows, short of the 5,000 a script may read.
+	graphQLListMost = 100
 
 	connectionEdges      = "edges"
 	connectionNode       = "node"
@@ -83,6 +87,11 @@ type graphQLListSpec struct {
 	// shape applies to each row what the screen's resolver does not, given
 	// the fields withheld from it and the call's clock.
 	shape func(row map[string]any, withheld map[string]struct{}, clk clock)
+	// derived are the fields shape works out for every row (a worker's
+	// dispatchable and why not), which fields may name beside the columns:
+	// the model sees them on every row, and naming one was refused, twice in
+	// a row, as not a column.
+	derived []string
 	// defaults are parameter values a call that omits them reads with (the
 	// active courses, not the retired ones), named in their notes.
 	defaults map[string]any
@@ -371,7 +380,7 @@ func newGraphQLListTool(
 		rowFields:   presentedFields(read.Fields, spec.presents),
 	}
 	tool.columns = agenttoolschema.Derived(spec.name+".column",
-		listColumns(tool.rowFields, spec.amounts))
+		append(listColumns(tool.rowFields, spec.amounts), spec.derived...))
 	tool.params = slices.DeleteFunc(params, func(param graphQLParam) bool {
 		return tool.confidential(&param)
 	})

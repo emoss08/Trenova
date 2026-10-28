@@ -69,6 +69,9 @@ type scriptGate struct {
 	position   int
 	// continues is the arguments of the script the call continues.
 	continues map[string]any
+	// reach is what the turn reached beyond the agent's own tools, which a
+	// script may call as the model may.
+	reach map[string]agent.AutonomyTier
 }
 
 // guardedDispatch runs one tool call at most once across every attempt of a

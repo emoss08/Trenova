@@ -97,6 +97,7 @@ func buildBillingQueueList(
 ) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "billing_list_queue_items",
+		row:          billingQueueRow{},
 		entityPlural: "billing queue items",
 		summary: "List billing queue items, the shipments waiting on a biller. Open one with " +
 			"billing_get_queue_item before deciding it; Posted items need status Posted.",

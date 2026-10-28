@@ -42,6 +42,8 @@ type toolOutcome struct {
 	batch []agentruntimeports.PendingAction
 	// continuation is how a later call of the turn may continue a script.
 	continuation codemode.Continuation
+	// unread is a script that stopped on an error before it read anything.
+	unread bool
 	// data is what a query tool returned, before it was encoded for the
 	// model. The caller may turn it into something a person sees.
 	data    any

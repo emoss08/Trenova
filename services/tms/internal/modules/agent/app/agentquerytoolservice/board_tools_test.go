@@ -1,7 +1,6 @@
 package agentquerytoolservice
 
 import (
-	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
@@ -89,8 +88,8 @@ func TestLateness_MeasuresFromTheWindowsClose(t *testing.T) {
 	end := now + 1800
 	open := &shipmentports.BoardMove{OriginWindowStart: now - 1800, OriginWindowEnd: &end}
 	what, seconds := lateness(open, now)
-	assert.Equal(t, "pick up", what)
-	assert.Empty(t, lateFor(seconds), "the pickup window is still open")
+	assert.Empty(t, what, "a move inside its pickup window is due, not late")
+	assert.Empty(t, lateFor(seconds))
 
 	closed := now - 22*3600
 	overdue := &shipmentports.BoardMove{OriginWindowStart: closed - 7200, OriginWindowEnd: &closed}
@@ -155,7 +154,7 @@ func TestDispatchBoard_ReadsDueFirstAndPagesTheLateMoves(t *testing.T) {
 	data, err := tool.Query(t.Context(), call)
 	require.NoError(t, err)
 
-	sent := reader.sent
+	sent := reader.req
 	require.NotNil(t, sent)
 	assert.True(t, sent.LateOnly)
 	assert.True(t, sent.DueFirst, "the board is read furthest behind first")
@@ -178,7 +177,7 @@ func TestDispatchBoard_ReadsDueFirstAndPagesTheLateMoves(t *testing.T) {
 		paramBoardLate: true, paramLimit: 2, paramAfter: view.NextCursor,
 	}))
 	require.NoError(t, err)
-	assert.Equal(t, 2, reader.sent.Offset, "the next page starts after the two read")
+	assert.Equal(t, 2, reader.req.Offset, "the next page starts after the two read")
 
 	cut, ok := view.CutPage(1)
 	require.True(t, ok)
@@ -191,18 +190,4 @@ func TestDispatchBoard_ReadsDueFirstAndPagesTheLateMoves(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "1", key, "a cut board resumes at the move after the last one kept")
 	assert.Contains(t, short.Note, "1 late moves listed")
-}
-
-type fakeBoard struct {
-	board *dispatchconsoleservice.Board
-	sent  *dispatchconsoleservice.GetBoardRequest
-}
-
-func (f *fakeBoard) GetBoard(
-	_ context.Context,
-	req *dispatchconsoleservice.GetBoardRequest,
-) (*dispatchconsoleservice.Board, error) {
-	f.sent = req
-
-	return f.board, nil
 }

@@ -2,11 +2,13 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { driverTypeChoices, statusChoices, workerTypeChoices } from "@/lib/choices";
 import { patchWorker } from "@/lib/graphql/worker-mutations";
-import { workerTableGraphQLConfigs, type WorkerRow } from "@/lib/graphql/worker-table";
-import type { DockAction } from "@trenova/shared/types/data-table";
-import { Resource } from "@trenova/shared/types/permission";
+import { workerTableGraphQLConfig, type WorkerRow } from "@/lib/graphql/worker-table";
+import { usePermission } from "@/hooks/use-permission";
+import { worker } from "@/lib/queries/worker";
+import type { DataTableToolbarSlots, DockAction } from "@trenova/shared/types/data-table";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Worker } from "@trenova/shared/types/worker";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircleIcon,
   GraduationHat01Icon,
@@ -16,6 +18,7 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { BulkAssignTrainingDialog } from "./bulk-assign-training-dialog";
+import { MissingCredentialMenu } from "./missing-credential-menu";
 import { getColumns } from "./worker-columns";
 import { WorkerPanel } from "./worker-panel";
 
@@ -27,6 +30,34 @@ export default function WorkerTable() {
   // Held here rather than inside the dock so the dialog keeps the selection
   // after the dock closes it.
   const [trainingTargets, setTrainingTargets] = useState<WorkerRow[] | null>(null);
+  const { allowed: readsCredentials } = usePermission(Resource.WorkerCredential, Operation.Read);
+  const [withoutCredential, setWithoutCredential] = useState<string | null>(null);
+  const graphql = useMemo(() => workerTableGraphQLConfig(withoutCredential), [withoutCredential]);
+  const choices = useQuery({
+    ...worker.credentialTypeChoices(),
+    enabled: withoutCredential !== null,
+  });
+  const missingName =
+    choices.data?.find((type) => type.code === withoutCredential)?.name ?? withoutCredential;
+  const toolbar = useMemo<DataTableToolbarSlots | undefined>(() => {
+    if (!readsCredentials) return undefined;
+    return {
+      trailing: <MissingCredentialMenu value={withoutCredential} onChange={setWithoutCredential} />,
+      chips:
+        withoutCredential === null
+          ? undefined
+          : {
+              items: [
+                {
+                  key: "withoutCredential",
+                  label: t("Missing {0}", missingName ?? ""),
+                  onRemove: () => setWithoutCredential(null),
+                },
+              ],
+              onClear: () => setWithoutCredential(null),
+            },
+    };
+  }, [missingName, readsCredentials, t, withoutCredential]);
 
   const handleBulkStatusUpdate = useCallback(
     async (rows: WorkerRow[], status: string) => {
@@ -156,7 +187,8 @@ export default function WorkerTable() {
         queryKey="worker-list"
         resource={Resource.Worker}
         columns={columns}
-        graphql={workerTableGraphQLConfigs.worker}
+        graphql={graphql}
+        toolbar={toolbar}
         dockActions={dockActions}
         enableRowSelection
         TablePanel={WorkerPanel}

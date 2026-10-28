@@ -182,15 +182,16 @@ func dueAt() keel.Int64Expr {
 		Else(windowClose(&origin))
 }
 
-// lateAt keeps the moves late at an instant, as the board's own lateness
-// reads them: a pickup window that has opened with no arrival, or a delivery
-// window that has closed on a load picked up and not delivered.
+// lateAt keeps the moves late at an instant, as the board's urgency reads
+// them: a stop not yet reached whose window has closed, the pickup until the
+// load is picked up and then the delivery, which is what the shipment list's
+// late reads from the stops too.
 func lateAt(at int64) keel.Pred {
 	return keel.Or(
 		keel.And(
 			zero(origin.stop.ActualArrival).Lte(0),
 			zero(origin.stop.ScheduledWindowStart).Gt(0),
-			zero(origin.stop.ScheduledWindowStart).Lt(at),
+			windowClose(&origin).Lt(at),
 		),
 		keel.And(
 			pickedUp(),

@@ -147,7 +147,9 @@ workers checked for a road test each came back with the whole catalog. Who lacks
 is `worker_list` with `withoutCredential` (the `workers` root's argument): a `NOT EXISTS` over
 the worker's active, unexpired credential of the type, through the unique index on a worker's
 active credential of each type, so one paged roster read answers "who has no road test on
-file" for the whole organization. An unknown code is refused, not read as everyone lacking it.
+file" for the whole organization. An unknown code is refused, not read as everyone lacking it,
+and the filter needs worker credential read as well as worker read, since it says who lacks one.
+The roster screen offers the same filter ("Missing credential", `MissingCredentialMenu`).
 
 A second active credential of a type is refused unless the call renews it, and the preview
 shows the one a renewal archives. Changing a fact a person verified clears the verification,

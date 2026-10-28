@@ -138,6 +138,9 @@ func shipmentOptionPredicates(opts *shipmentports.ShipmentOptions) []keel.Pred {
 	if opts.FiltersOnHolds() {
 		preds = append(preds, activeHoldPredicate(opts))
 	}
+	if opts.LateAt > 0 {
+		preds = append(preds, latePredicate(opts.LateAt))
+	}
 	if len(opts.WorkerIDs) > 0 {
 		preds = append(preds, workerPredicate(opts.WorkerIDs))
 	}
@@ -224,6 +227,30 @@ func activeHoldPredicate(opts *shipmentports.ShipmentOptions) keel.Pred {
 	}
 
 	return id.InQuery(held)
+}
+
+// latePredicate keeps the shipments with a stop not yet reached whose window
+// closed before at: its end, or its start when it has none. The stop's
+// window opened before at too, which is what the open-stop index walks, so
+// the read passes over the work under way and never the tenant's history.
+func latePredicate(at int64) keel.Pred {
+	sm := shipmentdb.ShipmentMoves
+	st := shipmentdb.Stops
+	closes := keel.CaseInt64().
+		When(st.ScheduledWindowEnd.Coalesce(0).Gt(0), st.ScheduledWindowEnd.Coalesce(0)).
+		Else(st.ScheduledWindowStart.Coalesce(0))
+	late := sm.Join(st, st.ShipmentMoveID.EqCol(sm.ID)).
+		Pick(sm.ShipmentID).
+		Where(
+			sm.Status.NotIn(shipment.MoveStatusCompleted, shipment.MoveStatusCanceled),
+			st.Status.In(shipment.StopStatusNew, shipment.StopStatusInTransit),
+			st.ScheduledWindowStart.Gt(0),
+			st.ScheduledWindowStart.Lt(at),
+			st.ActualArrival.Coalesce(0).Lte(0),
+			closes.Lt(at),
+		)
+
+	return shipmentdb.Shipments.ID.InQuery(late)
 }
 
 func holdReasonCodes(codes []string) []string {

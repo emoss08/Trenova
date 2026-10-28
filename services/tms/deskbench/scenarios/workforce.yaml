@@ -70,6 +70,25 @@ scenarios:
             It never checks workers one at a time, and never answers from part of the roster as
             though it were all of it.
 
+  - name: how-many-inactive-drivers
+    description: >
+      A count across the roster. The list read a page at a time once said "39 inactive" only
+      because the page happened to hold them all; a count is the list's total, from its first
+      page, never the rows counted by hand.
+    steps:
+      - say: "how many inactive drivers do we have, and why are they out"
+        expect:
+          calls: ["worker_list"]
+          maxCalls: 3
+          maxFailedCalls: 0
+          noProposals: true
+          facts:
+            - sql: select count(*) from workers where status = 'Inactive'
+              note: how many workers are inactive
+          rubric: >
+            States how many workers are inactive from the list's total and sums up why (leave,
+            separation) from the rows it read, saying when that reason covers only the rows shown.
+
   - name: open-safety-events
     description: A safety manager's Monday.
     steps:

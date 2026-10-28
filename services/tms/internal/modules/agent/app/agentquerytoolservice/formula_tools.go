@@ -143,6 +143,7 @@ func newListFormulaTemplatesTool(
 ) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListFormulaTemplates,
+		row:          formulaTemplateRow{},
 		entityPlural: pluralFormulaTemplates,
 		summary:      formulaTemplatesSummary,
 		resource:     permission.ResourceFormulaTemplate,

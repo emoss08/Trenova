@@ -120,6 +120,8 @@ func TestGraphQLList_FieldsLeaveTheListWhole(t *testing.T) {
 	items, _ := fields[toolschema.KeyItems].(map[string]any)
 	assert.Contains(t, items[toolschema.KeyEnum], "wholeName")
 	assert.Contains(t, items[toolschema.KeyEnum], "profile")
+	assert.Contains(t, items[toolschema.KeyEnum], workerDispatchable,
+		"what the list works out for every row may be named too")
 	assert.NotContains(t, items[toolschema.KeyEnum], recordIDField)
 
 	data, err := tool.Query(t.Context(), keyedCall(map[string]any{
@@ -238,4 +240,21 @@ func TestBesidePage_ACutKeepsWhatWasReadBeside(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, []any{"x"}, record["catalog"])
 	assert.Len(t, record[outcomeItems], 1)
+}
+
+// A repository list offers fields as its row's columns but the id, so what
+// the model reads narrows as a GraphQL list's does; a list that declares no
+// row takes none.
+func TestRepositoryList_FieldsAreItsRowsColumns(t *testing.T) {
+	t.Parallel()
+
+	properties, _ := newListFleetCodesTool(nil).ParamSchema()[toolschema.KeyProperties].(map[string]any)
+	fields, ok := properties[paramFields].(map[string]any)
+	require.True(t, ok, "a list that declares its row takes fields")
+	items, _ := fields[toolschema.KeyItems].(map[string]any)
+	assert.Equal(t, []string{"code", "name", "description", "status"}, items[toolschema.KeyEnum])
+
+	spec := agentRunListSpec()
+	properties, _ = buildListTool(&spec).ParamSchema()[toolschema.KeyProperties].(map[string]any)
+	assert.NotContains(t, properties, paramFields)
 }

@@ -211,6 +211,12 @@ func (r *QueryResolver) Workers(ctx context.Context, input gqlmodel.DataTableCon
 	if err != nil {
 		return nil, err
 	}
+	missing := strings.TrimSpace(base.StringValue(withoutCredential))
+	if missing != "" {
+		if _, err = r.RequirePermission(ctx, permission.ResourceWorkerCredential, permission.OpRead); err != nil {
+			return nil, err
+		}
+	}
 
 	connection, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
 	if err != nil {
@@ -220,7 +226,7 @@ func (r *QueryResolver) Workers(ctx context.Context, input gqlmodel.DataTableCon
 	result, err := r.WorkerService.List(ctx, &workerports.ListWorkersRequest{
 		Filter:            connection.Filter,
 		Cursor:            connection.Cursor,
-		WithoutCredential: strings.TrimSpace(base.StringValue(withoutCredential)),
+		WithoutCredential: missing,
 	})
 	if err != nil {
 		return nil, err

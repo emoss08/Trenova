@@ -269,3 +269,13 @@ mutation AttachWorkerCredentialDocument($input: AttachWorkerCredentialDocumentIn
     ...WorkerCredentialFields
   }
 }
+
+# The credential types a roster can be narrowed to the workers missing.
+query WorkerCredentialTypeChoices {
+  activeWorkerCredentialTypes {
+    id
+    code
+    name
+    isRequired
+  }
+}

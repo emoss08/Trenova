@@ -76,6 +76,7 @@ func workerReadSpecs() []graphQLListSpec {
 		}},
 		rank:       rankWorkerRows,
 		shape:      shapeWorkerRow,
+		derived:    []string{workerDispatchable, workerNotDispatchBy},
 		unoffered:  []string{workerBlockedField, workerAvailableField, workerPictureField},
 		conditions: []listCondition{dispatchableCondition},
 	}}

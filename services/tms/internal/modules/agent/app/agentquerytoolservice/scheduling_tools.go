@@ -73,6 +73,7 @@ func newListRecurringShipmentsTool(
 ) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "shipment_list_recurring",
+		row:          recurringShipmentRow{},
 		entityPlural: "recurring shipments",
 		summary: "List recurring shipments: the series that copy one saved shipment on a " +
 			"schedule for a customer's standing lane, with when each next generates. Use " +

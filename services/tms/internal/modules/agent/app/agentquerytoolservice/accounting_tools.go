@@ -816,6 +816,7 @@ func newListGLAccountsTool(
 ) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "ledger_list_accounts",
+		row:          glAccountRow{},
 		entityPlural: "general ledger accounts",
 		summary: "List the chart of accounts: each general ledger account's code, name, " +
 			"type and status, with its balances when your data access reaches them. Use " +
@@ -899,6 +900,7 @@ func newListFiscalPeriodsTool(
 ) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "ledger_list_fiscal_periods",
+		row:          fiscalPeriodRow{},
 		entityPlural: "fiscal periods",
 		searchTerms: []string{
 			"open periods", "period end dates", "current period", "fiscal calendar",

@@ -406,7 +406,7 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	view, ok := result.(boardView)
+	view, ok := result.(*boardView)
 	require.True(t, ok)
 	require.Len(t, view.Moves, 2)
 	assert.Equal(t, "Late", view.Moves[0].Urgency)
@@ -420,7 +420,7 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 	assert.Equal(t, 1, view.Counts["Late"])
 	assert.Contains(t, view.Note, "Late 1, Now 1")
 	require.NotNil(t, view.Summary)
-	assert.Equal(t, 1, view.Summary.LateMoves)
+	assert.Equal(t, 1, view.Summary.UncoveredPastPickup)
 
 	require.NotNil(t, board.req)
 	assert.False(t, board.req.IncludeCovered)
