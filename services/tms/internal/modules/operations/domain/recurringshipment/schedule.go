@@ -68,12 +68,12 @@ func (rs *RecurringShipment) applyExceptionPolicy(
 		return &Occurrence{At: occurrenceAt, OriginalAt: occurrenceAt}, true
 	}
 
-	var step time.Duration
+	var step int
 	switch rs.ExceptionPolicy {
 	case ExceptionPolicyPreviousBusinessDay:
-		step = -24 * time.Hour
+		step = -1
 	case ExceptionPolicyNextBusinessDay:
-		step = 24 * time.Hour
+		step = 1
 	case ExceptionPolicySkip:
 		return nil, false
 	default:
@@ -82,7 +82,7 @@ func (rs *RecurringShipment) applyExceptionPolicy(
 
 	shifted := time.Unix(occurrenceAt, 0).In(loc)
 	for range maxBusinessDayShiftDays {
-		shifted = shifted.Add(step)
+		shifted = shifted.AddDate(0, 0, step)
 		candidate := shifted.Unix()
 		if rs.EndDate != nil && candidate > *rs.EndDate {
 			return nil, false

@@ -97,6 +97,26 @@ func TestNextOccurrence_BlackoutNextBusinessDayShifts(t *testing.T) {
 	assert.True(t, occurrence.Shifted)
 }
 
+// A shift moves a load by business days on the calendar, not by 24 hours of
+// elapsed time: across the end of daylight saving the pickup keeps its hour.
+func TestNextOccurrence_BusinessDayShiftKeepsItsHourAcrossDaylightSaving(t *testing.T) {
+	t.Parallel()
+
+	series := &RecurringShipment{
+		CronExpression:  "0 8 * * 6",
+		Timezone:        "America/Chicago",
+		SkipWeekends:    true,
+		ExceptionPolicy: ExceptionPolicyNextBusinessDay,
+	}
+
+	occurrence, err := series.NextOccurrence(mustUnix(t, "2026-10-30 09:00", "America/Chicago"))
+	require.NoError(t, err)
+	require.NotNil(t, occurrence)
+
+	assert.Equal(t, mustUnix(t, "2026-11-02 08:00", "America/Chicago"), occurrence.At)
+	assert.Equal(t, mustUnix(t, "2026-10-31 08:00", "America/Chicago"), occurrence.OriginalAt)
+}
+
 func TestNextOccurrence_MonthlyWeekendPreviousBusinessDay(t *testing.T) {
 	t.Parallel()
 
