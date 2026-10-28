@@ -67,7 +67,7 @@ func TestNearMiss_NamesTheRowsTheConditionKeptOutAndWhatTheyHold(t *testing.T) {
 	}))
 	require.NoError(t, err)
 
-	note, _ := asMap(t, result)[outcomeNote].(string)
+	note, _ := encodedDocument(t, result)[outcomeNote].(string)
 	assert.Contains(t, note, "Without the condition on status, 1 does: "+
 		"SEED-STL-1005 (status Posted)")
 	assert.Contains(t, note, "That condition alone keeps them out.")
@@ -93,7 +93,7 @@ func TestNearMiss_ACallWhoseOnlyConditionFindsNothingIsToldThereIsNothing(t *tes
 	result, err := tool.Query(t.Context(), keyedCall(map[string]any{"isaSender": "ACMEMFG"}))
 	require.NoError(t, err)
 
-	note, _ := asMap(t, result)[outcomeNote].(string)
+	note, _ := encodedDocument(t, result)[outcomeNote].(string)
 	assert.Contains(t, note, "without that condition none do either")
 	assert.Contains(t, note, "there are no inbound EDI files here for you to find")
 
@@ -102,7 +102,7 @@ func TestNearMiss_ACallWhoseOnlyConditionFindsNothingIsToldThereIsNothing(t *tes
 		"status":    []any{"Quarantined"},
 	}))
 	require.NoError(t, err)
-	note, _ = asMap(t, result)[outcomeNote].(string)
+	note, _ = encodedDocument(t, result)[outcomeNote].(string)
 	assert.NotContains(t, note, "none do either",
 		"two conditions that each find nothing alone say nothing of the whole set")
 }
