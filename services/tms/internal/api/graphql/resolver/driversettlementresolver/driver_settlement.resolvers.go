@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -594,13 +595,12 @@ func (r *MutationResolver) DetachPayEventFromSettlement(ctx context.Context, inp
 }
 
 func (r *MutationResolver) BulkDriverSettlementAction(ctx context.Context, input gqlmodel.BulkSettlementActionInput) (*driversettlementservice.BulkActionPayload, error) {
-	operation := permission.OpUpdate
-	if input.Action == driversettlementservice.BulkActionApprove {
-		operation = permission.OpApprove
-	}
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverSettlement, operation)
-	if err != nil {
-		return nil, err
+	var authCtx *authctx.AuthContext
+	for _, operation := range bulkSettlementOperations(input.Action) {
+		var err error
+		if authCtx, err = r.RequirePermission(ctx, permission.ResourceDriverSettlement, operation); err != nil {
+			return nil, err
+		}
 	}
 	settlementIDs := make([]pulid.ID, 0, len(input.SettlementIds))
 	for _, rawID := range input.SettlementIds {

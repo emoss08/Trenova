@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -786,4 +787,19 @@ func settlementControlFromUpdateInput(
 		DefaultEscrowInterestRate:     escrowInterestRate,
 		EscrowInterestFrequencyMonths: input.EscrowInterestFrequencyMonths,
 	}, nil
+}
+
+func bulkSettlementOperations(action driversettlementservice.BulkActionType) []permission.Operation {
+	switch action {
+	case driversettlementservice.BulkActionSubmit:
+		return []permission.Operation{permission.OpSubmit}
+	case driversettlementservice.BulkActionApprove:
+		return []permission.Operation{permission.OpSubmit, permission.OpApprove}
+	case driversettlementservice.BulkActionPost:
+		return []permission.Operation{permission.OpApprove}
+	case driversettlementservice.BulkActionMarkPaid:
+		return []permission.Operation{permission.OpUpdate}
+	default:
+		return []permission.Operation{permission.OpUpdate}
+	}
 }

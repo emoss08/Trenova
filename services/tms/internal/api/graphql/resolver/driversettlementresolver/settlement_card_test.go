@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
@@ -194,4 +195,20 @@ func TestAnAdvanceIsReadOnlyForSomeoneWhoMayReadPayAdvances(t *testing.T) {
 	)}}).Advance(ctx, &driversettlement.LineGroup{})
 	require.NoError(t, err)
 	assert.Nil(t, none)
+}
+
+// Posting a settlement writes its journal and paying it releases money, so a
+// bulk action needs what the single action needs: update alone is not enough.
+func TestBulkSettlementOperationsMatchTheSingleActions(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, []permission.Operation{permission.OpSubmit},
+		bulkSettlementOperations(driversettlementservice.BulkActionSubmit))
+	assert.Equal(t, []permission.Operation{permission.OpSubmit, permission.OpApprove},
+		bulkSettlementOperations(driversettlementservice.BulkActionApprove),
+		"bulk approve submits a draft first")
+	assert.Equal(t, []permission.Operation{permission.OpApprove},
+		bulkSettlementOperations(driversettlementservice.BulkActionPost))
+	assert.Equal(t, []permission.Operation{permission.OpUpdate},
+		bulkSettlementOperations(driversettlementservice.BulkActionMarkPaid))
 }
