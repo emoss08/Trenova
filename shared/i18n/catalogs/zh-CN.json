@@ -12613,6 +12613,7 @@
   "You already have {0} schedules. Delete one to add another.": "您已有 {0} 个排程。请删除一个后再添加。",
   "You are not the owner of this shipment comment": "您不是此运单评论的所有者",
   "You authored part of this revision, so another reviewer must approve it": "您编写了此修订的一部分，因此必须由其他审查人员批准",
+  "You can change another person's sign-in only when your own access covers everything theirs does": "只有当您自己的权限涵盖对方的全部权限时，才能更改他人的登录信息",
   "You can give an agent only the data access your own role has": "您只能为代理授予您自身角色所拥有的数据访问权限",
   "You can keep at most {0} saved views. Delete one to save another.": "最多可保存 {0} 个视图。请删除一个后再保存新的视图。",
   "You can only cancel your own requests": "您只能取消自己的请求",

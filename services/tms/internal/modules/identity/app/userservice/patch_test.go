@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
@@ -24,6 +25,22 @@ type patchDeps struct {
 	security *securityaudittest.Recorder
 	target   *tenant.User
 	actor    pagination.TenantInfo
+	held     *permissionports.EffectivePermissions
+	theirs   *permissionports.EffectivePermissions
+}
+
+func holding(
+	sensitivity permission.FieldSensitivity,
+	grants map[permission.Resource][]permission.Operation,
+) *permissionports.EffectivePermissions {
+	resources := make(map[string]permissionports.EffectiveResourcePermission, len(grants))
+	for resource, ops := range grants {
+		resources[resource.String()] = permissionports.EffectiveResourcePermission{
+			Operations: ops,
+			DataScope:  permission.DataScopeOrganization,
+		}
+	}
+	return &permissionports.EffectivePermissions{MaxSensitivity: sensitivity, Resources: resources}
 }
 
 func setupPatchTest(t *testing.T) *patchDeps {
@@ -39,7 +56,10 @@ func setupPatchTest(t *testing.T) *patchDeps {
 	target.IsLocked = true
 	target.MustChangePassword = true
 
-	return &patchDeps{
+	same := holding(permission.SensitivityInternal, map[permission.Resource][]permission.Operation{
+		permission.ResourceUser: {permission.OpRead, permission.OpUpdate},
+	})
+	d := &patchDeps{
 		testDeps: deps,
 		security: security,
 		target:   target,
@@ -48,7 +68,19 @@ func setupPatchTest(t *testing.T) *patchDeps {
 			BuID:   target.BusinessUnitID,
 			UserID: pulid.MustNew("usr_"),
 		},
+		held:   same,
+		theirs: same,
 	}
+	deps.permissions.EXPECT().
+		GetEffectivePermissions(mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, userID, _ pulid.ID) (*permissionports.EffectivePermissions, error) {
+			if userID == d.actor.UserID {
+				return d.held, nil
+			}
+			return d.theirs, nil
+		}).Maybe()
+
+	return d
 }
 
 func (d *patchDeps) expectLoad(user *tenant.User) {
@@ -229,6 +261,86 @@ func TestPatch_LetsAnAdminLockSomebodyElse(t *testing.T) {
 	assert.Equal(t, d.target.ID.String(), change.ResourceID)
 	assert.Equal(t, false, jsonutils.MustToJSON(change.Before)["isLocked"])
 	assert.Equal(t, true, jsonutils.MustToJSON(change.After)["isLocked"])
+}
+
+func TestPatch_RefusesToChangeTheSignInOfSomeoneWhoHoldsMore(t *testing.T) {
+	t.Parallel()
+
+	d := setupPatchTest(t)
+	d.theirs = holding(permission.SensitivityConfidential, map[permission.Resource][]permission.Operation{
+		permission.ResourceUser: {permission.OpRead, permission.OpUpdate},
+		permission.ResourceRole: {permission.OpRead, permission.OpUpdate},
+	})
+	d.expectLoad(d.target)
+
+	_, err := d.svc.Patch(t.Context(), &PatchUserRequest{
+		TenantInfo: d.actor,
+		UserID:     d.target.ID,
+		Apply: func(user *tenant.User) error {
+			user.EmailAddress = "takeover@attacker.example"
+			return nil
+		},
+	})
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err), "an email change is how a reset link is redirected: %v", err)
+	d.repo.AssertNotCalled(t, "UpdateColumns", mock.Anything, mock.Anything)
+	assert.Empty(t, d.security.Changes())
+}
+
+func TestPatch_RefusesToChangeTheSignInOfAMemberOfAnotherOrganization(t *testing.T) {
+	t.Parallel()
+
+	d := setupPatchTest(t)
+	elsewhere := &tenant.OrganizationMembership{
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: d.target.BusinessUnitID,
+		UserID:         d.target.ID,
+	}
+	d.target.Memberships = append(d.target.Memberships, elsewhere)
+	d.permissions.EXPECT().
+		Check(mock.Anything, mock.MatchedBy(func(req *permissionports.PermissionCheckRequest) bool {
+			return req.OrganizationID == elsewhere.OrganizationID
+		})).
+		Return(&permissionports.PermissionCheckResult{Allowed: false}, nil).Once()
+	d.expectLoad(d.target)
+
+	_, err := d.svc.Patch(t.Context(), &PatchUserRequest{
+		TenantInfo: d.actor,
+		UserID:     d.target.ID,
+		Apply: func(user *tenant.User) error {
+			user.EmailAddress = "takeover@attacker.example"
+			return nil
+		},
+	})
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+	d.repo.AssertNotCalled(t, "UpdateColumns", mock.Anything, mock.Anything)
+}
+
+func TestPatch_LetsAnAdminRenameSomeoneWhoHoldsMore(t *testing.T) {
+	t.Parallel()
+
+	d := setupPatchTest(t)
+	d.theirs = holding(permission.SensitivityConfidential, map[permission.Resource][]permission.Operation{
+		permission.ResourceRole: {permission.OpUpdate},
+	})
+	d.expectLoad(d.target)
+	captured := d.expectSave()
+	d.expectAuditLog()
+
+	_, err := d.svc.Patch(t.Context(), &PatchUserRequest{
+		TenantInfo: d.actor,
+		UserID:     d.target.ID,
+		Apply: func(user *tenant.User) error {
+			user.Name = "Renamed"
+			return nil
+		},
+	})
+
+	require.NoError(t, err, "a name is not how anyone signs in")
+	assert.Equal(t, []string{"name"}, captured.Columns)
 }
 
 func TestPatch_IgnoresAttemptsToChangeImmutableFields(t *testing.T) {

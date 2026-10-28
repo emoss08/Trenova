@@ -12613,6 +12613,7 @@
   "You already have {0} schedules. Delete one to add another.": "Ya tiene {0} programaciones. Elimine una para agregar otra.",
   "You are not the owner of this shipment comment": "No es el autor de este comentario del envío",
   "You authored part of this revision, so another reviewer must approve it": "Usted es autor de parte de esta revisión, por lo que otro revisor debe aprobarla",
+  "You can change another person's sign-in only when your own access covers everything theirs does": "Solo puede cambiar el inicio de sesión de otra persona si su propio acceso cubre todo el suyo",
   "You can give an agent only the data access your own role has": "Solo puede darle a un agente el acceso a datos que tiene su propio rol",
   "You can keep at most {0} saved views. Delete one to save another.": "Puede conservar como máximo {0} vistas guardadas. Elimine una para guardar otra.",
   "You can only cancel your own requests": "Solo puede cancelar sus propias solicitudes",

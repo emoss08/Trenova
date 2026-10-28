@@ -34314,6 +34314,7 @@
   "You can answer once the reply finishes.": "回覆完成後即可作答。",
   "You can answer once you're back online.": "恢復連線後即可作答。",
   "You can change all of this in Organization settings.": "您可以在「組織設定」中變更這些內容。",
+  "You can change another person's sign-in only when your own access covers everything theirs does": "只有當您自己的權限涵蓋對方的全部權限時，才能變更他人的登入資訊",
   "You can close this window — the transfer keeps going.": "您可以關閉此視窗——轉移作業會繼續進行。",
   "You can close this window. The transfer runs in the background and you will be notified when it finishes.": "您可以關閉此視窗。轉移作業將在背景執行，完成後會通知您。",
   "You can give an agent only the data access your own role has": "您只能為代理授予您自身角色所擁有的資料存取權限",

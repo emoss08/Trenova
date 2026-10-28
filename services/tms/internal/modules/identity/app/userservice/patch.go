@@ -130,6 +130,11 @@ func (s *Service) Patch(ctx context.Context, req *PatchUserRequest) (*tenant.Use
 	}
 
 	changes := diffPatchedUser(&original, user)
+	if len(changes.access) > 0 {
+		if err = s.requireActorCoversTarget(ctx, req.TenantInfo, &original); err != nil {
+			return nil, err
+		}
+	}
 	if len(changes.columns) == 0 {
 		if err = s.endLingeringSessions(ctx, req.TenantInfo, &original); err != nil {
 			return nil, err

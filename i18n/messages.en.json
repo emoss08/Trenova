@@ -320747,6 +320747,15 @@
       "routes/onboarding"
     ]
   },
+  "You can change another person's sign-in only when your own access covers everything theirs does": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "You can close this window — the transfer keeps going.": {
     "sites": 1,
     "scope": [

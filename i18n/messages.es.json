@@ -34314,6 +34314,7 @@
   "You can answer once the reply finishes.": "Podrás responder cuando termine la respuesta.",
   "You can answer once you're back online.": "Podrás responder cuando vuelvas a estar en línea.",
   "You can change all of this in Organization settings.": "Puedes cambiar todo esto en Ajustes de la organización.",
+  "You can change another person's sign-in only when your own access covers everything theirs does": "Solo puede cambiar el inicio de sesión de otra persona si su propio acceso cubre todo el suyo",
   "You can close this window — the transfer keeps going.": "Puede cerrar esta ventana: la transferencia continúa.",
   "You can close this window. The transfer runs in the background and you will be notified when it finishes.": "Puede cerrar esta ventana. La transferencia se ejecuta en segundo plano y se le notificará cuando termine.",
   "You can give an agent only the data access your own role has": "Solo puede darle a un agente el acceso a datos que tiene su propio rol",
