@@ -379,7 +379,13 @@ func TestGetShipment_SaysWhenCommentsAndHoldsAreLeftOutForAccess(t *testing.T) {
 		Query(t.Context(), agentParams(shipmentArgs(fixture, "full"),
 			permission.SensitivityInternal))
 	require.NoError(t, err)
-	note, ok = encodedDocument(t, result)["leftOutForAccess"].(string)
-	require.True(t, ok)
+	document = encodedDocument(t, result)
+	assert.NotContains(t, document, "leftOutForAccess",
+		"the agent allow-list reads comments and holds, so an unattended run sees the note")
+	assert.NotEmpty(t, document["recentComments"])
+
+	note = shipmentActivityAccess{commentsWithheld: true, holdsWithheld: true}.
+		leftOutNote(agentParams(shipmentArgs(fixture, ""), permission.SensitivityInternal))
+	assert.Contains(t, note, "Comments and holds are left out")
 	assert.Contains(t, note, "this agent's unattended access")
 }

@@ -70,9 +70,8 @@ func NewWaitUntilTool(waits agentwaitports.AgentWaitService) agentports.AgentToo
 func (t *waitUntilTool) Name() string { return waitUntilName }
 
 func (t *waitUntilTool) Description() string {
-	return "Use it when someone asks to be told when something happens (\"let me know when it " +
-		"delivers\", \"tell me when the driver gets there\"): it parks the work until then, " +
-		"instead of checking back. It waits for a stop's arrival or departure (StopArrival, " +
+	return "Park the work until something happens when someone asks to be told (\"let me " +
+		"know when it delivers\"), instead of checking back. It waits for a stop's arrival or departure (StopArrival, " +
 		"StopDeparture: met when the truck is seen there or the time is recorded), a reply about " +
 		"a shipment or from a carrier or customer (Reply), an appointment coming round " +
 		"(AppointmentNear), detention free time running out (FreeTimeEnding), a driver's drive " +

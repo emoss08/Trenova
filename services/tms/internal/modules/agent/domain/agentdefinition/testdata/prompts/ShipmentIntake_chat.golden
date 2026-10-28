@@ -48,7 +48,7 @@ What find_tools can load, by area of Trenova:
 - Shipments (7 tools): commodity, service type, shipment, shipment type
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, masterdata_create_commodity, shipment_create, customer_create, location_create
+- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, shipment_create, customer_create, location_create, masterdata_create_commodity
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:

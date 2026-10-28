@@ -115,7 +115,7 @@ func (t *getDispatchBoardTool) Description() string {
 		"\"what is uncovered\" and \"who is free\". Urgency follows the move's next stop: " +
 		"the pickup window until it is picked up, then the delivery window. Each late " +
 		"move's lateTo says whether it is late to pick up or to deliver, " +
-		"and lateBy how long past the window's close it is, the way to say it; " +
+		"and lateBy how long past the window's close it is; " +
 		"check shipment_get_tracking on a late move " +
 		"before acting on it, since arrivals are sometimes recorded late. A rundown or " +
 		"a list answers from the board as it stands, saying what each is late to do, " +

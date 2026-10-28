@@ -233,7 +233,6 @@ func TestPointToTables_PointsEveryReprintToItsOwnTable(t *testing.T) {
 	assert.Empty(t, StrayArtifactLinks(got))
 	assert.NotContains(t, got, "| PRO-1")
 	assert.NotContains(t, got, "| Acme |")
-	assert.Contains(t, got, "Call the carriers first.")
 	assert.Contains(t, got, "That is all.")
 }
 

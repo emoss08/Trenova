@@ -25,7 +25,7 @@ func workerGetTool(
 	return tool
 }
 
-func TestWorkerGet_ReadsTheCardAndFoldsComplianceIntoAssignability(t *testing.T) {
+func TestWorkerGet_ReadsTheCardAndFoldsComplianceIntoDispatchable(t *testing.T) {
 	t.Parallel()
 
 	workerID := pulid.MustNew("wrk_").String()
@@ -50,8 +50,10 @@ func TestWorkerGet_ReadsTheCardAndFoldsComplianceIntoAssignability(t *testing.T)
 	assert.Equal(t, map[string]any{"id": workerID}, reader.sent("DeskWorkerCard").Variables)
 	record, ok := data.(map[string]any)
 	require.True(t, ok)
-	assert.Equal(t, false, record["canBeAssigned"], "a NonCompliant driver cannot be assigned")
-	assert.Equal(t, "Credentials are not compliant", record["assignmentBlocked"])
+	assert.Equal(t, true, record["canBeAssigned"],
+		"the stored flag says the driver is not off dispatch, so a hold can still be placed")
+	assert.Equal(t, false, record["dispatchable"], "a NonCompliant driver cannot take a load")
+	assert.Equal(t, "credentials are not compliant", record["notDispatchableBecause"])
 	profile, _ := record["profile"].(map[string]any)
 	assert.Contains(t, profile, "medicalCardExpiry", "a date not on file is present and null")
 	assert.Nil(t, profile["medicalCardExpiry"])

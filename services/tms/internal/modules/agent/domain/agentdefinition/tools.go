@@ -344,7 +344,8 @@ func (t Template) StarterTools() []string {
 			"carrier_resolve_intelligence_event",
 			"carrier_vet",
 			"carrier_set_monitoring",
-			"carrier_set_status",
+			// REVIEW: ed9ef342 added carrier_set_status here, but the Carrier risk desk
+			// must not hold it (starter_test.go) and no agent may update a carrier.
 			"carrier_record_intelligence_review",
 		}
 	case TemplateIntakeDesk:
@@ -483,7 +484,8 @@ func (t Template) StarterTools() []string {
 			toolListFormulaTemplates,
 			toolGetFormulaTemplate,
 			"masterdata_list_commodities",
-			"masterdata_create_commodity",
+			// REVIEW: ed9ef342 added masterdata_create_commodity here, but no agent may
+			// create a commodity, so an unattended intake run could never call it.
 			toolListAccessorialCharges,
 			toolShipmentList,
 			toolRateQuote,

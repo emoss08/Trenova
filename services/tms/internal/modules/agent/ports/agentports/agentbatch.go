@@ -68,8 +68,8 @@ type BatchItemResult struct {
 	FailureMessage string
 }
 
-func (r *BatchItemResult) Succeeded() bool {
-	return r != nil && r.Result != nil
+func (r BatchItemResult) Succeeded() bool {
+	return r.Result != nil
 }
 
 type BatchCompletionService interface {
