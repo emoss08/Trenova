@@ -232,3 +232,37 @@ func TestCreateSession_RecordsWhetherTheUploadWillBeScanned(t *testing.T) {
 		})
 	}
 }
+
+// A finished session's storage path is the object its document reads. A
+// cancel, which needs only document create, must not delete it.
+func TestCancel_LeavesTheFileOfAFinishedUploadAlone(t *testing.T) {
+	t.Parallel()
+
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	documentID := pulid.MustNew("doc_")
+	for _, finished := range []*documentupload.DocumentUploadSession{
+		{Status: documentupload.StatusAvailable, DocumentID: &documentID},
+		{Status: documentupload.StatusCompleted},
+		{Status: documentupload.StatusFinalizing},
+		{Status: documentupload.StatusQuarantined},
+	} {
+		session := uploadSession(tenant, []byte("%PDF-1.7 pod"))
+		session.Status = finished.Status
+		session.DocumentID = finished.DocumentID
+
+		sessions := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
+		sessions.EXPECT().GetByID(mock.Anything, mock.Anything).Return(session, nil).Once()
+		storage := objectstoretest.New()
+		storage.Put(session.StoragePath, []byte("%PDF-1.7 pod"))
+
+		svc := &Service{l: zap.NewNop(), sessionRepo: sessions, storage: storage}
+		err := svc.Cancel(t.Context(), &documentuploadports.CancelRequest{
+			TenantInfo: tenant,
+			SessionID:  session.ID,
+		})
+
+		require.Error(t, err, string(finished.Status))
+		_, kept := storage.Object(session.StoragePath)
+		assert.True(t, kept, "the %s session's document still reads its file", finished.Status)
+	}
+}

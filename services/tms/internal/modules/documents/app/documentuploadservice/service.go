@@ -576,7 +576,13 @@ func (s *Service) Cancel(ctx context.Context, req *documentuploadports.CancelReq
 		return err
 	}
 
-	if session.Status == documentupload.StatusCompleted {
+	if session.Status == documentupload.StatusCanceled {
+		return nil
+	}
+	if session.DocumentID != nil ||
+		session.Status.IsDocumentReady() ||
+		session.Status == documentupload.StatusQuarantined ||
+		session.Status == documentupload.StatusFinalizing {
 		return errortypes.NewConflictError("Completed uploads cannot be canceled")
 	}
 
