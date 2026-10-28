@@ -54,9 +54,18 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.get,
 	)
 
-	// This is un-protected because it is used only by the client, this api is not documented and is not part of the public api.
 	api.GET(
 		"/:customerID/billing-profile/",
+		h.pm.RequireAnyPermission(
+			middleware.PermissionCheck{
+				Resource:  permission.ResourceCustomer.String(),
+				Operation: permission.OpRead,
+			},
+			middleware.PermissionCheck{
+				Resource:  permission.ResourceShipment.String(),
+				Operation: permission.OpRead,
+			},
+		),
 		h.getBillingProfile,
 	)
 

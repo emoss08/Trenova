@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/reference/app/exchangerateservice"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -19,28 +21,49 @@ const defaultDateLayout = "2006-01-02"
 type Params struct {
 	fx.In
 
-	ExchangeRateService *exchangerateservice.Service
-	ErrorHandler        *helpers.ErrorHandler
+	ExchangeRateService  *exchangerateservice.Service
+	ErrorHandler         *helpers.ErrorHandler
+	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
 	service *exchangerateservice.Service
 	eh      *helpers.ErrorHandler
+	pm      *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
 		service: p.ExchangeRateService,
 		eh:      p.ErrorHandler,
+		pm:      p.PermissionMiddleware,
 	}
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/exchange-rates")
-	api.GET("/convert", h.convert)
-	api.GET("/latest", h.latest)
-	api.POST("/refresh", h.refresh)
-	api.POST("/settlement-quotes", h.createSettlementQuote)
+	readRates := h.pm.RequireAnyPermission(
+		middleware.PermissionCheck{
+			Resource:  permission.ResourceCustomerPayment.String(),
+			Operation: permission.OpRead,
+		},
+		middleware.PermissionCheck{
+			Resource:  permission.ResourceInvoice.String(),
+			Operation: permission.OpRead,
+		},
+	)
+	api.GET("/convert", readRates, h.convert)
+	api.GET("/latest", readRates, h.latest)
+	api.POST(
+		"/refresh",
+		h.pm.RequirePermission(permission.ResourceIntegration.String(), permission.OpUpdate),
+		h.refresh,
+	)
+	api.POST(
+		"/settlement-quotes",
+		h.pm.RequirePermission(permission.ResourceCustomerPayment.String(), permission.OpCreate),
+		h.createSettlementQuote,
+	)
 }
 
 func (h *Handler) convert(c *gin.Context) {
