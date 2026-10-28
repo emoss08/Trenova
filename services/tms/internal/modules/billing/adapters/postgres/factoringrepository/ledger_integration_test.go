@@ -15,7 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
@@ -32,10 +35,10 @@ import (
 
 type ledgerEnv struct {
 	*factoringEnv
-	svc         factoringports.LedgerService
-	submissions factoringports.SubmissionRepository
-	entries     factoringports.ReserveEntryRepository
-	attention   factoringports.WatchtowerReader
+	svc         factoringledgerports.LedgerService
+	submissions factoringsubmissionports.SubmissionRepository
+	entries     factoringledgerports.ReserveEntryRepository
+	attention   factoringwatchtowerports.WatchtowerReader
 	ledger      customerledgerports.CustomerLedgerProjectionRepository
 	accounts    factoring.PostingAccounts
 	userID      pulid.ID
@@ -185,7 +188,7 @@ func (e *ledgerEnv) ledgerBalance(t *testing.T, invoiceID pulid.ID) int64 {
 
 func (e *ledgerEnv) version(t *testing.T, id pulid.ID) int64 {
 	t.Helper()
-	sub, err := e.submissions.GetByID(e.ctx, factoringports.GetSubmissionRequest{
+	sub, err := e.submissions.GetByID(e.ctx, factoringsubmissionports.GetSubmissionRequest{
 		ID:         id,
 		TenantInfo: e.tenantInfo,
 	})
@@ -217,7 +220,7 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	require.NoError(t, err)
 
 	unfunded, err := e.attention.ListUnfundedSubmissions(e.ctx,
-		&factoringports.ListUnfundedSubmissionsRequest{TenantInfo: e.tenantInfo, At: now})
+		&factoringwatchtowerports.ListUnfundedSubmissionsRequest{TenantInfo: e.tenantInfo, At: now})
 	require.NoError(t, err)
 	require.Len(t, unfunded, 1)
 	assert.Equal(t, sub.ID, unfunded[0].SubmissionID)
@@ -235,12 +238,12 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	releasedItem, chargedItem, rejectedItem :=
 		itemFor(released.ID), itemFor(charged.ID), itemFor(rejected.ID)
 
-	funding, err := e.svc.RecordFunding(e.ctx, &factoringports.RecordFundingRequest{
+	funding, err := e.svc.RecordFunding(e.ctx, &factoringledgerports.RecordFundingRequest{
 		TenantInfo:   e.tenantInfo,
 		SubmissionID: sub.ID,
 		Version:      sub.Version,
 		FundedOn:     now,
-		Items: []factoringports.FundingItemInput{
+		Items: []factoringledgerports.FundingItemInput{
 			{ItemID: releasedItem.ID, Outcome: factoring.FundingOutcomeFunded},
 			{ItemID: chargedItem.ID, Outcome: factoring.FundingOutcomeFunded},
 			{
@@ -254,7 +257,7 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	require.Len(t, funding.Entries, 2)
 	assert.Equal(t, factoring.SubmissionStatusFunded, funding.Submission.Status)
 
-	balance, err := e.svc.GetBalance(e.ctx, factoringports.GetReserveBalanceRequest{
+	balance, err := e.svc.GetBalance(e.ctx, factoringledgerports.GetReserveBalanceRequest{
 		TenantInfo:         e.tenantInfo,
 		FactoringCompanyID: factor.ID,
 	})
@@ -292,20 +295,23 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	assert.Zero(t, notYetDue.ChargebacksDue.AmountMinor)
 
 	unfunded, err = e.attention.ListUnfundedSubmissions(e.ctx,
-		&factoringports.ListUnfundedSubmissionsRequest{TenantInfo: e.tenantInfo, At: now})
+		&factoringwatchtowerports.ListUnfundedSubmissionsRequest{TenantInfo: e.tenantInfo, At: now})
 	require.NoError(t, err)
 	assert.Empty(t, unfunded)
 
-	due, err := e.attention.ListChargebacksDue(e.ctx, &factoringports.ListChargebacksDueRequest{
-		TenantInfo:   e.tenantInfo,
-		Before:       now + 100*86400,
-		UnwarnedOnly: true,
-	})
+	due, err := e.attention.ListChargebacksDue(
+		e.ctx,
+		&factoringwatchtowerports.ListChargebacksDueRequest{
+			TenantInfo:   e.tenantInfo,
+			Before:       now + 100*86400,
+			UnwarnedOnly: true,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, due, 2)
 	claimed, err := e.submissions.ClaimChargebackWarning(
 		e.ctx,
-		factoringports.ClaimChargebackWarningRequest{
+		factoringsubmissionports.ClaimChargebackWarningRequest{
 			TenantInfo: e.tenantInfo, ItemID: due[0].ItemID, At: now,
 		},
 	)
@@ -313,7 +319,7 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	assert.True(t, claimed)
 	claimed, err = e.submissions.ClaimChargebackWarning(
 		e.ctx,
-		factoringports.ClaimChargebackWarningRequest{
+		factoringsubmissionports.ClaimChargebackWarningRequest{
 			TenantInfo: e.tenantInfo, ItemID: due[0].ItemID, At: now,
 		},
 	)
@@ -322,7 +328,7 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 
 	_, _, reserve := funding.Submission.Item(releasedItem.ID).Actuals()
 	short := reserve - 500
-	_, err = e.svc.ReleaseReserve(e.ctx, &factoringports.ReserveMovementRequest{
+	_, err = e.svc.ReleaseReserve(e.ctx, &factoringledgerports.ReserveMovementRequest{
 		TenantInfo:   e.tenantInfo,
 		SubmissionID: sub.ID,
 		ItemID:       releasedItem.ID,
@@ -334,7 +340,7 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	require.NoError(t, err)
 
 	chargeback := func(reason string) {
-		_, err = e.svc.RecordChargeback(e.ctx, &factoringports.ReserveMovementRequest{
+		_, err = e.svc.RecordChargeback(e.ctx, &factoringledgerports.ReserveMovementRequest{
 			TenantInfo:   e.tenantInfo,
 			SubmissionID: sub.ID,
 			ItemID:       chargedItem.ID,
@@ -345,7 +351,7 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 		require.NoError(t, err)
 	}
 	chargeback("Customer never paid")
-	_, err = e.svc.ReverseChargeback(e.ctx, &factoringports.ReserveMovementRequest{
+	_, err = e.svc.ReverseChargeback(e.ctx, &factoringledgerports.ReserveMovementRequest{
 		TenantInfo:   e.tenantInfo,
 		SubmissionID: sub.ID,
 		ItemID:       chargedItem.ID,
@@ -360,7 +366,7 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	assert.Zero(t, e.glBalance(t, e.accounts.DueFromFactor), "no reserve is left with the factor")
 	assert.Equal(t, int64(-100000), e.glBalance(t, e.accounts.AR),
 		"only the charged-back invoice is back in AR")
-	balance, err = e.svc.GetBalance(e.ctx, factoringports.GetReserveBalanceRequest{
+	balance, err = e.svc.GetBalance(e.ctx, factoringledgerports.GetReserveBalanceRequest{
 		TenantInfo:         e.tenantInfo,
 		FactoringCompanyID: factor.ID,
 	})
@@ -386,7 +392,7 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	assert.Zero(t, e.ledgerBalance(t, charged.ID))
 	assert.Equal(t, invoice.SettlementStatusPaid, e.invoice(t, released.ID).SettlementStatus)
 
-	live, err := e.submissions.ListLiveItems(e.ctx, &factoringports.ListLiveItemsRequest{
+	live, err := e.submissions.ListLiveItems(e.ctx, &factoringsubmissionports.ListLiveItemsRequest{
 		TenantInfo:         e.tenantInfo,
 		InvoiceIDs:         []pulid.ID{charged.ID},
 		IncludeChargedBack: true,

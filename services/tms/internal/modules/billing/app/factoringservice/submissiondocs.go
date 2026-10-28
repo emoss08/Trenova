@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -75,9 +76,9 @@ type scheduleSources struct {
 
 func (s *SubmissionService) PrepareDocuments(
 	ctx context.Context,
-	req *factoringports.DeliverSubmissionRequest,
+	req *factoringsubmissionports.DeliverSubmissionRequest,
 ) error {
-	sub, err := s.repo.GetByID(ctx, factoringports.GetSubmissionRequest{
+	sub, err := s.repo.GetByID(ctx, factoringsubmissionports.GetSubmissionRequest{
 		ID:           req.SubmissionID,
 		TenantInfo:   req.TenantInfo,
 		IncludeItems: true,
@@ -93,7 +94,7 @@ func (s *SubmissionService) PrepareDocuments(
 	if err != nil {
 		return err
 	}
-	update := &factoringports.SetSubmissionDocumentsRequest{
+	update := &factoringsubmissionports.SetSubmissionDocumentsRequest{
 		TenantInfo:            req.TenantInfo,
 		SubmissionID:          sub.ID,
 		SchedulePDFDocumentID: sub.SchedulePDFDocumentID,
@@ -461,7 +462,13 @@ func (s *SubmissionService) buildPacket(
 			pages = append(pages, *page)
 		}
 	}
-	packet, _, err := imagingkit.Merge(ctx, s.imaging, pages, maxPacketBytes, kernelports.ImagingBatch)
+	packet, _, err := imagingkit.Merge(
+		ctx,
+		s.imaging,
+		pages,
+		maxPacketBytes,
+		kernelports.ImagingBatch,
+	)
 	return packet, err
 }
 
@@ -511,11 +518,14 @@ func (s *SubmissionService) supportingDocuments(
 		for _, id := range ids {
 			resourceIDs = append(resourceIDs, id.String())
 		}
-		docs, err := s.documents.GetByResourceIDs(ctx, &documentports.GetDocumentsByResourceIDsRequest{
-			TenantInfo:   tenantInfo,
-			ResourceType: resourceType,
-			ResourceIDs:  resourceIDs,
-		})
+		docs, err := s.documents.GetByResourceIDs(
+			ctx,
+			&documentports.GetDocumentsByResourceIDsRequest{
+				TenantInfo:   tenantInfo,
+				ResourceType: resourceType,
+				ResourceIDs:  resourceIDs,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -660,7 +670,11 @@ func systemActor(tenantInfo pagination.TenantInfo) permissionports.RequestActor 
 }
 
 func scheduleFileName(sub *factoring.Submission, ext string) string {
-	return fileutils.SanitizeDisplayFilename(sub.Number+ext, scheduleFallbackName+ext, maxScheduleFileName)
+	return fileutils.SanitizeDisplayFilename(
+		sub.Number+ext,
+		scheduleFallbackName+ext,
+		maxScheduleFileName,
+	)
 }
 
 func packetFileName(item *factoring.SubmissionItem) string {

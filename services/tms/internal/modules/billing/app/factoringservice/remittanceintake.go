@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
@@ -25,8 +25,8 @@ const (
 
 func (s *RemittanceService) IngestEmail(
 	ctx context.Context,
-	req *factoringports.IngestRemittanceEmailRequest,
-) (*factoringports.IngestRemittanceEmailResult, error) {
+	req *factoringremittanceports.IngestRemittanceEmailRequest,
+) (*factoringremittanceports.IngestRemittanceEmailResult, error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (s *RemittanceService) IngestEmail(
 			"Choose the message",
 		)
 	}
-	result := &factoringports.IngestRemittanceEmailResult{RemittanceIDs: []pulid.ID{}}
+	result := &factoringremittanceports.IngestRemittanceEmailResult{RemittanceIDs: []pulid.ID{}}
 	factor, problem, err := s.factorForSender(ctx, req.TenantInfo, req.FromAddress)
 	if err != nil {
 		return nil, err
@@ -99,9 +99,9 @@ func (s *RemittanceService) factorForSender(
 
 func (s *RemittanceService) ingestAttachment(
 	ctx context.Context,
-	req *factoringports.IngestRemittanceEmailRequest,
+	req *factoringremittanceports.IngestRemittanceEmailRequest,
 	factor *factoringcompany.FactoringCompany,
-	attachment *factoringports.RemittanceEmailAttachment,
+	attachment *factoringremittanceports.RemittanceEmailAttachment,
 ) (pulid.ID, error) {
 	if attachment.DocumentID.IsNil() {
 		return pulid.Nil, nil
@@ -111,7 +111,7 @@ func (s *RemittanceService) ingestAttachment(
 	}
 	existing, err := s.remittances.FindByInboundDocument(
 		ctx,
-		&factoringports.FindRemittanceByDocumentRequest{
+		&factoringremittanceports.FindRemittanceByDocumentRequest{
 			TenantInfo:       req.TenantInfo,
 			InboundMessageID: req.InboundMessageID,
 			DocumentID:       attachment.DocumentID,

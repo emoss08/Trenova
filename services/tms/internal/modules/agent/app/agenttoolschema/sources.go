@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -65,7 +65,7 @@ var (
 	)
 	FactoringRemittanceLineActions = Source(
 		"factoring.remittanceLineAction",
-		factoringports.AllRemittanceLineActions(),
+		factoringremittanceports.AllRemittanceLineActions(),
 	)
 	FactoringOverrides = Source(
 		"invoice.factoringOverride",

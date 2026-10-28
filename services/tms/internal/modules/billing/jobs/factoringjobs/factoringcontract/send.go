@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -49,9 +49,9 @@ type SendStarter struct {
 	l         *zap.Logger
 }
 
-var _ factoringports.SubmissionSendStarter = (*SendStarter)(nil)
+var _ factoringsubmissionports.SubmissionSendStarter = (*SendStarter)(nil)
 
-func NewSendStarter(p SendStarterParams) factoringports.SubmissionSendStarter {
+func NewSendStarter(p SendStarterParams) factoringsubmissionports.SubmissionSendStarter {
 	return &SendStarter{workflows: p.Workflows, l: p.Logger.Named("factoring-send-starter")}
 }
 

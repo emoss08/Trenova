@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/money"
@@ -71,7 +71,7 @@ func submissionVersionParam() map[string]any {
 
 func submissionActionRequest(
 	params *agenttoolports.ToolExecuteParams,
-) (*factoringports.SubmissionActionRequest, error) {
+) (*factoringsubmissionports.SubmissionActionRequest, error) {
 	id, err := common.RequirePulid(params.Params, paramSubmissionID)
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func submissionActionRequest(
 	if err != nil {
 		return nil, err
 	}
-	return &factoringports.SubmissionActionRequest{
+	return &factoringsubmissionports.SubmissionActionRequest{
 		TenantInfo:   common.TenantFrom(*params),
 		SubmissionID: id,
 		Version:      int64(version),
@@ -88,11 +88,11 @@ func submissionActionRequest(
 }
 
 type SubmitInvoicesToFactorTool struct {
-	submissions factoringports.SubmissionService
+	submissions factoringsubmissionports.SubmissionService
 }
 
 func NewSubmitInvoicesToFactorTool(
-	submissions factoringports.SubmissionService,
+	submissions factoringsubmissionports.SubmissionService,
 ) agenttoolports.AgentTool {
 	return &SubmitInvoicesToFactorTool{submissions: submissions}
 }
@@ -149,7 +149,7 @@ func (t *SubmitInvoicesToFactorTool) Target(
 
 func (t *SubmitInvoicesToFactorTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*factoringports.PlanSubmissionRequest, error) {
+) (*factoringsubmissionports.PlanSubmissionRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -165,7 +165,7 @@ func (t *SubmitInvoicesToFactorTool) request(
 	if err != nil {
 		return nil, err
 	}
-	return &factoringports.PlanSubmissionRequest{
+	return &factoringsubmissionports.PlanSubmissionRequest{
 		TenantInfo:         common.TenantFrom(*params),
 		FactoringCompanyID: factorID,
 		InvoiceIDs:         invoiceIDs,
@@ -247,7 +247,7 @@ func (t *SubmitInvoicesToFactorTool) Preview(
 	), nil
 }
 
-func planMoney(plan *factoringports.SubmissionPlan) *agent.MoneyPreview {
+func planMoney(plan *factoringsubmissionports.SubmissionPlan) *agent.MoneyPreview {
 	lines := make([]agent.MoneyLine, 0, len(plan.Items)+3)
 	for _, item := range plan.Items {
 		lines = append(lines, agent.MoneyLine{
@@ -264,7 +264,7 @@ func planMoney(plan *factoringports.SubmissionPlan) *agent.MoneyPreview {
 	return block
 }
 
-func planMessage(plan *factoringports.SubmissionPlan) *agent.MessagePreview {
+func planMessage(plan *factoringsubmissionports.SubmissionPlan) *agent.MessagePreview {
 	attachments := []string{"Schedule of accounts (PDF)", "Schedule of accounts (CSV)"}
 	if plan.AttachPackets {
 		for _, item := range plan.Items {
@@ -290,11 +290,11 @@ func formatMinor(currency string, minor int64) string {
 }
 
 type RetryFactoringSubmissionTool struct {
-	submissions factoringports.SubmissionService
+	submissions factoringsubmissionports.SubmissionService
 }
 
 func NewRetryFactoringSubmissionTool(
-	submissions factoringports.SubmissionService,
+	submissions factoringsubmissionports.SubmissionService,
 ) agenttoolports.AgentTool {
 	return &RetryFactoringSubmissionTool{submissions: submissions}
 }
@@ -345,7 +345,7 @@ func (t *RetryFactoringSubmissionTool) Target(
 
 func (t *RetryFactoringSubmissionTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*factoringports.SubmissionActionRequest, error) {
+) (*factoringsubmissionports.SubmissionActionRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -407,11 +407,11 @@ func (t *RetryFactoringSubmissionTool) Preview(
 }
 
 type CancelFactoringSubmissionTool struct {
-	submissions factoringports.SubmissionService
+	submissions factoringsubmissionports.SubmissionService
 }
 
 func NewCancelFactoringSubmissionTool(
-	submissions factoringports.SubmissionService,
+	submissions factoringsubmissionports.SubmissionService,
 ) agenttoolports.AgentTool {
 	return &CancelFactoringSubmissionTool{submissions: submissions}
 }
@@ -460,7 +460,7 @@ func (t *CancelFactoringSubmissionTool) Target(
 
 func (t *CancelFactoringSubmissionTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*factoringports.SubmissionActionRequest, error) {
+) (*factoringsubmissionports.SubmissionActionRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}

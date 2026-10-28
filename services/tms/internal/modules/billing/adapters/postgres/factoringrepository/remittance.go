@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,7 +35,7 @@ type remittanceRepository struct {
 	l  *zap.Logger
 }
 
-func NewRemittanceRepository(p Params) factoringports.RemittanceRepository {
+func NewRemittanceRepository(p Params) factoringremittanceports.RemittanceRepository {
 	return &remittanceRepository{
 		db: p.DB,
 		l:  p.Logger.Named("repository.factoring-remittance"),
@@ -77,7 +77,7 @@ func (r *remittanceRepository) Update(
 
 func (r *remittanceRepository) Get(
 	ctx context.Context,
-	req factoringports.GetRemittanceRequest,
+	req factoringremittanceports.GetRemittanceRequest,
 ) (*factoring.Remittance, error) {
 	if req.ForUpdate {
 		return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
@@ -92,7 +92,7 @@ func (r *remittanceRepository) Get(
 
 func (r *remittanceRepository) get(
 	ctx context.Context,
-	req factoringports.GetRemittanceRequest,
+	req factoringremittanceports.GetRemittanceRequest,
 ) (*factoring.Remittance, error) {
 	db := r.db.Keel(ctx)
 	rem := factoringdb.Remittances
@@ -134,7 +134,7 @@ func withMatchedItem(
 
 func (r *remittanceRepository) FindByInboundDocument(
 	ctx context.Context,
-	req *factoringports.FindRemittanceByDocumentRequest,
+	req *factoringremittanceports.FindRemittanceByDocumentRequest,
 ) (*factoring.Remittance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
 		rem := factoringdb.Remittances
@@ -152,7 +152,7 @@ func (r *remittanceRepository) FindByInboundDocument(
 
 func (r *remittanceRepository) ListConnection(
 	ctx context.Context,
-	req *factoringports.ListRemittanceConnectionRequest,
+	req *factoringremittanceports.ListRemittanceConnectionRequest,
 ) (*pagination.CursorListResult[*factoring.Remittance], error) {
 	return dbtx.Read(
 		ctx,
@@ -189,7 +189,7 @@ func (r *remittanceRepository) ListConnection(
 
 func (r *remittanceRepository) ListLineConnection(
 	ctx context.Context,
-	req *factoringports.ListRemittanceLineConnectionRequest,
+	req *factoringremittanceports.ListRemittanceLineConnectionRequest,
 ) (*pagination.CursorListResult[*factoring.RemittanceLine], error) {
 	return dbtx.Read(
 		ctx,
@@ -327,7 +327,7 @@ func lineOutcomes(
 
 func (r *remittanceRepository) ListCandidates(
 	ctx context.Context,
-	req *factoringports.ListRemittanceCandidatesRequest,
+	req *factoringremittanceports.ListRemittanceCandidatesRequest,
 ) ([]*factoring.RemittanceCandidate, error) {
 	return dbtx.Read(
 		ctx,
@@ -357,7 +357,7 @@ func (r *remittanceRepository) ListCandidates(
 }
 
 func remittanceCandidates(
-	req *factoringports.ListRemittanceCandidatesRequest,
+	req *factoringremittanceports.ListRemittanceCandidatesRequest,
 ) *keel.Query[*factoring.SubmissionItem] {
 	item := factoringdb.SubmissionItems
 	sub := item.Submission()
@@ -424,13 +424,13 @@ func candidateMatch(invoices []string, amounts []int64) (invoiceMatch, amountMat
 
 func (r *remittanceRepository) ListOpen(
 	ctx context.Context,
-	req *factoringports.ListOpenRemittancesRequest,
-) ([]*factoringports.OpenRemittance, error) {
+	req *factoringremittanceports.ListOpenRemittancesRequest,
+) ([]*factoringremittanceports.OpenRemittance, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*factoringports.OpenRemittance, error) {
-			rows, err := keel.Into[factoringports.OpenRemittance](
+		func(ctx context.Context) ([]*factoringremittanceports.OpenRemittance, error) {
+			rows, err := keel.Into[factoringremittanceports.OpenRemittance](
 				ctx,
 				r.db.Keel(ctx),
 				openRemittances(req.Limit),
@@ -439,7 +439,7 @@ func (r *remittanceRepository) ListOpen(
 				return nil, err
 			}
 
-			out := make([]*factoringports.OpenRemittance, len(rows))
+			out := make([]*factoringremittanceports.OpenRemittance, len(rows))
 			for i := range rows {
 				out[i] = &rows[i]
 			}
@@ -479,7 +479,7 @@ func openRemittances(limit int) *keel.Query[*factoring.Remittance] {
 
 func (r *remittanceRepository) GetProfile(
 	ctx context.Context,
-	req factoringports.GetRemittanceProfileRequest,
+	req factoringremittanceports.GetRemittanceProfileRequest,
 ) (*factoring.RemittanceProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.RemittanceProfile, error) {
 		p := factoringdb.RemittanceProfiles

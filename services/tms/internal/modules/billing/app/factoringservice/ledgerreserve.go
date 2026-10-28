@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -21,7 +21,7 @@ const (
 )
 
 type itemDraft struct {
-	plan  *factoringports.ReserveMovementPlan
+	plan  *factoringledgerports.ReserveMovementPlan
 	input *movementInput
 }
 
@@ -33,9 +33,9 @@ type itemHistory struct {
 
 func (s *LedgerService) PlanRelease(
 	ctx context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	actor *permissionports.RequestActor,
-) (*factoringports.ReserveMovementPlan, error) {
+) (*factoringledgerports.ReserveMovementPlan, error) {
 	draft, err := s.planRelease(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -45,9 +45,9 @@ func (s *LedgerService) PlanRelease(
 
 func (s *LedgerService) ReleaseReserve(
 	ctx context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	actor *permissionports.RequestActor,
-) (*factoringports.ReserveMovementResult, error) {
+) (*factoringledgerports.ReserveMovementResult, error) {
 	draft, err := s.planRelease(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -58,9 +58,9 @@ func (s *LedgerService) ReleaseReserve(
 
 func (s *LedgerService) PlanChargeback(
 	ctx context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	actor *permissionports.RequestActor,
-) (*factoringports.ReserveMovementPlan, error) {
+) (*factoringledgerports.ReserveMovementPlan, error) {
 	draft, err := s.planChargeback(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -70,9 +70,9 @@ func (s *LedgerService) PlanChargeback(
 
 func (s *LedgerService) RecordChargeback(
 	ctx context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	actor *permissionports.RequestActor,
-) (*factoringports.ReserveMovementResult, error) {
+) (*factoringledgerports.ReserveMovementResult, error) {
 	draft, err := s.planChargeback(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -83,9 +83,9 @@ func (s *LedgerService) RecordChargeback(
 
 func (s *LedgerService) PlanChargebackReversal(
 	ctx context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	actor *permissionports.RequestActor,
-) (*factoringports.ReserveMovementPlan, error) {
+) (*factoringledgerports.ReserveMovementPlan, error) {
 	draft, err := s.planReversal(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -95,9 +95,9 @@ func (s *LedgerService) PlanChargebackReversal(
 
 func (s *LedgerService) ReverseChargeback(
 	ctx context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	actor *permissionports.RequestActor,
-) (*factoringports.ReserveMovementResult, error) {
+) (*factoringledgerports.ReserveMovementResult, error) {
 	draft, err := s.planReversal(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -109,7 +109,7 @@ func (s *LedgerService) ReverseChargeback(
 
 func (s *LedgerService) planRelease(
 	ctx context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	actor *permissionports.RequestActor,
 ) (*itemDraft, error) {
 	scope, plan, history, err := s.loadItem(ctx, req, actor, "releasedOn")
@@ -145,7 +145,7 @@ func (s *LedgerService) planRelease(
 
 func (s *LedgerService) planChargeback(
 	ctx context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	actor *permissionports.RequestActor,
 ) (*itemDraft, error) {
 	scope, plan, history, err := s.loadItem(ctx, req, actor, "chargedBackOn")
@@ -186,7 +186,7 @@ func (s *LedgerService) planChargeback(
 
 func (s *LedgerService) planReversal(
 	ctx context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	actor *permissionports.RequestActor,
 ) (*itemDraft, error) {
 	if strings.TrimSpace(req.Reason) == "" {
@@ -237,10 +237,10 @@ func (s *LedgerService) planReversal(
 
 func (s *LedgerService) loadItem(
 	ctx context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	actor *permissionports.RequestActor,
 	dateField string,
-) (*ledgerScope, *factoringports.ReserveMovementPlan, *itemHistory, error) {
+) (*ledgerScope, *factoringledgerports.ReserveMovementPlan, *itemHistory, error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, nil, nil, err
 	}
@@ -270,10 +270,13 @@ func (s *LedgerService) loadItem(
 			"That invoice is not on this schedule",
 		)
 	}
-	entries, err := s.entries.ListForItem(ctx, factoringports.ListReserveEntriesForItemRequest{
-		TenantInfo:       req.TenantInfo,
-		SubmissionItemID: item.ID,
-	})
+	entries, err := s.entries.ListForItem(
+		ctx,
+		factoringledgerports.ListReserveEntriesForItemRequest{
+			TenantInfo:       req.TenantInfo,
+			SubmissionItemID: item.ID,
+		},
+	)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -287,7 +290,7 @@ func (s *LedgerService) loadItem(
 	if err = requireAccounts(&scope.accounts, history.funding.Treatment); err != nil {
 		return nil, nil, nil, err
 	}
-	plan := &factoringports.ReserveMovementPlan{
+	plan := &factoringledgerports.ReserveMovementPlan{
 		Before: scope.before,
 		After:  after,
 		Item:   item,
@@ -297,7 +300,7 @@ func (s *LedgerService) loadItem(
 
 func (s *LedgerService) draftItem(
 	ctx context.Context,
-	plan *factoringports.ReserveMovementPlan,
+	plan *factoringledgerports.ReserveMovementPlan,
 	in *movementInput,
 ) (*itemDraft, error) {
 	if err := s.checkInvoices(ctx, in.tenantInfo(), []*movementInput{in}); err != nil {
@@ -313,11 +316,11 @@ func (s *LedgerService) draftItem(
 
 func (s *LedgerService) recordItemMovement(
 	ctx context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	actor *permissionports.RequestActor,
 	draft *itemDraft,
 	comment string,
-) (*factoringports.ReserveMovementResult, error) {
+) (*factoringledgerports.ReserveMovementResult, error) {
 	var entry *factoring.ReserveEntry
 	var updated *factoring.Submission
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
@@ -335,7 +338,7 @@ func (s *LedgerService) recordItemMovement(
 		comment+" on schedule "+updated.Number,
 		[]pulid.ID{draft.plan.Item.InvoiceID},
 	)
-	return &factoringports.ReserveMovementResult{Submission: updated, Entry: entry}, nil
+	return &factoringledgerports.ReserveMovementResult{Submission: updated, Entry: entry}, nil
 }
 
 func readHistory(entries []*factoring.ReserveEntry) *itemHistory {

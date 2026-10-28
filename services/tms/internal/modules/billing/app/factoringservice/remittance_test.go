@@ -12,7 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -30,7 +32,7 @@ import (
 )
 
 type fakeRemittances struct {
-	factoringports.RemittanceRepository
+	factoringremittanceports.RemittanceRepository
 	mu         sync.Mutex
 	byID       map[pulid.ID]*factoring.Remittance
 	candidates []*factoring.RemittanceCandidate
@@ -88,7 +90,7 @@ func (f *fakeRemittances) Update(
 
 func (f *fakeRemittances) Get(
 	_ context.Context,
-	req factoringports.GetRemittanceRequest,
+	req factoringremittanceports.GetRemittanceRequest,
 ) (*factoring.Remittance, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -105,7 +107,7 @@ func (f *fakeRemittances) Get(
 
 func (f *fakeRemittances) FindByInboundDocument(
 	_ context.Context,
-	req *factoringports.FindRemittanceByDocumentRequest,
+	req *factoringremittanceports.FindRemittanceByDocumentRequest,
 ) (*factoring.Remittance, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -149,7 +151,7 @@ func (f *fakeRemittances) UpdateLines(_ context.Context, lines []*factoring.Remi
 
 func (f *fakeRemittances) ListCandidates(
 	_ context.Context,
-	req *factoringports.ListRemittanceCandidatesRequest,
+	req *factoringremittanceports.ListRemittanceCandidatesRequest,
 ) ([]*factoring.RemittanceCandidate, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -169,7 +171,7 @@ func (f *fakeRemittances) ListCandidates(
 
 func (f *fakeRemittances) GetProfile(
 	context.Context,
-	factoringports.GetRemittanceProfileRequest,
+	factoringremittanceports.GetRemittanceProfileRequest,
 ) (*factoring.RemittanceProfile, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -191,11 +193,11 @@ func (f *fakeRemittances) SaveProfile(
 }
 
 type fakeLedger struct {
-	factoringports.LedgerService
+	factoringledgerports.LedgerService
 	mu        sync.Mutex
-	fundings  []*factoringports.RecordFundingRequest
-	releases  []*factoringports.ReserveMovementRequest
-	charges   []*factoringports.ReserveMovementRequest
+	fundings  []*factoringledgerports.RecordFundingRequest
+	releases  []*factoringledgerports.ReserveMovementRequest
+	charges   []*factoringledgerports.ReserveMovementRequest
 	versions  map[pulid.ID]int64
 	refuseFor pulid.ID
 }
@@ -207,10 +209,10 @@ func (f *fakeLedger) bump(submissionID pulid.ID) *factoring.Submission {
 
 func (f *fakeLedger) PlanFunding(
 	_ context.Context,
-	req *factoringports.RecordFundingRequest,
+	req *factoringledgerports.RecordFundingRequest,
 	_ *permissionports.RequestActor,
-) (*factoringports.FundingPlan, error) {
-	plan := &factoringports.FundingPlan{}
+) (*factoringledgerports.FundingPlan, error) {
+	plan := &factoringledgerports.FundingPlan{}
 	for _, item := range req.Items {
 		if item.Outcome == factoring.FundingOutcomeRejected {
 			plan.RejectCount++
@@ -220,7 +222,7 @@ func (f *fakeLedger) PlanFunding(
 		plan.AdvanceMinor += *item.AdvanceMinor
 		plan.Movements = append(
 			plan.Movements,
-			&factoringports.PlannedMovement{ItemID: item.ItemID},
+			&factoringledgerports.PlannedMovement{ItemID: item.ItemID},
 		)
 	}
 	return plan, nil
@@ -228,9 +230,9 @@ func (f *fakeLedger) PlanFunding(
 
 func (f *fakeLedger) RecordFunding(
 	_ context.Context,
-	req *factoringports.RecordFundingRequest,
+	req *factoringledgerports.RecordFundingRequest,
 	_ *permissionports.RequestActor,
-) (*factoringports.FundingResult, error) {
+) (*factoringledgerports.FundingResult, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if req.Version != f.versions[req.SubmissionID] {
@@ -250,7 +252,7 @@ func (f *fakeLedger) RecordFunding(
 			})
 		}
 	}
-	return &factoringports.FundingResult{
+	return &factoringledgerports.FundingResult{
 		Submission: f.bump(req.SubmissionID),
 		Entries:    entries,
 	}, nil
@@ -258,16 +260,16 @@ func (f *fakeLedger) RecordFunding(
 
 func (f *fakeLedger) ReleaseReserve(
 	_ context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	_ *permissionports.RequestActor,
-) (*factoringports.ReserveMovementResult, error) {
+) (*factoringledgerports.ReserveMovementResult, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if req.Version != f.versions[req.SubmissionID] {
 		return nil, errortypes.NewConflictError("stale schedule")
 	}
 	f.releases = append(f.releases, req)
-	return &factoringports.ReserveMovementResult{
+	return &factoringledgerports.ReserveMovementResult{
 		Submission: f.bump(req.SubmissionID),
 		Entry:      &factoring.ReserveEntry{ID: pulid.MustNew("facres_")},
 	}, nil
@@ -275,26 +277,28 @@ func (f *fakeLedger) ReleaseReserve(
 
 func (f *fakeLedger) PlanRelease(
 	_ context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	_ *permissionports.RequestActor,
-) (*factoringports.ReserveMovementPlan, error) {
-	return &factoringports.ReserveMovementPlan{Movement: &factoringports.PlannedMovement{
-		ItemID: req.ItemID,
-		Lines: []factoringports.PlannedLine{
-			{Role: factoring.AccountRoleCash, Debit: *req.CashMinor},
+) (*factoringledgerports.ReserveMovementPlan, error) {
+	return &factoringledgerports.ReserveMovementPlan{
+		Movement: &factoringledgerports.PlannedMovement{
+			ItemID: req.ItemID,
+			Lines: []factoringledgerports.PlannedLine{
+				{Role: factoring.AccountRoleCash, Debit: *req.CashMinor},
+			},
 		},
-	}}, nil
+	}, nil
 }
 
 func (f *fakeLedger) RecordChargeback(
 	_ context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	_ *permissionports.RequestActor,
-) (*factoringports.ReserveMovementResult, error) {
+) (*factoringledgerports.ReserveMovementResult, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.charges = append(f.charges, req)
-	return &factoringports.ReserveMovementResult{
+	return &factoringledgerports.ReserveMovementResult{
 		Submission: f.bump(req.SubmissionID),
 		Entry:      &factoring.ReserveEntry{ID: pulid.MustNew("facres_")},
 	}, nil
@@ -350,13 +354,13 @@ func (f *fakeRemitFactors) FindByEmail(
 }
 
 type fakeRemitSubmissions struct {
-	factoringports.SubmissionRepository
+	factoringsubmissionports.SubmissionRepository
 	ledger *fakeLedger
 }
 
 func (f *fakeRemitSubmissions) GetByIDs(
 	_ context.Context,
-	req factoringports.GetSubmissionsByIDsRequest,
+	req factoringsubmissionports.GetSubmissionsByIDsRequest,
 ) ([]*factoring.Submission, error) {
 	out := make([]*factoring.Submission, 0, len(req.IDs))
 	for _, id := range req.IDs {
@@ -465,7 +469,7 @@ func newRemittanceHarness(t *testing.T) *remittanceHarness {
 
 func (h *remittanceHarness) create(t *testing.T) *factoring.Remittance {
 	t.Helper()
-	rem, err := h.svc.Create(t.Context(), &factoringports.CreateRemittanceRequest{
+	rem, err := h.svc.Create(t.Context(), &factoringremittanceports.CreateRemittanceRequest{
 		TenantInfo:         h.tenantInfo,
 		FactoringCompanyID: h.factor.ID,
 	}, h.actor)
@@ -498,7 +502,7 @@ func (h *remittanceHarness) staged(t *testing.T) *factoring.Remittance {
 	t.Helper()
 	rem := h.create(t)
 	doc := h.upload(rem, "rts-2027-01-15.csv", standardRemittance)
-	staged, err := h.svc.Stage(t.Context(), &factoringports.StageRemittanceRequest{
+	staged, err := h.svc.Stage(t.Context(), &factoringremittanceports.StageRemittanceRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         rem.ID,
 		Version:    rem.Version,
@@ -545,7 +549,7 @@ func TestRemittanceStageRefusesAFileUploadedForAnotherRemittance(t *testing.T) {
 	other := h.create(t)
 	doc := h.upload(other, "rts.csv", standardRemittance)
 
-	_, err := h.svc.Stage(t.Context(), &factoringports.StageRemittanceRequest{
+	_, err := h.svc.Stage(t.Context(), &factoringremittanceports.StageRemittanceRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         first.ID,
 		Version:    first.Version,
@@ -562,7 +566,7 @@ func TestRemittanceNeedsMappingThenSavesTheFactorsLayout(t *testing.T) {
 	odd := "Ref,Paid Out,Wire Dt\nINV-100,900.00,2027-01-15\n"
 	doc := h.upload(rem, "odd.csv", odd)
 
-	staged, err := h.svc.Stage(t.Context(), &factoringports.StageRemittanceRequest{
+	staged, err := h.svc.Stage(t.Context(), &factoringremittanceports.StageRemittanceRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         rem.ID,
 		Version:    rem.Version,
@@ -572,7 +576,7 @@ func TestRemittanceNeedsMappingThenSavesTheFactorsLayout(t *testing.T) {
 	assert.Equal(t, factoring.RemittanceStatusNeedsMapping, staged.Status)
 	assert.Equal(t, []string{"Ref", "Paid Out", "Wire Dt"}, staged.Headers)
 
-	_, err = h.svc.Stage(t.Context(), &factoringports.StageRemittanceRequest{
+	_, err = h.svc.Stage(t.Context(), &factoringremittanceports.StageRemittanceRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         rem.ID,
 		Version:    staged.Version,
@@ -582,7 +586,7 @@ func TestRemittanceNeedsMappingThenSavesTheFactorsLayout(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr, "a mapping without an amount is refused field by field")
 
-	mapped, err := h.svc.Stage(t.Context(), &factoringports.StageRemittanceRequest{
+	mapped, err := h.svc.Stage(t.Context(), &factoringremittanceports.StageRemittanceRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         rem.ID,
 		Version:    staged.Version,
@@ -598,7 +602,7 @@ func TestRemittanceNeedsMappingThenSavesTheFactorsLayout(t *testing.T) {
 
 	next := h.create(t)
 	nextDoc := h.upload(next, "odd-2.csv", odd)
-	again, err := h.svc.Stage(t.Context(), &factoringports.StageRemittanceRequest{
+	again, err := h.svc.Stage(t.Context(), &factoringremittanceports.StageRemittanceRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         next.ID,
 		Version:    next.Version,
@@ -615,7 +619,7 @@ func TestRemittancePdfWithoutAModelFails(t *testing.T) {
 	rem := h.create(t)
 	doc := h.upload(rem, "rts.pdf", "%PDF-1.7")
 
-	staged, err := h.svc.Stage(t.Context(), &factoringports.StageRemittanceRequest{
+	staged, err := h.svc.Stage(t.Context(), &factoringremittanceports.StageRemittanceRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         rem.ID,
 		Version:    rem.Version,
@@ -632,17 +636,17 @@ func TestRemittanceResolveAndApplyBooksThroughTheLedger(t *testing.T) {
 	rem := h.staged(t)
 	mystery := lineByInvoice(rem, "MYSTERY")
 
-	_, err := h.svc.UpdateLine(t.Context(), &factoringports.UpdateRemittanceLineRequest{
+	_, err := h.svc.UpdateLine(t.Context(), &factoringremittanceports.UpdateRemittanceLineRequest{
 		TenantInfo:   h.tenantInfo,
 		RemittanceID: rem.ID,
 		Version:      rem.Version,
 		LineID:       mystery.ID,
-		Action:       factoringports.RemittanceLineActionMatch,
+		Action:       factoringremittanceports.RemittanceLineActionMatch,
 		ItemID:       h.pending[0].ID,
 	}, h.actor)
 	require.Error(t, err, "an item another line matched cannot be matched twice")
 
-	plan, err := h.svc.PlanApply(t.Context(), &factoringports.RemittanceVersionRequest{
+	plan, err := h.svc.PlanApply(t.Context(), &factoringremittanceports.RemittanceVersionRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         rem.ID,
 		Version:    rem.Version,
@@ -655,7 +659,7 @@ func TestRemittanceResolveAndApplyBooksThroughTheLedger(t *testing.T) {
 	assert.Equal(t, 1, plan.LeftOpenCount)
 	assert.Empty(t, h.ledger.fundings, "a plan books nothing")
 
-	applied, err := h.svc.Apply(t.Context(), &factoringports.RemittanceVersionRequest{
+	applied, err := h.svc.Apply(t.Context(), &factoringremittanceports.RemittanceVersionRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         rem.ID,
 		Version:    rem.Version,
@@ -682,7 +686,7 @@ func TestRemittanceResolveAndApplyBooksThroughTheLedger(t *testing.T) {
 		"the release reads the schedule's version after its funding was booked")
 	assert.Equal(t, lineByInvoice(rem, "INV-050").ID, release.RemittanceLineID)
 
-	stored, err := h.svc.Get(t.Context(), factoringports.GetRemittanceRequest{
+	stored, err := h.svc.Get(t.Context(), factoringremittanceports.GetRemittanceRequest{
 		TenantInfo:   h.tenantInfo,
 		ID:           rem.ID,
 		IncludeLines: true,
@@ -692,18 +696,22 @@ func TestRemittanceResolveAndApplyBooksThroughTheLedger(t *testing.T) {
 	assert.Equal(t, factoring.RemittanceLineApplied, lineByInvoice(stored, "INV-300").MatchStatus)
 
 	open := lineByInvoice(stored, "MYSTERY")
-	settled, err := h.svc.UpdateLine(t.Context(), &factoringports.UpdateRemittanceLineRequest{
-		TenantInfo:   h.tenantInfo,
-		RemittanceID: rem.ID,
-		Version:      stored.Version,
-		LineID:       open.ID,
-		Action:       factoringports.RemittanceLineActionIgnore,
-		Reason:       "Wire fee booked by hand",
-	}, h.actor)
+	settled, err := h.svc.UpdateLine(
+		t.Context(),
+		&factoringremittanceports.UpdateRemittanceLineRequest{
+			TenantInfo:   h.tenantInfo,
+			RemittanceID: rem.ID,
+			Version:      stored.Version,
+			LineID:       open.ID,
+			Action:       factoringremittanceports.RemittanceLineActionIgnore,
+			Reason:       "Wire fee booked by hand",
+		},
+		h.actor,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, 0, settled.ExceptionCount)
 
-	_, err = h.svc.Apply(t.Context(), &factoringports.RemittanceVersionRequest{
+	_, err = h.svc.Apply(t.Context(), &factoringremittanceports.RemittanceVersionRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         rem.ID,
 		Version:    settled.Version,
@@ -716,7 +724,7 @@ func TestRemittanceApplyNeedsAPersonAndRollsBackOnALedgerRefusal(t *testing.T) {
 	h := newRemittanceHarness(t)
 	rem := h.staged(t)
 
-	_, err := h.svc.Apply(t.Context(), &factoringports.RemittanceVersionRequest{
+	_, err := h.svc.Apply(t.Context(), &factoringremittanceports.RemittanceVersionRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         rem.ID,
 		Version:    rem.Version,
@@ -727,13 +735,13 @@ func TestRemittanceApplyNeedsAPersonAndRollsBackOnALedgerRefusal(t *testing.T) {
 	require.Error(t, err)
 
 	h.ledger.refuseFor = h.subB
-	_, err = h.svc.Apply(t.Context(), &factoringports.RemittanceVersionRequest{
+	_, err = h.svc.Apply(t.Context(), &factoringremittanceports.RemittanceVersionRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         rem.ID,
 		Version:    rem.Version,
 	}, h.actor)
 	require.Error(t, err)
-	stored, getErr := h.svc.Get(t.Context(), factoringports.GetRemittanceRequest{
+	stored, getErr := h.svc.Get(t.Context(), factoringremittanceports.GetRemittanceRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         rem.ID,
 	})
@@ -755,12 +763,12 @@ func TestRemittanceIngestEmailFindsTheFactorAndIsIdempotent(t *testing.T) {
 	}
 	h.documents.contents[docID] = []byte(standardRemittance)
 	logo := pulid.MustNew("doc_")
-	req := &factoringports.IngestRemittanceEmailRequest{
+	req := &factoringremittanceports.IngestRemittanceEmailRequest{
 		TenantInfo:       h.tenantInfo,
 		InboundMessageID: messageID,
 		FromAddress:      "someone@else.test",
 		ReceivedAt:       testNow,
-		Attachments: []factoringports.RemittanceEmailAttachment{
+		Attachments: []factoringremittanceports.RemittanceEmailAttachment{
 			{DocumentID: logo, FileName: "logo.png", ContentType: "image/png"},
 			{DocumentID: docID, FileName: "remit.csv", ContentType: "text/csv"},
 		},
@@ -776,7 +784,7 @@ func TestRemittanceIngestEmailFindsTheFactorAndIsIdempotent(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, ingested.Problem)
 	require.Len(t, ingested.RemittanceIDs, 1, "the logo is not a remittance")
-	rem, err := h.svc.Get(t.Context(), factoringports.GetRemittanceRequest{
+	rem, err := h.svc.Get(t.Context(), factoringremittanceports.GetRemittanceRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         ingested.RemittanceIDs[0],
 	})
@@ -856,7 +864,7 @@ func TestRemittancePdfWaitsForItsTextThenReadsItWithTheModel(t *testing.T) {
 
 	rem := h.create(t)
 	doc := h.upload(rem, "rts.pdf", "%PDF-1.7")
-	waiting, err := h.svc.Stage(t.Context(), &factoringports.StageRemittanceRequest{
+	waiting, err := h.svc.Stage(t.Context(), &factoringremittanceports.StageRemittanceRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         rem.ID,
 		Version:    rem.Version,
@@ -867,10 +875,14 @@ func TestRemittancePdfWaitsForItsTextThenReadsItWithTheModel(t *testing.T) {
 	assert.True(t, waiting.AwaitsReading())
 	assert.Equal(t, []pulid.ID{rem.ID}, starter.started)
 
-	still, err := h.svc.StagePending(t.Context(), &factoringports.RemittanceVersionRequest{
-		TenantInfo: h.tenantInfo,
-		ID:         rem.ID,
-	}, false)
+	still, err := h.svc.StagePending(
+		t.Context(),
+		&factoringremittanceports.RemittanceVersionRequest{
+			TenantInfo: h.tenantInfo,
+			ID:         rem.ID,
+		},
+		false,
+	)
 	require.NoError(t, err)
 	assert.True(t, still.Waiting)
 
@@ -878,7 +890,7 @@ func TestRemittancePdfWaitsForItsTextThenReadsItWithTheModel(t *testing.T) {
 		Status:      documentcontent.StatusIndexed,
 		ContentText: "RTS Financial purchase report ...",
 	}
-	read, err := h.svc.StagePending(t.Context(), &factoringports.RemittanceVersionRequest{
+	read, err := h.svc.StagePending(t.Context(), &factoringremittanceports.RemittanceVersionRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         rem.ID,
 	}, false)
@@ -902,7 +914,7 @@ func TestRemittancePdfStillUnreadWhenTheWaitEndsFails(t *testing.T) {
 	h.svc.starter = &fakeStageStarter{}
 	rem := h.create(t)
 	doc := h.upload(rem, "rts.pdf", "%PDF-1.7")
-	_, err := h.svc.Stage(t.Context(), &factoringports.StageRemittanceRequest{
+	_, err := h.svc.Stage(t.Context(), &factoringremittanceports.StageRemittanceRequest{
 		TenantInfo: h.tenantInfo,
 		ID:         rem.ID,
 		Version:    rem.Version,
@@ -910,10 +922,14 @@ func TestRemittancePdfStillUnreadWhenTheWaitEndsFails(t *testing.T) {
 	}, h.actor)
 	require.NoError(t, err)
 
-	gaveUp, err := h.svc.StagePending(t.Context(), &factoringports.RemittanceVersionRequest{
-		TenantInfo: h.tenantInfo,
-		ID:         rem.ID,
-	}, true)
+	gaveUp, err := h.svc.StagePending(
+		t.Context(),
+		&factoringremittanceports.RemittanceVersionRequest{
+			TenantInfo: h.tenantInfo,
+			ID:         rem.ID,
+		},
+		true,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, factoring.RemittanceStatusFailed, gaveUp.Remittance.Status)
 	assert.Equal(t, problemPdfSlow, gaveUp.Remittance.Error)

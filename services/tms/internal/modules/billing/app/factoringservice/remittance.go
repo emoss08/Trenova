@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -35,15 +37,15 @@ type RemittanceParams struct {
 	fx.In
 
 	DB          kernelports.Transactor
-	Remittances factoringports.RemittanceRepository
-	Submissions factoringports.SubmissionRepository
-	Ledger      factoringports.LedgerService
+	Remittances factoringremittanceports.RemittanceRepository
+	Submissions factoringsubmissionports.SubmissionRepository
+	Ledger      factoringledgerports.LedgerService
 	Factors     factoringcompanyports.FactoringCompanyRepository
 	Documents   documentports.InvoiceDocumentService
-	Content     documentports.DocumentContentService  `optional:"true"`
-	Completion  llmports.CompletionService            `optional:"true"`
-	Starter     factoringports.RemittanceStageStarter `optional:"true"`
-	Events      agentports.AgentEventPublisher        `optional:"true"`
+	Content     documentports.DocumentContentService            `optional:"true"`
+	Completion  llmports.CompletionService                      `optional:"true"`
+	Starter     factoringremittanceports.RemittanceStageStarter `optional:"true"`
+	Events      agentports.AgentEventPublisher                  `optional:"true"`
 	Audit       auditports.AuditService
 	Realtime    realtimeports.RealtimeService `optional:"true"`
 	SheetLimits rateimport.Limits             `optional:"true"`
@@ -52,14 +54,14 @@ type RemittanceParams struct {
 
 type RemittanceService struct {
 	db          kernelports.Transactor
-	remittances factoringports.RemittanceRepository
-	submissions factoringports.SubmissionRepository
-	ledger      factoringports.LedgerService
+	remittances factoringremittanceports.RemittanceRepository
+	submissions factoringsubmissionports.SubmissionRepository
+	ledger      factoringledgerports.LedgerService
 	factors     factoringcompanyports.FactoringCompanyRepository
 	documents   documentports.InvoiceDocumentService
 	content     documentports.DocumentContentService
 	completion  llmports.CompletionService
-	starter     factoringports.RemittanceStageStarter
+	starter     factoringremittanceports.RemittanceStageStarter
 	events      agentports.AgentEventPublisher
 	rec         recorder
 	sheetLimits rateimport.Limits
@@ -67,10 +69,10 @@ type RemittanceService struct {
 	now         func() int64
 }
 
-var _ factoringports.RemittanceService = (*RemittanceService)(nil)
+var _ factoringremittanceports.RemittanceService = (*RemittanceService)(nil)
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
-func NewRemittanceService(p RemittanceParams) factoringports.RemittanceService {
+func NewRemittanceService(p RemittanceParams) factoringremittanceports.RemittanceService {
 	l := p.Logger.Named("service.factoring-remittance")
 	return &RemittanceService{
 		db:          p.DB,
@@ -96,7 +98,7 @@ func remittanceTenant(rem *factoring.Remittance) pagination.TenantInfo {
 
 func (s *RemittanceService) Get(
 	ctx context.Context,
-	req factoringports.GetRemittanceRequest,
+	req factoringremittanceports.GetRemittanceRequest,
 ) (*factoring.Remittance, error) {
 	if req.ID.IsNil() {
 		return nil, errortypes.NewValidationError(
@@ -111,7 +113,7 @@ func (s *RemittanceService) Get(
 
 func (s *RemittanceService) ListConnection(
 	ctx context.Context,
-	req *factoringports.ListRemittanceConnectionRequest,
+	req *factoringremittanceports.ListRemittanceConnectionRequest,
 ) (*pagination.CursorListResult[*factoring.Remittance], error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
@@ -121,7 +123,7 @@ func (s *RemittanceService) ListConnection(
 
 func (s *RemittanceService) ListLineConnection(
 	ctx context.Context,
-	req *factoringports.ListRemittanceLineConnectionRequest,
+	req *factoringremittanceports.ListRemittanceLineConnectionRequest,
 ) (*pagination.CursorListResult[*factoring.RemittanceLine], error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
@@ -138,7 +140,7 @@ func (s *RemittanceService) ListLineConnection(
 
 func (s *RemittanceService) Create(
 	ctx context.Context,
-	req *factoringports.CreateRemittanceRequest,
+	req *factoringremittanceports.CreateRemittanceRequest,
 	actor *permissionports.RequestActor,
 ) (*factoring.Remittance, error) {
 	if err := requireRequest(req != nil); err != nil {
@@ -224,7 +226,7 @@ func (s *RemittanceService) requireRemittedOn(at *int64) error {
 
 func (s *RemittanceService) Rematch(
 	ctx context.Context,
-	req *factoringports.RemittanceVersionRequest,
+	req *factoringremittanceports.RemittanceVersionRequest,
 	actor *permissionports.RequestActor,
 ) (*factoring.Remittance, error) {
 	if err := requireRequest(req != nil); err != nil {
@@ -265,7 +267,7 @@ func (s *RemittanceService) Rematch(
 
 func (s *RemittanceService) UpdateLine(
 	ctx context.Context,
-	req *factoringports.UpdateRemittanceLineRequest,
+	req *factoringremittanceports.UpdateRemittanceLineRequest,
 	actor *permissionports.RequestActor,
 ) (*factoring.Remittance, error) {
 	if err := requireRequest(req != nil); err != nil {
@@ -308,9 +310,9 @@ func (s *RemittanceService) UpdateLine(
 
 func (s *RemittanceService) PlanUpdateLine(
 	ctx context.Context,
-	req *factoringports.UpdateRemittanceLineRequest,
+	req *factoringremittanceports.UpdateRemittanceLineRequest,
 	actor *permissionports.RequestActor,
-) (*factoringports.RemittanceLinePlan, error) {
+) (*factoringremittanceports.RemittanceLinePlan, error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
@@ -320,7 +322,7 @@ func (s *RemittanceService) PlanUpdateLine(
 	if err := validateLineRequest(req); err != nil {
 		return nil, err
 	}
-	rem, err := s.remittances.Get(ctx, factoringports.GetRemittanceRequest{
+	rem, err := s.remittances.Get(ctx, factoringremittanceports.GetRemittanceRequest{
 		TenantInfo:   req.TenantInfo,
 		ID:           req.RemittanceID,
 		IncludeLines: true,
@@ -335,7 +337,7 @@ func (s *RemittanceService) PlanUpdateLine(
 	if err != nil {
 		return nil, err
 	}
-	plan := &factoringports.RemittanceLinePlan{
+	plan := &factoringremittanceports.RemittanceLinePlan{
 		Before:     cloneRemittance(rem),
 		LineBefore: new(*line),
 	}
@@ -348,7 +350,7 @@ func (s *RemittanceService) PlanUpdateLine(
 	return plan, nil
 }
 
-func validateLineRequest(req *factoringports.UpdateRemittanceLineRequest) error {
+func validateLineRequest(req *factoringremittanceports.UpdateRemittanceLineRequest) error {
 	multiErr := errortypes.NewMultiError()
 	if req.LineID.IsNil() {
 		multiErr.Add("lineId", errortypes.ErrRequired, "Choose the line")
@@ -357,19 +359,20 @@ func validateLineRequest(req *factoringports.UpdateRemittanceLineRequest) error 
 		multiErr.Add("action", errortypes.ErrInvalid, "Choose what to do with the line")
 	}
 	switch req.Action {
-	case factoringports.RemittanceLineActionMatch:
+	case factoringremittanceports.RemittanceLineActionMatch:
 		if req.ItemID.IsNil() {
 			multiErr.Add("itemId", errortypes.ErrRequired, "Choose the invoice the line pays")
 		}
-	case factoringports.RemittanceLineActionIgnore:
+	case factoringremittanceports.RemittanceLineActionIgnore:
 		if strings.TrimSpace(req.Reason) == "" {
 			multiErr.Add("reason", errortypes.ErrRequired, "Say why this line is not booked")
 		}
-	case factoringports.RemittanceLineActionSetKind:
+	case factoringremittanceports.RemittanceLineActionSetKind:
 		if !req.Kind.IsValid() {
 			multiErr.Add("kind", errortypes.ErrInvalid, "Choose what the line records")
 		}
-	case factoringports.RemittanceLineActionUnmatch, factoringports.RemittanceLineActionRestore:
+	case factoringremittanceports.RemittanceLineActionUnmatch,
+		factoringremittanceports.RemittanceLineActionRestore:
 	}
 	return validationOf(multiErr)
 }
@@ -378,17 +381,17 @@ func (s *RemittanceService) resolveLine(
 	ctx context.Context,
 	rem *factoring.Remittance,
 	line *factoring.RemittanceLine,
-	req *factoringports.UpdateRemittanceLineRequest,
+	req *factoringremittanceports.UpdateRemittanceLineRequest,
 ) (string, error) {
 	row := "Row " + strconv.Itoa(line.RowNumber) + " of remittance " + rem.FileName
 	switch req.Action {
-	case factoringports.RemittanceLineActionMatch:
+	case factoringremittanceports.RemittanceLineActionMatch:
 		item, err := s.matchByPerson(ctx, rem, line, req.ItemID)
 		if err != nil {
 			return "", err
 		}
 		return row + " matched to invoice " + item.InvoiceNumber, nil
-	case factoringports.RemittanceLineActionUnmatch:
+	case factoringremittanceports.RemittanceLineActionUnmatch:
 		if line.MatchStatus != factoring.RemittanceLineMatched {
 			return "", errortypes.NewBusinessError(
 				"Row {0} is not matched",
@@ -397,12 +400,12 @@ func (s *RemittanceService) resolveLine(
 		}
 		line.Suggest(line.Suggestions, "")
 		return row + " unmatched", nil
-	case factoringports.RemittanceLineActionIgnore:
+	case factoringremittanceports.RemittanceLineActionIgnore:
 		if err := line.Ignore(req.Reason); err != nil {
 			return "", err
 		}
 		return row + " ignored: " + line.IgnoredReason, nil
-	case factoringports.RemittanceLineActionRestore:
+	case factoringremittanceports.RemittanceLineActionRestore:
 		if line.MatchStatus != factoring.RemittanceLineIgnored {
 			return "", errortypes.NewBusinessError(
 				"Row {0} is not ignored",
@@ -414,7 +417,7 @@ func (s *RemittanceService) resolveLine(
 			return "", err
 		}
 		return row + " restored", nil
-	case factoringports.RemittanceLineActionSetKind:
+	case factoringremittanceports.RemittanceLineActionSetKind:
 		if err := line.SetKind(req.Kind); err != nil {
 			return "", err
 		}
@@ -450,7 +453,7 @@ func (s *RemittanceService) matchByPerson(
 	}
 	candidates, err := s.remittances.ListCandidates(
 		ctx,
-		&factoringports.ListRemittanceCandidatesRequest{
+		&factoringremittanceports.ListRemittanceCandidatesRequest{
 			TenantInfo:         remittanceTenant(rem),
 			FactoringCompanyID: rem.FactoringCompanyID,
 			ItemIDs:            []pulid.ID{itemID},
@@ -531,16 +534,16 @@ func (s *RemittanceService) suggestFor(
 
 func (s *RemittanceService) PlanDiscard(
 	ctx context.Context,
-	req *factoringports.DiscardRemittanceRequest,
+	req *factoringremittanceports.DiscardRemittanceRequest,
 	actor *permissionports.RequestActor,
-) (*factoringports.RemittanceDiscardPlan, error) {
+) (*factoringremittanceports.RemittanceDiscardPlan, error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
 	if err := requireActor(actor, "Discarding a remittance"); err != nil {
 		return nil, err
 	}
-	rem, err := s.remittances.Get(ctx, factoringports.GetRemittanceRequest{
+	rem, err := s.remittances.Get(ctx, factoringremittanceports.GetRemittanceRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 	})
@@ -550,7 +553,7 @@ func (s *RemittanceService) PlanDiscard(
 	if err = requireVersion(rem, req.Version); err != nil {
 		return nil, err
 	}
-	plan := &factoringports.RemittanceDiscardPlan{Before: cloneRemittance(rem)}
+	plan := &factoringremittanceports.RemittanceDiscardPlan{Before: cloneRemittance(rem)}
 	if err = rem.Discard(s.now(), req.Reason); err != nil {
 		return nil, err
 	}
@@ -560,7 +563,7 @@ func (s *RemittanceService) PlanDiscard(
 
 func (s *RemittanceService) Discard(
 	ctx context.Context,
-	req *factoringports.DiscardRemittanceRequest,
+	req *factoringremittanceports.DiscardRemittanceRequest,
 	actor *permissionports.RequestActor,
 ) (*factoring.Remittance, error) {
 	if err := requireRequest(req != nil); err != nil {
@@ -603,7 +606,7 @@ func (s *RemittanceService) lock(
 			"Choose the remittance",
 		)
 	}
-	rem, err := s.remittances.Get(ctx, factoringports.GetRemittanceRequest{
+	rem, err := s.remittances.Get(ctx, factoringremittanceports.GetRemittanceRequest{
 		TenantInfo:   tenantInfo,
 		ID:           id,
 		IncludeLines: true,
@@ -677,12 +680,15 @@ func (s *RemittanceService) candidatesFor(
 	if len(invoices) == 0 && len(amounts) == 0 {
 		return []*factoring.RemittanceCandidate{}, nil
 	}
-	return s.remittances.ListCandidates(ctx, &factoringports.ListRemittanceCandidatesRequest{
-		TenantInfo:         remittanceTenant(rem),
-		FactoringCompanyID: rem.FactoringCompanyID,
-		Invoices:           invoices,
-		Amounts:            amounts,
-	})
+	return s.remittances.ListCandidates(
+		ctx,
+		&factoringremittanceports.ListRemittanceCandidatesRequest{
+			TenantInfo:         remittanceTenant(rem),
+			FactoringCompanyID: rem.FactoringCompanyID,
+			Invoices:           invoices,
+			Amounts:            amounts,
+		},
+	)
 }
 
 func (s *RemittanceService) record(

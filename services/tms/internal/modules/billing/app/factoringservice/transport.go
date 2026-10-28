@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -25,29 +25,29 @@ const maxSftpSecretBytes = 16 << 10
 type TransportParams struct {
 	fx.In
 
-	Repo       factoringports.TransportRepository
+	Repo       factoringsubmissionports.TransportRepository
 	Factors    factoringcompanyports.FactoringCompanyRepository
 	Cipher     kernelports.SecretCipher
-	Transports []factoringports.FactoringTransport `group:"factoring_transports"`
+	Transports []factoringsubmissionports.FactoringTransport `group:"factoring_transports"`
 	Audit      auditports.AuditService
 	Realtime   realtimeports.RealtimeService `                             optional:"true"`
 	Logger     *zap.Logger
 }
 
 type TransportService struct {
-	repo       factoringports.TransportRepository
+	repo       factoringsubmissionports.TransportRepository
 	factors    factoringcompanyports.FactoringCompanyRepository
 	cipher     kernelports.SecretCipher
-	transports map[factoring.TransportMethod]factoringports.FactoringTransport
+	transports map[factoring.TransportMethod]factoringsubmissionports.FactoringTransport
 	rec        recorder
 	l          *zap.Logger
 	now        func() int64
 }
 
-var _ factoringports.TransportService = (*TransportService)(nil)
+var _ factoringsubmissionports.TransportService = (*TransportService)(nil)
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
-func NewTransportService(p TransportParams) factoringports.TransportService {
+func NewTransportService(p TransportParams) factoringsubmissionports.TransportService {
 	l := p.Logger.Named("service.factoring-transport")
 	return &TransportService{
 		repo:       p.Repo,
@@ -61,9 +61,12 @@ func NewTransportService(p TransportParams) factoringports.TransportService {
 }
 
 func transportsByMethod(
-	list []factoringports.FactoringTransport,
-) map[factoring.TransportMethod]factoringports.FactoringTransport {
-	out := make(map[factoring.TransportMethod]factoringports.FactoringTransport, len(list))
+	list []factoringsubmissionports.FactoringTransport,
+) map[factoring.TransportMethod]factoringsubmissionports.FactoringTransport {
+	out := make(
+		map[factoring.TransportMethod]factoringsubmissionports.FactoringTransport,
+		len(list),
+	)
 	for _, transport := range list {
 		if transport != nil {
 			out[transport.Method()] = transport
@@ -74,14 +77,14 @@ func transportsByMethod(
 
 func (s *TransportService) Get(
 	ctx context.Context,
-	req factoringports.GetTransportRequest,
+	req factoringsubmissionports.GetTransportRequest,
 ) (*factoring.Transport, error) {
 	return s.repo.Get(ctx, req)
 }
 
 func (s *TransportService) Save(
 	ctx context.Context,
-	req *factoringports.SaveTransportRequest,
+	req *factoringsubmissionports.SaveTransportRequest,
 	actor *permissionports.RequestActor,
 ) (*factoring.Transport, error) {
 	if err := requireRequest(req != nil); err != nil {
@@ -97,7 +100,7 @@ func (s *TransportService) Save(
 		return nil, err
 	}
 
-	current, err := s.repo.Get(ctx, factoringports.GetTransportRequest{
+	current, err := s.repo.Get(ctx, factoringsubmissionports.GetTransportRequest{
 		TenantInfo:         req.TenantInfo,
 		FactoringCompanyID: req.FactoringCompanyID,
 	})
@@ -150,7 +153,7 @@ func (s *TransportService) Save(
 
 func (s *TransportService) apply(
 	ctx context.Context,
-	req *factoringports.SaveTransportRequest,
+	req *factoringsubmissionports.SaveTransportRequest,
 	entity *factoring.Transport,
 	previous *factoring.Transport,
 ) error {
@@ -205,16 +208,16 @@ func (s *TransportService) seal(
 
 func (s *TransportService) Test(
 	ctx context.Context,
-	req *factoringports.TestTransportRequest,
+	req *factoringsubmissionports.TestTransportRequest,
 	actor *permissionports.RequestActor,
-) (*factoringports.TransportTestResult, error) {
+) (*factoringsubmissionports.TransportTestResult, error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
 	if err := requireActor(actor, "Testing a factor's delivery settings"); err != nil {
 		return nil, err
 	}
-	entity, err := s.repo.Get(ctx, factoringports.GetTransportRequest{
+	entity, err := s.repo.Get(ctx, factoringsubmissionports.GetTransportRequest{
 		TenantInfo:         req.TenantInfo,
 		FactoringCompanyID: req.FactoringCompanyID,
 	})
@@ -233,7 +236,7 @@ func (s *TransportService) Test(
 		return nil, err
 	}
 
-	testErr := sender.Test(ctx, &factoringports.TransportTestRequest{
+	testErr := sender.Test(ctx, &factoringsubmissionports.TransportTestRequest{
 		TenantInfo: req.TenantInfo,
 		Transport:  entity,
 		Secret:     secret,
@@ -243,7 +246,10 @@ func (s *TransportService) Test(
 		return nil, err
 	}
 
-	result := &factoringports.TransportTestResult{Transport: entity, Passed: testErr == nil}
+	result := &factoringsubmissionports.TransportTestResult{
+		Transport: entity,
+		Passed:    testErr == nil,
+	}
 	if testErr != nil {
 		result.Message = testErr.Error()
 	} else {

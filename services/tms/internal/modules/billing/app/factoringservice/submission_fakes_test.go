@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -30,18 +31,21 @@ import (
 )
 
 type fakeSubmissions struct {
-	factoringports.SubmissionRepository
+	factoringsubmissionports.SubmissionRepository
 	mu      sync.Mutex
 	byID    map[pulid.ID]*factoring.Submission
 	created int
-	docs    *factoringports.SetSubmissionDocumentsRequest
+	docs    *factoringsubmissionports.SetSubmissionDocumentsRequest
 }
 
 func newFakeSubmissions() *fakeSubmissions {
 	return &fakeSubmissions{byID: map[pulid.ID]*factoring.Submission{}}
 }
 
-func (f *fakeSubmissions) Create(_ context.Context, e *factoring.Submission) (*factoring.Submission, error) {
+func (f *fakeSubmissions) Create(
+	_ context.Context,
+	e *factoring.Submission,
+) (*factoring.Submission, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	e.ID = pulid.MustNew("facsub_")
@@ -56,7 +60,10 @@ func (f *fakeSubmissions) Create(_ context.Context, e *factoring.Submission) (*f
 	return e, nil
 }
 
-func (f *fakeSubmissions) Update(_ context.Context, e *factoring.Submission) (*factoring.Submission, error) {
+func (f *fakeSubmissions) Update(
+	_ context.Context,
+	e *factoring.Submission,
+) (*factoring.Submission, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	current := f.byID[e.ID]
@@ -70,7 +77,7 @@ func (f *fakeSubmissions) Update(_ context.Context, e *factoring.Submission) (*f
 
 func (f *fakeSubmissions) GetByID(
 	_ context.Context,
-	req factoringports.GetSubmissionRequest,
+	req factoringsubmissionports.GetSubmissionRequest,
 ) (*factoring.Submission, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -83,7 +90,7 @@ func (f *fakeSubmissions) GetByID(
 
 func (f *fakeSubmissions) GetByIdempotencyKey(
 	_ context.Context,
-	req factoringports.GetSubmissionByKeyRequest,
+	req factoringsubmissionports.GetSubmissionByKeyRequest,
 ) (*factoring.Submission, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -97,7 +104,7 @@ func (f *fakeSubmissions) GetByIdempotencyKey(
 
 func (f *fakeSubmissions) SetDocuments(
 	_ context.Context,
-	req *factoringports.SetSubmissionDocumentsRequest,
+	req *factoringsubmissionports.SetSubmissionDocumentsRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -115,18 +122,21 @@ func (f *fakeSubmissions) SetDocuments(
 
 func (f *fakeSubmissions) ListLiveItems(
 	context.Context,
-	*factoringports.ListLiveItemsRequest,
-) (map[pulid.ID]*factoringports.LiveItem, error) {
-	return map[pulid.ID]*factoringports.LiveItem{}, nil
+	*factoringsubmissionports.ListLiveItemsRequest,
+) (map[pulid.ID]*factoringsubmissionports.LiveItem, error) {
+	return map[pulid.ID]*factoringsubmissionports.LiveItem{}, nil
 }
 
 type fakeTransports struct {
-	factoringports.TransportRepository
+	factoringsubmissionports.TransportRepository
 	entity *factoring.Transport
 	tested *factoring.Transport
 }
 
-func (f *fakeTransports) Get(context.Context, factoringports.GetTransportRequest) (*factoring.Transport, error) {
+func (f *fakeTransports) Get(
+	context.Context,
+	factoringsubmissionports.GetTransportRequest,
+) (*factoring.Transport, error) {
 	if f.entity == nil {
 		return nil, errortypes.NewNotFoundError("Factoring transport not found")
 	}
@@ -134,13 +144,19 @@ func (f *fakeTransports) Get(context.Context, factoringports.GetTransportRequest
 	return &copied, nil
 }
 
-func (f *fakeTransports) Create(_ context.Context, e *factoring.Transport) (*factoring.Transport, error) {
+func (f *fakeTransports) Create(
+	_ context.Context,
+	e *factoring.Transport,
+) (*factoring.Transport, error) {
 	copied := *e
 	f.entity = &copied
 	return e, nil
 }
 
-func (f *fakeTransports) Update(_ context.Context, e *factoring.Transport) (*factoring.Transport, error) {
+func (f *fakeTransports) Update(
+	_ context.Context,
+	e *factoring.Transport,
+) (*factoring.Transport, error) {
 	if f.entity == nil || f.entity.Version != e.Version {
 		return nil, errortypes.NewConflictError("version")
 	}
@@ -318,7 +334,9 @@ func (f *fakeDocumentReader) GetDownloadContent(
 	defer f.store.mu.Unlock()
 	stored, ok := f.store.stored[req.ID]
 	if !ok {
-		return &documentports.DocumentContent{Body: io.NopCloser(bytes.NewReader([]byte("%PDF-invoice")))}, nil
+		return &documentports.DocumentContent{
+			Body: io.NopCloser(bytes.NewReader([]byte("%PDF-invoice"))),
+		}, nil
 	}
 	return &documentports.DocumentContent{Body: io.NopCloser(bytes.NewReader(stored.Content))}, nil
 }
@@ -366,11 +384,19 @@ func fakeImaging() *imagingfake.Fake {
 
 type fakeCipher struct{}
 
-func (fakeCipher) Seal(_ context.Context, plaintext string, scope *kernelports.SecretScope) (string, error) {
+func (fakeCipher) Seal(
+	_ context.Context,
+	plaintext string,
+	scope *kernelports.SecretScope,
+) (string, error) {
 	return "sealed:" + scope.ResourceID + ":" + plaintext, nil
 }
 
-func (fakeCipher) Open(_ context.Context, sealed string, scope *kernelports.SecretScope) (string, error) {
+func (fakeCipher) Open(
+	_ context.Context,
+	sealed string,
+	scope *kernelports.SecretScope,
+) (string, error) {
 	prefix := "sealed:" + scope.ResourceID + ":"
 	if len(sealed) < len(prefix) || sealed[:len(prefix)] != prefix {
 		return "", errortypes.NewBusinessError("wrong scope")
@@ -380,7 +406,7 @@ func (fakeCipher) Open(_ context.Context, sealed string, scope *kernelports.Secr
 
 type fakeSender struct {
 	method   factoring.TransportMethod
-	requests []*factoringports.TransportSendRequest
+	requests []*factoringsubmissionports.TransportSendRequest
 	err      error
 	testErr  error
 }
@@ -389,8 +415,8 @@ func (f *fakeSender) Method() factoring.TransportMethod { return f.method }
 
 func (f *fakeSender) Send(
 	_ context.Context,
-	req *factoringports.TransportSendRequest,
-) (*factoringports.TransportSendResult, error) {
+	req *factoringsubmissionports.TransportSendRequest,
+) (*factoringsubmissionports.TransportSendResult, error) {
 	f.requests = append(f.requests, req)
 	if f.err != nil {
 		return nil, f.err
@@ -404,10 +430,10 @@ func (f *fakeSender) Send(
 			return nil, err
 		}
 	}
-	return &factoringports.TransportSendResult{Reference: "ref-1", Parts: 1}, nil
+	return &factoringsubmissionports.TransportSendResult{Reference: "ref-1", Parts: 1}, nil
 }
 
-func (f *fakeSender) Test(context.Context, *factoringports.TransportTestRequest) error {
+func (f *fakeSender) Test(context.Context, *factoringsubmissionports.TransportTestRequest) error {
 	return f.testErr
 }
 
@@ -415,7 +441,11 @@ type fakeStarter struct {
 	started []*factoring.Submission
 }
 
-func (f *fakeStarter) StartSend(_ context.Context, _ pagination.TenantInfo, sub *factoring.Submission) {
+func (f *fakeStarter) StartSend(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	sub *factoring.Submission,
+) {
 	f.started = append(f.started, cloneSubmission(sub))
 }
 

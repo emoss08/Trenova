@@ -7,11 +7,10 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (e *factoringEnv) watchtowerReader() factoringports.WatchtowerReader {
+func (e *factoringEnv) watchtowerReader() factoringwatchtowerports.WatchtowerReader {
 	return NewWatchtowerReader(Params{DB: postgres.NewTestConnection(e.db), Logger: zap.NewNop()})
 }
 
@@ -40,9 +39,9 @@ func (e *factoringEnv) setNoaDates(t *testing.T, id pulid.ID, acknowledgedAt, ex
 }
 
 func missingFor(
-	rows []*factoringports.CustomerMissingNoa,
+	rows []*factoringwatchtowerports.CustomerMissingNoa,
 	customerID, factorID pulid.ID,
-) *factoringports.CustomerMissingNoa {
+) *factoringwatchtowerports.CustomerMissingNoa {
 	for _, row := range rows {
 		if row.CustomerID == customerID && row.FactoringCompanyID == factorID {
 			return row
@@ -51,7 +50,10 @@ func missingFor(
 	return nil
 }
 
-func expiringFor(rows []*factoringports.ExpiringNoa, id pulid.ID) *factoringports.ExpiringNoa {
+func expiringFor(
+	rows []*factoringwatchtowerports.ExpiringNoa,
+	id pulid.ID,
+) *factoringwatchtowerports.ExpiringNoa {
 	for _, row := range rows {
 		if row.NoaID == id {
 			return row
@@ -67,18 +69,21 @@ func TestWatchtowerReaderFollowsTheNoticeOfAssignment(t *testing.T) {
 	now := time.Now().Unix()
 	window := now + int64(factoring.NoaExpiryWarningDays)*86400
 
-	listMissing := func() []*factoringports.CustomerMissingNoa {
+	listMissing := func() []*factoringwatchtowerports.CustomerMissingNoa {
 		rows, err := reader.ListCustomersMissingNoa(
 			env.ctx,
-			&factoringports.ListCustomersMissingNoaRequest{TenantInfo: env.tenantInfo, At: now},
+			&factoringwatchtowerports.ListCustomersMissingNoaRequest{
+				TenantInfo: env.tenantInfo,
+				At:         now,
+			},
 		)
 		require.NoError(t, err)
 		return rows
 	}
-	listExpiring := func() []*factoringports.ExpiringNoa {
+	listExpiring := func() []*factoringwatchtowerports.ExpiringNoa {
 		rows, err := reader.ListNoasExpiringSoon(
 			env.ctx,
-			&factoringports.ListNoasExpiringSoonRequest{
+			&factoringwatchtowerports.ListNoasExpiringSoonRequest{
 				TenantInfo: env.tenantInfo,
 				At:         now,
 				Before:     window,
@@ -157,16 +162,22 @@ func TestWatchtowerReaderLabelsInvoices(t *testing.T) {
 	factored := env.postInvoice(t, 75000, &factor.ID)
 	unfactored := env.postInvoice(t, 15000, nil)
 
-	empty, err := reader.ListInvoiceLabels(env.ctx, &factoringports.ListInvoiceLabelsRequest{
-		TenantInfo: env.tenantInfo,
-	})
+	empty, err := reader.ListInvoiceLabels(
+		env.ctx,
+		&factoringwatchtowerports.ListInvoiceLabelsRequest{
+			TenantInfo: env.tenantInfo,
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, empty)
 
-	labels, err := reader.ListInvoiceLabels(env.ctx, &factoringports.ListInvoiceLabelsRequest{
-		TenantInfo: env.tenantInfo,
-		InvoiceIDs: []pulid.ID{factored.ID, unfactored.ID, pulid.MustNew("inv_")},
-	})
+	labels, err := reader.ListInvoiceLabels(
+		env.ctx,
+		&factoringwatchtowerports.ListInvoiceLabelsRequest{
+			TenantInfo: env.tenantInfo,
+			InvoiceIDs: []pulid.ID{factored.ID, unfactored.ID, pulid.MustNew("inv_")},
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, labels, 2)
 

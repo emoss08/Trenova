@@ -1867,16 +1867,16 @@ models:
         resolver: true
   FactoringSubmissionPlanItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.SubmissionPlanItem
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports.SubmissionPlanItem
   FactoringSubmissionPlan:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.SubmissionPlan
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports.SubmissionPlan
     fields:
       agreementId:
         resolver: true
   FactoringLiveSubmission:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.LiveItem
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports.LiveItem
   FactoringTransport:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Transport
@@ -1887,7 +1887,7 @@ models:
         resolver: true
   FactoringTransportTestResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.TransportTestResult
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports.TransportTestResult
   FactoringFundingOutcome:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.FundingOutcome
@@ -1915,10 +1915,10 @@ models:
         resolver: true
   FactoringReserveBalance:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.ReserveBalance
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports.ReserveBalance
   FactoringPlannedLine:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.PlannedLine
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports.PlannedLine
     fields:
       account:
         resolver: true
@@ -1930,13 +1930,13 @@ models:
         resolver: true
   FactoringPlannedMovement:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.PlannedMovement
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports.PlannedMovement
     fields:
       fiscalPeriodId:
         resolver: true
   FactoringFundingPlan:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.FundingPlan
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports.FundingPlan
     fields:
       submissionId:
         resolver: true
@@ -1944,7 +1944,7 @@ models:
         resolver: true
   FactoringReserveMovementPlan:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.ReserveMovementPlan
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports.ReserveMovementPlan
     fields:
       submissionId:
         resolver: true
@@ -1975,7 +1975,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceMatchReason
   FactoringRemittanceLineAction:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.RemittanceLineAction
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports.RemittanceLineAction
   ReportSchedule:
     fields:
       mine:
@@ -2021,10 +2021,10 @@ models:
         resolver: true
   FactoringRemittancePlanLine:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.PlannedRemittanceLine
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports.PlannedRemittanceLine
   FactoringRemittancePlan:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.RemittancePlan
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports.RemittancePlan
     fields:
       remittanceId:
         resolver: true

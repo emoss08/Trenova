@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringtransport"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -19,8 +19,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func file(name string, size int) factoringports.TransportFile {
-	return factoringports.TransportFile{
+func file(name string, size int) factoringsubmissionports.TransportFile {
+	return factoringsubmissionports.TransportFile{
 		Name:        name,
 		ContentType: "application/pdf",
 		Content:     []byte(strings.Repeat("x", size)),
@@ -30,8 +30,11 @@ func file(name string, size int) factoringports.TransportFile {
 func TestPackAttachments(t *testing.T) {
 	t.Parallel()
 
-	parts, err := factoringtransport.PackAttachments([]factoringports.TransportFile{
-		file("FS1.pdf", 40), file("FS1.csv", 10), file("A.pdf", 60), file("B.pdf", 30), file("C.pdf", 90),
+	parts, err := factoringtransport.PackAttachments([]factoringsubmissionports.TransportFile{
+		file(
+			"FS1.pdf",
+			40,
+		), file("FS1.csv", 10), file("A.pdf", 60), file("B.pdf", 30), file("C.pdf", 90),
 	}, 100)
 	require.NoError(t, err)
 	require.Len(t, parts, 3)
@@ -40,7 +43,10 @@ func TestPackAttachments(t *testing.T) {
 	assert.Equal(t, "B.pdf", parts[1][1].Name)
 	assert.Equal(t, "C.pdf", parts[2][0].Name)
 
-	_, err = factoringtransport.PackAttachments([]factoringports.TransportFile{file("huge.pdf", 101)}, 100)
+	_, err = factoringtransport.PackAttachments(
+		[]factoringsubmissionports.TransportFile{file("huge.pdf", 101)},
+		100,
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 	assert.Contains(t, err.Error(), "huge.pdf")
@@ -54,7 +60,10 @@ type fakeEmail struct {
 	sent []*emailports.SendEmailRequest
 }
 
-func (f *fakeEmail) Send(_ context.Context, req *emailports.SendEmailRequest) (*email.Message, error) {
+func (f *fakeEmail) Send(
+	_ context.Context,
+	req *emailports.SendEmailRequest,
+) (*email.Message, error) {
 	f.sent = append(f.sent, req)
 	return &email.Message{ID: pulid.MustNew("emsg_")}, nil
 }
@@ -69,16 +78,19 @@ func TestEmailSendsOnePartWithKeyedParts(t *testing.T) {
 	fake := &fakeEmail{}
 	transport := factoringtransport.NewEmail(factoringtransport.EmailParams{Email: fake})
 	var rendered []string
-	result, err := transport.Send(t.Context(), &factoringports.TransportSendRequest{
+	result, err := transport.Send(t.Context(), &factoringsubmissionports.TransportSendRequest{
 		Submission: submission(),
 		Transport: &factoring.Transport{
 			Method:          factoring.TransportMethodEmail,
 			EmailRecipients: []string{"schedules@factor.test"},
 		},
-		Files: []factoringports.TransportFile{file("FS.pdf", 10), file("FS.csv", 5)},
-		Render: func(part, parts int, attachments []string) (*factoringports.TransportMessage, error) {
+		Files: []factoringsubmissionports.TransportFile{file("FS.pdf", 10), file("FS.csv", 5)},
+		Render: func(part, parts int, attachments []string) (*factoringsubmissionports.TransportMessage, error) {
 			rendered = append(rendered, strings.Join(attachments, ","))
-			return &factoringports.TransportMessage{Subject: "Schedule", Text: "body"}, nil
+			return &factoringsubmissionports.TransportMessage{
+				Subject: "Schedule",
+				Text:    "body",
+			}, nil
 		},
 		IdempotencyKey: "facsub-1-send-1",
 	})
@@ -128,11 +140,14 @@ func TestSftpUploadsEveryFileUnderTheScheduleNumber(t *testing.T) {
 		},
 		func(context.Context, string) ([]net.IP, error) { return []net.IP{net.ParseIP("93.184.215.14")}, nil },
 	)
-	result, err := transport.Send(t.Context(), &factoringports.TransportSendRequest{
-		Submission:     submission(),
-		Transport:      sftpTransport(),
-		Secret:         "hunter2",
-		Files:          []factoringports.TransportFile{file("FS2610000001.pdf", 3), file("../INV-1.pdf", 4)},
+	result, err := transport.Send(t.Context(), &factoringsubmissionports.TransportSendRequest{
+		Submission: submission(),
+		Transport:  sftpTransport(),
+		Secret:     "hunter2",
+		Files: []factoringsubmissionports.TransportFile{
+			file("FS2610000001.pdf", 3),
+			file("../INV-1.pdf", 4),
+		},
 		IdempotencyKey: "facsub-1-send-1",
 	})
 	require.NoError(t, err)
@@ -159,14 +174,17 @@ func TestSftpRefusesPrivateHostsAndMissingSecrets(t *testing.T) {
 			return []net.IP{net.ParseIP("93.184.215.14"), net.ParseIP("10.0.0.5")}, nil
 		},
 	)
-	err := transport.Test(t.Context(), &factoringports.TransportTestRequest{
+	err := transport.Test(t.Context(), &factoringsubmissionports.TransportTestRequest{
 		Transport: sftpTransport(),
 		Secret:    "hunter2",
 	})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "private or reserved")
 
-	err = transport.Test(t.Context(), &factoringports.TransportTestRequest{Transport: sftpTransport()})
+	err = transport.Test(
+		t.Context(),
+		&factoringsubmissionports.TransportTestRequest{Transport: sftpTransport()},
+	)
 	require.Error(t, err)
 	assert.False(t, dialCalled)
 }
@@ -180,7 +198,7 @@ func TestSftpTestReportsAnUnreadableDirectory(t *testing.T) {
 		},
 		func(context.Context, string) ([]net.IP, error) { return []net.IP{net.ParseIP("93.184.215.14")}, nil },
 	)
-	err := transport.Test(t.Context(), &factoringports.TransportTestRequest{
+	err := transport.Test(t.Context(), &factoringsubmissionports.TransportTestRequest{
 		Transport: sftpTransport(),
 		Secret:    "hunter2",
 	})

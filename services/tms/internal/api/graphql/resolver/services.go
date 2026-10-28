@@ -49,7 +49,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
@@ -326,10 +329,10 @@ type Params struct {
 	FactoringAgreementService    factoringports.AgreementService
 	FactoringNoaService          factoringports.NoaService
 	FactoringReadinessService    factoringports.ReadinessService
-	FactoringSubmissionService   factoringports.SubmissionService
-	FactoringLedgerService       factoringports.LedgerService
-	FactoringRemittanceService   factoringports.RemittanceService
-	FactoringTransportService    factoringports.TransportService
+	FactoringSubmissionService   factoringsubmissionports.SubmissionService
+	FactoringLedgerService       factoringledgerports.LedgerService
+	FactoringRemittanceService   factoringremittanceports.RemittanceService
+	FactoringTransportService    factoringsubmissionports.TransportService
 	InvoiceDisputeService        invoiceports.InvoiceDisputeService
 	LateChargeService            latechargeports.LateChargeService
 	AgentRunService              agentports.AgentRunService
@@ -563,10 +566,10 @@ type Services struct {
 	FactoringAgreementService    factoringports.AgreementService
 	FactoringNoaService          factoringports.NoaService
 	FactoringReadinessService    factoringports.ReadinessService
-	FactoringSubmissionService   factoringports.SubmissionService
-	FactoringLedgerService       factoringports.LedgerService
-	FactoringRemittanceService   factoringports.RemittanceService
-	FactoringTransportService    factoringports.TransportService
+	FactoringSubmissionService   factoringsubmissionports.SubmissionService
+	FactoringLedgerService       factoringledgerports.LedgerService
+	FactoringRemittanceService   factoringremittanceports.RemittanceService
+	FactoringTransportService    factoringsubmissionports.TransportService
 	InvoiceDisputeService        invoiceports.InvoiceDisputeService
 	LateChargeService            latechargeports.LateChargeService
 	AgentRunService              agentports.AgentRunService

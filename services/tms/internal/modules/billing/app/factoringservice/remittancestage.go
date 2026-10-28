@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -50,7 +50,7 @@ type preparedStage struct {
 
 func (s *RemittanceService) Stage(
 	ctx context.Context,
-	req *factoringports.StageRemittanceRequest,
+	req *factoringremittanceports.StageRemittanceRequest,
 	actor *permissionports.RequestActor,
 ) (*factoring.Remittance, error) {
 	if err := requireRequest(req != nil); err != nil {
@@ -62,7 +62,7 @@ func (s *RemittanceService) Stage(
 	if err := s.validateStageRequest(req); err != nil {
 		return nil, err
 	}
-	current, err := s.remittances.Get(ctx, factoringports.GetRemittanceRequest{
+	current, err := s.remittances.Get(ctx, factoringremittanceports.GetRemittanceRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 	})
@@ -112,7 +112,9 @@ func (s *RemittanceService) Stage(
 	return updated, nil
 }
 
-func (s *RemittanceService) validateStageRequest(req *factoringports.StageRemittanceRequest) error {
+func (s *RemittanceService) validateStageRequest(
+	req *factoringremittanceports.StageRemittanceRequest,
+) error {
 	if req.DocumentID.IsNil() {
 		return errortypes.NewValidationError(
 			"documentId",
@@ -143,20 +145,20 @@ func requireVersion(rem *factoring.Remittance, version int64) error {
 
 func (s *RemittanceService) StagePending(
 	ctx context.Context,
-	req *factoringports.RemittanceVersionRequest,
+	req *factoringremittanceports.RemittanceVersionRequest,
 	giveUp bool,
-) (*factoringports.StagePendingResult, error) {
+) (*factoringremittanceports.StagePendingResult, error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
-	current, err := s.remittances.Get(ctx, factoringports.GetRemittanceRequest{
+	current, err := s.remittances.Get(ctx, factoringremittanceports.GetRemittanceRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	result := &factoringports.StagePendingResult{Remittance: current}
+	result := &factoringremittanceports.StagePendingResult{Remittance: current}
 	if !current.AwaitsReading() {
 		return result, nil
 	}
@@ -178,7 +180,7 @@ func (s *RemittanceService) StagePending(
 	}
 
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		rem, lockErr := s.remittances.Get(txCtx, factoringports.GetRemittanceRequest{
+		rem, lockErr := s.remittances.Get(txCtx, factoringremittanceports.GetRemittanceRequest{
 			TenantInfo:   req.TenantInfo,
 			ID:           req.ID,
 			IncludeLines: true,
@@ -395,10 +397,13 @@ func (s *RemittanceService) resolveMapping(
 		return mapping, err == nil, err
 	}
 	guessed := factoringremit.GuessMapping(headers)
-	profile, err := s.remittances.GetProfile(ctx, factoringports.GetRemittanceProfileRequest{
-		TenantInfo:         remittanceTenant(in.rem),
-		FactoringCompanyID: in.rem.FactoringCompanyID,
-	})
+	profile, err := s.remittances.GetProfile(
+		ctx,
+		factoringremittanceports.GetRemittanceProfileRequest{
+			TenantInfo:         remittanceTenant(in.rem),
+			FactoringCompanyID: in.rem.FactoringCompanyID,
+		},
+	)
 	if err != nil && !errortypes.IsNotFoundError(err) {
 		return nil, false, err
 	}

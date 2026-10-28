@@ -185,7 +185,7 @@ An item at the cap stays overdue and is no longer picked up by the sweep.
 
 The `Factoring` kind is read as invoices (`ResourceInvoice`, the same read the factoring queue
 takes). Its snapshot is `watchtowersources.FactoringSource`, reading
-`InvoiceStateRepository.ListReadyUnsubmitted` and `factoringports.WatchtowerReader`
+`InvoiceStateRepository.ListReadyUnsubmitted` and `factoringwatchtowerports.WatchtowerReader`
 (`factoringrepository/watchtower.go`). Every item turns on the clock, so
 `factoring-watchtower-sweep` reconciles it for every organization every fifteen minutes, on
 top of the nightly reconcile. An invoice item is about the invoice (`factoring.invoice_ready`),

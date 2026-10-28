@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -32,7 +32,7 @@ type submissionRepository struct {
 	l  *zap.Logger
 }
 
-func NewSubmissionRepository(p Params) factoringports.SubmissionRepository {
+func NewSubmissionRepository(p Params) factoringsubmissionports.SubmissionRepository {
 	return &submissionRepository{
 		db: p.DB,
 		l:  p.Logger.Named("repository.factoring-submission"),
@@ -125,7 +125,7 @@ func (r *submissionRepository) updateItemStatuses(
 
 func (r *submissionRepository) SetDocuments(
 	ctx context.Context,
-	req *factoringports.SetSubmissionDocumentsRequest,
+	req *factoringsubmissionports.SetSubmissionDocumentsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
@@ -175,7 +175,7 @@ func submissionWithItems() *keel.Query[*factoring.Submission] {
 
 func (r *submissionRepository) GetByID(
 	ctx context.Context,
-	req factoringports.GetSubmissionRequest,
+	req factoringsubmissionports.GetSubmissionRequest,
 ) (*factoring.Submission, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Submission, error) {
 		s := factoringdb.Submissions
@@ -195,7 +195,7 @@ func (r *submissionRepository) GetByID(
 
 func (r *submissionRepository) GetByIdempotencyKey(
 	ctx context.Context,
-	req factoringports.GetSubmissionByKeyRequest,
+	req factoringsubmissionports.GetSubmissionByKeyRequest,
 ) (*factoring.Submission, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Submission, error) {
 		entity, err := submissionWithItems().
@@ -211,7 +211,7 @@ func (r *submissionRepository) GetByIdempotencyKey(
 
 func (r *submissionRepository) ListConnection(
 	ctx context.Context,
-	req *factoringports.ListSubmissionConnectionRequest,
+	req *factoringsubmissionports.ListSubmissionConnectionRequest,
 ) (*pagination.CursorListResult[*factoring.Submission], error) {
 	return dbtx.Read(
 		ctx,
@@ -235,7 +235,7 @@ func (r *submissionRepository) ListConnection(
 }
 
 func submissionScope(
-	req *factoringports.ListSubmissionConnectionRequest,
+	req *factoringsubmissionports.ListSubmissionConnectionRequest,
 	term string,
 ) *keel.Query[*factoring.Submission] {
 	s := factoringdb.Submissions
@@ -256,18 +256,22 @@ func submissionScope(
 
 func (r *submissionRepository) ListLiveItems(
 	ctx context.Context,
-	req *factoringports.ListLiveItemsRequest,
-) (map[pulid.ID]*factoringports.LiveItem, error) {
+	req *factoringsubmissionports.ListLiveItemsRequest,
+) (map[pulid.ID]*factoringsubmissionports.LiveItem, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (map[pulid.ID]*factoringports.LiveItem, error) {
-			result := make(map[pulid.ID]*factoringports.LiveItem, len(req.InvoiceIDs))
+		func(ctx context.Context) (map[pulid.ID]*factoringsubmissionports.LiveItem, error) {
+			result := make(map[pulid.ID]*factoringsubmissionports.LiveItem, len(req.InvoiceIDs))
 			if len(req.InvoiceIDs) == 0 {
 				return result, nil
 			}
 
-			rows, err := keel.Into[factoringports.LiveItem](ctx, r.db.Keel(ctx), liveItems(req))
+			rows, err := keel.Into[factoringsubmissionports.LiveItem](
+				ctx,
+				r.db.Keel(ctx),
+				liveItems(req),
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -284,7 +288,9 @@ func (r *submissionRepository) ListLiveItems(
 	)
 }
 
-func liveItems(req *factoringports.ListLiveItemsRequest) *keel.Query[*factoring.SubmissionItem] {
+func liveItems(
+	req *factoringsubmissionports.ListLiveItemsRequest,
+) *keel.Query[*factoring.SubmissionItem] {
 	item := factoringdb.SubmissionItems
 	sub := factoringdb.Submissions
 	return item.Pick(item.InvoiceID, item.SubmissionID, sub.Number, sub.Status, item.ID, item.Status).
@@ -297,7 +303,7 @@ func liveItems(req *factoringports.ListLiveItemsRequest) *keel.Query[*factoring.
 
 func (r *submissionRepository) ListItemsBySubmissionIDs(
 	ctx context.Context,
-	req *factoringports.ListItemsBySubmissionIDsRequest,
+	req *factoringsubmissionports.ListItemsBySubmissionIDsRequest,
 ) (map[pulid.ID][]*factoring.SubmissionItem, error) {
 	return dbtx.Read(
 		ctx,
@@ -362,7 +368,7 @@ func liveItemStatuses(includeChargedBack bool) []factoring.SubmissionItemStatus 
 
 func (r *submissionRepository) ClaimChargebackWarning(
 	ctx context.Context,
-	req factoringports.ClaimChargebackWarningRequest,
+	req factoringsubmissionports.ClaimChargebackWarningRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		item := factoringdb.SubmissionItems
@@ -384,7 +390,7 @@ func (r *submissionRepository) ClaimChargebackWarning(
 
 func (r *submissionRepository) GetByIDs(
 	ctx context.Context,
-	req factoringports.GetSubmissionsByIDsRequest,
+	req factoringsubmissionports.GetSubmissionsByIDsRequest,
 ) ([]*factoring.Submission, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*factoring.Submission, error) {
 		if len(req.IDs) == 0 {

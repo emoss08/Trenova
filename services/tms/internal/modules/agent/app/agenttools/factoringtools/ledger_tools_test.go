@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,13 +20,13 @@ import (
 )
 
 type fakeLedger struct {
-	factoringports.LedgerService
+	factoringledgerports.LedgerService
 
 	guard     agenttoolstest.WriteGuard
 	sub       *factoring.Submission
 	item      *factoring.SubmissionItem
-	funding   *factoringports.RecordFundingRequest
-	movement  *factoringports.ReserveMovementRequest
+	funding   *factoringledgerports.RecordFundingRequest
+	movement  *factoringledgerports.ReserveMovementRequest
 	recorded  string
 	emptyPlan bool
 }
@@ -54,20 +54,22 @@ func newFakeLedger() *fakeLedger {
 	}
 }
 
-func (f *fakeLedger) planned(kind factoring.ReserveEntryKind) *factoringports.PlannedMovement {
+func (f *fakeLedger) planned(
+	kind factoring.ReserveEntryKind,
+) *factoringledgerports.PlannedMovement {
 	if f.emptyPlan {
-		return &factoringports.PlannedMovement{
+		return &factoringledgerports.PlannedMovement{
 			ItemID:        f.item.ID,
 			InvoiceNumber: f.item.InvoiceNumber,
 			Movement:      factoring.Movement{Kind: kind},
 		}
 	}
-	return &factoringports.PlannedMovement{
+	return &factoringledgerports.PlannedMovement{
 		ItemID:        f.item.ID,
 		InvoiceID:     f.item.InvoiceID,
 		InvoiceNumber: f.item.InvoiceNumber,
 		Movement:      factoring.Movement{Kind: kind, CashMinor: 88_000},
-		Lines: []factoringports.PlannedLine{
+		Lines: []factoringledgerports.PlannedLine{
 			{Role: factoring.AccountRoleCash, AccountID: pulid.MustNew("gla_"), Debit: 88_000},
 			{Role: factoring.AccountRoleFeeExpense, AccountID: pulid.MustNew("gla_"), Debit: 2_500},
 			{
@@ -87,18 +89,20 @@ func (f *fakeLedger) planned(kind factoring.ReserveEntryKind) *factoringports.Pl
 
 func (f *fakeLedger) PlanFunding(
 	_ context.Context,
-	req *factoringports.RecordFundingRequest,
+	req *factoringledgerports.RecordFundingRequest,
 	_ *permissionports.RequestActor,
-) (*factoringports.FundingPlan, error) {
+) (*factoringledgerports.FundingPlan, error) {
 	if req.SubmissionID != f.sub.ID {
 		return nil, errortypes.NewNotFoundError("Factoring schedule not found")
 	}
 	after := *f.sub
 	after.Status = factoring.SubmissionStatusFunded
-	return &factoringports.FundingPlan{
-		Before:       f.sub,
-		After:        &after,
-		Movements:    []*factoringports.PlannedMovement{f.planned(factoring.ReserveEntryFunding)},
+	return &factoringledgerports.FundingPlan{
+		Before: f.sub,
+		After:  &after,
+		Movements: []*factoringledgerports.PlannedMovement{
+			f.planned(factoring.ReserveEntryFunding),
+		},
 		FundedCount:  1,
 		AdvanceMinor: 88_000,
 		FeeMinor:     2_500,
@@ -108,19 +112,19 @@ func (f *fakeLedger) PlanFunding(
 
 func (f *fakeLedger) RecordFunding(
 	_ context.Context,
-	req *factoringports.RecordFundingRequest,
+	req *factoringledgerports.RecordFundingRequest,
 	_ *permissionports.RequestActor,
-) (*factoringports.FundingResult, error) {
+) (*factoringledgerports.FundingResult, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.funding = req
-	return &factoringports.FundingResult{Submission: f.sub}, nil
+	return &factoringledgerports.FundingResult{Submission: f.sub}, nil
 }
 
 func (f *fakeLedger) movementPlan(
 	kind factoring.ReserveEntryKind,
-) *factoringports.ReserveMovementPlan {
+) *factoringledgerports.ReserveMovementPlan {
 	after := *f.item
 	switch kind {
 	case factoring.ReserveEntryRelease:
@@ -130,7 +134,7 @@ func (f *fakeLedger) movementPlan(
 	case factoring.ReserveEntryFunding, factoring.ReserveEntryChargebackReversal:
 		after.Status = factoring.SubmissionItemStatusFunded
 	}
-	return &factoringports.ReserveMovementPlan{
+	return &factoringledgerports.ReserveMovementPlan{
 		Before:   f.sub,
 		After:    f.sub,
 		Item:     &after,
@@ -140,42 +144,42 @@ func (f *fakeLedger) movementPlan(
 
 func (f *fakeLedger) PlanRelease(
 	_ context.Context,
-	_ *factoringports.ReserveMovementRequest,
+	_ *factoringledgerports.ReserveMovementRequest,
 	_ *permissionports.RequestActor,
-) (*factoringports.ReserveMovementPlan, error) {
+) (*factoringledgerports.ReserveMovementPlan, error) {
 	return f.movementPlan(factoring.ReserveEntryRelease), nil
 }
 
 func (f *fakeLedger) ReleaseReserve(
 	_ context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	_ *permissionports.RequestActor,
-) (*factoringports.ReserveMovementResult, error) {
+) (*factoringledgerports.ReserveMovementResult, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.movement, f.recorded = req, "release"
-	return &factoringports.ReserveMovementResult{Submission: f.sub}, nil
+	return &factoringledgerports.ReserveMovementResult{Submission: f.sub}, nil
 }
 
 func (f *fakeLedger) PlanChargeback(
 	_ context.Context,
-	_ *factoringports.ReserveMovementRequest,
+	_ *factoringledgerports.ReserveMovementRequest,
 	_ *permissionports.RequestActor,
-) (*factoringports.ReserveMovementPlan, error) {
+) (*factoringledgerports.ReserveMovementPlan, error) {
 	return f.movementPlan(factoring.ReserveEntryChargeback), nil
 }
 
 func (f *fakeLedger) RecordChargeback(
 	_ context.Context,
-	req *factoringports.ReserveMovementRequest,
+	req *factoringledgerports.ReserveMovementRequest,
 	_ *permissionports.RequestActor,
-) (*factoringports.ReserveMovementResult, error) {
+) (*factoringledgerports.ReserveMovementResult, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.movement, f.recorded = req, "chargeback"
-	return &factoringports.ReserveMovementResult{Submission: f.sub}, nil
+	return &factoringledgerports.ReserveMovementResult{Submission: f.sub}, nil
 }
 
 func fundingParams(f *fakeLedger, items ...any) agenttoolports.ToolExecuteParams {

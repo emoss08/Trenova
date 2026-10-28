@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -113,11 +114,11 @@ func newFactoringAgreementsByCompanyIDLoader(
 type FactoringSubmissionByIDLoaderFactoryParams struct {
 	fx.In
 
-	Submissions factoringports.SubmissionRepository
+	Submissions factoringsubmissionports.SubmissionRepository
 }
 
 type FactoringSubmissionByIDLoaderFactory struct {
-	submissions factoringports.SubmissionRepository
+	submissions factoringsubmissionports.SubmissionRepository
 }
 
 func NewFactoringSubmissionByIDLoaderFactory(
@@ -132,7 +133,7 @@ func newFactoringSubmissionByIDLoader(
 ) *dataloadgen.Loader[string, *factoring.Submission] {
 	return newLoader(batchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*factoring.Submission, error) {
-			return f.submissions.GetByIDs(ctx, factoringports.GetSubmissionsByIDsRequest{
+			return f.submissions.GetByIDs(ctx, factoringsubmissionports.GetSubmissionsByIDsRequest{
 				IDs:        ids,
 				TenantInfo: tenantInfo,
 			})
@@ -144,11 +145,11 @@ func newFactoringSubmissionByIDLoader(
 type FactoringSubmissionItemsLoaderFactoryParams struct {
 	fx.In
 
-	Submissions factoringports.SubmissionRepository
+	Submissions factoringsubmissionports.SubmissionRepository
 }
 
 type FactoringSubmissionItemsLoaderFactory struct {
-	submissions factoringports.SubmissionRepository
+	submissions factoringsubmissionports.SubmissionRepository
 }
 
 func NewFactoringSubmissionItemsLoaderFactory(
@@ -165,7 +166,7 @@ func newFactoringSubmissionItemsLoader(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*factoring.SubmissionItem, error) {
 			return f.submissions.ListItemsBySubmissionIDs(
 				ctx,
-				&factoringports.ListItemsBySubmissionIDsRequest{
+				&factoringsubmissionports.ListItemsBySubmissionIDsRequest{
 					TenantInfo:    tenantInfo,
 					SubmissionIDs: ids,
 				},
@@ -177,11 +178,11 @@ func newFactoringSubmissionItemsLoader(
 type FactoringLiveItemByInvoiceIDLoaderFactoryParams struct {
 	fx.In
 
-	Submissions factoringports.SubmissionRepository
+	Submissions factoringsubmissionports.SubmissionRepository
 }
 
 type FactoringLiveItemByInvoiceIDLoaderFactory struct {
-	submissions factoringports.SubmissionRepository
+	submissions factoringsubmissionports.SubmissionRepository
 }
 
 func NewFactoringLiveItemByInvoiceIDLoaderFactory(
@@ -193,10 +194,10 @@ func NewFactoringLiveItemByInvoiceIDLoaderFactory(
 func newFactoringLiveItemByInvoiceIDLoader(
 	f *FactoringLiveItemByInvoiceIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, *factoringports.LiveItem] {
+) *dataloadgen.Loader[string, *factoringsubmissionports.LiveItem] {
 	return newLoader(batchValueFunc(
-		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]*factoringports.LiveItem, error) {
-			return f.submissions.ListLiveItems(ctx, &factoringports.ListLiveItemsRequest{
+		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]*factoringsubmissionports.LiveItem, error) {
+			return f.submissions.ListLiveItems(ctx, &factoringsubmissionports.ListLiveItemsRequest{
 				TenantInfo: tenantInfo,
 				InvoiceIDs: ids,
 			})

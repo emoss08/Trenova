@@ -3,6 +3,9 @@
 package factoringresolver
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	factoringports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 )
@@ -12,10 +15,10 @@ type Deps struct {
 	FactoringAgreementService  factoringports.AgreementService
 	FactoringNoaService        factoringports.NoaService
 	FactoringReadinessService  factoringports.ReadinessService
-	FactoringSubmissionService factoringports.SubmissionService
-	FactoringLedgerService     factoringports.LedgerService
-	FactoringRemittanceService factoringports.RemittanceService
-	FactoringTransportService  factoringports.TransportService
+	FactoringSubmissionService factoringsubmissionports.SubmissionService
+	FactoringLedgerService     factoringledgerports.LedgerService
+	FactoringRemittanceService factoringremittanceports.RemittanceService
+	FactoringTransportService  factoringsubmissionports.TransportService
 }
 
 type CustomerBillingProfileResolver struct{ *Deps }

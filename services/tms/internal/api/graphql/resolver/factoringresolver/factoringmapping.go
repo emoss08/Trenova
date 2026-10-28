@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -182,7 +183,7 @@ func submissionConnectionToModel(
 func planRequestFromModel(
 	in *gqlmodel.FactoringSubmissionPlanInput,
 	authCtx *authctx.AuthContext,
-) (*factoringports.PlanSubmissionRequest, error) {
+) (*factoringsubmissionports.PlanSubmissionRequest, error) {
 	factorID, err := parseID(in.FactoringCompanyID, "factoringCompanyId")
 	if err != nil {
 		return nil, err
@@ -191,7 +192,7 @@ func planRequestFromModel(
 	if err != nil {
 		return nil, err
 	}
-	return &factoringports.PlanSubmissionRequest{
+	return &factoringsubmissionports.PlanSubmissionRequest{
 		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		FactoringCompanyID: factorID,
 		InvoiceIDs:         invoiceIDs,
@@ -201,16 +202,16 @@ func planRequestFromModel(
 func transportRequestFromModel(
 	in *gqlmodel.SaveFactoringTransportInput,
 	authCtx *authctx.AuthContext,
-) (*factoringports.SaveTransportRequest, error) {
+) (*factoringsubmissionports.SaveTransportRequest, error) {
 	factorID, err := parseID(in.FactoringCompanyID, "factoringCompanyId")
 	if err != nil {
 		return nil, err
 	}
-	req := &factoringports.SaveTransportRequest{
+	req := &factoringsubmissionports.SaveTransportRequest{
 		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		FactoringCompanyID: factorID,
 		Version:            int64Ptr(in.Version),
-		Input: factoringports.TransportInput{
+		Input: factoringsubmissionports.TransportInput{
 			Method:           in.Method,
 			EmailRecipients:  in.EmailRecipients,
 			AttachPackets:    in.AttachPackets == nil || *in.AttachPackets,

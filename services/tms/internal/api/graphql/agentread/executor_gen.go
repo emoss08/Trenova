@@ -3,6 +3,9 @@
 package agentread
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
@@ -310,12 +313,12 @@ type ResolverParams struct {
 	EscrowAccountRepo            driverpayports.EscrowAccountRepository
 	FactoringAgreementService    factoringports.AgreementService
 	FactoringCompanyService      *factoringcompanyservice.Service
-	FactoringLedgerService       factoringports.LedgerService
+	FactoringLedgerService       factoringledgerports.LedgerService
 	FactoringNoaService          factoringports.NoaService
 	FactoringReadinessService    factoringports.ReadinessService
-	FactoringRemittanceService   factoringports.RemittanceService
-	FactoringSubmissionService   factoringports.SubmissionService
-	FactoringTransportService    factoringports.TransportService
+	FactoringRemittanceService   factoringremittanceports.RemittanceService
+	FactoringSubmissionService   factoringsubmissionports.SubmissionService
+	FactoringTransportService    factoringsubmissionports.TransportService
 	FiscalPeriodService          *fiscalperiodservice.Service
 	FleetCodeService             *fleetcodeservice.Service
 	FormulaLibraryService        *formulalibraryservice.Service

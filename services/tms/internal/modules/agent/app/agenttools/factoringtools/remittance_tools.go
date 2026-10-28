@@ -13,7 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 )
@@ -97,7 +98,7 @@ func remittanceVersionParam() map[string]any {
 func remittanceVersionRequest(
 	params *agenttoolports.ToolExecuteParams,
 	key string,
-) (*factoringports.RemittanceVersionRequest, error) {
+) (*factoringremittanceports.RemittanceVersionRequest, error) {
 	id, err := common.RequirePulid(params.Params, key)
 	if err != nil {
 		return nil, err
@@ -106,7 +107,7 @@ func remittanceVersionRequest(
 	if err != nil {
 		return nil, err
 	}
-	return &factoringports.RemittanceVersionRequest{
+	return &factoringremittanceports.RemittanceVersionRequest{
 		TenantInfo: common.TenantFrom(*params),
 		ID:         id,
 		Version:    int64(version),
@@ -114,11 +115,11 @@ func remittanceVersionRequest(
 }
 
 type ResolveFactoringRemittanceLineTool struct {
-	remittances factoringports.RemittanceService
+	remittances factoringremittanceports.RemittanceService
 }
 
 func NewResolveFactoringRemittanceLineTool(
-	remittances factoringports.RemittanceService,
+	remittances factoringremittanceports.RemittanceService,
 ) agenttoolports.AgentTool {
 	return &ResolveFactoringRemittanceLineTool{remittances: remittances}
 }
@@ -189,7 +190,7 @@ func (t *ResolveFactoringRemittanceLineTool) Target(
 
 func (t *ResolveFactoringRemittanceLineTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*factoringports.UpdateRemittanceLineRequest, error) {
+) (*factoringremittanceports.UpdateRemittanceLineRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -201,7 +202,7 @@ func (t *ResolveFactoringRemittanceLineTool) request(
 	if err != nil {
 		return nil, err
 	}
-	action := factoringports.RemittanceLineAction(
+	action := factoringremittanceports.RemittanceLineAction(
 		strings.TrimSpace(common.OptionalString(params.Params, paramLineAction)),
 	)
 	if !action.IsValid() {
@@ -210,7 +211,7 @@ func (t *ResolveFactoringRemittanceLineTool) request(
 			paramLineAction,
 		)
 	}
-	req := &factoringports.UpdateRemittanceLineRequest{
+	req := &factoringremittanceports.UpdateRemittanceLineRequest{
 		TenantInfo:   base.TenantInfo,
 		RemittanceID: base.ID,
 		Version:      base.Version,
@@ -220,7 +221,7 @@ func (t *ResolveFactoringRemittanceLineTool) request(
 			strings.TrimSpace(common.OptionalString(params.Params, paramLineKind)),
 		),
 	}
-	if action == factoringports.RemittanceLineActionMatch {
+	if action == factoringremittanceports.RemittanceLineActionMatch {
 		if req.ItemID, err = common.RequirePulid(params.Params, paramItemID); err != nil {
 			return nil, err
 		}
@@ -298,11 +299,11 @@ func (t *ResolveFactoringRemittanceLineTool) Preview(
 }
 
 type RematchFactoringRemittanceTool struct {
-	remittances factoringports.RemittanceService
+	remittances factoringremittanceports.RemittanceService
 }
 
 func NewRematchFactoringRemittanceTool(
-	remittances factoringports.RemittanceService,
+	remittances factoringremittanceports.RemittanceService,
 ) agenttoolports.AgentTool {
 	return &RematchFactoringRemittanceTool{remittances: remittances}
 }
@@ -351,7 +352,7 @@ func (t *RematchFactoringRemittanceTool) Target(
 
 func (t *RematchFactoringRemittanceTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*factoringports.RemittanceVersionRequest, error) {
+) (*factoringremittanceports.RemittanceVersionRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -366,7 +367,7 @@ func (t *RematchFactoringRemittanceTool) Validate(
 	if err != nil {
 		return err
 	}
-	rem, err := t.remittances.Get(ctx, factoringports.GetRemittanceRequest{
+	rem, err := t.remittances.Get(ctx, factoringremittanceports.GetRemittanceRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 	})
@@ -401,12 +402,12 @@ func (t *RematchFactoringRemittanceTool) Preview(
 
 type ApplyFactoringRemittanceTool struct {
 	ledgerTool
-	remittances factoringports.RemittanceService
+	remittances factoringremittanceports.RemittanceService
 }
 
 func NewApplyFactoringRemittanceTool(
-	remittances factoringports.RemittanceService,
-	ledger factoringports.LedgerService,
+	remittances factoringremittanceports.RemittanceService,
+	ledger factoringledgerports.LedgerService,
 	accounts glaccountports.GLAccountRepository,
 ) agenttoolports.AgentTool {
 	return &ApplyFactoringRemittanceTool{
@@ -460,7 +461,7 @@ func (t *ApplyFactoringRemittanceTool) Target(
 
 func (t *ApplyFactoringRemittanceTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*factoringports.RemittanceVersionRequest, error) {
+) (*factoringremittanceports.RemittanceVersionRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -507,7 +508,7 @@ func (t *ApplyFactoringRemittanceTool) Preview(
 	if err != nil {
 		return refused(summary, err)
 	}
-	movements := make([]*factoringports.PlannedMovement, 0, len(plan.Lines))
+	movements := make([]*factoringledgerports.PlannedMovement, 0, len(plan.Lines))
 	for _, line := range plan.Lines {
 		if line.Movement != nil {
 			movements = append(movements, line.Movement)
@@ -541,11 +542,11 @@ func (t *ApplyFactoringRemittanceTool) Preview(
 }
 
 type DiscardFactoringRemittanceTool struct {
-	remittances factoringports.RemittanceService
+	remittances factoringremittanceports.RemittanceService
 }
 
 func NewDiscardFactoringRemittanceTool(
-	remittances factoringports.RemittanceService,
+	remittances factoringremittanceports.RemittanceService,
 ) agenttoolports.AgentTool {
 	return &DiscardFactoringRemittanceTool{remittances: remittances}
 }
@@ -595,7 +596,7 @@ func (t *DiscardFactoringRemittanceTool) Target(
 
 func (t *DiscardFactoringRemittanceTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*factoringports.DiscardRemittanceRequest, error) {
+) (*factoringremittanceports.DiscardRemittanceRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -607,7 +608,7 @@ func (t *DiscardFactoringRemittanceTool) request(
 	if err != nil {
 		return nil, err
 	}
-	return &factoringports.DiscardRemittanceRequest{
+	return &factoringremittanceports.DiscardRemittanceRequest{
 		TenantInfo: base.TenantInfo,
 		ID:         base.ID,
 		Version:    base.Version,

@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -18,15 +18,15 @@ import (
 const fundingKeyPrefix = "factoring-funded:"
 
 type fundingDraft struct {
-	plan   *factoringports.FundingPlan
+	plan   *factoringledgerports.FundingPlan
 	inputs []*movementInput
 }
 
 func (s *LedgerService) PlanFunding(
 	ctx context.Context,
-	req *factoringports.RecordFundingRequest,
+	req *factoringledgerports.RecordFundingRequest,
 	actor *permissionports.RequestActor,
-) (*factoringports.FundingPlan, error) {
+) (*factoringledgerports.FundingPlan, error) {
 	draft, err := s.planFunding(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -36,9 +36,9 @@ func (s *LedgerService) PlanFunding(
 
 func (s *LedgerService) RecordFunding(
 	ctx context.Context,
-	req *factoringports.RecordFundingRequest,
+	req *factoringledgerports.RecordFundingRequest,
 	actor *permissionports.RequestActor,
-) (*factoringports.FundingResult, error) {
+) (*factoringledgerports.FundingResult, error) {
 	draft, err := s.planFunding(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -83,12 +83,12 @@ func (s *LedgerService) RecordFunding(
 				" invoices funded, "+strconv.Itoa(draft.plan.RejectCount)+" rejected",
 		)
 	}
-	return &factoringports.FundingResult{Submission: updated, Entries: entries}, nil
+	return &factoringledgerports.FundingResult{Submission: updated, Entries: entries}, nil
 }
 
 func (s *LedgerService) planFunding(
 	ctx context.Context,
-	req *factoringports.RecordFundingRequest,
+	req *factoringledgerports.RecordFundingRequest,
 	actor *permissionports.RequestActor,
 ) (*fundingDraft, error) {
 	if err := requireRequest(req != nil); err != nil {
@@ -112,7 +112,7 @@ func (s *LedgerService) planFunding(
 	}
 
 	after := cloneSubmission(scope.before)
-	plan := &factoringports.FundingPlan{Before: scope.before, After: after}
+	plan := &factoringledgerports.FundingPlan{Before: scope.before, After: after}
 	funded, err := applyFundingOutcomes(after, req, plan)
 	if err != nil {
 		return nil, err
@@ -152,7 +152,7 @@ func (s *LedgerService) planFunding(
 	if err = s.checkInvoices(ctx, req.TenantInfo, draft.inputs); err != nil {
 		return nil, err
 	}
-	plan.Movements = make([]*factoringports.PlannedMovement, 0, len(draft.inputs))
+	plan.Movements = make([]*factoringledgerports.PlannedMovement, 0, len(draft.inputs))
 	for _, in := range draft.inputs {
 		planned, planErr := s.planMovement(ctx, in)
 		if planErr != nil {
@@ -163,7 +163,9 @@ func (s *LedgerService) planFunding(
 	return draft, nil
 }
 
-func (s *LedgerService) validateFundingRequest(req *factoringports.RecordFundingRequest) error {
+func (s *LedgerService) validateFundingRequest(
+	req *factoringledgerports.RecordFundingRequest,
+) error {
 	if err := s.requireMovementDate("fundedOn", req.FundedOn); err != nil {
 		return err
 	}
@@ -205,8 +207,8 @@ func (s *LedgerService) validateFundingRequest(req *factoringports.RecordFunding
 
 func applyFundingOutcomes(
 	after *factoring.Submission,
-	req *factoringports.RecordFundingRequest,
-	plan *factoringports.FundingPlan,
+	req *factoringledgerports.RecordFundingRequest,
+	plan *factoringledgerports.FundingPlan,
 ) ([]*factoring.SubmissionItem, error) {
 	funded := make([]*factoring.SubmissionItem, 0, len(req.Items))
 	multiErr := errortypes.NewMultiError()

@@ -1,9 +1,10 @@
-package factoringports
+package factoringremittanceports
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -176,14 +177,14 @@ type DiscardRemittanceRequest struct {
 }
 
 type PlannedRemittanceLine struct {
-	LineID        pulid.ID                     `json:"lineId"`
-	RowNumber     int                          `json:"rowNumber"`
-	Kind          factoring.RemittanceLineKind `json:"kind"`
-	InvoiceNumber string                       `json:"invoiceNumber"`
-	SubmissionID  pulid.ID                     `json:"submissionId"`
-	ItemID        pulid.ID                     `json:"itemId"`
-	CashMinor     int64                        `json:"cashMinor"`
-	Movement      *PlannedMovement             `json:"movement"`
+	LineID        pulid.ID                              `json:"lineId"`
+	RowNumber     int                                   `json:"rowNumber"`
+	Kind          factoring.RemittanceLineKind          `json:"kind"`
+	InvoiceNumber string                                `json:"invoiceNumber"`
+	SubmissionID  pulid.ID                              `json:"submissionId"`
+	ItemID        pulid.ID                              `json:"itemId"`
+	CashMinor     int64                                 `json:"cashMinor"`
+	Movement      *factoringledgerports.PlannedMovement `json:"movement"`
 }
 
 type RemittancePlan struct {

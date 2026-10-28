@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -19,16 +19,16 @@ import (
 )
 
 type fakeRemittances struct {
-	factoringports.RemittanceService
+	factoringremittanceports.RemittanceService
 
 	guard     agenttoolstest.WriteGuard
 	ledger    *fakeLedger
 	rem       *factoring.Remittance
 	line      *factoring.RemittanceLine
-	updated   *factoringports.UpdateRemittanceLineRequest
-	applied   *factoringports.RemittanceVersionRequest
-	rematched *factoringports.RemittanceVersionRequest
-	discarded *factoringports.DiscardRemittanceRequest
+	updated   *factoringremittanceports.UpdateRemittanceLineRequest
+	applied   *factoringremittanceports.RemittanceVersionRequest
+	rematched *factoringremittanceports.RemittanceVersionRequest
+	discarded *factoringremittanceports.DiscardRemittanceRequest
 }
 
 func newFakeRemittances() *fakeRemittances {
@@ -69,7 +69,7 @@ func (f *fakeRemittances) check(id pulid.ID, version int64) error {
 
 func (f *fakeRemittances) Get(
 	_ context.Context,
-	req factoringports.GetRemittanceRequest,
+	req factoringremittanceports.GetRemittanceRequest,
 ) (*factoring.Remittance, error) {
 	if req.ID != f.rem.ID {
 		return nil, errortypes.NewNotFoundError("Factoring remittance not found")
@@ -79,9 +79,9 @@ func (f *fakeRemittances) Get(
 
 func (f *fakeRemittances) PlanUpdateLine(
 	_ context.Context,
-	req *factoringports.UpdateRemittanceLineRequest,
+	req *factoringremittanceports.UpdateRemittanceLineRequest,
 	_ *permissionports.RequestActor,
-) (*factoringports.RemittanceLinePlan, error) {
+) (*factoringremittanceports.RemittanceLinePlan, error) {
 	if err := f.check(req.RemittanceID, req.Version); err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (f *fakeRemittances) PlanUpdateLine(
 	after.SubmissionItemID = req.ItemID
 	afterRem := *f.rem
 	afterRem.MatchedCount, afterRem.ExceptionCount = 2, 0
-	return &factoringports.RemittanceLinePlan{
+	return &factoringremittanceports.RemittanceLinePlan{
 		Before:     f.rem,
 		After:      &afterRem,
 		LineBefore: f.line,
@@ -101,7 +101,7 @@ func (f *fakeRemittances) PlanUpdateLine(
 
 func (f *fakeRemittances) UpdateLine(
 	_ context.Context,
-	req *factoringports.UpdateRemittanceLineRequest,
+	req *factoringremittanceports.UpdateRemittanceLineRequest,
 	_ *permissionports.RequestActor,
 ) (*factoring.Remittance, error) {
 	if err := f.guard.Write(); err != nil {
@@ -113,7 +113,7 @@ func (f *fakeRemittances) UpdateLine(
 
 func (f *fakeRemittances) Rematch(
 	_ context.Context,
-	req *factoringports.RemittanceVersionRequest,
+	req *factoringremittanceports.RemittanceVersionRequest,
 	_ *permissionports.RequestActor,
 ) (*factoring.Remittance, error) {
 	if err := f.guard.Write(); err != nil {
@@ -125,15 +125,15 @@ func (f *fakeRemittances) Rematch(
 
 func (f *fakeRemittances) PlanApply(
 	_ context.Context,
-	req *factoringports.RemittanceVersionRequest,
+	req *factoringremittanceports.RemittanceVersionRequest,
 	_ *permissionports.RequestActor,
-) (*factoringports.RemittancePlan, error) {
+) (*factoringremittanceports.RemittancePlan, error) {
 	if err := f.check(req.ID, req.Version); err != nil {
 		return nil, err
 	}
-	return &factoringports.RemittancePlan{
+	return &factoringremittanceports.RemittancePlan{
 		Remittance: f.rem,
-		Lines: []*factoringports.PlannedRemittanceLine{{
+		Lines: []*factoringremittanceports.PlannedRemittanceLine{{
 			LineID:        f.line.ID,
 			RowNumber:     f.line.RowNumber,
 			Kind:          factoring.RemittanceLineFunding,
@@ -149,33 +149,33 @@ func (f *fakeRemittances) PlanApply(
 
 func (f *fakeRemittances) Apply(
 	_ context.Context,
-	req *factoringports.RemittanceVersionRequest,
+	req *factoringremittanceports.RemittanceVersionRequest,
 	_ *permissionports.RequestActor,
-) (*factoringports.ApplyRemittanceResult, error) {
+) (*factoringremittanceports.ApplyRemittanceResult, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.applied = req
-	return &factoringports.ApplyRemittanceResult{Remittance: f.rem}, nil
+	return &factoringremittanceports.ApplyRemittanceResult{Remittance: f.rem}, nil
 }
 
 func (f *fakeRemittances) PlanDiscard(
 	_ context.Context,
-	req *factoringports.DiscardRemittanceRequest,
+	req *factoringremittanceports.DiscardRemittanceRequest,
 	_ *permissionports.RequestActor,
-) (*factoringports.RemittanceDiscardPlan, error) {
+) (*factoringremittanceports.RemittanceDiscardPlan, error) {
 	if err := f.check(req.ID, req.Version); err != nil {
 		return nil, err
 	}
 	after := *f.rem
 	after.Status = factoring.RemittanceStatusDiscarded
 	after.DiscardReason = req.Reason
-	return &factoringports.RemittanceDiscardPlan{Before: f.rem, After: &after}, nil
+	return &factoringremittanceports.RemittanceDiscardPlan{Before: f.rem, After: &after}, nil
 }
 
 func (f *fakeRemittances) Discard(
 	_ context.Context,
-	req *factoringports.DiscardRemittanceRequest,
+	req *factoringremittanceports.DiscardRemittanceRequest,
 	_ *permissionports.RequestActor,
 ) (*factoring.Remittance, error) {
 	if err := f.guard.Write(); err != nil {
@@ -218,7 +218,7 @@ func TestResolveFactoringRemittanceLine_PreviewsTheMatch(t *testing.T) {
 		paramRemittanceID: remittances.rem.ID.String(),
 		paramVersion:      float64(remittances.rem.Version),
 		paramLineID:       remittances.line.ID.String(),
-		paramLineAction:   string(factoringports.RemittanceLineActionMatch),
+		paramLineAction:   string(factoringremittanceports.RemittanceLineActionMatch),
 		paramItemID:       itemID.String(),
 	})
 
@@ -241,7 +241,7 @@ func TestResolveFactoringRemittanceLine_PreviewsTheMatch(t *testing.T) {
 		paramRemittanceID: remittances.rem.ID.String(),
 		paramVersion:      float64(remittances.rem.Version),
 		paramLineID:       remittances.line.ID.String(),
-		paramLineAction:   string(factoringports.RemittanceLineActionMatch),
+		paramLineAction:   string(factoringremittanceports.RemittanceLineActionMatch),
 	})
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), missingItem))
 

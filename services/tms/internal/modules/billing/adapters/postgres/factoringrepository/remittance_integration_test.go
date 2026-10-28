@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -67,12 +67,15 @@ func TestRemittanceStagesMatchesAndKeepsItsLines(t *testing.T) {
 		At:          now,
 	}, []*factoring.RemittanceLine{exact, byAmount}))
 
-	candidates, err := remittances.ListCandidates(e.ctx, &factoringports.ListRemittanceCandidatesRequest{
-		TenantInfo:         e.tenantInfo,
-		FactoringCompanyID: factor.ID,
-		Invoices:           []string{exact.NormalizedInvoice, "UNREADABLE"},
-		Amounts:            []int64{*byAmount.AdvanceMinor},
-	})
+	candidates, err := remittances.ListCandidates(
+		e.ctx,
+		&factoringremittanceports.ListRemittanceCandidatesRequest{
+			TenantInfo:         e.tenantInfo,
+			FactoringCompanyID: factor.ID,
+			Invoices:           []string{exact.NormalizedInvoice, "UNREADABLE"},
+			Amounts:            []int64{*byAmount.AdvanceMinor},
+		},
+	)
 	require.NoError(t, err)
 	ids := make([]pulid.ID, 0, len(candidates))
 	for _, candidate := range candidates {
@@ -84,11 +87,14 @@ func TestRemittanceStagesMatchesAndKeepsItsLines(t *testing.T) {
 	assert.ElementsMatch(t, []pulid.ID{firstItem.ID, secondItem.ID}, ids,
 		"one found by its normalized invoice number, the other by its expected advance")
 
-	none, err := remittances.ListCandidates(e.ctx, &factoringports.ListRemittanceCandidatesRequest{
-		TenantInfo:         e.tenantInfo,
-		FactoringCompanyID: pulid.MustNew("fac_"),
-		Invoices:           []string{exact.NormalizedInvoice},
-	})
+	none, err := remittances.ListCandidates(
+		e.ctx,
+		&factoringremittanceports.ListRemittanceCandidatesRequest{
+			TenantInfo:         e.tenantInfo,
+			FactoringCompanyID: pulid.MustNew("fac_"),
+			Invoices:           []string{exact.NormalizedInvoice},
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, none, "another factor's items are never candidates")
 
@@ -98,7 +104,7 @@ func TestRemittanceStagesMatchesAndKeepsItsLines(t *testing.T) {
 	created, err = remittances.Update(e.ctx, created)
 	require.NoError(t, err)
 
-	loaded, err := remittances.Get(e.ctx, factoringports.GetRemittanceRequest{
+	loaded, err := remittances.Get(e.ctx, factoringremittanceports.GetRemittanceRequest{
 		TenantInfo:   e.tenantInfo,
 		ID:           created.ID,
 		IncludeLines: true,
@@ -116,36 +122,52 @@ func TestRemittanceStagesMatchesAndKeepsItsLines(t *testing.T) {
 	assert.Equal(t, factoring.MatchReasonAmountOnly, loaded.Lines[1].Suggestions[0].Reason)
 
 	pending := loaded.Lines[1]
-	pending.MatchTo(secondItem, factoring.RemittanceMatchedByPerson, 40, factoring.MatchReasonChosenByPerson)
+	pending.MatchTo(
+		secondItem,
+		factoring.RemittanceMatchedByPerson,
+		40,
+		factoring.MatchReasonChosenByPerson,
+	)
 	require.NoError(t, remittances.UpdateLines(e.ctx, []*factoring.RemittanceLine{pending}))
 
-	page, err := remittances.ListLineConnection(e.ctx, &factoringports.ListRemittanceLineConnectionRequest{
-		TenantInfo:    e.tenantInfo,
-		Cursor:        pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
-		RemittanceID:  created.ID,
-		MatchStatuses: []factoring.RemittanceMatchStatus{factoring.RemittanceLineMatched},
-	})
+	page, err := remittances.ListLineConnection(
+		e.ctx,
+		&factoringremittanceports.ListRemittanceLineConnectionRequest{
+			TenantInfo:    e.tenantInfo,
+			Cursor:        pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
+			RemittanceID:  created.ID,
+			MatchStatuses: []factoring.RemittanceMatchStatus{factoring.RemittanceLineMatched},
+		},
+	)
 	require.NoError(t, err)
 	require.NotNil(t, page.TotalCount)
 	assert.Equal(t, 2, *page.TotalCount, "the person's match is stored")
 
-	open, err := remittances.ListOpen(e.ctx, &factoringports.ListOpenRemittancesRequest{TenantInfo: e.tenantInfo})
+	open, err := remittances.ListOpen(
+		e.ctx,
+		&factoringremittanceports.ListOpenRemittancesRequest{TenantInfo: e.tenantInfo},
+	)
 	require.NoError(t, err)
 	require.Len(t, open, 1)
 	assert.Equal(t, created.ID, open[0].RemittanceID)
 	assert.Equal(t, 1, open[0].ExceptionCount)
 
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	_, err = remittances.Get(dbscope.WithTenant(e.ctx, other.DBTenant()), factoringports.GetRemittanceRequest{TenantInfo: other, ID: created.ID})
+	_, err = remittances.Get(
+		dbscope.WithTenant(e.ctx, other.DBTenant()),
+		factoringremittanceports.GetRemittanceRequest{TenantInfo: other, ID: created.ID},
+	)
 	require.Error(t, err)
 }
 
 func TestRemittanceProfileIsOnePerFactor(t *testing.T) {
 	e := setupFactoringEnv(t)
-	remittances := NewRemittanceRepository(Params{DB: postgres.NewTestConnection(e.db), Logger: zap.NewNop()})
+	remittances := NewRemittanceRepository(
+		Params{DB: postgres.NewTestConnection(e.db), Logger: zap.NewNop()},
+	)
 	factor := e.createFactor(t, "FRMP")
 
-	_, err := remittances.GetProfile(e.ctx, factoringports.GetRemittanceProfileRequest{
+	_, err := remittances.GetProfile(e.ctx, factoringremittanceports.GetRemittanceProfileRequest{
 		TenantInfo:         e.tenantInfo,
 		FactoringCompanyID: factor.ID,
 	})
@@ -163,10 +185,13 @@ func TestRemittanceProfileIsOnePerFactor(t *testing.T) {
 	save(map[string]int{"invoiceNumber": 0, "cash": 3}, "sig-1")
 	save(map[string]int{"invoiceNumber": 1, "advance": 4}, "sig-2")
 
-	profile, err := remittances.GetProfile(e.ctx, factoringports.GetRemittanceProfileRequest{
-		TenantInfo:         e.tenantInfo,
-		FactoringCompanyID: factor.ID,
-	})
+	profile, err := remittances.GetProfile(
+		e.ctx,
+		factoringremittanceports.GetRemittanceProfileRequest{
+			TenantInfo:         e.tenantInfo,
+			FactoringCompanyID: factor.ID,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]int{"invoiceNumber": 1, "advance": 4}, profile.Mapping)
 	assert.Equal(t, "sig-2", profile.HeaderSignature)
@@ -178,19 +203,25 @@ func TestFactorIsFoundBySenderAddress(t *testing.T) {
 	exact := e.createFactor(t, "FMAIL")
 	e.createFactor(t, "FOTHR")
 
-	found, err := e.factors.FindByEmail(e.ctx, factoringcompanyports.FindFactoringCompaniesByEmailRequest{
-		TenantInfo: e.tenantInfo,
-		Address:    " REMIT@FMAIL.example.com ",
-	})
+	found, err := e.factors.FindByEmail(
+		e.ctx,
+		factoringcompanyports.FindFactoringCompaniesByEmailRequest{
+			TenantInfo: e.tenantInfo,
+			Address:    " REMIT@FMAIL.example.com ",
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, found.Exact, 1)
 	assert.Equal(t, exact.ID, found.Exact[0].ID)
 	assert.Empty(t, found.ByDomain)
 
-	byDomain, err := e.factors.FindByEmail(e.ctx, factoringcompanyports.FindFactoringCompaniesByEmailRequest{
-		TenantInfo: e.tenantInfo,
-		Address:    "noreply@fmail.example.com",
-	})
+	byDomain, err := e.factors.FindByEmail(
+		e.ctx,
+		factoringcompanyports.FindFactoringCompaniesByEmailRequest{
+			TenantInfo: e.tenantInfo,
+			Address:    "noreply@fmail.example.com",
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, byDomain.Exact)
 	require.Len(t, byDomain.ByDomain, 1, "a factor's other addresses share its domain")
@@ -198,10 +229,13 @@ func TestFactorIsFoundBySenderAddress(t *testing.T) {
 
 	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	strangerCtx := dbscope.WithTenant(e.ctx, stranger.DBTenant())
-	none, err := e.factors.FindByEmail(strangerCtx, factoringcompanyports.FindFactoringCompaniesByEmailRequest{
-		TenantInfo: stranger,
-		Address:    "remit@fmail.example.com",
-	})
+	none, err := e.factors.FindByEmail(
+		strangerCtx,
+		factoringcompanyports.FindFactoringCompaniesByEmailRequest{
+			TenantInfo: stranger,
+			Address:    "remit@fmail.example.com",
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, none.Exact, "another tenant's factor is never found")
 }

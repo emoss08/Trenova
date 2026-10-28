@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,15 +25,15 @@ func newTransportHarness() (*TransportService, *fakeTransports, *fakeSender, pag
 		Repo:       repo,
 		Factors:    &fakeFactors{factor: &factoringcompany.FactoringCompany{ID: factorID, Name: "Lone Star"}},
 		Cipher:     fakeCipher{},
-		Transports: []factoringports.FactoringTransport{sftp},
+		Transports: []factoringsubmissionports.FactoringTransport{sftp},
 		Logger:     zap.NewNop(),
 	}).(*TransportService)
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	return svc, repo, sftp, tenant, factorID
 }
 
-func sftpInput(secret *string) factoringports.TransportInput {
-	return factoringports.TransportInput{
+func sftpInput(secret *string) factoringsubmissionports.TransportInput {
+	return factoringsubmissionports.TransportInput{
 		Method:           factoring.TransportMethodSftp,
 		SftpHost:         "sftp.lonestar.test",
 		SftpUsername:     "carrier",
@@ -50,19 +50,22 @@ func TestSaveTransportSealsTheSecretToTheRow(t *testing.T) {
 	actor := &permissionports.RequestActor{UserID: pulid.MustNew("usr_")}
 	secret := "hunter2"
 
-	saved, err := svc.Save(t.Context(), &factoringports.SaveTransportRequest{
+	saved, err := svc.Save(t.Context(), &factoringsubmissionports.SaveTransportRequest{
 		TenantInfo:         tenant,
 		FactoringCompanyID: factorID,
 		Input:              sftpInput(&secret),
 	}, actor)
 	require.NoError(t, err)
 	assert.Equal(t, 22, saved.SftpPort)
-	assert.True(t, strings.HasPrefix(repo.entity.SftpSecret, "sealed:"+saved.ID.String()+":sftp_secret:"))
+	assert.True(
+		t,
+		strings.HasPrefix(repo.entity.SftpSecret, "sealed:"+saved.ID.String()+":sftp_secret:"),
+	)
 	assert.NotContains(t, redacted(saved).SftpSecret, "hunter2")
 
 	keep := sftpInput(nil)
 	version := saved.Version
-	kept, err := svc.Save(t.Context(), &factoringports.SaveTransportRequest{
+	kept, err := svc.Save(t.Context(), &factoringsubmissionports.SaveTransportRequest{
 		TenantInfo:         tenant,
 		FactoringCompanyID: factorID,
 		Version:            &version,
@@ -72,7 +75,7 @@ func TestSaveTransportSealsTheSecretToTheRow(t *testing.T) {
 	assert.Equal(t, repo.entity.SftpSecret, kept.SftpSecret)
 
 	stale := version
-	_, err = svc.Save(t.Context(), &factoringports.SaveTransportRequest{
+	_, err = svc.Save(t.Context(), &factoringsubmissionports.SaveTransportRequest{
 		TenantInfo:         tenant,
 		FactoringCompanyID: factorID,
 		Version:            &stale,
@@ -84,7 +87,7 @@ func TestSaveTransportSealsTheSecretToTheRow(t *testing.T) {
 	switched := sftpInput(nil)
 	switched.SftpAuthMethod = factoring.SftpAuthPrivateKey
 	current := kept.Version
-	_, err = svc.Save(t.Context(), &factoringports.SaveTransportRequest{
+	_, err = svc.Save(t.Context(), &factoringsubmissionports.SaveTransportRequest{
 		TenantInfo:         tenant,
 		FactoringCompanyID: factorID,
 		Version:            &current,
@@ -99,14 +102,14 @@ func TestTestTransportRecordsTheOutcome(t *testing.T) {
 	svc, repo, sftp, tenant, factorID := newTransportHarness()
 	actor := &permissionports.RequestActor{UserID: pulid.MustNew("usr_")}
 	secret := "hunter2"
-	_, err := svc.Save(t.Context(), &factoringports.SaveTransportRequest{
+	_, err := svc.Save(t.Context(), &factoringsubmissionports.SaveTransportRequest{
 		TenantInfo:         tenant,
 		FactoringCompanyID: factorID,
 		Input:              sftpInput(&secret),
 	}, actor)
 	require.NoError(t, err)
 
-	result, err := svc.Test(t.Context(), &factoringports.TestTransportRequest{
+	result, err := svc.Test(t.Context(), &factoringsubmissionports.TestTransportRequest{
 		TenantInfo:         tenant,
 		FactoringCompanyID: factorID,
 	}, actor)
@@ -116,7 +119,7 @@ func TestTestTransportRecordsTheOutcome(t *testing.T) {
 	assert.Empty(t, repo.tested.LastTestError)
 
 	sftp.testErr = errors.New("permission denied")
-	result, err = svc.Test(t.Context(), &factoringports.TestTransportRequest{
+	result, err = svc.Test(t.Context(), &factoringsubmissionports.TestTransportRequest{
 		TenantInfo:         tenant,
 		FactoringCompanyID: factorID,
 	}, actor)

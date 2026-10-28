@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,7 +22,7 @@ import (
 )
 
 type ledgerHarness struct {
-	svc         factoringports.LedgerService
+	svc         factoringledgerports.LedgerService
 	submissions *fakeSubmissions
 	entries     *fakeReserveEntries
 	agreements  *fakeAgreements
@@ -156,19 +158,22 @@ func newLedgerHarness(t *testing.T, treatment factoring.AccountingTreatment) *le
 
 func (h *ledgerHarness) version(t *testing.T) int64 {
 	t.Helper()
-	current, err := h.submissions.GetByID(t.Context(), factoringports.GetSubmissionRequest{ID: h.sub.ID})
+	current, err := h.submissions.GetByID(
+		t.Context(),
+		factoringsubmissionports.GetSubmissionRequest{ID: h.sub.ID},
+	)
 	require.NoError(t, err)
 	return current.Version
 }
 
 func (h *ledgerHarness) fundFirst(t *testing.T) {
 	t.Helper()
-	_, err := h.svc.RecordFunding(t.Context(), &factoringports.RecordFundingRequest{
+	_, err := h.svc.RecordFunding(t.Context(), &factoringledgerports.RecordFundingRequest{
 		TenantInfo:   h.tenantInfo,
 		SubmissionID: h.sub.ID,
 		Version:      h.version(t),
 		FundedOn:     testNow,
-		Items: []factoringports.FundingItemInput{
+		Items: []factoringledgerports.FundingItemInput{
 			{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded},
 			{ItemID: h.second.ID, Outcome: factoring.FundingOutcomeRejected, Reason: "Over limit"},
 		},
@@ -176,9 +181,13 @@ func (h *ledgerHarness) fundFirst(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func (h *ledgerHarness) itemRequest(t *testing.T, cash *int64, reason string) *factoringports.ReserveMovementRequest {
+func (h *ledgerHarness) itemRequest(
+	t *testing.T,
+	cash *int64,
+	reason string,
+) *factoringledgerports.ReserveMovementRequest {
 	t.Helper()
-	return &factoringports.ReserveMovementRequest{
+	return &factoringledgerports.ReserveMovementRequest{
 		TenantInfo:   h.tenantInfo,
 		SubmissionID: h.sub.ID,
 		ItemID:       h.first.ID,
@@ -198,14 +207,23 @@ func TestRecordFundingSale(t *testing.T) {
 	h := newLedgerHarness(t, factoring.AccountingTreatmentSale)
 	advance, fee := int64(88_000), int64(2_500)
 
-	req := &factoringports.RecordFundingRequest{
+	req := &factoringledgerports.RecordFundingRequest{
 		TenantInfo:   h.tenantInfo,
 		SubmissionID: h.sub.ID,
 		Version:      h.version(t),
 		FundedOn:     testNow,
-		Items: []factoringports.FundingItemInput{
-			{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded, AdvanceMinor: &advance, FeeMinor: &fee},
-			{ItemID: h.second.ID, Outcome: factoring.FundingOutcomeRejected, Reason: "Debtor over limit"},
+		Items: []factoringledgerports.FundingItemInput{
+			{
+				ItemID:       h.first.ID,
+				Outcome:      factoring.FundingOutcomeFunded,
+				AdvanceMinor: &advance,
+				FeeMinor:     &fee,
+			},
+			{
+				ItemID:  h.second.ID,
+				Outcome: factoring.FundingOutcomeRejected,
+				Reason:  "Debtor over limit",
+			},
 		},
 	}
 	plan, err := h.svc.PlanFunding(t.Context(), req, h.actor)
@@ -215,10 +233,14 @@ func TestRecordFundingSale(t *testing.T) {
 	assert.Equal(t, 1, plan.RejectCount)
 	assert.Equal(t, int64(9_500), plan.ReserveMinor)
 	assert.Equal(t, factoring.SubmissionStatusFunded, plan.After.Status)
-	assert.Equal(t, []factoringports.PlannedLine{
+	assert.Equal(t, []factoringledgerports.PlannedLine{
 		{Role: factoring.AccountRoleCash, AccountID: h.accounts.Cash, Debit: 88_000},
 		{Role: factoring.AccountRoleFeeExpense, AccountID: h.accounts.FeeExpense, Debit: 2_500},
-		{Role: factoring.AccountRoleDueFromFactor, AccountID: h.accounts.DueFromFactor, Debit: 9_500},
+		{
+			Role:      factoring.AccountRoleDueFromFactor,
+			AccountID: h.accounts.DueFromFactor,
+			Debit:     9_500,
+		},
 		{Role: factoring.AccountRoleAR, AccountID: h.accounts.AR, Credit: 100_000},
 	}, plan.Movements[0].Lines)
 	assert.Equal(t, "Period 1", plan.Movements[0].FiscalPeriodName)
@@ -247,7 +269,10 @@ func TestRecordFundingSale(t *testing.T) {
 	assert.Equal(t, int64(-100_000), h.projection.balance(h.first.InvoiceID))
 	assert.Zero(t, h.invoice(h.second.InvoiceID).AppliedAmountMinor)
 
-	stored, err := h.submissions.GetByID(t.Context(), factoringports.GetSubmissionRequest{ID: h.sub.ID})
+	stored, err := h.submissions.GetByID(
+		t.Context(),
+		factoringsubmissionports.GetSubmissionRequest{ID: h.sub.ID},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, factoring.SubmissionItemStatusFunded, stored.Item(h.first.ID).Status)
 	assert.Equal(t, factoring.SubmissionItemStatusRejected, stored.Item(h.second.ID).Status)
@@ -255,7 +280,11 @@ func TestRecordFundingSale(t *testing.T) {
 
 	assert.Equal(t, []string{string(agent.EventFactoringSubmissionFunded)}, h.events.kinds())
 	require.Len(t, h.requester.targets, 1)
-	assert.ElementsMatch(t, []pulid.ID{h.first.InvoiceID, h.second.InvoiceID}, h.requester.targets[0].InvoiceIDs)
+	assert.ElementsMatch(
+		t,
+		[]pulid.ID{h.first.InvoiceID, h.second.InvoiceID},
+		h.requester.targets[0].InvoiceIDs,
+	)
 
 	_, err = h.svc.RecordFunding(t.Context(), req, h.actor)
 	require.Error(t, err)
@@ -286,9 +315,11 @@ func TestRecordFundingRefusals(t *testing.T) {
 		h.agreements.agreement.DueFromFactorAccountID = pulid.Nil
 		h.agreements.agreement.FeeExpenseAccountID = pulid.Nil
 
-		_, err := h.svc.PlanFunding(t.Context(), &factoringports.RecordFundingRequest{
+		_, err := h.svc.PlanFunding(t.Context(), &factoringledgerports.RecordFundingRequest{
 			TenantInfo: h.tenantInfo, SubmissionID: h.sub.ID, Version: h.version(t), FundedOn: testNow,
-			Items: []factoringports.FundingItemInput{{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded}},
+			Items: []factoringledgerports.FundingItemInput{
+				{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded},
+			},
 		}, h.actor)
 		var multiErr *errortypes.MultiError
 		require.ErrorAs(t, err, &multiErr)
@@ -302,9 +333,11 @@ func TestRecordFundingRefusals(t *testing.T) {
 			PrincipalType: permissionports.PrincipalTypeAPIKey,
 			PrincipalID:   pulid.MustNew("ak_"),
 		}
-		_, err := h.svc.PlanFunding(t.Context(), &factoringports.RecordFundingRequest{
+		_, err := h.svc.PlanFunding(t.Context(), &factoringledgerports.RecordFundingRequest{
 			TenantInfo: h.tenantInfo, SubmissionID: h.sub.ID, Version: h.version(t), FundedOn: testNow,
-			Items: []factoringports.FundingItemInput{{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded}},
+			Items: []factoringledgerports.FundingItemInput{
+				{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded},
+			},
 		}, apiKey)
 		require.Error(t, err)
 		assert.True(t, errortypes.IsAuthorizationError(err))
@@ -313,25 +346,27 @@ func TestRecordFundingRefusals(t *testing.T) {
 	t.Run("future date, duplicate and unknown items", func(t *testing.T) {
 		t.Parallel()
 		h := newLedgerHarness(t, factoring.AccountingTreatmentSale)
-		_, err := h.svc.PlanFunding(t.Context(), &factoringports.RecordFundingRequest{
+		_, err := h.svc.PlanFunding(t.Context(), &factoringledgerports.RecordFundingRequest{
 			TenantInfo: h.tenantInfo, SubmissionID: h.sub.ID, Version: h.version(t),
 			FundedOn: testNow + 3*timeutils.SecondsPerDay,
-			Items:    []factoringports.FundingItemInput{{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded}},
+			Items: []factoringledgerports.FundingItemInput{
+				{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded},
+			},
 		}, h.actor)
 		require.Error(t, err)
 
-		_, err = h.svc.PlanFunding(t.Context(), &factoringports.RecordFundingRequest{
+		_, err = h.svc.PlanFunding(t.Context(), &factoringledgerports.RecordFundingRequest{
 			TenantInfo: h.tenantInfo, SubmissionID: h.sub.ID, Version: h.version(t), FundedOn: testNow,
-			Items: []factoringports.FundingItemInput{
+			Items: []factoringledgerports.FundingItemInput{
 				{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded},
 				{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeRejected, Reason: "x"},
 			},
 		}, h.actor)
 		require.Error(t, err)
 
-		_, err = h.svc.PlanFunding(t.Context(), &factoringports.RecordFundingRequest{
+		_, err = h.svc.PlanFunding(t.Context(), &factoringledgerports.RecordFundingRequest{
 			TenantInfo: h.tenantInfo, SubmissionID: h.sub.ID, Version: h.version(t), FundedOn: testNow,
-			Items: []factoringports.FundingItemInput{
+			Items: []factoringledgerports.FundingItemInput{
 				{ItemID: pulid.MustNew("facsit_"), Outcome: factoring.FundingOutcomeFunded},
 			},
 		}, h.actor)
@@ -343,9 +378,11 @@ func TestRecordFundingRefusals(t *testing.T) {
 		t.Parallel()
 		h := newLedgerHarness(t, factoring.AccountingTreatmentSale)
 		h.invoice(h.first.InvoiceID).ApplyPaymentMinor(10_000)
-		_, err := h.svc.PlanFunding(t.Context(), &factoringports.RecordFundingRequest{
+		_, err := h.svc.PlanFunding(t.Context(), &factoringledgerports.RecordFundingRequest{
 			TenantInfo: h.tenantInfo, SubmissionID: h.sub.ID, Version: h.version(t), FundedOn: testNow,
-			Items: []factoringports.FundingItemInput{{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded}},
+			Items: []factoringledgerports.FundingItemInput{
+				{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded},
+			},
 		}, h.actor)
 		require.Error(t, err)
 		assert.True(t, errortypes.IsBusinessError(err))
@@ -355,9 +392,11 @@ func TestRecordFundingRefusals(t *testing.T) {
 		t.Parallel()
 		h := newLedgerHarness(t, factoring.AccountingTreatmentSale)
 		h.fundFirst(t)
-		_, err := h.svc.PlanFunding(t.Context(), &factoringports.RecordFundingRequest{
+		_, err := h.svc.PlanFunding(t.Context(), &factoringledgerports.RecordFundingRequest{
 			TenantInfo: h.tenantInfo, SubmissionID: h.sub.ID, Version: h.version(t), FundedOn: testNow,
-			Items: []factoringports.FundingItemInput{{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded}},
+			Items: []factoringledgerports.FundingItemInput{
+				{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded},
+			},
 		}, h.actor)
 		require.Error(t, err)
 		assert.True(t, errortypes.IsBusinessError(err))
@@ -380,9 +419,11 @@ func TestFundingInAClosedPeriodMovesToTheNextOpenOne(t *testing.T) {
 		EndDate:      closed.EndDate + 30*timeutils.SecondsPerDay,
 	})
 
-	plan, err := h.svc.PlanFunding(t.Context(), &factoringports.RecordFundingRequest{
+	plan, err := h.svc.PlanFunding(t.Context(), &factoringledgerports.RecordFundingRequest{
 		TenantInfo: h.tenantInfo, SubmissionID: h.sub.ID, Version: h.version(t), FundedOn: testNow,
-		Items: []factoringports.FundingItemInput{{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded}},
+		Items: []factoringledgerports.FundingItemInput{
+			{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded},
+		},
 	}, h.actor)
 	require.NoError(t, err)
 	movement := plan.Movements[0]
@@ -399,16 +440,28 @@ func TestReleaseReserveSale(t *testing.T) {
 	short := int64(6_000)
 	plan, err := h.svc.PlanRelease(t.Context(), h.itemRequest(t, &short, ""), h.actor)
 	require.NoError(t, err)
-	assert.Equal(t, []factoringports.PlannedLine{
+	assert.Equal(t, []factoringledgerports.PlannedLine{
 		{Role: factoring.AccountRoleCash, AccountID: h.accounts.Cash, Debit: 6_000},
 		{Role: factoring.AccountRoleFeeExpense, AccountID: h.accounts.FeeExpense, Debit: 1_000},
-		{Role: factoring.AccountRoleDueFromFactor, AccountID: h.accounts.DueFromFactor, Credit: 7_000},
+		{
+			Role:      factoring.AccountRoleDueFromFactor,
+			AccountID: h.accounts.DueFromFactor,
+			Credit:    7_000,
+		},
 	}, plan.Movement.Lines)
 
-	result, err := h.svc.ReleaseReserve(t.Context(), h.itemRequest(t, &short, "Remittance 42"), h.actor)
+	result, err := h.svc.ReleaseReserve(
+		t.Context(),
+		h.itemRequest(t, &short, "Remittance 42"),
+		h.actor,
+	)
 	require.NoError(t, err)
 	require.NotNil(t, result.Entry)
-	assert.Equal(t, factoring.SubmissionItemStatusSettled, result.Submission.Item(h.first.ID).Status)
+	assert.Equal(
+		t,
+		factoring.SubmissionItemStatusSettled,
+		result.Submission.Item(h.first.ID).Status,
+	)
 	assert.Zero(t, h.journals.balance(h.accounts.DueFromFactor), "the reserve is cleared")
 	assert.Equal(t, int64(96_000), h.journals.balance(h.accounts.Cash))
 	assert.Equal(t, int64(4_000), h.journals.balance(h.accounts.FeeExpense))
@@ -445,7 +498,11 @@ func TestChargebackAndReversalSale(t *testing.T) {
 	_, err := h.svc.RecordChargeback(t.Context(), h.itemRequest(t, nil, ""), h.actor)
 	require.Error(t, err, "a chargeback needs a reason")
 
-	result, err := h.svc.RecordChargeback(t.Context(), h.itemRequest(t, nil, "Customer never paid"), h.actor)
+	result, err := h.svc.RecordChargeback(
+		t.Context(),
+		h.itemRequest(t, nil, "Customer never paid"),
+		h.actor,
+	)
 	require.NoError(t, err)
 	item := result.Submission.Item(h.first.ID)
 	assert.Equal(t, factoring.SubmissionItemStatusChargedBack, item.Status)
@@ -460,19 +517,35 @@ func TestChargebackAndReversalSale(t *testing.T) {
 	assert.Equal(t, "factoring-charged-back:"+h.first.ID.String()+":1", chargebackKey)
 
 	cash := int64(1)
-	_, err = h.svc.ReverseChargeback(t.Context(), h.itemRequest(t, &cash, "Factor withdrew it"), h.actor)
+	_, err = h.svc.ReverseChargeback(
+		t.Context(),
+		h.itemRequest(t, &cash, "Factor withdrew it"),
+		h.actor,
+	)
 	require.Error(t, err, "a reversal takes no amount")
 	_, err = h.svc.ReverseChargeback(t.Context(), h.itemRequest(t, nil, ""), h.actor)
 	require.Error(t, err, "a reversal needs a reason")
 
-	reversal, err := h.svc.PlanChargebackReversal(t.Context(), h.itemRequest(t, nil, "Factor withdrew it"), h.actor)
+	reversal, err := h.svc.PlanChargebackReversal(
+		t.Context(),
+		h.itemRequest(t, nil, "Factor withdrew it"),
+		h.actor,
+	)
 	require.NoError(t, err)
 	require.NotNil(t, reversal.Reverses)
 	assert.Equal(t, factoring.ReserveEntryChargeback, reversal.Reverses.Kind)
 
-	reversed, err := h.svc.ReverseChargeback(t.Context(), h.itemRequest(t, nil, "Factor withdrew it"), h.actor)
+	reversed, err := h.svc.ReverseChargeback(
+		t.Context(),
+		h.itemRequest(t, nil, "Factor withdrew it"),
+		h.actor,
+	)
 	require.NoError(t, err)
-	assert.Equal(t, factoring.SubmissionItemStatusFunded, reversed.Submission.Item(h.first.ID).Status)
+	assert.Equal(
+		t,
+		factoring.SubmissionItemStatusFunded,
+		reversed.Submission.Item(h.first.ID).Status,
+	)
 	assert.Equal(t, reversal.Reverses.ID, reversed.Entry.ReversesEntryID)
 	assert.Equal(t, int64(-100_000), h.journals.balance(h.accounts.AR))
 	assert.Equal(t, int64(7_000), h.journals.balance(h.accounts.DueFromFactor))
@@ -493,7 +566,11 @@ func TestChargebackSecuredBorrowingLeavesAROpen(t *testing.T) {
 	h := newLedgerHarness(t, factoring.AccountingTreatmentSecuredBorrowing)
 	h.fundFirst(t)
 
-	_, err := h.svc.RecordChargeback(t.Context(), h.itemRequest(t, nil, "Customer never paid"), h.actor)
+	_, err := h.svc.RecordChargeback(
+		t.Context(),
+		h.itemRequest(t, nil, "Customer never paid"),
+		h.actor,
+	)
 	require.NoError(t, err)
 
 	assert.Zero(t, h.journals.balance(h.accounts.Liability))
@@ -528,10 +605,15 @@ func TestReleaseOfAnEmptyReserveBooksNothing(t *testing.T) {
 	t.Parallel()
 	h := newLedgerHarness(t, factoring.AccountingTreatmentSale)
 	advance, fee := int64(97_000), int64(3_000)
-	_, err := h.svc.RecordFunding(t.Context(), &factoringports.RecordFundingRequest{
+	_, err := h.svc.RecordFunding(t.Context(), &factoringledgerports.RecordFundingRequest{
 		TenantInfo: h.tenantInfo, SubmissionID: h.sub.ID, Version: h.version(t), FundedOn: testNow,
-		Items: []factoringports.FundingItemInput{
-			{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded, AdvanceMinor: &advance, FeeMinor: &fee},
+		Items: []factoringledgerports.FundingItemInput{
+			{
+				ItemID:       h.first.ID,
+				Outcome:      factoring.FundingOutcomeFunded,
+				AdvanceMinor: &advance,
+				FeeMinor:     &fee,
+			},
 		},
 	}, h.actor)
 	require.NoError(t, err)
@@ -540,14 +622,18 @@ func TestReleaseOfAnEmptyReserveBooksNothing(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, result.Entry)
 	assert.Len(t, h.journals.postings, 1)
-	assert.Equal(t, factoring.SubmissionItemStatusSettled, result.Submission.Item(h.first.ID).Status)
+	assert.Equal(
+		t,
+		factoring.SubmissionItemStatusSettled,
+		result.Submission.Item(h.first.ID).Status,
+	)
 }
 
 func TestSweepWarnsOnceAboutChargebacksComingDue(t *testing.T) {
 	t.Parallel()
 	h := newLedgerHarness(t, factoring.AccountingTreatmentSale)
 	h.fundFirst(t)
-	attention := &fakeAttention{due: []*factoringports.ChargebackDue{
+	attention := &fakeAttention{due: []*factoringwatchtowerports.ChargebackDue{
 		{
 			ItemID:        h.first.ID,
 			SubmissionID:  h.sub.ID,
@@ -588,9 +674,9 @@ func TestSweepWarnsOnceAboutChargebacksComingDue(t *testing.T) {
 func TestLedgerRowsCarryTheirOwnIDs(t *testing.T) {
 	t.Parallel()
 	h := newLedgerHarness(t, factoring.AccountingTreatmentSale)
-	_, err := h.svc.RecordFunding(t.Context(), &factoringports.RecordFundingRequest{
+	_, err := h.svc.RecordFunding(t.Context(), &factoringledgerports.RecordFundingRequest{
 		TenantInfo: h.tenantInfo, SubmissionID: h.sub.ID, Version: h.version(t), FundedOn: testNow,
-		Items: []factoringports.FundingItemInput{
+		Items: []factoringledgerports.FundingItemInput{
 			{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded},
 			{ItemID: h.second.ID, Outcome: factoring.FundingOutcomeFunded},
 		},

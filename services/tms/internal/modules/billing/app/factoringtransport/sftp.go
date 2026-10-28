@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/httpsafe"
@@ -33,9 +33,9 @@ type Sftp struct {
 	resolve Resolver
 }
 
-var _ factoringports.FactoringTransport = (*Sftp)(nil)
+var _ factoringsubmissionports.FactoringTransport = (*Sftp)(nil)
 
-func NewSftp() factoringports.FactoringTransport {
+func NewSftp() factoringsubmissionports.FactoringTransport {
 	return NewSftpWith(dialSftp, resolveHost)
 }
 
@@ -49,8 +49,8 @@ func (t *Sftp) Method() factoring.TransportMethod {
 
 func (t *Sftp) Send(
 	ctx context.Context,
-	req *factoringports.TransportSendRequest,
-) (*factoringports.TransportSendResult, error) {
+	req *factoringsubmissionports.TransportSendRequest,
+) (*factoringsubmissionports.TransportSendResult, error) {
 	if err := checkSend(req); err != nil {
 		return nil, err
 	}
@@ -74,10 +74,10 @@ func (t *Sftp) Send(
 		}
 	}
 
-	return &factoringports.TransportSendResult{Reference: directory, Parts: 1}, nil
+	return &factoringsubmissionports.TransportSendResult{Reference: directory, Parts: 1}, nil
 }
 
-func (t *Sftp) Test(ctx context.Context, req *factoringports.TransportTestRequest) error {
+func (t *Sftp) Test(ctx context.Context, req *factoringsubmissionports.TransportTestRequest) error {
 	if req == nil || req.Transport == nil {
 		return errortypes.NewBusinessError("There is no delivery setting to test")
 	}

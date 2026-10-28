@@ -19,7 +19,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -52,9 +55,9 @@ type factoringRepos struct {
 	agreements  factoringports.AgreementRepository
 	noas        factoringports.NoaRepository
 	states      factoringports.InvoiceStateRepository
-	submissions factoringports.SubmissionRepository
-	remittances factoringports.RemittanceRepository
-	entries     factoringports.ReserveEntryRepository
+	submissions factoringsubmissionports.SubmissionRepository
+	remittances factoringremittanceports.RemittanceRepository
+	entries     factoringledgerports.ReserveEntryRepository
 	invoices    invoiceports.InvoiceRepository
 }
 

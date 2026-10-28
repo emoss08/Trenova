@@ -13,7 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/testutil"
@@ -80,13 +81,16 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 	require.NoError(t, err)
 	first := e.postInvoice(t, 100000, &factor.ID)
 	second := e.postInvoice(t, 60000, &factor.ID)
-	sub, err := e.submissions.Create(e.ctx, e.submission(agreement, "FS-RA1", "key-ra1", first, second))
+	sub, err := e.submissions.Create(
+		e.ctx,
+		e.submission(agreement, "FS-RA1", "key-ra1", first, second),
+	)
 	require.NoError(t, err)
 	require.NoError(t, sub.MarkSent(now-86400, "", 1))
 	sub, err = e.submissions.Update(e.ctx, sub)
 	require.NoError(t, err)
 
-	rem, err := svc.Create(e.ctx, &factoringports.CreateRemittanceRequest{
+	rem, err := svc.Create(e.ctx, &factoringremittanceports.CreateRemittanceRequest{
 		TenantInfo:         e.tenantInfo,
 		FactoringCompanyID: factor.ID,
 	}, actor)
@@ -107,7 +111,7 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 	}
 	files.contents[docID] = []byte(csv)
 
-	staged, err := svc.Stage(e.ctx, &factoringports.StageRemittanceRequest{
+	staged, err := svc.Stage(e.ctx, &factoringremittanceports.StageRemittanceRequest{
 		TenantInfo: e.tenantInfo,
 		ID:         rem.ID,
 		Version:    rem.Version,
@@ -117,7 +121,7 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 	require.Equal(t, factoring.RemittanceStatusParsed, staged.Status, staged.Error)
 	assert.Equal(t, 2, staged.MatchedCount)
 
-	plan, err := svc.PlanApply(e.ctx, &factoringports.RemittanceVersionRequest{
+	plan, err := svc.PlanApply(e.ctx, &factoringremittanceports.RemittanceVersionRequest{
 		TenantInfo: e.tenantInfo,
 		ID:         rem.ID,
 		Version:    staged.Version,
@@ -130,7 +134,7 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 		assert.NotEmpty(t, line.Movement.Lines)
 	}
 
-	applied, err := svc.Apply(e.ctx, &factoringports.RemittanceVersionRequest{
+	applied, err := svc.Apply(e.ctx, &factoringremittanceports.RemittanceVersionRequest{
 		TenantInfo: e.tenantInfo,
 		ID:         rem.ID,
 		Version:    staged.Version,
@@ -140,7 +144,7 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 	require.Len(t, applied.Entries, 2)
 	assert.Zero(t, e.unbalancedEntries(t))
 
-	loaded, err := remittances.Get(e.ctx, factoringports.GetRemittanceRequest{
+	loaded, err := remittances.Get(e.ctx, factoringremittanceports.GetRemittanceRequest{
 		TenantInfo:   e.tenantInfo,
 		ID:           rem.ID,
 		IncludeLines: true,
@@ -151,17 +155,20 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 		assert.NotEmpty(t, line.ReserveEntryID)
 		assert.Equal(t, sub.ID, line.MatchedSubmission)
 		assert.NotEmpty(t, line.MatchedInvoice)
-		entries, listErr := e.entries.ListForItem(e.ctx, factoringports.ListReserveEntriesForItemRequest{
-			TenantInfo:       e.tenantInfo,
-			SubmissionItemID: line.SubmissionItemID,
-		})
+		entries, listErr := e.entries.ListForItem(
+			e.ctx,
+			factoringledgerports.ListReserveEntriesForItemRequest{
+				TenantInfo:       e.tenantInfo,
+				SubmissionItemID: line.SubmissionItemID,
+			},
+		)
 		require.NoError(t, listErr)
 		require.Len(t, entries, 1)
 		assert.Equal(t, line.ID, entries[0].RemittanceLineID,
 			"each entry records the remittance line it came from")
 	}
 
-	_, err = svc.Apply(e.ctx, &factoringports.RemittanceVersionRequest{
+	_, err = svc.Apply(e.ctx, &factoringremittanceports.RemittanceVersionRequest{
 		TenantInfo: e.tenantInfo,
 		ID:         rem.ID,
 		Version:    applied.Remittance.Version,

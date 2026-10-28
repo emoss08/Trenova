@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -46,8 +48,8 @@ type ReadinessParams struct {
 	States        factoringports.InvoiceStateRepository
 	Agreements    factoringports.AgreementRepository
 	Noas          factoringports.NoaRepository
-	Submissions   factoringports.SubmissionRepository
-	Attention     factoringports.WatchtowerReader `optional:"true"`
+	Submissions   factoringsubmissionports.SubmissionRepository
+	Attention     factoringwatchtowerports.WatchtowerReader `optional:"true"`
 	Invoices      invoiceports.InvoiceRepository
 	Documents     documentports.DocumentRepository
 	Shipments     shipmentserviceports.ShipmentService `optional:"true"`
@@ -66,8 +68,8 @@ type ReadinessService struct {
 	states        factoringports.InvoiceStateRepository
 	agreements    factoringports.AgreementRepository
 	noas          factoringports.NoaRepository
-	submissions   factoringports.SubmissionRepository
-	attention     factoringports.WatchtowerReader
+	submissions   factoringsubmissionports.SubmissionRepository
+	attention     factoringwatchtowerports.WatchtowerReader
 	invoices      invoiceports.InvoiceRepository
 	documents     documentports.DocumentRepository
 	shipments     shipmentserviceports.ShipmentService
@@ -319,7 +321,7 @@ func (s *ReadinessService) gather(
 
 	in.OpenDispute = inv.DisputeStatus == invoice.DisputeStatusDisputed
 
-	items, err := s.submissions.ListLiveItems(ctx, &factoringports.ListLiveItemsRequest{
+	items, err := s.submissions.ListLiveItems(ctx, &factoringsubmissionports.ListLiveItemsRequest{
 		TenantInfo:         tenantInfo,
 		InvoiceIDs:         []pulid.ID{inv.ID},
 		IncludeChargedBack: true,
@@ -360,8 +362,8 @@ func (s *ReadinessService) liveItem(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	invoiceID pulid.ID,
-) (*factoringports.LiveItem, error) {
-	live, err := s.submissions.ListLiveItems(ctx, &factoringports.ListLiveItemsRequest{
+) (*factoringsubmissionports.LiveItem, error) {
+	live, err := s.submissions.ListLiveItems(ctx, &factoringsubmissionports.ListLiveItemsRequest{
 		TenantInfo: tenantInfo,
 		InvoiceIDs: []pulid.ID{invoiceID},
 	})
@@ -721,12 +723,15 @@ func (s *ReadinessService) warnChargebacksDue(
 		return 0, nil
 	}
 	now := s.now()
-	due, err := s.attention.ListChargebacksDue(ctx, &factoringports.ListChargebacksDueRequest{
-		TenantInfo:   tenantInfo,
-		Before:       now + int64(factoring.ChargebackWarningDays)*timeutils.SecondsPerDay,
-		UnwarnedOnly: true,
-		Limit:        maxAnnouncements,
-	})
+	due, err := s.attention.ListChargebacksDue(
+		ctx,
+		&factoringwatchtowerports.ListChargebacksDueRequest{
+			TenantInfo:   tenantInfo,
+			Before:       now + int64(factoring.ChargebackWarningDays)*timeutils.SecondsPerDay,
+			UnwarnedOnly: true,
+			Limit:        maxAnnouncements,
+		},
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -734,7 +739,7 @@ func (s *ReadinessService) warnChargebacksDue(
 	for _, row := range due {
 		claimed, claimErr := s.submissions.ClaimChargebackWarning(
 			ctx,
-			factoringports.ClaimChargebackWarningRequest{
+			factoringsubmissionports.ClaimChargebackWarningRequest{
 				TenantInfo: tenantInfo,
 				ItemID:     row.ItemID,
 				At:         now,

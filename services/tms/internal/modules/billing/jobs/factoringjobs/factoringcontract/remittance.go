@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -49,11 +49,11 @@ type RemittanceStageStarter struct {
 	l         *zap.Logger
 }
 
-var _ factoringports.RemittanceStageStarter = (*RemittanceStageStarter)(nil)
+var _ factoringremittanceports.RemittanceStageStarter = (*RemittanceStageStarter)(nil)
 
 func NewRemittanceStageStarter(
 	p RemittanceStageStarterParams,
-) factoringports.RemittanceStageStarter {
+) factoringremittanceports.RemittanceStageStarter {
 	return &RemittanceStageStarter{
 		workflows: p.Workflows,
 		l:         p.Logger.Named("factoring-remittance-stage-starter"),

@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -34,8 +36,8 @@ type LedgerParams struct {
 	fx.In
 
 	DB          kernelports.Transactor
-	Submissions factoringports.SubmissionRepository
-	Entries     factoringports.ReserveEntryRepository
+	Submissions factoringsubmissionports.SubmissionRepository
+	Entries     factoringledgerports.ReserveEntryRepository
 	Agreements  factoringports.AgreementRepository
 	Invoices    invoiceports.InvoiceRepository
 	Ledger      customerledgerports.CustomerLedgerProjectionRepository
@@ -52,8 +54,8 @@ type LedgerParams struct {
 
 type LedgerService struct {
 	db          kernelports.Transactor
-	submissions factoringports.SubmissionRepository
-	entries     factoringports.ReserveEntryRepository
+	submissions factoringsubmissionports.SubmissionRepository
+	entries     factoringledgerports.ReserveEntryRepository
 	agreements  factoringports.AgreementRepository
 	invoices    invoiceports.InvoiceRepository
 	ledger      customerledgerports.CustomerLedgerProjectionRepository
@@ -65,10 +67,10 @@ type LedgerService struct {
 	now         func() int64
 }
 
-var _ factoringports.LedgerService = (*LedgerService)(nil)
+var _ factoringledgerports.LedgerService = (*LedgerService)(nil)
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
-func NewLedgerService(p LedgerParams) factoringports.LedgerService {
+func NewLedgerService(p LedgerParams) factoringledgerports.LedgerService {
 	l := p.Logger.Named("service.factoring-ledger")
 	return &LedgerService{
 		db:          p.DB,
@@ -92,7 +94,7 @@ func NewLedgerService(p LedgerParams) factoringports.LedgerService {
 
 func (s *LedgerService) ListEntries(
 	ctx context.Context,
-	req *factoringports.ListReserveEntryConnectionRequest,
+	req *factoringledgerports.ListReserveEntryConnectionRequest,
 ) (*pagination.CursorListResult[*factoring.ReserveEntry], error) {
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
@@ -102,8 +104,8 @@ func (s *LedgerService) ListEntries(
 
 func (s *LedgerService) GetBalance(
 	ctx context.Context,
-	req factoringports.GetReserveBalanceRequest,
-) (*factoringports.ReserveBalance, error) {
+	req factoringledgerports.GetReserveBalanceRequest,
+) (*factoringledgerports.ReserveBalance, error) {
 	if req.FactoringCompanyID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"factoringCompanyId",
@@ -134,7 +136,7 @@ func (s *LedgerService) loadScope(
 			"Choose the schedule",
 		)
 	}
-	sub, err := s.submissions.GetByID(ctx, factoringports.GetSubmissionRequest{
+	sub, err := s.submissions.GetByID(ctx, factoringsubmissionports.GetSubmissionRequest{
 		ID:           submissionID,
 		TenantInfo:   tenantInfo,
 		IncludeItems: true,

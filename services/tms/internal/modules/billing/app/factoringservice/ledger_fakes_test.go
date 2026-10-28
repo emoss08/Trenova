@@ -12,7 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -33,7 +35,7 @@ func (fakeTx) Transact(
 }
 
 type fakeReserveEntries struct {
-	factoringports.ReserveEntryRepository
+	factoringledgerports.ReserveEntryRepository
 	mu      sync.Mutex
 	entries []*factoring.ReserveEntry
 }
@@ -57,7 +59,7 @@ func (f *fakeReserveEntries) Create(
 
 func (f *fakeReserveEntries) ListForItem(
 	_ context.Context,
-	req factoringports.ListReserveEntriesForItemRequest,
+	req factoringledgerports.ListReserveEntriesForItemRequest,
 ) ([]*factoring.ReserveEntry, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -196,7 +198,7 @@ func (f *fakeJournals) balance(accountID pulid.ID) int64 {
 
 func (f *fakeSubmissions) ClaimChargebackWarning(
 	_ context.Context,
-	req factoringports.ClaimChargebackWarningRequest,
+	req factoringsubmissionports.ClaimChargebackWarningRequest,
 ) (bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -218,15 +220,15 @@ func (f *fakeSubmissions) ClaimChargebackWarning(
 }
 
 type fakeAttention struct {
-	factoringports.WatchtowerReader
-	due []*factoringports.ChargebackDue
-	req *factoringports.ListChargebacksDueRequest
+	factoringwatchtowerports.WatchtowerReader
+	due []*factoringwatchtowerports.ChargebackDue
+	req *factoringwatchtowerports.ListChargebacksDueRequest
 }
 
 func (f *fakeAttention) ListChargebacksDue(
 	_ context.Context,
-	req *factoringports.ListChargebacksDueRequest,
-) ([]*factoringports.ChargebackDue, error) {
+	req *factoringwatchtowerports.ListChargebacksDueRequest,
+) ([]*factoringwatchtowerports.ChargebackDue, error) {
 	f.req = req
 	return f.due, nil
 }

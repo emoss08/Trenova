@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/money"
@@ -38,15 +40,15 @@ const (
 
 type FactoringSource struct {
 	states      factoringports.InvoiceStateRepository
-	reader      factoringports.WatchtowerReader
-	remittances factoringports.RemittanceRepository
+	reader      factoringwatchtowerports.WatchtowerReader
+	remittances factoringremittanceports.RemittanceRepository
 	now         func() int64
 }
 
 func NewFactoringSource(
 	states factoringports.InvoiceStateRepository,
-	reader factoringports.WatchtowerReader,
-	remittances factoringports.RemittanceRepository,
+	reader factoringwatchtowerports.WatchtowerReader,
+	remittances factoringremittanceports.RemittanceRepository,
 ) watchtowerports.WatchtowerSource {
 	return &FactoringSource{
 		states:      states,
@@ -60,13 +62,13 @@ func (s *FactoringSource) Kind() watchtower.SourceKind { return watchtower.Sourc
 
 type factoringSnapshot struct {
 	ready       []*factoring.InvoiceState
-	labels      map[pulid.ID]*factoringports.InvoiceLabel
-	missing     []*factoringports.CustomerMissingNoa
-	expiring    []*factoringports.ExpiringNoa
-	failed      []*factoringports.FailedSubmission
-	unfunded    []*factoringports.UnfundedSubmission
-	chargebacks []*factoringports.ChargebackDue
-	remittances []*factoringports.OpenRemittance
+	labels      map[pulid.ID]*factoringwatchtowerports.InvoiceLabel
+	missing     []*factoringwatchtowerports.CustomerMissingNoa
+	expiring    []*factoringwatchtowerports.ExpiringNoa
+	failed      []*factoringwatchtowerports.FailedSubmission
+	unfunded    []*factoringwatchtowerports.UnfundedSubmission
+	chargebacks []*factoringwatchtowerports.ChargebackDue
+	remittances []*factoringremittanceports.OpenRemittance
 }
 
 func (s *FactoringSource) Snapshot(
@@ -103,7 +105,7 @@ func (s *FactoringSource) read(
 			invoiceIDs = append(invoiceIDs, state.InvoiceID)
 		}
 	}
-	if snap.labels, err = s.reader.ListInvoiceLabels(ctx, &factoringports.ListInvoiceLabelsRequest{
+	if snap.labels, err = s.reader.ListInvoiceLabels(ctx, &factoringwatchtowerports.ListInvoiceLabelsRequest{
 		TenantInfo: tenant,
 		InvoiceIDs: invoiceIDs,
 	}); err != nil {
@@ -111,7 +113,7 @@ func (s *FactoringSource) read(
 	}
 	if snap.missing, err = s.reader.ListCustomersMissingNoa(
 		ctx,
-		&factoringports.ListCustomersMissingNoaRequest{
+		&factoringwatchtowerports.ListCustomersMissingNoaRequest{
 			TenantInfo: tenant,
 			At:         now,
 			Limit:      snapshotLimit,
@@ -121,7 +123,7 @@ func (s *FactoringSource) read(
 	}
 	if snap.expiring, err = s.reader.ListNoasExpiringSoon(
 		ctx,
-		&factoringports.ListNoasExpiringSoonRequest{
+		&factoringwatchtowerports.ListNoasExpiringSoonRequest{
 			TenantInfo: tenant,
 			At:         now,
 			Before:     now + FactoringNoaWarningSeconds(),
@@ -132,13 +134,13 @@ func (s *FactoringSource) read(
 	}
 	if snap.failed, err = s.reader.ListFailedSubmissions(
 		ctx,
-		&factoringports.ListFailedSubmissionsRequest{TenantInfo: tenant, Limit: snapshotLimit},
+		&factoringwatchtowerports.ListFailedSubmissionsRequest{TenantInfo: tenant, Limit: snapshotLimit},
 	); err != nil {
 		return nil, err
 	}
 	if snap.unfunded, err = s.reader.ListUnfundedSubmissions(
 		ctx,
-		&factoringports.ListUnfundedSubmissionsRequest{
+		&factoringwatchtowerports.ListUnfundedSubmissionsRequest{
 			TenantInfo: tenant,
 			At:         now,
 			Limit:      snapshotLimit,
@@ -148,7 +150,7 @@ func (s *FactoringSource) read(
 	}
 	if snap.chargebacks, err = s.reader.ListChargebacksDue(
 		ctx,
-		&factoringports.ListChargebacksDueRequest{
+		&factoringwatchtowerports.ListChargebacksDueRequest{
 			TenantInfo: tenant,
 			Before:     now + FactoringChargebackWarningSeconds(),
 			Limit:      snapshotLimit,
@@ -158,7 +160,7 @@ func (s *FactoringSource) read(
 	}
 	if snap.remittances, err = s.remittances.ListOpen(
 		ctx,
-		&factoringports.ListOpenRemittancesRequest{TenantInfo: tenant, Limit: snapshotLimit},
+		&factoringremittanceports.ListOpenRemittancesRequest{TenantInfo: tenant, Limit: snapshotLimit},
 	); err != nil {
 		return nil, err
 	}
@@ -225,7 +227,7 @@ func FactoringChargebackDueSourceID(itemID pulid.ID) string {
 
 func DescribeFactoringUnfunded(
 	tenant pagination.TenantInfo,
-	row *factoringports.UnfundedSubmission,
+	row *factoringwatchtowerports.UnfundedSubmission,
 	now int64,
 ) (watchtowerports.WatchtowerItemInput, bool) {
 	if row == nil || row.SubmissionID.IsNil() || row.PendingCount <= 0 || row.DueAt >= now {
@@ -259,7 +261,7 @@ func DescribeFactoringUnfunded(
 
 func DescribeFactoringChargebackDue(
 	tenant pagination.TenantInfo,
-	row *factoringports.ChargebackDue,
+	row *factoringwatchtowerports.ChargebackDue,
 	now int64,
 ) (watchtowerports.WatchtowerItemInput, bool) {
 	if row == nil || row.ItemID.IsNil() || row.InvoiceID.IsNil() ||
@@ -318,7 +320,7 @@ func FactoringSendFailedSourceID(submissionID pulid.ID) string {
 
 func DescribeFactoringSendFailed(
 	tenant pagination.TenantInfo,
-	row *factoringports.FailedSubmission,
+	row *factoringwatchtowerports.FailedSubmission,
 ) (watchtowerports.WatchtowerItemInput, bool) {
 	if row == nil || row.SubmissionID.IsNil() || row.FailedAt <= 0 {
 		return watchtowerports.WatchtowerItemInput{}, false
@@ -357,7 +359,7 @@ func DescribeFactoringSendFailed(
 func DescribeFactoringReadyUnsubmitted(
 	tenant pagination.TenantInfo,
 	state *factoring.InvoiceState,
-	label *factoringports.InvoiceLabel,
+	label *factoringwatchtowerports.InvoiceLabel,
 	now int64,
 ) (watchtowerports.WatchtowerItemInput, bool) {
 	if state == nil || state.InvoiceID.IsNil() || state.ReadySince == nil ||
@@ -409,7 +411,7 @@ func DescribeFactoringReadyUnsubmitted(
 
 func DescribeFactoringMissingNoa(
 	tenant pagination.TenantInfo,
-	row *factoringports.CustomerMissingNoa,
+	row *factoringwatchtowerports.CustomerMissingNoa,
 	now int64,
 ) (watchtowerports.WatchtowerItemInput, bool) {
 	if row == nil || row.CustomerID.IsNil() || row.FactoringCompanyID.IsNil() {
@@ -479,7 +481,7 @@ func DescribeFactoringMissingNoa(
 
 func DescribeFactoringNoaExpiring(
 	tenant pagination.TenantInfo,
-	row *factoringports.ExpiringNoa,
+	row *factoringwatchtowerports.ExpiringNoa,
 	now int64,
 ) (watchtowerports.WatchtowerItemInput, bool) {
 	if row == nil || row.NoaID.IsNil() || row.ExpiresAt <= now ||
@@ -555,7 +557,7 @@ func FactoringRemittanceSourceID(remittanceID pulid.ID) string {
 
 func DescribeFactoringRemittanceExceptions(
 	tenant pagination.TenantInfo,
-	row *factoringports.OpenRemittance,
+	row *factoringremittanceports.OpenRemittance,
 ) (watchtowerports.WatchtowerItemInput, bool) {
 	if row == nil || row.RemittanceID.IsNil() {
 		return watchtowerports.WatchtowerItemInput{}, false

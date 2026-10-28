@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -98,8 +98,8 @@ func (s *LedgerService) writeRequest(in *movementInput) *journalposting.WriteReq
 func (s *LedgerService) planMovement(
 	ctx context.Context,
 	in *movementInput,
-) (*factoringports.PlannedMovement, error) {
-	planned := &factoringports.PlannedMovement{
+) (*factoringledgerports.PlannedMovement, error) {
+	planned := &factoringledgerports.PlannedMovement{
 		ItemID:         in.item.ID,
 		InvoiceID:      in.item.InvoiceID,
 		InvoiceNumber:  in.item.InvoiceNumber,
@@ -115,9 +115,9 @@ func (s *LedgerService) planMovement(
 	if err != nil {
 		return nil, err
 	}
-	planned.Lines = make([]factoringports.PlannedLine, 0, len(in.movement.Lines))
+	planned.Lines = make([]factoringledgerports.PlannedLine, 0, len(in.movement.Lines))
 	for _, line := range in.movement.Lines {
-		planned.Lines = append(planned.Lines, factoringports.PlannedLine{
+		planned.Lines = append(planned.Lines, factoringledgerports.PlannedLine{
 			Role:      line.Role,
 			AccountID: in.scope.accounts.For(line.Role),
 			Debit:     line.Debit,

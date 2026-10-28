@@ -183,6 +183,21 @@ packages:
   github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/factoringports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports:
     config:
       all: true

@@ -57,7 +57,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
@@ -185,11 +185,11 @@ func factoringOptions() fx.Option {
 			factoringcontract.NewRemittanceStageStarter,
 			fx.Annotate(
 				factoringtransport.NewEmail,
-				fx.ResultTags(factoringports.TransportGroup),
+				fx.ResultTags(factoringsubmissionports.TransportGroup),
 			),
 			fx.Annotate(
 				factoringtransport.NewSftp,
-				fx.ResultTags(factoringports.TransportGroup),
+				fx.ResultTags(factoringsubmissionports.TransportGroup),
 			),
 			fx.Annotate(
 				factoringservice.NewDocumentObserver,

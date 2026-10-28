@@ -3,6 +3,7 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
@@ -58,7 +59,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
@@ -11807,7 +11807,7 @@ type UpdateFactoringRemittanceLineInput struct {
 	// The remittance's version.
 	Version int                                 `json:"version"`
 	LineID  string                              `json:"lineId"`
-	Action  factoringports.RemittanceLineAction `json:"action"`
+	Action  factoringremittanceports.RemittanceLineAction `json:"action"`
 	// The schedule item, for Match.
 	ItemID *string `json:"itemId,omitempty"`
 	// What the line records, for SetKind.

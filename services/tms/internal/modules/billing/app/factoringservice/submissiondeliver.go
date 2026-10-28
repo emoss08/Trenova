@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -22,9 +22,9 @@ const scheduleSendKeyInfix = "-send-"
 
 func (s *SubmissionService) Deliver(
 	ctx context.Context,
-	req *factoringports.DeliverSubmissionRequest,
-) (*factoringports.DeliverSubmissionResult, error) {
-	sub, err := s.repo.GetByID(ctx, factoringports.GetSubmissionRequest{
+	req *factoringsubmissionports.DeliverSubmissionRequest,
+) (*factoringsubmissionports.DeliverSubmissionResult, error) {
+	sub, err := s.repo.GetByID(ctx, factoringsubmissionports.GetSubmissionRequest{
 		ID:           req.SubmissionID,
 		TenantInfo:   req.TenantInfo,
 		IncludeItems: true,
@@ -33,10 +33,13 @@ func (s *SubmissionService) Deliver(
 		return nil, err
 	}
 	if sub.Status != factoring.SubmissionStatusSending || sub.SendAttemptGroup != req.Group {
-		return &factoringports.DeliverSubmissionResult{Status: sub.Status, Skipped: true}, nil
+		return &factoringsubmissionports.DeliverSubmissionResult{
+			Status:  sub.Status,
+			Skipped: true,
+		}, nil
 	}
 
-	transport, err := s.transports.Get(ctx, factoringports.GetTransportRequest{
+	transport, err := s.transports.Get(ctx, factoringsubmissionports.GetTransportRequest{
 		TenantInfo:         req.TenantInfo,
 		FactoringCompanyID: sub.FactoringCompanyID,
 	})
@@ -63,7 +66,7 @@ func (s *SubmissionService) Deliver(
 		return nil, err
 	}
 
-	result, err := sender.Send(ctx, &factoringports.TransportSendRequest{
+	result, err := sender.Send(ctx, &factoringsubmissionports.TransportSendRequest{
 		TenantInfo:     req.TenantInfo,
 		Submission:     sub,
 		Transport:      transport,
@@ -100,7 +103,7 @@ func (s *SubmissionService) Deliver(
 		"Schedule "+updated.Number+" of "+strconv.Itoa(updated.InvoiceCount)+
 			" invoices was sent to "+updated.TransportTarget)
 
-	return &factoringports.DeliverSubmissionResult{
+	return &factoringsubmissionports.DeliverSubmissionResult{
 		Status:    updated.Status,
 		Reference: result.Reference,
 		Parts:     result.Parts,
@@ -109,9 +112,9 @@ func (s *SubmissionService) Deliver(
 
 func (s *SubmissionService) MarkFailed(
 	ctx context.Context,
-	req *factoringports.FailSubmissionRequest,
+	req *factoringsubmissionports.FailSubmissionRequest,
 ) error {
-	sub, err := s.repo.GetByID(ctx, factoringports.GetSubmissionRequest{
+	sub, err := s.repo.GetByID(ctx, factoringsubmissionports.GetSubmissionRequest{
 		ID:         req.SubmissionID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -150,7 +153,7 @@ func (s *SubmissionService) deliveryFiles(
 	tenantInfo pagination.TenantInfo,
 	sub *factoring.Submission,
 	transport *factoring.Transport,
-) ([]factoringports.TransportFile, error) {
+) ([]factoringsubmissionports.TransportFile, error) {
 	if sub.SchedulePDFDocumentID.IsNil() || sub.ScheduleCSVDocumentID.IsNil() {
 		return nil, errortypes.NewBusinessError(
 			"Schedule {0} has not been built yet",
@@ -158,13 +161,13 @@ func (s *SubmissionService) deliveryFiles(
 		)
 	}
 	attach := transport.Method == factoring.TransportMethodSftp || transport.AttachPackets
-	files := make([]factoringports.TransportFile, 0, len(sub.Items)+2)
-	read := func(kind factoringports.TransportFileKind, id pulid.ID, name, contentType string, invoiceID pulid.ID) error {
+	files := make([]factoringsubmissionports.TransportFile, 0, len(sub.Items)+2)
+	read := func(kind factoringsubmissionports.TransportFileKind, id pulid.ID, name, contentType string, invoiceID pulid.ID) error {
 		content, err := s.readDocument(ctx, tenantInfo, id)
 		if err != nil {
 			return err
 		}
-		files = append(files, factoringports.TransportFile{
+		files = append(files, factoringsubmissionports.TransportFile{
 			Kind:        kind,
 			Name:        name,
 			ContentType: contentType,
@@ -173,11 +176,11 @@ func (s *SubmissionService) deliveryFiles(
 		})
 		return nil
 	}
-	if err := read(factoringports.TransportFileSchedulePDF, sub.SchedulePDFDocumentID,
+	if err := read(factoringsubmissionports.TransportFileSchedulePDF, sub.SchedulePDFDocumentID,
 		scheduleFileName(sub, ".pdf"), pdfContentType, pulid.Nil); err != nil {
 		return nil, err
 	}
-	if err := read(factoringports.TransportFileScheduleCSV, sub.ScheduleCSVDocumentID,
+	if err := read(factoringsubmissionports.TransportFileScheduleCSV, sub.ScheduleCSVDocumentID,
 		scheduleFileName(sub, ".csv"), csvContentType, pulid.Nil); err != nil {
 		return nil, err
 	}
@@ -194,7 +197,7 @@ func (s *SubmissionService) deliveryFiles(
 				item.InvoiceNumber,
 			)
 		}
-		if err := read(factoringports.TransportFilePacket, item.PacketDocumentID,
+		if err := read(factoringsubmissionports.TransportFilePacket, item.PacketDocumentID,
 			packetFileName(item), pdfContentType, item.InvoiceID); err != nil {
 			return nil, err
 		}
@@ -206,7 +209,7 @@ func (s *SubmissionService) messageRenderer(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	sub *factoring.Submission,
-) (factoringports.MessageRenderer, error) {
+) (factoringsubmissionports.MessageRenderer, error) {
 	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
@@ -223,7 +226,7 @@ func (s *SubmissionService) messageRenderer(
 	format := func(minor int64) string {
 		return money.FormatDecimal(sub.CurrencyCode, money.DecimalFromMinor(minor))
 	}
-	return func(part, parts int, attachments []string) (*factoringports.TransportMessage, error) {
+	return func(part, parts int, attachments []string) (*factoringsubmissionports.TransportMessage, error) {
 		rendered, renderErr := s.templates.RenderMessage(
 			ctx,
 			&documenttemplateports.RenderMessageRequest{
@@ -248,7 +251,7 @@ func (s *SubmissionService) messageRenderer(
 		if renderErr != nil {
 			return nil, renderErr
 		}
-		return &factoringports.TransportMessage{
+		return &factoringsubmissionports.TransportMessage{
 			Subject: rendered.Subject,
 			HTML:    rendered.HTML,
 			Text:    rendered.Text,

@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -1678,10 +1678,14 @@ func (f *FactoringSubmissionByIDLoaderFactory) Attach(
 func FactoringLiveItemByInvoiceID(
 	ctx context.Context,
 	key string,
-) (*factoringports.LiveItem, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *factoringports.LiveItem] {
-		return s.factoringLiveItemByInvoiceID
-	})
+) (*factoringsubmissionports.LiveItem, error) {
+	return load(
+		ctx,
+		key,
+		func(s *set) *dataloadgen.Loader[string, *factoringsubmissionports.LiveItem] {
+			return s.factoringLiveItemByInvoiceID
+		},
+	)
 }
 
 func (f *FactoringLiveItemByInvoiceIDLoaderFactory) Attach(

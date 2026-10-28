@@ -15,7 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
@@ -450,7 +453,7 @@ func (r *QueryResolver) FactoringSummary(ctx context.Context) (*factoringports.S
 	return r.FactoringReadinessService.Summary(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *FactoringInvoiceStateResolver) Submission(ctx context.Context, obj *factoring.InvoiceState) (*factoringports.LiveItem, error) {
+func (r *FactoringInvoiceStateResolver) Submission(ctx context.Context, obj *factoring.InvoiceState) (*factoringsubmissionports.LiveItem, error) {
 	if obj == nil || obj.Verdict != factoring.VerdictSubmitted || !loaders.Available(ctx) {
 		return nil, nil
 	}
@@ -495,7 +498,7 @@ func (r *FactoringSubmissionItemResolver) Customer(ctx context.Context, obj *fac
 	return loaders.CustomerByID(ctx, obj.CustomerID.String())
 }
 
-func (r *FactoringSubmissionPlanResolver) AgreementID(ctx context.Context, obj *factoringports.SubmissionPlan) (string, error) {
+func (r *FactoringSubmissionPlanResolver) AgreementID(ctx context.Context, obj *factoringsubmissionports.SubmissionPlan) (string, error) {
 	if obj == nil || obj.Agreement == nil {
 		return "", nil
 	}
@@ -578,7 +581,7 @@ func (r *MutationResolver) RetryFactoringSubmission(ctx context.Context, input g
 	if err != nil {
 		return nil, err
 	}
-	return r.FactoringSubmissionService.Retry(ctx, &factoringports.SubmissionActionRequest{
+	return r.FactoringSubmissionService.Retry(ctx, &factoringsubmissionports.SubmissionActionRequest{
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		SubmissionID: id,
 		Version:      int64(input.Version),
@@ -594,7 +597,7 @@ func (r *MutationResolver) CancelFactoringSubmission(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	return r.FactoringSubmissionService.Cancel(ctx, &factoringports.SubmissionActionRequest{
+	return r.FactoringSubmissionService.Cancel(ctx, &factoringsubmissionports.SubmissionActionRequest{
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		SubmissionID: id,
 		Version:      int64(input.Version),
@@ -614,7 +617,7 @@ func (r *MutationResolver) SaveFactoringTransport(ctx context.Context, input gql
 	return r.FactoringTransportService.Save(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) TestFactoringTransport(ctx context.Context, factoringCompanyID string) (*factoringports.TransportTestResult, error) {
+func (r *MutationResolver) TestFactoringTransport(ctx context.Context, factoringCompanyID string) (*factoringsubmissionports.TransportTestResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringCompany, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -623,7 +626,7 @@ func (r *MutationResolver) TestFactoringTransport(ctx context.Context, factoring
 	if err != nil {
 		return nil, err
 	}
-	return r.FactoringTransportService.Test(ctx, &factoringports.TestTransportRequest{
+	return r.FactoringTransportService.Test(ctx, &factoringsubmissionports.TestTransportRequest{
 		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		FactoringCompanyID: factorID,
 	}, actorutil.FromAuthContext(authCtx))
@@ -642,7 +645,7 @@ func (r *QueryResolver) FactoringSubmissions(ctx context.Context, input gqlmodel
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.FactoringSubmissionService.List(ctx, &factoringports.ListSubmissionConnectionRequest{
+	result, err := r.FactoringSubmissionService.List(ctx, &factoringsubmissionports.ListSubmissionConnectionRequest{
 		Filter:             tableInput.Filter,
 		Cursor:             tableInput.Cursor,
 		FactoringCompanyID: factorID,
@@ -663,14 +666,14 @@ func (r *QueryResolver) FactoringSubmission(ctx context.Context, id string) (*fa
 	if err != nil {
 		return nil, err
 	}
-	return r.FactoringSubmissionService.Get(ctx, factoringports.GetSubmissionRequest{
+	return r.FactoringSubmissionService.Get(ctx, factoringsubmissionports.GetSubmissionRequest{
 		ID:           submissionID,
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		IncludeItems: true,
 	})
 }
 
-func (r *QueryResolver) FactoringSubmissionPlan(ctx context.Context, input gqlmodel.FactoringSubmissionPlanInput) (*factoringports.SubmissionPlan, error) {
+func (r *QueryResolver) FactoringSubmissionPlan(ctx context.Context, input gqlmodel.FactoringSubmissionPlanInput) (*factoringsubmissionports.SubmissionPlan, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringSubmission, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -694,7 +697,7 @@ func (r *QueryResolver) FactoringTransport(ctx context.Context, factoringCompany
 	if err != nil {
 		return nil, err
 	}
-	transport, err := r.FactoringTransportService.Get(ctx, factoringports.GetTransportRequest{
+	transport, err := r.FactoringTransportService.Get(ctx, factoringsubmissionports.GetTransportRequest{
 		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		FactoringCompanyID: factorID,
 	})
@@ -739,14 +742,14 @@ func (r *FactoringAgreementResolver) CashAccountID(ctx context.Context, obj *fac
 	return idOrNil(obj.CashAccountID), nil
 }
 
-func (r *FactoringFundingPlanResolver) SubmissionID(ctx context.Context, obj *factoringports.FundingPlan) (string, error) {
+func (r *FactoringFundingPlanResolver) SubmissionID(ctx context.Context, obj *factoringledgerports.FundingPlan) (string, error) {
 	if obj == nil || obj.Before == nil {
 		return "", nil
 	}
 	return obj.Before.ID.String(), nil
 }
 
-func (r *FactoringFundingPlanResolver) Status(ctx context.Context, obj *factoringports.FundingPlan) (factoring.SubmissionStatus, error) {
+func (r *FactoringFundingPlanResolver) Status(ctx context.Context, obj *factoringledgerports.FundingPlan) (factoring.SubmissionStatus, error) {
 	if obj == nil || obj.After == nil {
 		return "", nil
 	}
@@ -760,7 +763,7 @@ func (r *FactoringMovementResolver) InvoiceEffect(ctx context.Context, obj *fact
 	return invoiceEffectToModel(obj.InvoiceEffect), nil
 }
 
-func (r *FactoringPlannedLineResolver) Account(ctx context.Context, obj *factoringports.PlannedLine) (*gqlmodel.JournalEntryLineAccount, error) {
+func (r *FactoringPlannedLineResolver) Account(ctx context.Context, obj *factoringledgerports.PlannedLine) (*gqlmodel.JournalEntryLineAccount, error) {
 	if obj == nil || obj.AccountID.IsNil() || !loaders.Available(ctx) {
 		return nil, nil
 	}
@@ -778,7 +781,7 @@ func (r *FactoringPlannedLineResolver) Account(ctx context.Context, obj *factori
 	}, nil
 }
 
-func (r *FactoringPlannedMovementResolver) FiscalPeriodID(ctx context.Context, obj *factoringports.PlannedMovement) (*string, error) {
+func (r *FactoringPlannedMovementResolver) FiscalPeriodID(ctx context.Context, obj *factoringledgerports.PlannedMovement) (*string, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -844,21 +847,21 @@ func (r *FactoringReserveEntryResolver) Submission(ctx context.Context, obj *fac
 	return loaders.FactoringSubmissionByID(ctx, obj.SubmissionID.String())
 }
 
-func (r *FactoringReserveMovementPlanResolver) SubmissionID(ctx context.Context, obj *factoringports.ReserveMovementPlan) (string, error) {
+func (r *FactoringReserveMovementPlanResolver) SubmissionID(ctx context.Context, obj *factoringledgerports.ReserveMovementPlan) (string, error) {
 	if obj == nil || obj.Before == nil {
 		return "", nil
 	}
 	return obj.Before.ID.String(), nil
 }
 
-func (r *FactoringReserveMovementPlanResolver) ItemID(ctx context.Context, obj *factoringports.ReserveMovementPlan) (string, error) {
+func (r *FactoringReserveMovementPlanResolver) ItemID(ctx context.Context, obj *factoringledgerports.ReserveMovementPlan) (string, error) {
 	if obj == nil || obj.Item == nil {
 		return "", nil
 	}
 	return obj.Item.ID.String(), nil
 }
 
-func (r *FactoringReserveMovementPlanResolver) ItemStatus(ctx context.Context, obj *factoringports.ReserveMovementPlan) (factoring.SubmissionItemStatus, error) {
+func (r *FactoringReserveMovementPlanResolver) ItemStatus(ctx context.Context, obj *factoringledgerports.ReserveMovementPlan) (factoring.SubmissionItemStatus, error) {
 	if obj == nil || obj.Item == nil {
 		return "", nil
 	}
@@ -950,7 +953,7 @@ func (r *QueryResolver) FactoringReserveEntries(ctx context.Context, input gqlmo
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.FactoringLedgerService.ListEntries(ctx, &factoringports.ListReserveEntryConnectionRequest{
+	result, err := r.FactoringLedgerService.ListEntries(ctx, &factoringledgerports.ListReserveEntryConnectionRequest{
 		Filter:             tableInput.Filter,
 		Cursor:             tableInput.Cursor,
 		FactoringCompanyID: factorID,
@@ -964,7 +967,7 @@ func (r *QueryResolver) FactoringReserveEntries(ctx context.Context, input gqlmo
 	return reserveConnectionToModel(result)
 }
 
-func (r *QueryResolver) FactoringReserveBalance(ctx context.Context, factoringCompanyID string) (*factoringports.ReserveBalance, error) {
+func (r *QueryResolver) FactoringReserveBalance(ctx context.Context, factoringCompanyID string) (*factoringledgerports.ReserveBalance, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -973,13 +976,13 @@ func (r *QueryResolver) FactoringReserveBalance(ctx context.Context, factoringCo
 	if err != nil {
 		return nil, err
 	}
-	return r.FactoringLedgerService.GetBalance(ctx, factoringports.GetReserveBalanceRequest{
+	return r.FactoringLedgerService.GetBalance(ctx, factoringledgerports.GetReserveBalanceRequest{
 		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		FactoringCompanyID: factorID,
 	})
 }
 
-func (r *QueryResolver) FactoringFundingPlan(ctx context.Context, input gqlmodel.RecordFactoringFundingInput) (*factoringports.FundingPlan, error) {
+func (r *QueryResolver) FactoringFundingPlan(ctx context.Context, input gqlmodel.RecordFactoringFundingInput) (*factoringledgerports.FundingPlan, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -991,7 +994,7 @@ func (r *QueryResolver) FactoringFundingPlan(ctx context.Context, input gqlmodel
 	return r.FactoringLedgerService.PlanFunding(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *QueryResolver) FactoringReleasePlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error) {
+func (r *QueryResolver) FactoringReleasePlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringledgerports.ReserveMovementPlan, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -1003,7 +1006,7 @@ func (r *QueryResolver) FactoringReleasePlan(ctx context.Context, input gqlmodel
 	return r.FactoringLedgerService.PlanRelease(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *QueryResolver) FactoringChargebackPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error) {
+func (r *QueryResolver) FactoringChargebackPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringledgerports.ReserveMovementPlan, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -1015,7 +1018,7 @@ func (r *QueryResolver) FactoringChargebackPlan(ctx context.Context, input gqlmo
 	return r.FactoringLedgerService.PlanChargeback(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *QueryResolver) FactoringChargebackReversalPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error) {
+func (r *QueryResolver) FactoringChargebackReversalPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringledgerports.ReserveMovementPlan, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -1062,7 +1065,7 @@ func (r *FactoringRemittanceLineResolver) ReserveEntryID(ctx context.Context, ob
 	return idOrNil(obj.ReserveEntryID), nil
 }
 
-func (r *FactoringRemittancePlanResolver) RemittanceID(ctx context.Context, obj *factoringports.RemittancePlan) (string, error) {
+func (r *FactoringRemittancePlanResolver) RemittanceID(ctx context.Context, obj *factoringremittanceports.RemittancePlan) (string, error) {
 	if obj == nil || obj.Remittance == nil {
 		return "", nil
 	}
@@ -1127,7 +1130,7 @@ func (r *MutationResolver) CreateFactoringRemittance(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	return r.FactoringRemittanceService.Create(ctx, &factoringports.CreateRemittanceRequest{
+	return r.FactoringRemittanceService.Create(ctx, &factoringremittanceports.CreateRemittanceRequest{
 		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		FactoringCompanyID: factorID,
 		DefaultKind:        validRemittanceKind(input.DefaultKind),
@@ -1152,7 +1155,7 @@ func (r *MutationResolver) StageFactoringRemittance(ctx context.Context, input g
 	if err != nil {
 		return nil, err
 	}
-	return r.FactoringRemittanceService.Stage(ctx, &factoringports.StageRemittanceRequest{
+	return r.FactoringRemittanceService.Stage(ctx, &factoringremittanceports.StageRemittanceRequest{
 		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		ID:          id,
 		Version:     int64(input.Version),
@@ -1192,7 +1195,7 @@ func (r *MutationResolver) UpdateFactoringRemittanceLine(ctx context.Context, in
 	if err != nil {
 		return nil, err
 	}
-	return r.FactoringRemittanceService.UpdateLine(ctx, &factoringports.UpdateRemittanceLineRequest{
+	return r.FactoringRemittanceService.UpdateLine(ctx, &factoringremittanceports.UpdateRemittanceLineRequest{
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		RemittanceID: remittanceID,
 		Version:      int64(input.Version),
@@ -1229,7 +1232,7 @@ func (r *MutationResolver) DiscardFactoringRemittance(ctx context.Context, input
 	if err != nil {
 		return nil, err
 	}
-	return r.FactoringRemittanceService.Discard(ctx, &factoringports.DiscardRemittanceRequest{
+	return r.FactoringRemittanceService.Discard(ctx, &factoringremittanceports.DiscardRemittanceRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         id,
 		Version:    int64(input.Version),
@@ -1254,7 +1257,7 @@ func (r *QueryResolver) FactoringRemittances(ctx context.Context, input gqlmodel
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.FactoringRemittanceService.ListConnection(ctx, &factoringports.ListRemittanceConnectionRequest{
+	result, err := r.FactoringRemittanceService.ListConnection(ctx, &factoringremittanceports.ListRemittanceConnectionRequest{
 		Filter:             tableInput.Filter,
 		Cursor:             tableInput.Cursor,
 		FactoringCompanyID: factorID,
@@ -1276,7 +1279,7 @@ func (r *QueryResolver) FactoringRemittance(ctx context.Context, id string) (*fa
 	if err != nil {
 		return nil, err
 	}
-	return r.FactoringRemittanceService.Get(ctx, factoringports.GetRemittanceRequest{
+	return r.FactoringRemittanceService.Get(ctx, factoringremittanceports.GetRemittanceRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         remittanceID,
 	})
@@ -1295,7 +1298,7 @@ func (r *QueryResolver) FactoringRemittanceLines(ctx context.Context, input gqlm
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.FactoringRemittanceService.ListLineConnection(ctx, &factoringports.ListRemittanceLineConnectionRequest{
+	result, err := r.FactoringRemittanceService.ListLineConnection(ctx, &factoringremittanceports.ListRemittanceLineConnectionRequest{
 		Filter:        tableInput.Filter,
 		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		Cursor:        tableInput.Cursor,
@@ -1308,7 +1311,7 @@ func (r *QueryResolver) FactoringRemittanceLines(ctx context.Context, input gqlm
 	return remittanceLineConnectionToModel(result)
 }
 
-func (r *QueryResolver) FactoringRemittancePlan(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoringports.RemittancePlan, error) {
+func (r *QueryResolver) FactoringRemittancePlan(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoringremittanceports.RemittancePlan, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringRemittance, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -1331,7 +1334,7 @@ func (r *FactoringRemittanceResolver) Lines(ctx context.Context, obj *factoring.
 	if err != nil {
 		return nil, err
 	}
-	full, err := r.FactoringRemittanceService.Get(ctx, factoringports.GetRemittanceRequest{
+	full, err := r.FactoringRemittanceService.Get(ctx, factoringremittanceports.GetRemittanceRequest{
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		ID:           obj.ID,
 		IncludeLines: true,

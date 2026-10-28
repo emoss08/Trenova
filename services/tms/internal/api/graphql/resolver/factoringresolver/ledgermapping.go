@@ -5,7 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -14,12 +14,12 @@ import (
 func fundingRequestFromModel(
 	in *gqlmodel.RecordFactoringFundingInput,
 	authCtx *authctx.AuthContext,
-) (*factoringports.RecordFundingRequest, error) {
+) (*factoringledgerports.RecordFundingRequest, error) {
 	submissionID, err := parseID(in.SubmissionID, "submissionId")
 	if err != nil {
 		return nil, err
 	}
-	items := make([]factoringports.FundingItemInput, 0, len(in.Items))
+	items := make([]factoringledgerports.FundingItemInput, 0, len(in.Items))
 	for _, item := range in.Items {
 		if item == nil {
 			continue
@@ -28,7 +28,7 @@ func fundingRequestFromModel(
 		if parseErr != nil {
 			return nil, parseErr
 		}
-		items = append(items, factoringports.FundingItemInput{
+		items = append(items, factoringledgerports.FundingItemInput{
 			ItemID:       itemID,
 			Outcome:      item.Outcome,
 			AdvanceMinor: int64Ptr(item.AdvanceMinor),
@@ -36,7 +36,7 @@ func fundingRequestFromModel(
 			Reason:       stringutils.FromPtr(item.Reason),
 		})
 	}
-	return &factoringports.RecordFundingRequest{
+	return &factoringledgerports.RecordFundingRequest{
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		SubmissionID: submissionID,
 		Version:      int64(in.Version),
@@ -49,7 +49,7 @@ func fundingRequestFromModel(
 func movementRequestFromModel(
 	in *gqlmodel.FactoringReserveMovementInput,
 	authCtx *authctx.AuthContext,
-) (*factoringports.ReserveMovementRequest, error) {
+) (*factoringledgerports.ReserveMovementRequest, error) {
 	submissionID, err := parseID(in.SubmissionID, "submissionId")
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func movementRequestFromModel(
 	if err != nil {
 		return nil, err
 	}
-	return &factoringports.ReserveMovementRequest{
+	return &factoringledgerports.ReserveMovementRequest{
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		SubmissionID: submissionID,
 		ItemID:       itemID,

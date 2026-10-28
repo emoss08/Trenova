@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -40,7 +40,7 @@ const (
 )
 
 type ledgerTool struct {
-	ledger   factoringports.LedgerService
+	ledger   factoringledgerports.LedgerService
 	accounts common.LedgerAccounts
 }
 
@@ -87,7 +87,7 @@ func (t *ledgerTool) movementChanges(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	currency string,
-	movements []*factoringports.PlannedMovement,
+	movements []*factoringledgerports.PlannedMovement,
 ) ([]*agent.RecordChange, error) {
 	journals := make([]*kernelports.JournalPreview, 0, len(movements))
 	sets := make([][]kernelports.JournalLinePreview, 0, len(movements))
@@ -124,7 +124,7 @@ func (t *ledgerTool) movementChanges(
 	return changes, nil
 }
 
-func journalOf(movement *factoringports.PlannedMovement) *kernelports.JournalPreview {
+func journalOf(movement *factoringledgerports.PlannedMovement) *kernelports.JournalPreview {
 	lines := make([]kernelports.JournalLinePreview, 0, len(movement.Lines))
 	for _, line := range movement.Lines {
 		lines = append(lines, kernelports.JournalLinePreview{
@@ -143,7 +143,7 @@ func journalOf(movement *factoringports.PlannedMovement) *kernelports.JournalPre
 	}
 }
 
-func movementLabel(movement *factoringports.PlannedMovement) string {
+func movementLabel(movement *factoringledgerports.PlannedMovement) string {
 	switch movement.Movement.Kind {
 	case factoring.ReserveEntryFunding:
 		return "Factor funding of invoice " + movement.InvoiceNumber
@@ -158,7 +158,7 @@ func movementLabel(movement *factoringports.PlannedMovement) string {
 	}
 }
 
-func bookingSentences(movements []*factoringports.PlannedMovement) []string {
+func bookingSentences(movements []*factoringledgerports.PlannedMovement) []string {
 	sentences := make([]string, 0, 2)
 	redated, approval := false, false
 	for _, movement := range movements {
@@ -183,7 +183,7 @@ type RecordFactoringFundingTool struct {
 }
 
 func NewRecordFactoringFundingTool(
-	ledger factoringports.LedgerService,
+	ledger factoringledgerports.LedgerService,
 	accounts glaccountports.GLAccountRepository,
 ) agenttoolports.AgentTool {
 	return &RecordFactoringFundingTool{ledgerTool{ledger: ledger, accounts: accounts}}
@@ -260,7 +260,7 @@ func (t *RecordFactoringFundingTool) Target(
 
 func (t *RecordFactoringFundingTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*factoringports.RecordFundingRequest, error) {
+) (*factoringledgerports.RecordFundingRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -284,7 +284,7 @@ func (t *RecordFactoringFundingTool) request(
 	if err != nil {
 		return nil, err
 	}
-	req := &factoringports.RecordFundingRequest{
+	req := &factoringledgerports.RecordFundingRequest{
 		TenantInfo:   common.TenantFrom(*params),
 		SubmissionID: submissionID,
 		Version:      int64(version),
@@ -297,7 +297,7 @@ func (t *RecordFactoringFundingTool) request(
 	return req, nil
 }
 
-func fundingItems(params map[string]any) ([]factoringports.FundingItemInput, error) {
+func fundingItems(params map[string]any) ([]factoringledgerports.FundingItemInput, error) {
 	raw, ok := params[paramItems].([]any)
 	if !ok || len(raw) == 0 {
 		return nil, fmt.Errorf("parameter %q must list at least one invoice", paramItems)
@@ -305,7 +305,7 @@ func fundingItems(params map[string]any) ([]factoringports.FundingItemInput, err
 	if len(raw) > factoring.MaxSubmissionInvoices {
 		return nil, fmt.Errorf("parameter %q lists more invoices than a schedule holds", paramItems)
 	}
-	items := make([]factoringports.FundingItemInput, 0, len(raw))
+	items := make([]factoringledgerports.FundingItemInput, 0, len(raw))
 	for idx, entry := range raw {
 		fields, isObject := entry.(map[string]any)
 		if !isObject {
@@ -338,7 +338,7 @@ func fundingItems(params map[string]any) ([]factoringports.FundingItemInput, err
 		if err != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramItems, idx, err)
 		}
-		item := factoringports.FundingItemInput{
+		item := factoringledgerports.FundingItemInput{
 			ItemID:       itemID,
 			Outcome:      outcome,
 			AdvanceMinor: advance,
@@ -437,18 +437,18 @@ type movementSpec struct {
 	needsReason bool
 	refusal     string
 	plan        func(
-		factoringports.LedgerService,
+		factoringledgerports.LedgerService,
 		context.Context,
-		*factoringports.ReserveMovementRequest,
+		*factoringledgerports.ReserveMovementRequest,
 		*permissionports.RequestActor,
-	) (*factoringports.ReserveMovementPlan, error)
+	) (*factoringledgerports.ReserveMovementPlan, error)
 	run func(
-		factoringports.LedgerService,
+		factoringledgerports.LedgerService,
 		context.Context,
-		*factoringports.ReserveMovementRequest,
+		*factoringledgerports.ReserveMovementRequest,
 		*permissionports.RequestActor,
-	) (*factoringports.ReserveMovementResult, error)
-	summary func(*factoringports.ReserveMovementPlan, string) string
+	) (*factoringledgerports.ReserveMovementResult, error)
+	summary func(*factoringledgerports.ReserveMovementPlan, string) string
 }
 
 type ReserveMovementTool struct {
@@ -491,7 +491,7 @@ func (t *ReserveMovementTool) Target(params map[string]any) (agenttoolports.Tool
 
 func (t *ReserveMovementTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*factoringports.ReserveMovementRequest, error) {
+) (*factoringledgerports.ReserveMovementRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -511,7 +511,7 @@ func (t *ReserveMovementTool) request(
 	if err != nil {
 		return nil, err
 	}
-	req := &factoringports.ReserveMovementRequest{
+	req := &factoringledgerports.ReserveMovementRequest{
 		TenantInfo:   common.TenantFrom(*params),
 		SubmissionID: submissionID,
 		ItemID:       itemID,
@@ -619,7 +619,7 @@ func (t *ReserveMovementTool) Preview(
 		return nil, err
 	}
 	changes := []*agent.RecordChange{itemChange}
-	movements := []*factoringports.PlannedMovement{plan.Movement}
+	movements := []*factoringledgerports.PlannedMovement{plan.Movement}
 	entries, err := t.movementChanges(ctx, req.TenantInfo, plan.After.CurrencyCode, movements)
 	if err != nil {
 		return nil, err
@@ -637,7 +637,7 @@ func (t *ReserveMovementTool) Preview(
 	return toolpreview.Build(strings.Join(sentences, " "), changes...), nil
 }
 
-func movementCash(plan *factoringports.ReserveMovementPlan) int64 {
+func movementCash(plan *factoringledgerports.ReserveMovementPlan) int64 {
 	if plan.Movement == nil {
 		return 0
 	}
@@ -645,7 +645,7 @@ func movementCash(plan *factoringports.ReserveMovementPlan) int64 {
 }
 
 func NewReleaseFactoringReserveTool(
-	ledger factoringports.LedgerService,
+	ledger factoringledgerports.LedgerService,
 	accounts glaccountports.GLAccountRepository,
 ) agenttoolports.AgentTool {
 	return &ReserveMovementTool{
@@ -665,9 +665,9 @@ func NewReleaseFactoringReserveTool(
 				"difference is booked to the fee account.",
 			reasonHelp: "A note kept with the entry, such as the remittance number.",
 			refusal:    "Would book the factor's release of an invoice's reserve.",
-			plan:       factoringports.LedgerService.PlanRelease,
-			run:        factoringports.LedgerService.ReleaseReserve,
-			summary: func(plan *factoringports.ReserveMovementPlan, currency string) string {
+			plan:       factoringledgerports.LedgerService.PlanRelease,
+			run:        factoringledgerports.LedgerService.ReleaseReserve,
+			summary: func(plan *factoringledgerports.ReserveMovementPlan, currency string) string {
 				_, _, reserve := plan.Item.Actuals()
 				return fmt.Sprintf(
 					"Would book the factor's release of invoice %s's reserve of %s: %s in cash. "+
@@ -682,7 +682,7 @@ func NewReleaseFactoringReserveTool(
 }
 
 func NewRecordFactoringChargebackTool(
-	ledger factoringports.LedgerService,
+	ledger factoringledgerports.LedgerService,
 	accounts glaccountports.GLAccountRepository,
 ) agenttoolports.AgentTool {
 	return &ReserveMovementTool{
@@ -703,9 +703,9 @@ func NewRecordFactoringChargebackTool(
 			reasonHelp:  "Why the factor charged it back.",
 			needsReason: true,
 			refusal:     "Would book the factor's chargeback of an invoice.",
-			plan:        factoringports.LedgerService.PlanChargeback,
-			run:         factoringports.LedgerService.RecordChargeback,
-			summary: func(plan *factoringports.ReserveMovementPlan, currency string) string {
+			plan:        factoringledgerports.LedgerService.PlanChargeback,
+			run:         factoringledgerports.LedgerService.RecordChargeback,
+			summary: func(plan *factoringledgerports.ReserveMovementPlan, currency string) string {
 				return fmt.Sprintf(
 					"Would book the factor's chargeback of invoice %s: %s paid back to the "+
 						"factor, and the invoice is the organization's to collect again.",
@@ -718,7 +718,7 @@ func NewRecordFactoringChargebackTool(
 }
 
 func NewReverseFactoringChargebackTool(
-	ledger factoringports.LedgerService,
+	ledger factoringledgerports.LedgerService,
 	accounts glaccountports.GLAccountRepository,
 ) agenttoolports.AgentTool {
 	return &ReserveMovementTool{
@@ -735,9 +735,9 @@ func NewReverseFactoringChargebackTool(
 			reasonHelp:  "Why the chargeback is reversed.",
 			needsReason: true,
 			refusal:     "Would reverse an invoice's chargeback.",
-			plan:        factoringports.LedgerService.PlanChargebackReversal,
-			run:         factoringports.LedgerService.ReverseChargeback,
-			summary: func(plan *factoringports.ReserveMovementPlan, currency string) string {
+			plan:        factoringledgerports.LedgerService.PlanChargebackReversal,
+			run:         factoringledgerports.LedgerService.ReverseChargeback,
+			summary: func(plan *factoringledgerports.ReserveMovementPlan, currency string) string {
 				return fmt.Sprintf(
 					"Would reverse invoice %s's chargeback of %s, booking its lines swapped; "+
 						"the invoice is funded with the factor again.",
@@ -749,7 +749,7 @@ func NewReverseFactoringChargebackTool(
 	}
 }
 
-func chargebackCash(plan *factoringports.ReserveMovementPlan) int64 {
+func chargebackCash(plan *factoringledgerports.ReserveMovementPlan) int64 {
 	if plan.Reverses == nil {
 		return 0
 	}

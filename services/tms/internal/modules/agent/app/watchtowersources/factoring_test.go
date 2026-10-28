@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -55,80 +57,80 @@ func (f *fakeFactoringStates) ListReadyUnsubmitted(
 }
 
 type fakeFactoringReader struct {
-	labels      map[pulid.ID]*factoringports.InvoiceLabel
-	missing     []*factoringports.CustomerMissingNoa
-	expiring    []*factoringports.ExpiringNoa
+	labels      map[pulid.ID]*factoringwatchtowerports.InvoiceLabel
+	missing     []*factoringwatchtowerports.CustomerMissingNoa
+	expiring    []*factoringwatchtowerports.ExpiringNoa
 	labelErr    error
 	missingErr  error
 	expiringErr error
-	failed      []*factoringports.FailedSubmission
+	failed      []*factoringwatchtowerports.FailedSubmission
 	failedErr   error
-	unfunded    []*factoringports.UnfundedSubmission
-	chargebacks []*factoringports.ChargebackDue
+	unfunded    []*factoringwatchtowerports.UnfundedSubmission
+	chargebacks []*factoringwatchtowerports.ChargebackDue
 	dueErr      error
-	dueReq      *factoringports.ListChargebacksDueRequest
-	labelReq    *factoringports.ListInvoiceLabelsRequest
-	missingReq  *factoringports.ListCustomersMissingNoaRequest
-	expiringReq *factoringports.ListNoasExpiringSoonRequest
+	dueReq      *factoringwatchtowerports.ListChargebacksDueRequest
+	labelReq    *factoringwatchtowerports.ListInvoiceLabelsRequest
+	missingReq  *factoringwatchtowerports.ListCustomersMissingNoaRequest
+	expiringReq *factoringwatchtowerports.ListNoasExpiringSoonRequest
 }
 
 func (f *fakeFactoringReader) ListInvoiceLabels(
 	_ context.Context,
-	req *factoringports.ListInvoiceLabelsRequest,
-) (map[pulid.ID]*factoringports.InvoiceLabel, error) {
+	req *factoringwatchtowerports.ListInvoiceLabelsRequest,
+) (map[pulid.ID]*factoringwatchtowerports.InvoiceLabel, error) {
 	f.labelReq = req
 	return f.labels, f.labelErr
 }
 
 func (f *fakeFactoringReader) ListCustomersMissingNoa(
 	_ context.Context,
-	req *factoringports.ListCustomersMissingNoaRequest,
-) ([]*factoringports.CustomerMissingNoa, error) {
+	req *factoringwatchtowerports.ListCustomersMissingNoaRequest,
+) ([]*factoringwatchtowerports.CustomerMissingNoa, error) {
 	f.missingReq = req
 	return f.missing, f.missingErr
 }
 
 func (f *fakeFactoringReader) ListNoasExpiringSoon(
 	_ context.Context,
-	req *factoringports.ListNoasExpiringSoonRequest,
-) ([]*factoringports.ExpiringNoa, error) {
+	req *factoringwatchtowerports.ListNoasExpiringSoonRequest,
+) ([]*factoringwatchtowerports.ExpiringNoa, error) {
 	f.expiringReq = req
 	return f.expiring, f.expiringErr
 }
 
 func (f *fakeFactoringReader) ListFailedSubmissions(
 	context.Context,
-	*factoringports.ListFailedSubmissionsRequest,
-) ([]*factoringports.FailedSubmission, error) {
+	*factoringwatchtowerports.ListFailedSubmissionsRequest,
+) ([]*factoringwatchtowerports.FailedSubmission, error) {
 	return f.failed, f.failedErr
 }
 
 func (f *fakeFactoringReader) ListUnfundedSubmissions(
 	context.Context,
-	*factoringports.ListUnfundedSubmissionsRequest,
-) ([]*factoringports.UnfundedSubmission, error) {
+	*factoringwatchtowerports.ListUnfundedSubmissionsRequest,
+) ([]*factoringwatchtowerports.UnfundedSubmission, error) {
 	return f.unfunded, nil
 }
 
 func (f *fakeFactoringReader) ListChargebacksDue(
 	_ context.Context,
-	req *factoringports.ListChargebacksDueRequest,
-) ([]*factoringports.ChargebackDue, error) {
+	req *factoringwatchtowerports.ListChargebacksDueRequest,
+) ([]*factoringwatchtowerports.ChargebackDue, error) {
 	f.dueReq = req
 	return f.chargebacks, f.dueErr
 }
 
 type fakeFactoringRemittances struct {
-	factoringports.RemittanceRepository
+	factoringremittanceports.RemittanceRepository
 
-	open []*factoringports.OpenRemittance
+	open []*factoringremittanceports.OpenRemittance
 	err  error
 }
 
 func (f *fakeFactoringRemittances) ListOpen(
 	context.Context,
-	*factoringports.ListOpenRemittancesRequest,
-) ([]*factoringports.OpenRemittance, error) {
+	*factoringremittanceports.ListOpenRemittancesRequest,
+) ([]*factoringremittanceports.OpenRemittance, error) {
 	return f.open, f.err
 }
 
@@ -177,7 +179,7 @@ func TestDescribeFactoringReadyUnsubmitted(t *testing.T) {
 
 	tenant := factoringTenant()
 	state := readyState(tenant, factoring.ReadyUnsubmittedSeconds+3600)
-	label := &factoringports.InvoiceLabel{
+	label := &factoringwatchtowerports.InvoiceLabel{
 		InvoiceID:    state.InvoiceID,
 		Number:       "INV-1042",
 		CurrencyCode: "usd",
@@ -247,8 +249,8 @@ func TestDescribeFactoringReadyUnsubmittedClearsWhenNotLate(t *testing.T) {
 	assert.False(t, open)
 }
 
-func missingNoa() *factoringports.CustomerMissingNoa {
-	return &factoringports.CustomerMissingNoa{
+func missingNoa() *factoringwatchtowerports.CustomerMissingNoa {
+	return &factoringwatchtowerports.CustomerMissingNoa{
 		CustomerID:         pulid.MustNew("cus_"),
 		CustomerCode:       "ACME",
 		CustomerName:       "Acme Foods",
@@ -375,9 +377,9 @@ func TestDescribeFactoringMissingNoaClearsOnceAcknowledged(t *testing.T) {
 	assert.False(t, raised)
 }
 
-func expiringNoa(expiresIn int64) *factoringports.ExpiringNoa {
+func expiringNoa(expiresIn int64) *factoringwatchtowerports.ExpiringNoa {
 	acknowledged := factoringNow - 300*timeutils.SecondsPerDay
-	return &factoringports.ExpiringNoa{
+	return &factoringwatchtowerports.ExpiringNoa{
 		NoaID:              pulid.MustNew("facnoa_"),
 		CustomerID:         pulid.MustNew("cus_"),
 		CustomerName:       "Acme Foods",
@@ -451,12 +453,15 @@ func TestFactoringSourceSnapshot(t *testing.T) {
 	late := readyState(tenant, 2*factoring.ReadyUnsubmittedSeconds)
 	states := &fakeFactoringStates{ready: []*factoring.InvoiceState{late, nil}}
 	reader := &fakeFactoringReader{
-		labels: map[pulid.ID]*factoringports.InvoiceLabel{
+		labels: map[pulid.ID]*factoringwatchtowerports.InvoiceLabel{
 			late.InvoiceID: {InvoiceID: late.InvoiceID, Number: "INV-7"},
 		},
-		missing:  []*factoringports.CustomerMissingNoa{missingNoa(), nil},
-		expiring: []*factoringports.ExpiringNoa{expiringNoa(10 * timeutils.SecondsPerDay), nil},
-		failed:   []*factoringports.FailedSubmission{failedSubmission(), nil},
+		missing: []*factoringwatchtowerports.CustomerMissingNoa{missingNoa(), nil},
+		expiring: []*factoringwatchtowerports.ExpiringNoa{
+			expiringNoa(10 * timeutils.SecondsPerDay),
+			nil,
+		},
+		failed: []*factoringwatchtowerports.FailedSubmission{failedSubmission(), nil},
 	}
 	source := newTestFactoringSource(states, reader)
 
@@ -515,8 +520,8 @@ func TestFactoringSourceSnapshotFailsWhenAReadFails(t *testing.T) {
 	require.ErrorIs(t, err, assert.AnError, "a partial snapshot would resolve live items")
 }
 
-func failedSubmission() *factoringports.FailedSubmission {
-	return &factoringports.FailedSubmission{
+func failedSubmission() *factoringwatchtowerports.FailedSubmission {
+	return &factoringwatchtowerports.FailedSubmission{
 		SubmissionID:    pulid.MustNew("facsub_"),
 		Number:          "FS2610000004",
 		FactorName:      "Lone Star Funding",
@@ -546,7 +551,7 @@ func TestDescribeFactoringSendFailed(t *testing.T) {
 	assert.Contains(t, item.Summary, "4500.00 USD")
 	assert.Equal(t, row.FailedAt, item.OccurredAt)
 
-	_, open = DescribeFactoringSendFailed(tenant, &factoringports.FailedSubmission{})
+	_, open = DescribeFactoringSendFailed(tenant, &factoringwatchtowerports.FailedSubmission{})
 	assert.False(t, open)
 }
 
@@ -564,7 +569,7 @@ func TestDescribeFactoringUnfunded(t *testing.T) {
 	t.Parallel()
 
 	tenant := factoringTenant()
-	row := &factoringports.UnfundedSubmission{
+	row := &factoringwatchtowerports.UnfundedSubmission{
 		SubmissionID:         pulid.MustNew("facsub_"),
 		Number:               "FS2610000007",
 		Status:               factoring.SubmissionStatusPartially,
@@ -600,7 +605,7 @@ func TestDescribeFactoringChargebackDue(t *testing.T) {
 	t.Parallel()
 
 	tenant := factoringTenant()
-	row := &factoringports.ChargebackDue{
+	row := &factoringwatchtowerports.ChargebackDue{
 		ItemID:          pulid.MustNew("facsit_"),
 		SubmissionID:    pulid.MustNew("facsub_"),
 		InvoiceID:       pulid.MustNew("inv_"),
@@ -641,13 +646,13 @@ func TestFactoringSourceSnapshotIncludesFundingFollowUps(t *testing.T) {
 	t.Parallel()
 
 	reader := &fakeFactoringReader{
-		unfunded: []*factoringports.UnfundedSubmission{{
+		unfunded: []*factoringwatchtowerports.UnfundedSubmission{{
 			SubmissionID: pulid.MustNew("facsub_"),
 			Number:       "FS2610000008",
 			PendingCount: 1,
 			DueAt:        factoringNow - 1,
 		}},
-		chargebacks: []*factoringports.ChargebackDue{{
+		chargebacks: []*factoringwatchtowerports.ChargebackDue{{
 			ItemID:     pulid.MustNew("facsit_"),
 			InvoiceID:  pulid.MustNew("inv_"),
 			FundedOn:   factoringNow - 88*timeutils.SecondsPerDay,
@@ -673,7 +678,7 @@ func TestDescribeFactoringRemittanceExceptions(t *testing.T) {
 	t.Parallel()
 
 	tenant := factoringTenant()
-	open := &factoringports.OpenRemittance{
+	open := &factoringremittanceports.OpenRemittance{
 		RemittanceID:   pulid.MustNew("facrem_"),
 		FactorName:     "RTS Financial",
 		FileName:       "rts-funding.csv",
@@ -715,11 +720,13 @@ func TestFactoringSnapshotRaisesOpenRemittances(t *testing.T) {
 
 	tenant := factoringTenant()
 	source := newTestFactoringSource(&fakeFactoringStates{}, &fakeFactoringReader{})
-	source.remittances = &fakeFactoringRemittances{open: []*factoringports.OpenRemittance{{
-		RemittanceID:   pulid.MustNew("facrem_"),
-		Status:         factoring.RemittanceStatusPartiallyApplied,
-		ExceptionCount: 1,
-	}}}
+	source.remittances = &fakeFactoringRemittances{
+		open: []*factoringremittanceports.OpenRemittance{{
+			RemittanceID:   pulid.MustNew("facrem_"),
+			Status:         factoring.RemittanceStatusPartiallyApplied,
+			ExceptionCount: 1,
+		}},
+	}
 	items, err := source.Snapshot(t.Context(), tenant)
 	require.NoError(t, err)
 	require.Len(t, items, 1)

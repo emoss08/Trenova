@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -112,7 +112,7 @@ func newSubmissionHarness(t *testing.T) *submissionHarness {
 		Templates:     h.templates,
 		Sequences:     &fakeSequences{},
 		Cipher:        fakeCipher{},
-		Senders:       []factoringports.FactoringTransport{h.sender},
+		Senders:       []factoringsubmissionports.FactoringTransport{h.sender},
 		Starter:       h.starter,
 		Requester:     h.requester,
 		Events:        h.events,
@@ -152,8 +152,10 @@ func (h *submissionHarness) readyInvoice(number string, totalMinor int64) *invoi
 	return inv
 }
 
-func (h *submissionHarness) request(ids ...pulid.ID) *factoringports.PlanSubmissionRequest {
-	return &factoringports.PlanSubmissionRequest{
+func (h *submissionHarness) request(
+	ids ...pulid.ID,
+) *factoringsubmissionports.PlanSubmissionRequest {
+	return &factoringsubmissionports.PlanSubmissionRequest{
 		TenantInfo:         h.tenant,
 		FactoringCompanyID: h.factor.ID,
 		InvoiceIDs:         ids,
@@ -254,7 +256,7 @@ func TestPrepareAndDeliverSendsTheScheduleAndPackets(t *testing.T) {
 	inv := h.readyInvoice("INV-1", 100000)
 	created, err := h.svc.Submit(t.Context(), h.request(inv.ID), h.actor)
 	require.NoError(t, err)
-	req := &factoringports.DeliverSubmissionRequest{
+	req := &factoringsubmissionports.DeliverSubmissionRequest{
 		TenantInfo:   h.tenant,
 		SubmissionID: created.ID,
 		Group:        1,
@@ -288,7 +290,10 @@ func TestPrepareAndDeliverSendsTheScheduleAndPackets(t *testing.T) {
 	message := h.templates.messages[0].(*documenttemplate.FactoringScheduleEmailContext)
 	assert.Equal(t, "Lone Star Funding", message.FactorName)
 
-	stored, err := h.svc.Get(t.Context(), factoringports.GetSubmissionRequest{ID: created.ID, TenantInfo: h.tenant})
+	stored, err := h.svc.Get(
+		t.Context(),
+		factoringsubmissionports.GetSubmissionRequest{ID: created.ID, TenantInfo: h.tenant},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, factoring.SubmissionStatusSent, stored.Status)
 	assert.Equal(t, 2, stored.Attempts)
@@ -308,7 +313,11 @@ func TestDeliverWithoutPacketsSendsOnlyTheSchedule(t *testing.T) {
 	inv := h.readyInvoice("INV-1", 100000)
 	created, err := h.svc.Submit(t.Context(), h.request(inv.ID), h.actor)
 	require.NoError(t, err)
-	req := &factoringports.DeliverSubmissionRequest{TenantInfo: h.tenant, SubmissionID: created.ID, Group: 1}
+	req := &factoringsubmissionports.DeliverSubmissionRequest{
+		TenantInfo:   h.tenant,
+		SubmissionID: created.ID,
+		Group:        1,
+	}
 	require.NoError(t, h.svc.PrepareDocuments(t.Context(), req))
 	_, err = h.svc.Deliver(t.Context(), req)
 	require.NoError(t, err)
@@ -322,30 +331,42 @@ func TestFailedScheduleCanBeRetriedOrCancelled(t *testing.T) {
 	created, err := h.svc.Submit(t.Context(), h.request(inv.ID), h.actor)
 	require.NoError(t, err)
 
-	require.NoError(t, h.svc.MarkFailed(t.Context(), &factoringports.FailSubmissionRequest{
-		TenantInfo: h.tenant, SubmissionID: created.ID, Group: 2, Cause: "stale", Attempts: 6,
-	}))
-	current, err := h.svc.Get(t.Context(), factoringports.GetSubmissionRequest{ID: created.ID, TenantInfo: h.tenant})
+	require.NoError(
+		t,
+		h.svc.MarkFailed(t.Context(), &factoringsubmissionports.FailSubmissionRequest{
+			TenantInfo: h.tenant, SubmissionID: created.ID, Group: 2, Cause: "stale", Attempts: 6,
+		}),
+	)
+	current, err := h.svc.Get(
+		t.Context(),
+		factoringsubmissionports.GetSubmissionRequest{ID: created.ID, TenantInfo: h.tenant},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, factoring.SubmissionStatusSending, current.Status)
 
-	require.NoError(t, h.svc.MarkFailed(t.Context(), &factoringports.FailSubmissionRequest{
-		TenantInfo: h.tenant, SubmissionID: created.ID, Group: 1, Cause: "connection refused", Attempts: 6,
-	}))
-	current, err = h.svc.Get(t.Context(), factoringports.GetSubmissionRequest{ID: created.ID, TenantInfo: h.tenant})
+	require.NoError(
+		t,
+		h.svc.MarkFailed(t.Context(), &factoringsubmissionports.FailSubmissionRequest{
+			TenantInfo: h.tenant, SubmissionID: created.ID, Group: 1, Cause: "connection refused", Attempts: 6,
+		}),
+	)
+	current, err = h.svc.Get(
+		t.Context(),
+		factoringsubmissionports.GetSubmissionRequest{ID: created.ID, TenantInfo: h.tenant},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, factoring.SubmissionStatusFailed, current.Status)
 	assert.Equal(t, "connection refused", current.LastError)
 	assert.Equal(t, []string{string(agent.EventFactoringSubmissionFailed)}, h.events.kinds())
 
-	_, err = h.svc.Retry(t.Context(), &factoringports.SubmissionActionRequest{
+	_, err = h.svc.Retry(t.Context(), &factoringsubmissionports.SubmissionActionRequest{
 		TenantInfo: h.tenant, SubmissionID: created.ID, Version: current.Version - 1,
 	}, h.actor)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsConflictError(err))
 
 	h.transports.entity.EmailRecipients = []string{"new@lonestar.test"}
-	retried, err := h.svc.Retry(t.Context(), &factoringports.SubmissionActionRequest{
+	retried, err := h.svc.Retry(t.Context(), &factoringsubmissionports.SubmissionActionRequest{
 		TenantInfo: h.tenant, SubmissionID: created.ID, Version: current.Version,
 	}, h.actor)
 	require.NoError(t, err)
@@ -355,18 +376,24 @@ func TestFailedScheduleCanBeRetriedOrCancelled(t *testing.T) {
 	require.Len(t, h.starter.started, 2)
 	assert.Equal(t, 2, h.starter.started[1].SendAttemptGroup)
 
-	require.NoError(t, h.svc.MarkFailed(t.Context(), &factoringports.FailSubmissionRequest{
-		TenantInfo: h.tenant, SubmissionID: created.ID, Group: 2, Cause: "again", Attempts: 6,
-	}))
-	current, err = h.svc.Get(t.Context(), factoringports.GetSubmissionRequest{ID: created.ID, TenantInfo: h.tenant})
+	require.NoError(
+		t,
+		h.svc.MarkFailed(t.Context(), &factoringsubmissionports.FailSubmissionRequest{
+			TenantInfo: h.tenant, SubmissionID: created.ID, Group: 2, Cause: "again", Attempts: 6,
+		}),
+	)
+	current, err = h.svc.Get(
+		t.Context(),
+		factoringsubmissionports.GetSubmissionRequest{ID: created.ID, TenantInfo: h.tenant},
+	)
 	require.NoError(t, err)
 
-	_, err = h.svc.Cancel(t.Context(), &factoringports.SubmissionActionRequest{
+	_, err = h.svc.Cancel(t.Context(), &factoringsubmissionports.SubmissionActionRequest{
 		TenantInfo: h.tenant, SubmissionID: created.ID, Version: current.Version,
 	}, h.actor)
 	require.Error(t, err)
 
-	cancelled, err := h.svc.Cancel(t.Context(), &factoringports.SubmissionActionRequest{
+	cancelled, err := h.svc.Cancel(t.Context(), &factoringsubmissionports.SubmissionActionRequest{
 		TenantInfo: h.tenant, SubmissionID: created.ID, Version: current.Version, Reason: "Wrong factor",
 	}, h.actor)
 	require.NoError(t, err)

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/factoringremit"
@@ -135,12 +135,12 @@ func validRemittanceKind(kind *factoring.RemittanceLineKind) factoring.Remittanc
 func remittanceVersionFromModel(
 	in *gqlmodel.FactoringRemittanceVersionInput,
 	authCtx *authctx.AuthContext,
-) (*factoringports.RemittanceVersionRequest, error) {
+) (*factoringremittanceports.RemittanceVersionRequest, error) {
 	id, err := parseID(in.ID, "id")
 	if err != nil {
 		return nil, err
 	}
-	return &factoringports.RemittanceVersionRequest{
+	return &factoringremittanceports.RemittanceVersionRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         id,
 		Version:    int64(in.Version),

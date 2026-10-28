@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/factoringjobs/factoringcontract"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -25,22 +25,22 @@ type stagePoller struct {
 func (p *stagePoller) poll(
 	_ context.Context,
 	payload *factoringcontract.RemittanceStagePayload,
-) (*factoringports.StagePendingResult, error) {
+) (*factoringremittanceports.StagePendingResult, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.calls++
 	if payload.GiveUp {
 		p.gaveUpRun = true
-		return &factoringports.StagePendingResult{
+		return &factoringremittanceports.StagePendingResult{
 			Remittance: &factoring.Remittance{Status: factoring.RemittanceStatusFailed},
 		}, nil
 	}
 	if p.readyAt > 0 && p.calls >= p.readyAt {
-		return &factoringports.StagePendingResult{
+		return &factoringremittanceports.StagePendingResult{
 			Remittance: &factoring.Remittance{Status: factoring.RemittanceStatusParsed},
 		}, nil
 	}
-	return &factoringports.StagePendingResult{
+	return &factoringremittanceports.StagePendingResult{
 		Remittance: &factoring.Remittance{Status: factoring.RemittanceStatusPending},
 		Waiting:    true,
 	}, nil
@@ -90,7 +90,11 @@ func TestRemittanceStageWorkflowGivesUpAtItsDeadline(t *testing.T) {
 
 	var result RemittanceStageResult
 	require.NoError(t, env.GetWorkflowResult(&result))
-	assert.True(t, poller.gaveUpRun, "the last poll fails the remittance rather than leaving it waiting")
+	assert.True(
+		t,
+		poller.gaveUpRun,
+		"the last poll fails the remittance rather than leaving it waiting",
+	)
 	assert.Equal(t, string(factoring.RemittanceStatusFailed), result.Status)
 	assert.LessOrEqual(t, result.Polls, int(remittanceStageDeadline/remittanceStagePoll)+1)
 }

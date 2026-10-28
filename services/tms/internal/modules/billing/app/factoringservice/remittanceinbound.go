@@ -3,18 +3,18 @@ package factoringservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 )
 
 type RemittanceIntake struct {
-	remittances factoringports.RemittanceService
+	remittances factoringremittanceports.RemittanceService
 }
 
 var _ inboundmessageports.RemittanceIntake = (*RemittanceIntake)(nil)
 
 func NewRemittanceIntake(
-	remittances factoringports.RemittanceService,
+	remittances factoringremittanceports.RemittanceService,
 ) inboundmessageports.RemittanceIntake {
 	return &RemittanceIntake{remittances: remittances}
 }
@@ -26,21 +26,28 @@ func (i *RemittanceIntake) IngestRemittances(
 	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
-	attachments := make([]factoringports.RemittanceEmailAttachment, 0, len(req.Attachments))
+	attachments := make(
+		[]factoringremittanceports.RemittanceEmailAttachment,
+		0,
+		len(req.Attachments),
+	)
 	for _, attachment := range req.Attachments {
-		attachments = append(attachments, factoringports.RemittanceEmailAttachment{
+		attachments = append(attachments, factoringremittanceports.RemittanceEmailAttachment{
 			DocumentID:  attachment.DocumentID,
 			FileName:    attachment.FileName,
 			ContentType: attachment.ContentType,
 		})
 	}
-	result, err := i.remittances.IngestEmail(ctx, &factoringports.IngestRemittanceEmailRequest{
-		TenantInfo:       req.TenantInfo,
-		InboundMessageID: req.MessageID,
-		FromAddress:      req.FromAddress,
-		ReceivedAt:       req.ReceivedAt,
-		Attachments:      attachments,
-	})
+	result, err := i.remittances.IngestEmail(
+		ctx,
+		&factoringremittanceports.IngestRemittanceEmailRequest{
+			TenantInfo:       req.TenantInfo,
+			InboundMessageID: req.MessageID,
+			FromAddress:      req.FromAddress,
+			ReceivedAt:       req.ReceivedAt,
+			Attachments:      attachments,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

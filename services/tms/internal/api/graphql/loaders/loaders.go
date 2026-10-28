@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -319,7 +319,7 @@ type set struct {
 	factoringAgreementsByCompanyID            *dataloadgen.Loader[string, []*factoring.Agreement]
 	factoringSubmissionItems                  *dataloadgen.Loader[string, []*factoring.SubmissionItem]
 	factoringSubmissionByID                   *dataloadgen.Loader[string, *factoring.Submission]
-	factoringLiveItemByInvoiceID              *dataloadgen.Loader[string, *factoringports.LiveItem]
+	factoringLiveItemByInvoiceID              *dataloadgen.Loader[string, *factoringsubmissionports.LiveItem]
 	lateChargeAssessmentsByInvoiceID          *dataloadgen.Loader[string, []*latecharge.LateChargeAssessment]
 	invoiceEDISendPlanByInvoiceID             *dataloadgen.Loader[string, *invoiceports.InvoiceEDISendPlan]
 	carrierIntelSnapshotByCarrierID           *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]

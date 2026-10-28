@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -60,7 +62,7 @@ func (s *Service) factoringSubmission(
 		return subject, nil
 	}
 
-	found, err := s.submissions.GetByID(ctx, factoringports.GetSubmissionRequest{
+	found, err := s.submissions.GetByID(ctx, factoringsubmissionports.GetSubmissionRequest{
 		ID:         submissionID,
 		TenantInfo: tenant,
 	})
@@ -99,7 +101,7 @@ func (s *Service) factoringRemittance(
 		return subject, nil
 	}
 
-	found, err := s.remittances.Get(ctx, factoringports.GetRemittanceRequest{
+	found, err := s.remittances.Get(ctx, factoringremittanceports.GetRemittanceRequest{
 		ID:         remittanceID,
 		TenantInfo: tenant,
 	})

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,7 +28,7 @@ type transportRepository struct {
 	l  *zap.Logger
 }
 
-func NewTransportRepository(p Params) factoringports.TransportRepository {
+func NewTransportRepository(p Params) factoringsubmissionports.TransportRepository {
 	return &transportRepository{
 		db: p.DB,
 		l:  p.Logger.Named("repository.factoring-transport"),
@@ -37,7 +37,7 @@ func NewTransportRepository(p Params) factoringports.TransportRepository {
 
 func (r *transportRepository) Get(
 	ctx context.Context,
-	req factoringports.GetTransportRequest,
+	req factoringsubmissionports.GetTransportRequest,
 ) (*factoring.Transport, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Transport, error) {
 		t := factoringdb.Transports

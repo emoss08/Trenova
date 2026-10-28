@@ -22,6 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -90,8 +92,8 @@ type Params struct {
 	Invoices          invoiceports.InvoiceRepository                           `optional:"true"`
 	Disputes          invoiceports.InvoiceDisputeRepository                    `optional:"true"`
 	Noas              factoringports.NoaRepository                             `optional:"true"`
-	Submissions       factoringports.SubmissionRepository                      `optional:"true"`
-	Remittances       factoringports.RemittanceRepository                      `optional:"true"`
+	Submissions       factoringsubmissionports.SubmissionRepository            `optional:"true"`
+	Remittances       factoringremittanceports.RemittanceRepository            `optional:"true"`
 	StopEtas          stopetaports.Repository                                  `optional:"true"`
 }
 
@@ -124,8 +126,8 @@ type Service struct {
 	invoices          invoiceports.InvoiceRepository
 	disputes          invoiceports.InvoiceDisputeRepository
 	noas              factoringports.NoaRepository
-	submissions       factoringports.SubmissionRepository
-	remittances       factoringports.RemittanceRepository
+	submissions       factoringsubmissionports.SubmissionRepository
+	remittances       factoringremittanceports.RemittanceRepository
 	stopEtas          stopetaports.Repository
 	logger            *zap.Logger
 }
