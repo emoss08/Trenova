@@ -161,6 +161,7 @@ fragment DeskInvoiceNeighbor on Invoice {
 query DeskInvoices($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
   invoices(input: $input) {
     edges {
+      cursor
       node {
         id
         number

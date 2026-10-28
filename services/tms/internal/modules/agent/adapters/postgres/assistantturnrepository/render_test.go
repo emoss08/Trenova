@@ -50,3 +50,13 @@ func TestLiveTurnQueriesJoinTheThreadOfTheSamePerson(t *testing.T) {
 	assert.Contains(t, titles, `"title"`)
 	assert.Contains(t, titles, " IN (SELECT")
 }
+
+func TestLiveThreadTitlesReadAnUnnamedConversationAsEmpty(t *testing.T) {
+	t.Parallel()
+
+	titles, _ := keeltest.Render(t, liveThreadTitlesQuery(&agentports.ListLiveAssistantTurnsRequest{
+		UserID: pulid.ID("usr_1"),
+	}))
+	assert.Contains(t, titles, `COALESCE(`)
+	assert.Contains(t, titles, `"title"`)
+}

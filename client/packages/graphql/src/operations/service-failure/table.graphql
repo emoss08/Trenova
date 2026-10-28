@@ -54,6 +54,7 @@ query ServiceFailureTable(
 ) {
   serviceFailures(input: $input, shipmentId: $shipmentId) {
     edges {
+      cursor
       node {
         ...ServiceFailureTableRowFields
       }

@@ -41,6 +41,35 @@ scenarios:
               note: each driver with a credential expiring within 30 days
               any: true
 
+  - name: workers-without-road-test
+    description: >
+      Who lacks a credential, across the roster. Asked of every worker, the agent once read the
+      roster a page at a time and checked each worker's credentials with a call of its own, and
+      still answered from part of the list.
+    steps:
+      - say: "show me all the workers that don't have a road test certificate"
+        expect:
+          calls: ["worker_list"]
+          maxCalls: 3
+          maxFailedCalls: 0
+          noProposals: true
+          facts:
+            - sql: >
+                select count(*) from workers w
+                where not exists (
+                  select 1 from worker_credentials c
+                  join worker_credential_types t on t.id = c.credential_type_id
+                  where c.worker_id = w.id and upper(t.code) = 'ROAD_TEST'
+                    and c.status = 'Active'
+                    and (c.expires_at is null or c.expires_at >= extract(epoch from now()))
+                )
+              note: how many workers have no valid road test on file
+          rubric: >
+            Answers for every worker with no valid road test certificate, pointing to the list
+            beside the conversation, and gives a count only when the list says it is complete.
+            It never checks workers one at a time, and never answers from part of the roster as
+            though it were all of it.
+
   - name: open-safety-events
     description: A safety manager's Monday.
     steps:

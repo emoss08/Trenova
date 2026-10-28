@@ -137,6 +137,18 @@ review are the reviewer's sign-off.
 | `worker_record_injury`, `worker_update_injury` | worker injury / create, update | inside | Propose → Ask first | no |
 | `worker_delete_injury` | worker injury / delete | inside | Propose → Propose | no |
 
+`worker_list_credentials` reads three ways from one root (`workerCredentials`): the
+credentials the workers in `workerIds` hold (at most 50, one query, never a call per worker);
+what falls due (a window, lapsed ones, or neither workers nor a type); and, with a type and
+neither workers nor a window, every active credential of that type, which is who holds it (a
+road test never expires, so no window found one). The credential types it reads beside a
+worker's credentials are left out when the call names a type (`alongsideSpec.unless`): a dozen
+workers checked for a road test each came back with the whole catalog. Who lacks a credential
+is `worker_list` with `withoutCredential` (the `workers` root's argument): a `NOT EXISTS` over
+the worker's active, unexpired credential of the type, through the unique index on a worker's
+active credential of each type, so one paged roster read answers "who has no road test on
+file" for the whole organization. An unknown code is refused, not read as everyone lacking it.
+
 A second active credential of a type is refused unless the call renews it, and the preview
 shows the one a renewal archives. Changing a fact a person verified clears the verification,
 and the preview says so. An injury takes the next case number for its year; its

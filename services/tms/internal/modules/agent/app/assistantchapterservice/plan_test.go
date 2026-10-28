@@ -21,46 +21,40 @@ func sectionTitles(req *agentports.StructuredCompletionRequest) []string {
 	return titles
 }
 
-func TestPlan_TheFirstQuestionOpensAChapterNamedByTheModel(t *testing.T) {
+func TestPlan_TheFirstQuestionOpensAQuietChapterWithoutAskingTheModel(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(t)
-	question := "why is load 1200 late?"
-	turn := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusRunning, question)
+	for name, off := range map[string]bool{"naming on": false, "naming off": true} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseOpened))
-	require.NoError(t, err)
+			f := newFixture(t)
+			f.control.AutoChaptersOff = off
+			question := "why is load 1200 late?"
+			turn := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusRunning, question)
 
-	assert.False(t, plan.Skipped())
-	assert.True(t, plan.Opens)
-	assert.False(t, plan.Decides)
-	assert.Equal(t, "Why is load 1200 late?", plan.Fallback)
-	assert.Equal(t, conversation.ChapterTitleFrom(question), plan.Fallback)
-	assert.Equal(t, conversation.ChapterTitleQuestion, plan.FallbackSource)
-	assert.Equal(t, conversation.ChapterTitleModel, plan.ModelSource)
-	assert.Equal(t, []string{question}, plan.Evidence)
-	assert.True(t, plan.NeedsModel())
+			plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseOpened))
+			require.NoError(t, err)
 
-	req := plan.Request
-	require.NotNil(t, req)
-	assert.Equal(t, aiprovider.TaskChapterTitling, req.Task)
-	assert.Equal(t, "chapter_title", req.SchemaName)
-	assert.Equal(t, aiprovider.ReasoningNone, req.Reasoning)
-	assert.Equal(t, f.tenant, req.TenantInfo)
-	assert.Equal(t, []string{"The message that opens the chapter"}, sectionTitles(req))
-	assert.Equal(t, question, req.Context.Sections[0].Content)
-	assert.Equal(t, aiusage.FeatureConversationChapters, req.Attribution.Feature)
-	assert.Equal(t, agentports.RunStepOwnerAssistantTurn, req.Attribution.OwnerKind)
-	assert.Equal(t, turn.ID, req.Attribution.OwnerID)
-	assert.Equal(t, f.thread.ID, req.Attribution.ThreadID)
-	assert.Equal(t, f.tenant.UserID, req.Attribution.UserID)
+			assert.False(t, plan.Skipped())
+			assert.True(t, plan.Opens)
+			assert.False(t, plan.Decides)
+			assert.Equal(t, "Why is load 1200 late?", plan.Fallback)
+			assert.Equal(t, conversation.ChapterTitleQuestion, plan.FallbackSource)
+			assert.Nil(t, plan.Request)
+			assert.False(t, plan.NeedsModel())
+			assert.True(t, plan.NameEarlier.IsNil())
+		})
+	}
 }
 
-func TestPlan_AutomaticChaptersOffSkipsAPersonsQuestion(t *testing.T) {
+func TestPlan_AutomaticChaptersOffSkipsALaterQuestion(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
 	f.control.AutoChaptersOff = true
+	earlier := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusCompleted, "Late loads")
+	f.chapter(earlier.ID, "Late loads", conversation.ChapterTitleQuestion, sequence(0))
 	turn := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusRunning, "Where is load 1200?")
 
 	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseOpened))
@@ -69,6 +63,31 @@ func TestPlan_AutomaticChaptersOffSkipsAPersonsQuestion(t *testing.T) {
 	assert.Equal(t, skipAutoOff, plan.Skip)
 	assert.Nil(t, plan.Request)
 	assert.False(t, plan.Opens)
+}
+
+func TestPlan_ANewChapterNamesTheQuietFirstOneWhenItOpens(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	earlier := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusCompleted, "Late loads")
+	f.chapter(earlier.ID, "Late loads", conversation.ChapterTitleQuestion, sequence(0))
+	turn := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusRunning, "Now the Acme invoice")
+
+	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseOpened))
+	require.NoError(t, err)
+
+	assert.True(t, plan.Decides)
+	assert.Equal(t, earlier.ID, plan.NameEarlier)
+
+	named := newFixture(t)
+	first := named.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusCompleted, "Late loads")
+	named.chapter(first.ID, "Late loads on the Dallas lane", conversation.ChapterTitleModel, sequence(0))
+	next := named.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusRunning, "Now the Acme invoice")
+
+	again, err := named.svc.Plan(t.Context(), named.request(next.ID, agentports.ChapterPhaseOpened))
+	require.NoError(t, err)
+
+	assert.True(t, again.NameEarlier.IsNil())
 }
 
 func TestPlan_ALaterQuestionAsksWhetherItStartsANewChapter(t *testing.T) {
@@ -102,6 +121,13 @@ func TestPlan_ALaterQuestionAsksWhetherItStartsANewChapter(t *testing.T) {
 	require.NotNil(t, req)
 	assert.Equal(t, "chapter_decision", req.SchemaName)
 	assert.Equal(t, aiprovider.TaskChapterTitling, req.Task)
+	assert.Equal(t, aiprovider.ReasoningOff, req.Reasoning)
+	assert.Equal(t, f.tenant, req.TenantInfo)
+	assert.Equal(t, aiusage.FeatureConversationChapters, req.Attribution.Feature)
+	assert.Equal(t, agentports.RunStepOwnerAssistantTurn, req.Attribution.OwnerKind)
+	assert.Equal(t, turn.ID, req.Attribution.OwnerID)
+	assert.Equal(t, f.thread.ID, req.Attribution.ThreadID)
+	assert.Equal(t, f.tenant.UserID, req.Attribution.UserID)
 	assert.Equal(t, []string{
 		"Current chapter title",
 		"The conversation just before",
@@ -320,7 +346,21 @@ func TestPlan_AChapterThePersonNamedIsNeverRemovedOrRenamed(t *testing.T) {
 	})
 }
 
-func TestPlan_AnAnsweredQuestionsChapterIsNamedFromTheQuestionAndReply(t *testing.T) {
+func TestPlan_AnAnsweredQuestionsChapterWaitsToBeNamedUntilAnotherOpens(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	turn := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusCompleted, "which loads are late?")
+	f.chapter(turn.ID, "Which loads are late?", conversation.ChapterTitleQuestion, sequence(0))
+
+	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseAnswered))
+	require.NoError(t, err)
+
+	assert.Equal(t, skipNamed, plan.Skip)
+	assert.Nil(t, plan.Request)
+}
+
+func TestPlan_RequestedNamesAChapterFromItsQuestionAndReply(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
@@ -334,7 +374,7 @@ func TestPlan_AnAnsweredQuestionsChapterIsNamedFromTheQuestionAndReply(t *testin
 		{Role: conversation.RoleAssistant, Content: "Three loads are late on the Dallas lane."},
 	}
 
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseAnswered))
+	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseRequested))
 	require.NoError(t, err)
 
 	assert.False(t, plan.Skipped())

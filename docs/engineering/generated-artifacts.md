@@ -256,7 +256,9 @@ tool, when:
   that selects `pageInfo` and needs no variable but its table input; instead, an unpaged list or
   one record with a variable of its own and no input object;
 - a get's operation requires an input object, or a paged list's a filter input with a required
-  input-object field.
+  input-object field;
+- a list paged through a connection reads an operation that does not select each edge's
+  `cursor` under `edges` (`cursorless`), which a page cut to what a model can read resumes from.
 
 Editing a bound operation on the client re-hashes it, and
 `TestEveryBoundOperationIsPersistedAsItIsRun` fails until the generator runs again. Adding a

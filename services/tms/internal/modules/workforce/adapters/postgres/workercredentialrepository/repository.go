@@ -308,6 +308,10 @@ func (r *repository) ListForWorker(
 	ctx context.Context,
 	req *workerports.ListWorkerCredentialsRequest,
 ) ([]*worker.WorkerCredential, error) {
+	if len(req.WorkerIDs) == 0 {
+		return []*worker.WorkerCredential{}, nil
+	}
+
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerCredential, error) {
 		c := workerdb.WorkerCredentials
 		loads := append(
@@ -316,11 +320,11 @@ func (r *repository) ListForWorker(
 		)
 
 		entities, err := c.Where(
-			c.WorkerID.Eq(req.WorkerID),
+			c.WorkerID.In(req.WorkerIDs...),
 			keel.When(!req.IncludeArchived, c.Status.Eq(worker.CredentialStatusActive)),
 		).
 			Load(loads...).
-			Order(c.Status.Asc(), c.CreatedAt.Desc(), c.ID.Asc()).
+			Order(c.WorkerID.Asc(), c.Status.Asc(), c.CreatedAt.Desc(), c.ID.Asc()).
 			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list worker credentials", zap.Error(err))
@@ -444,10 +448,10 @@ func expiringQuery(
 
 	q := c.Where(
 		c.Status.Eq(worker.CredentialStatusActive),
-		c.ExpiresAt.Between(grace, horizon),
+		keel.When(!req.AnyExpiry, c.ExpiresAt.Between(grace, horizon)),
 		c.Worker().Status.Eq(domaintypes.StatusActive),
 		ct.Status.Eq(domaintypes.StatusActive),
-		keel.When(req.WorkerID.IsNotNil(), c.WorkerID.Eq(req.WorkerID)),
+		keel.When(len(req.WorkerIDs) > 0, c.WorkerID.In(req.WorkerIDs...)),
 		keel.When(req.TenantInfo.OrgID.IsNotNil(), c.OrganizationID.Eq(req.TenantInfo.OrgID)),
 		keel.When(req.TenantInfo.BuID.IsNotNil(), c.BusinessUnitID.Eq(req.TenantInfo.BuID)),
 		keel.When(req.AfterID.IsNotNil(), c.ID.Gt(req.AfterID)),

@@ -43,11 +43,12 @@ type CountCredentialsByTypeIDsRequest struct {
 }
 
 type ListWorkerCredentialsRequest struct {
-	TenantInfo      pagination.TenantInfo `json:"tenantInfo"`
-	WorkerID        pulid.ID              `json:"workerId"`
-	IncludeArchived bool                  `json:"includeArchived"`
-	IncludeType     bool                  `json:"includeType"`
-	IncludeDocument bool                  `json:"includeDocument"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	// WorkerIDs are the workers whose credentials are read, in one query.
+	WorkerIDs       []pulid.ID `json:"workerIds"`
+	IncludeArchived bool       `json:"includeArchived"`
+	IncludeType     bool       `json:"includeType"`
+	IncludeDocument bool       `json:"includeDocument"`
 }
 
 type GetWorkerCredentialByIDRequest struct {
@@ -89,9 +90,14 @@ type ListExpiringWorkerCredentialsRequest struct {
 	// expiring credential and keeping the medical cards among them reports two
 	// when there are forty, and nothing in the result says so.
 	CredentialTypeCodes []string `json:"credentialTypeCodes"`
-	WorkerID            pulid.ID `json:"workerId"`
-	SoonestFirst        bool     `json:"soonestFirst"`
-	Offset              int      `json:"offset"`
+	// WorkerIDs narrows the walk to these workers' credentials.
+	WorkerIDs    []pulid.ID `json:"workerIds"`
+	SoonestFirst bool       `json:"soonestFirst"`
+	Offset       int        `json:"offset"`
+	// AnyExpiry drops the window: every active credential, whatever its
+	// expiry or none, which is who holds a type. A road test that never
+	// expires is outside every window.
+	AnyExpiry bool `json:"anyExpiry"`
 }
 
 type PatchProfileCredentialFieldRequest struct {

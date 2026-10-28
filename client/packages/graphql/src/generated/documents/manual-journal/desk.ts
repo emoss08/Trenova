@@ -2,4 +2,4 @@
 import type { TypedDocumentString, DeskManualJournalCardQuery, DeskManualJournalCardQueryVariables, DeskManualJournalsQuery, DeskManualJournalsQueryVariables } from "../../graphql";
 
 export const DeskManualJournalCardDocument = {"__meta__":{"kind":"query","name":"DeskManualJournalCard","hash":"sha256:1c91df8041f2edb76527ad3a0a8d2d17411bd31c785ff3aa4972d6552da2226f"}} as unknown as TypedDocumentString<DeskManualJournalCardQuery, DeskManualJournalCardQueryVariables>;
-export const DeskManualJournalsDocument = {"__meta__":{"kind":"query","name":"DeskManualJournals","hash":"sha256:2b8491c72820af80533bbfa7b71e23e336b13954455e017f1fa0b56ed556be14"}} as unknown as TypedDocumentString<DeskManualJournalsQuery, DeskManualJournalsQueryVariables>;
+export const DeskManualJournalsDocument = {"__meta__":{"kind":"query","name":"DeskManualJournals","hash":"sha256:29037eac713a284a1f150615fcc102438f61d41a7cb9b5bf29292e4e598dad09"}} as unknown as TypedDocumentString<DeskManualJournalsQuery, DeskManualJournalsQueryVariables>;

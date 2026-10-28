@@ -83,6 +83,7 @@ query DeskAccountingSyncRecords(
   $first: Int
   $after: String
   $filter: AccountingSyncRecordFilterInput
+  $includeTotalCount: Boolean = false
 ) {
   accountingSyncRecords(
     integrationType: $integrationType
@@ -91,6 +92,7 @@ query DeskAccountingSyncRecords(
     filter: $filter
   ) {
     edges {
+      cursor
       node {
         ...DeskAccountingSyncRecordFields
       }
@@ -98,6 +100,8 @@ query DeskAccountingSyncRecords(
     pageInfo {
       ...DataTablePageInfoFields
     }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }
 
@@ -157,6 +161,7 @@ query DeskAccountingMappings(
   $first: Int
   $after: String
   $filter: AccountingMappingFilterInput
+  $includeTotalCount: Boolean = false
 ) {
   accountingMappings(
     integrationType: $integrationType
@@ -165,6 +170,7 @@ query DeskAccountingMappings(
     filter: $filter
   ) {
     edges {
+      cursor
       node {
         ...DeskAccountingMappingFields
       }
@@ -172,6 +178,8 @@ query DeskAccountingMappings(
     pageInfo {
       ...DataTablePageInfoFields
     }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }
 
@@ -231,6 +239,7 @@ query DeskAccountingDriftFindings(
 ) {
   accountingDriftFindingTable(integrationType: $integrationType, input: $input) {
     edges {
+      cursor
       node {
         id
         kind
@@ -286,6 +295,7 @@ query DeskAccountingInboundChanges(
 ) {
   accountingInboundChangeTable(integrationType: $integrationType, input: $input) {
     edges {
+      cursor
       node {
         id
         kind

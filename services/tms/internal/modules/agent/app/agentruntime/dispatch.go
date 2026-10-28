@@ -108,6 +108,8 @@ type dispatchParams struct {
 	// script's batch.
 	scriptStepKey string
 	gate          scriptGate
+	// caller is who made the call: the model, or a script's broker.
+	caller string
 }
 
 func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
@@ -167,7 +169,9 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			return s.runScriptTool(ctx, &p, tool, &call)
 		}
 
-		outcome := s.runQueryTool(ctx, req, tool, call)
+		outcome := s.runQueryToolWith(ctx, req, tool, &call, &queryExtras{
+			fitPage: p.caller != aitrace.CallerScript,
+		})
 		outcome.ranWith = call.Arguments
 		if note := contract.note(); note != "" && !outcome.failed {
 			outcome.content += "\n\n[" + note + "]"
@@ -712,21 +716,14 @@ func humanResource(resource permission.Resource) string {
 	return strings.ReplaceAll(resource.String(), "_", " ")
 }
 
-func (s *Service) runQueryTool(
-	ctx context.Context,
-	req *agentports.RunRequest,
-	tool agentports.AgentQueryTool,
-	call agentports.ToolCall,
-) toolOutcome {
-	return s.runQueryToolWith(ctx, req, tool, &call, &queryExtras{})
-}
-
 // queryExtras is what only the tool that runs a script is handed: the broker
-// its reads go through and the step it is claimed under.
+// its reads go through and the step it is claimed under; and, for a call the
+// model reads, that a list page too long for it is cut to the rows that fit.
 type queryExtras struct {
 	broker    codemode.Broker
 	stepKey   string
 	continues map[string]any
+	fitPage   bool
 }
 
 func (s *Service) runQueryToolWith(
@@ -750,6 +747,7 @@ func (s *Service) runQueryToolWith(
 		StepKey:           extras.stepKey,
 		CallID:            call.ID,
 		Continues:         extras.continues,
+		IncludeTotal:      extras.fitPage && firstPage(call.Arguments),
 	})
 	if refused, ok := errors.AsType[*agentports.ReadRefusedError](err); ok {
 		return refusedOutcome(
@@ -766,17 +764,29 @@ func (s *Service) runQueryToolWith(
 			"Tool %q failed: %s", call.Name, err.Error())
 	}
 
-	encoded, document, err := encodeToolDocument(data, timeutils.NowUnix(), req.Context.Timezone)
+	now := timeutils.NowUnix()
+	var fields []string
+	if extras.fitPage {
+		fields = listFields(call.Arguments)
+	}
+	encoded, document, err := encodeModelDocument(data, now, req.Context.Timezone, fields)
 	if err != nil {
 		return refusedOutcome(aitrace.OutcomeFailed, "its result could not be encoded",
 			"Tool %q returned data that could not be encoded.", call.Name)
 	}
+	content := ""
+	if extras.fitPage {
+		if fitted, cut := fitPage(data, encoded, now, req.Context.Timezone, fields); cut {
+			data, encoded, document = fitted.data, fitted.encoded, fitted.document
+			content = "\n\n" + fitted.note()
+		}
+	}
 
 	outcome := toolOutcome{
-		content: FenceToolResult(call.Name, encoded),
+		content: FenceToolResult(call.Name, encoded) + content,
 		data:    data,
 		summary: summarizeResult(call.Name, document),
-		taint:   callTaint(s.ruled(ctx, req, tool.Policy()), *call, data, timeutils.NowUnix()),
+		taint:   callTaint(s.ruled(ctx, req, tool.Policy()), *call, data, now),
 		verdict: aitrace.OutcomeRan,
 	}
 	if recall, ok := data.(agentports.MemoryRecall); ok {
@@ -785,6 +795,18 @@ func (s *Service) runQueryToolWith(
 
 	return outcome
 }
+
+// firstPage reports whether a list call reads its first page, which is where
+// a model learns how many records the whole list holds: counted exactly up to
+// pagination.ExactTotalUpTo and estimated past it, so "how many inactive
+// drivers" is answered from the first page rather than by paging to the end.
+func firstPage(arguments map[string]any) bool {
+	after, _ := arguments[listAfterParam].(string)
+
+	return after == ""
+}
+
+const listAfterParam = "after"
 
 func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome {
 	call := a.call

@@ -110,8 +110,10 @@ type listPage struct {
 	rows       []any
 	hasMore    bool
 	nextCursor string
-	cursored   bool
-	fuzzy      bool
+	// cursors are each row's edge cursor, in order, when the page has them.
+	cursors  []string
+	cursored bool
+	fuzzy    bool
 }
 
 type listTool struct {
@@ -465,11 +467,14 @@ func (w *listWindow) outcome(
 	outcome := searchResult(criteria, rows, len(rows))
 	if w.byCursor {
 		outcome.cursorPaged(&w.cursor, more, fetched.nextCursor)
+		outcome.resume = &pageResume{scope: w.cursor.scope, cursors: fetched.cursors}
 
 		return outcome, more
 	}
+	outcome = outcome.paged(w.offset, more)
+	outcome.resume = &pageResume{byOffset: true}
 
-	return outcome.paged(w.offset, more), more
+	return outcome, more
 }
 
 type listFetch struct {
@@ -693,6 +698,7 @@ func cursorListPage[T any](
 		rows:       listRows(result.Items, row),
 		hasMore:    result.HasNextPage,
 		nextCursor: next,
+		cursors:    result.EdgeCursors,
 		cursored:   true,
 		fuzzy:      result.Fuzzy,
 	}, nil

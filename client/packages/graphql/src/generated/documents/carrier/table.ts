@@ -4,4 +4,4 @@ import type { TypedDocumentString, CarrierContactFieldsFragment, CarrierInsuranc
 export const CarrierContactFieldsFragmentDoc = {"__meta__":{"fragmentName":"CarrierContactFields"}} as unknown as TypedDocumentString<CarrierContactFieldsFragment, unknown>;
 export const CarrierInsurancePolicyFieldsFragmentDoc = {"__meta__":{"fragmentName":"CarrierInsurancePolicyFields"}} as unknown as TypedDocumentString<CarrierInsurancePolicyFieldsFragment, unknown>;
 export const CarrierTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"CarrierTableRowFields"}} as unknown as TypedDocumentString<CarrierTableRowFieldsFragment, unknown>;
-export const CarrierTableDocument = {"__meta__":{"kind":"query","name":"CarrierTable","hash":"sha256:e174f777c9e13d072c2d92fd20e2ae26f63ec024bdf73b1a2f59d4765d4d9aa5"}} as unknown as TypedDocumentString<CarrierTableQuery, CarrierTableQueryVariables>;
+export const CarrierTableDocument = {"__meta__":{"kind":"query","name":"CarrierTable","hash":"sha256:e2eb0236082974d513508421cb14d00433f24eee3e2a308cf0ae8048d8dbbb5c"}} as unknown as TypedDocumentString<CarrierTableQuery, CarrierTableQueryVariables>;

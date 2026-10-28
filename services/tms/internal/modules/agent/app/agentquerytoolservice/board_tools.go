@@ -1,10 +1,10 @@
 package agentquerytoolservice
 
 import (
-	"cmp"
 	"context"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -26,6 +27,9 @@ type boardReader interface {
 }
 
 const (
+	paramBoardLate    = "late"
+	paramBoardDrivers = "drivers"
+
 	defaultBoardHours = 24
 	maxBoardHours     = 7 * 24
 	defaultBoardLimit = 40
@@ -80,12 +84,67 @@ type boardDriverRow struct {
 }
 
 type boardView struct {
-	Window  string           `json:"window"`
-	Summary *boardSummaryRow `json:"summary"`
-	Moves   []boardMoveRow   `json:"moves"`
-	Drivers []boardDriverRow `json:"drivers"`
-	Note    string           `json:"note"`
-	Counts  map[string]int   `json:"urgencyCounts"`
+	Window     string           `json:"window"`
+	Summary    *boardSummaryRow `json:"summary"`
+	Moves      []boardMoveRow   `json:"moves"`
+	Drivers    []boardDriverRow `json:"drivers,omitempty"`
+	Note       string           `json:"note"`
+	Counts     map[string]int   `json:"urgencyCounts"`
+	HasMore    bool             `json:"hasMore"`
+	NextCursor string           `json:"nextCursor,omitempty"`
+
+	lateOnly bool
+	window   offsetWindow
+}
+
+func (v *boardView) PageRows() int { return len(v.Moves) }
+
+// CutPage is the board with its first rows moves, resuming at the move after
+// them; the drivers and the summary stay whole.
+func (v *boardView) CutPage(rows int) (any, bool) {
+	if rows <= 0 || rows >= len(v.Moves) {
+		return nil, false
+	}
+	cut := *v
+	cut.Moves = v.Moves[:rows]
+	cut.HasMore = true
+	cut.NextCursor = pagination.EncodeKeyCursor(
+		v.window.scope, strconv.Itoa(v.window.offset+rows))
+	cut.tally()
+
+	return &cut, true
+}
+
+// tally counts the moves listed by urgency and by what each is late to do,
+// and says so in the note.
+func (v *boardView) tally() {
+	v.Counts = make(map[string]int, 5)
+	late := lateTally{}
+	for idx := range v.Moves {
+		v.Counts[v.Moves[idx].Urgency]++
+		late.add(&v.Moves[idx])
+	}
+	listed := "moves"
+	if v.lateOnly {
+		listed = "late moves"
+	}
+	drivers := ""
+	if v.Drivers != nil {
+		drivers = fmt.Sprintf(" and %d drivers", len(v.Drivers))
+	}
+	more := ""
+	if v.HasMore {
+		more = " More moves follow on the next page (nextCursor as after)."
+	}
+	v.Note = fmt.Sprintf(
+		"%d %s%s listed, the furthest behind first, then the soonest due.%s Urgency "+
+			"counts among the moves listed: %s; summary counts every move in the window, so "+
+			"quote it for totals. Urgency follows each move's next stop, the pickup until it "+
+			"is picked up and then the delivery; lateTo says what each is late to do: %d late "+
+			"to pick up, %d late to deliver.%s",
+		len(v.Moves), listed, drivers, more, countsText(v.Counts),
+		late.pickUp, late.deliver, late.delayedText(),
+	)
 }
 
 // boardSummaryRow counts every move in the window, not only the moves listed.
@@ -117,46 +176,60 @@ func newGetDispatchBoardTool(board boardReader) agentports.AgentQueryTool {
 func (t *getDispatchBoardTool) Name() string { return "dispatch_get_board" }
 
 func (t *getDispatchBoardTool) Description() string {
-	return "The dispatch board: every move in the window with its urgency and coverage, " +
-		"and every driver with availability, hours remaining and last position. Urgency " +
-		"is Late, Now, Today, Tomorrow or Planned, and each move shows who covers it and " +
-		"its pickup and delivery windows. This is the one call for \"what is late\", " +
-		"\"what is uncovered\" and \"who is free\". Urgency follows the move's next stop: " +
-		"the pickup window until it is picked up, then the delivery window. Each late " +
-		"move's lateTo says whether it is late to pick up or to deliver, " +
-		"and lateBy how long past the window's close it is, the way to say it. Late moves " +
-		"come first, late to deliver then late to pick up, each furthest behind first; " +
-		"check shipment_get_tracking on a late move " +
-		"before acting on it, since arrivals are sometimes recorded late. A rundown or " +
-		"a list answers from the board as it stands, saying what each is late to do, " +
-		"rather than tracking each move. summary counts every move in the window, listed " +
-		"or not: overdueMoves, dueNowMoves and dueTodayMoves by urgency, and " +
-		"uncoveredPastPickup and uncoveredPickupSoon among the uncovered. On a board, show " +
-		"them with the metrics movesLate, movesDueNow, movesDueToday and movesUncovered. To " +
-		"act on one load, such as a note or a change, find it with shipment_list."
+	return "The dispatch board: moves in the window with their urgency and coverage, the " +
+		"furthest behind first, and the drivers with availability, hours remaining and last " +
+		"position. Urgency is Late, Now, Today, Tomorrow or Planned, and each move shows who " +
+		"covers it and its pickup and delivery windows. This is the one call for \"what is " +
+		"late\" (late), \"what is uncovered\" (uncoveredOnly) and \"who is free\". " +
+		"Urgency follows the move's next stop: the pickup window until it is picked up, then " +
+		"the delivery window. Each late move's lateTo says whether it is late to pick up or " +
+		"to deliver, and lateBy how long past the window's close it is, the way to say it. " +
+		"late lists every late move and no others, a page at a time, without the drivers " +
+		"unless asked; check shipment_get_tracking on a late move before acting on it, since " +
+		"arrivals are sometimes recorded late. A rundown or a list answers from the board as " +
+		"it stands, saying what each is late to do, rather than tracking each move. summary " +
+		"counts every move in the window, listed or not: overdueMoves, dueNowMoves and " +
+		"dueTodayMoves by urgency, and uncoveredPastPickup and uncoveredPickupSoon among the " +
+		"uncovered. On a board, show them with the metrics movesLate, movesDueNow, " +
+		"movesDueToday and movesUncovered. To act on one load, such as a note or a change, " +
+		"find it with shipment_list."
 }
 
 func (t *getDispatchBoardTool) ParamSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"hoursAhead": map[string]any{
-				"type": "integer",
-				"description": fmt.Sprintf(
-					"How far ahead the window reaches, in hours. Default %d, at most %d.",
-					defaultBoardHours, maxBoardHours,
-				),
-			},
-			"uncoveredOnly": map[string]any{
-				"type":        "boolean",
-				"description": "Only moves with no driver or carrier. Default false.",
-			},
-			"query": map[string]any{
-				"type":        "string",
-				"description": "Optional text matched against PRO numbers, customers and places.",
-			},
-			paramLimit: limitSchema(defaultBoardLimit, maxBoardLimit),
+	properties := map[string]any{
+		"hoursAhead": map[string]any{
+			"type": "integer",
+			"description": fmt.Sprintf(
+				"How far ahead the window reaches, in hours. Default %d, at most %d.",
+				defaultBoardHours, maxBoardHours,
+			),
 		},
+		"uncoveredOnly": map[string]any{
+			"type":        "boolean",
+			"description": "Only moves with no driver or carrier. Default false.",
+		},
+		paramBoardLate: map[string]any{
+			"type": "boolean",
+			"description": "Only the moves late now: past the pickup window with no arrival, " +
+				"or past the delivery window's close once picked up. Default false.",
+		},
+		paramBoardDrivers: map[string]any{
+			"type": "boolean",
+			"description": "List the drivers beside the moves. Default true, and false with " +
+				"late; leave them out when the question is only about loads.",
+		},
+		"query": map[string]any{
+			"type":        "string",
+			"description": "Optional text matched against PRO numbers, customers and places.",
+		},
+	}
+	for name, property := range cursorPageSchema(defaultBoardLimit, maxBoardLimit) {
+		properties[name] = property
+	}
+
+	return map[string]any{
+		"type":                 "object",
+		"properties":           properties,
 		"additionalProperties": false,
 	}
 }
@@ -179,7 +252,15 @@ func (t *getDispatchBoardTool) Query(
 	if hours <= 0 || hours > maxBoardHours {
 		hours = defaultBoardHours
 	}
-	limit := readLimit(params.Params, defaultBoardLimit, maxBoardLimit)
+	window, err := readOffsetWindow(t.Name(), params.Params, defaultBoardLimit, maxBoardLimit)
+	if err != nil {
+		return nil, err
+	}
+	late := optionalBool(params.Params, paramBoardLate)
+	drivers := !late
+	if raw, given := params.Params[paramBoardDrivers].(bool); given {
+		drivers = raw
+	}
 
 	now := clockFor(params).Now
 	board, err := t.board.GetBoard(ctx, &dispatchconsoleservice.GetBoardRequest{
@@ -188,16 +269,32 @@ func (t *getDispatchBoardTool) Query(
 		WindowEnd:      now + int64(hours)*3600,
 		Query:          optionalString(params.Params, "query"),
 		IncludeCovered: !optionalBool(params.Params, "uncoveredOnly"),
-		Limit:          limit,
+		Limit:          window.limit + 1,
+		LateOnly:       late,
+		DueFirst:       true,
+		Offset:         window.offset,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return boardViewOf(board, params.Timezone), nil
+	view := boardViewOf(board, params.Timezone, window.limit)
+	view.lateOnly = late
+	view.window = window
+	if view.HasMore {
+		view.NextCursor = window.next()
+	}
+	if !drivers {
+		view.Drivers = nil
+	}
+	view.tally()
+
+	return &view, nil
 }
 
-func boardViewOf(board *dispatchconsoleservice.Board, timezone string) boardView {
+// boardViewOf is a page of the board, at most limit moves in the board's
+// order, which the read made due-first: the furthest behind lead.
+func boardViewOf(board *dispatchconsoleservice.Board, timezone string, limit int) boardView {
 	view := boardView{
 		Window: fmt.Sprintf(
 			"%s to %s",
@@ -206,7 +303,6 @@ func boardViewOf(board *dispatchconsoleservice.Board, timezone string) boardView
 		),
 		Moves:   make([]boardMoveRow, 0, len(board.Moves)),
 		Drivers: make([]boardDriverRow, 0, len(board.Drivers)),
-		Counts:  make(map[string]int, 5),
 	}
 	if board.Summary != nil {
 		view.Summary = &boardSummaryRow{
@@ -224,43 +320,25 @@ func boardViewOf(board *dispatchconsoleservice.Board, timezone string) boardView
 		}
 	}
 
-	late := lateTally{}
 	for _, move := range board.Moves {
 		if move == nil || move.BoardMove == nil {
 			continue
 		}
-		view.Counts[string(move.Urgency)]++
+		if len(view.Moves) == limit {
+			view.HasMore = true
+			break
+		}
 		row := toBoardMoveRow(move, timezone)
 		row.LateTo, row.lateSeconds = lateness(move.BoardMove, board.WindowStart)
 		row.LateBy = lateFor(row.lateSeconds)
-		late.add(&row)
 		view.Moves = append(view.Moves, row)
 	}
-	// Late to deliver, then late to pick up, each furthest behind first: an
-	// agent read the first late move as the most overdue when it was only the
-	// oldest pickup, three hours behind with others fourteen hours behind.
-	slices.SortStableFunc(view.Moves, func(a, b boardMoveRow) int {
-		if rank := lateRank(a.LateTo) - lateRank(b.LateTo); rank != 0 {
-			return rank
-		}
-
-		return cmp.Compare(b.lateSeconds, a.lateSeconds)
-	})
 	for _, driver := range board.Drivers {
 		if driver == nil || driver.BoardDriver == nil {
 			continue
 		}
 		view.Drivers = append(view.Drivers, toBoardDriverRow(driver, timezone))
 	}
-
-	view.Note = fmt.Sprintf(
-		"%d moves and %d drivers listed. Urgency counts among the moves listed: %s; summary "+
-			"counts every move in the window, so quote it for totals. Urgency follows each "+
-			"move's next stop, the pickup until it is picked up and then the delivery; "+
-			"lateTo says what each is late to do: %d late to pick up, %d late to deliver.%s",
-		len(view.Moves), len(view.Drivers), countsText(view.Counts),
-		late.pickUp, late.deliver, late.delayedText(),
-	)
 
 	return view
 }
@@ -309,20 +387,6 @@ func lateFor(seconds int64) string {
 	}
 
 	return timeutils.FormatLongDurationMs(seconds * millisPerSecond)
-}
-
-// lateRank orders the agent's board by what a move is late to do: a load
-// late to deliver first, then one late to pick up, then the rest, so a
-// shortened board keeps the moves a "what is late" question is about.
-func lateRank(lateTo string) int {
-	switch lateTo {
-	case lateToDeliver:
-		return 0
-	case lateToPickUp:
-		return 1
-	default:
-		return 2
-	}
 }
 
 // lateTally counts the board's late moves by what they are late to do, and

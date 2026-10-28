@@ -34,6 +34,7 @@ fragment LocationTableRowFields on Location {
 query LocationTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   locations(input: $input) {
     edges {
+      cursor
       node {
         ...LocationTableRowFields
       }

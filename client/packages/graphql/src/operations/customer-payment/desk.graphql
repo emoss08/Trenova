@@ -4,6 +4,7 @@
 query DeskCustomerPayments($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
   customerPayments(input: $input) {
     edges {
+      cursor
       node {
         id
         customerId

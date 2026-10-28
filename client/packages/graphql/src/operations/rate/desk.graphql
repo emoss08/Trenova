@@ -17,6 +17,7 @@ query DeskRateAgreementPricing($input: DataTableConnectionInput!) {
 query DeskRateAgreements($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
   rateAgreements(input: $input) {
     edges {
+      cursor
       node {
         id
         code

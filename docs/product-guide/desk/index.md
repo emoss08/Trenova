@@ -400,7 +400,7 @@ Keywords: copy answer, read out loud, text to speech
 
 ### Move through a conversation by chapter
 Keywords: chapter, chapters, table of contents, jump to, topic, subject, rename chapter, chapter title, bookmark, split conversation
-1. When a conversation turns to a new subject, the Desk starts a chapter and names it in a few words. The name sits above the question that opens the chapter, with its number.
+1. A conversation about one thing shows no chapters. Once it turns to a second subject, the Desk splits it into chapters and names each in a few words. A chapter's name sits above the question that opens it, with its number.
 2. Once a conversation has two chapters, a mark for each shows in its top-left corner. The chapter you are reading has the longest mark, and a chapter with a decision waiting for you is marked in amber.
 3. Point at the marks to list the chapters. Each says what it made, what waits for your decision and what the agent is waiting on. Select a chapter to go to it, even one above the messages loaded so far.
 4. Double-click a chapter's name, or move to it with Tab and press Enter, to rename it. Press Enter or click away to keep the new name, or Escape to keep the old one. A name you give is never changed by the Desk.

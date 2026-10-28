@@ -5,6 +5,7 @@
 query DeskIftaReturns($input: IFTAReturnsInput!, $includeTotalCount: Boolean = false) {
   iftaReturns(input: $input) {
     edges {
+      cursor
       node {
         id
         year

@@ -16,6 +16,7 @@ query EquipmentManufacturerTable(
 ) {
   equipmentManufacturers(input: $input) {
     edges {
+      cursor
       node {
         ...EquipmentManufacturerTableRowFields
       }

@@ -2,4 +2,4 @@
 import type { TypedDocumentString, AccessorialChargeTableQuery, AccessorialChargeTableQueryVariables, AccessorialChargeTableRowFieldsFragment } from "../../graphql";
 
 export const AccessorialChargeTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"AccessorialChargeTableRowFields"}} as unknown as TypedDocumentString<AccessorialChargeTableRowFieldsFragment, unknown>;
-export const AccessorialChargeTableDocument = {"__meta__":{"kind":"query","name":"AccessorialChargeTable","hash":"sha256:f026ac4d573c423e867a719ef5ba51b4e4fd9c8dfb3828ac65235186a6b27822"}} as unknown as TypedDocumentString<AccessorialChargeTableQuery, AccessorialChargeTableQueryVariables>;
+export const AccessorialChargeTableDocument = {"__meta__":{"kind":"query","name":"AccessorialChargeTable","hash":"sha256:3e2bfd6b7f4858fcf5a9e4d1cabe48c8450eb34a39cf6b4bdafc6419b8d8c52e"}} as unknown as TypedDocumentString<AccessorialChargeTableQuery, AccessorialChargeTableQueryVariables>;

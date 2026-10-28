@@ -10,19 +10,24 @@
   color: var(--dsk-faint);
   font-variant-numeric: tabular-nums;
 }
+/* The title takes the width it needs and is cut short only when the column
+   runs out. The pull that lines its text up with the heading sits on the
+   heading, not the button: on the button it left the button 6px narrower than
+   its own text, so every title was cut. */
 .dk-chap-title {
-  margin: 0;
+  flex: 0 1 auto;
   min-width: 0;
+  margin: 0 0 0 -6px;
   font: inherit;
 }
 .dk-chap-t {
   display: block;
   max-width: 100%;
-  margin-left: -6px;
   padding: 2px 6px;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.4;
   letter-spacing: -0.005em;
   color: var(--dsk-fg);
   text-align: left;
@@ -61,7 +66,7 @@
   white-space: nowrap;
 }
 .dk-chap-rule {
-  flex: 1;
+  flex: 1 1 24px;
   min-width: 24px;
   height: 1px;
   background: var(--dsk-b-sub);
@@ -81,7 +86,8 @@
   animation: dk-chap-in 420ms var(--dk-settle) both;
 }
 
-/* The rail: a tick per chapter, opening into the list of them. */
+/* The rail: a tick per chapter, opening into the list of them. The list stays
+   mounted so it opens and closes on the same transition. */
 .dk-chap-rail {
   position: relative;
 }
@@ -89,13 +95,17 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
-  padding: 8px;
-  border-radius: 8px;
+  gap: 3px;
+  padding: 5px;
+  border-radius: 6px;
+  transition: opacity 140ms var(--dk-settle);
+}
+.dk-chap-rail-open .dk-chap-ticks {
+  opacity: 0;
 }
 .dk-chap-tick {
   display: block;
-  width: 12px;
+  width: 8px;
   height: 2px;
   border-radius: 1px;
   background: var(--dsk-b-strong);
@@ -104,7 +114,7 @@
     background-color 200ms;
 }
 .dk-chap-tick-on {
-  width: 20px;
+  width: 14px;
   background: var(--dsk-fg);
 }
 .dk-chap-tick-waits {
@@ -118,29 +128,51 @@
   top: 0;
   left: 0;
   z-index: 6;
-  width: 300px;
-  max-height: min(60vh, 520px);
+  width: 264px;
+  max-height: min(52vh, 360px);
   margin: 0;
-  padding: 6px;
+  padding: 4px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   background: var(--dsk-raised);
   border: 1px solid var(--dsk-b);
-  border-radius: 12px;
-  animation: dk-chap-open 160ms var(--dk-settle) both;
+  border-radius: 8px;
+  transform-origin: top left;
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 150ms var(--dk-settle),
+    transform 180ms var(--dk-settle),
+    visibility 0s linear 180ms;
 }
-.dk-chap-list[hidden] {
-  display: none;
+.dk-chap-list[data-open] {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity 150ms var(--dk-settle),
+    transform 180ms var(--dk-settle),
+    visibility 0s;
 }
 .dk-chap-row {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: baseline;
+  gap: 8px;
   width: 100%;
-  padding: 7px 8px;
-  border-radius: 8px;
+  padding: 5px 8px;
+  border-radius: 5px;
   text-align: left;
   color: var(--dsk-muted);
+  transition:
+    background-color 120ms,
+    color 120ms;
 }
 .dk-chap-row:hover {
   background: var(--dsk-hover);
@@ -152,21 +184,24 @@
 }
 .dk-chap-row-n {
   flex: none;
-  width: 18px;
-  padding-top: 1px;
-  font: 11px var(--font-mono);
+  width: 12px;
+  font: 10px var(--font-mono);
   color: var(--dsk-faint);
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+/* One line a chapter: the title takes what the counts leave it. */
 .dk-chap-row-body {
   display: flex;
+  flex: 1;
   min-width: 0;
-  flex-direction: column;
-  gap: 2px;
+  align-items: baseline;
+  gap: 10px;
 }
 .dk-chap-row-t {
-  font-size: 13px;
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -174,9 +209,10 @@
 }
 .dk-chap-work {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px 10px;
-  font-size: 11.5px;
+  flex: none;
+  gap: 8px;
+  font-size: 10.5px;
+  white-space: nowrap;
   color: var(--dsk-subtle);
 }
 .dk-chap-w-decide {
@@ -192,12 +228,6 @@
     transform: translateY(-2px);
   }
 }
-@keyframes dk-chap-open {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-}
 @keyframes dk-chap-pulse {
   50% {
     opacity: 0.35;
@@ -205,9 +235,12 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .dk-chap-tick,
+  .dk-chap-ticks,
+  .dk-chap-row,
   .dk-chap-live .dk-chap-title,
   .dk-chap-tick-live,
-  .dk-chap-list {
+  .dk-chap-list,
+  .dk-chap-list[data-open] {
     animation: none;
     transition: none;
   }

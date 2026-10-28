@@ -21,6 +21,7 @@ fragment HoldReasonTableRowFields on HoldReason {
 query HoldReasonTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   holdReasons(input: $input) {
     edges {
+      cursor
       node {
         ...HoldReasonTableRowFields
       }

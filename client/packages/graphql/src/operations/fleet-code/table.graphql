@@ -22,6 +22,7 @@ fragment FleetCodeTableRowFields on FleetCode {
 query FleetCodeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   fleetCodes(input: $input) {
     edges {
+      cursor
       node {
         ...FleetCodeTableRowFields
       }

@@ -51,9 +51,10 @@ query DeskManualJournalCard($id: ID!) @requiresRead(kind: "fiscal_period") {
   }
 }
 
-query DeskManualJournals($input: DataTableConnectionInput!) {
+query DeskManualJournals($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
   manualJournals(input: $input) {
     edges {
+      cursor
       node {
         id
         requestNumber
@@ -77,5 +78,7 @@ query DeskManualJournals($input: DataTableConnectionInput!) {
       endCursor
       hasNextPage
     }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }

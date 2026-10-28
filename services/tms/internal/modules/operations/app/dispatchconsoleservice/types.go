@@ -94,6 +94,13 @@ type GetBoardRequest struct {
 	Query          string
 	IncludeCovered bool
 	Limit          int
+	// LateOnly lists only the moves late now; the summary still counts
+	// every move in the window.
+	LateOnly bool
+	// DueFirst orders the moves by when their next stop is due, furthest
+	// behind first, and Offset skips that many of them for the next page.
+	DueFirst bool
+	Offset   int
 }
 
 type MoveCandidatesRequest struct {

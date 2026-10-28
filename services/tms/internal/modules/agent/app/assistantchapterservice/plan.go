@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/numberguard"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
 
@@ -109,6 +110,7 @@ func (s *Service) planOpened(
 	}
 
 	plan.Evidence = []string{question}
+	plan.NameEarlier = earlierToName(chapters)
 	if turn.Origin == conversation.AssistantTurnOriginScheduled {
 		plan.Opens = true
 		plan.Fallback = conversation.ChapterTitleFrom(question)
@@ -121,18 +123,16 @@ func (s *Service) planOpened(
 		return plan, nil
 	}
 
-	if !auto {
-		plan.Skip = skipAutoOff
-
-		return plan, nil
-	}
-
 	if len(chapters) == 0 {
 		plan.Opens = true
 		plan.Fallback = conversation.ChapterTitleFrom(question)
 		plan.FallbackSource = conversation.ChapterTitleQuestion
-		plan.ModelSource = conversation.ChapterTitleModel
-		plan.Request = nameRequest(&plan.Turn, question, "")
+
+		return plan, nil
+	}
+
+	if !auto {
+		plan.Skip = skipAutoOff
 
 		return plan, nil
 	}
@@ -233,14 +233,19 @@ func (s *Service) planRename(
 }
 
 func worthRenaming(chapter *conversation.Chapter, question string) bool {
-	switch chapter.TitleSource {
-	case conversation.ChapterTitleQuestion:
-		return true
-	case conversation.ChapterTitleModel:
-		return len(strings.Fields(question)) < shortQuestionWord
-	default:
-		return false
+	return chapter.TitleSource == conversation.ChapterTitleModel &&
+		len(strings.Fields(question)) < shortQuestionWord
+}
+
+func earlierToName(chapters []*conversation.Chapter) pulid.ID {
+	if len(chapters) == 0 {
+		return ""
 	}
+	if last := chapters[len(chapters)-1]; last.TitleSource == conversation.ChapterTitleQuestion {
+		return last.TurnID
+	}
+
+	return ""
 }
 
 func (s *Service) Apply(
@@ -283,7 +288,7 @@ func (s *Service) Apply(
 		return s.open(ctx, plan, answer.Title, plan.ModelSource, outcome)
 	case plan.Opens:
 		if answer.Title == "" {
-			outcome.Fallback = true
+			outcome.Fallback = plan.Request != nil
 
 			return s.open(ctx, plan, plan.Fallback, plan.FallbackSource, outcome)
 		}
@@ -337,6 +342,7 @@ func (s *Service) open(
 	outcome.ChapterID = chapter.ID
 	outcome.Opened = true
 	s.announce(ctx, turn.TenantInfo, turn.UserID, turn.ThreadID)
+	s.cueNaming(ctx, turn, plan.NameEarlier)
 
 	return outcome, nil
 }

@@ -44,6 +44,10 @@ type ChapterPlan struct {
 	FallbackSource conversation.ChapterTitleSource `json:"fallbackSource,omitempty"`
 	ModelSource    conversation.ChapterTitleSource `json:"modelSource,omitempty"`
 	Evidence       []string                        `json:"evidence,omitempty"`
+	// NameEarlier is the turn of the chapter before, still named after its
+	// question: a chapter shows only once there is a second, so the first
+	// is named when the next one opens.
+	NameEarlier pulid.ID `json:"nameEarlier,omitempty"`
 
 	Request *StructuredCompletionRequest `json:"request,omitempty"`
 }

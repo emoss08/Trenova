@@ -2,4 +2,4 @@
 import type { TypedDocumentString, LocationCategoryTableQuery, LocationCategoryTableQueryVariables, LocationCategoryTableRowFieldsFragment } from "../../graphql";
 
 export const LocationCategoryTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"LocationCategoryTableRowFields"}} as unknown as TypedDocumentString<LocationCategoryTableRowFieldsFragment, unknown>;
-export const LocationCategoryTableDocument = {"__meta__":{"kind":"query","name":"LocationCategoryTable","hash":"sha256:90c364f2f1f43cf3a0c8f1c6d662f6fb91c2364b66b97eae4b59056917383926"}} as unknown as TypedDocumentString<LocationCategoryTableQuery, LocationCategoryTableQueryVariables>;
+export const LocationCategoryTableDocument = {"__meta__":{"kind":"query","name":"LocationCategoryTable","hash":"sha256:ad36a5696fc7a897077225e34e695686d9a859477a93ca5501e33bddde2bf895"}} as unknown as TypedDocumentString<LocationCategoryTableQuery, LocationCategoryTableQueryVariables>;

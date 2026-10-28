@@ -3,6 +3,6 @@ import type { TypedDocumentString, DeskInvoiceCardQuery, DeskInvoiceCardQueryVar
 
 export const DeskInvoiceNeighborFragmentDoc = {"__meta__":{"fragmentName":"DeskInvoiceNeighbor"}} as unknown as TypedDocumentString<DeskInvoiceNeighborFragment, unknown>;
 export const DeskInvoiceCardDocument = {"__meta__":{"kind":"query","name":"DeskInvoiceCard","hash":"sha256:999c7e0d491ec67cede9bfa0b886e9a98cded555418d9929104cb1b9acd28fab"}} as unknown as TypedDocumentString<DeskInvoiceCardQuery, DeskInvoiceCardQueryVariables>;
-export const DeskInvoicesDocument = {"__meta__":{"kind":"query","name":"DeskInvoices","hash":"sha256:c9af45dcf534adb10da4b10a76f78b3b35d72e2121e892e0645cdcd240de6934"}} as unknown as TypedDocumentString<DeskInvoicesQuery, DeskInvoicesQueryVariables>;
+export const DeskInvoicesDocument = {"__meta__":{"kind":"query","name":"DeskInvoices","hash":"sha256:b8a6d2f879f737b8f6e954fe0687a6fe78d030d56903d04c5d5fc8dc5d86c475"}} as unknown as TypedDocumentString<DeskInvoicesQuery, DeskInvoicesQueryVariables>;
 export const DeskInvoiceDetailDocument = {"__meta__":{"kind":"query","name":"DeskInvoiceDetail","hash":"sha256:069d2dc8e358639942c0e5b64e52245e504037875c935a0de73a48c1709ba2c9"}} as unknown as TypedDocumentString<DeskInvoiceDetailQuery, DeskInvoiceDetailQueryVariables>;
 export const DeskInvoiceDisputesDocument = {"__meta__":{"kind":"query","name":"DeskInvoiceDisputes","hash":"sha256:33201d434cd44727380c5e0f76fca31c8b86740337f7579d3c75934f9c43351f"}} as unknown as TypedDocumentString<DeskInvoiceDisputesQuery, DeskInvoiceDisputesQueryVariables>;

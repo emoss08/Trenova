@@ -25,6 +25,7 @@ query ServiceFailureReasonCodeTable(
 ) {
   serviceFailureReasonCodes(input: $input) {
     edges {
+      cursor
       node {
         ...ServiceFailureReasonCodeTableRowFields
       }

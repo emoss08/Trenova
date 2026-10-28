@@ -81,7 +81,7 @@ func baseRequest(turn *agentports.ChapterTurnRequest) *agentports.StructuredComp
 		Task:       aiprovider.TaskChapterTitling,
 		MaxTokens:  titleMaxTokens,
 		HedgeAfter: hedgeAfter,
-		Reasoning:  aiprovider.ReasoningNone,
+		Reasoning:  aiprovider.ReasoningOff,
 		Attribution: aiusageports.AIUsageAttribution{
 			UserID:    turn.UserID,
 			ThreadID:  turn.ThreadID,

@@ -2,4 +2,4 @@
 import type { TypedDocumentString, ServiceTypeTableQuery, ServiceTypeTableQueryVariables, ServiceTypeTableRowFieldsFragment } from "../../graphql";
 
 export const ServiceTypeTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"ServiceTypeTableRowFields"}} as unknown as TypedDocumentString<ServiceTypeTableRowFieldsFragment, unknown>;
-export const ServiceTypeTableDocument = {"__meta__":{"kind":"query","name":"ServiceTypeTable","hash":"sha256:8662454fa5d28db4f6914176896d4b3b714ca182462196b3875116289184ace5"}} as unknown as TypedDocumentString<ServiceTypeTableQuery, ServiceTypeTableQueryVariables>;
+export const ServiceTypeTableDocument = {"__meta__":{"kind":"query","name":"ServiceTypeTable","hash":"sha256:a3f67a37878b346449ae8db530bae58cc2d07db9e3ff7ddfff1ec0c927ef37cb"}} as unknown as TypedDocumentString<ServiceTypeTableQuery, ServiceTypeTableQueryVariables>;

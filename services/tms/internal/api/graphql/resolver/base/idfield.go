@@ -25,3 +25,16 @@ func ParseOptionalIDField(field string, raw *string) (pulid.ID, error) {
 
 	return ParseIDField(field, *raw)
 }
+
+func ParseIDListField(field string, raw []string) ([]pulid.ID, error) {
+	ids := make([]pulid.ID, 0, len(raw))
+	for _, value := range raw {
+		id, err := ParseIDField(field, value)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, nil
+}

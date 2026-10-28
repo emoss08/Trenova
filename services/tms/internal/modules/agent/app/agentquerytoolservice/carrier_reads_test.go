@@ -61,7 +61,7 @@ func queryInvoiceMatches(
 
 	data, err := tool.Query(t.Context(), keyedCall(map[string]any{}))
 	require.NoError(t, err)
-	marked, ok := data.(*markedRecord)
+	marked, ok := data.(*offsetPage)
 	require.True(t, ok, "a page with an EDI invoice carries its mark")
 	items, _ := marked.record[outcomeItems].([]map[string]any)
 	require.Len(t, items, 3)
@@ -87,7 +87,7 @@ func TestListCarrierInvoiceMatches_MarksOnlyInvoicesACarrierSentOverEDI(t *testi
 	}}, data.(agent.TaintCarrier).TaintedRecords())
 
 	assert.Equal(t, []string{"invoiceTotal", "expectedTotal", "variance"},
-		data.(*markedRecord).record[outcomeWithheld], "withheld amounts are named as a person reads them")
+		data.(*offsetPage).record[outcomeWithheld], "withheld amounts are named as a person reads them")
 }
 
 func TestListCarrierInvoiceMatches_ShowsAmountsAsDecimals(t *testing.T) {

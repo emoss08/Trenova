@@ -77,7 +77,7 @@ func (s *Service) planRenewal(
 
 	held, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
 		TenantInfo:  req.TenantInfo,
-		WorkerID:    req.WorkerID,
+		WorkerIDs:   []pulid.ID{req.WorkerID},
 		IncludeType: true,
 	})
 	if err != nil {

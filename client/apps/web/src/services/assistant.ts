@@ -610,7 +610,8 @@ export class AssistantService {
     { signal }: { signal?: AbortSignal } = {},
   ) {
     const response = await api.get(`/assistant/threads/${threadId}/chapters/`, { signal });
-    return safeParse(assistantChapterListSchema, response, "Assistant Chapter").items;
+    const list = await safeParse(assistantChapterListSchema, response, "Assistant Chapter");
+    return list.items;
   }
 
   /** Starts a chapter at the turn the message belongs to. */

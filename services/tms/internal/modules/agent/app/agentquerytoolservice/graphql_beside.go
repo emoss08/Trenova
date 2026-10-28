@@ -289,7 +289,7 @@ func (b *besideReads) read(
 		bound := &b.bound[idx]
 		spec := &b.specs[idx]
 		resource := permission.Resource(bound.Resource)
-		if spec.scoped && !scoped {
+		if (spec.scoped && !scoped) || namesAny(sent, spec.unless) {
 			continue
 		}
 		if !ceilings.Reads(ctx, resource) {
@@ -384,4 +384,15 @@ func argumentSchema(properties map[string]any, required []string) map[string]any
 	}
 
 	return schema
+}
+
+// namesAny reports whether a read's variables give any of names a value.
+func namesAny(sent map[string]any, names []string) bool {
+	for _, name := range names {
+		if raw, given := sent[name]; given && raw != nil && raw != "" {
+			return true
+		}
+	}
+
+	return false
 }

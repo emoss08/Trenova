@@ -75,9 +75,13 @@ export function DeskChapterRow({
   children: ReactNode;
 }) {
   return (
-    <div className={cn("dk-r dk-chap", first && "dk-first")} data-chapter-turn={turnId}>
+    <div className={cn("dk-r dk-chap", first && "dk-first")}>
       <div className="dk-g" />
-      <div className="dk-c">{children}</div>
+      {/* The row is display: contents and has no box to scroll to or measure, so the
+          heading's own cell carries the turn. */}
+      <div className="dk-c" data-chapter-turn={turnId}>
+        {children}
+      </div>
       <div className="dk-m" />
     </div>
   );

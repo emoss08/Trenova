@@ -33,6 +33,7 @@ query HazardousMaterialTable(
 ) {
   hazardousMaterials(input: $input) {
     edges {
+      cursor
       node {
         ...HazardousMaterialTableRowFields
       }

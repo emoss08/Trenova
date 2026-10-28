@@ -742,7 +742,7 @@ func (s *Service) workerCredentials(
 ) []map[string]any {
 	credentials, err := s.credentials.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
 		TenantInfo:  tenant,
-		WorkerID:    workerID,
+		WorkerIDs:   []pulid.ID{workerID},
 		IncludeType: true,
 	})
 	if err != nil {

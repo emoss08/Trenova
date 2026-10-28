@@ -28,7 +28,7 @@ query DeskWorkerCredential($id: ID!) {
 }
 
 query DeskWorkerCredentialList(
-  $workerId: ID
+  $workerIds: [ID!]
   $includeArchived: Boolean
   $expiringWithinDays: Int
   $includeExpired: Boolean
@@ -38,7 +38,7 @@ query DeskWorkerCredentialList(
   $offset: Int
 ) {
   workerCredentials(
-    workerId: $workerId
+    workerIds: $workerIds
     includeArchived: $includeArchived
     expiringWithinDays: $expiringWithinDays
     includeExpired: $includeExpired

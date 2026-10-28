@@ -197,6 +197,38 @@ func TestOpen_StartsAChapterAtTheQuestionOfTheMessagesTurn(t *testing.T) {
 	}}, f.scheduler.cues, "the model is asked to name it afterwards")
 }
 
+func TestOpen_NamesTheQuietFirstChapterAlongsideTheNewOne(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	first := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusCompleted, "late loads")
+	f.chapter(first.ID, "Late loads", conversation.ChapterTitleQuestion, sequence(0))
+	named := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusCompleted, "acme")
+	f.chapter(named.ID, "Acme invoice dispute", conversation.ChapterTitlePerson, sequence(4))
+	turn := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusCompleted, "driver hours")
+	messageID := pulid.MustNew("amsg_")
+	f.chapters.turnOf[messageID] = turn.ID
+	f.conversations.byTurn[turn.ID] = []conversation.Message{
+		{Role: conversation.RoleUser, Content: "driver hours for Tuesday"},
+	}
+
+	_, err := f.svc.Open(t.Context(), agentports.OpenChapterRequest{
+		ThreadID:   f.thread.ID,
+		UserID:     f.tenant.UserID,
+		MessageID:  messageID,
+		TenantInfo: f.tenant,
+	})
+	require.NoError(t, err)
+
+	cued := make([]pulid.ID, 0, len(f.scheduler.cues))
+	for _, cue := range f.scheduler.cues {
+		assert.Equal(t, agentports.ChapterPhaseRequested, cue.Phase)
+		cued = append(cued, cue.TurnID)
+	}
+	assert.Equal(t, []pulid.ID{turn.ID, first.ID}, cued,
+		"the new chapter and the quiet first one are named; the person's title is kept")
+}
+
 func TestOpen_AMessageOutsideATurnCannotStartAChapter(t *testing.T) {
 	t.Parallel()
 

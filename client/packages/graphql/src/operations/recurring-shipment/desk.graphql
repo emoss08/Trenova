@@ -4,6 +4,7 @@
 query DeskRecurringShipments($input: DataTableConnectionInput!, $includeTotalCount: Boolean!) {
   recurringShipments(input: $input) {
     edges {
+      cursor
       node {
         id
         name

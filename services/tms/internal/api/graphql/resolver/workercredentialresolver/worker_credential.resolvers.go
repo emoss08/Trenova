@@ -240,13 +240,13 @@ func (r *QueryResolver) ActiveWorkerCredentialTypes(ctx context.Context) ([]*wor
 	return r.WorkerCredentialService.ActiveTypes(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) WorkerCredentials(ctx context.Context, workerID *string, includeArchived *bool, expiringWithinDays *int, includeExpired *bool, credentialTypeCode *string, requiredOnly *bool, limit *int, offset *int) ([]*worker.WorkerCredential, error) {
+func (r *QueryResolver) WorkerCredentials(ctx context.Context, workerIds []string, includeArchived *bool, expiringWithinDays *int, includeExpired *bool, credentialTypeCode *string, requiredOnly *bool, limit *int, offset *int) ([]*worker.WorkerCredential, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerCredential, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	id, err := base.ParseOptionalIDField("workerId", workerID)
+	ids, err := base.ParseIDListField("workerIds", workerIds)
 	if err != nil {
 		return nil, err
 	}
@@ -273,13 +273,13 @@ func (r *QueryResolver) WorkerCredentials(ctx context.Context, workerID *string,
 
 	return r.WorkerCredentialService.List(ctx, &workercredentialservice.ListRequest{
 		TenantInfo:         base.TenantInfo(authCtx),
-		WorkerID:           id,
+		WorkerIDs:          ids,
 		IncludeArchived:    archived,
 		ExpiringWithinDays: within,
 		IncludeExpired:     base.BoolValue(includeExpired),
 		CredentialTypeCode: base.StringValue(credentialTypeCode),
 		RequiredOnly:       base.BoolValue(requiredOnly),
-		Limit:              base.RecordListLimit(limit, id.IsNotNil()),
+		Limit:              base.RecordListLimit(limit, len(ids) > 0),
 		Offset:             skip,
 	})
 }

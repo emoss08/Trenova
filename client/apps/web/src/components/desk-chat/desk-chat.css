@@ -9438,6 +9438,10 @@
 .dk-r.dk-chap + .dk-r.dk-first > * {
   margin-top: 10px;
 }
+/* A chapter brought into view stops below the scroll's top fade and the rail. */
+[data-chapter-turn] {
+  scroll-margin-top: 40px;
+}
 /* The chapter rail floats in the room's top-left corner, over the scroll. */
 .dk-chap-rail-slot {
   position: absolute;

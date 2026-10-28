@@ -18,11 +18,15 @@ import { useRef, useState, type KeyboardEvent } from "react";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { DeskTip } from "@/components/desk-chat/desk-tip";
+import { StreamedText } from "@/components/streamed-text";
 import type { ChapterEntry } from "./chapter-work";
 import "./desk-chapters.css";
 
 /** The longest title the server keeps for a chapter. */
 export const MAX_CHAPTER_TITLE = 60;
+
+/** How recently a title must have been written to type itself in when it first shows. */
+export const FRESH_TITLE_SECONDS = 15;
 
 export type ChapterActions = {
   rename: (entry: ChapterEntry, title: string) => void;
@@ -61,6 +65,17 @@ export function DeskChapterHeading({
   const settled = useRef(false);
   const [shown, setSent] = usePendingValue(chapter.title);
   const saved = entry.chapter.startSequence !== null;
+  // A title the model has just written types itself in, as the briefing
+  // does: when the heading first shows moments after it was named, and when
+  // the model names it again while it is on screen. A title the person typed,
+  // and one that was there before the page opened, shows whole.
+  const [streaming, setStreaming] = useState(() => ({
+    title: chapter.title,
+    animate: Date.now() / 1000 - chapter.updatedAt < FRESH_TITLE_SECONDS,
+  }));
+  if (streaming.title !== chapter.title) {
+    setStreaming({ title: chapter.title, animate: chapter.titleSource !== "Person" });
+  }
 
   const edit = () => {
     settled.current = false;
@@ -122,11 +137,21 @@ export function DeskChapterHeading({
               variant="bare"
               size="bare"
               className="dk-chap-t"
+              aria-label={shown}
               aria-keyshortcuts="Enter F2"
               onDoubleClick={edit}
               onKeyDown={onTitleKey}
             >
-              {shown}
+              {shown === chapter.title ? (
+                <StreamedText
+                  as="span"
+                  streamKey={`${chapter.id}:${chapter.title}`}
+                  segments={[{ text: chapter.title }]}
+                  animate={streaming.animate}
+                />
+              ) : (
+                shown
+              )}
             </Button>
           </DeskTip>
         </h2>

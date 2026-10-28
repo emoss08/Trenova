@@ -17,6 +17,7 @@ fragment DocumentTypeTableRowFields on DocumentType {
 query DocumentTypeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   documentTypes(input: $input) {
     edges {
+      cursor
       node {
         ...DocumentTypeTableRowFields
       }

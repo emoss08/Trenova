@@ -14,6 +14,7 @@ fragment ServiceTypeTableRowFields on ServiceType {
 query ServiceTypeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   serviceTypes(input: $input) {
     edges {
+      cursor
       node {
         ...ServiceTypeTableRowFields
       }

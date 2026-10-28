@@ -19,6 +19,7 @@ query AccessorialChargeTable(
 ) {
   accessorialCharges(input: $input) {
     edges {
+      cursor
       node {
         ...AccessorialChargeTableRowFields
       }

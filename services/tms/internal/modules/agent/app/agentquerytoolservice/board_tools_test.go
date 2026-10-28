@@ -1,11 +1,13 @@
 package agentquerytoolservice
 
 import (
+	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -53,7 +55,8 @@ func TestBoardView_SaysWhatEachLateMoveIsLateFor(t *testing.T) {
 		},
 	}
 
-	view := boardViewOf(board, "UTC")
+	view := boardViewOf(board, "UTC", defaultBoardLimit)
+	view.tally()
 
 	require.Len(t, view.Moves, 3)
 	lateTo := map[string]string{}
@@ -72,9 +75,6 @@ func TestBoardView_SaysWhatEachLateMoveIsLateFor(t *testing.T) {
 	assert.Contains(t, view.Note, "SEED-LATE-DELIVERY", "the note names every Delayed shipment")
 	assert.Contains(t, view.Note, "1 late to deliver")
 	assert.Contains(t, view.Note, "1 late to pick up")
-	assert.Equal(t, "SEED-LATE-DELIVERY", view.Moves[0].ProNumber,
-		"a load late to deliver comes first, so shortening a long board cannot drop it")
-	assert.Equal(t, "SEED-NOT-PICKED", view.Moves[1].ProNumber)
 }
 
 /*
@@ -114,10 +114,11 @@ func TestLateness_MeasuresFromTheWindowsClose(t *testing.T) {
 /*
 Asked for the operations board, Haiku named the first late move "the most
 overdue": it was three hours behind, with others fourteen hours behind further
-down, because late moves kept the board's own order. Late moves now come
-furthest behind first within what they are late to do.
+down, because late moves kept the board's own order. The board is now read
+due-first, the furthest behind leading, a page at a time; the view keeps that
+order, so a page cut short resumes where it ended.
 */
-func TestBoardView_ListsLateMovesFurthestBehindFirst(t *testing.T) {
+func TestDispatchBoard_ReadsDueFirstAndPagesTheLateMoves(t *testing.T) {
 	t.Parallel()
 
 	const now = int64(1_790_000_000)
@@ -138,22 +139,70 @@ func TestBoardView_ListsLateMovesFurthestBehindFirst(t *testing.T) {
 			Urgency: dispatchconsoleservice.UrgencyLate,
 		}
 	}
-	board := &dispatchconsoleservice.Board{
+	reader := &fakeBoard{board: &dispatchconsoleservice.Board{
 		WindowStart: now,
 		WindowEnd:   now + 86_400,
 		Moves: []*dispatchconsoleservice.BoardMove{
-			delivering("THREE-HOURS", 3*3600),
 			delivering("FOURTEEN-HOURS", 14*3600),
 			delivering("ELEVEN-HOURS", 11*3600),
+			delivering("THREE-HOURS", 3*3600),
 		},
-	}
+		Drivers: []*dispatchconsoleservice.BoardDriver{},
+	}}
+	tool := newGetDispatchBoardTool(reader)
 
-	view := boardViewOf(board, "UTC")
+	call := keyedCall(map[string]any{paramBoardLate: true, paramLimit: 2})
+	data, err := tool.Query(t.Context(), call)
+	require.NoError(t, err)
 
+	sent := reader.sent
+	require.NotNil(t, sent)
+	assert.True(t, sent.LateOnly)
+	assert.True(t, sent.DueFirst, "the board is read furthest behind first")
+	assert.Equal(t, 3, sent.Limit, "one more than the page, to know there is another")
+	assert.Zero(t, sent.Offset)
+
+	view, ok := data.(*boardView)
+	require.True(t, ok)
 	order := make([]string, 0, len(view.Moves))
 	for _, row := range view.Moves {
 		order = append(order, row.ProNumber)
 	}
-	assert.Equal(t, []string{"FOURTEEN-HOURS", "ELEVEN-HOURS", "THREE-HOURS"}, order)
+	assert.Equal(t, []string{"FOURTEEN-HOURS", "ELEVEN-HOURS"}, order)
 	assert.Equal(t, "14h 00m", view.Moves[0].LateBy)
+	assert.Nil(t, view.Drivers, "a question about late loads leaves the drivers out")
+	assert.True(t, view.HasMore)
+	assert.Contains(t, view.Note, "2 late moves listed")
+
+	_, err = tool.Query(t.Context(), keyedCall(map[string]any{
+		paramBoardLate: true, paramLimit: 2, paramAfter: view.NextCursor,
+	}))
+	require.NoError(t, err)
+	assert.Equal(t, 2, reader.sent.Offset, "the next page starts after the two read")
+
+	cut, ok := view.CutPage(1)
+	require.True(t, ok)
+	short, _ := cut.(*boardView)
+	assert.Len(t, short.Moves, 1)
+	assert.True(t, short.HasMore)
+	scope, err := cursorScope(tool.Name(), call.Params)
+	require.NoError(t, err)
+	key, err := pagination.DecodeKeyCursor(scope, short.NextCursor)
+	require.NoError(t, err)
+	assert.Equal(t, "1", key, "a cut board resumes at the move after the last one kept")
+	assert.Contains(t, short.Note, "1 late moves listed")
+}
+
+type fakeBoard struct {
+	board *dispatchconsoleservice.Board
+	sent  *dispatchconsoleservice.GetBoardRequest
+}
+
+func (f *fakeBoard) GetBoard(
+	_ context.Context,
+	req *dispatchconsoleservice.GetBoardRequest,
+) (*dispatchconsoleservice.Board, error) {
+	f.sent = req
+
+	return f.board, nil
 }

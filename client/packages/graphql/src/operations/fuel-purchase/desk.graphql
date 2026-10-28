@@ -55,6 +55,7 @@ query DeskFuelPurchaseCard($id: ID!) @requiresRead(kind: "fuel_card") {
 query DeskFuelPurchases($input: FuelPurchasesInput!, $includeTotalCount: Boolean = false) {
   fuelPurchases(input: $input) {
     edges {
+      cursor
       node {
         id
         tractorId

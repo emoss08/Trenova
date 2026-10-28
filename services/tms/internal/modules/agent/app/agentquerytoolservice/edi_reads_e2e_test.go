@@ -420,6 +420,10 @@ func listItems(t *testing.T, data any) []map[string]any {
 	switch outcome := data.(type) {
 	case graphQLListOutcome:
 		return outcome.Items
+	case *besidePage:
+		return outcome.page.Items
+	case *offsetPage:
+		return outcome.items()
 	case map[string]any:
 		raw, _ := outcome[outcomeItems].([]map[string]any)
 		if raw != nil {
@@ -561,7 +565,7 @@ func TestEDICarrierInvoices_ThroughTheExecutor(t *testing.T) {
 		fakes.invoices.ReconciliationStatus)
 	require.NotNil(t, fakes.identity)
 	assert.Equal(t, "ACME", fakes.identity.SCAC)
-	outcome := data.(map[string]any)
+	outcome := data.(*offsetPage).record
 	items := listItems(t, data)
 	require.Len(t, items, 1)
 	suggested, _ := items[0]["suggestedCarrier"].(map[string]any)

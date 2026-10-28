@@ -130,13 +130,13 @@ func (r *repository) ListBoardMoves(
 			Where(
 				keel.When(!filter.IncludeCovered, asn.ID.IsNull()),
 				keel.When(!filter.IncludeCovered, ca.ID.IsNull()),
+				keel.When(filter.LateAt > 0, lateAt(filter.LateAt)),
 			).
-			Order(
-				keel.Asc(zero(orig.stop.ScheduledWindowStart)),
-				sm.Sequence.Asc(),
-				sm.ID.Asc(),
-			).
+			Order(boardOrder(filter)...).
 			Limit(boardLimit(filter.Limit))
+		if filter.Offset > 0 {
+			q = q.Offset(filter.Offset)
+		}
 
 		rows, err := keel.Into[shipmentports.BoardMove](ctx, r.db.Keel(ctx), q)
 		if err != nil {
@@ -145,6 +145,60 @@ func (r *repository) ListBoardMoves(
 
 		return pointers(rows), nil
 	})
+}
+
+// boardOrder is the board's order: by pickup window, or, for a reader that
+// wants the most urgent first, by when each move's next stop is due.
+func boardOrder(filter *shipmentports.DispatchBoardFilter) []keel.Order {
+	sm := shipmentdb.ShipmentMoves
+	if filter.DueFirst {
+		return []keel.Order{keel.Asc(dueAt()), sm.Sequence.Asc(), sm.ID.Asc()}
+	}
+
+	return []keel.Order{
+		keel.Asc(zero(origin.stop.ScheduledWindowStart)),
+		sm.Sequence.Asc(),
+		sm.ID.Asc(),
+	}
+}
+
+// windowClose is when a stop's window closes: its end, or its start when it
+// has none.
+func windowClose(edge *stopEdge) keel.Int64Expr {
+	return keel.CaseInt64().
+		When(zero(edge.stop.ScheduledWindowEnd).Gt(0), zero(edge.stop.ScheduledWindowEnd)).
+		Else(zero(edge.stop.ScheduledWindowStart))
+}
+
+func pickedUp() keel.Pred {
+	return zero(origin.stop.ActualArrival).Gt(0)
+}
+
+// dueAt is when a move's next stop is due: the pickup window's close until
+// it is picked up, then the delivery window's close.
+func dueAt() keel.Int64Expr {
+	return keel.CaseInt64().
+		When(pickedUp(), windowClose(&destination)).
+		Else(windowClose(&origin))
+}
+
+// lateAt keeps the moves late at an instant, as the board's own lateness
+// reads them: a pickup window that has opened with no arrival, or a delivery
+// window that has closed on a load picked up and not delivered.
+func lateAt(at int64) keel.Pred {
+	return keel.Or(
+		keel.And(
+			zero(origin.stop.ActualArrival).Lte(0),
+			zero(origin.stop.ScheduledWindowStart).Gt(0),
+			zero(origin.stop.ScheduledWindowStart).Lt(at),
+		),
+		keel.And(
+			pickedUp(),
+			zero(destination.stop.ActualArrival).Lte(0),
+			windowClose(&destination).Gt(0),
+			windowClose(&destination).Lt(at),
+		),
+	)
 }
 
 func pointers[T any](rows []T) []*T {

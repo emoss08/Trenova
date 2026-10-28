@@ -34,6 +34,16 @@ type DispatchBoardFilter struct {
 	Query          string
 	IncludeCovered bool
 	Limit          int
+	// LateAt, when set, lists only the moves late at that instant: the pickup
+	// window opened with no arrival, or picked up with the delivery window
+	// closed and no arrival. The summary still counts every move.
+	LateAt int64
+	// DueFirst orders the moves by when their next stop is due, the pickup's
+	// window until it is picked up and then the delivery's close, so the
+	// furthest behind come first and a page of them is the most urgent page.
+	DueFirst bool
+	// Offset skips that many moves of the same order, for the page after.
+	Offset int
 }
 
 type BoardMove struct {

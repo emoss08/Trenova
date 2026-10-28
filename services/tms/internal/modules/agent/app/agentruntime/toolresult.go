@@ -6,6 +6,7 @@ import (
 
 	"github.com/bytedance/sonic"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -82,9 +83,12 @@ func humanizeDates(value any, now int64, timezone string) any {
 }
 
 // trimRecord takes out what a record carries for the database rather than for
-// the reader: the tenant everywhere, and the version and audit stamps of every
-// record nested inside another. depth is zero for the result itself and for
-// each row of a top-level list.
+// the reader: the tenant everywhere, the version and audit stamps of every
+// record nested inside another, and what says nothing (an empty text, a date
+// left unset as zero, a fleetCodeId beside the fleetCode that carries the
+// same id). A worker row carried all three, and fifty rows of them crowded
+// out the rows a list was read for. depth is zero for the result itself and
+// for each row of a top-level list.
 func trimRecord(value any, depth int) any {
 	switch typed := value.(type) {
 	case map[string]any:
@@ -97,6 +101,10 @@ func trimRecord(value any, depth int) any {
 			}
 		}
 		for key, nested := range typed {
+			if saysNothing(typed, key, nested) {
+				delete(typed, key)
+				continue
+			}
 			typed[key] = trimRecord(nested, depth+1)
 		}
 
@@ -110,6 +118,45 @@ func trimRecord(value any, depth int) any {
 	default:
 		return value
 	}
+}
+
+// saysNothing reports whether a field tells the reader nothing its absence
+// does not: an empty text, a date-named field holding zero (never set), or a
+// reference id the record it names, carried beside it, already holds.
+func saysNothing(record map[string]any, key string, value any) bool {
+	switch typed := value.(type) {
+	case string:
+		if typed == "" {
+			return true
+		}
+		named, found := strings.CutSuffix(key, "Id")
+		if !found || named == "" {
+			return false
+		}
+		related, ok := record[named].(map[string]any)
+
+		return ok && related["id"] == typed
+	default:
+		seconds, ok := wholeNumber(value)
+
+		return ok && seconds == 0 && !counts(key) &&
+			(hasKeySuffix(key, dateKeySuffixes) || hasCamelSuffix(key, camelDateSuffixes))
+	}
+}
+
+// quantityPrefixes open the names of counts that end like a date:
+// daysUntilExpiry is 0 on the day a credential expires, which is the answer.
+var quantityPrefixes = []string{"days", "hours", "minutes", "count", "num", "total"}
+
+func counts(key string) bool {
+	lowered := strings.ToLower(key)
+	for _, prefix := range quantityPrefixes {
+		if strings.HasPrefix(lowered, prefix) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // describeInstant renders one instant as the date it falls on in the
@@ -217,6 +264,17 @@ func encodeToolResult(data any, now int64, timezone string) (string, error) {
 }
 
 func encodeToolDocument(data any, now int64, timezone string) (string, any, error) {
+	return encodeModelDocument(data, now, timezone, nil)
+}
+
+// encodeModelDocument is encodeToolDocument with a list's rows narrowed to
+// the columns the call named in fields, for the model's copy alone.
+func encodeModelDocument(
+	data any,
+	now int64,
+	timezone string,
+	fields []string,
+) (string, any, error) {
 	encoded, err := sonic.Marshal(data)
 	if err != nil {
 		return "", nil, err
@@ -227,11 +285,86 @@ func encodeToolDocument(data any, now int64, timezone string) (string, any, erro
 		return "", nil, err
 	}
 
-	document = humanizeDates(trimRecord(document, 0), now, timezone)
+	document = humanizeDates(narrowRows(trimRecord(document, 0), fields), now, timezone)
 	humanized, err := sonic.ConfigStd.Marshal(document)
 	if err != nil {
 		return "", nil, err
 	}
 
 	return string(humanized), document, nil
+}
+
+// narrowRows keeps, in each row of a list the model reads, its id, the
+// columns the call named and what the list works out beside its columns (a
+// worker's dispatchable and why not), which columns does not name. The list
+// returned every column, and the person's table keeps them: narrowing the
+// list itself left a table of names alone, and its later pages too, when the
+// person asked for the inactive drivers. A result that names no columns is
+// left whole, since nothing says which of its fields are columns.
+func narrowRows(document any, fields []string) any {
+	record, ok := document.(map[string]any)
+	if !ok || len(fields) == 0 {
+		return document
+	}
+	listed, _ := record[listColumnsKey].([]any)
+	items, _ := record[listItemsKey].([]any)
+	if len(listed) == 0 || len(items) == 0 {
+		return document
+	}
+	columns := make(map[string]struct{}, len(listed))
+	for _, column := range listed {
+		if name, isText := column.(string); isText {
+			columns[name] = struct{}{}
+		}
+	}
+	wanted := make(map[string]struct{}, len(fields)+1)
+	wanted[listIDKey] = struct{}{}
+	for _, field := range fields {
+		wanted[field] = struct{}{}
+	}
+	drop := func(key string) bool {
+		_, column := columns[key]
+		_, kept := wanted[key]
+
+		return column && !kept
+	}
+	for _, item := range items {
+		row, isRow := item.(map[string]any)
+		if !isRow {
+			continue
+		}
+		for key := range row {
+			if drop(key) {
+				delete(row, key)
+			}
+		}
+	}
+	kept := make([]any, 0, len(listed))
+	for _, column := range listed {
+		if name, _ := column.(string); !drop(name) {
+			kept = append(kept, column)
+		}
+	}
+	record[listColumnsKey] = kept
+
+	return record
+}
+
+const (
+	listColumnsKey = "columns"
+	listItemsKey   = "items"
+	listIDKey      = "id"
+)
+
+// listFields are the columns a call named for the model to read.
+func listFields(arguments map[string]any) []string {
+	raw, _ := arguments[agentports.ListFieldsParam].([]any)
+	fields := make([]string, 0, len(raw))
+	for _, entry := range raw {
+		if name, ok := entry.(string); ok && name != "" {
+			fields = append(fields, name)
+		}
+	}
+
+	return fields
 }

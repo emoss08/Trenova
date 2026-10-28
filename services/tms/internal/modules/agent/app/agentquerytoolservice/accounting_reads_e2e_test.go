@@ -316,7 +316,7 @@ func TestAccountingReads_ThroughTheExecutor(t *testing.T) {
 	assert.Equal(t, integration.Type("QuickBooksOnline"), drift.list.IntegrationType)
 	require.NotNil(t, drift.list.Filter)
 	assert.Equal(t, "acme", drift.list.Filter.Query)
-	outcome, ok := data.(map[string]any)
+	outcome, ok := pageRecord(data)
 	require.True(t, ok)
 	items, _ := outcome["items"].([]any)
 	require.Len(t, items, 1)
@@ -330,7 +330,7 @@ func TestAccountingReads_ThroughTheExecutor(t *testing.T) {
 	ctx, call = accountingCall(map[string]any{"system": "QuickBooksOnline"})
 	data, err = public.Query(ctx, call)
 	require.NoError(t, err)
-	outcome, ok = data.(map[string]any)
+	outcome, ok = pageRecord(data)
 	require.True(t, ok)
 	items, _ = outcome["items"].([]any)
 	require.Len(t, items, 1)
@@ -374,7 +374,8 @@ func TestAccountingSyncReads_ThroughTheExecutor(t *testing.T) {
 	require.NotNil(t, ledger.states)
 	assert.Equal(t, []pulid.ID{invoice}, ledger.states.ObjectIDs)
 	assert.Equal(t, integration.Type("Xero"), ledger.states.IntegrationType)
-	states, _ := data.(map[string]any)[keyAccountingStates].([]map[string]any)
+	record, _ := pageRecord(data)
+	states, _ := record[keyAccountingStates].([]map[string]any)
 	require.Len(t, states, 1)
 	assert.Contains(t, states[0][accountingMeaningField], "Xero refused it")
 }
@@ -433,7 +434,7 @@ func TestAccountingMappingAndRecordReads_ThroughTheExecutor(t *testing.T) {
 	assert.Equal(t, []accountingsync.MappingState{
 		accountingsync.MappingStateUnmatched, accountingsync.MappingStateProposed,
 	}, mappings.list.States)
-	outcome, ok := data.(map[string]any)
+	outcome, ok := pageRecord(data)
 	require.True(t, ok)
 	assert.Empty(t, outcome[outcomeWithheld])
 	summary, _ := outcome[keyAccountingSummary].(map[string]any)

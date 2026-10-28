@@ -397,3 +397,55 @@ func TestKeyedWhole_AGetReadsTheListOneRecordHolds(t *testing.T) {
 	assert.False(t, keyedWhole(schema.Query.Fields.ForName("hoursStates")),
 		"a list of ids names no one record")
 }
+
+const cursorSchema = `
+input DataTableConnectionInput { first: Int, after: String }
+type FleetCode { id: ID! }
+type FleetCodeConnection { edges: [FleetCodeEdge!]! }
+type FleetCodeEdge { cursor: String!, node: FleetCode! }
+type Query {
+  fleetCodes(input: DataTableConnectionInput!): FleetCodeConnection!
+}
+`
+
+// A paged list's operation selects each edge's cursor, which a page cut to
+// what a model can read resumes from.
+func TestCursorless_APagedListSelectsEachEdgesCursor(t *testing.T) {
+	t.Parallel()
+
+	schema := gqlparser.MustLoadSchema(&ast.Source{Input: cursorSchema})
+	root := schema.Query.Fields.ForName("fleetCodes")
+	cases := map[string]struct {
+		text    string
+		refused bool
+	}{
+		"each edge's cursor is selected": {
+			text: `query DeskFleetCodes($input: DataTableConnectionInput!) {
+				fleetCodes(input: $input) { edges { cursor node { id } } } }`,
+		},
+		"a fragment may select it": {
+			text: `query DeskFleetCodes($input: DataTableConnectionInput!) {
+				fleetCodes(input: $input) { edges { ...Edge } } }
+				fragment Edge on FleetCodeEdge { cursor node { id } }`,
+		},
+		"only the node is selected": {
+			text: `query DeskFleetCodes($input: DataTableConnectionInput!) {
+				fleetCodes(input: $input) { edges { node { id } } } }`,
+			refused: true,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			problem := cursorless(&binding{
+				Tool:      "masterdata_list_fleet_codes",
+				Verb:      verbList,
+				Operation: supplyOperation(t, schema, "DeskFleetCodes", tc.text),
+				RootField: root,
+				Node:      "FleetCode",
+			})
+			assert.Equal(t, tc.refused, problem != "", problem)
+		})
+	}
+}

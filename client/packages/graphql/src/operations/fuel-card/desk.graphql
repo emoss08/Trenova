@@ -101,6 +101,7 @@ query DeskFuelCardCard($id: ID!) {
 query DeskFuelCards($input: FuelCardsInput!, $includeTotalCount: Boolean = false) {
   fuelCards(input: $input) {
     edges {
+      cursor
       node {
         id
         provider

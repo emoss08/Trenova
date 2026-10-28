@@ -555,6 +555,10 @@ the agent read. `tableArtifact` keeps the agent's rows with where the list goes 
   artifact. A page that would push the payload past `MaxPayloadBytes` leaves the table as it is,
   and the person reads the rest from where it ends. A cursor the table never handed out is kept as
   before, as the lineage's next version.
+- **A page cut to fit is the page.** When a model's read is too long for it, the runtime
+  cuts the page to the rows that fit and resumes its cursor at the first row left out ("An
+  oversized tool result" in [agent-runtime.md](agent-runtime.md)); the table keeps that page,
+  so the person's next page and the agent's start at the same row.
 - **A paged table is always kept.** `ShownArtifact.Paged` makes it `MustBeLinked`, and `shownNote`
   tells the model the person pages through every row beside the conversation, so it reads another
   page only when its answer needs one.

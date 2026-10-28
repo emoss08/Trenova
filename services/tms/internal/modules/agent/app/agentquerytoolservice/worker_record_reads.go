@@ -66,22 +66,27 @@ const (
 		"worker's; set it to false for the fleet's closed events too."
 	opDeskCredentialTypes = "DeskWorkerCredentialTypes"
 
-	workerCredentialsSummary = "List worker credentials: one worker's licences, medical " +
-		"cards and endorsements, or those falling due across the organization. With a worker " +
-		"and no expiry window it returns every credential the worker holds, with its dates " +
-		"and whether it is verified, and the credential types the organization tracks; a " +
-		"required type with nothing on file was never recorded, worse than expiring " +
-		"soon. Without a worker, or with expiringWithinDays or includeExpired, it lists " +
-		"active credentials expiring within that many days from now, soonest first, a page " +
-		"at a time: the tool for any " +
-		"question about who is expiring, lapsed or out of compliance by a date. Narrow by " +
-		"credentialTypeCode, such as MED_CARD or CDL. Each row's worker says if dispatchable; " +
-		"canBeAssigned false is already off dispatch, so no hold. It yields the credentialId " +
-		"and credentialTypeId the credential tools take."
-	noteFallingDue   = "Leave it out for the credentials falling due across the organization."
-	noteEveryWorker  = "Leave it out for every worker's."
-	fieldPrivacyCase = "privacyCase"
-	fieldWorker      = "worker"
+	workerCredentialsSummary = "List worker credentials: the licences, medical cards and " +
+		"endorsements workers hold, those falling due, or who holds a type. With workerIds " +
+		"and no expiry window it returns every credential those workers hold, every worker " +
+		"in one call, with its dates and whether it is verified, and the credential types " +
+		"the organization tracks; a required type with nothing on file was never recorded, " +
+		"worse than expiring soon. With expiringWithinDays or includeExpired, or with " +
+		"neither workers nor a type, it lists active credentials expiring within that many " +
+		"days from now, soonest first, a page at a time: the tool for any question about " +
+		"who is expiring, lapsed or out of compliance by a date. A credentialTypeCode, such " +
+		"as MED_CARD or ROAD_TEST, with no worker and no window lists every active one of " +
+		"that type: who holds it. Who lacks one is worker_list with withoutCredential, never " +
+		"a call per worker. Each row's worker says if dispatchable; canBeAssigned false is " +
+		"already off dispatch, so no hold. It yields the credentialId and credentialTypeId " +
+		"the credential tools take."
+	noteFallingDue = "Leave it out for the credentials across the organization."
+	paramWorkerIDs = "workerIds"
+
+	paramCredentialTypeCode = "credentialTypeCode"
+	noteEveryWorker         = "Leave it out for every worker's."
+	fieldPrivacyCase        = "privacyCase"
+	fieldWorker             = "worker"
 )
 
 // workerReference is a worker id parameter: a worker, from the worker list.
@@ -199,8 +204,8 @@ func workerRecordReadSpecs() []graphQLListSpec {
 				"expiring licenses", "credentials due", "about to lapse", "lapsed",
 			},
 			resource:   permission.ResourceWorkerCredential,
-			references: theWorker,
-			notes:      map[string]string{paramWorkerID: noteFallingDue},
+			references: map[string]idReference{paramWorkerIDs: workerReference},
+			notes:      map[string]string{paramWorkerIDs: noteFallingDue},
 			defaults: map[string]any{
 				paramLimit:           graphQLListLimit,
 				paramIncludeArchived: false,
@@ -212,6 +217,7 @@ func workerRecordReadSpecs() []graphQLListSpec {
 				what:      "credential types",
 				inputs:    map[string]any{inputStatus: activeStatus},
 				scoped:    true,
+				unless:    []string{paramCredentialTypeCode},
 			}},
 		},
 		{

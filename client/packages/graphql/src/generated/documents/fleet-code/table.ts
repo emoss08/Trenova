@@ -2,4 +2,4 @@
 import type { TypedDocumentString, FleetCodeTableQuery, FleetCodeTableQueryVariables, FleetCodeTableRowFieldsFragment } from "../../graphql";
 
 export const FleetCodeTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"FleetCodeTableRowFields"}} as unknown as TypedDocumentString<FleetCodeTableRowFieldsFragment, unknown>;
-export const FleetCodeTableDocument = {"__meta__":{"kind":"query","name":"FleetCodeTable","hash":"sha256:4625378765a75597fbfc1b6821d77b15edee201bb88c59a1fe86d90288f5f5e4"}} as unknown as TypedDocumentString<FleetCodeTableQuery, FleetCodeTableQueryVariables>;
+export const FleetCodeTableDocument = {"__meta__":{"kind":"query","name":"FleetCodeTable","hash":"sha256:e4d84bfa1e4d99a9af0535de603de059b4e88c0efe7b908e0e4dbfe870a0dcae"}} as unknown as TypedDocumentString<FleetCodeTableQuery, FleetCodeTableQueryVariables>;

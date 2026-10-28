@@ -238,8 +238,10 @@ describe("DeskThread in the Desk's density", () => {
     });
 
     const heading = container.querySelector('[data-chapter-turn="atrn_1"]');
+    // The row is display: contents; the turn sits on its cell, which has a box to scroll to.
+    expect(heading).toHaveClass("dk-c");
     expect(heading).toHaveTextContent("Stuck loads at the yard");
-    expect(heading?.nextElementSibling).toHaveTextContent("Which loads are stuck?");
+    expect(heading?.parentElement?.nextElementSibling).toHaveTextContent("Which loads are stuck?");
     expect(container.querySelector(".dk-chap-rail-slot")).toHaveTextContent("rail at atrn_1");
     expect(screen.queryByRole("button", { name: "Start a chapter here" })).toBeNull();
     expect(started).not.toHaveBeenCalled();

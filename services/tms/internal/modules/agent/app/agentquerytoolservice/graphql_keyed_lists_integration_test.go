@@ -71,8 +71,11 @@ type keyedCase struct {
 	internal   []string
 	// nested is a list every record carries rows of (an event's violations).
 	nested string
-	write  func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error)
-	before func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error)
+	// several marks a list keyed by workerIds, which names its worker in a
+	// list of one.
+	several bool
+	write   func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error)
+	before  func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error)
 	// templates writes a record the list reads alongside under key, and one
 	// it must leave out, and returns the first's id. keyed marks a read
 	// alongside keyed by the worker the call names, made only when it names
@@ -345,6 +348,7 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 		},
 		{
 			tool: "worker_list_credentials", key: "credentialTypes", openByDefaultUnscoped: true,
+			several:  true,
 			openArgs: map[string]any{}, allArgs: map[string]any{"includeArchived": true},
 			defaultOpen: true,
 			internal: []string{
@@ -374,7 +378,7 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeArchived bool) ([]string, error) {
 				rows, err := services.credentialService.List(ctx, &workercredentialservice.ListRequest{
-					TenantInfo: tenant, WorkerID: workerID, IncludeArchived: includeArchived,
+					TenantInfo: tenant, WorkerIDs: []pulid.ID{workerID}, IncludeArchived: includeArchived,
 				})
 				return idsOf(rows, err)
 			},
@@ -605,7 +609,7 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 			}
 
 			t.Run("what a call reads by default, as the repository tool read it", func(t *testing.T) {
-				page := call(withWorker(ours.workerID, nil))
+				page := call(c.withWorker(ours.workerID, nil))
 				want := ours.all
 				if c.defaultOpen {
 					want = ours.open
@@ -619,13 +623,13 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 
 			if c.openArgs != nil {
 				t.Run("the open records, and every record", func(t *testing.T) {
-					open := call(withWorker(ours.workerID, c.openArgs))
+					open := call(c.withWorker(ours.workerID, c.openArgs))
 					before, beforeErr := c.before(ours.ctx, ours.info, ours.workerID, false)
 					require.NoError(t, beforeErr)
 					assert.ElementsMatch(t, ours.open, itemIDs(open))
 					assert.ElementsMatch(t, before, itemIDs(open))
 
-					all := call(withWorker(ours.workerID, c.allArgs))
+					all := call(c.withWorker(ours.workerID, c.allArgs))
 					before, beforeErr = c.before(ours.ctx, ours.info, ours.workerID, true)
 					require.NoError(t, beforeErr)
 					assert.ElementsMatch(t, ours.all, itemIDs(all))
@@ -634,13 +638,13 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 			}
 
 			t.Run("another tenant's worker reads nothing", func(t *testing.T) {
-				page := call(withWorker(other.workerID, c.allArgs))
+				page := call(c.withWorker(other.workerID, c.allArgs))
 				assert.Empty(t, itemIDs(page))
 			})
 
 			if c.orgWide {
 				t.Run("no worker reads every worker's, and nothing of another tenant", func(t *testing.T) {
-					page := call(withWorker(pulid.Nil, c.allArgs))
+					page := call(c.withWorker(pulid.Nil, c.allArgs))
 					assert.ElementsMatch(t, ours.all, itemIDs(page))
 					if c.keyed {
 						assert.NotContains(t, page, c.key, "a read keyed by the worker needs one")
@@ -651,7 +655,7 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 
 			if c.templates != nil {
 				t.Run("what is read alongside is ours alone, and only what it should be", func(t *testing.T) {
-					page := call(map[string]any{"workerId": ours.workerID.String()})
+					page := call(c.withWorker(ours.workerID, nil))
 					listed := page[c.key].([]any)
 					ids := make([]string, 0, len(listed))
 					for _, row := range listed {
@@ -698,7 +702,7 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 
 			if c.nested != "" {
 				t.Run("each record carries its "+c.nested, func(t *testing.T) {
-					page := call(withWorker(ours.workerID, c.allArgs))
+					page := call(c.withWorker(ours.workerID, c.allArgs))
 					items, _ := page["items"].([]any)
 					require.Len(t, items, len(ours.all))
 					for _, item := range items {
@@ -714,7 +718,7 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 						BusinessUnitID:    actor.BusinessUnitID,
 						Actor:             actor,
 						Timezone:          "America/Chicago",
-						Params:            withWorker(ours.workerID, c.allArgs),
+						Params:            c.withWorker(ours.workerID, c.allArgs),
 						RunID:             pulid.MustNew("ar_"),
 						DataAccessCeiling: permission.SensitivityInternal,
 					})
@@ -736,7 +740,7 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 						BusinessUnitID:    actor.BusinessUnitID,
 						Actor:             actor,
 						Timezone:          "America/Chicago",
-						Params:            withWorker(ours.workerID, c.allArgs),
+						Params:            c.withWorker(ours.workerID, c.allArgs),
 						RunID:             pulid.MustNew("ar_"),
 						DataAccessCeiling: permission.SensitivityInternal,
 					})
@@ -757,7 +761,7 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 			t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
 				hidden, hiddenErr := agentquerytoolservice.ConvertedListTool(c.tool, public, &publicRole{})
 				require.NoError(t, hiddenErr)
-				page := callTool(t, ours.ctx, hidden, actor, withWorker(ours.workerID, c.allArgs))
+				page := callTool(t, ours.ctx, hidden, actor, c.withWorker(ours.workerID, c.allArgs))
 				withheld, _ := page["withheldByAccess"].([]any)
 				require.NotEmpty(t, withheld)
 				items, _ := page["items"].([]any)
@@ -777,12 +781,16 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 var includeClosed = map[string]any{"includeClosed": true}
 
 // withWorker is a call's arguments with the worker it names, or none.
-func withWorker(workerID pulid.ID, args map[string]any) map[string]any {
+func (c *keyedCase) withWorker(workerID pulid.ID, args map[string]any) map[string]any {
 	out := make(map[string]any, len(args)+1)
 	for key, value := range args {
 		out[key] = value
 	}
-	if workerID.IsNotNil() {
+	switch {
+	case workerID.IsNil():
+	case c.several:
+		out["workerIds"] = []any{workerID.String()}
+	default:
 		out["workerId"] = workerID.String()
 	}
 

@@ -69,7 +69,10 @@ on the ids the person kept ("Tools that take one record or many" in
 record in full for one id and a table for several (`invoice_get`, `billing_get_queue_item`,
 `shipment_get`, `shipment_get_tracking`), read in one query per source for the whole set, never
 one per id. A get a model would call once for each row of a list it just read takes a list, and
-its description's first sentence says to pass every record at once; what the model opened each
+its description's first sentence says to pass every record at once (a list keyed by a record
+takes the record's ids the same way: `worker_list_credentials` takes `workerIds`); a question
+about which records lack something is a filter on the list of those records, never a call per
+row (`worker_list`'s `withoutCredential`); what the model opened each
 row for belongs on the list row when it is cheap to read for a page (a shipment row's holds with
 their notes).
 
@@ -82,6 +85,7 @@ their notes).
 | Paging | `limit` with its `minimum` and `maximum` declared and marked `toolschema.Clamped`, so a call past the bound is read as the bound with a note rather than refused. A read over a cursor connection (a repository listing through `listquery.Connection`, which has no offset) pages with `after`, the `nextCursor` of the previous page, and returns `hasMore` and `nextCursor`, as the GraphQL list queries page with `after` and `endCursor` (`cursorPageSchema`, `readCursorWindow`). Each cursor is bound to the tool and its other arguments (`cursorScope`), so one reused under a changed query, filter, status or sort is refused, and an `offset` sent to a cursor list is refused rather than ignored. A read over an offset query (a repository that applies `.Offset(SafeOffset())`, or a slice in memory) keeps `offset` and returns `hasMore` and `nextOffset` (`pageSchema`). A tool never takes both. |
 | Free text | `reason` for why a change is made (a cancel, a rejection, a void); `note` for text kept on the record (a hold's note); `body` for a message sent to someone. `comment` and `memo` stay where they are the record's own field. Never `notes` or `<x>Reason`. |
 | Dates | `agenttoolschema.Date` for a day, `DateTime` for an instant and `LocalDateTime` for a wall-clock time read in the place's or organization's zone. Each declares its format, which the runtime asserts before the tool parses it. |
+| Columns | A list whose rows are wide takes `fields`, the columns of each row to read besides the id (`fieldsSchema`, `paramFields`), outside the cursor scope. Every GraphQL list and `shipment_list` take it. |
 | Status | A tool narrowing by status takes `status` as a list of the domain's values, all in one call. |
 | Filters | The generated list tools take `filters` of `{field, operator, value, values, days}` from the entity's filter catalog; a tool that takes `status` itself leaves it out of `filters`. |
 

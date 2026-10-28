@@ -38,7 +38,9 @@ type QueryToolParams struct {
 	CallID string
 	// Continues is the arguments of the script of the turn this one
 	// continues, set only once the runtime has found it may be continued.
-	Continues    map[string]any
+	Continues map[string]any
+	// IncludeTotal asks a list for how many records it holds in all: set for
+	// a model's first page and for a person's table when it counts.
 	IncludeTotal bool
 }
 
@@ -67,3 +69,25 @@ type AgentQueryToolRegistry interface {
 	All() []AgentQueryTool
 	Descriptors() []AgentToolDescriptor
 }
+
+// PageCutter is a page of a list that can end early and still say where the
+// list goes on. The runtime cuts a page too long for the model to read whole
+// to the rows that fit, and the next page then starts at the first row it
+// left out. Cutting the encoded result instead kept the cursor the tool made
+// for the whole page, so the rows between the cut and the page's end were
+// never read by anyone: fifty workers asked for, thirteen shown, and the next
+// page began at the fifty-first.
+type PageCutter interface {
+	// PageRows is how many rows the page holds.
+	PageRows() int
+	// CutPage is the page ending after its first rows rows, saying there is
+	// more and where the next page starts. It is false when the page cannot
+	// say where a shorter page would go on, such as rows ranked or merged
+	// out of the list's own order.
+	CutPage(rows int) (any, bool)
+}
+
+// ListFieldsParam names the columns of each row of a list a model reads. The
+// runtime narrows the model's copy of the rows to them; the list itself, the
+// table beside the conversation and its later pages keep every column.
+const ListFieldsParam = "fields"

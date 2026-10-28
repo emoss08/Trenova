@@ -8,7 +8,7 @@ import type { AssistantChapter, AssistantMessage, AssistantThread } from "@/type
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useHandOffThread } from "../handoff/use-hand-off-thread";
-import { chapterEntries, shownChapters } from "./chapter-work";
+import { chapterEntries, MIN_SHOWN_CHAPTERS, shownChapters } from "./chapter-work";
 import { DeskChapterHeading, type ChapterActions } from "./desk-chapter-heading";
 import { DeskChapterRail } from "./desk-chapter-rail";
 
@@ -66,6 +66,9 @@ export function useDeskChapters({
     () => new Map(entries.map((entry) => [entry.chapter.turnId, entry])),
     [entries],
   );
+  // A conversation about one thing has one chapter, and naming it would only
+  // repeat the conversation: chapters show once there is a second.
+  const shown = entries.length >= MIN_SHOWN_CHAPTERS;
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: chaptersKey });
 
@@ -136,12 +139,12 @@ export function useDeskChapters({
 
   return {
     heading: (turnId: string) => {
-      const entry = byTurn.get(turnId);
+      const entry = shown ? byTurn.get(turnId) : undefined;
       return entry ? (
         <DeskChapterHeading entry={entry} actions={actions} timezone={timezone} />
       ) : null;
     },
-    liveTurnId: liveTurnId !== null && byTurn.has(liveTurnId) ? liveTurnId : null,
+    liveTurnId: shown && liveTurnId !== null && byTurn.has(liveTurnId) ? liveTurnId : null,
     rail: (nav) => <DeskChapterRail entries={entries} nav={nav} />,
     startAt: (message: AssistantMessage) =>
       opensChapter(message) || open.isPending ? undefined : () => open.mutate(message.id),

@@ -2,4 +2,4 @@
 import type { TypedDocumentString, ServiceFailureReasonCodeTableQuery, ServiceFailureReasonCodeTableQueryVariables, ServiceFailureReasonCodeTableRowFieldsFragment } from "../../graphql";
 
 export const ServiceFailureReasonCodeTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"ServiceFailureReasonCodeTableRowFields"}} as unknown as TypedDocumentString<ServiceFailureReasonCodeTableRowFieldsFragment, unknown>;
-export const ServiceFailureReasonCodeTableDocument = {"__meta__":{"kind":"query","name":"ServiceFailureReasonCodeTable","hash":"sha256:e76cd043f89be55ce3659c8bd8a4cc485911bfdbec4bb06e07c6ace89e2bcbf1"}} as unknown as TypedDocumentString<ServiceFailureReasonCodeTableQuery, ServiceFailureReasonCodeTableQueryVariables>;
+export const ServiceFailureReasonCodeTableDocument = {"__meta__":{"kind":"query","name":"ServiceFailureReasonCodeTable","hash":"sha256:67633ac15c6b0e95fc80f27705623dcd9a4ce8f6e49bfd1b0bdd85b66e41cc4f"}} as unknown as TypedDocumentString<ServiceFailureReasonCodeTableQuery, ServiceFailureReasonCodeTableQueryVariables>;

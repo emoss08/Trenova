@@ -1,8 +1,9 @@
 # The inbox as the Desk reads it: who wrote, about what, what it was read as and
 # whether it waits on a person, with a line of the sender's own words.
-query DeskInboundMessages($input: InboundMessagesInput!) {
+query DeskInboundMessages($input: InboundMessagesInput!, $includeTotalCount: Boolean = false) {
   inboundMessages(input: $input) {
     edges {
+      cursor
       node {
         id
         receivedAt
@@ -33,6 +34,8 @@ query DeskInboundMessages($input: InboundMessagesInput!) {
       hasNextPage
       endCursor
     }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }
 

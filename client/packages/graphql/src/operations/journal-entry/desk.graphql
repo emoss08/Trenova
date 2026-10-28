@@ -127,9 +127,10 @@ query DeskJournalEntryCard($id: ID!) @requiresRead(kind: "fiscal_period") {
   }
 }
 
-query DeskJournalEntries($input: DataTableConnectionInput!) {
+query DeskJournalEntries($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
   journalEntries(input: $input) {
     edges {
+      cursor
       node {
         id
         entryNumber
@@ -151,5 +152,7 @@ query DeskJournalEntries($input: DataTableConnectionInput!) {
       endCursor
       hasNextPage
     }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }

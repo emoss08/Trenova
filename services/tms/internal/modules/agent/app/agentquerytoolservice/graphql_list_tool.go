@@ -32,6 +32,7 @@ const (
 
 	connectionEdges      = "edges"
 	connectionNode       = "node"
+	connectionCursor     = "cursor"
 	connectionPageInfo   = "pageInfo"
 	connectionTotalCount = "totalCount"
 	connectionTotalExact = "totalCountExact"
@@ -255,6 +256,7 @@ type graphQLListTool struct {
 	permissions permissionports.PermissionEngine
 	registry    *permission.Registry
 	rowFields   []graphQLField
+	columns     agenttoolschema.EnumSource[string]
 }
 
 // insteadRead is a read a list makes in place of its own, and the
@@ -366,6 +368,8 @@ func newGraphQLListTool(
 		registry:    fieldsensitivity.DefaultRegistry(),
 		rowFields:   presentedFields(read.Fields, spec.presents),
 	}
+	tool.columns = agenttoolschema.Derived(spec.name+".column",
+		listColumns(tool.rowFields, spec.amounts))
 	tool.params = slices.DeleteFunc(params, func(param graphQLParam) bool {
 		return tool.confidential(&param)
 	})
@@ -854,6 +858,9 @@ func (t *graphQLListTool) ParamSchema() map[string]any {
 	for name, property := range cursorPageSchema(t.pageBounds()) {
 		properties[name] = property
 	}
+	if len(t.columns.Names()) > 1 {
+		properties[paramFields] = fieldsSchema(t.columns)
+	}
 
 	return argumentSchema(properties, t.demanded)
 }
@@ -901,7 +908,7 @@ func (t *graphQLListTool) readInstead(
 	keys := slices.Concat(instead.params, instead.shared)
 	chosen := instead.params[0].Name
 	for name, raw := range params.Params {
-		if raw == nil || raw == "" || name == paramLimit ||
+		if raw == nil || raw == "" || name == paramLimit || name == paramFields ||
 			slices.ContainsFunc(keys, func(p graphQLParam) bool { return p.Name == name }) {
 			continue
 		}
@@ -962,6 +969,54 @@ type graphQLListOutcome struct {
 	WithheldNote     string           `json:"withheldNote,omitempty"`
 
 	outside []agent.RecordRef
+	// cursors are the edge cursors of items, in order, and window the call's
+	// cursor scope: what a page cut short resumes from. They are nil when the
+	// rows are not in the list's own order, so no cut can resume.
+	cursors []string
+	window  cursorWindow
+}
+
+func (o graphQLListOutcome) PageRows() int { return len(o.Items) }
+
+// CutPage is the page ending after its first rows rows, resuming at the edge
+// after them.
+//
+//nolint:gocritic // the outcome is passed by value wherever a list returns it
+func (o graphQLListOutcome) CutPage(rows int) (any, bool) {
+	if rows <= 0 || rows >= len(o.Items) || len(o.cursors) != len(o.Items) ||
+		o.cursors[rows-1] == "" {
+		return nil, false
+	}
+	cut := o
+	cut.Items = o.Items[:rows]
+	cut.cursors = o.cursors[:rows]
+	cut.Count = rows
+	cut.HasMore = true
+	cut.NextCursor = o.window.next(o.cursors[rows-1])
+	cut.outside = keptRecords(o.outside, cut.Items)
+
+	return cut, true
+}
+
+// keptRecords are the marked records among the rows a cut page kept.
+func keptRecords(marked []agent.RecordRef, items []map[string]any) []agent.RecordRef {
+	if len(marked) == 0 {
+		return nil
+	}
+	ids := make(map[string]struct{}, len(items))
+	for _, item := range items {
+		if id, _ := item[recordIDField].(string); id != "" {
+			ids[id] = struct{}{}
+		}
+	}
+	out := make([]agent.RecordRef, 0, len(marked))
+	for _, ref := range marked {
+		if _, ok := ids[ref.ID]; ok {
+			out = append(out, ref)
+		}
+	}
+
+	return out
 }
 
 // TaintedRecords is on the value: a list returns its outcome by value, as
@@ -1088,9 +1143,12 @@ func (t *graphQLListTool) Query(
 	}
 	page.withheld = append(page.withheld, besideWithheld...)
 
+	cursors := page.cursors
 	if t.spec.rank != nil && query != "" && optionalString(params.Params, paramSortBy) == "" {
 		page.items = t.spec.rank(query, page.items)
+		cursors = nil
 	}
+	outside := markedRows(&t.spec, page.items)
 
 	outcome := graphQLListOutcome{
 		Count:            len(page.items),
@@ -1101,7 +1159,9 @@ func (t *graphQLListTool) Query(
 		Total:            page.total,
 		TotalEstimated:   page.total != nil && !page.totalExact,
 		WithheldByAccess: page.withheld,
-		outside:          markedRows(&t.spec, page.items),
+		outside:          outside,
+		cursors:          cursors,
+		window:           window,
 	}
 	if page.hasMore {
 		outcome.NextCursor = window.next(page.endCursor)
@@ -1130,22 +1190,54 @@ func (t *graphQLListTool) Query(
 // withBeside is a page's outcome with the records read alongside it, each
 // under its key.
 func withBeside(outcome *graphQLListOutcome, beside map[string]any) (any, error) {
-	out := make(map[string]any, len(beside)+10)
-	encoded, err := sonic.Marshal(outcome)
+	return &besidePage{page: *outcome, beside: beside}, nil
+}
+
+// besidePage is a page with the records read alongside it, encoded as one
+// object, which cuts as its page does and keeps what was read beside it.
+type besidePage struct {
+	page   graphQLListOutcome
+	beside map[string]any
+}
+
+func (p *besidePage) MarshalJSON() ([]byte, error) {
+	record, err := p.record()
+	if err != nil {
+		return nil, err
+	}
+
+	return sonic.Marshal(record)
+}
+
+// record is the page and what was read beside it as one object.
+func (p *besidePage) record() (map[string]any, error) {
+	out := make(map[string]any, len(p.beside)+10)
+	encoded, err := sonic.Marshal(p.page)
 	if err != nil {
 		return nil, fmt.Errorf("encode the page: %w", err)
 	}
 	if err = sonic.Unmarshal(encoded, &out); err != nil {
 		return nil, fmt.Errorf("decode the page: %w", err)
 	}
-	for key, value := range beside {
+	for key, value := range p.beside {
 		out[key] = value
-	}
-	if len(outcome.outside) > 0 {
-		return &markedRecord{record: out, outside: outcome.outside}, nil
 	}
 
 	return out, nil
+}
+
+func (p *besidePage) TaintedRecords() []agent.RecordRef { return p.page.outside }
+
+func (p *besidePage) PageRows() int { return p.page.PageRows() }
+
+func (p *besidePage) CutPage(rows int) (any, bool) {
+	cut, ok := p.page.CutPage(rows)
+	if !ok {
+		return nil, false
+	}
+	page, _ := cut.(graphQLListOutcome)
+
+	return &besidePage{page: page, beside: p.beside}, true
 }
 
 type pageRequest struct {
@@ -1163,6 +1255,7 @@ type pageRequest struct {
 
 type graphQLPage struct {
 	items      []map[string]any
+	cursors    []string
 	hasMore    bool
 	endCursor  string
 	withheld   []string
@@ -1194,10 +1287,13 @@ func (t *graphQLListTool) page(
 	page := &graphQLPage{first: req.after == "", withheld: t.relativeWithheld(result.Withheld)}
 	edges, _ := connection[connectionEdges].([]any)
 	page.items = make([]map[string]any, 0, len(edges))
+	page.cursors = make([]string, 0, len(edges))
 	for _, edge := range edges {
 		object, _ := edge.(map[string]any)
 		if node, ok := object[connectionNode].(map[string]any); ok {
 			page.items = append(page.items, presented(compact(node), t.spec.presents))
+			cursor, _ := object[connectionCursor].(string)
+			page.cursors = append(page.cursors, cursor)
 		}
 	}
 	if t.spec.shape != nil {

@@ -32,9 +32,10 @@ fragment DeskCaptureBatchFields on CaptureBatch {
   }
 }
 
-query DeskCaptureBatches($input: CaptureBatchesInput!) {
+query DeskCaptureBatches($input: CaptureBatchesInput!, $includeTotalCount: Boolean = false) {
   captureBatches(input: $input) {
     edges {
+      cursor
       node {
         ...DeskCaptureBatchFields
       }
@@ -43,6 +44,8 @@ query DeskCaptureBatches($input: CaptureBatchesInput!) {
       endCursor
       hasNextPage
     }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }
 

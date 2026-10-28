@@ -235,3 +235,36 @@ func TestHumanizeDates_DrawsTheDayInTheOrganizationsZone(t *testing.T) {
 	humanized, _ := humanizeDates(document, now, "America/New_York").(map[string]any)
 	assert.Equal(t, "2026-09-20 (tomorrow)", humanized["medicalCardExpiry"])
 }
+
+// What says nothing its absence does not is left out of what the model reads:
+// a worker row carried an empty external id, a compliance check of zero and a
+// fleetCodeId beside the fleet code holding it. A count of zero days stays.
+func TestEncodeToolResult_LeavesOutWhatSaysNothing(t *testing.T) {
+	t.Parallel()
+
+	encoded, err := encodeToolResult(map[string]any{
+		"items": []any{map[string]any{
+			"id":              "wrk_1",
+			"externalId":      "",
+			"fleetCodeId":     "fc_1",
+			"fleetCode":       map[string]any{"id": "fc_1", "code": "OTR-W"},
+			"managerId":       "usr_1",
+			"daysUntilExpiry": 0,
+			"profile": map[string]any{
+				"lastComplianceCheck": 0,
+				"cdlRestrictions":     "",
+				"cdlClass":            "A",
+			},
+		}},
+	}, transcriptNow, "UTC")
+	require.NoError(t, err)
+
+	assert.NotContains(t, encoded, "externalId")
+	assert.NotContains(t, encoded, "fleetCodeId")
+	assert.NotContains(t, encoded, "lastComplianceCheck")
+	assert.NotContains(t, encoded, "cdlRestrictions")
+	assert.Contains(t, encoded, `"code":"OTR-W"`)
+	assert.Contains(t, encoded, `"managerId":"usr_1"`, "an id with nothing beside it is kept")
+	assert.Contains(t, encoded, `"daysUntilExpiry":0`)
+	assert.Contains(t, encoded, `"cdlClass":"A"`)
+}

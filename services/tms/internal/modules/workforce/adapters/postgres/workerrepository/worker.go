@@ -2,7 +2,9 @@ package workerrepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -17,8 +19,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -124,7 +128,15 @@ func (r *repository) List(
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*worker.Worker], error) {
 			w := workerdb.Workers
-			result, err := listquery.Connection(ctx, r.db.Keel(ctx), w.Query(),
+			q := w.Query()
+			if req.WithoutCredential != "" {
+				typeID, err := r.credentialTypeID(ctx, req.WithoutCredential)
+				if err != nil {
+					return nil, err
+				}
+				q = q.Where(keel.NotExists(validCredential(typeID, timeutils.NowUnix())))
+			}
+			result, err := listquery.Connection(ctx, r.db.Keel(ctx), q,
 				&listquery.Request[worker.Worker]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
@@ -139,6 +151,40 @@ func (r *repository) List(
 
 			return result, nil
 		},
+	)
+}
+
+// credentialTypeID is the id of the credential type a code names, in any
+// case. A code that names none is refused rather than read as every worker
+// lacking it.
+func (r *repository) credentialTypeID(ctx context.Context, code string) (pulid.ID, error) {
+	t := workerdb.WorkerCredentialTypes
+	kind, err := t.Where(t.Code.Lower().Eq(strings.ToLower(code))).One(ctx, r.db.Keel(ctx))
+	if errors.Is(err, keel.ErrNotFound) {
+		return pulid.Nil, errortypes.NewValidationError(
+			"withoutCredential",
+			errortypes.ErrInvalid,
+			fmt.Sprintf("No credential type has the code %s", code),
+		)
+	}
+	if err != nil {
+		r.l.Error("failed to read the credential type a worker list narrows by", zap.Error(err))
+		return pulid.Nil, err
+	}
+
+	return kind.ID, nil
+}
+
+// validCredential is a worker's active credential of a type that has not
+// expired, through the index on the worker's active credential of each type.
+func validCredential(typeID pulid.ID, now int64) *keel.Query[*worker.WorkerCredential] {
+	c := workerdb.WorkerCredentials
+
+	return c.Where(
+		c.WorkerID.EqCol(workerdb.Workers.ID),
+		c.CredentialTypeID.Eq(typeID),
+		c.Status.Eq(worker.CredentialStatusActive),
+		keel.Or(c.ExpiresAt.IsNull(), c.ExpiresAt.Gte(now)),
 	)
 }
 

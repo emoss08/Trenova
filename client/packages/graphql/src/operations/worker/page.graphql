@@ -168,6 +168,7 @@ query WorkerTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean
 query WorkerPtoTable($input: WorkerPTOEntriesInput!, $includeTotalCount: Boolean = true) {
   workerPTOEntries(input: $input) {
     edges {
+      cursor
       node {
         ...WorkerPtoRowFields
       }

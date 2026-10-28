@@ -535,6 +535,7 @@ query MyYtdPay($year: Int!) {
 query DriverExpenseTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   driverExpenses(input: $input) {
     edges {
+      cursor
       node {
         id
         workerId

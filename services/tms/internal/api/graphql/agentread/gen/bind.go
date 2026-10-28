@@ -27,6 +27,7 @@ const (
 	tableSuffix  = "Table"
 	connection   = "Connection"
 	edgesField   = "edges"
+	edgeCursor   = "cursor"
 	nodeField    = "node"
 	idArgument   = "id"
 	itemsField   = "items"
@@ -386,6 +387,9 @@ func bindOne(
 	if problem = unsupplied(b); problem != "" {
 		return nil, problem
 	}
+	if problem = cursorless(b); problem != "" {
+		return nil, problem
+	}
 	for _, name := range r.Alongside {
 		beside, besideProblem := bindAlongside(catalog, b, name)
 		if besideProblem != "" {
@@ -406,6 +410,39 @@ func bindOne(
 	}
 
 	return b, ""
+}
+
+// cursorless names a list paged through a connection whose operation does
+// not select each edge's cursor. The runtime cuts a page too long for a model
+// to read whole and resumes the list at the first row it left out, which
+// takes that row's cursor; with only the page's end cursor, the rows between
+// the cut and the page's end would never be read.
+func cursorless(b *binding) string {
+	if b.Verb != verbList || b.unpaged() || b.RootField.Type.Name() == b.Node ||
+		!strings.HasSuffix(b.RootField.Type.Name(), connection) {
+		return ""
+	}
+	doc := b.Operation.Query
+	fragments := make(map[string]*ast.FragmentDefinition, len(doc.Fragments))
+	for _, fragment := range doc.Fragments {
+		fragments[fragment.Name] = fragment
+	}
+	for _, selection := range doc.Operations[0].SelectionSet {
+		root, ok := selection.(*ast.Field)
+		if !ok || root.Name != b.RootField.Name {
+			continue
+		}
+		edges := childSet(collect(root.SelectionSet, fragments), edgesField)
+		for _, f := range collect(edges, fragments) {
+			if f.Name == edgeCursor {
+				return ""
+			}
+		}
+	}
+
+	return fmt.Sprintf("%s reads %s, which does not select each edge's cursor: add cursor "+
+		"under edges, so a page cut to what a model can read resumes at the row after the cut",
+		b.Tool, b.Operation.Name)
 }
 
 // provenRead is an operation another read is made through: persisted, one

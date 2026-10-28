@@ -4,4 +4,4 @@ import type { TypedDocumentString, CustomerBillingProfileFieldsFragment, Custome
 export const CustomerBillingProfileFieldsFragmentDoc = {"__meta__":{"fragmentName":"CustomerBillingProfileFields"}} as unknown as TypedDocumentString<CustomerBillingProfileFieldsFragment, unknown>;
 export const CustomerEmailProfileFieldsFragmentDoc = {"__meta__":{"fragmentName":"CustomerEmailProfileFields"}} as unknown as TypedDocumentString<CustomerEmailProfileFieldsFragment, unknown>;
 export const CustomerTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"CustomerTableRowFields"}} as unknown as TypedDocumentString<CustomerTableRowFieldsFragment, unknown>;
-export const CustomerTableDocument = {"__meta__":{"kind":"query","name":"CustomerTable","hash":"sha256:de01ee3d2d72d6ed6fffa3cd29795e39588d66cd2e5152d0b6c15212259984c7"}} as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
+export const CustomerTableDocument = {"__meta__":{"kind":"query","name":"CustomerTable","hash":"sha256:77fc50a2943abe8cc016f3b69f09896edacab646e68166b8cc4d87a08bd86e99"}} as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;

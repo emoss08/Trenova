@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 // searchOutcome is what a search tool returns instead of a bare slice.
@@ -45,6 +46,61 @@ type searchOutcome struct {
 	HasMore    bool   `json:"hasMore"`
 	NextOffset *int   `json:"nextOffset,omitempty"`
 	NextCursor string `json:"nextCursor,omitempty"`
+	// resume is where a page cut short goes on, set only by a list whose rows
+	// are in the list's own order. A type that embeds the outcome with it set
+	// declares its own CutPage, or the cut would drop the type's own fields.
+	resume *pageResume
+}
+
+// pageResume is where a page cut short goes on: each row's cursor under the
+// call's cursor scope, or, for a list paged by offset, the offset after the
+// rows kept.
+type pageResume struct {
+	scope    string
+	cursors  []string
+	byOffset bool
+}
+
+func (o searchOutcome) PageRows() int {
+	list := reflect.ValueOf(o.Items)
+	if list.Kind() != reflect.Slice {
+		return 0
+	}
+
+	return list.Len()
+}
+
+func (o searchOutcome) CutPage(rows int) (any, bool) {
+	cut, ok := o.cut(rows)
+	if !ok {
+		return nil, false
+	}
+
+	return cut, true
+}
+
+// cut is the outcome ending after its first rows rows, resuming at the row
+// after them.
+func (o *searchOutcome) cut(rows int) (searchOutcome, bool) {
+	list := reflect.ValueOf(o.Items)
+	if o.resume == nil || list.Kind() != reflect.Slice || rows <= 0 || rows >= list.Len() {
+		return searchOutcome{}, false
+	}
+	cut := *o
+	cut.Items = list.Slice(0, rows).Interface()
+	cut.Count = rows
+	cut.HasMore = true
+	switch {
+	case o.resume.byOffset:
+		next := o.Offset + rows
+		cut.NextOffset = &next
+	case len(o.resume.cursors) == list.Len() && o.resume.cursors[rows-1] != "":
+		cut.NextCursor = pagination.EncodeKeyCursor(o.resume.scope, o.resume.cursors[rows-1])
+	default:
+		return searchOutcome{}, false
+	}
+
+	return cut, true
 }
 
 // paged records where a page sits in the whole list.

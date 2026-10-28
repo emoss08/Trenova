@@ -210,7 +210,7 @@ func firstCursorWindow(limit int) cursorWindow {
 func cursorScope(tool string, params map[string]any) (string, error) {
 	shape := make(map[string]any, len(params))
 	for key, value := range params {
-		if key == paramLimit || key == paramAfter || key == paramOffset {
+		if key == paramLimit || key == paramAfter || key == paramOffset || key == paramFields {
 			continue
 		}
 		shape[key] = value

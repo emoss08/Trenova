@@ -435,6 +435,19 @@ func gatedResult(outcome *searchOutcome, gate *fieldGate) *gatedOutcome {
 	return result
 }
 
+// CutPage cuts the page and keeps what the gate withheld. Every marked record
+// stays marked: a row the cut left out was still read.
+func (o *gatedOutcome) CutPage(rows int) (any, bool) {
+	cut, ok := o.searchOutcome.cut(rows)
+	if !ok {
+		return nil, false
+	}
+	result := *o
+	result.searchOutcome = cut
+
+	return &result, true
+}
+
 func (o *gatedOutcome) withTaint(refs []agent.RecordRef) *gatedOutcome {
 	o.tainted = refs
 

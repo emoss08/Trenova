@@ -1,6 +1,7 @@
 query PayProfileTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   payProfiles(input: $input) {
     edges {
+      cursor
       node {
         id
         organizationId
@@ -154,6 +155,7 @@ query RecurringDeductionTable(
 ) {
   recurringDeductions(input: $input) {
     edges {
+      cursor
       node {
         id
         workerId
@@ -194,6 +196,7 @@ query RecurringDeductionTable(
 query RecurringEarningTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   recurringEarnings(input: $input) {
     edges {
+      cursor
       node {
         id
         workerId
@@ -266,6 +269,7 @@ query PayCodeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolea
 query PayAdvanceTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   payAdvances(input: $input) {
     edges {
+      cursor
       node {
         id
         workerId
@@ -301,6 +305,7 @@ query PayAdvanceTable($input: DataTableConnectionInput!, $includeTotalCount: Boo
 query EscrowAccountTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   escrowAccounts(input: $input) {
     edges {
+      cursor
       node {
         id
         workerId
@@ -364,6 +369,7 @@ query EscrowAccountDetail($id: ID!) {
 query DriverSettlementTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   driverSettlements(input: $input) {
     edges {
+      cursor
       node {
         id
         workerId
@@ -513,6 +519,7 @@ query SettlementBatchTable($input: DataTableConnectionInput!, $includeTotalCount
 query DriverPayEventTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   driverPayEvents(input: $input) {
     edges {
+      cursor
       node {
         id
         workerId

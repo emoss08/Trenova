@@ -7,6 +7,7 @@ package workerresolver
 
 import (
 	"context"
+	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/actorutil"
@@ -205,7 +206,7 @@ func (r *PTOChartDataPointResolver) Workers(ctx context.Context, obj *workerport
 	return workers, nil
 }
 
-func (r *QueryResolver) Workers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.WorkerConnection, error) {
+func (r *QueryResolver) Workers(ctx context.Context, input gqlmodel.DataTableConnectionInput, withoutCredential *string) (*gqlmodel.WorkerConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorker, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -217,8 +218,9 @@ func (r *QueryResolver) Workers(ctx context.Context, input gqlmodel.DataTableCon
 	}
 
 	result, err := r.WorkerService.List(ctx, &workerports.ListWorkersRequest{
-		Filter: connection.Filter,
-		Cursor: connection.Cursor,
+		Filter:            connection.Filter,
+		Cursor:            connection.Cursor,
+		WithoutCredential: strings.TrimSpace(base.StringValue(withoutCredential)),
 	})
 	if err != nil {
 		return nil, err

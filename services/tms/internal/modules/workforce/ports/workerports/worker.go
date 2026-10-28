@@ -11,6 +11,9 @@ import (
 type ListWorkersRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 	Cursor pagination.CursorInfo    `json:"cursor"`
+	// WithoutCredential keeps the workers with no valid credential of the
+	// type this code names: none on file, archived, or expired.
+	WithoutCredential string `json:"withoutCredential"`
 }
 
 type WorkerSelectOptionsRequest struct {

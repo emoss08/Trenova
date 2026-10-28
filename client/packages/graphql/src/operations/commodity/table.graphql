@@ -23,6 +23,7 @@ fragment CommodityTableRowFields on Commodity {
 query CommodityTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   commodities(input: $input) {
     edges {
+      cursor
       node {
         ...CommodityTableRowFields
       }

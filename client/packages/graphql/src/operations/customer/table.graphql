@@ -120,6 +120,7 @@ fragment CustomerTableRowFields on Customer {
 query CustomerTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   customers(input: $input) {
     edges {
+      cursor
       node {
         ...CustomerTableRowFields
       }

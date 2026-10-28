@@ -95,6 +95,7 @@ fragment WorkerTrainingRecordFields on WorkerTrainingRecord {
 query TrainingCourseTable($input: TrainingCoursesInput!, $includeTotalCount: Boolean = true) {
   trainingCourses(input: $input) {
     edges {
+      cursor
       node {
         ...TrainingCourseFields
       }

@@ -84,10 +84,12 @@ describe("DeskChapterRail", () => {
     render(<DeskChapterRail entries={chapters} nav={{ current: null, reveal: vi.fn() }} />);
 
     const toggle = screen.getByRole("button", { name: "3 chapters" });
+    expect(screen.queryByRole("list")).toBeNull();
     fireEvent.click(toggle);
     fireEvent.keyDown(screen.getByRole("list"), { key: "Escape" });
 
     expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("list")).toBeNull();
   });
 });
 

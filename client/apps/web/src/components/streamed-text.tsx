@@ -64,21 +64,26 @@ function SegmentAction({ segment, children }: { segment: StreamedSegment; childr
  * A sentence that arrives a few characters at a time, each word resolving
  * from a blur, with a caret until it is whole. Segments with an action read
  * as underlined links, and one with a preview opens it on hover. A prefix is
- * shown whole from the start. Reduced motion shows the sentence whole at once.
+ * shown whole from the start. Reduced motion, or `animate` off, shows the
+ * sentence whole at once. `as="span"` sets it inside a line, such as a button.
  */
 export function StreamedText({
   segments,
   className,
   streamKey,
   prefix,
+  as: Tag = "p",
+  animate = true,
 }: {
   segments: StreamedSegment[];
   className?: string;
   /** Restarts the stream when it changes; the same sentence never streams twice. */
   streamKey: string;
   prefix?: ReactNode;
+  as?: "p" | "span";
+  animate?: boolean;
 }) {
-  const reduceMotion = useReducedMotion() ?? false;
+  const whole = (useReducedMotion() ?? false) || !animate;
   const layout = useMemo(() => {
     const next: { segment: StreamedSegment; words: Word[] }[] = [];
     let offset = 0;
@@ -89,19 +94,19 @@ export function StreamedText({
     return next;
   }, [segments]);
   const total = segments.reduce((sum, segment) => sum + segment.text.length, 0);
-  const [revealed, setRevealed] = useState(reduceMotion ? total : 0);
-  const [stream, setStream] = useState({ streamKey, total, reduceMotion });
+  const [revealed, setRevealed] = useState(whole ? total : 0);
+  const [stream, setStream] = useState({ streamKey, total, whole });
   if (
     stream.streamKey !== streamKey ||
     stream.total !== total ||
-    stream.reduceMotion !== reduceMotion
+    stream.whole !== whole
   ) {
-    setStream({ streamKey, total, reduceMotion });
-    setRevealed(reduceMotion ? total : 0);
+    setStream({ streamKey, total, whole });
+    setRevealed(whole ? total : 0);
   }
 
   useEffect(() => {
-    if (reduceMotion) return undefined;
+    if (whole) return undefined;
     const timer = window.setInterval(() => {
       setRevealed((current) => {
         const step =
@@ -113,12 +118,12 @@ export function StreamedText({
       });
     }, STREAM_TICK_MS);
     return () => window.clearInterval(timer);
-  }, [streamKey, total, reduceMotion]);
+  }, [streamKey, total, whole]);
 
   const done = revealed >= total;
 
   return (
-    <p className={cn(className, !done && "ui-stream-caret")} aria-live="polite" aria-busy={!done}>
+    <Tag className={cn(className, !done && "ui-stream-caret")} aria-live="polite" aria-busy={!done}>
       {prefix}
       {layout.map(({ segment, words }, index) => {
         const visible: ReactNode[] = words
@@ -144,6 +149,6 @@ export function StreamedText({
           </SegmentAction>
         );
       })}
-    </p>
+    </Tag>
   );
 }

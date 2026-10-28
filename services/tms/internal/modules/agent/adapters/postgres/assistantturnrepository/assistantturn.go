@@ -105,7 +105,7 @@ func liveThreadTitlesQuery(
 ) *keel.Query[*conversation.Thread] {
 	th := conversationdb.Threads
 
-	return th.Pick(th.ID, th.Title).Where(
+	return th.Pick(th.ID, th.Title.Coalesce("")).Where(
 		th.ID.InQuery(liveTurnsQuery(req).Pick(conversationdb.AssistantTurns.ThreadID)),
 	)
 }

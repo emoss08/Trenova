@@ -5,6 +5,7 @@
 query DeskFormulaLibraries($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
   formulaLibraries(input: $input) {
     edges {
+      cursor
       node {
         id
         name

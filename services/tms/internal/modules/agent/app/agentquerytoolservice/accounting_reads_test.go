@@ -101,7 +101,7 @@ func TestAccountingDrift_SendsTheSystemBesideTheTableInput(t *testing.T) {
 	require.NotNil(t, overview)
 	assert.Equal(t, map[string]any{argIntegrationType: "QuickBooksOnline"}, overview.Variables)
 
-	outcome, ok := data.(map[string]any)
+	outcome, ok := pageRecord(data)
 	require.True(t, ok)
 	items, _ := outcome["items"].([]any)
 	require.Len(t, items, 3)
@@ -211,7 +211,7 @@ func TestAccountingSyncRecords_DocumentIDsReadTheirStatesInstead(t *testing.T) {
 	require.NotNil(t, sent)
 	assert.Equal(t, map[string]any{"objectIds": []any{invoice}}, sent.Variables)
 
-	outcome, ok := data.(map[string]any)
+	outcome, ok := pageRecord(data)
 	require.True(t, ok)
 	assert.Equal(t, untrackedNote, outcome[outcomeNote])
 	states, _ := outcome[keyAccountingStates].([]map[string]any)
@@ -265,7 +265,7 @@ func TestAccountingMappingGaps_ReadsTheOpenStatesBesideTheSummary(t *testing.T) 
 		"targetTypes": []any{"Customer"},
 	}, sent.Variables["filter"])
 
-	outcome, ok := data.(map[string]any)
+	outcome, ok := pageRecord(data)
 	require.True(t, ok)
 	summary, _ := outcome[keyAccountingSummary].(map[string]any)
 	assert.Equal(t, false, summary["canCompleteSetup"])

@@ -319,7 +319,11 @@ input WorkerPTOChartInput {
 }
 
 extend type Query {
-  workers(input: DataTableConnectionInput!): WorkerConnection!
+  workers(
+    input: DataTableConnectionInput!
+    "Only workers with no valid credential of this type, by its code, such as ROAD_TEST or MED_CARD, in any case: none on file, archived, or expired."
+    withoutCredential: String
+  ): WorkerConnection!
   "One worker, with the profile, state, fleet, manager and license state it is asked for."
   worker(id: ID!): Worker
   workerPTOEntries(input: WorkerPTOEntriesInput!): WorkerPTOConnection!

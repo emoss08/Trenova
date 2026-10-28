@@ -394,7 +394,7 @@ func TestCaptureBatches_ListOpenStacksOrReadOne(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{"id": batchID}, reader.sent("DeskCaptureBatch").Variables)
-	outcome := data.(map[string]any)
+	outcome, _ := pageRecord(data)
 	batch, _ := outcome[keyCaptureBatch].(map[string]any)
 	assert.Equal(t, batchID, batch["id"])
 

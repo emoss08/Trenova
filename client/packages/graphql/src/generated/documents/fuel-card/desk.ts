@@ -3,4 +3,4 @@ import type { TypedDocumentString, DeskFuelCardCardQuery, DeskFuelCardCardQueryV
 
 export const DeskFuelCardPurchaseFieldsFragmentDoc = {"__meta__":{"fragmentName":"DeskFuelCardPurchaseFields"}} as unknown as TypedDocumentString<DeskFuelCardPurchaseFieldsFragment, unknown>;
 export const DeskFuelCardCardDocument = {"__meta__":{"kind":"query","name":"DeskFuelCardCard","hash":"sha256:18c449ed1705abb31333289e7bb2859182162bc37998e582cb9b32abee7a54bd"}} as unknown as TypedDocumentString<DeskFuelCardCardQuery, DeskFuelCardCardQueryVariables>;
-export const DeskFuelCardsDocument = {"__meta__":{"kind":"query","name":"DeskFuelCards","hash":"sha256:ef5a5ccaaf8049f3b8ca73c93523ef6c1762b08767703922c50ca33d5505d146"}} as unknown as TypedDocumentString<DeskFuelCardsQuery, DeskFuelCardsQueryVariables>;
+export const DeskFuelCardsDocument = {"__meta__":{"kind":"query","name":"DeskFuelCards","hash":"sha256:3b23c8ffbfbf3ed95dd810efac107cf07269a462734f9caadca2892de36e0ea1"}} as unknown as TypedDocumentString<DeskFuelCardsQuery, DeskFuelCardsQueryVariables>;

@@ -25,6 +25,7 @@ fragment OrderTableRowFields on Order {
 query OrderTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   orders(input: $input) {
     edges {
+      cursor
       node {
         ...OrderTableRowFields
       }

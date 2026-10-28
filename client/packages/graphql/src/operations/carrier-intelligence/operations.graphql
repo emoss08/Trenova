@@ -883,6 +883,7 @@ query DeskCarrierIntelEvents(
 ) {
   carrierIntelEvents(input: $input, filter: $filter) {
     edges {
+      cursor
       node {
         id
         carrierId

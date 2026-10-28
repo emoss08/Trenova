@@ -24,6 +24,17 @@ func (f *fixture) openingPlan(t *testing.T, question string) *agentports.Chapter
 	return plan
 }
 
+func (f *fixture) scheduledPlan(t *testing.T, prompt string) *agentports.ChapterPlan {
+	t.Helper()
+
+	turn := f.turn(conversation.AssistantTurnOriginScheduled, conversation.AssistantTurnStatusRunning, prompt)
+	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseOpened))
+	require.NoError(t, err)
+	require.True(t, plan.Opens)
+
+	return plan
+}
+
 func (f *fixture) decidingPlan(t *testing.T, question string) *agentports.ChapterPlan {
 	t.Helper()
 
@@ -104,7 +115,7 @@ func TestApply_ANewChapterWithoutATitleIsNotOpened(t *testing.T) {
 	assert.Empty(t, f.chapters.created)
 }
 
-func TestApply_TheFirstQuestionFallsBackToItsOwnWordsWithoutAnAnswer(t *testing.T) {
+func TestApply_TheFirstQuestionOpensItsQuietChapterInItsOwnWords(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
@@ -117,25 +128,55 @@ func TestApply_TheFirstQuestionFallsBackToItsOwnWordsWithoutAnAnswer(t *testing.
 	created := f.chapters.created[0]
 	assert.Equal(t, "Why is load 1200 late?", created.Title)
 	assert.Equal(t, conversation.ChapterTitleQuestion, created.TitleSource)
-	assert.Equal(t,
-		&agentports.ChapterOutcome{ChapterID: created.ID, Opened: true, Fallback: true}, outcome)
+	assert.Equal(t, &agentports.ChapterOutcome{ChapterID: created.ID, Opened: true}, outcome)
+	assert.Empty(t, f.scheduler.cues)
 	f.assertAnnounced(t, 1)
 }
 
-func TestApply_TheFirstQuestionTakesTheModelsTitle(t *testing.T) {
+func TestApply_AScheduledRunTakesTheModelsTitle(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	plan := f.openingPlan(t, "why is load 1200 late?")
+	plan := f.scheduledPlan(t, "list the loads still late on the Dallas lane")
 
-	outcome, err := f.svc.Apply(t.Context(), plan, answer(`{"title":"Late load 1200"}`))
+	outcome, err := f.svc.Apply(t.Context(), plan, answer(`{"title":"Late loads on the Dallas lane"}`))
 	require.NoError(t, err)
 
 	require.Len(t, f.chapters.created, 1)
-	assert.Equal(t, "Late load 1200", f.chapters.created[0].Title)
-	assert.Equal(t, conversation.ChapterTitleModel, f.chapters.created[0].TitleSource)
+	assert.Equal(t, "Late loads on the Dallas lane", f.chapters.created[0].Title)
+	assert.Equal(t, conversation.ChapterTitleSchedule, f.chapters.created[0].TitleSource)
 	assert.False(t, outcome.Fallback)
 	assert.True(t, outcome.Opened)
+}
+
+func TestApply_OpeningASecondChapterNamesTheQuietFirstOne(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	first := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusCompleted, "Late loads")
+	f.chapter(first.ID, "Late loads", conversation.ChapterTitleQuestion, sequence(0))
+	turn := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusRunning, "Now the Acme invoice")
+	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseOpened))
+	require.NoError(t, err)
+
+	_, err = f.svc.Apply(t.Context(), plan, answer(`{"newChapter":true,"title":"Acme invoice dispute"}`))
+	require.NoError(t, err)
+
+	require.Len(t, f.scheduler.cues, 1)
+	assert.Equal(t, first.ID, f.scheduler.cues[0].TurnID)
+	assert.Equal(t, agentports.ChapterPhaseRequested, f.scheduler.cues[0].Phase)
+
+	stays := newFixture(t)
+	earlier := stays.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusCompleted, "Late loads")
+	stays.chapter(earlier.ID, "Late loads", conversation.ChapterTitleQuestion, sequence(0))
+	next := stays.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusRunning, "And the third one?")
+	same, err := stays.svc.Plan(t.Context(), stays.request(next.ID, agentports.ChapterPhaseOpened))
+	require.NoError(t, err)
+
+	_, err = stays.svc.Apply(t.Context(), same, answer(`{"newChapter":false,"title":""}`))
+	require.NoError(t, err)
+
+	assert.Empty(t, stays.scheduler.cues, "a follow-up opens nothing, so nothing is named yet")
 }
 
 /*
@@ -150,14 +191,14 @@ func TestApply_ATitleNamingANumberTheConversationLacksIsRefused(t *testing.T) {
 		t.Parallel()
 
 		f := newFixture(t)
-		plan := f.openingPlan(t, "why is load 1200 late")
+		plan := f.scheduledPlan(t, "why is load 1200 late")
 
 		outcome, err := f.svc.Apply(t.Context(), plan, answer(`{"title":"Load 4471 delay"}`))
 		require.NoError(t, err)
 
 		require.Len(t, f.chapters.created, 1)
 		assert.Equal(t, "Why is load 1200 late", f.chapters.created[0].Title)
-		assert.Equal(t, conversation.ChapterTitleQuestion, f.chapters.created[0].TitleSource)
+		assert.Equal(t, conversation.ChapterTitleSchedule, f.chapters.created[0].TitleSource)
 		assert.True(t, outcome.Fallback)
 	})
 
@@ -184,7 +225,7 @@ func TestApply_AnAnswerThatCannotBeReadCountsAsNone(t *testing.T) {
 		t.Parallel()
 
 		f := newFixture(t)
-		plan := f.openingPlan(t, "Detention policy setup")
+		plan := f.scheduledPlan(t, "Detention policy setup")
 
 		outcome, err := f.svc.Apply(t.Context(), plan, answer("Sure! The title is Detention."))
 		require.NoError(t, err)

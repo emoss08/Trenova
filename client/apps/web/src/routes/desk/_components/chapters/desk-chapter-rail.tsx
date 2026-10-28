@@ -3,7 +3,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
-import type { ChapterEntry } from "./chapter-work";
+import { MIN_SHOWN_CHAPTERS, type ChapterEntry } from "./chapter-work";
 import "./desk-chapters.css";
 
 /** The most ticks the folded rail draws; a longer conversation shows those around the one in view. */
@@ -55,7 +55,7 @@ export function DeskChapterRail({
     [],
   );
 
-  if (entries.length < 2) {
+  if (entries.length < MIN_SHOWN_CHAPTERS) {
     return null;
   }
 
@@ -123,7 +123,13 @@ export function DeskChapterRail({
           />
         ))}
       </Button>
-      <ol id={listId} className="dk-chap-list" hidden={!open}>
+      <ol
+        id={listId}
+        className="dk-chap-list"
+        data-open={open || undefined}
+        aria-hidden={!open}
+        inert={!open}
+      >
         {entries.map((entry) => (
           <li key={entry.chapter.id}>
             <Button
@@ -134,6 +140,7 @@ export function DeskChapterRail({
                 entry.chapter.turnId === nav.current && "dk-chap-row-on",
               )}
               aria-current={entry.chapter.turnId === nav.current ? "location" : undefined}
+              title={entry.chapter.title}
               onClick={() => pick(entry)}
             >
               <span className="dk-chap-row-n">{entry.number}</span>

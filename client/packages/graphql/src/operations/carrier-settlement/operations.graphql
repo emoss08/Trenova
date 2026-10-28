@@ -4,6 +4,7 @@ query CarrierSettlementTable(
 ) {
   carrierSettlements(input: $input) {
     edges {
+      cursor
       node {
         id
         carrierId

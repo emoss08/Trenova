@@ -32354,7 +32354,11 @@ input WorkerPTOChartInput {
 }
 
 extend type Query {
-  workers(input: DataTableConnectionInput!): WorkerConnection!
+  workers(
+    input: DataTableConnectionInput!
+    "Only workers with no valid credential of this type, by its code, such as ROAD_TEST or MED_CARD, in any case: none on file, archived, or expired."
+    withoutCredential: String
+  ): WorkerConnection!
   "One worker, with the profile, state, fleet, manager and license state it is asked for."
   worker(id: ID!): Worker
   workerPTOEntries(input: WorkerPTOEntriesInput!): WorkerPTOConnection!
@@ -32814,20 +32818,22 @@ extend type Query {
   """
   activeWorkerCredentialTypes: [WorkerCredentialType!]!
   """
-  One worker's credentials, or those falling due: active credentials expiring
-  within a number of days, soonest first, for the worker named or across the
-  organization when none is.
+  The credentials the workers named hold; those falling due, active
+  credentials expiring within a number of days, soonest first, for the workers
+  named or across the organization when none is; or, with a type and neither
+  workers nor a window, every active credential of that type across the
+  organization, which is who holds it.
   """
   workerCredentials(
-    "The worker whose credentials are read. Leave it out for those falling due across the organization."
-    workerId: ID
+    "The workers whose credentials are read, every one in one call, at most 50. Leave it out for those across the organization."
+    workerIds: [ID!]
     "With a worker and no expiry window, also read their archived credentials."
     includeArchived: Boolean = true
-    "Only active credentials expiring within this many days from now, from 1 to 365. 30 when no worker is named."
+    "Only active credentials expiring within this many days from now, from 1 to 365. 30 when neither a worker nor a type is named."
     expiringWithinDays: Int
     "With an expiry window, also those that lapsed in the last 90 days."
     includeExpired: Boolean
-    "Only credentials of this type, by its code, such as MED_CARD or CDL, in any case."
+    "Only credentials of this type, by its code, such as MED_CARD or CDL, in any case. Named with no worker and no window, every active one of the type: who holds it, those that never expire included."
     credentialTypeCode: String
     "Only credential types the organization marks required."
     requiredOnly: Boolean

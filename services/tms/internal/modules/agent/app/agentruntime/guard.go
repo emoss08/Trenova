@@ -115,6 +115,7 @@ func (s *Service) guardedDispatch(
 			beyond:         p.beyond,
 			scriptStepKey:  p.scriptStepKey,
 			gate:           p.gate,
+			caller:         p.caller,
 		})
 		finishToolSpan(span, &outcome, p.afterExternal)
 
@@ -198,6 +199,7 @@ func (s *Service) claimAndDispatch(
 		stepKey:        key,
 		scriptStepKey:  p.scriptStepKey,
 		gate:           p.gate,
+		caller:         p.caller,
 	})
 
 	step.Status = agentports.RunStepCompleted

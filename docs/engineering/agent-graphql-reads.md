@@ -617,6 +617,20 @@ cursor-paged list (`paging.go`):
 - `after` is read by `readCursorWindow`, which unwraps it in the call's own scope and passes the
   connection cursor inside to the operation's `after`.
 
+Every connection a paged list reads selects each edge's `cursor` beside its node, and
+`agentread/gen` refuses a binding whose operation does not (`cursorless`): the runtime cuts a
+page too long for a model to read whole and resumes it at the first row it left out, which
+takes that row's cursor (see "An oversized tool result" in [agent-runtime.md](agent-runtime.md)).
+A resolver that leaves an edge's cursor empty is not refused; its pages are only never cut.
+
+A list takes `fields`, the columns of each row it reads besides the id
+(`agenttoolschema.Derived("<tool>.column", …)`, the operation's selected top-level fields under
+the names a row shows them by). Rows keep their id, the columns named, and what the spec's
+`shape` works out beside the columns (a worker's `dispatchable`), and `columns` names only what
+they carry. `fields` is outside the cursor scope, since it never changes which rows a page
+holds. A worker row with its profile is about 900 characters; names and statuses alone fit ten
+times as many rows in a result. `shipment_list` takes it too (`projectOutcome`).
+
 So a model sees the same shape whichever path a list reads through. A cursor sent with changed
 filters, query or sort, an altered cursor, or one the tool never returned is refused before the
 read with `errStaleCursor` ("call it again without after"), and `offset` with

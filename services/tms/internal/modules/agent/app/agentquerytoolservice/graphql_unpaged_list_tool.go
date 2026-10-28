@@ -4,13 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
+	"strconv"
 	"strings"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -57,6 +62,10 @@ type alongsideSpec struct {
 	// (the credential types beside one worker's credentials, not beside what
 	// falls due across the organization).
 	scoped bool
+	// unless are the list's parameters that, named, leave it unread: a call
+	// that names a credential type already knows the types, and a dozen
+	// workers checked for one each came back with the whole catalog again.
+	unless []string
 	// withheld is the note a result carries when the reader may not read
 	// the kind, so the model knows the records exist and are hidden.
 	withheld string
@@ -404,9 +413,11 @@ func (t *graphQLUnpagedListTool) Query(
 	}
 	query := strings.ToLower(strings.TrimSpace(optionalString(params.Params, graphQLParamQuery)))
 	items := make([]map[string]any, 0, len(rows))
-	for _, row := range rows {
+	positions := make([]int, 0, len(rows))
+	for idx, row := range rows {
 		if node, ok := row.(map[string]any); ok && matchesQuery(node, t.spec.matches, query) {
 			items = append(items, compact(node))
+			positions = append(positions, idx)
 		}
 	}
 	withheld := relativePaths(result.Withheld, prefix)
@@ -469,11 +480,60 @@ func (t *graphQLUnpagedListTool) Query(
 		outcome[outcomeWithheld] = withheld
 		outcome[outcomeWithheldNote] = withheldNote
 	}
-	if marked := markedRows(&t.spec, items); len(marked) > 0 {
+	marked := markedRows(&t.spec, items)
+	if t.paged {
+		return &offsetPage{
+			record: outcome, outside: marked, positions: positions, window: window,
+		}, nil
+	}
+	if len(marked) > 0 {
 		return &markedRecord{record: outcome, outside: marked}, nil
 	}
 
 	return outcome, nil
+}
+
+// offsetPage is a page of a list that pages by offset under the cursor
+// contract, which a cut resumes at the offset after the last row it kept.
+// positions are each item's place among the rows read, since a query the
+// list matches itself keeps only some of them.
+type offsetPage struct {
+	record    map[string]any
+	outside   []agent.RecordRef
+	positions []int
+	window    offsetWindow
+}
+
+func (p *offsetPage) MarshalJSON() ([]byte, error) { return sonic.Marshal(p.record) }
+
+func (p *offsetPage) TaintedRecords() []agent.RecordRef { return p.outside }
+
+func (p *offsetPage) items() []map[string]any {
+	items, _ := p.record[outcomeItems].([]map[string]any)
+
+	return items
+}
+
+func (p *offsetPage) PageRows() int { return len(p.items()) }
+
+func (p *offsetPage) CutPage(rows int) (any, bool) {
+	items := p.items()
+	if rows <= 0 || rows >= len(items) || len(p.positions) != len(items) {
+		return nil, false
+	}
+	record := maps.Clone(p.record)
+	record[outcomeItems] = items[:rows]
+	record[outcomeCount] = rows
+	record[outcomeHasMore] = true
+	record[outcomeNextCursor] = pagination.EncodeKeyCursor(
+		p.window.scope, strconv.Itoa(p.window.offset+p.positions[rows-1]+1))
+
+	return &offsetPage{
+		record:    record,
+		outside:   keptRecords(p.outside, items[:rows]),
+		positions: p.positions[:rows],
+		window:    p.window,
+	}, true
 }
 
 // rows are the records the root returned, as a list or under items, and the

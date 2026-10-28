@@ -92,7 +92,7 @@ query WorkerCredentialTypeTable(
 }
 
 query WorkerCredentials($workerId: ID!, $includeArchived: Boolean) {
-  workerCredentials(workerId: $workerId, includeArchived: $includeArchived) {
+  workerCredentials(workerIds: [$workerId], includeArchived: $includeArchived) {
     ...WorkerCredentialFields
   }
 }

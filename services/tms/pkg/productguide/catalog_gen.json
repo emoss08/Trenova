@@ -1,5 +1,5 @@
 {
-  "version": "sha256:b369a3d595f99f96d0ad0254dab80b83560fef545b92074e7ca79743cfad39b3",
+  "version": "sha256:00a8cbd39e62bd25f82cb3ba2a46f639ba2310c0e1957e409231e8f92f1c5ba3",
   "modules": [
     {
       "id": "home",
@@ -10366,7 +10366,7 @@
             "split conversation"
           ],
           "steps": [
-            "When a conversation turns to a new subject, the Desk starts a chapter and names it in a few words. The name sits above the question that opens the chapter, with its number.",
+            "A conversation about one thing shows no chapters. Once it turns to a second subject, the Desk splits it into chapters and names each in a few words. A chapter's name sits above the question that opens it, with its number.",
             "Once a conversation has two chapters, a mark for each shows in its top-left corner. The chapter you are reading has the longest mark, and a chapter with a decision waiting for you is marked in amber.",
             "Point at the marks to list the chapters. Each says what it made, what waits for your decision and what the agent is waiting on. Select a chapter to go to it, even one above the messages loaded so far.",
             "Double-click a chapter's name, or move to it with Tab and press Enter, to rename it. Press Enter or click away to keep the new name, or Escape to keep the old one. A name you give is never changed by the Desk.",

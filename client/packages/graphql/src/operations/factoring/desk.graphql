@@ -31,6 +31,7 @@ query DeskFactoringInvoiceStates(
 ) {
   factoringInvoiceStates(input: { table: $input }) {
     edges {
+      cursor
       node {
         ...DeskFactoringInvoiceStateFields
       }
@@ -74,6 +75,7 @@ query DeskFactoringAgreements($factoringCompanyId: ID!) {
 query DeskFactoringNoas($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
   factoringNoas(input: { table: $input }) {
     edges {
+      cursor
       node {
         id
         customerId
@@ -139,6 +141,7 @@ query DeskFactoringSubmissions(
 ) {
   factoringSubmissions(input: { table: $input }) {
     edges {
+      cursor
       node {
         ...DeskFactoringSubmissionFields
       }
@@ -212,6 +215,7 @@ query DeskFactoringRemittances(
 ) {
   factoringRemittances(input: { table: $input }) {
     edges {
+      cursor
       node {
         ...DeskFactoringRemittanceFields
       }

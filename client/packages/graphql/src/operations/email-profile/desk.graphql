@@ -1,8 +1,9 @@
 # The sending profiles an agent picks one from: what each is called and who
 # the mail comes from and goes back to.
-query DeskEmailProfiles($input: DataTableConnectionInput!) {
+query DeskEmailProfiles($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
   emailProfiles(input: $input) {
     edges {
+      cursor
       node {
         id
         name
@@ -17,5 +18,7 @@ query DeskEmailProfiles($input: DataTableConnectionInput!) {
       endCursor
       hasNextPage
     }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }

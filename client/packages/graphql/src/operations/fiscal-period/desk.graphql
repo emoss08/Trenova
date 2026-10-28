@@ -1,6 +1,7 @@
-query DeskFiscalPeriods($input: DataTableConnectionInput!) {
+query DeskFiscalPeriods($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
   fiscalPeriods(input: $input) {
     edges {
+      cursor
       node {
         id
         fiscalYearId
@@ -21,5 +22,7 @@ query DeskFiscalPeriods($input: DataTableConnectionInput!) {
       endCursor
       hasNextPage
     }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }

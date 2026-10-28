@@ -5,6 +5,7 @@
 query DeskFormulaTemplates($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
   formulaTemplates(input: $input) {
     edges {
+      cursor
       node {
         id
         name

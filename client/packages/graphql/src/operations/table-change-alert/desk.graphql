@@ -1,6 +1,7 @@
 query DeskTableChangeAlerts($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
   tcaSubscriptions(input: $input) {
     edges {
+      cursor
       node {
         id
         name

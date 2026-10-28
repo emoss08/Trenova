@@ -2,6 +2,7 @@ package workercredentialservice
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -34,12 +35,14 @@ const (
 	credentialResourceID = "worker_credential"
 )
 
-// ListRequest asks for one worker's credentials, or for those falling due:
-// active credentials expiring within ExpiringWithinDays, soonest first, for
-// the worker named or across the organization when none is.
+// ListRequest asks for the credentials the workers named hold, for those
+// falling due (active credentials expiring within ExpiringWithinDays, soonest
+// first, for the workers named or across the organization when none is), or,
+// with a type and neither workers nor a window, for every active credential
+// of that type across the organization: who holds it.
 type ListRequest struct {
 	TenantInfo         pagination.TenantInfo
-	WorkerID           pulid.ID
+	WorkerIDs          []pulid.ID
 	IncludeArchived    bool
 	ExpiringWithinDays int
 	IncludeExpired     bool
@@ -49,14 +52,19 @@ type ListRequest struct {
 	Offset             int
 }
 
-// fallingDue reports whether a list reads what falls due rather than what a
-// worker holds: a list across the organization always does.
+// MaxListedWorkers is the most workers one list names.
+const MaxListedWorkers = 50
+
+// fallingDue reports whether a list reads what falls due rather than what
+// workers hold: a window or lapsed credentials asked for, or a list across
+// the organization that names no type.
 func (r *ListRequest) fallingDue() bool {
-	return r.WorkerID.IsNil() || r.ExpiringWithinDays > 0 || r.IncludeExpired
+	return r.ExpiringWithinDays > 0 || r.IncludeExpired ||
+		(len(r.WorkerIDs) == 0 && strings.TrimSpace(r.CredentialTypeCode) == "")
 }
 
-// List reads one worker's credentials with their types and documents, or
-// those falling due. Credential type codes are stored upper-case, so a code
+// List reads the credentials the workers named hold, with their types and
+// documents, those falling due, or who holds a type. Credential type codes are stored upper-case, so a code
 // is matched whatever its case.
 func (s *Service) List(
 	ctx context.Context,
@@ -69,14 +77,21 @@ func (s *Service) List(
 			"Credentials are listed within one organization",
 		)
 	}
+	if len(req.WorkerIDs) > MaxListedWorkers {
+		return nil, errortypes.NewValidationError(
+			"workerIds",
+			errortypes.ErrInvalid,
+			fmt.Sprintf("At most %d workers are listed at once", MaxListedWorkers),
+		)
+	}
 	code := strings.ToUpper(strings.TrimSpace(req.CredentialTypeCode))
-	if req.fallingDue() {
-		return s.listFallingDue(ctx, req, code)
+	if req.fallingDue() || len(req.WorkerIDs) == 0 {
+		return s.listAcross(ctx, req, code)
 	}
 
 	held, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
 		TenantInfo:      req.TenantInfo,
-		WorkerID:        req.WorkerID,
+		WorkerIDs:       req.WorkerIDs,
 		IncludeArchived: req.IncludeArchived,
 		IncludeType:     true,
 		IncludeDocument: true,
@@ -98,7 +113,10 @@ func (s *Service) List(
 	return out, nil
 }
 
-func (s *Service) listFallingDue(
+// listAcross reads what falls due, or, when the list is not falling due,
+// every active credential of the type named, soonest expiring first and
+// those that never expire last.
+func (s *Service) listAcross(
 	ctx context.Context,
 	req *ListRequest,
 	code string,
@@ -122,10 +140,11 @@ func (s *Service) listFallingDue(
 		GraceDays:           grace,
 		RequiredOnly:        req.RequiredOnly,
 		CredentialTypeCodes: codes,
-		WorkerID:            req.WorkerID,
+		WorkerIDs:           req.WorkerIDs,
 		SoonestFirst:        true,
 		Limit:               req.Limit,
 		Offset:              max(req.Offset, 0),
+		AnyExpiry:           !req.fallingDue(),
 	})
 }
 
@@ -525,7 +544,7 @@ func (s *Service) mirrorToProfile(ctx context.Context, entity *worker.WorkerCred
 		}
 		active, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
 			TenantInfo: tenantInfo,
-			WorkerID:   entity.WorkerID,
+			WorkerIDs:  []pulid.ID{entity.WorkerID},
 		})
 		if err != nil {
 			s.l.Warn("failed to check remaining credentials before clearing profile field",
@@ -571,7 +590,7 @@ func (s *Service) summarize(
 	}
 	credentials, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
 		TenantInfo:      tenantInfo,
-		WorkerID:        wrk.ID,
+		WorkerIDs:       []pulid.ID{wrk.ID},
 		IncludeType:     true,
 		IncludeDocument: true,
 	})
@@ -643,7 +662,7 @@ func (s *Service) SyncFromProfile(ctx context.Context, wrk *worker.Worker, userI
 	}
 	credentials, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
 		TenantInfo: tenantInfo,
-		WorkerID:   wrk.ID,
+		WorkerIDs:  []pulid.ID{wrk.ID},
 	})
 	if err != nil {
 		return err

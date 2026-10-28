@@ -9,6 +9,7 @@ query DeskCarrierCapacityPostings(
 ) {
   carrierCapacityPostings(input: $input, openOnly: $openOnly) {
     edges {
+      cursor
       node {
         id
         carrierId

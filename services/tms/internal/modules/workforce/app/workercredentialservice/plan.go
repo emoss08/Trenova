@@ -45,7 +45,7 @@ func (s *Service) PlanCreate(ctx context.Context, req *CreateRequest) (*CreatePl
 
 	held, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
 		TenantInfo: credentialTenant(&entity),
-		WorkerID:   entity.WorkerID,
+		WorkerIDs:  []pulid.ID{entity.WorkerID},
 	})
 	if err != nil {
 		return nil, err

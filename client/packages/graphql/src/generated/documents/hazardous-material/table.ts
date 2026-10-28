@@ -2,4 +2,4 @@
 import type { TypedDocumentString, HazardousMaterialTableQuery, HazardousMaterialTableQueryVariables, HazardousMaterialTableRowFieldsFragment } from "../../graphql";
 
 export const HazardousMaterialTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"HazardousMaterialTableRowFields"}} as unknown as TypedDocumentString<HazardousMaterialTableRowFieldsFragment, unknown>;
-export const HazardousMaterialTableDocument = {"__meta__":{"kind":"query","name":"HazardousMaterialTable","hash":"sha256:8a6c58c9d10e87fe7b895e91d59b4c5d67b881406844082505189a6cd200e0c2"}} as unknown as TypedDocumentString<HazardousMaterialTableQuery, HazardousMaterialTableQueryVariables>;
+export const HazardousMaterialTableDocument = {"__meta__":{"kind":"query","name":"HazardousMaterialTable","hash":"sha256:dbd7c2383d028303c6e3b82131ffff09fcf19dfc46c0232a32e669510d4f6e3a"}} as unknown as TypedDocumentString<HazardousMaterialTableQuery, HazardousMaterialTableQueryVariables>;

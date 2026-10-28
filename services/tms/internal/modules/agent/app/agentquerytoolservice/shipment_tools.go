@@ -322,6 +322,7 @@ type shipmentListTool struct {
 	access       fieldAccess
 	list         *listTool
 	filterFields agenttoolschema.EnumSource[string]
+	columns      agenttoolschema.EnumSource[string]
 }
 
 func provideShipmentListTool(
@@ -363,6 +364,10 @@ func newShipmentListTool(
 		parties:      parties,
 		list:         list,
 		filterFields: agenttoolschema.Derived(shipmentListName+".filterField", fields),
+		columns: agenttoolschema.Derived(shipmentListName+".column",
+			slices.DeleteFunc(columnsOf([]shipmentRow{{}}), func(name string) bool {
+				return name == recordIDField
+			})),
 	}
 }
 
@@ -439,7 +444,8 @@ func (t *shipmentListTool) ParamSchema() map[string]any {
 					"give words, %d otherwise, at most %d.",
 					defaultShipmentWordLimit, defaultListLimit, maxListLimit),
 			}),
-			paramAfter: cursorPageSchema(defaultListLimit, maxListLimit)[paramAfter],
+			paramAfter:  cursorPageSchema(defaultListLimit, maxListLimit)[paramAfter],
+			paramFields: fieldsSchema(t.columns),
 		},
 		toolschema.KeyAdditionalProperties: false,
 	}
@@ -841,6 +847,9 @@ func (t *shipmentListTool) wordOutcome(
 			outcome.TotalEstimated = !exact
 		}
 	}
+	if !found.byParty && len(sampled) == 0 {
+		outcome.resume = &pageResume{scope: search.window.scope, cursors: found.cursors}
+	}
 	if len(sampled) > 0 {
 		outcome.HasMore = true
 		outcome.Note = strings.TrimSpace(outcome.Note + " " + fmt.Sprintf(
@@ -903,6 +912,7 @@ type shipmentSearch struct {
 	byParty    bool
 	hasMore    bool
 	nextCursor string
+	cursors    []string
 }
 
 func (t *shipmentListTool) search(
@@ -952,6 +962,7 @@ func (t *shipmentListTool) search(
 		byParty:    len(rows) > direct,
 		hasMore:    result.HasNextPage,
 		nextCursor: next,
+		cursors:    result.EdgeCursors,
 	}, nil
 }
 

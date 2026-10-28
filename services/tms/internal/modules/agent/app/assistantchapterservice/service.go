@@ -126,17 +126,55 @@ func (s *Service) Open(
 		return nil, err
 	}
 
-	if s.scheduler != nil {
-		s.scheduler.Cue(ctx, &agentports.ChapterTurnRequest{
-			TenantInfo: req.TenantInfo,
-			ThreadID:   req.ThreadID,
-			UserID:     req.UserID,
-			TurnID:     turnID,
-			Phase:      agentports.ChapterPhaseRequested,
-		})
-	}
+	s.nameQuestionChapters(ctx, req, chapter)
 
 	return chapter, nil
+}
+
+func (s *Service) nameQuestionChapters(
+	ctx context.Context,
+	req agentports.OpenChapterRequest,
+	opened *conversation.Chapter,
+) {
+	turn := &agentports.ChapterTurnRequest{
+		TenantInfo: req.TenantInfo,
+		ThreadID:   req.ThreadID,
+		UserID:     req.UserID,
+	}
+	s.cueNaming(ctx, turn, opened.TurnID)
+
+	chapters, err := s.chapters.List(ctx, agentports.ListChaptersRequest{
+		ThreadID:   req.ThreadID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		s.l.Warn("could not read the chapters to name beside a new one",
+			zap.String("thread", req.ThreadID.String()), zap.Error(err))
+
+		return
+	}
+	for _, chapter := range chapters {
+		if chapter.ID != opened.ID && chapter.TitleSource == conversation.ChapterTitleQuestion {
+			s.cueNaming(ctx, turn, chapter.TurnID)
+		}
+	}
+}
+
+func (s *Service) cueNaming(
+	ctx context.Context,
+	turn *agentports.ChapterTurnRequest,
+	turnID pulid.ID,
+) {
+	if s.scheduler == nil || turnID.IsNil() {
+		return
+	}
+	s.scheduler.Cue(ctx, &agentports.ChapterTurnRequest{
+		TenantInfo: turn.TenantInfo,
+		ThreadID:   turn.ThreadID,
+		UserID:     turn.UserID,
+		TurnID:     turnID,
+		Phase:      agentports.ChapterPhaseRequested,
+	})
 }
 
 func (s *Service) Rename(

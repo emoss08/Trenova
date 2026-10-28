@@ -2,4 +2,4 @@
 import type { TypedDocumentString, ShipmentTypeTableQuery, ShipmentTypeTableQueryVariables, ShipmentTypeTableRowFieldsFragment } from "../../graphql";
 
 export const ShipmentTypeTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"ShipmentTypeTableRowFields"}} as unknown as TypedDocumentString<ShipmentTypeTableRowFieldsFragment, unknown>;
-export const ShipmentTypeTableDocument = {"__meta__":{"kind":"query","name":"ShipmentTypeTable","hash":"sha256:317685c4da72dc0125a332a31479b7eb7c96a1cd770f1e9be9b9c336adeba0c0"}} as unknown as TypedDocumentString<ShipmentTypeTableQuery, ShipmentTypeTableQueryVariables>;
+export const ShipmentTypeTableDocument = {"__meta__":{"kind":"query","name":"ShipmentTypeTable","hash":"sha256:8f8538af7cf45d78289ae31123fab44d1852a3935c902a7102fedaf766a39634"}} as unknown as TypedDocumentString<ShipmentTypeTableQuery, ShipmentTypeTableQueryVariables>;

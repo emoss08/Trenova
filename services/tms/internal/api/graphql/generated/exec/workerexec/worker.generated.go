@@ -297,7 +297,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workers_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Workers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").Workers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["withoutCredential"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerConnection),
 			},
@@ -1546,7 +1546,7 @@ type resolverPTOChartDataPoint interface {
 }
 
 type resolverQuery interface {
-	Workers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.WorkerConnection, error)
+	Workers(ctx context.Context, input gqlmodel.DataTableConnectionInput, withoutCredential *string) (*gqlmodel.WorkerConnection, error)
 	Worker(ctx context.Context, id string) (*worker.Worker, error)
 	WorkerPTOEntries(ctx context.Context, input gqlmodel.WorkerPTOEntriesInput) (*gqlmodel.WorkerPTOConnection, error)
 	UpcomingWorkerPTO(ctx context.Context, input gqlmodel.UpcomingWorkerPTOInput) (*gqlmodel.WorkerPTOConnection, error)
@@ -1711,7 +1711,7 @@ func field_Mutation_bulkWorkerPTOAction_args(ctx context.Context, ec *gqlexec.Ex
 }
 
 func field_Query_workers_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 2)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
 			return unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, ec, v)
@@ -1720,6 +1720,14 @@ func field_Query_workers_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map
 		return nil, err
 	}
 	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "withoutCredential",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["withoutCredential"] = arg1
 	return args, nil
 }
 

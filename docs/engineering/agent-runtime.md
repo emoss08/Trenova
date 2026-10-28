@@ -2208,6 +2208,32 @@ A result that is not a JSON object, or does not fit even with its lists shortene
 still cut at a character boundary, with a note saying records are missing and not to
 count or infer from them.
 
+A list page is cut before that, by the runtime, so the page and its cursor agree
+(`pagefit.go`). The fence keeps the page's own `nextCursor`, so fifty workers read,
+thirteen shown, and the next page started at the fifty-first: the rows between were never
+read by anyone, and asked for every inactive worker an agent answered from a quarter of
+them. A list page implements `agentports.PageCutter`, and when a model's read of it is over
+the bound, `fitPage` finds the most rows that fit (a binary search over the encoded result,
+at most seven encodings), and the page it hands on ends there with `hasMore` and a
+`nextCursor` that starts at the first row it left out, followed by a note outside the fence
+saying no row was skipped and steering a question about the whole list to the tool's
+filters, `fields` or a script. The cut page is what the observer keeps, so the person's
+table pages on from the same row. A script's read and the person's own table pages are
+never cut (`dispatchParams.caller`; the rows endpoint does not dispatch). A page cuts
+where it can say where a shorter page goes on: a GraphQL connection by each edge's
+`cursor` (`graphQLListOutcome`, `besidePage`), a repository list by its edge cursors or
+offset (`searchOutcome.resume`, set only by `newListTool` and `shipment_list`), a list
+paged by offset by the row after the last one kept among the rows read (`offsetPage`).
+Rows ranked or merged out of the list's order (closest name first, party matches, the
+newest of each status) cannot, and are left to the fence. A type that embeds
+`searchOutcome` with `resume` set declares its own `CutPage` (`gatedOutcome`), or the cut
+would drop its fields.
+
+What the model reads also leaves out what says nothing (`trimRecord`, `saysNothing`): an
+empty text, a date-named field holding zero, and a reference id beside the record it names
+carrying the same id (`fleetCodeId` beside `fleetCode`). A count that ends like a date
+(`daysUntilExpiry`) is kept at zero, since zero days is the answer.
+
 ### Files a person attaches
 
 A file is uploaded against the conversation (`document.ConversationResourceType`)
@@ -2314,17 +2340,22 @@ its chapter land in cannot race.
 `chaptercontract.IdleWait` without one. Each signal is plan → model → apply
 (`assistantchapterservice.Plan`/`Apply`):
 
-- `Opened`: a person's first question opens chapter 1 and is named; a later question asks the
-  model whether it starts a new chapter (`chapter_decision`); a scheduled run always opens one
-  (`Schedule`, named even when titling is off, from its request); follow-ups, compactions and
-  wait resumptions continue their chapter.
+- `Opened`: a person's first question opens chapter 1 quietly, named after the question with no
+  model call, whether titling is on or off; a later question asks the model whether it starts a
+  new chapter (`chapter_decision`); a scheduled run always opens one (`Schedule`, named from its
+  request); follow-ups, compactions and wait resumptions continue their chapter. The client
+  draws no chapter until a conversation has two, so a chapter still named after its question is
+  named by the model (`ChapterPlan.NameEarlier`, a `Requested` cue) once the next one opens,
+  whether the model or the person opened it.
 - `Answered`: a chapter whose turn saved nothing, or was refused, is removed unless the person
-  named it; one still named after its question, or opened by a question under five words, is
-  named again from the question and the reply.
-- `Requested`: a chapter the person started by hand (`POST …/chapters/`) is named from its turn.
+  named it; one the model named from a question under five words is named again from the
+  question and the reply.
+- `Requested`: a chapter still named after its question is named from its turn: one the person
+  started by hand (`POST …/chapters/`, which also names a quiet first chapter beside it), or the
+  quiet first chapter once a second opens.
 
 The model is `aiprovider.TaskChapterTitling`, which borrows the Desk's own providers when none is
-routed, at temperature 0, no reasoning, a 4-second hedge and 80 tokens, attributed to
+routed, at temperature 0, with no reasoning setting sent (so a model that cannot reason, such as GPT-4.1 nano, is never refused), a 4-second hedge and 80 tokens, attributed to
 `aiusage.FeatureConversationChapters`. Its title is cleaned (`conversation.CleanChapterTitle`)
 and refused when it names a number the question, reply or recent turns do not hold
 (`numberguard`); a refused or missing answer opens nothing for a decision and falls back to the

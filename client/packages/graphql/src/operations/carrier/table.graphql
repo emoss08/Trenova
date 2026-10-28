@@ -85,6 +85,7 @@ fragment CarrierTableRowFields on Carrier {
 query CarrierTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   carriers(input: $input) {
     edges {
+      cursor
       node {
         ...CarrierTableRowFields
       }

@@ -8,6 +8,7 @@ query DeskIftaMileageEntries(
 ) {
   iftaMileageEntries(input: $input) {
     edges {
+      cursor
       node {
         id
         tractorId

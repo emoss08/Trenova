@@ -159,6 +159,11 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 		Query:          req.Query,
 		IncludeCovered: req.IncludeCovered,
 		Limit:          req.Limit,
+		DueFirst:       req.DueFirst,
+		Offset:         max(req.Offset, 0),
+	}
+	if req.LateOnly {
+		filter.LateAt = now
 	}
 
 	moves, err := s.consoleRepo.ListBoardMoves(ctx, filter)
@@ -170,6 +175,8 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 	driverFilter.Query = ""
 	driverFilter.CustomerIDs = nil
 	driverFilter.ServiceTypeIDs = nil
+	driverFilter.LateAt = 0
+	driverFilter.Offset = 0
 
 	snapshot, err := s.candidates.BuildSnapshot(ctx, &dispatchcandidateservice.SnapshotRequest{
 		TenantInfo:  req.TenantInfo,

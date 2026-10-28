@@ -278,7 +278,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerCredentials_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerCredentials(ctx, fc.Args["workerId"].(*string), fc.Args["includeArchived"].(*bool), fc.Args["expiringWithinDays"].(*int), fc.Args["includeExpired"].(*bool), fc.Args["credentialTypeCode"].(*string), fc.Args["requiredOnly"].(*bool), fc.Args["limit"].(*int), fc.Args["offset"].(*int))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerCredentials(ctx, fc.Args["workerIds"].([]string), fc.Args["includeArchived"].(*bool), fc.Args["expiringWithinDays"].(*int), fc.Args["includeExpired"].(*bool), fc.Args["credentialTypeCode"].(*string), fc.Args["requiredOnly"].(*bool), fc.Args["limit"].(*int), fc.Args["offset"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialᚄ),
 			},
@@ -1091,7 +1091,7 @@ type resolverQuery interface {
 	WorkerCredentialTypes(ctx context.Context, input gqlmodel.WorkerCredentialTypesInput) (*gqlmodel.WorkerCredentialTypeConnection, error)
 	WorkerCredentialType(ctx context.Context, id string) (*worker.WorkerCredentialType, error)
 	ActiveWorkerCredentialTypes(ctx context.Context) ([]*worker.WorkerCredentialType, error)
-	WorkerCredentials(ctx context.Context, workerID *string, includeArchived *bool, expiringWithinDays *int, includeExpired *bool, credentialTypeCode *string, requiredOnly *bool, limit *int, offset *int) ([]*worker.WorkerCredential, error)
+	WorkerCredentials(ctx context.Context, workerIds []string, includeArchived *bool, expiringWithinDays *int, includeExpired *bool, credentialTypeCode *string, requiredOnly *bool, limit *int, offset *int) ([]*worker.WorkerCredential, error)
 	WorkerCredential(ctx context.Context, id string) (*worker.WorkerCredential, error)
 	WorkerCredentialSummary(ctx context.Context, workerID string) (*worker.WorkerCredentialSummary, error)
 	CredentialExpiryForecast(ctx context.Context, days *int, limit *int) (*workercredentialservice.ExpiryForecast, error)
@@ -1301,14 +1301,14 @@ func field_Query_workerCredentialType_args(ctx context.Context, ec *gqlexec.Exec
 
 func field_Query_workerCredentials_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 8)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "workerId",
-		func(ctx context.Context, v any) (*string, error) {
-			return unmarshalOID2ᚖstring(ctx, ec, v)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "workerIds",
+		func(ctx context.Context, v any) ([]string, error) {
+			return unmarshalOID2ᚕstringᚄ(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["workerId"] = arg0
+	args["workerIds"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "includeArchived",
 		func(ctx context.Context, v any) (*bool, error) {
 			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
@@ -1988,6 +1988,13 @@ func unmarshalOFilterGroupInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 		return nil, nil
 	}
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFilterGroupInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFilterGroupInput)
+}
+
+func unmarshalOID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
 }
 
 func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {

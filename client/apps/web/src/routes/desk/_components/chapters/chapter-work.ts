@@ -17,6 +17,9 @@ export type ChapterEntry = {
   live: boolean;
 };
 
+/** How many chapters a conversation has before any of them is drawn. */
+export const MIN_SHOWN_CHAPTERS = 2;
+
 type Dated = { createdAt: number };
 
 /**

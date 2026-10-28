@@ -156,6 +156,7 @@ query TractorTable(
     includeWorkerDetails: $includeWorkerDetails
   ) {
     edges {
+      cursor
       node {
         ...TractorTableRowFields
       }
@@ -180,6 +181,7 @@ query TrailerTable(
     includeFleetDetails: $includeFleetDetails
   ) {
     edges {
+      cursor
       node {
         ...TrailerTableRowFields
       }
@@ -199,6 +201,7 @@ query EquipmentTypeTable(
 ) {
   equipmentTypes(input: $input, classes: $classes) {
     edges {
+      cursor
       node {
         ...EquipmentTypeConfigurationRowFields
       }

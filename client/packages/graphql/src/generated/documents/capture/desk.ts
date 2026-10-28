@@ -2,5 +2,5 @@
 import type { TypedDocumentString, DeskCaptureBatchFieldsFragment, DeskCaptureBatchQuery, DeskCaptureBatchQueryVariables, DeskCaptureBatchesQuery, DeskCaptureBatchesQueryVariables } from "../../graphql";
 
 export const DeskCaptureBatchFieldsFragmentDoc = {"__meta__":{"fragmentName":"DeskCaptureBatchFields"}} as unknown as TypedDocumentString<DeskCaptureBatchFieldsFragment, unknown>;
-export const DeskCaptureBatchesDocument = {"__meta__":{"kind":"query","name":"DeskCaptureBatches","hash":"sha256:8fd9ddb9d88549f4e0cb5ed13d326e969be39ddcc10c8050bfc4f6e0cd7645e8"}} as unknown as TypedDocumentString<DeskCaptureBatchesQuery, DeskCaptureBatchesQueryVariables>;
+export const DeskCaptureBatchesDocument = {"__meta__":{"kind":"query","name":"DeskCaptureBatches","hash":"sha256:fb6308277a09f7a144d1f764cf353a5046f6ac6ca1e5390a1e790eabb0e7e0eb"}} as unknown as TypedDocumentString<DeskCaptureBatchesQuery, DeskCaptureBatchesQueryVariables>;
 export const DeskCaptureBatchDocument = {"__meta__":{"kind":"query","name":"DeskCaptureBatch","hash":"sha256:40c5149d4636da2a4ce1517fe6bc433598ea3431591644b8b62fe861f50416b1"}} as unknown as TypedDocumentString<DeskCaptureBatchQuery, DeskCaptureBatchQueryVariables>;

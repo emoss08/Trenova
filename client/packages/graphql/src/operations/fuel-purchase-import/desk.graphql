@@ -9,6 +9,7 @@ query DeskFuelPurchaseImports(
 ) {
   fuelPurchaseImports(input: $input) {
     edges {
+      cursor
       node {
         id
         provider

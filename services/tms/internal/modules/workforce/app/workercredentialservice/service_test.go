@@ -161,7 +161,7 @@ func (f *fakeRepo) ListForWorker(
 ) ([]*worker.WorkerCredential, error) {
 	out := make([]*worker.WorkerCredential, 0, len(f.credentials))
 	for _, cred := range f.credentials {
-		if cred.WorkerID != req.WorkerID {
+		if !slices.Contains(req.WorkerIDs, cred.WorkerID) {
 			continue
 		}
 		if !req.IncludeArchived && !cred.IsActive() {

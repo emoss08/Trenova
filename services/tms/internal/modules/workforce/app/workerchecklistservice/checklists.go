@@ -523,7 +523,7 @@ func (s *Service) collectEvidence(
 		ctx,
 		&workerports.ListWorkerCredentialsRequest{
 			TenantInfo:  tenantInfo,
-			WorkerID:    workerID,
+			WorkerIDs:   []pulid.ID{workerID},
 			IncludeType: true,
 		},
 	)

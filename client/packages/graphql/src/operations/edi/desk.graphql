@@ -7,6 +7,7 @@
 query DeskEdiPartners($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
   ediPartners(input: $input) {
     edges {
+      cursor
       node {
         id
         code
@@ -35,6 +36,7 @@ query DeskEdiPartners($input: DataTableConnectionInput!, $includeTotalCount: Boo
 query DeskEdiInboundFiles($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
   ediInboundFiles(input: $input) {
     edges {
+      cursor
       node {
         id
         fileName
@@ -150,6 +152,7 @@ fragment DeskEdiMessageRowFields on EdiMessage {
 query DeskEdiMessages($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
   ediMessages(input: $input) {
     edges {
+      cursor
       node {
         ...DeskEdiMessageRowFields
       }
@@ -224,6 +227,7 @@ query DeskEdiTransfers(
 ) {
   ediTransfers(input: $input, direction: $direction, inboundFileId: $inboundFileId) {
     edges {
+      cursor
       node {
         ...DeskEdiTransferRowFields
       }

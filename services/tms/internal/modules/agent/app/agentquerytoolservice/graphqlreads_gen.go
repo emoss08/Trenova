@@ -8483,6 +8483,7 @@ var graphQLReads = map[string]graphQLRead{
 		Entity:    func() domaintypes.PostgresSearchable { return new(worker.Worker) },
 		Variables: []graphQLVariable{
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
+			{Name: "withoutCredential", Type: "String", NonNull: false, List: false, Kind: "scalar", Description: "Only workers with no valid credential of this type, by its code, such as ROAD_TEST or MED_CARD, in any case: none on file, archived, or expired."},
 		},
 		Fields: []graphQLField{
 			{Name: "id", Type: "ID", Kind: "scalar", List: false, NonNull: true, Selected: true},
@@ -8638,14 +8639,14 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "worker_credential",
 		Unpaged:   true,
 		Variables: []graphQLVariable{
-			{Name: "credentialTypeCode", Type: "String", NonNull: false, List: false, Kind: "scalar", Description: "Only credentials of this type, by its code, such as MED_CARD or CDL, in any case."},
-			{Name: "expiringWithinDays", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "Only active credentials expiring within this many days from now, from 1 to 365. 30 when no worker is named."},
+			{Name: "credentialTypeCode", Type: "String", NonNull: false, List: false, Kind: "scalar", Description: "Only credentials of this type, by its code, such as MED_CARD or CDL, in any case. Named with no worker and no window, every active one of the type: who holds it, those that never expire included."},
+			{Name: "expiringWithinDays", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "Only active credentials expiring within this many days from now, from 1 to 365. 30 when neither a worker nor a type is named."},
 			{Name: "includeArchived", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "With a worker and no expiry window, also read their archived credentials."},
 			{Name: "includeExpired", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "With an expiry window, also those that lapsed in the last 90 days."},
 			{Name: "limit", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "At most this many credentials, from 1 to 100. Every credential of a named worker when left out; 20 across the organization."},
 			{Name: "offset", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "Skip this many credentials of the same list, for the page after them."},
 			{Name: "requiredOnly", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "Only credential types the organization marks required."},
-			{Name: "workerId", Type: "ID", NonNull: false, List: false, Kind: "scalar", Description: "The worker whose credentials are read. Leave it out for those falling due across the organization."},
+			{Name: "workerIds", Type: "ID", NonNull: false, List: true, Kind: "scalar", Description: "The workers whose credentials are read, every one in one call, at most 50. Leave it out for those across the organization."},
 		},
 		Alongside: []graphQLAlongside{
 			{Operation: "DeskWorkerCredentialTypes", RootField: "workerCredentialTypes", Resource: "worker_credential_type", Input: "input"},
