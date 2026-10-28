@@ -44,6 +44,10 @@ func SamplingForTask(task aiprovider.Task) Sampling {
 		// the same question giving two different sets of filters is a defect
 		// nobody can reproduce.
 		aiprovider.TaskQueryCompose,
+		// Whether a question starts a new chapter is a yes-or-no too, and a
+		// title that changes each time the same conversation is read again
+		// is noise.
+		aiprovider.TaskChapterTitling,
 		aiprovider.TaskEvaluationJudge:
 		// A yes-or-no with a category. There is nothing to be imaginative
 		// about, and a reclassification that changes between two identical

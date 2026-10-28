@@ -106,6 +106,23 @@ describe("DeskSearchPalette", () => {
     expect(useDeskSettingsStore.getState().recentSearches[0]).toBe("work");
   });
 
+  it("opens the conversation at the chapter picked", async () => {
+    search.results = (query) =>
+      query === ""
+        ? []
+        : [result({ kind: "chap", id: "achp_4", title: "Acme invoice dispute" })];
+    renderPalette();
+
+    const input = screen.getByRole("combobox", { name: "Search the Desk" });
+    fireEvent.change(input, { target: { value: "acme" } });
+    await screen.findByText("1 result");
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    await waitFor(() =>
+      expect(screen.getByTestId("where")).toHaveTextContent("/desk/t/athr_1?c=achp_4"),
+    );
+  });
+
   it("moves between filters with Tab and says when nothing matches", async () => {
     search.results = () => [];
     renderPalette();

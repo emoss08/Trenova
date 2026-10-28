@@ -40,6 +40,7 @@ const TASK_ORDER: readonly AITask[] = [
   "DailyBriefing",
   "FormulaAssistant",
   "QueryCompose",
+  "ChapterTitling",
   "InboundClassification",
   "AccountingMapping",
   "RemittanceExtraction",

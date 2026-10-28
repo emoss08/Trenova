@@ -332,3 +332,26 @@ func TestUpdateOnAStaleVersionSaysWhoChangedWhat(t *testing.T) {
 }
 
 func int64Ptr(v int64) *int64 { return &v }
+
+func TestUpdate_TurnsAutomaticChaptersOffOnlyWhenSent(t *testing.T) {
+	t.Parallel()
+
+	svc, controls := newTestService(defaultControl())
+
+	updated, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+		AutoChaptersOff: boolPtr(true),
+	}, userActor(pulid.ID("usr_admin")))
+	require.NoError(t, err)
+	require.Same(t, updated, controls.updated)
+	assert.True(t, updated.AutoChaptersOff)
+
+	control := defaultControl()
+	control.AutoChaptersOff = true
+	svc, _ = newTestService(control)
+
+	kept, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+		ShadowMode: true,
+	}, userActor(pulid.ID("usr_admin")))
+	require.NoError(t, err)
+	assert.True(t, kept.AutoChaptersOff, "a save that does not send the setting leaves it")
+}

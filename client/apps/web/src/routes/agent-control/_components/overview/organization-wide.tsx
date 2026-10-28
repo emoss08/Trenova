@@ -43,6 +43,12 @@ export function OrganizationWide({
       on: !control.learningOff,
     },
     {
+      icon: "bookmark",
+      label: t("Name Desk chapters"),
+      value: control.autoChaptersOff ? t("Off") : t("On"),
+      on: !control.autoChaptersOff,
+    },
+    {
       icon: "gauge",
       label: t("Monthly allowance"),
       value:

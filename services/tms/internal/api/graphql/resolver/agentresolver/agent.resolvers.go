@@ -537,6 +537,7 @@ func (r *MutationResolver) UpdateAgentControl(ctx context.Context, input gqlmode
 		AITrainingConsent:     input.AiTrainingConsent,
 		PersonMonthlyMessages: input.PersonMonthlyMessages,
 		LearningOff:           input.LearningOff,
+		AutoChaptersOff:       input.AutoChaptersOff,
 		AgentMoney: agentports.AgentMoneyLimitsUpdate{
 			CallCeilingMinor: callCeiling,
 			RunCalls:         input.AgentMoneyRunCalls,

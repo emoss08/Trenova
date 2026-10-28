@@ -95,6 +95,7 @@ func TestEveryDeterministicTaskPinsItsTemperature(t *testing.T) {
 		aiprovider.TaskDocumentClassification,
 		aiprovider.TaskDocumentExtraction,
 		aiprovider.TaskQueryCompose,
+		aiprovider.TaskChapterTitling,
 		aiprovider.TaskInboundClassification,
 		aiprovider.TaskAccountingMapping,
 		aiprovider.TaskRemittanceExtraction,

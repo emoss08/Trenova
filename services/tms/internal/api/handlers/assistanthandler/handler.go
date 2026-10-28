@@ -40,6 +40,7 @@ type Params struct {
 	Queue                *assistantqueueservice.Service
 	Waits                *agentwaitservice.Service
 	Cases                deskcaseports.AssistantCaseService
+	Chapters             agentports.AssistantChapterService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
@@ -54,6 +55,7 @@ type Handler struct {
 	queue     *assistantqueueservice.Service
 	waits     *agentwaitservice.Service
 	cases     deskcaseports.AssistantCaseService
+	chapters  agentports.AssistantChapterService
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware
 	logger    *zap.Logger
@@ -68,6 +70,7 @@ func New(p Params) *Handler {
 		queue:     p.Queue,
 		waits:     p.Waits,
 		cases:     p.Cases,
+		chapters:  p.Chapters,
 		eh:        p.ErrorHandler,
 		pm:        p.PermissionMiddleware,
 		logger:    p.Logger.Named("assistanthandler"),
@@ -243,6 +246,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	h.registerQueueRoutes(api, resource)
 	h.registerWaitRoutes(api, resource)
 	h.registerCaseRoutes(api, resource)
+	h.registerChapterRoutes(api, resource)
 }
 
 func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {

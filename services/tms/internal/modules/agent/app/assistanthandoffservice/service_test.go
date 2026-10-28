@@ -27,6 +27,7 @@ type fakeConversations struct {
 	threads  map[pulid.ID]*conversation.Thread
 	history  []conversation.Message
 	appended map[pulid.ID][]conversation.Message
+	listed   []agentports.ListMessagesRequest
 }
 
 func (f *fakeConversations) GetThread(
@@ -45,6 +46,8 @@ func (f *fakeConversations) ListMessages(
 	_ context.Context,
 	req agentports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
+	f.listed = append(f.listed, req)
+
 	return f.history, nil
 }
 

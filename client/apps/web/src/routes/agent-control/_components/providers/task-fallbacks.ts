@@ -12,6 +12,7 @@ export const TASK_FALLBACKS: Record<AITask, string> = defineLabels({
   DailyBriefing: "No morning briefing",
   FormulaAssistant: "Formulas are written by hand",
   QueryCompose: "Tables are filtered by hand",
+  ChapterTitling: "Chapters are named by the Desk's own model",
   InboundClassification: "Inbound mail is sorted by hand",
   AccountingMapping: "Accounts are mapped by hand",
   RemittanceExtraction: "PDF remittances are refused; upload the CSV",

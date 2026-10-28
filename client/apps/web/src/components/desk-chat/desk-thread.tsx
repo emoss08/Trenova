@@ -82,6 +82,7 @@ import {
 import { usePoorlyReadFiles } from "./conversation/desk-poorly-read";
 import { DeskWriteResultCard } from "./conversation/desk-tool-failures";
 import {
+  DeskChapterRow,
   DeskInlineArtifact,
   DeskQuestion,
   DeskReply,
@@ -103,6 +104,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { DeskTermsNote } from "./desk-terms-note";
 import { useConversationSuggestion, type ConversationHandOff } from "./use-conversation-suggestion";
+import { useChapterNav, type DeskChapterNav } from "./use-chapter-nav";
 import { DeskTranscriptSkeleton } from "./desk-skeletons";
 import { turnTime } from "./turn-time";
 import "./desk-frame.css";
@@ -141,6 +143,26 @@ export type DeskDock = {
   /** Asks the conversation's agent, or with `directedAgentId` hands the words to that agent. */
   ask: (text: string, options?: { directedAgentId?: string }) => void;
   busy: boolean;
+};
+
+/**
+ * A conversation's chapters as the Desk draws them: a heading above the
+ * question that opens each one, a rail that moves between them, and a way to
+ * start one where a reply was asked. Left out, the thread has no chapters.
+ */
+export type DeskThreadChapters = {
+  /** The heading of the chapter a turn opens, or null when it opens none. */
+  heading: (turnId: string) => ReactNode;
+  /** The turn the reply being written opens a chapter with, when it does. */
+  liveTurnId: string | null;
+  /** The rail of chapters, given the one in view and a way to move to another. */
+  rail: (nav: DeskChapterNav) => ReactNode;
+  /** Starts a chapter where a reply was asked; undefined where its turn already opens one. */
+  startAt: (message: AssistantMessage) => (() => void) | undefined;
+  /** A chapter a link asked to open at: the turn that opens it, until it is shown. */
+  linkedTurnId?: string | null;
+  /** Told once the linked chapter has been brought into view. */
+  onLinkShown?: () => void;
 };
 
 export type DeskThreadSchedules = {
@@ -204,8 +226,7 @@ export type DeskThreadProps = {
   onOpeningQuestionSent?: () => void;
   artifacts?: DeskThreadArtifacts;
   schedules?: DeskThreadSchedules;
-  /** Pinning replies as chapters, by message id. Left out, replies have no chapters. */
-  chapters?: { of: (messageId: string) => number; toggle: (messageId: string) => void };
+  chapters?: DeskThreadChapters;
   /** Draws a conversation handed to this agent by another. */
   renderHandoff?: (message: AssistantMessage) => ReactNode;
   /**
@@ -521,6 +542,40 @@ export function DeskThread({
     return () => observer.disconnect();
   }, [hasOlder, loadOlder, loadingOlder, scrollRef]);
   const messageCount = model.entries.length;
+  const chapterNav = useChapterNav({
+    scrollRef,
+    older: model.older,
+    version: messageCount + (turn ? 1 : 0),
+    smooth: !reduceMotion,
+  });
+  const savedTurns = useMemo(
+    () => new Set(entries.map((entry) => entry.message.turnId).filter(Boolean)),
+    [entries],
+  );
+  const linkedTurn = chapters?.linkedTurnId ?? null;
+  const onLinkShown = chapters?.onLinkShown;
+  const { reveal: revealChapter } = chapterNav;
+  const historyReady = !model.historyLoading;
+  useEffect(() => {
+    if (linkedTurn === null || !historyReady) {
+      return;
+    }
+    revealChapter(linkedTurn);
+    onLinkShown?.();
+  }, [historyReady, linkedTurn, onLinkShown, revealChapter]);
+  const liveChapterTurn =
+    chapters?.liveTurnId && !savedTurns.has(chapters.liveTurnId) ? chapters.liveTurnId : null;
+  const chapterRow = (turnId: string | null | undefined, first: boolean) => {
+    if (!chapters || !turnId) {
+      return null;
+    }
+    const heading = chapters.heading(turnId);
+    return heading ? (
+      <DeskChapterRow turnId={turnId} first={first}>
+        {heading}
+      </DeskChapterRow>
+    ) : null;
+  };
   useLayoutEffect(() => {
     const scroller = scrollRef.current;
     if (keptHeight.current === null || !scroller || loadingOlder) {
@@ -793,7 +848,6 @@ export function DeskThread({
   // step, and every page it has found, for the citations in its words.
   const webSearch = useMemo(() => liveWebSearch(turn), [turn]);
   const liveSources = useMemo(() => turnWebSources(turn), [turn]);
-  const chapterOf = (id: string) => chapters?.of(id) ?? 0;
   const showCard = model.showDock && model.current !== null && !holding;
   // The change waiting on the person, or the approval in its undo window, is
   // attached to the top of the composer.
@@ -969,6 +1023,7 @@ export function DeskThread({
                     : ({ "--dk-dock-h": `${dockHeight}px` } as CSSProperties)
                 }
               >
+                {chapters && <div className="dk-chap-rail-slot">{chapters.rail(chapterNav)}</div>}
                 <div className="dk-scroll" ref={scrollRef} tabIndex={0}>
                   <div className="dk-grid dk-flow">
                     {model.historyLoading && entries.length === 0 && turn === null && (
@@ -1012,17 +1067,16 @@ export function DeskThread({
                       }
                       if (entry.kind === "user") {
                         return (
-                          <DeskRow
-                            key={entry.message.id}
-                            kind="question"
-                            first={isFirst(entry.message.id)}
-                          >
-                            <DeskQuestion
-                              text={entry.message.content}
-                              mentions={entry.message.mentions}
-                              attachments={entry.message.attachments}
-                            />
-                          </DeskRow>
+                          <Fragment key={entry.message.id}>
+                            {chapterRow(entry.message.turnId, isFirst(entry.message.id))}
+                            <DeskRow kind="question" first={isFirst(entry.message.id)}>
+                              <DeskQuestion
+                                text={entry.message.content}
+                                mentions={entry.message.mentions}
+                                attachments={entry.message.attachments}
+                              />
+                            </DeskRow>
+                          </Fragment>
                         );
                       }
                       if (entry.kind === "steer") {
@@ -1239,9 +1293,8 @@ export function DeskThread({
                                 ? sentAnswer
                                 : null
                             }
-                            chapter={chapterOf(entry.message.id)}
                             closesTurn={lastOfTurn.has(entry.message.id)}
-                            onTogglePin={chapters?.toggle}
+                            onStartChapter={chapters?.startAt(entry.message)}
                             onOpenArtifact={openArtifact}
                           />
                           {(poorlyRead.get(entry.message.id) ?? []).map((fileName) => (
@@ -1297,6 +1350,12 @@ export function DeskThread({
                         <DeskMessageAttachments attachments={turn.attachments} />
                       </DeskRow>
                     )}
+                    {sentAnswer === null &&
+                      turn &&
+                      !turn.followUp &&
+                      turn.userContent !== "" &&
+                      turn.rateLimited === null &&
+                      chapterRow(liveChapterTurn, !layout.any)}
                     {sentAnswer === null &&
                       turn &&
                       !turn.followUp &&

@@ -16,6 +16,8 @@ type handoffRequest struct {
 	// Facts are the conversation's pinned facts, carried as the person
 	// sees them.
 	Facts []string `json:"facts"`
+	// ChapterID hands off one chapter of the conversation instead of all of it.
+	ChapterID pulid.ID `json:"chapterId"`
 }
 
 // handoff takes the conversation to another agent: a new conversation with
@@ -49,6 +51,7 @@ func (h *Handler) handoff(c *gin.Context) {
 		ThreadID:          req.ID,
 		AgentDefinitionID: agentID,
 		Facts:             body.Facts,
+		ChapterID:         body.ChapterID,
 	}, &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)

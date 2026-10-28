@@ -12,6 +12,7 @@ const loaded: PolicyFormValues = {
   earnedAutonomy: false,
   promotionThreshold: 10,
   learnsFromWork: true,
+  chaptersByModel: true,
   personMonthlyMessages: 0,
   agentMoney: {
     callCeilingCents: 100_000,
@@ -24,6 +25,23 @@ const loaded: PolicyFormValues = {
   version: 4,
 };
 
+function servedControl(): Partial<AgentControl> {
+  return {
+    earnedAutonomy: false,
+    promotionThreshold: 10,
+    learningOff: false,
+    autoChaptersOff: false,
+    personMonthlyMessages: 0,
+    agentMoneyCallCeiling: "1000.00",
+    agentMoneyRunCalls: 10,
+    agentMoneyRunAmount: "5000.00",
+    agentMoneyDayCalls: 50,
+    agentMoneyDayAmount: "25000.00",
+    aiTrainingConsent: false,
+    version: 4,
+  };
+}
+
 describe("toControlInput", () => {
   it("keeps the pause switch and leaves consent out unless it changed", () => {
     const input = toControlInput({ ...loaded, learnsFromWork: false }, loaded, true);
@@ -33,6 +51,7 @@ describe("toControlInput", () => {
       earnedAutonomy: false,
       promotionThreshold: 10,
       learningOff: true,
+      autoChaptersOff: false,
       personMonthlyMessages: 0,
       agentMoneyCallCeiling: "1000.00",
       agentMoneyRunCalls: 10,
@@ -41,6 +60,16 @@ describe("toControlInput", () => {
       agentMoneyDayAmount: "25000.00",
       version: 4,
     });
+  });
+
+  it("sends chapters named by a model as their off switch", () => {
+    expect(toControlInput({ ...loaded, chaptersByModel: false }, loaded, false)).toMatchObject({
+      autoChaptersOff: true,
+    });
+    expect(
+      toPolicyForm({ ...servedControl(), autoChaptersOff: true } as AgentControl)
+        .chaptersByModel,
+    ).toBe(false);
   });
 
   it("sends consent when it changed", () => {

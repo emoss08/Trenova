@@ -78,6 +78,7 @@ func (s *Service) Transcript(
 			Delegates:  s.agentNames(ctx, req.TenantInfo, delegatedAgents(messages)),
 			Messages:   messages,
 			Proposals:  proposals,
+			Chapters:   s.chapterTitles(ctx, req.ID, req.TenantInfo),
 			ExportedAt: timeutils.NowUnix(),
 		}),
 	}, nil
@@ -179,6 +180,9 @@ type transcriptInput struct {
 	Delegates  map[pulid.ID]string
 	Messages   []conversation.Message
 	Proposals  []*agent.AgentProposal
+	// Chapters are the conversation's chapter titles by the sequence of the
+	// message each starts at.
+	Chapters   map[int]string
 	ExportedAt int64
 }
 
@@ -225,6 +229,12 @@ func renderTranscript(in *transcriptInput) string {
 			Value: transcriptTime(in.Thread.LastMessageAt),
 		})
 	}
+	if len(in.Chapters) > 0 {
+		facts = append(facts, transcriptFact{
+			Name:  "Chapters",
+			Value: strconv.Itoa(len(in.Chapters)),
+		})
+	}
 	facts = append(facts,
 		transcriptFact{Name: "Messages", Value: strconv.Itoa(len(in.Messages))},
 		transcriptFact{Name: "Exported", Value: transcriptTime(in.ExportedAt)},
@@ -238,6 +248,7 @@ func renderTranscript(in *transcriptInput) string {
 		Delegates: in.Delegates,
 		Messages:  in.Messages,
 		Proposals: in.Proposals,
+		Chapters:  in.Chapters,
 	})
 }
 
@@ -261,6 +272,7 @@ type transcriptDocument struct {
 	Gap       transcriptGap
 	Empty     string
 	Proposals []*agent.AgentProposal
+	Chapters  map[int]string
 }
 
 func (d *transcriptDocument) delegateName(id pulid.ID) string {
@@ -303,6 +315,8 @@ func renderTranscriptDocument(doc *transcriptDocument) string {
 		writeSection(&b, "_"+doc.Empty+"_")
 	}
 
+	chapter := 0
+
 	for i := 0; i <= len(doc.Messages); {
 		if doc.gapAt(i) {
 			writeSection(&b, transcriptGapNote(doc.Gap.Count))
@@ -312,6 +326,10 @@ func renderTranscriptDocument(doc *transcriptDocument) string {
 		}
 
 		message := &doc.Messages[i]
+		if title, ok := doc.Chapters[message.Sequence]; ok && !message.Delegated() {
+			chapter++
+			writeSection(&b, fmt.Sprintf("# Chapter %d · %s", chapter, title))
+		}
 		if message.Delegated() {
 			end := doc.delegationEnd(i)
 			var section strings.Builder

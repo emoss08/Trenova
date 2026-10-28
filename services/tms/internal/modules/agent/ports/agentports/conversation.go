@@ -115,6 +115,8 @@ type ListMessagesRequest struct {
 	// many turns land while the reader scrolls.
 	BeforeSequence *int
 	AfterSequence  *int
+	// TurnID, when set, reads only the messages one turn saved.
+	TurnID pulid.ID
 	// ExcludeKinds leaves messages of these kinds out, before Limit counts:
 	// the history replayed to the model leaves out another agent's steps, so
 	// they neither reach the model nor crowd its window.
@@ -158,6 +160,7 @@ type CountMessagesRequest struct {
 // result and break the next replay.
 type AppendTurnRequest struct {
 	ThreadID   pulid.ID
+	TurnID     pulid.ID
 	TenantInfo pagination.TenantInfo
 	Messages   []conversation.Message
 }

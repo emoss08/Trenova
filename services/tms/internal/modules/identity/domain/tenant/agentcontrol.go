@@ -48,6 +48,12 @@ type AgentControl struct {
 
 	LearningOff bool `json:"learningOff" keel:"learning_off"`
 
+	// AutoChaptersOff stops a model splitting Desk conversations into
+	// chapters and naming them. On by default: it is one short call per
+	// question on the cheapest model, and people can still start chapters
+	// by hand while it is off.
+	AutoChaptersOff bool `json:"autoChaptersOff" keel:"auto_chapters_off"`
+
 	AgentMoneyCallCeilingMinor int64 `json:"agentMoneyCallCeilingMinor" keel:"agent_money_call_ceiling_minor"`
 	AgentMoneyRunCalls         int   `json:"agentMoneyRunCalls"         keel:"agent_money_run_calls"`
 	AgentMoneyRunAmountMinor   int64 `json:"agentMoneyRunAmountMinor"   keel:"agent_money_run_amount_minor"`

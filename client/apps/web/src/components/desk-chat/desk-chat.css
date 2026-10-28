@@ -9425,3 +9425,23 @@
   height: 9px;
   margin: 9px 6px;
 }
+
+/* A chapter's heading sits further from what came before and close above the
+   question that opens it. */
+.dk-r.dk-chap > * {
+  margin-top: 64px;
+}
+.dk-r.dk-chap.dk-first > * {
+  margin-top: 0;
+}
+.dk-r.dk-chap + .dk-r > *,
+.dk-r.dk-chap + .dk-r.dk-first > * {
+  margin-top: 10px;
+}
+/* The chapter rail floats in the room's top-left corner, over the scroll. */
+.dk-chap-rail-slot {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 5;
+}

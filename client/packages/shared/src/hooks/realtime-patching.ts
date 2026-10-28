@@ -137,10 +137,16 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   assistant_artifact: [["assistant", "artifacts"]],
   // A reply starting or closing moves the "writing" markers and the
   // conversation's place in the list together.
+  // A reply's chapter is opened as it starts and gets its first message as it
+  // ends, so a reply starting or closing reads the chapters again too.
   assistant_turns: [
     ["assistant", "activeTurns"],
     ["assistant", "threads"],
+    ["assistant", "chapters"],
   ],
+  // A chapter opened, named or merged: the conversation's headings and its
+  // chapter rail move.
+  assistant_chapters: [["assistant", "chapters"]],
   // A schedule made, paused, resumed, deleted or run: its card's state and
   // next run move, and so does its row on the Desk's Scheduled page.
   conversation_schedules: [
@@ -428,6 +434,7 @@ const ON_SCREEN_RESOURCES = new Set([
   "agent_profile",
   "assistant_artifact",
   "assistant_case",
+  "assistant_chapters",
   "assistant_queue",
   "assistant_turns",
   "conversation_schedules",

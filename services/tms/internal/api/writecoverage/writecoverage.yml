@@ -400,6 +400,9 @@ writes:
   "DELETE /api/v1/assistant/threads/:threadID/case/":
     exempt: agent-administration
     reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
+  "DELETE /api/v1/assistant/threads/:threadID/chapters/:chapterID/":
+    exempt: agent-administration
+    reason: "Chapters arrange the person's own conversation: where one subject ends and what it is called. The runtime marks and names them on its own, and no record an agent acts on changes."
   "DELETE /api/v1/assistant/threads/:threadID/queue/:itemID/":
     exempt: agent-administration
     reason: "Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words."
@@ -409,6 +412,9 @@ writes:
   "PATCH /api/v1/assistant/threads/:threadID/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "PATCH /api/v1/assistant/threads/:threadID/chapters/:chapterID/":
+    exempt: agent-administration
+    reason: "Chapters arrange the person's own conversation: where one subject ends and what it is called. The runtime marks and names them on its own, and no record an agent acts on changes."
   "PATCH /api/v1/assistant/threads/:threadID/queue/:itemID/":
     exempt: agent-administration
     reason: "Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words."
@@ -446,6 +452,9 @@ writes:
   "POST /api/v1/assistant/threads/:threadID/case/wake/":
     exempt: agent-administration
     reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
+  "POST /api/v1/assistant/threads/:threadID/chapters/":
+    exempt: agent-administration
+    reason: "Chapters arrange the person's own conversation: where one subject ends and what it is called. The runtime marks and names them on its own, and no record an agent acts on changes."
   "POST /api/v1/assistant/threads/:threadID/compact/":
     exempt: agent-administration
     reason: "Compacting a conversation manages the agent's own context window; the runtime compacts on its own limits and no record changes."

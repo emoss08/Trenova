@@ -33,6 +33,7 @@ import {
   useScheduleClock,
 } from "./conversation/desk-schedules";
 import { useDesk } from "./desk-layout";
+import { useDeskChapters } from "./chapters/use-desk-chapters";
 import { DeskHandoffCard } from "./handoff/desk-handoff-card";
 import { useHandOffThread } from "./handoff/use-hand-off-thread";
 
@@ -41,6 +42,10 @@ export type DeskConversationProps = {
   agent: AgentChoice | null;
   agentsUnavailable: boolean;
   onStartNew?: () => void;
+  /** A chapter a link asked to open the conversation at. */
+  linkedChapterId?: string | null;
+  /** Told once the linked chapter is in view, so the link is not followed again. */
+  onLinkedChapterShown?: () => void;
 };
 
 /**
@@ -54,12 +59,12 @@ export function DeskConversation({
   agent,
   agentsUnavailable,
   onStartNew,
+  linkedChapterId = null,
+  onLinkedChapterShown,
 }: DeskConversationProps) {
   const desk = useDesk();
   const t = useT();
   const timezone = useAuthStore((state) => state.user?.timezone) || "UTC";
-  const chapters = useDeskStore((state) => state.chaptersByThread[thread.id]);
-  const toggleChapter = useDeskStore((state) => state.toggleChapter);
   // What the reply being written says about a hand-off, for the top bar's
   // menu, which watches the store rather than the reply.
   const setLiveHandoff = useDeskStore((state) => state.setLiveHandoff);
@@ -175,13 +180,15 @@ export function DeskConversation({
     thread.case?.state === "Snoozed" ? thread.case.snoozedUntil : null,
     refreshCase,
   );
-  const chapterApi = useMemo(
-    () => ({
-      of: (messageId: string) => (chapters ? chapters.indexOf(messageId) + 1 : 0),
-      toggle: (messageId: string) => toggleChapter(thread.id, messageId),
-    }),
-    [chapters, thread.id, toggleChapter],
-  );
+  const chapters = useDeskChapters({
+    thread,
+    agent,
+    agents: desk.agents,
+    timezone,
+    onHandedOff: (next) => void navigate(conversationPath(next)),
+    linkedChapterId,
+    onLinkShown: onLinkedChapterShown,
+  });
   const { agentsById } = desk;
   const renderHandoff = useCallback(
     (message: AssistantMessage) =>
@@ -211,7 +218,7 @@ export function DeskConversation({
       followNavigation={false}
       artifacts={artifacts}
       schedules={schedules}
-      chapters={chapterApi}
+      chapters={chapters}
       renderHandoff={renderHandoff}
       dockTop={(dock) => (
         <>

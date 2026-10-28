@@ -16,25 +16,21 @@ function speechAvailable(): boolean {
 }
 
 /**
- * The small actions under a reply, shown on hover: pin it as a chapter of the
- * conversation, copy it, or have it read aloud. A pinned reply says which
- * chapter it is; the row stays in view while one of them is on. A surface
- * without chapters leaves `onTogglePin` out and offers Copy and Read aloud.
+ * The small actions under a reply, shown on hover: start a chapter of the
+ * conversation where it was asked, copy it, or have it read aloud. The row
+ * stays in view while one of them is on. A reply whose question already opens
+ * a chapter, and a surface without chapters, leave `onStartChapter` out.
  */
 export function DeskMessageActions({
   text,
-  chapter,
-  onTogglePin,
+  onStartChapter,
 }: {
   text: string;
-  /** Which chapter this reply is, from 1, or 0 when it is not pinned. */
-  chapter: number;
-  onTogglePin?: () => void;
+  onStartChapter?: () => void;
 }) {
   const t = useT();
   const [copied, setCopied] = useState(false);
   const [reading, setReading] = useState(false);
-  const pinned = chapter > 0;
 
   useEffect(() => {
     if (!copied) {
@@ -76,19 +72,17 @@ export function DeskMessageActions({
   };
 
   return (
-    <div className={cn("dk-acts", (pinned || reading || copied) && "dk-stay")}>
-      {onTogglePin && (
+    <div className={cn("dk-acts", (reading || copied) && "dk-stay")}>
+      {onStartChapter && (
         <Button
           variant="quiet"
           size="sm"
-          className={cn(actClass, pinned && actOnClass)}
-          data-tip={pinned ? t("Unpin chapter") : t("Pin as chapter")}
-          aria-label={pinned ? t("Unpin chapter") : t("Pin as chapter")}
-          aria-pressed={pinned}
-          onClick={onTogglePin}
+          className={actClass}
+          data-tip={t("Start a chapter here")}
+          aria-label={t("Start a chapter here")}
+          onClick={onStartChapter}
         >
           <DeskIcon name="bookmark" size={14} />
-          {pinned && <span className="text-xs font-medium">{t("Chapter {0}", chapter)}</span>}
         </Button>
       )}
       <Button

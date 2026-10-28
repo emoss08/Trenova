@@ -97,7 +97,10 @@ export function DeskHandoffMenu({
                   className="flex w-full gap-2.5 rounded-lg px-2 py-1.75 text-left hover:bg-dsk-hover"
                   onClick={() => {
                     dispatch({ type: "pick", agentId: target.id });
-                    handoff.mutate(target.id, { onSettled: () => dispatch({ type: "settled" }) });
+                    handoff.mutate(
+                      { agentId: target.id },
+                      { onSettled: () => dispatch({ type: "settled" }) },
+                    );
                   }}
                 >
                   <DeskAgentTile agent={target} size="xs" />

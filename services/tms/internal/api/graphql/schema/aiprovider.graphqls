@@ -122,6 +122,7 @@ enum AITask {
   ScopeClassification
   DailyBriefing
   QueryCompose
+  ChapterTitling
   InboundClassification
   AccountingMapping
   RemittanceExtraction

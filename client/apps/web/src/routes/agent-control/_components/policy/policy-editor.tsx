@@ -100,6 +100,7 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
     earnedAutonomy: { label: t("Earned autonomy") },
     promotionThreshold: { label: t("Clean approvals") },
     learnsFromWork: { label: t("Learning") },
+    chaptersByModel: { label: t("Desk chapters") },
     personMonthlyMessages: {
       label: t("Allowance"),
       format: (value) =>
@@ -178,6 +179,25 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
             </Callout>
           )}
         </>
+      ),
+    },
+    {
+      id: "chapters",
+      label: t("Name Desk chapters"),
+      keys: ["chaptersByModel"],
+      actions: (
+        <HeaderSwitch
+          control={form.control}
+          name="chaptersByModel"
+          label={t("Name Desk chapters")}
+        />
+      ),
+      content: (
+        <p className="es-note">
+          {t(
+            "As a conversation moves from one subject to the next, a small model starts a chapter and names it in a few words, so a long conversation can be read and searched by subject. It is one short call per question on the cheapest model you route it to, and its cost shows under Desk chapters in usage. People can still start and name chapters themselves when it is off, and scheduled runs still open a chapter of their own.",
+          )}
+        </p>
       ),
     },
     {
@@ -298,7 +318,7 @@ function HeaderSwitch({
   label,
 }: {
   control: Control<PolicyFormValues>;
-  name: "earnedAutonomy" | "learnsFromWork" | "aiTrainingConsent";
+  name: "earnedAutonomy" | "learnsFromWork" | "chaptersByModel" | "aiTrainingConsent";
   label: string;
 }) {
   return (

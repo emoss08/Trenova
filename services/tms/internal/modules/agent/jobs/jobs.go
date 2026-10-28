@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/aituneupjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/briefingjobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/chapterjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/completionjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/decisioncommitjobs"
@@ -39,6 +40,7 @@ func WorkerOptions() fx.Option {
 		agentqualityjobs.Module,
 		agentflow.Module,
 		assistantjobs.Module,
+		chapterjobs.Module,
 		completionjobs.Module,
 		runstepledger.Module,
 		conversationschedulejobs.Module,

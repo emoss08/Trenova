@@ -392,12 +392,20 @@ Keywords: citation, citations, source, step number, how did the agent know, reas
 3. When the agent searched the web, the reply names the site it cites. Point at it to list every page it cites, and select one to open it in a new tab. Under the finished reply, select the sources count to see the search and every page it found.
 4. To hide the numbers, turn off **Source numbers** in Desk settings.
 
-### Copy, pin or listen to a reply
-Keywords: copy answer, bookmark reply, chapter, chapters, read out loud, text to speech
+### Copy or listen to a reply
+Keywords: copy answer, read out loud, text to speech
 1. Hover over a reply in a Desk conversation to show its actions.
 2. Select **Copy reply** to copy its text.
-3. Select **Pin as chapter** to mark the reply as a chapter of the conversation. It then shows its chapter number. Select **Unpin chapter** to remove it.
-4. Select **Read aloud** to hear the reply, and **Stop reading** to stop. This button only appears when your browser can read text aloud.
+3. Select **Read aloud** to hear the reply, and **Stop reading** to stop. This button only appears when your browser can read text aloud.
+
+### Move through a conversation by chapter
+Keywords: chapter, chapters, table of contents, jump to, topic, subject, rename chapter, chapter title, bookmark, split conversation
+1. When a conversation turns to a new subject, the Desk starts a chapter and names it in a few words. The name sits above the question that opens the chapter, with its number.
+2. Once a conversation has two chapters, a mark for each shows in its top-left corner. The chapter you are reading has the longest mark, and a chapter with a decision waiting for you is marked in amber.
+3. Point at the marks to list the chapters. Each says what it made, what waits for your decision and what the agent is waiting on. Select a chapter to go to it, even one above the messages loaded so far.
+4. Double-click a chapter's name, or move to it with Tab and press Enter, to rename it. Press Enter or click away to keep the new name, or Escape to keep the old one. A name you give is never changed by the Desk.
+5. To start a chapter yourself, hover over a reply and select **Start a chapter here**. The chapter starts at the question that reply answers.
+6. Open the menu beside a chapter's name to **Rename** it, **Continue in a new conversation** with the same agent, **Hand off this chapter** to another agent, or **Merge into the chapter above**. Continuing or handing off starts a conversation briefed on that chapter alone and named after it.
 
 ### See or change what an agent can do
 Keywords: agent permissions, agent tools, ask first, agent limits, budget, business hours, turn agent off, what can this agent do
@@ -409,11 +417,11 @@ Keywords: agent permissions, agent tools, ask first, agent limits, budget, busin
 6. Select **Back to conversation** to return.
 
 ### Search the whole Desk
-Keywords: find conversation, find message, find artifact, find decision, search desk, recent searches
+Keywords: find conversation, find chapter, find message, find artifact, find decision, search desk, recent searches
 1. On [Desk](/desk), select **Search** in the rail or press ⌘K (Ctrl+K).
-2. Type in **Search chats, messages, artifacts…**. Results are grouped as **Conversations**, **Messages**, **Artifacts** and **Decisions**.
-3. Narrow the results with **All**, **Chats**, **Messages**, **Artifacts** or **Decisions**, or press Tab to move between them.
-4. Use the arrow keys and Enter, or select a result. A conversation or message opens its conversation, an artifact opens the conversation with it beside it, and a decision opens [Decisions](/desk/decisions).
+2. Type in **Search chats, messages, artifacts…**. Results are grouped as **Conversations**, **Chapters**, **Messages**, **Artifacts** and **Decisions**.
+3. Narrow the results with **All**, **Chats**, **Chapters**, **Messages**, **Artifacts** or **Decisions**, or press Tab to move between them.
+4. Use the arrow keys and Enter, or select a result. A conversation or message opens its conversation, a chapter opens its conversation at that chapter, an artifact opens the conversation with it beside it, and a decision opens [Decisions](/desk/decisions).
 5. With nothing typed, the search offers **Recent searches** and recent conversations and artifacts.
 
 ### Change how the Desk looks and behaves
@@ -451,5 +459,7 @@ A long conversation eventually becomes read-only; select **Start a new conversat
 - An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. A case step you hand to another agent with its button needs only that you may use that agent. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person.
 - Anything an agent produces lands in the workspace: tables, reports, record cards, documents, email drafts, plans, read documents, decisions and billing items. With **Open new artifacts** set to **Right away**, a new item opens as it arrives; otherwise a dot on **Workspace** marks something new.
 - Billing actions on a billing item are your own and need billing queue permissions. The agent never approves or posts an invoice on its own.
-- Desk settings and chapters are kept in this browser; they do not follow you to another browser or computer.
+- Desk settings are kept in this browser; they do not follow you to another browser or computer. Chapters are kept with the conversation and follow you everywhere.
+- A conversation holds up to 200 chapters. A chapter name is at most 60 characters. Requests the agent runs on a schedule each open a chapter of their own, marked with the date they ran. A downloaded transcript and a compaction summary keep each chapter's name.
+- The Desk names chapters with a small model, one short call per question. Its cost shows under **Desk chapters** in usage. An administrator can turn it off with **Name Desk chapters** in [AI control](/admin/agent-control); you can still start and name chapters yourself.
 - Changing what an agent can do needs permission to manage agents.

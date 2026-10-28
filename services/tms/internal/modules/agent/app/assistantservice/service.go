@@ -91,6 +91,7 @@ type Params struct {
 	// Schedules settles the requests scheduled in a conversation being
 	// deleted, so none fires again and no open list keeps showing one.
 	Schedules conversationscheduleports.ConversationThreadSchedules `optional:"true"`
+	Chapters  agentports.ChapterRepository                          `optional:"true"`
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
@@ -151,6 +152,7 @@ type Service struct {
 	waits         agentwaitports.AgentWaitRepository
 	readWaits     agentwaitports.DocumentReadWaiter
 	schedules     conversationscheduleports.ConversationThreadSchedules
+	chapters      agentports.ChapterRepository
 }
 
 func New(p Params) *Service {
@@ -183,6 +185,7 @@ func New(p Params) *Service {
 		waits:         p.Waits,
 		readWaits:     p.ReadWaits,
 		schedules:     p.Schedules,
+		chapters:      p.Chapters,
 		systemAgents:  p.SystemAgents,
 		pageThreads:   p.PageThreads,
 		agentControls: p.AgentControls,

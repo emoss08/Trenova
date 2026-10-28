@@ -735,6 +735,7 @@ export function createAIState(anchor, scenario) {
       promotionThreshold: 10,
       personMonthlyMessages: 250,
       learningOff: false,
+      autoChaptersOff: false,
       agentMoneyCallCeiling: "1000.00",
       agentMoneyRunCalls: 10,
       agentMoneyRunAmount: "5000.00",

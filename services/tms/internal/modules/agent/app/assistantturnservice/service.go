@@ -33,6 +33,7 @@ type Params struct {
 	Metrics   *metrics.Registry             `optional:"true"`
 	Quota     platformplanports.QuotaGuard  `optional:"true"`
 	Plans     platformplanports.PlanService `optional:"true"`
+	Chapters  agentports.ChapterScheduler   `optional:"true"`
 }
 
 type Service struct {
@@ -44,6 +45,7 @@ type Service struct {
 	metrics   *metrics.Assistant
 	quota     platformplanports.QuotaGuard
 	plans     platformplanports.PlanService
+	chapters  agentports.ChapterScheduler
 }
 
 var _ agentports.AssistantTurnStopper = (*Service)(nil)
@@ -58,6 +60,7 @@ func New(p Params) *Service {
 		metrics:   metrics.AssistantFrom(p.Metrics),
 		quota:     p.Quota,
 		plans:     p.Plans,
+		chapters:  p.Chapters,
 	}
 }
 
@@ -274,8 +277,22 @@ func (s *Service) StartTurn(
 	}
 	turn.WorkflowID = workflowID
 	s.announce(ctx, turn, turnActionStarted, turn.Status)
+	s.cueChapter(ctx, turn)
 
 	return turn, nil
+}
+
+func (s *Service) cueChapter(ctx context.Context, turn *conversation.AssistantTurn) {
+	if s.chapters == nil {
+		return
+	}
+	s.chapters.Cue(ctx, &agentports.ChapterTurnRequest{
+		TenantInfo: tenantOf(turn),
+		ThreadID:   turn.ThreadID,
+		UserID:     turn.UserID,
+		TurnID:     turn.ID,
+		Phase:      agentports.ChapterPhaseOpened,
+	})
 }
 
 // ErrNoExecution is what a cancel reports when no execution carries the

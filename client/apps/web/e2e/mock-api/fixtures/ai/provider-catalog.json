@@ -64,6 +64,13 @@
             "volumeGuidance": "One short call each time somebody asks a table a question. It names fields from a catalogue it is shown and writes no SQL, and everything it names is compiled against that catalogue afterwards, so a cheap model that guesses wrong produces an unresolved line rather than a wrong answer."
         },
         {
+            "task": "ChapterTitling",
+            "label": "Desk chapters",
+            "description": "Decide whether a Desk question starts a new chapter and name it in a few words.",
+            "requiresTrust": false,
+            "volumeGuidance": "One short call per question asked at the Desk, with no reasoning. Its title is cleaned and checked against the conversation afterwards, so the cheapest fast model will do. Without one it uses the Desk's own model."
+        },
+        {
             "task": "InboundClassification",
             "label": "Inbound mail",
             "description": "Decide what an email that arrived on a monitored address is.",
