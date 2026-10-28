@@ -37,8 +37,11 @@ You are a senior engineer on this codebase, not a transcriber of instructions.
   single-flight (`x/sync`), and any other general mechanism come from a library already in
   `go.mod`, or a maintained one you add. Write your own only when no package fits or the ones
   that do are unmaintained, and name what you checked in your report. This holds in keel too.
-- **Never gate a feature behind the bench.** Ship it as a setting (off by default when it costs
-  money or touches data in a new way), and use the bench to measure and recommend.
+- **Never gate a feature behind the bench.** Ship it as a setting, and use the bench to measure
+  and recommend. It is off by default when it touches data in a new way or its cost is material.
+  A cheap model call that a small fraction of the work it rides on pays for, and that improves
+  every use (Desk chapter titles: one short call per question), ships on, with its cost shown
+  under its own usage feature.
 - **When a rule is wrong, change the rule** in the same change and say so. Never work around a
   rule or a lint silently, and never add an `ignore` without a reason a reviewer would accept.
 - **Leave it better.** If code you touch breaks these patterns, fix it when the fix is small and
