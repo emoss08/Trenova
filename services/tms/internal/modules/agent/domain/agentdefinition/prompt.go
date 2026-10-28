@@ -133,6 +133,9 @@ type RuntimeUser struct {
 	Name  string
 	Email string
 	Roles []string
+	// Timezone is the person's own clock, which a schedule they ask for runs
+	// on. It is named to the agent only where it is not the organization's.
+	Timezone string
 }
 
 type PageContext = agent.PageContext
@@ -637,7 +640,7 @@ func (d *Definition) buildContextSection(rc *RuntimeContext) string {
 	}
 
 	if d.HasContextProvider(ContextUser) && rc.User != nil {
-		lines = append(lines, describeUser(rc.User)...)
+		lines = append(lines, describeUser(rc.User, rc.Timezone)...)
 	}
 
 	fenced := make([]string, 0, 6)
@@ -724,8 +727,13 @@ func describeTrigger(trigger agent.RunTrigger) string {
 	}
 }
 
-func describeUser(user *RuntimeUser) []string {
-	lines := make([]string, 0, 2)
+// describeUser names the person, their roles and, where it is not the
+// organization's, their own clock. The agent tells the time on the
+// organization's clock, and a schedule runs on the person's: an agent that
+// offered "8:00 AM Pacific" to a person in New York filed a schedule for 8:00
+// in New York, then withdrew it and filed it again.
+func describeUser(user *RuntimeUser, organizationZone string) []string {
+	lines := make([]string, 0, 3)
 	if name := strings.TrimSpace(user.Name); name != "" {
 		line := "- You are talking to: " + name
 		if email := strings.TrimSpace(user.Email); email != "" {
@@ -735,6 +743,11 @@ func describeUser(user *RuntimeUser) []string {
 	}
 	if len(user.Roles) > 0 {
 		lines = append(lines, "- Their roles: "+strings.Join(user.Roles, ", "))
+	}
+	if zone := strings.TrimSpace(user.Timezone); zone != "" && zone != organizationZone {
+		lines = append(lines, "- Their own clock: "+zone+", not the organization's. A "+
+			"schedule they ask for runs on their own clock unless they name another, so say "+
+			"its time on theirs.")
 	}
 
 	return lines

@@ -17693,6 +17693,12 @@ span.dk-bd-ref {
   display: grid;
   grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr));
 }
+/* A figures block of more than four, set in balanced rows. */
+.dk-bd-reads {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 .dk-bd-read > div {
   display: flex;
   flex-direction: column;
@@ -18328,7 +18334,7 @@ a.dk-bd-face:hover {
 }
 .dk-bd-wait.dk-read {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr));
   gap: 14px;
 }
 .dk-bd-wait.dk-read > span {

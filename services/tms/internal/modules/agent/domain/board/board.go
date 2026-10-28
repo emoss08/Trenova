@@ -15,7 +15,7 @@ const (
 	MinCompareRecords   = 2
 	MaxCompareRecords   = 4
 	MaxCompareRows      = 12
-	MaxFigures          = 4
+	MaxFigures          = 8
 	MaxChecks           = 12
 	MaxCheckRecords     = 25
 	MaxNoteRecords      = 8

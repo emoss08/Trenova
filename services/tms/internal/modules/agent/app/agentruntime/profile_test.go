@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -247,4 +248,44 @@ func TestDispatchStep_RunsAReachedWriteUnderItsHoldersCeiling(t *testing.T) {
 	require.NotNil(t, reached.Action)
 	assert.Equal(t, agent.TierPropose, reached.Action.Tier)
 	assert.False(t, reached.Action.Executed)
+}
+
+/*
+Scheduling a request repeats it in the person's own conversation, so only a
+conversation with a person in it holds the tool: not a run nobody watches,
+not a task another agent handed over, and not a turn with no conversation to
+post into.
+*/
+func TestProfile_OnlyAPersonsConversationHoldsTheScheduleTool(t *testing.T) {
+	t.Parallel()
+
+	billing := agentHolding("Billing helper", "invoice_list")
+	service := profileRuntime(t, billing)
+
+	held := service.profileFor(t.Context(), conversationRequest(billing), nil).held
+	assert.Contains(t, held, agentdefinition.CoreToolSchedule)
+
+	cases := map[string]func(*agentports.RunRequest){
+		"unattended": func(req *agentports.RunRequest) { req.Unattended = true },
+		"delegated": func(req *agentports.RunRequest) {
+			req.Delegation = &agentports.Delegation{ParentAgentID: pulid.MustNew("agdef_")}
+		},
+		"no thread": func(req *agentports.RunRequest) { req.ThreadID = pulid.Nil },
+		"no person": func(req *agentports.RunRequest) {
+			req.Actor.PrincipalType = permissionports.PrincipalTypeAgent
+		},
+	}
+	for name, change := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			req := conversationRequest(billing)
+			change(req)
+
+			assert.NotContains(t,
+				service.profileFor(t.Context(), req, nil).held,
+				agentdefinition.CoreToolSchedule,
+			)
+		})
+	}
 }

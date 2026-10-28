@@ -25,12 +25,17 @@ var blockFields = map[BlockType][]string{
 	BlockChart:    {fieldAnalysis, "chart"},
 	BlockTimeline: {"record", "limit"},
 	BlockChecks:   {"checks"},
-	BlockMeter:    {"of", "metric"},
+	BlockMeter:    {fieldChecksBlock, "metric"},
 	BlockProse:    {"text"},
 	BlockNote:     {"tone", "text", fieldRecords},
 }
 
 var commonFields = []string{"type", "title", "half"}
+
+// fieldChecksBlock is the checks block a meter fills from. It was "of", which
+// a model read as "of how many" and sent beside a metric, so every meter it
+// drew was refused once.
+const fieldChecksBlock = "checksBlock"
 
 type parser struct {
 	problems []string
@@ -105,7 +110,8 @@ func (p *parser) whole(board *Board) {
 		}
 		if block.Type == BlockMeter && block.Of > 0 {
 			if block.Of > len(board.Blocks) || board.Blocks[block.Of-1].Type != BlockChecks {
-				p.addf("blocks[%d].of names block %d, which is not a checks block", idx+1, block.Of)
+				p.addf("blocks[%d].checksBlock names block %d, which is not a checks block",
+					idx+1, block.Of)
 			}
 		}
 	}
@@ -322,15 +328,18 @@ func (p *parser) compareRows(raw any, path string) []CompareRow {
 }
 
 func (p *parser) meter(fields map[string]any, path string, block *Block) {
-	_, ofChecks := fields["of"]
+	_, ofChecks := fields[fieldChecksBlock]
 	metric := strings.TrimSpace(stringOf(fields["metric"]))
 	switch {
 	case ofChecks && metric != "":
-		p.addf("%s is drawn from a checks block or a metric, not both", path)
+		p.addf("%s fills from a checks block or a percentage metric, not both: keep metric "+
+			"for a percentage such as onTimePercent and leave out checksBlock, or keep "+
+			"checksBlock and leave out metric", path)
 	case ofChecks:
-		position, ok := wholeOf(fields["of"])
+		position, ok := wholeOf(fields[fieldChecksBlock])
 		if !ok || position < 1 {
-			p.addf("%s.of is the position of a checks block on this board, from 1", path)
+			p.addf("%s.checksBlock is the position of a checks block on this board, from 1",
+				path)
 			return
 		}
 		block.Of = position
@@ -340,7 +349,8 @@ func (p *parser) meter(fields map[string]any, path string, block *Block) {
 			p.addf("%s.metric must be a percentage to draw as a meter", path)
 		}
 	default:
-		p.addf("%s needs of (the position of a checks block) or a metric", path)
+		p.addf("%s needs checksBlock (the position of a checks block) or a percentage metric",
+			path)
 	}
 }
 
@@ -504,8 +514,10 @@ var emphasis = strings.NewReplacer("**", "", "__", "", "`", "")
 func (p *parser) words(fields map[string]any, key, path string, most int, required bool) string {
 	text := p.limited(fields, key, path, most, required, emphasis.Replace)
 	if figures := Figures(PlainText(text)); len(figures) > 0 {
-		p.addf("%s states %s; the board reads every figure live from its blocks, so write "+
-			"the words without it and cite the block that shows it", path, figureList(figures))
+		p.addf("%s states %s; the board reads every figure live from its blocks, so take it "+
+			"out of the words. Where the board should show it, add a block that reads it "+
+			"(records or checks for the loads it counts, figures for a metric) and cite that "+
+			"block; never point at a block the board does not have", path, figureList(figures))
 	}
 
 	return text

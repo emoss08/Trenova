@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { BoardArtifact, BoardLayoutBlock } from "../../artifact-payloads";
-import { halfBlocks } from "./board-card";
+import type { CSSProperties } from "react";
+import { figureRows, halfBlocks } from "./board-card";
 
 const SKETCH_ROWS = 4;
 const SKETCH_FIGURES = 4;
@@ -10,18 +11,25 @@ const LOG_WIDTHS = [86, 64, 78, 52, 70];
 function BlockSketch({ block }: { block: BoardLayoutBlock }) {
   switch (block.type) {
     case "figures":
+      // The same rows the figures are drawn in, so nothing moves when they land.
       return (
-        <div className="dk-bd-wait dk-read">
-          {Array.from(
-            { length: Math.min(block.size || SKETCH_FIGURES, SKETCH_FIGURES) },
-            (_, index) => (
-              // oxlint-disable-next-line react/no-array-index-key -- shimmer slots are positional
-              <span key={index}>
-                <i className="ui-shimmer" />
-                <i className="ui-shimmer" />
-              </span>
-            ),
-          )}
+        <div className="dk-bd-reads">
+          {figureRows(block.size || SKETCH_FIGURES).map((size, row) => (
+            <div
+              // oxlint-disable-next-line react/no-array-index-key -- shimmer rows are positional
+              key={row}
+              className="dk-bd-wait dk-read"
+              style={{ "--n": size } as CSSProperties}
+            >
+              {Array.from({ length: size }, (_, index) => (
+                // oxlint-disable-next-line react/no-array-index-key -- shimmer slots are positional
+                <span key={index}>
+                  <i className="ui-shimmer" />
+                  <i className="ui-shimmer" />
+                </span>
+              ))}
+            </div>
+          ))}
         </div>
       );
     case "records":

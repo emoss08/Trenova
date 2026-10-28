@@ -26,6 +26,7 @@ func TestParseRequest(t *testing.T) {
 		cadence string
 		cron    string
 		prompt  string
+		zone    string
 	}{
 		{
 			name:    "weekday with a time",
@@ -111,6 +112,58 @@ func TestParseRequest(t *testing.T) {
 			cron:    "0 8 * * 4",
 			prompt:  "Amazing loads to review",
 		},
+		{
+			name:    "everyday as one word, on a clock it names",
+			text:    "everyday at 9:30 AM EST, give me today's operations board",
+			cadence: "Every day · 9:30 AM",
+			cron:    "30 9 * * *",
+			prompt:  "Give me today's operations board",
+			zone:    "America/New_York",
+		},
+		{
+			name:    "daily with a separator",
+			text:    "daily: unbilled loads",
+			cadence: "Every day · 8:00 AM",
+			cron:    "0 8 * * *",
+			prompt:  "Unbilled loads",
+		},
+		{
+			name:    "daily under the command",
+			text:    "/schedule daily check for late loads",
+			cadence: "Every day · 8:00 AM",
+			cron:    "0 8 * * *",
+			prompt:  "Check for late loads",
+		},
+		{
+			name:    "a region's clock written out",
+			text:    "every Monday at 8am Pacific time summarize detention",
+			cadence: "Every Monday · 8:00 AM",
+			cron:    "0 8 * * 1",
+			prompt:  "Summarize detention",
+			zone:    "America/Los_Angeles",
+		},
+		{
+			name:    "a 24-hour time in UTC",
+			text:    "every weekday at 17:00 UTC: who is still on the road",
+			cadence: "Every weekday · 5:00 PM",
+			cron:    "0 17 * * 1-5",
+			prompt:  "Who is still on the road",
+			zone:    "UTC",
+		},
+		{
+			name:    "a clock is read only right after the time",
+			text:    "every day at 8, ET loads still open",
+			cadence: "Every day · 8:00 AM",
+			cron:    "0 8 * * *",
+			prompt:  "ET loads still open",
+		},
+		{
+			name:    "a word after the time that names no clock is the request",
+			text:    "every day at 8 give me the dispatch board",
+			cadence: "Every day · 8:00 AM",
+			cron:    "0 8 * * *",
+			prompt:  "Give me the dispatch board",
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -121,6 +174,7 @@ func TestParseRequest(t *testing.T) {
 			assert.Equal(t, tt.cadence, got.Cadence)
 			assert.Equal(t, tt.cron, got.CronExpression)
 			assert.Equal(t, tt.prompt, got.Prompt)
+			assert.Equal(t, tt.zone, got.Timezone)
 			require.NoError(t, cronutils.Validate(got.CronExpression))
 		})
 	}
@@ -139,6 +193,8 @@ func TestIsRequestLeavesOrdinaryQuestionsAlone(t *testing.T) {
 		"every hour check the board",
 		"What happens every Monday?",
 		"everyday is fine",
+		"Daily revenue for last week?",
+		"daily active drivers by terminal",
 	} {
 		assert.False(t, IsRequest(text), text)
 	}
@@ -162,6 +218,11 @@ func TestParseRequestRefusesWhatItCannotRun(t *testing.T) {
 		{name: "minutes past the hour", text: "every day at 7:75, check loads"},
 		{name: "a 24-hour time past midnight", text: "every day at 25:00 check loads"},
 		{name: "zero o'clock am", text: "every day at 0am check loads"},
+		{
+			name: "two schedules in one message",
+			text: "everyday at 10:15am Pacific time, list shipments still not dispatched\n" +
+				"daily: unbilled loads older than 3 days",
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -572,4 +633,74 @@ func editable() *Schedule {
 		Timezone:       "America/Chicago",
 		Enabled:        true,
 	}
+}
+
+/*
+A clock is named the way people say it, or as the IANA name an agent sends.
+An abbreviation names its region's clock in both halves of the year, so
+"EST" in July is still New York's 9:30.
+*/
+func TestResolveZone(t *testing.T) {
+	t.Parallel()
+
+	for name, want := range map[string]string{
+		"EST":                   "America/New_York",
+		"edt":                   "America/New_York",
+		"Eastern time":          "America/New_York",
+		"Central Standard Time": "America/Chicago",
+		"PT":                    "America/Los_Angeles",
+		"gmt":                   "UTC",
+		"America/Denver":        "America/Denver",
+		"Europe/London":         "Europe/London",
+	} {
+		got, ok := ResolveZone(name)
+		assert.True(t, ok, name)
+		assert.Equal(t, want, got, name)
+	}
+
+	for _, name := range []string{"", "Local", "Mars/Olympus", "EST and more", "tomorrow"} {
+		_, ok := ResolveZone(name)
+		assert.False(t, ok, name)
+	}
+}
+
+/*
+A schedule nobody typed is written on its card as the request a person would
+have typed for it, in the words the composer reads back as a schedule.
+*/
+func TestAskedReadsBackAsTheSameSchedule(t *testing.T) {
+	t.Parallel()
+
+	schedule := editable()
+	multiErr := errortypes.NewMultiError()
+	schedule.Change(Edit{Prompt: "give me today's operations board", Repeat: "day", Time: "09:30"}, multiErr)
+	require.False(t, multiErr.HasErrors(), multiErr.Error())
+
+	asked := schedule.Asked()
+	assert.Equal(t, "Every day at 9:30 AM, Give me today's operations board", asked)
+
+	parsed, err := ParseRequest(asked)
+	require.NoError(t, err)
+	assert.Equal(t, schedule.Cadence, parsed.Cadence)
+	assert.Equal(t, schedule.CronExpression, parsed.CronExpression)
+	assert.Equal(t, schedule.Prompt, parsed.Prompt)
+}
+
+/*
+A request that runs over several lines is one request. Only a later line that
+opens with a cadence of its own is a second schedule, which is refused rather
+than asked as part of the first.
+*/
+func TestParseRequestKeepsAManyLineRequestAndRefusesASecondSchedule(t *testing.T) {
+	t.Parallel()
+
+	got, err := ParseRequest("every Monday at 8am, summarize:\n- detention by customer\n- late loads")
+	require.NoError(t, err)
+	assert.Equal(t, "Summarize:\n- detention by customer\n- late loads", got.Prompt)
+
+	_, err = ParseRequest("every day at 8, unbilled loads\nevery weekday at 7:30am CT, what's blocking?")
+	var invalid *errortypes.Error
+	require.ErrorAs(t, err, &invalid)
+	assert.Equal(t, "content", invalid.Field)
+	assert.Contains(t, invalid.Error(), "every weekday at 7:30am CT, what's blocking?")
 }

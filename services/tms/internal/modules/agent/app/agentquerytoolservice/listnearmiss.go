@@ -84,18 +84,30 @@ func (t *listTool) nearMiss(ctx context.Context, req *nearMissRequest) string {
 		}
 	}
 
+	return nearMissNote(entity, applied, loosened)
+}
+
+// nearMissNote says what ruled every row out. A term the person asked for is
+// the question, not a guess to loosen: "loosen that one" read as an
+// instruction made an agent drop "delivered today" from "what was delivered
+// today?" and answer a different question, and then propose keeping that as
+// a lesson. None matching is an answer.
+func nearMissNote(entity, applied string, loosened []string) string {
 	if len(loosened) == 0 {
 		return fmt.Sprintf(
 			"No %s matched %s, and dropping any one of these still finds none: together they "+
-				"rule everything out. Other %s exist, so loosen more than one, or ask the person "+
-				"what they meant.",
+				"rule everything out. Other %s exist. If the person asked for all of these, "+
+				"none matching is the answer: say so. Otherwise loosen more than one, or ask "+
+				"the person what they meant.",
 			entity, applied, entity,
 		)
 	}
 
 	return fmt.Sprintf(
-		"No %s matched %s. Dropping just one of these finds some: %s. Loosen that one rather "+
-			"than trying new values one by one.",
+		"No %s matched %s. Without just one of these, some do: %s. If the person asked for "+
+			"it, none matching is the answer: say so rather than searching without it. Loosen "+
+			"it only when you chose it yourself, and loosen it rather than trying new values "+
+			"one by one.",
 		entity, applied, strings.Join(loosened, "; "),
 	)
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta/stopetadb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert/weatheralertdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/pkg/lanequery"
@@ -47,21 +48,23 @@ const defaultTomorrowsPickupsLimit = 20
 type ProviderParams struct {
 	fx.In
 
-	DB             *postgres.Connection
-	Logger         *zap.Logger
-	DispatchRepo   dispatchcontrolports.DispatchControlRepository
-	CostingService *costingservice.Service
-	Views          permissionports.ReferenceViews
-	FieldAccess    permissionports.FieldAccess
+	DB              *postgres.Connection
+	Logger          *zap.Logger
+	DispatchRepo    dispatchcontrolports.DispatchControlRepository
+	DispatchConsole shipmentports.DispatchConsoleRepository
+	CostingService  *costingservice.Service
+	Views           permissionports.ReferenceViews
+	FieldAccess     permissionports.FieldAccess
 }
 
 type Provider struct {
-	l              *zap.Logger
-	db             *postgres.Connection
-	dispatchRepo   dispatchcontrolports.DispatchControlRepository
-	costingService *costingservice.Service
-	views          permissionports.ReferenceViews
-	fieldAccess    permissionports.FieldAccess
+	l               *zap.Logger
+	db              *postgres.Connection
+	dispatchRepo    dispatchcontrolports.DispatchControlRepository
+	dispatchConsole shipmentports.DispatchConsoleRepository
+	costingService  *costingservice.Service
+	views           permissionports.ReferenceViews
+	fieldAccess     permissionports.FieldAccess
 }
 
 type laneStateRow struct {
@@ -113,12 +116,13 @@ type tomorrowsPickupsRequest struct {
 
 func NewProvider(p ProviderParams) *Provider {
 	return &Provider{
-		l:              p.Logger.Named("analyticsprovider.shipment"),
-		db:             p.DB,
-		dispatchRepo:   p.DispatchRepo,
-		costingService: p.CostingService,
-		views:          p.Views,
-		fieldAccess:    p.FieldAccess,
+		l:               p.Logger.Named("analyticsprovider.shipment"),
+		db:              p.DB,
+		dispatchRepo:    p.DispatchRepo,
+		dispatchConsole: p.DispatchConsole,
+		costingService:  p.CostingService,
+		views:           p.Views,
+		fieldAccess:     p.FieldAccess,
 	}
 }
 
@@ -281,6 +285,12 @@ func (p *Provider) getMetricCards(
 		return nil, err
 	}
 
+	dispatch, err := p.getDispatch(ctx, opts, tz)
+	if err != nil {
+		log.Error("failed to get dispatch counts", zap.Error(err))
+		return nil, err
+	}
+
 	return kernelports.AnalyticsData{
 		"activeShipments":  activeShipments,
 		"onTimePercent":    onTime,
@@ -290,6 +300,45 @@ func (p *Provider) getMetricCards(
 		"unassigned":       unassigned,
 		"readyToDispatch":  readyToDispatch,
 		"profitability":    profitability,
+		"dispatch":         dispatch,
+	}, nil
+}
+
+// dispatchWindowSeconds is the day ahead the dispatch counts cover, the
+// window the dispatch board opens on.
+const dispatchWindowSeconds = 24 * 60 * 60
+
+// getDispatch counts the next day's moves from the dispatch board's own
+// summary, in one query, so a KPI tile or a board figure and the dispatch
+// board never disagree.
+func (p *Provider) getDispatch(
+	ctx context.Context,
+	opts *kernelports.AnalyticsRequestOptions,
+	tz string,
+) (*DispatchCard, error) {
+	now := timeutils.NowUnix()
+	dayStart, err := timeutils.DayStartUnix(now, tz)
+	if err != nil {
+		return nil, fmt.Errorf("load timezone %q: %w", tz, err)
+	}
+
+	summary, err := p.dispatchConsole.GetBoardSummary(ctx, &shipmentports.DispatchBoardFilter{
+		TenantInfo:     pagination.TenantInfo{OrgID: opts.OrgID, BuID: opts.BuID},
+		WindowStart:    now,
+		WindowEnd:      now + dispatchWindowSeconds,
+		DayStartUnix:   dayStart,
+		IncludeCovered: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &DispatchCard{
+		Moves:     summary.UncoveredMoves + summary.CoveredMoves,
+		Late:      summary.OverdueMoves,
+		DueNow:    summary.DueNowMoves,
+		DueToday:  summary.DueTodayMoves,
+		Uncovered: summary.UncoveredMoves,
 	}, nil
 }
 

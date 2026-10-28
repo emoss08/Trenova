@@ -36,8 +36,9 @@ const (
 	// delegated only ever saw its own call and the answer it got back.
 	MessageKindDelegated = MessageKind("Delegated")
 	// MessageKindSchedule is a request the person asked to have repeated. It
-	// is kept in the person's words with the schedule it made, and drawn as
-	// that schedule's card. The model is never sent it: nothing answered it,
+	// is kept in the person's words with the schedule it made, or, for one an
+	// agent proposed, in the words of the proposal they approved, and drawn
+	// as that schedule's card. The model is never sent it: nothing answered it,
 	// and each run asks the request afresh in a turn of its own.
 	MessageKindSchedule = MessageKind("Schedule")
 	// MessageKindCompaction is the summary a compaction wrote of the

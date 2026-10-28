@@ -783,6 +783,13 @@ query ShipmentPageAnalytics($input: ShipmentAnalyticsInput!) {
       unassigned
       driverReady
     }
+    dispatch {
+      moves
+      late
+      dueNow
+      dueToday
+      uncovered
+    }
     detentionWatchlist {
       items {
         shipmentId

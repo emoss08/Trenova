@@ -118,6 +118,12 @@ cases:
     expect: [report_create_dashboard]
   - request: email this report every Monday
     expect: [report_create_schedule]
+  - request: schedule this to run everyday at 9:30 AM EST
+    expect: [agent_create_schedule]
+  - request: ask me this every weekday morning at 7
+    expect: [agent_create_schedule]
+  - request: give me this operations board every Monday at 8am
+    expect: [agent_create_schedule]
   - request: remember that Acme closes at four on Fridays
     expect: [agent_create_memory]
   - request: what did we record about this customer before

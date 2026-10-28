@@ -29,6 +29,14 @@ func TestFiguresFindsWhatTheBoardShouldReadLive(t *testing.T) {
 			[]string{},
 		},
 		"words for numbers": {"Four loads are late and two are held", []string{}},
+		"a span of time named from now": {
+			"The board covers the next 24 hours from 9:23 AM, against the past 7 days",
+			[]string{},
+		},
+		"a span beside a reading still finds the reading": {
+			"over the last 3 days, 40 moves ran 22h late",
+			[]string{"40 moves", "22h"},
+		},
 	}
 
 	for name, tc := range cases {
@@ -49,6 +57,8 @@ func TestParseRefusesFiguresWrittenIntoTheWords(t *testing.T) {
 
 	assert.Equal(t, []string{
 		`verdict states "22h", "33m"; the board reads every figure live from its blocks, ` +
-			"so write the words without it and cite the block that shows it",
+			"so take it out of the words. Where the board should show it, add a block that " +
+			"reads it (records or checks for the loads it counts, figures for a metric) and " +
+			"cite that block; never point at a block the board does not have",
 	}, problems)
 }

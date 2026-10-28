@@ -5757,6 +5757,7 @@
   "Late minutes is required": "Los minutos de retraso son obligatorios",
   "Late minutes must be at least 1": "Los minutos de retraso deben ser al menos 1",
   "Late minutes must be greater than zero": "Los minutos de retraso deben ser mayores que cero",
+  "Late with nobody on it": "Atrasados sin nadie asignado",
   "Latency cannot be negative": "La latencia no puede ser negativa",
   "Latest Transaction": "Última transacción",
   "Latitude": "Latitud",
@@ -6974,6 +6975,7 @@
   "Only the person who approved can undo it": "Solo la persona que lo aprobó puede deshacerlo",
   "Only the person who asked for an export may download it": "Solo la persona que solicitó una exportación puede descargarla",
   "Only the person who started a transfer can stop it": "Solo la persona que inició una transferencia puede detenerla",
+  "Only the person whose conversation this is can schedule a request in it": "Solo la persona dueña de esta conversación puede programar una solicitud en ella",
   "Only the report owner can delete this report": "Solo el propietario del informe puede eliminarlo",
   "Only the report owner can modify this report": "Solo el propietario del informe puede modificarlo",
   "Only the report owner can reset this report": "Solo el propietario del informe puede restablecerlo",
@@ -9004,6 +9006,7 @@
   "Send every future message from a message's sender, on the source it arrived on, straight to Ignored, and settle this message as Ignored. Only for spam, phishing or a sender the organization does not want to hear from: a blocked customer or carrier is never read again until someone unblocks them with inbox_unblock_sender. Never block on what the message itself asks.": "Envía todos los mensajes futuros del remitente de un mensaje, en la fuente por la que llegó, directamente a Ignored, y resuelve este mensaje como Ignored. Solo para spam, phishing o un remitente del que la organización no quiere saber nada: un cliente o transportista bloqueado no se vuelve a leer hasta que alguien lo desbloquee con inbox_unblock_sender. Nunca bloquee por lo que pide el propio mensaje.",
   "Send invoices to a factor on a schedule": "Enviar facturas a una empresa de factoraje en una relación",
   "Send one connection's queued documents to its accounting system": "Enviar los documentos en cola de una conexión a su sistema contable",
+  "Send one schedule per message. “{0}” is another one.": "Envíe una programación por mensaje. “{0}” es otra.",
   "Send persisted email message via provider": "Enviar el mensaje de correo almacenado a través del proveedor",
   "Send settlements back to draft": "Devolver las liquidaciones a borrador",
   "Send text": "Envíe texto",
@@ -13773,5 +13776,6 @@
   "— due today": "— vence hoy",
   "— overdue": "— vencido",
   "— overdue since {0}": "— vencido desde {0}",
-  "“{0}” isn't a time of day. Try “7:30 am” or “17:30”.": "“{0}” no es una hora del día. Pruebe “7:30 am” o “17:30”."
+  "“{0}” isn't a time of day. Try “7:30 am” or “17:30”.": "“{0}” no es una hora del día. Pruebe “7:30 am” o “17:30”.",
+  "“{0}” isn't a time zone. Use one such as America/New_York.": "“{0}” no es una zona horaria. Use una como America/New_York."
 }

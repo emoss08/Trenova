@@ -194,6 +194,7 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"agent_raise_exception":               {agent.EgressInternal},
 		"agent_create_wait":                   {agent.EgressInternal},
 		"agent_cancel_wait":                   {agent.EgressInternal},
+		"agent_create_schedule":               {agent.EgressPersonal},
 		"report_create_dashboard":             {agent.EgressInternal},
 		"report_add_dashboard_tile":           {agent.EgressInternal},
 		"report_create_table_change_alert":    {agent.EgressInternal},
@@ -734,6 +735,7 @@ func TestScriptsPrepareOnlyWritesThatNameAndPreviewTheirRecord(t *testing.T) {
 
 	for _, name := range []string{
 		"agent_create_memory", "agent_create_wait", "agent_raise_exception",
+		"agent_create_schedule",
 	} {
 		for _, tool := range tools.Actions {
 			if tool.Name() == name {

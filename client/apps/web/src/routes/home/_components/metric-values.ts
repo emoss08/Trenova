@@ -30,6 +30,7 @@ export type MetricValue = {
 };
 
 const SHIPMENTS_HREF = "/shipment-management/shipments";
+const DISPATCH_HREF = "/dispatch/console";
 const RECEIVABLES_HREF = "/accounting/ar/aging";
 
 function minorToMajor(minor: number | null | undefined): number {
@@ -142,6 +143,49 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
         deltaTone: "brand",
         sub: translate("{0} driver-ready", analytics.readyToDispatch.driverReady),
         href: SHIPMENTS_HREF,
+      };
+    case "movesLate":
+      return {
+        key,
+        label: translate("Late moves"),
+        shape: "stat",
+        display: String(analytics.dispatch.late),
+        raw: analytics.dispatch.late,
+        sub: translate(
+          "{0, plural, one {of # move in the next day} other {of # moves in the next day}}",
+          analytics.dispatch.moves,
+        ),
+        href: DISPATCH_HREF,
+      };
+    case "movesDueNow":
+      return {
+        key,
+        label: translate("Moves due now"),
+        shape: "stat",
+        display: String(analytics.dispatch.dueNow),
+        raw: analytics.dispatch.dueNow,
+        sub: translate("next stop within 4 hours"),
+        href: DISPATCH_HREF,
+      };
+    case "movesDueToday":
+      return {
+        key,
+        label: translate("Moves due today"),
+        shape: "stat",
+        display: String(analytics.dispatch.dueToday),
+        raw: analytics.dispatch.dueToday,
+        sub: translate("next stop later today"),
+        href: DISPATCH_HREF,
+      };
+    case "movesUncovered":
+      return {
+        key,
+        label: translate("Uncovered moves"),
+        shape: "stat",
+        display: String(analytics.dispatch.uncovered),
+        raw: analytics.dispatch.uncovered,
+        sub: translate("no driver or carrier"),
+        href: DISPATCH_HREF,
       };
     case "marginPercent":
       return {

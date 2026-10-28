@@ -134,11 +134,23 @@ describe("isScheduleRequest", () => {
     expect(isScheduleRequest("/schedule hourly check loads")).toBe(true);
   });
 
+  it("reads everyday and daily with a time or a separator as every day", () => {
+    expect(
+      isScheduleRequest("everyday at 9:30 AM EST, give me today's operations board"),
+    ).toBe(true);
+    expect(isScheduleRequest("daily: unbilled loads")).toBe(true);
+    expect(isScheduleRequest("Daily at 7 check for late loads")).toBe(true);
+    expect(isScheduleRequest("/schedule daily check for late loads")).toBe(true);
+  });
+
   it("leaves ordinary questions alone", () => {
     expect(isScheduleRequest("Every time I open the queue it is slow, why?")).toBe(false);
     expect(isScheduleRequest("every hour check the board")).toBe(false);
     expect(isScheduleRequest("What happens every Monday?")).toBe(false);
     expect(isScheduleRequest("/schedules")).toBe(false);
+    expect(isScheduleRequest("everyday is fine")).toBe(false);
+    expect(isScheduleRequest("Daily revenue for last week?")).toBe(false);
+    expect(isScheduleRequest("daily active drivers by terminal")).toBe(false);
   });
 });
 
@@ -158,6 +170,30 @@ describe("/schedule", () => {
     expect(parseSlashCommand("/schedule every Mon")?.complete).toBe(false);
     expect(parseSlashCommand("/schedule every Monday at")?.args).toEqual(["every Monday at", ""]);
     expect(parseSlashCommand("/schedule every Monday at 8am")?.complete).toBe(false);
+  });
+
+  it("keeps the clock named after the time with the cadence", () => {
+    expect(splitScheduleSlots("everyday at 9:30am EST give me the operations board")).toEqual([
+      "everyday at 9:30am EST",
+      "give me the operations board",
+    ]);
+    expect(
+      splitScheduleSlots("every Monday at 8am Pacific time, summarize detention"),
+    ).toEqual(["every Monday at 8am Pacific time", "summarize detention"]);
+    expect(splitScheduleSlots("every day at 8 give me the board")).toEqual([
+      "every day at 8",
+      "give me the board",
+    ]);
+    expect(splitScheduleSlots("every day at 8, ET loads still open")).toEqual([
+      "every day at 8",
+      "ET loads still open",
+    ]);
+
+    const parsed = parseSlashCommand("/schedule everyday at 9:30am EST give me the board");
+    expect(fillCommand(parsed!.command, parsed!.args)).toBe(
+      "everyday at 9:30am EST, give me the board",
+    );
+    expect(isScheduleRequest(fillCommand(parsed!.command, parsed!.args))).toBe(true);
   });
 
   it("is listed first among the commands", () => {

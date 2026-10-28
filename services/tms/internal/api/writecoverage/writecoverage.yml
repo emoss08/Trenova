@@ -393,7 +393,7 @@ writes:
   # assistant
   "DELETE /api/v1/assistant/schedules/:scheduleID/":
     exempt: agent-administration
-    reason: "Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload."
+    reason: "Editing, pausing, deleting or running a schedule now is the person arranging what they asked an agent to repeat; an agent only proposes a new schedule, through agent_create_schedule, and a person approves it, so it never sets its own workload."
   "DELETE /api/v1/assistant/threads/:threadID/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
@@ -408,7 +408,7 @@ writes:
     reason: "Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words."
   "PATCH /api/v1/assistant/schedules/:scheduleID/":
     exempt: agent-administration
-    reason: "Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload."
+    reason: "Editing, pausing, deleting or running a schedule now is the person arranging what they asked an agent to repeat; an agent only proposes a new schedule, through agent_create_schedule, and a person approves it, so it never sets its own workload."
   "PATCH /api/v1/assistant/threads/:threadID/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
@@ -423,7 +423,7 @@ writes:
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
   "POST /api/v1/assistant/schedules/:scheduleID/run/":
     exempt: agent-administration
-    reason: "Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload."
+    reason: "Editing, pausing, deleting or running a schedule now is the person arranging what they asked an agent to repeat; an agent only proposes a new schedule, through agent_create_schedule, and a person approves it, so it never sets its own workload."
   "POST /api/v1/assistant/threads/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
@@ -477,8 +477,7 @@ writes:
     exempt: agent-administration
     reason: "Asking an administrator for access to an agent, or for more allowance, budget or daily requests, is a person's request about their own use of the assistant; an agent that could ask for its own limits to be raised would defeat them."
   "POST /api/v1/assistant/threads/:threadID/schedules/":
-    exempt: agent-administration
-    reason: "Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload."
+    tools: [agent_create_schedule]
   "POST /api/v1/assistant/threads/:threadID/turns/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."

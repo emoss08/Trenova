@@ -25,6 +25,9 @@ type moveSummary struct {
 	CoveredMoves    int
 	LateMoves       int
 	AtRiskMoves     int
+	OverdueMoves    int
+	DueNowMoves     int
+	DueTodayMoves   int
 	AssignedToday   int
 	AverageDeadhead float64
 }
@@ -64,6 +67,9 @@ func (r *repository) GetBoardSummary(
 			CoveredMoves:     moves.CoveredMoves,
 			LateMoves:        moves.LateMoves,
 			AtRiskMoves:      moves.AtRiskMoves,
+			OverdueMoves:     moves.OverdueMoves,
+			DueNowMoves:      moves.DueNowMoves,
+			DueTodayMoves:    moves.DueTodayMoves,
 			UnseatedDrivers:  drivers.UnseatedDrivers,
 			AvailableDrivers: drivers.AvailableDrivers,
 			AssignedToday:    moves.AssignedToday,
@@ -94,6 +100,7 @@ func moveSummaryQuery(
 	uncovered := keel.And(asn.ID.IsNull(), ca.ID.IsNull())
 	covered := keel.Or(asn.ID.IsNotNull(), ca.ID.IsNotNull())
 	scheduled := windowStart.Coalesce(0).Gt(0)
+	urgency := urgencyOf(now)
 
 	return boardMoves().
 		LeftJoin(pos,
@@ -110,6 +117,9 @@ func moveSummaryQuery(
 				windowStart.Gte(now),
 				windowStart.Lte(now+atRiskLeadSeconds),
 			),
+			countIf(urgency.overdue),
+			countIf(urgency.dueNow),
+			countIf(urgency.dueToday),
 			countIf(
 				covered,
 				asn.CreatedAt.Coalesce(ca.CreatedAt).Gte(dayStart),
@@ -130,6 +140,49 @@ func moveSummaryQuery(
 				Cast(keel.TypeFloat64),
 		).
 		Where(moveFilters(filter)...)
+}
+
+// moveUrgency is a move's urgency bucket as SQL, the rule
+// dispatchconsoleservice.urgencyFor applies to each move: by the pickup until
+// it is picked up, then by the delivery. A pickup is overdue once its window
+// opens unvisited, a delivery once its window closes unvisited; one still to
+// come is due now inside UrgencyNowSeconds and due today inside
+// UrgencyTodaySeconds. A move with no window on its next stop, or delivered,
+// is in none of them.
+type moveUrgency struct {
+	overdue, dueNow, dueToday keel.Pred
+}
+
+func urgencyOf(now int64) moveUrgency {
+	pickupStart := zero(origin.stop.ScheduledWindowStart)
+	deliveryStart := zero(destination.stop.ScheduledWindowStart)
+	deliveryEnd := zero(destination.stop.ScheduledWindowEnd)
+
+	toPickUp := keel.And(zero(origin.stop.ActualArrival).Lte(0), pickupStart.Gt(0))
+	toDeliver := keel.And(
+		zero(origin.stop.ActualArrival).Gt(0),
+		zero(destination.stop.ActualArrival).Lte(0),
+		deliveryStart.Gt(0),
+	)
+	deliveryClosed := keel.And(deliveryStart.Lt(now), deliveryEnd.Lt(now))
+	deliveryOpen := keel.Or(deliveryStart.Gte(now), deliveryEnd.Gte(now))
+	soon := now + shipmentports.UrgencyNowSeconds
+	today := now + shipmentports.UrgencyTodaySeconds
+
+	return moveUrgency{
+		overdue: keel.Or(
+			keel.And(toPickUp, pickupStart.Lt(now)),
+			keel.And(toDeliver, deliveryClosed),
+		),
+		dueNow: keel.Or(
+			keel.And(toPickUp, pickupStart.Gte(now), pickupStart.Lte(soon)),
+			keel.And(toDeliver, deliveryOpen, deliveryStart.Lte(soon)),
+		),
+		dueToday: keel.Or(
+			keel.And(toPickUp, pickupStart.Gt(soon), pickupStart.Lte(today)),
+			keel.And(toDeliver, deliveryOpen, deliveryStart.Gt(soon), deliveryStart.Lte(today)),
+		),
+	}
 }
 
 func driverSummaryQuery(filter *shipmentports.DispatchBoardFilter) *keel.Query[*worker.Worker] {

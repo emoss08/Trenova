@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -77,4 +78,39 @@ type ConversationThreadSchedules interface {
 	// conversation and announces each one gone. Like the syncer it never
 	// fails the delete: what it could not remove the next reconcile does.
 	Forget(ctx context.Context, schedules []*conversationschedule.Schedule)
+}
+
+// PlanConversationScheduleRequest is a request to repeat in one of the
+// person's conversations, as fields rather than a message: what to ask, how
+// often and at what time (Edit), and the clock the time is on, an IANA name
+// or one a person says ("EST", "Pacific"), empty for the person's own.
+// ProposalID is the approved proposal that asks for it, which its card names.
+type PlanConversationScheduleRequest struct {
+	ThreadID   pulid.ID
+	Edit       conversationschedule.Edit
+	Timezone   string
+	ProposalID pulid.ID
+	Actor      permissionports.RequestActor
+}
+
+// PlannedConversationSchedule is the schedule a planned request keeps, and
+// Existing the one the conversation already keeps for the same request, time
+// and clock, when there is one; then nothing new is kept.
+type PlannedConversationSchedule struct {
+	Schedule *conversationschedule.Schedule
+	Existing *conversationschedule.Schedule
+}
+
+// ConversationSchedulePlanner checks and keeps a schedule an agent proposed
+// in the conversation it was answering. Plan writes nothing; CreatePlanned
+// keeps it, with its card, once the person approved it.
+type ConversationSchedulePlanner interface {
+	Plan(
+		ctx context.Context,
+		req PlanConversationScheduleRequest,
+	) (*PlannedConversationSchedule, error)
+	CreatePlanned(
+		ctx context.Context,
+		req PlanConversationScheduleRequest,
+	) (*PlannedConversationSchedule, error)
 }

@@ -193,9 +193,16 @@ func TestParseRefusesWhatABoardCannotDraw(t *testing.T) {
 		"a meter of a block that is not checks": {
 			mutate: func(args map[string]any) {
 				args["blocks"] = append(args["blocks"].([]any),
-					map[string]any{"type": "meter", "of": 2.0})
+					map[string]any{"type": "meter", "checksBlock": 2.0})
 			},
 			want: "names block 2, which is not a checks block",
+		},
+		"a meter given both a checks block and a metric": {
+			mutate: func(args map[string]any) {
+				args["blocks"] = append(args["blocks"].([]any),
+					map[string]any{"type": "meter", "metric": "onTimePercent", "checksBlock": 1.0})
+			},
+			want: "keep metric for a percentage such as onTimePercent and leave out checksBlock",
 		},
 		"a meter of a count": {
 			mutate: func(args map[string]any) {
@@ -297,4 +304,44 @@ func TestParseWritesTheWordsPlainAndHoldsANoteToItsOwnLimits(t *testing.T) {
 	note["title"] = "Re-tender the two furthest behind"
 	_, problems = board.Parse(args)
 	assert.Equal(t, []string{"blocks[1].title is longer than 60 characters"}, problems)
+}
+
+/*
+Every operations board asked for five figures, and show_board refused each one
+for holding more than four, so every board cost a retry. A figures block holds
+up to eight, which the card draws in rows of at most four; nine is refused.
+*/
+func TestParseTakesUpToEightFiguresInABlock(t *testing.T) {
+	t.Parallel()
+
+	figuresBoard := func(n int) map[string]any {
+		metrics := []string{
+			"activeShipments", "onTimePercent", "atRisk", "unassigned", "revenueToday",
+		}
+		figures := make([]any, 0, n)
+		for idx := range n {
+			figures = append(figures, map[string]any{
+				"label":  "Figure " + string(rune('A'+idx)),
+				"metric": metrics[idx%len(metrics)],
+			})
+		}
+
+		return map[string]any{
+			"title":   "Operations board",
+			"verdict": "Today's operations figures.",
+			"blocks": []any{
+				map[string]any{"type": "figures", "title": "Today", "figures": figures},
+			},
+		}
+	}
+
+	parsed, problems := board.Parse(figuresBoard(5))
+	require.Empty(t, problems)
+	assert.Len(t, parsed.Blocks[0].Figures, 5)
+
+	_, problems = board.Parse(figuresBoard(board.MaxFigures))
+	assert.Empty(t, problems)
+
+	_, problems = board.Parse(figuresBoard(board.MaxFigures + 1))
+	assert.Contains(t, strings.Join(problems, "\n"), "blocks[1].figures needs 1 to 8 figures")
 }

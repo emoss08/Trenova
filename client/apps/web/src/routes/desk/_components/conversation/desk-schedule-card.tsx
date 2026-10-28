@@ -58,12 +58,14 @@ export function DeskScheduleRow({
  * Results will post into this conversation" over the schedule's row, or
  * "Schedule deleted" once it is gone. `schedule` is undefined while the
  * conversation's schedules are still being read, and null when this one is
- * not among them.
+ * not among them. A `proposed` card is one the person approved from an
+ * agent's proposal, with no request of theirs above it, so it says so.
  */
 export function DeskScheduleCard({
   schedule,
   now,
   timezone,
+  proposed = false,
   disabled,
   onToggle,
   onDelete,
@@ -71,6 +73,7 @@ export function DeskScheduleCard({
   schedule: ConversationSchedule | null | undefined;
   now: number;
   timezone: string;
+  proposed?: boolean;
   disabled?: boolean;
   onToggle: (schedule: ConversationSchedule) => void;
   onDelete: (schedule: ConversationSchedule) => void;
@@ -93,7 +96,11 @@ export function DeskScheduleCard({
     <div className="dk-schc">
       <div className="dk-schc-h">
         <b>{t("Scheduled")}</b>
-        <span>{t("Results will post into this conversation")}</span>
+        <span>
+          {proposed
+            ? t("From a proposal you approved · results will post into this conversation")
+            : t("Results will post into this conversation")}
+        </span>
       </div>
       <DeskScheduleRow
         schedule={schedule}

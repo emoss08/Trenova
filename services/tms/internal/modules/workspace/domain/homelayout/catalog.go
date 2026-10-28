@@ -453,6 +453,10 @@ func MetricCatalog() []MetricDefinition {
 		shipment("marginPercent", "Margin %"),
 		shipment("revenuePerMile", "Revenue per Mile"),
 		shipment("costPerMile", "Cost per Mile"),
+		shipment("movesLate", "Late Moves"),
+		shipment("movesDueNow", "Moves Due Now"),
+		shipment("movesDueToday", "Moves Due Today"),
+		shipment("movesUncovered", "Uncovered Moves"),
 		{
 			Key:       "arTotalOpen",
 			Label:     "Open Receivables",

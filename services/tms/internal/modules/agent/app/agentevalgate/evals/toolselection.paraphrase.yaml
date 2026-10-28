@@ -6,6 +6,8 @@
 cases:
   - request: chase the shipper for paperwork
     expect: [shipment_request_documents]
+  - request: keep giving me this every morning before standup
+    expect: [agent_create_schedule]
   - request: who's out on leave this week
     expect: [worker_list_time_off]
   - request: is anyone's medical certificate about to lapse

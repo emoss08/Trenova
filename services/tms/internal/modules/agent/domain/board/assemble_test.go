@@ -240,7 +240,7 @@ func TestAssembleCountsChecksAndDrawsTheirMeter(t *testing.T) {
 				map[string]any{"title": "Invoices not synced", "tone": "warn", "records": invoices},
 				map[string]any{"title": "Bank matched", "tone": "ok", "metric": "arOverdue"},
 			}},
-			map[string]any{"type": "meter", "of": 1.0},
+			map[string]any{"type": "meter", "checksBlock": 1.0},
 		},
 	})
 	require.Empty(t, problems)

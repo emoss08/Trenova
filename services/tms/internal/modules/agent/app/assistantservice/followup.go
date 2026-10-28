@@ -152,9 +152,9 @@ func (s *Service) decisionNote(
 	}
 
 	return decisionFollowUp{
-		note: fmt.Sprintf("%s%s\nDecision on proposal %s (%s). %s%s",
+		note: fmt.Sprintf("%s%s\nDecision on proposal %s (%s). %s%s%s",
 			decisionLine(proposal), ranWith(proposal, decisions), proposal.ID, proposal.ToolName,
-			producedNote(proposal), ask),
+			liftedHold(p.history, proposal), producedNote(proposal), ask),
 		decided: []*agent.AgentProposal{proposal},
 		changed: changedTargets(refused),
 	}, nil
@@ -341,6 +341,32 @@ func followUpAsk(declined bool, note string) string {
 		header,
 		stringutils.TruncateRunes(note, agent.MaxDecisionNoteLength),
 	) + "\n" + personNoteGuard + " " + instruction
+}
+
+// liftedHold says, for a proposal someone approved, that what kept anyone
+// from approving it when it was filed has since been lifted, when the result
+// of the call that filed it said so. What the agent told the person then was
+// true, and the note says it is not to be taken back.
+func liftedHold(history []conversation.Message, proposal *agent.AgentProposal) string {
+	switch proposal.Status {
+	case agent.ProposalStatusExecuted, agent.ProposalStatusExecutionFailed,
+		agent.ProposalStatusAccepted, agent.ProposalStatusModified:
+	default:
+		return ""
+	}
+
+	for idx := range history {
+		message := &history[idx]
+		if message.Role != conversation.RoleTool {
+			continue
+		}
+		if lifted := agentruntime.LiftedHold(message.Content, proposal.ID); lifted != "" {
+			return lifted + " What you told the person then was true when you said it: do not " +
+				"take it back or apologise for it. "
+		}
+	}
+
+	return ""
 }
 
 // producedNote names the ids an executed proposal's write produced, for the

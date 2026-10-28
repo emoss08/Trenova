@@ -28262,6 +28262,10 @@ type ShipmentAnalytics {
   atRisk: ShipmentAtRisk
   unassigned: ShipmentUnassignedAnalytics
   readyToDispatch: ShipmentReadyToDispatch
+  """
+  The next day's moves as the dispatch board counts them, covered or not.
+  """
+  dispatch: ShipmentDispatchCounts
   detentionWatchlist: ShipmentDetentionWatchlist
   """
   Null for a reader who cannot read customers: the figures about each customer
@@ -28346,6 +28350,19 @@ type ShipmentReadyToDispatch {
   delta: Int!
   unassigned: Int!
   driverReady: Int!
+}
+
+"""
+The next day's moves by each one's next stop, the pickup until it is picked up
+and then the delivery: past its window (late), due within four hours (dueNow)
+or later today (dueToday), and the moves nobody covers (uncovered).
+"""
+type ShipmentDispatchCounts {
+  moves: Int!
+  late: Int!
+  dueNow: Int!
+  dueToday: Int!
+  uncovered: Int!
 }
 
 type ShipmentDetentionWatchlist {

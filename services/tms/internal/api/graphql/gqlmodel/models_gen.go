@@ -9133,15 +9133,17 @@ type ShipmentAdditionalChargeInput struct {
 }
 
 type ShipmentAnalytics struct {
-	Page               string                       `json:"page"`
-	ActiveShipments    *ShipmentActiveShipments     `json:"activeShipments,omitempty"`
-	OnTimePercent      *ShipmentOnTime              `json:"onTimePercent,omitempty"`
-	RevenueToday       *ShipmentRevenueToday        `json:"revenueToday,omitempty"`
-	EmptyMilePercent   *ShipmentEmptyMile           `json:"emptyMilePercent,omitempty"`
-	AtRisk             *ShipmentAtRisk              `json:"atRisk,omitempty"`
-	Unassigned         *ShipmentUnassignedAnalytics `json:"unassigned,omitempty"`
-	ReadyToDispatch    *ShipmentReadyToDispatch     `json:"readyToDispatch,omitempty"`
-	DetentionWatchlist *ShipmentDetentionWatchlist  `json:"detentionWatchlist,omitempty"`
+	Page             string                       `json:"page"`
+	ActiveShipments  *ShipmentActiveShipments     `json:"activeShipments,omitempty"`
+	OnTimePercent    *ShipmentOnTime              `json:"onTimePercent,omitempty"`
+	RevenueToday     *ShipmentRevenueToday        `json:"revenueToday,omitempty"`
+	EmptyMilePercent *ShipmentEmptyMile           `json:"emptyMilePercent,omitempty"`
+	AtRisk           *ShipmentAtRisk              `json:"atRisk,omitempty"`
+	Unassigned       *ShipmentUnassignedAnalytics `json:"unassigned,omitempty"`
+	ReadyToDispatch  *ShipmentReadyToDispatch     `json:"readyToDispatch,omitempty"`
+	// The next day's moves as the dispatch board counts them, covered or not.
+	Dispatch           *ShipmentDispatchCounts     `json:"dispatch,omitempty"`
+	DetentionWatchlist *ShipmentDetentionWatchlist `json:"detentionWatchlist,omitempty"`
 	// Null for a reader who cannot read customers: the figures about each customer
 	// need customer read, and the order of the names alone would rank them.
 	CustomerMix      *ShipmentCustomerMix      `json:"customerMix,omitempty"`
@@ -9865,6 +9867,17 @@ type ShipmentDetentionWatchlistItem struct {
 	Customer   *string `json:"customer,omitempty"`
 	DwellLabel string  `json:"dwellLabel"`
 	Tone       string  `json:"tone"`
+}
+
+// The next day's moves by each one's next stop, the pickup until it is picked up
+// and then the delivery: past its window (late), due within four hours (dueNow)
+// or later today (dueToday), and the moves nobody covers (uncovered).
+type ShipmentDispatchCounts struct {
+	Moves     int `json:"moves"`
+	Late      int `json:"late"`
+	DueNow    int `json:"dueNow"`
+	DueToday  int `json:"dueToday"`
+	Uncovered int `json:"uncovered"`
 }
 
 type ShipmentDistanceMoveResult struct {

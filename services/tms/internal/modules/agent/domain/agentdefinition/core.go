@@ -11,6 +11,7 @@ const (
 	CoreToolOpenPage       = "agent_open_page"
 	CoreToolWaitUntil      = "agent_create_wait"
 	CoreToolCancelWait     = "agent_cancel_wait"
+	CoreToolSchedule       = "agent_create_schedule"
 	CoreToolReadAttachment = "agent_read_attachment"
 )
 
@@ -23,6 +24,7 @@ var coreTools = [...]string{
 	CoreToolOpenPage,
 	CoreToolWaitUntil,
 	CoreToolCancelWait,
+	CoreToolSchedule,
 	CoreToolReadAttachment,
 }
 
@@ -33,8 +35,9 @@ var coreTools = [...]string{
 // answer for the person in the conversation, so a run nobody is watching goes
 // without them; agent_read_attachment rides only on a conversation a file was
 // attached to. agent_guide_profile writes down what a person said about the
-// organization's business or their own work, so it rides only where a person
-// is talking to the agent.
+// organization's business or their own work, and agent_create_schedule
+// repeats a request in the person's own conversation, so both ride only where
+// a person is talking to the agent.
 // find_tools and ask_user are the other two always-on tools; the runtime
 // answers those itself, so they are not registry tools and are not listed here.
 func CoreTools() []string {

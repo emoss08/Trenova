@@ -292,6 +292,7 @@ var messagesTable = schema.Table{
 		{Name: "delegate_call_id", Quoted: `"delegate_call_id"`, Field: "DelegateCallID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Delegate Call ID`, JSON: `delegateCallId`},
 		{Name: "delegate_report", Quoted: `"delegate_report"`, Field: "DelegateReport", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Delegate Report`, Doc: `DelegateReport is the account of the task a delegate_task call handed out, kept on that call's result: how it ended, what the other agent answered, made, left waiting and published. Nil on every other message and on a call refused before anybody was asked.`, JSON: `delegateReport`},
 		{Name: "schedule_id", Quoted: `"schedule_id"`, Field: "ScheduleID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Schedule ID`, Doc: `ScheduleID is the conversation schedule a Schedule message made. The schedule may since have been deleted; the card then says so.`, JSON: `scheduleId`},
+		{Name: "proposal_id", Quoted: `"proposal_id"`, Field: "ProposalID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Proposal ID`, Doc: `ProposalID is the agent proposal whose approval made a Schedule card. Its words are the request the agent wrote out and the person approved, not words they typed, so it is drawn as the approved proposal. Empty on a card the person typed and on every other message.`, JSON: `proposalId`},
 		{Name: "handoff", Quoted: `"handoff"`, Field: "Handoff", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Handoff`, Doc: `Handoff is what a hand-off carried, on the card it left in the conversation handed off and on the brief that opens the new one. Nil on every other message.`, JSON: `handoff`},
 		{Name: "content", Quoted: `"content"`, Field: "Content", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Content`, JSON: `content`},
 		{Name: "world_changes", Quoted: `"world_changes"`, Field: "WorldChanges", Kind: schema.KindJSON, Flags: schema.FlagJSONB | schema.FlagNullZero, Label: `World Changes`, Doc: `WorldChanges are the records a WorldChange notice reported changed. Nil on every other message.`, JSON: `worldChanges`},
@@ -331,13 +332,13 @@ var messagesTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43},
 	Returning:    nil,
 	Version:      -1,
 	AutoID:       0,
-	AutoCreate:   43,
+	AutoCreate:   44,
 	AutoUpdate:   -1,
 	IDPrefix:     "amsg_",
 	New:          newMessage,
@@ -365,6 +366,7 @@ type MessagesTable struct {
 	DelegateCallID    keel.StringCol
 	DelegateReport    keel.JSONBCol
 	ScheduleID        keelkinds.PulidIDCol
+	ProposalID        keelkinds.PulidIDCol
 	Handoff           keel.JSONBCol
 	Content           keel.StringCol
 	WorldChanges      keel.JSONBCol
@@ -414,39 +416,40 @@ var Messages = &MessagesTable{
 	DelegateCallID:    keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 8}},
 	DelegateReport:    keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 9}},
 	ScheduleID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 10}}},
-	Handoff:           keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 11}},
-	Content:           keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 12}},
-	WorldChanges:      keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 13}},
-	Compaction:        keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 14}},
-	ToolCalls:         keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 15}},
-	ToolCallID:        keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 16}},
-	ToolName:          keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 17}},
-	ToolFailed:        keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 18}},
-	ToolVerdict:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 19}},
-	ToolSummary:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 20}},
-	FoundTools:        keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 21}},
-	HandOffAgents:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 22}},
-	ScopeStage:        keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 23}},
-	ScopeCategory:     keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 24}},
-	ScopeReason:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 25}},
-	Refused:           keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 26}},
-	PageContext:       keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 27}},
-	Attachments:       keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 28}},
-	Mentions:          keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 29}},
-	Reasoning:         keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 30}},
-	Model:             keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 31}},
-	Truncated:         keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 32}},
-	FallbackFrom:      keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 33}},
-	Failure:           keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 34}},
-	ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 35}}},
-	InputTokens:       keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 36}},
-	OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 37}},
-	ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 38}},
-	LatencyMs:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 39}},
-	CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &messagesRef, Index: 40}}},
-	UsedMemoryIDs:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 41}},
-	SavedMemories:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 42}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 43}},
+	ProposalID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 11}}},
+	Handoff:           keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 12}},
+	Content:           keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 13}},
+	WorldChanges:      keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 14}},
+	Compaction:        keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 15}},
+	ToolCalls:         keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 16}},
+	ToolCallID:        keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 17}},
+	ToolName:          keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 18}},
+	ToolFailed:        keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 19}},
+	ToolVerdict:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 20}},
+	ToolSummary:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 21}},
+	FoundTools:        keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 22}},
+	HandOffAgents:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 23}},
+	ScopeStage:        keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 24}},
+	ScopeCategory:     keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 25}},
+	ScopeReason:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 26}},
+	Refused:           keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 27}},
+	PageContext:       keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 28}},
+	Attachments:       keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 29}},
+	Mentions:          keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 30}},
+	Reasoning:         keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 31}},
+	Model:             keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 32}},
+	Truncated:         keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 33}},
+	FallbackFrom:      keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 34}},
+	Failure:           keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 35}},
+	ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 36}}},
+	InputTokens:       keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 37}},
+	OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 38}},
+	ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 39}},
+	LatencyMs:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 40}},
+	CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &messagesRef, Index: 41}}},
+	UsedMemoryIDs:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 42}},
+	SavedMemories:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 43}},
+	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 44}},
 }
 
 // BuildMessages builds the handle of assistant_messages for ref. Generated relation and alias methods call it.
@@ -464,39 +467,40 @@ func BuildMessages(r *keel.Ref) *MessagesTable {
 		DelegateCallID:    keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		DelegateReport:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
 		ScheduleID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		Handoff:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
-		Content:           keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		WorldChanges:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 13}},
-		Compaction:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
-		ToolCalls:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
-		ToolCallID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
-		ToolName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		ToolFailed:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 18}},
-		ToolVerdict:       keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		ToolSummary:       keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		FoundTools:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 21}},
-		HandOffAgents:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 22}},
-		ScopeStage:        keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
-		ScopeCategory:     keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
-		ScopeReason:       keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
-		Refused:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 26}},
-		PageContext:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 27}},
-		Attachments:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 28}},
-		Mentions:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 29}},
-		Reasoning:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 30}},
-		Model:             keel.StringCol{Col: keel.Col{Ref: r, Index: 31}},
-		Truncated:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 32}},
-		FallbackFrom:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 33}},
-		Failure:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 34}},
-		ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 35}}},
-		InputTokens:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
-		OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
-		ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: r, Index: 38}},
-		LatencyMs:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
-		CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 40}}},
-		UsedMemoryIDs:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 41}},
-		SavedMemories:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 42}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
+		ProposalID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Handoff:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
+		Content:           keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
+		WorldChanges:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
+		Compaction:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
+		ToolCalls:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
+		ToolCallID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
+		ToolName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
+		ToolFailed:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 19}},
+		ToolVerdict:       keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
+		ToolSummary:       keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
+		FoundTools:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 22}},
+		HandOffAgents:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 23}},
+		ScopeStage:        keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
+		ScopeCategory:     keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
+		ScopeReason:       keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
+		Refused:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 27}},
+		PageContext:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 28}},
+		Attachments:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 29}},
+		Mentions:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 30}},
+		Reasoning:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 31}},
+		Model:             keel.StringCol{Col: keel.Col{Ref: r, Index: 32}},
+		Truncated:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 33}},
+		FallbackFrom:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 34}},
+		Failure:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 35}},
+		ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 36}}},
+		InputTokens:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
+		OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
+		ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: r, Index: 39}},
+		LatencyMs:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
+		CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 41}}},
+		UsedMemoryIDs:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 42}},
+		SavedMemories:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 43}},
+		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 44}},
 	}
 }
 
@@ -548,70 +552,72 @@ func ptrMessage(p unsafe.Pointer, c int32) any {
 	case 10:
 		return (*string)(unsafe.Pointer(&r.ScheduleID))
 	case 11:
-		return &r.Handoff
+		return (*string)(unsafe.Pointer(&r.ProposalID))
 	case 12:
-		return &r.Content
+		return &r.Handoff
 	case 13:
-		return &r.WorldChanges
+		return &r.Content
 	case 14:
-		return &r.Compaction
+		return &r.WorldChanges
 	case 15:
-		return &r.ToolCalls
+		return &r.Compaction
 	case 16:
-		return &r.ToolCallID
+		return &r.ToolCalls
 	case 17:
-		return &r.ToolName
+		return &r.ToolCallID
 	case 18:
-		return &r.ToolFailed
+		return &r.ToolName
 	case 19:
-		return &r.ToolVerdict
+		return &r.ToolFailed
 	case 20:
-		return &r.ToolSummary
+		return &r.ToolVerdict
 	case 21:
-		return &r.FoundTools
+		return &r.ToolSummary
 	case 22:
-		return &r.HandOffAgents
+		return &r.FoundTools
 	case 23:
-		return &r.ScopeStage
+		return &r.HandOffAgents
 	case 24:
-		return &r.ScopeCategory
+		return &r.ScopeStage
 	case 25:
-		return &r.ScopeReason
+		return &r.ScopeCategory
 	case 26:
-		return &r.Refused
+		return &r.ScopeReason
 	case 27:
-		return &r.PageContext
+		return &r.Refused
 	case 28:
-		return &r.Attachments
+		return &r.PageContext
 	case 29:
-		return &r.Mentions
+		return &r.Attachments
 	case 30:
-		return &r.Reasoning
+		return &r.Mentions
 	case 31:
-		return &r.Model
+		return &r.Reasoning
 	case 32:
-		return &r.Truncated
+		return &r.Model
 	case 33:
-		return &r.FallbackFrom
+		return &r.Truncated
 	case 34:
-		return &r.Failure
+		return &r.FallbackFrom
 	case 35:
-		return (*string)(unsafe.Pointer(&r.ProviderID))
+		return &r.Failure
 	case 36:
-		return (*int64)(unsafe.Pointer(&r.InputTokens))
+		return (*string)(unsafe.Pointer(&r.ProviderID))
 	case 37:
-		return (*int64)(unsafe.Pointer(&r.OutputTokens))
+		return (*int64)(unsafe.Pointer(&r.InputTokens))
 	case 38:
-		return &r.ProviderMessageID
+		return (*int64)(unsafe.Pointer(&r.OutputTokens))
 	case 39:
-		return &r.LatencyMs
+		return &r.ProviderMessageID
 	case 40:
-		return &r.CostUSD
+		return &r.LatencyMs
 	case 41:
-		return &r.UsedMemoryIDs
+		return &r.CostUSD
 	case 42:
-		return &r.SavedMemories
+		return &r.UsedMemoryIDs
 	case 43:
+		return &r.SavedMemories
+	case 44:
 		return &r.CreatedAt
 	}
 	return nil
@@ -655,151 +661,156 @@ func valueMessage(p unsafe.Pointer, c int32) any {
 		}
 		return string(r.ScheduleID)
 	case 11:
+		if r.ProposalID == "" {
+			return nil
+		}
+		return string(r.ProposalID)
+	case 12:
 		if r.Handoff == nil {
 			return nil
 		}
 		return *r.Handoff
-	case 12:
+	case 13:
 		if r.Content == "" {
 			return nil
 		}
 		return r.Content
-	case 13:
+	case 14:
 		if r.WorldChanges == nil {
 			return nil
 		}
 		return r.WorldChanges
-	case 14:
+	case 15:
 		if r.Compaction == nil {
 			return nil
 		}
 		return *r.Compaction
-	case 15:
+	case 16:
 		if r.ToolCalls == nil {
 			return nil
 		}
 		return r.ToolCalls
-	case 16:
+	case 17:
 		if r.ToolCallID == "" {
 			return nil
 		}
 		return r.ToolCallID
-	case 17:
+	case 18:
 		if r.ToolName == "" {
 			return nil
 		}
 		return r.ToolName
-	case 18:
-		return r.ToolFailed
 	case 19:
+		return r.ToolFailed
+	case 20:
 		if r.ToolVerdict == "" {
 			return nil
 		}
 		return r.ToolVerdict
-	case 20:
+	case 21:
 		if r.ToolSummary == "" {
 			return nil
 		}
 		return r.ToolSummary
-	case 21:
+	case 22:
 		if r.FoundTools == nil {
 			return nil
 		}
 		return r.FoundTools
-	case 22:
+	case 23:
 		if r.HandOffAgents == nil {
 			return nil
 		}
 		return r.HandOffAgents
-	case 23:
+	case 24:
 		if r.ScopeStage == "" {
 			return nil
 		}
 		return r.ScopeStage
-	case 24:
+	case 25:
 		if r.ScopeCategory == "" {
 			return nil
 		}
 		return r.ScopeCategory
-	case 25:
+	case 26:
 		if r.ScopeReason == "" {
 			return nil
 		}
 		return r.ScopeReason
-	case 26:
-		return r.Refused
 	case 27:
+		return r.Refused
+	case 28:
 		if r.PageContext == nil {
 			return nil
 		}
 		return *r.PageContext
-	case 28:
+	case 29:
 		if r.Attachments == nil {
 			return nil
 		}
 		return r.Attachments
-	case 29:
+	case 30:
 		if r.Mentions == nil {
 			return nil
 		}
 		return r.Mentions
-	case 30:
+	case 31:
 		if r.Reasoning == nil {
 			return nil
 		}
 		return *r.Reasoning
-	case 31:
+	case 32:
 		if r.Model == "" {
 			return nil
 		}
 		return r.Model
-	case 32:
-		return r.Truncated
 	case 33:
+		return r.Truncated
+	case 34:
 		if r.FallbackFrom == nil {
 			return nil
 		}
 		return *r.FallbackFrom
-	case 34:
+	case 35:
 		if r.Failure == nil {
 			return nil
 		}
 		return *r.Failure
-	case 35:
+	case 36:
 		if r.ProviderID == "" {
 			return nil
 		}
 		return string(r.ProviderID)
-	case 36:
-		return int64(r.InputTokens)
 	case 37:
-		return int64(r.OutputTokens)
+		return int64(r.InputTokens)
 	case 38:
+		return int64(r.OutputTokens)
+	case 39:
 		if r.ProviderMessageID == "" {
 			return nil
 		}
 		return r.ProviderMessageID
-	case 39:
+	case 40:
 		if r.LatencyMs == 0 {
 			return nil
 		}
 		return r.LatencyMs
-	case 40:
+	case 41:
 		if r.CostUSD == nil {
 			return nil
 		}
 		return *r.CostUSD
-	case 41:
+	case 42:
 		if r.UsedMemoryIDs == nil {
 			return nil
 		}
 		return r.UsedMemoryIDs
-	case 42:
+	case 43:
 		if r.SavedMemories == nil {
 			return nil
 		}
 		return r.SavedMemories
-	case 43:
+	case 44:
 		return r.CreatedAt
 	}
 	return nil
@@ -1439,7 +1450,7 @@ var enumMessageKind = [...]schema.EnumValue{
 	{Value: `Message`, Label: `Message`},
 	{Value: `DecisionNote`, Label: `Decision Note`},
 	{Value: `Delegated`, Label: `Delegated`, Doc: `MessageKindDelegated is a step another agent took on a task the conversation's agent handed it: the task, its model's messages and its tool results. The conversation shows them nested under the delegate call; the model is never sent them again, because the agent that delegated only ever saw its own call and the answer it got back.`},
-	{Value: `Schedule`, Label: `Schedule`, Doc: `MessageKindSchedule is a request the person asked to have repeated. It is kept in the person's words with the schedule it made, and drawn as that schedule's card. The model is never sent it: nothing answered it, and each run asks the request afresh in a turn of its own.`},
+	{Value: `Schedule`, Label: `Schedule`, Doc: `MessageKindSchedule is a request the person asked to have repeated. It is kept in the person's words with the schedule it made, or, for one an agent proposed, in the words of the proposal they approved, and drawn as that schedule's card. The model is never sent it: nothing answered it, and each run asks the request afresh in a turn of its own.`},
 	{Value: `Compaction`, Label: `Compaction`, Doc: `MessageKindCompaction is the summary a compaction wrote of the conversation before it. The model reads it in place of every message it stands in for, and the thread shows it as the line where the conversation was compacted.`},
 	{Value: `Handoff`, Label: `Handoff`, Doc: `MessageKindHandoff marks, in the conversation a person handed off, that they took it to another agent and what went with it. The conversation shows it as a card; the model is never sent it.`},
 	{Value: `HandoffBrief`, Label: `Handoff Brief`, Doc: `MessageKindHandoffBrief opens the conversation a hand-off started: the summary, pinned facts and pinned artifacts carried over. It is sent to the model like a person's message, and shown as a note.`},

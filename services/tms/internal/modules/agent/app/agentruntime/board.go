@@ -25,17 +25,18 @@ const showBoardDescription = "Lay out your answer to a question that spans sever
 	"write only the words: the title, a verdict of one or two sentences, prose and at most two " +
 	"notes. Every number, status, row and count is read by Trenova from what each block names " +
 	"when the person opens the board, so never write a figure in the words (a duration, an " +
-	"amount, a percentage or a count is refused; record numbers, times of day and dates are " +
-	"fine): point at the block that shows it. Name only records your tools returned in this conversation, by their ids. " +
+	"amount, a percentage or a count is refused; record numbers, times of day, dates and " +
+	"a span such as the next 24 hours are fine): point at the block that shows it. Name only records your tools returned in this conversation, by their ids. " +
 	"Cite a block in the verdict or in prose as [words][n], n being the block's position from " +
-	"1; only blocks that read data can be cited. Blocks: figures (1 to 4 figures, each a " +
+	"1; only blocks that read data can be cited. Blocks: figures (1 to 8 figures, each a " +
 	"metric, records with a measure and how to add them up, or an analysis figure); records " +
 	"(up to 25 records of one kind, each drawn with its status and an optional measure, " +
 	"furthest first); compare (2 to 4 records side by side, rows taken from an analysis table " +
 	"whose key column holds their ids); table (an analysis table or a table artifact); chart " +
 	"(an analysis chart); timeline (one record's history); checks (up to 12, each with a tone " +
-	"and the records it counts or a metric); meter (the checks of a checks block, or a " +
-	"percentage metric); prose; note (bad, warn, info or ok). To revise a board you showed, " +
+	"and the records it counts or a metric); meter (the checks of the checks block " +
+	"checksBlock names, or a percentage metric, never both); prose; note (bad, warn, info " +
+	"or ok). To revise a board you showed, " +
 	"pass its boardId with the whole new board; the earlier one is kept as a version. Write " +
 	"plain sentences: no markdown, no bold, no headings, no lists. A prose block is one " +
 	"paragraph of at most 600 characters; to say more, use another block. A note needs a " +
@@ -190,11 +191,12 @@ func boardBlockSchema() map[string]any {
 		"key": schemaText(
 			"compare: the analysis table's column that holds the record ids.",
 		),
-		"rows":          schemaList(board.MaxCompareRows, boardCompareRowSchema()),
-		"limit":         schemaPosition("table and timeline: how many rows or entries to show."),
-		"record":        schemaText("timeline: the id of the record whose history to show."),
-		"checks":        schemaList(board.MaxChecks, boardCheckSchema()),
-		"of":            schemaPosition("meter: the position of the checks block it measures."),
+		"rows":   schemaList(board.MaxCompareRows, boardCompareRowSchema()),
+		"limit":  schemaPosition("table and timeline: how many rows or entries to show."),
+		"record": schemaText("timeline: the id of the record whose history to show."),
+		"checks": schemaList(board.MaxChecks, boardCheckSchema()),
+		"checksBlock": schemaPosition("meter, instead of metric: the position of the " +
+			"checks block whose checks it fills with."),
 		boardPropMetric: boardMetricSchema(),
 		"text": schemaWords(board.MaxProseRunes, "prose: one paragraph of plain sentences, "+
 			"at most 600 characters. note: at most 400 characters."),

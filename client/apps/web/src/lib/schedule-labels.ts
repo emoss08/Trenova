@@ -106,14 +106,42 @@ export function cadenceLabel(
   }
 }
 
-/** The line under a schedule's request: "{when} · next {next}", or "paused". */
+/**
+ * A clock's short name as the reader's language writes it, "ET" or "PT", or
+ * the zone's own name where the runtime has none.
+ */
+export function clockName(timezone: string): string {
+  try {
+    const parts = new Intl.DateTimeFormat(undefined, {
+      timeZone: timezone,
+      timeZoneName: "shortGeneric",
+    }).formatToParts(new Date());
+
+    return parts.find((part) => part.type === "timeZoneName")?.value ?? timezone;
+  } catch {
+    return timezone;
+  }
+}
+
+/**
+ * The line under a schedule's request: "{when} · next {next}", or "paused".
+ * A schedule kept on another clock than the reader's names it after its
+ * time, "Every day · 9:30 AM ET", since the next run is on the reader's own.
+ */
 export function scheduleLine(
-  schedule: Pick<ConversationSchedule, "cadence" | "cronExpression" | "enabled" | "nextRunAt">,
+  schedule: Pick<
+    ConversationSchedule,
+    "cadence" | "cronExpression" | "enabled" | "nextRunAt" | "timezone"
+  >,
   now: number,
   timezone: string,
   t: TranslateFn,
 ): string {
-  const cadence = cadenceLabel(schedule, t);
+  const label = cadenceLabel(schedule, t);
+  const cadence =
+    schedule.timezone && schedule.timezone !== timezone
+      ? `${label} ${clockName(schedule.timezone)}`
+      : label;
   if (!schedule.enabled) {
     return t("{0} · paused", cadence);
   }
