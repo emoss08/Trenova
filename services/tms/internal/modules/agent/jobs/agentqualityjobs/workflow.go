@@ -1,6 +1,7 @@
 package agentqualityjobs
 
 import (
+	"slices"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
@@ -48,6 +49,20 @@ var (
 		StartToCloseTimeout: 10 * time.Minute,
 		RetryPolicy:         stepRetry,
 	}
+	submitBatchOptions = workflow.ActivityOptions{
+		StartToCloseTimeout: 5 * time.Minute,
+		RetryPolicy:         &temporal.RetryPolicy{MaximumAttempts: 1},
+	}
+	collectBatchOptions = workflow.ActivityOptions{
+		StartToCloseTimeout: 15 * time.Minute,
+		RetryPolicy:         stepRetry,
+	}
+)
+
+const (
+	judgeBatchFirstPoll = time.Minute
+	judgeBatchMaxPoll   = 15 * time.Minute
+	judgeBatchWait      = 25 * time.Hour
 )
 
 func evaluationPriority(orgID pulid.ID) temporal.Priority {
@@ -165,6 +180,7 @@ func AgentQualitySweepWorkflow(ctx workflow.Context, payload *SweepPayload) (*Sw
 		}
 
 		childCtx := workflow.WithChildOptions(ctx, childOptions(opened.WorkflowID, tenant.OrgID))
+		var child SuiteRunResult
 		if err := workflow.ExecuteChildWorkflow(childCtx, AgentSuiteRunWorkflowName,
 			&SuiteRunPayload{
 				OrganizationID:    tenant.OrgID,
@@ -175,13 +191,18 @@ func AgentQualitySweepWorkflow(ctx workflow.Context, payload *SweepPayload) (*Sw
 				Settings:          plan.Settings,
 				DayStart:          plan.DayStart,
 				MonthStart:        plan.MonthStart,
+				Unattended:        true,
+				CommittedUSD:      result.CommittedUSD,
 			},
-		).Get(childCtx, nil); err != nil {
+		).Get(childCtx, &child); err != nil {
 			logger.Warn("an agent's suite run did not finish",
 				"suiteRunId", opened.SuiteRunID.String(), "error", err.Error())
 			result.Failed++
 
 			continue
+		}
+		if child.CommittedUSD.IsPositive() {
+			result.CommittedUSD = result.CommittedUSD.Add(child.CommittedUSD)
 		}
 		result.Ran++
 	}
@@ -282,42 +303,239 @@ func AgentSuiteRunWorkflow(
 	}
 
 	judged := 0
-	if stop == "" && payload.Settings.JudgeEnabled {
-		judgeCtx := workflow.WithActivityOptions(ctx, withPriority(judgeOptions, tenant.OrgID))
-		for _, evaluationID := range scored.JudgeCases {
-			budget, err := checkBudget(stepCtx, a, payload)
-			if err != nil {
+	if stop == "" && payload.Settings.JudgeEnabled && len(scored.JudgeCases) > 0 {
+		if payload.Unattended {
+			batch := submitJudgeBatch(ctx, a, payload, scored.JudgeCases)
+			if batch.Batched() {
+				return judgeLater(ctx, a, payload, payload.Replayed+replayed, batch)
+			}
+			stop = batch.StopReason
+		}
+		if stop == "" {
+			var err error
+			if judged, stop, err = judgeEach(ctx, a, payload, scored.JudgeCases); err != nil {
 				return nil, failSuite(ctx, a, payload, err)
-			}
-			if budget.Stop {
-				stop = budget.Reason
-
-				break
-			}
-
-			var verdict agentqualityservice.JudgedCase
-			if err = workflow.ExecuteActivity(judgeCtx, a.JudgeCaseActivity,
-				&agentqualityservice.JudgeCaseRequest{
-					TenantInfo:   tenant,
-					EvaluationID: evaluationID,
-				},
-			).Get(judgeCtx, &verdict); err != nil {
-				logger.Warn("the judge could not read a case; it keeps its checks' score",
-					"evaluationId", evaluationID.String(), "error", err.Error())
-
-				continue
-			}
-			if verdict.Judged {
-				judged++
 			}
 		}
 	}
 
-	finalizeCtx := workflow.WithActivityOptions(ctx, withPriority(finalizeOptions, tenant.OrgID))
+	return finalizeSuite(ctx, a, payload, stop, payload.Replayed+replayed, judged)
+}
+
+func AgentSuiteJudgeWorkflow(
+	ctx workflow.Context,
+	payload *SuiteJudgePayload,
+) (*SuiteRunResult, error) {
+	var a *Activities
+
+	return judgeBatchAndFinalize(ctx, a, payload)
+}
+
+func submitJudgeBatch(
+	ctx workflow.Context,
+	a *Activities,
+	payload *SuiteRunPayload,
+	evaluationIDs []pulid.ID,
+) *agentqualityservice.JudgeBatch {
+	submitCtx := workflow.WithActivityOptions(
+		ctx,
+		withPriority(submitBatchOptions, payload.OrganizationID),
+	)
+	var batch agentqualityservice.JudgeBatch
+	if err := workflow.ExecuteActivity(submitCtx, a.SubmitJudgeBatchActivity,
+		&agentqualityservice.SubmitJudgeBatchRequest{
+			TenantInfo:    payload.tenantInfo(),
+			SuiteRunID:    payload.SuiteRunID,
+			EvaluationIDs: evaluationIDs,
+			DayStart:      payload.DayStart,
+			MonthStart:    payload.MonthStart,
+			Settings:      payload.Settings,
+			CommittedUSD:  payload.CommittedUSD,
+		},
+	).Get(submitCtx, &batch); err != nil {
+		workflow.GetLogger(ctx).Warn("the judge batch could not be sent; judging each case on its own",
+			"suiteRunId", payload.SuiteRunID.String(), "error", err.Error())
+
+		return &agentqualityservice.JudgeBatch{}
+	}
+
+	return &batch
+}
+
+func judgeLater(
+	ctx workflow.Context,
+	a *Activities,
+	payload *SuiteRunPayload,
+	replayed int,
+	batch *agentqualityservice.JudgeBatch,
+) (*SuiteRunResult, error) {
+	judging := &SuiteJudgePayload{Suite: *payload, Batch: *batch}
+	judging.Suite.Replayed = replayed
+	judging.Suite.Cursor = 0
+
+	childCtx := workflow.WithChildOptions(ctx, childOptions(
+		SuiteJudgeWorkflowID(payload.SuiteRunID),
+		payload.OrganizationID,
+	))
+	if err := workflow.ExecuteChildWorkflow(childCtx, AgentSuiteJudgeWorkflowName, judging).
+		GetChildWorkflowExecution().
+		Get(childCtx, nil); err != nil {
+		workflow.GetLogger(ctx).Warn("the judge batch could not be handed off; waiting for it here",
+			"suiteRunId", payload.SuiteRunID.String(), "error", err.Error())
+
+		return judgeBatchAndFinalize(ctx, a, judging)
+	}
+
+	return &SuiteRunResult{
+		Replayed:     replayed,
+		Status:       agentquality.SuiteRunStatusRunning,
+		Judging:      true,
+		CommittedUSD: batch.EstimateUSD,
+	}, nil
+}
+
+func judgeBatchAndFinalize(
+	ctx workflow.Context,
+	a *Activities,
+	judging *SuiteJudgePayload,
+) (*SuiteRunResult, error) {
+	suite := &judging.Suite
+	batch := &judging.Batch
+
+	judged := 0
+	pending := batch.Submitted
+	if awaitJudgeBatch(ctx, a, suite, batch) {
+		collectCtx := workflow.WithActivityOptions(
+			ctx,
+			withPriority(collectBatchOptions, suite.OrganizationID),
+		)
+		var collected agentqualityservice.CollectedJudgeBatch
+		if err := workflow.ExecuteActivity(collectCtx, a.CollectJudgeBatchActivity,
+			&agentqualityservice.CollectJudgeBatchRequest{
+				TenantInfo: suite.tenantInfo(),
+				SuiteRunID: suite.SuiteRunID,
+				Batch:      *batch,
+			},
+		).Get(collectCtx, &collected); err != nil {
+			workflow.GetLogger(ctx).Warn("the judge batch's results could not be read; "+
+				"judging each case on its own",
+				"suiteRunId", suite.SuiteRunID.String(), "error", err.Error())
+		} else {
+			judged = collected.Judged
+			pending = collected.Retry
+		}
+	}
+
+	pending = append(slices.Clone(pending), batch.Deferred...)
+	stop := ""
+	if len(pending) > 0 {
+		more, reason, err := judgeEach(ctx, a, suite, pending)
+		if err != nil {
+			return nil, failSuite(ctx, a, suite, err)
+		}
+		judged += more
+		stop = reason
+	}
+
+	return finalizeSuite(ctx, a, suite, stop, suite.Replayed, judged)
+}
+
+func awaitJudgeBatch(
+	ctx workflow.Context,
+	a *Activities,
+	suite *SuiteRunPayload,
+	batch *agentqualityservice.JudgeBatch,
+) bool {
+	logger := workflow.GetLogger(ctx)
+	pollCtx := workflow.WithActivityOptions(ctx, withPriority(stepOptions, suite.OrganizationID))
+	deadline := workflow.Now(ctx).Add(judgeBatchWait)
+	wait := judgeBatchFirstPoll
+	for {
+		if err := workflow.Sleep(ctx, wait); err != nil {
+			return false
+		}
+
+		var status agentqualityservice.JudgeBatchStatus
+		err := workflow.ExecuteActivity(pollCtx, a.CheckJudgeBatchActivity,
+			&agentqualityservice.CheckJudgeBatchRequest{
+				TenantInfo: suite.tenantInfo(),
+				Batch:      *batch,
+			},
+		).Get(pollCtx, &status)
+		if err == nil && status.Ended {
+			return true
+		}
+		if err != nil {
+			logger.Warn("could not ask how the judge batch is going",
+				"suiteRunId", suite.SuiteRunID.String(), "error", err.Error())
+		}
+		if !workflow.Now(ctx).Add(wait).Before(deadline) {
+			logger.Warn("the judge batch did not end in time; judging each case on its own",
+				"suiteRunId", suite.SuiteRunID.String(), "batchId", batch.BatchID)
+
+			return false
+		}
+		wait = min(wait*2, judgeBatchMaxPoll)
+	}
+}
+
+func judgeEach(
+	ctx workflow.Context,
+	a *Activities,
+	payload *SuiteRunPayload,
+	evaluationIDs []pulid.ID,
+) (int, string, error) {
+	logger := workflow.GetLogger(ctx)
+	tenant := payload.tenantInfo()
+	stepCtx := workflow.WithActivityOptions(ctx, withPriority(stepOptions, tenant.OrgID))
+	judgeCtx := workflow.WithActivityOptions(ctx, withPriority(judgeOptions, tenant.OrgID))
+
+	judged := 0
+	for _, evaluationID := range evaluationIDs {
+		budget, err := checkBudget(stepCtx, a, payload)
+		if err != nil {
+			return judged, "", err
+		}
+		if budget.Stop {
+			return judged, budget.Reason, nil
+		}
+
+		var verdict agentqualityservice.JudgedCase
+		if err = workflow.ExecuteActivity(judgeCtx, a.JudgeCaseActivity,
+			&agentqualityservice.JudgeCaseRequest{
+				TenantInfo:   tenant,
+				EvaluationID: evaluationID,
+			},
+		).Get(judgeCtx, &verdict); err != nil {
+			logger.Warn("the judge could not read a case; it keeps its checks' score",
+				"evaluationId", evaluationID.String(), "error", err.Error())
+
+			continue
+		}
+		if verdict.Judged {
+			judged++
+		}
+	}
+
+	return judged, "", nil
+}
+
+func finalizeSuite(
+	ctx workflow.Context,
+	a *Activities,
+	payload *SuiteRunPayload,
+	stop string,
+	replayed int,
+	judged int,
+) (*SuiteRunResult, error) {
+	finalizeCtx := workflow.WithActivityOptions(
+		ctx,
+		withPriority(finalizeOptions, payload.OrganizationID),
+	)
 	var finalized agentqualityservice.FinalizedSuite
 	if err := workflow.ExecuteActivity(finalizeCtx, a.FinalizeSuiteActivity,
 		&agentqualityservice.FinalizeSuiteRequest{
-			TenantInfo: tenant,
+			TenantInfo: payload.tenantInfo(),
 			SuiteRunID: payload.SuiteRunID,
 			Settings:   payload.Settings,
 			StopReason: stop,
@@ -327,7 +545,7 @@ func AgentSuiteRunWorkflow(
 	}
 
 	return &SuiteRunResult{
-		Replayed:     payload.Replayed + replayed,
+		Replayed:     replayed,
 		Judged:       judged,
 		Status:       finalized.Status,
 		QualityScore: finalized.QualityScore,
@@ -343,10 +561,11 @@ func checkBudget(
 	var decision agentquality.BudgetDecision
 	err := workflow.ExecuteActivity(ctx, a.CheckEvalBudgetActivity,
 		&agentqualityservice.CheckBudgetRequest{
-			TenantInfo: payload.tenantInfo(),
-			DayStart:   payload.DayStart,
-			MonthStart: payload.MonthStart,
-			Settings:   payload.Settings,
+			TenantInfo:   payload.tenantInfo(),
+			DayStart:     payload.DayStart,
+			MonthStart:   payload.MonthStart,
+			Settings:     payload.Settings,
+			CommittedUSD: payload.CommittedUSD,
 		},
 	).Get(ctx, &decision)
 

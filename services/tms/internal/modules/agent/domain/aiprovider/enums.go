@@ -232,6 +232,17 @@ const (
 	TaskGeneral              = Task("General")
 )
 
+// BorrowsFrom is the task whose providers serve this one after its own: the
+// scope classifier falls back to the model answering the Desk, so a guard that
+// no provider was assigned to, or whose providers are down, still runs.
+func (t Task) BorrowsFrom() Task {
+	if t == TaskScopeClassification {
+		return TaskAssistantChat
+	}
+
+	return ""
+}
+
 func (t Task) IsValid() bool {
 	switch t {
 	case TaskDocumentClassification,

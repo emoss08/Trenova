@@ -116,6 +116,27 @@ func TestListReads_FindTheOrdersPOAndTheHoldsInForce(t *testing.T) {
 	require.Len(t, holds, 1)
 	assert.Equal(t, holdID, holds[0].ID)
 
+	older, newer := pulid.MustNew("shc_"), pulid.MustNew("shc_")
+	_, err = keel.Exec(sys, db, `
+		INSERT INTO shipment_comments (id, shipment_id, organization_id, business_unit_id,
+			comment, source, created_at)
+		VALUES ($1, $3, $4, $5, 'older note', 'System', 1800000000),
+			($2, $3, $4, $5, 'newer note', 'System', 1800000600)`,
+		older.String(), newer.String(), held.ShipmentID.String(),
+		held.OrganizationID.String(), held.BusinessUnitID.String(),
+	)
+	require.NoError(t, err)
+
+	newest, err := newestCommentsQuery([]pulid.ID{held.ShipmentID, free.ShipmentID}).
+		All(tenantCtx, db)
+	require.NoError(t, err)
+	byShipment := make(map[pulid.ID]string, len(newest))
+	for _, comment := range newest {
+		byShipment[comment.ShipmentID] = comment.Comment
+	}
+	assert.Equal(t, "newer note", byShipment[held.ShipmentID],
+		"each shipment's newest comment, in one read")
+
 	otherTenant := dbscope.WithTenant(ctx, dbscope.Tenant{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),

@@ -125,7 +125,11 @@ scenarios:
       eighty time-off records each, a score of them still requested and most beyond her balance,
       so the scenario owns its driver's pending requests instead: Emily Chen has none seeded, and
       the setup files two (two vacation days in about three weeks, one sick day in about twelve
-      days) and keeps them requested and ahead of today on every run.
+      days) and keeps them requested and ahead of today on every run. Her balances cover both:
+      the setup marks this year's rollover as posted on them, as the daily accrual run leaves
+      them, because a database seeded before the PTO seed posted rollovers holds a balance whose
+      year-end rollover is still due, and approving projects it (19.50 vacation days read as
+      1.25, 7 sick days as none) and is rightly refused.
     agent: Workforce coordinator
     tags: [workforce]
     setup:
@@ -156,6 +160,13 @@ scenarios:
             ('wrkpto_01JBENCH00000000000000PT02', 1087200, 1116000))
           AS v (id, start_off, end_off)
         WHERE p.id = v.id AND p.status IN ('Requested', 'Rejected', 'Cancelled')
+      - >
+        UPDATE worker_pto_balances AS b
+        SET last_rollover_key = 'X:' || extract(YEAR FROM now())::int, carried_days = 0
+        FROM workers AS w
+        WHERE b.worker_id = w.id AND w.email = 'emily.chen@example.com'
+          AND coalesce(b.last_rollover_key, '') NOT IN
+            ('C:' || extract(YEAR FROM now())::int, 'X:' || extract(YEAR FROM now())::int)
     steps:
       - say: "approve whatever pto emily chen has pending"
         expect:

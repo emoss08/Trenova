@@ -66,7 +66,12 @@ its validation, its target (so the proposal is pinned to that record's version) 
 result; a call naming several previews each through the single tool and runs each through it
 on the ids the person kept ("Tools that take one record or many" in
 [proposal-previews.md](proposal-previews.md)). A read over one record or many returns the
-record in full for one id and a table for several (`invoice_get`, `billing_get_queue_item`).
+record in full for one id and a table for several (`invoice_get`, `billing_get_queue_item`,
+`shipment_get`, `shipment_get_tracking`), read in one query per source for the whole set, never
+one per id. A get a model would call once for each row of a list it just read takes a list, and
+its description's first sentence says to pass every record at once; what the model opened each
+row for belongs on the list row when it is cheap to read for a page (a shipment row's holds with
+their notes).
 
 ## Parameters
 

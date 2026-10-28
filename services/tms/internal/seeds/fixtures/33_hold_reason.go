@@ -117,6 +117,17 @@ func seededHoldReasons() []*holdreason.HoldReason {
 			SortOrder: 100,
 		},
 		{
+			Type:                  holdreason.HoldTypeFinance,
+			Code:                  "RATE_CHECK",
+			Label:                 "Rate does not match the contract",
+			Description:           "The rate entered disagrees with the customer's contract; fix it before the load moves.",
+			DefaultSeverity:       holdreason.HoldSeverityBlocking,
+			DefaultBlocksDispatch: true,
+			DefaultBlocksBilling:  true,
+
+			SortOrder: 100,
+		},
+		{
 			Type:                 holdreason.HoldTypeFinance,
 			Code:                 "RATE_DISPUTE",
 			Label:                "Rate in dispute",

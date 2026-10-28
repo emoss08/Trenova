@@ -16,15 +16,18 @@ type Requirement struct {
 	Extension    agentextension.Type `yaml:"extension"    json:"extension,omitempty"`
 	EmailProfile email.Purpose       `yaml:"emailProfile" json:"emailProfile,omitempty"`
 	EDILading    string              `yaml:"ediLading"    json:"ediLading,omitempty"`
+	DocumentText bool                `yaml:"documentText" json:"documentText,omitempty"`
 }
 
 var errRequirementShape = errors.New(
-	"a requirement names one of extension, emailProfile or ediLading",
+	"a requirement names one of extension, emailProfile, ediLading or documentText",
 )
 
 func (r *Requirement) validate() error {
 	named := 0
-	for _, set := range []bool{r.Extension != "", r.EmailProfile != "", r.EDILading != ""} {
+	for _, set := range []bool{
+		r.Extension != "", r.EmailProfile != "", r.EDILading != "", r.DocumentText,
+	} {
 		if set {
 			named++
 		}
@@ -52,6 +55,9 @@ func (r *Requirement) Label() string {
 	case r.EmailProfile != "":
 		return "an active email profile assigned to " + string(r.EmailProfile) + " or " +
 			string(email.PurposeGeneral) + " email (email settings)"
+	case r.DocumentText:
+		return "the server reading an attached file's text (documentConversion configured " +
+			"and document extraction available)"
 	default:
 		return "an active Lading version for EDI partner " + strings.TrimSpace(r.EDILading)
 	}
@@ -61,6 +67,8 @@ func (r *Requirement) probe() (string, []any) {
 	switch {
 	case r.Extension != "":
 		return extensionReadySQL, []any{string(r.Extension), agentextension.ConfigKeyAPIKey}
+	case r.DocumentText:
+		return attachedTextReadySQL, nil
 	case r.EmailProfile != "":
 		return emailProfileReadySQL, []any{
 			string(r.EmailProfile),
@@ -73,6 +81,8 @@ func (r *Requirement) probe() (string, []any) {
 }
 
 const (
+	attachedTextReadySQL = `SELECT true`
+
 	extensionReadySQL = `SELECT EXISTS (
 		SELECT 1 FROM agent_extensions
 		WHERE type = $1 AND enabled AND coalesce(configuration->>$2, '') <> '')`

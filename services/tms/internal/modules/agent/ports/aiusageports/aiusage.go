@@ -129,6 +129,7 @@ type AIUsageRepository interface {
 	SurfaceCost(ctx context.Context, req AIUsageSurfaceCostRequest) (*AIUsageCost, error)
 	EvaluationCost(ctx context.Context, req AIUsageEvaluationCostRequest) (*AIUsageCost, error)
 	Create(ctx context.Context, record *aiusage.AIUsageRecord) error
+	CreateOrSkip(ctx context.Context, records []*aiusage.AIUsageRecord) (int64, error)
 	Summary(ctx context.Context, req AIUsageSummaryRequest) (*AIUsageSummaryRow, error)
 	RecentFailures(ctx context.Context, req AIUsageFailuresRequest) ([]AIUsageFailureRow, error)
 	CostByDefinition(ctx context.Context, req AIUsageCostRequest) (*AIUsageCost, error)

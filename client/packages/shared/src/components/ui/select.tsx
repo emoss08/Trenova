@@ -3,8 +3,8 @@
 import { Select as SelectPrimitive } from "@base-ui/react/select";
 import * as React from "react";
 
-import { cn } from "@trenova/shared/lib/utils";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@trenova/shared/components/icons";
+import { cn } from "@trenova/shared/lib/utils";
 
 const Select = SelectPrimitive.Root;
 
@@ -67,7 +67,7 @@ function SelectContent({
   sideOffset = 4,
   align = "center",
   alignOffset = 0,
-  alignItemWithTrigger = true,
+  alignItemWithTrigger = false,
   ...props
 }: SelectPrimitive.Popup.Props &
   Pick<

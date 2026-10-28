@@ -17,7 +17,7 @@ scenarios:
     steps:
       - say: "put a note on the late freshhaul reefer to LA that the receiver pushed us to tomorrow am"
         expect:
-          calls: ["shipment_list|shipment_get"]
+          calls: ["shipment_list|shipment_get|dispatch_get_board"]
           proposals: [{ tool: shipment_add_comment }]
           maxFailedCalls: 1
           rubric: >

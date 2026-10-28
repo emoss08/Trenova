@@ -489,3 +489,32 @@ func TestFirstNotNil(t *testing.T) {
 	assert.Equal(t, pulid.Nil, pulid.FirstNotNil())
 	assert.Equal(t, pulid.Nil, pulid.FirstNotNil(pulid.Nil, ""))
 }
+
+func TestDerived(t *testing.T) {
+	t.Parallel()
+
+	at := time.Date(2026, time.October, 27, 3, 0, 0, 0, time.UTC)
+
+	t.Run("the same key and instant give the same id", func(t *testing.T) {
+		t.Parallel()
+		assert.Equal(t,
+			pulid.Derived("aiu_", at, "msgbatch_1/aeval_1"),
+			pulid.Derived("aiu_", at, "msgbatch_1/aeval_1"))
+	})
+
+	t.Run("another key gives another id", func(t *testing.T) {
+		t.Parallel()
+		assert.NotEqual(t,
+			pulid.Derived("aiu_", at, "msgbatch_1/aeval_1"),
+			pulid.Derived("aiu_", at, "msgbatch_1/aeval_2"))
+	})
+
+	t.Run("embeds the instant and the prefix", func(t *testing.T) {
+		t.Parallel()
+		id := pulid.Derived("aiu_", at, "key")
+		assert.Equal(t, "aiu_", id.Prefix())
+		got, err := id.Time()
+		require.NoError(t, err)
+		assert.True(t, at.Equal(got.UTC()))
+	})
+}

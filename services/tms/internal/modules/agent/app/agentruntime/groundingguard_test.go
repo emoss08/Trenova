@@ -787,3 +787,193 @@ func TestGroundingGuard_HoldsClaimsAboutTheChangeToWhatWasFiled(t *testing.T) {
 		assert.Equal(t, []string{"delivered to"}, regrounded[0].Fields, name)
 	}
 }
+
+// readFigures is a turn that reads one record and answers the person with the
+// replies given, filing nothing.
+func readFigures(
+	t *testing.T,
+	input string,
+	read map[string]any,
+	replies ...string,
+) groundingRun {
+	t.Helper()
+
+	turns := []*agentports.ChatCompletionResult{toolTurn("record_get", map[string]any{})}
+	for _, reply := range replies {
+		turns = append(turns, textTurn(reply))
+	}
+	completion := &scriptedCompletion{Turns: turns}
+	registry := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+		&agenttest.StubQueryTool{ToolName: "record_get", Result: read},
+	}}
+	rt := newRuntime(completion, registry, &stubActionRegistry{}, nil)
+	fx := &groundingEffects{}
+	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
+
+	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
+		Definition: testDefinition("record_get"),
+		Actor:      testActor(),
+		Input:      input,
+	}), fx)
+	require.NoError(t, err)
+
+	return groundingRun{result: result, completion: completion, fx: fx}
+}
+
+// DB-145, DB-230, DB-244: a figure the reply works out from what the
+// conversation read, in steps the reply shows, is checked by the guard rather
+// than sent back to the model; a figure nothing read or shown gives is still
+// rewritten.
+func TestGroundingGuard_ChecksArithmeticOnWhatTheConversationRead(t *testing.T) {
+	t.Parallel()
+
+	loads := map[string]any{"shipments": []any{
+		map[string]any{"pro": "SEED-SHP-002", "charge": "1900"},
+		map[string]any{"pro": "SEED-SHP-009", "charge": "3700"},
+		map[string]any{"pro": "SEED-DET-009", "charge": "2700"},
+		map[string]any{"pro": "SEED-DET-003", "charge": "3150"},
+		map[string]any{"pro": "SEED-PAY-009", "charge": "2600"},
+		map[string]any{"pro": "SEED-PAY-003", "charge": "2950"},
+	}}
+	loadList := "**Loads**\n\n" +
+		"- **SEED-SHP-002**, $1,900, status New.\n" +
+		"- **SEED-SHP-009**, $3,700, delivered 10-21.\n" +
+		"- **SEED-DET-009**, $2,700, delivered 10-19.\n" +
+		"- **SEED-DET-003**, $3,150, delivered 10-22.\n" +
+		"- **SEED-PAY-009**, $2,600, delivered 10-23.\n" +
+		"- **SEED-PAY-003**, $2,950, delivered 10-20.\n\n"
+	invoices := map[string]any{"invoices": []any{
+		map[string]any{"number": "SEED-INV-0007", "open": "1562.50"},
+		map[string]any{"number": "SEED-INV-0006", "open": "2531.25"},
+		map[string]any{"number": "SEED-INV-0005", "open": "2081.25"},
+	}}
+	const shortPaid = "peak sent a check for 3,200 but their invoice was 3,700. what do we " +
+		"do with it"
+	const formula = "make me a new pricing formula for flatbed: 3.10 a mile plus a 150 tarp fee"
+	template := map[string]any{"name": "Per Mile", "exampleDistance": 400}
+	billing := map[string]any{"billed": "87310.40", "stillOpen": "45662.16"}
+
+	cases := []struct {
+		name    string
+		input   string
+		read    map[string]any
+		reply   string
+		figures []string
+	}{
+		{
+			name:  "log-a-fuel-purchase: the product of the person's own figures",
+			input: "log fuel for trc-001: 112 gallons diesel at 3.89 in amarillo tx yesterday",
+			read:  map[string]any{"tractor": "TRC-001", "fuelType": "Diesel"},
+			reply: "TRC-001 took 112 gallons of diesel in Amarillo yesterday, $435.68 in all.",
+		},
+		{
+			name:  "formula-asked-for-in-the-desk: 400 mi x $3.10 + $150, in two steps",
+			input: formula,
+			read:  template,
+			reply: "For a 400-mile load, that prices at $1,240 for the miles plus $150 for " +
+				"the tarp, for **$1,390** total. The $3.10 rate and $150 fee are defaults.",
+		},
+		{
+			name:  "customer-short-paid: a payment applied oldest first",
+			input: shortPaid,
+			read:  invoices,
+			reply: "Applied oldest first, the $3,200 pays $1,562.50 to SEED-INV-0007 and " +
+				"$1,637.50 of the $2,531.25 on SEED-INV-0006, leaving $893.75 open on it.",
+		},
+		{
+			name:  "palette-customer-by-name: the total of the reply's own list",
+			input: "how is peak distributing doing",
+			read:  loads,
+			reply: loadList + "Total on these loads is $17,000.",
+		},
+		{
+			name:  "the total of amounts one sentence lists",
+			input: "what does peak owe",
+			read:  invoices,
+			reply: "Peak's three invoices, $1,562.50, $2,531.25 and $2,081.25, come to $6,175.00.",
+		},
+		{
+			name:  "a 5.6x ratio of two figures the reply gives",
+			input: "how does garza compare to vanguard",
+			read:  map[string]any{"garza": "1958616.70", "vanguard": "349753.00"},
+			reply: "Garza & Coleman's $1,958,616.70 open is 5.6 times Vanguard's $349,753.00, " +
+				"560% of it.",
+		},
+		{
+			name:    "an invented price",
+			input:   "what does acme pay on the dallas lane",
+			read:    map[string]any{"ratePerMile": "2.15", "miles": "412"},
+			reply:   "Acme pays $2.15 a mile over 412 miles, a $1,450.00 linehaul.",
+			figures: []string{"1,450.00"},
+		},
+		{
+			name:    "a percentage nothing supports",
+			input:   "how much of what we billed is still open",
+			read:    billing,
+			reply:   "Of the $87,310.40 billed, $45,662.16 is still open: about 61.4%.",
+			figures: []string{"61.4"},
+		},
+		{
+			name:    "a share whose other side the reply leaves out (DB-186)",
+			input:   "how much of what we billed is still open",
+			read:    billing,
+			reply:   "About 52.3% of the $87,310.40 billed is still open.",
+			figures: []string{"52.3"},
+		},
+		{
+			name:    "a wrong second step",
+			input:   formula,
+			read:    template,
+			reply:   "A 400-mile load prices at $1,240 for the miles at $3.10, plus $150, $1,490.",
+			figures: []string{"1,490"},
+		},
+		{
+			name:    "a wrong list total",
+			input:   "how is peak distributing doing",
+			read:    loads,
+			reply:   loadList + "Total on these loads is $17,900.",
+			figures: []string{"17,900"},
+		},
+	}
+	for _, tc := range cases {
+		run := readFigures(t, tc.input, tc.read, tc.reply, "I checked the record.")
+
+		regrounded := run.fx.regrounded()
+		if len(tc.figures) == 0 {
+			assert.Equal(t, 2, run.completion.CallCount, tc.name)
+			assert.Empty(t, regrounded, tc.name)
+			assert.Equal(t, tc.reply, run.result.Reply, tc.name)
+			continue
+		}
+		assert.Equal(t, 3, run.completion.CallCount, tc.name)
+		require.Len(t, regrounded, 1, tc.name)
+		assert.Equal(t, agentports.RegroundRewrite, regrounded[0].Action, tc.name)
+		assert.Equal(t, tc.figures, regrounded[0].Figures, tc.name)
+	}
+}
+
+// A figure the reply works out about what it read may take two steps beside a
+// filed change; one it says the change holds is held to what was read and
+// filed and one step of the reply's working.
+func TestGroundingGuard_HoldsAFigureSaidOfTheChangeToOneStep(t *testing.T) {
+	t.Parallel()
+
+	rows := []any{map[string]any{"ratePerMile": 3.1, "miles": 400, "tarpFee": 150}}
+
+	read := runGroundedResult(t, &groundingEffects{}, rows,
+		"Proposed the copy. At $3.10 a mile, its 400 miles cost $1,240, and with the $150 "+
+			"tarp it comes to $1,390.",
+	)
+	assert.Equal(t, 2, read.completion.CallCount)
+	assert.Empty(t, read.fx.regrounded())
+
+	claimed := runGroundedResult(t, &groundingEffects{}, rows,
+		"The proposal bills $3.10 a mile for 400 miles, $1,240, and the $150 tarp, $1,390 in "+
+			"all.",
+		"Proposed the copy.",
+	)
+	assert.Equal(t, 3, claimed.completion.CallCount)
+	regrounded := claimed.fx.regrounded()
+	require.Len(t, regrounded, 1)
+	assert.Equal(t, []string{"1,390"}, regrounded[0].Figures)
+}

@@ -3,6 +3,7 @@ package deskbench
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -15,6 +16,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -25,6 +28,10 @@ const (
 	attachmentReadWithin = 2 * time.Minute
 	attachmentReadEvery  = time.Second
 	documentIDPrefix     = "doc_"
+)
+
+var ErrAttachmentUnreadable = errors.New(
+	"the server cannot read attached files, so a tool that reads one has nothing to read",
 )
 
 type attachmentSource struct {
@@ -129,7 +136,10 @@ func (c *Conversation) awaitReading(ctx context.Context, id pulid.ID) error {
 	for {
 		content, err := c.session.bench.Contents.GetContent(ctx, id, c.session.Tenant)
 		if err == nil && content != nil && content.Status.Settled() {
-			return nil
+			if !c.needsText {
+				return nil
+			}
+			return unreadableHere(content)
 		}
 		if time.Now().After(deadline) {
 			return fmt.Errorf("document %s was not read within %s", id, attachmentReadWithin)
@@ -172,4 +182,13 @@ func formFile(source *attachmentSource) (*multipart.FileHeader, error) {
 	}
 
 	return files[0], nil
+}
+
+func unreadableHere(content *documentcontent.Content) error {
+	switch documentupload.FailureCode(content.FailureCode) {
+	case documentupload.FailureConverterUnavailable, documentupload.FailureExtractionUnavailable:
+		return fmt.Errorf("%w: %s", ErrAttachmentUnreadable, content.FailureMessage)
+	default:
+		return nil
+	}
 }

@@ -8,9 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -27,8 +27,11 @@ type suiteHarness struct {
 	mu         sync.Mutex
 	activities []string
 	replayed   []pulid.ID
+	judged     []pulid.ID
 	finalized  *agentqualityservice.FinalizeSuiteRequest
 	failed     bool
+	submitted  *agentqualityservice.SubmitJudgeBatchRequest
+	handedOff  *SuiteJudgePayload
 }
 
 func (h *suiteHarness) record(info *activity.Info, _ context.Context, _ converter.EncodedValues) {
@@ -78,9 +81,14 @@ func suiteCases(count int, from int) []agentqualityservice.SuiteCase {
 }
 
 type suiteScript struct {
-	pages       [][]agentqualityservice.SuiteCase
-	stopAtCheck int
-	judgeCases  []pulid.ID
+	pages           [][]agentqualityservice.SuiteCase
+	stopAtCheck     int
+	judgeCases      []pulid.ID
+	batch           *agentqualityservice.JudgeBatch
+	endsAfterPolls  int
+	collected       *agentqualityservice.CollectedJudgeBatch
+	collectFailures int
+	stubJudge       bool
 }
 
 func newSuiteHarness(t *testing.T, script suiteScript) *suiteHarness {
@@ -102,6 +110,30 @@ func newSuiteHarness(t *testing.T, script suiteScript) *suiteHarness {
 		},
 		workflow.RegisterOptions{Name: agentcontract.AgentEvaluationWorkflowName},
 	)
+	if script.stubJudge {
+		env.RegisterWorkflowWithOptions(
+			func(workflow.Context, *SuiteJudgePayload) (*SuiteRunResult, error) {
+				return &SuiteRunResult{Status: agentquality.SuiteRunStatusCompleted}, nil
+			},
+			workflow.RegisterOptions{Name: AgentSuiteJudgeWorkflowName},
+		)
+		env.SetOnChildWorkflowStartedListener(
+			func(info *workflow.Info, _ workflow.Context, args converter.EncodedValues) {
+				if info.WorkflowType.Name != AgentSuiteJudgeWorkflowName {
+					return
+				}
+				var payload SuiteJudgePayload
+				if args.Get(&payload) == nil {
+					h.mu.Lock()
+					h.handedOff = &payload
+					h.mu.Unlock()
+				}
+			},
+		)
+	} else {
+		env.RegisterWorkflowWithOptions(AgentSuiteJudgeWorkflow,
+			workflow.RegisterOptions{Name: AgentSuiteJudgeWorkflowName})
+	}
 	env.RegisterActivity(&Activities{})
 	env.SetOnActivityStartedListener(h.record)
 
@@ -140,7 +172,56 @@ func newSuiteHarness(t *testing.T, script suiteScript) *suiteHarness {
 		Return(&agentqualityservice.ScoredSuite{Scored: 3, JudgeCases: script.judgeCases}, nil).
 		Maybe()
 	env.OnActivity(a.JudgeCaseActivity, mock.Anything, mock.Anything).
-		Return(&agentqualityservice.JudgedCase{Judged: true}, nil).Maybe()
+		Return(func(
+			_ context.Context,
+			req *agentqualityservice.JudgeCaseRequest,
+		) (*agentqualityservice.JudgedCase, error) {
+			h.mu.Lock()
+			defer h.mu.Unlock()
+			h.judged = append(h.judged, req.EvaluationID)
+
+			return &agentqualityservice.JudgedCase{Judged: true}, nil
+		}).Maybe()
+	env.OnActivity(a.SubmitJudgeBatchActivity, mock.Anything, mock.Anything).
+		Return(func(
+			_ context.Context,
+			req *agentqualityservice.SubmitJudgeBatchRequest,
+		) (*agentqualityservice.JudgeBatch, error) {
+			h.mu.Lock()
+			defer h.mu.Unlock()
+			h.submitted = req
+			if script.batch == nil {
+				return &agentqualityservice.JudgeBatch{}, nil
+			}
+
+			return script.batch, nil
+		}).Maybe()
+	polls := 0
+	env.OnActivity(a.CheckJudgeBatchActivity, mock.Anything, mock.Anything).
+		Return(func(
+			context.Context,
+			*agentqualityservice.CheckJudgeBatchRequest,
+		) (*agentqualityservice.JudgeBatchStatus, error) {
+			polls++
+
+			return &agentqualityservice.JudgeBatchStatus{Ended: polls >= script.endsAfterPolls}, nil
+		}).Maybe()
+	collects := 0
+	env.OnActivity(a.CollectJudgeBatchActivity, mock.Anything, mock.Anything).
+		Return(func(
+			context.Context,
+			*agentqualityservice.CollectJudgeBatchRequest,
+		) (*agentqualityservice.CollectedJudgeBatch, error) {
+			collects++
+			if collects <= script.collectFailures {
+				return nil, errors.New("connection reset while reading the results")
+			}
+			if script.collected == nil {
+				return &agentqualityservice.CollectedJudgeBatch{}, nil
+			}
+
+			return script.collected, nil
+		}).Maybe()
 	env.OnActivity(a.FinalizeSuiteActivity, mock.Anything, mock.Anything).
 		Return(func(
 			_ context.Context,
@@ -201,6 +282,7 @@ func TestAgentSuiteRunWorkflow_ReplaysEachCaseThenScoresJudgesAndFinalizes(t *te
 	assert.Equal(t, 4, h.count("CheckEvalBudgetActivity"), "one check per case and per judgement")
 	assert.Equal(t, 1, h.count("ScoreSuiteActivity"))
 	assert.Equal(t, 1, h.count("JudgeCaseActivity"))
+	assert.Zero(t, h.count("SubmitJudgeBatchActivity"), "a person's run is judged at once")
 	require.NotNil(t, h.finalized)
 	assert.Empty(t, h.finalized.StopReason)
 	assert.False(t, h.failed)
@@ -295,12 +377,207 @@ func TestAgentSuiteRunWorkflow_RecordsWhyItFailed(t *testing.T) {
 	assert.True(t, failed, "a run that cannot go on is closed as failed, never left Running")
 }
 
+func unattendedPayload() *SuiteRunPayload {
+	payload := suitePayload(true)
+	payload.Unattended = true
+	payload.CommittedUSD = decimal.RequireFromString("0.10")
+
+	return payload
+}
+
+func TestAgentSuiteRunWorkflow_UnattendedRunHandsItsJudgementsToABatch(t *testing.T) {
+	t.Parallel()
+
+	cases := suiteCases(3, 0)
+	judge := []pulid.ID{cases[0].EvaluationID, cases[2].EvaluationID}
+	batch := &agentqualityservice.JudgeBatch{
+		ProviderID:  pulid.MustNew("aiprv_"),
+		BatchID:     "msgbatch_1",
+		SubmittedAt: 1_800_000_100,
+		Submitted:   judge,
+		EstimateUSD: decimal.RequireFromString("0.04"),
+	}
+	h := newSuiteHarness(t, suiteScript{
+		pages:      [][]agentqualityservice.SuiteCase{cases},
+		judgeCases: judge,
+		batch:      batch,
+		stubJudge:  true,
+	})
+
+	payload := unattendedPayload()
+	h.env.ExecuteWorkflow(AgentSuiteRunWorkflowName, payload)
+	require.True(t, h.env.IsWorkflowCompleted())
+	require.NoError(t, h.env.GetWorkflowError())
+
+	var result SuiteRunResult
+	require.NoError(t, h.env.GetWorkflowResult(&result))
+	assert.True(t, result.Judging, "the run hands its judging off and returns")
+	assert.Equal(t, agentquality.SuiteRunStatusRunning, result.Status)
+	assert.Equal(t, 3, result.Replayed)
+	assert.True(t, result.CommittedUSD.Equal(batch.EstimateUSD),
+		"the sweep is told what the batch will cost")
+
+	require.NotNil(t, h.submitted)
+	assert.Equal(t, judge, h.submitted.EvaluationIDs)
+	assert.True(t, h.submitted.CommittedUSD.Equal(payload.CommittedUSD),
+		"the budget holds what earlier batches will cost")
+	assert.Zero(t, h.count("JudgeCaseActivity"), "nothing is judged one call at a time")
+	assert.Zero(t, h.count("FinalizeSuiteActivity"), "the judge workflow finalizes the run")
+
+	require.NotNil(t, h.handedOff)
+	assert.Equal(t, "msgbatch_1", h.handedOff.Batch.BatchID)
+	assert.Equal(t, 3, h.handedOff.Suite.Replayed)
+	assert.Equal(t, payload.SuiteRunID, h.handedOff.Suite.SuiteRunID)
+}
+
+func TestAgentSuiteRunWorkflow_JudgesEachCaseWhenTheProviderCannotBatch(t *testing.T) {
+	t.Parallel()
+
+	cases := suiteCases(2, 0)
+	judge := []pulid.ID{cases[0].EvaluationID, cases[1].EvaluationID}
+	h := newSuiteHarness(t, suiteScript{
+		pages:      [][]agentqualityservice.SuiteCase{cases},
+		judgeCases: judge,
+	})
+
+	h.env.ExecuteWorkflow(AgentSuiteRunWorkflowName, unattendedPayload())
+	require.True(t, h.env.IsWorkflowCompleted())
+	require.NoError(t, h.env.GetWorkflowError())
+
+	var result SuiteRunResult
+	require.NoError(t, h.env.GetWorkflowResult(&result))
+	assert.Equal(t, agentquality.SuiteRunStatusCompleted, result.Status)
+	assert.Equal(t, 2, result.Judged)
+	assert.Equal(t, 1, h.count("SubmitJudgeBatchActivity"))
+	assert.Equal(t, judge, h.judged, "every sampled case is judged on its own")
+	assert.Zero(t, h.count("CheckJudgeBatchActivity"))
+	assert.Equal(t, 1, h.count("FinalizeSuiteActivity"))
+}
+
+func TestAgentSuiteRunWorkflow_StopsWhenTheBudgetCannotTakeTheBatch(t *testing.T) {
+	t.Parallel()
+
+	cases := suiteCases(2, 0)
+	h := newSuiteHarness(t, suiteScript{
+		pages:      [][]agentqualityservice.SuiteCase{cases},
+		judgeCases: []pulid.ID{cases[0].EvaluationID},
+		batch:      &agentqualityservice.JudgeBatch{StopReason: "Tonight's budget is spent."},
+	})
+
+	h.env.ExecuteWorkflow(AgentSuiteRunWorkflowName, unattendedPayload())
+	require.NoError(t, h.env.GetWorkflowError())
+
+	assert.Zero(t, h.count("JudgeCaseActivity"))
+	require.NotNil(t, h.finalized)
+	assert.Equal(t, "Tonight's budget is spent.", h.finalized.StopReason)
+}
+
+func judgePayload(batch agentqualityservice.JudgeBatch) *SuiteJudgePayload {
+	suite := unattendedPayload()
+	suite.Replayed = 4
+
+	return &SuiteJudgePayload{Suite: *suite, Batch: batch}
+}
+
+func TestAgentSuiteJudgeWorkflow_KeepsTheBatchAndJudgesWhatItMissedOnItsOwn(t *testing.T) {
+	t.Parallel()
+
+	ids := []pulid.ID{
+		pulid.MustNew(agent.EvaluationIDPrefix),
+		pulid.MustNew(agent.EvaluationIDPrefix),
+		pulid.MustNew(agent.EvaluationIDPrefix),
+		pulid.MustNew(agent.EvaluationIDPrefix),
+	}
+	h := newSuiteHarness(t, suiteScript{
+		endsAfterPolls: 3,
+		collected: &agentqualityservice.CollectedJudgeBatch{
+			Judged: 2,
+			Retry:  []pulid.ID{ids[2]},
+		},
+	})
+
+	h.env.ExecuteWorkflow(AgentSuiteJudgeWorkflowName, judgePayload(agentqualityservice.JudgeBatch{
+		ProviderID: pulid.MustNew("aiprv_"),
+		BatchID:    "msgbatch_1",
+		Submitted:  ids[:3],
+		Deferred:   []pulid.ID{ids[3]},
+	}))
+	require.True(t, h.env.IsWorkflowCompleted())
+	require.NoError(t, h.env.GetWorkflowError())
+
+	var result SuiteRunResult
+	require.NoError(t, h.env.GetWorkflowResult(&result))
+	assert.Equal(t, 4, result.Judged, "two from the batch, two on their own")
+	assert.Equal(t, 4, result.Replayed)
+	assert.Equal(t, agentquality.SuiteRunStatusCompleted, result.Status)
+
+	assert.Equal(t, 3, h.count("CheckJudgeBatchActivity"), "it waits until the batch has ended")
+	assert.Equal(t, 1, h.count("CollectJudgeBatchActivity"))
+	assert.Equal(t, []pulid.ID{ids[2], ids[3]}, h.judged,
+		"an item the batch lost and one it never took are judged one at a time")
+	assert.Equal(t, 2, h.count("CheckEvalBudgetActivity"), "each one-off judgement checks the budget")
+	assert.Equal(t, 1, h.count("FinalizeSuiteActivity"))
+}
+
+func TestAgentSuiteJudgeWorkflow_ARetriedCollectionKeepsEachJudgementOnce(t *testing.T) {
+	t.Parallel()
+
+	ids := []pulid.ID{
+		pulid.MustNew(agent.EvaluationIDPrefix),
+		pulid.MustNew(agent.EvaluationIDPrefix),
+	}
+	h := newSuiteHarness(t, suiteScript{
+		endsAfterPolls:  1,
+		collectFailures: 1,
+		collected:       &agentqualityservice.CollectedJudgeBatch{Judged: 2, Retry: []pulid.ID{}},
+	})
+
+	h.env.ExecuteWorkflow(AgentSuiteJudgeWorkflowName, judgePayload(agentqualityservice.JudgeBatch{
+		ProviderID: pulid.MustNew("aiprv_"),
+		BatchID:    "msgbatch_1",
+		Submitted:  ids,
+	}))
+	require.True(t, h.env.IsWorkflowCompleted())
+	require.NoError(t, h.env.GetWorkflowError())
+
+	var result SuiteRunResult
+	require.NoError(t, h.env.GetWorkflowResult(&result))
+	assert.Equal(t, 2, h.count("CollectJudgeBatchActivity"), "a failed read is retried")
+	assert.Equal(t, 2, result.Judged, "and its judgements are counted once")
+	assert.Empty(t, h.judged, "nothing the batch judged is asked again")
+}
+
+func TestAgentSuiteJudgeWorkflow_JudgesEverythingOnItsOwnWhenTheResultsCannotBeRead(t *testing.T) {
+	t.Parallel()
+
+	ids := []pulid.ID{
+		pulid.MustNew(agent.EvaluationIDPrefix),
+		pulid.MustNew(agent.EvaluationIDPrefix),
+	}
+	h := newSuiteHarness(t, suiteScript{
+		endsAfterPolls:  1,
+		collectFailures: 10,
+	})
+
+	h.env.ExecuteWorkflow(AgentSuiteJudgeWorkflowName, judgePayload(agentqualityservice.JudgeBatch{
+		ProviderID: pulid.MustNew("aiprv_"),
+		BatchID:    "msgbatch_1",
+		Submitted:  ids,
+	}))
+	require.True(t, h.env.IsWorkflowCompleted())
+	require.NoError(t, h.env.GetWorkflowError())
+
+	assert.Equal(t, ids, h.judged)
+	assert.Equal(t, 1, h.count("FinalizeSuiteActivity"))
+}
+
 type sweepHarness struct {
-	env      *testsuite.TestWorkflowEnvironment
-	opened   []pulid.ID
-	skipped  []pulid.ID
-	children []*SuiteRunPayload
-	sweepKey []string
+	env       *testsuite.TestWorkflowEnvironment
+	opened    []pulid.ID
+	skipped   []pulid.ID
+	children  []*SuiteRunPayload
+	sweepKey  []string
+	committed decimal.Decimal
 }
 
 func plannedAgent(skip bool) agentqualityservice.PlannedAgent {
@@ -330,7 +607,10 @@ func newSweepHarness(t *testing.T, plan *agentqualityservice.SweepPlan) *sweepHa
 		func(_ workflow.Context, payload *SuiteRunPayload) (*SuiteRunResult, error) {
 			h.children = append(h.children, payload)
 
-			return &SuiteRunResult{Status: agentquality.SuiteRunStatusCompleted}, nil
+			return &SuiteRunResult{
+				Status:       agentquality.SuiteRunStatusCompleted,
+				CommittedUSD: h.committed,
+			}, nil
 		},
 		workflow.RegisterOptions{Name: AgentSuiteRunWorkflowName},
 	)
@@ -446,4 +726,36 @@ func TestAgentQualitySweepWorkflow_ContinuesAsNewWithItsPlan(t *testing.T) {
 	assert.Len(t, next.Plan.Agents, agentsPerExecution+5)
 	require.NotNil(t, next.Result)
 	assert.Equal(t, agentsPerExecution, next.Result.Skipped)
+}
+
+func TestAgentQualitySweepWorkflow_RunsEachSuiteUnattendedAndHoldsItsBatches(t *testing.T) {
+	t.Parallel()
+
+	first := plannedAgent(false)
+	second := plannedAgent(false)
+	h := newSweepHarness(t, &agentqualityservice.SweepPlan{
+		Enabled:  true,
+		Settings: settings(true),
+		Agents:   []agentqualityservice.PlannedAgent{first, second},
+	})
+	h.committed = decimal.RequireFromString("0.03")
+
+	h.env.ExecuteWorkflow(AgentQualitySweepWorkflowName, &SweepPayload{
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	})
+	require.True(t, h.env.IsWorkflowCompleted())
+	require.NoError(t, h.env.GetWorkflowError())
+
+	require.Len(t, h.children, 2)
+	for _, child := range h.children {
+		assert.True(t, child.Unattended, "nobody is waiting on a scheduled suite")
+	}
+	assert.True(t, h.children[0].CommittedUSD.IsZero())
+	assert.True(t, h.children[1].CommittedUSD.Equal(decimal.RequireFromString("0.03")),
+		"the second suite's budget holds the first suite's running batch")
+
+	var result SweepResult
+	require.NoError(t, h.env.GetWorkflowResult(&result))
+	assert.True(t, result.CommittedUSD.Equal(decimal.RequireFromString("0.06")))
 }

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -202,9 +203,14 @@ type runOutcome struct {
 	LatencyMs        int64
 	CostUSD          *decimal.Decimal
 	Advisor          *aiprovider.AdvisorUsage
+	Batched          bool
 }
 
 func (o *runOutcome) cost(provider *aiprovider.Provider, task aiprovider.Task) *decimal.Decimal {
+	if o.Batched {
+		return provider.BatchCostForTask(task, o.tokenUsage())
+	}
+
 	return provider.AdvisedCostForTask(task, o.tokenUsage(), o.Advisor)
 }
 
@@ -267,6 +273,33 @@ func (s *Service) usableFor(
 	task aiprovider.Task,
 	tenant pagination.TenantInfo,
 ) ([]*aiprovider.Provider, error) {
+	usable, err := s.servingTask(ctx, task, tenant, nil)
+	if err != nil {
+		return nil, err
+	}
+	if borrowed := task.BorrowsFrom(); borrowed != "" {
+		if usable, err = s.servingTask(ctx, borrowed, tenant, usable); err != nil {
+			return nil, err
+		}
+	}
+
+	if len(usable) == 0 {
+		return nil, errortypes.NewBusinessError(
+			"No AI provider is configured for {0}", string(task),
+		).WithInternal(agentports.ErrNoProviderConfigured)
+	}
+
+	return usable, nil
+}
+
+// servingTask appends to usable the providers that may serve task and are not
+// already in it, in the repository's priority order.
+func (s *Service) servingTask(
+	ctx context.Context,
+	task aiprovider.Task,
+	tenant pagination.TenantInfo,
+	usable []*aiprovider.Provider,
+) ([]*aiprovider.Provider, error) {
 	candidates, err := s.repo.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
 		Task:       task,
 		TenantInfo: tenant,
@@ -275,8 +308,12 @@ func (s *Service) usableFor(
 		return nil, err
 	}
 
-	usable := make([]*aiprovider.Provider, 0, len(candidates))
 	for _, provider := range candidates {
+		if slices.ContainsFunc(usable, func(held *aiprovider.Provider) bool {
+			return held.ID == provider.ID
+		}) {
+			continue
+		}
 		if ok, reason := provider.CanServeTask(task); ok {
 			usable = append(usable, provider)
 		} else {
@@ -286,12 +323,6 @@ func (s *Service) usableFor(
 				zap.String("reason", reason),
 			)
 		}
-	}
-
-	if len(usable) == 0 {
-		return nil, errortypes.NewBusinessError(
-			"No AI provider is configured for {0}", string(task),
-		).WithInternal(agentports.ErrNoProviderConfigured)
 	}
 
 	return usable, nil
@@ -574,7 +605,11 @@ func validateStructuredOutput(schema map[string]any, text string) error {
 		return nil
 	}
 
-	decoded := make(map[string]any, len(schema))
+	return objectReply(text)
+}
+
+func objectReply(text string) error {
+	decoded := make(map[string]any)
 	if err := modeladapter.ExtractJSON(text, &decoded); err != nil {
 		return fmt.Errorf("%w: %w", agentports.ErrModelSchemaValidation, err)
 	}

@@ -332,6 +332,23 @@ func (s *PTOPolicySeed) enrolWorker(
 			LookbackMonths:  12,
 		})
 		for _, planned := range plan {
+			if planned.Deferred {
+				if amount, posts := ptoledgerservice.ResolveExpiry(bal, planned, rule); posts {
+					entry := &worker.WorkerPTOLedgerEntry{
+						EntryType:    planned.EntryType,
+						AmountDays:   amount,
+						EffectiveAt:  planned.EffectiveAt,
+						PeriodKey:    planned.PeriodKey,
+						AssignmentID: assignment.ID,
+						PTOPolicyID:  policy.ID,
+						ActorType:    worker.PTOLedgerActorSystem,
+					}
+					bal.Apply(entry)
+					entries = append(entries, entry)
+				}
+				ptoledgerservice.AdvanceCursor(bal, planned, rule)
+				continue
+			}
 			if planned.EntryType != worker.PTOLedgerEntryAccrual {
 				continue
 			}

@@ -43,10 +43,24 @@ const (
 )
 
 type getShipmentTool struct {
-	repo     shipmentports.ShipmentRepository
-	comments shipmentports.ShipmentCommentRepository
-	holds    shipmentports.ShipmentHoldRepository
-	access   fieldAccess
+	repo          shipmentports.ShipmentRepository
+	comments      shipmentports.ShipmentCommentRepository
+	holds         shipmentports.ShipmentHoldRepository
+	batchHolds    shipmentports.ActiveHoldReader
+	batchComments shipmentports.NewestCommentReader
+	access        fieldAccess
+}
+
+func provideGetShipmentTool(
+	repo shipmentports.ShipmentRepository,
+	comments shipmentports.ShipmentCommentRepository,
+	holds shipmentports.ShipmentHoldRepository,
+	batchHolds shipmentports.ActiveHoldReader,
+	batchComments shipmentports.NewestCommentReader,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
+	return newGetShipmentTool(repo, comments, holds, permissions).
+		withBatchReads(batchHolds, batchComments)
 }
 
 func newGetShipmentTool(
@@ -54,7 +68,7 @@ func newGetShipmentTool(
 	comments shipmentports.ShipmentCommentRepository,
 	holds shipmentports.ShipmentHoldRepository,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) *getShipmentTool {
 	return &getShipmentTool{
 		repo:     repo,
 		comments: comments,
@@ -66,14 +80,15 @@ func newGetShipmentTool(
 func (t *getShipmentTool) Name() string { return "shipment_get" }
 
 func (t *getShipmentTool) Description() string {
-	return "Read one shipment (load) by its id or PRO number. It shows the customer and " +
-		"rating, each move's stops with their windows in the stop's local time, who drives " +
-		"it and with what equipment, the holds on it now and its newest comments. Pass " +
-		"detail full only " +
-		"for a field the summary leaves out. Each hold carries the holdId " +
-		"shipment_update_hold and shipment_release_hold take. leftOutForAccess says when " +
-		"the holds or comments could not be read. Find it with shipment_list when you have " +
-		"only a customer, a place, a PO or a BOL."
+	return "Read shipments (loads) by id, passing every load you need in one call, up to 25, " +
+		"or one by its PRO number. One load shows the customer and rating, each move's " +
+		"stops with their windows in the stop's local time, who drives it with what " +
+		"equipment, the holds on it now and its newest comments; pass detail full only for " +
+		"a field that summary leaves out. Several come as a table of each load's route, " +
+		"driver, holds in force with their notes and newest comment. Each hold carries the " +
+		"holdId shipment_update_hold and shipment_release_hold take. leftOutForAccess says " +
+		"when the holds or comments could not be read. Find loads with shipment_list when " +
+		"you have only a customer, a place, a PO or a BOL."
 }
 
 func (t *getShipmentTool) SearchTerms() []string {
@@ -84,8 +99,8 @@ func (t *getShipmentTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			paramShipmentID: shipmentRefProperty(),
-			paramProNumber:  proNumberProperty(),
+			paramShipmentIDs: shipmentRefsProperty(),
+			paramProNumber:   proNumberProperty(),
 			paramDetail: agenttoolschema.Enum(
 				"How much to return. Omit it for the summary: the customer, the rating, "+
 					"the moves with their stops, assignment and carrier, the commodities, "+
@@ -121,8 +136,20 @@ func (t *getShipmentTool) Query(
 		return nil, err
 	}
 
+	ids, pro, err := shipmentRefs(params.Params)
+	if err != nil {
+		return nil, err
+	}
+	if len(ids) > 1 {
+		return t.several(ctx, params, ids, detail)
+	}
+	var id pulid.ID
+	if len(ids) == 1 {
+		id = ids[0]
+	}
+
 	tenant := tenantOf(params)
-	entity, err := loadShipment(ctx, t.repo, tenant, params.Params)
+	entity, err := loadShipment(ctx, t.repo, tenant, id, pro)
 	if err != nil {
 		return nil, err
 	}
@@ -359,8 +386,9 @@ func (t *shipmentListTool) Description() string {
 		"chicago\" finds Sunbelt's loads through Chicago, and a word that names several " +
 		"things narrows to any of them. With no words and no filters it lists the newest. " +
 		"Each row has the first pickup, the final stop, who drives each move, what it carries " +
-		"and the holds in force with the holdId shipment_release_hold takes, so onHold lists " +
-		"held loads in one call; open one with shipment_get only for more."
+		"and the holds in force, each with its note, when it started and the holdId " +
+		"shipment_release_hold takes, so onHold lists held loads and why in one call. For " +
+		"more, pass every load you need to shipment_get at once."
 }
 
 func (t *shipmentListTool) SearchTerms() []string {
@@ -539,11 +567,13 @@ func (f shipmentHoldFilter) describe(criteria *filtercatalog.Criteria) {
 }
 
 type shipmentRowHold struct {
-	HoldID     string `json:"holdId"`
-	Reason     string `json:"reason"`
-	ReasonCode string `json:"reasonCode,omitempty"`
-	Severity   string `json:"severity,omitempty"`
-	Blocks     string `json:"blocks,omitempty"`
+	HoldID     string       `json:"holdId"`
+	Reason     string       `json:"reason"`
+	ReasonCode string       `json:"reasonCode,omitempty"`
+	Severity   string       `json:"severity,omitempty"`
+	Blocks     string       `json:"blocks,omitempty"`
+	Note       string       `json:"note,omitempty"`
+	StartedAt  optionalDate `json:"startedAt"`
 }
 
 func rowHoldOf(hold *shipment.ShipmentHold) shipmentRowHold {
@@ -552,6 +582,8 @@ func rowHoldOf(hold *shipment.ShipmentHold) shipmentRowHold {
 		Reason:     string(hold.Type),
 		ReasonCode: hold.ReasonCode,
 		Severity:   string(hold.Severity),
+		Note:       holdNote(hold),
+		StartedAt:  recordedDate(hold.StartedAt),
 	}
 	switch {
 	case hold.HoldReason != nil && strings.TrimSpace(hold.HoldReason.Label) != "":

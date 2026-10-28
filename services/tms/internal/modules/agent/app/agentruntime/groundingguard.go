@@ -199,7 +199,7 @@ func readFinding(t *Turn, reply string) groundingFinding {
 		Unsupported
 	if len(candidates) > 0 {
 		finding.figures = narrowed(candidates, numberguard.CheckAmounts(reply,
-			t.withWorking(reply, slices.Concat(t.groundingSupport(), separated))).Unsupported)
+			t.withDerived(reply, slices.Concat(t.groundingSupport(), separated))).Unsupported)
 	}
 
 	return finding
@@ -207,13 +207,32 @@ func readFinding(t *Turn, reply string) groundingFinding {
 
 // withWorking is what the turn read, and what the reply's own figures and the
 // person's work out to in one step (numberguard.Worked): "112 gallons at $3.89
-// come to $435.68" shows its working, and the guard checks the result.
+// come to $435.68" shows its working, and the guard checks the result. It is
+// what a figure the reply says a filed change holds is held to.
 func (t *Turn) withWorking(reply string, read []decimal.Decimal) []decimal.Decimal {
-	supported := slices.Clone(read)
-	supported = append(supported,
-		numberguard.Combinations(t.statedFigures(numberguard.ReadCodesApart))...)
+	return append(t.withStated(read), numberguard.Worked(reply, read)...)
+}
 
-	return append(supported, numberguard.Worked(reply, read)...)
+// withDerived is what the turn read and the person's figures work out to, and
+// what the reply derives from them in the steps it shows (numberguard.Derived):
+// "$1,240 for the miles plus $150 for the tarp, $1,390 in all" (DB-244), "the
+// $3,200 pays $1,562.50 and $1,637.50 of $2,531.25, leaving $893.75", and a
+// list of six loads followed by their total. Each operand is a figure the
+// reply states, so a share whose sides it leaves out still goes to a script
+// (DB-186), and the work is bounded by the reply, not by what the conversation
+// read: at most sixteen operands over two steps, and a total per list, table
+// column and sentence.
+func (t *Turn) withDerived(reply string, read []decimal.Decimal) []decimal.Decimal {
+	supported := t.withStated(read)
+
+	return append(supported, numberguard.Derived(reply, supported)...)
+}
+
+// withStated is what the turn read, and what the person's own figures work out
+// to in one step.
+func (t *Turn) withStated(read []decimal.Decimal) []decimal.Decimal {
+	return append(slices.Clone(read),
+		numberguard.Combinations(t.statedFigures(numberguard.ReadCodesApart))...)
 }
 
 // maxStatedFigures bounds the figures of the person's question that are
@@ -273,7 +292,10 @@ func (t *Turn) readUnseenFiles() bool {
 
 // filedFigures is the figures a reply on a filed change cites that nothing
 // read or filed gives. A figure from a file only the model can read is not
-// held against the reply.
+// held against the reply. A figure the reply states in a sentence about the
+// change (changeSpeak: "the proposal bills $1,390") is held to what was read
+// and filed and one step of the reply's working; one it states about what the
+// conversation read may be derived as a reply that filed nothing may.
 func (t *Turn) filedFigures(reply string) []string {
 	if t.readUnseenFiles() {
 		return nil
@@ -284,8 +306,32 @@ func (t *Turn) filedFigures(reply string) []string {
 		return figures
 	}
 
-	return narrowed(figures, numberguard.CheckNumbers(reply,
-		t.withWorking(reply, slices.Concat(t.groundingSupport(), separated))).Unsupported)
+	read := slices.Concat(t.groundingSupport(), separated)
+	figures = narrowed(figures, numberguard.CheckNumbers(reply, t.withWorking(reply, read)).
+		Unsupported)
+	if len(figures) == 0 {
+		return figures
+	}
+	derived := numberguard.CheckNumbers(reply, t.withDerived(reply, read)).Unsupported
+	claimed := numberguard.CheckNumbers(changeSentences(reply), nil).Unsupported
+
+	return slices.DeleteFunc(figures, func(figure string) bool {
+		return !slices.Contains(derived, figure) && !slices.Contains(claimed, figure)
+	})
+}
+
+// changeSentences is the reply's sentences that speak of the change, one to a
+// line.
+func changeSentences(reply string) string {
+	sentences := numberguard.Sentences(reply)
+	claims := make([]string, 0, len(sentences))
+	for _, sentence := range sentences {
+		if speaksOfChange(strings.ToLower(sentence)) {
+			claims = append(claims, sentence)
+		}
+	}
+
+	return strings.Join(claims, "\n")
 }
 
 func narrowed(candidates, unsupported []string) []string {

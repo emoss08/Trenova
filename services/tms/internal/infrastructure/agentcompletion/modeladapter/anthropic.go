@@ -239,9 +239,16 @@ func (a anthropicAdapter) complete(
 		return nil, err
 	}
 
+	resp := anthropicMessageResponse(message, advisorFor(call))
+	resp.OutputLimit = int(params.MaxTokens)
+	resp.Files = attached.report
+
+	return resp, nil
+}
+
+func anthropicMessageResponse(message *anthropic.BetaMessage, advisor *AdvisorSpec) *Response {
 	content := anthropicContent(message.Content)
 	text, toolCalls := splitAnthropicContent(content)
-	advisor := advisorFor(call)
 	advised := anthropicAdvisorUsage(message.Usage.Iterations, advisor)
 
 	return &Response{
@@ -255,13 +262,11 @@ func (a anthropicAdapter) complete(
 		Refused:          message.StopReason == anthropic.BetaStopReasonRefusal,
 		Truncated:        message.StopReason == anthropic.BetaStopReasonMaxTokens,
 		Reasoning:        anthropicReasoning(content, advisorModelOf(advised, advisor)),
-		OutputLimit:      int(params.MaxTokens),
 		ThinkingDropped:  thinkingDropped(message.InputTransformations),
 		MessageID:        message.ID,
 		CacheDiagnosis:   anthropicDiagnosis(message),
-		Files:            attached.report,
 		Advisor:          advised,
-	}, nil
+	}
 }
 
 // anthropicBlock is one block of a reply, read off the SDK's union into the

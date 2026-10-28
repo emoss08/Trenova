@@ -43,3 +43,26 @@ func TestRecordIDArgument_SendsTheIDToAToolThatTakesOne(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "shp_1", recordIDArgument(schema, param, "shp_1"))
 }
+
+func TestRecordIDParam_FindsAListOfIDsBesideAnotherWayToName(t *testing.T) {
+	t.Parallel()
+
+	schema := map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			"shipmentIds": map[string]any{
+				toolschema.KeyType: toolschema.TypeArray,
+				toolschema.KeyItems: map[string]any{
+					toolschema.KeyType:     toolschema.TypeString,
+					toolschema.KeyRecordOf: "shipment",
+				},
+			},
+			"proNumber": map[string]any{toolschema.KeyType: toolschema.TypeString},
+		},
+	}
+
+	param, ok := recordIDParam(schema)
+	require.True(t, ok)
+	assert.Equal(t, "shipmentIds", param)
+	assert.Equal(t, []any{"shp_1"}, recordIDArgument(schema, param, "shp_1"))
+}

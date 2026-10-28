@@ -5,11 +5,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 const (
 	AgentQualitySweepWorkflowName          = "AgentQualitySweepWorkflow"
 	AgentSuiteRunWorkflowName              = "AgentSuiteRunWorkflow"
+	AgentSuiteJudgeWorkflowName            = "AgentSuiteJudgeWorkflow"
 	ReconcileQualitySchedulesWorkflowName  = "ReconcileQualitySchedulesWorkflow"
 	ReconcileQualitySchedulesScheduleID    = "agent-quality-schedules"
 	sweepWorkflowIDPrefix                  = "agent-quality-sweep/"
@@ -17,6 +19,7 @@ const (
 	casesPerExecution                      = 100
 	agentsPerExecution                     = 100
 	reconcileQualitySchedulesOnStartWorkID = "agent-quality-schedules-on-start"
+	suiteJudgeWorkflowSuffix               = "/judge"
 )
 
 type SweepPayload struct {
@@ -33,10 +36,11 @@ func (p *SweepPayload) tenantInfo() pagination.TenantInfo {
 }
 
 type SweepResult struct {
-	Planned int `json:"planned"`
-	Ran     int `json:"ran"`
-	Skipped int `json:"skipped"`
-	Failed  int `json:"failed"`
+	Planned      int             `json:"planned"`
+	Ran          int             `json:"ran"`
+	Skipped      int             `json:"skipped"`
+	Failed       int             `json:"failed"`
+	CommittedUSD decimal.Decimal `json:"committedUsd,omitzero"`
 }
 
 type SuiteRunPayload struct {
@@ -52,6 +56,8 @@ type SuiteRunPayload struct {
 	Cursor            int                        `json:"cursor,omitempty"`
 	Replayed          int                        `json:"replayed,omitempty"`
 	StopReason        string                     `json:"stopReason,omitempty"`
+	Unattended        bool                       `json:"unattended,omitempty"`
+	CommittedUSD      decimal.Decimal            `json:"committedUsd,omitzero"`
 }
 
 func (p *SuiteRunPayload) tenantInfo() pagination.TenantInfo {
@@ -64,6 +70,17 @@ type SuiteRunResult struct {
 	Status       agentquality.SuiteRunStatus `json:"status"`
 	QualityScore *float64                    `json:"qualityScore,omitempty"`
 	Regression   bool                        `json:"regression"`
+	Judging      bool                        `json:"judging,omitempty"`
+	CommittedUSD decimal.Decimal             `json:"committedUsd,omitzero"`
+}
+
+type SuiteJudgePayload struct {
+	Suite SuiteRunPayload                `json:"suite"`
+	Batch agentqualityservice.JudgeBatch `json:"batch"`
+}
+
+func SuiteJudgeWorkflowID(suiteRunID pulid.ID) string {
+	return agentquality.SuiteRunWorkflowID(suiteRunID) + suiteJudgeWorkflowSuffix
 }
 
 type ReconcileResult struct {

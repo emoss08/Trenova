@@ -147,19 +147,37 @@ func (s *AgentDefinitionSeed) reconcileToolNames(
 	}
 
 	for _, definition := range existing {
-		merged, changed := mergeToolNames(definition.ToolNames, definition.Template.StarterTools())
-		if !changed {
+		merged, toolsChanged := mergeToolNames(
+			definition.ToolNames,
+			definition.Template.StarterTools(),
+		)
+		access, accessRaised := raisedDataAccess(
+			definition.DataAccessCeiling,
+			definition.Template.StarterDataAccess(),
+		)
+		if !toolsChanged && !accessRaised {
 			continue
 		}
 
 		d := agentdefinitiondb.Definitions
 		definition.ToolNames = merged
-		if err := d.Save(ctx, db, definition, d.ToolNames); err != nil {
+		definition.DataAccessCeiling = access
+		if err := d.Save(ctx, db, definition, d.ToolNames, d.DataAccessCeiling); err != nil {
 			return fmt.Errorf("reconcile agent %s: %w", definition.Name, err)
 		}
 	}
 
 	return nil
+}
+
+func raisedDataAccess(
+	current, starter agentdefinition.DataAccessCeiling,
+) (agentdefinition.DataAccessCeiling, bool) {
+	if current.Sensitivity().Level() >= starter.Sensitivity().Level() {
+		return current, false
+	}
+
+	return starter, true
 }
 
 // mergeToolNames appends the starters a definition is missing, preserving the

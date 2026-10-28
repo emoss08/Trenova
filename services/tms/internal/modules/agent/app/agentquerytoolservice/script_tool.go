@@ -103,17 +103,17 @@ func (t *runScriptTool) Name() string { return codemode.ToolRunScript }
 
 func (t *runScriptTool) Description() string {
 	return "Run a short Python script that calls the reads you hold and totals, compares " +
-		"or charts what they return. Use it for every record of a list, two " +
-		"sources reconciled, a report run or attached spreadsheet analyzed, or any figure no " +
-		"read gives; for one or two reads in a row, call the reads themselves. Call a read as " +
-		"trenova.<namespace>.<the rest of its name>(**parameters), as " +
-		"trenova.shipment.list(status=[\"InTransit\"]) for shipment_list; parameters and " +
-		"results are exactly the tool's. trenova.tools() lists what you may call, " +
-		"trenova.gather(a.defer(...), b.defer(...)) runs several at once, and a refused call " +
-		"raises trenova.Refused. The person sees only what it shows with show_figure, " +
-		"show_table and show_chart, kept as an analysis; what it prints and " +
-		"trenova.result(value) reach only you. A script changes nothing: a change it calls is " +
-		"proposed as one batch for a person to approve."
+		"or charts what they return. Use it for every record of a list, two sources " +
+		"reconciled, a report run or attached spreadsheet analyzed, or any figure no read " +
+		"gives; for one or two reads, call them yourself. Call shipment_list as " +
+		"trenova.shipment.list(status=[\"InTransit\"]), any read alike, with its own " +
+		"parameters. A list returns a dict: rows in items, and hasMore with nextCursor, " +
+		"which after= takes for the next page. A read taking ids, such as shipmentIds, " +
+		"takes them all at once. trenova.gather(a.defer(...), b.defer(...)) runs reads " +
+		"together; a refused one raises trenova.Refused. The person sees only show_figure, " +
+		"show_table and show_chart; print and trenova.result(value) reach only you. A " +
+		"script changes nothing: a change it calls is proposed as one batch for a person " +
+		"to approve."
 }
 
 func (t *runScriptTool) ParamSchema() map[string]any {

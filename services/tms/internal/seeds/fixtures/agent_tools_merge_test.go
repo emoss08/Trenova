@@ -113,3 +113,27 @@ func TestMergeToolNames_StopsAtTheToolCap(t *testing.T) {
 	assert.False(t, changed, "a full list gains nothing")
 	assert.Len(t, full, agentdefinition.MaxTools)
 }
+
+func TestRaisedDataAccess_RaisesToTheTemplateAndNeverLowers(t *testing.T) {
+	t.Parallel()
+
+	access, raised := raisedDataAccess(
+		agentdefinition.DataAccessInternal,
+		agentdefinition.TemplateReportAnalyst.StarterDataAccess(),
+	)
+	assert.True(t, raised, "the report analyst reads amounts, which are Restricted")
+	assert.Equal(t, agentdefinition.DataAccessRestricted, access)
+
+	access, raised = raisedDataAccess(
+		agentdefinition.DataAccessRestricted,
+		agentdefinition.DataAccessInternal,
+	)
+	assert.False(t, raised, "an administrator's wider grant is not the seeder's to narrow")
+	assert.Equal(t, agentdefinition.DataAccessRestricted, access)
+
+	_, raised = raisedDataAccess(
+		agentdefinition.DataAccessInternal,
+		agentdefinition.DataAccessInternal,
+	)
+	assert.False(t, raised)
+}

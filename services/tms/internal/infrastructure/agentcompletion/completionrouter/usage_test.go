@@ -35,6 +35,35 @@ func (f *fakeUsage) Create(_ context.Context, record *aiusage.AIUsageRecord) err
 	return f.err
 }
 
+func (f *fakeUsage) CreateOrSkip(
+	_ context.Context,
+	records []*aiusage.AIUsageRecord,
+) (int64, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.err != nil {
+		return 0, f.err
+	}
+
+	var inserted int64
+	for _, record := range records {
+		known := false
+		for _, row := range f.rows {
+			if row.ID == record.ID {
+				known = true
+
+				break
+			}
+		}
+		if !known {
+			f.rows = append(f.rows, record)
+			inserted++
+		}
+	}
+
+	return inserted, nil
+}
+
 func (f *fakeUsage) Summary(
 	context.Context,
 	aiusageports.AIUsageSummaryRequest,

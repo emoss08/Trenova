@@ -234,8 +234,10 @@ scenarios:
   - name: unattended-intake-acme-tender-document-ready-to-enter
     description: >
       Acme's single-load tender ACME-8841 was read cleanly: Acme as shipper, Los Angeles Terminal
-      to the Chicago DC, dry van, $3,200, high confidence on every field. A good run resolves each
-      name to a record, prices the lane, and proposes the shipment with the document's BOL.
+      to the Chicago DC, dry van, general freight, $5,960, high confidence on every field. A good run
+      resolves each name to a record, prices the lane (Acme's agreement prices it within a dollar of
+      the tender), and proposes the shipment with the document's BOL. Its rate and commodity agree
+      with the seed on purpose: a rate gap or an unknown commodity is a different case.
     tags: [unattended, shipment-intake]
     expectedTools: [intake_get_draft, "customer_list|location_list", rate_quote]
     exclusive: shipment-intake-seed
@@ -274,10 +276,10 @@ scenarios:
               'consignee', jsonb_build_object('label', 'Consignee', 'value', 'Chicago Distribution Center', 'confidence', 0.95),
               'referenceNumber', jsonb_build_object('label', 'Load number', 'value', 'ACME-8841', 'confidence', 0.98),
               'bol', jsonb_build_object('label', 'BOL', 'value', 'BOL-ACME-8841', 'confidence', 0.96),
-              'rate', jsonb_build_object('label', 'Rate', 'value', '$3,200.00', 'confidence', 0.94),
+              'rate', jsonb_build_object('label', 'Rate', 'value', '$5,960.00', 'confidence', 0.94),
               'equipment', jsonb_build_object('label', 'Equipment', 'value', '53 ft dry van', 'confidence', 0.92),
               'weight', jsonb_build_object('label', 'Weight', 'value', '41,500 lbs', 'confidence', 0.93),
-              'commodity', jsonb_build_object('label', 'Commodity', 'value', 'Packaged machine parts', 'confidence', 0.9)),
+              'commodity', jsonb_build_object('label', 'Commodity', 'value', 'General Freight', 'confidence', 0.9)),
             'stops', jsonb_build_array(
               jsonb_build_object('sequence', 1, 'role', 'pickup', 'name', 'Los Angeles Terminal',
                 'addressLine1', '1200 E 7th St', 'city', 'Los Angeles', 'state', 'CA',
@@ -301,4 +303,4 @@ scenarios:
           rubric: >
             The proposed shipment is Acme, Los Angeles Terminal then Chicago Distribution Center in
             that order on the document's dates, dry van, with BOL-ACME-8841 as the reference and
-            the tender named as its source. It says how the $3,200 compares with the quote.
+            the tender named as its source. It says how the $5,960 compares with the quote.

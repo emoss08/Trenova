@@ -58,7 +58,7 @@ func ToolProviders() []any {
 
 func coreToolProviders() []any {
 	return []any{
-		newGetShipmentTool,
+		provideGetShipmentTool,
 		provideShipmentListTool,
 		newRecallMemoryTool,
 		newComposeTableViewTool,

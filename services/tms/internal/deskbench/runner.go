@@ -105,6 +105,8 @@ type StepResult struct {
 	Formula   string            `json:"formula,omitempty"`
 	Error     string            `json:"error,omitempty"`
 	Passed    bool              `json:"passed"`
+
+	unmet string
 }
 
 type plannedCase struct {
@@ -280,6 +282,12 @@ func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCa
 		if tidyErr := b.runStatements(ctx, session, benchLeftovers()); tidyErr != nil {
 			b.live.Line("bench", "could not cancel what earlier bench runs left open: %v", tidyErr)
 		}
+		marked, delayErr := b.bringStatusesCurrent(ctx, session)
+		if delayErr != nil {
+			b.live.Line("bench", "could not bring shipment statuses current: %v", delayErr)
+		} else if marked > 0 {
+			b.live.Line("bench", "marked %d late shipment(s) Delayed, as the auto-delay schedule would", marked)
+		}
 	})
 	if err = b.runSetup(ctx, session, scenario.Setup); err != nil {
 		result.Error = err.Error()
@@ -322,6 +330,7 @@ func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCa
 		return result
 	}
 	result.ThreadID = conv.Thread.ID.String()
+	conv.needsText = slices.Contains(scenario.Requires, Requirement{DocumentText: true})
 	unpin := b.recorder.Pin(conv.Thread.ID, ProviderPin{Effort: cell.Effort, Advisor: cell.Advisor})
 	defer unpin()
 	if conv.Agent != nil {
@@ -336,6 +345,10 @@ func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCa
 		step := &scenario.Steps[idx]
 		stepResult := b.runStep(ctx, session, conv, idx, step)
 		result.Steps = append(result.Steps, stepResult)
+		if stepResult.unmet != "" {
+			result.Skipped = stepResult.unmet
+			break
+		}
 		if ctx.Err() != nil {
 			break
 		}
@@ -476,6 +489,11 @@ func (b *Bench) runStep(
 			result.Turns, err = conv.Say(ctx, &utterance)
 		}
 		evidence.turns = result.Turns
+		if errors.Is(err, ErrAttachmentUnreadable) {
+			result.unmet = "needs " + (&Requirement{DocumentText: true}).Label() + ": " +
+				err.Error()
+			return result
+		}
 		if err != nil {
 			result.Error = err.Error()
 		}

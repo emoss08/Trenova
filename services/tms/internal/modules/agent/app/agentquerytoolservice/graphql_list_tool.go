@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/bytedance/sonic"
@@ -50,6 +51,7 @@ const (
 	// maxNearMissProbes bounds the reads an empty first page may spend asking
 	// which condition to loosen; each is charged to the caller's budget.
 	maxNearMissProbes = 4
+	nearMissSample    = 5
 )
 
 var errGraphQLReadUnbound = errors.New("no GraphQL read is bound to this tool")
@@ -108,6 +110,9 @@ type graphQLListSpec struct {
 	// names are the names the tool takes derived parameters by, keyed by
 	// the derived name (integrationType is system).
 	names map[string]string
+	// presents are the row fields shown under the name people call them by,
+	// keyed by the field's own name (a tractor's code is its unitNumber).
+	presents map[string]string
 	// instants are the Timestamp fields a call bounds to the minute rather
 	// than the day (when an EDI message was created).
 	instants []string
@@ -249,6 +254,7 @@ type graphQLListTool struct {
 	reader      agentports.GraphQLReader
 	permissions permissionports.PermissionEngine
 	registry    *permission.Registry
+	rowFields   []graphQLField
 }
 
 // insteadRead is a read a list makes in place of its own, and the
@@ -358,6 +364,7 @@ func newGraphQLListTool(
 		reader:      reader,
 		permissions: permissions,
 		registry:    fieldsensitivity.DefaultRegistry(),
+		rowFields:   presentedFields(read.Fields, spec.presents),
 	}
 	tool.params = slices.DeleteFunc(params, func(param graphQLParam) bool {
 		return tool.confidential(&param)
@@ -1089,7 +1096,7 @@ func (t *graphQLListTool) Query(
 		Count:            len(page.items),
 		SearchedFor:      criteria.Describe(),
 		Items:            page.items,
-		Columns:          selectedColumns(t.read.Fields, page.items),
+		Columns:          selectedColumns(t.rowFields, page.items),
 		HasMore:          page.hasMore,
 		Total:            page.total,
 		TotalEstimated:   page.total != nil && !page.totalExact,
@@ -1190,7 +1197,7 @@ func (t *graphQLListTool) page(
 	for _, edge := range edges {
 		object, _ := edge.(map[string]any)
 		if node, ok := object[connectionNode].(map[string]any); ok {
-			page.items = append(page.items, compact(node))
+			page.items = append(page.items, presented(compact(node), t.spec.presents))
 		}
 	}
 	if t.spec.shape != nil {
@@ -1369,6 +1376,31 @@ func compact(node map[string]any) map[string]any {
 
 // selectedColumns are the fields the operation selects on the record, in
 // schema order, that the rows carry.
+func presentedFields(fields []graphQLField, presents map[string]string) []graphQLField {
+	if len(presents) == 0 {
+		return fields
+	}
+	out := slices.Clone(fields)
+	for idx := range out {
+		if name, ok := presents[out[idx].Name]; ok {
+			out[idx].Name = name
+		}
+	}
+
+	return out
+}
+
+func presented(row map[string]any, presents map[string]string) map[string]any {
+	for field, name := range presents {
+		if value, ok := row[field]; ok {
+			delete(row, field)
+			row[name] = value
+		}
+	}
+
+	return row
+}
+
 func selectedColumns(fields []graphQLField, items []map[string]any) []string {
 	if len(items) == 0 {
 		return nil
@@ -1520,73 +1552,153 @@ func (t *graphQLListTool) nearMiss(
 	asked *pageRequest,
 ) string {
 	query, inputs, args, filters := asked.query, asked.inputs, asked.args, asked.filters
-	probe := func(req pageRequest) bool {
-		req.groups, req.limit = asked.groups, 1
+	probe := func(req pageRequest) *graphQLPage {
+		req.groups, req.limit = asked.groups, nearMissSample
 		page, err := t.page(ctx, params, &req)
-		return err == nil && len(page.items) > 0
+		if err != nil || len(page.items) == 0 {
+			return nil
+		}
+		return page
 	}
-	probes := 0
+	probes, conditions := 0, 0
 	if query != "" {
 		probes++
-		if probe(pageRequest{inputs: inputs, args: args, filters: filters}) {
+		conditions++
+		if probe(pageRequest{inputs: inputs, args: args, filters: filters}) != nil {
 			return fmt.Sprintf("Nothing matched the text %q, but %s do match the other "+
 				"conditions. Try different words, or drop the text.", query, t.spec.entityPlural)
 		}
 	}
 	for idx := range filters {
+		conditions++
 		if probes >= maxNearMissProbes {
-			break
+			continue
 		}
 		probes++
 		rest := slices.Delete(slices.Clone(filters), idx, idx+1)
-		if probe(pageRequest{query: query, inputs: inputs, args: args, filters: rest}) {
-			return t.keptOut(filters[idx][paramField])
+		page := probe(pageRequest{query: query, inputs: inputs, args: args, filters: rest})
+		if page != nil {
+			return t.keptOut(filters[idx][paramField], page)
 		}
 	}
 	for _, name := range slices.Sorted(maps.Keys(inputs)) {
+		conditions++
 		if _, toggle := inputs[name].(bool); toggle {
 			continue
 		}
 		if probes >= maxNearMissProbes {
-			break
+			continue
 		}
 		probes++
 		rest := maps.Clone(inputs)
 		delete(rest, name)
-		if probe(pageRequest{query: query, inputs: rest, args: args, filters: filters}) {
-			return t.keptOut(name)
+		page := probe(pageRequest{query: query, inputs: rest, args: args, filters: filters})
+		if page != nil {
+			return t.keptOut(name, page)
 		}
 	}
 	for _, param := range t.params {
-		filter, _ := args[param.Arg].(map[string]any)
-		value, set := filter[param.ArgField]
-		if _, toggle := value.(bool); param.ArgField == "" || !set || toggle {
+		if _, scoped := args[param.Arg]; scoped && param.ArgField == "" {
+			conditions++
 			continue
 		}
-		if probes >= maxNearMissProbes {
-			break
+		filter, _ := args[param.Arg].(map[string]any)
+		value, set := filter[param.ArgField]
+		if param.ArgField == "" || !set {
+			continue
+		}
+		conditions++
+		if _, toggle := value.(bool); toggle || probes >= maxNearMissProbes {
+			continue
 		}
 		probes++
 		rest := maps.Clone(args)
 		narrower := maps.Clone(filter)
 		delete(narrower, param.ArgField)
 		rest[param.Arg] = narrower
-		if probe(pageRequest{query: query, inputs: inputs, args: rest, filters: filters}) {
-			return t.keptOut(param.Name)
+		page := probe(pageRequest{query: query, inputs: inputs, args: rest, filters: filters})
+		if page != nil {
+			return t.keptOut(param.Name, page)
+		}
+	}
+	if conditions == 1 && probes == 1 && len(t.spec.inputs) == 0 {
+		return fmt.Sprintf("No %s matched, and without that condition none do either: "+
+			"there are no %s here for you to find, so another filter will not find any.",
+			t.spec.entityPlural, t.spec.entityPlural)
+	}
+
+	return ""
+}
+
+func (t *graphQLListTool) keptOut(condition any, page *graphQLPage) string {
+	field := fmt.Sprint(condition)
+	named := field
+	if t.spec.amounts {
+		named = presentedName(named)
+	}
+	note := fmt.Sprintf("No %s matched every condition. Without the condition on %s",
+		t.spec.entityPlural, named)
+	if held := keptOutRows(page, field, named); held != "" {
+		count, verb := strconv.Itoa(len(page.items)), "do"
+		switch {
+		case page.hasMore:
+			count = "at least " + count
+		case len(page.items) == 1:
+			verb = "does"
+		}
+		return fmt.Sprintf("%s, %s %s: %s. That condition alone keeps them out.",
+			note, count, verb, held)
+	}
+
+	return note + " some do, so that one alone keeps them out."
+}
+
+func keptOutRows(page *graphQLPage, field, named string) string {
+	labels := make([]string, 0, len(page.items))
+	for _, row := range page.items {
+		label := rowLabel(row)
+		value, shown := scalarText(row[field])
+		if !shown {
+			value, shown = scalarText(row[named])
+		}
+		switch {
+		case label != "" && shown:
+			labels = append(labels, fmt.Sprintf("%s (%s %s)", label, named, value))
+		case shown:
+			labels = append(labels, named+" "+value)
+		case label != "":
+			labels = append(labels, label)
+		}
+	}
+
+	return strings.Join(slices.Compact(labels), "; ")
+}
+
+var rowLabelKeys = []string{
+	"proNumber", "invoiceNumber", "settlementNumber", "number", "referenceNumber",
+	"unitNumber", "code", "name", "wholeName", "title",
+}
+
+func rowLabel(row map[string]any) string {
+	for _, key := range rowLabelKeys {
+		if text, ok := scalarText(row[key]); ok {
+			return text
 		}
 	}
 
 	return ""
 }
 
-func (t *graphQLListTool) keptOut(condition any) string {
-	named := fmt.Sprint(condition)
-	if t.spec.amounts {
-		named = presentedName(named)
+func scalarText(value any) (string, bool) {
+	switch typed := value.(type) {
+	case string:
+		text := strings.TrimSpace(typed)
+		return text, text != ""
+	case bool, int, int64, float64:
+		return fmt.Sprint(typed), true
+	default:
+		return "", false
 	}
-
-	return fmt.Sprintf("No %s matched every condition. Without the condition on %s "+
-		"some do, so that one alone keeps them out.", t.spec.entityPlural, named)
 }
 
 // runView reads a composed table view through the same operation, so the
@@ -1646,7 +1758,7 @@ func (t *graphQLListTool) runView(
 			Count:       len(items),
 			SearchedFor: criteria.Describe(),
 			Items:       items,
-			Columns:     selectedColumns(t.read.Fields, page.items),
+			Columns:     selectedColumns(t.rowFields, page.items),
 		},
 		withheld: page.withheld,
 		more:     page.hasMore,
