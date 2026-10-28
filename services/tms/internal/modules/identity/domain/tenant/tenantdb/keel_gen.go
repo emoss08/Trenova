@@ -533,6 +533,7 @@ var agentControlsTable = schema.Table{
 		{Name: "ai_training_consent_changed_by_id", Quoted: `"ai_training_consent_changed_by_id"`, Field: "AITrainingConsentChangedByID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `AI Training Consent Changed By ID`, JSON: `aiTrainingConsentChangedById`},
 		{Name: "person_monthly_messages", Quoted: `"person_monthly_messages"`, Field: "PersonMonthlyMessages", Kind: schema.KindInt64, Flags: 0, Label: `Person Monthly Messages`, Doc: `PersonMonthlyMessages is how many questions one person may ask the agents in a calendar month; nought leaves it unlimited.`, JSON: `personMonthlyMessages`},
 		{Name: "learning_off", Quoted: `"learning_off"`, Field: "LearningOff", Kind: schema.KindBool, Flags: 0, Label: `Learning Off`, JSON: `learningOff`},
+		{Name: "auto_chapters_off", Quoted: `"auto_chapters_off"`, Field: "AutoChaptersOff", Kind: schema.KindBool, Flags: 0, Label: `Auto Chapters Off`, Doc: `AutoChaptersOff stops a model splitting Desk conversations into chapters and naming them. On by default: it is one short call per question on the cheapest model, and people can still start chapters by hand while it is off.`, JSON: `autoChaptersOff`},
 		{Name: "agent_money_call_ceiling_minor", Quoted: `"agent_money_call_ceiling_minor"`, Field: "AgentMoneyCallCeilingMinor", Kind: schema.KindInt64, Flags: 0, Label: `Agent Money Call Ceiling Minor`, JSON: `agentMoneyCallCeilingMinor`},
 		{Name: "agent_money_run_calls", Quoted: `"agent_money_run_calls"`, Field: "AgentMoneyRunCalls", Kind: schema.KindInt64, Flags: 0, Label: `Agent Money Run Calls`, JSON: `agentMoneyRunCalls`},
 		{Name: "agent_money_run_amount_minor", Quoted: `"agent_money_run_amount_minor"`, Field: "AgentMoneyRunAmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Agent Money Run Amount Minor`, JSON: `agentMoneyRunAmountMinor`},
@@ -544,14 +545,14 @@ var agentControlsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
 	Returning:    nil,
-	Version:      18,
+	Version:      19,
 	AutoID:       0,
-	AutoCreate:   19,
-	AutoUpdate:   20,
+	AutoCreate:   20,
+	AutoUpdate:   21,
 	IDPrefix:     "agc_",
 	New:          newAgentControl,
 	NewN:         newNAgentControl,
@@ -579,6 +580,7 @@ type AgentControlsTable struct {
 	AITrainingConsentChangedByID keelkinds.PulidIDCol
 	PersonMonthlyMessages        keel.Int64Col
 	LearningOff                  keel.BoolCol
+	AutoChaptersOff              keel.BoolCol
 	AgentMoneyCallCeilingMinor   keel.Int64Col
 	AgentMoneyRunCalls           keel.Int64Col
 	AgentMoneyRunAmountMinor     keel.Int64Col
@@ -605,14 +607,15 @@ var AgentControls = &AgentControlsTable{
 	AITrainingConsentChangedByID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentControlsRef, Index: 10}}},
 	PersonMonthlyMessages:        keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 11}},
 	LearningOff:                  keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 12}},
-	AgentMoneyCallCeilingMinor:   keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 13}},
-	AgentMoneyRunCalls:           keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 14}},
-	AgentMoneyRunAmountMinor:     keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 15}},
-	AgentMoneyDayCalls:           keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 16}},
-	AgentMoneyDayAmountMinor:     keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 17}},
-	Version:                      keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 18}},
-	CreatedAt:                    keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 19}},
-	UpdatedAt:                    keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 20}},
+	AutoChaptersOff:              keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 13}},
+	AgentMoneyCallCeilingMinor:   keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 14}},
+	AgentMoneyRunCalls:           keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 15}},
+	AgentMoneyRunAmountMinor:     keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 16}},
+	AgentMoneyDayCalls:           keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 17}},
+	AgentMoneyDayAmountMinor:     keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 18}},
+	Version:                      keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 19}},
+	CreatedAt:                    keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 20}},
+	UpdatedAt:                    keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 21}},
 }
 
 // BuildAgentControls builds the handle of agent_controls for ref. Generated relation and alias methods call it.
@@ -632,14 +635,15 @@ func BuildAgentControls(r *keel.Ref) *AgentControlsTable {
 		AITrainingConsentChangedByID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		PersonMonthlyMessages:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		LearningOff:                  keel.BoolCol{Col: keel.Col{Ref: r, Index: 12}},
-		AgentMoneyCallCeilingMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		AgentMoneyRunCalls:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		AgentMoneyRunAmountMinor:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		AgentMoneyDayCalls:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		AgentMoneyDayAmountMinor:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		Version:                      keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		CreatedAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		UpdatedAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		AutoChaptersOff:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 13}},
+		AgentMoneyCallCeilingMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		AgentMoneyRunCalls:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		AgentMoneyRunAmountMinor:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		AgentMoneyDayCalls:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		AgentMoneyDayAmountMinor:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		Version:                      keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		CreatedAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		UpdatedAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 	}
 }
 
@@ -692,20 +696,22 @@ func ptrAgentControl(p unsafe.Pointer, c int32) any {
 	case 12:
 		return &r.LearningOff
 	case 13:
-		return &r.AgentMoneyCallCeilingMinor
+		return &r.AutoChaptersOff
 	case 14:
-		return (*int64)(unsafe.Pointer(&r.AgentMoneyRunCalls))
+		return &r.AgentMoneyCallCeilingMinor
 	case 15:
-		return &r.AgentMoneyRunAmountMinor
+		return (*int64)(unsafe.Pointer(&r.AgentMoneyRunCalls))
 	case 16:
-		return (*int64)(unsafe.Pointer(&r.AgentMoneyDayCalls))
+		return &r.AgentMoneyRunAmountMinor
 	case 17:
-		return &r.AgentMoneyDayAmountMinor
+		return (*int64)(unsafe.Pointer(&r.AgentMoneyDayCalls))
 	case 18:
-		return &r.Version
+		return &r.AgentMoneyDayAmountMinor
 	case 19:
-		return &r.CreatedAt
+		return &r.Version
 	case 20:
+		return &r.CreatedAt
+	case 21:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -747,20 +753,22 @@ func valueAgentControl(p unsafe.Pointer, c int32) any {
 	case 12:
 		return r.LearningOff
 	case 13:
-		return r.AgentMoneyCallCeilingMinor
+		return r.AutoChaptersOff
 	case 14:
-		return int64(r.AgentMoneyRunCalls)
+		return r.AgentMoneyCallCeilingMinor
 	case 15:
-		return r.AgentMoneyRunAmountMinor
+		return int64(r.AgentMoneyRunCalls)
 	case 16:
-		return int64(r.AgentMoneyDayCalls)
+		return r.AgentMoneyRunAmountMinor
 	case 17:
-		return r.AgentMoneyDayAmountMinor
+		return int64(r.AgentMoneyDayCalls)
 	case 18:
-		return r.Version
+		return r.AgentMoneyDayAmountMinor
 	case 19:
-		return r.CreatedAt
+		return r.Version
 	case 20:
+		return r.CreatedAt
+	case 21:
 		return r.UpdatedAt
 	}
 	return nil

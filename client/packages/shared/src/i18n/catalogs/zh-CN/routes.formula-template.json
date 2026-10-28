@@ -265,7 +265,6 @@
   "Write a tariff for this rating method: {0}": "为此计价方式编写运价表：{0}",
   "Write the tariff and its bill appears here as you type.": "编写运价表，账单会在您输入时显示在此处。",
   "Writing tests for the tariff's edges and running them…": "正在为运价表的边界情况编写并运行测试…",
-  "Writing…": "正在编写…",
   "Your organization has no templates yet.": "您的组织尚无模板。",
   "Your rate tables, charge codes and libraries could not be loaded, so the check cannot see them yet.": "无法加载您的费率表、费用代码和公式库，因此检查暂时无法读取它们。",
   "Your templates": "您的模板",

@@ -2794,6 +2794,10 @@ func init() {
 				Column: "learning_off",
 			},
 			{
+				Name:   "autoChaptersOff",
+				Column: "auto_chapters_off",
+			},
+			{
 				Name:   "agentMoneyCallCeiling",
 				Column: "agent_money_call_ceiling_minor",
 			},

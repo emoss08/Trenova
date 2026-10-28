@@ -271,6 +271,188 @@ func beforeCreateAssistantTurn(ctx context.Context, p unsafe.Pointer) error {
 	return (*conversation.AssistantTurn)(p).BeforeCreate(ctx)
 }
 
+// chaptersTable is the schema of conversation.Chapter.
+var chaptersTable = schema.Table{
+	Name:   "assistant_thread_chapters",
+	Quoted: `"assistant_thread_chapters"`,
+	Alias:  "atc",
+	Model:  "conversation.Chapter",
+	Label:  `Chapter`,
+	Plural: `Chapters`,
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "thread_id", Quoted: `"thread_id"`, Field: "ThreadID", Kind: schema.KindString, Flags: 0, Label: `Thread ID`, JSON: `threadId`},
+		{Name: "turn_id", Quoted: `"turn_id"`, Field: "TurnID", Kind: schema.KindString, Flags: 0, Label: `Turn ID`, JSON: `turnId`},
+		{Name: "title", Quoted: `"title"`, Field: "Title", Kind: schema.KindString, Flags: 0, Label: `Title`, JSON: `title`},
+		{Name: "title_source", Quoted: `"title_source"`, Field: "TitleSource", Kind: schema.KindString, Flags: 0, Label: `Title Source`, JSON: `titleSource`, Enum: enumChapterTitleSource[:]},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
+		{Name: "start_sequence", Quoted: `"start_sequence"`, Field: "StartSequence", Kind: schema.KindInt64, Flags: schema.FlagNullable | schema.FlagComputed, Label: `Start Sequence`, JSON: `startSequence`},
+		{Name: "started_at", Quoted: `"started_at"`, Field: "StartedAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero | schema.FlagComputed, Label: `Started At`, JSON: `startedAt`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Update:     []int32{3, 4, 5, 6, 9},
+	Returning:  nil,
+	Version:    7,
+	AutoID:     0,
+	AutoCreate: 8,
+	AutoUpdate: 9,
+	IDPrefix:   "achp_",
+	New:        newChapter,
+	NewN:       newNChapter,
+	Size:       unsafe.Sizeof(conversation.Chapter{}),
+	Ptr:        ptrChapter,
+	Value:      valueChapter,
+}
+
+var chaptersRef = keel.Ref{Table: &chaptersTable}
+
+// ChaptersTable is the table of conversation.Chapter.
+type ChaptersTable struct {
+	keel.Handle[*conversation.Chapter]
+	ID             keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	OrganizationID keelkinds.PulidIDCol
+	ThreadID       keelkinds.PulidIDCol
+	TurnID         keelkinds.PulidIDCol
+	Title          keel.StringCol
+	TitleSource    ChapterTitleSourceCol
+	Version        keel.Int64Col
+	CreatedAt      keel.Int64Col
+	UpdatedAt      keel.Int64Col
+	StartSequence  keel.Int64Col
+	StartedAt      keel.Int64Col
+}
+
+// Chapters references the assistant_thread_chapters table.
+var Chapters = &ChaptersTable{
+	Handle:         keel.Handle[*conversation.Chapter]{Ref: &chaptersRef},
+	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chaptersRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chaptersRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chaptersRef, Index: 2}}},
+	ThreadID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chaptersRef, Index: 3}}},
+	TurnID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chaptersRef, Index: 4}}},
+	Title:          keel.StringCol{Col: keel.Col{Ref: &chaptersRef, Index: 5}},
+	TitleSource:    ChapterTitleSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chaptersRef, Index: 6}}},
+	Version:        keel.Int64Col{Col: keel.Col{Ref: &chaptersRef, Index: 7}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &chaptersRef, Index: 8}},
+	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &chaptersRef, Index: 9}},
+	StartSequence:  keel.Int64Col{Col: keel.Col{Ref: &chaptersRef, Index: 10}},
+	StartedAt:      keel.Int64Col{Col: keel.Col{Ref: &chaptersRef, Index: 11}},
+}
+
+// BuildChapters builds the handle of assistant_thread_chapters for ref. Generated relation and alias methods call it.
+func BuildChapters(r *keel.Ref) *ChaptersTable {
+	return &ChaptersTable{
+		Handle:         keel.Handle[*conversation.Chapter]{Ref: r},
+		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ThreadID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		TurnID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Title:          keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
+		TitleSource:    ChapterTitleSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		StartSequence:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		StartedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+	}
+}
+
+// ChaptersSchema returns the schema of assistant_thread_chapters.
+func ChaptersSchema() *schema.Table { return &chaptersTable }
+
+// As returns a handle that references assistant_thread_chapters under its own alias.
+func (t *ChaptersTable) As(alias string) *ChaptersTable {
+	return keel.Alias(t.Ref, alias, BuildChapters)
+}
+
+// Get returns the assistant_thread_chapters row with the given key, or keel.ErrNotFound.
+func (t *ChaptersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*conversation.Chapter, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+func newChapter() unsafe.Pointer { return unsafe.Pointer(new(conversation.Chapter)) }
+
+func newNChapter(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]conversation.Chapter, n)))
+}
+
+func ptrChapter(p unsafe.Pointer, c int32) any {
+	r := (*conversation.Chapter)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return (*string)(unsafe.Pointer(&r.ThreadID))
+	case 4:
+		return (*string)(unsafe.Pointer(&r.TurnID))
+	case 5:
+		return &r.Title
+	case 6:
+		return (*string)(unsafe.Pointer(&r.TitleSource))
+	case 7:
+		return &r.Version
+	case 8:
+		return &r.CreatedAt
+	case 9:
+		return &r.UpdatedAt
+	case 10:
+		return &r.StartSequence
+	case 11:
+		return &r.StartedAt
+	}
+	return nil
+}
+
+func valueChapter(p unsafe.Pointer, c int32) any {
+	r := (*conversation.Chapter)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return string(r.ThreadID)
+	case 4:
+		return string(r.TurnID)
+	case 5:
+		return r.Title
+	case 6:
+		return string(r.TitleSource)
+	case 7:
+		return r.Version
+	case 8:
+		return r.CreatedAt
+	case 9:
+		return r.UpdatedAt
+	case 10:
+		if r.StartSequence == nil {
+			return nil
+		}
+		return *r.StartSequence
+	case 11:
+		if r.StartedAt == 0 {
+			return nil
+		}
+		return r.StartedAt
+	}
+	return nil
+}
+
 // messagesTable is the schema of conversation.Message.
 var messagesTable = schema.Table{
 	Name:   "assistant_messages",
@@ -287,6 +469,7 @@ var messagesTable = schema.Table{
 		{Name: "thread_id", Quoted: `"thread_id"`, Field: "ThreadID", Kind: schema.KindString, Flags: 0, Label: `Thread ID`, JSON: `threadId`},
 		{Name: "sequence", Quoted: `"sequence"`, Field: "Sequence", Kind: schema.KindInt64, Flags: 0, Label: `Sequence`, Doc: `Sequence orders messages within a thread without relying on a timestamp, which can collide inside a single fast tool loop.`, JSON: `sequence`},
 		{Name: "role", Quoted: `"role"`, Field: "Role", Kind: schema.KindString, Flags: 0, Label: `Role`, JSON: `role`, Enum: enumRole[:]},
+		{Name: "turn_id", Quoted: `"turn_id"`, Field: "TurnID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Turn ID`, Doc: `TurnID is the turn that saved the message, which is where a chapter that turn opened starts. Empty on cards written outside a turn.`, JSON: `turnId`},
 		{Name: "kind", Quoted: `"kind"`, Field: "Kind", Kind: schema.KindString, Flags: 0, Label: `Kind`, Doc: `Kind is Message for everything but the note that starts the turn after a decision and the steps of another agent the turn handed work to; see MessageKind.`, JSON: `kind`, Enum: enumMessageKind[:]},
 		{Name: "agent_definition_id", Quoted: `"agent_definition_id"`, Field: "AgentDefinitionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Agent Definition ID`, Doc: `AgentDefinitionID and DelegateCallID mark a step another agent took on a task this conversation's agent handed it: which agent, and the delegate_task call it answers. Both are empty on the conversation's own messages. AgentName, AgentIcon and AgentAccent are the agent's name and mark as the thread is served.`, JSON: `agentId`},
 		{Name: "delegate_call_id", Quoted: `"delegate_call_id"`, Field: "DelegateCallID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Delegate Call ID`, JSON: `delegateCallId`},
@@ -332,13 +515,13 @@ var messagesTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44},
 	Returning:    nil,
 	Version:      -1,
 	AutoID:       0,
-	AutoCreate:   44,
+	AutoCreate:   45,
 	AutoUpdate:   -1,
 	IDPrefix:     "amsg_",
 	New:          newMessage,
@@ -361,6 +544,7 @@ type MessagesTable struct {
 	ThreadID          keelkinds.PulidIDCol
 	Sequence          keel.Int64Col
 	Role              RoleCol
+	TurnID            keelkinds.PulidIDCol
 	Kind              MessageKindCol
 	AgentDefinitionID keelkinds.PulidIDCol
 	DelegateCallID    keel.StringCol
@@ -411,45 +595,46 @@ var Messages = &MessagesTable{
 	ThreadID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 3}}},
 	Sequence:          keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 4}},
 	Role:              RoleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 5}}},
-	Kind:              MessageKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 6}}},
-	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 7}}},
-	DelegateCallID:    keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 8}},
-	DelegateReport:    keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 9}},
-	ScheduleID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 10}}},
-	ProposalID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 11}}},
-	Handoff:           keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 12}},
-	Content:           keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 13}},
-	WorldChanges:      keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 14}},
-	Compaction:        keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 15}},
-	ToolCalls:         keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 16}},
-	ToolCallID:        keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 17}},
-	ToolName:          keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 18}},
-	ToolFailed:        keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 19}},
-	ToolVerdict:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 20}},
-	ToolSummary:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 21}},
-	FoundTools:        keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 22}},
-	HandOffAgents:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 23}},
-	ScopeStage:        keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 24}},
-	ScopeCategory:     keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 25}},
-	ScopeReason:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 26}},
-	Refused:           keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 27}},
-	PageContext:       keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 28}},
-	Attachments:       keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 29}},
-	Mentions:          keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 30}},
-	Reasoning:         keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 31}},
-	Model:             keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 32}},
-	Truncated:         keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 33}},
-	FallbackFrom:      keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 34}},
-	Failure:           keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 35}},
-	ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 36}}},
-	InputTokens:       keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 37}},
-	OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 38}},
-	ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 39}},
-	LatencyMs:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 40}},
-	CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &messagesRef, Index: 41}}},
-	UsedMemoryIDs:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 42}},
-	SavedMemories:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 43}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 44}},
+	TurnID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 6}}},
+	Kind:              MessageKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 7}}},
+	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 8}}},
+	DelegateCallID:    keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 9}},
+	DelegateReport:    keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 10}},
+	ScheduleID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 11}}},
+	ProposalID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 12}}},
+	Handoff:           keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 13}},
+	Content:           keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 14}},
+	WorldChanges:      keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 15}},
+	Compaction:        keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 16}},
+	ToolCalls:         keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 17}},
+	ToolCallID:        keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 18}},
+	ToolName:          keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 19}},
+	ToolFailed:        keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 20}},
+	ToolVerdict:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 21}},
+	ToolSummary:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 22}},
+	FoundTools:        keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 23}},
+	HandOffAgents:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 24}},
+	ScopeStage:        keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 25}},
+	ScopeCategory:     keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 26}},
+	ScopeReason:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 27}},
+	Refused:           keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 28}},
+	PageContext:       keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 29}},
+	Attachments:       keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 30}},
+	Mentions:          keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 31}},
+	Reasoning:         keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 32}},
+	Model:             keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 33}},
+	Truncated:         keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 34}},
+	FallbackFrom:      keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 35}},
+	Failure:           keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 36}},
+	ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 37}}},
+	InputTokens:       keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 38}},
+	OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 39}},
+	ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 40}},
+	LatencyMs:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 41}},
+	CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &messagesRef, Index: 42}}},
+	UsedMemoryIDs:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 43}},
+	SavedMemories:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 44}},
+	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 45}},
 }
 
 // BuildMessages builds the handle of assistant_messages for ref. Generated relation and alias methods call it.
@@ -462,45 +647,46 @@ func BuildMessages(r *keel.Ref) *MessagesTable {
 		ThreadID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Sequence:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		Role:              RoleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Kind:              MessageKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		DelegateCallID:    keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		DelegateReport:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
-		ScheduleID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		ProposalID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		Handoff:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
-		Content:           keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		WorldChanges:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
-		Compaction:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
-		ToolCalls:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
-		ToolCallID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		ToolName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
-		ToolFailed:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 19}},
-		ToolVerdict:       keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		ToolSummary:       keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
-		FoundTools:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 22}},
-		HandOffAgents:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 23}},
-		ScopeStage:        keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
-		ScopeCategory:     keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
-		ScopeReason:       keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
-		Refused:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 27}},
-		PageContext:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 28}},
-		Attachments:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 29}},
-		Mentions:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 30}},
-		Reasoning:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 31}},
-		Model:             keel.StringCol{Col: keel.Col{Ref: r, Index: 32}},
-		Truncated:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 33}},
-		FallbackFrom:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 34}},
-		Failure:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 35}},
-		ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 36}}},
-		InputTokens:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
-		OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
-		ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: r, Index: 39}},
-		LatencyMs:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
-		CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 41}}},
-		UsedMemoryIDs:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 42}},
-		SavedMemories:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 43}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 44}},
+		TurnID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Kind:              MessageKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		DelegateCallID:    keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
+		DelegateReport:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
+		ScheduleID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		ProposalID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Handoff:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 13}},
+		Content:           keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
+		WorldChanges:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
+		Compaction:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
+		ToolCalls:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 17}},
+		ToolCallID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
+		ToolName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
+		ToolFailed:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 20}},
+		ToolVerdict:       keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
+		ToolSummary:       keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
+		FoundTools:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 23}},
+		HandOffAgents:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 24}},
+		ScopeStage:        keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
+		ScopeCategory:     keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
+		ScopeReason:       keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
+		Refused:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 28}},
+		PageContext:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 29}},
+		Attachments:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 30}},
+		Mentions:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 31}},
+		Reasoning:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 32}},
+		Model:             keel.StringCol{Col: keel.Col{Ref: r, Index: 33}},
+		Truncated:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 34}},
+		FallbackFrom:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 35}},
+		Failure:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 36}},
+		ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 37}}},
+		InputTokens:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
+		OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
+		ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: r, Index: 40}},
+		LatencyMs:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
+		CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 42}}},
+		UsedMemoryIDs:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 43}},
+		SavedMemories:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 44}},
+		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 45}},
 	}
 }
 
@@ -542,82 +728,84 @@ func ptrMessage(p unsafe.Pointer, c int32) any {
 	case 5:
 		return (*string)(unsafe.Pointer(&r.Role))
 	case 6:
-		return (*string)(unsafe.Pointer(&r.Kind))
+		return (*string)(unsafe.Pointer(&r.TurnID))
 	case 7:
-		return (*string)(unsafe.Pointer(&r.AgentDefinitionID))
+		return (*string)(unsafe.Pointer(&r.Kind))
 	case 8:
-		return &r.DelegateCallID
+		return (*string)(unsafe.Pointer(&r.AgentDefinitionID))
 	case 9:
-		return &r.DelegateReport
+		return &r.DelegateCallID
 	case 10:
-		return (*string)(unsafe.Pointer(&r.ScheduleID))
+		return &r.DelegateReport
 	case 11:
-		return (*string)(unsafe.Pointer(&r.ProposalID))
+		return (*string)(unsafe.Pointer(&r.ScheduleID))
 	case 12:
-		return &r.Handoff
+		return (*string)(unsafe.Pointer(&r.ProposalID))
 	case 13:
-		return &r.Content
+		return &r.Handoff
 	case 14:
-		return &r.WorldChanges
+		return &r.Content
 	case 15:
-		return &r.Compaction
+		return &r.WorldChanges
 	case 16:
-		return &r.ToolCalls
+		return &r.Compaction
 	case 17:
-		return &r.ToolCallID
+		return &r.ToolCalls
 	case 18:
-		return &r.ToolName
+		return &r.ToolCallID
 	case 19:
-		return &r.ToolFailed
+		return &r.ToolName
 	case 20:
-		return &r.ToolVerdict
+		return &r.ToolFailed
 	case 21:
-		return &r.ToolSummary
+		return &r.ToolVerdict
 	case 22:
-		return &r.FoundTools
+		return &r.ToolSummary
 	case 23:
-		return &r.HandOffAgents
+		return &r.FoundTools
 	case 24:
-		return &r.ScopeStage
+		return &r.HandOffAgents
 	case 25:
-		return &r.ScopeCategory
+		return &r.ScopeStage
 	case 26:
-		return &r.ScopeReason
+		return &r.ScopeCategory
 	case 27:
-		return &r.Refused
+		return &r.ScopeReason
 	case 28:
-		return &r.PageContext
+		return &r.Refused
 	case 29:
-		return &r.Attachments
+		return &r.PageContext
 	case 30:
-		return &r.Mentions
+		return &r.Attachments
 	case 31:
-		return &r.Reasoning
+		return &r.Mentions
 	case 32:
-		return &r.Model
+		return &r.Reasoning
 	case 33:
-		return &r.Truncated
+		return &r.Model
 	case 34:
-		return &r.FallbackFrom
+		return &r.Truncated
 	case 35:
-		return &r.Failure
+		return &r.FallbackFrom
 	case 36:
-		return (*string)(unsafe.Pointer(&r.ProviderID))
+		return &r.Failure
 	case 37:
-		return (*int64)(unsafe.Pointer(&r.InputTokens))
+		return (*string)(unsafe.Pointer(&r.ProviderID))
 	case 38:
-		return (*int64)(unsafe.Pointer(&r.OutputTokens))
+		return (*int64)(unsafe.Pointer(&r.InputTokens))
 	case 39:
-		return &r.ProviderMessageID
+		return (*int64)(unsafe.Pointer(&r.OutputTokens))
 	case 40:
-		return &r.LatencyMs
+		return &r.ProviderMessageID
 	case 41:
-		return &r.CostUSD
+		return &r.LatencyMs
 	case 42:
-		return &r.UsedMemoryIDs
+		return &r.CostUSD
 	case 43:
-		return &r.SavedMemories
+		return &r.UsedMemoryIDs
 	case 44:
+		return &r.SavedMemories
+	case 45:
 		return &r.CreatedAt
 	}
 	return nil
@@ -639,178 +827,183 @@ func valueMessage(p unsafe.Pointer, c int32) any {
 	case 5:
 		return string(r.Role)
 	case 6:
-		return string(r.Kind)
+		if r.TurnID == "" {
+			return nil
+		}
+		return string(r.TurnID)
 	case 7:
+		return string(r.Kind)
+	case 8:
 		if r.AgentDefinitionID == "" {
 			return nil
 		}
 		return string(r.AgentDefinitionID)
-	case 8:
+	case 9:
 		if r.DelegateCallID == "" {
 			return nil
 		}
 		return r.DelegateCallID
-	case 9:
+	case 10:
 		if r.DelegateReport == nil {
 			return nil
 		}
 		return *r.DelegateReport
-	case 10:
+	case 11:
 		if r.ScheduleID == "" {
 			return nil
 		}
 		return string(r.ScheduleID)
-	case 11:
+	case 12:
 		if r.ProposalID == "" {
 			return nil
 		}
 		return string(r.ProposalID)
-	case 12:
+	case 13:
 		if r.Handoff == nil {
 			return nil
 		}
 		return *r.Handoff
-	case 13:
+	case 14:
 		if r.Content == "" {
 			return nil
 		}
 		return r.Content
-	case 14:
+	case 15:
 		if r.WorldChanges == nil {
 			return nil
 		}
 		return r.WorldChanges
-	case 15:
+	case 16:
 		if r.Compaction == nil {
 			return nil
 		}
 		return *r.Compaction
-	case 16:
+	case 17:
 		if r.ToolCalls == nil {
 			return nil
 		}
 		return r.ToolCalls
-	case 17:
+	case 18:
 		if r.ToolCallID == "" {
 			return nil
 		}
 		return r.ToolCallID
-	case 18:
+	case 19:
 		if r.ToolName == "" {
 			return nil
 		}
 		return r.ToolName
-	case 19:
-		return r.ToolFailed
 	case 20:
+		return r.ToolFailed
+	case 21:
 		if r.ToolVerdict == "" {
 			return nil
 		}
 		return r.ToolVerdict
-	case 21:
+	case 22:
 		if r.ToolSummary == "" {
 			return nil
 		}
 		return r.ToolSummary
-	case 22:
+	case 23:
 		if r.FoundTools == nil {
 			return nil
 		}
 		return r.FoundTools
-	case 23:
+	case 24:
 		if r.HandOffAgents == nil {
 			return nil
 		}
 		return r.HandOffAgents
-	case 24:
+	case 25:
 		if r.ScopeStage == "" {
 			return nil
 		}
 		return r.ScopeStage
-	case 25:
+	case 26:
 		if r.ScopeCategory == "" {
 			return nil
 		}
 		return r.ScopeCategory
-	case 26:
+	case 27:
 		if r.ScopeReason == "" {
 			return nil
 		}
 		return r.ScopeReason
-	case 27:
-		return r.Refused
 	case 28:
+		return r.Refused
+	case 29:
 		if r.PageContext == nil {
 			return nil
 		}
 		return *r.PageContext
-	case 29:
+	case 30:
 		if r.Attachments == nil {
 			return nil
 		}
 		return r.Attachments
-	case 30:
+	case 31:
 		if r.Mentions == nil {
 			return nil
 		}
 		return r.Mentions
-	case 31:
+	case 32:
 		if r.Reasoning == nil {
 			return nil
 		}
 		return *r.Reasoning
-	case 32:
+	case 33:
 		if r.Model == "" {
 			return nil
 		}
 		return r.Model
-	case 33:
-		return r.Truncated
 	case 34:
+		return r.Truncated
+	case 35:
 		if r.FallbackFrom == nil {
 			return nil
 		}
 		return *r.FallbackFrom
-	case 35:
+	case 36:
 		if r.Failure == nil {
 			return nil
 		}
 		return *r.Failure
-	case 36:
+	case 37:
 		if r.ProviderID == "" {
 			return nil
 		}
 		return string(r.ProviderID)
-	case 37:
-		return int64(r.InputTokens)
 	case 38:
-		return int64(r.OutputTokens)
+		return int64(r.InputTokens)
 	case 39:
+		return int64(r.OutputTokens)
+	case 40:
 		if r.ProviderMessageID == "" {
 			return nil
 		}
 		return r.ProviderMessageID
-	case 40:
+	case 41:
 		if r.LatencyMs == 0 {
 			return nil
 		}
 		return r.LatencyMs
-	case 41:
+	case 42:
 		if r.CostUSD == nil {
 			return nil
 		}
 		return *r.CostUSD
-	case 42:
+	case 43:
 		if r.UsedMemoryIDs == nil {
 			return nil
 		}
 		return r.UsedMemoryIDs
-	case 43:
+	case 44:
 		if r.SavedMemories == nil {
 			return nil
 		}
 		return r.SavedMemories
-	case 44:
+	case 45:
 		return r.CreatedAt
 	}
 	return nil
@@ -1440,6 +1633,13 @@ var enumAssistantTurnStatus = [...]schema.EnumValue{
 	{Value: `Failed`, Label: `Failed`},
 }
 
+var enumChapterTitleSource = [...]schema.EnumValue{
+	{Value: `Model`, Label: `Chapter Title Model`},
+	{Value: `Question`, Label: `Chapter Title Question`},
+	{Value: `Person`, Label: `Chapter Title Person`},
+	{Value: `Schedule`, Label: `Chapter Title Schedule`},
+}
+
 var enumDeskcaseSnoozeAnchor = [...]schema.EnumValue{
 	{Value: `Time`, Label: `Snooze Time`},
 	{Value: `Appointment`, Label: `Snooze Appointment`},
@@ -1551,6 +1751,43 @@ func (c AssistantTurnStatusCol) In(vs ...conversation.AssistantTurnStatus) keel.
 	return c.StringCol.In(keel.Strings(vs)...)
 }
 func (c AssistantTurnStatusCol) NotIn(vs ...conversation.AssistantTurnStatus) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// ChapterTitleSourceCol is a column of conversation.ChapterTitleSource values.
+type ChapterTitleSourceCol struct{ keel.StringCol }
+
+func (c ChapterTitleSourceCol) Eq(v conversation.ChapterTitleSource) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c ChapterTitleSourceCol) Ne(v conversation.ChapterTitleSource) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c ChapterTitleSourceCol) Gt(v conversation.ChapterTitleSource) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c ChapterTitleSourceCol) Gte(v conversation.ChapterTitleSource) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c ChapterTitleSourceCol) Lt(v conversation.ChapterTitleSource) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c ChapterTitleSourceCol) Lte(v conversation.ChapterTitleSource) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c ChapterTitleSourceCol) IsDistinctFrom(v conversation.ChapterTitleSource) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c ChapterTitleSourceCol) Between(lo, hi conversation.ChapterTitleSource) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c ChapterTitleSourceCol) To(v conversation.ChapterTitleSource) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c ChapterTitleSourceCol) In(vs ...conversation.ChapterTitleSource) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c ChapterTitleSourceCol) NotIn(vs ...conversation.ChapterTitleSource) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 

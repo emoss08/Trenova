@@ -265,7 +265,6 @@
   "Write a tariff for this rating method: {0}": "Escriba una tarifa para este método de tarificación: {0}",
   "Write the tariff and its bill appears here as you type.": "Escriba la tarifa y su factura aparecerá aquí a medida que escribe.",
   "Writing tests for the tariff's edges and running them…": "Escribiendo pruebas para los casos límite de la tarifa y ejecutándolas…",
-  "Writing…": "Escribiendo…",
   "Your organization has no templates yet.": "Su organización aún no tiene plantillas.",
   "Your rate tables, charge codes and libraries could not be loaded, so the check cannot see them yet.": "No se pudieron cargar sus tablas de tarifas, códigos de cargo y bibliotecas, así que la verificación todavía no puede verlos.",
   "Your templates": "Sus plantillas",

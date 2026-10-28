@@ -89,7 +89,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 267 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 53 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 107 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 110 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 52 |
@@ -97,23 +97,23 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1168 writes: 640 GraphQL mutations and 528 REST writes, after merging 71 REST routes into the mutation they duplicate.
+1171 writes: 640 GraphQL mutations and 531 REST writes, after merging 71 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 460 |
-| Exempt | 707 |
+| Exempt | 710 |
 | — Security | 87 |
 | — Configuration | 267 |
 | — User preference | 40 |
 | — Infrastructure | 53 |
-| — Agent administration | 107 |
+| — Agent administration | 110 |
 | — Counterparty | 35 |
 | — Read-only | 56 |
 | — Attestation | 52 |
 | — Duplicate | 10 |
 | **Pending** | **1** |
-| Total | 1168 |
+| Total | 1171 |
 
 Of the 461 writes an agent should be able to make, 460 have a tool (99%).
 
@@ -149,7 +149,7 @@ The writes no tool performs yet, and what the tool would do.
 | airetrieval | 2 | 0 | 2 | 0 |
 | apikey | 4 | 0 | 4 | 0 |
 | assignment | 1 | 0 | 1 | 0 |
-| assistant | 33 | 4 | 29 | 0 |
+| assistant | 36 | 4 | 32 | 0 |
 | auth | 8 | 0 | 8 | 0 |
 | bankreceipt | 2 | 1 | 1 | 0 |
 | bankreceiptbatch | 1 | 0 | 1 | 0 |
@@ -551,9 +551,11 @@ Tools that change something no person-facing write does, such as sending a messa
 | `DELETE /api/v1/assistant/schedules/:scheduleID/`<br>assistanthandler.deleteSchedule | Exempt, agent-administration: Editing, pausing, deleting or running a schedule now is the person arranging what they asked an agent to repeat; an agent only proposes a new schedule, through agent_create_schedule, and a person approves it, so it never sets its own workload. |
 | `DELETE /api/v1/assistant/threads/:threadID/`<br>assistanthandler.deleteThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `DELETE /api/v1/assistant/threads/:threadID/case/`<br>assistanthandler.unbindCase | Exempt, agent-administration: A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on. |
+| `DELETE /api/v1/assistant/threads/:threadID/chapters/:chapterID/`<br>assistanthandler.removeChapter | Exempt, agent-administration: Chapters arrange the person's own conversation: where one subject ends and what it is called. The runtime marks and names them on its own, and no record an agent acts on changes. |
 | `DELETE /api/v1/assistant/threads/:threadID/queue/:itemID/`<br>assistanthandler.removeQueued | Exempt, agent-administration: Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words. |
 | `PATCH /api/v1/assistant/schedules/:scheduleID/`<br>assistanthandler.updateSchedule | Exempt, agent-administration: Editing, pausing, deleting or running a schedule now is the person arranging what they asked an agent to repeat; an agent only proposes a new schedule, through agent_create_schedule, and a person approves it, so it never sets its own workload. |
 | `PATCH /api/v1/assistant/threads/:threadID/`<br>assistanthandler.updateThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `PATCH /api/v1/assistant/threads/:threadID/chapters/:chapterID/`<br>assistanthandler.renameChapter | Exempt, agent-administration: Chapters arrange the person's own conversation: where one subject ends and what it is called. The runtime marks and names them on its own, and no record an agent acts on changes. |
 | `PATCH /api/v1/assistant/threads/:threadID/queue/:itemID/`<br>assistanthandler.editQueued | Exempt, agent-administration: Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words. |
 | `POST /api/v1/assistant/ask/`<br>assistanthandler.ask | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/schedules/:scheduleID/run/`<br>assistanthandler.runSchedule | Exempt, agent-administration: Editing, pausing, deleting or running a schedule now is the person arranging what they asked an agent to repeat; an agent only proposes a new schedule, through agent_create_schedule, and a person approves it, so it never sets its own workload. |
@@ -567,6 +569,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/assistant/threads/:threadID/case/snooze/`<br>assistanthandler.snoozeCase | Exempt, agent-administration: A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on. |
 | `POST /api/v1/assistant/threads/:threadID/case/ticks/`<br>assistanthandler.tickCaseItem | Exempt, agent-administration: A tick on a step the organization added for a person to tick is that person's word that it was done; an agent ticking it would vouch for itself. |
 | `POST /api/v1/assistant/threads/:threadID/case/wake/`<br>assistanthandler.wakeCase | Exempt, agent-administration: A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on. |
+| `POST /api/v1/assistant/threads/:threadID/chapters/`<br>assistanthandler.openChapter | Exempt, agent-administration: Chapters arrange the person's own conversation: where one subject ends and what it is called. The runtime marks and names them on its own, and no record an agent acts on changes. |
 | `POST /api/v1/assistant/threads/:threadID/compact/`<br>assistanthandler.compactThread | Exempt, agent-administration: Compacting a conversation manages the agent's own context window; the runtime compacts on its own limits and no record changes. |
 | `POST /api/v1/assistant/threads/:threadID/handoff/`<br>assistanthandler.handoff | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/threads/:threadID/messages/`<br>assistanthandler.sendMessage | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |

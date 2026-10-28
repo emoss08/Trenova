@@ -279,6 +279,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
+				Name:     "autoChaptersOff",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.AgentControl)
+					return obj.AutoChaptersOff, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:       "agentMoneyCallCeiling",
 				NonNull:    true,
 				IsResolver: true,
@@ -4882,7 +4892,7 @@ func unmarshalInputAgentControlInput(ctx context.Context, ec *gqlexec.Exec, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"shadowMode", "earnedAutonomy", "promotionThreshold", "aiTrainingConsent", "personMonthlyMessages", "learningOff", "agentMoneyCallCeiling", "agentMoneyRunCalls", "agentMoneyRunAmount", "agentMoneyDayCalls", "agentMoneyDayAmount", "version"}
+	fieldsInOrder := [...]string{"shadowMode", "earnedAutonomy", "promotionThreshold", "aiTrainingConsent", "personMonthlyMessages", "learningOff", "autoChaptersOff", "agentMoneyCallCeiling", "agentMoneyRunCalls", "agentMoneyRunAmount", "agentMoneyDayCalls", "agentMoneyDayAmount", "version"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4931,6 +4941,13 @@ func unmarshalInputAgentControlInput(ctx context.Context, ec *gqlexec.Exec, obj 
 				return it, err
 			}
 			it.LearningOff = data
+		case "autoChaptersOff":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoChaptersOff"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoChaptersOff = data
 		case "agentMoneyCallCeiling":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("agentMoneyCallCeiling"))
 			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)

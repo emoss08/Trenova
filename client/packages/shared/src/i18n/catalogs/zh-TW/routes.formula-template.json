@@ -265,7 +265,6 @@
   "Write a tariff for this rating method: {0}": "為此計價方式撰寫運價表：{0}",
   "Write the tariff and its bill appears here as you type.": "撰寫運價表，帳單會在您輸入時顯示在此。",
   "Writing tests for the tariff's edges and running them…": "正在為運價表的邊界情況撰寫並執行測試…",
-  "Writing…": "正在撰寫…",
   "Your organization has no templates yet.": "您的組織尚無範本。",
   "Your rate tables, charge codes and libraries could not be loaded, so the check cannot see them yet.": "無法載入您的費率表、費用代碼與公式庫，因此檢查暫時無法讀取它們。",
   "Your templates": "您的範本",

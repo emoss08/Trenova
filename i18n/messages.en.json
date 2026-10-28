@@ -4330,6 +4330,33 @@
       "routes/shipment"
     ]
   },
+  "A chapter needs a title": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A chapter starts where a question was asked, and this message was not part of one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A chapter title can be at most 60 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A charge": {
     "sites": 2,
     "scope": [
@@ -33106,6 +33133,15 @@
       "go/other"
     ]
   },
+  "As a conversation moves from one subject to the next, a small model starts a chapter and names it in a few words, so a long conversation can be read and searched by subject. It is one short call per question on the cheapest model you route it to, and its cost shows under Desk chapters in usage. People can still start and name chapters themselves when it is off, and scheduled runs still open a chapter of their own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "As drivers complete their moves (or the shipment reaches your pay trigger), each assigned driver earns a pay event computed from their pay profile plus any driver-specific overrides.": {
     "sites": 1,
     "scope": [
@@ -33845,6 +33881,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Ask whether the question starts a chapter and what to call it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Ask you to approve": {
@@ -45203,7 +45248,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 140,
+    "sites": 141,
     "scope": [
       "go"
     ],
@@ -52079,13 +52124,58 @@
       "go/other"
     ]
   },
-  "Chapter {0}": {
+  "Chapter actions": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/desk"
+    ]
+  },
+  "Chapter not found in this conversation": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Chapter title": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Chapters": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Chapters are named by the Desk's own model": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Chapters are not available here": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Characters drawn from each selected attribute (1–10).": {
@@ -63572,12 +63662,13 @@
     ]
   },
   "Continue in a new conversation": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Continue manual entry": {
@@ -64337,7 +64428,7 @@
     ]
   },
   "Conversation is required": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -70445,6 +70536,15 @@
       "routes/invoice"
     ]
   },
+  "Current chapter title": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Current clocks": {
     "sites": 2,
     "scope": [
@@ -74515,6 +74615,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Decide whether a Desk question starts a new chapter and name it in a few words.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Decide whether a chat message is about this organization's freight at all.": {
@@ -79108,6 +79217,18 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Desk chapters": {
+    "sites": 3,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "api/handlers",
+      "apps/web/lib",
+      "routes/agent-control"
     ]
   },
   "Desk conversation": {
@@ -84534,6 +84655,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Double-click to rename": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Double-entry journal headers, their approval state, and their reversals": {
@@ -118078,6 +118208,15 @@
       "routes/desk"
     ]
   },
+  "Hand off this chapter": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Hand off to": {
     "sites": 2,
     "scope": [
@@ -134208,6 +134347,15 @@
       "packages/shared/types"
     ]
   },
+  "Keep the conversation's chapters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Keep the default unless Postmark changes the API endpoint.": {
     "sites": 1,
     "scope": [
@@ -147755,6 +147903,15 @@
       "routes/factoring-submission"
     ]
   },
+  "Mark and name the chapters of a conversation as each question is asked and answered": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Mark as read": {
     "sites": 3,
     "scope": [
@@ -150631,6 +150788,15 @@
       "go/other"
     ]
   },
+  "Merge into the chapter above": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Message": {
     "sites": 13,
     "scope": [
@@ -150752,6 +150918,15 @@
   },
   "Message is required": {
     "sites": 7,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Message not found in this conversation": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -155453,6 +155628,15 @@
     "areas": [
       "routes/admin",
       "routes/reports"
+    ]
+  },
+  "Name Desk chapters": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Name a location category from location_list_categories": {
@@ -175207,7 +175391,7 @@
     ]
   },
   "Off": {
-    "sites": 37,
+    "sites": 38,
     "scope": [
       "ts"
     ],
@@ -175963,7 +176147,7 @@
     ]
   },
   "On": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "ts"
     ],
@@ -184417,7 +184601,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 139,
+    "sites": 140,
     "scope": [
       "go"
     ],
@@ -195301,15 +195485,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Pin as chapter": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Pin comments to the top of a shipment": {
@@ -208039,6 +208214,15 @@
       "routes/admin"
     ]
   },
+  "Read what a turn means for the conversation's chapters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Read what changed in every syncing accounting system and bring payments in": {
     "sites": 1,
     "scope": [
@@ -215788,6 +215972,15 @@
       "routes/admin"
     ]
   },
+  "Remove chapter": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Remove charge": {
     "sites": 2,
     "scope": [
@@ -216612,12 +216805,13 @@
     ]
   },
   "Rename": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/edi",
       "routes/inbox"
     ]
@@ -250160,6 +250354,15 @@
       "go/other"
     ]
   },
+  "Start a chapter here": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Start a checklist": {
     "sites": 1,
     "scope": [
@@ -251132,6 +251335,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Starts from this chapter alone": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Starts from what step {0} leaves": {
@@ -264639,6 +264851,15 @@
       "go/other"
     ]
   },
+  "The conversation just before": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The conversation no longer holds the question that led here": {
     "sites": 1,
     "scope": [
@@ -271342,6 +271563,15 @@
       "go/other"
     ]
   },
+  "The message that opens the chapter": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The message's mailbox no longer exists": {
     "sites": 2,
     "scope": [
@@ -273445,6 +273675,15 @@
     ]
   },
   "The person's administrator manages this home page, so it cannot be changed here": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The person's new message": {
     "sites": 1,
     "scope": [
       "go"
@@ -278190,6 +278429,15 @@
     ]
   },
   "The start date cannot move once opening balances are sent, because they hold every balance up to it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The start of the agent's reply": {
     "sites": 1,
     "scope": [
       "go"
@@ -283548,6 +283796,24 @@
       "routes/formula-template"
     ]
   },
+  "This chapter has nothing saved in it yet. Wait for its reply to finish.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This chapter was renamed since you opened it. Read its new title and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This charge bills {0} detained stops. Open a claim file:": {
     "sites": 1,
     "scope": [
@@ -283782,6 +284048,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "This conversation has as many chapters as it can hold. Merge some before starting another.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This conversation has reached its limit of {0} messages. Start a new conversation to continue": {
@@ -296767,6 +297042,15 @@
       "go/other"
     ]
   },
+  "Turn is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Turn it off to keep the site and its history without agents using it.": {
     "sites": 1,
     "scope": [
@@ -299067,6 +299351,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Unknown chapter title source": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Unknown comparison": {
     "sites": 1,
     "scope": [
@@ -299849,15 +300142,6 @@
       "apps/web/components"
     ]
   },
-  "Unpin chapter": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Unpin comment": {
     "sites": 1,
     "scope": [
@@ -300475,7 +300759,7 @@
     ]
   },
   "Untitled conversation": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -319895,11 +320179,12 @@
     ]
   },
   "Writing…": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/formula-template"
     ]
   },
@@ -336303,6 +336588,15 @@
       "routes/formula-template"
     ]
   },
+  "{0, plural, one {# chapter} other {# chapters}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# charge waits on approval} other {# charges wait on approval}}": {
     "sites": 1,
     "scope": [
@@ -337797,6 +338091,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "{0, plural, one {# made} other {# made}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# match} other {# matches}}": {
@@ -339825,6 +340128,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# to decide} other {# to decide}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# to index} other {# to index}}": {
     "sites": 1,
     "scope": [
@@ -340017,11 +340329,12 @@
     ]
   },
   "{0, plural, one {# waiting} other {# waiting}}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/inbox"
     ]
   },

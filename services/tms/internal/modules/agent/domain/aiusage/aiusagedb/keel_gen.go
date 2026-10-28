@@ -546,6 +546,7 @@ var enumAiproviderTask = [...]schema.EnumValue{
 	{Value: `OperationalInsights`, Label: `Operational Insights`, Doc: `TaskOperationalInsights writes the prose on a home-screen insight. It never produces a number, a severity or a link — those are computed before it runs and checked after it — so it is safe to route to whatever is cheapest.`},
 	{Value: `DailyBriefing`, Label: `Daily Briefing`, Doc: `TaskDailyBriefing writes the morning page from figures already gathered. Like the insight narration it produces only wording, and every number it writes is checked against those figures afterwards, so it is safe to route wherever is cheapest.`},
 	{Value: `QueryCompose`, Label: `Query Compose`, Doc: `TaskQueryCompose turns a sentence into a table's filters. It names fields and values from a catalogue it is shown and writes no SQL; everything it names is compiled against that catalogue afterwards, so a cheap model that guesses wrong produces an unresolved line rather than a wrong answer.`},
+	{Value: `ChapterTitling`, Label: `Chapter Titling`, Doc: `TaskChapterTitling decides whether a Desk question starts a new chapter and names it in a few words. It runs once per question on a short prompt and its answer is cleaned and checked against the conversation afterwards, so the cheapest fast model is the right one.`},
 	{Value: `InboundClassification`, Label: `Inbound Classification`, Doc: `TaskInboundClassification decides what an email that arrived actually is. Like the other classifiers it answers with a label from a fixed set, and the label is re-checked against that set afterwards — a model that invents a category produces a message for a person, not a new kind of work.`},
 	{Value: `AccountingMapping`, Label: `Accounting Mapping`},
 	{Value: `RemittanceExtraction`, Label: `Remittance Extraction`, Doc: `TaskRemittanceExtraction reads the lines of a factor's PDF remittance. It is kept apart from DocumentExtraction because the fine-tuned extraction model, its shadow runs and its training data all key on that task, and a remittance is not the kind of document they were built for. What it reads is matched to schedule items and a person applies it, so it never books anything on its own.`},
@@ -569,6 +570,7 @@ var enumFeature = [...]schema.EnumValue{
 	{Value: `AgentDrafting`, Label: `Agent Drafting`},
 	{Value: `AgentProfile`, Label: `Agent Profile`},
 	{Value: `AgentRecommendation`, Label: `Agent Recommendation`},
+	{Value: `ConversationChapters`, Label: `Conversation Chapters`},
 }
 
 var enumSubjectType = [...]schema.EnumValue{

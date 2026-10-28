@@ -1,5 +1,5 @@
 {
-  "version": "sha256:c4e80be626be128e3b7a48aed0bd0c23c4ca986e39837ac274d753ab9d1ee67a",
+  "version": "sha256:b369a3d595f99f96d0ad0254dab80b83560fef545b92074e7ca79743cfad39b3",
   "modules": [
     {
       "id": "home",
@@ -3281,6 +3281,21 @@
             "Select **Memory**. **What agents learned** lists the latest times an agent looked back over its work: what made it look (a tool that worked after failing, a person correcting it, a proposal changed or refused, a reply rated unhelpful, a long task in a conversation) and each lesson it kept, offered or turned down, with the reason.",
             "A lesson shared beyond one person waits under **Waiting for approval**, with the memory it would retire. Select **Approve** to keep it as written, **Edit** to reword it first, or **Dismiss**.",
             "Open any memory in the list to see **Where it came from**: why it was kept, what made the agent look back, what was said, the conversation or run it was drawn from, and the memory it replaces or that has replaced it."
+          ]
+        },
+        {
+          "title": "Turn Desk chapter names on or off",
+          "keywords": [
+            "chapters",
+            "chapter titles",
+            "name chapters",
+            "desk chapters",
+            "conversation outline"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) on **Overview**. In **Organization-wide**, select **Edit** and turn **Name Desk chapters** on or off, then save. It is on unless someone turned it off.",
+            "While it is on, a small model starts a chapter as a Desk conversation turns to a new subject and names it in a few words. It is one short call per question, and its cost shows as **Desk chapters** in usage. To choose the model, assign **Desk chapters** to a provider under **Routing**; without one it uses the model that answers the Desk.",
+            "While it is off, people can still start and name chapters themselves, and requests run on a schedule still open a chapter of their own."
           ]
         }
       ],
@@ -10070,13 +10085,17 @@
             "schedule",
             "recurring",
             "every morning",
+            "every day",
+            "everyday",
+            "daily",
             "every weekday",
             "every Monday",
             "daily report",
-            "run automatically"
+            "run automatically",
+            "schedule this"
           ],
           "steps": [
-            "In a conversation on [Desk](/desk), send a message that starts with when it should run, then what to ask. For example: \"every weekday at 7:30am, list shipments still not dispatched for today\". You can also type /schedule, then the when and the request.",
+            "In a conversation on [Desk](/desk), send a message that starts with when it should run, then what to ask. For example: \"every weekday at 7:30am, list shipments still not dispatched for today\" or \"everyday at 9:30am EST, give me today's operations board\". You can also type /schedule, then the when and the request, or ask the agent to \"schedule this every day at 9:30\": it proposes the schedule, and you approve it.",
             "Instead of an answer, a **Scheduled** card appears: **Results will post into this conversation**. The card shows the request, how often it runs and when it runs next.",
             "On the card, open **Schedule actions** (the three dots) and select **Edit** to change it, **Pause** to stop it for now, **Resume** to start it again, or **Delete** to remove it. A deleted one shows **Schedule deleted**.",
             "To see every request you have scheduled, across all of your conversations, open [Scheduled requests](/desk/scheduled) from **Scheduled** in the sidebar. You can run, pause, resume or delete each one there."
@@ -10320,20 +10339,39 @@
           ]
         },
         {
-          "title": "Copy, pin or listen to a reply",
+          "title": "Copy or listen to a reply",
           "keywords": [
             "copy answer",
-            "bookmark reply",
-            "chapter",
-            "chapters",
             "read out loud",
             "text to speech"
           ],
           "steps": [
             "Hover over a reply in a Desk conversation to show its actions.",
             "Select **Copy reply** to copy its text.",
-            "Select **Pin as chapter** to mark the reply as a chapter of the conversation. It then shows its chapter number. Select **Unpin chapter** to remove it.",
             "Select **Read aloud** to hear the reply, and **Stop reading** to stop. This button only appears when your browser can read text aloud."
+          ]
+        },
+        {
+          "title": "Move through a conversation by chapter",
+          "keywords": [
+            "chapter",
+            "chapters",
+            "table of contents",
+            "jump to",
+            "topic",
+            "subject",
+            "rename chapter",
+            "chapter title",
+            "bookmark",
+            "split conversation"
+          ],
+          "steps": [
+            "When a conversation turns to a new subject, the Desk starts a chapter and names it in a few words. The name sits above the question that opens the chapter, with its number.",
+            "Once a conversation has two chapters, a mark for each shows in its top-left corner. The chapter you are reading has the longest mark, and a chapter with a decision waiting for you is marked in amber.",
+            "Point at the marks to list the chapters. Each says what it made, what waits for your decision and what the agent is waiting on. Select a chapter to go to it, even one above the messages loaded so far.",
+            "Double-click a chapter's name, or move to it with Tab and press Enter, to rename it. Press Enter or click away to keep the new name, or Escape to keep the old one. A name you give is never changed by the Desk.",
+            "To start a chapter yourself, hover over a reply and select **Start a chapter here**. The chapter starts at the question that reply answers.",
+            "Open the menu beside a chapter's name to **Rename** it, **Continue in a new conversation** with the same agent, **Hand off this chapter** to another agent, or **Merge into the chapter above**. Continuing or handing off starts a conversation briefed on that chapter alone and named after it."
           ]
         },
         {
@@ -10361,6 +10399,7 @@
           "title": "Search the whole Desk",
           "keywords": [
             "find conversation",
+            "find chapter",
             "find message",
             "find artifact",
             "find decision",
@@ -10369,9 +10408,9 @@
           ],
           "steps": [
             "On [Desk](/desk), select **Search** in the rail or press ⌘K (Ctrl+K).",
-            "Type in **Search chats, messages, artifacts…**. Results are grouped as **Conversations**, **Messages**, **Artifacts** and **Decisions**.",
-            "Narrow the results with **All**, **Chats**, **Messages**, **Artifacts** or **Decisions**, or press Tab to move between them.",
-            "Use the arrow keys and Enter, or select a result. A conversation or message opens its conversation, an artifact opens the conversation with it beside it, and a decision opens [Decisions](/desk/decisions).",
+            "Type in **Search chats, messages, artifacts…**. Results are grouped as **Conversations**, **Chapters**, **Messages**, **Artifacts** and **Decisions**.",
+            "Narrow the results with **All**, **Chats**, **Chapters**, **Messages**, **Artifacts** or **Decisions**, or press Tab to move between them.",
+            "Use the arrow keys and Enter, or select a result. A conversation or message opens its conversation, a chapter opens its conversation at that chapter, an artifact opens the conversation with it beside it, and a decision opens [Decisions](/desk/decisions).",
             "With nothing typed, the search offers **Recent searches** and recent conversations and artifacts."
           ]
         },
@@ -10395,7 +10434,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI Control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, the card above the message box shows it the same way on the Desk and in the floating assistant: what it would set and whether it can be undone, checked against your records as they are now. **Approve** waits until that check has loaded. If the change was drafted against records that have changed since, the card says it is out of date and offers to redraft it instead. A plan of several steps, or several changes of one kind, is approved with one answer. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nThe conversation marks each decided change with a line (\"Approved\"), and deciding on the card or on [Decisions](/desk/decisions) updates both.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.\n\n- Enter sends and Shift+Enter starts a new line. In **Desk settings**, **Send with** can be set to **⌘ Enter** instead. **@ mentions**, **Slash commands** and **Dictation** can each be turned off there. - Only words can steer a reply under way. A message carrying files always waits until the reply finishes. Once a steering message has been handed to the agent, it can't be edited or taken back; stopping the reply is the only way to undo it. Waiting messages are kept with the conversation, so they survive a reload or another tab. - You can't change the agent or the model while an agent is replying. - A message can carry up to 5 files, each up to 25 MB: PDF, PNG, JPG, HEIC, TIFF, CSV, Excel, Word, text and email (.eml) files. Password-protected PDFs and other file types are refused before they upload. Scanning works only inside an open conversation, not from the box on Today. - @ search lists only records you are allowed to read. Dictation isn't available in every browser; where it isn't, the microphone says so. - A conversation keeps up to 12 pinned facts of up to 200 characters each. Compacting keeps pinned facts, pending approvals and, where it can, the latest turns in full. A conversation set to compact itself does so at 85% full. - An agent can wait on up to ten things in one conversation. A wait gives up after a day unless the agent sets a longer limit (at most a week); either way the agent picks the task back up and is told it ran out. If the thing has already happened, the agent acts on it right away. - A case is in one of four states, shown on its card and in its menu. **Working**: nothing is put off. Waiting: on something such as **Waiting on the customer**, **Waiting on the carrier** or **Waiting on a reply**. Snoozed: put away until a time, the next appointment or the ETA. **Settled**: the record is closed. A shipment settles once it is invoiced or canceled, not when it delivers, because the ready-to-bill work comes after delivery; an invoice once it is paid or voided; a dispute once it is resolved or withdrawn. - A case's state is worked out each time you look, so a payment recorded elsewhere settles its invoice's case on its own. In the rail a case stays with the other conversations, grouped by when it was last used; a snoozed case comes back on time, or sooner when something the agent was waiting on arrives. A conversation started from a shipment, invoice or dispute is a case from the start. - Which steps a case checklist shows, their order, and whether each is required or optional, are set in **Settings** › **Case checklists** on the Desk; a customer can have its own. A ticked step belongs to the record, so everyone working a case about the same shipment or invoice sees it. - If a record the agent was working with changes elsewhere during its turn, a note headed **Changed while the agent was working** lists what changed, and the agent reads those records again before relying on them. - An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. A case step you hand to another agent with its button needs only that you may use that agent. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person. - Anything an agent produces lands in the workspace: tables, reports, record cards, documents, email drafts, plans, read documents, decisions and billing items. With **Open new artifacts** set to **Right away**, a new item opens as it arrives; otherwise a dot on **Workspace** marks something new. - Billing actions on a billing item are your own and need billing queue permissions. The agent never approves or posts an invoice on its own. - Desk settings and chapters are kept in this browser; they do not follow you to another browser or computer. - Changing what an agent can do needs permission to manage agents.",
+      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI Control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, the card above the message box shows it the same way on the Desk and in the floating assistant: what it would set and whether it can be undone, checked against your records as they are now. **Approve** waits until that check has loaded. If the change was drafted against records that have changed since, the card says it is out of date and offers to redraft it instead. A plan of several steps, or several changes of one kind, is approved with one answer. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nThe conversation marks each decided change with a line (\"Approved\"), and deciding on the card or on [Decisions](/desk/decisions) updates both.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.\n\n- Enter sends and Shift+Enter starts a new line. In **Desk settings**, **Send with** can be set to **⌘ Enter** instead. **@ mentions**, **Slash commands** and **Dictation** can each be turned off there. - Only words can steer a reply under way. A message carrying files always waits until the reply finishes. Once a steering message has been handed to the agent, it can't be edited or taken back; stopping the reply is the only way to undo it. Waiting messages are kept with the conversation, so they survive a reload or another tab. - You can't change the agent or the model while an agent is replying. - A message can carry up to 5 files, each up to 25 MB: PDF, PNG, JPG, HEIC, TIFF, CSV, Excel, Word, text and email (.eml) files. Password-protected PDFs and other file types are refused before they upload. Scanning works only inside an open conversation, not from the box on Today. - @ search lists only records you are allowed to read. Dictation isn't available in every browser; where it isn't, the microphone says so. - A conversation keeps up to 12 pinned facts of up to 200 characters each. Compacting keeps pinned facts, pending approvals and, where it can, the latest turns in full. A conversation set to compact itself does so at 85% full. - An agent can wait on up to ten things in one conversation. A wait gives up after a day unless the agent sets a longer limit (at most a week); either way the agent picks the task back up and is told it ran out. If the thing has already happened, the agent acts on it right away. - A case is in one of four states, shown on its card and in its menu. **Working**: nothing is put off. Waiting: on something such as **Waiting on the customer**, **Waiting on the carrier** or **Waiting on a reply**. Snoozed: put away until a time, the next appointment or the ETA. **Settled**: the record is closed. A shipment settles once it is invoiced or canceled, not when it delivers, because the ready-to-bill work comes after delivery; an invoice once it is paid or voided; a dispute once it is resolved or withdrawn. - A case's state is worked out each time you look, so a payment recorded elsewhere settles its invoice's case on its own. In the rail a case stays with the other conversations, grouped by when it was last used; a snoozed case comes back on time, or sooner when something the agent was waiting on arrives. A conversation started from a shipment, invoice or dispute is a case from the start. - Which steps a case checklist shows, their order, and whether each is required or optional, are set in **Settings** › **Case checklists** on the Desk; a customer can have its own. A ticked step belongs to the record, so everyone working a case about the same shipment or invoice sees it. - If a record the agent was working with changes elsewhere during its turn, a note headed **Changed while the agent was working** lists what changed, and the agent reads those records again before relying on them. - An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. A case step you hand to another agent with its button needs only that you may use that agent. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person. - Anything an agent produces lands in the workspace: tables, reports, record cards, documents, email drafts, plans, read documents, decisions and billing items. With **Open new artifacts** set to **Right away**, a new item opens as it arrives; otherwise a dot on **Workspace** marks something new. - Billing actions on a billing item are your own and need billing queue permissions. The agent never approves or posts an invoice on its own. - Desk settings are kept in this browser; they do not follow you to another browser or computer. Chapters are kept with the conversation and follow you everywhere. - A conversation holds up to 200 chapters. A chapter name is at most 60 characters. Requests the agent runs on a schedule each open a chapter of their own, marked with the date they ran. A downloaded transcript and a compaction summary keep each chapter's name. - The Desk names chapters with a small model, one short call per question. Its cost shows under **Desk chapters** in usage. An administrator can turn it off with **Name Desk chapters** in [AI control](/admin/agent-control); you can still start and name chapters yourself. - Changing what an agent can do needs permission to manage agents.",
       "related": [
         "/desk/decisions",
         "/desk/watchtower",
@@ -10844,7 +10883,7 @@
         "Scheduled"
       ],
       "description": "**Scheduled requests** lists every request you asked Desk to repeat, such as \"every Monday at 8am, send me invoices more than 60 days past due\", across all of your conversations.",
-      "summary": "**Scheduled requests** lists every request you asked Desk to repeat, such as \"every Monday at 8am, send me invoices more than 60 days past due\", across all of your conversations. Open it from **Scheduled** in the [Desk](/desk) sidebar.\n\nEach run asks the conversation's agent the request again, with the access you have at the time it runs, and the answer posts into the conversation the request was made in. A request runs at the time it names on your own clock, or your organization's when you have not set one.\n\nRequests that will run are listed under **Coming up**, the soonest first. Each shows how often it runs and when it runs next, the conversation its answers post into, and when it last ran. Paused requests are listed under **Paused**.",
+      "summary": "**Scheduled requests** lists every request you asked Desk to repeat, such as \"every Monday at 8am, send me invoices more than 60 days past due\", across all of your conversations. Open it from **Scheduled** in the [Desk](/desk) sidebar.\n\nEach run asks the conversation's agent the request again, with the access you have at the time it runs, and the answer posts into the conversation the request was made in. A request runs at the time it names, on the clock it names (\"at 9:30am EST\", \"at 8 Pacific time\"), or else on your own clock, or your organization's when you have not set one.\n\nRequests that will run are listed under **Coming up**, the soonest first. Each shows how often it runs and when it runs next, the conversation its answers post into, and when it last ran. Paused requests are listed under **Paused**.",
       "requires": [
         {
           "resource": "assistant",
@@ -10869,7 +10908,10 @@
         "every morning report",
         "daily report",
         "weekly report",
-        "run a schedule now"
+        "run a schedule now",
+        "schedule this every day",
+        "everyday",
+        "run daily"
       ],
       "tasks": [
         {
@@ -10950,15 +10992,20 @@
             "new schedule",
             "add schedule",
             "schedule a report",
-            "recurring report"
+            "recurring report",
+            "schedule this",
+            "every day",
+            "everyday",
+            "daily"
           ],
           "steps": [
-            "In a conversation on [Desk](/desk), send a message that starts with when it should run, then what to ask. For example: \"every weekday at 7:30am, list shipments still not dispatched for today\". You can also type /schedule, then the when and the request.",
+            "In a conversation on [Desk](/desk), send a message that starts with when it should run, then what to ask. For example: \"every weekday at 7:30am, list shipments still not dispatched for today\" or \"everyday at 9:30am EST, give me today's operations board\". \"Every day\", \"everyday\" and \"daily\" all run every day; \"every weekday\" runs Monday to Friday; \"every Monday\" (or any other day) runs once a week. You can also type /schedule, then the when and the request.",
+            "Or ask the agent to schedule something it already answered, such as \"schedule this to run every day at 9:30 AM Eastern\". It writes out the request in full and proposes the schedule: select **Approve** on the proposal to keep it. Its **Scheduled** card then says **From a proposal you approved · results will post into this conversation**, and the request it shows is the one the agent wrote out.",
             "A **Scheduled** card appears in the conversation, and the request is listed on [Scheduled requests](/desk/scheduled)."
           ]
         }
       ],
-      "notes": "- Answers post only into the conversation the request was made in. They are not emailed. - Deleting a conversation deletes the requests scheduled in it, and they stop running at once. A conversation with scheduled requests asks before it is deleted and lists the ones that will go with it. - A conversation can keep up to 25 scheduled requests, and you can keep up to 100 in all. - If you lose access to a conversation's agent, its scheduled requests stop running. You can still pause or delete them. - **Run now** needs permission to ask agents. Without it you can still pause, resume and delete your requests.",
+      "notes": "- Answers post only into the conversation the request was made in. They are not emailed. - Deleting a conversation deletes the requests scheduled in it, and they stop running at once. A conversation with scheduled requests asks before it is deleted and lists the ones that will go with it. - A conversation can keep up to 25 scheduled requests, and you can keep up to 100 in all. - A request can run every day, every weekday or once a week. It cannot run hourly or monthly. - Send one schedule per message. A message with a second line that starts with when to run, such as \"daily: …\", is turned down so you can send each one on its own. - When you have set your own time zone and it differs from your organization's, the agent gives a schedule's time on your clock, which is the one the schedule runs on. - A time zone named as an abbreviation, such as EST or PST, means that region's clock all year: \"9:30am EST\" runs at 9:30 in New York in summer too. When a request runs on another clock than yours, its card names that clock. - An agent never schedules a request on its own: it proposes one and you approve it. - If you lose access to a conversation's agent, its scheduled requests stop running. You can still pause or delete them. - **Run now** needs permission to ask agents. Without it you can still pause, resume and delete your requests.",
       "related": [
         "/desk"
       ],

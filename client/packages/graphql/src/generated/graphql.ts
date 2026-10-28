@@ -384,6 +384,7 @@ export type AiTask =
   | 'AccountingMapping'
   | 'AssistantChat'
   | 'BillingDiagnosis'
+  | 'ChapterTitling'
   | 'DailyBriefing'
   | 'DocumentClassification'
   | 'DocumentExtraction'
@@ -449,6 +450,7 @@ export type AiUsageFeature =
   | 'AgentRecommendation'
   | 'AgentReflection'
   | 'AgentTurn'
+  | 'ConversationChapters'
   | 'DocumentIntelligenceExtract'
   | 'DocumentIntelligenceRoute'
   | 'FactoringRemittanceExtract'
@@ -1006,6 +1008,8 @@ export type AgentControlInput = {
   agentMoneyRunCalls?: number | null | undefined;
   /** Absent leaves training consent as it is. Only a signed-in person can change it. */
   aiTrainingConsent?: boolean | null | undefined;
+  /** Absent leaves whether a model splits Desk conversations into named chapters as it is. */
+  autoChaptersOff?: boolean | null | undefined;
   /** Absent leaves the organization's earned autonomy switch as it is. */
   earnedAutonomy?: boolean | null | undefined;
   /** Absent leaves whether agents learn from their work as it is. */
@@ -10255,7 +10259,7 @@ export type UpdateAgentCapabilitiesMutationVariables = Exact<{
 
 export type UpdateAgentCapabilitiesMutation = { updateAgentCapabilities: { ' $fragmentRefs'?: { 'AgentCapabilitiesFieldsFragment': AgentCapabilitiesFieldsFragment } } };
 
-export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, personMonthlyMessages: number, learningOff: boolean, agentMoneyCallCeiling: string, agentMoneyRunCalls: number, agentMoneyRunAmount: string, agentMoneyDayCalls: number, agentMoneyDayAmount: string, agentMoneyCurrency: string, aiTrainingConsent: boolean, aiTrainingConsentChangedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
+export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, personMonthlyMessages: number, learningOff: boolean, autoChaptersOff: boolean, agentMoneyCallCeiling: string, agentMoneyRunCalls: number, agentMoneyRunAmount: string, agentMoneyDayCalls: number, agentMoneyDayAmount: string, agentMoneyCurrency: string, aiTrainingConsent: boolean, aiTrainingConsentChangedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
 
 export type AgentControlSettingsQueryVariables = Exact<{ [key: string]: never; }>;
 

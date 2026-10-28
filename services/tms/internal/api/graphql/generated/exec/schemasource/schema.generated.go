@@ -2294,6 +2294,8 @@ type AgentControl {
   personMonthlyMessages: Int!
   "Agents no longer look back over their work to keep what they learned as memory."
   learningOff: Boolean!
+  "Desk conversations are no longer split into chapters and named by a model. People can still start chapters by hand."
+  autoChaptersOff: Boolean!
   "The most one money change an agent makes on its own may move. 0 holds every money change for a person."
   agentMoneyCallCeiling: Decimal!
   "The most money changes one agent run or turn may make on its own."
@@ -2757,6 +2759,8 @@ input AgentControlInput {
   personMonthlyMessages: Int
   "Absent leaves whether agents learn from their work as it is."
   learningOff: Boolean
+  "Absent leaves whether a model splits Desk conversations into named chapters as it is."
+  autoChaptersOff: Boolean
   "Absent leaves the most one automatic money change may move as it is."
   agentMoneyCallCeiling: Decimal
   "Absent leaves the number of automatic money changes a run may make as it is."
@@ -6342,6 +6346,7 @@ enum AITask {
   ScopeClassification
   DailyBriefing
   QueryCompose
+  ChapterTitling
   InboundClassification
   AccountingMapping
   RemittanceExtraction
@@ -6897,6 +6902,7 @@ enum AIUsageFeature {
   AgentDrafting
   AgentProfile
   AgentRecommendation
+  ConversationChapters
 }
 
 """

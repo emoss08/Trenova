@@ -246,6 +246,7 @@ func All() []*schema.Table {
 		briefingdb.BriefingsSchema(),
 		conversationdb.MessagesSchema(),
 		conversationdb.QueuedMessagesSchema(),
+		conversationdb.ChaptersSchema(),
 		conversationdb.ThreadsSchema(),
 		conversationdb.AssistantTurnsSchema(),
 		auditdb.DLQEntriesSchema(),
