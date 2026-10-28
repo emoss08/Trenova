@@ -216,12 +216,14 @@ type artifactReader struct {
 }
 
 func (r *artifactRecorder) readingAgent() *agentIdentity {
-	if r.readBy != nil || r.svc == nil || r.thread.AgentDefinitionID.IsNil() {
+	if r.readBy != nil || r.svc == nil {
 		return r.readBy
 	}
-	identity, found := r.svc.agentIdentities(
-		r.ctx, r.tenant, []pulid.ID{r.thread.AgentDefinitionID},
-	)[r.thread.AgentDefinitionID]
+	agentID := r.agentThread().AgentDefinitionID
+	if agentID.IsNil() {
+		return r.readBy
+	}
+	identity, found := r.svc.agentIdentities(r.ctx, r.tenant, []pulid.ID{agentID})[agentID]
 	if found && identity.name != "" {
 		r.readBy = &identity
 	}
