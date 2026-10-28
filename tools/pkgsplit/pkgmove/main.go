@@ -301,7 +301,9 @@ func main() {
 			if err != nil {
 				return err
 			}
-			if !strings.Contains(string(src), oldPath) && !strings.Contains(string(src), mockOldPath) {
+			_, isMovedMock := mockMoves[p]
+			if !isMovedMock && !strings.Contains(string(src), oldPath) &&
+				!strings.Contains(string(src), mockOldPath) {
 				return nil
 			}
 			fw := byPath[p]
