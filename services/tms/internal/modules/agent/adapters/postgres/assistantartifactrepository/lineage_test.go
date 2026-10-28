@@ -91,7 +91,8 @@ func TestFamilyExprMatchesTheDomainsFamilies(t *testing.T) {
 		`\(aa\."kind" = 'table_view' AND aa\."payload" \? \$3\)\) THEN \$12::text `, sql)
 	assert.Contains(t, sql, `WHEN (aa."kind" IN ('extraction', 'edi_connection_draft')) THEN $14::text `)
 	assert.Contains(t, sql,
-		`WHEN (aa."kind" IN ('report_preview', 'report_run', 'analysis', 'portal_task')) THEN $9::text `)
+		`WHEN (aa."kind" IN ('report_preview', 'report_run', 'analysis', 'portal_task', 'board')) `+
+			`THEN $9::text `)
 	assert.Equal(t, "path", args[2])
 	assert.Equal(t, "table", args[3])
 	assert.Equal(t, "view", args[11])
