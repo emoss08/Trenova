@@ -68,6 +68,16 @@
         "no-constant-condition": "error",
         "no-control-regex": "error",
         "no-debugger": "error",
+        "no-console": [
+            "error",
+            {
+                "allow": [
+                    "warn",
+                    "error",
+                    "debug"
+                ]
+            }
+        ],
         "no-delete-var": "error",
         "no-dupe-class-members": "error",
         "no-dupe-else-if": "error",
@@ -224,6 +234,21 @@
             ],
             "rules": {
                 "no-restricted-imports": "off"
+            }
+        },
+        {
+            "files": [
+                "**/scripts/**",
+                "**/e2e/**",
+                "**/__tests__/**",
+                "**/*.test.ts",
+                "**/*.test.tsx",
+                "**/*.stories.tsx",
+                "**/vite/**",
+                "**/*.config.ts"
+            ],
+            "rules": {
+                "no-console": "off"
             }
         },
         {

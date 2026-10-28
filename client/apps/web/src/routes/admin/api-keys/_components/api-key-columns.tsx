@@ -67,10 +67,7 @@ export function getColumns(t: TranslateFn): ColumnDef<ApiKeyRow>[] {
     {
       accessorKey: "permissionScope",
       header: t("Permissions"),
-      cell: ({ row }) => {
-        console.info("scope", row.original);
-        return <PermissionScopeBadge scope={row.original.permissionScope} />;
-      },
+      cell: ({ row }) => <PermissionScopeBadge scope={row.original.permissionScope} />,
       meta: {
         label: t("Permissions"),
         apiField: "permissionScope",

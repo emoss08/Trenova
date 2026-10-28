@@ -34,8 +34,6 @@ export function HazmatSegregationRulePanel({
     },
   });
 
-  console.info("Form", form.formState.errors);
-
   if (mode === "edit") {
     return (
       <FormEditPanel

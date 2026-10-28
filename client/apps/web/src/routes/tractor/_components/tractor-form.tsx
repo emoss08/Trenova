@@ -266,12 +266,7 @@ function WorkerAssignmentSection({ control }: { control: Control<Tractor> }) {
 }
 
 export function TractorForm() {
-  const {
-    control,
-    formState: { errors },
-  } = useFormContext<Tractor>();
-
-  console.info("tractor form errors", errors);
+  const { control } = useFormContext<Tractor>();
 
   return (
     <div className="flex flex-col gap-6">
