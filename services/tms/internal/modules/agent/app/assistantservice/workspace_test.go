@@ -3,6 +3,7 @@ package assistantservice
 import (
 	"bytes"
 	"context"
+	"encoding/csv"
 	"errors"
 	"testing"
 
@@ -271,6 +272,37 @@ func TestWriteTableCSV_ReadsEveryPage(t *testing.T) {
 	lines := bytes.Split(bytes.TrimSpace(out.Bytes()), []byte("\n"))
 	require.Len(t, lines, 4, out.String())
 	assert.Contains(t, string(lines[3]), `"P-3, late"`)
+}
+
+// A customer name, a BOL or a note can be typed by someone outside the
+// organization. When a dispatcher opens the export in a spreadsheet, a cell
+// that starts like a formula must read as text, while a negative amount
+// stays a number.
+func TestWriteTableCSV_WritesFormulasAsText(t *testing.T) {
+	t.Parallel()
+
+	page := map[string]any{
+		"columns": []any{"proNumber", "bol"},
+		"items": []any{
+			map[string]any{"id": "shp_1", "proNumber": "=HYPERLINK(\"https://x.example\")", "bol": "@SUM(1)"},
+			map[string]any{"id": "shp_2", "proNumber": "-12.50", "bol": "+cmd|' /C calc'!A0"},
+		},
+		"hasMore": false,
+	}
+	var out bytes.Buffer
+
+	err := writeTableCSV(&out, func(tablePosition) (map[string]any, error) {
+		return page, nil
+	}, "shipments")
+	require.NoError(t, err)
+
+	records, err := csv.NewReader(&out).ReadAll()
+	require.NoError(t, err)
+	require.Len(t, records, 3)
+	assert.Equal(t, "'=HYPERLINK(\"https://x.example\")", records[1][0])
+	assert.Equal(t, "'@SUM(1)", records[1][1])
+	assert.Equal(t, "-12.50", records[2][0], "a signed number is not a formula")
+	assert.Equal(t, "'+cmd|' /C calc'!A0", records[2][1])
 }
 
 func TestWriteTableCSV_FollowsTheNextCursorOfACursorList(t *testing.T) {

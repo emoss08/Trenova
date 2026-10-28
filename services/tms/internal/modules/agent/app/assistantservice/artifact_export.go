@@ -8,6 +8,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/csvutils"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -212,7 +214,7 @@ func writeTableCSV(
 			columns = projection.columns
 			header := make([]string, 0, len(columns))
 			for _, column := range columns {
-				header = append(header, column.Label)
+				header = append(header, csvutils.SafeCell(column.Label))
 			}
 			if err = writer.Write(header); err != nil {
 				return err
@@ -222,7 +224,7 @@ func writeTableCSV(
 			record, _ := row.(map[string]any)
 			cells := make([]string, 0, len(columns))
 			for _, column := range columns {
-				cells = append(cells, csvCell(record[column.Key]))
+				cells = append(cells, csvutils.SafeNumberCell(csvCell(record[column.Key])))
 			}
 			if err = writer.Write(cells); err != nil {
 				return err
