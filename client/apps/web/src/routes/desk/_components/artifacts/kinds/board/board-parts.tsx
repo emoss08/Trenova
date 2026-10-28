@@ -313,7 +313,7 @@ function RowBody({ row, furthest, now }: { row: DeskBoardRow; furthest: number; 
       {track ? (
         <span className={cn("dk-bd-behind", toneClass(reading.tone))}>
           <span>
-            <span>{reading.against}</span>
+            <span title={reading.against}>{reading.against}</span>
             <b>{reading.standing}</b>
           </span>
           <span className="dk-bd-track">

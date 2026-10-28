@@ -17838,8 +17838,16 @@ div.dk-bd-row:not(.dk-gone):hover {
   font: 400 11px var(--dk-plex);
   color: var(--dsk-subtle);
 }
+.dk-bd-behind > span > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .dk-bd-behind > span b {
+  flex: none;
   font-weight: 500;
+  white-space: nowrap;
   color: var(--dsk-warn-fg);
 }
 .dk-bd-track {
