@@ -130,4 +130,17 @@ func TestDriverPortal_UnderRowLevelSecurityReadsOnlyTheDriversOwnRecords(t *test
 	assigned, err = repo.WorkerAssignedToShipment(driverCtx, tenant, own.ID, theirs.Shipment.ID)
 	require.NoError(t, err)
 	assert.False(t, assigned, "a load another driver drives is not the caller's")
+
+	a := shipmentdb.Assignments
+	_, err = a.Where(a.ShipmentMoveID.Eq(driven.Moves[0].ID)).
+		Update(data.Ctx(ctx), admin, a.ArchivedAt.To(1))
+	require.NoError(t, err)
+
+	assigned, err = repo.WorkerAssignedToShipment(driverCtx, tenant, own.ID, driven.Shipment.ID)
+	require.NoError(t, err)
+	assert.False(t, assigned, "a driver taken off a load no longer reaches it")
+
+	assigned, err = repo.WorkerAssignedToMove(driverCtx, tenant, own.ID, driven.Moves[0].ID)
+	require.NoError(t, err)
+	assert.False(t, assigned)
 }
