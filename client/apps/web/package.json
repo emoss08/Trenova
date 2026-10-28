@@ -141,7 +141,7 @@
     "eslint-plugin-tailwindcss": "4.4.0",
     "globals": "^17.13.0",
     "graphql": "^17.0.2",
-    "happy-dom": "^21.0.3",
+    "happy-dom": "^21.0.4",
     "lint-staged": "^17.6.0",
     "magic-string": "0.30.21",
     "oxc-parser": "0.148.0",

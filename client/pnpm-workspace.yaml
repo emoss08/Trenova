@@ -13,6 +13,9 @@ overrides:
   "@codemirror/view": "6.43.6"
   "@tanstack/query-core": "5.102.8"
   "@tanstack/table-core": "9.3.1"
+  # GHSA-834v-8h66-3h79: vitest's optional happy-dom peer resolved to a
+  # version that runs an unsanitized import alias as host code.
+  happy-dom: ^21.0.4
 # Packages that must resolve once (see singleton-packages.ts). Every
 # package.json references them as "catalog:" so versions cannot drift.
 catalog:
