@@ -332,7 +332,7 @@ func TestListWorkers_SaysWhenACredentialIsNotOnFile(t *testing.T) {
 A NonCompliant driver is not dispatchable, and the row has to say so.
 
 workers.can_be_assigned means "no employment-level block" — no termination, no
-leave, no manual hold. The domain's own dispatch decision (worker.Standing)
+leave, no manual hold. The domain's own dispatch decision (workercompliance.Standing)
 additionally refuses a worker whose credentials are NonCompliant. The row
 reported the column verbatim, so a driver whose medical card had lapsed four
 days earlier came back as canBeAssigned: true, alongside

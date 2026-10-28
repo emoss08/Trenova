@@ -148,7 +148,7 @@ type MockPortalAccessRepository_CreateInvitation_Call struct {
 
 // CreateInvitation is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *worker.PortalInvitation
+//   - entity *portalinvitation.PortalInvitation
 func (_e *MockPortalAccessRepository_Expecter) CreateInvitation(ctx any, entity any) *MockPortalAccessRepository_CreateInvitation_Call {
 	return &MockPortalAccessRepository_CreateInvitation_Call{Call: _e.mock.On("CreateInvitation", ctx, entity)}
 }
@@ -1067,7 +1067,7 @@ type MockPortalAccessRepository_UpdateInvitation_Call struct {
 
 // UpdateInvitation is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *worker.PortalInvitation
+//   - entity *portalinvitation.PortalInvitation
 func (_e *MockPortalAccessRepository_Expecter) UpdateInvitation(ctx any, entity any) *MockPortalAccessRepository_UpdateInvitation_Call {
 	return &MockPortalAccessRepository_UpdateInvitation_Call{Call: _e.mock.On("UpdateInvitation", ctx, entity)}
 }

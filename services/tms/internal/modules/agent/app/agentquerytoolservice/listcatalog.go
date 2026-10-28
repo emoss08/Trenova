@@ -87,7 +87,7 @@ type workerRow struct {
 	// the stored flag alone answers a narrower question than its name does.
 	// The column means "no employment-level block"; the domain additionally
 	// refuses to dispatch a worker whose credentials are NonCompliant
-	// (worker.Standing). A row that reported the column verbatim said a driver
+	// (workercompliance.Standing). A row that reported the column verbatim said a driver
 	// whose medical card had lapsed four days earlier was dispatchable.
 	CanBeAssigned     bool   `json:"canBeAssigned"`
 	AssignmentBlocked string `json:"assignmentBlocked,omitempty"`
@@ -715,7 +715,7 @@ func toGatedWorkerRow(item *worker.Worker, showCity bool) workerRow {
 }
 
 // dispatchable folds a worker's credential compliance into the stored
-// dispatch flag, as worker.Standing does: a NonCompliant worker cannot be
+// dispatch flag, as workercompliance.Standing does: a NonCompliant worker cannot be
 // assigned whatever the column says.
 func dispatchable(
 	canBeAssigned bool,
@@ -742,7 +742,7 @@ func applyProfile(row *workerRow, profile *worker.WorkerProfile) {
 	row.ComplianceStatus = string(profile.ComplianceStatus)
 	row.Qualified = &profile.IsQualified
 
-	// The same rule worker.Standing applies, at the only point this projection
+	// The same rule workercompliance.Standing applies, at the only point this projection
 	// can apply it. Standing also weighs training, safety and checklists, which
 	// a list row does not load — so this can still be too generous, never too
 	// strict, and a caller deciding whether to dispatch should open the record.

@@ -109,7 +109,7 @@ func (r *formulaDraftRequest) toDraft() (formulastudioports.FormulaStudioDraft, 
 // @Accept json
 // @Produce json
 // @Param request body explainFormulaRequest true "The editor's draft and the preview load"
-// @Success 200 {object} agentports.ExplainFormulaResponse
+// @Success 200 {object} formulastudioports.ExplainFormulaResponse
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -177,7 +177,7 @@ func (h *Handler) explainFormula(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body formulaDraftRequest true "The editor's draft"
-// @Success 200 {object} agentports.DescribeFormulaInputsResponse
+// @Success 200 {object} formulastudioports.DescribeFormulaInputsResponse
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -226,7 +226,7 @@ func (h *Handler) describeInputs(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body formulaDraftRequest true "The editor's draft"
-// @Success 200 {object} agentports.SuggestFormulaTestsResponse
+// @Success 200 {object} formulastudioports.SuggestFormulaTestsResponse
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -275,7 +275,7 @@ func (h *Handler) suggestTests(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body explainTestRequest true "The editor's draft and the test's name"
-// @Success 200 {object} agentports.ExplainFormulaTestResponse
+// @Success 200 {object} formulastudioports.ExplainFormulaTestResponse
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -333,7 +333,7 @@ func (h *Handler) explainTest(c *gin.Context) {
 // @Tags Formula Templates
 // @Produce json
 // @Param templateID path string true "Formula template ID"
-// @Success 200 {object} agentports.DraftFormulaReviewNoteResponse
+// @Success 200 {object} formulastudioports.DraftFormulaReviewNoteResponse
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail

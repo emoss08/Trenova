@@ -265,7 +265,7 @@ type rootRead struct {
 
 // rootReads are the Query root fields that read one kind of record, each with
 // the tool the rule names for it: a connection of X is list_<Xs>, an X by id
-// is get_<x>, in reading order, then namespaced (agentports.ToolNameFor).
+// is get_<x>, in reading order, then namespaced (agenttoolports.ToolNameFor).
 func rootReads(schema *ast.Schema) []rootRead {
 	if schema.Query == nil {
 		return nil

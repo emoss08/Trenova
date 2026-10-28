@@ -60,7 +60,7 @@ func TestToolsMoveIntoNamespacesAndNeverOut(t *testing.T) {
 
 	require.LessOrEqualf(t, len(outside), maxToolsOutsideANamespace,
 		"a new tool is named <namespace>_<verb>[_<object>] with a namespace from "+
-			"agentports.ToolNamespaces; %d tools are outside one:\n%s",
+			"agenttoolports.ToolNamespaces; %d tools are outside one:\n%s",
 		len(outside), strings.Join(outside, "\n"))
 	require.Equalf(t, maxToolsOutsideANamespace, len(outside),
 		"lower maxToolsOutsideANamespace to %d: tools moved into a namespace", len(outside))
