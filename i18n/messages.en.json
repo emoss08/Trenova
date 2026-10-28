@@ -69529,6 +69529,15 @@
       "routes/worker-credential-type"
     ]
   },
+  "Credential types could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "Credential was changed by someone else. Reload and try again": {
     "sites": 1,
     "scope": [
@@ -142278,6 +142287,15 @@
       "routes/worker"
     ]
   },
+  "Loading credential types": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "Loading dashboards…": {
     "sites": 1,
     "scope": [
@@ -152375,6 +152393,15 @@
       "go/other"
     ]
   },
+  "Missing credential": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "Missing critical fields": {
     "sites": 2,
     "scope": [
@@ -152504,6 +152531,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Missing {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "Mississippi (MS)": {
@@ -161818,6 +161854,15 @@
     ]
   },
   "No credential types are required for this worker.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "No credential types are tracked yet.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -219635,7 +219680,7 @@
     ]
   },
   "Required": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -318927,6 +318972,15 @@
     ]
   },
   "Workers with approved PTO": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "Workers with none on file, archived or expired": {
     "sites": 1,
     "scope": [
       "ts"

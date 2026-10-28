@@ -42,12 +42,12 @@ What find_tools can load, by area of Trenova:
 - AI & agents (2 tools): agent run
 - Billing (29 tools): accessorial charge, customer, formula library, formula template, rate agreement, rate matrix and 1 more
 - Carriers (1 tool): carrier
-- Desk (6 tools): desk
+- Desk (7 tools): desk
 - Dispatch (1 tool): location
 - Fuel & tax (4 tools): fuel surcharge program
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, rate_create_agreement, rate_update_agreement_draft, rate_duplicate_agreement, rate_submit_agreement, rate_amend_agreement_rules, rate_apply_increase, rate_suspend_agreement, rate_resume_agreement, rate_archive_agreement, rate_commit_import, rate_discard_import, rate_run_simulation, rate_record_fuel_index_price, rate_correct_fuel_index_price
+- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, agent_create_schedule, rate_create_agreement, rate_update_agreement_draft, rate_duplicate_agreement, rate_submit_agreement, rate_amend_agreement_rules, rate_apply_increase, rate_suspend_agreement, rate_resume_agreement, rate_archive_agreement, rate_commit_import, rate_discard_import, rate_run_simulation, rate_record_fuel_index_price, rate_correct_fuel_index_price
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:

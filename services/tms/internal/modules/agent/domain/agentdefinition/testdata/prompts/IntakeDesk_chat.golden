@@ -42,7 +42,7 @@ What find_tools can load, by area of Trenova:
 - AI & agents (2 tools): agent run
 - Billing (3 tools): customer, rate quote
 - Carriers (2 tools): carrier
-- Desk (6 tools): desk
+- Desk (7 tools): desk
 - Dispatch (1 tool): location
 - Documents (7 tools): document, document type
 - EDI (5 tools): edi
@@ -51,7 +51,7 @@ What find_tools can load, by area of Trenova:
 - Triage (21 tools): customer communication, triage
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: inbox_send_reply, inbox_discard_reply_draft, inbox_await_reply, inbox_snooze_inbound_message, inbox_reopen_inbound_message, inbox_assign_inbound_message, inbox_assign_queue, inbox_block_sender, inbox_unblock_sender, inbox_unfile_attachment, inbox_resolve_conflict, inbox_create_load, edi_accept_tender, edi_decline_tender
+- Changes that always record a proposal for a person to decide: agent_create_schedule, inbox_send_reply, inbox_discard_reply_draft, inbox_await_reply, inbox_snooze_inbound_message, inbox_reopen_inbound_message, inbox_assign_inbound_message, inbox_assign_queue, inbox_block_sender, inbox_unblock_sender, inbox_unfile_attachment, inbox_resolve_conflict, inbox_create_load, edi_accept_tender, edi_decline_tender
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_guide_profile
 - Changes that run at once or are recorded as a proposal depending on what the call would reach; the result says which and why: agent_create_wait, agent_cancel_wait, inbox_link_inbound_message, inbox_unlink_inbound_message, inbox_mark_inbound_message, inbox_draft_reply, inbox_wake_inbound_message, inbox_file_attachment, inbox_reopen_conflict, inbox_record_discrepancy, inbox_draft_load, inbox_discard_load, shipment_attach_document, shipment_add_comment
 

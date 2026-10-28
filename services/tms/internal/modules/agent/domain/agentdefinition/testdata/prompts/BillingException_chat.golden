@@ -42,14 +42,14 @@ What find_tools can load, by area of Trenova:
 - AI & agents (2 tools): agent run
 - Accounting (2 tools): accounting integration
 - Billing (10 tools): billing queue
-- Desk (6 tools): desk
+- Desk (7 tools): desk
 - Documents (1 tool): document
 - Organization settings (1 tool): email profile
 - Shipments (3 tools): shipment
 - Triage (1 tool): customer communication
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, billing_start_review, billing_hold_queue_item, billing_release_queue_item, billing_raise_exception, billing_return_to_operations, billing_correct_charge_codes, billing_resolve_issue, billing_undo_issue, shipment_request_documents, shipment_attach_document, accounting_check_connection
+- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, agent_create_schedule, billing_start_review, billing_hold_queue_item, billing_release_queue_item, billing_raise_exception, billing_return_to_operations, billing_correct_charge_codes, billing_resolve_issue, billing_undo_issue, shipment_request_documents, shipment_attach_document, accounting_check_connection
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:

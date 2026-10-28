@@ -512,8 +512,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskAccountingMappings",
-		Hash:     "sha256:b72e96ea5e92d88b4f768c6229930166ad6a70cd09f42de64a35db73cc70079c",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskAccountingMappingFields on AccountingMapping { candidates { externalId name reason score } confidence confirmedAt externalId externalName id providerKind reason required source state targetLabel targetType trenovaKey trenovaObjectId } query DeskAccountingMappings($after: String, $filter: AccountingMappingFilterInput, $first: Int, $integrationType: AccountingSystem!) { accountingMappings( integrationType: $integrationType first: $first after: $after filter: $filter ) { edges { cursor node { ...DeskAccountingMappingFields } } pageInfo { ...DataTablePageInfoFields } } }",
+		Hash:     "sha256:7d714c4c2325f49f5d4ebbe75ef5b2b399ad0b8ca3204d20619700877a5051ce",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskAccountingMappingFields on AccountingMapping { candidates { externalId name reason score } confidence confirmedAt externalId externalName id providerKind reason required source state targetLabel targetType trenovaKey trenovaObjectId } query DeskAccountingMappings($after: String, $filter: AccountingMappingFilterInput, $first: Int, $includeTotalCount: Boolean = false, $integrationType: AccountingSystem!) { accountingMappings( integrationType: $integrationType first: $first after: $after filter: $filter ) { edges { cursor node { ...DeskAccountingMappingFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskAccountingMappingSummary",
@@ -522,8 +522,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskAccountingSyncRecords",
-		Hash:     "sha256:ca6610fbf54240604efc633ffa333f19749fdfad28ed0681b85c064f3406a509",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskAccountingSyncRecordFields on AccountingSyncRecord { attemptCount documentDate errorCategory externalDocNumber externalUrl id nextAttemptAt objectId objectNumber objectType operation queuedAt resolution skippedReason sourceEvent status syncedAt } query DeskAccountingSyncRecords($after: String, $filter: AccountingSyncRecordFilterInput, $first: Int, $integrationType: AccountingSystem!) { accountingSyncRecords( integrationType: $integrationType first: $first after: $after filter: $filter ) { edges { cursor node { ...DeskAccountingSyncRecordFields } } pageInfo { ...DataTablePageInfoFields } } }",
+		Hash:     "sha256:dff49624682ddb77c806c6d106c2b8ea6622d2ae0d74734bfd46602929c4f95f",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskAccountingSyncRecordFields on AccountingSyncRecord { attemptCount documentDate errorCategory externalDocNumber externalUrl id nextAttemptAt objectId objectNumber objectType operation queuedAt resolution skippedReason sourceEvent status syncedAt } query DeskAccountingSyncRecords($after: String, $filter: AccountingSyncRecordFilterInput, $first: Int, $includeTotalCount: Boolean = false, $integrationType: AccountingSystem!) { accountingSyncRecords( integrationType: $integrationType first: $first after: $after filter: $filter ) { edges { cursor node { ...DeskAccountingSyncRecordFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskAccountingSyncObjectStates",
@@ -807,8 +807,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskCaptureBatches",
-		Hash:     "sha256:b9ff4bc173f2783c89e71405b5123d0a8408205e04a8f5c6df5a839dbeffcf21",
-		Document: "fragment DeskCaptureBatchFields on CaptureBatch { createdAt failureMessage filedItemCount id isEditable itemCount items { detectedKind failureMessage filedId filedType id pageCount position status suggestedDocumentTypeId suggestedId suggestedType suggestionConfidence suggestionReason version } jobName openItemCount receivedPageCount source sourceName status version } query DeskCaptureBatches($input: CaptureBatchesInput!) { captureBatches(input: $input) { edges { cursor node { ...DeskCaptureBatchFields } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:fb6308277a09f7a144d1f764cf353a5046f6ac6ca1e5390a1e790eabb0e7e0eb",
+		Document: "fragment DeskCaptureBatchFields on CaptureBatch { createdAt failureMessage filedItemCount id isEditable itemCount items { detectedKind failureMessage filedId filedType id pageCount position status suggestedDocumentTypeId suggestedId suggestedType suggestionConfidence suggestionReason version } jobName openItemCount receivedPageCount source sourceName status version } query DeskCaptureBatches($includeTotalCount: Boolean = false, $input: CaptureBatchesInput!) { captureBatches(input: $input) { edges { cursor node { ...DeskCaptureBatchFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskCaptureBatch",
@@ -817,13 +817,13 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskEmailProfiles",
-		Hash:     "sha256:f89bec20e5e4da495654c0a54ba992eda757a0c3e4c84d0b8cae52eceb2190cf",
-		Document: "query DeskEmailProfiles($input: DataTableConnectionInput!) { emailProfiles(input: $input) { edges { cursor node { description id name replyToEmail senderEmail senderName status } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:ab69cc8a07cf8e63efca3132446b900c25438d77a23e849bae5c99a00848ee21",
+		Document: "query DeskEmailProfiles($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { emailProfiles(input: $input) { edges { cursor node { description id name replyToEmail senderEmail senderName status } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskInboundMessages",
-		Hash:     "sha256:1f66f654ce5c505635005a4af1cb3b1fa73e8944774bc23e63262cb4d76738ba",
-		Document: "query DeskInboundMessages($input: InboundMessagesInput!) { inboundMessages(input: $input) { edges { cursor node { attachmentCount classification confidence dueAt fromAddress fromName id mailbox { address name } mailboxId matchReason matchedCustomerId matchedShipmentId needsReview ownerId preview receivedAt status subject threadCount threadKey } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:2307e4d7f28a357bac7034f1930da4aae664029e4f3b6f74e15ce21e38567f1d",
+		Document: "query DeskInboundMessages($includeTotalCount: Boolean = false, $input: InboundMessagesInput!) { inboundMessages(input: $input) { edges { cursor node { attachmentCount classification confidence dueAt fromAddress fromName id mailbox { address name } mailboxId matchReason matchedCustomerId matchedShipmentId needsReview ownerId preview receivedAt status subject threadCount threadKey } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "TriageAssignees",
@@ -872,23 +872,23 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskFiscalPeriods",
-		Hash:     "sha256:e83468ca3e2354865d77c7d65e7096c7689f51658fb69eb7ac5cebe3d274324b",
-		Document: "query DeskFiscalPeriods($input: DataTableConnectionInput!) { fiscalPeriods(input: $input) { edges { cursor node { closedAt endDate fiscalYearId id isAdjusting lockedAt name periodNumber periodType reopenReason reopenedAt startDate status } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:ef179492e839211a7ea7b696b6a80de3ae1afa34f4acfd9480fccb77e2d6a168",
+		Document: "query DeskFiscalPeriods($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { fiscalPeriods(input: $input) { edges { cursor node { closedAt endDate fiscalYearId id isAdjusting lockedAt name periodNumber periodType reopenReason reopenedAt startDate status } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskJournalEntries",
-		Hash:     "sha256:ae82c6e423b4b47fb00a12a90c9bd4e1971d082a55b6efe89e96dca328e1a8d4",
-		Document: "query DeskJournalEntries($input: DataTableConnectionInput!) { journalEntries(input: $input) { edges { cursor node { accountingDate description entryDate entryNumber entryType fiscalPeriodId id isAutoGenerated isReversal referenceNumber referenceType status totalCredit totalDebit } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:830849d32b585f471085c32e45a1758249606b3bcb444655c28b11f6aa0ae57a",
+		Document: "query DeskJournalEntries($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { journalEntries(input: $input) { edges { cursor node { accountingDate description entryDate entryNumber entryType fiscalPeriodId id isAutoGenerated isReversal referenceNumber referenceType status totalCredit totalDebit } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskJournalReversals",
-		Hash:     "sha256:e4de0fbdcb6a424cbae7b2bc7ba1b7a2202f63502f63695dbb91f517fb225878",
-		Document: "query DeskJournalReversals($input: DataTableConnectionInput!) { journalReversals(input: $input) { edges { cursor node { approvedAt cancelReason createdAt id originalJournalEntryId postedAt reasonCode reasonText rejectionReason requestedAccountingDate resolvedFiscalPeriodId reversalJournalEntryId status } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:751df07c5c6191c8269b7dea0a8a536f38e60b07ab201641949976007e6411a7",
+		Document: "query DeskJournalReversals($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { journalReversals(input: $input) { edges { cursor node { approvedAt cancelReason createdAt id originalJournalEntryId postedAt reasonCode reasonText rejectionReason requestedAccountingDate resolvedFiscalPeriodId reversalJournalEntryId status } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskManualJournals",
-		Hash:     "sha256:0ab4ddc613c4f6f1b24fe9e7c9b6f4d740a799f5d167800caa5deaca85517392",
-		Document: "query DeskManualJournals($input: DataTableConnectionInput!) { manualJournals(input: $input) { edges { cursor node { accountingDate approvedAt cancelReason createdAt currencyCode description id isBalanced postedBatchId reason rejectionReason requestNumber requestedFiscalPeriodId status totalCredit totalDebit } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:29037eac713a284a1f150615fcc102438f61d41a7cb9b5bf29292e4e598dad09",
+		Document: "query DeskManualJournals($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { manualJournals(input: $input) { edges { cursor node { accountingDate approvedAt cancelReason createdAt currencyCode description id isBalanced postedBatchId reason rejectionReason requestNumber requestedFiscalPeriodId status totalCredit totalDebit } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskLocationCard",
@@ -1112,8 +1112,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskWorkers",
-		Hash:     "sha256:3be55cb574e3642d02678112104ec454681d662be5141f34d004f8d5fb5f19f3",
-		Document: "query DeskWorkers($input: DataTableConnectionInput!, $withoutCredential: String) { workers(input: $input, withoutCredential: $withoutCredential) { edges { cursor node { assignmentBlocked availableForDispatch canBeAssigned city createdAt driverType externalId firstName fleetCode { code id } fleetCodeId id lastName profile { cdlClass cdlRestrictions complianceStatus eldExempt endorsement hazmatExpiry isQualified lastComplianceCheck lastMvrCheck licenseExpiry medicalCardExpiry mvrDueDate physicalDueDate shortHaulExempt twicExpiry } status type wholeName } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:9fdca621dc272cb47ab91abb96f3d27c90b9f8cf5b468641a1dfe54aeeaa3b4e",
+		Document: "query DeskWorkers($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $withoutCredential: String) { workers(input: $input, withoutCredential: $withoutCredential) { edges { cursor node { assignmentBlocked availableForDispatch canBeAssigned city createdAt driverType externalId firstName fleetCode { code id } fleetCodeId id lastName profile { cdlClass cdlRestrictions complianceStatus eldExempt endorsement hazmatExpiry isQualified lastComplianceCheck lastMvrCheck licenseExpiry medicalCardExpiry mvrDueDate physicalDueDate shortHaulExempt twicExpiry } status type wholeName } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskWorkerChecklists",

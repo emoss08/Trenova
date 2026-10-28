@@ -42,7 +42,7 @@ What find_tools can load, by area of Trenova:
 - AI & agents (2 tools): agent run
 - Billing (1 tool): rate quote
 - Carriers (8 tools): carrier tender, rate confirmation
-- Desk (7 tools): briefing, desk
+- Desk (8 tools): briefing, desk
 - Dispatch (8 tools): shipment move
 - EDI (12 tools): edi
 - Equipment (4 tools): tractor, trailer
@@ -51,7 +51,7 @@ What find_tools can load, by area of Trenova:
 - Shipments (18 tools): hold reason, recurring shipment, shipment, shipment comment, shipment hold
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, dispatch_assign_move, shipment_add_comment, shipment_place_hold, shipment_release_hold, equipment_set_tractor_status, equipment_set_trailer_status, dispatch_unassign_move, dispatch_set_move_status, dispatch_create_carrier_assignment, dispatch_cancel_carrier_assignment, dispatch_cancel_tender, dispatch_record_tender_response, rate_generate_confirmation, rate_send_confirmation, rate_void_confirmation, rate_record_confirmation, edi_send_tender, edi_cancel_tender, edi_expire_tender, edi_review_transfer_change, edi_send_status_update, edi_retry_message, edi_replay_message, shipment_uncancel, shipment_duplicate, shipment_update_hold, dispatch_split_move, shipment_recalculate_distance, shipment_transfer_ownership, shipment_pin_comment, shipment_resolve_comment, shipment_generate_recurring, shipment_update, dispatch_record_stop_actual, shipment_reschedule_stop
+- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, agent_create_schedule, dispatch_assign_move, shipment_add_comment, shipment_place_hold, shipment_release_hold, equipment_set_tractor_status, equipment_set_trailer_status, dispatch_unassign_move, dispatch_set_move_status, dispatch_create_carrier_assignment, dispatch_cancel_carrier_assignment, dispatch_cancel_tender, dispatch_record_tender_response, rate_generate_confirmation, rate_send_confirmation, rate_void_confirmation, rate_record_confirmation, edi_send_tender, edi_cancel_tender, edi_expire_tender, edi_review_transfer_change, edi_send_status_update, edi_retry_message, edi_replay_message, shipment_uncancel, shipment_duplicate, shipment_update_hold, dispatch_split_move, shipment_recalculate_distance, shipment_transfer_ownership, shipment_pin_comment, shipment_resolve_comment, shipment_generate_recurring, shipment_update, dispatch_record_stop_actual, shipment_reschedule_stop
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:

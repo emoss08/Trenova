@@ -41,11 +41,11 @@ You hold more tools than are loaded on this turn. The loaded ones are on this re
 What find_tools can load, by area of Trenova:
 - AI & agents (2 tools): agent run
 - Billing (22 tools): factoring agreement, factoring remittance, factoring reserve, factoring schedule, invoice, notice of assignment
-- Desk (6 tools): desk
+- Desk (7 tools): desk
 - Triage (1 tool): customer communication
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, factoring_create_noa, factoring_send_noa, factoring_record_noa_acknowledgement, factoring_request_document, factoring_create_submission, factoring_retry_submission, factoring_cancel_submission, factoring_record_funding, factoring_release_reserve, factoring_resolve_remittance_line, factoring_rematch_remittance, factoring_apply_remittance
+- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, agent_create_schedule, factoring_create_noa, factoring_send_noa, factoring_record_noa_acknowledgement, factoring_request_document, factoring_create_submission, factoring_retry_submission, factoring_cancel_submission, factoring_record_funding, factoring_release_reserve, factoring_resolve_remittance_line, factoring_rematch_remittance, factoring_apply_remittance
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_guide_profile
 
 ## Trenova itself

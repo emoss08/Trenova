@@ -42,7 +42,7 @@ What find_tools can load, by area of Trenova:
 - AI & agents (2 tools): agent run
 - Billing (5 tools): customer
 - Carriers (5 tools): carrier
-- Desk (8 tools): desk, watchtower
+- Desk (9 tools): desk, watchtower
 - Dispatch (7 tools): fleet code, location, location category
 - Documents (5 tools): document, document type
 - Equipment (14 tools): equipment manufacturer, equipment type, tractor, trailer
@@ -51,7 +51,7 @@ What find_tools can load, by area of Trenova:
 - Shipments (9 tools): commodity, hazardous material, shipment
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, carrier_create, carrier_update, carrier_set_status, customer_create, customer_update, customer_set_status, masterdata_create_commodity, masterdata_update_commodity, masterdata_set_commodity_status, masterdata_create_hazardous_material, masterdata_update_hazardous_material, masterdata_set_hazardous_material_status, location_create, location_update, location_set_status, equipment_create_tractor, equipment_update_tractor, equipment_set_tractor_status, equipment_set_tractor_location, equipment_create_trailer, equipment_update_trailer, equipment_set_trailer_status, equipment_set_trailer_location, document_delete, document_restore_version, inbox_file_capture_item, inbox_discard_capture_item, inbox_discard_capture_batch, report_create_table_change_alert, report_update_table_change_alert, report_set_table_change_alert_status, report_delete_table_change_alert, exception_dismiss_watchtower_item
+- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, agent_create_schedule, carrier_create, carrier_update, carrier_set_status, customer_create, customer_update, customer_set_status, masterdata_create_commodity, masterdata_update_commodity, masterdata_set_commodity_status, masterdata_create_hazardous_material, masterdata_update_hazardous_material, masterdata_set_hazardous_material_status, location_create, location_update, location_set_status, equipment_create_tractor, equipment_update_tractor, equipment_set_tractor_status, equipment_set_tractor_location, equipment_create_trailer, equipment_update_trailer, equipment_set_trailer_status, equipment_set_trailer_location, document_delete, document_restore_version, inbox_file_capture_item, inbox_discard_capture_item, inbox_discard_capture_batch, report_create_table_change_alert, report_update_table_change_alert, report_set_table_change_alert_status, report_delete_table_change_alert, exception_dismiss_watchtower_item
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:

@@ -41,14 +41,14 @@ You hold more tools than are loaded on this turn. The loaded ones are on this re
 What find_tools can load, by area of Trenova:
 - AI & agents (2 tools): agent run
 - Carriers (9 tools): carrier, carrier intelligence, carrier sourcing, equipment verification
-- Desk (7 tools): briefing, desk
+- Desk (8 tools): briefing, desk
 - Dispatch (1 tool): driver dispatch hold
 - Equipment (2 tools): tractor, trailer
 - Human resources (38 tools): drug & alcohol testing, leave & fmla, qualification, random testing pool, schedule, shift and 8 more
 - Reports (6 tools): insight, report
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, worker_assign_shift, worker_end_shift_assignment, worker_set_availability_preference, worker_request_shift_swap, worker_approve_shift_swap, worker_reject_shift_swap, worker_withdraw_shift_swap, carrier_vet, carrier_set_monitoring, carrier_record_intelligence_review, carrier_apply_intelligence_suggestions, carrier_import, carrier_verify_equipment, worker_record_credential, worker_update_credential, worker_attach_credential_document, worker_assign_training, worker_assign_required_training, worker_record_training_completion, worker_record_employment_verification, worker_update_employment_verification, worker_record_employment_verification_request, worker_update_checklist_item, worker_open_safety_event, worker_record_safety_violation, worker_set_safety_event_status, worker_schedule_dot_test, worker_update_dot_random_selection, worker_request_credential_renewal, worker_place_dispatch_hold
+- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, agent_create_schedule, worker_assign_shift, worker_end_shift_assignment, worker_set_availability_preference, worker_request_shift_swap, worker_approve_shift_swap, worker_reject_shift_swap, worker_withdraw_shift_swap, carrier_vet, carrier_set_monitoring, carrier_record_intelligence_review, carrier_apply_intelligence_suggestions, carrier_import, carrier_verify_equipment, worker_record_credential, worker_update_credential, worker_attach_credential_document, worker_assign_training, worker_assign_required_training, worker_record_training_completion, worker_record_employment_verification, worker_update_employment_verification, worker_record_employment_verification_request, worker_update_checklist_item, worker_open_safety_event, worker_record_safety_violation, worker_set_safety_event_status, worker_schedule_dot_test, worker_update_dot_random_selection, worker_request_credential_renewal, worker_place_dispatch_hold
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:

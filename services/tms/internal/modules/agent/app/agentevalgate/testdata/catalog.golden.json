@@ -737,6 +737,37 @@
             "description": "A link to the document in the accounting system. Only records whose external url contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "objectType",
+                "objectId",
+                "objectNumber",
+                "partyName",
+                "externalUrl",
+                "kind",
+                "currencyCode",
+                "trenovaMinor",
+                "providerMinor",
+                "differenceMinor",
+                "trenovaState",
+                "providerState",
+                "detail",
+                "providerModifiedAt",
+                "providerModifiedBy",
+                "status",
+                "resolution",
+                "resolutionNote",
+                "directions",
+                "pushed",
+                "detectedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "accounting_list_drift_findings.column"
+            },
+            "type": "array"
+          },
           "fixObjectType": {
             "description": "What the fix made: the record sent, or the memo, void or reversal posted. Only records whose fix object type is one of these.",
             "items": {
@@ -1101,6 +1132,32 @@
             "description": "A link to the payment in the accounting system. Only records whose external url contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "kind",
+                "status",
+                "reason",
+                "resolution",
+                "externalNumber",
+                "externalUrl",
+                "providerModifiedBy",
+                "txnDate",
+                "amountMinor",
+                "currencyCode",
+                "partyName",
+                "partyObjectId",
+                "referenceNumber",
+                "methodName",
+                "lines",
+                "detectedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "accounting_list_inbound_changes.column"
+            },
+            "type": "array"
+          },
           "hasPartyObject": {
             "description": "The Trenova customer, carrier or driver it pays for, once matched. true for only records that have a party object, false for only those that have none.",
             "type": "boolean"
@@ -1319,6 +1376,30 @@
             "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "targetType",
+                "trenovaObjectId",
+                "trenovaKey",
+                "targetLabel",
+                "providerKind",
+                "externalId",
+                "externalName",
+                "state",
+                "source",
+                "confidence",
+                "reason",
+                "required",
+                "candidates",
+                "confirmedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "accounting_list_mapping_gaps.column"
+            },
+            "type": "array"
+          },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
             "maximum": 50,
@@ -1492,6 +1573,32 @@
               "x-enumOf": "graphql.AccountingSyncErrorCategory"
             },
             "minItems": 1,
+            "type": "array"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "objectType",
+                "objectId",
+                "objectNumber",
+                "operation",
+                "sourceEvent",
+                "documentDate",
+                "status",
+                "attemptCount",
+                "nextAttemptAt",
+                "externalDocNumber",
+                "externalUrl",
+                "errorCategory",
+                "resolution",
+                "queuedAt",
+                "syncedAt",
+                "skippedReason"
+              ],
+              "type": "string",
+              "x-enumOf": "accounting_list_sync_records.column"
+            },
             "type": "array"
           },
           "limit": {
@@ -2482,6 +2589,82 @@
         "readsExternal": "never",
         "carriesTaint": true,
         "rationale": "Saves a memory later runs read, so it keeps the taint of the run that wrote it. One kept for the caller alone is their own record; one for their team or the organization reaches colleagues' conversations."
+      }
+    },
+    {
+      "name": "agent_create_schedule",
+      "description": "Repeat a request in this conversation on a schedule, when the person asks for something every day, every weekday or one day a week (\"schedule this to run everyday at 9:30 AM EST\", \"give me this board every Monday at 8\"). Each run asks request again here, as the person, and the answer posts into this conversation. Write request in full so it stands alone: when they say \"this\", write out what they asked for. time is 24-hour HH:MM. timezone is the clock they named (America/New_York for EST or Eastern); leave it out for their own clock, which is the organization's unless your context names theirs. The person approves it before it is kept; then say in one line when it runs. It cannot run hourly or monthly: say so. To email a saved report to people, use report_create_schedule instead.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "repeat": {
+            "description": "How often it runs: day for every day, weekday for Monday to Friday, or one day of the week.",
+            "enum": [
+              "day",
+              "weekday",
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday",
+              "saturday",
+              "sunday"
+            ],
+            "type": "string",
+            "x-enumOf": "conversation_schedule_repeats"
+          },
+          "request": {
+            "description": "What each run asks, in the person's words and in full, at most 2000 characters: \"Give me today's operations board: active shipments, on-time %, at-risk, unassigned, revenue today\".",
+            "type": "string"
+          },
+          "time": {
+            "description": "When it runs, 24-hour HH:MM: 09:30, 17:00.",
+            "type": "string"
+          },
+          "timezone": {
+            "description": "The clock the time is on, as an IANA name (America/New_York, America/Chicago), when the person named one. Leave it out for their own clock, the one your context names as theirs.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request",
+          "repeat",
+          "time"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "schedule this",
+        "every day",
+        "everyday",
+        "daily",
+        "every morning",
+        "every weekday",
+        "run this again",
+        "ask this again",
+        "repeat this request"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "assistant",
+        "operation": "create",
+        "scope": "self",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "personal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "assistant_thread",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Repeats a request in the person's own conversation, asked as them with the access they have when it runs. A person approves every schedule, so an agent never sets its own workload."
       }
     },
     {
@@ -3908,6 +4091,27 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "number",
+                "status",
+                "billType",
+                "proNumber",
+                "billTo",
+                "assignedBiller",
+                "amount",
+                "exceptionReason",
+                "ageDays",
+                "queuedAt",
+                "invoiceId"
+              ],
+              "type": "string",
+              "x-enumOf": "billing_list_queue_items.column"
+            },
+            "type": "array"
+          },
           "filters": {
             "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
             "items": {
@@ -5577,6 +5781,59 @@
             "description": "Only records whose external id contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "stateId",
+                "remitStateId",
+                "status",
+                "code",
+                "name",
+                "dbaName",
+                "carrierType",
+                "dotNumber",
+                "mcNumber",
+                "scac",
+                "complianceStatus",
+                "safetyRating",
+                "qualifiedAt",
+                "disqualifiedReason",
+                "taxId",
+                "taxIdType",
+                "w9OnFile",
+                "is1099Eligible",
+                "paymentMethod",
+                "paymentTermDays",
+                "remitToName",
+                "remitAddressLine1",
+                "remitAddressLine2",
+                "remitCity",
+                "remitPostalCode",
+                "addressLine1",
+                "addressLine2",
+                "city",
+                "postalCode",
+                "phone",
+                "email",
+                "externalId",
+                "notes",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "contacts",
+                "insurancePolicies",
+                "intelRiskLevel",
+                "intelReviewRequired",
+                "intelBlockingCount"
+              ],
+              "type": "string",
+              "x-enumOf": "carrier_list.column"
+            },
+            "type": "array"
+          },
           "hasRemitState": {
             "description": "true for only records that have a remit state, false for only those that have none.",
             "type": "boolean"
@@ -5917,6 +6174,34 @@
             "type": "string",
             "x-recordOf": "equipment_type"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "carrierId",
+                "originLocationId",
+                "originStateId",
+                "originRadiusMiles",
+                "destinationStateId",
+                "equipmentTypeId",
+                "availableFrom",
+                "availableTo",
+                "truckCount",
+                "rateMethod",
+                "rate",
+                "source",
+                "version",
+                "carrier",
+                "originLocation",
+                "originState",
+                "destinationState",
+                "equipmentType"
+              ],
+              "type": "string",
+              "x-enumOf": "carrier_list_capacity_postings.column"
+            },
+            "type": "array"
+          },
           "hasDestinationState": {
             "description": "true for only records that have a destination state, false for only those that have none.",
             "type": "boolean"
@@ -6167,6 +6452,29 @@
           "dotNumber": {
             "description": "Only records whose dot number contains this text.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "subjectType",
+                "carrierId",
+                "dotNumber",
+                "subjectName",
+                "category",
+                "severity",
+                "action",
+                "summary",
+                "detectedAt",
+                "status",
+                "acknowledgedAt",
+                "resolvedAt",
+                "resolution"
+              ],
+              "type": "string",
+              "x-enumOf": "carrier_list_intelligence_events.column"
+            },
+            "type": "array"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -7512,6 +7820,39 @@
             "description": "Only records whose external id contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "stateId",
+                "status",
+                "code",
+                "name",
+                "addressLine1",
+                "addressLine2",
+                "city",
+                "postalCode",
+                "isGeocoded",
+                "longitude",
+                "latitude",
+                "placeId",
+                "externalId",
+                "allowConsolidation",
+                "exclusiveConsolidation",
+                "consolidationPriority",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "billingProfile",
+                "emailProfile"
+              ],
+              "type": "string",
+              "x-enumOf": "customer_list.column"
+            },
+            "type": "array"
+          },
           "isGeocoded": {
             "description": "true for only the records whose isGeocoded is true, false for only those whose isGeocoded is false.",
             "type": "boolean"
@@ -8824,13 +9165,25 @@
     },
     {
       "name": "dispatch_get_board",
-      "description": "The dispatch board: every move in the window with its urgency and coverage, and every driver with availability, hours remaining and last position. Urgency is Late, Now, Today, Tomorrow or Planned, and each move shows who covers it and its pickup and delivery windows. This is the one call for \"what is late\", \"what is uncovered\" and \"who is free\". Urgency follows the move's next stop: the pickup window until it is picked up, then the delivery window. Each late move's lateTo says whether it is late to pick up or to deliver, and lateBy how long past the window's close it is, the way to say it; check shipment_get_tracking on a late move before acting on it, since arrivals are sometimes recorded late. A rundown or a list answers from the board as it stands, saying what each is late to do, rather than tracking each move. To act on one load, such as a note or a change, find it with shipment_list.",
+      "description": "The dispatch board: moves in the window with their urgency and coverage, the furthest behind first, and the drivers with availability, hours remaining and last position. Urgency is Late, Now, Today, Tomorrow or Planned, and each move shows who covers it and its pickup and delivery windows. This is the one call for \"what is late\" (late), \"what is uncovered\" (uncoveredOnly) and \"who is free\". Urgency follows the move's next stop: the pickup window until it is picked up, then the delivery window. Each late move's lateTo says whether it is late to pick up or to deliver, and lateBy how long past the window's close it is, the way to say it. late lists every late move and no others, a page at a time, without the drivers unless asked; check shipment_get_tracking on a late move before acting on it, since arrivals are sometimes recorded late. A rundown or a list answers from the board as it stands, saying what each is late to do, rather than tracking each move. summary counts every move in the window, listed or not: overdueMoves, dueNowMoves and dueTodayMoves by urgency, and uncoveredPastPickup and uncoveredPickupSoon among the uncovered. On a board, show them with the metrics movesLate, movesDueNow, movesDueToday and movesUncovered. To act on one load, such as a note or a change, find it with shipment_list.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "drivers": {
+            "description": "List the drivers beside the moves. Default true, and false with late; leave them out when the question is only about loads.",
+            "type": "boolean"
+          },
           "hoursAhead": {
             "description": "How far ahead the window reaches, in hours. Default 24, at most 168.",
             "type": "integer"
+          },
+          "late": {
+            "description": "Only the moves late now: past the pickup window's close with no arrival, or past the delivery window's close once picked up, the same rule as shipment_list's late. A move inside its window is due now, not late. Default false.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 40 unless you ask, at most 100.",
@@ -9815,6 +10168,28 @@
               "x-enumOf": "graphql.DocumentClassification"
             },
             "minItems": 1,
+            "type": "array"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "code",
+                "name",
+                "description",
+                "color",
+                "documentClassification",
+                "documentCategory",
+                "isSystem",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "document_list_types.column"
+            },
             "type": "array"
           },
           "isSystem": {
@@ -11655,6 +12030,29 @@
             "description": "Only records whose failure reason contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "ediPartnerId",
+                "method",
+                "fileName",
+                "sizeBytes",
+                "interchangeControlNumber",
+                "isaSenderId",
+                "status",
+                "failureReason",
+                "transactionCount",
+                "receivedAt",
+                "processedAt",
+                "partner",
+                "rawPurgedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "edi_list_inbound_files.column"
+            },
+            "type": "array"
+          },
           "fileName": {
             "description": "Only records whose file name contains this text.",
             "type": "string"
@@ -12015,6 +12413,38 @@
             "minItems": 1,
             "type": "array"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "ediPartnerId",
+                "shipmentId",
+                "transferId",
+                "inboundFileId",
+                "direction",
+                "transactionSet",
+                "x12Version",
+                "status",
+                "interchangeControlNumber",
+                "groupControlNumber",
+                "transactionControlNumber",
+                "segmentCount",
+                "deliveryStatus",
+                "deliveryAttempts",
+                "deliverySentAt",
+                "deliveryLastError",
+                "ackStatus",
+                "ackLastError",
+                "generatedAt",
+                "partner",
+                "invoiceId",
+                "rawPurgedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "edi_list_messages.column"
+            },
+            "type": "array"
+          },
           "generatedAtFrom": {
             "description": "Only records whose generated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
             "examples": [
@@ -12260,6 +12690,24 @@
           "enabledForOutbound": {
             "description": "true for only the records whose enabledForOutbound is true, false for only those whose enabledForOutbound is false.",
             "type": "boolean"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "kind",
+                "status",
+                "code",
+                "name",
+                "customerId",
+                "enabledForInbound",
+                "enabledForOutbound",
+                "internalOrganization"
+              ],
+              "type": "string",
+              "x-enumOf": "edi_list_partners.column"
+            },
+            "type": "array"
           },
           "hasCustomer": {
             "description": "true for only records that have a customer, false for only those that have none.",
@@ -12562,6 +13010,30 @@
           "failureReason": {
             "description": "Only records whose failure reason contains this text.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "sourceShipmentId",
+                "targetShipmentId",
+                "inboundMessageId",
+                "status",
+                "rejectionReason",
+                "failureReason",
+                "submittedAt",
+                "processedAt",
+                "direction",
+                "counterparty",
+                "bol",
+                "customerLabel",
+                "serviceTypeLabel",
+                "stopCount"
+              ],
+              "type": "string",
+              "x-enumOf": "edi_list_transfers.column"
+            },
+            "type": "array"
           },
           "hasInboundMessage": {
             "description": "true for only records that have a inbound message, false for only those that have none.",
@@ -13571,6 +14043,24 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "status",
+                "name",
+                "description",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "equipment_list_manufacturers.column"
+            },
+            "type": "array"
+          },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
             "maximum": 50,
@@ -13752,6 +14242,51 @@
           "externalId": {
             "description": "Only records whose external id contains this text.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "primaryWorkerId",
+                "equipmentTypeId",
+                "equipmentManufacturerId",
+                "stateId",
+                "fleetCodeId",
+                "secondaryWorkerId",
+                "status",
+                "unitNumber",
+                "model",
+                "make",
+                "year",
+                "licensePlateNumber",
+                "registrationNumber",
+                "registrationExpiry",
+                "vin",
+                "externalId",
+                "lastKnownLocationId",
+                "lastKnownLocationName",
+                "inProgressMoveId",
+                "inProgressProNumber",
+                "inProgressDueAt",
+                "fuelType",
+                "iftaQualified",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "customFields",
+                "equipmentType",
+                "equipmentManufacturer",
+                "fleetCode",
+                "state",
+                "primaryWorker",
+                "secondaryWorker"
+              ],
+              "type": "string",
+              "x-enumOf": "equipment_list_tractors.column"
+            },
+            "type": "array"
           },
           "fleetCodeId": {
             "description": "The fleet code, from masterdata_list_fleet_codes. Never guess one.",
@@ -14088,6 +14623,47 @@
             "description": "Only records whose external id contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "equipmentTypeId",
+                "equipmentManufacturerId",
+                "registrationStateId",
+                "fleetCodeId",
+                "status",
+                "unitNumber",
+                "model",
+                "make",
+                "year",
+                "licensePlateNumber",
+                "vin",
+                "externalId",
+                "registrationNumber",
+                "maxLoadWeight",
+                "lastInspectionDate",
+                "registrationExpiry",
+                "lastKnownLocationId",
+                "lastKnownLocationName",
+                "inProgressMoveId",
+                "inProgressProNumber",
+                "inProgressDueAt",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "customFields",
+                "equipmentType",
+                "equipmentManufacturer",
+                "fleetCode",
+                "registrationState"
+              ],
+              "type": "string",
+              "x-enumOf": "equipment_list_trailers.column"
+            },
+            "type": "array"
+          },
           "fleetCodeId": {
             "description": "The fleet code, from masterdata_list_fleet_codes. Never guess one.",
             "type": "string",
@@ -14420,6 +14996,27 @@
           "description": {
             "description": "Only records whose description contains this text.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "status",
+                "code",
+                "description",
+                "class",
+                "color",
+                "interiorLength",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "equipment_list_types.column"
+            },
+            "type": "array"
           },
           "interiorLengthMax": {
             "description": "Only records whose interior length is at most this. Write it as a decimal, such as 1250.00.",
@@ -15428,6 +16025,33 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "code",
+                "label",
+                "description",
+                "category",
+                "appliesTo",
+                "defaultStatusCode",
+                "defaultReasonCode",
+                "defaultExceptionCode",
+                "defaultNote",
+                "active",
+                "sortOrder",
+                "externalMap",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "exception_list_service_failure_reason_codes.column"
+            },
+            "type": "array"
+          },
           "label": {
             "description": "Only records whose label contains this text.",
             "type": "string"
@@ -15578,6 +16202,39 @@
             ],
             "format": "date",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "shipmentId",
+                "shipmentMoveId",
+                "stopId",
+                "reasonCodeId",
+                "number",
+                "type",
+                "source",
+                "status",
+                "stopType",
+                "scheduledCutoff",
+                "actualArrival",
+                "gracePeriodMinutes",
+                "lateMinutes",
+                "notes",
+                "internalNotes",
+                "x12StatusCodeOverride",
+                "x12ReasonCodeOverride",
+                "x12ExceptionCode",
+                "detectedAt",
+                "version",
+                "shipment",
+                "stop",
+                "reasonCode"
+              ],
+              "type": "string",
+              "x-enumOf": "exception_list_service_failures.column"
+            },
+            "type": "array"
           },
           "gracePeriodMinutesMax": {
             "description": "Only records whose grace period minutes is at most this.",
@@ -17095,6 +17752,28 @@
             "type": "string",
             "x-recordOf": "factoring_company"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "customerId",
+                "factoringCompanyId",
+                "status",
+                "sentAt",
+                "sentTo",
+                "acknowledgedAt",
+                "expiresAt",
+                "releasedAt",
+                "releaseReason",
+                "version",
+                "customer",
+                "factoringCompany"
+              ],
+              "type": "string",
+              "x-enumOf": "factoring_list_noas.column"
+            },
+            "type": "array"
+          },
           "hasSignedDocument": {
             "description": "The customer's signed copy, a document on this notice. true for only records that have a signed document, false for only those that have none.",
             "type": "boolean"
@@ -17287,6 +17966,25 @@
           "failedChecksMin": {
             "description": "Only records whose failed checks is at least this.",
             "type": "integer"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "invoiceId",
+                "factoringCompanyId",
+                "customerId",
+                "verdict",
+                "checks",
+                "failedChecks",
+                "openBalanceMinor",
+                "readySince",
+                "evaluatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "factoring_list_readiness.column"
+            },
+            "type": "array"
           },
           "hasFactoringCompany": {
             "description": "true for only records that have a factoring company, false for only those that have none.",
@@ -17502,6 +18200,36 @@
             "description": "The factor, from invoice_get, factoring_list_readiness or factoring_list_noas. Never guess one.",
             "type": "string",
             "x-recordOf": "factoring_company"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "factoringCompanyId",
+                "fileName",
+                "source",
+                "sourceFormat",
+                "status",
+                "defaultKind",
+                "remittedOn",
+                "currencyCode",
+                "unmappedHeaders",
+                "lineCount",
+                "matchedCount",
+                "exceptionCount",
+                "appliedCount",
+                "totalCashMinor",
+                "error",
+                "stagedAt",
+                "appliedAt",
+                "discardReason",
+                "version",
+                "factoringCompany"
+              ],
+              "type": "string",
+              "x-enumOf": "factoring_list_remittances.column"
+            },
+            "type": "array"
           },
           "fileName": {
             "description": "Only records whose file name contains this text.",
@@ -17827,6 +18555,35 @@
             ],
             "format": "date",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "number",
+                "factoringCompanyId",
+                "status",
+                "currencyCode",
+                "invoiceCount",
+                "faceMinor",
+                "expectedAdvanceMinor",
+                "expectedFeeMinor",
+                "expectedReserveMinor",
+                "transportMethod",
+                "transportTarget",
+                "attempts",
+                "lastError",
+                "sentAt",
+                "failedAt",
+                "cancelReason",
+                "version",
+                "createdAt",
+                "factoringCompany"
+              ],
+              "type": "string",
+              "x-enumOf": "factoring_list_submissions.column"
+            },
+            "type": "array"
           },
           "fundedAtFrom": {
             "description": "When the factor's funding was first recorded. Only records whose funded at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
@@ -19211,6 +19968,22 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "name",
+                "path",
+                "description",
+                "testCount",
+                "status",
+                "currentVersionNumber"
+              ],
+              "type": "string",
+              "x-enumOf": "formula_list_libraries.column"
+            },
+            "type": "array"
+          },
           "hasApprovedBy": {
             "description": "true for only records that have a approved by, false for only those that have none.",
             "type": "boolean"
@@ -19423,6 +20196,21 @@
           "description": {
             "description": "Only records whose description contains this text.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "name",
+                "description",
+                "testCount",
+                "status",
+                "currentVersionNumber"
+              ],
+              "type": "string",
+              "x-enumOf": "formula_list_templates.column"
+            },
+            "type": "array"
           },
           "hasApprovedBy": {
             "description": "true for only records that have a approved by, false for only those that have none.",
@@ -20501,6 +21289,27 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "provider",
+                "lastFour",
+                "label",
+                "assignedWorkerId",
+                "assignedTractorId",
+                "status",
+                "expiresAt",
+                "cancelledAt",
+                "discoveredAt",
+                "assignedWorker",
+                "assignedTractor"
+              ],
+              "type": "string",
+              "x-enumOf": "fuel_list_cards.column"
+            },
+            "type": "array"
+          },
           "hasAssignedTractor": {
             "description": "true for only records that have a assigned tractor, false for only those that have none.",
             "type": "boolean"
@@ -20704,6 +21513,28 @@
             ],
             "format": "date",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "tractorId",
+                "jurisdictionId",
+                "traveledAt",
+                "year",
+                "quarter",
+                "miles",
+                "loaded",
+                "source",
+                "shipmentMoveId",
+                "notes",
+                "tractor",
+                "jurisdiction"
+              ],
+              "type": "string",
+              "x-enumOf": "fuel_list_ifta_mileage_entries.column"
+            },
+            "type": "array"
           },
           "hasCreatedBy": {
             "description": "true for only records that have a created by, false for only those that have none.",
@@ -20943,6 +21774,29 @@
           "currencyCode": {
             "description": "Only records whose currency code contains this text.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "year",
+                "quarter",
+                "amendmentNumber",
+                "status",
+                "totalMiles",
+                "totalGallons",
+                "totalTaxPaidGallons",
+                "netDue",
+                "currencyCode",
+                "problems",
+                "finalizedAt",
+                "filedAt",
+                "filingReference"
+              ],
+              "type": "string",
+              "x-enumOf": "fuel_list_ifta_returns.column"
+            },
+            "type": "array"
           },
           "filedAtFrom": {
             "description": "Only records whose filed at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
@@ -21363,6 +22217,27 @@
             "description": "What the sync read: the remote file path for a file feed, or the request window\nfor an API feed. Only records whose feed reference contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "provider",
+                "origin",
+                "fileName",
+                "status",
+                "summary",
+                "rowCount",
+                "errorCount",
+                "committedCount",
+                "error",
+                "stagedAt",
+                "committedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "fuel_list_purchase_imports.column"
+            },
+            "type": "array"
+          },
           "fileName": {
             "description": "Only records whose file name contains this text.",
             "type": "string"
@@ -21608,6 +22483,37 @@
           "currencyCode": {
             "description": "Only records whose currency code contains this text.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "tractorId",
+                "workerId",
+                "jurisdictionId",
+                "fuelCardId",
+                "cardLastFour",
+                "purchasedAt",
+                "vendor",
+                "vendorCity",
+                "fuelType",
+                "quantity",
+                "quantityUnit",
+                "gallons",
+                "totalAmount",
+                "currencyCode",
+                "transactionReference",
+                "source",
+                "importBatchId",
+                "taxPaid",
+                "tractor",
+                "worker",
+                "jurisdiction"
+              ],
+              "type": "string",
+              "x-enumOf": "fuel_list_purchases.column"
+            },
+            "type": "array"
           },
           "fuelCardId": {
             "description": "The fuel card, from fuel_list_cards. Never guess one.",
@@ -23518,6 +24424,29 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "source",
+                "status",
+                "sourceName",
+                "jobName",
+                "receivedPageCount",
+                "itemCount",
+                "filedItemCount",
+                "openItemCount",
+                "failureMessage",
+                "isEditable",
+                "items",
+                "version",
+                "createdAt"
+              ],
+              "type": "string",
+              "x-enumOf": "inbox_list_capture_batches.column"
+            },
+            "type": "array"
+          },
           "limit": {
             "description": "How many rows to return: 5 unless you ask, at most 10.",
             "maximum": 10,
@@ -23648,6 +24577,22 @@
           "description": {
             "description": "Only records whose description contains this text.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "name",
+                "description",
+                "senderName",
+                "senderEmail",
+                "replyToEmail",
+                "status"
+              ],
+              "type": "string",
+              "x-enumOf": "inbox_list_email_profiles.column"
+            },
+            "type": "array"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -23796,6 +24741,35 @@
           "collapseThreads": {
             "description": "Show one row per thread: the newest message of it in the folder.",
             "type": "boolean"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "mailboxId",
+                "mailbox",
+                "fromAddress",
+                "fromName",
+                "subject",
+                "receivedAt",
+                "classification",
+                "confidence",
+                "status",
+                "matchedCustomerId",
+                "matchedShipmentId",
+                "matchReason",
+                "attachmentCount",
+                "preview",
+                "needsReview",
+                "threadKey",
+                "threadCount",
+                "ownerId",
+                "dueAt"
+              ],
+              "type": "string",
+              "x-enumOf": "inbox_list_inbound_messages.column"
+            },
+            "type": "array"
           },
           "lane": {
             "description": "The folder. Absent keeps the older status filter. Only records whose lane is this.",
@@ -26139,6 +27113,28 @@
             "description": "Why the invoice stays out of factoring; null unless it is excluded. Only records whose factoring override reason contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "customerId",
+                "number",
+                "billType",
+                "status",
+                "currencyCode",
+                "invoiceDate",
+                "dueDate",
+                "shipmentProNumber",
+                "billToName",
+                "totalAmount",
+                "settlementStatus",
+                "disputeStatus"
+              ],
+              "type": "string",
+              "x-enumOf": "invoice_list.column"
+            },
+            "type": "array"
+          },
           "hasFactoringAgreement": {
             "description": "The agreement in force when the invoice posted. true for only records that have a factoring agreement, false for only those that have none.",
             "type": "boolean"
@@ -26783,6 +27779,30 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "number",
+                "status",
+                "source",
+                "cycle",
+                "periodStart",
+                "periodEnd",
+                "invoiceDate",
+                "groupCount",
+                "itemCount",
+                "excludedCount",
+                "invoiceCount",
+                "totalAmount",
+                "currency",
+                "failureReason"
+              ],
+              "type": "string",
+              "x-enumOf": "invoice_list_runs.column"
+            },
+            "type": "array"
+          },
           "filters": {
             "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
             "items": {
@@ -28272,6 +29292,28 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "accountCode",
+                "name",
+                "accountType",
+                "category",
+                "status",
+                "description",
+                "parentId",
+                "isSystem",
+                "allowManualJe",
+                "currentBalance",
+                "debitBalance",
+                "creditBalance"
+              ],
+              "type": "string",
+              "x-enumOf": "ledger_list_accounts.column"
+            },
+            "type": "array"
+          },
           "filters": {
             "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
             "items": {
@@ -28474,6 +29516,28 @@
             ],
             "format": "date",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "fiscalYearId",
+                "periodNumber",
+                "periodType",
+                "status",
+                "name",
+                "startDate",
+                "endDate",
+                "isAdjusting",
+                "lockedAt",
+                "closedAt",
+                "reopenedAt",
+                "reopenReason"
+              ],
+              "type": "string",
+              "x-enumOf": "ledger_list_fiscal_periods.column"
+            },
+            "type": "array"
           },
           "isAdjusting": {
             "description": "true for only the records whose isAdjusting is true, false for only those whose isAdjusting is false.",
@@ -28754,6 +29818,29 @@
             "description": "Only records whose entry type is exactly this. Such as Standard, Adjusting, Closing or Reversal.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "fiscalPeriodId",
+                "entryNumber",
+                "entryDate",
+                "entryType",
+                "status",
+                "accountingDate",
+                "description",
+                "referenceType",
+                "totalDebit",
+                "totalCredit",
+                "isReversal",
+                "referenceNumber",
+                "isAutoGenerated"
+              ],
+              "type": "string",
+              "x-enumOf": "ledger_list_journal_entries.column"
+            },
+            "type": "array"
+          },
           "fiscalPeriodId": {
             "description": "The fiscal period, from ledger_list_fiscal_periods. Never guess one.",
             "type": "string",
@@ -29028,6 +30115,28 @@
             ],
             "format": "date",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "originalJournalEntryId",
+                "reversalJournalEntryId",
+                "status",
+                "requestedAccountingDate",
+                "resolvedFiscalPeriodId",
+                "reasonCode",
+                "reasonText",
+                "approvedAt",
+                "rejectionReason",
+                "cancelReason",
+                "postedAt",
+                "createdAt"
+              ],
+              "type": "string",
+              "x-enumOf": "ledger_list_journal_reversals.column"
+            },
+            "type": "array"
           },
           "hasApprovedBy": {
             "description": "true for only records that have a approved by, false for only those that have none.",
@@ -29315,6 +30424,31 @@
           "description": {
             "description": "Only records whose description contains this text.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "requestNumber",
+                "status",
+                "description",
+                "reason",
+                "accountingDate",
+                "requestedFiscalPeriodId",
+                "currencyCode",
+                "totalDebit",
+                "totalCredit",
+                "isBalanced",
+                "approvedAt",
+                "rejectionReason",
+                "cancelReason",
+                "postedBatchId",
+                "createdAt"
+              ],
+              "type": "string",
+              "x-enumOf": "ledger_list_manual_journals.column"
+            },
+            "type": "array"
           },
           "hasApprovedBy": {
             "description": "true for only records that have a approved by, false for only those that have none.",
@@ -30058,6 +31192,37 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "locationCategoryId",
+                "stateId",
+                "status",
+                "code",
+                "name",
+                "description",
+                "addressLine1",
+                "addressLine2",
+                "city",
+                "postalCode",
+                "placeId",
+                "isGeocoded",
+                "longitude",
+                "latitude",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "state",
+                "locationCategory"
+              ],
+              "type": "string",
+              "x-enumOf": "location_list.column"
+            },
+            "type": "array"
+          },
           "geofenceRadiusMetersMax": {
             "description": "Only records whose geofence radius meters is at most this. Write it as a decimal, such as 1250.00.",
             "type": "string"
@@ -30376,6 +31541,30 @@
               "x-enumOf": "graphql.FacilityType"
             },
             "minItems": 1,
+            "type": "array"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "name",
+                "description",
+                "type",
+                "facilityType",
+                "color",
+                "hasSecureParking",
+                "requiresAppointment",
+                "allowsOvernight",
+                "hasRestroom",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "location_list_categories.column"
+            },
             "type": "array"
           },
           "hasRestroom": {
@@ -30981,6 +32170,27 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "status",
+                "code",
+                "description",
+                "method",
+                "rateUnit",
+                "amount",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "masterdata_list_accessorial_charges.column"
+            },
+            "type": "array"
+          },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
             "maximum": 50,
@@ -31128,6 +32338,34 @@
           "description": {
             "description": "Only records whose description contains this text.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "hazardousMaterialId",
+                "status",
+                "name",
+                "description",
+                "minTemperature",
+                "maxTemperature",
+                "weightPerUnit",
+                "linearFeetPerUnit",
+                "maxQuantityPerShipment",
+                "freightClass",
+                "loadingInstructions",
+                "stackable",
+                "fragile",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "masterdata_list_commodities.column"
+            },
+            "type": "array"
           },
           "fragile": {
             "description": "true for only the records whose fragile is true, false for only those whose fragile is false.",
@@ -31365,6 +32603,30 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "managerId",
+                "status",
+                "code",
+                "description",
+                "revenueGoal",
+                "deadheadGoal",
+                "mileageGoal",
+                "color",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "manager"
+              ],
+              "type": "string",
+              "x-enumOf": "masterdata_list_fleet_codes.column"
+            },
+            "type": "array"
+          },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
             "maximum": 50,
@@ -31549,6 +32811,41 @@
           "ergGuideNumber": {
             "description": "Only records whose erg guide number contains this text.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "status",
+                "code",
+                "name",
+                "description",
+                "class",
+                "unNumber",
+                "packingGroup",
+                "subsidiaryHazardClass",
+                "ergGuideNumber",
+                "labelCodes",
+                "specialProvisions",
+                "properShippingName",
+                "handlingInstructions",
+                "emergencyContact",
+                "emergencyContactPhoneNumber",
+                "quantityThreshold",
+                "placardRequired",
+                "isReportableQuantity",
+                "marinePollutant",
+                "inhalationHazard",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "masterdata_list_hazardous_materials.column"
+            },
+            "type": "array"
           },
           "handlingInstructions": {
             "description": "Only records whose handling instructions contains this text.",
@@ -31783,6 +33080,32 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "type",
+                "code",
+                "label",
+                "description",
+                "active",
+                "defaultSeverity",
+                "defaultBlocksDispatch",
+                "defaultBlocksDelivery",
+                "defaultBlocksBilling",
+                "defaultVisibleToCustomer",
+                "sortOrder",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "masterdata_list_hold_reasons.column"
+            },
+            "type": "array"
+          },
           "label": {
             "description": "Only records whose label contains this text.",
             "type": "string"
@@ -31929,6 +33252,25 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "status",
+                "code",
+                "description",
+                "color",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "masterdata_list_service_types.column"
+            },
+            "type": "array"
+          },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
             "maximum": 50,
@@ -32053,6 +33395,25 @@
           "description": {
             "description": "Only records whose description contains this text.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "status",
+                "code",
+                "description",
+                "color",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "masterdata_list_shipment_types.column"
+            },
+            "type": "array"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -33046,6 +34407,32 @@
             "description": "The customer, from customer_list. Never guess one.",
             "type": "string",
             "x-recordOf": "customer"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "customerId",
+                "ownerId",
+                "status",
+                "orderNumber",
+                "poNumber",
+                "bol",
+                "currencyCode",
+                "quotedAmount",
+                "baseAmount",
+                "totalAmount",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "customer"
+              ],
+              "type": "string",
+              "x-enumOf": "order_list.column"
+            },
+            "type": "array"
           },
           "hasEnteredBy": {
             "description": "true for only records that have a entered by, false for only those that have none.",
@@ -34609,6 +35996,30 @@
             ],
             "format": "date",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "partyType",
+                "customerId",
+                "carrierId",
+                "code",
+                "name",
+                "agreementType",
+                "status",
+                "contractRef",
+                "priority",
+                "effectiveFrom",
+                "effectiveTo",
+                "autoRenew",
+                "currency",
+                "inputs"
+              ],
+              "type": "string",
+              "x-enumOf": "rate_list_agreements.column"
+            },
+            "type": "array"
           },
           "hasApprovedBy": {
             "description": "true for only records that have a approved by, false for only those that have none.",
@@ -36443,6 +37854,28 @@
           "exchangeRateMin": {
             "description": "Units of the organization's functional currency per one unit of the payment\ncurrency, fixed when the payment posted. Null when both are the same. Only records whose exchange rate is at least this. Write it as a decimal, such as 1250.00.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "customerId",
+                "paymentDate",
+                "amountMinor",
+                "appliedAmountMinor",
+                "unappliedAmountMinor",
+                "status",
+                "paymentMethod",
+                "referenceNumber",
+                "memo",
+                "currencyCode",
+                "reversedAt",
+                "applications"
+              ],
+              "type": "string",
+              "x-enumOf": "receivable_list_customer_payments.column"
+            },
+            "type": "array"
           },
           "hasPostedBatch": {
             "description": "true for only records that have a posted batch, false for only those that have none.",
@@ -39726,6 +41159,25 @@
             "type": "string",
             "x-recordOf": "report"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "definitionId",
+                "cannedKey",
+                "format",
+                "status",
+                "rowCount",
+                "truncated",
+                "rowsStored",
+                "completedAt",
+                "createdAt"
+              ],
+              "type": "string",
+              "x-enumOf": "report_list_runs.column"
+            },
+            "type": "array"
+          },
           "format": {
             "description": "Only records whose format is exactly this.",
             "type": "string"
@@ -39906,6 +41358,23 @@
             ],
             "format": "date",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "name",
+                "tableName",
+                "eventTypes",
+                "conditions",
+                "conditionMatch",
+                "watchedColumns",
+                "status"
+              ],
+              "type": "string",
+              "x-enumOf": "report_list_table_change_alerts.column"
+            },
+            "type": "array"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -44241,6 +45710,32 @@
             "description": "Only records whose currency code contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "status",
+                "source",
+                "reference",
+                "issuedDate",
+                "amount",
+                "recovered",
+                "writtenOff",
+                "outstanding",
+                "writeOffReason",
+                "notes",
+                "currencyCode",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "worker"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_advances.column"
+            },
+            "type": "array"
+          },
           "issuedDateFrom": {
             "description": "Only records whose issued date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
             "examples": [
@@ -44484,6 +45979,34 @@
           "exchangeRateMin": {
             "description": "Units of the organization's functional currency per one unit of the\nsettlement currency, fixed when the settlement posted. Null when both are the same. Only records whose exchange rate is at least this. Write it as a decimal, such as 1250.00.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "carrierId",
+                "batchId",
+                "settlementNumber",
+                "status",
+                "periodStart",
+                "periodEnd",
+                "payDate",
+                "grossCost",
+                "adjustments",
+                "netPayable",
+                "shipmentCount",
+                "currencyCode",
+                "paymentMethod",
+                "paymentReference",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "carrier"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_carrier.column"
+            },
+            "type": "array"
           },
           "grossCostMax": {
             "description": "Only records whose gross cost is at most this. Write it as a decimal in the record's currency, such as 1250.00.",
@@ -44933,6 +46456,39 @@
             "description": "Units of the organization's functional currency per one unit of the\nsettlement currency, fixed when the settlement posted. Null when both are the same. Only records whose exchange rate is at least this. Write it as a decimal, such as 1250.00.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "batchId",
+                "settlementNumber",
+                "status",
+                "classification",
+                "payProfileName",
+                "periodStart",
+                "periodEnd",
+                "payDate",
+                "grossEarnings",
+                "reimbursements",
+                "deductions",
+                "carryForwardIn",
+                "carryForwardOut",
+                "netPay",
+                "totalMiles",
+                "shipmentCount",
+                "currencyCode",
+                "hasExceptions",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "worker"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_driver.column"
+            },
+            "type": "array"
+          },
           "grossEarningsMax": {
             "description": "Only records whose gross earnings is at most this. Write it as a decimal in the record's currency, such as 1250.00.",
             "type": "string"
@@ -45337,6 +46893,32 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "shipmentId",
+                "status",
+                "amount",
+                "currencyCode",
+                "description",
+                "incurredDate",
+                "receiptDocumentId",
+                "reviewNote",
+                "reviewedAt",
+                "settlementLineId",
+                "version",
+                "createdAt",
+                "worker",
+                "payCode",
+                "reviewedBy"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_driver_expenses.column"
+            },
+            "type": "array"
+          },
           "hasPayCode": {
             "description": "true for only records that have a pay code, false for only those that have none.",
             "type": "boolean"
@@ -45559,6 +47141,29 @@
           "currencyCode": {
             "description": "Only records whose currency code contains this text.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "status",
+                "targetAmount",
+                "balance",
+                "annualInterestRate",
+                "lastInterestAccrualDate",
+                "openedDate",
+                "closedDate",
+                "currencyCode",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "worker"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_escrow_accounts.column"
+            },
+            "type": "array"
           },
           "lastInterestAccrualDateFrom": {
             "description": "Only records whose last interest accrual date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
@@ -45827,6 +47432,35 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "shipmentId",
+                "moveId",
+                "settlementId",
+                "status",
+                "eventDate",
+                "grossAmount",
+                "totalMiles",
+                "currencyCode",
+                "components",
+                "proNumber",
+                "onHold",
+                "holdReason",
+                "voidedAt",
+                "voidReason",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "worker"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_pay_events.column"
+            },
+            "type": "array"
+          },
           "grossAmountMax": {
             "description": "Only records whose gross amount is at most this. Write it as a decimal in the record's currency, such as 1250.00.",
             "type": "string"
@@ -46046,6 +47680,31 @@
           "description": {
             "description": "Only records whose description contains this text.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "organizationId",
+                "businessUnitId",
+                "status",
+                "name",
+                "description",
+                "classification",
+                "currencyCode",
+                "guaranteedPeriodMinimum",
+                "perDiemRatePerMile",
+                "perDiemDailyCap",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "components",
+                "activeAssignmentCount"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_pay_profiles.column"
+            },
+            "type": "array"
           },
           "guaranteedPeriodMinimumMax": {
             "description": "Only records whose guaranteed period minimum is at most this. Write it as a decimal in the record's currency, such as 1250.00.",
@@ -46267,6 +47926,33 @@
             "type": "string",
             "x-recordOf": "escrow_account"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "payCodeId",
+                "escrowAccountId",
+                "status",
+                "frequency",
+                "description",
+                "amount",
+                "totalCap",
+                "deductedToDate",
+                "startDate",
+                "endDate",
+                "currencyCode",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "worker",
+                "payCode"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_recurring_deductions.column"
+            },
+            "type": "array"
+          },
           "frequency": {
             "description": "Only records whose frequency is one of these.",
             "items": {
@@ -46471,6 +48157,32 @@
             ],
             "format": "date",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "payCodeId",
+                "status",
+                "frequency",
+                "description",
+                "amount",
+                "totalCap",
+                "paidToDate",
+                "startDate",
+                "endDate",
+                "currencyCode",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "worker",
+                "payCode"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_recurring_earnings.column"
+            },
+            "type": "array"
           },
           "frequency": {
             "description": "Only records whose frequency is one of these.",
@@ -48929,13 +50641,36 @@
     },
     {
       "name": "shipment_list",
-      "description": "Find shipments (loads) by the words people use for them, by status, by holds, or by filters on dates, charges and transfer status. Words match a pro number, BOL, the customer's PO or reference number, a customer's name or code, a stop's place or city, the driver or what it carries; several words each narrow, so \"sunbelt chicago\" finds Sunbelt's loads through Chicago, and a word that names several things narrows to any of them. With no words and no filters it lists the newest. Each row has the first pickup, the final stop, who drives each move, what it carries and the holds in force, each with its note, when it started and the holdId shipment_release_hold takes, so onHold lists held loads and why in one call. For more, pass every load you need to shipment_get at once.",
+      "description": "Find shipments (loads) by the words people use for them, by status, by holds, or by filters on dates, charges and transfer status. Words match a pro number, BOL, the customer's PO or reference number, a customer's name or code, a stop's place or city, the driver or what it carries; several words each narrow, so \"sunbelt chicago\" finds Sunbelt's loads through Chicago, and a word that names several things narrows to any of them. With no words and no filters it lists the newest. Each row has the first pickup, the final stop, who drives each move, what it carries and the holds in force, each with its note, when it started and the holdId shipment_release_hold takes, so onHold lists held loads and why in one call, and late lists the loads behind schedule by their stops, whatever their status. For more, pass every load you need to shipment_get at once.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "after": {
             "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "proNumber",
+                "bol",
+                "status",
+                "customer",
+                "pickup",
+                "delivery",
+                "drivers",
+                "carrying",
+                "totalCharge",
+                "actualShipDate",
+                "actualDeliveryDate",
+                "billingStatus",
+                "activeHolds"
+              ],
+              "type": "string",
+              "x-enumOf": "shipment_list.column"
+            },
+            "type": "array"
           },
           "filters": {
             "description": "Conditions beside status, combined with AND: billingTransferStatus (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled; isnull means never transferred), freightTerms (Prepaid|Collect|ThirdParty), customerId (from customer_list, never guessed), proNumber, bol, the dates actualShipDate, actualDeliveryDate, billedAt, canceledAt and createdAt, and the numbers totalChargeAmount and weight. Give value for one comparison, values for in and notin, days for nextndays and lastndays, and nothing for isnull, isnotnull, today, yesterday and tomorrow. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
@@ -49016,6 +50751,10 @@
             "maxItems": 10,
             "type": "array"
           },
+          "late": {
+            "description": "true lists only shipments running late now: a stop not yet reached whose window has closed, the loads behind schedule. Delayed is a status a person sets, and a late load may not carry it; this reads the stops. Combine with status, words and filters.",
+            "type": "boolean"
+          },
           "limit": {
             "description": "How many rows to return: 10 when you give words, 25 otherwise, at most 50.",
             "maximum": 50,
@@ -49054,7 +50793,7 @@
             "x-enumOf": "list.sortDirection"
           },
           "status": {
-            "description": "Only shipments in these statuses, all in one call; omit for every status. Not picked up yet is New, PartiallyAssigned and Assigned; on the road is InTransit and Delayed. A load the person calls late or running behind is Delayed. There is no Delivered: a delivered load is Completed, ReadyToInvoice or Invoiced.",
+            "description": "Only shipments in these statuses, all in one call; omit for every status. Not picked up yet is New, PartiallyAssigned and Assigned; on the road is InTransit and Delayed. For a load the person calls late or running behind, pass late rather than Delayed, which only some late loads carry. There is no Delivered: a delivered load is Completed, ReadyToInvoice or Invoiced.",
             "items": {
               "enum": [
                 "New",
@@ -49228,6 +50967,29 @@
               "x-enumOf": "graphql.RecurringShipmentExceptionPolicy"
             },
             "minItems": 1,
+            "type": "array"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "sourceShipmentId",
+                "customerId",
+                "lastGeneratedShipmentId",
+                "name",
+                "status",
+                "cronExpression",
+                "timezone",
+                "autoGenerate",
+                "nextOccurrenceAt",
+                "generationCount",
+                "customer",
+                "originLocation",
+                "destinationLocation"
+              ],
+              "type": "string",
+              "x-enumOf": "shipment_list_recurring.column"
+            },
             "type": "array"
           },
           "generationCountMax": {
@@ -52804,7 +54566,7 @@
     },
     {
       "name": "worker_list",
-      "description": "Find workers (drivers) by name, closest first, or the roster by employment or qualification. Credentials due: worker_list_credentials. \"none on file\" was never recorded: worse than expiring soon. dispatchable says if a driver can take a load; canBeAssigned false is already off dispatch, so no hold. Filters: canBeAssigned, createdAtFrom/To, driverType, externalId, firstName, fleetCodeId, hasFleetCode, hasPosition, lastName, status, type, updatedAtFrom/To, wholeName, dispatchable; profile fields, each named profile and the field (profileCdlClass): cdlClass, cdlRestrictions, complianceStatus, createdAtFrom/To, eldExempt, endorsement, hazmatExpiryFrom/To, isQualified, lastComplianceCheckFrom/To, lastMvrCheckFrom/To, licenseExpiryFrom/To, medicalCardExpiryFrom/To, mvrDueDateFrom/To, physicalDueDateFrom/To, shortHaulExempt, twicExpiryFrom/To, updatedAtFrom/To.",
+      "description": "Find workers (drivers) by name, closest first, or the roster by employment or qualification. Workers without a credential, such as no road test on file or an expired one, in one call: withoutCredential with its code. Credentials due: worker_list_credentials. \"none on file\" was never recorded: worse than expiring soon. dispatchable says if a driver can take a load; canBeAssigned false is already off dispatch, so no hold. Filters: canBeAssigned, createdAtFrom/To, driverType, externalId, firstName, fleetCodeId, hasFleetCode, hasPosition, lastName, status, type, updatedAtFrom/To, wholeName, withoutCredential, dispatchable; profile fields, each named profile and the field (profileCdlClass): cdlClass, cdlRestrictions, complianceStatus, createdAtFrom/To, eldExempt, endorsement, hazmatExpiryFrom/To, isQualified, lastComplianceCheckFrom/To, lastMvrCheckFrom/To, licenseExpiryFrom/To, medicalCardExpiryFrom/To, mvrDueDateFrom/To, physicalDueDateFrom/To, shortHaulExempt, twicExpiryFrom/To, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -52878,6 +54640,31 @@
           "externalId": {
             "description": "Only records whose external id contains this text.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "fleetCodeId",
+                "status",
+                "type",
+                "driverType",
+                "firstName",
+                "lastName",
+                "wholeName",
+                "city",
+                "externalId",
+                "assignmentBlocked",
+                "canBeAssigned",
+                "availableForDispatch",
+                "createdAt",
+                "fleetCode",
+                "profile"
+              ],
+              "type": "string",
+              "x-enumOf": "worker_list.column"
+            },
+            "type": "array"
           },
           "firstName": {
             "description": "Only records whose first name contains this text.",
@@ -53414,6 +55201,10 @@
           "wholeName": {
             "description": "Only records whose whole name contains this text.",
             "type": "string"
+          },
+          "withoutCredential": {
+            "description": "Only workers with no valid credential of this type, by its code, such as ROAD_TEST or MED_CARD, in any case: none on file, archived, or expired.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -53492,7 +55283,7 @@
     },
     {
       "name": "worker_list_credentials",
-      "description": "List worker credentials: one worker's licences, medical cards and endorsements, or those falling due across the organization. With a worker and no expiry window it returns every credential the worker holds, with its dates and whether it is verified, and the credential types the organization tracks; a required type with nothing on file was never recorded, worse than expiring soon. Without a worker, or with expiringWithinDays or includeExpired, it lists active credentials expiring within that many days from now, soonest first, a page at a time: the tool for any question about who is expiring, lapsed or out of compliance by a date. Narrow by credentialTypeCode, such as MED_CARD or CDL. Each row's worker says if dispatchable; canBeAssigned false is already off dispatch, so no hold. It yields the credentialId and credentialTypeId the credential tools take.",
+      "description": "List worker credentials: the licences, medical cards and endorsements workers hold, those falling due, or who holds a type. With workerIds and no expiry window it returns every credential those workers hold, every worker in one call, with its dates and whether it is verified, and the credential types the organization tracks; a required type with nothing on file was never recorded, worse than expiring soon. With expiringWithinDays or includeExpired, or with neither workers nor a type, it lists active credentials expiring within that many days from now, soonest first, a page at a time: the tool for any question about who is expiring, lapsed or out of compliance by a date. A credentialTypeCode, such as MED_CARD or ROAD_TEST, with no worker and no window lists every active one of that type: who holds it. Who lacks one is worker_list with withoutCredential, never a call per worker. Each row's worker says if dispatchable; canBeAssigned false is already off dispatch, so no hold. It yields the credentialId and credentialTypeId the credential tools take.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -53501,11 +55292,11 @@
             "type": "string"
           },
           "credentialTypeCode": {
-            "description": "Only credentials of this type, by its code, such as MED_CARD or CDL, in any case.",
+            "description": "Only credentials of this type, by its code, such as MED_CARD or CDL, in any case. Named with no worker and no window, every active one of the type: who holds it, those that never expire included.",
             "type": "string"
           },
           "expiringWithinDays": {
-            "description": "Only active credentials expiring within this many days from now, from 1 to 365. 30 when no worker is named.",
+            "description": "Only active credentials expiring within this many days from now, from 1 to 365. 30 when neither a worker nor a type is named.",
             "type": "integer"
           },
           "includeArchived": {
@@ -53527,10 +55318,15 @@
             "description": "Only credential types the organization marks required.",
             "type": "boolean"
           },
-          "workerId": {
-            "description": "The worker, from worker_list. Never guess one. Leave it out for the credentials falling due across the organization.",
-            "type": "string",
-            "x-recordOf": "worker"
+          "workerIds": {
+            "description": "The worker, from worker_list. Never guess one. Leave it out for the credentials across the organization.",
+            "items": {
+              "type": "string",
+              "x-recordOf": "worker"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
           }
         },
         "type": "object"
@@ -53995,6 +55791,39 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "organizationId",
+                "businessUnitId",
+                "approverId",
+                "rejectorId",
+                "cancelledById",
+                "status",
+                "type",
+                "startDate",
+                "endDate",
+                "reason",
+                "rejectionReason",
+                "cancellationReason",
+                "days",
+                "balanceAfterDays",
+                "autoApproved",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "worker",
+                "approver",
+                "rejector",
+                "cancelledBy"
+              ],
+              "type": "string",
+              "x-enumOf": "worker_list_time_off.column"
+            },
+            "type": "array"
+          },
           "hasApprover": {
             "description": "true for only records that have a approver, false for only those that have none.",
             "type": "boolean"
@@ -54295,6 +56124,38 @@
           "durationMinutesMin": {
             "description": "Only records whose duration minutes is at least this.",
             "type": "integer"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "code",
+                "name",
+                "description",
+                "category",
+                "status",
+                "delivery",
+                "contentUrl",
+                "durationMinutes",
+                "passingScore",
+                "validityMonths",
+                "renewalWindowDays",
+                "isRequired",
+                "requiredForDriverTypes",
+                "dueDaysAfterAssignment",
+                "requiresAcknowledgement",
+                "sortOrder",
+                "openRecordCount",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "worker_list_training_courses.column"
+            },
+            "type": "array"
           },
           "isRequired": {
             "description": "true for only the records whose isRequired is true, false for only those whose isRequired is false.",

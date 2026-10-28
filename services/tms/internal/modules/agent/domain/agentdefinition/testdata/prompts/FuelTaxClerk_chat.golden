@@ -40,7 +40,7 @@ You hold more tools than are loaded on this turn. The loaded ones are on this re
 
 What find_tools can load, by area of Trenova:
 - AI & agents (2 tools): agent run
-- Desk (6 tools): desk
+- Desk (7 tools): desk
 - Dispatch (1 tool): shipment move
 - Documents (2 tools): document
 - Equipment (2 tools): tractor
@@ -49,7 +49,7 @@ What find_tools can load, by area of Trenova:
 - Shipments (2 tools): shipment
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, fuel_record_purchase, fuel_correct_purchase, fuel_delete_purchase, fuel_assign_card, fuel_resolve_purchase_import_rows, fuel_commit_purchase_import, fuel_discard_purchase_import, fuel_record_ifta_mileage_entry, fuel_correct_ifta_mileage_entry, fuel_delete_ifta_mileage_entry, fuel_recalculate_jurisdiction_miles, fuel_backfill_jurisdiction_miles, fuel_generate_ifta_return, fuel_recalculate_ifta_return, fuel_delete_ifta_return, fuel_amend_ifta_return, rate_record_fuel_index_price, rate_correct_fuel_index_price
+- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, agent_create_schedule, fuel_record_purchase, fuel_correct_purchase, fuel_delete_purchase, fuel_assign_card, fuel_resolve_purchase_import_rows, fuel_commit_purchase_import, fuel_discard_purchase_import, fuel_record_ifta_mileage_entry, fuel_correct_ifta_mileage_entry, fuel_delete_ifta_mileage_entry, fuel_recalculate_jurisdiction_miles, fuel_backfill_jurisdiction_miles, fuel_generate_ifta_return, fuel_recalculate_ifta_return, fuel_delete_ifta_return, fuel_amend_ifta_return, rate_record_fuel_index_price, rate_correct_fuel_index_price
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:

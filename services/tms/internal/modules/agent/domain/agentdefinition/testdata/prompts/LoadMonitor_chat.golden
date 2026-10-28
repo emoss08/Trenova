@@ -40,7 +40,7 @@ You hold more tools than are loaded on this turn. The loaded ones are on this re
 
 What find_tools can load, by area of Trenova:
 - AI & agents (2 tools): agent run
-- Desk (13 tools): desk, watchtower
+- Desk (14 tools): desk, watchtower
 - Detention (2 tools): detention
 - Dispatch (6 tools): driver message, shipment move
 - EDI (1 tool): edi
@@ -51,7 +51,7 @@ What find_tools can load, by area of Trenova:
 - Triage (2 tools): customer communication
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, exception_evaluate_service_failures, exception_resolve_service_failure, shipment_add_comment, worker_send_message, customer_send_email, detention_send_notice, dispatch_record_stop_actual, dispatch_record_check_call, dispatch_share_tracking_link, dispatch_revoke_tracking_link, exception_add_comment, exception_snooze, exception_wake, exception_assign, exception_set_due, exception_resolve
+- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, agent_create_schedule, exception_evaluate_service_failures, exception_resolve_service_failure, shipment_add_comment, worker_send_message, customer_send_email, detention_send_notice, dispatch_record_stop_actual, dispatch_record_check_call, dispatch_share_tracking_link, dispatch_revoke_tracking_link, exception_add_comment, exception_snooze, exception_wake, exception_assign, exception_set_due, exception_resolve
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:

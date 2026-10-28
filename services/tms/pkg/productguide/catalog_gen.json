@@ -1,5 +1,5 @@
 {
-  "version": "sha256:00a8cbd39e62bd25f82cb3ba2a46f639ba2310c0e1957e409231e8f92f1c5ba3",
+  "version": "sha256:0a478930b5541c5eada9708048febb17d33adc76a49a8be0d8bbdccaf9e4d88c",
   "modules": [
     {
       "id": "home",
@@ -11923,7 +11923,7 @@
         "Console"
       ],
       "description": "Cover open moves against available capacity without opening a shipment",
-      "summary": "The dispatch console is where dispatchers cover open moves against available capacity without opening each shipment. The strip at the top shows **Needs coverage**, **Late**, **At risk**, **Open drivers**, **Utilization** and **Assigned today**. The center shows open moves either as a **Board** grouped by urgency (Late, Next 4 hours, Today, Tomorrow, Planned) or as a **Timeline**; the **Capacity** rail lists drivers by availability (Open, Finishing, Working, Blocked, Time off); and the inspector on the right ranks drivers for the selected move or finds work for the selected driver.",
+      "summary": "The dispatch console is where dispatchers cover open moves against available capacity without opening each shipment. The strip at the top shows **Needs coverage**, **Late**, **At risk**, **Open drivers**, **Utilization** and **Assigned today**. The center shows open moves either as a **Board** grouped by urgency (Late, Next 4 hours, Today, Tomorrow, Planned: a move is Late once its next stop's window has closed with no arrival, and in Next 4 hours while that window is open) or as a **Timeline**; the **Capacity** rail lists drivers by availability (Open, Finishing, Working, Blocked, Time off); and the inspector on the right ranks drivers for the selected move or finds work for the selected driver.",
       "requires": [
         {
           "resource": "shipment_move",
@@ -15642,6 +15642,21 @@
             "Select **Add credential**, or open the actions menu on an existing credential and choose its renew, edit, verify or archive option.",
             "Pick the **Credential type**, fill in **Number**, **Issuing authority**, **Issued** and **Expires**, and attach a scan of the document.",
             "Select **Add credential** (or **Renew credential** when renewing)."
+          ]
+        },
+        {
+          "title": "Find workers missing a credential",
+          "keywords": [
+            "no road test",
+            "missing medical card",
+            "credential gap",
+            "who lacks",
+            "not on file"
+          ],
+          "steps": [
+            "Open [Workers](/hr/workers).",
+            "Select **Missing credential** in the toolbar and pick the credential type.",
+            "The table shows every worker with no valid credential of that type: none on file, archived or expired. The filter shows as a chip; remove the chip to see every worker again."
           ]
         },
         {

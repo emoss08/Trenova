@@ -41,7 +41,7 @@ You hold more tools than are loaded on this turn. The loaded ones are on this re
 What find_tools can load, by area of Trenova:
 - AI & agents (2 tools): agent run
 - Billing (39 tools): accessorial charge, billing queue, customer, invoice, invoice run, rate matrix
-- Desk (7 tools): briefing, desk
+- Desk (8 tools): briefing, desk
 - Detention (3 tools): detention
 - Documents (1 tool): document
 - Organization settings (1 tool): email profile
@@ -50,7 +50,7 @@ What find_tools can load, by area of Trenova:
 - Triage (2 tools): customer communication
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, billing_transfer, billing_assign_biller, billing_start_review, billing_hold_queue_item, billing_raise_exception, billing_return_to_operations, billing_approve_queue_item, billing_cancel_queue_item, invoice_post, invoice_send, shipment_request_documents, shipment_add_comment, invoice_create, invoice_update_draft, invoice_generate_pdf, invoice_void, invoice_create_memo, invoice_send_edi, invoice_save_adjustment_draft, invoice_submit_adjustment, invoice_approve_adjustment, invoice_reject_adjustment, invoice_build_run, invoice_adjust_run, invoice_commit_run, invoice_cancel_run, invoice_bill_statement, invoice_share, billing_reassign_charge, billing_manage_transfer_run, shipment_add_charge, detention_approve, detention_send_notice
+- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, agent_create_schedule, billing_transfer, billing_assign_biller, billing_start_review, billing_hold_queue_item, billing_raise_exception, billing_return_to_operations, billing_approve_queue_item, billing_cancel_queue_item, invoice_post, invoice_send, shipment_request_documents, shipment_add_comment, invoice_create, invoice_update_draft, invoice_generate_pdf, invoice_void, invoice_create_memo, invoice_send_edi, invoice_save_adjustment_draft, invoice_submit_adjustment, invoice_approve_adjustment, invoice_reject_adjustment, invoice_build_run, invoice_adjust_run, invoice_commit_run, invoice_cancel_run, invoice_bill_statement, invoice_share, billing_reassign_charge, billing_manage_transfer_run, shipment_add_charge, detention_approve, detention_send_notice
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:

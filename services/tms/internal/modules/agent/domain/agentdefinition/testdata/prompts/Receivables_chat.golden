@@ -42,12 +42,12 @@ What find_tools can load, by area of Trenova:
 - AI & agents (2 tools): agent run
 - Accounting (14 tools): accounts receivable, customer payment
 - Billing (15 tools): customer, invoice, invoice dispute
-- Desk (6 tools): desk
+- Desk (7 tools): desk
 - Documents (2 tools): document
 - Shipments (1 tool): shipment
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, receivable_record_collection_activity, receivable_assign_collector, receivable_schedule_follow_up, receivable_send_payment_reminder, receivable_send_statement, receivable_apply_customer_payment, receivable_reverse_customer_payment, receivable_apply_credit_memo, receivable_unapply_credit_memo, invoice_open_dispute, invoice_resolve_dispute, invoice_withdraw_dispute, receivable_assess_late_charges, invoice_send, invoice_share
+- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, agent_create_schedule, receivable_record_collection_activity, receivable_assign_collector, receivable_schedule_follow_up, receivable_send_payment_reminder, receivable_send_statement, receivable_apply_customer_payment, receivable_reverse_customer_payment, receivable_apply_credit_memo, receivable_unapply_credit_memo, invoice_open_dispute, invoice_resolve_dispute, invoice_withdraw_dispute, receivable_assess_late_charges, invoice_send, invoice_share
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:

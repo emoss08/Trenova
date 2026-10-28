@@ -192,10 +192,11 @@ strata:
       mode: chat
     heldOut:
       - approve the Acme rate agreement so it starts pricing
-      - cancel the journal reversal, the entry was right
+      - ask me this every weekday morning at 7
       - find the journal entry for invoice 1042
       - generate the payroll export for the last two weeks
       - how do I set up a rate matrix in Trenova
+      - keep giving me this every morning before standup
       - list the posted journal entries from last month
       - list the runs the billing agent made this week
       - open the next fiscal period so postings are accepted

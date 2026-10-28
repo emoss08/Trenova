@@ -41,10 +41,10 @@ You hold more tools than are loaded on this turn. The loaded ones are on this re
 What find_tools can load, by area of Trenova:
 - AI & agents (2 tools): agent run
 - Accounting (26 tools): accounting integration, accounting sync, fiscal period
-- Desk (6 tools): desk
+- Desk (7 tools): desk
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, accounting_retry_sync_record, accounting_skip_sync_record, accounting_pause_sync, accounting_resume_sync, accounting_set_mapping, accounting_create_reference_record, accounting_refresh_reference_data, accounting_apply_inbound_change, accounting_ignore_inbound_change, accounting_resolve_drift_finding, accounting_dismiss_drift_finding, accounting_check_drift, accounting_confirm_mapping, accounting_reject_mapping, accounting_release_sync_record, ledger_lock_fiscal_period, ledger_close_fiscal_period
+- Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, agent_create_schedule, accounting_retry_sync_record, accounting_skip_sync_record, accounting_pause_sync, accounting_resume_sync, accounting_set_mapping, accounting_create_reference_record, accounting_refresh_reference_data, accounting_apply_inbound_change, accounting_ignore_inbound_change, accounting_resolve_drift_finding, accounting_dismiss_drift_finding, accounting_check_drift, accounting_confirm_mapping, accounting_reject_mapping, accounting_release_sync_record, ledger_lock_fiscal_period, ledger_close_fiscal_period
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
