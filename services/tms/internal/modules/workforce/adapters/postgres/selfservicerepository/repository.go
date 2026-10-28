@@ -8,8 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerteam"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -61,8 +63,8 @@ func limitOr(requested, fallback int) int {
 func (r *repository) ListPolicies(
 	ctx context.Context,
 	req *workerports.ListWorkerPoliciesRequest,
-) ([]*worker.WorkerPolicy, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPolicy, error) {
+) ([]*workerpolicy.WorkerPolicy, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*workerpolicy.WorkerPolicy, error) {
 		p := workerdb.WorkerPolicies
 		entities, err := p.Where(
 			keel.When(req.ActiveOnly, p.Status.Eq(domaintypes.StatusActive)),
@@ -83,8 +85,8 @@ func (r *repository) ListPolicies(
 func (r *repository) GetPolicyByID(
 	ctx context.Context,
 	req *workerports.GetWorkerPolicyByIDRequest,
-) (*worker.WorkerPolicy, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerPolicy, error) {
+) (*workerpolicy.WorkerPolicy, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerpolicy.WorkerPolicy, error) {
 		entity, err := workerdb.WorkerPolicies.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, policyErrors.Map(err, req.ID.String())
@@ -96,9 +98,9 @@ func (r *repository) GetPolicyByID(
 
 func (r *repository) CreatePolicy(
 	ctx context.Context,
-	entity *worker.WorkerPolicy,
-) (*worker.WorkerPolicy, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerPolicy, error) {
+	entity *workerpolicy.WorkerPolicy,
+) (*workerpolicy.WorkerPolicy, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*workerpolicy.WorkerPolicy, error) {
 		if err := workerdb.WorkerPolicies.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create worker policy", zap.Error(err))
 			return nil, policyErrors.Map(err, entity.ID.String())
@@ -110,9 +112,9 @@ func (r *repository) CreatePolicy(
 
 func (r *repository) UpdatePolicy(
 	ctx context.Context,
-	entity *worker.WorkerPolicy,
-) (*worker.WorkerPolicy, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerPolicy, error) {
+	entity *workerpolicy.WorkerPolicy,
+) (*workerpolicy.WorkerPolicy, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*workerpolicy.WorkerPolicy, error) {
 		if err := workerdb.WorkerPolicies.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update worker policy", zap.Error(err))
 			return nil, policyErrors.Map(err, entity.ID.String())
@@ -124,7 +126,7 @@ func (r *repository) UpdatePolicy(
 
 func acknowledgementsQuery(
 	req *workerports.ListPolicyAcknowledgementsRequest,
-) *keel.Query[*worker.WorkerPolicyAcknowledgement] {
+) *keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
 	a := workerdb.WorkerPolicyAcknowledgements
 	q := a.Where(
 		keel.When(req.PolicyID.IsNotNil(), a.PolicyID.Eq(req.PolicyID)),
@@ -143,11 +145,11 @@ func acknowledgementsQuery(
 func (r *repository) ListAcknowledgements(
 	ctx context.Context,
 	req *workerports.ListPolicyAcknowledgementsRequest,
-) ([]*worker.WorkerPolicyAcknowledgement, error) {
+) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*worker.WorkerPolicyAcknowledgement, error) {
+		func(ctx context.Context) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
 			entities, err := acknowledgementsQuery(req).List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list policy acknowledgements", zap.Error(err))
@@ -161,12 +163,12 @@ func (r *repository) ListAcknowledgements(
 
 func (r *repository) CreateAcknowledgement(
 	ctx context.Context,
-	entity *worker.WorkerPolicyAcknowledgement,
-) (*worker.WorkerPolicyAcknowledgement, error) {
+	entity *workerpolicy.WorkerPolicyAcknowledgement,
+) (*workerpolicy.WorkerPolicyAcknowledgement, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerPolicyAcknowledgement, error) {
+		func(ctx context.Context) (*workerpolicy.WorkerPolicyAcknowledgement, error) {
 			err := workerdb.WorkerPolicyAcknowledgements.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to record policy acknowledgement", zap.Error(err))
@@ -224,14 +226,14 @@ func (r *repository) PolicyCompliance(
 	)
 }
 
-func audienceFilter(audience worker.PolicyAudience) keel.Pred {
+func audienceFilter(audience workerpolicy.PolicyAudience) keel.Pred {
 	w := workerdb.Workers
 	switch audience {
-	case worker.PolicyAudienceEmployees:
+	case workerpolicy.PolicyAudienceEmployees:
 		return w.Type.Eq(worker.WorkerTypeEmployee)
-	case worker.PolicyAudienceContractors:
+	case workerpolicy.PolicyAudienceContractors:
 		return w.Type.Eq(worker.WorkerTypeContractor)
-	case worker.PolicyAudienceAll:
+	case workerpolicy.PolicyAudienceAll:
 		return nil
 	}
 
@@ -262,7 +264,7 @@ func policyComplianceQuery(req *workerports.PolicyComplianceRequest) *keel.Query
 
 func changeRequestsQuery(
 	req *workerports.ListProfileChangeRequestsRequest,
-) *keel.Query[*worker.WorkerProfileChangeRequest] {
+) *keel.Query[*profilechange.WorkerProfileChangeRequest] {
 	c := workerdb.WorkerProfileChangeRequests
 	q := c.Where(
 		keel.When(req.WorkerID.IsNotNil(), c.WorkerID.Eq(req.WorkerID)),
@@ -281,11 +283,11 @@ func changeRequestsQuery(
 func (r *repository) ListChangeRequests(
 	ctx context.Context,
 	req *workerports.ListProfileChangeRequestsRequest,
-) ([]*worker.WorkerProfileChangeRequest, error) {
+) ([]*profilechange.WorkerProfileChangeRequest, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*worker.WorkerProfileChangeRequest, error) {
+		func(ctx context.Context) ([]*profilechange.WorkerProfileChangeRequest, error) {
 			entities, err := changeRequestsQuery(req).List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list profile change requests", zap.Error(err))
@@ -300,11 +302,11 @@ func (r *repository) ListChangeRequests(
 func (r *repository) GetChangeRequestByID(
 	ctx context.Context,
 	req *workerports.GetProfileChangeRequestByIDRequest,
-) (*worker.WorkerProfileChangeRequest, error) {
+) (*profilechange.WorkerProfileChangeRequest, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerProfileChangeRequest, error) {
+		func(ctx context.Context) (*profilechange.WorkerProfileChangeRequest, error) {
 			c := workerdb.WorkerProfileChangeRequests
 			q := c.Where(c.ID.Eq(req.ID))
 			if req.IncludeWorker {
@@ -323,12 +325,12 @@ func (r *repository) GetChangeRequestByID(
 
 func (r *repository) CreateChangeRequest(
 	ctx context.Context,
-	entity *worker.WorkerProfileChangeRequest,
-) (*worker.WorkerProfileChangeRequest, error) {
+	entity *profilechange.WorkerProfileChangeRequest,
+) (*profilechange.WorkerProfileChangeRequest, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerProfileChangeRequest, error) {
+		func(ctx context.Context) (*profilechange.WorkerProfileChangeRequest, error) {
 			err := workerdb.WorkerProfileChangeRequests.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to create profile change request", zap.Error(err))
@@ -342,12 +344,12 @@ func (r *repository) CreateChangeRequest(
 
 func (r *repository) UpdateChangeRequest(
 	ctx context.Context,
-	entity *worker.WorkerProfileChangeRequest,
-) (*worker.WorkerProfileChangeRequest, error) {
+	entity *profilechange.WorkerProfileChangeRequest,
+) (*profilechange.WorkerProfileChangeRequest, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerProfileChangeRequest, error) {
+		func(ctx context.Context) (*profilechange.WorkerProfileChangeRequest, error) {
 			err := workerdb.WorkerProfileChangeRequests.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update profile change request", zap.Error(err))

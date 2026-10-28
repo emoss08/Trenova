@@ -3,7 +3,7 @@ package workerports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -58,23 +58,23 @@ type WorkerDQFRepository interface {
 	ListVerifications(
 		ctx context.Context,
 		req *ListEmploymentVerificationsRequest,
-	) ([]*worker.WorkerEmploymentVerification, error)
+	) ([]*employment.WorkerEmploymentVerification, error)
 	ListVerificationsByWorkerIDs(
 		ctx context.Context,
 		req *ListEmploymentVerificationsByWorkerIDsRequest,
-	) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error)
+	) (map[pulid.ID][]*employment.WorkerEmploymentVerification, error)
 	GetVerificationByID(
 		ctx context.Context,
 		req *GetEmploymentVerificationByIDRequest,
-	) (*worker.WorkerEmploymentVerification, error)
+	) (*employment.WorkerEmploymentVerification, error)
 	CreateVerification(
 		ctx context.Context,
-		entity *worker.WorkerEmploymentVerification,
-	) (*worker.WorkerEmploymentVerification, error)
+		entity *employment.WorkerEmploymentVerification,
+	) (*employment.WorkerEmploymentVerification, error)
 	UpdateVerification(
 		ctx context.Context,
-		entity *worker.WorkerEmploymentVerification,
-	) (*worker.WorkerEmploymentVerification, error)
+		entity *employment.WorkerEmploymentVerification,
+	) (*employment.WorkerEmploymentVerification, error)
 	DeleteVerification(ctx context.Context, req *GetEmploymentVerificationByIDRequest) error
 
 	ListRetentionCandidates(

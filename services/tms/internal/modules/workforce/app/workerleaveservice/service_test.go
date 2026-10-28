@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,30 +27,30 @@ func at(year int, month time.Month, day int) int64 {
 // fakeRepo holds rows so the designation-copying and certification behaviour
 // can be exercised for real rather than asserted against canned returns.
 type fakeRepo struct {
-	control *worker.LeaveControl
-	cases   map[pulid.ID]*worker.WorkerLeaveCase
-	entries map[pulid.ID]*worker.WorkerLeaveEntry
+	control *workerleave.LeaveControl
+	cases   map[pulid.ID]*workerleave.WorkerLeaveCase
+	entries map[pulid.ID]*workerleave.WorkerLeaveEntry
 }
 
 func newFakeRepo() *fakeRepo {
 	return &fakeRepo{
-		control: worker.DefaultLeaveControl(),
-		cases:   map[pulid.ID]*worker.WorkerLeaveCase{},
-		entries: map[pulid.ID]*worker.WorkerLeaveEntry{},
+		control: workerleave.DefaultLeaveControl(),
+		cases:   map[pulid.ID]*workerleave.WorkerLeaveCase{},
+		entries: map[pulid.ID]*workerleave.WorkerLeaveEntry{},
 	}
 }
 
 func (f *fakeRepo) GetControl(
 	_ context.Context,
 	_ pagination.TenantInfo,
-) (*worker.LeaveControl, error) {
+) (*workerleave.LeaveControl, error) {
 	return f.control, nil
 }
 
 func (f *fakeRepo) UpdateControl(
 	_ context.Context,
-	entity *worker.LeaveControl,
-) (*worker.LeaveControl, error) {
+	entity *workerleave.LeaveControl,
+) (*workerleave.LeaveControl, error) {
 	f.control = entity
 	return entity, nil
 }
@@ -58,8 +58,8 @@ func (f *fakeRepo) UpdateControl(
 func (f *fakeRepo) ListCases(
 	_ context.Context,
 	req *workerports.ListLeaveCasesRequest,
-) ([]*worker.WorkerLeaveCase, error) {
-	out := make([]*worker.WorkerLeaveCase, 0, len(f.cases))
+) ([]*workerleave.WorkerLeaveCase, error) {
+	out := make([]*workerleave.WorkerLeaveCase, 0, len(f.cases))
 	for _, entity := range f.cases {
 		if !req.WorkerID.IsNil() && entity.WorkerID != req.WorkerID {
 			continue
@@ -89,7 +89,7 @@ func (f *fakeRepo) CountCases(
 func (f *fakeRepo) GetCaseByID(
 	_ context.Context,
 	req *workerports.GetLeaveCaseByIDRequest,
-) (*worker.WorkerLeaveCase, error) {
+) (*workerleave.WorkerLeaveCase, error) {
 	entity, ok := f.cases[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("case not found")
@@ -99,8 +99,8 @@ func (f *fakeRepo) GetCaseByID(
 
 func (f *fakeRepo) CreateCase(
 	_ context.Context,
-	entity *worker.WorkerLeaveCase,
-) (*worker.WorkerLeaveCase, error) {
+	entity *workerleave.WorkerLeaveCase,
+) (*workerleave.WorkerLeaveCase, error) {
 	if entity.ID.IsNil() {
 		entity.ID = pulid.MustNew("wlc_")
 	}
@@ -110,8 +110,8 @@ func (f *fakeRepo) CreateCase(
 
 func (f *fakeRepo) UpdateCase(
 	_ context.Context,
-	entity *worker.WorkerLeaveCase,
-) (*worker.WorkerLeaveCase, error) {
+	entity *workerleave.WorkerLeaveCase,
+) (*workerleave.WorkerLeaveCase, error) {
 	f.cases[entity.ID] = entity
 	return entity, nil
 }
@@ -119,8 +119,8 @@ func (f *fakeRepo) UpdateCase(
 func (f *fakeRepo) ListEntries(
 	_ context.Context,
 	req *workerports.ListLeaveEntriesRequest,
-) ([]*worker.WorkerLeaveEntry, error) {
-	out := make([]*worker.WorkerLeaveEntry, 0, len(f.entries))
+) ([]*workerleave.WorkerLeaveEntry, error) {
+	out := make([]*workerleave.WorkerLeaveEntry, 0, len(f.entries))
 	for _, entity := range f.entries {
 		if !req.WorkerID.IsNil() && entity.WorkerID != req.WorkerID {
 			continue
@@ -139,18 +139,18 @@ func (f *fakeRepo) ListEntries(
 func (f *fakeRepo) ListEntriesByCaseIDs(
 	_ context.Context,
 	req *workerports.ListLeaveEntriesByCaseIDsRequest,
-) (map[pulid.ID][]*worker.WorkerLeaveEntry, error) {
+) (map[pulid.ID][]*workerleave.WorkerLeaveEntry, error) {
 	wanted := make(map[pulid.ID]struct{}, len(req.LeaveCaseIDs))
 	for _, id := range req.LeaveCaseIDs {
 		wanted[id] = struct{}{}
 	}
-	matched := make([]*worker.WorkerLeaveEntry, 0, len(f.entries))
+	matched := make([]*workerleave.WorkerLeaveEntry, 0, len(f.entries))
 	for _, entity := range f.entries {
 		if _, ok := wanted[entity.LeaveCaseID]; ok {
 			matched = append(matched, entity)
 		}
 	}
-	return sliceutils.GroupBy(matched, func(e *worker.WorkerLeaveEntry) pulid.ID {
+	return sliceutils.GroupBy(matched, func(e *workerleave.WorkerLeaveEntry) pulid.ID {
 		return e.LeaveCaseID
 	}), nil
 }
@@ -158,7 +158,7 @@ func (f *fakeRepo) ListEntriesByCaseIDs(
 func (f *fakeRepo) GetEntryByID(
 	_ context.Context,
 	req *workerports.GetLeaveEntryByIDRequest,
-) (*worker.WorkerLeaveEntry, error) {
+) (*workerleave.WorkerLeaveEntry, error) {
 	entity, ok := f.entries[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("entry not found")
@@ -168,8 +168,8 @@ func (f *fakeRepo) GetEntryByID(
 
 func (f *fakeRepo) CreateEntry(
 	_ context.Context,
-	entity *worker.WorkerLeaveEntry,
-) (*worker.WorkerLeaveEntry, error) {
+	entity *workerleave.WorkerLeaveEntry,
+) (*workerleave.WorkerLeaveEntry, error) {
 	if entity.ID.IsNil() {
 		entity.ID = pulid.MustNew("wle_")
 	}
@@ -179,8 +179,8 @@ func (f *fakeRepo) CreateEntry(
 
 func (f *fakeRepo) UpdateEntry(
 	_ context.Context,
-	entity *worker.WorkerLeaveEntry,
-) (*worker.WorkerLeaveEntry, error) {
+	entity *workerleave.WorkerLeaveEntry,
+) (*workerleave.WorkerLeaveEntry, error) {
 	f.entries[entity.ID] = entity
 	return entity, nil
 }
@@ -233,14 +233,14 @@ func newHarness(t *testing.T) *harness {
 	}
 }
 
-func (h *harness) openCase(t *testing.T) *worker.WorkerLeaveCase {
+func (h *harness) openCase(t *testing.T) *workerleave.WorkerLeaveCase {
 	t.Helper()
-	created, err := h.svc.OpenCase(t.Context(), &worker.WorkerLeaveCase{
+	created, err := h.svc.OpenCase(t.Context(), &workerleave.WorkerLeaveCase{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
 		LeaveType:      worker.LeaveTypeFMLA,
-		Frequency:      worker.LeaveIntermittent,
+		Frequency:      workerleave.LeaveIntermittent,
 		StartsAt:       at(2026, time.March, 2),
 		RequestedAt:    at(2026, time.February, 20),
 	}, h.userID)
@@ -248,7 +248,7 @@ func (h *harness) openCase(t *testing.T) *worker.WorkerLeaveCase {
 	return created
 }
 
-func (h *harness) approved(t *testing.T, designate bool) *worker.WorkerLeaveCase {
+func (h *harness) approved(t *testing.T, designate bool) *workerleave.WorkerLeaveCase {
 	t.Helper()
 	created := h.openCase(t)
 	decided, err := h.svc.DecideCase(t.Context(), &workerleaveservice.DecideCaseRequest{
@@ -268,9 +268,9 @@ func TestOpenCase_Defaults(t *testing.T) {
 
 	created := h.openCase(t)
 
-	assert.Equal(t, worker.LeaveCasePending, created.Status)
+	assert.Equal(t, workerleave.LeaveCasePending, created.Status)
 	assert.False(t, created.FMLADesignated)
-	assert.Equal(t, worker.CertificationNotRequired, created.CertificationStatus)
+	assert.Equal(t, workerleave.CertificationNotRequired, created.CertificationStatus)
 	assert.Equal(t, h.userID, created.RecordedByID)
 }
 
@@ -282,7 +282,7 @@ func TestDecideCase_ApproveWithoutDesignating(t *testing.T) {
 
 	decided := h.approved(t, false)
 
-	assert.Equal(t, worker.LeaveCaseApproved, decided.Status)
+	assert.Equal(t, workerleave.LeaveCaseApproved, decided.Status)
 	assert.False(t, decided.FMLADesignated)
 	assert.False(t, decided.CountsAgainstEntitlement())
 	require.NotNil(t, decided.DecidedAt)
@@ -304,7 +304,7 @@ func TestDecideCase_DenyingClearsTheDesignation(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, worker.LeaveCaseDenied, denied.Status)
+	assert.Equal(t, workerleave.LeaveCaseDenied, denied.Status)
 	assert.False(t, denied.FMLADesignated)
 }
 
@@ -418,7 +418,7 @@ func TestRequestCertification_SetsTheDeadline(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	assert.Equal(t, worker.CertificationRequested, updated.CertificationStatus)
+	assert.Equal(t, workerleave.CertificationRequested, updated.CertificationStatus)
 	require.NotNil(t, updated.CertificationRequestedAt)
 	require.NotNil(t, updated.CertificationDueAt)
 	assert.Equal(t,
@@ -445,13 +445,13 @@ func TestRecordCertification_StampsTheArrival(t *testing.T) {
 		&workerleaveservice.RecordCertificationRequest{
 			TenantInfo: h.tenant,
 			CaseID:     decided.ID,
-			Status:     worker.CertificationReceived,
+			Status:     workerleave.CertificationReceived,
 			UserID:     h.userID,
 		},
 	)
 	require.NoError(t, err)
 
-	assert.Equal(t, worker.CertificationReceived, updated.CertificationStatus)
+	assert.Equal(t, workerleave.CertificationReceived, updated.CertificationStatus)
 	require.NotNil(t, updated.CertificationReceivedAt)
 }
 
@@ -540,7 +540,7 @@ func TestUpdateControl_ChangesTheMeasurementMethod(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	method := worker.MeasureCalendarYear
+	method := workerleave.MeasureCalendarYear
 	updated, err := h.svc.UpdateControl(t.Context(), &workerleaveservice.UpdateControlRequest{
 		TenantInfo:        h.tenant,
 		MeasurementMethod: &method,
@@ -548,7 +548,7 @@ func TestUpdateControl_ChangesTheMeasurementMethod(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, worker.MeasureCalendarYear, updated.MeasurementMethod)
+	assert.Equal(t, workerleave.MeasureCalendarYear, updated.MeasurementMethod)
 
 	entitlement, err := h.svc.Entitlement(
 		t.Context(),
@@ -557,6 +557,6 @@ func TestUpdateControl_ChangesTheMeasurementMethod(t *testing.T) {
 		at(2026, time.June, 15),
 	)
 	require.NoError(t, err)
-	assert.Equal(t, worker.MeasureCalendarYear, entitlement.Method)
+	assert.Equal(t, workerleave.MeasureCalendarYear, entitlement.Method)
 	assert.Equal(t, at(2026, time.January, 1), entitlement.Window.From)
 }

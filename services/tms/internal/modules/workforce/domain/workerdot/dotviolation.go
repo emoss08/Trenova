@@ -1,0 +1,346 @@
+package workerdot
+
+import (
+	"context"
+	"errors"
+
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/pulid"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+)
+
+var (
+	ErrInvalidDOTViolationType   = errors.New("invalid dot violation type")
+	ErrInvalidDOTViolationStatus = errors.New("invalid dot violation status")
+)
+
+// MinimumFollowUpTests is the floor a substance abuse professional may set for
+// the follow-up programme: at least six unannounced tests in the first twelve
+// months back on duty (49 CFR 382.311).
+const MinimumFollowUpTests = 6
+
+type DOTViolationType string
+
+const (
+	DOTViolationPositiveTest    = DOTViolationType("PositiveTest")
+	DOTViolationTestRefusal     = DOTViolationType("TestRefusal")
+	DOTViolationAlcoholUse      = DOTViolationType("AlcoholUse")
+	DOTViolationDrugUse         = DOTViolationType("DrugUse")
+	DOTViolationActualKnowledge = DOTViolationType("ActualKnowledge")
+	DOTViolationOther           = DOTViolationType("Other")
+)
+
+func (t DOTViolationType) String() string { return string(t) }
+
+func (t DOTViolationType) IsValid() bool {
+	switch t {
+	case DOTViolationPositiveTest, DOTViolationTestRefusal, DOTViolationAlcoholUse,
+		DOTViolationDrugUse, DOTViolationActualKnowledge, DOTViolationOther:
+		return true
+	default:
+		return false
+	}
+}
+
+func (t DOTViolationType) Label() string {
+	switch t {
+	case DOTViolationPositiveTest:
+		return "Positive test"
+	case DOTViolationTestRefusal:
+		return "Refusal to test"
+	case DOTViolationAlcoholUse:
+		return "Alcohol use"
+	case DOTViolationDrugUse:
+		return "Drug use"
+	case DOTViolationActualKnowledge:
+		return "Actual knowledge"
+	case DOTViolationOther:
+		return "Other"
+	default:
+		return string(t)
+	}
+}
+
+// DOTViolationStatus is where the return-to-duty process has got to. The order
+// is the order the regulation requires: referral, evaluation, a passed
+// return-to-duty test, then the follow-up programme.
+type DOTViolationStatus string
+
+const (
+	DOTViolationStatusOpen          = DOTViolationStatus("Open")
+	DOTViolationStatusSAPEvaluation = DOTViolationStatus("SAPEvaluation")
+	DOTViolationStatusRTDPending    = DOTViolationStatus("RTDPending")
+	DOTViolationStatusFollowUp      = DOTViolationStatus("FollowUp")
+	DOTViolationStatusResolved      = DOTViolationStatus("Resolved")
+)
+
+func (s DOTViolationStatus) String() string { return string(s) }
+
+func (s DOTViolationStatus) IsValid() bool {
+	switch s {
+	case DOTViolationStatusOpen, DOTViolationStatusSAPEvaluation, DOTViolationStatusRTDPending,
+		DOTViolationStatusFollowUp, DOTViolationStatusResolved:
+		return true
+	default:
+		return false
+	}
+}
+
+// Prohibits reports whether a driver at this stage must be kept off
+// safety-sensitive duty. Follow-up testing happens after the driver is back at
+// work, so it is not a prohibition — the tests are unannounced, not a bar.
+func (s DOTViolationStatus) Prohibits() bool {
+	switch s {
+	case DOTViolationStatusOpen, DOTViolationStatusSAPEvaluation, DOTViolationStatusRTDPending:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s DOTViolationStatus) Label() string {
+	switch s {
+	case DOTViolationStatusOpen:
+		return "Awaiting SAP referral"
+	case DOTViolationStatusSAPEvaluation:
+		return "SAP evaluation"
+	case DOTViolationStatusRTDPending:
+		return "Return-to-duty test required"
+	case DOTViolationStatusFollowUp:
+		return "Follow-up testing"
+	case DOTViolationStatusResolved:
+		return "Resolved"
+	default:
+		return string(s)
+	}
+}
+
+// ReturnToDutyStatusFor projects a violation's stage onto the worker.
+func ReturnToDutyStatusFor(status DOTViolationStatus) worker.ReturnToDutyStatus {
+	switch status {
+	case DOTViolationStatusOpen, DOTViolationStatusSAPEvaluation:
+		return worker.ReturnToDutySAPEvaluation
+	case DOTViolationStatusRTDPending:
+		return worker.ReturnToDutyRTDTestRequired
+	case DOTViolationStatusFollowUp:
+		return worker.ReturnToDutyFollowUpTesting
+	case DOTViolationStatusResolved:
+		return worker.ReturnToDutyComplete
+	default:
+		return worker.ReturnToDutyNotRequired
+	}
+}
+
+var (
+	_ validationframework.TenantedEntity = (*WorkerDOTViolation)(nil)
+)
+
+type WorkerDOTViolation struct {
+	keel.Table `keel:"worker_dot_violations"`
+
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wdotv_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
+
+	ViolationType DOTViolationType   `json:"violationType" keel:"violation_type"`
+	Status        DOTViolationStatus `json:"status"        keel:"status"`
+	OccurredAt    int64              `json:"occurredAt"    keel:"occurred_at"`
+
+	SourceTestID              pulid.ID `json:"sourceTestId"              keel:"source_test_id,nullzero"`
+	ReportedToClearinghouseAt *int64   `json:"reportedToClearinghouseAt" keel:"reported_to_clearinghouse_at"`
+
+	SAPName                  string `json:"sapName"                  keel:"sap_name,nullzero"`
+	SAPReferredAt            *int64 `json:"sapReferredAt"            keel:"sap_referred_at"`
+	SAPEvaluationCompletedAt *int64 `json:"sapEvaluationCompletedAt" keel:"sap_evaluation_completed_at"`
+
+	RTDTestID      pulid.ID `json:"rtdTestId"      keel:"rtd_test_id,nullzero"`
+	RTDCompletedAt *int64   `json:"rtdCompletedAt" keel:"rtd_completed_at"`
+
+	FollowUpTestCount      int32  `json:"followUpTestCount"      keel:"follow_up_test_count"`
+	FollowUpTestsCompleted int32  `json:"followUpTestsCompleted" keel:"follow_up_tests_completed"`
+	FollowUpEndsAt         *int64 `json:"followUpEndsAt"         keel:"follow_up_ends_at"`
+
+	ResolvedAt   *int64   `json:"resolvedAt"   keel:"resolved_at"`
+	DocumentID   pulid.ID `json:"documentId"   keel:"document_id,nullzero"`
+	Notes        string   `json:"notes"        keel:"notes,nullzero"`
+	RecordedByID pulid.ID `json:"recordedById" keel:"recorded_by_id,nullzero"`
+
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
+
+	Worker     *worker.Worker     `json:"worker,omitempty"     keel:"belongs:worker_id"`
+	SourceTest *WorkerDOTTest     `json:"sourceTest,omitempty" keel:"belongs:source_test_id"`
+	RTDTest    *WorkerDOTTest     `json:"rtdTest,omitempty"    keel:"belongs:rtd_test_id"`
+	Document   *document.Document `json:"document,omitempty"   keel:"belongs:document_id"`
+	RecordedBy *tenant.User       `json:"recordedBy,omitempty" keel:"belongs:recorded_by_id"`
+}
+
+func (v *WorkerDOTViolation) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(v,
+		validation.Field(&v.WorkerID, validation.Required.Error("Worker is required")),
+		validation.Field(&v.ViolationType,
+			validation.Required.Error("Violation type is required"),
+			domainvalidation.ValidEnum[DOTViolationType]("Violation type is not valid"),
+		),
+		validation.Field(&v.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[DOTViolationStatus]("Status is not valid"),
+		),
+		validation.Field(&v.OccurredAt,
+			validation.Required.Error("Violation date is required"),
+		),
+		validation.Field(&v.SAPName,
+			validation.Length(0, 100).Error("SAP name cannot exceed 100 characters"),
+		),
+	))
+
+	v.validateSequence(multiErr)
+
+	if v.FollowUpTestCount < 0 {
+		multiErr.Add(
+			"followUpTestCount",
+			errortypes.ErrInvalid,
+			"Follow-up test count cannot be negative",
+		)
+	}
+	if v.FollowUpTestsCompleted > v.FollowUpTestCount {
+		multiErr.Add(
+			"followUpTestsCompleted",
+			errortypes.ErrInvalid,
+			"More follow-up tests have been recorded than the programme calls for",
+		)
+	}
+	if v.FollowUpTestCount > 0 && v.FollowUpTestCount < MinimumFollowUpTests {
+		multiErr.Add(
+			"followUpTestCount",
+			errortypes.ErrInvalid,
+			"A follow-up programme is at least six tests (49 CFR 382.311)",
+		)
+	}
+}
+
+// validateSequence keeps the return-to-duty steps in the order the regulation
+// requires. Recording a passed return-to-duty test before the SAP has evaluated
+// the driver would leave a file that reads as compliant and is not.
+func (v *WorkerDOTViolation) validateSequence(multiErr *errortypes.MultiError) {
+	if v.SAPEvaluationCompletedAt != nil && v.SAPReferredAt == nil {
+		multiErr.Add(
+			"sapReferredAt",
+			errortypes.ErrRequired,
+			"Record the SAP referral before the evaluation that followed it",
+		)
+	}
+	if v.RTDCompletedAt != nil && v.SAPEvaluationCompletedAt == nil {
+		multiErr.Add(
+			"rtdCompletedAt",
+			errortypes.ErrInvalid,
+			"A return-to-duty test comes after the SAP evaluation (49 CFR 40.305)",
+		)
+	}
+	if v.RTDCompletedAt != nil && *v.RTDCompletedAt < v.OccurredAt {
+		multiErr.Add(
+			"rtdCompletedAt",
+			errortypes.ErrInvalid,
+			"The return-to-duty test cannot pre-date the violation",
+		)
+	}
+	if v.FollowUpTestsCompleted > 0 && v.RTDCompletedAt == nil {
+		multiErr.Add(
+			"followUpTestsCompleted",
+			errortypes.ErrInvalid,
+			"Follow-up testing starts once the driver has returned to duty",
+		)
+	}
+}
+
+// DeriveStatus reads the stage off what has actually been recorded, so the
+// status can never drift from the file underneath it.
+func (v *WorkerDOTViolation) DeriveStatus() DOTViolationStatus {
+	switch {
+	case v.SAPReferredAt == nil:
+		return DOTViolationStatusOpen
+	case v.SAPEvaluationCompletedAt == nil:
+		return DOTViolationStatusSAPEvaluation
+	case v.RTDCompletedAt == nil:
+		return DOTViolationStatusRTDPending
+	case v.FollowUpTestCount > 0 && v.FollowUpTestsCompleted < v.FollowUpTestCount:
+		return DOTViolationStatusFollowUp
+	case v.FollowUpTestCount == 0:
+		return DOTViolationStatusFollowUp
+	default:
+		return DOTViolationStatusResolved
+	}
+}
+
+// ApplyDerivedStatus moves the row to the stage its own fields imply and stamps
+// or clears the resolution instant so the two can never disagree.
+func (v *WorkerDOTViolation) ApplyDerivedStatus(now int64) {
+	v.Status = v.DeriveStatus()
+	if v.Status == DOTViolationStatusResolved {
+		if v.ResolvedAt == nil {
+			resolved := now
+			v.ResolvedAt = &resolved
+		}
+		return
+	}
+	v.ResolvedAt = nil
+}
+
+func (v *WorkerDOTViolation) IsResolved() bool { return v.Status == DOTViolationStatusResolved }
+
+func (v *WorkerDOTViolation) Prohibits() bool { return v.Status.Prohibits() }
+
+func (v *WorkerDOTViolation) GetID() pulid.ID { return v.ID }
+
+func (v *WorkerDOTViolation) GetCreatedAt() int64 { return v.CreatedAt }
+
+func (v *WorkerDOTViolation) GetOrganizationID() pulid.ID { return v.OrganizationID }
+
+func (v *WorkerDOTViolation) GetBusinessUnitID() pulid.ID { return v.BusinessUnitID }
+
+func (v *WorkerDOTViolation) GetTableName() string { return "worker_dot_violations" }
+
+func (v *WorkerDOTViolation) GetResourceType() string { return "worker_dot_violation" }
+
+func (v *WorkerDOTViolation) GetResourceID() string { return v.ID.String() }
+
+func (v *WorkerDOTViolation) BeforeCreate(_ context.Context) error {
+	if v.Status == "" {
+		v.Status = DOTViolationStatusOpen
+	}
+
+	return nil
+}
+
+func (WorkerDOTViolation) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_worker_dot_violations_open",
+			Message: "This worker already has an unresolved violation; record the new one against it",
+		},
+		{
+			Name:    "fk_worker_dot_violations_source_test",
+			Message: "Source test does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_dot_violations_rtd_test",
+			Message: "Return-to-duty test does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_dot_violations_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_dot_violations_document",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+	}
+}

@@ -6,15 +6,15 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type safetyEventFields struct {
-	kind             worker.SafetyEventKind
-	severity         worker.SafetySeverity
+	kind             workersafety.SafetyEventKind
+	severity         workersafety.SafetySeverity
 	occurredAt       int
 	location         *string
 	description      string
@@ -24,14 +24,14 @@ type safetyEventFields struct {
 	referenceNumber  *string
 	shipmentID       *string
 	inspectionLevel  *int
-	inspectionResult *worker.InspectionResult
+	inspectionResult *workersafety.InspectionResult
 	outOfService     *bool
 	fineAmount       *string
 	costAmount       *string
 	documentID       *string
 }
 
-func applySafetyEventFields(entity *worker.WorkerSafetyEvent, f *safetyEventFields) error {
+func applySafetyEventFields(entity *workersafety.WorkerSafetyEvent, f *safetyEventFields) error {
 	shipmentID, err := base.OptionalID(f.shipmentID)
 	if err != nil {
 		return errortypes.NewValidationError(
@@ -73,7 +73,7 @@ func applySafetyEventFields(entity *worker.WorkerSafetyEvent, f *safetyEventFiel
 	if f.inspectionResult != nil {
 		entity.InspectionResult = *f.inspectionResult
 	} else {
-		entity.InspectionResult = worker.InspectionResultNone
+		entity.InspectionResult = workersafety.InspectionResultNone
 	}
 	if f.inspectionLevel != nil {
 		level := int16(*f.inspectionLevel) //nolint:gosec // bounded by validation
@@ -84,7 +84,7 @@ func applySafetyEventFields(entity *worker.WorkerSafetyEvent, f *safetyEventFiel
 	if f.points != nil {
 		entity.Points = int32(*f.points) //nolint:gosec // bounded by validation
 	} else {
-		entity.Points = worker.DefaultSafetyPoints(
+		entity.Points = workersafety.DefaultSafetyPoints(
 			entity.Kind,
 			entity.Severity,
 			entity.Preventable,
@@ -97,7 +97,7 @@ func applySafetyEventFields(entity *worker.WorkerSafetyEvent, f *safetyEventFiel
 func safetyEventFromInput(
 	input *gqlmodel.WorkerSafetyEventInput,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -106,11 +106,11 @@ func safetyEventFromInput(
 			"Worker is invalid",
 		)
 	}
-	entity := &worker.WorkerSafetyEvent{
+	entity := &workersafety.WorkerSafetyEvent{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		WorkerID:       workerID,
-		Status:         worker.SafetyEventStatusOpen,
+		Status:         workersafety.SafetyEventStatusOpen,
 	}
 	if err = applySafetyEventFields(entity, &safetyEventFields{
 		kind:             input.Kind,
@@ -138,7 +138,7 @@ func safetyEventFromInput(
 func safetyEventFromUpdateInput(
 	input *gqlmodel.UpdateWorkerSafetyEventInput,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	id, err := pulid.MustParse(input.ID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -148,7 +148,7 @@ func safetyEventFromUpdateInput(
 		)
 	}
 	points := input.Points
-	entity := &worker.WorkerSafetyEvent{
+	entity := &workersafety.WorkerSafetyEvent{
 		ID:             id,
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
@@ -252,7 +252,7 @@ func issueActionRequestFromInput(
 func recognitionFromInput(
 	input *gqlmodel.WorkerRecognitionInput,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerRecognition, error) {
+) (*workersafety.WorkerRecognition, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -265,7 +265,7 @@ func recognitionFromInput(
 	if input.VisibleToWorker != nil {
 		visible = *input.VisibleToWorker
 	}
-	return &worker.WorkerRecognition{
+	return &workersafety.WorkerRecognition{
 		OrganizationID:  tenantInfo.OrgID,
 		BusinessUnitID:  tenantInfo.BuID,
 		WorkerID:        workerID,
@@ -277,8 +277,8 @@ func recognitionFromInput(
 	}, nil
 }
 
-func disciplinaryLevelPtr(level worker.DisciplinaryLevel) *worker.DisciplinaryLevel {
-	if level == worker.DisciplinaryLevelNone {
+func disciplinaryLevelPtr(level workersafety.DisciplinaryLevel) *workersafety.DisciplinaryLevel {
+	if level == workersafety.DisciplinaryLevelNone {
 		return nil
 	}
 	return &level

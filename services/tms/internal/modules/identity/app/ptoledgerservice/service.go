@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -99,36 +100,36 @@ func (s *Service) PayPeriodSpec(
 func (s *Service) HolidayCalendar(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*worker.HolidayCalendar, error) {
+) (*pto.HolidayCalendar, error) {
 	if s.holidays == nil {
-		return worker.NewHolidayCalendar(nil), nil
+		return pto.NewHolidayCalendar(nil), nil
 	}
 	rows, err := s.holidays.List(ctx, &workerports.ListOrgHolidaysRequest{TenantInfo: tenantInfo})
 	if err != nil {
 		return nil, err
 	}
-	return worker.NewHolidayCalendar(rows), nil
+	return pto.NewHolidayCalendar(rows), nil
 }
 
 type Actor struct {
-	Type   worker.PTOLedgerActorType
+	Type   pto.PTOLedgerActorType
 	UserID pulid.ID
 }
 
 func UserActor(userID pulid.ID) Actor {
-	return Actor{Type: worker.PTOLedgerActorUser, UserID: userID}
+	return Actor{Type: pto.PTOLedgerActorUser, UserID: userID}
 }
 
 func SystemActor() Actor {
-	return Actor{Type: worker.PTOLedgerActorSystem}
+	return Actor{Type: pto.PTOLedgerActorSystem}
 }
 
 type ResolvedPolicy struct {
-	Assignment *worker.WorkerPTOPolicyAssignment
-	Policy     *worker.PTOPolicy
+	Assignment *pto.WorkerPTOPolicyAssignment
+	Policy     *pto.PTOPolicy
 }
 
-func (r *ResolvedPolicy) RuleFor(ptoType worker.PTOType) *worker.PTOPolicyRule {
+func (r *ResolvedPolicy) RuleFor(ptoType worker.PTOType) *pto.PTOPolicyRule {
 	if r == nil || r.Policy == nil {
 		return nil
 	}
@@ -183,19 +184,19 @@ func (s *Service) OrgLocation(
 
 type postParams struct {
 	key       workerports.PTOBalanceKey
-	entry     *worker.WorkerPTOLedgerEntry
+	entry     *pto.WorkerPTOLedgerEntry
 	actor     Actor
-	rule      *worker.PTOPolicyRule
-	resolve   func(bal *worker.WorkerPTOBalance) (decimal.Decimal, bool)
-	onApplied func(bal *worker.WorkerPTOBalance)
+	rule      *pto.PTOPolicyRule
+	resolve   func(bal *pto.WorkerPTOBalance) (decimal.Decimal, bool)
+	onApplied func(bal *pto.WorkerPTOBalance)
 }
 
 func (s *Service) post(
 	ctx context.Context,
 	p postParams,
-) (*worker.WorkerPTOLedgerEntry, error) {
+) (*pto.WorkerPTOLedgerEntry, error) {
 	entry := p.entry
-	var posted *worker.WorkerPTOLedgerEntry
+	var posted *pto.WorkerPTOLedgerEntry
 
 	err := s.db.Transact(
 		ctx,
@@ -217,7 +218,7 @@ func (s *Service) post(
 				}
 				amount = resolved
 			}
-			if entry.EntryType == worker.PTOLedgerEntryAccrual && p.rule != nil &&
+			if entry.EntryType == pto.PTOLedgerEntryAccrual && p.rule != nil &&
 				p.rule.MaxBalanceDays.Valid {
 				room := p.rule.MaxBalanceDays.Decimal.Sub(bal.BalanceDays)
 				if room.LessThan(amount) {
@@ -270,7 +271,7 @@ func (s *Service) post(
 
 func (s *Service) skipEntry(
 	ctx context.Context,
-	bal *worker.WorkerPTOBalance,
+	bal *pto.WorkerPTOBalance,
 	p postParams,
 ) error {
 	if p.onApplied != nil {
@@ -288,7 +289,7 @@ func (s *Service) publish(ctx context.Context, key workerports.PTOBalanceKey, ac
 	}
 	actorType := permissionports.PrincipalTypeUser
 	actorID := actor.UserID
-	if actor.Type == worker.PTOLedgerActorSystem {
+	if actor.Type == pto.PTOLedgerActorSystem {
 		actorType = permissionports.PrincipalTypeSystem
 		actorID = permissionports.SystemPrincipalID
 	}
@@ -311,7 +312,7 @@ func (s *Service) PostUsage(
 	tenantInfo pagination.TenantInfo,
 	pto *worker.WorkerPTO,
 	actor Actor,
-) (*worker.WorkerPTOLedgerEntry, error) {
+) (*pto.WorkerPTOLedgerEntry, error) {
 	if !pto.Days.IsPositive() {
 		return nil, nil
 	}
@@ -330,8 +331,8 @@ func (s *Service) PostUsage(
 			PTOType:    pto.Type,
 		},
 		actor: actor,
-		entry: &worker.WorkerPTOLedgerEntry{
-			EntryType:    worker.PTOLedgerEntryUsage,
+		entry: &pto.WorkerPTOLedgerEntry{
+			EntryType:    pto.PTOLedgerEntryUsage,
 			AmountDays:   pto.Days.Neg(),
 			EffectiveAt:  pto.StartDate,
 			SourcePTOID:  pto.ID,
@@ -350,11 +351,11 @@ func (s *Service) PostReversal(
 	tenantInfo pagination.TenantInfo,
 	pto *worker.WorkerPTO,
 	actor Actor,
-) (*worker.WorkerPTOLedgerEntry, error) {
+) (*pto.WorkerPTOLedgerEntry, error) {
 	hasUsage, err := s.ledgerRepo.HasEntry(ctx, &workerports.HasPTOLedgerEntryRequest{
 		TenantInfo:  tenantInfo,
 		SourcePTOID: pto.ID,
-		EntryType:   worker.PTOLedgerEntryUsage,
+		EntryType:   pto.PTOLedgerEntryUsage,
 	})
 	if err != nil {
 		return nil, err
@@ -370,8 +371,8 @@ func (s *Service) PostReversal(
 			PTOType:    pto.Type,
 		},
 		actor: actor,
-		entry: &worker.WorkerPTOLedgerEntry{
-			EntryType:   worker.PTOLedgerEntryReversal,
+		entry: &pto.WorkerPTOLedgerEntry{
+			EntryType:   pto.PTOLedgerEntryReversal,
 			AmountDays:  pto.Days,
 			EffectiveAt: time.Now().Unix(),
 			SourcePTOID: pto.ID,
@@ -396,7 +397,7 @@ type AdjustRequest struct {
 func (s *Service) Adjust(
 	ctx context.Context,
 	req *AdjustRequest,
-) (*worker.WorkerPTOLedgerEntry, error) {
+) (*pto.WorkerPTOLedgerEntry, error) {
 	if err := validateAdjust(req); err != nil {
 		return nil, err
 	}
@@ -408,8 +409,8 @@ func (s *Service) Adjust(
 			PTOType:    req.PTOType,
 		},
 		actor: UserActor(req.UserID),
-		entry: &worker.WorkerPTOLedgerEntry{
-			EntryType:   worker.PTOLedgerEntryAdjustment,
+		entry: &pto.WorkerPTOLedgerEntry{
+			EntryType:   pto.PTOLedgerEntryAdjustment,
 			AmountDays:  req.AmountDays,
 			EffectiveAt: req.EffectiveAt,
 			Note:        req.Note,
@@ -441,7 +442,7 @@ type OpeningBalance struct {
 
 func (s *Service) PostOpeningBalances(
 	ctx context.Context,
-	assignment *worker.WorkerPTOPolicyAssignment,
+	assignment *pto.WorkerPTOPolicyAssignment,
 	balances []OpeningBalance,
 	actor Actor,
 ) error {
@@ -460,8 +461,8 @@ func (s *Service) PostOpeningBalances(
 				PTOType:    ob.PTOType,
 			},
 			actor: actor,
-			entry: &worker.WorkerPTOLedgerEntry{
-				EntryType:    worker.PTOLedgerEntryOpeningBalance,
+			entry: &pto.WorkerPTOLedgerEntry{
+				EntryType:    pto.PTOLedgerEntryOpeningBalance,
 				AmountDays:   ob.Days,
 				EffectiveAt:  assignment.EffectiveFrom,
 				PeriodKey:    "OB:" + assignment.ID.String(),
@@ -480,7 +481,7 @@ func (s *Service) EnsureBalances(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-	policy *worker.PTOPolicy,
+	policy *pto.PTOPolicy,
 ) error {
 	for _, rule := range policy.Rules {
 		if rule == nil {
@@ -500,7 +501,7 @@ func (s *Service) EnsureBalances(
 func (s *Service) ListLedger(
 	ctx context.Context,
 	req *workerports.ListPTOLedgerRequest,
-) (*pagination.CursorListResult[*worker.WorkerPTOLedgerEntry], error) {
+) (*pagination.CursorListResult[*pto.WorkerPTOLedgerEntry], error) {
 	return s.ledgerRepo.ListEntries(ctx, req)
 }
 
@@ -514,8 +515,8 @@ func (s *Service) Summary(
 func (s *Service) RebuildBalance(
 	ctx context.Context,
 	key *workerports.PTOBalanceKey,
-) (*worker.WorkerPTOBalance, error) {
-	var rebuilt *worker.WorkerPTOBalance
+) (*pto.WorkerPTOBalance, error) {
+	var rebuilt *pto.WorkerPTOBalance
 	err := s.db.Transact(
 		ctx,
 		kernelports.TxOptions{LockTimeout: lockTimeout},

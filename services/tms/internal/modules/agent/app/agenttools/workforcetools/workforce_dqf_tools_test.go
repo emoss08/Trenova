@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,9 +22,9 @@ type fakeDQF struct {
 	VerificationKeeper
 
 	guard        *agenttoolstest.WriteGuard
-	verification *worker.WorkerEmploymentVerification
+	verification *employment.WorkerEmploymentVerification
 
-	recorded  *worker.WorkerEmploymentVerification
+	recorded  *employment.WorkerEmploymentVerification
 	updated   *workerdqfservice.UpdateVerificationRequest
 	requested []pulid.ID
 	followUps []pulid.ID
@@ -34,11 +34,11 @@ type fakeDQF struct {
 func newFakeDQF() *fakeDQF {
 	return &fakeDQF{
 		guard: &agenttoolstest.WriteGuard{},
-		verification: &worker.WorkerEmploymentVerification{
+		verification: &employment.WorkerEmploymentVerification{
 			ID:           pulid.MustNew("wev_"),
 			WorkerID:     pulid.MustNew("wrk_"),
 			EmployerName: "Prairie Freight Lines",
-			Status:       worker.VerificationRequested,
+			Status:       employment.VerificationRequested,
 			Version:      3,
 		},
 	}
@@ -46,9 +46,9 @@ func newFakeDQF() *fakeDQF {
 
 func (f *fakeDQF) PlanRecordVerification(
 	_ context.Context,
-	entity *worker.WorkerEmploymentVerification,
+	entity *employment.WorkerEmploymentVerification,
 	_ pulid.ID,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	if entity.EmployedTo != nil && entity.EmployedFrom != nil &&
 		*entity.EmployedTo < *entity.EmployedFrom {
 		return nil, errortypes.NewValidationError("employedTo", errortypes.ErrInvalid,
@@ -60,9 +60,9 @@ func (f *fakeDQF) PlanRecordVerification(
 
 func (f *fakeDQF) RecordVerification(
 	ctx context.Context,
-	entity *worker.WorkerEmploymentVerification,
+	entity *employment.WorkerEmploymentVerification,
 	userID pulid.ID,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (f *fakeDQF) PlanUpdateVerification(
 func (f *fakeDQF) UpdateVerification(
 	_ context.Context,
 	req *workerdqfservice.UpdateVerificationRequest,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (f *fakeDQF) PlanMarkRequested(
 	pulid.ID,
 ) (*workerdqfservice.VerificationChange, error) {
 	after := *f.verification
-	after.Status = worker.VerificationRequested
+	after.Status = employment.VerificationRequested
 	return &workerdqfservice.VerificationChange{Before: f.verification, After: &after}, nil
 }
 
@@ -112,7 +112,7 @@ func (f *fakeDQF) MarkRequested(
 	_ pagination.TenantInfo,
 	id pulid.ID,
 	_ pulid.ID,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (f *fakeDQF) RecordFollowUp(
 	_ pagination.TenantInfo,
 	id pulid.ID,
 	_ pulid.ID,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (f *fakeDQF) PlanDeleteVerification(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	return f.verification, nil
 }
 
@@ -188,7 +188,7 @@ func TestRecordEmploymentVerification_StartsPending(t *testing.T) {
 	assert.Contains(t, preview.Summary, "Lakeshore Carriers")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, dqf.recorded)
-	assert.Equal(t, worker.VerificationPending, dqf.recorded.Status)
+	assert.Equal(t, employment.VerificationPending, dqf.recorded.Status)
 	assert.Equal(t, "1234567", dqf.recorded.EmployerDOTNumber)
 	assert.True(t, dqf.recorded.WasDOTRegulated)
 	assert.Equal(t, permission.ResourceQualification, tool.Policy().Resource)

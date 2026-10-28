@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/shared/carrierok"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -194,7 +194,7 @@ func TestNormalizeProfile_SafetyAndBasics(t *testing.T) {
 	assert.Equal(t, "Compliance Review", safety.LatestReviewType)
 	assert.Equal(t, unixDate(t, "1996-03-05"), *safety.LatestReviewAt)
 
-	require.Len(t, profile.Basics, len(worker.AllCSABasics()))
+	require.Len(t, profile.Basics, len(workersafety.AllCSABasics()))
 	for idx := range profile.Basics {
 		basic := &profile.Basics[idx]
 		assert.False(t, basic.Alert, basic.Basic)
@@ -202,7 +202,7 @@ func TestNormalizeProfile_SafetyAndBasics(t *testing.T) {
 		assert.Nil(t, basic.Threshold, basic.Basic)
 	}
 
-	unsafe := profile.Basic(worker.BasicUnsafeDriving)
+	unsafe := profile.Basic(workersafety.BasicUnsafeDriving)
 	require.NotNil(t, unsafe)
 	require.NotNil(t, unsafe.Measure)
 	assert.InDelta(t, 0.13, *unsafe.Measure, 0.0001)
@@ -212,12 +212,12 @@ func TestNormalizeProfile_SafetyAndBasics(t *testing.T) {
 	require.NotNil(t, unsafe.MeasuredAt)
 	assert.Equal(t, unixDate(t, "2024-12-31"), *unsafe.MeasuredAt)
 
-	maintenance := profile.Basic(worker.BasicVehicleMaintenance)
+	maintenance := profile.Basic(workersafety.BasicVehicleMaintenance)
 	require.NotNil(t, maintenance)
 	require.NotNil(t, maintenance.Measure)
 	assert.InDelta(t, 3.11, *maintenance.Measure, 0.0001)
 
-	crash := profile.Basic(worker.BasicCrashIndicator)
+	crash := profile.Basic(workersafety.BasicCrashIndicator)
 	require.NotNil(t, crash)
 	assert.Nil(t, crash.Measure)
 	assert.Nil(t, crash.Violations)
@@ -236,12 +236,12 @@ func TestNormalizeProfile_BasicAlerts(t *testing.T) {
 	require.NoError(t, err)
 	profile := normalizeProfile(sdk)
 
-	hos := profile.Basic(worker.BasicHOSCompliance)
+	hos := profile.Basic(workersafety.BasicHOSCompliance)
 	require.NotNil(t, hos)
 	assert.True(t, hos.Alert)
 	assert.Equal(t, 9, *hos.Violations)
-	require.NotNil(t, profile.Basic(worker.BasicVehicleMaintenance))
-	assert.Nil(t, profile.Basic(worker.BasicDriverFitness))
+	require.NotNil(t, profile.Basic(workersafety.BasicVehicleMaintenance))
+	assert.Nil(t, profile.Basic(workersafety.BasicDriverFitness))
 }
 
 func TestNormalizeProfile_OperationalSections(t *testing.T) {

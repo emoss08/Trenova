@@ -208,7 +208,7 @@ never from the request. A list across workers asks `RequireListTeamScope` or
 the request's `ManagerIDs`; the repository filters with `workerteam.Where`
 (`workforce/adapters/postgres/workerteam`), so every list applies one definition of a team.
 A list never relies on the client asking for `teamOnly`. Leave counts delegations for time
-off (`worker.ApprovalScopeTimeOff`); the others count delegations of everything.
+off (`approvaldelegation.ApprovalScopeTimeOff`); the others count delegations of everything.
 
 **Database enforcement.** Each authenticated request (`ReadScopeMiddleware`) and each
 agent tool call (`agentflow.runTool`) carries a `pkg/readscope` holder. At its first

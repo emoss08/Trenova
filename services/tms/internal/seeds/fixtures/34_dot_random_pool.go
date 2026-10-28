@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-
 	"github.com/emoss08/keel/seed"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 
@@ -35,14 +34,14 @@ func (s *DOTRandomPoolSeed) Run(ctx context.Context, sr *seed.Run) error {
 		return err
 	}
 
-	pool := &worker.DOTRandomPool{
+	pool := &workerdot.DOTRandomPool{
 		OrganizationID:      org.ID,
 		BusinessUnitID:      org.BusinessUnitID,
 		Code:                seededPoolCode,
 		Name:                "All DOT drivers",
 		Description:         "Every CDL driver in safety-sensitive work, drawn each quarter.",
 		Status:              domaintypes.StatusActive,
-		Period:              worker.RandomPeriodQuarterly,
+		Period:              workerdot.RandomPeriodQuarterly,
 		DrugRatePercent:     seededDrugRatePercent,
 		AlcoholRatePercent:  seededAlcoholRatePercent,
 		IsDefault:           true,

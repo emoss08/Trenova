@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,10 +19,10 @@ func TestWorkerDQFVerificationsBatchFunc_GroupsByWorkerAndDefaultsToEmpty(t *tes
 	firstID := pulid.MustNew("wrk_")
 	secondID := pulid.MustNew("wrk_")
 	lister := &stubEmploymentVerificationsByWorkerIDsLister{
-		list: func(_ context.Context, req *workerports.ListEmploymentVerificationsByWorkerIDsRequest) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error) {
+		list: func(_ context.Context, req *workerports.ListEmploymentVerificationsByWorkerIDsRequest) (map[pulid.ID][]*employment.WorkerEmploymentVerification, error) {
 			assert.Equal(t, []pulid.ID{firstID, secondID}, req.WorkerIDs)
 			assert.True(t, req.IncludeDocument)
-			return map[pulid.ID][]*worker.WorkerEmploymentVerification{
+			return map[pulid.ID][]*employment.WorkerEmploymentVerification{
 				firstID: {
 					{WorkerID: firstID, EmployerName: "Acme"},
 					{WorkerID: firstID, EmployerName: "Globex"},
@@ -58,7 +58,7 @@ func TestWorkerDQFVerificationsBatchFunc_RepositoryErrorFillsValidResults(t *tes
 	workerID := pulid.MustNew("wrk_")
 	repoErr := errors.New("repository failed")
 	lister := &stubEmploymentVerificationsByWorkerIDsLister{
-		list: func(context.Context, *workerports.ListEmploymentVerificationsByWorkerIDsRequest) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error) {
+		list: func(context.Context, *workerports.ListEmploymentVerificationsByWorkerIDsRequest) (map[pulid.ID][]*employment.WorkerEmploymentVerification, error) {
 			return nil, repoErr
 		},
 	}
@@ -75,12 +75,12 @@ func TestWorkerDQFVerificationsBatchFunc_RepositoryErrorFillsValidResults(t *tes
 }
 
 type stubEmploymentVerificationsByWorkerIDsLister struct {
-	list func(context.Context, *workerports.ListEmploymentVerificationsByWorkerIDsRequest) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error)
+	list func(context.Context, *workerports.ListEmploymentVerificationsByWorkerIDsRequest) (map[pulid.ID][]*employment.WorkerEmploymentVerification, error)
 }
 
 func (s *stubEmploymentVerificationsByWorkerIDsLister) ListVerificationsByWorkerIDs(
 	ctx context.Context,
 	req *workerports.ListEmploymentVerificationsByWorkerIDsRequest,
-) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error) {
+) (map[pulid.ID][]*employment.WorkerEmploymentVerification, error) {
 	return s.list(ctx, req)
 }

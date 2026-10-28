@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -40,7 +40,7 @@ type wfPayrollReader interface {
 	ListExports(
 		ctx context.Context,
 		req *workerports.ListPayrollExportsRequest,
-	) ([]*worker.PayrollExport, error)
+	) ([]*timesheet.PayrollExport, error)
 }
 
 var (

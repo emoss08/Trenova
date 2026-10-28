@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,7 +27,7 @@ func (r *Core) RequireTimesheetWorkerScope(
 		ctx,
 		permission.ResourceTimesheet,
 		operation,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		id,
 	)
 	if err != nil {

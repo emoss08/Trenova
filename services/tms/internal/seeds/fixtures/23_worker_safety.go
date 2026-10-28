@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -41,7 +42,7 @@ type safetySeedRefs struct {
 	buID     pulid.ID
 	adminID  pulid.ID
 	now      int64
-	template *worker.PerformanceReviewTemplate
+	template *workerreview.PerformanceReviewTemplate
 }
 
 func (s *WorkerSafetySeed) Run(ctx context.Context, sr *seed.Run) error {
@@ -76,9 +77,13 @@ func (s *WorkerSafetySeed) Run(ctx context.Context, sr *seed.Run) error {
 	return nil
 }
 
-func (s *WorkerSafetySeed) ensureTemplate(ctx context.Context, db *keel.DB, refs *safetySeedRefs) error {
+func (s *WorkerSafetySeed) ensureTemplate(
+	ctx context.Context,
+	db *keel.DB,
+	refs *safetySeedRefs,
+) error {
 	cadence := int32(12)
-	template := &worker.PerformanceReviewTemplate{
+	template := &workerreview.PerformanceReviewTemplate{
 		OrganizationID: refs.orgID,
 		BusinessUnitID: refs.buID,
 		Code:           "DRIVER-ANNUAL",
@@ -87,17 +92,37 @@ func (s *WorkerSafetySeed) ensureTemplate(ctx context.Context, db *keel.DB, refs
 		Status:         domaintypes.StatusActive,
 		IsDefault:      true,
 		CadenceMonths:  &cadence,
-		Items: []worker.ReviewItem{
-			{Key: "safety", Label: "Safe driving", Description: "Inspections, incidents, defensive habits", Weight: 3},
-			{Key: "service", Label: "Customer service", Description: "On-time, professional at the dock", Weight: 2},
-			{Key: "compliance", Label: "Compliance & paperwork", Description: "HOS, logs, BOLs, expenses", Weight: 2},
-			{Key: "teamwork", Label: "Teamwork", Description: "Communication with dispatch and peers", Weight: 1},
+		Items: []workerreview.ReviewItem{
+			{
+				Key:         "safety",
+				Label:       "Safe driving",
+				Description: "Inspections, incidents, defensive habits",
+				Weight:      3,
+			},
+			{
+				Key:         "service",
+				Label:       "Customer service",
+				Description: "On-time, professional at the dock",
+				Weight:      2,
+			},
+			{
+				Key:         "compliance",
+				Label:       "Compliance & paperwork",
+				Description: "HOS, logs, BOLs, expenses",
+				Weight:      2,
+			},
+			{
+				Key:         "teamwork",
+				Label:       "Teamwork",
+				Description: "Communication with dispatch and peers",
+				Weight:      1,
+			},
 		},
 	}
 	if _, err := workerdb.PerformanceReviewTemplates.CreateOrSkip(
 		ctx,
 		db,
-		[]*worker.PerformanceReviewTemplate{template},
+		[]*workerreview.PerformanceReviewTemplate{template},
 	); err != nil {
 		return err
 	}
@@ -157,19 +182,19 @@ func (s *WorkerSafetySeed) seedWorker(
 func (s *WorkerSafetySeed) event(
 	refs *safetySeedRefs,
 	wrk *worker.Worker,
-	kind worker.SafetyEventKind,
-	severity worker.SafetySeverity,
+	kind workersafety.SafetyEventKind,
+	severity workersafety.SafetySeverity,
 	daysAgo int64,
 	description string,
-	mutate func(*worker.WorkerSafetyEvent),
-) *worker.WorkerSafetyEvent {
-	e := &worker.WorkerSafetyEvent{
+	mutate func(*workersafety.WorkerSafetyEvent),
+) *workersafety.WorkerSafetyEvent {
+	e := &workersafety.WorkerSafetyEvent{
 		OrganizationID: refs.orgID,
 		BusinessUnitID: refs.buID,
 		WorkerID:       wrk.ID,
 		Kind:           kind,
 		Severity:       severity,
-		Status:         worker.SafetyEventStatusClosed,
+		Status:         workersafety.SafetyEventStatusClosed,
 		OccurredAt:     refs.now - daysAgo*safetySeedDay,
 		Description:    description,
 		RecordedByID:   refs.adminID,
@@ -178,9 +203,14 @@ func (s *WorkerSafetySeed) event(
 	if mutate != nil {
 		mutate(e)
 	}
-	e.Points = worker.DefaultSafetyPoints(e.Kind, e.Severity, e.Preventable, e.InspectionResult)
+	e.Points = workersafety.DefaultSafetyPoints(
+		e.Kind,
+		e.Severity,
+		e.Preventable,
+		e.InspectionResult,
+	)
 	e.DefaultPointsExpiry()
-	if e.Status == worker.SafetyEventStatusClosed {
+	if e.Status == workersafety.SafetyEventStatusClosed {
 		closed := e.OccurredAt + 5*safetySeedDay
 		e.ClosedAt = &closed
 		e.ClosedByID = refs.adminID
@@ -190,51 +220,108 @@ func (s *WorkerSafetySeed) event(
 	return e
 }
 
-func (s *WorkerSafetySeed) eventsFor(refs *safetySeedRefs, wrk *worker.Worker, index int) []*worker.WorkerSafetyEvent {
+func (s *WorkerSafetySeed) eventsFor(
+	refs *safetySeedRefs,
+	wrk *worker.Worker,
+	index int,
+) []*workersafety.WorkerSafetyEvent {
 	level := int16(2)
-	events := []*worker.WorkerSafetyEvent{
-		s.event(refs, wrk, worker.SafetyEventInspection, worker.SafetySeverityMinor, 45+int64(index)*7,
+	events := []*workersafety.WorkerSafetyEvent{
+		s.event(
+			refs,
+			wrk,
+			workersafety.SafetyEventInspection,
+			workersafety.SafetySeverityMinor,
+			45+int64(index)*7,
 			"Level 2 roadside inspection at the Ohio scale house.",
-			func(e *worker.WorkerSafetyEvent) {
-				e.InspectionResult = worker.InspectionResultPass
+			func(e *workersafety.WorkerSafetyEvent) {
+				e.InspectionResult = workersafety.InspectionResultPass
 				e.InspectionLevel = &level
 				e.Location = "I-70 EB, Cambridge OH"
-			}),
+			},
+		),
 	}
 	switch index % 6 {
 	case 1:
-		events = append(events, s.event(refs, wrk, worker.SafetyEventAccident, worker.SafetySeverityModerate, 120,
-			"Backed into a dock door at the consignee; trailer door damage.",
-			func(e *worker.WorkerSafetyEvent) {
-				e.Preventable = true
-				e.Location = "Consignee yard, Indianapolis IN"
-				e.CostAmount = decimal.NewNullDecimal(decimal.NewFromInt(1850))
-			}))
+		events = append(
+			events,
+			s.event(
+				refs,
+				wrk,
+				workersafety.SafetyEventAccident,
+				workersafety.SafetySeverityModerate,
+				120,
+				"Backed into a dock door at the consignee; trailer door damage.",
+				func(e *workersafety.WorkerSafetyEvent) {
+					e.Preventable = true
+					e.Location = "Consignee yard, Indianapolis IN"
+					e.CostAmount = decimal.NewNullDecimal(decimal.NewFromInt(1850))
+				},
+			),
+		)
 	case 2:
-		events = append(events, s.event(refs, wrk, worker.SafetyEventCitation, worker.SafetySeverityMinor, 30,
-			"Speeding citation, 9 over in a 55 zone.",
-			func(e *worker.WorkerSafetyEvent) {
-				e.Status = worker.SafetyEventStatusUnderReview
-				e.ReferenceNumber = fmt.Sprintf("CIT-%05d", 40000+index*13)
-				e.FineAmount = decimal.NewNullDecimal(decimal.NewFromInt(175))
-				e.Location = "US-30, Fort Wayne IN"
-			}))
+		events = append(
+			events,
+			s.event(
+				refs,
+				wrk,
+				workersafety.SafetyEventCitation,
+				workersafety.SafetySeverityMinor,
+				30,
+				"Speeding citation, 9 over in a 55 zone.",
+				func(e *workersafety.WorkerSafetyEvent) {
+					e.Status = workersafety.SafetyEventStatusUnderReview
+					e.ReferenceNumber = fmt.Sprintf("CIT-%05d", 40000+index*13)
+					e.FineAmount = decimal.NewNullDecimal(decimal.NewFromInt(175))
+					e.Location = "US-30, Fort Wayne IN"
+				},
+			),
+		)
 	case 3:
-		events = append(events, s.event(refs, wrk, worker.SafetyEventInspection, worker.SafetySeverityMajor, 12,
-			"Level 1 inspection; brake adjustment out of service.",
-			func(e *worker.WorkerSafetyEvent) {
-				one := int16(1)
-				e.InspectionResult = worker.InspectionResultOutOfService
-				e.InspectionLevel = &one
-				e.Status = worker.SafetyEventStatusOpen
-				e.Location = "I-80 WB, Joliet IL"
-			}))
+		events = append(
+			events,
+			s.event(
+				refs,
+				wrk,
+				workersafety.SafetyEventInspection,
+				workersafety.SafetySeverityMajor,
+				12,
+				"Level 1 inspection; brake adjustment out of service.",
+				func(e *workersafety.WorkerSafetyEvent) {
+					one := int16(1)
+					e.InspectionResult = workersafety.InspectionResultOutOfService
+					e.InspectionLevel = &one
+					e.Status = workersafety.SafetyEventStatusOpen
+					e.Location = "I-80 WB, Joliet IL"
+				},
+			),
+		)
 	case 4:
-		events = append(events, s.event(refs, wrk, worker.SafetyEventNearMiss, worker.SafetySeverityMinor, 8,
-			"Lane departure alert on I-65; driver reported drowsiness and pulled off.", nil))
+		events = append(
+			events,
+			s.event(
+				refs,
+				wrk,
+				workersafety.SafetyEventNearMiss,
+				workersafety.SafetySeverityMinor,
+				8,
+				"Lane departure alert on I-65; driver reported drowsiness and pulled off.",
+				nil,
+			),
+		)
 	case 5:
-		events = append(events, s.event(refs, wrk, worker.SafetyEventIncident, worker.SafetySeverityMinor, 200,
-			"Cargo shift on a partial load; no damage, restrapped at the next stop.", nil))
+		events = append(
+			events,
+			s.event(
+				refs,
+				wrk,
+				workersafety.SafetyEventIncident,
+				workersafety.SafetySeverityMinor,
+				200,
+				"Cargo shift on a partial load; no damage, restrapped at the next stop.",
+				nil,
+			),
+		)
 	}
 	return events
 }
@@ -243,15 +330,15 @@ func (s *WorkerSafetySeed) actionsFor(
 	refs *safetySeedRefs,
 	wrk *worker.Worker,
 	index int,
-	events []*worker.WorkerSafetyEvent,
-) []*worker.WorkerDisciplinaryAction {
-	action := func(level worker.DisciplinaryLevel, daysAgo int64, reason string, mutate func(*worker.WorkerDisciplinaryAction)) *worker.WorkerDisciplinaryAction {
-		a := &worker.WorkerDisciplinaryAction{
+	events []*workersafety.WorkerSafetyEvent,
+) []*workersafety.WorkerDisciplinaryAction {
+	action := func(level workersafety.DisciplinaryLevel, daysAgo int64, reason string, mutate func(*workersafety.WorkerDisciplinaryAction)) *workersafety.WorkerDisciplinaryAction {
+		a := &workersafety.WorkerDisciplinaryAction{
 			OrganizationID: refs.orgID,
 			BusinessUnitID: refs.buID,
 			WorkerID:       wrk.ID,
 			Level:          level,
-			Status:         worker.DisciplinaryStatusActive,
+			Status:         workersafety.DisciplinaryStatusActive,
 			Reason:         reason,
 			IssuedAt:       refs.now - daysAgo*safetySeedDay,
 			IssuedByID:     refs.adminID,
@@ -260,45 +347,67 @@ func (s *WorkerSafetySeed) actionsFor(
 			mutate(a)
 		}
 		a.DefaultExpiry()
-		if a.ExpiresAt != nil && *a.ExpiresAt < refs.now && a.Status == worker.DisciplinaryStatusActive {
-			a.Status = worker.DisciplinaryStatusExpired
+		if a.ExpiresAt != nil && *a.ExpiresAt < refs.now &&
+			a.Status == workersafety.DisciplinaryStatusActive {
+			a.Status = workersafety.DisciplinaryStatusExpired
 		}
 		return a
 	}
 	switch index % 6 {
 	case 1:
 		acked := refs.now - 110*safetySeedDay
-		return []*worker.WorkerDisciplinaryAction{
-			action(worker.DisciplinaryLevelCoaching, 115, "Preventable dock strike; backing procedure reviewed.",
-				func(a *worker.WorkerDisciplinaryAction) {
+		return []*workersafety.WorkerDisciplinaryAction{
+			action(
+				workersafety.DisciplinaryLevelCoaching,
+				115,
+				"Preventable dock strike; backing procedure reviewed.",
+				func(a *workersafety.WorkerDisciplinaryAction) {
 					a.SafetyEventID = events[len(events)-1].ID
 					a.AcknowledgedAt = &acked
-				}),
+				},
+			),
 		}
 	case 3:
-		return []*worker.WorkerDisciplinaryAction{
-			action(worker.DisciplinaryLevelVerbalWarning, 400, "Missed pre-trip inspection.", nil),
-			action(worker.DisciplinaryLevelWrittenWarning, 10, "Out-of-service brake adjustment found at roadside.",
-				func(a *worker.WorkerDisciplinaryAction) { a.SafetyEventID = events[len(events)-1].ID }),
+		return []*workersafety.WorkerDisciplinaryAction{
+			action(
+				workersafety.DisciplinaryLevelVerbalWarning,
+				400,
+				"Missed pre-trip inspection.",
+				nil,
+			),
+			action(
+				workersafety.DisciplinaryLevelWrittenWarning,
+				10,
+				"Out-of-service brake adjustment found at roadside.",
+				func(a *workersafety.WorkerDisciplinaryAction) { a.SafetyEventID = events[len(events)-1].ID },
+			),
 		}
 	case 5:
 		rescinded := refs.now - 150*safetySeedDay
-		return []*worker.WorkerDisciplinaryAction{
-			action(worker.DisciplinaryLevelVerbalWarning, 160, "Late departure reported by dispatch.",
-				func(a *worker.WorkerDisciplinaryAction) {
-					a.Status = worker.DisciplinaryStatusRescinded
+		return []*workersafety.WorkerDisciplinaryAction{
+			action(
+				workersafety.DisciplinaryLevelVerbalWarning,
+				160,
+				"Late departure reported by dispatch.",
+				func(a *workersafety.WorkerDisciplinaryAction) {
+					a.Status = workersafety.DisciplinaryStatusRescinded
 					a.RescindedAt = &rescinded
 					a.RescindedByID = refs.adminID
 					a.RescindReason = "Departure was delayed by the shipper; not the driver's fault"
-				}),
+				},
+			),
 		}
 	}
 	return nil
 }
 
-func (s *WorkerSafetySeed) recognitionsFor(refs *safetySeedRefs, wrk *worker.Worker, index int) []*worker.WorkerRecognition {
-	give := func(kind worker.RecognitionKind, daysAgo int64, title, message string) *worker.WorkerRecognition {
-		return &worker.WorkerRecognition{
+func (s *WorkerSafetySeed) recognitionsFor(
+	refs *safetySeedRefs,
+	wrk *worker.Worker,
+	index int,
+) []*workersafety.WorkerRecognition {
+	give := func(kind workersafety.RecognitionKind, daysAgo int64, title, message string) *workersafety.WorkerRecognition {
+		return &workersafety.WorkerRecognition{
 			OrganizationID:  refs.orgID,
 			BusinessUnitID:  refs.buID,
 			WorkerID:        wrk.ID,
@@ -312,24 +421,38 @@ func (s *WorkerSafetySeed) recognitionsFor(refs *safetySeedRefs, wrk *worker.Wor
 	}
 	switch index % 4 {
 	case 0:
-		return []*worker.WorkerRecognition{
-			give(worker.RecognitionKindSafetyMilestone, 20, "One year accident-free", "Twelve months without a preventable. Thank you for the care you take out there."),
+		return []*workersafety.WorkerRecognition{
+			give(
+				workersafety.RecognitionKindSafetyMilestone,
+				20,
+				"One year accident-free",
+				"Twelve months without a preventable. Thank you for the care you take out there.",
+			),
 		}
 	case 2:
-		return []*worker.WorkerRecognition{
-			give(worker.RecognitionKindCustomerPraise, 6, "Praised by the receiver in Columbus", "The dock lead called to say the load was the smoothest delivery they had all week."),
-			give(worker.RecognitionKindTeamPlayer, 90, "Covered a sick call on a Sunday", ""),
+		return []*workersafety.WorkerRecognition{
+			give(
+				workersafety.RecognitionKindCustomerPraise,
+				6,
+				"Praised by the receiver in Columbus",
+				"The dock lead called to say the load was the smoothest delivery they had all week.",
+			),
+			give(workersafety.RecognitionKindTeamPlayer, 90, "Covered a sick call on a Sunday", ""),
 		}
 	}
 	return nil
 }
 
-func (s *WorkerSafetySeed) reviewFor(refs *safetySeedRefs, wrk *worker.Worker, index int) *worker.PerformanceReview {
+func (s *WorkerSafetySeed) reviewFor(
+	refs *safetySeedRefs,
+	wrk *worker.Worker,
+	index int,
+) *workerreview.PerformanceReview {
 	if refs.template == nil || index%3 == 2 {
 		return nil
 	}
 	score := func(v int32) *int32 { return &v }
-	review := &worker.PerformanceReview{
+	review := &workerreview.PerformanceReview{
 		OrganizationID: refs.orgID,
 		BusinessUnitID: refs.buID,
 		WorkerID:       wrk.ID,
@@ -338,9 +461,9 @@ func (s *WorkerSafetySeed) reviewFor(refs *safetySeedRefs, wrk *worker.Worker, i
 		Title:          "Annual review — 2025",
 		PeriodStart:    refs.now - 365*safetySeedDay,
 		PeriodEnd:      refs.now - 30*safetySeedDay,
-		Ratings:        worker.RatingsFromTemplate(refs.template),
-		Goals:          []worker.ReviewGoal{},
-		Status:         worker.ReviewStatusDraft,
+		Ratings:        workerreview.RatingsFromTemplate(refs.template),
+		Goals:          []workerreview.ReviewGoal{},
+		Status:         workerreview.ReviewStatusDraft,
 	}
 	scores := []int32{4, 4, 3, 5}
 	if index%2 == 1 {
@@ -349,22 +472,26 @@ func (s *WorkerSafetySeed) reviewFor(refs *safetySeedRefs, wrk *worker.Worker, i
 	for i := range review.Ratings {
 		review.Ratings[i].Score = score(scores[i%len(scores)])
 	}
-	review.OverallScore = worker.ComputeOverallScore(review.Ratings)
+	review.OverallScore = workerreview.ComputeOverallScore(review.Ratings)
 	review.Summary = "Dependable, safe, and easy to dispatch. Keep the paperwork tight and the year looks even better."
 	review.Strengths = "Clean inspections; customers ask for this driver by name."
 	review.Improvements = "Turn in fuel receipts the same day."
-	review.Goals = []worker.ReviewGoal{
-		{ID: pulid.MustNew("goal_").String(), Title: "Zero late expense submissions for a quarter", Status: worker.ReviewGoalStatusOpen},
+	review.Goals = []workerreview.ReviewGoal{
+		{
+			ID:     pulid.MustNew("goal_").String(),
+			Title:  "Zero late expense submissions for a quarter",
+			Status: workerreview.ReviewGoalStatusOpen,
+		},
 	}
 	submitted := refs.now - 20*safetySeedDay
 	switch index % 3 {
 	case 0:
-		review.Status = worker.ReviewStatusSubmitted
+		review.Status = workerreview.ReviewStatusSubmitted
 		review.SubmittedAt = &submitted
 	case 1:
 		acked := refs.now - 15*safetySeedDay
 		closed := refs.now - 10*safetySeedDay
-		review.Status = worker.ReviewStatusClosed
+		review.Status = workerreview.ReviewStatusClosed
 		review.SubmittedAt = &submitted
 		review.AcknowledgedAt = &acked
 		review.WorkerComment = "Fair review — I will get the receipts in on time."

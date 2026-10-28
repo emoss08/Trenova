@@ -24,6 +24,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -60,11 +62,11 @@ type PTOPolicyManager interface {
 	ListAssignments(
 		ctx context.Context,
 		req *workerports.ListPTOAssignmentsRequest,
-	) ([]*worker.WorkerPTOPolicyAssignment, error)
+	) ([]*pto.WorkerPTOPolicyAssignment, error)
 	EndAssignment(
 		ctx context.Context,
 		req *ptopolicyservice.EndAssignmentRequest,
-	) (*worker.WorkerPTOPolicyAssignment, error)
+	) (*pto.WorkerPTOPolicyAssignment, error)
 	AssignDefaultPolicy(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -211,8 +213,8 @@ func (s *Service) List(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-	kinds []worker.EmploymentEventKind,
-) ([]*worker.WorkerEmploymentEvent, error) {
+	kinds []employment.EmploymentEventKind,
+) ([]*employment.WorkerEmploymentEvent, error) {
 	return s.repo.List(ctx, &workerports.ListWorkerEmploymentEventsRequest{
 		TenantInfo:      tenantInfo,
 		WorkerID:        workerID,
@@ -226,7 +228,7 @@ func (s *Service) Get(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerEmploymentEvent, error) {
+) (*employment.WorkerEmploymentEvent, error) {
 	return s.repo.GetByID(ctx, &workerports.GetWorkerEmploymentEventByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
@@ -240,7 +242,7 @@ func (s *Service) Get(
 type RecordRequest struct {
 	TenantInfo  pagination.TenantInfo
 	WorkerID    pulid.ID
-	Kind        worker.EmploymentEventKind
+	Kind        employment.EmploymentEventKind
 	EffectiveAt int64
 	Reason      string
 	Notes       string
@@ -279,7 +281,7 @@ type CascadeSummary struct {
 }
 
 type RecordResult struct {
-	Event   *worker.WorkerEmploymentEvent
+	Event   *employment.WorkerEmploymentEvent
 	Cascade CascadeSummary
 }
 
@@ -309,7 +311,7 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 		return nil, err
 	}
 
-	event := &worker.WorkerEmploymentEvent{
+	event := &employment.WorkerEmploymentEvent{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		WorkerID:       req.WorkerID,
@@ -328,7 +330,7 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
-	if err = req.Kind.CanRecord(worker.EmploymentStateOf(wrk, history)); err != nil {
+	if err = req.Kind.CanRecord(employment.EmploymentStateOf(wrk, history)); err != nil {
 		return nil, err
 	}
 	if err = s.populateValues(ctx, req, wrk, event); err != nil {
@@ -380,20 +382,20 @@ func (s *Service) RecordHired(ctx context.Context, wrk *worker.Worker, userID pu
 		return nil
 	}
 	tenantInfo := pagination.TenantInfo{OrgID: wrk.OrganizationID, BuID: wrk.BusinessUnitID}
-	event := &worker.WorkerEmploymentEvent{
+	event := &employment.WorkerEmploymentEvent{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		WorkerID:       wrk.ID,
-		Kind:           worker.EmploymentEventHired,
+		Kind:           employment.EmploymentEventHired,
 		EffectiveAt:    wrk.Profile.HireDate,
 		RecordedByID:   userID,
 		FromValues:     map[string]string{},
 		ToValues: map[string]string{
-			worker.EmploymentValueHireDate: fmt.Sprintf("%d", wrk.Profile.HireDate),
+			employment.EmploymentValueHireDate: fmt.Sprintf("%d", wrk.Profile.HireDate),
 		},
 	}
 	if !wrk.FleetCodeID.IsNil() {
-		event.ToValues[worker.EmploymentValueFleetCodeID] = wrk.FleetCodeID.String()
+		event.ToValues[employment.EmploymentValueFleetCodeID] = wrk.FleetCodeID.String()
 	}
 	created, err := s.repo.Create(ctx, event)
 	if err != nil {
@@ -411,7 +413,7 @@ func (s *Service) RecordHired(ctx context.Context, wrk *worker.Worker, userID pu
 // recorded and stands regardless.
 func (s *Service) closeChecklists(
 	ctx context.Context,
-	event *worker.WorkerEmploymentEvent,
+	event *employment.WorkerEmploymentEvent,
 	wrk *worker.Worker,
 	userID pulid.ID,
 	log *zap.Logger,
@@ -431,7 +433,7 @@ func (s *Service) closeChecklists(
 // employment change that has already been recorded.
 func (s *Service) spawnChecklist(
 	ctx context.Context,
-	event *worker.WorkerEmploymentEvent,
+	event *employment.WorkerEmploymentEvent,
 	wrk *worker.Worker,
 	userID pulid.ID,
 	log *zap.Logger,
@@ -451,27 +453,33 @@ func (s *Service) populateValues(
 	ctx context.Context,
 	req *RecordRequest,
 	wrk *worker.Worker,
-	event *worker.WorkerEmploymentEvent,
+	event *employment.WorkerEmploymentEvent,
 ) error {
 	switch req.Kind {
-	case worker.EmploymentEventHired, worker.EmploymentEventRehired:
+	case employment.EmploymentEventHired, employment.EmploymentEventRehired:
 		if wrk.Profile != nil && wrk.Profile.HireDate > 0 {
-			event.FromValues[worker.EmploymentValueHireDate] = fmt.Sprintf(
+			event.FromValues[employment.EmploymentValueHireDate] = fmt.Sprintf(
 				"%d",
 				wrk.Profile.HireDate,
 			)
 		}
-		event.ToValues[worker.EmploymentValueHireDate] = fmt.Sprintf("%d", req.EffectiveAt)
-		event.FromValues[worker.EmploymentValueStatus] = wrk.Status.String()
-		event.ToValues[worker.EmploymentValueStatus] = "Active"
-	case worker.EmploymentEventTerminated:
-		event.FromValues[worker.EmploymentValueStatus] = wrk.Status.String()
-		event.ToValues[worker.EmploymentValueStatus] = "Inactive"
-		event.ToValues[worker.EmploymentValueTerminationDate] = fmt.Sprintf("%d", req.EffectiveAt)
-	case worker.EmploymentEventSuspended:
-		event.FromValues[worker.EmploymentValueCanBeAssigned] = fmt.Sprintf("%t", wrk.CanBeAssigned)
-		event.ToValues[worker.EmploymentValueCanBeAssigned] = "false"
-	case worker.EmploymentEventLeaveStarted:
+		event.ToValues[employment.EmploymentValueHireDate] = fmt.Sprintf("%d", req.EffectiveAt)
+		event.FromValues[employment.EmploymentValueStatus] = wrk.Status.String()
+		event.ToValues[employment.EmploymentValueStatus] = "Active"
+	case employment.EmploymentEventTerminated:
+		event.FromValues[employment.EmploymentValueStatus] = wrk.Status.String()
+		event.ToValues[employment.EmploymentValueStatus] = "Inactive"
+		event.ToValues[employment.EmploymentValueTerminationDate] = fmt.Sprintf(
+			"%d",
+			req.EffectiveAt,
+		)
+	case employment.EmploymentEventSuspended:
+		event.FromValues[employment.EmploymentValueCanBeAssigned] = fmt.Sprintf(
+			"%t",
+			wrk.CanBeAssigned,
+		)
+		event.ToValues[employment.EmploymentValueCanBeAssigned] = "false"
+	case employment.EmploymentEventLeaveStarted:
 		if req.LeaveType == nil || !req.LeaveType.IsValid() {
 			return errortypes.NewValidationError(
 				"leaveType",
@@ -479,23 +487,32 @@ func (s *Service) populateValues(
 				"Choose the kind of leave",
 			)
 		}
-		event.FromValues[worker.EmploymentValueCanBeAssigned] = fmt.Sprintf("%t", wrk.CanBeAssigned)
-		event.ToValues[worker.EmploymentValueCanBeAssigned] = "false"
-		event.ToValues[worker.EmploymentValueLeaveType] = req.LeaveType.String()
-	case worker.EmploymentEventReinstated:
-		event.FromValues[worker.EmploymentValueCanBeAssigned] = fmt.Sprintf("%t", wrk.CanBeAssigned)
-		event.ToValues[worker.EmploymentValueCanBeAssigned] = "true"
-	case worker.EmploymentEventLeaveEnded:
-		event.FromValues[worker.EmploymentValueCanBeAssigned] = fmt.Sprintf("%t", wrk.CanBeAssigned)
-		event.ToValues[worker.EmploymentValueCanBeAssigned] = "true"
+		event.FromValues[employment.EmploymentValueCanBeAssigned] = fmt.Sprintf(
+			"%t",
+			wrk.CanBeAssigned,
+		)
+		event.ToValues[employment.EmploymentValueCanBeAssigned] = "false"
+		event.ToValues[employment.EmploymentValueLeaveType] = req.LeaveType.String()
+	case employment.EmploymentEventReinstated:
+		event.FromValues[employment.EmploymentValueCanBeAssigned] = fmt.Sprintf(
+			"%t",
+			wrk.CanBeAssigned,
+		)
+		event.ToValues[employment.EmploymentValueCanBeAssigned] = "true"
+	case employment.EmploymentEventLeaveEnded:
+		event.FromValues[employment.EmploymentValueCanBeAssigned] = fmt.Sprintf(
+			"%t",
+			wrk.CanBeAssigned,
+		)
+		event.ToValues[employment.EmploymentValueCanBeAssigned] = "true"
 		if wrk.LeaveType != "" {
-			event.FromValues[worker.EmploymentValueLeaveType] = wrk.LeaveType.String()
+			event.FromValues[employment.EmploymentValueLeaveType] = wrk.LeaveType.String()
 		}
-	case worker.EmploymentEventTransferred:
+	case employment.EmploymentEventTransferred:
 		return s.populateTransfer(ctx, req, wrk, event)
-	case worker.EmploymentEventPromoted:
+	case employment.EmploymentEventPromoted:
 		return populatePromotion(req, wrk, event)
-	case worker.EmploymentEventRateChanged:
+	case employment.EmploymentEventRateChanged:
 		rate := strings.TrimSpace(req.Rate)
 		if rate == "" {
 			return errortypes.NewValidationError(
@@ -504,11 +521,11 @@ func (s *Service) populateValues(
 				"Enter the new rate",
 			)
 		}
-		event.ToValues[worker.EmploymentValueRate] = rate
+		event.ToValues[employment.EmploymentValueRate] = rate
 		if unit := strings.TrimSpace(req.RateUnit); unit != "" {
-			event.ToValues[worker.EmploymentValueRateUnit] = unit
+			event.ToValues[employment.EmploymentValueRateUnit] = unit
 		}
-	case worker.EmploymentEventProbationEnded:
+	case employment.EmploymentEventProbationEnded:
 	}
 	return nil
 }
@@ -517,7 +534,7 @@ func (s *Service) populateTransfer(
 	ctx context.Context,
 	req *RecordRequest,
 	wrk *worker.Worker,
-	event *worker.WorkerEmploymentEvent,
+	event *employment.WorkerEmploymentEvent,
 ) error {
 	if req.FleetCodeID == nil && req.ManagerID == nil {
 		return errortypes.NewValidationError(
@@ -535,13 +552,13 @@ func (s *Service) populateTransfer(
 			)
 		}
 		if !wrk.FleetCodeID.IsNil() {
-			event.FromValues[worker.EmploymentValueFleetCodeID] = wrk.FleetCodeID.String()
+			event.FromValues[employment.EmploymentValueFleetCodeID] = wrk.FleetCodeID.String()
 			if wrk.FleetCode != nil {
-				event.FromValues[worker.EmploymentValueFleetCode] = wrk.FleetCode.Code
+				event.FromValues[employment.EmploymentValueFleetCode] = wrk.FleetCode.Code
 			}
 		}
 		if req.FleetCodeID.IsNil() {
-			event.ToValues[worker.EmploymentValueFleetCodeID] = ""
+			event.ToValues[employment.EmploymentValueFleetCodeID] = ""
 		} else {
 			tenantInfo := req.TenantInfo
 			fleet, err := s.fleetCodeRepo.GetByID(ctx, fleetcodeports.GetFleetCodeByIDRequest{
@@ -551,15 +568,15 @@ func (s *Service) populateTransfer(
 			if err != nil {
 				return err
 			}
-			event.ToValues[worker.EmploymentValueFleetCodeID] = fleet.ID.String()
-			event.ToValues[worker.EmploymentValueFleetCode] = fleet.Code
+			event.ToValues[employment.EmploymentValueFleetCodeID] = fleet.ID.String()
+			event.ToValues[employment.EmploymentValueFleetCode] = fleet.Code
 		}
 	}
 	if req.ManagerID != nil {
 		if !wrk.ManagerID.IsNil() {
-			event.FromValues[worker.EmploymentValueManagerID] = wrk.ManagerID.String()
+			event.FromValues[employment.EmploymentValueManagerID] = wrk.ManagerID.String()
 		}
-		event.ToValues[worker.EmploymentValueManagerID] = req.ManagerID.String()
+		event.ToValues[employment.EmploymentValueManagerID] = req.ManagerID.String()
 	}
 	return nil
 }
@@ -567,7 +584,7 @@ func (s *Service) populateTransfer(
 func populatePromotion(
 	req *RecordRequest,
 	wrk *worker.Worker,
-	event *worker.WorkerEmploymentEvent,
+	event *employment.WorkerEmploymentEvent,
 ) error {
 	if req.DriverType == nil && req.WorkerType == nil {
 		return errortypes.NewValidationError(
@@ -586,8 +603,8 @@ func populatePromotion(
 			)
 		}
 		if *req.DriverType != wrk.DriverType {
-			event.FromValues[worker.EmploymentValueDriverType] = wrk.DriverType.String()
-			event.ToValues[worker.EmploymentValueDriverType] = req.DriverType.String()
+			event.FromValues[employment.EmploymentValueDriverType] = wrk.DriverType.String()
+			event.ToValues[employment.EmploymentValueDriverType] = req.DriverType.String()
 			changed = true
 		}
 	}
@@ -600,8 +617,8 @@ func populatePromotion(
 			)
 		}
 		if *req.WorkerType != wrk.Type {
-			event.FromValues[worker.EmploymentValueWorkerType] = wrk.Type.String()
-			event.ToValues[worker.EmploymentValueWorkerType] = req.WorkerType.String()
+			event.FromValues[employment.EmploymentValueWorkerType] = wrk.Type.String()
+			event.ToValues[employment.EmploymentValueWorkerType] = req.WorkerType.String()
 			changed = true
 		}
 	}
@@ -624,7 +641,7 @@ func (s *Service) cascade(
 ) (CascadeSummary, error) {
 	var summary CascadeSummary
 	switch req.Kind {
-	case worker.EmploymentEventTerminated:
+	case employment.EmploymentEventTerminated:
 		ended, err := s.endPTOAssignment(ctx, req)
 		if err != nil {
 			return summary, err
@@ -654,7 +671,7 @@ func (s *Service) cascade(
 		summary.PortalAccessRevoked, summary.PortalRevocationError = s.revokePortalAccess(
 			ctx, req, actor, log,
 		)
-	case worker.EmploymentEventRehired:
+	case employment.EmploymentEventRehired:
 		if err := s.ptoPolicies.AssignDefaultPolicy(
 			ctx, req.TenantInfo, wrk.ID, req.EffectiveAt, req.UserID,
 		); err != nil {
@@ -662,14 +679,16 @@ func (s *Service) cascade(
 		} else {
 			summary.DefaultPolicyApplied = true
 		}
-	case worker.EmploymentEventHired, worker.EmploymentEventProbationEnded,
-		worker.EmploymentEventPromoted, worker.EmploymentEventTransferred,
-		worker.EmploymentEventLeaveStarted, worker.EmploymentEventLeaveEnded,
-		worker.EmploymentEventSuspended, worker.EmploymentEventReinstated,
-		worker.EmploymentEventRateChanged:
+	case employment.EmploymentEventHired, employment.EmploymentEventProbationEnded,
+		employment.EmploymentEventPromoted, employment.EmploymentEventTransferred,
+		employment.EmploymentEventLeaveStarted, employment.EmploymentEventLeaveEnded,
+		employment.EmploymentEventSuspended, employment.EmploymentEventReinstated,
+		employment.EmploymentEventRateChanged:
 	}
 	switch req.Kind {
-	case worker.EmploymentEventHired, worker.EmploymentEventRehired, worker.EmploymentEventPromoted:
+	case employment.EmploymentEventHired,
+		employment.EmploymentEventRehired,
+		employment.EmploymentEventPromoted:
 		summary.TrainingAssigned = s.assignTraining(ctx, req, log)
 	default:
 	}
@@ -834,7 +853,7 @@ type AmendRequest struct {
 func (s *Service) Amend(
 	ctx context.Context,
 	req *AmendRequest,
-) (*worker.WorkerEmploymentEvent, error) {
+) (*employment.WorkerEmploymentEvent, error) {
 	log := s.l.With(zap.String("operation", "Amend"), zap.String("id", req.ID.String()))
 
 	original, err := s.repo.GetByID(ctx, &workerports.GetWorkerEmploymentEventByIDRequest{
@@ -941,7 +960,7 @@ func (s *Service) actor(
 }
 
 func (s *Service) audit(
-	current, previous *worker.WorkerEmploymentEvent,
+	current, previous *employment.WorkerEmploymentEvent,
 	operation permission.Operation,
 	userID pulid.ID,
 	comment string,
@@ -972,7 +991,7 @@ func (s *Service) audit(
 func (s *Service) publish(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	event *worker.WorkerEmploymentEvent,
+	event *employment.WorkerEmploymentEvent,
 	operation permission.Operation,
 	userID pulid.ID,
 ) {

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,7 +26,7 @@ const seedBytes = 32
 func (s *Service) ListPools(
 	ctx context.Context,
 	req *workerports.ListDOTRandomPoolsRequest,
-) (*pagination.CursorListResult[*worker.DOTRandomPool], error) {
+) (*pagination.CursorListResult[*workerdot.DOTRandomPool], error) {
 	return s.repo.ListPools(ctx, req)
 }
 
@@ -34,7 +34,7 @@ func (s *Service) GetPool(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.DOTRandomPool, error) {
+) (*workerdot.DOTRandomPool, error) {
 	return s.repo.GetPoolByID(ctx, &workerports.GetDOTRandomPoolByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
@@ -43,7 +43,7 @@ func (s *Service) GetPool(
 
 func (s *Service) preparePool(
 	ctx context.Context,
-	entity *worker.DOTRandomPool,
+	entity *workerdot.DOTRandomPool,
 	excludeID pulid.ID,
 ) error {
 	entity.Code = strings.ToUpper(strings.TrimSpace(entity.Code))
@@ -84,9 +84,9 @@ func (s *Service) preparePool(
 
 func (s *Service) CreatePool(
 	ctx context.Context,
-	entity *worker.DOTRandomPool,
+	entity *workerdot.DOTRandomPool,
 	userID pulid.ID,
-) (*worker.DOTRandomPool, error) {
+) (*workerdot.DOTRandomPool, error) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
@@ -122,9 +122,9 @@ func (s *Service) CreatePool(
 
 func (s *Service) UpdatePool(
 	ctx context.Context,
-	entity *worker.DOTRandomPool,
+	entity *workerdot.DOTRandomPool,
 	userID pulid.ID,
-) (*worker.DOTRandomPool, error) {
+) (*workerdot.DOTRandomPool, error) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
@@ -170,7 +170,7 @@ func (s *Service) UpdatePool(
 func (s *Service) ListDraws(
 	ctx context.Context,
 	req *workerports.ListDOTRandomDrawsRequest,
-) ([]*worker.DOTRandomDraw, error) {
+) ([]*workerdot.DOTRandomDraw, error) {
 	return s.repo.ListDraws(ctx, req)
 }
 
@@ -178,7 +178,7 @@ func (s *Service) GetDraw(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.DOTRandomDraw, error) {
+) (*workerdot.DOTRandomDraw, error) {
 	return s.repo.GetDrawByID(ctx, &workerports.GetDOTRandomDrawByIDRequest{
 		ID:             id,
 		TenantInfo:     tenantInfo,
@@ -208,7 +208,7 @@ type RunDrawRequest struct {
 func (s *Service) RunDraw(
 	ctx context.Context,
 	req *RunDrawRequest,
-) (*worker.DOTRandomDraw, error) {
+) (*workerdot.DOTRandomDraw, error) {
 	plan, err := s.planDraw(ctx, req)
 	if err != nil {
 		return nil, err
@@ -224,8 +224,8 @@ func (s *Service) RunDraw(
 	// not exclude anybody from the alcohol draw, and the rates are separate
 	// obligations. Salting the seed per substance keeps the two orders from
 	// being the same list twice.
-	drugPicks := worker.SelectRandom(plan.candidates, seed+":drug", int(draw.DrugTarget))
-	alcoholPicks := worker.SelectRandom(
+	drugPicks := workerdot.SelectRandom(plan.candidates, seed+":drug", int(draw.DrugTarget))
+	alcoholPicks := workerdot.SelectRandom(
 		plan.candidates,
 		seed+":alcohol",
 		int(draw.AlcoholTarget),
@@ -240,8 +240,8 @@ func (s *Service) RunDraw(
 		return nil, multiErr
 	}
 
-	entries := buildEntries(drugPicks, worker.DOTSubstanceDrug)
-	entries = append(entries, buildEntries(alcoholPicks, worker.DOTSubstanceAlcohol)...)
+	entries := buildEntries(drugPicks, workerdot.DOTSubstanceDrug)
+	entries = append(entries, buildEntries(alcoholPicks, workerdot.DOTSubstanceAlcohol)...)
 
 	created, err := s.repo.CreateDrawWithEntries(ctx, draw, entries)
 	if err != nil {
@@ -264,9 +264,9 @@ func (s *Service) RunDraw(
 }
 
 type drawPlan struct {
-	pool       *worker.DOTRandomPool
+	pool       *workerdot.DOTRandomPool
 	candidates []pulid.ID
-	draw       *worker.DOTRandomDraw
+	draw       *workerdot.DOTRandomDraw
 }
 
 func (s *Service) planDraw(ctx context.Context, req *RunDrawRequest) (*drawPlan, error) {
@@ -280,8 +280,8 @@ func (s *Service) planDraw(ctx context.Context, req *RunDrawRequest) (*drawPlan,
 		at = timeutils.NowUnix()
 	}
 	drawTime := time.Unix(at, 0).UTC()
-	periodKey := worker.PeriodKeyFor(pool.Period, drawTime)
-	periodStart, periodEnd := worker.PeriodBoundsFor(pool.Period, drawTime)
+	periodKey := workerdot.PeriodKeyFor(pool.Period, drawTime)
+	periodStart, periodEnd := workerdot.PeriodBoundsFor(pool.Period, drawTime)
 
 	existing, err := s.repo.GetDrawByPeriod(ctx, &workerports.GetDOTRandomDrawByPeriodRequest{
 		TenantInfo: req.TenantInfo,
@@ -319,18 +319,18 @@ func (s *Service) planDraw(ctx context.Context, req *RunDrawRequest) (*drawPlan,
 	return &drawPlan{
 		pool:       pool,
 		candidates: candidates,
-		draw: &worker.DOTRandomDraw{
+		draw: &workerdot.DOTRandomDraw{
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
 			PoolID:         pool.ID,
 			PeriodKey:      periodKey,
 			PeriodStart:    periodStart,
 			PeriodEnd:      periodEnd,
-			Status:         worker.RandomDrawStatusDraft,
+			Status:         workerdot.RandomDrawStatusDraft,
 			PoolSize:       int32(len(candidates)), //nolint:gosec // a pool's drivers fit in int32
 			DrugTarget:     int32(drugTarget),      //nolint:gosec // bounded by the pool size
 			AlcoholTarget:  int32(alcoholTarget),   //nolint:gosec // bounded by the pool size
-			Method:         worker.RandomSelectionMethod,
+			Method:         workerdot.RandomSelectionMethod,
 			Notes:          strings.TrimSpace(req.Notes),
 			DrawnAt:        at,
 			DrawnByID:      req.UserID,
@@ -346,7 +346,7 @@ func (s *Service) FinalizeDraw(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 	userID pulid.ID,
-) (*worker.DOTRandomDraw, error) {
+) (*workerdot.DOTRandomDraw, error) {
 	change, err := s.PlanFinalizeDraw(ctx, tenantInfo, id)
 	if err != nil {
 		return nil, err
@@ -381,12 +381,12 @@ func (s *Service) CancelDraw(
 	id pulid.ID,
 	reason string,
 	userID pulid.ID,
-) (*worker.DOTRandomDraw, error) {
+) (*workerdot.DOTRandomDraw, error) {
 	change, err := s.PlanCancelDraw(ctx, tenantInfo, id, reason)
 	if err != nil {
 		return nil, err
 	}
-	if change.Before.Status == worker.RandomDrawStatusCancelled {
+	if change.Before.Status == workerdot.RandomDrawStatusCancelled {
 		return change.Before, nil
 	}
 	reason = strings.TrimSpace(reason)
@@ -415,7 +415,7 @@ func (s *Service) CancelDraw(
 func (s *Service) ListDrawEntries(
 	ctx context.Context,
 	req *workerports.ListDOTRandomDrawEntriesRequest,
-) ([]*worker.DOTRandomDrawEntry, error) {
+) ([]*workerdot.DOTRandomDrawEntry, error) {
 	return s.repo.ListDrawEntries(ctx, req)
 }
 
@@ -424,7 +424,7 @@ func (s *Service) ListDrawEntries(
 type UpdateEntryRequest struct {
 	TenantInfo   pagination.TenantInfo
 	EntryID      pulid.ID
-	Status       worker.RandomEntryStatus
+	Status       workerdot.RandomEntryStatus
 	ExcuseReason string
 	UserID       pulid.ID
 }
@@ -432,7 +432,7 @@ type UpdateEntryRequest struct {
 func (s *Service) UpdateDrawEntry(
 	ctx context.Context,
 	req *UpdateEntryRequest,
-) (*worker.DOTRandomDrawEntry, error) {
+) (*workerdot.DOTRandomDrawEntry, error) {
 	change, err := s.PlanUpdateDrawEntry(ctx, req)
 	if err != nil {
 		return nil, err
@@ -463,7 +463,7 @@ func (s *Service) resolvePool(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	poolID pulid.ID,
-) (*worker.DOTRandomPool, error) {
+) (*workerdot.DOTRandomPool, error) {
 	if !poolID.IsNil() {
 		return s.repo.GetPoolByID(ctx, &workerports.GetDOTRandomPoolByIDRequest{
 			ID:         poolID,
@@ -488,15 +488,15 @@ func (s *Service) resolvePool(
 
 func buildEntries(
 	picks []pulid.ID,
-	substance worker.DOTTestSubstance,
-) []*worker.DOTRandomDrawEntry {
-	entries := make([]*worker.DOTRandomDrawEntry, 0, len(picks))
+	substance workerdot.DOTTestSubstance,
+) []*workerdot.DOTRandomDrawEntry {
+	entries := make([]*workerdot.DOTRandomDrawEntry, 0, len(picks))
 	for i, workerID := range picks {
-		entries = append(entries, &worker.DOTRandomDrawEntry{
+		entries = append(entries, &workerdot.DOTRandomDrawEntry{
 			WorkerID:  workerID,
 			Substance: substance,
 			Rank:      int32(i + 1),
-			Status:    worker.RandomEntrySelected,
+			Status:    workerdot.RandomEntrySelected,
 		})
 	}
 	return entries

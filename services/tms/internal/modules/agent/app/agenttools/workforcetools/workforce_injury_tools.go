@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -58,27 +58,27 @@ const maxClaimField = 150
 
 var oshaClassifications = agenttoolschema.Source(
 	"worker.oshaCaseClassification",
-	worker.OSHACaseClassificationValues(),
+	workersafety.OSHACaseClassificationValues(),
 )
 
 var oshaIllnessTypes = agenttoolschema.Source(
 	"worker.oshaIllnessType",
-	worker.OSHAIllnessTypeValues(),
+	workersafety.OSHAIllnessTypeValues(),
 )
 
 var injuryTreatments = agenttoolschema.Source(
 	"worker.injuryTreatment",
-	worker.InjuryTreatmentValues(),
+	workersafety.InjuryTreatmentValues(),
 )
 
 var injuryStatuses = agenttoolschema.Source(
 	"worker.injuryCaseStatus",
-	worker.InjuryCaseStatusValues(),
+	workersafety.InjuryCaseStatusValues(),
 )
 
 var claimStatuses = agenttoolschema.Source(
 	"worker.workersCompClaimStatus",
-	worker.WorkersCompClaimStatusValues(),
+	workersafety.WorkersCompClaimStatusValues(),
 )
 
 var injuryFields = []string{
@@ -93,14 +93,14 @@ var injuryFields = []string{
 type InjuryKeeper interface {
 	PlanRecordInjury(
 		ctx context.Context,
-		entity *worker.WorkerInjury,
+		entity *workersafety.WorkerInjury,
 		userID pulid.ID,
-	) (*worker.WorkerInjury, error)
+	) (*workersafety.WorkerInjury, error)
 	RecordInjury(
 		ctx context.Context,
-		entity *worker.WorkerInjury,
+		entity *workersafety.WorkerInjury,
 		userID pulid.ID,
-	) (*worker.WorkerInjury, error)
+	) (*workersafety.WorkerInjury, error)
 	PlanUpdateInjury(
 		ctx context.Context,
 		req *workerinjuryservice.UpdateInjuryRequest,
@@ -108,12 +108,12 @@ type InjuryKeeper interface {
 	UpdateInjury(
 		ctx context.Context,
 		req *workerinjuryservice.UpdateInjuryRequest,
-	) (*worker.WorkerInjury, error)
+	) (*workersafety.WorkerInjury, error)
 	PlanDeleteInjury(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*worker.WorkerInjury, error)
+	) (*workersafety.WorkerInjury, error)
 	DeleteInjury(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -135,7 +135,7 @@ func injuryIDProperty() map[string]any {
 		"worker_list_injuries")
 }
 
-func injuryRecord(injury *worker.WorkerInjury) toolpreview.Record {
+func injuryRecord(injury *workersafety.WorkerInjury) toolpreview.Record {
 	return wfRecord(permission.ResourceWorkerInjury, injury.ID,
 		fmt.Sprintf("Case %d-%d", injury.CaseYear, injury.CaseNumber), injury.Version)
 }
@@ -321,8 +321,8 @@ func newRecordWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 
 	return common.NewReportingReceivableTool(
 		spec,
-		common.ReceivablePlan[*worker.WorkerInjury, *worker.WorkerInjury]{
-			Request: func(params *agenttoolports.ToolExecuteParams) (*worker.WorkerInjury, error) {
+		common.ReceivablePlan[*workersafety.WorkerInjury, *workersafety.WorkerInjury]{
+			Request: func(params *agenttoolports.ToolExecuteParams) (*workersafety.WorkerInjury, error) {
 				workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
 				if err != nil {
 					return nil, err
@@ -338,7 +338,7 @@ func newRecordWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 				if req.Description == nil || *req.Description == "" {
 					return nil, fmt.Errorf("missing required parameter %q", common.FieldDescription)
 				}
-				entity := &worker.WorkerInjury{
+				entity := &workersafety.WorkerInjury{
 					OrganizationID: params.OrganizationID,
 					BusinessUnitID: params.BusinessUnitID,
 					WorkerID:       workerID,
@@ -349,15 +349,15 @@ func newRecordWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 			},
 			Plan: func(
 				ctx context.Context,
-				entity *worker.WorkerInjury,
+				entity *workersafety.WorkerInjury,
 				params *agenttoolports.ToolExecuteParams,
-			) (*worker.WorkerInjury, error) {
+			) (*workersafety.WorkerInjury, error) {
 				return injuries.PlanRecordInjury(ctx, entity, params.Actor.UserID)
 			},
-			Refused: func(*worker.WorkerInjury) string {
+			Refused: func(*workersafety.WorkerInjury) string {
 				return "Would enter an injury case on the log."
 			},
-			Render: func(_ *worker.WorkerInjury, planned *worker.WorkerInjury) (*agent.ToolPreview, error) {
+			Render: func(_ *workersafety.WorkerInjury, planned *workersafety.WorkerInjury) (*agent.ToolPreview, error) {
 				change, err := toolpreview.Create(
 					wfRecord(permission.ResourceWorkerInjury, pulid.Nil,
 						fmt.Sprintf("Case %d-%d", planned.CaseYear, planned.CaseNumber), 0),
@@ -371,7 +371,7 @@ func newRecordWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 			},
 			Run: func(
 				ctx context.Context,
-				entity *worker.WorkerInjury,
+				entity *workersafety.WorkerInjury,
 				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				created, err := injuries.RecordInjury(ctx, entity, params.Actor.UserID)
@@ -484,17 +484,17 @@ func newDeleteWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 
 	return common.NewReceivableTool(
 		spec,
-		common.ReceivablePlan[*recordDelete, *worker.WorkerInjury]{
+		common.ReceivablePlan[*recordDelete, *workersafety.WorkerInjury]{
 			Request: recordDeleteFrom(paramInjuryID),
 			Plan: func(
 				ctx context.Context,
 				req *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*worker.WorkerInjury, error) {
+			) (*workersafety.WorkerInjury, error) {
 				return injuries.PlanDeleteInjury(ctx, req.tenant, req.id)
 			},
 			Refused: func(*recordDelete) string { return "Would delete an injury case." },
-			Render: func(_ *recordDelete, injury *worker.WorkerInjury) (*agent.ToolPreview, error) {
+			Render: func(_ *recordDelete, injury *workersafety.WorkerInjury) (*agent.ToolPreview, error) {
 				change, err := toolpreview.Delete(injuryRecord(injury), injury,
 					wfOptions(injuryFields...)...)
 				if err != nil {

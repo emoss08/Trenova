@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -125,7 +126,7 @@ func (f *fakePTOLedger) PlanAdjust(
 ) (*ptoledgerservice.AdjustPlan, error) {
 	after := f.balance.Add(req.AmountDays)
 	return &ptoledgerservice.AdjustPlan{
-		Entry: &worker.WorkerPTOLedgerEntry{
+		Entry: &pto.WorkerPTOLedgerEntry{
 			WorkerID:         req.WorkerID,
 			PTOType:          req.PTOType,
 			AmountDays:       req.AmountDays,
@@ -140,12 +141,12 @@ func (f *fakePTOLedger) PlanAdjust(
 func (f *fakePTOLedger) Adjust(
 	_ context.Context,
 	req *ptoledgerservice.AdjustRequest,
-) (*worker.WorkerPTOLedgerEntry, error) {
+) (*pto.WorkerPTOLedgerEntry, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.adjusted = req
-	return &worker.WorkerPTOLedgerEntry{ID: pulid.MustNew("wpl_"), WorkerID: req.WorkerID}, nil
+	return &pto.WorkerPTOLedgerEntry{ID: pulid.MustNew("wpl_"), WorkerID: req.WorkerID}, nil
 }
 
 func TestRequestWorkerPTO_SaysWhenThePolicyBooksItAtOnce(t *testing.T) {

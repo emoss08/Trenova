@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +21,7 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-func (r *MutationResolver) CreateWorkerChecklistTemplate(ctx context.Context, input gqlmodel.WorkerChecklistTemplateInput) (*worker.WorkerChecklistTemplate, error) {
+func (r *MutationResolver) CreateWorkerChecklistTemplate(ctx context.Context, input gqlmodel.WorkerChecklistTemplateInput) (*workerchecklist.WorkerChecklistTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerChecklistTemplate, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func (r *MutationResolver) CreateWorkerChecklistTemplate(ctx context.Context, in
 	return r.WorkerChecklistService.CreateTemplate(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) UpdateWorkerChecklistTemplate(ctx context.Context, id string, input gqlmodel.WorkerChecklistTemplateInput) (*worker.WorkerChecklistTemplate, error) {
+func (r *MutationResolver) UpdateWorkerChecklistTemplate(ctx context.Context, id string, input gqlmodel.WorkerChecklistTemplateInput) (*workerchecklist.WorkerChecklistTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerChecklistTemplate, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (r *MutationResolver) UpdateWorkerChecklistTemplate(ctx context.Context, id
 	return r.WorkerChecklistService.UpdateTemplate(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) ArchiveWorkerChecklistTemplate(ctx context.Context, id string, version *int) (*worker.WorkerChecklistTemplate, error) {
+func (r *MutationResolver) ArchiveWorkerChecklistTemplate(ctx context.Context, id string, version *int) (*workerchecklist.WorkerChecklistTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerChecklistTemplate, permission.OpArchive)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (r *MutationResolver) ArchiveWorkerChecklistTemplate(ctx context.Context, i
 	})
 }
 
-func (r *MutationResolver) RestoreWorkerChecklistTemplate(ctx context.Context, id string, version *int) (*worker.WorkerChecklistTemplate, error) {
+func (r *MutationResolver) RestoreWorkerChecklistTemplate(ctx context.Context, id string, version *int) (*workerchecklist.WorkerChecklistTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerChecklistTemplate, permission.OpRestore)
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (r *MutationResolver) RestoreWorkerChecklistTemplate(ctx context.Context, i
 	})
 }
 
-func (r *MutationResolver) StartWorkerChecklist(ctx context.Context, input gqlmodel.StartWorkerChecklistInput) (*worker.WorkerChecklist, error) {
+func (r *MutationResolver) StartWorkerChecklist(ctx context.Context, input gqlmodel.StartWorkerChecklistInput) (*workerchecklist.WorkerChecklist, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerChecklist, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -116,7 +116,7 @@ func (r *MutationResolver) StartWorkerChecklist(ctx context.Context, input gqlmo
 	})
 }
 
-func (r *MutationResolver) CompleteWorkerChecklistItem(ctx context.Context, input gqlmodel.WorkerChecklistItemActionInput) (*worker.WorkerChecklist, error) {
+func (r *MutationResolver) CompleteWorkerChecklistItem(ctx context.Context, input gqlmodel.WorkerChecklistItemActionInput) (*workerchecklist.WorkerChecklist, error) {
 	req, err := r.checklistItemRequest(ctx, input)
 	if err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func (r *MutationResolver) CompleteWorkerChecklistItem(ctx context.Context, inpu
 	return r.WorkerChecklistService.CompleteItem(ctx, req)
 }
 
-func (r *MutationResolver) SkipWorkerChecklistItem(ctx context.Context, input gqlmodel.WorkerChecklistItemActionInput) (*worker.WorkerChecklist, error) {
+func (r *MutationResolver) SkipWorkerChecklistItem(ctx context.Context, input gqlmodel.WorkerChecklistItemActionInput) (*workerchecklist.WorkerChecklist, error) {
 	req, err := r.checklistItemRequest(ctx, input)
 	if err != nil {
 		return nil, err
@@ -132,7 +132,7 @@ func (r *MutationResolver) SkipWorkerChecklistItem(ctx context.Context, input gq
 	return r.WorkerChecklistService.SkipItem(ctx, req)
 }
 
-func (r *MutationResolver) MarkWorkerChecklistItemNotApplicable(ctx context.Context, input gqlmodel.WorkerChecklistItemActionInput) (*worker.WorkerChecklist, error) {
+func (r *MutationResolver) MarkWorkerChecklistItemNotApplicable(ctx context.Context, input gqlmodel.WorkerChecklistItemActionInput) (*workerchecklist.WorkerChecklist, error) {
 	req, err := r.checklistItemRequest(ctx, input)
 	if err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func (r *MutationResolver) MarkWorkerChecklistItemNotApplicable(ctx context.Cont
 	return r.WorkerChecklistService.MarkItemNotApplicable(ctx, req)
 }
 
-func (r *MutationResolver) ReopenWorkerChecklistItem(ctx context.Context, id string, version *int) (*worker.WorkerChecklist, error) {
+func (r *MutationResolver) ReopenWorkerChecklistItem(ctx context.Context, id string, version *int) (*workerchecklist.WorkerChecklist, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerChecklist, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -159,7 +159,7 @@ func (r *MutationResolver) ReopenWorkerChecklistItem(ctx context.Context, id str
 	})
 }
 
-func (r *MutationResolver) CancelWorkerChecklist(ctx context.Context, input gqlmodel.CancelWorkerChecklistInput) (*worker.WorkerChecklist, error) {
+func (r *MutationResolver) CancelWorkerChecklist(ctx context.Context, input gqlmodel.CancelWorkerChecklistInput) (*workerchecklist.WorkerChecklist, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerChecklist, permission.OpCancel)
 	if err != nil {
 		return nil, err
@@ -216,7 +216,7 @@ func (r *QueryResolver) WorkerChecklistTemplates(ctx context.Context, input gqlm
 	return checklistTemplateCursorConnectionToModel(result)
 }
 
-func (r *QueryResolver) WorkerChecklistTemplate(ctx context.Context, id string) (*worker.WorkerChecklistTemplate, error) {
+func (r *QueryResolver) WorkerChecklistTemplate(ctx context.Context, id string) (*workerchecklist.WorkerChecklistTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerChecklistTemplate, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -234,7 +234,7 @@ func (r *QueryResolver) WorkerChecklistTemplate(ctx context.Context, id string) 
 	})
 }
 
-func (r *QueryResolver) ActiveWorkerChecklistTemplates(ctx context.Context) ([]*worker.WorkerChecklistTemplate, error) {
+func (r *QueryResolver) ActiveWorkerChecklistTemplates(ctx context.Context) ([]*workerchecklist.WorkerChecklistTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerChecklist, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -243,7 +243,7 @@ func (r *QueryResolver) ActiveWorkerChecklistTemplates(ctx context.Context) ([]*
 	return r.WorkerChecklistService.ActiveTemplates(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) WorkerChecklists(ctx context.Context, workerID string, includeClosed *bool) ([]*worker.WorkerChecklist, error) {
+func (r *QueryResolver) WorkerChecklists(ctx context.Context, workerID string, includeClosed *bool) ([]*workerchecklist.WorkerChecklist, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerChecklist, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -261,7 +261,7 @@ func (r *QueryResolver) WorkerChecklists(ctx context.Context, workerID string, i
 	return r.WorkerChecklistService.ListForWorker(ctx, base.TenantInfo(authCtx), wid, closed)
 }
 
-func (r *QueryResolver) WorkerChecklist(ctx context.Context, id string) (*worker.WorkerChecklist, error) {
+func (r *QueryResolver) WorkerChecklist(ctx context.Context, id string) (*workerchecklist.WorkerChecklist, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerChecklist, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -275,67 +275,67 @@ func (r *QueryResolver) WorkerChecklist(ctx context.Context, id string) (*worker
 	return r.WorkerChecklistService.Get(ctx, base.TenantInfo(authCtx), checklistID)
 }
 
-func (r *WorkerChecklistResolver) TemplateID(ctx context.Context, obj *worker.WorkerChecklist) (*string, error) {
+func (r *WorkerChecklistResolver) TemplateID(ctx context.Context, obj *workerchecklist.WorkerChecklist) (*string, error) {
 	return base.IDPtr(obj.TemplateID), nil
 }
 
-func (r *WorkerChecklistResolver) SourceEventID(ctx context.Context, obj *worker.WorkerChecklist) (*string, error) {
+func (r *WorkerChecklistResolver) SourceEventID(ctx context.Context, obj *workerchecklist.WorkerChecklist) (*string, error) {
 	return base.IDPtr(obj.SourceEventID), nil
 }
 
-func (r *WorkerChecklistResolver) StartedByID(ctx context.Context, obj *worker.WorkerChecklist) (*string, error) {
+func (r *WorkerChecklistResolver) StartedByID(ctx context.Context, obj *workerchecklist.WorkerChecklist) (*string, error) {
 	return base.IDPtr(obj.StartedByID), nil
 }
 
-func (r *WorkerChecklistResolver) Progress(ctx context.Context, obj *worker.WorkerChecklist) (*worker.ChecklistProgress, error) {
+func (r *WorkerChecklistResolver) Progress(ctx context.Context, obj *workerchecklist.WorkerChecklist) (*workerchecklist.ChecklistProgress, error) {
 	progress := obj.Progress(timeutils.NowUnix())
 	return &progress, nil
 }
 
-func (r *WorkerChecklistItemResolver) Overdue(ctx context.Context, obj *worker.WorkerChecklistItem) (bool, error) {
+func (r *WorkerChecklistItemResolver) Overdue(ctx context.Context, obj *workerchecklist.WorkerChecklistItem) (bool, error) {
 	return obj.IsOverdue(timeutils.NowUnix()), nil
 }
 
-func (r *WorkerChecklistItemResolver) CredentialTypeID(ctx context.Context, obj *worker.WorkerChecklistItem) (*string, error) {
+func (r *WorkerChecklistItemResolver) CredentialTypeID(ctx context.Context, obj *workerchecklist.WorkerChecklistItem) (*string, error) {
 	return base.IDPtr(obj.CredentialTypeID), nil
 }
 
-func (r *WorkerChecklistItemResolver) DocumentTypeID(ctx context.Context, obj *worker.WorkerChecklistItem) (*string, error) {
+func (r *WorkerChecklistItemResolver) DocumentTypeID(ctx context.Context, obj *workerchecklist.WorkerChecklistItem) (*string, error) {
 	return base.IDPtr(obj.DocumentTypeID), nil
 }
 
-func (r *WorkerChecklistItemResolver) CompletedByID(ctx context.Context, obj *worker.WorkerChecklistItem) (*string, error) {
+func (r *WorkerChecklistItemResolver) CompletedByID(ctx context.Context, obj *workerchecklist.WorkerChecklistItem) (*string, error) {
 	return base.IDPtr(obj.CompletedByID), nil
 }
 
-func (r *WorkerChecklistItemResolver) EvidenceDocumentID(ctx context.Context, obj *worker.WorkerChecklistItem) (*string, error) {
+func (r *WorkerChecklistItemResolver) EvidenceDocumentID(ctx context.Context, obj *workerchecklist.WorkerChecklistItem) (*string, error) {
 	return base.IDPtr(obj.EvidenceDocumentID), nil
 }
 
-func (r *WorkerChecklistItemResolver) EvidenceCredentialID(ctx context.Context, obj *worker.WorkerChecklistItem) (*string, error) {
+func (r *WorkerChecklistItemResolver) EvidenceCredentialID(ctx context.Context, obj *workerchecklist.WorkerChecklistItem) (*string, error) {
 	return base.IDPtr(obj.EvidenceCredentialID), nil
 }
 
-func (r *WorkerChecklistProgressResolver) Complete(ctx context.Context, obj *worker.ChecklistProgress) (bool, error) {
+func (r *WorkerChecklistProgressResolver) Complete(ctx context.Context, obj *workerchecklist.ChecklistProgress) (bool, error) {
 	return obj.Complete(), nil
 }
 
-func (r *WorkerChecklistTemplateResolver) OpenChecklistCount(ctx context.Context, obj *worker.WorkerChecklistTemplate) (int, error) {
+func (r *WorkerChecklistTemplateResolver) OpenChecklistCount(ctx context.Context, obj *workerchecklist.WorkerChecklistTemplate) (int, error) {
 	if loaders.Available(ctx) {
 		return loaders.WorkerChecklistTemplateOpenChecklistCount(ctx, obj.ID.String())
 	}
 	return r.WorkerChecklistService.CountOpenChecklistsForTemplate(ctx, obj)
 }
 
-func (r *WorkerChecklistTemplateItemResolver) CredentialTypeID(ctx context.Context, obj *worker.WorkerChecklistTemplateItem) (*string, error) {
+func (r *WorkerChecklistTemplateItemResolver) CredentialTypeID(ctx context.Context, obj *workerchecklist.WorkerChecklistTemplateItem) (*string, error) {
 	return base.IDPtr(obj.CredentialTypeID), nil
 }
 
-func (r *WorkerChecklistTemplateItemResolver) DocumentTypeID(ctx context.Context, obj *worker.WorkerChecklistTemplateItem) (*string, error) {
+func (r *WorkerChecklistTemplateItemResolver) DocumentTypeID(ctx context.Context, obj *workerchecklist.WorkerChecklistTemplateItem) (*string, error) {
 	return base.IDPtr(obj.DocumentTypeID), nil
 }
 
-func (r *WorkerChecklistTemplateItemResolver) DocumentTypeName(ctx context.Context, obj *worker.WorkerChecklistTemplateItem) (*string, error) {
+func (r *WorkerChecklistTemplateItemResolver) DocumentTypeName(ctx context.Context, obj *workerchecklist.WorkerChecklistTemplateItem) (*string, error) {
 	if obj.DocumentType == nil {
 		return nil, nil //nolint:nilnil // no document type attached
 	}

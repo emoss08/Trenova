@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -12,18 +13,18 @@ import (
 // PortalTraining is the driver's view of one course: what to take, by when,
 // how to open it, and where a completed course stands.
 type PortalTraining struct {
-	ID                      pulid.ID                `json:"id"`
-	CourseID                pulid.ID                `json:"courseId"`
-	Name                    string                  `json:"name"`
-	Description             string                  `json:"description"`
-	Category                worker.TrainingCategory `json:"category"`
-	Delivery                worker.TrainingDelivery `json:"delivery"`
-	ContentURL              string                  `json:"contentUrl"`
-	DurationMinutes         int32                   `json:"durationMinutes"`
-	Status                  worker.TrainingStatus   `json:"status"`
-	Health                  worker.TrainingHealth   `json:"health"`
-	Required                bool                    `json:"required"`
-	RequiresAcknowledgement bool                    `json:"requiresAcknowledgement"`
+	ID                      pulid.ID                        `json:"id"`
+	CourseID                pulid.ID                        `json:"courseId"`
+	Name                    string                          `json:"name"`
+	Description             string                          `json:"description"`
+	Category                workertraining.TrainingCategory `json:"category"`
+	Delivery                workertraining.TrainingDelivery `json:"delivery"`
+	ContentURL              string                          `json:"contentUrl"`
+	DurationMinutes         int32                           `json:"durationMinutes"`
+	Status                  workertraining.TrainingStatus   `json:"status"`
+	Health                  worker.TrainingHealth           `json:"health"`
+	Required                bool                            `json:"required"`
+	RequiresAcknowledgement bool                            `json:"requiresAcknowledgement"`
 	// Scored courses need the office to enter a result after the driver
 	// acknowledges them; unscored self-serve courses complete on acknowledgement.
 	Scored          bool   `json:"scored"`
@@ -37,7 +38,7 @@ type PortalTraining struct {
 	Score           string `json:"score"`
 }
 
-func portalTrainingView(item *worker.TrainingSummaryItem) *PortalTraining {
+func portalTrainingView(item *workertraining.TrainingSummaryItem) *PortalTraining {
 	course := item.Course
 	view := &PortalTraining{
 		CourseID:                course.ID,
@@ -70,11 +71,11 @@ func portalTrainingView(item *worker.TrainingSummaryItem) *PortalTraining {
 }
 
 func portalTrainingFromRecord(
-	record *worker.WorkerTrainingRecord,
+	record *workertraining.WorkerTrainingRecord,
 	wrk *worker.Worker,
 ) *PortalTraining {
 	now := timeutils.NowUnix()
-	return portalTrainingView(&worker.TrainingSummaryItem{
+	return portalTrainingView(&workertraining.TrainingSummaryItem{
 		Course:          record.Course,
 		Record:          record,
 		Health:          record.Health(now),

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -205,7 +206,7 @@ func (s *Service) GetBalances(
 	if err != nil {
 		return nil, err
 	}
-	byType := make(map[worker.PTOType]*worker.WorkerPTOBalance, len(balances))
+	byType := make(map[worker.PTOType]*pto.WorkerPTOBalance, len(balances))
 	for _, bal := range balances {
 		byType[bal.PTOType] = bal
 	}
@@ -285,7 +286,7 @@ func (s *Service) GetBalances(
 				LastRolloverKey: lastRollover,
 			})
 			for i := range plan {
-				if plan[i].EntryType == worker.PTOLedgerEntryAccrual &&
+				if plan[i].EntryType == pto.PTOLedgerEntryAccrual &&
 					plan[i].EffectiveAt > nowUnix {
 					next := plan[i]
 					view.NextAccrual = &next

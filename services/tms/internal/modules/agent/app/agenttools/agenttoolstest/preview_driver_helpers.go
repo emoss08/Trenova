@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 )
 
@@ -15,10 +15,10 @@ func (s *StubCredentialActor) PreviewRenewal(
 	expires := int64(1_790_000_000)
 
 	return &workercredentialservice.RenewalPreview{
-		Credentials: []*worker.WorkerCredential{{
+		Credentials: []*workercredential.WorkerCredential{{
 			ID:             req.CredentialIDs[0],
 			ExpiresAt:      &expires,
-			CredentialType: &worker.WorkerCredentialType{Name: "CDL"},
+			CredentialType: &workercredential.WorkerCredentialType{Name: "CDL"},
 		}},
 		Notification: &notificationports.DriverNotificationPreview{
 			WorkerID:   req.WorkerID,

@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,8 +23,8 @@ type fakeTraining struct {
 	TrainingKeeper
 
 	guard  *agenttoolstest.WriteGuard
-	record *worker.WorkerTrainingRecord
-	course *worker.TrainingCourse
+	record *workertraining.WorkerTrainingRecord
+	course *workertraining.TrainingCourse
 	failed []workertrainingservice.BulkAssignOutcome
 
 	assigned     *workertrainingservice.AssignRequest
@@ -36,41 +36,43 @@ type fakeTraining struct {
 }
 
 func newFakeTraining() *fakeTraining {
-	course := &worker.TrainingCourse{ID: pulid.MustNew("trc_"), Name: "Hazmat awareness"}
+	course := &workertraining.TrainingCourse{ID: pulid.MustNew("trc_"), Name: "Hazmat awareness"}
 	return &fakeTraining{
 		guard:  &agenttoolstest.WriteGuard{},
 		course: course,
-		record: &worker.WorkerTrainingRecord{
+		record: &workertraining.WorkerTrainingRecord{
 			ID:       pulid.MustNew("wtr_"),
 			WorkerID: pulid.MustNew("wrk_"),
 			CourseID: course.ID,
 			Course:   course,
-			Status:   worker.TrainingStatusAssigned,
+			Status:   workertraining.TrainingStatusAssigned,
 			Version:  2,
 		},
 	}
 }
 
-func (f *fakeTraining) assignedRecord(workerID, courseID pulid.ID) *worker.WorkerTrainingRecord {
-	return &worker.WorkerTrainingRecord{
+func (f *fakeTraining) assignedRecord(
+	workerID, courseID pulid.ID,
+) *workertraining.WorkerTrainingRecord {
+	return &workertraining.WorkerTrainingRecord{
 		WorkerID: workerID,
 		CourseID: courseID,
 		Course:   f.course,
-		Status:   worker.TrainingStatusAssigned,
+		Status:   workertraining.TrainingStatusAssigned,
 	}
 }
 
 func (f *fakeTraining) PlanAssign(
 	_ context.Context,
 	req *workertrainingservice.AssignRequest,
-) (*worker.WorkerTrainingRecord, error) {
+) (*workertraining.WorkerTrainingRecord, error) {
 	return f.assignedRecord(req.WorkerID, req.CourseID), nil
 }
 
 func (f *fakeTraining) Assign(
 	_ context.Context,
 	req *workertrainingservice.AssignRequest,
-) (*worker.WorkerTrainingRecord, error) {
+) (*workertraining.WorkerTrainingRecord, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -109,8 +111,8 @@ func (f *fakeTraining) PlanAssignRequired(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) ([]*worker.TrainingCourse, error) {
-	return []*worker.TrainingCourse{f.course}, nil
+) ([]*workertraining.TrainingCourse, error) {
+	return []*workertraining.TrainingCourse{f.course}, nil
 }
 
 func (f *fakeTraining) AssignRequired(
@@ -118,12 +120,12 @@ func (f *fakeTraining) AssignRequired(
 	_ pagination.TenantInfo,
 	workerID pulid.ID,
 	_ pulid.ID,
-) ([]*worker.WorkerTrainingRecord, error) {
+) ([]*workertraining.WorkerTrainingRecord, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.required = append(f.required, workerID)
-	return []*worker.WorkerTrainingRecord{f.record}, nil
+	return []*workertraining.WorkerTrainingRecord{f.record}, nil
 }
 
 func (f *fakeTraining) PlanComplete(
@@ -135,9 +137,9 @@ func (f *fakeTraining) PlanComplete(
 			"Name the assignment, or the worker and course")
 	}
 	after := *f.record
-	after.Status = worker.TrainingStatusCompleted
+	after.Status = workertraining.TrainingStatusCompleted
 	if req.Score.Valid && req.Score.Decimal.IntPart() < 80 {
-		after.Status = worker.TrainingStatusFailed
+		after.Status = workertraining.TrainingStatusFailed
 	}
 	if req.ID.IsNil() {
 		return &workertrainingservice.RecordChange{After: &after}, nil
@@ -148,7 +150,7 @@ func (f *fakeTraining) PlanComplete(
 func (f *fakeTraining) Complete(
 	_ context.Context,
 	req *workertrainingservice.CompleteRequest,
-) (*worker.WorkerTrainingRecord, error) {
+) (*workertraining.WorkerTrainingRecord, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -156,7 +158,9 @@ func (f *fakeTraining) Complete(
 	return f.record, nil
 }
 
-func (f *fakeTraining) planClose(status worker.TrainingStatus) *workertrainingservice.RecordChange {
+func (f *fakeTraining) planClose(
+	status workertraining.TrainingStatus,
+) *workertrainingservice.RecordChange {
 	after := *f.record
 	after.Status = status
 	return &workertrainingservice.RecordChange{Before: f.record, After: &after}
@@ -170,13 +174,13 @@ func (f *fakeTraining) PlanWaive(
 		return nil, errortypes.NewValidationError("reason", errortypes.ErrRequired,
 			"A waiver says why")
 	}
-	return f.planClose(worker.TrainingStatusWaived), nil
+	return f.planClose(workertraining.TrainingStatusWaived), nil
 }
 
 func (f *fakeTraining) Waive(
 	_ context.Context,
 	req *workertrainingservice.StatusRequest,
-) (*worker.WorkerTrainingRecord, error) {
+) (*workertraining.WorkerTrainingRecord, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -188,13 +192,13 @@ func (f *fakeTraining) PlanCancel(
 	context.Context,
 	*workertrainingservice.StatusRequest,
 ) (*workertrainingservice.RecordChange, error) {
-	return f.planClose(worker.TrainingStatusCancelled), nil
+	return f.planClose(workertraining.TrainingStatusCancelled), nil
 }
 
 func (f *fakeTraining) Cancel(
 	_ context.Context,
 	req *workertrainingservice.StatusRequest,
-) (*worker.WorkerTrainingRecord, error) {
+) (*workertraining.WorkerTrainingRecord, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}

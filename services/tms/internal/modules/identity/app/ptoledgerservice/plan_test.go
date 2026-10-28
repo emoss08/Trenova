@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -15,20 +16,20 @@ import (
 
 type balanceReader struct {
 	workerports.PTOLedgerRepository
-	balances []*worker.WorkerPTOBalance
+	balances []*pto.WorkerPTOBalance
 }
 
 func (r *balanceReader) ListBalances(
 	context.Context,
 	*workerports.ListPTOBalancesRequest,
-) ([]*worker.WorkerPTOBalance, error) {
+) ([]*pto.WorkerPTOBalance, error) {
 	return r.balances, nil
 }
 
 func TestPlanAdjust_ProjectsTheBalance(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{ledgerRepo: &balanceReader{balances: []*worker.WorkerPTOBalance{
+	svc := &Service{ledgerRepo: &balanceReader{balances: []*pto.WorkerPTOBalance{
 		{PTOType: worker.PTOTypeVacation, BalanceDays: decimal.NewFromInt(4)},
 		{PTOType: worker.PTOTypeSick, BalanceDays: decimal.NewFromInt(2)},
 	}}}
@@ -45,7 +46,7 @@ func TestPlanAdjust_ProjectsTheBalance(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, plan.BalanceBefore.Equal(decimal.NewFromInt(4)))
 	assert.True(t, plan.BalanceAfter.Equal(decimal.NewFromFloat(5.5)))
-	assert.Equal(t, worker.PTOLedgerEntryAdjustment, plan.Entry.EntryType)
+	assert.Equal(t, pto.PTOLedgerEntryAdjustment, plan.Entry.EntryType)
 
 	req.Note = ""
 	_, err = svc.PlanAdjust(t.Context(), req)

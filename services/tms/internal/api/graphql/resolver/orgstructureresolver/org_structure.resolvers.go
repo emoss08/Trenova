@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -19,19 +20,19 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-func (r *ApprovalDelegationResolver) EndsAt(ctx context.Context, obj *worker.ApprovalDelegation) (*int, error) {
+func (r *ApprovalDelegationResolver) EndsAt(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*int, error) {
 	return base.IntPtr(obj.EndsAt), nil
 }
 
-func (r *ApprovalDelegationResolver) RevokedAt(ctx context.Context, obj *worker.ApprovalDelegation) (*int, error) {
+func (r *ApprovalDelegationResolver) RevokedAt(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*int, error) {
 	return base.IntPtr(obj.RevokedAt), nil
 }
 
-func (r *ApprovalDelegationResolver) RevokedByID(ctx context.Context, obj *worker.ApprovalDelegation) (*string, error) {
+func (r *ApprovalDelegationResolver) RevokedByID(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*string, error) {
 	return base.IDPtr(obj.RevokedByID), nil
 }
 
-func (r *ApprovalDelegationResolver) CreatedByID(ctx context.Context, obj *worker.ApprovalDelegation) (*string, error) {
+func (r *ApprovalDelegationResolver) CreatedByID(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*string, error) {
 	return base.IDPtr(obj.CreatedByID), nil
 }
 
@@ -135,7 +136,7 @@ func (r *MutationResolver) AssignUserPosition(ctx context.Context, userID string
 	return true, nil
 }
 
-func (r *MutationResolver) DelegateApproval(ctx context.Context, input gqlmodel.DelegateApprovalInput) (*worker.ApprovalDelegation, error) {
+func (r *MutationResolver) DelegateApproval(ctx context.Context, input gqlmodel.DelegateApprovalInput) (*approvaldelegation.ApprovalDelegation, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceApprovalDelegation,
@@ -194,7 +195,7 @@ func (r *MutationResolver) DelegateApproval(ctx context.Context, input gqlmodel.
 	return r.OrgStructureService.Delegate(ctx, req)
 }
 
-func (r *MutationResolver) RevokeApprovalDelegation(ctx context.Context, id string) (*worker.ApprovalDelegation, error) {
+func (r *MutationResolver) RevokeApprovalDelegation(ctx context.Context, id string) (*approvaldelegation.ApprovalDelegation, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceApprovalDelegation,
@@ -318,7 +319,7 @@ func (r *QueryResolver) MyTeam(ctx context.Context, includeInactive *bool) ([]*g
 	return toTeamMembers(rows), nil
 }
 
-func (r *QueryResolver) ApprovalDelegations(ctx context.Context, delegatorID *string, delegateID *string, activeOnly *bool) ([]*worker.ApprovalDelegation, error) {
+func (r *QueryResolver) ApprovalDelegations(ctx context.Context, delegatorID *string, delegateID *string, activeOnly *bool) ([]*approvaldelegation.ApprovalDelegation, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceApprovalDelegation,

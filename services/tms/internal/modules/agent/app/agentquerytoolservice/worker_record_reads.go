@@ -2,7 +2,7 @@ package agentquerytoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 )
 
 const (
@@ -124,7 +124,7 @@ func workerRecordReadSpecs() []graphQLListSpec {
 				what:      "checklist templates",
 				inputs: map[string]any{
 					inputStatus:  activeStatus,
-					inputTrigger: string(worker.ChecklistTriggerManual),
+					inputTrigger: string(workerchecklist.ChecklistTriggerManual),
 				},
 			}},
 		},

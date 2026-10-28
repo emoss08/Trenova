@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -53,10 +54,10 @@ func TestAcceptInvitationRefusesAPasswordContainingTheInvitedEmail(t *testing.T)
 	t.Parallel()
 
 	portalRepo := workerportsmock.NewMockPortalAccessRepository(t)
-	invitation := &worker.PortalInvitation{
+	invitation := &portalinvitation.PortalInvitation{
 		ID:        pulid.MustNew("wpi_"),
 		Email:     "marisol.ortega@carrier.example",
-		Status:    worker.PortalInvitationStatusPending,
+		Status:    portalinvitation.PortalInvitationStatusPending,
 		ExpiresAt: time.Now().Add(time.Hour).Unix(),
 		Worker:    &worker.Worker{FirstName: "Marisol", LastName: "Ortega"},
 	}

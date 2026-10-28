@@ -3,6 +3,7 @@ package workerports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -165,19 +166,19 @@ type OrgStructureRepository interface {
 	ListDelegations(
 		ctx context.Context,
 		req *ListApprovalDelegationsRequest,
-	) ([]*worker.ApprovalDelegation, error)
+	) ([]*approvaldelegation.ApprovalDelegation, error)
 	GetDelegationByID(
 		ctx context.Context,
 		req *GetApprovalDelegationByIDRequest,
-	) (*worker.ApprovalDelegation, error)
+	) (*approvaldelegation.ApprovalDelegation, error)
 	CreateDelegation(
 		ctx context.Context,
-		entity *worker.ApprovalDelegation,
-	) (*worker.ApprovalDelegation, error)
+		entity *approvaldelegation.ApprovalDelegation,
+	) (*approvaldelegation.ApprovalDelegation, error)
 	UpdateDelegation(
 		ctx context.Context,
-		entity *worker.ApprovalDelegation,
-	) (*worker.ApprovalDelegation, error)
+		entity *approvaldelegation.ApprovalDelegation,
+	) (*approvaldelegation.ApprovalDelegation, error)
 
 	HeadcountByFleet(
 		ctx context.Context,

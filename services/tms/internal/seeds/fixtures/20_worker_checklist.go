@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
-
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -115,115 +113,150 @@ func (s *WorkerChecklistSeed) credentialItem(
 	refs *checklistSeedRefs,
 	code, label string,
 	due int32,
-) *worker.WorkerChecklistTemplateItem {
-	return &worker.WorkerChecklistTemplateItem{
+) *workerchecklist.WorkerChecklistTemplateItem {
+	return &workerchecklist.WorkerChecklistTemplateItem{
 		Label:            label,
-		Kind:             worker.ChecklistItemCredential,
+		Kind:             workerchecklist.ChecklistItemCredential,
 		Required:         true,
 		DueOffsetDays:    due,
-		Owner:            worker.ChecklistOwnerSafety,
+		Owner:            workerchecklist.ChecklistOwnerSafety,
 		CredentialTypeID: refs.credentialTypes[code],
 	}
 }
 
-func (s *WorkerChecklistSeed) onboardingTemplate(refs *checklistSeedRefs) *worker.WorkerChecklistTemplate {
-	items := []*worker.WorkerChecklistTemplateItem{
+func (s *WorkerChecklistSeed) onboardingTemplate(
+	refs *checklistSeedRefs,
+) *workerchecklist.WorkerChecklistTemplate {
+	items := []*workerchecklist.WorkerChecklistTemplateItem{
 		s.credentialItem(refs, "CDL", "CDL copied to the driver qualification file", 1),
 		s.credentialItem(refs, "MED_CARD", "Medical examiner's certificate on file", 3),
 		s.credentialItem(refs, "MVR", "Motor vehicle record pulled and reviewed", 5),
 		{
 			Label:         "Pre-employment drug & alcohol test result",
 			Description:   "Negative result received from the collection site.",
-			Kind:          worker.ChecklistItemTask,
+			Kind:          workerchecklist.ChecklistItemTask,
 			Required:      true,
 			DueOffsetDays: 5,
-			Owner:         worker.ChecklistOwnerSafety,
+			Owner:         workerchecklist.ChecklistOwnerSafety,
 		},
 		{
 			Label:         "Road test and evaluation signed off",
-			Kind:          worker.ChecklistItemTask,
+			Kind:          workerchecklist.ChecklistItemTask,
 			Required:      true,
 			DueOffsetDays: 7,
-			Owner:         worker.ChecklistOwnerSafety,
+			Owner:         workerchecklist.ChecklistOwnerSafety,
 		},
 		{
 			Label:         "Employee handbook acknowledged",
-			Kind:          worker.ChecklistItemTask,
+			Kind:          workerchecklist.ChecklistItemTask,
 			Required:      true,
 			DueOffsetDays: 7,
-			Owner:         worker.ChecklistOwnerHR,
+			Owner:         workerchecklist.ChecklistOwnerHR,
 		},
 		{
 			Label:         "Direct deposit and tax forms collected",
-			Kind:          worker.ChecklistItemTask,
+			Kind:          workerchecklist.ChecklistItemTask,
 			Required:      true,
 			DueOffsetDays: 3,
-			Owner:         worker.ChecklistOwnerPayroll,
+			Owner:         workerchecklist.ChecklistOwnerPayroll,
 		},
 		{
 			Label:         "Fuel card issued",
-			Kind:          worker.ChecklistItemEquipment,
+			Kind:          workerchecklist.ChecklistItemEquipment,
 			Required:      true,
 			DueOffsetDays: 2,
-			Owner:         worker.ChecklistOwnerFleet,
+			Owner:         workerchecklist.ChecklistOwnerFleet,
 		},
 		{
 			Label:         "ELD tablet and login provisioned",
-			Kind:          worker.ChecklistItemEquipment,
+			Kind:          workerchecklist.ChecklistItemEquipment,
 			Required:      true,
 			DueOffsetDays: 2,
-			Owner:         worker.ChecklistOwnerIT,
+			Owner:         workerchecklist.ChecklistOwnerIT,
 		},
 		{
 			Label:         "Invited to Dash",
 			Description:   "Completes itself once the driver has portal access.",
-			Kind:          worker.ChecklistItemPortalAccess,
+			Kind:          workerchecklist.ChecklistItemPortalAccess,
 			Required:      false,
 			DueOffsetDays: 1,
-			Owner:         worker.ChecklistOwnerDispatch,
+			Owner:         workerchecklist.ChecklistOwnerDispatch,
 		},
 	}
 	if len(refs.documentTypes) > 0 {
-		items = append(items, &worker.WorkerChecklistTemplateItem{
+		items = append(items, &workerchecklist.WorkerChecklistTemplateItem{
 			Label:          "Signed employment application on file",
-			Kind:           worker.ChecklistItemDocument,
+			Kind:           workerchecklist.ChecklistItemDocument,
 			Required:       false,
 			DueOffsetDays:  3,
-			Owner:          worker.ChecklistOwnerHR,
+			Owner:          workerchecklist.ChecklistOwnerHR,
 			DocumentTypeID: refs.documentTypes[0].ID,
 		})
 	}
-	return &worker.WorkerChecklistTemplate{
+	return &workerchecklist.WorkerChecklistTemplate{
 		OrganizationID: refs.orgID,
 		BusinessUnitID: refs.buID,
 		Code:           checklistOnboardingCode,
 		Name:           "Driver onboarding",
 		Description:    "Everything a new driver needs before their first dispatch.",
-		Kind:           worker.ChecklistKindOnboarding,
-		Trigger:        worker.ChecklistTriggerHired,
+		Kind:           workerchecklist.ChecklistKindOnboarding,
+		Trigger:        workerchecklist.ChecklistTriggerHired,
 		Status:         domaintypes.StatusActive,
 		IsDefault:      true,
 		Items:          items,
 	}
 }
 
-func (s *WorkerChecklistSeed) offboardingTemplate(refs *checklistSeedRefs) *worker.WorkerChecklistTemplate {
-	return &worker.WorkerChecklistTemplate{
+func (s *WorkerChecklistSeed) offboardingTemplate(
+	refs *checklistSeedRefs,
+) *workerchecklist.WorkerChecklistTemplate {
+	return &workerchecklist.WorkerChecklistTemplate{
 		OrganizationID: refs.orgID,
 		BusinessUnitID: refs.buID,
 		Code:           checklistOffboardingCode,
 		Name:           "Driver offboarding",
 		Description:    "Close out equipment, access and pay when a driver leaves.",
-		Kind:           worker.ChecklistKindOffboarding,
-		Trigger:        worker.ChecklistTriggerTerminated,
+		Kind:           workerchecklist.ChecklistKindOffboarding,
+		Trigger:        workerchecklist.ChecklistTriggerTerminated,
 		Status:         domaintypes.StatusActive,
 		IsDefault:      true,
-		Items: []*worker.WorkerChecklistTemplateItem{
-			{Label: "Fuel card returned and cancelled", Kind: worker.ChecklistItemEquipment, Required: true, DueOffsetDays: 2, Owner: worker.ChecklistOwnerFleet},
-			{Label: "ELD tablet returned", Kind: worker.ChecklistItemEquipment, Required: true, DueOffsetDays: 2, Owner: worker.ChecklistOwnerIT},
-			{Label: "Dash access revoked", Description: "Completes itself once portal access is removed.", Kind: worker.ChecklistItemPortalAccess, Required: true, DueOffsetDays: 1, Owner: worker.ChecklistOwnerDispatch},
-			{Label: "Final settlement processed", Kind: worker.ChecklistItemTask, Required: true, DueOffsetDays: 14, Owner: worker.ChecklistOwnerPayroll},
-			{Label: "Exit interview completed", Kind: worker.ChecklistItemTask, Required: false, DueOffsetDays: 7, Owner: worker.ChecklistOwnerHR},
+		Items: []*workerchecklist.WorkerChecklistTemplateItem{
+			{
+				Label:         "Fuel card returned and cancelled",
+				Kind:          workerchecklist.ChecklistItemEquipment,
+				Required:      true,
+				DueOffsetDays: 2,
+				Owner:         workerchecklist.ChecklistOwnerFleet,
+			},
+			{
+				Label:         "ELD tablet returned",
+				Kind:          workerchecklist.ChecklistItemEquipment,
+				Required:      true,
+				DueOffsetDays: 2,
+				Owner:         workerchecklist.ChecklistOwnerIT,
+			},
+			{
+				Label:         "Dash access revoked",
+				Description:   "Completes itself once portal access is removed.",
+				Kind:          workerchecklist.ChecklistItemPortalAccess,
+				Required:      true,
+				DueOffsetDays: 1,
+				Owner:         workerchecklist.ChecklistOwnerDispatch,
+			},
+			{
+				Label:         "Final settlement processed",
+				Kind:          workerchecklist.ChecklistItemTask,
+				Required:      true,
+				DueOffsetDays: 14,
+				Owner:         workerchecklist.ChecklistOwnerPayroll,
+			},
+			{
+				Label:         "Exit interview completed",
+				Kind:          workerchecklist.ChecklistItemTask,
+				Required:      false,
+				DueOffsetDays: 7,
+				Owner:         workerchecklist.ChecklistOwnerHR,
+			},
 		},
 	}
 }
@@ -232,13 +265,16 @@ func (s *WorkerChecklistSeed) ensureTemplate(
 	ctx context.Context,
 	db *keel.DB,
 	sr *seed.Run,
-	template *worker.WorkerChecklistTemplate,
-) (*worker.WorkerChecklistTemplate, error) {
-	existing, err := workerdb.WorkerChecklistTemplates.AllTenants().Load(workerdb.WorkerChecklistTemplates.Items()).Where(
-		workerdb.WorkerChecklistTemplates.OrganizationID.Eq(template.OrganizationID),
-		workerdb.WorkerChecklistTemplates.BusinessUnitID.Eq(template.BusinessUnitID),
-		workerdb.WorkerChecklistTemplates.Code.Eq(template.Code),
-	).First(ctx, db)
+	template *workerchecklist.WorkerChecklistTemplate,
+) (*workerchecklist.WorkerChecklistTemplate, error) {
+	existing, err := workerdb.WorkerChecklistTemplates.AllTenants().
+		Load(workerdb.WorkerChecklistTemplates.Items()).
+		Where(
+			workerdb.WorkerChecklistTemplates.OrganizationID.Eq(template.OrganizationID),
+			workerdb.WorkerChecklistTemplates.BusinessUnitID.Eq(template.BusinessUnitID),
+			workerdb.WorkerChecklistTemplates.Code.Eq(template.Code),
+		).
+		First(ctx, db)
 	if err == nil {
 		return existing, nil
 	}
@@ -263,7 +299,7 @@ func (s *WorkerChecklistSeed) openForRecentHires(
 	db *keel.DB,
 	sr *seed.Run,
 	refs *checklistSeedRefs,
-	template *worker.WorkerChecklistTemplate,
+	template *workerchecklist.WorkerChecklistTemplate,
 ) error {
 	workers, err := workerdb.Workers.AllTenants().Load(workerdb.Workers.Profile()).Where(
 		workerdb.Workers.OrganizationID.Eq(refs.orgID),
@@ -285,9 +321,9 @@ func (s *WorkerChecklistSeed) openForRecentHires(
 			item.OrganizationID = checklist.OrganizationID
 			item.BusinessUnitID = checklist.BusinessUnitID
 			item.SortOrder = int32(i) //nolint:gosec // item counts are tiny
-			if item.Kind == worker.ChecklistItemTask && i%2 == index%2 {
+			if item.Kind == workerchecklist.ChecklistItemTask && i%2 == index%2 {
 				completedAt := startedAt + checklistSeedDay
-				item.Status = worker.ChecklistItemDone
+				item.Status = workerchecklist.ChecklistItemDone
 				item.CompletedAt = &completedAt
 				item.CompletedByID = refs.adminID
 			}

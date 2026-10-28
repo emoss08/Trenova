@@ -3,6 +3,7 @@
 package ptopolicyexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"context"
 	"errors"
 
@@ -269,7 +270,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOAccrualTier)
+					obj := o.(*pto.PTOAccrualTier)
 					return obj.MinMonths, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -281,7 +282,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOAccrualTier)
+					obj := o.(*pto.PTOAccrualTier)
 					return gqlexec.Resolver[resolverPTOAccrualTier](ec, "PTOAccrualTier").AccrualAmountDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -292,7 +293,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOAccrualTier)
+					obj := o.(*pto.PTOAccrualTier)
 					return gqlexec.Resolver[resolverPTOAccrualTier](ec, "PTOAccrualTier").MaxBalanceDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
@@ -648,7 +649,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -658,7 +659,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -668,7 +669,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -678,7 +679,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -688,7 +689,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.Code, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -697,7 +698,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "description",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.Description, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -707,7 +708,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOPolicyStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicyStatus),
@@ -717,7 +718,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.IsDefault, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -727,7 +728,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.YearBasis, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOYearBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOYearBasis),
@@ -737,7 +738,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.CountWeekends, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -747,7 +748,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.WaitingPeriodDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -757,7 +758,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.RequiresApproval, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -767,7 +768,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.EnforceBalance, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -777,7 +778,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.AllowNegative, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -789,7 +790,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return gqlexec.Resolver[resolverPTOPolicy](ec, "PTOPolicy").NegativeFloorDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -800,7 +801,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "PTOPolicyRule",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.Rules, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOPolicyRule2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicyRuleᚄ),
@@ -812,7 +813,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return gqlexec.Resolver[resolverPTOPolicy](ec, "PTOPolicy").OpenAssignmentCount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -822,7 +823,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -832,7 +833,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -842,7 +843,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicy)
+					obj := o.(*pto.PTOPolicy)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -920,7 +921,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicyRule)
+					obj := o.(*pto.PTOPolicyRule)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -930,7 +931,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicyRule)
+					obj := o.(*pto.PTOPolicyRule)
 					return obj.PTOPolicyID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -940,7 +941,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicyRule)
+					obj := o.(*pto.PTOPolicyRule)
 					return obj.PTOType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOType),
@@ -950,7 +951,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicyRule)
+					obj := o.(*pto.PTOPolicyRule)
 					return obj.AccrualMethod, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOAccrualMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOAccrualMethod),
@@ -962,7 +963,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicyRule)
+					obj := o.(*pto.PTOPolicyRule)
 					return gqlexec.Resolver[resolverPTOPolicyRule](ec, "PTOPolicyRule").AccrualAmountDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -973,7 +974,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicyRule)
+					obj := o.(*pto.PTOPolicyRule)
 					return gqlexec.Resolver[resolverPTOPolicyRule](ec, "PTOPolicyRule").MaxBalanceDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
@@ -984,7 +985,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicyRule)
+					obj := o.(*pto.PTOPolicyRule)
 					return gqlexec.Resolver[resolverPTOPolicyRule](ec, "PTOPolicyRule").CarryoverCapDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
@@ -994,7 +995,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicyRule)
+					obj := o.(*pto.PTOPolicyRule)
 					return obj.CarryoverExpiryDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -1005,7 +1006,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "PTOAccrualTier",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicyRule)
+					obj := o.(*pto.PTOPolicyRule)
 					return obj.Tiers, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOAccrualTier2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOAccrualTierᚄ),
@@ -1015,7 +1016,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicyRule)
+					obj := o.(*pto.PTOPolicyRule)
 					return obj.OnTermination, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOTerminationAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOTerminationAction),
@@ -1025,7 +1026,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PTOPolicyRule)
+					obj := o.(*pto.PTOPolicyRule)
 					return obj.SortOrder, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -1408,7 +1409,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1418,7 +1419,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1428,7 +1429,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return obj.PTOType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOType),
@@ -1438,7 +1439,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return obj.EntryType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOLedgerEntryType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOLedgerEntryType),
@@ -1450,7 +1451,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").AmountDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -1462,7 +1463,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").BalanceAfterDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -1472,7 +1473,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return obj.Sequence, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1482,7 +1483,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return obj.EffectiveAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1493,7 +1494,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").PeriodKey(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
@@ -1504,7 +1505,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").SourcePTOID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -1515,7 +1516,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").AssignmentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -1526,7 +1527,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").PTOPolicyID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -1536,7 +1537,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return obj.ActorType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOLedgerActorType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOLedgerActorType),
@@ -1547,7 +1548,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").CreatedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -1558,7 +1559,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").Note(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
@@ -1568,7 +1569,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1578,7 +1579,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return obj.Worker, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
@@ -1588,7 +1589,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "WorkerPTO",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOLedgerEntry)
+					obj := o.(*pto.WorkerPTOLedgerEntry)
 					return obj.SourcePTO, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorkerPTO2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTO),
@@ -1600,7 +1601,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOPolicyAssignment)
+					obj := o.(*pto.WorkerPTOPolicyAssignment)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1610,7 +1611,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOPolicyAssignment)
+					obj := o.(*pto.WorkerPTOPolicyAssignment)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1620,7 +1621,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOPolicyAssignment)
+					obj := o.(*pto.WorkerPTOPolicyAssignment)
 					return obj.PTOPolicyID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1632,7 +1633,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "PTOPolicy",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOPolicyAssignment)
+					obj := o.(*pto.WorkerPTOPolicyAssignment)
 					return gqlexec.Resolver[resolverWorkerPTOPolicyAssignment](ec, "WorkerPTOPolicyAssignment").PTOPolicy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOPTOPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicy),
@@ -1642,7 +1643,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOPolicyAssignment)
+					obj := o.(*pto.WorkerPTOPolicyAssignment)
 					return obj.EffectiveFrom, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1651,7 +1652,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "effectiveTo",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOPolicyAssignment)
+					obj := o.(*pto.WorkerPTOPolicyAssignment)
 					return obj.EffectiveTo, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1662,7 +1663,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOPolicyAssignment)
+					obj := o.(*pto.WorkerPTOPolicyAssignment)
 					return gqlexec.Resolver[resolverWorkerPTOPolicyAssignment](ec, "WorkerPTOPolicyAssignment").AssignedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -1671,7 +1672,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "note",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOPolicyAssignment)
+					obj := o.(*pto.WorkerPTOPolicyAssignment)
 					return obj.Note, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -1681,7 +1682,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOPolicyAssignment)
+					obj := o.(*pto.WorkerPTOPolicyAssignment)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1691,7 +1692,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOPolicyAssignment)
+					obj := o.(*pto.WorkerPTOPolicyAssignment)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1701,7 +1702,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPTOPolicyAssignment)
+					obj := o.(*pto.WorkerPTOPolicyAssignment)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1739,19 +1740,19 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverMutation interface {
-	CreatePTOPolicy(ctx context.Context, input gqlmodel.PTOPolicyInput) (*worker.PTOPolicy, error)
-	UpdatePTOPolicy(ctx context.Context, id string, input gqlmodel.PTOPolicyInput) (*worker.PTOPolicy, error)
-	ArchivePTOPolicy(ctx context.Context, id string, version *int) (*worker.PTOPolicy, error)
-	RestorePTOPolicy(ctx context.Context, id string, version *int) (*worker.PTOPolicy, error)
+	CreatePTOPolicy(ctx context.Context, input gqlmodel.PTOPolicyInput) (*pto.PTOPolicy, error)
+	UpdatePTOPolicy(ctx context.Context, id string, input gqlmodel.PTOPolicyInput) (*pto.PTOPolicy, error)
+	ArchivePTOPolicy(ctx context.Context, id string, version *int) (*pto.PTOPolicy, error)
+	RestorePTOPolicy(ctx context.Context, id string, version *int) (*pto.PTOPolicy, error)
 	AssignWorkerPTOPolicy(ctx context.Context, input gqlmodel.AssignWorkerPTOPolicyInput) (*ptopolicyservice.AssignWorkersResult, error)
-	EndWorkerPTOPolicyAssignment(ctx context.Context, input gqlmodel.EndWorkerPTOPolicyAssignmentInput) (*worker.WorkerPTOPolicyAssignment, error)
-	AdjustWorkerPTOBalance(ctx context.Context, input gqlmodel.AdjustWorkerPTOBalanceInput) (*worker.WorkerPTOLedgerEntry, error)
+	EndWorkerPTOPolicyAssignment(ctx context.Context, input gqlmodel.EndWorkerPTOPolicyAssignmentInput) (*pto.WorkerPTOPolicyAssignment, error)
+	AdjustWorkerPTOBalance(ctx context.Context, input gqlmodel.AdjustWorkerPTOBalanceInput) (*pto.WorkerPTOLedgerEntry, error)
 	RunPTOAccrual(ctx context.Context, input gqlmodel.RunPTOAccrualInput) (*gqlmodel.PTOAccrualRunPayload, error)
 }
 
 type resolverPTOAccrualTier interface {
-	AccrualAmountDays(ctx context.Context, obj *worker.PTOAccrualTier) (string, error)
-	MaxBalanceDays(ctx context.Context, obj *worker.PTOAccrualTier) (*string, error)
+	AccrualAmountDays(ctx context.Context, obj *pto.PTOAccrualTier) (string, error)
+	MaxBalanceDays(ctx context.Context, obj *pto.PTOAccrualTier) (*string, error)
 }
 
 type resolverPTOAvailability interface {
@@ -1785,14 +1786,14 @@ type resolverPTOLiabilityRow interface {
 }
 
 type resolverPTOPolicy interface {
-	NegativeFloorDays(ctx context.Context, obj *worker.PTOPolicy) (string, error)
-	OpenAssignmentCount(ctx context.Context, obj *worker.PTOPolicy) (int, error)
+	NegativeFloorDays(ctx context.Context, obj *pto.PTOPolicy) (string, error)
+	OpenAssignmentCount(ctx context.Context, obj *pto.PTOPolicy) (int, error)
 }
 
 type resolverPTOPolicyRule interface {
-	AccrualAmountDays(ctx context.Context, obj *worker.PTOPolicyRule) (string, error)
-	MaxBalanceDays(ctx context.Context, obj *worker.PTOPolicyRule) (*string, error)
-	CarryoverCapDays(ctx context.Context, obj *worker.PTOPolicyRule) (*string, error)
+	AccrualAmountDays(ctx context.Context, obj *pto.PTOPolicyRule) (string, error)
+	MaxBalanceDays(ctx context.Context, obj *pto.PTOPolicyRule) (*string, error)
+	CarryoverCapDays(ctx context.Context, obj *pto.PTOPolicyRule) (*string, error)
 }
 
 type resolverPlannedPTOAccrual interface {
@@ -1801,8 +1802,8 @@ type resolverPlannedPTOAccrual interface {
 
 type resolverQuery interface {
 	PTOPolicies(ctx context.Context, input gqlmodel.PTOPoliciesInput) (*gqlmodel.PTOPolicyConnection, error)
-	PTOPolicy(ctx context.Context, id string) (*worker.PTOPolicy, error)
-	WorkerPTOPolicyAssignments(ctx context.Context, workerID string) ([]*worker.WorkerPTOPolicyAssignment, error)
+	PTOPolicy(ctx context.Context, id string) (*pto.PTOPolicy, error)
+	WorkerPTOPolicyAssignments(ctx context.Context, workerID string) ([]*pto.WorkerPTOPolicyAssignment, error)
 	WorkerPTOBalances(ctx context.Context, workerID string) ([]*ptoledgerservice.BalanceView, error)
 	WorkerPTOLedger(ctx context.Context, input gqlmodel.WorkerPTOLedgerInput) (*gqlmodel.WorkerPTOLedgerConnection, error)
 	WorkerPTOAvailability(ctx context.Context, input gqlmodel.PTOAvailabilityInput) (*ptoledgerservice.AvailabilityResult, error)
@@ -1822,19 +1823,19 @@ type resolverWorkerPTOBalance interface {
 }
 
 type resolverWorkerPTOLedgerEntry interface {
-	AmountDays(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (string, error)
-	BalanceAfterDays(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (string, error)
-	PeriodKey(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error)
-	SourcePTOID(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error)
-	AssignmentID(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error)
-	PTOPolicyID(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error)
-	CreatedByID(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error)
-	Note(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error)
+	AmountDays(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (string, error)
+	BalanceAfterDays(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (string, error)
+	PeriodKey(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error)
+	SourcePTOID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error)
+	AssignmentID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error)
+	PTOPolicyID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error)
+	CreatedByID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error)
+	Note(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error)
 }
 
 type resolverWorkerPTOPolicyAssignment interface {
-	PTOPolicy(ctx context.Context, obj *worker.WorkerPTOPolicyAssignment) (*worker.PTOPolicy, error)
-	AssignedByID(ctx context.Context, obj *worker.WorkerPTOPolicyAssignment) (*string, error)
+	PTOPolicy(ctx context.Context, obj *pto.WorkerPTOPolicyAssignment) (*pto.PTOPolicy, error)
+	AssignedByID(ctx context.Context, obj *pto.WorkerPTOPolicyAssignment) (*string, error)
 }
 
 var (
@@ -2890,9 +2891,9 @@ func unmarshalNOpeningPTOBalanceInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNPTOAccrualMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOAccrualMethod(ctx context.Context, ec *gqlexec.Exec, v any) (worker.PTOAccrualMethod, error) {
+func unmarshalNPTOAccrualMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOAccrualMethod(ctx context.Context, ec *gqlexec.Exec, v any) (pto.PTOAccrualMethod, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.PTOAccrualMethod(tmp)
+	res := pto.PTOAccrualMethod(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2925,9 +2926,9 @@ func unmarshalNPTOPolicyRuleInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNPTOPolicyStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicyStatus(ctx context.Context, ec *gqlexec.Exec, v any) (worker.PTOPolicyStatus, error) {
+func unmarshalNPTOPolicyStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicyStatus(ctx context.Context, ec *gqlexec.Exec, v any) (pto.PTOPolicyStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.PTOPolicyStatus(tmp)
+	res := pto.PTOPolicyStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2937,9 +2938,9 @@ func unmarshalNPTOType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋw
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNPTOYearBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOYearBasis(ctx context.Context, ec *gqlexec.Exec, v any) (worker.PTOYearBasis, error) {
+func unmarshalNPTOYearBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOYearBasis(ctx context.Context, ec *gqlexec.Exec, v any) (pto.PTOYearBasis, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.PTOYearBasis(tmp)
+	res := pto.PTOYearBasis(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -3028,30 +3029,30 @@ func unmarshalOPTOAccrualTierInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNPTOAccrualTierInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPTOAccrualTierInput)
 }
 
-func unmarshalOPTOLedgerEntryType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOLedgerEntryType(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.PTOLedgerEntryType, error) {
+func unmarshalOPTOLedgerEntryType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOLedgerEntryType(ctx context.Context, ec *gqlexec.Exec, v any) (*pto.PTOLedgerEntryType, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.PTOLedgerEntryType(tmp)
+	res := pto.PTOLedgerEntryType(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOPTOPolicyStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicyStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.PTOPolicyStatus, error) {
+func unmarshalOPTOPolicyStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicyStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*pto.PTOPolicyStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.PTOPolicyStatus(tmp)
+	res := pto.PTOPolicyStatus(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOPTOTerminationAction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOTerminationAction(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.PTOTerminationAction, error) {
+func unmarshalOPTOTerminationAction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOTerminationAction(ctx context.Context, ec *gqlexec.Exec, v any) (*pto.PTOTerminationAction, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.PTOTerminationAction(tmp)
+	res := pto.PTOTerminationAction(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -3155,7 +3156,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNPTOAccrualMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOAccrualMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.PTOAccrualMethod) graphql.Marshaler {
+func marshalNPTOAccrualMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOAccrualMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pto.PTOAccrualMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3171,12 +3172,12 @@ func marshalNPTOAccrualRunPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "PTOAccrualRunPayload", v)
 }
 
-func marshalNPTOAccrualTier2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOAccrualTier(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.PTOAccrualTier) graphql.Marshaler {
+func marshalNPTOAccrualTier2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOAccrualTier(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pto.PTOAccrualTier) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "PTOAccrualTier", &v)
 }
 
-func marshalNPTOAccrualTier2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOAccrualTierᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []worker.PTOAccrualTier) graphql.Marshaler {
-	return gqlexec.List[worker.PTOAccrualTier]{
+func marshalNPTOAccrualTier2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOAccrualTierᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []pto.PTOAccrualTier) graphql.Marshaler {
+	return gqlexec.List[pto.PTOAccrualTier]{
 		Elem:        marshalNPTOAccrualTier2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOAccrualTier,
 		NonNull:     true,
 		NonNullElem: true,
@@ -3199,7 +3200,7 @@ func marshalNPTOBalanceSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "PTOBalanceSummary", v)
 }
 
-func marshalNPTOLedgerActorType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOLedgerActorType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.PTOLedgerActorType) graphql.Marshaler {
+func marshalNPTOLedgerActorType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOLedgerActorType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pto.PTOLedgerActorType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3207,7 +3208,7 @@ func marshalNPTOLedgerActorType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmo
 	return res
 }
 
-func marshalNPTOLedgerEntryType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOLedgerEntryType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.PTOLedgerEntryType) graphql.Marshaler {
+func marshalNPTOLedgerEntryType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOLedgerEntryType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pto.PTOLedgerEntryType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3239,7 +3240,7 @@ func marshalNPTOLiabilityRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmo
 	return ec.MarshalType(ctx, sel, "PTOLiabilityRow", v)
 }
 
-func marshalNPTOPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.PTOPolicy) graphql.Marshaler {
+func marshalNPTOPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *pto.PTOPolicy) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3271,15 +3272,15 @@ func marshalNPTOPolicyEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return ec.MarshalType(ctx, sel, "PTOPolicyEdge", v)
 }
 
-func marshalNPTOPolicyRule2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicyRuleᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.PTOPolicyRule) graphql.Marshaler {
-	return gqlexec.List[*worker.PTOPolicyRule]{
+func marshalNPTOPolicyRule2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicyRuleᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*pto.PTOPolicyRule) graphql.Marshaler {
+	return gqlexec.List[*pto.PTOPolicyRule]{
 		Elem:        marshalNPTOPolicyRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicyRule,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPTOPolicyRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicyRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.PTOPolicyRule) graphql.Marshaler {
+func marshalNPTOPolicyRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicyRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *pto.PTOPolicyRule) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3287,7 +3288,7 @@ func marshalNPTOPolicyRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 	return ec.MarshalType(ctx, sel, "PTOPolicyRule", v)
 }
 
-func marshalNPTOPolicyStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicyStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.PTOPolicyStatus) graphql.Marshaler {
+func marshalNPTOPolicyStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicyStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pto.PTOPolicyStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3295,7 +3296,7 @@ func marshalNPTOPolicyStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return res
 }
 
-func marshalNPTOTerminationAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOTerminationAction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.PTOTerminationAction) graphql.Marshaler {
+func marshalNPTOTerminationAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOTerminationAction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pto.PTOTerminationAction) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3311,7 +3312,7 @@ func marshalNPTOType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋwor
 	return res
 }
 
-func marshalNPTOYearBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOYearBasis(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.PTOYearBasis) graphql.Marshaler {
+func marshalNPTOYearBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOYearBasis(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pto.PTOYearBasis) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3399,7 +3400,7 @@ func marshalNWorkerPTOLedgerEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "WorkerPTOLedgerEdge", v)
 }
 
-func marshalNWorkerPTOLedgerEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTOLedgerEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerPTOLedgerEntry) graphql.Marshaler {
+func marshalNWorkerPTOLedgerEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTOLedgerEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *pto.WorkerPTOLedgerEntry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3407,15 +3408,15 @@ func marshalNWorkerPTOLedgerEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "WorkerPTOLedgerEntry", v)
 }
 
-func marshalNWorkerPTOPolicyAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTOPolicyAssignmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerPTOPolicyAssignment) graphql.Marshaler {
-	return gqlexec.List[*worker.WorkerPTOPolicyAssignment]{
+func marshalNWorkerPTOPolicyAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTOPolicyAssignmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*pto.WorkerPTOPolicyAssignment) graphql.Marshaler {
+	return gqlexec.List[*pto.WorkerPTOPolicyAssignment]{
 		Elem:        marshalNWorkerPTOPolicyAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTOPolicyAssignment,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerPTOPolicyAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTOPolicyAssignment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerPTOPolicyAssignment) graphql.Marshaler {
+func marshalNWorkerPTOPolicyAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTOPolicyAssignment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *pto.WorkerPTOPolicyAssignment) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3447,7 +3448,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOPTOPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.PTOPolicy) graphql.Marshaler {
+func marshalOPTOPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *pto.PTOPolicy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

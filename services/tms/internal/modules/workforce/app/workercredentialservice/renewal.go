@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -65,7 +65,7 @@ func (s *Service) RequestRenewal(ctx context.Context, req RenewalRequest) error 
 func (s *Service) planRenewal(
 	ctx context.Context,
 	req *RenewalRequest,
-) ([]*worker.WorkerCredential, error) {
+) ([]*workercredential.WorkerCredential, error) {
 	if len(req.CredentialIDs) == 0 {
 		return nil, errortypes.NewValidationError("credentialIds", errortypes.ErrRequired,
 			"Name at least one credential to renew")
@@ -91,17 +91,17 @@ func (s *Service) planRenewal(
 // so an id belonging to somebody else is refused rather than silently
 // included in a message about this driver.
 func (s *Service) namedCredentials(
-	held []*worker.WorkerCredential,
+	held []*workercredential.WorkerCredential,
 	wanted []pulid.ID,
-) ([]*worker.WorkerCredential, error) {
-	byID := make(map[pulid.ID]*worker.WorkerCredential, len(held))
+) ([]*workercredential.WorkerCredential, error) {
+	byID := make(map[pulid.ID]*workercredential.WorkerCredential, len(held))
 	for _, credential := range held {
 		if credential != nil {
 			byID[credential.ID] = credential
 		}
 	}
 
-	out := make([]*worker.WorkerCredential, 0, len(wanted))
+	out := make([]*workercredential.WorkerCredential, 0, len(wanted))
 	for _, id := range wanted {
 		credential, ok := byID[id]
 		if !ok {
@@ -117,7 +117,7 @@ func (s *Service) namedCredentials(
 func (s *Service) notifyRenewal(
 	ctx context.Context,
 	req RenewalRequest,
-	named []*worker.WorkerCredential,
+	named []*workercredential.WorkerCredential,
 ) {
 	if s.driverNotify == nil {
 		return
@@ -132,7 +132,7 @@ func (s *Service) notifyRenewal(
 // twice.
 func renewalNotification(
 	req *RenewalRequest,
-	named []*worker.WorkerCredential,
+	named []*workercredential.WorkerCredential,
 	now int64,
 ) (notice *drivernotificationservice.DriverNotification, correlation string) {
 	soonest := named[0]
@@ -148,7 +148,7 @@ func renewalNotification(
 	daysLeft := 0
 	expires := ""
 	if soonest.ExpiresAt != nil {
-		daysLeft = int(worker.DaysUntil(*soonest.ExpiresAt, now))
+		daysLeft = int(workercredential.DaysUntil(*soonest.ExpiresAt, now))
 		expires = timeutils.FormatUnixDateIn(*soonest.ExpiresAt, "")
 	}
 
@@ -174,7 +174,7 @@ func renewalNotification(
 
 // renewalSubject names what is being asked for: the one paper when there is
 // one, and how many when there are several.
-func renewalSubject(named []*worker.WorkerCredential) string {
+func renewalSubject(named []*workercredential.WorkerCredential) string {
 	if len(named) == 1 {
 		if named[0].CredentialType != nil {
 			return named[0].CredentialType.Name
@@ -193,7 +193,7 @@ func renewalSubject(named []*worker.WorkerCredential) string {
 	return strings.Join(names, ", ")
 }
 
-func (s *Service) auditRenewal(req RenewalRequest, named []*worker.WorkerCredential) {
+func (s *Service) auditRenewal(req RenewalRequest, named []*workercredential.WorkerCredential) {
 	if s.auditService == nil {
 		return
 	}

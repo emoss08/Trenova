@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -22,8 +22,8 @@ type fakeChecklists struct {
 	ChecklistKeeper
 
 	guard     *agenttoolstest.WriteGuard
-	checklist *worker.WorkerChecklist
-	item      *worker.WorkerChecklistItem
+	checklist *workerchecklist.WorkerChecklist
+	item      *workerchecklist.WorkerChecklistItem
 	existing  bool
 
 	started   *workerchecklistservice.StartRequest
@@ -33,22 +33,22 @@ type fakeChecklists struct {
 
 func newFakeChecklists() *fakeChecklists {
 	checklistID := pulid.MustNew("wcl_")
-	item := &worker.WorkerChecklistItem{
+	item := &workerchecklist.WorkerChecklistItem{
 		ID:          pulid.MustNew("wcli_"),
 		ChecklistID: checklistID,
 		Label:       "Road test",
-		Status:      worker.ChecklistItemPending,
+		Status:      workerchecklist.ChecklistItemPending,
 		Version:     1,
 	}
 	return &fakeChecklists{
 		guard: &agenttoolstest.WriteGuard{},
 		item:  item,
-		checklist: &worker.WorkerChecklist{
+		checklist: &workerchecklist.WorkerChecklist{
 			ID:       checklistID,
 			WorkerID: pulid.MustNew("wrk_"),
 			Name:     "Driver onboarding",
-			Status:   worker.ChecklistStatusOpen,
-			Items:    []*worker.WorkerChecklistItem{item},
+			Status:   workerchecklist.ChecklistStatusOpen,
+			Items:    []*workerchecklist.WorkerChecklistItem{item},
 			Version:  2,
 		},
 	}
@@ -64,7 +64,7 @@ func (f *fakeChecklists) PlanStart(
 func (f *fakeChecklists) Start(
 	_ context.Context,
 	req *workerchecklistservice.StartRequest,
-) (*worker.WorkerChecklist, error) {
+) (*workerchecklist.WorkerChecklist, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (f *fakeChecklists) Start(
 
 func (f *fakeChecklists) planItem(
 	req *workerchecklistservice.ItemRequest,
-	status worker.ChecklistItemStatus,
+	status workerchecklist.ChecklistItemStatus,
 	noteRequired bool,
 ) (*workerchecklistservice.ItemPlan, error) {
 	if noteRequired && req.Note == "" {
@@ -89,7 +89,7 @@ func (f *fakeChecklists) planItem(
 	}, nil
 }
 
-func (f *fakeChecklists) settle(move string) (*worker.WorkerChecklist, error) {
+func (f *fakeChecklists) settle(move string) (*workerchecklist.WorkerChecklist, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -101,13 +101,13 @@ func (f *fakeChecklists) PlanCompleteItem(
 	_ context.Context,
 	req *workerchecklistservice.ItemRequest,
 ) (*workerchecklistservice.ItemPlan, error) {
-	return f.planItem(req, worker.ChecklistItemDone, false)
+	return f.planItem(req, workerchecklist.ChecklistItemDone, false)
 }
 
 func (f *fakeChecklists) CompleteItem(
 	context.Context,
 	*workerchecklistservice.ItemRequest,
-) (*worker.WorkerChecklist, error) {
+) (*workerchecklist.WorkerChecklist, error) {
 	return f.settle("complete")
 }
 
@@ -115,13 +115,13 @@ func (f *fakeChecklists) PlanSkipItem(
 	_ context.Context,
 	req *workerchecklistservice.ItemRequest,
 ) (*workerchecklistservice.ItemPlan, error) {
-	return f.planItem(req, worker.ChecklistItemSkipped, true)
+	return f.planItem(req, workerchecklist.ChecklistItemSkipped, true)
 }
 
 func (f *fakeChecklists) SkipItem(
 	context.Context,
 	*workerchecklistservice.ItemRequest,
-) (*worker.WorkerChecklist, error) {
+) (*workerchecklist.WorkerChecklist, error) {
 	return f.settle("skip")
 }
 
@@ -130,7 +130,7 @@ func (f *fakeChecklists) PlanReopenItem(
 	*workerchecklistservice.ReopenItemRequest,
 ) (*workerchecklistservice.ItemPlan, error) {
 	before := *f.item
-	before.Status = worker.ChecklistItemDone
+	before.Status = workerchecklist.ChecklistItemDone
 	return &workerchecklistservice.ItemPlan{
 		Item:      workerchecklistservice.ItemChange{Before: &before, After: f.item},
 		Checklist: f.checklist,
@@ -140,7 +140,7 @@ func (f *fakeChecklists) PlanReopenItem(
 func (f *fakeChecklists) ReopenItem(
 	context.Context,
 	*workerchecklistservice.ReopenItemRequest,
-) (*worker.WorkerChecklist, error) {
+) (*workerchecklist.WorkerChecklist, error) {
 	return f.settle("reopen")
 }
 
@@ -149,14 +149,14 @@ func (f *fakeChecklists) PlanCancel(
 	*workerchecklistservice.CancelRequest,
 ) (*workerchecklistservice.ChecklistChange, error) {
 	after := *f.checklist
-	after.Status = worker.ChecklistStatusCancelled
+	after.Status = workerchecklist.ChecklistStatusCancelled
 	return &workerchecklistservice.ChecklistChange{Before: f.checklist, After: &after}, nil
 }
 
 func (f *fakeChecklists) Cancel(
 	_ context.Context,
 	req *workerchecklistservice.CancelRequest,
-) (*worker.WorkerChecklist, error) {
+) (*workerchecklist.WorkerChecklist, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}

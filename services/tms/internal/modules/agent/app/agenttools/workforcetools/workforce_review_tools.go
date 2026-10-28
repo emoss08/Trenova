@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -56,7 +56,7 @@ const maxReviewScore = 5
 
 var reviewGoalStatuses = agenttoolschema.Source(
 	"worker.reviewGoalStatus",
-	worker.ReviewGoalStatusValues(),
+	workerreview.ReviewGoalStatusValues(),
 )
 
 var reviewFields = []string{
@@ -80,15 +80,15 @@ type ReviewKeeper interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*worker.PerformanceReview, error)
+	) (*workerreview.PerformanceReview, error)
 	PlanCreateReview(
 		ctx context.Context,
 		req *performancereviewservice.CreateReviewRequest,
-	) (*worker.PerformanceReview, error)
+	) (*workerreview.PerformanceReview, error)
 	CreateReview(
 		ctx context.Context,
 		req *performancereviewservice.CreateReviewRequest,
-	) (*worker.PerformanceReview, error)
+	) (*workerreview.PerformanceReview, error)
 	PlanUpdateReview(
 		ctx context.Context,
 		req *performancereviewservice.UpdateReviewRequest,
@@ -96,12 +96,12 @@ type ReviewKeeper interface {
 	UpdateReview(
 		ctx context.Context,
 		req *performancereviewservice.UpdateReviewRequest,
-	) (*worker.PerformanceReview, error)
+	) (*workerreview.PerformanceReview, error)
 	PlanDeleteReview(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*worker.PerformanceReview, error)
+	) (*workerreview.PerformanceReview, error)
 	DeleteReview(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -123,7 +123,7 @@ func reviewIDProperty() map[string]any {
 		"worker_list_performance_reviews")
 }
 
-func reviewRecord(review *worker.PerformanceReview) toolpreview.Record {
+func reviewRecord(review *workerreview.PerformanceReview) toolpreview.Record {
 	return wfRecord(permission.ResourcePerformanceReview, review.ID, review.Title, review.Version)
 }
 
@@ -154,7 +154,7 @@ func newStartPerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentToo
 	}, common.ParamWorkerID, paramReviewTemplate, common.FieldPeriodStart, common.FieldPeriodEnd)
 
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
-		*performancereviewservice.CreateReviewRequest, *worker.PerformanceReview,
+		*performancereviewservice.CreateReviewRequest, *workerreview.PerformanceReview,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
@@ -193,7 +193,7 @@ func newStartPerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentToo
 			ctx context.Context,
 			req *performancereviewservice.CreateReviewRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*worker.PerformanceReview, error) {
+		) (*workerreview.PerformanceReview, error) {
 			return reviews.PlanCreateReview(ctx, req)
 		},
 		Refused: func(*performancereviewservice.CreateReviewRequest) string {
@@ -201,7 +201,7 @@ func newStartPerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentToo
 		},
 		Render: func(
 			_ *performancereviewservice.CreateReviewRequest,
-			planned *worker.PerformanceReview,
+			planned *workerreview.PerformanceReview,
 		) (*agent.ToolPreview, error) {
 			change, err := toolpreview.Create(
 				wfRecord(permission.ResourcePerformanceReview, pulid.Nil, planned.Title, 0),
@@ -256,11 +256,11 @@ func (d *reviewDraft) request(
 	req := &performancereviewservice.UpdateReviewRequest{
 		TenantInfo:   common.TenantFrom(*d.params),
 		ID:           d.id,
-		Ratings:      append([]worker.ReviewRating(nil), current.Ratings...),
+		Ratings:      append([]workerreview.ReviewRating(nil), current.Ratings...),
 		Summary:      current.Summary,
 		Strengths:    current.Strengths,
 		Improvements: current.Improvements,
-		Goals:        append([]worker.ReviewGoal(nil), current.Goals...),
+		Goals:        append([]workerreview.ReviewGoal(nil), current.Goals...),
 		Version:      current.Version,
 		UserID:       d.params.Actor.UserID,
 	}
@@ -345,9 +345,12 @@ func applyReviewGoals(
 	if err := common.DecodeParam(params, paramGoals, &goals); err != nil {
 		return err
 	}
-	req.Goals = make([]worker.ReviewGoal, 0, len(goals))
+	req.Goals = make([]workerreview.ReviewGoal, 0, len(goals))
 	for i, goal := range goals {
-		entry := worker.ReviewGoal{Title: goal.Title, Status: worker.ReviewGoalStatusOpen}
+		entry := workerreview.ReviewGoal{
+			Title:  goal.Title,
+			Status: workerreview.ReviewGoalStatusOpen,
+		}
 		if goal.Status != "" {
 			status, err := common.RequireEnum(map[string]any{paramGoalStatus: goal.Status},
 				paramGoalStatus, reviewGoalStatuses.Values)
@@ -498,17 +501,17 @@ func newDeletePerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentTo
 
 	return common.NewReceivableTool(
 		spec,
-		common.ReceivablePlan[*recordDelete, *worker.PerformanceReview]{
+		common.ReceivablePlan[*recordDelete, *workerreview.PerformanceReview]{
 			Request: recordDeleteFrom(paramReviewID),
 			Plan: func(
 				ctx context.Context,
 				req *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*worker.PerformanceReview, error) {
+			) (*workerreview.PerformanceReview, error) {
 				return reviews.PlanDeleteReview(ctx, req.tenant, req.id)
 			},
 			Refused: func(*recordDelete) string { return "Would delete a draft review." },
-			Render: func(_ *recordDelete, review *worker.PerformanceReview) (*agent.ToolPreview, error) {
+			Render: func(_ *recordDelete, review *workerreview.PerformanceReview) (*agent.ToolPreview, error) {
 				change, err := toolpreview.Delete(reviewRecord(review), review,
 					wfOptions(reviewFields...)...)
 				if err != nil {

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,15 +17,15 @@ import (
 // anybody else: the office board shows the roster, and a driver seeing who
 // else is off is a personnel matter rather than a scheduling one.
 type PortalShiftDay struct {
-	Date            int64               `json:"date"`
-	State           worker.RotaDayState `json:"state"`
-	Scheduled       bool                `json:"scheduled"`
-	StartMinute     int16               `json:"startMinute"`
-	DurationMinutes int16               `json:"durationMinutes"`
+	Date            int64                       `json:"date"`
+	State           workerschedule.RotaDayState `json:"state"`
+	Scheduled       bool                        `json:"scheduled"`
+	StartMinute     int16                       `json:"startMinute"`
+	DurationMinutes int16                       `json:"durationMinutes"`
 	// Preference is nil when the driver has said nothing about that weekday,
 	// which is not the same as having said they are available.
-	Preference      *worker.AvailabilityPreference `json:"preference"`
-	AssignmentCount int                            `json:"assignmentCount"`
+	Preference      *workerschedule.AvailabilityPreference `json:"preference"`
+	AssignmentCount int                                    `json:"assignmentCount"`
 }
 
 // PortalSchedule is the driver's own rota.
@@ -112,7 +112,7 @@ func (s *Service) MySchedule(
 func (s *Service) MyAvailability(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*worker.WorkerAvailabilityPreference, error) {
+) ([]*workerschedule.WorkerAvailabilityPreference, error) {
 	if err := s.requireScheduling(); err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (s *Service) MyAvailability(
 // SetMyAvailabilityRequest is one weekday's statement.
 type SetMyAvailabilityRequest struct {
 	DayOfWeek  int16
-	Preference worker.AvailabilityPreference
+	Preference workerschedule.AvailabilityPreference
 	Note       string
 }
 
@@ -141,7 +141,7 @@ func (s *Service) SetMyAvailability(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	req *SetMyAvailabilityRequest,
-) (*worker.WorkerAvailabilityPreference, error) {
+) (*workerschedule.WorkerAvailabilityPreference, error) {
 	if err := s.requireScheduling(); err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (s *Service) SetMyAvailability(
 	}
 
 	return s.scheduling.SetPreference(ctx, &schedulingservice.SetPreferenceRequest{
-		Entity: &worker.WorkerAvailabilityPreference{
+		Entity: &workerschedule.WorkerAvailabilityPreference{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			WorkerID:       wrk.ID,
@@ -168,16 +168,16 @@ func (s *Service) SetMyAvailability(
 // whether the app offers "take it" or "withdraw", and a client that had to
 // work that out would first have to be told its own worker id.
 type PortalShiftSwap struct {
-	ID                    string                 `json:"id"`
-	Status                worker.ShiftSwapStatus `json:"status"`
-	Outgoing              bool                   `json:"outgoing"`
-	CounterpartyName      string                 `json:"counterpartyName"`
-	ShiftDate             int64                  `json:"shiftDate"`
-	CounterpartyShiftDate *int64                 `json:"counterpartyShiftDate"`
-	Reason                string                 `json:"reason"`
-	ResponseNote          string                 `json:"responseNote"`
-	RespondedAt           *int64                 `json:"respondedAt"`
-	DecidedAt             *int64                 `json:"decidedAt"`
+	ID                    string                         `json:"id"`
+	Status                workerschedule.ShiftSwapStatus `json:"status"`
+	Outgoing              bool                           `json:"outgoing"`
+	CounterpartyName      string                         `json:"counterpartyName"`
+	ShiftDate             int64                          `json:"shiftDate"`
+	CounterpartyShiftDate *int64                         `json:"counterpartyShiftDate"`
+	Reason                string                         `json:"reason"`
+	ResponseNote          string                         `json:"responseNote"`
+	RespondedAt           *int64                         `json:"respondedAt"`
+	DecidedAt             *int64                         `json:"decidedAt"`
 }
 
 // MyShiftSwaps is every swap the driver is on either side of.
@@ -242,7 +242,7 @@ func (s *Service) ProposeMyShiftSwap(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	req *ProposeMyShiftSwapRequest,
-) (*worker.ShiftSwapRequest, error) {
+) (*workerschedule.ShiftSwapRequest, error) {
 	if err := s.requireScheduling(); err != nil {
 		return nil, err
 	}
@@ -252,7 +252,7 @@ func (s *Service) ProposeMyShiftSwap(
 	}
 
 	return s.scheduling.ProposeSwap(ctx, &schedulingservice.ProposeSwapRequest{
-		Entity: &worker.ShiftSwapRequest{
+		Entity: &workerschedule.ShiftSwapRequest{
 			OrganizationID:        tenantInfo.OrgID,
 			BusinessUnitID:        tenantInfo.BuID,
 			RequestingWorkerID:    wrk.ID,
@@ -273,14 +273,14 @@ func (s *Service) RespondToMyShiftSwap(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	swapID pulid.ID,
-	status worker.ShiftSwapStatus,
+	status workerschedule.ShiftSwapStatus,
 	note string,
-) (*worker.ShiftSwapRequest, error) {
+) (*workerschedule.ShiftSwapRequest, error) {
 	if err := s.requireScheduling(); err != nil {
 		return nil, err
 	}
 	switch status {
-	case worker.SwapAccepted, worker.SwapDeclined, worker.SwapWithdrawn:
+	case workerschedule.SwapAccepted, workerschedule.SwapDeclined, workerschedule.SwapWithdrawn:
 	default:
 		return nil, errortypes.NewValidationError(
 			"status",

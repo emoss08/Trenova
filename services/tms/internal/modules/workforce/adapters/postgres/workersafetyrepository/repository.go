@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -53,13 +53,13 @@ func eventLoads(includeDocument, includeActors, includeWorker bool) []keel.Loade
 
 func eventsQuery(
 	req *workerports.ListWorkerSafetyEventsRequest,
-) *keel.Query[*worker.WorkerSafetyEvent] {
+) *keel.Query[*workersafety.WorkerSafetyEvent] {
 	e := workerdb.WorkerSafetyEvents
 	q := e.Where(
 		keel.When(req.WorkerID.IsNotNil(), e.WorkerID.Eq(req.WorkerID)),
 		keel.When(req.OpenOnly, e.Status.In(
-			worker.SafetyEventStatusOpen,
-			worker.SafetyEventStatusUnderReview,
+			workersafety.SafetyEventStatusOpen,
+			workersafety.SafetyEventStatusUnderReview,
 		)),
 		keel.When(req.Since > 0, e.OccurredAt.Gte(req.Since)),
 	).
@@ -75,23 +75,27 @@ func eventsQuery(
 func (r *repository) ListEvents(
 	ctx context.Context,
 	req *workerports.ListWorkerSafetyEventsRequest,
-) ([]*worker.WorkerSafetyEvent, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerSafetyEvent, error) {
-		entities, err := eventsQuery(req).All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list worker safety events", zap.Error(err))
-			return nil, fmt.Errorf("list worker safety events: %w", err)
-		}
+) ([]*workersafety.WorkerSafetyEvent, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workersafety.WorkerSafetyEvent, error) {
+			entities, err := eventsQuery(req).All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list worker safety events", zap.Error(err))
+				return nil, fmt.Errorf("list worker safety events: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) GetEventByID(
 	ctx context.Context,
 	req *workerports.GetWorkerSafetyEventByIDRequest,
-) (*worker.WorkerSafetyEvent, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workersafety.WorkerSafetyEvent, error) {
 		e := workerdb.WorkerSafetyEvents
 		entity, err := e.Where(e.ID.Eq(req.ID)).
 			Load(eventLoads(req.IncludeDocument, false, req.IncludeWorker)...).
@@ -106,30 +110,38 @@ func (r *repository) GetEventByID(
 
 func (r *repository) CreateEvent(
 	ctx context.Context,
-	entity *worker.WorkerSafetyEvent,
-) (*worker.WorkerSafetyEvent, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerSafetyEvent, error) {
-		if err := workerdb.WorkerSafetyEvents.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to create worker safety event", zap.Error(err))
-			return nil, eventErrors.Map(err, entity.ID.String())
-		}
+	entity *workersafety.WorkerSafetyEvent,
+) (*workersafety.WorkerSafetyEvent, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workersafety.WorkerSafetyEvent, error) {
+			if err := workerdb.WorkerSafetyEvents.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+				r.l.Error("failed to create worker safety event", zap.Error(err))
+				return nil, eventErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) UpdateEvent(
 	ctx context.Context,
-	entity *worker.WorkerSafetyEvent,
-) (*worker.WorkerSafetyEvent, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerSafetyEvent, error) {
-		if err := workerdb.WorkerSafetyEvents.Save(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to update worker safety event", zap.Error(err))
-			return nil, eventErrors.Map(err, entity.ID.String())
-		}
+	entity *workersafety.WorkerSafetyEvent,
+) (*workersafety.WorkerSafetyEvent, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workersafety.WorkerSafetyEvent, error) {
+			if err := workerdb.WorkerSafetyEvents.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+				r.l.Error("failed to update worker safety event", zap.Error(err))
+				return nil, eventErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) DeleteEvent(
@@ -151,11 +163,11 @@ func (r *repository) DeleteEvent(
 func (r *repository) ListActions(
 	ctx context.Context,
 	req *workerports.ListWorkerDisciplinaryActionsRequest,
-) ([]*worker.WorkerDisciplinaryAction, error) {
+) ([]*workersafety.WorkerDisciplinaryAction, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*worker.WorkerDisciplinaryAction, error) {
+		func(ctx context.Context) ([]*workersafety.WorkerDisciplinaryAction, error) {
 			a := workerdb.WorkerDisciplinaryActions
 			loads := listquery.When(req.IncludeEvent, a.SafetyEvent())
 			loads = append(loads, listquery.When(req.IncludeActors, a.IssuedBy())...)
@@ -177,11 +189,11 @@ func (r *repository) ListActions(
 func (r *repository) GetActionByID(
 	ctx context.Context,
 	req *workerports.GetWorkerDisciplinaryActionByIDRequest,
-) (*worker.WorkerDisciplinaryAction, error) {
+) (*workersafety.WorkerDisciplinaryAction, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerDisciplinaryAction, error) {
+		func(ctx context.Context) (*workersafety.WorkerDisciplinaryAction, error) {
 			a := workerdb.WorkerDisciplinaryActions
 			entity, err := a.Where(a.ID.Eq(req.ID)).
 				Load(listquery.When(req.IncludeEvent, a.SafetyEvent())...).
@@ -197,12 +209,12 @@ func (r *repository) GetActionByID(
 
 func (r *repository) CreateAction(
 	ctx context.Context,
-	entity *worker.WorkerDisciplinaryAction,
-) (*worker.WorkerDisciplinaryAction, error) {
+	entity *workersafety.WorkerDisciplinaryAction,
+) (*workersafety.WorkerDisciplinaryAction, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerDisciplinaryAction, error) {
+		func(ctx context.Context) (*workersafety.WorkerDisciplinaryAction, error) {
 			err := workerdb.WorkerDisciplinaryActions.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to create disciplinary action", zap.Error(err))
@@ -216,12 +228,12 @@ func (r *repository) CreateAction(
 
 func (r *repository) UpdateAction(
 	ctx context.Context,
-	entity *worker.WorkerDisciplinaryAction,
-) (*worker.WorkerDisciplinaryAction, error) {
+	entity *workersafety.WorkerDisciplinaryAction,
+) (*workersafety.WorkerDisciplinaryAction, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerDisciplinaryAction, error) {
+		func(ctx context.Context) (*workersafety.WorkerDisciplinaryAction, error) {
 			err := workerdb.WorkerDisciplinaryActions.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update disciplinary action", zap.Error(err))
@@ -236,30 +248,34 @@ func (r *repository) UpdateAction(
 func (r *repository) ListRecognitions(
 	ctx context.Context,
 	req *workerports.ListWorkerRecognitionsRequest,
-) ([]*worker.WorkerRecognition, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerRecognition, error) {
-		rc := workerdb.WorkerRecognitions
-		entities, err := rc.Where(
-			rc.WorkerID.Eq(req.WorkerID),
-			keel.When(req.VisibleOnly, rc.VisibleToWorker.IsTrue()),
-		).
-			Load(listquery.When(req.IncludeActors, rc.AwardedBy())...).
-			Order(rc.OccurredAt.Desc()).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list recognitions", zap.Error(err))
-			return nil, fmt.Errorf("list recognitions: %w", err)
-		}
+) ([]*workersafety.WorkerRecognition, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workersafety.WorkerRecognition, error) {
+			rc := workerdb.WorkerRecognitions
+			entities, err := rc.Where(
+				rc.WorkerID.Eq(req.WorkerID),
+				keel.When(req.VisibleOnly, rc.VisibleToWorker.IsTrue()),
+			).
+				Load(listquery.When(req.IncludeActors, rc.AwardedBy())...).
+				Order(rc.OccurredAt.Desc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list recognitions", zap.Error(err))
+				return nil, fmt.Errorf("list recognitions: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) GetRecognitionByID(
 	ctx context.Context,
 	req *workerports.GetWorkerRecognitionByIDRequest,
-) (*worker.WorkerRecognition, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerRecognition, error) {
+) (*workersafety.WorkerRecognition, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workersafety.WorkerRecognition, error) {
 		entity, err := workerdb.WorkerRecognitions.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, recognitionErrors.Map(err, req.ID.String())
@@ -271,16 +287,20 @@ func (r *repository) GetRecognitionByID(
 
 func (r *repository) CreateRecognition(
 	ctx context.Context,
-	entity *worker.WorkerRecognition,
-) (*worker.WorkerRecognition, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerRecognition, error) {
-		if err := workerdb.WorkerRecognitions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to create recognition", zap.Error(err))
-			return nil, recognitionErrors.Map(err, entity.ID.String())
-		}
+	entity *workersafety.WorkerRecognition,
+) (*workersafety.WorkerRecognition, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workersafety.WorkerRecognition, error) {
+			if err := workerdb.WorkerRecognitions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+				r.l.Error("failed to create recognition", zap.Error(err))
+				return nil, recognitionErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) DeleteRecognition(

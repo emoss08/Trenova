@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -12,11 +12,11 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-type VerificationChange = kernelports.RecordChange[worker.WorkerEmploymentVerification]
+type VerificationChange = kernelports.RecordChange[employment.WorkerEmploymentVerification]
 
 func (s *Service) prepareRecord(
 	ctx context.Context,
-	entity *worker.WorkerEmploymentVerification,
+	entity *employment.WorkerEmploymentVerification,
 	userID pulid.ID,
 ) error {
 	if _, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
@@ -32,9 +32,9 @@ func (s *Service) prepareRecord(
 
 func (s *Service) PlanRecordVerification(
 	ctx context.Context,
-	entity *worker.WorkerEmploymentVerification,
+	entity *employment.WorkerEmploymentVerification,
 	userID pulid.ID,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	planned := *entity
 	if err := s.prepareRecord(ctx, &planned, userID); err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (s *Service) loadVerification(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	return s.repo.GetVerificationByID(ctx, &workerports.GetEmploymentVerificationByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
@@ -75,7 +75,7 @@ func (s *Service) PlanMarkRequested(
 	id pulid.ID,
 ) (*VerificationChange, error) {
 	now := timeutils.NowUnix()
-	status := worker.VerificationRequested
+	status := employment.VerificationRequested
 	return s.PlanUpdateVerification(ctx, &UpdateVerificationRequest{
 		TenantInfo:     tenantInfo,
 		VerificationID: id,
@@ -94,7 +94,7 @@ func (s *Service) PlanRecordFollowUp(
 		return nil, err
 	}
 
-	if original.Status != worker.VerificationRequested {
+	if original.Status != employment.VerificationRequested {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
@@ -116,6 +116,6 @@ func (s *Service) PlanDeleteVerification(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	return s.loadVerification(ctx, tenantInfo, id)
 }

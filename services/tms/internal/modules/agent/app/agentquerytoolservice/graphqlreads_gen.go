@@ -3,6 +3,7 @@
 package agentquerytoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	accountingsync "github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	fiscalperiod "github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	journalentry "github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
@@ -9559,7 +9560,7 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: "trainingCourses",
 		Node:      "TrainingCourse",
 		Resource:  "training_course",
-		Entity:    func() domaintypes.PostgresSearchable { return new(worker.TrainingCourse) },
+		Entity:    func() domaintypes.PostgresSearchable { return new(workertraining.TrainingCourse) },
 		Variables: []graphQLVariable{
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "TrainingCoursesInput", NonNull: true, List: false, Kind: "input"},

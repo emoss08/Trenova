@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,14 +16,14 @@ import (
 func (s *Service) ListVerifications(
 	ctx context.Context,
 	req *workerports.ListEmploymentVerificationsRequest,
-) ([]*worker.WorkerEmploymentVerification, error) {
+) ([]*employment.WorkerEmploymentVerification, error) {
 	return s.repo.ListVerifications(ctx, req)
 }
 
 func (s *Service) ListVerificationsByWorkerIDs(
 	ctx context.Context,
 	req *workerports.ListEmploymentVerificationsByWorkerIDsRequest,
-) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error) {
+) (map[pulid.ID][]*employment.WorkerEmploymentVerification, error) {
 	return s.repo.ListVerificationsByWorkerIDs(ctx, req)
 }
 
@@ -31,7 +31,7 @@ func (s *Service) GetVerification(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	return s.repo.GetVerificationByID(ctx, &workerports.GetEmploymentVerificationByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
@@ -39,7 +39,7 @@ func (s *Service) GetVerification(
 	})
 }
 
-func (s *Service) prepare(entity *worker.WorkerEmploymentVerification) error {
+func (s *Service) prepare(entity *employment.WorkerEmploymentVerification) error {
 	entity.EmployerName = strings.TrimSpace(entity.EmployerName)
 	entity.EmployerDOTNumber = strings.TrimSpace(entity.EmployerDOTNumber)
 	entity.EmployerMCNumber = strings.TrimSpace(entity.EmployerMCNumber)
@@ -52,10 +52,10 @@ func (s *Service) prepare(entity *worker.WorkerEmploymentVerification) error {
 	// The column defaults cover the insert, but validation runs first, so the
 	// same defaults have to be applied here.
 	if entity.Status == "" {
-		entity.Status = worker.VerificationPending
+		entity.Status = employment.VerificationPending
 	}
 	if entity.Method == "" {
-		entity.Method = worker.VerificationByEmail
+		entity.Method = employment.VerificationByEmail
 	}
 	// A non-regulated employer has no testing record to ask about, so anything
 	// recorded against the drug and alcohol half is meaningless there.
@@ -79,9 +79,9 @@ func (s *Service) prepare(entity *worker.WorkerEmploymentVerification) error {
 // RecordVerification files a previous employer to investigate.
 func (s *Service) RecordVerification(
 	ctx context.Context,
-	entity *worker.WorkerEmploymentVerification,
+	entity *employment.WorkerEmploymentVerification,
 	userID pulid.ID,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	tenantInfo := verificationTenant(entity)
 
 	if err := s.prepareRecord(ctx, entity, userID); err != nil {
@@ -120,8 +120,8 @@ type UpdateVerificationRequest struct {
 	EmployedFrom                  *int64
 	EmployedTo                    *int64
 	WasDOTRegulated               *bool
-	Status                        *worker.EmploymentVerificationStatus
-	Method                        *worker.EmploymentVerificationMethod
+	Status                        *employment.EmploymentVerificationStatus
+	Method                        *employment.EmploymentVerificationMethod
 	RequestedAt                   *int64
 	ResponseReceivedAt            *int64
 	DrugAlcoholResponseReceivedAt *int64
@@ -137,7 +137,7 @@ type UpdateVerificationRequest struct {
 func (s *Service) UpdateVerification(
 	ctx context.Context,
 	req *UpdateVerificationRequest,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	change, err := s.PlanUpdateVerification(ctx, req)
 	if err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func (s *Service) UpdateVerification(
 }
 
 func applyVerificationUpdate(
-	entity *worker.WorkerEmploymentVerification,
+	entity *employment.WorkerEmploymentVerification,
 	req *UpdateVerificationRequest,
 ) {
 	if req.EmployerName != nil {
@@ -237,9 +237,9 @@ func (s *Service) MarkRequested(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 	userID pulid.ID,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	now := timeutils.NowUnix()
-	status := worker.VerificationRequested
+	status := employment.VerificationRequested
 	return s.UpdateVerification(ctx, &UpdateVerificationRequest{
 		TenantInfo:     tenantInfo,
 		VerificationID: id,
@@ -257,7 +257,7 @@ func (s *Service) RecordFollowUp(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 	userID pulid.ID,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	change, err := s.PlanRecordFollowUp(ctx, tenantInfo, id)
 	if err != nil {
 		return nil, err

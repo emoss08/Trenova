@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/shopspring/decimal"
 )
 
@@ -50,7 +51,7 @@ func protectedTypes() map[string]protectedType {
 		"WorkerCredential": {
 			resource: permission.ResourceWorkerCredential,
 			entity: func() permission.FieldWithholder {
-				return &worker.WorkerCredential{Number: "CDL-445566"}
+				return &workercredential.WorkerCredential{Number: "CDL-445566"}
 			},
 		},
 		"RateAgreement": {

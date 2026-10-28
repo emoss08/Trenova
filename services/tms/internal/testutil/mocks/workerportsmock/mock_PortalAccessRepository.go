@@ -5,6 +5,7 @@
 package workerportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -112,26 +113,26 @@ func (_c *MockPortalAccessRepository_ActivatePortalAccess_Call) RunAndReturn(run
 }
 
 // CreateInvitation provides a mock function for the type MockPortalAccessRepository
-func (_mock *MockPortalAccessRepository) CreateInvitation(ctx context.Context, entity *worker.PortalInvitation) (*worker.PortalInvitation, error) {
+func (_mock *MockPortalAccessRepository) CreateInvitation(ctx context.Context, entity *portalinvitation.PortalInvitation) (*portalinvitation.PortalInvitation, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateInvitation")
 	}
 
-	var r0 *worker.PortalInvitation
+	var r0 *portalinvitation.PortalInvitation
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *worker.PortalInvitation) (*worker.PortalInvitation, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *portalinvitation.PortalInvitation) (*portalinvitation.PortalInvitation, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *worker.PortalInvitation) *worker.PortalInvitation); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *portalinvitation.PortalInvitation) *portalinvitation.PortalInvitation); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*worker.PortalInvitation)
+			r0 = ret.Get(0).(*portalinvitation.PortalInvitation)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *worker.PortalInvitation) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *portalinvitation.PortalInvitation) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -151,15 +152,15 @@ func (_e *MockPortalAccessRepository_Expecter) CreateInvitation(ctx any, entity 
 	return &MockPortalAccessRepository_CreateInvitation_Call{Call: _e.mock.On("CreateInvitation", ctx, entity)}
 }
 
-func (_c *MockPortalAccessRepository_CreateInvitation_Call) Run(run func(ctx context.Context, entity *worker.PortalInvitation)) *MockPortalAccessRepository_CreateInvitation_Call {
+func (_c *MockPortalAccessRepository_CreateInvitation_Call) Run(run func(ctx context.Context, entity *portalinvitation.PortalInvitation)) *MockPortalAccessRepository_CreateInvitation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *worker.PortalInvitation
+		var arg1 *portalinvitation.PortalInvitation
 		if args[1] != nil {
-			arg1 = args[1].(*worker.PortalInvitation)
+			arg1 = args[1].(*portalinvitation.PortalInvitation)
 		}
 		run(
 			arg0,
@@ -169,12 +170,12 @@ func (_c *MockPortalAccessRepository_CreateInvitation_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockPortalAccessRepository_CreateInvitation_Call) Return(portalInvitation *worker.PortalInvitation, err error) *MockPortalAccessRepository_CreateInvitation_Call {
+func (_c *MockPortalAccessRepository_CreateInvitation_Call) Return(portalInvitation *portalinvitation.PortalInvitation, err error) *MockPortalAccessRepository_CreateInvitation_Call {
 	_c.Call.Return(portalInvitation, err)
 	return _c
 }
 
-func (_c *MockPortalAccessRepository_CreateInvitation_Call) RunAndReturn(run func(ctx context.Context, entity *worker.PortalInvitation) (*worker.PortalInvitation, error)) *MockPortalAccessRepository_CreateInvitation_Call {
+func (_c *MockPortalAccessRepository_CreateInvitation_Call) RunAndReturn(run func(ctx context.Context, entity *portalinvitation.PortalInvitation) (*portalinvitation.PortalInvitation, error)) *MockPortalAccessRepository_CreateInvitation_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -246,23 +247,23 @@ func (_c *MockPortalAccessRepository_ExistsWorkerForUser_Call) RunAndReturn(run 
 }
 
 // GetInvitationByID provides a mock function for the type MockPortalAccessRepository
-func (_mock *MockPortalAccessRepository) GetInvitationByID(ctx context.Context, req workerports.GetPortalInvitationByIDRequest) (*worker.PortalInvitation, error) {
+func (_mock *MockPortalAccessRepository) GetInvitationByID(ctx context.Context, req workerports.GetPortalInvitationByIDRequest) (*portalinvitation.PortalInvitation, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetInvitationByID")
 	}
 
-	var r0 *worker.PortalInvitation
+	var r0 *portalinvitation.PortalInvitation
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, workerports.GetPortalInvitationByIDRequest) (*worker.PortalInvitation, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, workerports.GetPortalInvitationByIDRequest) (*portalinvitation.PortalInvitation, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, workerports.GetPortalInvitationByIDRequest) *worker.PortalInvitation); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, workerports.GetPortalInvitationByIDRequest) *portalinvitation.PortalInvitation); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*worker.PortalInvitation)
+			r0 = ret.Get(0).(*portalinvitation.PortalInvitation)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, workerports.GetPortalInvitationByIDRequest) error); ok {
@@ -303,34 +304,34 @@ func (_c *MockPortalAccessRepository_GetInvitationByID_Call) Run(run func(ctx co
 	return _c
 }
 
-func (_c *MockPortalAccessRepository_GetInvitationByID_Call) Return(portalInvitation *worker.PortalInvitation, err error) *MockPortalAccessRepository_GetInvitationByID_Call {
+func (_c *MockPortalAccessRepository_GetInvitationByID_Call) Return(portalInvitation *portalinvitation.PortalInvitation, err error) *MockPortalAccessRepository_GetInvitationByID_Call {
 	_c.Call.Return(portalInvitation, err)
 	return _c
 }
 
-func (_c *MockPortalAccessRepository_GetInvitationByID_Call) RunAndReturn(run func(ctx context.Context, req workerports.GetPortalInvitationByIDRequest) (*worker.PortalInvitation, error)) *MockPortalAccessRepository_GetInvitationByID_Call {
+func (_c *MockPortalAccessRepository_GetInvitationByID_Call) RunAndReturn(run func(ctx context.Context, req workerports.GetPortalInvitationByIDRequest) (*portalinvitation.PortalInvitation, error)) *MockPortalAccessRepository_GetInvitationByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetInvitationByTokenHash provides a mock function for the type MockPortalAccessRepository
-func (_mock *MockPortalAccessRepository) GetInvitationByTokenHash(ctx context.Context, tokenHash string) (*worker.PortalInvitation, error) {
+func (_mock *MockPortalAccessRepository) GetInvitationByTokenHash(ctx context.Context, tokenHash string) (*portalinvitation.PortalInvitation, error) {
 	ret := _mock.Called(ctx, tokenHash)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetInvitationByTokenHash")
 	}
 
-	var r0 *worker.PortalInvitation
+	var r0 *portalinvitation.PortalInvitation
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*worker.PortalInvitation, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*portalinvitation.PortalInvitation, error)); ok {
 		return returnFunc(ctx, tokenHash)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *worker.PortalInvitation); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *portalinvitation.PortalInvitation); ok {
 		r0 = returnFunc(ctx, tokenHash)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*worker.PortalInvitation)
+			r0 = ret.Get(0).(*portalinvitation.PortalInvitation)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -371,34 +372,34 @@ func (_c *MockPortalAccessRepository_GetInvitationByTokenHash_Call) Run(run func
 	return _c
 }
 
-func (_c *MockPortalAccessRepository_GetInvitationByTokenHash_Call) Return(portalInvitation *worker.PortalInvitation, err error) *MockPortalAccessRepository_GetInvitationByTokenHash_Call {
+func (_c *MockPortalAccessRepository_GetInvitationByTokenHash_Call) Return(portalInvitation *portalinvitation.PortalInvitation, err error) *MockPortalAccessRepository_GetInvitationByTokenHash_Call {
 	_c.Call.Return(portalInvitation, err)
 	return _c
 }
 
-func (_c *MockPortalAccessRepository_GetInvitationByTokenHash_Call) RunAndReturn(run func(ctx context.Context, tokenHash string) (*worker.PortalInvitation, error)) *MockPortalAccessRepository_GetInvitationByTokenHash_Call {
+func (_c *MockPortalAccessRepository_GetInvitationByTokenHash_Call) RunAndReturn(run func(ctx context.Context, tokenHash string) (*portalinvitation.PortalInvitation, error)) *MockPortalAccessRepository_GetInvitationByTokenHash_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetPendingInvitationForWorker provides a mock function for the type MockPortalAccessRepository
-func (_mock *MockPortalAccessRepository) GetPendingInvitationForWorker(ctx context.Context, req workerports.GetPendingPortalInvitationRequest) (*worker.PortalInvitation, error) {
+func (_mock *MockPortalAccessRepository) GetPendingInvitationForWorker(ctx context.Context, req workerports.GetPendingPortalInvitationRequest) (*portalinvitation.PortalInvitation, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPendingInvitationForWorker")
 	}
 
-	var r0 *worker.PortalInvitation
+	var r0 *portalinvitation.PortalInvitation
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, workerports.GetPendingPortalInvitationRequest) (*worker.PortalInvitation, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, workerports.GetPendingPortalInvitationRequest) (*portalinvitation.PortalInvitation, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, workerports.GetPendingPortalInvitationRequest) *worker.PortalInvitation); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, workerports.GetPendingPortalInvitationRequest) *portalinvitation.PortalInvitation); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*worker.PortalInvitation)
+			r0 = ret.Get(0).(*portalinvitation.PortalInvitation)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, workerports.GetPendingPortalInvitationRequest) error); ok {
@@ -439,12 +440,12 @@ func (_c *MockPortalAccessRepository_GetPendingInvitationForWorker_Call) Run(run
 	return _c
 }
 
-func (_c *MockPortalAccessRepository_GetPendingInvitationForWorker_Call) Return(portalInvitation *worker.PortalInvitation, err error) *MockPortalAccessRepository_GetPendingInvitationForWorker_Call {
+func (_c *MockPortalAccessRepository_GetPendingInvitationForWorker_Call) Return(portalInvitation *portalinvitation.PortalInvitation, err error) *MockPortalAccessRepository_GetPendingInvitationForWorker_Call {
 	_c.Call.Return(portalInvitation, err)
 	return _c
 }
 
-func (_c *MockPortalAccessRepository_GetPendingInvitationForWorker_Call) RunAndReturn(run func(ctx context.Context, req workerports.GetPendingPortalInvitationRequest) (*worker.PortalInvitation, error)) *MockPortalAccessRepository_GetPendingInvitationForWorker_Call {
+func (_c *MockPortalAccessRepository_GetPendingInvitationForWorker_Call) RunAndReturn(run func(ctx context.Context, req workerports.GetPendingPortalInvitationRequest) (*portalinvitation.PortalInvitation, error)) *MockPortalAccessRepository_GetPendingInvitationForWorker_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -666,23 +667,23 @@ func (_c *MockPortalAccessRepository_ListDriverShipmentComments_Call) RunAndRetu
 }
 
 // ListInvitations provides a mock function for the type MockPortalAccessRepository
-func (_mock *MockPortalAccessRepository) ListInvitations(ctx context.Context, req *workerports.ListPortalInvitationsRequest) ([]*worker.PortalInvitation, error) {
+func (_mock *MockPortalAccessRepository) ListInvitations(ctx context.Context, req *workerports.ListPortalInvitationsRequest) ([]*portalinvitation.PortalInvitation, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListInvitations")
 	}
 
-	var r0 []*worker.PortalInvitation
+	var r0 []*portalinvitation.PortalInvitation
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *workerports.ListPortalInvitationsRequest) ([]*worker.PortalInvitation, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *workerports.ListPortalInvitationsRequest) ([]*portalinvitation.PortalInvitation, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *workerports.ListPortalInvitationsRequest) []*worker.PortalInvitation); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *workerports.ListPortalInvitationsRequest) []*portalinvitation.PortalInvitation); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*worker.PortalInvitation)
+			r0 = ret.Get(0).([]*portalinvitation.PortalInvitation)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *workerports.ListPortalInvitationsRequest) error); ok {
@@ -723,12 +724,12 @@ func (_c *MockPortalAccessRepository_ListInvitations_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockPortalAccessRepository_ListInvitations_Call) Return(portalInvitations []*worker.PortalInvitation, err error) *MockPortalAccessRepository_ListInvitations_Call {
+func (_c *MockPortalAccessRepository_ListInvitations_Call) Return(portalInvitations []*portalinvitation.PortalInvitation, err error) *MockPortalAccessRepository_ListInvitations_Call {
 	_c.Call.Return(portalInvitations, err)
 	return _c
 }
 
-func (_c *MockPortalAccessRepository_ListInvitations_Call) RunAndReturn(run func(ctx context.Context, req *workerports.ListPortalInvitationsRequest) ([]*worker.PortalInvitation, error)) *MockPortalAccessRepository_ListInvitations_Call {
+func (_c *MockPortalAccessRepository_ListInvitations_Call) RunAndReturn(run func(ctx context.Context, req *workerports.ListPortalInvitationsRequest) ([]*portalinvitation.PortalInvitation, error)) *MockPortalAccessRepository_ListInvitations_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1031,26 +1032,26 @@ func (_c *MockPortalAccessRepository_UpdateAssignmentAck_Call) RunAndReturn(run 
 }
 
 // UpdateInvitation provides a mock function for the type MockPortalAccessRepository
-func (_mock *MockPortalAccessRepository) UpdateInvitation(ctx context.Context, entity *worker.PortalInvitation) (*worker.PortalInvitation, error) {
+func (_mock *MockPortalAccessRepository) UpdateInvitation(ctx context.Context, entity *portalinvitation.PortalInvitation) (*portalinvitation.PortalInvitation, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateInvitation")
 	}
 
-	var r0 *worker.PortalInvitation
+	var r0 *portalinvitation.PortalInvitation
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *worker.PortalInvitation) (*worker.PortalInvitation, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *portalinvitation.PortalInvitation) (*portalinvitation.PortalInvitation, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *worker.PortalInvitation) *worker.PortalInvitation); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *portalinvitation.PortalInvitation) *portalinvitation.PortalInvitation); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*worker.PortalInvitation)
+			r0 = ret.Get(0).(*portalinvitation.PortalInvitation)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *worker.PortalInvitation) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *portalinvitation.PortalInvitation) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -1070,15 +1071,15 @@ func (_e *MockPortalAccessRepository_Expecter) UpdateInvitation(ctx any, entity 
 	return &MockPortalAccessRepository_UpdateInvitation_Call{Call: _e.mock.On("UpdateInvitation", ctx, entity)}
 }
 
-func (_c *MockPortalAccessRepository_UpdateInvitation_Call) Run(run func(ctx context.Context, entity *worker.PortalInvitation)) *MockPortalAccessRepository_UpdateInvitation_Call {
+func (_c *MockPortalAccessRepository_UpdateInvitation_Call) Run(run func(ctx context.Context, entity *portalinvitation.PortalInvitation)) *MockPortalAccessRepository_UpdateInvitation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *worker.PortalInvitation
+		var arg1 *portalinvitation.PortalInvitation
 		if args[1] != nil {
-			arg1 = args[1].(*worker.PortalInvitation)
+			arg1 = args[1].(*portalinvitation.PortalInvitation)
 		}
 		run(
 			arg0,
@@ -1088,12 +1089,12 @@ func (_c *MockPortalAccessRepository_UpdateInvitation_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockPortalAccessRepository_UpdateInvitation_Call) Return(portalInvitation *worker.PortalInvitation, err error) *MockPortalAccessRepository_UpdateInvitation_Call {
+func (_c *MockPortalAccessRepository_UpdateInvitation_Call) Return(portalInvitation *portalinvitation.PortalInvitation, err error) *MockPortalAccessRepository_UpdateInvitation_Call {
 	_c.Call.Return(portalInvitation, err)
 	return _c
 }
 
-func (_c *MockPortalAccessRepository_UpdateInvitation_Call) RunAndReturn(run func(ctx context.Context, entity *worker.PortalInvitation) (*worker.PortalInvitation, error)) *MockPortalAccessRepository_UpdateInvitation_Call {
+func (_c *MockPortalAccessRepository_UpdateInvitation_Call) RunAndReturn(run func(ctx context.Context, entity *portalinvitation.PortalInvitation) (*portalinvitation.PortalInvitation, error)) *MockPortalAccessRepository_UpdateInvitation_Call {
 	_c.Call.Return(run)
 	return _c
 }

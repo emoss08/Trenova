@@ -14,7 +14,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -155,21 +157,21 @@ func (s *Service) requireHourlyWorker(
 func (s *Service) ListEntries(
 	ctx context.Context,
 	req *workerports.ListTimeClockEntriesRequest,
-) ([]*worker.TimeClockEntry, error) {
+) ([]*timesheet.TimeClockEntry, error) {
 	return s.repo.ListEntries(ctx, req)
 }
 
 func (s *Service) ListTimesheets(
 	ctx context.Context,
 	req *workerports.ListTimesheetsRequest,
-) ([]*worker.Timesheet, error) {
+) ([]*timesheet.Timesheet, error) {
 	return s.repo.ListTimesheets(ctx, req)
 }
 
 func (s *Service) GetTimesheet(
 	ctx context.Context,
 	req *workerports.GetTimesheetByIDRequest,
-) (*worker.Timesheet, error) {
+) (*timesheet.Timesheet, error) {
 	return s.repo.GetTimesheetByID(ctx, req)
 }
 
@@ -179,7 +181,7 @@ func (s *Service) OpenEntry(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (*worker.TimeClockEntry, error) {
+) (*timesheet.TimeClockEntry, error) {
 	return s.repo.GetOpenEntry(ctx, tenantInfo, workerID)
 }
 
@@ -187,7 +189,7 @@ func (s *Service) OpenEntry(
 type ClockRequest struct {
 	WorkerID     pulid.ID
 	At           int64
-	Source       worker.TimeEntrySource
+	Source       timesheet.TimeEntrySource
 	BreakMinutes int32
 	PayCodeID    pulid.ID
 	Note         string
@@ -201,7 +203,7 @@ type ClockRequest struct {
 func (s *Service) ClockIn(
 	ctx context.Context,
 	req *ClockRequest,
-) (*worker.TimeClockEntry, error) {
+) (*timesheet.TimeClockEntry, error) {
 	if err := s.requireHourlyWorker(ctx, req.TenantInfo, req.WorkerID); err != nil {
 		return nil, err
 	}
@@ -246,10 +248,10 @@ func (s *Service) ClockIn(
 
 	source := req.Source
 	if source == "" {
-		source = worker.TimeEntrySourceClock
+		source = timesheet.TimeEntrySourceClock
 	}
 
-	entity := &worker.TimeClockEntry{
+	entity := &timesheet.TimeClockEntry{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		WorkerID:       req.WorkerID,
@@ -288,7 +290,7 @@ func (s *Service) ClockIn(
 func (s *Service) ClockOut(
 	ctx context.Context,
 	req *ClockRequest,
-) (*worker.TimeClockEntry, error) {
+) (*timesheet.TimeClockEntry, error) {
 	open, err := s.repo.GetOpenEntry(ctx, req.TenantInfo, req.WorkerID)
 	if err != nil {
 		return nil, err
@@ -364,7 +366,7 @@ type RecordEntryRequest struct {
 func (s *Service) RecordEntry(
 	ctx context.Context,
 	req *RecordEntryRequest,
-) (*worker.TimeClockEntry, error) {
+) (*timesheet.TimeClockEntry, error) {
 	if req.Reason == "" {
 		return nil, errortypes.NewValidationError(
 			"reason",
@@ -374,19 +376,19 @@ func (s *Service) RecordEntry(
 	}
 
 	var (
-		entity   *worker.TimeClockEntry
-		previous *worker.TimeClockEntry
+		entity   *timesheet.TimeClockEntry
+		previous *timesheet.TimeClockEntry
 	)
 
 	if req.ID.IsNil() {
 		if err := s.requireHourlyWorker(ctx, req.TenantInfo, req.WorkerID); err != nil {
 			return nil, err
 		}
-		entity = &worker.TimeClockEntry{
+		entity = &timesheet.TimeClockEntry{
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
 			WorkerID:       req.WorkerID,
-			Source:         worker.TimeEntrySourceManual,
+			Source:         timesheet.TimeEntrySourceManual,
 		}
 	} else {
 		existing, err := s.repo.GetEntryByID(ctx, &workerports.GetTimeClockEntryByIDRequest{
@@ -438,7 +440,7 @@ func (s *Service) RecordEntry(
 		return nil, multiErr
 	}
 
-	var saved *worker.TimeClockEntry
+	var saved *timesheet.TimeClockEntry
 	if req.ID.IsNil() {
 		saved, err = s.repo.CreateEntry(ctx, entity)
 	} else {
@@ -562,14 +564,14 @@ func (s *Service) openSheetFor(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 	at int64,
-) (*worker.Timesheet, error) {
-	periodStart := worker.StartOfWeekUTC(at, time.UTC)
+) (*timesheet.Timesheet, error) {
+	periodStart := workerschedule.StartOfWeekUTC(at, time.UTC)
 
-	return s.repo.GetOrCreateTimesheet(ctx, &worker.Timesheet{
+	return s.repo.GetOrCreateTimesheet(ctx, &timesheet.Timesheet{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		WorkerID:       workerID,
-		Status:         worker.TimesheetOpen,
+		Status:         timesheet.TimesheetOpen,
 		PeriodStart:    periodStart,
 		PeriodEnd:      periodStart + daysInWeek*secondsPerDay,
 	})
@@ -640,7 +642,7 @@ func (s *Service) recalculate(
 func (s *Service) paidLeaveMinutes(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	sheet *worker.Timesheet,
+	sheet *timesheet.Timesheet,
 ) (int32, error) {
 	dayMinutes := sheet.OvertimeThresholdMinutes / workingDaysInWeek
 	if dayMinutes <= 0 {

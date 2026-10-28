@@ -3,6 +3,7 @@
 package workertrainingexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"context"
 	"errors"
 
@@ -606,7 +607,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -616,7 +617,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -626,7 +627,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -636,7 +637,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.Code, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -646,7 +647,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -655,7 +656,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "description",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.Description, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -665,7 +666,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.Category, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTrainingCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCategory),
@@ -675,7 +676,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus),
@@ -685,7 +686,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.Delivery, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTrainingDelivery2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingDelivery),
@@ -694,7 +695,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "contentUrl",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.ContentURL, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -704,7 +705,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.DurationMinutes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -715,7 +716,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return gqlexec.Resolver[resolverTrainingCourse](ec, "TrainingCourse").PassingScore(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
@@ -724,7 +725,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "validityMonths",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.ValidityMonths, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint32),
@@ -734,7 +735,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.RenewalWindowDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -744,7 +745,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.IsRequired, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -754,7 +755,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.RequiredForDriverTypes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDriverTypeᚄ),
@@ -764,7 +765,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.DueDaysAfterAssignment, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -774,7 +775,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.RequiresAcknowledgement, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -784,7 +785,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.SortOrder, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -796,7 +797,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return gqlexec.Resolver[resolverTrainingCourse](ec, "TrainingCourse").OpenRecordCount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -806,7 +807,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -816,7 +817,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -826,7 +827,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingCourse)
+					obj := o.(*workertraining.TrainingCourse)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -904,7 +905,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -914,7 +915,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -924,7 +925,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -934,7 +935,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -944,7 +945,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.CourseID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -954,7 +955,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "TrainingCourse",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.Course, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTrainingCourse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCourse),
@@ -964,7 +965,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerTrainingStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingStatus),
@@ -974,7 +975,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.AssignedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -983,7 +984,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "dueAt",
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.DueAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -992,7 +993,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "startedAt",
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.StartedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1001,7 +1002,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "completedAt",
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.CompletedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1010,7 +1011,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "expiresAt",
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.ExpiresAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1021,7 +1022,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return gqlexec.Resolver[resolverWorkerTrainingRecord](ec, "WorkerTrainingRecord").Score(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
@@ -1030,7 +1031,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "passed",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.Passed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOBoolean2ᚖbool),
@@ -1039,7 +1040,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "acknowledgedAt",
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.AcknowledgedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1050,7 +1051,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return gqlexec.Resolver[resolverWorkerTrainingRecord](ec, "WorkerTrainingRecord").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -1060,7 +1061,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "WorkerCredentialDocument",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.Document, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocument),
@@ -1071,7 +1072,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return gqlexec.Resolver[resolverWorkerTrainingRecord](ec, "WorkerTrainingRecord").AssignedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -1081,7 +1082,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.AssignedBy, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
@@ -1092,7 +1093,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return gqlexec.Resolver[resolverWorkerTrainingRecord](ec, "WorkerTrainingRecord").RecordedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -1102,7 +1103,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.RecordedBy, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
@@ -1111,7 +1112,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "notes",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.Notes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -1120,7 +1121,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "waivedReason",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.WaivedReason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -1132,7 +1133,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return gqlexec.Resolver[resolverWorkerTrainingRecord](ec, "WorkerTrainingRecord").Health(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerTrainingHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingHealth),
@@ -1143,7 +1144,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return gqlexec.Resolver[resolverWorkerTrainingRecord](ec, "WorkerTrainingRecord").DaysUntilDue(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
@@ -1154,7 +1155,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return gqlexec.Resolver[resolverWorkerTrainingRecord](ec, "WorkerTrainingRecord").DaysUntilExpiry(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
@@ -1164,7 +1165,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1174,7 +1175,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1184,7 +1185,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1194,7 +1195,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingRecord)
+					obj := o.(*workertraining.WorkerTrainingRecord)
 					return obj.Worker, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
@@ -1206,7 +1207,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingSummary)
+					obj := o.(*workertraining.WorkerTrainingSummary)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1216,7 +1217,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingSummary)
+					obj := o.(*workertraining.WorkerTrainingSummary)
 					return obj.Compliant, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1226,7 +1227,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingSummary)
+					obj := o.(*workertraining.WorkerTrainingSummary)
 					return obj.RequiredCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1236,7 +1237,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingSummary)
+					obj := o.(*workertraining.WorkerTrainingSummary)
 					return obj.CurrentCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1246,7 +1247,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingSummary)
+					obj := o.(*workertraining.WorkerTrainingSummary)
 					return obj.DueCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1256,7 +1257,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingSummary)
+					obj := o.(*workertraining.WorkerTrainingSummary)
 					return obj.OverdueCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1266,7 +1267,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingSummary)
+					obj := o.(*workertraining.WorkerTrainingSummary)
 					return obj.ExpiringCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1276,7 +1277,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingSummary)
+					obj := o.(*workertraining.WorkerTrainingSummary)
 					return obj.ExpiredCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1286,7 +1287,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingSummary)
+					obj := o.(*workertraining.WorkerTrainingSummary)
 					return obj.MissingCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1297,7 +1298,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "WorkerTrainingSummaryItem",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerTrainingSummary)
+					obj := o.(*workertraining.WorkerTrainingSummary)
 					return obj.Items, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerTrainingSummaryItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingSummaryItemᚄ),
@@ -1310,7 +1311,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "TrainingCourse",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingSummaryItem)
+					obj := o.(*workertraining.TrainingSummaryItem)
 					return obj.Course, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTrainingCourse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCourse),
@@ -1320,7 +1321,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "WorkerTrainingRecord",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingSummaryItem)
+					obj := o.(*workertraining.TrainingSummaryItem)
 					return obj.Record, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorkerTrainingRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerTrainingRecord),
@@ -1330,7 +1331,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingSummaryItem)
+					obj := o.(*workertraining.TrainingSummaryItem)
 					return obj.Health, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerTrainingHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingHealth),
@@ -1339,7 +1340,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "daysUntilDue",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingSummaryItem)
+					obj := o.(*workertraining.TrainingSummaryItem)
 					return obj.DaysUntilDue, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
@@ -1348,7 +1349,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "daysUntilExpiry",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingSummaryItem)
+					obj := o.(*workertraining.TrainingSummaryItem)
 					return obj.DaysUntilExpiry, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
@@ -1358,7 +1359,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TrainingSummaryItem)
+					obj := o.(*workertraining.TrainingSummaryItem)
 					return obj.Required, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1385,16 +1386,16 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverMutation interface {
-	CreateTrainingCourse(ctx context.Context, input gqlmodel.TrainingCourseInput) (*worker.TrainingCourse, error)
-	UpdateTrainingCourse(ctx context.Context, id string, input gqlmodel.TrainingCourseInput) (*worker.TrainingCourse, error)
-	ArchiveTrainingCourse(ctx context.Context, id string, version *int) (*worker.TrainingCourse, error)
-	RestoreTrainingCourse(ctx context.Context, id string, version *int) (*worker.TrainingCourse, error)
-	AssignWorkerTraining(ctx context.Context, input gqlmodel.AssignWorkerTrainingInput) (*worker.WorkerTrainingRecord, error)
-	AssignRequiredWorkerTraining(ctx context.Context, workerID string) ([]*worker.WorkerTrainingRecord, error)
-	CompleteWorkerTraining(ctx context.Context, input gqlmodel.CompleteWorkerTrainingInput) (*worker.WorkerTrainingRecord, error)
-	WaiveWorkerTraining(ctx context.Context, input gqlmodel.WaiveWorkerTrainingInput) (*worker.WorkerTrainingRecord, error)
-	CancelWorkerTraining(ctx context.Context, input gqlmodel.CancelWorkerTrainingInput) (*worker.WorkerTrainingRecord, error)
-	AttachWorkerTrainingDocument(ctx context.Context, input gqlmodel.AttachWorkerTrainingDocumentInput) (*worker.WorkerTrainingRecord, error)
+	CreateTrainingCourse(ctx context.Context, input gqlmodel.TrainingCourseInput) (*workertraining.TrainingCourse, error)
+	UpdateTrainingCourse(ctx context.Context, id string, input gqlmodel.TrainingCourseInput) (*workertraining.TrainingCourse, error)
+	ArchiveTrainingCourse(ctx context.Context, id string, version *int) (*workertraining.TrainingCourse, error)
+	RestoreTrainingCourse(ctx context.Context, id string, version *int) (*workertraining.TrainingCourse, error)
+	AssignWorkerTraining(ctx context.Context, input gqlmodel.AssignWorkerTrainingInput) (*workertraining.WorkerTrainingRecord, error)
+	AssignRequiredWorkerTraining(ctx context.Context, workerID string) ([]*workertraining.WorkerTrainingRecord, error)
+	CompleteWorkerTraining(ctx context.Context, input gqlmodel.CompleteWorkerTrainingInput) (*workertraining.WorkerTrainingRecord, error)
+	WaiveWorkerTraining(ctx context.Context, input gqlmodel.WaiveWorkerTrainingInput) (*workertraining.WorkerTrainingRecord, error)
+	CancelWorkerTraining(ctx context.Context, input gqlmodel.CancelWorkerTrainingInput) (*workertraining.WorkerTrainingRecord, error)
+	AttachWorkerTrainingDocument(ctx context.Context, input gqlmodel.AttachWorkerTrainingDocumentInput) (*workertraining.WorkerTrainingRecord, error)
 	StartMyTraining(ctx context.Context, id string) (*driverportalservice.PortalTraining, error)
 	AcknowledgeMyTraining(ctx context.Context, id string) (*driverportalservice.PortalTraining, error)
 	BulkAssignTraining(ctx context.Context, input gqlmodel.BulkAssignTrainingInput) (*workertrainingservice.BulkAssignResult, error)
@@ -1402,33 +1403,33 @@ type resolverMutation interface {
 
 type resolverPortalTraining interface {
 	ID(ctx context.Context, obj *driverportalservice.PortalTraining) (*string, error)
-	Status(ctx context.Context, obj *driverportalservice.PortalTraining) (*worker.TrainingStatus, error)
+	Status(ctx context.Context, obj *driverportalservice.PortalTraining) (*workertraining.TrainingStatus, error)
 	Score(ctx context.Context, obj *driverportalservice.PortalTraining) (*string, error)
 }
 
 type resolverQuery interface {
 	TrainingCourses(ctx context.Context, input gqlmodel.TrainingCoursesInput) (*gqlmodel.TrainingCourseConnection, error)
-	TrainingCourse(ctx context.Context, id string) (*worker.TrainingCourse, error)
-	ActiveTrainingCourses(ctx context.Context) ([]*worker.TrainingCourse, error)
-	WorkerTrainingRecords(ctx context.Context, workerID string, includeClosed *bool) ([]*worker.WorkerTrainingRecord, error)
-	WorkerTrainingRecord(ctx context.Context, id string) (*worker.WorkerTrainingRecord, error)
-	WorkerTrainingSummary(ctx context.Context, workerID string) (*worker.WorkerTrainingSummary, error)
+	TrainingCourse(ctx context.Context, id string) (*workertraining.TrainingCourse, error)
+	ActiveTrainingCourses(ctx context.Context) ([]*workertraining.TrainingCourse, error)
+	WorkerTrainingRecords(ctx context.Context, workerID string, includeClosed *bool) ([]*workertraining.WorkerTrainingRecord, error)
+	WorkerTrainingRecord(ctx context.Context, id string) (*workertraining.WorkerTrainingRecord, error)
+	WorkerTrainingSummary(ctx context.Context, workerID string) (*workertraining.WorkerTrainingSummary, error)
 	MyTraining(ctx context.Context) ([]*driverportalservice.PortalTraining, error)
 }
 
 type resolverTrainingCourse interface {
-	PassingScore(ctx context.Context, obj *worker.TrainingCourse) (*string, error)
-	OpenRecordCount(ctx context.Context, obj *worker.TrainingCourse) (int, error)
+	PassingScore(ctx context.Context, obj *workertraining.TrainingCourse) (*string, error)
+	OpenRecordCount(ctx context.Context, obj *workertraining.TrainingCourse) (int, error)
 }
 
 type resolverWorkerTrainingRecord interface {
-	Score(ctx context.Context, obj *worker.WorkerTrainingRecord) (*string, error)
-	DocumentID(ctx context.Context, obj *worker.WorkerTrainingRecord) (*string, error)
-	AssignedByID(ctx context.Context, obj *worker.WorkerTrainingRecord) (*string, error)
-	RecordedByID(ctx context.Context, obj *worker.WorkerTrainingRecord) (*string, error)
-	Health(ctx context.Context, obj *worker.WorkerTrainingRecord) (worker.TrainingHealth, error)
-	DaysUntilDue(ctx context.Context, obj *worker.WorkerTrainingRecord) (*int, error)
-	DaysUntilExpiry(ctx context.Context, obj *worker.WorkerTrainingRecord) (*int, error)
+	Score(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error)
+	DocumentID(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error)
+	AssignedByID(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error)
+	RecordedByID(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error)
+	Health(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (worker.TrainingHealth, error)
+	DaysUntilDue(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*int, error)
+	DaysUntilExpiry(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*int, error)
 }
 
 var (
@@ -2330,9 +2331,9 @@ func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (stri
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNTrainingCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCategory(ctx context.Context, ec *gqlexec.Exec, v any) (worker.TrainingCategory, error) {
+func unmarshalNTrainingCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCategory(ctx context.Context, ec *gqlexec.Exec, v any) (workertraining.TrainingCategory, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.TrainingCategory(tmp)
+	res := workertraining.TrainingCategory(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2346,9 +2347,9 @@ func unmarshalNTrainingCoursesInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNTrainingDelivery2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingDelivery(ctx context.Context, ec *gqlexec.Exec, v any) (worker.TrainingDelivery, error) {
+func unmarshalNTrainingDelivery2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingDelivery(ctx context.Context, ec *gqlexec.Exec, v any) (workertraining.TrainingDelivery, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.TrainingDelivery(tmp)
+	res := workertraining.TrainingDelivery(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2442,12 +2443,12 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOTrainingCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCategory(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.TrainingCategory, error) {
+func unmarshalOTrainingCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCategory(ctx context.Context, ec *gqlexec.Exec, v any) (*workertraining.TrainingCategory, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.TrainingCategory(tmp)
+	res := workertraining.TrainingCategory(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2575,7 +2576,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNTrainingCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.TrainingCategory) graphql.Marshaler {
+func marshalNTrainingCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workertraining.TrainingCategory) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2583,15 +2584,15 @@ func marshalNTrainingCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 	return res
 }
 
-func marshalNTrainingCourse2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCourseᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.TrainingCourse) graphql.Marshaler {
-	return gqlexec.List[*worker.TrainingCourse]{
+func marshalNTrainingCourse2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCourseᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workertraining.TrainingCourse) graphql.Marshaler {
+	return gqlexec.List[*workertraining.TrainingCourse]{
 		Elem:        marshalNTrainingCourse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCourse,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNTrainingCourse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCourse(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.TrainingCourse) graphql.Marshaler {
+func marshalNTrainingCourse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCourse(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workertraining.TrainingCourse) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2623,7 +2624,7 @@ func marshalNTrainingCourseEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "TrainingCourseEdge", v)
 }
 
-func marshalNTrainingDelivery2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingDelivery(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.TrainingDelivery) graphql.Marshaler {
+func marshalNTrainingDelivery2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingDelivery(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workertraining.TrainingDelivery) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2639,15 +2640,15 @@ func marshalNWorkerTrainingHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNWorkerTrainingRecord2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerTrainingRecordᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerTrainingRecord) graphql.Marshaler {
-	return gqlexec.List[*worker.WorkerTrainingRecord]{
+func marshalNWorkerTrainingRecord2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerTrainingRecordᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workertraining.WorkerTrainingRecord) graphql.Marshaler {
+	return gqlexec.List[*workertraining.WorkerTrainingRecord]{
 		Elem:        marshalNWorkerTrainingRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerTrainingRecord,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerTrainingRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerTrainingRecord(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerTrainingRecord) graphql.Marshaler {
+func marshalNWorkerTrainingRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerTrainingRecord(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workertraining.WorkerTrainingRecord) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2655,7 +2656,7 @@ func marshalNWorkerTrainingRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "WorkerTrainingRecord", v)
 }
 
-func marshalNWorkerTrainingStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.TrainingStatus) graphql.Marshaler {
+func marshalNWorkerTrainingStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workertraining.TrainingStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2663,7 +2664,7 @@ func marshalNWorkerTrainingStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNWorkerTrainingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerTrainingSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerTrainingSummary) graphql.Marshaler {
+func marshalNWorkerTrainingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerTrainingSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workertraining.WorkerTrainingSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2671,15 +2672,15 @@ func marshalNWorkerTrainingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "WorkerTrainingSummary", v)
 }
 
-func marshalNWorkerTrainingSummaryItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingSummaryItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.TrainingSummaryItem) graphql.Marshaler {
-	return gqlexec.List[*worker.TrainingSummaryItem]{
+func marshalNWorkerTrainingSummaryItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingSummaryItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workertraining.TrainingSummaryItem) graphql.Marshaler {
+	return gqlexec.List[*workertraining.TrainingSummaryItem]{
 		Elem:        marshalNWorkerTrainingSummaryItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingSummaryItem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerTrainingSummaryItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingSummaryItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.TrainingSummaryItem) graphql.Marshaler {
+func marshalNWorkerTrainingSummaryItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingSummaryItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workertraining.TrainingSummaryItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2753,7 +2754,7 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	return res
 }
 
-func marshalOTrainingCourse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCourse(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.TrainingCourse) graphql.Marshaler {
+func marshalOTrainingCourse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingCourse(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workertraining.TrainingCourse) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -2781,14 +2782,14 @@ func marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "WorkerCredentialDocument", v)
 }
 
-func marshalOWorkerTrainingRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerTrainingRecord(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerTrainingRecord) graphql.Marshaler {
+func marshalOWorkerTrainingRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerTrainingRecord(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workertraining.WorkerTrainingRecord) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WorkerTrainingRecord", v)
 }
 
-func marshalOWorkerTrainingStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.TrainingStatus) graphql.Marshaler {
+func marshalOWorkerTrainingStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workertraining.TrainingStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

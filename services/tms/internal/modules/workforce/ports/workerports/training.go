@@ -3,7 +3,7 @@ package workerports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -17,5 +17,5 @@ type TrainingAssigner interface {
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
 		userID pulid.ID,
-	) ([]*worker.WorkerTrainingRecord, error)
+	) ([]*workertraining.WorkerTrainingRecord, error)
 }

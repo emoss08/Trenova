@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 )
 
@@ -50,7 +50,7 @@ func DriverName(notice *notificationports.DriverNotificationPreview) string {
 	return notice.WorkerName
 }
 
-func CredentialLabel(credential *worker.WorkerCredential) string {
+func CredentialLabel(credential *workercredential.WorkerCredential) string {
 	name := "a credential"
 	if credential.CredentialType != nil && credential.CredentialType.Name != "" {
 		name = credential.CredentialType.Name

@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -52,12 +52,12 @@ type Request struct {
 	Operation  permission.Operation
 	WorkerID   pulid.ID
 	// ApprovalScope is which delegations count toward the team; empty is all.
-	ApprovalScope worker.ApprovalScope
+	ApprovalScope approvaldelegation.ApprovalScope
 }
 
-func (r *Request) approvalScope() worker.ApprovalScope {
+func (r *Request) approvalScope() approvaldelegation.ApprovalScope {
 	if r.ApprovalScope == "" {
-		return worker.ApprovalScopeAll
+		return approvaldelegation.ApprovalScopeAll
 	}
 	return r.ApprovalScope
 }
@@ -102,7 +102,7 @@ type Managers interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		userID pulid.ID,
-		scope worker.ApprovalScope,
+		scope approvaldelegation.ApprovalScope,
 		asOf int64,
 	) ([]pulid.ID, map[pulid.ID]pulid.ID, error)
 }

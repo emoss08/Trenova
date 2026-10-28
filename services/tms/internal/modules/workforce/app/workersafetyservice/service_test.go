@@ -4,14 +4,15 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,17 +27,17 @@ const day = int64(86400)
 
 type fakeRepo struct {
 	workerports.WorkerSafetyRepository
-	events       []*worker.WorkerSafetyEvent
-	actions      []*worker.WorkerDisciplinaryAction
-	recognitions []*worker.WorkerRecognition
-	violations   []*worker.WorkerSafetyViolation
+	events       []*workersafety.WorkerSafetyEvent
+	actions      []*workersafety.WorkerDisciplinaryAction
+	recognitions []*workersafety.WorkerRecognition
+	violations   []*workersafety.WorkerSafetyViolation
 }
 
 func (f *fakeRepo) ListEvents(
 	_ context.Context,
 	req *workerports.ListWorkerSafetyEventsRequest,
-) ([]*worker.WorkerSafetyEvent, error) {
-	out := make([]*worker.WorkerSafetyEvent, 0, len(f.events))
+) ([]*workersafety.WorkerSafetyEvent, error) {
+	out := make([]*workersafety.WorkerSafetyEvent, 0, len(f.events))
 	for _, e := range f.events {
 		if e.WorkerID == req.WorkerID {
 			out = append(out, e)
@@ -48,7 +49,7 @@ func (f *fakeRepo) ListEvents(
 func (f *fakeRepo) GetEventByID(
 	_ context.Context,
 	req *workerports.GetWorkerSafetyEventByIDRequest,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	for _, e := range f.events {
 		if e.ID == req.ID {
 			copied := *e
@@ -60,8 +61,8 @@ func (f *fakeRepo) GetEventByID(
 
 func (f *fakeRepo) CreateEvent(
 	_ context.Context,
-	e *worker.WorkerSafetyEvent,
-) (*worker.WorkerSafetyEvent, error) {
+	e *workersafety.WorkerSafetyEvent,
+) (*workersafety.WorkerSafetyEvent, error) {
 	e.ID = pulid.MustNew("wsev_")
 	f.events = append(f.events, e)
 	return e, nil
@@ -69,8 +70,8 @@ func (f *fakeRepo) CreateEvent(
 
 func (f *fakeRepo) UpdateEvent(
 	_ context.Context,
-	e *worker.WorkerSafetyEvent,
-) (*worker.WorkerSafetyEvent, error) {
+	e *workersafety.WorkerSafetyEvent,
+) (*workersafety.WorkerSafetyEvent, error) {
 	for i, existing := range f.events {
 		if existing.ID == e.ID {
 			e.Version = existing.Version + 1
@@ -97,8 +98,8 @@ func (f *fakeRepo) DeleteEvent(
 func (f *fakeRepo) ListActions(
 	_ context.Context,
 	req *workerports.ListWorkerDisciplinaryActionsRequest,
-) ([]*worker.WorkerDisciplinaryAction, error) {
-	out := make([]*worker.WorkerDisciplinaryAction, 0, len(f.actions))
+) ([]*workersafety.WorkerDisciplinaryAction, error) {
+	out := make([]*workersafety.WorkerDisciplinaryAction, 0, len(f.actions))
 	for _, a := range f.actions {
 		if a.WorkerID == req.WorkerID {
 			out = append(out, a)
@@ -110,7 +111,7 @@ func (f *fakeRepo) ListActions(
 func (f *fakeRepo) GetActionByID(
 	_ context.Context,
 	req *workerports.GetWorkerDisciplinaryActionByIDRequest,
-) (*worker.WorkerDisciplinaryAction, error) {
+) (*workersafety.WorkerDisciplinaryAction, error) {
 	for _, a := range f.actions {
 		if a.ID == req.ID {
 			copied := *a
@@ -122,8 +123,8 @@ func (f *fakeRepo) GetActionByID(
 
 func (f *fakeRepo) CreateAction(
 	_ context.Context,
-	a *worker.WorkerDisciplinaryAction,
-) (*worker.WorkerDisciplinaryAction, error) {
+	a *workersafety.WorkerDisciplinaryAction,
+) (*workersafety.WorkerDisciplinaryAction, error) {
 	a.ID = pulid.MustNew("wdac_")
 	f.actions = append(f.actions, a)
 	return a, nil
@@ -131,8 +132,8 @@ func (f *fakeRepo) CreateAction(
 
 func (f *fakeRepo) UpdateAction(
 	_ context.Context,
-	a *worker.WorkerDisciplinaryAction,
-) (*worker.WorkerDisciplinaryAction, error) {
+	a *workersafety.WorkerDisciplinaryAction,
+) (*workersafety.WorkerDisciplinaryAction, error) {
 	for i, existing := range f.actions {
 		if existing.ID == a.ID {
 			a.Version = existing.Version + 1
@@ -146,8 +147,8 @@ func (f *fakeRepo) UpdateAction(
 func (f *fakeRepo) ListRecognitions(
 	_ context.Context,
 	req *workerports.ListWorkerRecognitionsRequest,
-) ([]*worker.WorkerRecognition, error) {
-	out := make([]*worker.WorkerRecognition, 0, len(f.recognitions))
+) ([]*workersafety.WorkerRecognition, error) {
+	out := make([]*workersafety.WorkerRecognition, 0, len(f.recognitions))
 	for _, r := range f.recognitions {
 		if r.WorkerID == req.WorkerID && (!req.VisibleOnly || r.VisibleToWorker) {
 			out = append(out, r)
@@ -158,8 +159,8 @@ func (f *fakeRepo) ListRecognitions(
 
 func (f *fakeRepo) CreateRecognition(
 	_ context.Context,
-	r *worker.WorkerRecognition,
-) (*worker.WorkerRecognition, error) {
+	r *workersafety.WorkerRecognition,
+) (*workersafety.WorkerRecognition, error) {
 	r.ID = pulid.MustNew("wrec_")
 	f.recognitions = append(f.recognitions, r)
 	return r, nil
@@ -175,7 +176,7 @@ func (f *fakeEmployment) Record(
 ) (*workeremploymentservice.RecordResult, error) {
 	f.recorded = append(f.recorded, req)
 	return &workeremploymentservice.RecordResult{
-		Event: &worker.WorkerEmploymentEvent{ID: pulid.MustNew("wee_"), Kind: req.Kind},
+		Event: &employment.WorkerEmploymentEvent{ID: pulid.MustNew("wee_"), Kind: req.Kind},
 	}, nil
 }
 
@@ -231,15 +232,15 @@ func newHarness(t *testing.T) *harness {
 }
 
 func (h *harness) event(
-	kind worker.SafetyEventKind,
-	mutate func(*worker.WorkerSafetyEvent),
-) *worker.WorkerSafetyEvent {
-	e := &worker.WorkerSafetyEvent{
+	kind workersafety.SafetyEventKind,
+	mutate func(*workersafety.WorkerSafetyEvent),
+) *workersafety.WorkerSafetyEvent {
+	e := &workersafety.WorkerSafetyEvent{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.wrk.ID,
 		Kind:           kind,
-		Severity:       worker.SafetySeverityModerate,
+		Severity:       workersafety.SafetySeverityModerate,
 		OccurredAt:     h.now - 3*day,
 		Description:    "Backed into a dock door at the consignee",
 	}
@@ -254,15 +255,15 @@ func TestCreateEvent_DefaultsExpiryAndScrubsKindSpecificFields(t *testing.T) {
 
 	created, err := h.svc.CreateEvent(
 		context.Background(),
-		h.event(worker.SafetyEventAccident, func(e *worker.WorkerSafetyEvent) {
+		h.event(workersafety.SafetyEventAccident, func(e *workersafety.WorkerSafetyEvent) {
 			e.Points = 4
 			e.Preventable = true
-			e.InspectionResult = worker.InspectionResultPass
+			e.InspectionResult = workersafety.InspectionResultPass
 		}),
 		h.userID,
 	)
 	require.NoError(t, err)
-	assert.Equal(t, worker.SafetyEventStatusOpen, created.Status)
+	assert.Equal(t, workersafety.SafetyEventStatusOpen, created.Status)
 	assert.Equal(t, h.userID, created.RecordedByID)
 	assert.Empty(t, created.InspectionResult, "only inspections carry a result")
 	require.NotNil(t, created.PointsExpireAt)
@@ -270,7 +271,7 @@ func TestCreateEvent_DefaultsExpiryAndScrubsKindSpecificFields(t *testing.T) {
 
 	_, err = h.svc.CreateEvent(
 		context.Background(),
-		h.event(worker.SafetyEventInspection, nil),
+		h.event(workersafety.SafetyEventInspection, nil),
 		h.userID,
 	)
 	var multiErr *errortypes.MultiError
@@ -279,8 +280,8 @@ func TestCreateEvent_DefaultsExpiryAndScrubsKindSpecificFields(t *testing.T) {
 
 	oos, err := h.svc.CreateEvent(
 		context.Background(),
-		h.event(worker.SafetyEventInspection, func(e *worker.WorkerSafetyEvent) {
-			e.InspectionResult = worker.InspectionResultOutOfService
+		h.event(workersafety.SafetyEventInspection, func(e *workersafety.WorkerSafetyEvent) {
+			e.InspectionResult = workersafety.InspectionResultOutOfService
 			e.Points = 5
 		}),
 		h.userID,
@@ -300,7 +301,7 @@ func TestCloseAndDeleteEvent(t *testing.T) {
 	h := newHarness(t)
 	created, err := h.svc.CreateEvent(
 		context.Background(),
-		h.event(worker.SafetyEventIncident, nil),
+		h.event(workersafety.SafetyEventIncident, nil),
 		h.userID,
 	)
 	require.NoError(t, err)
@@ -316,7 +317,7 @@ func TestCloseAndDeleteEvent(t *testing.T) {
 		ID: created.ID, TenantInfo: h.tenant, Resolution: "Coached; dock procedure reviewed", UserID: h.userID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.SafetyEventStatusClosed, closed.Status)
+	assert.Equal(t, workersafety.SafetyEventStatusClosed, closed.Status)
 	require.NotNil(t, closed.ClosedAt)
 	assert.Equal(t, h.userID, closed.ClosedByID)
 
@@ -331,7 +332,7 @@ func TestCloseAndDeleteEvent(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, worker.SafetyEventStatusOpen, reopened.Status)
+	assert.Equal(t, workersafety.SafetyEventStatusOpen, reopened.Status)
 	assert.Nil(t, reopened.ClosedAt)
 	require.NoError(t, h.svc.DeleteEvent(context.Background(), h.tenant, created.ID, h.userID))
 	assert.Empty(t, h.repo.events)
@@ -342,14 +343,14 @@ func TestIssueAction_ClimbsTheLadderAndRecordsEmployment(t *testing.T) {
 
 	ladder, err := h.svc.Ladder(context.Background(), h.tenant, h.wrk.ID)
 	require.NoError(t, err)
-	assert.Equal(t, worker.DisciplinaryLevelCoaching, ladder.SuggestedLevel)
+	assert.Equal(t, workersafety.DisciplinaryLevelCoaching, ladder.SuggestedLevel)
 
 	first, err := h.svc.IssueAction(context.Background(), &workersafetyservice.IssueActionRequest{
-		TenantInfo: h.tenant, WorkerID: h.wrk.ID, Level: worker.DisciplinaryLevelWrittenWarning,
+		TenantInfo: h.tenant, WorkerID: h.wrk.ID, Level: workersafety.DisciplinaryLevelWrittenWarning,
 		Reason: "Two missed pre-trip inspections", UserID: h.userID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.DisciplinaryStatusActive, first.Action.Status)
+	assert.Equal(t, workersafety.DisciplinaryStatusActive, first.Action.Status)
 	require.NotNil(t, first.Action.ExpiresAt)
 	assert.Equal(t, timeutils.AddMonthsUTC(first.Action.IssuedAt, 12), *first.Action.ExpiresAt)
 	assert.Nil(t, first.EmploymentEvent)
@@ -357,10 +358,10 @@ func TestIssueAction_ClimbsTheLadderAndRecordsEmployment(t *testing.T) {
 
 	ladder, err = h.svc.Ladder(context.Background(), h.tenant, h.wrk.ID)
 	require.NoError(t, err)
-	assert.Equal(t, worker.DisciplinaryLevelFinalWarning, ladder.SuggestedLevel)
+	assert.Equal(t, workersafety.DisciplinaryLevelFinalWarning, ladder.SuggestedLevel)
 
 	_, err = h.svc.IssueAction(context.Background(), &workersafetyservice.IssueActionRequest{
-		TenantInfo: h.tenant, WorkerID: h.wrk.ID, Level: worker.DisciplinaryLevelSuspension,
+		TenantInfo: h.tenant, WorkerID: h.wrk.ID, Level: workersafety.DisciplinaryLevelSuspension,
 		Reason: "Third missed inspection", UserID: h.userID,
 	})
 	var multiErr *errortypes.MultiError
@@ -371,14 +372,14 @@ func TestIssueAction_ClimbsTheLadderAndRecordsEmployment(t *testing.T) {
 	suspension, err := h.svc.IssueAction(
 		context.Background(),
 		&workersafetyservice.IssueActionRequest{
-			TenantInfo: h.tenant, WorkerID: h.wrk.ID, Level: worker.DisciplinaryLevelSuspension,
+			TenantInfo: h.tenant, WorkerID: h.wrk.ID, Level: workersafety.DisciplinaryLevelSuspension,
 			Reason: "Third missed inspection", SuspensionDays: &days, RecordEmploymentEvent: true, UserID: h.userID,
 		},
 	)
 	require.NoError(t, err)
 	require.NotNil(t, suspension.EmploymentEvent)
 	require.Len(t, h.employment.recorded, 1)
-	assert.Equal(t, worker.EmploymentEventSuspended, h.employment.recorded[0].Kind)
+	assert.Equal(t, employment.EmploymentEventSuspended, h.employment.recorded[0].Kind)
 	assert.Equal(t, "Third missed inspection", h.employment.recorded[0].Reason)
 
 	rescinded, err := h.svc.RescindAction(
@@ -388,7 +389,7 @@ func TestIssueAction_ClimbsTheLadderAndRecordsEmployment(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, worker.DisciplinaryStatusRescinded, rescinded.Status)
+	assert.Equal(t, workersafety.DisciplinaryStatusRescinded, rescinded.Status)
 
 	acknowledged, err := h.svc.AcknowledgeAction(
 		context.Background(),
@@ -413,18 +414,18 @@ func TestIssueAction_ClimbsTheLadderAndRecordsEmployment(t *testing.T) {
 
 func TestGiveRecognition(t *testing.T) {
 	h := newHarness(t)
-	given, err := h.svc.GiveRecognition(context.Background(), &worker.WorkerRecognition{
+	given, err := h.svc.GiveRecognition(context.Background(), &workersafety.WorkerRecognition{
 		OrganizationID: h.tenant.OrgID, BusinessUnitID: h.tenant.BuID, WorkerID: h.wrk.ID,
-		Kind: worker.RecognitionKindSafetyMilestone, Title: "  One year accident-free  ", VisibleToWorker: true,
+		Kind: workersafety.RecognitionKindSafetyMilestone, Title: "  One year accident-free  ", VisibleToWorker: true,
 	}, h.userID)
 	require.NoError(t, err)
 	assert.Equal(t, "One year accident-free", given.Title)
 	assert.Equal(t, h.userID, given.AwardedByID)
 	assert.NotZero(t, given.OccurredAt)
 
-	hidden, err := h.svc.GiveRecognition(context.Background(), &worker.WorkerRecognition{
+	hidden, err := h.svc.GiveRecognition(context.Background(), &workersafety.WorkerRecognition{
 		OrganizationID: h.tenant.OrgID, BusinessUnitID: h.tenant.BuID, WorkerID: h.wrk.ID,
-		Kind: worker.RecognitionKindOther, Title: "Internal note",
+		Kind: workersafety.RecognitionKindOther, Title: "Internal note",
 	}, h.userID)
 	require.NoError(t, err)
 	assert.False(t, hidden.VisibleToWorker)

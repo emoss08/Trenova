@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -157,7 +158,7 @@ func (s *Service) audit(p auditParams) {
 func (s *Service) ListPolicies(
 	ctx context.Context,
 	req *workerports.ListWorkerPoliciesRequest,
-) ([]*worker.WorkerPolicy, error) {
+) ([]*workerpolicy.WorkerPolicy, error) {
 	return s.repo.ListPolicies(ctx, req)
 }
 
@@ -165,7 +166,7 @@ func (s *Service) GetPolicy(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerPolicy, error) {
+) (*workerpolicy.WorkerPolicy, error) {
 	return s.repo.GetPolicyByID(ctx, &workerports.GetWorkerPolicyByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
@@ -174,7 +175,7 @@ func (s *Service) GetPolicy(
 
 // PolicyRequest is a policy being written or rewritten.
 type PolicyRequest struct {
-	Entity     *worker.WorkerPolicy
+	Entity     *workerpolicy.WorkerPolicy
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
 }
@@ -182,7 +183,7 @@ type PolicyRequest struct {
 func (s *Service) CreatePolicy(
 	ctx context.Context,
 	req *PolicyRequest,
-) (*worker.WorkerPolicy, error) {
+) (*workerpolicy.WorkerPolicy, error) {
 	entity := req.Entity
 	entity.OrganizationID = req.TenantInfo.OrgID
 	entity.BusinessUnitID = req.TenantInfo.BuID
@@ -224,7 +225,7 @@ func (s *Service) CreatePolicy(
 func (s *Service) UpdatePolicy(
 	ctx context.Context,
 	req *PolicyRequest,
-) (*worker.WorkerPolicy, error) {
+) (*workerpolicy.WorkerPolicy, error) {
 	entity := req.Entity
 	entity.OrganizationID = req.TenantInfo.OrgID
 	entity.BusinessUnitID = req.TenantInfo.BuID
@@ -290,7 +291,7 @@ func (s *Service) UpdatePolicy(
 // PolicyCompliance is who has signed what is in force and who has not,
 // derived on read: the roster and the acknowledgements both move.
 type PolicyCompliance struct {
-	Policy      *worker.WorkerPolicy
+	Policy      *workerpolicy.WorkerPolicy
 	Rows        []workerports.PolicyComplianceRow
 	Signed      int
 	Outstanding int
@@ -331,8 +332,8 @@ func (s *Service) PolicyCompliance(
 // PolicyStanding is one policy from one worker's side: the policy, and their
 // signature on the version in force if they have given one.
 type PolicyStanding struct {
-	Policy          *worker.WorkerPolicy
-	Acknowledgement *worker.WorkerPolicyAcknowledgement
+	Policy          *workerpolicy.WorkerPolicy
+	Acknowledgement *workerpolicy.WorkerPolicyAcknowledgement
 }
 
 // Outstanding reports whether the worker still owes a signature.
@@ -363,7 +364,7 @@ func (s *Service) PoliciesForWorker(
 	if err != nil {
 		return nil, err
 	}
-	signed := make(map[string]*worker.WorkerPolicyAcknowledgement, len(acks))
+	signed := make(map[string]*workerpolicy.WorkerPolicyAcknowledgement, len(acks))
 	for _, ack := range acks {
 		signed[ack.PolicyID.String()+"@"+ack.VersionLabel] = ack
 	}
@@ -398,7 +399,7 @@ type AcknowledgeRequest struct {
 func (s *Service) Acknowledge(
 	ctx context.Context,
 	req *AcknowledgeRequest,
-) (*worker.WorkerPolicyAcknowledgement, error) {
+) (*workerpolicy.WorkerPolicyAcknowledgement, error) {
 	policy, err := s.GetPolicy(ctx, req.TenantInfo, req.PolicyID)
 	if err != nil {
 		return nil, err
@@ -457,7 +458,7 @@ func (s *Service) Acknowledge(
 		return existing[0], nil
 	}
 
-	entity := &worker.WorkerPolicyAcknowledgement{
+	entity := &workerpolicy.WorkerPolicyAcknowledgement{
 		OrganizationID:     req.TenantInfo.OrgID,
 		BusinessUnitID:     req.TenantInfo.BuID,
 		PolicyID:           policy.ID,
@@ -509,7 +510,7 @@ func truncate(value string, limit int) string {
 func (s *Service) ListAcknowledgements(
 	ctx context.Context,
 	req *workerports.ListPolicyAcknowledgementsRequest,
-) ([]*worker.WorkerPolicyAcknowledgement, error) {
+) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
 	return s.repo.ListAcknowledgements(ctx, req)
 }
 

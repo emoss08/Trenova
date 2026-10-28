@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,7 +17,7 @@ import (
 func dotTestFromInput(
 	input *gqlmodel.RecordDOTTestInput,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerDOTTest, error) {
+) (*workerdot.WorkerDOTTest, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -58,14 +58,14 @@ func dotTestFromInput(
 		return nil, err
 	}
 
-	entity := &worker.WorkerDOTTest{
+	entity := &workerdot.WorkerDOTTest{
 		OrganizationID:       tenantInfo.OrgID,
 		BusinessUnitID:       tenantInfo.BuID,
 		WorkerID:             workerID,
 		TestType:             input.TestType,
 		Substance:            input.Substance,
-		Status:               worker.DOTTestStatusScheduled,
-		Result:               worker.DOTResultPending,
+		Status:               workerdot.DOTTestStatusScheduled,
+		Result:               workerdot.DOTResultPending,
 		IsDOT:                true,
 		Reason:               base.StringValue(input.Reason),
 		ScheduledAt:          base.Int64Ptr(input.ScheduledAt),
@@ -143,7 +143,7 @@ func dotTestResultRequest(
 func dotViolationFromInput(
 	input *gqlmodel.RecordDOTViolationInput,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerDOTViolation, error) {
+) (*workerdot.WorkerDOTViolation, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -169,7 +169,7 @@ func dotViolationFromInput(
 		)
 	}
 
-	return &worker.WorkerDOTViolation{
+	return &workerdot.WorkerDOTViolation{
 		OrganizationID:            tenantInfo.OrgID,
 		BusinessUnitID:            tenantInfo.BuID,
 		WorkerID:                  workerID,
@@ -229,7 +229,7 @@ func dotViolationUpdateRequest(
 func clearinghouseQueryFromInput(
 	input *gqlmodel.RecordClearinghouseQueryInput,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerClearinghouseQuery, error) {
+) (*workerdot.WorkerClearinghouseQuery, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -247,12 +247,12 @@ func clearinghouseQueryFromInput(
 		)
 	}
 
-	entity := &worker.WorkerClearinghouseQuery{
+	entity := &workerdot.WorkerClearinghouseQuery{
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
 		WorkerID:          workerID,
 		QueryType:         input.QueryType,
-		Result:            worker.ClearinghouseResultPending,
+		Result:            workerdot.ClearinghouseResultPending,
 		ConsentObtainedAt: base.Int64Ptr(input.ConsentObtainedAt),
 		ConsentExpiresAt:  base.Int64Ptr(input.ConsentExpiresAt),
 		RequestedAt:       base.Int64Value(input.RequestedAt),
@@ -309,8 +309,8 @@ func completeQueryRequest(
 func randomPoolFromInput(
 	input *gqlmodel.DOTRandomPoolInput,
 	tenantInfo pagination.TenantInfo,
-) *worker.DOTRandomPool {
-	entity := &worker.DOTRandomPool{
+) *workerdot.DOTRandomPool {
+	entity := &workerdot.DOTRandomPool{
 		OrganizationID:      tenantInfo.OrgID,
 		BusinessUnitID:      tenantInfo.BuID,
 		Code:                strings.TrimSpace(input.Code),
@@ -334,12 +334,12 @@ func randomPoolFromInput(
 }
 
 func randomPoolCursorConnectionToModel(
-	result *pagination.CursorListResult[*worker.DOTRandomPool],
+	result *pagination.CursorListResult[*workerdot.DOTRandomPool],
 ) (*gqlmodel.DOTRandomPoolConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
 		result,
-		func(node *worker.DOTRandomPool, cursor string) *gqlmodel.DOTRandomPoolEdge {
+		func(node *workerdot.DOTRandomPool, cursor string) *gqlmodel.DOTRandomPoolEdge {
 			return &gqlmodel.DOTRandomPoolEdge{Node: node, Cursor: cursor}
 		},
 	)

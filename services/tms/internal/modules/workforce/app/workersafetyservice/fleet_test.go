@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -109,14 +110,14 @@ func TestFleet_SummarisesTheRoster(t *testing.T) {
 		},
 		kinds: []workerports.FleetSafetyKindRow{
 			{
-				Kind:        worker.SafetyEventAccident,
+				Kind:        workersafety.SafetyEventAccident,
 				Events:      2,
 				Points:      12,
 				Preventable: 1,
 				Open:        1,
 			},
 			{
-				Kind:         worker.SafetyEventInspection,
+				Kind:         workersafety.SafetyEventInspection,
 				Events:       9,
 				Points:       5,
 				OutOfService: 1,
@@ -176,14 +177,14 @@ func TestFleet_FoldsRecordedAndInferredBasics(t *testing.T) {
 	repo := &fleetRepo{
 		basics: []workerports.FleetSafetyBasicRow{
 			{
-				Basic:       worker.BasicHOSCompliance,
+				Basic:       workersafety.BasicHOSCompliance,
 				Bucket:      0,
 				Violations:  2,
 				SeveritySum: 10,
 			},
 		},
 		inferred: []workerports.FleetSafetyEventBasicRow{
-			{Kind: worker.SafetyEventAccident, Bucket: 0, Events: 1, Points: 6},
+			{Kind: workersafety.SafetyEventAccident, Bucket: 0, Events: 1, Points: 6},
 		},
 	}
 
@@ -196,12 +197,12 @@ func TestFleet_FoldsRecordedAndInferredBasics(t *testing.T) {
 	require.Len(t, summary.Basics, 7)
 	assert.True(t, summary.BasicsInferred)
 
-	var hos, crash worker.FleetSafetyBasic
+	var hos, crash workersafety.FleetSafetyBasic
 	for _, basic := range summary.Basics {
 		switch basic.Basic {
-		case worker.BasicHOSCompliance:
+		case workersafety.BasicHOSCompliance:
 			hos = basic
-		case worker.BasicCrashIndicator:
+		case workersafety.BasicCrashIndicator:
 			crash = basic
 		default:
 		}

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -30,13 +31,13 @@ func TestChangeRequestsNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 		err := workerdb.WorkerProfileChangeRequests.Create(
 			ctx,
 			db,
-			&worker.WorkerProfileChangeRequest{
+			&profilechange.WorkerProfileChangeRequest{
 				ID:             pulid.MustNew("wpcr_"),
 				OrganizationID: data.Organization.ID,
 				BusinessUnitID: data.BusinessUnit.ID,
 				WorkerID:       wrk.ID,
-				Status:         worker.ProfileChangePending,
-				Changes:        []worker.FieldChange{},
+				Status:         profilechange.ProfileChangePending,
+				Changes:        []profilechange.FieldChange{},
 				SubmittedAt:    1_700_000_000,
 			},
 		)

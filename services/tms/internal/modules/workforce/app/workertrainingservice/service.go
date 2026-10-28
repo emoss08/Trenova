@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -99,7 +100,7 @@ func (s *Service) audit(p *auditParams) {
 }
 
 func (s *Service) auditCourse(
-	current, previous *worker.TrainingCourse,
+	current, previous *workertraining.TrainingCourse,
 	operation permission.Operation,
 	userID pulid.ID,
 	comment string,
@@ -119,7 +120,7 @@ func (s *Service) auditCourse(
 }
 
 func (s *Service) auditRecord(
-	current, previous *worker.WorkerTrainingRecord,
+	current, previous *workertraining.WorkerTrainingRecord,
 	operation permission.Operation,
 	userID pulid.ID,
 	comment string,
@@ -169,11 +170,11 @@ func (s *Service) publish(
 	}
 }
 
-func courseTenant(entity *worker.TrainingCourse) pagination.TenantInfo {
+func courseTenant(entity *workertraining.TrainingCourse) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 
-func recordTenant(entity *worker.WorkerTrainingRecord) pagination.TenantInfo {
+func recordTenant(entity *workertraining.WorkerTrainingRecord) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 

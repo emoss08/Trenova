@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,7 +13,7 @@ import (
 func employmentVerificationFromInput(
 	input *gqlmodel.RecordEmploymentVerificationInput,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -23,7 +23,7 @@ func employmentVerificationFromInput(
 		)
 	}
 
-	entity := &worker.WorkerEmploymentVerification{
+	entity := &employment.WorkerEmploymentVerification{
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
 		WorkerID:          workerID,

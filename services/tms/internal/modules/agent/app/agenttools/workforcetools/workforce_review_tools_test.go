@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +22,7 @@ type fakeReviews struct {
 	ReviewKeeper
 
 	guard  *agenttoolstest.WriteGuard
-	review *worker.PerformanceReview
+	review *workerreview.PerformanceReview
 
 	created *performancereviewservice.CreateReviewRequest
 	saved   *performancereviewservice.UpdateReviewRequest
@@ -33,17 +33,17 @@ func newFakeReviews() *fakeReviews {
 	three := int32(3)
 	return &fakeReviews{
 		guard: &agenttoolstest.WriteGuard{},
-		review: &worker.PerformanceReview{
+		review: &workerreview.PerformanceReview{
 			ID:       pulid.MustNew("prv_"),
 			WorkerID: pulid.MustNew("wrk_"),
-			Status:   worker.ReviewStatusDraft,
+			Status:   workerreview.ReviewStatusDraft,
 			Title:    "2026 annual review",
 			Summary:  "Steady year",
-			Ratings: []worker.ReviewRating{
+			Ratings: []workerreview.ReviewRating{
 				{Key: "safety", Label: "Safety", Weight: 2, Score: &three},
 				{Key: "service", Label: "Customer service", Weight: 1},
 			},
-			Goals:   []worker.ReviewGoal{{ID: "g1", Title: "Zero preventables"}},
+			Goals:   []workerreview.ReviewGoal{{ID: "g1", Title: "Zero preventables"}},
 			Version: 5,
 		},
 	}
@@ -53,7 +53,7 @@ func (f *fakeReviews) GetReview(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*worker.PerformanceReview, error) {
+) (*workerreview.PerformanceReview, error) {
 	copied := *f.review
 	return &copied, nil
 }
@@ -61,11 +61,11 @@ func (f *fakeReviews) GetReview(
 func (f *fakeReviews) PlanCreateReview(
 	_ context.Context,
 	req *performancereviewservice.CreateReviewRequest,
-) (*worker.PerformanceReview, error) {
-	return &worker.PerformanceReview{
+) (*workerreview.PerformanceReview, error) {
+	return &workerreview.PerformanceReview{
 		WorkerID:    req.WorkerID,
 		TemplateID:  req.TemplateID,
-		Status:      worker.ReviewStatusDraft,
+		Status:      workerreview.ReviewStatusDraft,
 		Title:       "Annual review",
 		PeriodStart: req.PeriodStart,
 		PeriodEnd:   req.PeriodEnd,
@@ -75,7 +75,7 @@ func (f *fakeReviews) PlanCreateReview(
 func (f *fakeReviews) CreateReview(
 	_ context.Context,
 	req *performancereviewservice.CreateReviewRequest,
-) (*worker.PerformanceReview, error) {
+) (*workerreview.PerformanceReview, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (f *fakeReviews) PlanUpdateReview(
 	_ context.Context,
 	req *performancereviewservice.UpdateReviewRequest,
 ) (*performancereviewservice.ReviewChange, error) {
-	if f.review.Status != worker.ReviewStatusDraft {
+	if f.review.Status != workerreview.ReviewStatusDraft {
 		return nil, errortypes.NewValidationError("status", errortypes.ErrInvalidOperation,
 			"Only a draft review can be edited")
 	}
@@ -101,7 +101,7 @@ func (f *fakeReviews) PlanUpdateReview(
 func (f *fakeReviews) UpdateReview(
 	_ context.Context,
 	req *performancereviewservice.UpdateReviewRequest,
-) (*worker.PerformanceReview, error) {
+) (*workerreview.PerformanceReview, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -113,8 +113,8 @@ func (f *fakeReviews) PlanDeleteReview(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*worker.PerformanceReview, error) {
-	if f.review.Status != worker.ReviewStatusDraft {
+) (*workerreview.PerformanceReview, error) {
+	if f.review.Status != workerreview.ReviewStatusDraft {
 		return nil, errortypes.NewValidationError("status", errortypes.ErrInvalidOperation,
 			"Only a draft review can be deleted")
 	}
@@ -199,7 +199,7 @@ func TestDraftPerformanceReview_MergesRatingsByKey(t *testing.T) {
 	assert.Equal(t, int32(4), *reviews.saved.Ratings[1].Score)
 	assert.Equal(t, "Steady year", reviews.saved.Summary)
 	require.Len(t, reviews.saved.Goals, 1)
-	assert.Equal(t, worker.ReviewGoalStatusOpen, reviews.saved.Goals[0].Status)
+	assert.Equal(t, workerreview.ReviewGoalStatusOpen, reviews.saved.Goals[0].Status)
 	require.NotNil(t, reviews.saved.Goals[0].DueAt)
 	assert.Equal(t, reviews.review.Version, reviews.saved.Version)
 
@@ -227,7 +227,7 @@ func TestDraftPerformanceReview_MergesRatingsByKey(t *testing.T) {
 			agenttoolstest.ExecuteParams(raw)), name)
 	}
 
-	reviews.review.Status = worker.ReviewStatusSubmitted
+	reviews.review.Status = workerreview.ReviewStatusSubmitted
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params),
 		"a submitted review is the reviewer's")
 }
@@ -257,6 +257,6 @@ func TestDeletePerformanceReview_OnlyADraft(t *testing.T) {
 	assert.Equal(t, []pulid.ID{reviews.review.ID}, reviews.deleted)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 
-	reviews.review.Status = worker.ReviewStatusClosed
+	reviews.review.Status = workerreview.ReviewStatusClosed
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }

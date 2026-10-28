@@ -3,6 +3,22 @@
 package workerdb
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersyncdrift"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"context"
 	"unsafe"
 
@@ -66,7 +82,7 @@ var approvalDelegationsTable = schema.Table{
 	IDPrefix:     "apdl_",
 	New:          newApprovalDelegation,
 	NewN:         newNApprovalDelegation,
-	Size:         unsafe.Sizeof(worker.ApprovalDelegation{}),
+	Size:         unsafe.Sizeof(approvaldelegation.ApprovalDelegation{}),
 	Ptr:          ptrApprovalDelegation,
 	Value:        valueApprovalDelegation,
 	Attach:       attachApprovalDelegation,
@@ -77,7 +93,7 @@ var approvalDelegationsRef = keel.Ref{Table: &approvalDelegationsTable}
 
 // ApprovalDelegationsTable is the table of worker.ApprovalDelegation.
 type ApprovalDelegationsTable struct {
-	keel.Handle[*worker.ApprovalDelegation]
+	keel.Handle[*approvaldelegation.ApprovalDelegation]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -97,7 +113,7 @@ type ApprovalDelegationsTable struct {
 
 // ApprovalDelegations references the approval_delegations table.
 var ApprovalDelegations = &ApprovalDelegationsTable{
-	Handle:         keel.Handle[*worker.ApprovalDelegation]{Ref: &approvalDelegationsRef},
+	Handle:         keel.Handle[*approvaldelegation.ApprovalDelegation]{Ref: &approvalDelegationsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 2}}},
@@ -118,7 +134,7 @@ var ApprovalDelegations = &ApprovalDelegationsTable{
 // BuildApprovalDelegations builds the handle of approval_delegations for ref. Generated relation and alias methods call it.
 func BuildApprovalDelegations(r *keel.Ref) *ApprovalDelegationsTable {
 	return &ApprovalDelegationsTable{
-		Handle:         keel.Handle[*worker.ApprovalDelegation]{Ref: r},
+		Handle:         keel.Handle[*approvaldelegation.ApprovalDelegation]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -156,18 +172,18 @@ func (t *ApprovalDelegationsTable) Delegate() *tenantdb.UsersTable {
 }
 
 // Get returns the approval_delegations row with the given key, or keel.ErrNotFound.
-func (t *ApprovalDelegationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.ApprovalDelegation, error) {
+func (t *ApprovalDelegationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*approvaldelegation.ApprovalDelegation, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newApprovalDelegation() unsafe.Pointer { return unsafe.Pointer(new(worker.ApprovalDelegation)) }
+func newApprovalDelegation() unsafe.Pointer { return unsafe.Pointer(new(approvaldelegation.ApprovalDelegation)) }
 
 func newNApprovalDelegation(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.ApprovalDelegation, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]approvaldelegation.ApprovalDelegation, n)))
 }
 
 func ptrApprovalDelegation(p unsafe.Pointer, c int32) any {
-	r := (*worker.ApprovalDelegation)(p)
+	r := (*approvaldelegation.ApprovalDelegation)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -204,7 +220,7 @@ func ptrApprovalDelegation(p unsafe.Pointer, c int32) any {
 }
 
 func valueApprovalDelegation(p unsafe.Pointer, c int32) any {
-	r := (*worker.ApprovalDelegation)(p)
+	r := (*approvaldelegation.ApprovalDelegation)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -256,7 +272,7 @@ func valueApprovalDelegation(p unsafe.Pointer, c int32) any {
 }
 
 func attachApprovalDelegation(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.ApprovalDelegation)(p)
+	r := (*approvaldelegation.ApprovalDelegation)(p)
 	switch rel {
 	case 0:
 		r.Delegator = (*tenant.User)(child)
@@ -266,7 +282,7 @@ func attachApprovalDelegation(p unsafe.Pointer, rel int32, child unsafe.Pointer)
 }
 
 func beforeCreateApprovalDelegation(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.ApprovalDelegation)(p).BeforeCreate(ctx)
+	return (*approvaldelegation.ApprovalDelegation)(p).BeforeCreate(ctx)
 }
 
 // dOTRandomDrawsTable is the schema of worker.DOTRandomDraw.
@@ -277,7 +293,7 @@ var dOTRandomDrawsTable = schema.Table{
 	Model:       "worker.DOTRandomDraw",
 	Label:       `DOT Random Draw`,
 	Plural:      `DOT Random Draws`,
-	Constraints: (&worker.DOTRandomDraw{}).Constraints(),
+	Constraints: (&workerdot.DOTRandomDraw{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -320,7 +336,7 @@ var dOTRandomDrawsTable = schema.Table{
 	IDPrefix:     "drdraw_",
 	New:          newDOTRandomDraw,
 	NewN:         newNDOTRandomDraw,
-	Size:         unsafe.Sizeof(worker.DOTRandomDraw{}),
+	Size:         unsafe.Sizeof(workerdot.DOTRandomDraw{}),
 	Ptr:          ptrDOTRandomDraw,
 	Value:        valueDOTRandomDraw,
 	Attach:       attachDOTRandomDraw,
@@ -331,7 +347,7 @@ var dOTRandomDrawsRef = keel.Ref{Table: &dOTRandomDrawsTable}
 
 // DOTRandomDrawsTable is the table of worker.DOTRandomDraw.
 type DOTRandomDrawsTable struct {
-	keel.Handle[*worker.DOTRandomDraw]
+	keel.Handle[*workerdot.DOTRandomDraw]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -358,7 +374,7 @@ type DOTRandomDrawsTable struct {
 
 // DOTRandomDraws references the dot_random_draws table.
 var DOTRandomDraws = &DOTRandomDrawsTable{
-	Handle:          keel.Handle[*worker.DOTRandomDraw]{Ref: &dOTRandomDrawsRef},
+	Handle:          keel.Handle[*workerdot.DOTRandomDraw]{Ref: &dOTRandomDrawsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 2}}},
@@ -386,7 +402,7 @@ var DOTRandomDraws = &DOTRandomDrawsTable{
 // BuildDOTRandomDraws builds the handle of dot_random_draws for ref. Generated relation and alias methods call it.
 func BuildDOTRandomDraws(r *keel.Ref) *DOTRandomDrawsTable {
 	return &DOTRandomDrawsTable{
-		Handle:          keel.Handle[*worker.DOTRandomDraw]{Ref: r},
+		Handle:          keel.Handle[*workerdot.DOTRandomDraw]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -436,18 +452,18 @@ func (t *DOTRandomDrawsTable) Entries() *DOTRandomDrawEntriesTable {
 }
 
 // Get returns the dot_random_draws row with the given key, or keel.ErrNotFound.
-func (t *DOTRandomDrawsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.DOTRandomDraw, error) {
+func (t *DOTRandomDrawsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerdot.DOTRandomDraw, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newDOTRandomDraw() unsafe.Pointer { return unsafe.Pointer(new(worker.DOTRandomDraw)) }
+func newDOTRandomDraw() unsafe.Pointer { return unsafe.Pointer(new(workerdot.DOTRandomDraw)) }
 
 func newNDOTRandomDraw(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.DOTRandomDraw, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerdot.DOTRandomDraw, n)))
 }
 
 func ptrDOTRandomDraw(p unsafe.Pointer, c int32) any {
-	r := (*worker.DOTRandomDraw)(p)
+	r := (*workerdot.DOTRandomDraw)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -498,7 +514,7 @@ func ptrDOTRandomDraw(p unsafe.Pointer, c int32) any {
 }
 
 func valueDOTRandomDraw(p unsafe.Pointer, c int32) any {
-	r := (*worker.DOTRandomDraw)(p)
+	r := (*workerdot.DOTRandomDraw)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -558,19 +574,19 @@ func valueDOTRandomDraw(p unsafe.Pointer, c int32) any {
 }
 
 func attachDOTRandomDraw(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.DOTRandomDraw)(p)
+	r := (*workerdot.DOTRandomDraw)(p)
 	switch rel {
 	case 0:
-		r.Pool = (*worker.DOTRandomPool)(child)
+		r.Pool = (*workerdot.DOTRandomPool)(child)
 	case 1:
 		r.DrawnBy = (*tenant.User)(child)
 	case 2:
-		r.Entries = append(r.Entries, (*worker.DOTRandomDrawEntry)(child))
+		r.Entries = append(r.Entries, (*workerdot.DOTRandomDrawEntry)(child))
 	}
 }
 
 func beforeCreateDOTRandomDraw(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.DOTRandomDraw)(p).BeforeCreate(ctx)
+	return (*workerdot.DOTRandomDraw)(p).BeforeCreate(ctx)
 }
 
 // dOTRandomDrawEntriesTable is the schema of worker.DOTRandomDrawEntry.
@@ -581,7 +597,7 @@ var dOTRandomDrawEntriesTable = schema.Table{
 	Model:       "worker.DOTRandomDrawEntry",
 	Label:       `DOT Random Draw Entry`,
 	Plural:      `DOT Random Draw Entries`,
-	Constraints: (&worker.DOTRandomDrawEntry{}).Constraints(),
+	Constraints: (&workerdot.DOTRandomDrawEntry{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -616,7 +632,7 @@ var dOTRandomDrawEntriesTable = schema.Table{
 	IDPrefix:     "drde_",
 	New:          newDOTRandomDrawEntry,
 	NewN:         newNDOTRandomDrawEntry,
-	Size:         unsafe.Sizeof(worker.DOTRandomDrawEntry{}),
+	Size:         unsafe.Sizeof(workerdot.DOTRandomDrawEntry{}),
 	Ptr:          ptrDOTRandomDrawEntry,
 	Value:        valueDOTRandomDrawEntry,
 	Attach:       attachDOTRandomDrawEntry,
@@ -627,7 +643,7 @@ var dOTRandomDrawEntriesRef = keel.Ref{Table: &dOTRandomDrawEntriesTable}
 
 // DOTRandomDrawEntriesTable is the table of worker.DOTRandomDrawEntry.
 type DOTRandomDrawEntriesTable struct {
-	keel.Handle[*worker.DOTRandomDrawEntry]
+	keel.Handle[*workerdot.DOTRandomDrawEntry]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -647,7 +663,7 @@ type DOTRandomDrawEntriesTable struct {
 
 // DOTRandomDrawEntries references the dot_random_draw_entries table.
 var DOTRandomDrawEntries = &DOTRandomDrawEntriesTable{
-	Handle:         keel.Handle[*worker.DOTRandomDrawEntry]{Ref: &dOTRandomDrawEntriesRef},
+	Handle:         keel.Handle[*workerdot.DOTRandomDrawEntry]{Ref: &dOTRandomDrawEntriesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 2}}},
@@ -668,7 +684,7 @@ var DOTRandomDrawEntries = &DOTRandomDrawEntriesTable{
 // BuildDOTRandomDrawEntries builds the handle of dot_random_draw_entries for ref. Generated relation and alias methods call it.
 func BuildDOTRandomDrawEntries(r *keel.Ref) *DOTRandomDrawEntriesTable {
 	return &DOTRandomDrawEntriesTable{
-		Handle:         keel.Handle[*worker.DOTRandomDrawEntry]{Ref: r},
+		Handle:         keel.Handle[*workerdot.DOTRandomDrawEntry]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -704,18 +720,18 @@ func (t *DOTRandomDrawEntriesTable) Draw() *DOTRandomDrawsTable {
 func (t *DOTRandomDrawEntriesTable) Worker() *WorkersTable { return keel.Path(t.Ref, 1, BuildWorkers) }
 
 // Get returns the dot_random_draw_entries row with the given key, or keel.ErrNotFound.
-func (t *DOTRandomDrawEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.DOTRandomDrawEntry, error) {
+func (t *DOTRandomDrawEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerdot.DOTRandomDrawEntry, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newDOTRandomDrawEntry() unsafe.Pointer { return unsafe.Pointer(new(worker.DOTRandomDrawEntry)) }
+func newDOTRandomDrawEntry() unsafe.Pointer { return unsafe.Pointer(new(workerdot.DOTRandomDrawEntry)) }
 
 func newNDOTRandomDrawEntry(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.DOTRandomDrawEntry, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerdot.DOTRandomDrawEntry, n)))
 }
 
 func ptrDOTRandomDrawEntry(p unsafe.Pointer, c int32) any {
-	r := (*worker.DOTRandomDrawEntry)(p)
+	r := (*workerdot.DOTRandomDrawEntry)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -752,7 +768,7 @@ func ptrDOTRandomDrawEntry(p unsafe.Pointer, c int32) any {
 }
 
 func valueDOTRandomDrawEntry(p unsafe.Pointer, c int32) any {
-	r := (*worker.DOTRandomDrawEntry)(p)
+	r := (*workerdot.DOTRandomDrawEntry)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -801,17 +817,17 @@ func valueDOTRandomDrawEntry(p unsafe.Pointer, c int32) any {
 }
 
 func attachDOTRandomDrawEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.DOTRandomDrawEntry)(p)
+	r := (*workerdot.DOTRandomDrawEntry)(p)
 	switch rel {
 	case 0:
-		r.Draw = (*worker.DOTRandomDraw)(child)
+		r.Draw = (*workerdot.DOTRandomDraw)(child)
 	case 1:
 		r.Worker = (*worker.Worker)(child)
 	}
 }
 
 func beforeCreateDOTRandomDrawEntry(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.DOTRandomDrawEntry)(p).BeforeCreate(ctx)
+	return (*workerdot.DOTRandomDrawEntry)(p).BeforeCreate(ctx)
 }
 
 // dOTRandomPoolsTable is the schema of worker.DOTRandomPool.
@@ -822,7 +838,7 @@ var dOTRandomPoolsTable = schema.Table{
 	Model:       "worker.DOTRandomPool",
 	Label:       `DOT Random Pool`,
 	Plural:      `DOT Random Pools`,
-	Constraints: (&worker.DOTRandomPool{}).Constraints(),
+	Constraints: (&workerdot.DOTRandomPool{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -855,7 +871,7 @@ var dOTRandomPoolsTable = schema.Table{
 	IDPrefix:     "drpool_",
 	New:          newDOTRandomPool,
 	NewN:         newNDOTRandomPool,
-	Size:         unsafe.Sizeof(worker.DOTRandomPool{}),
+	Size:         unsafe.Sizeof(workerdot.DOTRandomPool{}),
 	Ptr:          ptrDOTRandomPool,
 	Value:        valueDOTRandomPool,
 	BeforeCreate: beforeCreateDOTRandomPool,
@@ -866,7 +882,7 @@ var dOTRandomPoolsRef = keel.Ref{Table: &dOTRandomPoolsTable}
 
 // DOTRandomPoolsTable is the table of worker.DOTRandomPool.
 type DOTRandomPoolsTable struct {
-	keel.Handle[*worker.DOTRandomPool]
+	keel.Handle[*workerdot.DOTRandomPool]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -888,7 +904,7 @@ type DOTRandomPoolsTable struct {
 
 // DOTRandomPools references the dot_random_pools table.
 var DOTRandomPools = &DOTRandomPoolsTable{
-	Handle:              keel.Handle[*worker.DOTRandomPool]{Ref: &dOTRandomPoolsRef},
+	Handle:              keel.Handle[*workerdot.DOTRandomPool]{Ref: &dOTRandomPoolsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 2}}},
@@ -911,7 +927,7 @@ var DOTRandomPools = &DOTRandomPoolsTable{
 // BuildDOTRandomPools builds the handle of dot_random_pools for ref. Generated relation and alias methods call it.
 func BuildDOTRandomPools(r *keel.Ref) *DOTRandomPoolsTable {
 	return &DOTRandomPoolsTable{
-		Handle:              keel.Handle[*worker.DOTRandomPool]{Ref: r},
+		Handle:              keel.Handle[*workerdot.DOTRandomPool]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -941,18 +957,18 @@ func (t *DOTRandomPoolsTable) As(alias string) *DOTRandomPoolsTable {
 }
 
 // Get returns the dot_random_pools row with the given key, or keel.ErrNotFound.
-func (t *DOTRandomPoolsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.DOTRandomPool, error) {
+func (t *DOTRandomPoolsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerdot.DOTRandomPool, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newDOTRandomPool() unsafe.Pointer { return unsafe.Pointer(new(worker.DOTRandomPool)) }
+func newDOTRandomPool() unsafe.Pointer { return unsafe.Pointer(new(workerdot.DOTRandomPool)) }
 
 func newNDOTRandomPool(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.DOTRandomPool, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerdot.DOTRandomPool, n)))
 }
 
 func ptrDOTRandomPool(p unsafe.Pointer, c int32) any {
-	r := (*worker.DOTRandomPool)(p)
+	r := (*workerdot.DOTRandomPool)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -993,7 +1009,7 @@ func ptrDOTRandomPool(p unsafe.Pointer, c int32) any {
 }
 
 func valueDOTRandomPool(p unsafe.Pointer, c int32) any {
-	r := (*worker.DOTRandomPool)(p)
+	r := (*workerdot.DOTRandomPool)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1040,11 +1056,11 @@ func valueDOTRandomPool(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateDOTRandomPool(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.DOTRandomPool)(p).BeforeCreate(ctx)
+	return (*workerdot.DOTRandomPool)(p).BeforeCreate(ctx)
 }
 
 func beforeUpdateDOTRandomPool(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.DOTRandomPool)(p).BeforeUpdate(ctx)
+	return (*workerdot.DOTRandomPool)(p).BeforeUpdate(ctx)
 }
 
 // jobPositionsTable is the schema of worker.JobPosition.
@@ -1306,7 +1322,7 @@ var leaveControlsTable = schema.Table{
 	IDPrefix:     "lctl_",
 	New:          newLeaveControl,
 	NewN:         newNLeaveControl,
-	Size:         unsafe.Sizeof(worker.LeaveControl{}),
+	Size:         unsafe.Sizeof(workerleave.LeaveControl{}),
 	Ptr:          ptrLeaveControl,
 	Value:        valueLeaveControl,
 	BeforeCreate: beforeCreateLeaveControl,
@@ -1316,7 +1332,7 @@ var leaveControlsRef = keel.Ref{Table: &leaveControlsTable}
 
 // LeaveControlsTable is the table of worker.LeaveControl.
 type LeaveControlsTable struct {
-	keel.Handle[*worker.LeaveControl]
+	keel.Handle[*workerleave.LeaveControl]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -1334,7 +1350,7 @@ type LeaveControlsTable struct {
 
 // LeaveControls references the leave_controls table.
 var LeaveControls = &LeaveControlsTable{
-	Handle:                 keel.Handle[*worker.LeaveControl]{Ref: &leaveControlsRef},
+	Handle:                 keel.Handle[*workerleave.LeaveControl]{Ref: &leaveControlsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 2}}},
@@ -1353,7 +1369,7 @@ var LeaveControls = &LeaveControlsTable{
 // BuildLeaveControls builds the handle of leave_controls for ref. Generated relation and alias methods call it.
 func BuildLeaveControls(r *keel.Ref) *LeaveControlsTable {
 	return &LeaveControlsTable{
-		Handle:                 keel.Handle[*worker.LeaveControl]{Ref: r},
+		Handle:                 keel.Handle[*workerleave.LeaveControl]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1379,18 +1395,18 @@ func (t *LeaveControlsTable) As(alias string) *LeaveControlsTable {
 }
 
 // Get returns the leave_controls row with the given key, or keel.ErrNotFound.
-func (t *LeaveControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.LeaveControl, error) {
+func (t *LeaveControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerleave.LeaveControl, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newLeaveControl() unsafe.Pointer { return unsafe.Pointer(new(worker.LeaveControl)) }
+func newLeaveControl() unsafe.Pointer { return unsafe.Pointer(new(workerleave.LeaveControl)) }
 
 func newNLeaveControl(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.LeaveControl, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerleave.LeaveControl, n)))
 }
 
 func ptrLeaveControl(p unsafe.Pointer, c int32) any {
-	r := (*worker.LeaveControl)(p)
+	r := (*workerleave.LeaveControl)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -1423,7 +1439,7 @@ func ptrLeaveControl(p unsafe.Pointer, c int32) any {
 }
 
 func valueLeaveControl(p unsafe.Pointer, c int32) any {
-	r := (*worker.LeaveControl)(p)
+	r := (*workerleave.LeaveControl)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1456,7 +1472,7 @@ func valueLeaveControl(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateLeaveControl(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.LeaveControl)(p).BeforeCreate(ctx)
+	return (*workerleave.LeaveControl)(p).BeforeCreate(ctx)
 }
 
 // oSHAAnnualSummariesTable is the schema of worker.OSHAAnnualSummary.
@@ -1468,7 +1484,7 @@ var oSHAAnnualSummariesTable = schema.Table{
 	Label:       `OSHA Annual Summary`,
 	Plural:      `OSHA Annual Summaries`,
 	Doc:         "OSHAAnnualSummary is the 300A for one establishment and year. The organisation is the establishment: it carries one address, which is what OSHA means by one.\n\nThe case totals are deliberately not columns here. They are derived from the injuries whenever the summary is read, so a case corrected in March — which the rule requires for five years — cannot leave a stale summary behind it.",
-	Constraints: (&worker.OSHAAnnualSummary{}).Constraints(),
+	Constraints: (&workersafety.OSHAAnnualSummary{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -1508,7 +1524,7 @@ var oSHAAnnualSummariesTable = schema.Table{
 	IDPrefix:     "osum_",
 	New:          newOSHAAnnualSummary,
 	NewN:         newNOSHAAnnualSummary,
-	Size:         unsafe.Sizeof(worker.OSHAAnnualSummary{}),
+	Size:         unsafe.Sizeof(workersafety.OSHAAnnualSummary{}),
 	Ptr:          ptrOSHAAnnualSummary,
 	Value:        valueOSHAAnnualSummary,
 	Attach:       attachOSHAAnnualSummary,
@@ -1519,7 +1535,7 @@ var oSHAAnnualSummariesRef = keel.Ref{Table: &oSHAAnnualSummariesTable}
 
 // OSHAAnnualSummariesTable is the table of worker.OSHAAnnualSummary.
 type OSHAAnnualSummariesTable struct {
-	keel.Handle[*worker.OSHAAnnualSummary]
+	keel.Handle[*workersafety.OSHAAnnualSummary]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -1545,7 +1561,7 @@ type OSHAAnnualSummariesTable struct {
 
 // OSHAAnnualSummaries references the osha_annual_summaries table.
 var OSHAAnnualSummaries = &OSHAAnnualSummariesTable{
-	Handle:              keel.Handle[*worker.OSHAAnnualSummary]{Ref: &oSHAAnnualSummariesRef},
+	Handle:              keel.Handle[*workersafety.OSHAAnnualSummary]{Ref: &oSHAAnnualSummariesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 2}}},
@@ -1572,7 +1588,7 @@ var OSHAAnnualSummaries = &OSHAAnnualSummariesTable{
 // BuildOSHAAnnualSummaries builds the handle of osha_annual_summaries for ref. Generated relation and alias methods call it.
 func BuildOSHAAnnualSummaries(r *keel.Ref) *OSHAAnnualSummariesTable {
 	return &OSHAAnnualSummariesTable{
-		Handle:              keel.Handle[*worker.OSHAAnnualSummary]{Ref: r},
+		Handle:              keel.Handle[*workersafety.OSHAAnnualSummary]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1611,18 +1627,18 @@ func (t *OSHAAnnualSummariesTable) CertifiedBy() *tenantdb.UsersTable {
 }
 
 // Get returns the osha_annual_summaries row with the given key, or keel.ErrNotFound.
-func (t *OSHAAnnualSummariesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.OSHAAnnualSummary, error) {
+func (t *OSHAAnnualSummariesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workersafety.OSHAAnnualSummary, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newOSHAAnnualSummary() unsafe.Pointer { return unsafe.Pointer(new(worker.OSHAAnnualSummary)) }
+func newOSHAAnnualSummary() unsafe.Pointer { return unsafe.Pointer(new(workersafety.OSHAAnnualSummary)) }
 
 func newNOSHAAnnualSummary(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.OSHAAnnualSummary, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workersafety.OSHAAnnualSummary, n)))
 }
 
 func ptrOSHAAnnualSummary(p unsafe.Pointer, c int32) any {
-	r := (*worker.OSHAAnnualSummary)(p)
+	r := (*workersafety.OSHAAnnualSummary)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -1671,7 +1687,7 @@ func ptrOSHAAnnualSummary(p unsafe.Pointer, c int32) any {
 }
 
 func valueOSHAAnnualSummary(p unsafe.Pointer, c int32) any {
-	r := (*worker.OSHAAnnualSummary)(p)
+	r := (*workersafety.OSHAAnnualSummary)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1753,7 +1769,7 @@ func valueOSHAAnnualSummary(p unsafe.Pointer, c int32) any {
 }
 
 func attachOSHAAnnualSummary(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.OSHAAnnualSummary)(p)
+	r := (*workersafety.OSHAAnnualSummary)(p)
 	switch rel {
 	case 0:
 		r.CertifiedBy = (*tenant.User)(child)
@@ -1761,7 +1777,7 @@ func attachOSHAAnnualSummary(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 }
 
 func beforeCreateOSHAAnnualSummary(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.OSHAAnnualSummary)(p).BeforeCreate(ctx)
+	return (*workersafety.OSHAAnnualSummary)(p).BeforeCreate(ctx)
 }
 
 // orgHolidaysTable is the schema of worker.OrgHoliday.
@@ -1773,7 +1789,7 @@ var orgHolidaysTable = schema.Table{
 	Label:       `Org Holiday`,
 	Plural:      `Org Holidays`,
 	Doc:         `OrgHoliday is one calendar date the organisation treats specially. The date is stored as midnight UTC of the calendar day so it compares the same way regardless of the organisation's timezone.`,
-	Constraints: (&worker.OrgHoliday{}).Constraints(),
+	Constraints: (&pto.OrgHoliday{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -1800,7 +1816,7 @@ var orgHolidaysTable = schema.Table{
 	IDPrefix:     "ohol_",
 	New:          newOrgHoliday,
 	NewN:         newNOrgHoliday,
-	Size:         unsafe.Sizeof(worker.OrgHoliday{}),
+	Size:         unsafe.Sizeof(pto.OrgHoliday{}),
 	Ptr:          ptrOrgHoliday,
 	Value:        valueOrgHoliday,
 	BeforeCreate: beforeCreateOrgHoliday,
@@ -1810,7 +1826,7 @@ var orgHolidaysRef = keel.Ref{Table: &orgHolidaysTable}
 
 // OrgHolidaysTable is the table of worker.OrgHoliday.
 type OrgHolidaysTable struct {
-	keel.Handle[*worker.OrgHoliday]
+	keel.Handle[*pto.OrgHoliday]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1826,7 +1842,7 @@ type OrgHolidaysTable struct {
 
 // OrgHolidays references the org_holidays table.
 var OrgHolidays = &OrgHolidaysTable{
-	Handle:         keel.Handle[*worker.OrgHoliday]{Ref: &orgHolidaysRef},
+	Handle:         keel.Handle[*pto.OrgHoliday]{Ref: &orgHolidaysRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 2}}},
@@ -1843,7 +1859,7 @@ var OrgHolidays = &OrgHolidaysTable{
 // BuildOrgHolidays builds the handle of org_holidays for ref. Generated relation and alias methods call it.
 func BuildOrgHolidays(r *keel.Ref) *OrgHolidaysTable {
 	return &OrgHolidaysTable{
-		Handle:         keel.Handle[*worker.OrgHoliday]{Ref: r},
+		Handle:         keel.Handle[*pto.OrgHoliday]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1867,18 +1883,18 @@ func (t *OrgHolidaysTable) As(alias string) *OrgHolidaysTable {
 }
 
 // Get returns the org_holidays row with the given key, or keel.ErrNotFound.
-func (t *OrgHolidaysTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.OrgHoliday, error) {
+func (t *OrgHolidaysTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*pto.OrgHoliday, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newOrgHoliday() unsafe.Pointer { return unsafe.Pointer(new(worker.OrgHoliday)) }
+func newOrgHoliday() unsafe.Pointer { return unsafe.Pointer(new(pto.OrgHoliday)) }
 
 func newNOrgHoliday(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.OrgHoliday, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]pto.OrgHoliday, n)))
 }
 
 func ptrOrgHoliday(p unsafe.Pointer, c int32) any {
-	r := (*worker.OrgHoliday)(p)
+	r := (*pto.OrgHoliday)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -1907,7 +1923,7 @@ func ptrOrgHoliday(p unsafe.Pointer, c int32) any {
 }
 
 func valueOrgHoliday(p unsafe.Pointer, c int32) any {
-	r := (*worker.OrgHoliday)(p)
+	r := (*pto.OrgHoliday)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1939,7 +1955,7 @@ func valueOrgHoliday(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateOrgHoliday(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.OrgHoliday)(p).BeforeCreate(ctx)
+	return (*pto.OrgHoliday)(p).BeforeCreate(ctx)
 }
 
 // pTOPoliciesTable is the schema of worker.PTOPolicy.
@@ -1950,7 +1966,7 @@ var pTOPoliciesTable = schema.Table{
 	Model:       "worker.PTOPolicy",
 	Label:       `PTO Policy`,
 	Plural:      `PTO Policies`,
-	Constraints: (&worker.PTOPolicy{}).Constraints(),
+	Constraints: (&pto.PTOPolicy{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -1988,7 +2004,7 @@ var pTOPoliciesTable = schema.Table{
 	IDPrefix:     "ptop_",
 	New:          newPTOPolicy,
 	NewN:         newNPTOPolicy,
-	Size:         unsafe.Sizeof(worker.PTOPolicy{}),
+	Size:         unsafe.Sizeof(pto.PTOPolicy{}),
 	Ptr:          ptrPTOPolicy,
 	Value:        valuePTOPolicy,
 	Attach:       attachPTOPolicy,
@@ -1999,7 +2015,7 @@ var pTOPoliciesRef = keel.Ref{Table: &pTOPoliciesTable}
 
 // PTOPoliciesTable is the table of worker.PTOPolicy.
 type PTOPoliciesTable struct {
-	keel.Handle[*worker.PTOPolicy]
+	keel.Handle[*pto.PTOPolicy]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -2023,7 +2039,7 @@ type PTOPoliciesTable struct {
 
 // PTOPolicies references the pto_policies table.
 var PTOPolicies = &PTOPoliciesTable{
-	Handle:            keel.Handle[*worker.PTOPolicy]{Ref: &pTOPoliciesRef},
+	Handle:            keel.Handle[*pto.PTOPolicy]{Ref: &pTOPoliciesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 2}}},
@@ -2048,7 +2064,7 @@ var PTOPolicies = &PTOPoliciesTable{
 // BuildPTOPolicies builds the handle of pto_policies for ref. Generated relation and alias methods call it.
 func BuildPTOPolicies(r *keel.Ref) *PTOPoliciesTable {
 	return &PTOPoliciesTable{
-		Handle:            keel.Handle[*worker.PTOPolicy]{Ref: r},
+		Handle:            keel.Handle[*pto.PTOPolicy]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2085,18 +2101,18 @@ func (t *PTOPoliciesTable) Rules() *PTOPolicyRulesTable {
 }
 
 // Get returns the pto_policies row with the given key, or keel.ErrNotFound.
-func (t *PTOPoliciesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.PTOPolicy, error) {
+func (t *PTOPoliciesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*pto.PTOPolicy, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newPTOPolicy() unsafe.Pointer { return unsafe.Pointer(new(worker.PTOPolicy)) }
+func newPTOPolicy() unsafe.Pointer { return unsafe.Pointer(new(pto.PTOPolicy)) }
 
 func newNPTOPolicy(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.PTOPolicy, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]pto.PTOPolicy, n)))
 }
 
 func ptrPTOPolicy(p unsafe.Pointer, c int32) any {
-	r := (*worker.PTOPolicy)(p)
+	r := (*pto.PTOPolicy)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -2141,7 +2157,7 @@ func ptrPTOPolicy(p unsafe.Pointer, c int32) any {
 }
 
 func valuePTOPolicy(p unsafe.Pointer, c int32) any {
-	r := (*worker.PTOPolicy)(p)
+	r := (*pto.PTOPolicy)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -2189,15 +2205,15 @@ func valuePTOPolicy(p unsafe.Pointer, c int32) any {
 }
 
 func attachPTOPolicy(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.PTOPolicy)(p)
+	r := (*pto.PTOPolicy)(p)
 	switch rel {
 	case 0:
-		r.Rules = append(r.Rules, (*worker.PTOPolicyRule)(child))
+		r.Rules = append(r.Rules, (*pto.PTOPolicyRule)(child))
 	}
 }
 
 func beforeCreatePTOPolicy(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PTOPolicy)(p).BeforeCreate(ctx)
+	return (*pto.PTOPolicy)(p).BeforeCreate(ctx)
 }
 
 // pTOPolicyRulesTable is the schema of worker.PTOPolicyRule.
@@ -2208,7 +2224,7 @@ var pTOPolicyRulesTable = schema.Table{
 	Model:       "worker.PTOPolicyRule",
 	Label:       `PTO Policy Rule`,
 	Plural:      `PTO Policy Rules`,
-	Constraints: (&worker.PTOPolicyRule{}).Constraints(),
+	Constraints: (&pto.PTOPolicyRule{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -2239,7 +2255,7 @@ var pTOPolicyRulesTable = schema.Table{
 	IDPrefix:     "ptpr_",
 	New:          newPTOPolicyRule,
 	NewN:         newNPTOPolicyRule,
-	Size:         unsafe.Sizeof(worker.PTOPolicyRule{}),
+	Size:         unsafe.Sizeof(pto.PTOPolicyRule{}),
 	Ptr:          ptrPTOPolicyRule,
 	Value:        valuePTOPolicyRule,
 	BeforeCreate: beforeCreatePTOPolicyRule,
@@ -2250,7 +2266,7 @@ var pTOPolicyRulesRef = keel.Ref{Table: &pTOPolicyRulesTable}
 
 // PTOPolicyRulesTable is the table of worker.PTOPolicyRule.
 type PTOPolicyRulesTable struct {
-	keel.Handle[*worker.PTOPolicyRule]
+	keel.Handle[*pto.PTOPolicyRule]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -2270,7 +2286,7 @@ type PTOPolicyRulesTable struct {
 
 // PTOPolicyRules references the pto_policy_rules table.
 var PTOPolicyRules = &PTOPolicyRulesTable{
-	Handle:              keel.Handle[*worker.PTOPolicyRule]{Ref: &pTOPolicyRulesRef},
+	Handle:              keel.Handle[*pto.PTOPolicyRule]{Ref: &pTOPolicyRulesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 2}}},
@@ -2291,7 +2307,7 @@ var PTOPolicyRules = &PTOPolicyRulesTable{
 // BuildPTOPolicyRules builds the handle of pto_policy_rules for ref. Generated relation and alias methods call it.
 func BuildPTOPolicyRules(r *keel.Ref) *PTOPolicyRulesTable {
 	return &PTOPolicyRulesTable{
-		Handle:              keel.Handle[*worker.PTOPolicyRule]{Ref: r},
+		Handle:              keel.Handle[*pto.PTOPolicyRule]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2319,18 +2335,18 @@ func (t *PTOPolicyRulesTable) As(alias string) *PTOPolicyRulesTable {
 }
 
 // Get returns the pto_policy_rules row with the given key, or keel.ErrNotFound.
-func (t *PTOPolicyRulesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.PTOPolicyRule, error) {
+func (t *PTOPolicyRulesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*pto.PTOPolicyRule, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newPTOPolicyRule() unsafe.Pointer { return unsafe.Pointer(new(worker.PTOPolicyRule)) }
+func newPTOPolicyRule() unsafe.Pointer { return unsafe.Pointer(new(pto.PTOPolicyRule)) }
 
 func newNPTOPolicyRule(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.PTOPolicyRule, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]pto.PTOPolicyRule, n)))
 }
 
 func ptrPTOPolicyRule(p unsafe.Pointer, c int32) any {
-	r := (*worker.PTOPolicyRule)(p)
+	r := (*pto.PTOPolicyRule)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -2367,7 +2383,7 @@ func ptrPTOPolicyRule(p unsafe.Pointer, c int32) any {
 }
 
 func valuePTOPolicyRule(p unsafe.Pointer, c int32) any {
-	r := (*worker.PTOPolicyRule)(p)
+	r := (*pto.PTOPolicyRule)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -2407,11 +2423,11 @@ func valuePTOPolicyRule(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreatePTOPolicyRule(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PTOPolicyRule)(p).BeforeCreate(ctx)
+	return (*pto.PTOPolicyRule)(p).BeforeCreate(ctx)
 }
 
 func beforeUpdatePTOPolicyRule(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PTOPolicyRule)(p).BeforeUpdate(ctx)
+	return (*pto.PTOPolicyRule)(p).BeforeUpdate(ctx)
 }
 
 // payrollExportsTable is the schema of worker.PayrollExport.
@@ -2456,7 +2472,7 @@ var payrollExportsTable = schema.Table{
 	IDPrefix:     "pxb_",
 	New:          newPayrollExport,
 	NewN:         newNPayrollExport,
-	Size:         unsafe.Sizeof(worker.PayrollExport{}),
+	Size:         unsafe.Sizeof(timesheet.PayrollExport{}),
 	Ptr:          ptrPayrollExport,
 	Value:        valuePayrollExport,
 	BeforeCreate: beforeCreatePayrollExport,
@@ -2466,7 +2482,7 @@ var payrollExportsRef = keel.Ref{Table: &payrollExportsTable}
 
 // PayrollExportsTable is the table of worker.PayrollExport.
 type PayrollExportsTable struct {
-	keel.Handle[*worker.PayrollExport]
+	keel.Handle[*timesheet.PayrollExport]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -2489,7 +2505,7 @@ type PayrollExportsTable struct {
 
 // PayrollExports references the payroll_exports table.
 var PayrollExports = &PayrollExportsTable{
-	Handle:           keel.Handle[*worker.PayrollExport]{Ref: &payrollExportsRef},
+	Handle:           keel.Handle[*timesheet.PayrollExport]{Ref: &payrollExportsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 2}}},
@@ -2513,7 +2529,7 @@ var PayrollExports = &PayrollExportsTable{
 // BuildPayrollExports builds the handle of payroll_exports for ref. Generated relation and alias methods call it.
 func BuildPayrollExports(r *keel.Ref) *PayrollExportsTable {
 	return &PayrollExportsTable{
-		Handle:           keel.Handle[*worker.PayrollExport]{Ref: r},
+		Handle:           keel.Handle[*timesheet.PayrollExport]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2544,18 +2560,18 @@ func (t *PayrollExportsTable) As(alias string) *PayrollExportsTable {
 }
 
 // Get returns the payroll_exports row with the given key, or keel.ErrNotFound.
-func (t *PayrollExportsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.PayrollExport, error) {
+func (t *PayrollExportsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*timesheet.PayrollExport, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newPayrollExport() unsafe.Pointer { return unsafe.Pointer(new(worker.PayrollExport)) }
+func newPayrollExport() unsafe.Pointer { return unsafe.Pointer(new(timesheet.PayrollExport)) }
 
 func newNPayrollExport(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.PayrollExport, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]timesheet.PayrollExport, n)))
 }
 
 func ptrPayrollExport(p unsafe.Pointer, c int32) any {
-	r := (*worker.PayrollExport)(p)
+	r := (*timesheet.PayrollExport)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -2598,7 +2614,7 @@ func ptrPayrollExport(p unsafe.Pointer, c int32) any {
 }
 
 func valuePayrollExport(p unsafe.Pointer, c int32) any {
-	r := (*worker.PayrollExport)(p)
+	r := (*timesheet.PayrollExport)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -2656,7 +2672,7 @@ func valuePayrollExport(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreatePayrollExport(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PayrollExport)(p).BeforeCreate(ctx)
+	return (*timesheet.PayrollExport)(p).BeforeCreate(ctx)
 }
 
 // performanceReviewsTable is the schema of worker.PerformanceReview.
@@ -2667,7 +2683,7 @@ var performanceReviewsTable = schema.Table{
 	Model:       "worker.PerformanceReview",
 	Label:       `Performance Review`,
 	Plural:      `Performance Reviews`,
-	Constraints: (&worker.PerformanceReview{}).Constraints(),
+	Constraints: (&workerreview.PerformanceReview{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -2713,7 +2729,7 @@ var performanceReviewsTable = schema.Table{
 	IDPrefix:     "prev_",
 	New:          newPerformanceReview,
 	NewN:         newNPerformanceReview,
-	Size:         unsafe.Sizeof(worker.PerformanceReview{}),
+	Size:         unsafe.Sizeof(workerreview.PerformanceReview{}),
 	Ptr:          ptrPerformanceReview,
 	Value:        valuePerformanceReview,
 	Attach:       attachPerformanceReview,
@@ -2725,7 +2741,7 @@ var performanceReviewsRef = keel.Ref{Table: &performanceReviewsTable}
 
 // PerformanceReviewsTable is the table of worker.PerformanceReview.
 type PerformanceReviewsTable struct {
-	keel.Handle[*worker.PerformanceReview]
+	keel.Handle[*workerreview.PerformanceReview]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -2755,7 +2771,7 @@ type PerformanceReviewsTable struct {
 
 // PerformanceReviews references the performance_reviews table.
 var PerformanceReviews = &PerformanceReviewsTable{
-	Handle:         keel.Handle[*worker.PerformanceReview]{Ref: &performanceReviewsRef},
+	Handle:         keel.Handle[*workerreview.PerformanceReview]{Ref: &performanceReviewsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 2}}},
@@ -2786,7 +2802,7 @@ var PerformanceReviews = &PerformanceReviewsTable{
 // BuildPerformanceReviews builds the handle of performance_reviews for ref. Generated relation and alias methods call it.
 func BuildPerformanceReviews(r *keel.Ref) *PerformanceReviewsTable {
 	return &PerformanceReviewsTable{
-		Handle:         keel.Handle[*worker.PerformanceReview]{Ref: r},
+		Handle:         keel.Handle[*workerreview.PerformanceReview]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2837,18 +2853,18 @@ func (t *PerformanceReviewsTable) Reviewer() *tenantdb.UsersTable {
 }
 
 // Get returns the performance_reviews row with the given key, or keel.ErrNotFound.
-func (t *PerformanceReviewsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.PerformanceReview, error) {
+func (t *PerformanceReviewsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerreview.PerformanceReview, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newPerformanceReview() unsafe.Pointer { return unsafe.Pointer(new(worker.PerformanceReview)) }
+func newPerformanceReview() unsafe.Pointer { return unsafe.Pointer(new(workerreview.PerformanceReview)) }
 
 func newNPerformanceReview(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.PerformanceReview, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerreview.PerformanceReview, n)))
 }
 
 func ptrPerformanceReview(p unsafe.Pointer, c int32) any {
-	r := (*worker.PerformanceReview)(p)
+	r := (*workerreview.PerformanceReview)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -2905,7 +2921,7 @@ func ptrPerformanceReview(p unsafe.Pointer, c int32) any {
 }
 
 func valuePerformanceReview(p unsafe.Pointer, c int32) any {
-	r := (*worker.PerformanceReview)(p)
+	r := (*workerreview.PerformanceReview)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -2998,23 +3014,23 @@ func valuePerformanceReview(p unsafe.Pointer, c int32) any {
 }
 
 func attachPerformanceReview(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.PerformanceReview)(p)
+	r := (*workerreview.PerformanceReview)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
 	case 1:
-		r.Template = (*worker.PerformanceReviewTemplate)(child)
+		r.Template = (*workerreview.PerformanceReviewTemplate)(child)
 	case 2:
 		r.Reviewer = (*tenant.User)(child)
 	}
 }
 
 func beforeCreatePerformanceReview(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PerformanceReview)(p).BeforeCreate(ctx)
+	return (*workerreview.PerformanceReview)(p).BeforeCreate(ctx)
 }
 
 func beforeUpdatePerformanceReview(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PerformanceReview)(p).BeforeUpdate(ctx)
+	return (*workerreview.PerformanceReview)(p).BeforeUpdate(ctx)
 }
 
 // performanceReviewTemplatesTable is the schema of worker.PerformanceReviewTemplate.
@@ -3025,7 +3041,7 @@ var performanceReviewTemplatesTable = schema.Table{
 	Model:       "worker.PerformanceReviewTemplate",
 	Label:       `Performance Review Template`,
 	Plural:      `Performance Review Templates`,
-	Constraints: (&worker.PerformanceReviewTemplate{}).Constraints(),
+	Constraints: (&workerreview.PerformanceReviewTemplate{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -3055,7 +3071,7 @@ var performanceReviewTemplatesTable = schema.Table{
 	IDPrefix:     "prt_",
 	New:          newPerformanceReviewTemplate,
 	NewN:         newNPerformanceReviewTemplate,
-	Size:         unsafe.Sizeof(worker.PerformanceReviewTemplate{}),
+	Size:         unsafe.Sizeof(workerreview.PerformanceReviewTemplate{}),
 	Ptr:          ptrPerformanceReviewTemplate,
 	Value:        valuePerformanceReviewTemplate,
 	BeforeCreate: beforeCreatePerformanceReviewTemplate,
@@ -3067,7 +3083,7 @@ var performanceReviewTemplatesRef = keel.Ref{Table: &performanceReviewTemplatesT
 
 // PerformanceReviewTemplatesTable is the table of worker.PerformanceReviewTemplate.
 type PerformanceReviewTemplatesTable struct {
-	keel.Handle[*worker.PerformanceReviewTemplate]
+	keel.Handle[*workerreview.PerformanceReviewTemplate]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -3086,7 +3102,7 @@ type PerformanceReviewTemplatesTable struct {
 
 // PerformanceReviewTemplates references the performance_review_templates table.
 var PerformanceReviewTemplates = &PerformanceReviewTemplatesTable{
-	Handle:         keel.Handle[*worker.PerformanceReviewTemplate]{Ref: &performanceReviewTemplatesRef},
+	Handle:         keel.Handle[*workerreview.PerformanceReviewTemplate]{Ref: &performanceReviewTemplatesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 2}}},
@@ -3106,7 +3122,7 @@ var PerformanceReviewTemplates = &PerformanceReviewTemplatesTable{
 // BuildPerformanceReviewTemplates builds the handle of performance_review_templates for ref. Generated relation and alias methods call it.
 func BuildPerformanceReviewTemplates(r *keel.Ref) *PerformanceReviewTemplatesTable {
 	return &PerformanceReviewTemplatesTable{
-		Handle:         keel.Handle[*worker.PerformanceReviewTemplate]{Ref: r},
+		Handle:         keel.Handle[*workerreview.PerformanceReviewTemplate]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -3133,20 +3149,20 @@ func (t *PerformanceReviewTemplatesTable) As(alias string) *PerformanceReviewTem
 }
 
 // Get returns the performance_review_templates row with the given key, or keel.ErrNotFound.
-func (t *PerformanceReviewTemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.PerformanceReviewTemplate, error) {
+func (t *PerformanceReviewTemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerreview.PerformanceReviewTemplate, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newPerformanceReviewTemplate() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.PerformanceReviewTemplate))
+	return unsafe.Pointer(new(workerreview.PerformanceReviewTemplate))
 }
 
 func newNPerformanceReviewTemplate(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.PerformanceReviewTemplate, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerreview.PerformanceReviewTemplate, n)))
 }
 
 func ptrPerformanceReviewTemplate(p unsafe.Pointer, c int32) any {
-	r := (*worker.PerformanceReviewTemplate)(p)
+	r := (*workerreview.PerformanceReviewTemplate)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -3181,7 +3197,7 @@ func ptrPerformanceReviewTemplate(p unsafe.Pointer, c int32) any {
 }
 
 func valuePerformanceReviewTemplate(p unsafe.Pointer, c int32) any {
-	r := (*worker.PerformanceReviewTemplate)(p)
+	r := (*workerreview.PerformanceReviewTemplate)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -3225,15 +3241,15 @@ func valuePerformanceReviewTemplate(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreatePerformanceReviewTemplate(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PerformanceReviewTemplate)(p).BeforeCreate(ctx)
+	return (*workerreview.PerformanceReviewTemplate)(p).BeforeCreate(ctx)
 }
 
 func beforeUpdatePerformanceReviewTemplate(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PerformanceReviewTemplate)(p).BeforeUpdate(ctx)
+	return (*workerreview.PerformanceReviewTemplate)(p).BeforeUpdate(ctx)
 }
 
 func beforeSavePerformanceReviewTemplate(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PerformanceReviewTemplate)(p).BeforeSave(ctx)
+	return (*workerreview.PerformanceReviewTemplate)(p).BeforeSave(ctx)
 }
 
 // portalInvitationsTable is the schema of worker.PortalInvitation.
@@ -3277,7 +3293,7 @@ var portalInvitationsTable = schema.Table{
 	IDPrefix:     "wpi_",
 	New:          newPortalInvitation,
 	NewN:         newNPortalInvitation,
-	Size:         unsafe.Sizeof(worker.PortalInvitation{}),
+	Size:         unsafe.Sizeof(portalinvitation.PortalInvitation{}),
 	Ptr:          ptrPortalInvitation,
 	Value:        valuePortalInvitation,
 	Attach:       attachPortalInvitation,
@@ -3288,7 +3304,7 @@ var portalInvitationsRef = keel.Ref{Table: &portalInvitationsTable}
 
 // PortalInvitationsTable is the table of worker.PortalInvitation.
 type PortalInvitationsTable struct {
-	keel.Handle[*worker.PortalInvitation]
+	keel.Handle[*portalinvitation.PortalInvitation]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -3307,7 +3323,7 @@ type PortalInvitationsTable struct {
 
 // PortalInvitations references the worker_portal_invitations table.
 var PortalInvitations = &PortalInvitationsTable{
-	Handle:         keel.Handle[*worker.PortalInvitation]{Ref: &portalInvitationsRef},
+	Handle:         keel.Handle[*portalinvitation.PortalInvitation]{Ref: &portalInvitationsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalInvitationsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalInvitationsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalInvitationsRef, Index: 2}}},
@@ -3327,7 +3343,7 @@ var PortalInvitations = &PortalInvitationsTable{
 // BuildPortalInvitations builds the handle of worker_portal_invitations for ref. Generated relation and alias methods call it.
 func BuildPortalInvitations(r *keel.Ref) *PortalInvitationsTable {
 	return &PortalInvitationsTable{
-		Handle:         keel.Handle[*worker.PortalInvitation]{Ref: r},
+		Handle:         keel.Handle[*portalinvitation.PortalInvitation]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -3362,18 +3378,18 @@ func (t *PortalInvitationsTable) InvitedBy() *tenantdb.UsersTable {
 }
 
 // Get returns the worker_portal_invitations row with the given key, or keel.ErrNotFound.
-func (t *PortalInvitationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.PortalInvitation, error) {
+func (t *PortalInvitationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*portalinvitation.PortalInvitation, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newPortalInvitation() unsafe.Pointer { return unsafe.Pointer(new(worker.PortalInvitation)) }
+func newPortalInvitation() unsafe.Pointer { return unsafe.Pointer(new(portalinvitation.PortalInvitation)) }
 
 func newNPortalInvitation(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.PortalInvitation, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]portalinvitation.PortalInvitation, n)))
 }
 
 func ptrPortalInvitation(p unsafe.Pointer, c int32) any {
-	r := (*worker.PortalInvitation)(p)
+	r := (*portalinvitation.PortalInvitation)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -3408,7 +3424,7 @@ func ptrPortalInvitation(p unsafe.Pointer, c int32) any {
 }
 
 func valuePortalInvitation(p unsafe.Pointer, c int32) any {
-	r := (*worker.PortalInvitation)(p)
+	r := (*portalinvitation.PortalInvitation)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -3449,7 +3465,7 @@ func valuePortalInvitation(p unsafe.Pointer, c int32) any {
 }
 
 func attachPortalInvitation(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.PortalInvitation)(p)
+	r := (*portalinvitation.PortalInvitation)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
@@ -3459,7 +3475,7 @@ func attachPortalInvitation(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 }
 
 func beforeCreatePortalInvitation(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PortalInvitation)(p).BeforeCreate(ctx)
+	return (*portalinvitation.PortalInvitation)(p).BeforeCreate(ctx)
 }
 
 // shiftSwapRequestsTable is the schema of worker.ShiftSwapRequest.
@@ -3471,7 +3487,7 @@ var shiftSwapRequestsTable = schema.Table{
 	Label:       `Shift Swap Request`,
 	Plural:      `Shift Swap Requests`,
 	Doc:         `ShiftSwapRequest is one driver asking another to take a day.`,
-	Constraints: (&worker.ShiftSwapRequest{}).Constraints(),
+	Constraints: (&workerschedule.ShiftSwapRequest{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -3507,7 +3523,7 @@ var shiftSwapRequestsTable = schema.Table{
 	IDPrefix:     "sswp_",
 	New:          newShiftSwapRequest,
 	NewN:         newNShiftSwapRequest,
-	Size:         unsafe.Sizeof(worker.ShiftSwapRequest{}),
+	Size:         unsafe.Sizeof(workerschedule.ShiftSwapRequest{}),
 	Ptr:          ptrShiftSwapRequest,
 	Value:        valueShiftSwapRequest,
 	Attach:       attachShiftSwapRequest,
@@ -3518,7 +3534,7 @@ var shiftSwapRequestsRef = keel.Ref{Table: &shiftSwapRequestsTable}
 
 // ShiftSwapRequestsTable is the table of worker.ShiftSwapRequest.
 type ShiftSwapRequestsTable struct {
-	keel.Handle[*worker.ShiftSwapRequest]
+	keel.Handle[*workerschedule.ShiftSwapRequest]
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -3539,7 +3555,7 @@ type ShiftSwapRequestsTable struct {
 
 // ShiftSwapRequests references the shift_swap_requests table.
 var ShiftSwapRequests = &ShiftSwapRequestsTable{
-	Handle:                keel.Handle[*worker.ShiftSwapRequest]{Ref: &shiftSwapRequestsRef},
+	Handle:                keel.Handle[*workerschedule.ShiftSwapRequest]{Ref: &shiftSwapRequestsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 2}}},
@@ -3561,7 +3577,7 @@ var ShiftSwapRequests = &ShiftSwapRequestsTable{
 // BuildShiftSwapRequests builds the handle of shift_swap_requests for ref. Generated relation and alias methods call it.
 func BuildShiftSwapRequests(r *keel.Ref) *ShiftSwapRequestsTable {
 	return &ShiftSwapRequestsTable{
-		Handle:                keel.Handle[*worker.ShiftSwapRequest]{Ref: r},
+		Handle:                keel.Handle[*workerschedule.ShiftSwapRequest]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -3600,18 +3616,18 @@ func (t *ShiftSwapRequestsTable) CounterpartyWorker() *WorkersTable {
 }
 
 // Get returns the shift_swap_requests row with the given key, or keel.ErrNotFound.
-func (t *ShiftSwapRequestsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.ShiftSwapRequest, error) {
+func (t *ShiftSwapRequestsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerschedule.ShiftSwapRequest, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newShiftSwapRequest() unsafe.Pointer { return unsafe.Pointer(new(worker.ShiftSwapRequest)) }
+func newShiftSwapRequest() unsafe.Pointer { return unsafe.Pointer(new(workerschedule.ShiftSwapRequest)) }
 
 func newNShiftSwapRequest(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.ShiftSwapRequest, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerschedule.ShiftSwapRequest, n)))
 }
 
 func ptrShiftSwapRequest(p unsafe.Pointer, c int32) any {
-	r := (*worker.ShiftSwapRequest)(p)
+	r := (*workerschedule.ShiftSwapRequest)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -3650,7 +3666,7 @@ func ptrShiftSwapRequest(p unsafe.Pointer, c int32) any {
 }
 
 func valueShiftSwapRequest(p unsafe.Pointer, c int32) any {
-	r := (*worker.ShiftSwapRequest)(p)
+	r := (*workerschedule.ShiftSwapRequest)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -3710,7 +3726,7 @@ func valueShiftSwapRequest(p unsafe.Pointer, c int32) any {
 }
 
 func attachShiftSwapRequest(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.ShiftSwapRequest)(p)
+	r := (*workerschedule.ShiftSwapRequest)(p)
 	switch rel {
 	case 0:
 		r.RequestingWorker = (*worker.Worker)(child)
@@ -3720,7 +3736,7 @@ func attachShiftSwapRequest(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 }
 
 func beforeCreateShiftSwapRequest(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.ShiftSwapRequest)(p).BeforeCreate(ctx)
+	return (*workerschedule.ShiftSwapRequest)(p).BeforeCreate(ctx)
 }
 
 // shiftTemplatesTable is the schema of worker.ShiftTemplate.
@@ -3732,7 +3748,7 @@ var shiftTemplatesTable = schema.Table{
 	Label:       `Shift Template`,
 	Plural:      `Shift Templates`,
 	Doc:         `ShiftTemplate is a repeating pattern of working days.`,
-	Constraints: (&worker.ShiftTemplate{}).Constraints(),
+	Constraints: (&workerschedule.ShiftTemplate{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -3763,7 +3779,7 @@ var shiftTemplatesTable = schema.Table{
 	IDPrefix:     "shft_",
 	New:          newShiftTemplate,
 	NewN:         newNShiftTemplate,
-	Size:         unsafe.Sizeof(worker.ShiftTemplate{}),
+	Size:         unsafe.Sizeof(workerschedule.ShiftTemplate{}),
 	Ptr:          ptrShiftTemplate,
 	Value:        valueShiftTemplate,
 	BeforeCreate: beforeCreateShiftTemplate,
@@ -3773,7 +3789,7 @@ var shiftTemplatesRef = keel.Ref{Table: &shiftTemplatesTable}
 
 // ShiftTemplatesTable is the table of worker.ShiftTemplate.
 type ShiftTemplatesTable struct {
-	keel.Handle[*worker.ShiftTemplate]
+	keel.Handle[*workerschedule.ShiftTemplate]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -3793,7 +3809,7 @@ type ShiftTemplatesTable struct {
 
 // ShiftTemplates references the shift_templates table.
 var ShiftTemplates = &ShiftTemplatesTable{
-	Handle:          keel.Handle[*worker.ShiftTemplate]{Ref: &shiftTemplatesRef},
+	Handle:          keel.Handle[*workerschedule.ShiftTemplate]{Ref: &shiftTemplatesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 2}}},
@@ -3814,7 +3830,7 @@ var ShiftTemplates = &ShiftTemplatesTable{
 // BuildShiftTemplates builds the handle of shift_templates for ref. Generated relation and alias methods call it.
 func BuildShiftTemplates(r *keel.Ref) *ShiftTemplatesTable {
 	return &ShiftTemplatesTable{
-		Handle:          keel.Handle[*worker.ShiftTemplate]{Ref: r},
+		Handle:          keel.Handle[*workerschedule.ShiftTemplate]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -3842,18 +3858,18 @@ func (t *ShiftTemplatesTable) As(alias string) *ShiftTemplatesTable {
 }
 
 // Get returns the shift_templates row with the given key, or keel.ErrNotFound.
-func (t *ShiftTemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.ShiftTemplate, error) {
+func (t *ShiftTemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerschedule.ShiftTemplate, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newShiftTemplate() unsafe.Pointer { return unsafe.Pointer(new(worker.ShiftTemplate)) }
+func newShiftTemplate() unsafe.Pointer { return unsafe.Pointer(new(workerschedule.ShiftTemplate)) }
 
 func newNShiftTemplate(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.ShiftTemplate, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerschedule.ShiftTemplate, n)))
 }
 
 func ptrShiftTemplate(p unsafe.Pointer, c int32) any {
-	r := (*worker.ShiftTemplate)(p)
+	r := (*workerschedule.ShiftTemplate)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -3890,7 +3906,7 @@ func ptrShiftTemplate(p unsafe.Pointer, c int32) any {
 }
 
 func valueShiftTemplate(p unsafe.Pointer, c int32) any {
-	r := (*worker.ShiftTemplate)(p)
+	r := (*workerschedule.ShiftTemplate)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -3933,7 +3949,7 @@ func valueShiftTemplate(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateShiftTemplate(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.ShiftTemplate)(p).BeforeCreate(ctx)
+	return (*workerschedule.ShiftTemplate)(p).BeforeCreate(ctx)
 }
 
 // timeClockEntriesTable is the schema of worker.TimeClockEntry.
@@ -3945,7 +3961,7 @@ var timeClockEntriesTable = schema.Table{
 	Label:       `Time Clock Entry`,
 	Plural:      `Time Clock Entries`,
 	Doc:         `TimeClockEntry is one period of work.`,
-	Constraints: (&worker.TimeClockEntry{}).Constraints(),
+	Constraints: (&timesheet.TimeClockEntry{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -3980,7 +3996,7 @@ var timeClockEntriesTable = schema.Table{
 	IDPrefix:     "tce_",
 	New:          newTimeClockEntry,
 	NewN:         newNTimeClockEntry,
-	Size:         unsafe.Sizeof(worker.TimeClockEntry{}),
+	Size:         unsafe.Sizeof(timesheet.TimeClockEntry{}),
 	Ptr:          ptrTimeClockEntry,
 	Value:        valueTimeClockEntry,
 	Attach:       attachTimeClockEntry,
@@ -3991,7 +4007,7 @@ var timeClockEntriesRef = keel.Ref{Table: &timeClockEntriesTable}
 
 // TimeClockEntriesTable is the table of worker.TimeClockEntry.
 type TimeClockEntriesTable struct {
-	keel.Handle[*worker.TimeClockEntry]
+	keel.Handle[*timesheet.TimeClockEntry]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -4012,7 +4028,7 @@ type TimeClockEntriesTable struct {
 
 // TimeClockEntries references the time_clock_entries table.
 var TimeClockEntries = &TimeClockEntriesTable{
-	Handle:         keel.Handle[*worker.TimeClockEntry]{Ref: &timeClockEntriesRef},
+	Handle:         keel.Handle[*timesheet.TimeClockEntry]{Ref: &timeClockEntriesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 2}}},
@@ -4034,7 +4050,7 @@ var TimeClockEntries = &TimeClockEntriesTable{
 // BuildTimeClockEntries builds the handle of time_clock_entries for ref. Generated relation and alias methods call it.
 func BuildTimeClockEntries(r *keel.Ref) *TimeClockEntriesTable {
 	return &TimeClockEntriesTable{
-		Handle:         keel.Handle[*worker.TimeClockEntry]{Ref: r},
+		Handle:         keel.Handle[*timesheet.TimeClockEntry]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -4066,18 +4082,18 @@ func (t *TimeClockEntriesTable) As(alias string) *TimeClockEntriesTable {
 func (t *TimeClockEntriesTable) Worker() *WorkersTable { return keel.Path(t.Ref, 0, BuildWorkers) }
 
 // Get returns the time_clock_entries row with the given key, or keel.ErrNotFound.
-func (t *TimeClockEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.TimeClockEntry, error) {
+func (t *TimeClockEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*timesheet.TimeClockEntry, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newTimeClockEntry() unsafe.Pointer { return unsafe.Pointer(new(worker.TimeClockEntry)) }
+func newTimeClockEntry() unsafe.Pointer { return unsafe.Pointer(new(timesheet.TimeClockEntry)) }
 
 func newNTimeClockEntry(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.TimeClockEntry, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]timesheet.TimeClockEntry, n)))
 }
 
 func ptrTimeClockEntry(p unsafe.Pointer, c int32) any {
-	r := (*worker.TimeClockEntry)(p)
+	r := (*timesheet.TimeClockEntry)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -4116,7 +4132,7 @@ func ptrTimeClockEntry(p unsafe.Pointer, c int32) any {
 }
 
 func valueTimeClockEntry(p unsafe.Pointer, c int32) any {
-	r := (*worker.TimeClockEntry)(p)
+	r := (*timesheet.TimeClockEntry)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -4173,7 +4189,7 @@ func valueTimeClockEntry(p unsafe.Pointer, c int32) any {
 }
 
 func attachTimeClockEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.TimeClockEntry)(p)
+	r := (*timesheet.TimeClockEntry)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
@@ -4181,7 +4197,7 @@ func attachTimeClockEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 }
 
 func beforeCreateTimeClockEntry(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.TimeClockEntry)(p).BeforeCreate(ctx)
+	return (*timesheet.TimeClockEntry)(p).BeforeCreate(ctx)
 }
 
 // timesheetsTable is the schema of worker.Timesheet.
@@ -4193,7 +4209,7 @@ var timesheetsTable = schema.Table{
 	Label:       `Timesheet`,
 	Plural:      `Timesheets`,
 	Doc:         "Timesheet is one worker's week of paid hours.\n\nIts totals are frozen at submit rather than derived on read. Everywhere else a roll-up is derived, because a stored one goes stale; here the roll-up is the decision — what a manager approved and what payroll paid from — and recomputing it later would change a signed-off wage record.",
-	Constraints: (&worker.Timesheet{}).Constraints(),
+	Constraints: (&timesheet.Timesheet{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -4233,7 +4249,7 @@ var timesheetsTable = schema.Table{
 	IDPrefix:     "tsh_",
 	New:          newTimesheet,
 	NewN:         newNTimesheet,
-	Size:         unsafe.Sizeof(worker.Timesheet{}),
+	Size:         unsafe.Sizeof(timesheet.Timesheet{}),
 	Ptr:          ptrTimesheet,
 	Value:        valueTimesheet,
 	Attach:       attachTimesheet,
@@ -4244,7 +4260,7 @@ var timesheetsRef = keel.Ref{Table: &timesheetsTable}
 
 // TimesheetsTable is the table of worker.Timesheet.
 type TimesheetsTable struct {
-	keel.Handle[*worker.Timesheet]
+	keel.Handle[*timesheet.Timesheet]
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -4270,7 +4286,7 @@ type TimesheetsTable struct {
 
 // Timesheets references the timesheets table.
 var Timesheets = &TimesheetsTable{
-	Handle:                   keel.Handle[*worker.Timesheet]{Ref: &timesheetsRef},
+	Handle:                   keel.Handle[*timesheet.Timesheet]{Ref: &timesheetsRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 2}}},
@@ -4297,7 +4313,7 @@ var Timesheets = &TimesheetsTable{
 // BuildTimesheets builds the handle of timesheets for ref. Generated relation and alias methods call it.
 func BuildTimesheets(r *keel.Ref) *TimesheetsTable {
 	return &TimesheetsTable{
-		Handle:                   keel.Handle[*worker.Timesheet]{Ref: r},
+		Handle:                   keel.Handle[*timesheet.Timesheet]{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -4334,18 +4350,18 @@ func (t *TimesheetsTable) As(alias string) *TimesheetsTable {
 func (t *TimesheetsTable) Worker() *WorkersTable { return keel.Path(t.Ref, 0, BuildWorkers) }
 
 // Get returns the timesheets row with the given key, or keel.ErrNotFound.
-func (t *TimesheetsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.Timesheet, error) {
+func (t *TimesheetsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*timesheet.Timesheet, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newTimesheet() unsafe.Pointer { return unsafe.Pointer(new(worker.Timesheet)) }
+func newTimesheet() unsafe.Pointer { return unsafe.Pointer(new(timesheet.Timesheet)) }
 
 func newNTimesheet(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.Timesheet, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]timesheet.Timesheet, n)))
 }
 
 func ptrTimesheet(p unsafe.Pointer, c int32) any {
-	r := (*worker.Timesheet)(p)
+	r := (*timesheet.Timesheet)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -4394,7 +4410,7 @@ func ptrTimesheet(p unsafe.Pointer, c int32) any {
 }
 
 func valueTimesheet(p unsafe.Pointer, c int32) any {
-	r := (*worker.Timesheet)(p)
+	r := (*timesheet.Timesheet)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -4461,7 +4477,7 @@ func valueTimesheet(p unsafe.Pointer, c int32) any {
 }
 
 func attachTimesheet(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.Timesheet)(p)
+	r := (*timesheet.Timesheet)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
@@ -4469,7 +4485,7 @@ func attachTimesheet(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 }
 
 func beforeCreateTimesheet(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.Timesheet)(p).BeforeCreate(ctx)
+	return (*timesheet.Timesheet)(p).BeforeCreate(ctx)
 }
 
 // trainingCoursesTable is the schema of worker.TrainingCourse.
@@ -4480,7 +4496,7 @@ var trainingCoursesTable = schema.Table{
 	Model:       "worker.TrainingCourse",
 	Label:       `Training Course`,
 	Plural:      `Training Courses`,
-	Constraints: (&worker.TrainingCourse{}).Constraints(),
+	Constraints: (&workertraining.TrainingCourse{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -4519,7 +4535,7 @@ var trainingCoursesTable = schema.Table{
 	IDPrefix:     "trnc_",
 	New:          newTrainingCourse,
 	NewN:         newNTrainingCourse,
-	Size:         unsafe.Sizeof(worker.TrainingCourse{}),
+	Size:         unsafe.Sizeof(workertraining.TrainingCourse{}),
 	Ptr:          ptrTrainingCourse,
 	Value:        valueTrainingCourse,
 	BeforeCreate: beforeCreateTrainingCourse,
@@ -4531,7 +4547,7 @@ var trainingCoursesRef = keel.Ref{Table: &trainingCoursesTable}
 
 // TrainingCoursesTable is the table of worker.TrainingCourse.
 type TrainingCoursesTable struct {
-	keel.Handle[*worker.TrainingCourse]
+	keel.Handle[*workertraining.TrainingCourse]
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -4559,7 +4575,7 @@ type TrainingCoursesTable struct {
 
 // TrainingCourses references the training_courses table.
 var TrainingCourses = &TrainingCoursesTable{
-	Handle:                  keel.Handle[*worker.TrainingCourse]{Ref: &trainingCoursesRef},
+	Handle:                  keel.Handle[*workertraining.TrainingCourse]{Ref: &trainingCoursesRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingCoursesRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingCoursesRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingCoursesRef, Index: 2}}},
@@ -4588,7 +4604,7 @@ var TrainingCourses = &TrainingCoursesTable{
 // BuildTrainingCourses builds the handle of training_courses for ref. Generated relation and alias methods call it.
 func BuildTrainingCourses(r *keel.Ref) *TrainingCoursesTable {
 	return &TrainingCoursesTable{
-		Handle:                  keel.Handle[*worker.TrainingCourse]{Ref: r},
+		Handle:                  keel.Handle[*workertraining.TrainingCourse]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -4624,18 +4640,18 @@ func (t *TrainingCoursesTable) As(alias string) *TrainingCoursesTable {
 }
 
 // Get returns the training_courses row with the given key, or keel.ErrNotFound.
-func (t *TrainingCoursesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.TrainingCourse, error) {
+func (t *TrainingCoursesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workertraining.TrainingCourse, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newTrainingCourse() unsafe.Pointer { return unsafe.Pointer(new(worker.TrainingCourse)) }
+func newTrainingCourse() unsafe.Pointer { return unsafe.Pointer(new(workertraining.TrainingCourse)) }
 
 func newNTrainingCourse(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.TrainingCourse, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workertraining.TrainingCourse, n)))
 }
 
 func ptrTrainingCourse(p unsafe.Pointer, c int32) any {
-	r := (*worker.TrainingCourse)(p)
+	r := (*workertraining.TrainingCourse)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -4688,7 +4704,7 @@ func ptrTrainingCourse(p unsafe.Pointer, c int32) any {
 }
 
 func valueTrainingCourse(p unsafe.Pointer, c int32) any {
-	r := (*worker.TrainingCourse)(p)
+	r := (*workertraining.TrainingCourse)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -4753,15 +4769,15 @@ func valueTrainingCourse(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateTrainingCourse(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.TrainingCourse)(p).BeforeCreate(ctx)
+	return (*workertraining.TrainingCourse)(p).BeforeCreate(ctx)
 }
 
 func beforeUpdateTrainingCourse(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.TrainingCourse)(p).BeforeUpdate(ctx)
+	return (*workertraining.TrainingCourse)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveTrainingCourse(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.TrainingCourse)(p).BeforeSave(ctx)
+	return (*workertraining.TrainingCourse)(p).BeforeSave(ctx)
 }
 
 // workersTable is the schema of worker.Worker.
@@ -5252,7 +5268,7 @@ var workerAvailabilityPreferencesTable = schema.Table{
 	Label:       `Worker Availability Preference`,
 	Plural:      `Worker Availability Preferences`,
 	Doc:         `WorkerAvailabilityPreference is what a driver would rather work on a given weekday.`,
-	Constraints: (&worker.WorkerAvailabilityPreference{}).Constraints(),
+	Constraints: (&workerschedule.WorkerAvailabilityPreference{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -5278,7 +5294,7 @@ var workerAvailabilityPreferencesTable = schema.Table{
 	IDPrefix:     "wapf_",
 	New:          newWorkerAvailabilityPreference,
 	NewN:         newNWorkerAvailabilityPreference,
-	Size:         unsafe.Sizeof(worker.WorkerAvailabilityPreference{}),
+	Size:         unsafe.Sizeof(workerschedule.WorkerAvailabilityPreference{}),
 	Ptr:          ptrWorkerAvailabilityPreference,
 	Value:        valueWorkerAvailabilityPreference,
 	BeforeCreate: beforeCreateWorkerAvailabilityPreference,
@@ -5288,7 +5304,7 @@ var workerAvailabilityPreferencesRef = keel.Ref{Table: &workerAvailabilityPrefer
 
 // WorkerAvailabilityPreferencesTable is the table of worker.WorkerAvailabilityPreference.
 type WorkerAvailabilityPreferencesTable struct {
-	keel.Handle[*worker.WorkerAvailabilityPreference]
+	keel.Handle[*workerschedule.WorkerAvailabilityPreference]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -5303,7 +5319,7 @@ type WorkerAvailabilityPreferencesTable struct {
 
 // WorkerAvailabilityPreferences references the worker_availability_preferences table.
 var WorkerAvailabilityPreferences = &WorkerAvailabilityPreferencesTable{
-	Handle:         keel.Handle[*worker.WorkerAvailabilityPreference]{Ref: &workerAvailabilityPreferencesRef},
+	Handle:         keel.Handle[*workerschedule.WorkerAvailabilityPreference]{Ref: &workerAvailabilityPreferencesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 2}}},
@@ -5319,7 +5335,7 @@ var WorkerAvailabilityPreferences = &WorkerAvailabilityPreferencesTable{
 // BuildWorkerAvailabilityPreferences builds the handle of worker_availability_preferences for ref. Generated relation and alias methods call it.
 func BuildWorkerAvailabilityPreferences(r *keel.Ref) *WorkerAvailabilityPreferencesTable {
 	return &WorkerAvailabilityPreferencesTable{
-		Handle:         keel.Handle[*worker.WorkerAvailabilityPreference]{Ref: r},
+		Handle:         keel.Handle[*workerschedule.WorkerAvailabilityPreference]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -5342,20 +5358,20 @@ func (t *WorkerAvailabilityPreferencesTable) As(alias string) *WorkerAvailabilit
 }
 
 // Get returns the worker_availability_preferences row with the given key, or keel.ErrNotFound.
-func (t *WorkerAvailabilityPreferencesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerAvailabilityPreference, error) {
+func (t *WorkerAvailabilityPreferencesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerschedule.WorkerAvailabilityPreference, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerAvailabilityPreference() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.WorkerAvailabilityPreference))
+	return unsafe.Pointer(new(workerschedule.WorkerAvailabilityPreference))
 }
 
 func newNWorkerAvailabilityPreference(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerAvailabilityPreference, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerschedule.WorkerAvailabilityPreference, n)))
 }
 
 func ptrWorkerAvailabilityPreference(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerAvailabilityPreference)(p)
+	r := (*workerschedule.WorkerAvailabilityPreference)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -5382,7 +5398,7 @@ func ptrWorkerAvailabilityPreference(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerAvailabilityPreference(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerAvailabilityPreference)(p)
+	r := (*workerschedule.WorkerAvailabilityPreference)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -5412,7 +5428,7 @@ func valueWorkerAvailabilityPreference(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateWorkerAvailabilityPreference(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerAvailabilityPreference)(p).BeforeCreate(ctx)
+	return (*workerschedule.WorkerAvailabilityPreference)(p).BeforeCreate(ctx)
 }
 
 // workerChecklistsTable is the schema of worker.WorkerChecklist.
@@ -5423,7 +5439,7 @@ var workerChecklistsTable = schema.Table{
 	Model:       "worker.WorkerChecklist",
 	Label:       `Worker Checklist`,
 	Plural:      `Worker Checklists`,
-	Constraints: (&worker.WorkerChecklist{}).Constraints(),
+	Constraints: (&workerchecklist.WorkerChecklist{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -5463,7 +5479,7 @@ var workerChecklistsTable = schema.Table{
 	IDPrefix:     "wcl_",
 	New:          newWorkerChecklist,
 	NewN:         newNWorkerChecklist,
-	Size:         unsafe.Sizeof(worker.WorkerChecklist{}),
+	Size:         unsafe.Sizeof(workerchecklist.WorkerChecklist{}),
 	Ptr:          ptrWorkerChecklist,
 	Value:        valueWorkerChecklist,
 	Attach:       attachWorkerChecklist,
@@ -5474,7 +5490,7 @@ var workerChecklistsRef = keel.Ref{Table: &workerChecklistsTable}
 
 // WorkerChecklistsTable is the table of worker.WorkerChecklist.
 type WorkerChecklistsTable struct {
-	keel.Handle[*worker.WorkerChecklist]
+	keel.Handle[*workerchecklist.WorkerChecklist]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -5497,7 +5513,7 @@ type WorkerChecklistsTable struct {
 
 // WorkerChecklists references the worker_checklists table.
 var WorkerChecklists = &WorkerChecklistsTable{
-	Handle:         keel.Handle[*worker.WorkerChecklist]{Ref: &workerChecklistsRef},
+	Handle:         keel.Handle[*workerchecklist.WorkerChecklist]{Ref: &workerChecklistsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 2}}},
@@ -5521,7 +5537,7 @@ var WorkerChecklists = &WorkerChecklistsTable{
 // BuildWorkerChecklists builds the handle of worker_checklists for ref. Generated relation and alias methods call it.
 func BuildWorkerChecklists(r *keel.Ref) *WorkerChecklistsTable {
 	return &WorkerChecklistsTable{
-		Handle:         keel.Handle[*worker.WorkerChecklist]{Ref: r},
+		Handle:         keel.Handle[*workerchecklist.WorkerChecklist]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -5570,18 +5586,18 @@ func (t *WorkerChecklistsTable) StartedBy() *tenantdb.UsersTable {
 }
 
 // Get returns the worker_checklists row with the given key, or keel.ErrNotFound.
-func (t *WorkerChecklistsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerChecklist, error) {
+func (t *WorkerChecklistsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerchecklist.WorkerChecklist, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newWorkerChecklist() unsafe.Pointer { return unsafe.Pointer(new(worker.WorkerChecklist)) }
+func newWorkerChecklist() unsafe.Pointer { return unsafe.Pointer(new(workerchecklist.WorkerChecklist)) }
 
 func newNWorkerChecklist(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerChecklist, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerchecklist.WorkerChecklist, n)))
 }
 
 func ptrWorkerChecklist(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerChecklist)(p)
+	r := (*workerchecklist.WorkerChecklist)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -5624,7 +5640,7 @@ func ptrWorkerChecklist(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerChecklist(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerChecklist)(p)
+	r := (*workerchecklist.WorkerChecklist)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -5688,21 +5704,21 @@ func valueWorkerChecklist(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerChecklist(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerChecklist)(p)
+	r := (*workerchecklist.WorkerChecklist)(p)
 	switch rel {
 	case 0:
-		r.Items = append(r.Items, (*worker.WorkerChecklistItem)(child))
+		r.Items = append(r.Items, (*workerchecklist.WorkerChecklistItem)(child))
 	case 1:
 		r.Worker = (*worker.Worker)(child)
 	case 2:
-		r.Template = (*worker.WorkerChecklistTemplate)(child)
+		r.Template = (*workerchecklist.WorkerChecklistTemplate)(child)
 	case 3:
 		r.StartedBy = (*tenant.User)(child)
 	}
 }
 
 func beforeCreateWorkerChecklist(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerChecklist)(p).BeforeCreate(ctx)
+	return (*workerchecklist.WorkerChecklist)(p).BeforeCreate(ctx)
 }
 
 // workerChecklistItemsTable is the schema of worker.WorkerChecklistItem.
@@ -5713,7 +5729,7 @@ var workerChecklistItemsTable = schema.Table{
 	Model:       "worker.WorkerChecklistItem",
 	Label:       `Worker Checklist Item`,
 	Plural:      `Worker Checklist Items`,
-	Constraints: (&worker.WorkerChecklistItem{}).Constraints(),
+	Constraints: (&workerchecklist.WorkerChecklistItem{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -5759,7 +5775,7 @@ var workerChecklistItemsTable = schema.Table{
 	IDPrefix:     "wcli_",
 	New:          newWorkerChecklistItem,
 	NewN:         newNWorkerChecklistItem,
-	Size:         unsafe.Sizeof(worker.WorkerChecklistItem{}),
+	Size:         unsafe.Sizeof(workerchecklist.WorkerChecklistItem{}),
 	Ptr:          ptrWorkerChecklistItem,
 	Value:        valueWorkerChecklistItem,
 	Attach:       attachWorkerChecklistItem,
@@ -5770,7 +5786,7 @@ var workerChecklistItemsRef = keel.Ref{Table: &workerChecklistItemsTable}
 
 // WorkerChecklistItemsTable is the table of worker.WorkerChecklistItem.
 type WorkerChecklistItemsTable struct {
-	keel.Handle[*worker.WorkerChecklistItem]
+	keel.Handle[*workerchecklist.WorkerChecklistItem]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -5799,7 +5815,7 @@ type WorkerChecklistItemsTable struct {
 
 // WorkerChecklistItems references the worker_checklist_items table.
 var WorkerChecklistItems = &WorkerChecklistItemsTable{
-	Handle:               keel.Handle[*worker.WorkerChecklistItem]{Ref: &workerChecklistItemsRef},
+	Handle:               keel.Handle[*workerchecklist.WorkerChecklistItem]{Ref: &workerChecklistItemsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 2}}},
@@ -5829,7 +5845,7 @@ var WorkerChecklistItems = &WorkerChecklistItemsTable{
 // BuildWorkerChecklistItems builds the handle of worker_checklist_items for ref. Generated relation and alias methods call it.
 func BuildWorkerChecklistItems(r *keel.Ref) *WorkerChecklistItemsTable {
 	return &WorkerChecklistItemsTable{
-		Handle:               keel.Handle[*worker.WorkerChecklistItem]{Ref: r},
+		Handle:               keel.Handle[*workerchecklist.WorkerChecklistItem]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -5886,18 +5902,18 @@ func (t *WorkerChecklistItemsTable) CredentialType() *WorkerCredentialTypesTable
 }
 
 // Get returns the worker_checklist_items row with the given key, or keel.ErrNotFound.
-func (t *WorkerChecklistItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerChecklistItem, error) {
+func (t *WorkerChecklistItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerchecklist.WorkerChecklistItem, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newWorkerChecklistItem() unsafe.Pointer { return unsafe.Pointer(new(worker.WorkerChecklistItem)) }
+func newWorkerChecklistItem() unsafe.Pointer { return unsafe.Pointer(new(workerchecklist.WorkerChecklistItem)) }
 
 func newNWorkerChecklistItem(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerChecklistItem, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerchecklist.WorkerChecklistItem, n)))
 }
 
 func ptrWorkerChecklistItem(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerChecklistItem)(p)
+	r := (*workerchecklist.WorkerChecklistItem)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -5952,7 +5968,7 @@ func ptrWorkerChecklistItem(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerChecklistItem(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerChecklistItem)(p)
+	r := (*workerchecklist.WorkerChecklistItem)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -6037,21 +6053,21 @@ func valueWorkerChecklistItem(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerChecklistItem(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerChecklistItem)(p)
+	r := (*workerchecklist.WorkerChecklistItem)(p)
 	switch rel {
 	case 0:
 		r.CompletedBy = (*tenant.User)(child)
 	case 1:
 		r.EvidenceDocument = (*document.Document)(child)
 	case 2:
-		r.EvidenceCredential = (*worker.WorkerCredential)(child)
+		r.EvidenceCredential = (*workercredential.WorkerCredential)(child)
 	case 3:
-		r.CredentialType = (*worker.WorkerCredentialType)(child)
+		r.CredentialType = (*workercredential.WorkerCredentialType)(child)
 	}
 }
 
 func beforeCreateWorkerChecklistItem(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerChecklistItem)(p).BeforeCreate(ctx)
+	return (*workerchecklist.WorkerChecklistItem)(p).BeforeCreate(ctx)
 }
 
 // workerChecklistTemplatesTable is the schema of worker.WorkerChecklistTemplate.
@@ -6062,7 +6078,7 @@ var workerChecklistTemplatesTable = schema.Table{
 	Model:       "worker.WorkerChecklistTemplate",
 	Label:       `Worker Checklist Template`,
 	Plural:      `Worker Checklist Templates`,
-	Constraints: (&worker.WorkerChecklistTemplate{}).Constraints(),
+	Constraints: (&workerchecklist.WorkerChecklistTemplate{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -6095,7 +6111,7 @@ var workerChecklistTemplatesTable = schema.Table{
 	IDPrefix:     "wclt_",
 	New:          newWorkerChecklistTemplate,
 	NewN:         newNWorkerChecklistTemplate,
-	Size:         unsafe.Sizeof(worker.WorkerChecklistTemplate{}),
+	Size:         unsafe.Sizeof(workerchecklist.WorkerChecklistTemplate{}),
 	Ptr:          ptrWorkerChecklistTemplate,
 	Value:        valueWorkerChecklistTemplate,
 	Attach:       attachWorkerChecklistTemplate,
@@ -6106,7 +6122,7 @@ var workerChecklistTemplatesRef = keel.Ref{Table: &workerChecklistTemplatesTable
 
 // WorkerChecklistTemplatesTable is the table of worker.WorkerChecklistTemplate.
 type WorkerChecklistTemplatesTable struct {
-	keel.Handle[*worker.WorkerChecklistTemplate]
+	keel.Handle[*workerchecklist.WorkerChecklistTemplate]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -6125,7 +6141,7 @@ type WorkerChecklistTemplatesTable struct {
 
 // WorkerChecklistTemplates references the worker_checklist_templates table.
 var WorkerChecklistTemplates = &WorkerChecklistTemplatesTable{
-	Handle:         keel.Handle[*worker.WorkerChecklistTemplate]{Ref: &workerChecklistTemplatesRef},
+	Handle:         keel.Handle[*workerchecklist.WorkerChecklistTemplate]{Ref: &workerChecklistTemplatesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 2}}},
@@ -6145,7 +6161,7 @@ var WorkerChecklistTemplates = &WorkerChecklistTemplatesTable{
 // BuildWorkerChecklistTemplates builds the handle of worker_checklist_templates for ref. Generated relation and alias methods call it.
 func BuildWorkerChecklistTemplates(r *keel.Ref) *WorkerChecklistTemplatesTable {
 	return &WorkerChecklistTemplatesTable{
-		Handle:         keel.Handle[*worker.WorkerChecklistTemplate]{Ref: r},
+		Handle:         keel.Handle[*workerchecklist.WorkerChecklistTemplate]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -6177,20 +6193,20 @@ func (t *WorkerChecklistTemplatesTable) Items() *WorkerChecklistTemplateItemsTab
 }
 
 // Get returns the worker_checklist_templates row with the given key, or keel.ErrNotFound.
-func (t *WorkerChecklistTemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerChecklistTemplate, error) {
+func (t *WorkerChecklistTemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerchecklist.WorkerChecklistTemplate, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerChecklistTemplate() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.WorkerChecklistTemplate))
+	return unsafe.Pointer(new(workerchecklist.WorkerChecklistTemplate))
 }
 
 func newNWorkerChecklistTemplate(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerChecklistTemplate, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerchecklist.WorkerChecklistTemplate, n)))
 }
 
 func ptrWorkerChecklistTemplate(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerChecklistTemplate)(p)
+	r := (*workerchecklist.WorkerChecklistTemplate)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -6225,7 +6241,7 @@ func ptrWorkerChecklistTemplate(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerChecklistTemplate(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerChecklistTemplate)(p)
+	r := (*workerchecklist.WorkerChecklistTemplate)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -6263,15 +6279,15 @@ func valueWorkerChecklistTemplate(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerChecklistTemplate(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerChecklistTemplate)(p)
+	r := (*workerchecklist.WorkerChecklistTemplate)(p)
 	switch rel {
 	case 0:
-		r.Items = append(r.Items, (*worker.WorkerChecklistTemplateItem)(child))
+		r.Items = append(r.Items, (*workerchecklist.WorkerChecklistTemplateItem)(child))
 	}
 }
 
 func beforeCreateWorkerChecklistTemplate(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerChecklistTemplate)(p).BeforeCreate(ctx)
+	return (*workerchecklist.WorkerChecklistTemplate)(p).BeforeCreate(ctx)
 }
 
 // workerChecklistTemplateItemsTable is the schema of worker.WorkerChecklistTemplateItem.
@@ -6282,7 +6298,7 @@ var workerChecklistTemplateItemsTable = schema.Table{
 	Model:       "worker.WorkerChecklistTemplateItem",
 	Label:       `Worker Checklist Template Item`,
 	Plural:      `Worker Checklist Template Items`,
-	Constraints: (&worker.WorkerChecklistTemplateItem{}).Constraints(),
+	Constraints: (&workerchecklist.WorkerChecklistTemplateItem{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -6317,7 +6333,7 @@ var workerChecklistTemplateItemsTable = schema.Table{
 	IDPrefix:     "wclti_",
 	New:          newWorkerChecklistTemplateItem,
 	NewN:         newNWorkerChecklistTemplateItem,
-	Size:         unsafe.Sizeof(worker.WorkerChecklistTemplateItem{}),
+	Size:         unsafe.Sizeof(workerchecklist.WorkerChecklistTemplateItem{}),
 	Ptr:          ptrWorkerChecklistTemplateItem,
 	Value:        valueWorkerChecklistTemplateItem,
 	Attach:       attachWorkerChecklistTemplateItem,
@@ -6328,7 +6344,7 @@ var workerChecklistTemplateItemsRef = keel.Ref{Table: &workerChecklistTemplateIt
 
 // WorkerChecklistTemplateItemsTable is the table of worker.WorkerChecklistTemplateItem.
 type WorkerChecklistTemplateItemsTable struct {
-	keel.Handle[*worker.WorkerChecklistTemplateItem]
+	keel.Handle[*workerchecklist.WorkerChecklistTemplateItem]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -6348,7 +6364,7 @@ type WorkerChecklistTemplateItemsTable struct {
 
 // WorkerChecklistTemplateItems references the worker_checklist_template_items table.
 var WorkerChecklistTemplateItems = &WorkerChecklistTemplateItemsTable{
-	Handle:           keel.Handle[*worker.WorkerChecklistTemplateItem]{Ref: &workerChecklistTemplateItemsRef},
+	Handle:           keel.Handle[*workerchecklist.WorkerChecklistTemplateItem]{Ref: &workerChecklistTemplateItemsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 2}}},
@@ -6369,7 +6385,7 @@ var WorkerChecklistTemplateItems = &WorkerChecklistTemplateItemsTable{
 // BuildWorkerChecklistTemplateItems builds the handle of worker_checklist_template_items for ref. Generated relation and alias methods call it.
 func BuildWorkerChecklistTemplateItems(r *keel.Ref) *WorkerChecklistTemplateItemsTable {
 	return &WorkerChecklistTemplateItemsTable{
-		Handle:           keel.Handle[*worker.WorkerChecklistTemplateItem]{Ref: r},
+		Handle:           keel.Handle[*workerchecklist.WorkerChecklistTemplateItem]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -6407,20 +6423,20 @@ func (t *WorkerChecklistTemplateItemsTable) DocumentType() *documenttypedb.Docum
 }
 
 // Get returns the worker_checklist_template_items row with the given key, or keel.ErrNotFound.
-func (t *WorkerChecklistTemplateItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerChecklistTemplateItem, error) {
+func (t *WorkerChecklistTemplateItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerchecklist.WorkerChecklistTemplateItem, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerChecklistTemplateItem() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.WorkerChecklistTemplateItem))
+	return unsafe.Pointer(new(workerchecklist.WorkerChecklistTemplateItem))
 }
 
 func newNWorkerChecklistTemplateItem(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerChecklistTemplateItem, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerchecklist.WorkerChecklistTemplateItem, n)))
 }
 
 func ptrWorkerChecklistTemplateItem(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerChecklistTemplateItem)(p)
+	r := (*workerchecklist.WorkerChecklistTemplateItem)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -6457,7 +6473,7 @@ func ptrWorkerChecklistTemplateItem(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerChecklistTemplateItem(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerChecklistTemplateItem)(p)
+	r := (*workerchecklist.WorkerChecklistTemplateItem)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -6503,17 +6519,17 @@ func valueWorkerChecklistTemplateItem(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerChecklistTemplateItem(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerChecklistTemplateItem)(p)
+	r := (*workerchecklist.WorkerChecklistTemplateItem)(p)
 	switch rel {
 	case 0:
-		r.CredentialType = (*worker.WorkerCredentialType)(child)
+		r.CredentialType = (*workercredential.WorkerCredentialType)(child)
 	case 1:
 		r.DocumentType = (*documenttype.DocumentType)(child)
 	}
 }
 
 func beforeCreateWorkerChecklistTemplateItem(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerChecklistTemplateItem)(p).BeforeCreate(ctx)
+	return (*workerchecklist.WorkerChecklistTemplateItem)(p).BeforeCreate(ctx)
 }
 
 // workerClearinghouseQueriesTable is the schema of worker.WorkerClearinghouseQuery.
@@ -6524,7 +6540,7 @@ var workerClearinghouseQueriesTable = schema.Table{
 	Model:       "worker.WorkerClearinghouseQuery",
 	Label:       `Worker Clearinghouse Query`,
 	Plural:      `Worker Clearinghouse Queries`,
-	Constraints: (&worker.WorkerClearinghouseQuery{}).Constraints(),
+	Constraints: (&workerdot.WorkerClearinghouseQuery{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -6563,7 +6579,7 @@ var workerClearinghouseQueriesTable = schema.Table{
 	IDPrefix:     "wchq_",
 	New:          newWorkerClearinghouseQuery,
 	NewN:         newNWorkerClearinghouseQuery,
-	Size:         unsafe.Sizeof(worker.WorkerClearinghouseQuery{}),
+	Size:         unsafe.Sizeof(workerdot.WorkerClearinghouseQuery{}),
 	Ptr:          ptrWorkerClearinghouseQuery,
 	Value:        valueWorkerClearinghouseQuery,
 	Attach:       attachWorkerClearinghouseQuery,
@@ -6574,7 +6590,7 @@ var workerClearinghouseQueriesRef = keel.Ref{Table: &workerClearinghouseQueriesT
 
 // WorkerClearinghouseQueriesTable is the table of worker.WorkerClearinghouseQuery.
 type WorkerClearinghouseQueriesTable struct {
-	keel.Handle[*worker.WorkerClearinghouseQuery]
+	keel.Handle[*workerdot.WorkerClearinghouseQuery]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -6597,7 +6613,7 @@ type WorkerClearinghouseQueriesTable struct {
 
 // WorkerClearinghouseQueries references the worker_clearinghouse_queries table.
 var WorkerClearinghouseQueries = &WorkerClearinghouseQueriesTable{
-	Handle:            keel.Handle[*worker.WorkerClearinghouseQuery]{Ref: &workerClearinghouseQueriesRef},
+	Handle:            keel.Handle[*workerdot.WorkerClearinghouseQuery]{Ref: &workerClearinghouseQueriesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 2}}},
@@ -6621,7 +6637,7 @@ var WorkerClearinghouseQueries = &WorkerClearinghouseQueriesTable{
 // BuildWorkerClearinghouseQueries builds the handle of worker_clearinghouse_queries for ref. Generated relation and alias methods call it.
 func BuildWorkerClearinghouseQueries(r *keel.Ref) *WorkerClearinghouseQueriesTable {
 	return &WorkerClearinghouseQueriesTable{
-		Handle:            keel.Handle[*worker.WorkerClearinghouseQuery]{Ref: r},
+		Handle:            keel.Handle[*workerdot.WorkerClearinghouseQuery]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -6667,20 +6683,20 @@ func (t *WorkerClearinghouseQueriesTable) PerformedBy() *tenantdb.UsersTable {
 }
 
 // Get returns the worker_clearinghouse_queries row with the given key, or keel.ErrNotFound.
-func (t *WorkerClearinghouseQueriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerClearinghouseQuery, error) {
+func (t *WorkerClearinghouseQueriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerdot.WorkerClearinghouseQuery, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerClearinghouseQuery() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.WorkerClearinghouseQuery))
+	return unsafe.Pointer(new(workerdot.WorkerClearinghouseQuery))
 }
 
 func newNWorkerClearinghouseQuery(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerClearinghouseQuery, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerdot.WorkerClearinghouseQuery, n)))
 }
 
 func ptrWorkerClearinghouseQuery(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerClearinghouseQuery)(p)
+	r := (*workerdot.WorkerClearinghouseQuery)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -6723,7 +6739,7 @@ func ptrWorkerClearinghouseQuery(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerClearinghouseQuery(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerClearinghouseQuery)(p)
+	r := (*workerdot.WorkerClearinghouseQuery)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -6787,7 +6803,7 @@ func valueWorkerClearinghouseQuery(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerClearinghouseQuery(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerClearinghouseQuery)(p)
+	r := (*workerdot.WorkerClearinghouseQuery)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
@@ -6799,7 +6815,7 @@ func attachWorkerClearinghouseQuery(p unsafe.Pointer, rel int32, child unsafe.Po
 }
 
 func beforeCreateWorkerClearinghouseQuery(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerClearinghouseQuery)(p).BeforeCreate(ctx)
+	return (*workerdot.WorkerClearinghouseQuery)(p).BeforeCreate(ctx)
 }
 
 // workerCredentialsTable is the schema of worker.WorkerCredential.
@@ -6812,7 +6828,7 @@ var workerCredentialsTable = schema.Table{
 	Plural:      `Worker Credentials`,
 	Doc:         `Licences and certificates a worker holds, with their expiry and verification`,
 	Report:      &schema.TableReport{Category: `Parties`},
-	Constraints: (&worker.WorkerCredential{}).Constraints(),
+	Constraints: (&workercredential.WorkerCredential{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -6854,7 +6870,7 @@ var workerCredentialsTable = schema.Table{
 	IDPrefix:     "wcred_",
 	New:          newWorkerCredential,
 	NewN:         newNWorkerCredential,
-	Size:         unsafe.Sizeof(worker.WorkerCredential{}),
+	Size:         unsafe.Sizeof(workercredential.WorkerCredential{}),
 	Ptr:          ptrWorkerCredential,
 	Value:        valueWorkerCredential,
 	Attach:       attachWorkerCredential,
@@ -6865,7 +6881,7 @@ var workerCredentialsRef = keel.Ref{Table: &workerCredentialsTable}
 
 // WorkerCredentialsTable is the table of worker.WorkerCredential.
 type WorkerCredentialsTable struct {
-	keel.Handle[*worker.WorkerCredential]
+	keel.Handle[*workercredential.WorkerCredential]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -6890,7 +6906,7 @@ type WorkerCredentialsTable struct {
 
 // WorkerCredentials references the worker_credentials table.
 var WorkerCredentials = &WorkerCredentialsTable{
-	Handle:           keel.Handle[*worker.WorkerCredential]{Ref: &workerCredentialsRef},
+	Handle:           keel.Handle[*workercredential.WorkerCredential]{Ref: &workerCredentialsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 2}}},
@@ -6916,7 +6932,7 @@ var WorkerCredentials = &WorkerCredentialsTable{
 // BuildWorkerCredentials builds the handle of worker_credentials for ref. Generated relation and alias methods call it.
 func BuildWorkerCredentials(r *keel.Ref) *WorkerCredentialsTable {
 	return &WorkerCredentialsTable{
-		Handle:           keel.Handle[*worker.WorkerCredential]{Ref: r},
+		Handle:           keel.Handle[*workercredential.WorkerCredential]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -6967,18 +6983,18 @@ func (t *WorkerCredentialsTable) VerifiedBy() *tenantdb.UsersTable {
 }
 
 // Get returns the worker_credentials row with the given key, or keel.ErrNotFound.
-func (t *WorkerCredentialsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerCredential, error) {
+func (t *WorkerCredentialsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workercredential.WorkerCredential, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newWorkerCredential() unsafe.Pointer { return unsafe.Pointer(new(worker.WorkerCredential)) }
+func newWorkerCredential() unsafe.Pointer { return unsafe.Pointer(new(workercredential.WorkerCredential)) }
 
 func newNWorkerCredential(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerCredential, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workercredential.WorkerCredential, n)))
 }
 
 func ptrWorkerCredential(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerCredential)(p)
+	r := (*workercredential.WorkerCredential)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -7025,7 +7041,7 @@ func ptrWorkerCredential(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerCredential(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerCredential)(p)
+	r := (*workercredential.WorkerCredential)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -7105,10 +7121,10 @@ func valueWorkerCredential(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerCredential(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerCredential)(p)
+	r := (*workercredential.WorkerCredential)(p)
 	switch rel {
 	case 0:
-		r.CredentialType = (*worker.WorkerCredentialType)(child)
+		r.CredentialType = (*workercredential.WorkerCredentialType)(child)
 	case 1:
 		r.Worker = (*worker.Worker)(child)
 	case 2:
@@ -7119,7 +7135,7 @@ func attachWorkerCredential(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 }
 
 func beforeCreateWorkerCredential(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerCredential)(p).BeforeCreate(ctx)
+	return (*workercredential.WorkerCredential)(p).BeforeCreate(ctx)
 }
 
 // workerCredentialTypesTable is the schema of worker.WorkerCredentialType.
@@ -7132,7 +7148,7 @@ var workerCredentialTypesTable = schema.Table{
 	Plural:      `Credential Types`,
 	Doc:         `The catalog of credentials a carrier tracks`,
 	Report:      &schema.TableReport{Category: `Parties`},
-	Constraints: (&worker.WorkerCredentialType{}).Constraints(),
+	Constraints: (&workercredential.WorkerCredentialType{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -7169,7 +7185,7 @@ var workerCredentialTypesTable = schema.Table{
 	IDPrefix:     "wct_",
 	New:          newWorkerCredentialType,
 	NewN:         newNWorkerCredentialType,
-	Size:         unsafe.Sizeof(worker.WorkerCredentialType{}),
+	Size:         unsafe.Sizeof(workercredential.WorkerCredentialType{}),
 	Ptr:          ptrWorkerCredentialType,
 	Value:        valueWorkerCredentialType,
 	BeforeCreate: beforeCreateWorkerCredentialType,
@@ -7181,7 +7197,7 @@ var workerCredentialTypesRef = keel.Ref{Table: &workerCredentialTypesTable}
 
 // WorkerCredentialTypesTable is the table of worker.WorkerCredentialType.
 type WorkerCredentialTypesTable struct {
-	keel.Handle[*worker.WorkerCredentialType]
+	keel.Handle[*workercredential.WorkerCredentialType]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -7207,7 +7223,7 @@ type WorkerCredentialTypesTable struct {
 
 // WorkerCredentialTypes references the worker_credential_types table.
 var WorkerCredentialTypes = &WorkerCredentialTypesTable{
-	Handle:                 keel.Handle[*worker.WorkerCredentialType]{Ref: &workerCredentialTypesRef},
+	Handle:                 keel.Handle[*workercredential.WorkerCredentialType]{Ref: &workerCredentialTypesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 2}}},
@@ -7234,7 +7250,7 @@ var WorkerCredentialTypes = &WorkerCredentialTypesTable{
 // BuildWorkerCredentialTypes builds the handle of worker_credential_types for ref. Generated relation and alias methods call it.
 func BuildWorkerCredentialTypes(r *keel.Ref) *WorkerCredentialTypesTable {
 	return &WorkerCredentialTypesTable{
-		Handle:                 keel.Handle[*worker.WorkerCredentialType]{Ref: r},
+		Handle:                 keel.Handle[*workercredential.WorkerCredentialType]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -7268,20 +7284,20 @@ func (t *WorkerCredentialTypesTable) As(alias string) *WorkerCredentialTypesTabl
 }
 
 // Get returns the worker_credential_types row with the given key, or keel.ErrNotFound.
-func (t *WorkerCredentialTypesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerCredentialType, error) {
+func (t *WorkerCredentialTypesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workercredential.WorkerCredentialType, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerCredentialType() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.WorkerCredentialType))
+	return unsafe.Pointer(new(workercredential.WorkerCredentialType))
 }
 
 func newNWorkerCredentialType(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerCredentialType, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workercredential.WorkerCredentialType, n)))
 }
 
 func ptrWorkerCredentialType(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerCredentialType)(p)
+	r := (*workercredential.WorkerCredentialType)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -7330,7 +7346,7 @@ func ptrWorkerCredentialType(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerCredentialType(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerCredentialType)(p)
+	r := (*workercredential.WorkerCredentialType)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -7391,15 +7407,15 @@ func valueWorkerCredentialType(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateWorkerCredentialType(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerCredentialType)(p).BeforeCreate(ctx)
+	return (*workercredential.WorkerCredentialType)(p).BeforeCreate(ctx)
 }
 
 func beforeUpdateWorkerCredentialType(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerCredentialType)(p).BeforeUpdate(ctx)
+	return (*workercredential.WorkerCredentialType)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveWorkerCredentialType(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerCredentialType)(p).BeforeSave(ctx)
+	return (*workercredential.WorkerCredentialType)(p).BeforeSave(ctx)
 }
 
 // workerDOTTestsTable is the schema of worker.WorkerDOTTest.
@@ -7410,7 +7426,7 @@ var workerDOTTestsTable = schema.Table{
 	Model:       "worker.WorkerDOTTest",
 	Label:       `Worker DOT Test`,
 	Plural:      `Worker DOT Tests`,
-	Constraints: (&worker.WorkerDOTTest{}).Constraints(),
+	Constraints: (&workerdot.WorkerDOTTest{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -7462,7 +7478,7 @@ var workerDOTTestsTable = schema.Table{
 	IDPrefix:     "wdot_",
 	New:          newWorkerDOTTest,
 	NewN:         newNWorkerDOTTest,
-	Size:         unsafe.Sizeof(worker.WorkerDOTTest{}),
+	Size:         unsafe.Sizeof(workerdot.WorkerDOTTest{}),
 	Ptr:          ptrWorkerDOTTest,
 	Value:        valueWorkerDOTTest,
 	Attach:       attachWorkerDOTTest,
@@ -7473,7 +7489,7 @@ var workerDOTTestsRef = keel.Ref{Table: &workerDOTTestsTable}
 
 // WorkerDOTTestsTable is the table of worker.WorkerDOTTest.
 type WorkerDOTTestsTable struct {
-	keel.Handle[*worker.WorkerDOTTest]
+	keel.Handle[*workerdot.WorkerDOTTest]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -7507,7 +7523,7 @@ type WorkerDOTTestsTable struct {
 
 // WorkerDOTTests references the worker_dot_tests table.
 var WorkerDOTTests = &WorkerDOTTestsTable{
-	Handle:               keel.Handle[*worker.WorkerDOTTest]{Ref: &workerDOTTestsRef},
+	Handle:               keel.Handle[*workerdot.WorkerDOTTest]{Ref: &workerDOTTestsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 2}}},
@@ -7542,7 +7558,7 @@ var WorkerDOTTests = &WorkerDOTTestsTable{
 // BuildWorkerDOTTests builds the handle of worker_dot_tests for ref. Generated relation and alias methods call it.
 func BuildWorkerDOTTests(r *keel.Ref) *WorkerDOTTestsTable {
 	return &WorkerDOTTestsTable{
-		Handle:               keel.Handle[*worker.WorkerDOTTest]{Ref: r},
+		Handle:               keel.Handle[*workerdot.WorkerDOTTest]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -7607,18 +7623,18 @@ func (t *WorkerDOTTestsTable) RecordedBy() *tenantdb.UsersTable {
 }
 
 // Get returns the worker_dot_tests row with the given key, or keel.ErrNotFound.
-func (t *WorkerDOTTestsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerDOTTest, error) {
+func (t *WorkerDOTTestsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerdot.WorkerDOTTest, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newWorkerDOTTest() unsafe.Pointer { return unsafe.Pointer(new(worker.WorkerDOTTest)) }
+func newWorkerDOTTest() unsafe.Pointer { return unsafe.Pointer(new(workerdot.WorkerDOTTest)) }
 
 func newNWorkerDOTTest(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerDOTTest, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerdot.WorkerDOTTest, n)))
 }
 
 func ptrWorkerDOTTest(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerDOTTest)(p)
+	r := (*workerdot.WorkerDOTTest)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -7683,7 +7699,7 @@ func ptrWorkerDOTTest(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerDOTTest(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerDOTTest)(p)
+	r := (*workerdot.WorkerDOTTest)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -7799,12 +7815,12 @@ func valueWorkerDOTTest(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerDOTTest(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerDOTTest)(p)
+	r := (*workerdot.WorkerDOTTest)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
 	case 1:
-		r.SafetyEvent = (*worker.WorkerSafetyEvent)(child)
+		r.SafetyEvent = (*workersafety.WorkerSafetyEvent)(child)
 	case 2:
 		r.Document = (*document.Document)(child)
 	case 3:
@@ -7815,7 +7831,7 @@ func attachWorkerDOTTest(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 }
 
 func beforeCreateWorkerDOTTest(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerDOTTest)(p).BeforeCreate(ctx)
+	return (*workerdot.WorkerDOTTest)(p).BeforeCreate(ctx)
 }
 
 // workerDOTViolationsTable is the schema of worker.WorkerDOTViolation.
@@ -7826,7 +7842,7 @@ var workerDOTViolationsTable = schema.Table{
 	Model:       "worker.WorkerDOTViolation",
 	Label:       `Worker DOT Violation`,
 	Plural:      `Worker DOT Violations`,
-	Constraints: (&worker.WorkerDOTViolation{}).Constraints(),
+	Constraints: (&workerdot.WorkerDOTViolation{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -7873,7 +7889,7 @@ var workerDOTViolationsTable = schema.Table{
 	IDPrefix:     "wdotv_",
 	New:          newWorkerDOTViolation,
 	NewN:         newNWorkerDOTViolation,
-	Size:         unsafe.Sizeof(worker.WorkerDOTViolation{}),
+	Size:         unsafe.Sizeof(workerdot.WorkerDOTViolation{}),
 	Ptr:          ptrWorkerDOTViolation,
 	Value:        valueWorkerDOTViolation,
 	Attach:       attachWorkerDOTViolation,
@@ -7884,7 +7900,7 @@ var workerDOTViolationsRef = keel.Ref{Table: &workerDOTViolationsTable}
 
 // WorkerDOTViolationsTable is the table of worker.WorkerDOTViolation.
 type WorkerDOTViolationsTable struct {
-	keel.Handle[*worker.WorkerDOTViolation]
+	keel.Handle[*workerdot.WorkerDOTViolation]
 	ID                        keelkinds.PulidIDCol
 	BusinessUnitID            keelkinds.PulidIDCol
 	OrganizationID            keelkinds.PulidIDCol
@@ -7913,7 +7929,7 @@ type WorkerDOTViolationsTable struct {
 
 // WorkerDOTViolations references the worker_dot_violations table.
 var WorkerDOTViolations = &WorkerDOTViolationsTable{
-	Handle:                    keel.Handle[*worker.WorkerDOTViolation]{Ref: &workerDOTViolationsRef},
+	Handle:                    keel.Handle[*workerdot.WorkerDOTViolation]{Ref: &workerDOTViolationsRef},
 	ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 0}}},
 	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 1}}},
 	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 2}}},
@@ -7943,7 +7959,7 @@ var WorkerDOTViolations = &WorkerDOTViolationsTable{
 // BuildWorkerDOTViolations builds the handle of worker_dot_violations for ref. Generated relation and alias methods call it.
 func BuildWorkerDOTViolations(r *keel.Ref) *WorkerDOTViolationsTable {
 	return &WorkerDOTViolationsTable{
-		Handle:                    keel.Handle[*worker.WorkerDOTViolation]{Ref: r},
+		Handle:                    keel.Handle[*workerdot.WorkerDOTViolation]{Ref: r},
 		ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -8003,18 +8019,18 @@ func (t *WorkerDOTViolationsTable) RecordedBy() *tenantdb.UsersTable {
 }
 
 // Get returns the worker_dot_violations row with the given key, or keel.ErrNotFound.
-func (t *WorkerDOTViolationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerDOTViolation, error) {
+func (t *WorkerDOTViolationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerdot.WorkerDOTViolation, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newWorkerDOTViolation() unsafe.Pointer { return unsafe.Pointer(new(worker.WorkerDOTViolation)) }
+func newWorkerDOTViolation() unsafe.Pointer { return unsafe.Pointer(new(workerdot.WorkerDOTViolation)) }
 
 func newNWorkerDOTViolation(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerDOTViolation, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerdot.WorkerDOTViolation, n)))
 }
 
 func ptrWorkerDOTViolation(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerDOTViolation)(p)
+	r := (*workerdot.WorkerDOTViolation)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -8069,7 +8085,7 @@ func ptrWorkerDOTViolation(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerDOTViolation(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerDOTViolation)(p)
+	r := (*workerdot.WorkerDOTViolation)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -8160,14 +8176,14 @@ func valueWorkerDOTViolation(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerDOTViolation(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerDOTViolation)(p)
+	r := (*workerdot.WorkerDOTViolation)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
 	case 1:
-		r.SourceTest = (*worker.WorkerDOTTest)(child)
+		r.SourceTest = (*workerdot.WorkerDOTTest)(child)
 	case 2:
-		r.RTDTest = (*worker.WorkerDOTTest)(child)
+		r.RTDTest = (*workerdot.WorkerDOTTest)(child)
 	case 3:
 		r.Document = (*document.Document)(child)
 	case 4:
@@ -8176,7 +8192,7 @@ func attachWorkerDOTViolation(p unsafe.Pointer, rel int32, child unsafe.Pointer)
 }
 
 func beforeCreateWorkerDOTViolation(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerDOTViolation)(p).BeforeCreate(ctx)
+	return (*workerdot.WorkerDOTViolation)(p).BeforeCreate(ctx)
 }
 
 // workerDisciplinaryActionsTable is the schema of worker.WorkerDisciplinaryAction.
@@ -8187,7 +8203,7 @@ var workerDisciplinaryActionsTable = schema.Table{
 	Model:       "worker.WorkerDisciplinaryAction",
 	Label:       `Worker Disciplinary Action`,
 	Plural:      `Worker Disciplinary Actions`,
-	Constraints: (&worker.WorkerDisciplinaryAction{}).Constraints(),
+	Constraints: (&workersafety.WorkerDisciplinaryAction{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -8232,7 +8248,7 @@ var workerDisciplinaryActionsTable = schema.Table{
 	IDPrefix:     "wdac_",
 	New:          newWorkerDisciplinaryAction,
 	NewN:         newNWorkerDisciplinaryAction,
-	Size:         unsafe.Sizeof(worker.WorkerDisciplinaryAction{}),
+	Size:         unsafe.Sizeof(workersafety.WorkerDisciplinaryAction{}),
 	Ptr:          ptrWorkerDisciplinaryAction,
 	Value:        valueWorkerDisciplinaryAction,
 	Attach:       attachWorkerDisciplinaryAction,
@@ -8243,7 +8259,7 @@ var workerDisciplinaryActionsRef = keel.Ref{Table: &workerDisciplinaryActionsTab
 
 // WorkerDisciplinaryActionsTable is the table of worker.WorkerDisciplinaryAction.
 type WorkerDisciplinaryActionsTable struct {
-	keel.Handle[*worker.WorkerDisciplinaryAction]
+	keel.Handle[*workersafety.WorkerDisciplinaryAction]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -8271,7 +8287,7 @@ type WorkerDisciplinaryActionsTable struct {
 
 // WorkerDisciplinaryActions references the worker_disciplinary_actions table.
 var WorkerDisciplinaryActions = &WorkerDisciplinaryActionsTable{
-	Handle:         keel.Handle[*worker.WorkerDisciplinaryAction]{Ref: &workerDisciplinaryActionsRef},
+	Handle:         keel.Handle[*workersafety.WorkerDisciplinaryAction]{Ref: &workerDisciplinaryActionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDisciplinaryActionsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDisciplinaryActionsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDisciplinaryActionsRef, Index: 2}}},
@@ -8300,7 +8316,7 @@ var WorkerDisciplinaryActions = &WorkerDisciplinaryActionsTable{
 // BuildWorkerDisciplinaryActions builds the handle of worker_disciplinary_actions for ref. Generated relation and alias methods call it.
 func BuildWorkerDisciplinaryActions(r *keel.Ref) *WorkerDisciplinaryActionsTable {
 	return &WorkerDisciplinaryActionsTable{
-		Handle:         keel.Handle[*worker.WorkerDisciplinaryAction]{Ref: r},
+		Handle:         keel.Handle[*workersafety.WorkerDisciplinaryAction]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -8356,20 +8372,20 @@ func (t *WorkerDisciplinaryActionsTable) IssuedBy() *tenantdb.UsersTable {
 }
 
 // Get returns the worker_disciplinary_actions row with the given key, or keel.ErrNotFound.
-func (t *WorkerDisciplinaryActionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerDisciplinaryAction, error) {
+func (t *WorkerDisciplinaryActionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workersafety.WorkerDisciplinaryAction, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerDisciplinaryAction() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.WorkerDisciplinaryAction))
+	return unsafe.Pointer(new(workersafety.WorkerDisciplinaryAction))
 }
 
 func newNWorkerDisciplinaryAction(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerDisciplinaryAction, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workersafety.WorkerDisciplinaryAction, n)))
 }
 
 func ptrWorkerDisciplinaryAction(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerDisciplinaryAction)(p)
+	r := (*workersafety.WorkerDisciplinaryAction)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -8422,7 +8438,7 @@ func ptrWorkerDisciplinaryAction(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerDisciplinaryAction(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerDisciplinaryAction)(p)
+	r := (*workersafety.WorkerDisciplinaryAction)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -8511,12 +8527,12 @@ func valueWorkerDisciplinaryAction(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerDisciplinaryAction(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerDisciplinaryAction)(p)
+	r := (*workersafety.WorkerDisciplinaryAction)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
 	case 1:
-		r.SafetyEvent = (*worker.WorkerSafetyEvent)(child)
+		r.SafetyEvent = (*workersafety.WorkerSafetyEvent)(child)
 	case 2:
 		r.Document = (*document.Document)(child)
 	case 3:
@@ -8525,7 +8541,7 @@ func attachWorkerDisciplinaryAction(p unsafe.Pointer, rel int32, child unsafe.Po
 }
 
 func beforeCreateWorkerDisciplinaryAction(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerDisciplinaryAction)(p).BeforeCreate(ctx)
+	return (*workersafety.WorkerDisciplinaryAction)(p).BeforeCreate(ctx)
 }
 
 // workerEmploymentEventsTable is the schema of worker.WorkerEmploymentEvent.
@@ -8538,7 +8554,7 @@ var workerEmploymentEventsTable = schema.Table{
 	Plural:      `Employment Events`,
 	Doc:         `Hires, transfers, leave, suspensions and terminations, with who recorded them`,
 	Report:      &schema.TableReport{Category: `Parties`},
-	Constraints: (&worker.WorkerEmploymentEvent{}).Constraints(),
+	Constraints: (&employment.WorkerEmploymentEvent{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -8578,7 +8594,7 @@ var workerEmploymentEventsTable = schema.Table{
 	IDPrefix:     "wee_",
 	New:          newWorkerEmploymentEvent,
 	NewN:         newNWorkerEmploymentEvent,
-	Size:         unsafe.Sizeof(worker.WorkerEmploymentEvent{}),
+	Size:         unsafe.Sizeof(employment.WorkerEmploymentEvent{}),
 	Ptr:          ptrWorkerEmploymentEvent,
 	Value:        valueWorkerEmploymentEvent,
 	Attach:       attachWorkerEmploymentEvent,
@@ -8591,7 +8607,7 @@ var workerEmploymentEventsRef = keel.Ref{Table: &workerEmploymentEventsTable}
 
 // WorkerEmploymentEventsTable is the table of worker.WorkerEmploymentEvent.
 type WorkerEmploymentEventsTable struct {
-	keel.Handle[*worker.WorkerEmploymentEvent]
+	keel.Handle[*employment.WorkerEmploymentEvent]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -8614,7 +8630,7 @@ type WorkerEmploymentEventsTable struct {
 
 // WorkerEmploymentEvents references the worker_employment_events table.
 var WorkerEmploymentEvents = &WorkerEmploymentEventsTable{
-	Handle:         keel.Handle[*worker.WorkerEmploymentEvent]{Ref: &workerEmploymentEventsRef},
+	Handle:         keel.Handle[*employment.WorkerEmploymentEvent]{Ref: &workerEmploymentEventsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 2}}},
@@ -8638,7 +8654,7 @@ var WorkerEmploymentEvents = &WorkerEmploymentEventsTable{
 // BuildWorkerEmploymentEvents builds the handle of worker_employment_events for ref. Generated relation and alias methods call it.
 func BuildWorkerEmploymentEvents(r *keel.Ref) *WorkerEmploymentEventsTable {
 	return &WorkerEmploymentEventsTable{
-		Handle:         keel.Handle[*worker.WorkerEmploymentEvent]{Ref: r},
+		Handle:         keel.Handle[*employment.WorkerEmploymentEvent]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -8689,20 +8705,20 @@ func (t *WorkerEmploymentEventsTable) AmendedBy() *tenantdb.UsersTable {
 }
 
 // Get returns the worker_employment_events row with the given key, or keel.ErrNotFound.
-func (t *WorkerEmploymentEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerEmploymentEvent, error) {
+func (t *WorkerEmploymentEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*employment.WorkerEmploymentEvent, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerEmploymentEvent() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.WorkerEmploymentEvent))
+	return unsafe.Pointer(new(employment.WorkerEmploymentEvent))
 }
 
 func newNWorkerEmploymentEvent(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerEmploymentEvent, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]employment.WorkerEmploymentEvent, n)))
 }
 
 func ptrWorkerEmploymentEvent(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerEmploymentEvent)(p)
+	r := (*employment.WorkerEmploymentEvent)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -8745,7 +8761,7 @@ func ptrWorkerEmploymentEvent(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerEmploymentEvent(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerEmploymentEvent)(p)
+	r := (*employment.WorkerEmploymentEvent)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -8815,7 +8831,7 @@ func valueWorkerEmploymentEvent(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerEmploymentEvent(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerEmploymentEvent)(p)
+	r := (*employment.WorkerEmploymentEvent)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
@@ -8829,15 +8845,15 @@ func attachWorkerEmploymentEvent(p unsafe.Pointer, rel int32, child unsafe.Point
 }
 
 func beforeCreateWorkerEmploymentEvent(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerEmploymentEvent)(p).BeforeCreate(ctx)
+	return (*employment.WorkerEmploymentEvent)(p).BeforeCreate(ctx)
 }
 
 func beforeUpdateWorkerEmploymentEvent(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerEmploymentEvent)(p).BeforeUpdate(ctx)
+	return (*employment.WorkerEmploymentEvent)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveWorkerEmploymentEvent(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerEmploymentEvent)(p).BeforeSave(ctx)
+	return (*employment.WorkerEmploymentEvent)(p).BeforeSave(ctx)
 }
 
 // workerEmploymentVerificationsTable is the schema of worker.WorkerEmploymentVerification.
@@ -8849,7 +8865,7 @@ var workerEmploymentVerificationsTable = schema.Table{
 	Label:       `Worker Employment Verification`,
 	Plural:      `Worker Employment Verifications`,
 	Doc:         `WorkerEmploymentVerification is one previous employer's safety performance history investigation (49 CFR 391.23). The drug and alcohol part is tracked separately because 49 CFR 382.413 asks for it specifically and an employer often answers the general request without it.`,
-	Constraints: (&worker.WorkerEmploymentVerification{}).Constraints(),
+	Constraints: (&employment.WorkerEmploymentVerification{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -8900,7 +8916,7 @@ var workerEmploymentVerificationsTable = schema.Table{
 	IDPrefix:     "wemv_",
 	New:          newWorkerEmploymentVerification,
 	NewN:         newNWorkerEmploymentVerification,
-	Size:         unsafe.Sizeof(worker.WorkerEmploymentVerification{}),
+	Size:         unsafe.Sizeof(employment.WorkerEmploymentVerification{}),
 	Ptr:          ptrWorkerEmploymentVerification,
 	Value:        valueWorkerEmploymentVerification,
 	Attach:       attachWorkerEmploymentVerification,
@@ -8911,7 +8927,7 @@ var workerEmploymentVerificationsRef = keel.Ref{Table: &workerEmploymentVerifica
 
 // WorkerEmploymentVerificationsTable is the table of worker.WorkerEmploymentVerification.
 type WorkerEmploymentVerificationsTable struct {
-	keel.Handle[*worker.WorkerEmploymentVerification]
+	keel.Handle[*employment.WorkerEmploymentVerification]
 	ID                            keelkinds.PulidIDCol
 	BusinessUnitID                keelkinds.PulidIDCol
 	OrganizationID                keelkinds.PulidIDCol
@@ -8946,7 +8962,7 @@ type WorkerEmploymentVerificationsTable struct {
 
 // WorkerEmploymentVerifications references the worker_employment_verifications table.
 var WorkerEmploymentVerifications = &WorkerEmploymentVerificationsTable{
-	Handle:                        keel.Handle[*worker.WorkerEmploymentVerification]{Ref: &workerEmploymentVerificationsRef},
+	Handle:                        keel.Handle[*employment.WorkerEmploymentVerification]{Ref: &workerEmploymentVerificationsRef},
 	ID:                            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 0}}},
 	BusinessUnitID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 1}}},
 	OrganizationID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 2}}},
@@ -8982,7 +8998,7 @@ var WorkerEmploymentVerifications = &WorkerEmploymentVerificationsTable{
 // BuildWorkerEmploymentVerifications builds the handle of worker_employment_verifications for ref. Generated relation and alias methods call it.
 func BuildWorkerEmploymentVerifications(r *keel.Ref) *WorkerEmploymentVerificationsTable {
 	return &WorkerEmploymentVerificationsTable{
-		Handle:                        keel.Handle[*worker.WorkerEmploymentVerification]{Ref: r},
+		Handle:                        keel.Handle[*employment.WorkerEmploymentVerification]{Ref: r},
 		ID:                            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -9040,20 +9056,20 @@ func (t *WorkerEmploymentVerificationsTable) RequestedBy() *tenantdb.UsersTable 
 }
 
 // Get returns the worker_employment_verifications row with the given key, or keel.ErrNotFound.
-func (t *WorkerEmploymentVerificationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerEmploymentVerification, error) {
+func (t *WorkerEmploymentVerificationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*employment.WorkerEmploymentVerification, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerEmploymentVerification() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.WorkerEmploymentVerification))
+	return unsafe.Pointer(new(employment.WorkerEmploymentVerification))
 }
 
 func newNWorkerEmploymentVerification(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerEmploymentVerification, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]employment.WorkerEmploymentVerification, n)))
 }
 
 func ptrWorkerEmploymentVerification(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerEmploymentVerification)(p)
+	r := (*employment.WorkerEmploymentVerification)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -9120,7 +9136,7 @@ func ptrWorkerEmploymentVerification(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerEmploymentVerification(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerEmploymentVerification)(p)
+	r := (*employment.WorkerEmploymentVerification)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -9232,7 +9248,7 @@ func valueWorkerEmploymentVerification(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerEmploymentVerification(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerEmploymentVerification)(p)
+	r := (*employment.WorkerEmploymentVerification)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
@@ -9244,7 +9260,7 @@ func attachWorkerEmploymentVerification(p unsafe.Pointer, rel int32, child unsaf
 }
 
 func beforeCreateWorkerEmploymentVerification(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerEmploymentVerification)(p).BeforeCreate(ctx)
+	return (*employment.WorkerEmploymentVerification)(p).BeforeCreate(ctx)
 }
 
 // workerInjuriesTable is the schema of worker.WorkerInjury.
@@ -9256,7 +9272,7 @@ var workerInjuriesTable = schema.Table{
 	Label:       `Worker Injury`,
 	Plural:      `Worker Injuries`,
 	Doc:         `WorkerInjury is one injury or illness case. The recordable ones are the OSHA 300 log; the rest are kept because the decision not to record is itself worth a record.`,
-	Constraints: (&worker.WorkerInjury{}).Constraints(),
+	Constraints: (&workersafety.WorkerInjury{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -9310,7 +9326,7 @@ var workerInjuriesTable = schema.Table{
 	IDPrefix:     "winj_",
 	New:          newWorkerInjury,
 	NewN:         newNWorkerInjury,
-	Size:         unsafe.Sizeof(worker.WorkerInjury{}),
+	Size:         unsafe.Sizeof(workersafety.WorkerInjury{}),
 	Ptr:          ptrWorkerInjury,
 	Value:        valueWorkerInjury,
 	Attach:       attachWorkerInjury,
@@ -9321,7 +9337,7 @@ var workerInjuriesRef = keel.Ref{Table: &workerInjuriesTable}
 
 // WorkerInjuriesTable is the table of worker.WorkerInjury.
 type WorkerInjuriesTable struct {
-	keel.Handle[*worker.WorkerInjury]
+	keel.Handle[*workersafety.WorkerInjury]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -9358,7 +9374,7 @@ type WorkerInjuriesTable struct {
 
 // WorkerInjuries references the worker_injuries table.
 var WorkerInjuries = &WorkerInjuriesTable{
-	Handle:           keel.Handle[*worker.WorkerInjury]{Ref: &workerInjuriesRef},
+	Handle:           keel.Handle[*workersafety.WorkerInjury]{Ref: &workerInjuriesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 2}}},
@@ -9396,7 +9412,7 @@ var WorkerInjuries = &WorkerInjuriesTable{
 // BuildWorkerInjuries builds the handle of worker_injuries for ref. Generated relation and alias methods call it.
 func BuildWorkerInjuries(r *keel.Ref) *WorkerInjuriesTable {
 	return &WorkerInjuriesTable{
-		Handle:           keel.Handle[*worker.WorkerInjury]{Ref: r},
+		Handle:           keel.Handle[*workersafety.WorkerInjury]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -9459,18 +9475,18 @@ func (t *WorkerInjuriesTable) RecordedBy() *tenantdb.UsersTable {
 }
 
 // Get returns the worker_injuries row with the given key, or keel.ErrNotFound.
-func (t *WorkerInjuriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerInjury, error) {
+func (t *WorkerInjuriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workersafety.WorkerInjury, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newWorkerInjury() unsafe.Pointer { return unsafe.Pointer(new(worker.WorkerInjury)) }
+func newWorkerInjury() unsafe.Pointer { return unsafe.Pointer(new(workersafety.WorkerInjury)) }
 
 func newNWorkerInjury(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerInjury, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workersafety.WorkerInjury, n)))
 }
 
 func ptrWorkerInjury(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerInjury)(p)
+	r := (*workersafety.WorkerInjury)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -9541,7 +9557,7 @@ func ptrWorkerInjury(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerInjury(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerInjury)(p)
+	r := (*workersafety.WorkerInjury)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -9651,12 +9667,12 @@ func valueWorkerInjury(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerInjury(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerInjury)(p)
+	r := (*workersafety.WorkerInjury)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
 	case 1:
-		r.SafetyEvent = (*worker.WorkerSafetyEvent)(child)
+		r.SafetyEvent = (*workersafety.WorkerSafetyEvent)(child)
 	case 2:
 		r.Document = (*document.Document)(child)
 	case 3:
@@ -9665,7 +9681,7 @@ func attachWorkerInjury(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 }
 
 func beforeCreateWorkerInjury(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerInjury)(p).BeforeCreate(ctx)
+	return (*workersafety.WorkerInjury)(p).BeforeCreate(ctx)
 }
 
 // workerLeaveCasesTable is the schema of worker.WorkerLeaveCase.
@@ -9677,7 +9693,7 @@ var workerLeaveCasesTable = schema.Table{
 	Label:       `Worker Leave Case`,
 	Plural:      `Worker Leave Cases`,
 	Doc:         `WorkerLeaveCase is one qualifying reason for leave. Entitlement is drawn down by the entries under a case, so a case that has been open for months has used nothing until days are recorded against it.`,
-	Constraints: (&worker.WorkerLeaveCase{}).Constraints(),
+	Constraints: (&workerleave.WorkerLeaveCase{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -9728,7 +9744,7 @@ var workerLeaveCasesTable = schema.Table{
 	IDPrefix:     "wlc_",
 	New:          newWorkerLeaveCase,
 	NewN:         newNWorkerLeaveCase,
-	Size:         unsafe.Sizeof(worker.WorkerLeaveCase{}),
+	Size:         unsafe.Sizeof(workerleave.WorkerLeaveCase{}),
 	Ptr:          ptrWorkerLeaveCase,
 	Value:        valueWorkerLeaveCase,
 	Attach:       attachWorkerLeaveCase,
@@ -9739,7 +9755,7 @@ var workerLeaveCasesRef = keel.Ref{Table: &workerLeaveCasesTable}
 
 // WorkerLeaveCasesTable is the table of worker.WorkerLeaveCase.
 type WorkerLeaveCasesTable struct {
-	keel.Handle[*worker.WorkerLeaveCase]
+	keel.Handle[*workerleave.WorkerLeaveCase]
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -9773,7 +9789,7 @@ type WorkerLeaveCasesTable struct {
 
 // WorkerLeaveCases references the worker_leave_cases table.
 var WorkerLeaveCases = &WorkerLeaveCasesTable{
-	Handle:                   keel.Handle[*worker.WorkerLeaveCase]{Ref: &workerLeaveCasesRef},
+	Handle:                   keel.Handle[*workerleave.WorkerLeaveCase]{Ref: &workerLeaveCasesRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 2}}},
@@ -9808,7 +9824,7 @@ var WorkerLeaveCases = &WorkerLeaveCasesTable{
 // BuildWorkerLeaveCases builds the handle of worker_leave_cases for ref. Generated relation and alias methods call it.
 func BuildWorkerLeaveCases(r *keel.Ref) *WorkerLeaveCasesTable {
 	return &WorkerLeaveCasesTable{
-		Handle:                   keel.Handle[*worker.WorkerLeaveCase]{Ref: r},
+		Handle:                   keel.Handle[*workerleave.WorkerLeaveCase]{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -9868,18 +9884,18 @@ func (t *WorkerLeaveCasesTable) Entries() *WorkerLeaveEntriesTable {
 }
 
 // Get returns the worker_leave_cases row with the given key, or keel.ErrNotFound.
-func (t *WorkerLeaveCasesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerLeaveCase, error) {
+func (t *WorkerLeaveCasesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerleave.WorkerLeaveCase, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newWorkerLeaveCase() unsafe.Pointer { return unsafe.Pointer(new(worker.WorkerLeaveCase)) }
+func newWorkerLeaveCase() unsafe.Pointer { return unsafe.Pointer(new(workerleave.WorkerLeaveCase)) }
 
 func newNWorkerLeaveCase(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerLeaveCase, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerleave.WorkerLeaveCase, n)))
 }
 
 func ptrWorkerLeaveCase(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerLeaveCase)(p)
+	r := (*workerleave.WorkerLeaveCase)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -9944,7 +9960,7 @@ func ptrWorkerLeaveCase(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerLeaveCase(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerLeaveCase)(p)
+	r := (*workerleave.WorkerLeaveCase)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -10051,7 +10067,7 @@ func valueWorkerLeaveCase(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerLeaveCase(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerLeaveCase)(p)
+	r := (*workerleave.WorkerLeaveCase)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
@@ -10060,12 +10076,12 @@ func attachWorkerLeaveCase(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 2:
 		r.DecidedBy = (*tenant.User)(child)
 	case 3:
-		r.Entries = append(r.Entries, (*worker.WorkerLeaveEntry)(child))
+		r.Entries = append(r.Entries, (*workerleave.WorkerLeaveEntry)(child))
 	}
 }
 
 func beforeCreateWorkerLeaveCase(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerLeaveCase)(p).BeforeCreate(ctx)
+	return (*workerleave.WorkerLeaveCase)(p).BeforeCreate(ctx)
 }
 
 // workerLeaveEntriesTable is the schema of worker.WorkerLeaveEntry.
@@ -10077,7 +10093,7 @@ var workerLeaveEntriesTable = schema.Table{
 	Label:       `Worker Leave Entry`,
 	Plural:      `Worker Leave Entries`,
 	Doc:         `WorkerLeaveEntry is one day of leave taken. Intermittent leave is many rows; continuous leave is a row per working day. Hours rather than days, because 29 CFR 825.205 lets intermittent leave be taken in the smallest increment the employer uses for any other absence.`,
-	Constraints: (&worker.WorkerLeaveEntry{}).Constraints(),
+	Constraints: (&workerleave.WorkerLeaveEntry{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -10110,7 +10126,7 @@ var workerLeaveEntriesTable = schema.Table{
 	IDPrefix:   "wle_",
 	New:        newWorkerLeaveEntry,
 	NewN:       newNWorkerLeaveEntry,
-	Size:       unsafe.Sizeof(worker.WorkerLeaveEntry{}),
+	Size:       unsafe.Sizeof(workerleave.WorkerLeaveEntry{}),
 	Ptr:        ptrWorkerLeaveEntry,
 	Value:      valueWorkerLeaveEntry,
 	Attach:     attachWorkerLeaveEntry,
@@ -10120,7 +10136,7 @@ var workerLeaveEntriesRef = keel.Ref{Table: &workerLeaveEntriesTable}
 
 // WorkerLeaveEntriesTable is the table of worker.WorkerLeaveEntry.
 type WorkerLeaveEntriesTable struct {
-	keel.Handle[*worker.WorkerLeaveEntry]
+	keel.Handle[*workerleave.WorkerLeaveEntry]
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -10139,7 +10155,7 @@ type WorkerLeaveEntriesTable struct {
 
 // WorkerLeaveEntries references the worker_leave_entries table.
 var WorkerLeaveEntries = &WorkerLeaveEntriesTable{
-	Handle:                   keel.Handle[*worker.WorkerLeaveEntry]{Ref: &workerLeaveEntriesRef},
+	Handle:                   keel.Handle[*workerleave.WorkerLeaveEntry]{Ref: &workerLeaveEntriesRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 2}}},
@@ -10159,7 +10175,7 @@ var WorkerLeaveEntries = &WorkerLeaveEntriesTable{
 // BuildWorkerLeaveEntries builds the handle of worker_leave_entries for ref. Generated relation and alias methods call it.
 func BuildWorkerLeaveEntries(r *keel.Ref) *WorkerLeaveEntriesTable {
 	return &WorkerLeaveEntriesTable{
-		Handle:                   keel.Handle[*worker.WorkerLeaveEntry]{Ref: r},
+		Handle:                   keel.Handle[*workerleave.WorkerLeaveEntry]{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -10191,18 +10207,18 @@ func (t *WorkerLeaveEntriesTable) LeaveCase() *WorkerLeaveCasesTable {
 }
 
 // Get returns the worker_leave_entries row with the given key, or keel.ErrNotFound.
-func (t *WorkerLeaveEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerLeaveEntry, error) {
+func (t *WorkerLeaveEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerleave.WorkerLeaveEntry, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newWorkerLeaveEntry() unsafe.Pointer { return unsafe.Pointer(new(worker.WorkerLeaveEntry)) }
+func newWorkerLeaveEntry() unsafe.Pointer { return unsafe.Pointer(new(workerleave.WorkerLeaveEntry)) }
 
 func newNWorkerLeaveEntry(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerLeaveEntry, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerleave.WorkerLeaveEntry, n)))
 }
 
 func ptrWorkerLeaveEntry(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerLeaveEntry)(p)
+	r := (*workerleave.WorkerLeaveEntry)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -10237,7 +10253,7 @@ func ptrWorkerLeaveEntry(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerLeaveEntry(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerLeaveEntry)(p)
+	r := (*workerleave.WorkerLeaveEntry)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -10281,10 +10297,10 @@ func valueWorkerLeaveEntry(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerLeaveEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerLeaveEntry)(p)
+	r := (*workerleave.WorkerLeaveEntry)(p)
 	switch rel {
 	case 0:
-		r.LeaveCase = (*worker.WorkerLeaveCase)(child)
+		r.LeaveCase = (*workerleave.WorkerLeaveCase)(child)
 	}
 }
 
@@ -10608,7 +10624,7 @@ var workerPTOBalancesTable = schema.Table{
 	Plural:      `PTO Balances`,
 	Doc:         `What each worker has accrued, used and carried, per time-off type`,
 	Report:      &schema.TableReport{Category: `Parties`},
-	Constraints: (&worker.WorkerPTOBalance{}).Constraints(),
+	Constraints: (&pto.WorkerPTOBalance{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -10643,7 +10659,7 @@ var workerPTOBalancesTable = schema.Table{
 	IDPrefix:   "wpb_",
 	New:        newWorkerPTOBalance,
 	NewN:       newNWorkerPTOBalance,
-	Size:       unsafe.Sizeof(worker.WorkerPTOBalance{}),
+	Size:       unsafe.Sizeof(pto.WorkerPTOBalance{}),
 	Ptr:        ptrWorkerPTOBalance,
 	Value:      valueWorkerPTOBalance,
 	Attach:     attachWorkerPTOBalance,
@@ -10653,7 +10669,7 @@ var workerPTOBalancesRef = keel.Ref{Table: &workerPTOBalancesTable}
 
 // WorkerPTOBalancesTable is the table of worker.WorkerPTOBalance.
 type WorkerPTOBalancesTable struct {
-	keel.Handle[*worker.WorkerPTOBalance]
+	keel.Handle[*pto.WorkerPTOBalance]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -10674,7 +10690,7 @@ type WorkerPTOBalancesTable struct {
 
 // WorkerPTOBalances references the worker_pto_balances table.
 var WorkerPTOBalances = &WorkerPTOBalancesTable{
-	Handle:               keel.Handle[*worker.WorkerPTOBalance]{Ref: &workerPTOBalancesRef},
+	Handle:               keel.Handle[*pto.WorkerPTOBalance]{Ref: &workerPTOBalancesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 2}}},
@@ -10696,7 +10712,7 @@ var WorkerPTOBalances = &WorkerPTOBalancesTable{
 // BuildWorkerPTOBalances builds the handle of worker_pto_balances for ref. Generated relation and alias methods call it.
 func BuildWorkerPTOBalances(r *keel.Ref) *WorkerPTOBalancesTable {
 	return &WorkerPTOBalancesTable{
-		Handle:               keel.Handle[*worker.WorkerPTOBalance]{Ref: r},
+		Handle:               keel.Handle[*pto.WorkerPTOBalance]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -10728,18 +10744,18 @@ func (t *WorkerPTOBalancesTable) As(alias string) *WorkerPTOBalancesTable {
 func (t *WorkerPTOBalancesTable) Worker() *WorkersTable { return keel.Path(t.Ref, 0, BuildWorkers) }
 
 // Get returns the worker_pto_balances row with the given key, or keel.ErrNotFound.
-func (t *WorkerPTOBalancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerPTOBalance, error) {
+func (t *WorkerPTOBalancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*pto.WorkerPTOBalance, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newWorkerPTOBalance() unsafe.Pointer { return unsafe.Pointer(new(worker.WorkerPTOBalance)) }
+func newWorkerPTOBalance() unsafe.Pointer { return unsafe.Pointer(new(pto.WorkerPTOBalance)) }
 
 func newNWorkerPTOBalance(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerPTOBalance, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]pto.WorkerPTOBalance, n)))
 }
 
 func ptrWorkerPTOBalance(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerPTOBalance)(p)
+	r := (*pto.WorkerPTOBalance)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -10778,7 +10794,7 @@ func ptrWorkerPTOBalance(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerPTOBalance(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerPTOBalance)(p)
+	r := (*pto.WorkerPTOBalance)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -10826,7 +10842,7 @@ func valueWorkerPTOBalance(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerPTOBalance(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerPTOBalance)(p)
+	r := (*pto.WorkerPTOBalance)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
@@ -10878,7 +10894,7 @@ var workerPTOLedgerEntriesTable = schema.Table{
 	IDPrefix:     "wpl_",
 	New:          newWorkerPTOLedgerEntry,
 	NewN:         newNWorkerPTOLedgerEntry,
-	Size:         unsafe.Sizeof(worker.WorkerPTOLedgerEntry{}),
+	Size:         unsafe.Sizeof(pto.WorkerPTOLedgerEntry{}),
 	Ptr:          ptrWorkerPTOLedgerEntry,
 	Value:        valueWorkerPTOLedgerEntry,
 	Attach:       attachWorkerPTOLedgerEntry,
@@ -10889,7 +10905,7 @@ var workerPTOLedgerEntriesRef = keel.Ref{Table: &workerPTOLedgerEntriesTable}
 
 // WorkerPTOLedgerEntriesTable is the table of worker.WorkerPTOLedgerEntry.
 type WorkerPTOLedgerEntriesTable struct {
-	keel.Handle[*worker.WorkerPTOLedgerEntry]
+	keel.Handle[*pto.WorkerPTOLedgerEntry]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -10912,7 +10928,7 @@ type WorkerPTOLedgerEntriesTable struct {
 
 // WorkerPTOLedgerEntries references the worker_pto_ledger table.
 var WorkerPTOLedgerEntries = &WorkerPTOLedgerEntriesTable{
-	Handle:           keel.Handle[*worker.WorkerPTOLedgerEntry]{Ref: &workerPTOLedgerEntriesRef},
+	Handle:           keel.Handle[*pto.WorkerPTOLedgerEntry]{Ref: &workerPTOLedgerEntriesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 2}}},
@@ -10936,7 +10952,7 @@ var WorkerPTOLedgerEntries = &WorkerPTOLedgerEntriesTable{
 // BuildWorkerPTOLedgerEntries builds the handle of worker_pto_ledger for ref. Generated relation and alias methods call it.
 func BuildWorkerPTOLedgerEntries(r *keel.Ref) *WorkerPTOLedgerEntriesTable {
 	return &WorkerPTOLedgerEntriesTable{
-		Handle:           keel.Handle[*worker.WorkerPTOLedgerEntry]{Ref: r},
+		Handle:           keel.Handle[*pto.WorkerPTOLedgerEntry]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -10977,20 +10993,20 @@ func (t *WorkerPTOLedgerEntriesTable) SourcePTO() *WorkerPTOsTable {
 }
 
 // Get returns the worker_pto_ledger row with the given key, or keel.ErrNotFound.
-func (t *WorkerPTOLedgerEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerPTOLedgerEntry, error) {
+func (t *WorkerPTOLedgerEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*pto.WorkerPTOLedgerEntry, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerPTOLedgerEntry() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.WorkerPTOLedgerEntry))
+	return unsafe.Pointer(new(pto.WorkerPTOLedgerEntry))
 }
 
 func newNWorkerPTOLedgerEntry(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerPTOLedgerEntry, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]pto.WorkerPTOLedgerEntry, n)))
 }
 
 func ptrWorkerPTOLedgerEntry(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerPTOLedgerEntry)(p)
+	r := (*pto.WorkerPTOLedgerEntry)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -11033,7 +11049,7 @@ func ptrWorkerPTOLedgerEntry(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerPTOLedgerEntry(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerPTOLedgerEntry)(p)
+	r := (*pto.WorkerPTOLedgerEntry)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -11094,7 +11110,7 @@ func valueWorkerPTOLedgerEntry(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerPTOLedgerEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerPTOLedgerEntry)(p)
+	r := (*pto.WorkerPTOLedgerEntry)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
@@ -11104,7 +11120,7 @@ func attachWorkerPTOLedgerEntry(p unsafe.Pointer, rel int32, child unsafe.Pointe
 }
 
 func beforeCreateWorkerPTOLedgerEntry(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerPTOLedgerEntry)(p).BeforeCreate(ctx)
+	return (*pto.WorkerPTOLedgerEntry)(p).BeforeCreate(ctx)
 }
 
 // workerPTOPolicyAssignmentsTable is the schema of worker.WorkerPTOPolicyAssignment.
@@ -11115,7 +11131,7 @@ var workerPTOPolicyAssignmentsTable = schema.Table{
 	Model:       "worker.WorkerPTOPolicyAssignment",
 	Label:       `Worker PTO Policy Assignment`,
 	Plural:      `Worker PTO Policy Assignments`,
-	Constraints: (&worker.WorkerPTOPolicyAssignment{}).Constraints(),
+	Constraints: (&pto.WorkerPTOPolicyAssignment{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -11147,7 +11163,7 @@ var workerPTOPolicyAssignmentsTable = schema.Table{
 	IDPrefix:   "wppa_",
 	New:        newWorkerPTOPolicyAssignment,
 	NewN:       newNWorkerPTOPolicyAssignment,
-	Size:       unsafe.Sizeof(worker.WorkerPTOPolicyAssignment{}),
+	Size:       unsafe.Sizeof(pto.WorkerPTOPolicyAssignment{}),
 	Ptr:        ptrWorkerPTOPolicyAssignment,
 	Value:      valueWorkerPTOPolicyAssignment,
 	Attach:     attachWorkerPTOPolicyAssignment,
@@ -11157,7 +11173,7 @@ var workerPTOPolicyAssignmentsRef = keel.Ref{Table: &workerPTOPolicyAssignmentsT
 
 // WorkerPTOPolicyAssignmentsTable is the table of worker.WorkerPTOPolicyAssignment.
 type WorkerPTOPolicyAssignmentsTable struct {
-	keel.Handle[*worker.WorkerPTOPolicyAssignment]
+	keel.Handle[*pto.WorkerPTOPolicyAssignment]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -11174,7 +11190,7 @@ type WorkerPTOPolicyAssignmentsTable struct {
 
 // WorkerPTOPolicyAssignments references the worker_pto_policy_assignments table.
 var WorkerPTOPolicyAssignments = &WorkerPTOPolicyAssignmentsTable{
-	Handle:         keel.Handle[*worker.WorkerPTOPolicyAssignment]{Ref: &workerPTOPolicyAssignmentsRef},
+	Handle:         keel.Handle[*pto.WorkerPTOPolicyAssignment]{Ref: &workerPTOPolicyAssignmentsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 2}}},
@@ -11192,7 +11208,7 @@ var WorkerPTOPolicyAssignments = &WorkerPTOPolicyAssignmentsTable{
 // BuildWorkerPTOPolicyAssignments builds the handle of worker_pto_policy_assignments for ref. Generated relation and alias methods call it.
 func BuildWorkerPTOPolicyAssignments(r *keel.Ref) *WorkerPTOPolicyAssignmentsTable {
 	return &WorkerPTOPolicyAssignmentsTable{
-		Handle:         keel.Handle[*worker.WorkerPTOPolicyAssignment]{Ref: r},
+		Handle:         keel.Handle[*pto.WorkerPTOPolicyAssignment]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -11227,20 +11243,20 @@ func (t *WorkerPTOPolicyAssignmentsTable) Worker() *WorkersTable {
 }
 
 // Get returns the worker_pto_policy_assignments row with the given key, or keel.ErrNotFound.
-func (t *WorkerPTOPolicyAssignmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerPTOPolicyAssignment, error) {
+func (t *WorkerPTOPolicyAssignmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*pto.WorkerPTOPolicyAssignment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerPTOPolicyAssignment() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.WorkerPTOPolicyAssignment))
+	return unsafe.Pointer(new(pto.WorkerPTOPolicyAssignment))
 }
 
 func newNWorkerPTOPolicyAssignment(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerPTOPolicyAssignment, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]pto.WorkerPTOPolicyAssignment, n)))
 }
 
 func ptrWorkerPTOPolicyAssignment(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerPTOPolicyAssignment)(p)
+	r := (*pto.WorkerPTOPolicyAssignment)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -11271,7 +11287,7 @@ func ptrWorkerPTOPolicyAssignment(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerPTOPolicyAssignment(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerPTOPolicyAssignment)(p)
+	r := (*pto.WorkerPTOPolicyAssignment)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -11311,10 +11327,10 @@ func valueWorkerPTOPolicyAssignment(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerPTOPolicyAssignment(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerPTOPolicyAssignment)(p)
+	r := (*pto.WorkerPTOPolicyAssignment)(p)
 	switch rel {
 	case 0:
-		r.Policy = (*worker.PTOPolicy)(child)
+		r.Policy = (*pto.PTOPolicy)(child)
 	case 1:
 		r.Worker = (*worker.Worker)(child)
 	}
@@ -11329,7 +11345,7 @@ var workerPoliciesTable = schema.Table{
 	Label:       `Worker Policy`,
 	Plural:      `Worker Policies`,
 	Doc:         "WorkerPolicy is a handbook, a policy, or a notice the carrier needs people to have read. It is either a short text or an attached document — never neither, because a policy that says nothing is a signature with nothing behind it.\n\nThe version label is the load-bearing field. An acknowledgement records the version it was given for, so changing the text under a signed policy without changing the version is refused: it would make every existing signature a signature on words nobody saw.",
-	Constraints: (&worker.WorkerPolicy{}).Constraints(),
+	Constraints: (&workerpolicy.WorkerPolicy{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -11362,7 +11378,7 @@ var workerPoliciesTable = schema.Table{
 	IDPrefix:     "wpol_",
 	New:          newWorkerPolicy,
 	NewN:         newNWorkerPolicy,
-	Size:         unsafe.Sizeof(worker.WorkerPolicy{}),
+	Size:         unsafe.Sizeof(workerpolicy.WorkerPolicy{}),
 	Ptr:          ptrWorkerPolicy,
 	Value:        valueWorkerPolicy,
 	BeforeCreate: beforeCreateWorkerPolicy,
@@ -11372,7 +11388,7 @@ var workerPoliciesRef = keel.Ref{Table: &workerPoliciesTable}
 
 // WorkerPoliciesTable is the table of worker.WorkerPolicy.
 type WorkerPoliciesTable struct {
-	keel.Handle[*worker.WorkerPolicy]
+	keel.Handle[*workerpolicy.WorkerPolicy]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -11394,7 +11410,7 @@ type WorkerPoliciesTable struct {
 
 // WorkerPolicies references the worker_policies table.
 var WorkerPolicies = &WorkerPoliciesTable{
-	Handle:            keel.Handle[*worker.WorkerPolicy]{Ref: &workerPoliciesRef},
+	Handle:            keel.Handle[*workerpolicy.WorkerPolicy]{Ref: &workerPoliciesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 2}}},
@@ -11417,7 +11433,7 @@ var WorkerPolicies = &WorkerPoliciesTable{
 // BuildWorkerPolicies builds the handle of worker_policies for ref. Generated relation and alias methods call it.
 func BuildWorkerPolicies(r *keel.Ref) *WorkerPoliciesTable {
 	return &WorkerPoliciesTable{
-		Handle:            keel.Handle[*worker.WorkerPolicy]{Ref: r},
+		Handle:            keel.Handle[*workerpolicy.WorkerPolicy]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -11447,18 +11463,18 @@ func (t *WorkerPoliciesTable) As(alias string) *WorkerPoliciesTable {
 }
 
 // Get returns the worker_policies row with the given key, or keel.ErrNotFound.
-func (t *WorkerPoliciesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerPolicy, error) {
+func (t *WorkerPoliciesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerpolicy.WorkerPolicy, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newWorkerPolicy() unsafe.Pointer { return unsafe.Pointer(new(worker.WorkerPolicy)) }
+func newWorkerPolicy() unsafe.Pointer { return unsafe.Pointer(new(workerpolicy.WorkerPolicy)) }
 
 func newNWorkerPolicy(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerPolicy, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerpolicy.WorkerPolicy, n)))
 }
 
 func ptrWorkerPolicy(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerPolicy)(p)
+	r := (*workerpolicy.WorkerPolicy)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -11499,7 +11515,7 @@ func ptrWorkerPolicy(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerPolicy(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerPolicy)(p)
+	r := (*workerpolicy.WorkerPolicy)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -11552,7 +11568,7 @@ func valueWorkerPolicy(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateWorkerPolicy(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerPolicy)(p).BeforeCreate(ctx)
+	return (*workerpolicy.WorkerPolicy)(p).BeforeCreate(ctx)
 }
 
 // workerPolicyAcknowledgementsTable is the schema of worker.WorkerPolicyAcknowledgement.
@@ -11564,7 +11580,7 @@ var workerPolicyAcknowledgementsTable = schema.Table{
 	Label:       `Worker Policy Acknowledgement`,
 	Plural:      `Worker Policy Acknowledgements`,
 	Doc:         "WorkerPolicyAcknowledgement is one worker's signature on one version of a policy. It copies what was signed — the version label and the document's checksum — because the policy row will move on and the signature must not.\n\nThe signature is a typed name plus the address and client it came from and the moment it was given. That is what an electronic signature is: not a picture of handwriting, but a record that a specific person, from a specific place, at a specific time, agreed to a specific text.",
-	Constraints: (&worker.WorkerPolicyAcknowledgement{}).Constraints(),
+	Constraints: (&workerpolicy.WorkerPolicyAcknowledgement{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -11598,7 +11614,7 @@ var workerPolicyAcknowledgementsTable = schema.Table{
 	IDPrefix:     "wpak_",
 	New:          newWorkerPolicyAcknowledgement,
 	NewN:         newNWorkerPolicyAcknowledgement,
-	Size:         unsafe.Sizeof(worker.WorkerPolicyAcknowledgement{}),
+	Size:         unsafe.Sizeof(workerpolicy.WorkerPolicyAcknowledgement{}),
 	Ptr:          ptrWorkerPolicyAcknowledgement,
 	Value:        valueWorkerPolicyAcknowledgement,
 	Attach:       attachWorkerPolicyAcknowledgement,
@@ -11609,7 +11625,7 @@ var workerPolicyAcknowledgementsRef = keel.Ref{Table: &workerPolicyAcknowledgeme
 
 // WorkerPolicyAcknowledgementsTable is the table of worker.WorkerPolicyAcknowledgement.
 type WorkerPolicyAcknowledgementsTable struct {
-	keel.Handle[*worker.WorkerPolicyAcknowledgement]
+	keel.Handle[*workerpolicy.WorkerPolicyAcknowledgement]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -11628,7 +11644,7 @@ type WorkerPolicyAcknowledgementsTable struct {
 
 // WorkerPolicyAcknowledgements references the worker_policy_acknowledgements table.
 var WorkerPolicyAcknowledgements = &WorkerPolicyAcknowledgementsTable{
-	Handle:             keel.Handle[*worker.WorkerPolicyAcknowledgement]{Ref: &workerPolicyAcknowledgementsRef},
+	Handle:             keel.Handle[*workerpolicy.WorkerPolicyAcknowledgement]{Ref: &workerPolicyAcknowledgementsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 2}}},
@@ -11648,7 +11664,7 @@ var WorkerPolicyAcknowledgements = &WorkerPolicyAcknowledgementsTable{
 // BuildWorkerPolicyAcknowledgements builds the handle of worker_policy_acknowledgements for ref. Generated relation and alias methods call it.
 func BuildWorkerPolicyAcknowledgements(r *keel.Ref) *WorkerPolicyAcknowledgementsTable {
 	return &WorkerPolicyAcknowledgementsTable{
-		Handle:             keel.Handle[*worker.WorkerPolicyAcknowledgement]{Ref: r},
+		Handle:             keel.Handle[*workerpolicy.WorkerPolicyAcknowledgement]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -11685,20 +11701,20 @@ func (t *WorkerPolicyAcknowledgementsTable) Worker() *WorkersTable {
 }
 
 // Get returns the worker_policy_acknowledgements row with the given key, or keel.ErrNotFound.
-func (t *WorkerPolicyAcknowledgementsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerPolicyAcknowledgement, error) {
+func (t *WorkerPolicyAcknowledgementsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerpolicy.WorkerPolicyAcknowledgement, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerPolicyAcknowledgement() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.WorkerPolicyAcknowledgement))
+	return unsafe.Pointer(new(workerpolicy.WorkerPolicyAcknowledgement))
 }
 
 func newNWorkerPolicyAcknowledgement(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerPolicyAcknowledgement, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerpolicy.WorkerPolicyAcknowledgement, n)))
 }
 
 func ptrWorkerPolicyAcknowledgement(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerPolicyAcknowledgement)(p)
+	r := (*workerpolicy.WorkerPolicyAcknowledgement)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -11733,7 +11749,7 @@ func ptrWorkerPolicyAcknowledgement(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerPolicyAcknowledgement(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerPolicyAcknowledgement)(p)
+	r := (*workerpolicy.WorkerPolicyAcknowledgement)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -11780,17 +11796,17 @@ func valueWorkerPolicyAcknowledgement(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerPolicyAcknowledgement(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerPolicyAcknowledgement)(p)
+	r := (*workerpolicy.WorkerPolicyAcknowledgement)(p)
 	switch rel {
 	case 0:
-		r.Policy = (*worker.WorkerPolicy)(child)
+		r.Policy = (*workerpolicy.WorkerPolicy)(child)
 	case 1:
 		r.Worker = (*worker.Worker)(child)
 	}
 }
 
 func beforeCreateWorkerPolicyAcknowledgement(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerPolicyAcknowledgement)(p).BeforeCreate(ctx)
+	return (*workerpolicy.WorkerPolicyAcknowledgement)(p).BeforeCreate(ctx)
 }
 
 // workerProfilesTable is the schema of worker.WorkerProfile.
@@ -12283,7 +12299,7 @@ var workerProfileChangeRequestsTable = schema.Table{
 	Label:       `Worker Profile Change Request`,
 	Plural:      `Worker Profile Change Requests`,
 	Doc:         `WorkerProfileChangeRequest is a driver asking to change their own record, waiting on somebody in the office. The changes are stored as before-and- after pairs rather than as a copy of the wanted record, so a manager sees exactly what is being asked and an approval applies exactly that — not whatever else happened to be on the form.`,
-	Constraints: (&worker.WorkerProfileChangeRequest{}).Constraints(),
+	Constraints: (&profilechange.WorkerProfileChangeRequest{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -12316,7 +12332,7 @@ var workerProfileChangeRequestsTable = schema.Table{
 	IDPrefix:     "wpcr_",
 	New:          newWorkerProfileChangeRequest,
 	NewN:         newNWorkerProfileChangeRequest,
-	Size:         unsafe.Sizeof(worker.WorkerProfileChangeRequest{}),
+	Size:         unsafe.Sizeof(profilechange.WorkerProfileChangeRequest{}),
 	Ptr:          ptrWorkerProfileChangeRequest,
 	Value:        valueWorkerProfileChangeRequest,
 	Attach:       attachWorkerProfileChangeRequest,
@@ -12327,7 +12343,7 @@ var workerProfileChangeRequestsRef = keel.Ref{Table: &workerProfileChangeRequest
 
 // WorkerProfileChangeRequestsTable is the table of worker.WorkerProfileChangeRequest.
 type WorkerProfileChangeRequestsTable struct {
-	keel.Handle[*worker.WorkerProfileChangeRequest]
+	keel.Handle[*profilechange.WorkerProfileChangeRequest]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -12346,7 +12362,7 @@ type WorkerProfileChangeRequestsTable struct {
 
 // WorkerProfileChangeRequests references the worker_profile_change_requests table.
 var WorkerProfileChangeRequests = &WorkerProfileChangeRequestsTable{
-	Handle:         keel.Handle[*worker.WorkerProfileChangeRequest]{Ref: &workerProfileChangeRequestsRef},
+	Handle:         keel.Handle[*profilechange.WorkerProfileChangeRequest]{Ref: &workerProfileChangeRequestsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 2}}},
@@ -12366,7 +12382,7 @@ var WorkerProfileChangeRequests = &WorkerProfileChangeRequestsTable{
 // BuildWorkerProfileChangeRequests builds the handle of worker_profile_change_requests for ref. Generated relation and alias methods call it.
 func BuildWorkerProfileChangeRequests(r *keel.Ref) *WorkerProfileChangeRequestsTable {
 	return &WorkerProfileChangeRequestsTable{
-		Handle:         keel.Handle[*worker.WorkerProfileChangeRequest]{Ref: r},
+		Handle:         keel.Handle[*profilechange.WorkerProfileChangeRequest]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -12398,20 +12414,20 @@ func (t *WorkerProfileChangeRequestsTable) Worker() *WorkersTable {
 }
 
 // Get returns the worker_profile_change_requests row with the given key, or keel.ErrNotFound.
-func (t *WorkerProfileChangeRequestsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerProfileChangeRequest, error) {
+func (t *WorkerProfileChangeRequestsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*profilechange.WorkerProfileChangeRequest, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerProfileChangeRequest() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.WorkerProfileChangeRequest))
+	return unsafe.Pointer(new(profilechange.WorkerProfileChangeRequest))
 }
 
 func newNWorkerProfileChangeRequest(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerProfileChangeRequest, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]profilechange.WorkerProfileChangeRequest, n)))
 }
 
 func ptrWorkerProfileChangeRequest(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerProfileChangeRequest)(p)
+	r := (*profilechange.WorkerProfileChangeRequest)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -12446,7 +12462,7 @@ func ptrWorkerProfileChangeRequest(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerProfileChangeRequest(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerProfileChangeRequest)(p)
+	r := (*profilechange.WorkerProfileChangeRequest)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -12496,7 +12512,7 @@ func valueWorkerProfileChangeRequest(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerProfileChangeRequest(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerProfileChangeRequest)(p)
+	r := (*profilechange.WorkerProfileChangeRequest)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
@@ -12504,7 +12520,7 @@ func attachWorkerProfileChangeRequest(p unsafe.Pointer, rel int32, child unsafe.
 }
 
 func beforeCreateWorkerProfileChangeRequest(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerProfileChangeRequest)(p).BeforeCreate(ctx)
+	return (*profilechange.WorkerProfileChangeRequest)(p).BeforeCreate(ctx)
 }
 
 // workerRecognitionsTable is the schema of worker.WorkerRecognition.
@@ -12515,7 +12531,7 @@ var workerRecognitionsTable = schema.Table{
 	Model:       "worker.WorkerRecognition",
 	Label:       `Worker Recognition`,
 	Plural:      `Worker Recognitions`,
-	Constraints: (&worker.WorkerRecognition{}).Constraints(),
+	Constraints: (&workersafety.WorkerRecognition{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -12548,7 +12564,7 @@ var workerRecognitionsTable = schema.Table{
 	IDPrefix:     "wrec_",
 	New:          newWorkerRecognition,
 	NewN:         newNWorkerRecognition,
-	Size:         unsafe.Sizeof(worker.WorkerRecognition{}),
+	Size:         unsafe.Sizeof(workersafety.WorkerRecognition{}),
 	Ptr:          ptrWorkerRecognition,
 	Value:        valueWorkerRecognition,
 	Attach:       attachWorkerRecognition,
@@ -12559,7 +12575,7 @@ var workerRecognitionsRef = keel.Ref{Table: &workerRecognitionsTable}
 
 // WorkerRecognitionsTable is the table of worker.WorkerRecognition.
 type WorkerRecognitionsTable struct {
-	keel.Handle[*worker.WorkerRecognition]
+	keel.Handle[*workersafety.WorkerRecognition]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -12577,7 +12593,7 @@ type WorkerRecognitionsTable struct {
 
 // WorkerRecognitions references the worker_recognitions table.
 var WorkerRecognitions = &WorkerRecognitionsTable{
-	Handle:          keel.Handle[*worker.WorkerRecognition]{Ref: &workerRecognitionsRef},
+	Handle:          keel.Handle[*workersafety.WorkerRecognition]{Ref: &workerRecognitionsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerRecognitionsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerRecognitionsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerRecognitionsRef, Index: 2}}},
@@ -12596,7 +12612,7 @@ var WorkerRecognitions = &WorkerRecognitionsTable{
 // BuildWorkerRecognitions builds the handle of worker_recognitions for ref. Generated relation and alias methods call it.
 func BuildWorkerRecognitions(r *keel.Ref) *WorkerRecognitionsTable {
 	return &WorkerRecognitionsTable{
-		Handle:          keel.Handle[*worker.WorkerRecognition]{Ref: r},
+		Handle:          keel.Handle[*workersafety.WorkerRecognition]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -12630,18 +12646,18 @@ func (t *WorkerRecognitionsTable) AwardedBy() *tenantdb.UsersTable {
 }
 
 // Get returns the worker_recognitions row with the given key, or keel.ErrNotFound.
-func (t *WorkerRecognitionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerRecognition, error) {
+func (t *WorkerRecognitionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workersafety.WorkerRecognition, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newWorkerRecognition() unsafe.Pointer { return unsafe.Pointer(new(worker.WorkerRecognition)) }
+func newWorkerRecognition() unsafe.Pointer { return unsafe.Pointer(new(workersafety.WorkerRecognition)) }
 
 func newNWorkerRecognition(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerRecognition, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workersafety.WorkerRecognition, n)))
 }
 
 func ptrWorkerRecognition(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerRecognition)(p)
+	r := (*workersafety.WorkerRecognition)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -12674,7 +12690,7 @@ func ptrWorkerRecognition(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerRecognition(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerRecognition)(p)
+	r := (*workersafety.WorkerRecognition)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -12713,7 +12729,7 @@ func valueWorkerRecognition(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerRecognition(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerRecognition)(p)
+	r := (*workersafety.WorkerRecognition)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
@@ -12723,7 +12739,7 @@ func attachWorkerRecognition(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 }
 
 func beforeCreateWorkerRecognition(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerRecognition)(p).BeforeCreate(ctx)
+	return (*workersafety.WorkerRecognition)(p).BeforeCreate(ctx)
 }
 
 // workerSafetyEventsTable is the schema of worker.WorkerSafetyEvent.
@@ -12734,7 +12750,7 @@ var workerSafetyEventsTable = schema.Table{
 	Model:       "worker.WorkerSafetyEvent",
 	Label:       `Worker Safety Event`,
 	Plural:      `Worker Safety Events`,
-	Constraints: (&worker.WorkerSafetyEvent{}).Constraints(),
+	Constraints: (&workersafety.WorkerSafetyEvent{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -12784,7 +12800,7 @@ var workerSafetyEventsTable = schema.Table{
 	IDPrefix:     "wsev_",
 	New:          newWorkerSafetyEvent,
 	NewN:         newNWorkerSafetyEvent,
-	Size:         unsafe.Sizeof(worker.WorkerSafetyEvent{}),
+	Size:         unsafe.Sizeof(workersafety.WorkerSafetyEvent{}),
 	Ptr:          ptrWorkerSafetyEvent,
 	Value:        valueWorkerSafetyEvent,
 	Attach:       attachWorkerSafetyEvent,
@@ -12795,7 +12811,7 @@ var workerSafetyEventsRef = keel.Ref{Table: &workerSafetyEventsTable}
 
 // WorkerSafetyEventsTable is the table of worker.WorkerSafetyEvent.
 type WorkerSafetyEventsTable struct {
-	keel.Handle[*worker.WorkerSafetyEvent]
+	keel.Handle[*workersafety.WorkerSafetyEvent]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -12828,7 +12844,7 @@ type WorkerSafetyEventsTable struct {
 
 // WorkerSafetyEvents references the worker_safety_events table.
 var WorkerSafetyEvents = &WorkerSafetyEventsTable{
-	Handle:           keel.Handle[*worker.WorkerSafetyEvent]{Ref: &workerSafetyEventsRef},
+	Handle:           keel.Handle[*workersafety.WorkerSafetyEvent]{Ref: &workerSafetyEventsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 2}}},
@@ -12862,7 +12878,7 @@ var WorkerSafetyEvents = &WorkerSafetyEventsTable{
 // BuildWorkerSafetyEvents builds the handle of worker_safety_events for ref. Generated relation and alias methods call it.
 func BuildWorkerSafetyEvents(r *keel.Ref) *WorkerSafetyEventsTable {
 	return &WorkerSafetyEventsTable{
-		Handle:           keel.Handle[*worker.WorkerSafetyEvent]{Ref: r},
+		Handle:           keel.Handle[*workersafety.WorkerSafetyEvent]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -12921,18 +12937,18 @@ func (t *WorkerSafetyEventsTable) ClosedBy() *tenantdb.UsersTable {
 }
 
 // Get returns the worker_safety_events row with the given key, or keel.ErrNotFound.
-func (t *WorkerSafetyEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerSafetyEvent, error) {
+func (t *WorkerSafetyEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workersafety.WorkerSafetyEvent, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newWorkerSafetyEvent() unsafe.Pointer { return unsafe.Pointer(new(worker.WorkerSafetyEvent)) }
+func newWorkerSafetyEvent() unsafe.Pointer { return unsafe.Pointer(new(workersafety.WorkerSafetyEvent)) }
 
 func newNWorkerSafetyEvent(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerSafetyEvent, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workersafety.WorkerSafetyEvent, n)))
 }
 
 func ptrWorkerSafetyEvent(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerSafetyEvent)(p)
+	r := (*workersafety.WorkerSafetyEvent)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -12995,7 +13011,7 @@ func ptrWorkerSafetyEvent(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerSafetyEvent(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerSafetyEvent)(p)
+	r := (*workersafety.WorkerSafetyEvent)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -13091,7 +13107,7 @@ func valueWorkerSafetyEvent(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerSafetyEvent(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerSafetyEvent)(p)
+	r := (*workersafety.WorkerSafetyEvent)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
@@ -13105,7 +13121,7 @@ func attachWorkerSafetyEvent(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 }
 
 func beforeCreateWorkerSafetyEvent(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerSafetyEvent)(p).BeforeCreate(ctx)
+	return (*workersafety.WorkerSafetyEvent)(p).BeforeCreate(ctx)
 }
 
 // workerSafetyViolationsTable is the schema of worker.WorkerSafetyViolation.
@@ -13117,7 +13133,7 @@ var workerSafetyViolationsTable = schema.Table{
 	Label:       `Worker Safety Violation`,
 	Plural:      `Worker Safety Violations`,
 	Doc:         `WorkerSafetyViolation is one violation cited on a safety event. A roadside inspection routinely produces several, in different BASICs, so they are rows rather than a column on the event.`,
-	Constraints: (&worker.WorkerSafetyViolation{}).Constraints(),
+	Constraints: (&workersafety.WorkerSafetyViolation{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -13149,7 +13165,7 @@ var workerSafetyViolationsTable = schema.Table{
 	IDPrefix:     "wsvi_",
 	New:          newWorkerSafetyViolation,
 	NewN:         newNWorkerSafetyViolation,
-	Size:         unsafe.Sizeof(worker.WorkerSafetyViolation{}),
+	Size:         unsafe.Sizeof(workersafety.WorkerSafetyViolation{}),
 	Ptr:          ptrWorkerSafetyViolation,
 	Value:        valueWorkerSafetyViolation,
 	Attach:       attachWorkerSafetyViolation,
@@ -13160,7 +13176,7 @@ var workerSafetyViolationsRef = keel.Ref{Table: &workerSafetyViolationsTable}
 
 // WorkerSafetyViolationsTable is the table of worker.WorkerSafetyViolation.
 type WorkerSafetyViolationsTable struct {
-	keel.Handle[*worker.WorkerSafetyViolation]
+	keel.Handle[*workersafety.WorkerSafetyViolation]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -13178,7 +13194,7 @@ type WorkerSafetyViolationsTable struct {
 
 // WorkerSafetyViolations references the worker_safety_violations table.
 var WorkerSafetyViolations = &WorkerSafetyViolationsTable{
-	Handle:         keel.Handle[*worker.WorkerSafetyViolation]{Ref: &workerSafetyViolationsRef},
+	Handle:         keel.Handle[*workersafety.WorkerSafetyViolation]{Ref: &workerSafetyViolationsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 2}}},
@@ -13197,7 +13213,7 @@ var WorkerSafetyViolations = &WorkerSafetyViolationsTable{
 // BuildWorkerSafetyViolations builds the handle of worker_safety_violations for ref. Generated relation and alias methods call it.
 func BuildWorkerSafetyViolations(r *keel.Ref) *WorkerSafetyViolationsTable {
 	return &WorkerSafetyViolationsTable{
-		Handle:         keel.Handle[*worker.WorkerSafetyViolation]{Ref: r},
+		Handle:         keel.Handle[*workersafety.WorkerSafetyViolation]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -13228,20 +13244,20 @@ func (t *WorkerSafetyViolationsTable) SafetyEvent() *WorkerSafetyEventsTable {
 }
 
 // Get returns the worker_safety_violations row with the given key, or keel.ErrNotFound.
-func (t *WorkerSafetyViolationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerSafetyViolation, error) {
+func (t *WorkerSafetyViolationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workersafety.WorkerSafetyViolation, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerSafetyViolation() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.WorkerSafetyViolation))
+	return unsafe.Pointer(new(workersafety.WorkerSafetyViolation))
 }
 
 func newNWorkerSafetyViolation(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerSafetyViolation, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workersafety.WorkerSafetyViolation, n)))
 }
 
 func ptrWorkerSafetyViolation(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerSafetyViolation)(p)
+	r := (*workersafety.WorkerSafetyViolation)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -13274,7 +13290,7 @@ func ptrWorkerSafetyViolation(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerSafetyViolation(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerSafetyViolation)(p)
+	r := (*workersafety.WorkerSafetyViolation)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -13310,15 +13326,15 @@ func valueWorkerSafetyViolation(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerSafetyViolation(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerSafetyViolation)(p)
+	r := (*workersafety.WorkerSafetyViolation)(p)
 	switch rel {
 	case 0:
-		r.SafetyEvent = (*worker.WorkerSafetyEvent)(child)
+		r.SafetyEvent = (*workersafety.WorkerSafetyEvent)(child)
 	}
 }
 
 func beforeCreateWorkerSafetyViolation(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerSafetyViolation)(p).BeforeCreate(ctx)
+	return (*workersafety.WorkerSafetyViolation)(p).BeforeCreate(ctx)
 }
 
 // workerShiftAssignmentsTable is the schema of worker.WorkerShiftAssignment.
@@ -13330,7 +13346,7 @@ var workerShiftAssignmentsTable = schema.Table{
 	Label:       `Worker Shift Assignment`,
 	Plural:      `Worker Shift Assignments`,
 	Doc:         `WorkerShiftAssignment puts a worker on a pattern for a period.`,
-	Constraints: (&worker.WorkerShiftAssignment{}).Constraints(),
+	Constraints: (&workerschedule.WorkerShiftAssignment{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -13363,7 +13379,7 @@ var workerShiftAssignmentsTable = schema.Table{
 	IDPrefix:   "wsa_",
 	New:        newWorkerShiftAssignment,
 	NewN:       newNWorkerShiftAssignment,
-	Size:       unsafe.Sizeof(worker.WorkerShiftAssignment{}),
+	Size:       unsafe.Sizeof(workerschedule.WorkerShiftAssignment{}),
 	Ptr:        ptrWorkerShiftAssignment,
 	Value:      valueWorkerShiftAssignment,
 	Attach:     attachWorkerShiftAssignment,
@@ -13373,7 +13389,7 @@ var workerShiftAssignmentsRef = keel.Ref{Table: &workerShiftAssignmentsTable}
 
 // WorkerShiftAssignmentsTable is the table of worker.WorkerShiftAssignment.
 type WorkerShiftAssignmentsTable struct {
-	keel.Handle[*worker.WorkerShiftAssignment]
+	keel.Handle[*workerschedule.WorkerShiftAssignment]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -13391,7 +13407,7 @@ type WorkerShiftAssignmentsTable struct {
 
 // WorkerShiftAssignments references the worker_shift_assignments table.
 var WorkerShiftAssignments = &WorkerShiftAssignmentsTable{
-	Handle:           keel.Handle[*worker.WorkerShiftAssignment]{Ref: &workerShiftAssignmentsRef},
+	Handle:           keel.Handle[*workerschedule.WorkerShiftAssignment]{Ref: &workerShiftAssignmentsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 2}}},
@@ -13410,7 +13426,7 @@ var WorkerShiftAssignments = &WorkerShiftAssignmentsTable{
 // BuildWorkerShiftAssignments builds the handle of worker_shift_assignments for ref. Generated relation and alias methods call it.
 func BuildWorkerShiftAssignments(r *keel.Ref) *WorkerShiftAssignmentsTable {
 	return &WorkerShiftAssignmentsTable{
-		Handle:           keel.Handle[*worker.WorkerShiftAssignment]{Ref: r},
+		Handle:           keel.Handle[*workerschedule.WorkerShiftAssignment]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -13446,20 +13462,20 @@ func (t *WorkerShiftAssignmentsTable) Worker() *WorkersTable {
 }
 
 // Get returns the worker_shift_assignments row with the given key, or keel.ErrNotFound.
-func (t *WorkerShiftAssignmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerShiftAssignment, error) {
+func (t *WorkerShiftAssignmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerschedule.WorkerShiftAssignment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerShiftAssignment() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.WorkerShiftAssignment))
+	return unsafe.Pointer(new(workerschedule.WorkerShiftAssignment))
 }
 
 func newNWorkerShiftAssignment(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerShiftAssignment, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workerschedule.WorkerShiftAssignment, n)))
 }
 
 func ptrWorkerShiftAssignment(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerShiftAssignment)(p)
+	r := (*workerschedule.WorkerShiftAssignment)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -13492,7 +13508,7 @@ func ptrWorkerShiftAssignment(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerShiftAssignment(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerShiftAssignment)(p)
+	r := (*workerschedule.WorkerShiftAssignment)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -13534,10 +13550,10 @@ func valueWorkerShiftAssignment(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerShiftAssignment(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerShiftAssignment)(p)
+	r := (*workerschedule.WorkerShiftAssignment)(p)
 	switch rel {
 	case 0:
-		r.ShiftTemplate = (*worker.ShiftTemplate)(child)
+		r.ShiftTemplate = (*workerschedule.ShiftTemplate)(child)
 	case 1:
 		r.Worker = (*worker.Worker)(child)
 	}
@@ -13575,7 +13591,7 @@ var workerSyncDriftsTable = schema.Table{
 	IDPrefix:   "",
 	New:        newWorkerSyncDrift,
 	NewN:       newNWorkerSyncDrift,
-	Size:       unsafe.Sizeof(worker.WorkerSyncDrift{}),
+	Size:       unsafe.Sizeof(workersyncdrift.WorkerSyncDrift{}),
 	Ptr:        ptrWorkerSyncDrift,
 	Value:      valueWorkerSyncDrift,
 }
@@ -13584,7 +13600,7 @@ var workerSyncDriftsRef = keel.Ref{Table: &workerSyncDriftsTable}
 
 // WorkerSyncDriftsTable is the table of worker.WorkerSyncDrift.
 type WorkerSyncDriftsTable struct {
-	keel.Handle[*worker.WorkerSyncDrift]
+	keel.Handle[*workersyncdrift.WorkerSyncDrift]
 	OrganizationID  keel.StringCol
 	BusinessUnitID  keel.StringCol
 	WorkerID        keel.StringCol
@@ -13598,7 +13614,7 @@ type WorkerSyncDriftsTable struct {
 
 // WorkerSyncDrifts references the samsara_worker_sync_drifts table.
 var WorkerSyncDrifts = &WorkerSyncDriftsTable{
-	Handle:          keel.Handle[*worker.WorkerSyncDrift]{Ref: &workerSyncDriftsRef},
+	Handle:          keel.Handle[*workersyncdrift.WorkerSyncDrift]{Ref: &workerSyncDriftsRef},
 	OrganizationID:  keel.StringCol{Col: keel.Col{Ref: &workerSyncDriftsRef, Index: 0}},
 	BusinessUnitID:  keel.StringCol{Col: keel.Col{Ref: &workerSyncDriftsRef, Index: 1}},
 	WorkerID:        keel.StringCol{Col: keel.Col{Ref: &workerSyncDriftsRef, Index: 2}},
@@ -13613,7 +13629,7 @@ var WorkerSyncDrifts = &WorkerSyncDriftsTable{
 // BuildWorkerSyncDrifts builds the handle of samsara_worker_sync_drifts for ref. Generated relation and alias methods call it.
 func BuildWorkerSyncDrifts(r *keel.Ref) *WorkerSyncDriftsTable {
 	return &WorkerSyncDriftsTable{
-		Handle:          keel.Handle[*worker.WorkerSyncDrift]{Ref: r},
+		Handle:          keel.Handle[*workersyncdrift.WorkerSyncDrift]{Ref: r},
 		OrganizationID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
 		BusinessUnitID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 1}},
 		WorkerID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -13634,14 +13650,14 @@ func (t *WorkerSyncDriftsTable) As(alias string) *WorkerSyncDriftsTable {
 	return keel.Alias(t.Ref, alias, BuildWorkerSyncDrifts)
 }
 
-func newWorkerSyncDrift() unsafe.Pointer { return unsafe.Pointer(new(worker.WorkerSyncDrift)) }
+func newWorkerSyncDrift() unsafe.Pointer { return unsafe.Pointer(new(workersyncdrift.WorkerSyncDrift)) }
 
 func newNWorkerSyncDrift(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerSyncDrift, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workersyncdrift.WorkerSyncDrift, n)))
 }
 
 func ptrWorkerSyncDrift(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerSyncDrift)(p)
+	r := (*workersyncdrift.WorkerSyncDrift)(p)
 	switch c {
 	case 0:
 		return &r.OrganizationID
@@ -13666,7 +13682,7 @@ func ptrWorkerSyncDrift(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerSyncDrift(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerSyncDrift)(p)
+	r := (*workersyncdrift.WorkerSyncDrift)(p)
 	switch c {
 	case 0:
 		return r.OrganizationID
@@ -13704,7 +13720,7 @@ var workerTrainingRecordsTable = schema.Table{
 	Model:       "worker.WorkerTrainingRecord",
 	Label:       `Worker Training Record`,
 	Plural:      `Worker Training Records`,
-	Constraints: (&worker.WorkerTrainingRecord{}).Constraints(),
+	Constraints: (&workertraining.WorkerTrainingRecord{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -13749,7 +13765,7 @@ var workerTrainingRecordsTable = schema.Table{
 	IDPrefix:     "wtrn_",
 	New:          newWorkerTrainingRecord,
 	NewN:         newNWorkerTrainingRecord,
-	Size:         unsafe.Sizeof(worker.WorkerTrainingRecord{}),
+	Size:         unsafe.Sizeof(workertraining.WorkerTrainingRecord{}),
 	Ptr:          ptrWorkerTrainingRecord,
 	Value:        valueWorkerTrainingRecord,
 	Attach:       attachWorkerTrainingRecord,
@@ -13760,7 +13776,7 @@ var workerTrainingRecordsRef = keel.Ref{Table: &workerTrainingRecordsTable}
 
 // WorkerTrainingRecordsTable is the table of worker.WorkerTrainingRecord.
 type WorkerTrainingRecordsTable struct {
-	keel.Handle[*worker.WorkerTrainingRecord]
+	keel.Handle[*workertraining.WorkerTrainingRecord]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -13787,7 +13803,7 @@ type WorkerTrainingRecordsTable struct {
 
 // WorkerTrainingRecords references the worker_training_records table.
 var WorkerTrainingRecords = &WorkerTrainingRecordsTable{
-	Handle:         keel.Handle[*worker.WorkerTrainingRecord]{Ref: &workerTrainingRecordsRef},
+	Handle:         keel.Handle[*workertraining.WorkerTrainingRecord]{Ref: &workerTrainingRecordsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerTrainingRecordsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerTrainingRecordsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerTrainingRecordsRef, Index: 2}}},
@@ -13815,7 +13831,7 @@ var WorkerTrainingRecords = &WorkerTrainingRecordsTable{
 // BuildWorkerTrainingRecords builds the handle of worker_training_records for ref. Generated relation and alias methods call it.
 func BuildWorkerTrainingRecords(r *keel.Ref) *WorkerTrainingRecordsTable {
 	return &WorkerTrainingRecordsTable{
-		Handle:         keel.Handle[*worker.WorkerTrainingRecord]{Ref: r},
+		Handle:         keel.Handle[*workertraining.WorkerTrainingRecord]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -13873,20 +13889,20 @@ func (t *WorkerTrainingRecordsTable) RecordedBy() *tenantdb.UsersTable {
 }
 
 // Get returns the worker_training_records row with the given key, or keel.ErrNotFound.
-func (t *WorkerTrainingRecordsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.WorkerTrainingRecord, error) {
+func (t *WorkerTrainingRecordsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workertraining.WorkerTrainingRecord, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerTrainingRecord() unsafe.Pointer {
-	return unsafe.Pointer(new(worker.WorkerTrainingRecord))
+	return unsafe.Pointer(new(workertraining.WorkerTrainingRecord))
 }
 
 func newNWorkerTrainingRecord(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]worker.WorkerTrainingRecord, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]workertraining.WorkerTrainingRecord, n)))
 }
 
 func ptrWorkerTrainingRecord(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerTrainingRecord)(p)
+	r := (*workertraining.WorkerTrainingRecord)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -13937,7 +13953,7 @@ func ptrWorkerTrainingRecord(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerTrainingRecord(p unsafe.Pointer, c int32) any {
-	r := (*worker.WorkerTrainingRecord)(p)
+	r := (*workertraining.WorkerTrainingRecord)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -14021,10 +14037,10 @@ func valueWorkerTrainingRecord(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerTrainingRecord(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*worker.WorkerTrainingRecord)(p)
+	r := (*workertraining.WorkerTrainingRecord)(p)
 	switch rel {
 	case 0:
-		r.Course = (*worker.TrainingCourse)(child)
+		r.Course = (*workertraining.TrainingCourse)(child)
 	case 1:
 		r.Worker = (*worker.Worker)(child)
 	case 2:
@@ -14037,7 +14053,7 @@ func attachWorkerTrainingRecord(p unsafe.Pointer, rel int32, child unsafe.Pointe
 }
 
 func beforeCreateWorkerTrainingRecord(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerTrainingRecord)(p).BeforeCreate(ctx)
+	return (*workertraining.WorkerTrainingRecord)(p).BeforeCreate(ctx)
 }
 
 func init() {
@@ -14748,62 +14764,62 @@ var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: s
 // ApprovalScopeCol is a column of worker.ApprovalScope values.
 type ApprovalScopeCol struct{ keel.StringCol }
 
-func (c ApprovalScopeCol) Eq(v worker.ApprovalScope) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ApprovalScopeCol) Ne(v worker.ApprovalScope) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ApprovalScopeCol) Gt(v worker.ApprovalScope) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ApprovalScopeCol) Gte(v worker.ApprovalScope) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ApprovalScopeCol) Lt(v worker.ApprovalScope) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ApprovalScopeCol) Lte(v worker.ApprovalScope) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c ApprovalScopeCol) IsDistinctFrom(v worker.ApprovalScope) keel.Pred {
+func (c ApprovalScopeCol) Eq(v approvaldelegation.ApprovalScope) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c ApprovalScopeCol) Ne(v approvaldelegation.ApprovalScope) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c ApprovalScopeCol) Gt(v approvaldelegation.ApprovalScope) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c ApprovalScopeCol) Gte(v approvaldelegation.ApprovalScope) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c ApprovalScopeCol) Lt(v approvaldelegation.ApprovalScope) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c ApprovalScopeCol) Lte(v approvaldelegation.ApprovalScope) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ApprovalScopeCol) IsDistinctFrom(v approvaldelegation.ApprovalScope) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ApprovalScopeCol) Between(lo, hi worker.ApprovalScope) keel.Pred {
+func (c ApprovalScopeCol) Between(lo, hi approvaldelegation.ApprovalScope) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ApprovalScopeCol) To(v worker.ApprovalScope) keel.Assignment {
+func (c ApprovalScopeCol) To(v approvaldelegation.ApprovalScope) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ApprovalScopeCol) In(vs ...worker.ApprovalScope) keel.Pred {
+func (c ApprovalScopeCol) In(vs ...approvaldelegation.ApprovalScope) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ApprovalScopeCol) NotIn(vs ...worker.ApprovalScope) keel.Pred {
+func (c ApprovalScopeCol) NotIn(vs ...approvaldelegation.ApprovalScope) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // AvailabilityPreferenceCol is a column of worker.AvailabilityPreference values.
 type AvailabilityPreferenceCol struct{ keel.StringCol }
 
-func (c AvailabilityPreferenceCol) Eq(v worker.AvailabilityPreference) keel.Pred {
+func (c AvailabilityPreferenceCol) Eq(v workerschedule.AvailabilityPreference) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c AvailabilityPreferenceCol) Ne(v worker.AvailabilityPreference) keel.Pred {
+func (c AvailabilityPreferenceCol) Ne(v workerschedule.AvailabilityPreference) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c AvailabilityPreferenceCol) Gt(v worker.AvailabilityPreference) keel.Pred {
+func (c AvailabilityPreferenceCol) Gt(v workerschedule.AvailabilityPreference) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c AvailabilityPreferenceCol) Gte(v worker.AvailabilityPreference) keel.Pred {
+func (c AvailabilityPreferenceCol) Gte(v workerschedule.AvailabilityPreference) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c AvailabilityPreferenceCol) Lt(v worker.AvailabilityPreference) keel.Pred {
+func (c AvailabilityPreferenceCol) Lt(v workerschedule.AvailabilityPreference) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c AvailabilityPreferenceCol) Lte(v worker.AvailabilityPreference) keel.Pred {
+func (c AvailabilityPreferenceCol) Lte(v workerschedule.AvailabilityPreference) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c AvailabilityPreferenceCol) IsDistinctFrom(v worker.AvailabilityPreference) keel.Pred {
+func (c AvailabilityPreferenceCol) IsDistinctFrom(v workerschedule.AvailabilityPreference) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c AvailabilityPreferenceCol) Between(lo, hi worker.AvailabilityPreference) keel.Pred {
+func (c AvailabilityPreferenceCol) Between(lo, hi workerschedule.AvailabilityPreference) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c AvailabilityPreferenceCol) To(v worker.AvailabilityPreference) keel.Assignment {
+func (c AvailabilityPreferenceCol) To(v workerschedule.AvailabilityPreference) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c AvailabilityPreferenceCol) In(vs ...worker.AvailabilityPreference) keel.Pred {
+func (c AvailabilityPreferenceCol) In(vs ...workerschedule.AvailabilityPreference) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c AvailabilityPreferenceCol) NotIn(vs ...worker.AvailabilityPreference) keel.Pred {
+func (c AvailabilityPreferenceCol) NotIn(vs ...workerschedule.AvailabilityPreference) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -14831,285 +14847,285 @@ func (c CDLClassCol) NotIn(vs ...worker.CDLClass) keel.Pred {
 // CSABasicCol is a column of worker.CSABasic values.
 type CSABasicCol struct{ keel.StringCol }
 
-func (c CSABasicCol) Eq(v worker.CSABasic) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CSABasicCol) Ne(v worker.CSABasic) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CSABasicCol) Gt(v worker.CSABasic) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CSABasicCol) Gte(v worker.CSABasic) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CSABasicCol) Lt(v worker.CSABasic) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CSABasicCol) Lte(v worker.CSABasic) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c CSABasicCol) IsDistinctFrom(v worker.CSABasic) keel.Pred {
+func (c CSABasicCol) Eq(v workersafety.CSABasic) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c CSABasicCol) Ne(v workersafety.CSABasic) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c CSABasicCol) Gt(v workersafety.CSABasic) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c CSABasicCol) Gte(v workersafety.CSABasic) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c CSABasicCol) Lt(v workersafety.CSABasic) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c CSABasicCol) Lte(v workersafety.CSABasic) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c CSABasicCol) IsDistinctFrom(v workersafety.CSABasic) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c CSABasicCol) Between(lo, hi worker.CSABasic) keel.Pred {
+func (c CSABasicCol) Between(lo, hi workersafety.CSABasic) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c CSABasicCol) To(v worker.CSABasic) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c CSABasicCol) In(vs ...worker.CSABasic) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
-func (c CSABasicCol) NotIn(vs ...worker.CSABasic) keel.Pred {
+func (c CSABasicCol) To(v workersafety.CSABasic) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c CSABasicCol) In(vs ...workersafety.CSABasic) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c CSABasicCol) NotIn(vs ...workersafety.CSABasic) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // ChecklistItemKindCol is a column of worker.ChecklistItemKind values.
 type ChecklistItemKindCol struct{ keel.StringCol }
 
-func (c ChecklistItemKindCol) Eq(v worker.ChecklistItemKind) keel.Pred {
+func (c ChecklistItemKindCol) Eq(v workerchecklist.ChecklistItemKind) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c ChecklistItemKindCol) Ne(v worker.ChecklistItemKind) keel.Pred {
+func (c ChecklistItemKindCol) Ne(v workerchecklist.ChecklistItemKind) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c ChecklistItemKindCol) Gt(v worker.ChecklistItemKind) keel.Pred {
+func (c ChecklistItemKindCol) Gt(v workerchecklist.ChecklistItemKind) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c ChecklistItemKindCol) Gte(v worker.ChecklistItemKind) keel.Pred {
+func (c ChecklistItemKindCol) Gte(v workerchecklist.ChecklistItemKind) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c ChecklistItemKindCol) Lt(v worker.ChecklistItemKind) keel.Pred {
+func (c ChecklistItemKindCol) Lt(v workerchecklist.ChecklistItemKind) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c ChecklistItemKindCol) Lte(v worker.ChecklistItemKind) keel.Pred {
+func (c ChecklistItemKindCol) Lte(v workerchecklist.ChecklistItemKind) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c ChecklistItemKindCol) IsDistinctFrom(v worker.ChecklistItemKind) keel.Pred {
+func (c ChecklistItemKindCol) IsDistinctFrom(v workerchecklist.ChecklistItemKind) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ChecklistItemKindCol) Between(lo, hi worker.ChecklistItemKind) keel.Pred {
+func (c ChecklistItemKindCol) Between(lo, hi workerchecklist.ChecklistItemKind) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ChecklistItemKindCol) To(v worker.ChecklistItemKind) keel.Assignment {
+func (c ChecklistItemKindCol) To(v workerchecklist.ChecklistItemKind) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ChecklistItemKindCol) In(vs ...worker.ChecklistItemKind) keel.Pred {
+func (c ChecklistItemKindCol) In(vs ...workerchecklist.ChecklistItemKind) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ChecklistItemKindCol) NotIn(vs ...worker.ChecklistItemKind) keel.Pred {
+func (c ChecklistItemKindCol) NotIn(vs ...workerchecklist.ChecklistItemKind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // ChecklistItemStatusCol is a column of worker.ChecklistItemStatus values.
 type ChecklistItemStatusCol struct{ keel.StringCol }
 
-func (c ChecklistItemStatusCol) Eq(v worker.ChecklistItemStatus) keel.Pred {
+func (c ChecklistItemStatusCol) Eq(v workerchecklist.ChecklistItemStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c ChecklistItemStatusCol) Ne(v worker.ChecklistItemStatus) keel.Pred {
+func (c ChecklistItemStatusCol) Ne(v workerchecklist.ChecklistItemStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c ChecklistItemStatusCol) Gt(v worker.ChecklistItemStatus) keel.Pred {
+func (c ChecklistItemStatusCol) Gt(v workerchecklist.ChecklistItemStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c ChecklistItemStatusCol) Gte(v worker.ChecklistItemStatus) keel.Pred {
+func (c ChecklistItemStatusCol) Gte(v workerchecklist.ChecklistItemStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c ChecklistItemStatusCol) Lt(v worker.ChecklistItemStatus) keel.Pred {
+func (c ChecklistItemStatusCol) Lt(v workerchecklist.ChecklistItemStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c ChecklistItemStatusCol) Lte(v worker.ChecklistItemStatus) keel.Pred {
+func (c ChecklistItemStatusCol) Lte(v workerchecklist.ChecklistItemStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c ChecklistItemStatusCol) IsDistinctFrom(v worker.ChecklistItemStatus) keel.Pred {
+func (c ChecklistItemStatusCol) IsDistinctFrom(v workerchecklist.ChecklistItemStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ChecklistItemStatusCol) Between(lo, hi worker.ChecklistItemStatus) keel.Pred {
+func (c ChecklistItemStatusCol) Between(lo, hi workerchecklist.ChecklistItemStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ChecklistItemStatusCol) To(v worker.ChecklistItemStatus) keel.Assignment {
+func (c ChecklistItemStatusCol) To(v workerchecklist.ChecklistItemStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ChecklistItemStatusCol) In(vs ...worker.ChecklistItemStatus) keel.Pred {
+func (c ChecklistItemStatusCol) In(vs ...workerchecklist.ChecklistItemStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ChecklistItemStatusCol) NotIn(vs ...worker.ChecklistItemStatus) keel.Pred {
+func (c ChecklistItemStatusCol) NotIn(vs ...workerchecklist.ChecklistItemStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // ChecklistKindCol is a column of worker.ChecklistKind values.
 type ChecklistKindCol struct{ keel.StringCol }
 
-func (c ChecklistKindCol) Eq(v worker.ChecklistKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ChecklistKindCol) Ne(v worker.ChecklistKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ChecklistKindCol) Gt(v worker.ChecklistKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ChecklistKindCol) Gte(v worker.ChecklistKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ChecklistKindCol) Lt(v worker.ChecklistKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ChecklistKindCol) Lte(v worker.ChecklistKind) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c ChecklistKindCol) IsDistinctFrom(v worker.ChecklistKind) keel.Pred {
+func (c ChecklistKindCol) Eq(v workerchecklist.ChecklistKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c ChecklistKindCol) Ne(v workerchecklist.ChecklistKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c ChecklistKindCol) Gt(v workerchecklist.ChecklistKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c ChecklistKindCol) Gte(v workerchecklist.ChecklistKind) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c ChecklistKindCol) Lt(v workerchecklist.ChecklistKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c ChecklistKindCol) Lte(v workerchecklist.ChecklistKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ChecklistKindCol) IsDistinctFrom(v workerchecklist.ChecklistKind) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ChecklistKindCol) Between(lo, hi worker.ChecklistKind) keel.Pred {
+func (c ChecklistKindCol) Between(lo, hi workerchecklist.ChecklistKind) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ChecklistKindCol) To(v worker.ChecklistKind) keel.Assignment {
+func (c ChecklistKindCol) To(v workerchecklist.ChecklistKind) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ChecklistKindCol) In(vs ...worker.ChecklistKind) keel.Pred {
+func (c ChecklistKindCol) In(vs ...workerchecklist.ChecklistKind) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ChecklistKindCol) NotIn(vs ...worker.ChecklistKind) keel.Pred {
+func (c ChecklistKindCol) NotIn(vs ...workerchecklist.ChecklistKind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // ChecklistOwnerCol is a column of worker.ChecklistOwner values.
 type ChecklistOwnerCol struct{ keel.StringCol }
 
-func (c ChecklistOwnerCol) Eq(v worker.ChecklistOwner) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ChecklistOwnerCol) Ne(v worker.ChecklistOwner) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ChecklistOwnerCol) Gt(v worker.ChecklistOwner) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ChecklistOwnerCol) Gte(v worker.ChecklistOwner) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ChecklistOwnerCol) Lt(v worker.ChecklistOwner) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ChecklistOwnerCol) Lte(v worker.ChecklistOwner) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c ChecklistOwnerCol) IsDistinctFrom(v worker.ChecklistOwner) keel.Pred {
+func (c ChecklistOwnerCol) Eq(v workerchecklist.ChecklistOwner) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c ChecklistOwnerCol) Ne(v workerchecklist.ChecklistOwner) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c ChecklistOwnerCol) Gt(v workerchecklist.ChecklistOwner) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c ChecklistOwnerCol) Gte(v workerchecklist.ChecklistOwner) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c ChecklistOwnerCol) Lt(v workerchecklist.ChecklistOwner) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c ChecklistOwnerCol) Lte(v workerchecklist.ChecklistOwner) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ChecklistOwnerCol) IsDistinctFrom(v workerchecklist.ChecklistOwner) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ChecklistOwnerCol) Between(lo, hi worker.ChecklistOwner) keel.Pred {
+func (c ChecklistOwnerCol) Between(lo, hi workerchecklist.ChecklistOwner) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ChecklistOwnerCol) To(v worker.ChecklistOwner) keel.Assignment {
+func (c ChecklistOwnerCol) To(v workerchecklist.ChecklistOwner) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ChecklistOwnerCol) In(vs ...worker.ChecklistOwner) keel.Pred {
+func (c ChecklistOwnerCol) In(vs ...workerchecklist.ChecklistOwner) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ChecklistOwnerCol) NotIn(vs ...worker.ChecklistOwner) keel.Pred {
+func (c ChecklistOwnerCol) NotIn(vs ...workerchecklist.ChecklistOwner) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // ChecklistStatusCol is a column of worker.ChecklistStatus values.
 type ChecklistStatusCol struct{ keel.StringCol }
 
-func (c ChecklistStatusCol) Eq(v worker.ChecklistStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c ChecklistStatusCol) Ne(v worker.ChecklistStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c ChecklistStatusCol) Gt(v worker.ChecklistStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c ChecklistStatusCol) Gte(v worker.ChecklistStatus) keel.Pred {
+func (c ChecklistStatusCol) Eq(v workerchecklist.ChecklistStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c ChecklistStatusCol) Ne(v workerchecklist.ChecklistStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c ChecklistStatusCol) Gt(v workerchecklist.ChecklistStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c ChecklistStatusCol) Gte(v workerchecklist.ChecklistStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c ChecklistStatusCol) Lt(v worker.ChecklistStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c ChecklistStatusCol) Lte(v worker.ChecklistStatus) keel.Pred {
+func (c ChecklistStatusCol) Lt(v workerchecklist.ChecklistStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c ChecklistStatusCol) Lte(v workerchecklist.ChecklistStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c ChecklistStatusCol) IsDistinctFrom(v worker.ChecklistStatus) keel.Pred {
+func (c ChecklistStatusCol) IsDistinctFrom(v workerchecklist.ChecklistStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ChecklistStatusCol) Between(lo, hi worker.ChecklistStatus) keel.Pred {
+func (c ChecklistStatusCol) Between(lo, hi workerchecklist.ChecklistStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ChecklistStatusCol) To(v worker.ChecklistStatus) keel.Assignment {
+func (c ChecklistStatusCol) To(v workerchecklist.ChecklistStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ChecklistStatusCol) In(vs ...worker.ChecklistStatus) keel.Pred {
+func (c ChecklistStatusCol) In(vs ...workerchecklist.ChecklistStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ChecklistStatusCol) NotIn(vs ...worker.ChecklistStatus) keel.Pred {
+func (c ChecklistStatusCol) NotIn(vs ...workerchecklist.ChecklistStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // ChecklistTriggerCol is a column of worker.ChecklistTrigger values.
 type ChecklistTriggerCol struct{ keel.StringCol }
 
-func (c ChecklistTriggerCol) Eq(v worker.ChecklistTrigger) keel.Pred {
+func (c ChecklistTriggerCol) Eq(v workerchecklist.ChecklistTrigger) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c ChecklistTriggerCol) Ne(v worker.ChecklistTrigger) keel.Pred {
+func (c ChecklistTriggerCol) Ne(v workerchecklist.ChecklistTrigger) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c ChecklistTriggerCol) Gt(v worker.ChecklistTrigger) keel.Pred {
+func (c ChecklistTriggerCol) Gt(v workerchecklist.ChecklistTrigger) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c ChecklistTriggerCol) Gte(v worker.ChecklistTrigger) keel.Pred {
+func (c ChecklistTriggerCol) Gte(v workerchecklist.ChecklistTrigger) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c ChecklistTriggerCol) Lt(v worker.ChecklistTrigger) keel.Pred {
+func (c ChecklistTriggerCol) Lt(v workerchecklist.ChecklistTrigger) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c ChecklistTriggerCol) Lte(v worker.ChecklistTrigger) keel.Pred {
+func (c ChecklistTriggerCol) Lte(v workerchecklist.ChecklistTrigger) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c ChecklistTriggerCol) IsDistinctFrom(v worker.ChecklistTrigger) keel.Pred {
+func (c ChecklistTriggerCol) IsDistinctFrom(v workerchecklist.ChecklistTrigger) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ChecklistTriggerCol) Between(lo, hi worker.ChecklistTrigger) keel.Pred {
+func (c ChecklistTriggerCol) Between(lo, hi workerchecklist.ChecklistTrigger) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ChecklistTriggerCol) To(v worker.ChecklistTrigger) keel.Assignment {
+func (c ChecklistTriggerCol) To(v workerchecklist.ChecklistTrigger) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ChecklistTriggerCol) In(vs ...worker.ChecklistTrigger) keel.Pred {
+func (c ChecklistTriggerCol) In(vs ...workerchecklist.ChecklistTrigger) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ChecklistTriggerCol) NotIn(vs ...worker.ChecklistTrigger) keel.Pred {
+func (c ChecklistTriggerCol) NotIn(vs ...workerchecklist.ChecklistTrigger) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // ClearinghouseQueryTypeCol is a column of worker.ClearinghouseQueryType values.
 type ClearinghouseQueryTypeCol struct{ keel.StringCol }
 
-func (c ClearinghouseQueryTypeCol) Eq(v worker.ClearinghouseQueryType) keel.Pred {
+func (c ClearinghouseQueryTypeCol) Eq(v workerdot.ClearinghouseQueryType) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c ClearinghouseQueryTypeCol) Ne(v worker.ClearinghouseQueryType) keel.Pred {
+func (c ClearinghouseQueryTypeCol) Ne(v workerdot.ClearinghouseQueryType) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c ClearinghouseQueryTypeCol) Gt(v worker.ClearinghouseQueryType) keel.Pred {
+func (c ClearinghouseQueryTypeCol) Gt(v workerdot.ClearinghouseQueryType) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c ClearinghouseQueryTypeCol) Gte(v worker.ClearinghouseQueryType) keel.Pred {
+func (c ClearinghouseQueryTypeCol) Gte(v workerdot.ClearinghouseQueryType) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c ClearinghouseQueryTypeCol) Lt(v worker.ClearinghouseQueryType) keel.Pred {
+func (c ClearinghouseQueryTypeCol) Lt(v workerdot.ClearinghouseQueryType) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c ClearinghouseQueryTypeCol) Lte(v worker.ClearinghouseQueryType) keel.Pred {
+func (c ClearinghouseQueryTypeCol) Lte(v workerdot.ClearinghouseQueryType) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c ClearinghouseQueryTypeCol) IsDistinctFrom(v worker.ClearinghouseQueryType) keel.Pred {
+func (c ClearinghouseQueryTypeCol) IsDistinctFrom(v workerdot.ClearinghouseQueryType) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ClearinghouseQueryTypeCol) Between(lo, hi worker.ClearinghouseQueryType) keel.Pred {
+func (c ClearinghouseQueryTypeCol) Between(lo, hi workerdot.ClearinghouseQueryType) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ClearinghouseQueryTypeCol) To(v worker.ClearinghouseQueryType) keel.Assignment {
+func (c ClearinghouseQueryTypeCol) To(v workerdot.ClearinghouseQueryType) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ClearinghouseQueryTypeCol) In(vs ...worker.ClearinghouseQueryType) keel.Pred {
+func (c ClearinghouseQueryTypeCol) In(vs ...workerdot.ClearinghouseQueryType) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ClearinghouseQueryTypeCol) NotIn(vs ...worker.ClearinghouseQueryType) keel.Pred {
+func (c ClearinghouseQueryTypeCol) NotIn(vs ...workerdot.ClearinghouseQueryType) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // ClearinghouseResultCol is a column of worker.ClearinghouseResult values.
 type ClearinghouseResultCol struct{ keel.StringCol }
 
-func (c ClearinghouseResultCol) Eq(v worker.ClearinghouseResult) keel.Pred {
+func (c ClearinghouseResultCol) Eq(v workerdot.ClearinghouseResult) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c ClearinghouseResultCol) Ne(v worker.ClearinghouseResult) keel.Pred {
+func (c ClearinghouseResultCol) Ne(v workerdot.ClearinghouseResult) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c ClearinghouseResultCol) Gt(v worker.ClearinghouseResult) keel.Pred {
+func (c ClearinghouseResultCol) Gt(v workerdot.ClearinghouseResult) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c ClearinghouseResultCol) Gte(v worker.ClearinghouseResult) keel.Pred {
+func (c ClearinghouseResultCol) Gte(v workerdot.ClearinghouseResult) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c ClearinghouseResultCol) Lt(v worker.ClearinghouseResult) keel.Pred {
+func (c ClearinghouseResultCol) Lt(v workerdot.ClearinghouseResult) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c ClearinghouseResultCol) Lte(v worker.ClearinghouseResult) keel.Pred {
+func (c ClearinghouseResultCol) Lte(v workerdot.ClearinghouseResult) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c ClearinghouseResultCol) IsDistinctFrom(v worker.ClearinghouseResult) keel.Pred {
+func (c ClearinghouseResultCol) IsDistinctFrom(v workerdot.ClearinghouseResult) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ClearinghouseResultCol) Between(lo, hi worker.ClearinghouseResult) keel.Pred {
+func (c ClearinghouseResultCol) Between(lo, hi workerdot.ClearinghouseResult) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ClearinghouseResultCol) To(v worker.ClearinghouseResult) keel.Assignment {
+func (c ClearinghouseResultCol) To(v workerdot.ClearinghouseResult) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ClearinghouseResultCol) In(vs ...worker.ClearinghouseResult) keel.Pred {
+func (c ClearinghouseResultCol) In(vs ...workerdot.ClearinghouseResult) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ClearinghouseResultCol) NotIn(vs ...worker.ClearinghouseResult) keel.Pred {
+func (c ClearinghouseResultCol) NotIn(vs ...workerdot.ClearinghouseResult) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -15153,369 +15169,369 @@ func (c ComplianceStatusCol) NotIn(vs ...worker.ComplianceStatus) keel.Pred {
 // CredentialCategoryCol is a column of worker.CredentialCategory values.
 type CredentialCategoryCol struct{ keel.StringCol }
 
-func (c CredentialCategoryCol) Eq(v worker.CredentialCategory) keel.Pred {
+func (c CredentialCategoryCol) Eq(v workercredential.CredentialCategory) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c CredentialCategoryCol) Ne(v worker.CredentialCategory) keel.Pred {
+func (c CredentialCategoryCol) Ne(v workercredential.CredentialCategory) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c CredentialCategoryCol) Gt(v worker.CredentialCategory) keel.Pred {
+func (c CredentialCategoryCol) Gt(v workercredential.CredentialCategory) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c CredentialCategoryCol) Gte(v worker.CredentialCategory) keel.Pred {
+func (c CredentialCategoryCol) Gte(v workercredential.CredentialCategory) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c CredentialCategoryCol) Lt(v worker.CredentialCategory) keel.Pred {
+func (c CredentialCategoryCol) Lt(v workercredential.CredentialCategory) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c CredentialCategoryCol) Lte(v worker.CredentialCategory) keel.Pred {
+func (c CredentialCategoryCol) Lte(v workercredential.CredentialCategory) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c CredentialCategoryCol) IsDistinctFrom(v worker.CredentialCategory) keel.Pred {
+func (c CredentialCategoryCol) IsDistinctFrom(v workercredential.CredentialCategory) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c CredentialCategoryCol) Between(lo, hi worker.CredentialCategory) keel.Pred {
+func (c CredentialCategoryCol) Between(lo, hi workercredential.CredentialCategory) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c CredentialCategoryCol) To(v worker.CredentialCategory) keel.Assignment {
+func (c CredentialCategoryCol) To(v workercredential.CredentialCategory) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c CredentialCategoryCol) In(vs ...worker.CredentialCategory) keel.Pred {
+func (c CredentialCategoryCol) In(vs ...workercredential.CredentialCategory) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c CredentialCategoryCol) NotIn(vs ...worker.CredentialCategory) keel.Pred {
+func (c CredentialCategoryCol) NotIn(vs ...workercredential.CredentialCategory) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // CredentialProfileFieldCol is a column of worker.CredentialProfileField values.
 type CredentialProfileFieldCol struct{ keel.StringCol }
 
-func (c CredentialProfileFieldCol) Eq(v worker.CredentialProfileField) keel.Pred {
+func (c CredentialProfileFieldCol) Eq(v workercredential.CredentialProfileField) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c CredentialProfileFieldCol) Ne(v worker.CredentialProfileField) keel.Pred {
+func (c CredentialProfileFieldCol) Ne(v workercredential.CredentialProfileField) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c CredentialProfileFieldCol) Gt(v worker.CredentialProfileField) keel.Pred {
+func (c CredentialProfileFieldCol) Gt(v workercredential.CredentialProfileField) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c CredentialProfileFieldCol) Gte(v worker.CredentialProfileField) keel.Pred {
+func (c CredentialProfileFieldCol) Gte(v workercredential.CredentialProfileField) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c CredentialProfileFieldCol) Lt(v worker.CredentialProfileField) keel.Pred {
+func (c CredentialProfileFieldCol) Lt(v workercredential.CredentialProfileField) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c CredentialProfileFieldCol) Lte(v worker.CredentialProfileField) keel.Pred {
+func (c CredentialProfileFieldCol) Lte(v workercredential.CredentialProfileField) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c CredentialProfileFieldCol) IsDistinctFrom(v worker.CredentialProfileField) keel.Pred {
+func (c CredentialProfileFieldCol) IsDistinctFrom(v workercredential.CredentialProfileField) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c CredentialProfileFieldCol) Between(lo, hi worker.CredentialProfileField) keel.Pred {
+func (c CredentialProfileFieldCol) Between(lo, hi workercredential.CredentialProfileField) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c CredentialProfileFieldCol) To(v worker.CredentialProfileField) keel.Assignment {
+func (c CredentialProfileFieldCol) To(v workercredential.CredentialProfileField) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c CredentialProfileFieldCol) In(vs ...worker.CredentialProfileField) keel.Pred {
+func (c CredentialProfileFieldCol) In(vs ...workercredential.CredentialProfileField) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c CredentialProfileFieldCol) NotIn(vs ...worker.CredentialProfileField) keel.Pred {
+func (c CredentialProfileFieldCol) NotIn(vs ...workercredential.CredentialProfileField) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // CredentialStatusCol is a column of worker.CredentialStatus values.
 type CredentialStatusCol struct{ keel.StringCol }
 
-func (c CredentialStatusCol) Eq(v worker.CredentialStatus) keel.Pred {
+func (c CredentialStatusCol) Eq(v workercredential.CredentialStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c CredentialStatusCol) Ne(v worker.CredentialStatus) keel.Pred {
+func (c CredentialStatusCol) Ne(v workercredential.CredentialStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c CredentialStatusCol) Gt(v worker.CredentialStatus) keel.Pred {
+func (c CredentialStatusCol) Gt(v workercredential.CredentialStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c CredentialStatusCol) Gte(v worker.CredentialStatus) keel.Pred {
+func (c CredentialStatusCol) Gte(v workercredential.CredentialStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c CredentialStatusCol) Lt(v worker.CredentialStatus) keel.Pred {
+func (c CredentialStatusCol) Lt(v workercredential.CredentialStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c CredentialStatusCol) Lte(v worker.CredentialStatus) keel.Pred {
+func (c CredentialStatusCol) Lte(v workercredential.CredentialStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c CredentialStatusCol) IsDistinctFrom(v worker.CredentialStatus) keel.Pred {
+func (c CredentialStatusCol) IsDistinctFrom(v workercredential.CredentialStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c CredentialStatusCol) Between(lo, hi worker.CredentialStatus) keel.Pred {
+func (c CredentialStatusCol) Between(lo, hi workercredential.CredentialStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c CredentialStatusCol) To(v worker.CredentialStatus) keel.Assignment {
+func (c CredentialStatusCol) To(v workercredential.CredentialStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c CredentialStatusCol) In(vs ...worker.CredentialStatus) keel.Pred {
+func (c CredentialStatusCol) In(vs ...workercredential.CredentialStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c CredentialStatusCol) NotIn(vs ...worker.CredentialStatus) keel.Pred {
+func (c CredentialStatusCol) NotIn(vs ...workercredential.CredentialStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // DOTTestResultCol is a column of worker.DOTTestResult values.
 type DOTTestResultCol struct{ keel.StringCol }
 
-func (c DOTTestResultCol) Eq(v worker.DOTTestResult) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DOTTestResultCol) Ne(v worker.DOTTestResult) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DOTTestResultCol) Gt(v worker.DOTTestResult) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DOTTestResultCol) Gte(v worker.DOTTestResult) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DOTTestResultCol) Lt(v worker.DOTTestResult) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DOTTestResultCol) Lte(v worker.DOTTestResult) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c DOTTestResultCol) IsDistinctFrom(v worker.DOTTestResult) keel.Pred {
+func (c DOTTestResultCol) Eq(v workerdot.DOTTestResult) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c DOTTestResultCol) Ne(v workerdot.DOTTestResult) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c DOTTestResultCol) Gt(v workerdot.DOTTestResult) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c DOTTestResultCol) Gte(v workerdot.DOTTestResult) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c DOTTestResultCol) Lt(v workerdot.DOTTestResult) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c DOTTestResultCol) Lte(v workerdot.DOTTestResult) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DOTTestResultCol) IsDistinctFrom(v workerdot.DOTTestResult) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c DOTTestResultCol) Between(lo, hi worker.DOTTestResult) keel.Pred {
+func (c DOTTestResultCol) Between(lo, hi workerdot.DOTTestResult) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c DOTTestResultCol) To(v worker.DOTTestResult) keel.Assignment {
+func (c DOTTestResultCol) To(v workerdot.DOTTestResult) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c DOTTestResultCol) In(vs ...worker.DOTTestResult) keel.Pred {
+func (c DOTTestResultCol) In(vs ...workerdot.DOTTestResult) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c DOTTestResultCol) NotIn(vs ...worker.DOTTestResult) keel.Pred {
+func (c DOTTestResultCol) NotIn(vs ...workerdot.DOTTestResult) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // DOTTestStatusCol is a column of worker.DOTTestStatus values.
 type DOTTestStatusCol struct{ keel.StringCol }
 
-func (c DOTTestStatusCol) Eq(v worker.DOTTestStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DOTTestStatusCol) Ne(v worker.DOTTestStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DOTTestStatusCol) Gt(v worker.DOTTestStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DOTTestStatusCol) Gte(v worker.DOTTestStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DOTTestStatusCol) Lt(v worker.DOTTestStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DOTTestStatusCol) Lte(v worker.DOTTestStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c DOTTestStatusCol) IsDistinctFrom(v worker.DOTTestStatus) keel.Pred {
+func (c DOTTestStatusCol) Eq(v workerdot.DOTTestStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c DOTTestStatusCol) Ne(v workerdot.DOTTestStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c DOTTestStatusCol) Gt(v workerdot.DOTTestStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c DOTTestStatusCol) Gte(v workerdot.DOTTestStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c DOTTestStatusCol) Lt(v workerdot.DOTTestStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c DOTTestStatusCol) Lte(v workerdot.DOTTestStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DOTTestStatusCol) IsDistinctFrom(v workerdot.DOTTestStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c DOTTestStatusCol) Between(lo, hi worker.DOTTestStatus) keel.Pred {
+func (c DOTTestStatusCol) Between(lo, hi workerdot.DOTTestStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c DOTTestStatusCol) To(v worker.DOTTestStatus) keel.Assignment {
+func (c DOTTestStatusCol) To(v workerdot.DOTTestStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c DOTTestStatusCol) In(vs ...worker.DOTTestStatus) keel.Pred {
+func (c DOTTestStatusCol) In(vs ...workerdot.DOTTestStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c DOTTestStatusCol) NotIn(vs ...worker.DOTTestStatus) keel.Pred {
+func (c DOTTestStatusCol) NotIn(vs ...workerdot.DOTTestStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // DOTTestSubstanceCol is a column of worker.DOTTestSubstance values.
 type DOTTestSubstanceCol struct{ keel.StringCol }
 
-func (c DOTTestSubstanceCol) Eq(v worker.DOTTestSubstance) keel.Pred {
+func (c DOTTestSubstanceCol) Eq(v workerdot.DOTTestSubstance) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c DOTTestSubstanceCol) Ne(v worker.DOTTestSubstance) keel.Pred {
+func (c DOTTestSubstanceCol) Ne(v workerdot.DOTTestSubstance) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c DOTTestSubstanceCol) Gt(v worker.DOTTestSubstance) keel.Pred {
+func (c DOTTestSubstanceCol) Gt(v workerdot.DOTTestSubstance) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c DOTTestSubstanceCol) Gte(v worker.DOTTestSubstance) keel.Pred {
+func (c DOTTestSubstanceCol) Gte(v workerdot.DOTTestSubstance) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c DOTTestSubstanceCol) Lt(v worker.DOTTestSubstance) keel.Pred {
+func (c DOTTestSubstanceCol) Lt(v workerdot.DOTTestSubstance) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c DOTTestSubstanceCol) Lte(v worker.DOTTestSubstance) keel.Pred {
+func (c DOTTestSubstanceCol) Lte(v workerdot.DOTTestSubstance) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c DOTTestSubstanceCol) IsDistinctFrom(v worker.DOTTestSubstance) keel.Pred {
+func (c DOTTestSubstanceCol) IsDistinctFrom(v workerdot.DOTTestSubstance) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c DOTTestSubstanceCol) Between(lo, hi worker.DOTTestSubstance) keel.Pred {
+func (c DOTTestSubstanceCol) Between(lo, hi workerdot.DOTTestSubstance) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c DOTTestSubstanceCol) To(v worker.DOTTestSubstance) keel.Assignment {
+func (c DOTTestSubstanceCol) To(v workerdot.DOTTestSubstance) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c DOTTestSubstanceCol) In(vs ...worker.DOTTestSubstance) keel.Pred {
+func (c DOTTestSubstanceCol) In(vs ...workerdot.DOTTestSubstance) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c DOTTestSubstanceCol) NotIn(vs ...worker.DOTTestSubstance) keel.Pred {
+func (c DOTTestSubstanceCol) NotIn(vs ...workerdot.DOTTestSubstance) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // DOTTestTypeCol is a column of worker.DOTTestType values.
 type DOTTestTypeCol struct{ keel.StringCol }
 
-func (c DOTTestTypeCol) Eq(v worker.DOTTestType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DOTTestTypeCol) Ne(v worker.DOTTestType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DOTTestTypeCol) Gt(v worker.DOTTestType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DOTTestTypeCol) Gte(v worker.DOTTestType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DOTTestTypeCol) Lt(v worker.DOTTestType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DOTTestTypeCol) Lte(v worker.DOTTestType) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c DOTTestTypeCol) IsDistinctFrom(v worker.DOTTestType) keel.Pred {
+func (c DOTTestTypeCol) Eq(v workerdot.DOTTestType) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c DOTTestTypeCol) Ne(v workerdot.DOTTestType) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c DOTTestTypeCol) Gt(v workerdot.DOTTestType) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c DOTTestTypeCol) Gte(v workerdot.DOTTestType) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c DOTTestTypeCol) Lt(v workerdot.DOTTestType) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c DOTTestTypeCol) Lte(v workerdot.DOTTestType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DOTTestTypeCol) IsDistinctFrom(v workerdot.DOTTestType) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c DOTTestTypeCol) Between(lo, hi worker.DOTTestType) keel.Pred {
+func (c DOTTestTypeCol) Between(lo, hi workerdot.DOTTestType) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c DOTTestTypeCol) To(v worker.DOTTestType) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c DOTTestTypeCol) In(vs ...worker.DOTTestType) keel.Pred {
+func (c DOTTestTypeCol) To(v workerdot.DOTTestType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c DOTTestTypeCol) In(vs ...workerdot.DOTTestType) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c DOTTestTypeCol) NotIn(vs ...worker.DOTTestType) keel.Pred {
+func (c DOTTestTypeCol) NotIn(vs ...workerdot.DOTTestType) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // DOTViolationStatusCol is a column of worker.DOTViolationStatus values.
 type DOTViolationStatusCol struct{ keel.StringCol }
 
-func (c DOTViolationStatusCol) Eq(v worker.DOTViolationStatus) keel.Pred {
+func (c DOTViolationStatusCol) Eq(v workerdot.DOTViolationStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c DOTViolationStatusCol) Ne(v worker.DOTViolationStatus) keel.Pred {
+func (c DOTViolationStatusCol) Ne(v workerdot.DOTViolationStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c DOTViolationStatusCol) Gt(v worker.DOTViolationStatus) keel.Pred {
+func (c DOTViolationStatusCol) Gt(v workerdot.DOTViolationStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c DOTViolationStatusCol) Gte(v worker.DOTViolationStatus) keel.Pred {
+func (c DOTViolationStatusCol) Gte(v workerdot.DOTViolationStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c DOTViolationStatusCol) Lt(v worker.DOTViolationStatus) keel.Pred {
+func (c DOTViolationStatusCol) Lt(v workerdot.DOTViolationStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c DOTViolationStatusCol) Lte(v worker.DOTViolationStatus) keel.Pred {
+func (c DOTViolationStatusCol) Lte(v workerdot.DOTViolationStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c DOTViolationStatusCol) IsDistinctFrom(v worker.DOTViolationStatus) keel.Pred {
+func (c DOTViolationStatusCol) IsDistinctFrom(v workerdot.DOTViolationStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c DOTViolationStatusCol) Between(lo, hi worker.DOTViolationStatus) keel.Pred {
+func (c DOTViolationStatusCol) Between(lo, hi workerdot.DOTViolationStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c DOTViolationStatusCol) To(v worker.DOTViolationStatus) keel.Assignment {
+func (c DOTViolationStatusCol) To(v workerdot.DOTViolationStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c DOTViolationStatusCol) In(vs ...worker.DOTViolationStatus) keel.Pred {
+func (c DOTViolationStatusCol) In(vs ...workerdot.DOTViolationStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c DOTViolationStatusCol) NotIn(vs ...worker.DOTViolationStatus) keel.Pred {
+func (c DOTViolationStatusCol) NotIn(vs ...workerdot.DOTViolationStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // DOTViolationTypeCol is a column of worker.DOTViolationType values.
 type DOTViolationTypeCol struct{ keel.StringCol }
 
-func (c DOTViolationTypeCol) Eq(v worker.DOTViolationType) keel.Pred {
+func (c DOTViolationTypeCol) Eq(v workerdot.DOTViolationType) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c DOTViolationTypeCol) Ne(v worker.DOTViolationType) keel.Pred {
+func (c DOTViolationTypeCol) Ne(v workerdot.DOTViolationType) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c DOTViolationTypeCol) Gt(v worker.DOTViolationType) keel.Pred {
+func (c DOTViolationTypeCol) Gt(v workerdot.DOTViolationType) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c DOTViolationTypeCol) Gte(v worker.DOTViolationType) keel.Pred {
+func (c DOTViolationTypeCol) Gte(v workerdot.DOTViolationType) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c DOTViolationTypeCol) Lt(v worker.DOTViolationType) keel.Pred {
+func (c DOTViolationTypeCol) Lt(v workerdot.DOTViolationType) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c DOTViolationTypeCol) Lte(v worker.DOTViolationType) keel.Pred {
+func (c DOTViolationTypeCol) Lte(v workerdot.DOTViolationType) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c DOTViolationTypeCol) IsDistinctFrom(v worker.DOTViolationType) keel.Pred {
+func (c DOTViolationTypeCol) IsDistinctFrom(v workerdot.DOTViolationType) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c DOTViolationTypeCol) Between(lo, hi worker.DOTViolationType) keel.Pred {
+func (c DOTViolationTypeCol) Between(lo, hi workerdot.DOTViolationType) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c DOTViolationTypeCol) To(v worker.DOTViolationType) keel.Assignment {
+func (c DOTViolationTypeCol) To(v workerdot.DOTViolationType) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c DOTViolationTypeCol) In(vs ...worker.DOTViolationType) keel.Pred {
+func (c DOTViolationTypeCol) In(vs ...workerdot.DOTViolationType) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c DOTViolationTypeCol) NotIn(vs ...worker.DOTViolationType) keel.Pred {
+func (c DOTViolationTypeCol) NotIn(vs ...workerdot.DOTViolationType) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // DisciplinaryLevelCol is a column of worker.DisciplinaryLevel values.
 type DisciplinaryLevelCol struct{ keel.StringCol }
 
-func (c DisciplinaryLevelCol) Eq(v worker.DisciplinaryLevel) keel.Pred {
+func (c DisciplinaryLevelCol) Eq(v workersafety.DisciplinaryLevel) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c DisciplinaryLevelCol) Ne(v worker.DisciplinaryLevel) keel.Pred {
+func (c DisciplinaryLevelCol) Ne(v workersafety.DisciplinaryLevel) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c DisciplinaryLevelCol) Gt(v worker.DisciplinaryLevel) keel.Pred {
+func (c DisciplinaryLevelCol) Gt(v workersafety.DisciplinaryLevel) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c DisciplinaryLevelCol) Gte(v worker.DisciplinaryLevel) keel.Pred {
+func (c DisciplinaryLevelCol) Gte(v workersafety.DisciplinaryLevel) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c DisciplinaryLevelCol) Lt(v worker.DisciplinaryLevel) keel.Pred {
+func (c DisciplinaryLevelCol) Lt(v workersafety.DisciplinaryLevel) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c DisciplinaryLevelCol) Lte(v worker.DisciplinaryLevel) keel.Pred {
+func (c DisciplinaryLevelCol) Lte(v workersafety.DisciplinaryLevel) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c DisciplinaryLevelCol) IsDistinctFrom(v worker.DisciplinaryLevel) keel.Pred {
+func (c DisciplinaryLevelCol) IsDistinctFrom(v workersafety.DisciplinaryLevel) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c DisciplinaryLevelCol) Between(lo, hi worker.DisciplinaryLevel) keel.Pred {
+func (c DisciplinaryLevelCol) Between(lo, hi workersafety.DisciplinaryLevel) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c DisciplinaryLevelCol) To(v worker.DisciplinaryLevel) keel.Assignment {
+func (c DisciplinaryLevelCol) To(v workersafety.DisciplinaryLevel) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c DisciplinaryLevelCol) In(vs ...worker.DisciplinaryLevel) keel.Pred {
+func (c DisciplinaryLevelCol) In(vs ...workersafety.DisciplinaryLevel) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c DisciplinaryLevelCol) NotIn(vs ...worker.DisciplinaryLevel) keel.Pred {
+func (c DisciplinaryLevelCol) NotIn(vs ...workersafety.DisciplinaryLevel) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // DisciplinaryStatusCol is a column of worker.DisciplinaryStatus values.
 type DisciplinaryStatusCol struct{ keel.StringCol }
 
-func (c DisciplinaryStatusCol) Eq(v worker.DisciplinaryStatus) keel.Pred {
+func (c DisciplinaryStatusCol) Eq(v workersafety.DisciplinaryStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c DisciplinaryStatusCol) Ne(v worker.DisciplinaryStatus) keel.Pred {
+func (c DisciplinaryStatusCol) Ne(v workersafety.DisciplinaryStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c DisciplinaryStatusCol) Gt(v worker.DisciplinaryStatus) keel.Pred {
+func (c DisciplinaryStatusCol) Gt(v workersafety.DisciplinaryStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c DisciplinaryStatusCol) Gte(v worker.DisciplinaryStatus) keel.Pred {
+func (c DisciplinaryStatusCol) Gte(v workersafety.DisciplinaryStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c DisciplinaryStatusCol) Lt(v worker.DisciplinaryStatus) keel.Pred {
+func (c DisciplinaryStatusCol) Lt(v workersafety.DisciplinaryStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c DisciplinaryStatusCol) Lte(v worker.DisciplinaryStatus) keel.Pred {
+func (c DisciplinaryStatusCol) Lte(v workersafety.DisciplinaryStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c DisciplinaryStatusCol) IsDistinctFrom(v worker.DisciplinaryStatus) keel.Pred {
+func (c DisciplinaryStatusCol) IsDistinctFrom(v workersafety.DisciplinaryStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c DisciplinaryStatusCol) Between(lo, hi worker.DisciplinaryStatus) keel.Pred {
+func (c DisciplinaryStatusCol) Between(lo, hi workersafety.DisciplinaryStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c DisciplinaryStatusCol) To(v worker.DisciplinaryStatus) keel.Assignment {
+func (c DisciplinaryStatusCol) To(v workersafety.DisciplinaryStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c DisciplinaryStatusCol) In(vs ...worker.DisciplinaryStatus) keel.Pred {
+func (c DisciplinaryStatusCol) In(vs ...workersafety.DisciplinaryStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c DisciplinaryStatusCol) NotIn(vs ...worker.DisciplinaryStatus) keel.Pred {
+func (c DisciplinaryStatusCol) NotIn(vs ...workersafety.DisciplinaryStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -15582,111 +15598,111 @@ func (c DrugAlcoholStatusCol) NotIn(vs ...worker.DrugAlcoholStatus) keel.Pred {
 // EmploymentEventKindCol is a column of worker.EmploymentEventKind values.
 type EmploymentEventKindCol struct{ keel.StringCol }
 
-func (c EmploymentEventKindCol) Eq(v worker.EmploymentEventKind) keel.Pred {
+func (c EmploymentEventKindCol) Eq(v employment.EmploymentEventKind) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c EmploymentEventKindCol) Ne(v worker.EmploymentEventKind) keel.Pred {
+func (c EmploymentEventKindCol) Ne(v employment.EmploymentEventKind) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c EmploymentEventKindCol) Gt(v worker.EmploymentEventKind) keel.Pred {
+func (c EmploymentEventKindCol) Gt(v employment.EmploymentEventKind) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c EmploymentEventKindCol) Gte(v worker.EmploymentEventKind) keel.Pred {
+func (c EmploymentEventKindCol) Gte(v employment.EmploymentEventKind) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c EmploymentEventKindCol) Lt(v worker.EmploymentEventKind) keel.Pred {
+func (c EmploymentEventKindCol) Lt(v employment.EmploymentEventKind) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c EmploymentEventKindCol) Lte(v worker.EmploymentEventKind) keel.Pred {
+func (c EmploymentEventKindCol) Lte(v employment.EmploymentEventKind) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c EmploymentEventKindCol) IsDistinctFrom(v worker.EmploymentEventKind) keel.Pred {
+func (c EmploymentEventKindCol) IsDistinctFrom(v employment.EmploymentEventKind) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c EmploymentEventKindCol) Between(lo, hi worker.EmploymentEventKind) keel.Pred {
+func (c EmploymentEventKindCol) Between(lo, hi employment.EmploymentEventKind) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c EmploymentEventKindCol) To(v worker.EmploymentEventKind) keel.Assignment {
+func (c EmploymentEventKindCol) To(v employment.EmploymentEventKind) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c EmploymentEventKindCol) In(vs ...worker.EmploymentEventKind) keel.Pred {
+func (c EmploymentEventKindCol) In(vs ...employment.EmploymentEventKind) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c EmploymentEventKindCol) NotIn(vs ...worker.EmploymentEventKind) keel.Pred {
+func (c EmploymentEventKindCol) NotIn(vs ...employment.EmploymentEventKind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // EmploymentVerificationMethodCol is a column of worker.EmploymentVerificationMethod values.
 type EmploymentVerificationMethodCol struct{ keel.StringCol }
 
-func (c EmploymentVerificationMethodCol) Eq(v worker.EmploymentVerificationMethod) keel.Pred {
+func (c EmploymentVerificationMethodCol) Eq(v employment.EmploymentVerificationMethod) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c EmploymentVerificationMethodCol) Ne(v worker.EmploymentVerificationMethod) keel.Pred {
+func (c EmploymentVerificationMethodCol) Ne(v employment.EmploymentVerificationMethod) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c EmploymentVerificationMethodCol) Gt(v worker.EmploymentVerificationMethod) keel.Pred {
+func (c EmploymentVerificationMethodCol) Gt(v employment.EmploymentVerificationMethod) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c EmploymentVerificationMethodCol) Gte(v worker.EmploymentVerificationMethod) keel.Pred {
+func (c EmploymentVerificationMethodCol) Gte(v employment.EmploymentVerificationMethod) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c EmploymentVerificationMethodCol) Lt(v worker.EmploymentVerificationMethod) keel.Pred {
+func (c EmploymentVerificationMethodCol) Lt(v employment.EmploymentVerificationMethod) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c EmploymentVerificationMethodCol) Lte(v worker.EmploymentVerificationMethod) keel.Pred {
+func (c EmploymentVerificationMethodCol) Lte(v employment.EmploymentVerificationMethod) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c EmploymentVerificationMethodCol) IsDistinctFrom(v worker.EmploymentVerificationMethod) keel.Pred {
+func (c EmploymentVerificationMethodCol) IsDistinctFrom(v employment.EmploymentVerificationMethod) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c EmploymentVerificationMethodCol) Between(lo, hi worker.EmploymentVerificationMethod) keel.Pred {
+func (c EmploymentVerificationMethodCol) Between(lo, hi employment.EmploymentVerificationMethod) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c EmploymentVerificationMethodCol) To(v worker.EmploymentVerificationMethod) keel.Assignment {
+func (c EmploymentVerificationMethodCol) To(v employment.EmploymentVerificationMethod) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c EmploymentVerificationMethodCol) In(vs ...worker.EmploymentVerificationMethod) keel.Pred {
+func (c EmploymentVerificationMethodCol) In(vs ...employment.EmploymentVerificationMethod) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c EmploymentVerificationMethodCol) NotIn(vs ...worker.EmploymentVerificationMethod) keel.Pred {
+func (c EmploymentVerificationMethodCol) NotIn(vs ...employment.EmploymentVerificationMethod) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // EmploymentVerificationStatusCol is a column of worker.EmploymentVerificationStatus values.
 type EmploymentVerificationStatusCol struct{ keel.StringCol }
 
-func (c EmploymentVerificationStatusCol) Eq(v worker.EmploymentVerificationStatus) keel.Pred {
+func (c EmploymentVerificationStatusCol) Eq(v employment.EmploymentVerificationStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c EmploymentVerificationStatusCol) Ne(v worker.EmploymentVerificationStatus) keel.Pred {
+func (c EmploymentVerificationStatusCol) Ne(v employment.EmploymentVerificationStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c EmploymentVerificationStatusCol) Gt(v worker.EmploymentVerificationStatus) keel.Pred {
+func (c EmploymentVerificationStatusCol) Gt(v employment.EmploymentVerificationStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c EmploymentVerificationStatusCol) Gte(v worker.EmploymentVerificationStatus) keel.Pred {
+func (c EmploymentVerificationStatusCol) Gte(v employment.EmploymentVerificationStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c EmploymentVerificationStatusCol) Lt(v worker.EmploymentVerificationStatus) keel.Pred {
+func (c EmploymentVerificationStatusCol) Lt(v employment.EmploymentVerificationStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c EmploymentVerificationStatusCol) Lte(v worker.EmploymentVerificationStatus) keel.Pred {
+func (c EmploymentVerificationStatusCol) Lte(v employment.EmploymentVerificationStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c EmploymentVerificationStatusCol) IsDistinctFrom(v worker.EmploymentVerificationStatus) keel.Pred {
+func (c EmploymentVerificationStatusCol) IsDistinctFrom(v employment.EmploymentVerificationStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c EmploymentVerificationStatusCol) Between(lo, hi worker.EmploymentVerificationStatus) keel.Pred {
+func (c EmploymentVerificationStatusCol) Between(lo, hi employment.EmploymentVerificationStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c EmploymentVerificationStatusCol) To(v worker.EmploymentVerificationStatus) keel.Assignment {
+func (c EmploymentVerificationStatusCol) To(v employment.EmploymentVerificationStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c EmploymentVerificationStatusCol) In(vs ...worker.EmploymentVerificationStatus) keel.Pred {
+func (c EmploymentVerificationStatusCol) In(vs ...employment.EmploymentVerificationStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c EmploymentVerificationStatusCol) NotIn(vs ...worker.EmploymentVerificationStatus) keel.Pred {
+func (c EmploymentVerificationStatusCol) NotIn(vs ...employment.EmploymentVerificationStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -15743,126 +15759,126 @@ func (c GenderCol) NotIn(vs ...worker.Gender) keel.Pred {
 // HolidayKindCol is a column of worker.HolidayKind values.
 type HolidayKindCol struct{ keel.StringCol }
 
-func (c HolidayKindCol) Eq(v worker.HolidayKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c HolidayKindCol) Ne(v worker.HolidayKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c HolidayKindCol) Gt(v worker.HolidayKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c HolidayKindCol) Gte(v worker.HolidayKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c HolidayKindCol) Lt(v worker.HolidayKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c HolidayKindCol) Lte(v worker.HolidayKind) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c HolidayKindCol) IsDistinctFrom(v worker.HolidayKind) keel.Pred {
+func (c HolidayKindCol) Eq(v pto.HolidayKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c HolidayKindCol) Ne(v pto.HolidayKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c HolidayKindCol) Gt(v pto.HolidayKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c HolidayKindCol) Gte(v pto.HolidayKind) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c HolidayKindCol) Lt(v pto.HolidayKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c HolidayKindCol) Lte(v pto.HolidayKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c HolidayKindCol) IsDistinctFrom(v pto.HolidayKind) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c HolidayKindCol) Between(lo, hi worker.HolidayKind) keel.Pred {
+func (c HolidayKindCol) Between(lo, hi pto.HolidayKind) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c HolidayKindCol) To(v worker.HolidayKind) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c HolidayKindCol) In(vs ...worker.HolidayKind) keel.Pred {
+func (c HolidayKindCol) To(v pto.HolidayKind) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c HolidayKindCol) In(vs ...pto.HolidayKind) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c HolidayKindCol) NotIn(vs ...worker.HolidayKind) keel.Pred {
+func (c HolidayKindCol) NotIn(vs ...pto.HolidayKind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // InjuryCaseStatusCol is a column of worker.InjuryCaseStatus values.
 type InjuryCaseStatusCol struct{ keel.StringCol }
 
-func (c InjuryCaseStatusCol) Eq(v worker.InjuryCaseStatus) keel.Pred {
+func (c InjuryCaseStatusCol) Eq(v workersafety.InjuryCaseStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c InjuryCaseStatusCol) Ne(v worker.InjuryCaseStatus) keel.Pred {
+func (c InjuryCaseStatusCol) Ne(v workersafety.InjuryCaseStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c InjuryCaseStatusCol) Gt(v worker.InjuryCaseStatus) keel.Pred {
+func (c InjuryCaseStatusCol) Gt(v workersafety.InjuryCaseStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c InjuryCaseStatusCol) Gte(v worker.InjuryCaseStatus) keel.Pred {
+func (c InjuryCaseStatusCol) Gte(v workersafety.InjuryCaseStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c InjuryCaseStatusCol) Lt(v worker.InjuryCaseStatus) keel.Pred {
+func (c InjuryCaseStatusCol) Lt(v workersafety.InjuryCaseStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c InjuryCaseStatusCol) Lte(v worker.InjuryCaseStatus) keel.Pred {
+func (c InjuryCaseStatusCol) Lte(v workersafety.InjuryCaseStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c InjuryCaseStatusCol) IsDistinctFrom(v worker.InjuryCaseStatus) keel.Pred {
+func (c InjuryCaseStatusCol) IsDistinctFrom(v workersafety.InjuryCaseStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c InjuryCaseStatusCol) Between(lo, hi worker.InjuryCaseStatus) keel.Pred {
+func (c InjuryCaseStatusCol) Between(lo, hi workersafety.InjuryCaseStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c InjuryCaseStatusCol) To(v worker.InjuryCaseStatus) keel.Assignment {
+func (c InjuryCaseStatusCol) To(v workersafety.InjuryCaseStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c InjuryCaseStatusCol) In(vs ...worker.InjuryCaseStatus) keel.Pred {
+func (c InjuryCaseStatusCol) In(vs ...workersafety.InjuryCaseStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c InjuryCaseStatusCol) NotIn(vs ...worker.InjuryCaseStatus) keel.Pred {
+func (c InjuryCaseStatusCol) NotIn(vs ...workersafety.InjuryCaseStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // InjuryTreatmentCol is a column of worker.InjuryTreatment values.
 type InjuryTreatmentCol struct{ keel.StringCol }
 
-func (c InjuryTreatmentCol) Eq(v worker.InjuryTreatment) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c InjuryTreatmentCol) Ne(v worker.InjuryTreatment) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c InjuryTreatmentCol) Gt(v worker.InjuryTreatment) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c InjuryTreatmentCol) Gte(v worker.InjuryTreatment) keel.Pred {
+func (c InjuryTreatmentCol) Eq(v workersafety.InjuryTreatment) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c InjuryTreatmentCol) Ne(v workersafety.InjuryTreatment) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c InjuryTreatmentCol) Gt(v workersafety.InjuryTreatment) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c InjuryTreatmentCol) Gte(v workersafety.InjuryTreatment) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c InjuryTreatmentCol) Lt(v worker.InjuryTreatment) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c InjuryTreatmentCol) Lte(v worker.InjuryTreatment) keel.Pred {
+func (c InjuryTreatmentCol) Lt(v workersafety.InjuryTreatment) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c InjuryTreatmentCol) Lte(v workersafety.InjuryTreatment) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c InjuryTreatmentCol) IsDistinctFrom(v worker.InjuryTreatment) keel.Pred {
+func (c InjuryTreatmentCol) IsDistinctFrom(v workersafety.InjuryTreatment) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c InjuryTreatmentCol) Between(lo, hi worker.InjuryTreatment) keel.Pred {
+func (c InjuryTreatmentCol) Between(lo, hi workersafety.InjuryTreatment) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c InjuryTreatmentCol) To(v worker.InjuryTreatment) keel.Assignment {
+func (c InjuryTreatmentCol) To(v workersafety.InjuryTreatment) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c InjuryTreatmentCol) In(vs ...worker.InjuryTreatment) keel.Pred {
+func (c InjuryTreatmentCol) In(vs ...workersafety.InjuryTreatment) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c InjuryTreatmentCol) NotIn(vs ...worker.InjuryTreatment) keel.Pred {
+func (c InjuryTreatmentCol) NotIn(vs ...workersafety.InjuryTreatment) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // InspectionResultCol is a column of worker.InspectionResult values.
 type InspectionResultCol struct{ keel.StringCol }
 
-func (c InspectionResultCol) Eq(v worker.InspectionResult) keel.Pred {
+func (c InspectionResultCol) Eq(v workersafety.InspectionResult) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c InspectionResultCol) Ne(v worker.InspectionResult) keel.Pred {
+func (c InspectionResultCol) Ne(v workersafety.InspectionResult) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c InspectionResultCol) Gt(v worker.InspectionResult) keel.Pred {
+func (c InspectionResultCol) Gt(v workersafety.InspectionResult) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c InspectionResultCol) Gte(v worker.InspectionResult) keel.Pred {
+func (c InspectionResultCol) Gte(v workersafety.InspectionResult) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c InspectionResultCol) Lt(v worker.InspectionResult) keel.Pred {
+func (c InspectionResultCol) Lt(v workersafety.InspectionResult) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c InspectionResultCol) Lte(v worker.InspectionResult) keel.Pred {
+func (c InspectionResultCol) Lte(v workersafety.InspectionResult) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c InspectionResultCol) IsDistinctFrom(v worker.InspectionResult) keel.Pred {
+func (c InspectionResultCol) IsDistinctFrom(v workersafety.InspectionResult) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c InspectionResultCol) Between(lo, hi worker.InspectionResult) keel.Pred {
+func (c InspectionResultCol) Between(lo, hi workersafety.InspectionResult) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c InspectionResultCol) To(v worker.InspectionResult) keel.Assignment {
+func (c InspectionResultCol) To(v workersafety.InspectionResult) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c InspectionResultCol) In(vs ...worker.InspectionResult) keel.Pred {
+func (c InspectionResultCol) In(vs ...workersafety.InspectionResult) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c InspectionResultCol) NotIn(vs ...worker.InspectionResult) keel.Pred {
+func (c InspectionResultCol) NotIn(vs ...workersafety.InspectionResult) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -15894,128 +15910,128 @@ func (c JobDepartmentCol) NotIn(vs ...worker.JobDepartment) keel.Pred {
 // LeaveCaseStatusCol is a column of worker.LeaveCaseStatus values.
 type LeaveCaseStatusCol struct{ keel.StringCol }
 
-func (c LeaveCaseStatusCol) Eq(v worker.LeaveCaseStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c LeaveCaseStatusCol) Ne(v worker.LeaveCaseStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c LeaveCaseStatusCol) Gt(v worker.LeaveCaseStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c LeaveCaseStatusCol) Gte(v worker.LeaveCaseStatus) keel.Pred {
+func (c LeaveCaseStatusCol) Eq(v workerleave.LeaveCaseStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c LeaveCaseStatusCol) Ne(v workerleave.LeaveCaseStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c LeaveCaseStatusCol) Gt(v workerleave.LeaveCaseStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c LeaveCaseStatusCol) Gte(v workerleave.LeaveCaseStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c LeaveCaseStatusCol) Lt(v worker.LeaveCaseStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c LeaveCaseStatusCol) Lte(v worker.LeaveCaseStatus) keel.Pred {
+func (c LeaveCaseStatusCol) Lt(v workerleave.LeaveCaseStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c LeaveCaseStatusCol) Lte(v workerleave.LeaveCaseStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c LeaveCaseStatusCol) IsDistinctFrom(v worker.LeaveCaseStatus) keel.Pred {
+func (c LeaveCaseStatusCol) IsDistinctFrom(v workerleave.LeaveCaseStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c LeaveCaseStatusCol) Between(lo, hi worker.LeaveCaseStatus) keel.Pred {
+func (c LeaveCaseStatusCol) Between(lo, hi workerleave.LeaveCaseStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c LeaveCaseStatusCol) To(v worker.LeaveCaseStatus) keel.Assignment {
+func (c LeaveCaseStatusCol) To(v workerleave.LeaveCaseStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c LeaveCaseStatusCol) In(vs ...worker.LeaveCaseStatus) keel.Pred {
+func (c LeaveCaseStatusCol) In(vs ...workerleave.LeaveCaseStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c LeaveCaseStatusCol) NotIn(vs ...worker.LeaveCaseStatus) keel.Pred {
+func (c LeaveCaseStatusCol) NotIn(vs ...workerleave.LeaveCaseStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // LeaveCertificationStatusCol is a column of worker.LeaveCertificationStatus values.
 type LeaveCertificationStatusCol struct{ keel.StringCol }
 
-func (c LeaveCertificationStatusCol) Eq(v worker.LeaveCertificationStatus) keel.Pred {
+func (c LeaveCertificationStatusCol) Eq(v workerleave.LeaveCertificationStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c LeaveCertificationStatusCol) Ne(v worker.LeaveCertificationStatus) keel.Pred {
+func (c LeaveCertificationStatusCol) Ne(v workerleave.LeaveCertificationStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c LeaveCertificationStatusCol) Gt(v worker.LeaveCertificationStatus) keel.Pred {
+func (c LeaveCertificationStatusCol) Gt(v workerleave.LeaveCertificationStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c LeaveCertificationStatusCol) Gte(v worker.LeaveCertificationStatus) keel.Pred {
+func (c LeaveCertificationStatusCol) Gte(v workerleave.LeaveCertificationStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c LeaveCertificationStatusCol) Lt(v worker.LeaveCertificationStatus) keel.Pred {
+func (c LeaveCertificationStatusCol) Lt(v workerleave.LeaveCertificationStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c LeaveCertificationStatusCol) Lte(v worker.LeaveCertificationStatus) keel.Pred {
+func (c LeaveCertificationStatusCol) Lte(v workerleave.LeaveCertificationStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c LeaveCertificationStatusCol) IsDistinctFrom(v worker.LeaveCertificationStatus) keel.Pred {
+func (c LeaveCertificationStatusCol) IsDistinctFrom(v workerleave.LeaveCertificationStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c LeaveCertificationStatusCol) Between(lo, hi worker.LeaveCertificationStatus) keel.Pred {
+func (c LeaveCertificationStatusCol) Between(lo, hi workerleave.LeaveCertificationStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c LeaveCertificationStatusCol) To(v worker.LeaveCertificationStatus) keel.Assignment {
+func (c LeaveCertificationStatusCol) To(v workerleave.LeaveCertificationStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c LeaveCertificationStatusCol) In(vs ...worker.LeaveCertificationStatus) keel.Pred {
+func (c LeaveCertificationStatusCol) In(vs ...workerleave.LeaveCertificationStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c LeaveCertificationStatusCol) NotIn(vs ...worker.LeaveCertificationStatus) keel.Pred {
+func (c LeaveCertificationStatusCol) NotIn(vs ...workerleave.LeaveCertificationStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // LeaveFrequencyCol is a column of worker.LeaveFrequency values.
 type LeaveFrequencyCol struct{ keel.StringCol }
 
-func (c LeaveFrequencyCol) Eq(v worker.LeaveFrequency) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c LeaveFrequencyCol) Ne(v worker.LeaveFrequency) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c LeaveFrequencyCol) Gt(v worker.LeaveFrequency) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c LeaveFrequencyCol) Gte(v worker.LeaveFrequency) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c LeaveFrequencyCol) Lt(v worker.LeaveFrequency) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c LeaveFrequencyCol) Lte(v worker.LeaveFrequency) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c LeaveFrequencyCol) IsDistinctFrom(v worker.LeaveFrequency) keel.Pred {
+func (c LeaveFrequencyCol) Eq(v workerleave.LeaveFrequency) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c LeaveFrequencyCol) Ne(v workerleave.LeaveFrequency) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c LeaveFrequencyCol) Gt(v workerleave.LeaveFrequency) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c LeaveFrequencyCol) Gte(v workerleave.LeaveFrequency) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c LeaveFrequencyCol) Lt(v workerleave.LeaveFrequency) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c LeaveFrequencyCol) Lte(v workerleave.LeaveFrequency) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c LeaveFrequencyCol) IsDistinctFrom(v workerleave.LeaveFrequency) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c LeaveFrequencyCol) Between(lo, hi worker.LeaveFrequency) keel.Pred {
+func (c LeaveFrequencyCol) Between(lo, hi workerleave.LeaveFrequency) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c LeaveFrequencyCol) To(v worker.LeaveFrequency) keel.Assignment {
+func (c LeaveFrequencyCol) To(v workerleave.LeaveFrequency) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c LeaveFrequencyCol) In(vs ...worker.LeaveFrequency) keel.Pred {
+func (c LeaveFrequencyCol) In(vs ...workerleave.LeaveFrequency) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c LeaveFrequencyCol) NotIn(vs ...worker.LeaveFrequency) keel.Pred {
+func (c LeaveFrequencyCol) NotIn(vs ...workerleave.LeaveFrequency) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // LeaveMeasurementMethodCol is a column of worker.LeaveMeasurementMethod values.
 type LeaveMeasurementMethodCol struct{ keel.StringCol }
 
-func (c LeaveMeasurementMethodCol) Eq(v worker.LeaveMeasurementMethod) keel.Pred {
+func (c LeaveMeasurementMethodCol) Eq(v workerleave.LeaveMeasurementMethod) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c LeaveMeasurementMethodCol) Ne(v worker.LeaveMeasurementMethod) keel.Pred {
+func (c LeaveMeasurementMethodCol) Ne(v workerleave.LeaveMeasurementMethod) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c LeaveMeasurementMethodCol) Gt(v worker.LeaveMeasurementMethod) keel.Pred {
+func (c LeaveMeasurementMethodCol) Gt(v workerleave.LeaveMeasurementMethod) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c LeaveMeasurementMethodCol) Gte(v worker.LeaveMeasurementMethod) keel.Pred {
+func (c LeaveMeasurementMethodCol) Gte(v workerleave.LeaveMeasurementMethod) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c LeaveMeasurementMethodCol) Lt(v worker.LeaveMeasurementMethod) keel.Pred {
+func (c LeaveMeasurementMethodCol) Lt(v workerleave.LeaveMeasurementMethod) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c LeaveMeasurementMethodCol) Lte(v worker.LeaveMeasurementMethod) keel.Pred {
+func (c LeaveMeasurementMethodCol) Lte(v workerleave.LeaveMeasurementMethod) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c LeaveMeasurementMethodCol) IsDistinctFrom(v worker.LeaveMeasurementMethod) keel.Pred {
+func (c LeaveMeasurementMethodCol) IsDistinctFrom(v workerleave.LeaveMeasurementMethod) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c LeaveMeasurementMethodCol) Between(lo, hi worker.LeaveMeasurementMethod) keel.Pred {
+func (c LeaveMeasurementMethodCol) Between(lo, hi workerleave.LeaveMeasurementMethod) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c LeaveMeasurementMethodCol) To(v worker.LeaveMeasurementMethod) keel.Assignment {
+func (c LeaveMeasurementMethodCol) To(v workerleave.LeaveMeasurementMethod) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c LeaveMeasurementMethodCol) In(vs ...worker.LeaveMeasurementMethod) keel.Pred {
+func (c LeaveMeasurementMethodCol) In(vs ...workerleave.LeaveMeasurementMethod) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c LeaveMeasurementMethodCol) NotIn(vs ...worker.LeaveMeasurementMethod) keel.Pred {
+func (c LeaveMeasurementMethodCol) NotIn(vs ...workerleave.LeaveMeasurementMethod) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -16045,243 +16061,243 @@ func (c LeaveTypeCol) NotIn(vs ...worker.LeaveType) keel.Pred {
 // OSHACaseClassificationCol is a column of worker.OSHACaseClassification values.
 type OSHACaseClassificationCol struct{ keel.StringCol }
 
-func (c OSHACaseClassificationCol) Eq(v worker.OSHACaseClassification) keel.Pred {
+func (c OSHACaseClassificationCol) Eq(v workersafety.OSHACaseClassification) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c OSHACaseClassificationCol) Ne(v worker.OSHACaseClassification) keel.Pred {
+func (c OSHACaseClassificationCol) Ne(v workersafety.OSHACaseClassification) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c OSHACaseClassificationCol) Gt(v worker.OSHACaseClassification) keel.Pred {
+func (c OSHACaseClassificationCol) Gt(v workersafety.OSHACaseClassification) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c OSHACaseClassificationCol) Gte(v worker.OSHACaseClassification) keel.Pred {
+func (c OSHACaseClassificationCol) Gte(v workersafety.OSHACaseClassification) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c OSHACaseClassificationCol) Lt(v worker.OSHACaseClassification) keel.Pred {
+func (c OSHACaseClassificationCol) Lt(v workersafety.OSHACaseClassification) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c OSHACaseClassificationCol) Lte(v worker.OSHACaseClassification) keel.Pred {
+func (c OSHACaseClassificationCol) Lte(v workersafety.OSHACaseClassification) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c OSHACaseClassificationCol) IsDistinctFrom(v worker.OSHACaseClassification) keel.Pred {
+func (c OSHACaseClassificationCol) IsDistinctFrom(v workersafety.OSHACaseClassification) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c OSHACaseClassificationCol) Between(lo, hi worker.OSHACaseClassification) keel.Pred {
+func (c OSHACaseClassificationCol) Between(lo, hi workersafety.OSHACaseClassification) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c OSHACaseClassificationCol) To(v worker.OSHACaseClassification) keel.Assignment {
+func (c OSHACaseClassificationCol) To(v workersafety.OSHACaseClassification) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c OSHACaseClassificationCol) In(vs ...worker.OSHACaseClassification) keel.Pred {
+func (c OSHACaseClassificationCol) In(vs ...workersafety.OSHACaseClassification) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c OSHACaseClassificationCol) NotIn(vs ...worker.OSHACaseClassification) keel.Pred {
+func (c OSHACaseClassificationCol) NotIn(vs ...workersafety.OSHACaseClassification) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // OSHAIllnessTypeCol is a column of worker.OSHAIllnessType values.
 type OSHAIllnessTypeCol struct{ keel.StringCol }
 
-func (c OSHAIllnessTypeCol) Eq(v worker.OSHAIllnessType) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c OSHAIllnessTypeCol) Ne(v worker.OSHAIllnessType) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c OSHAIllnessTypeCol) Gt(v worker.OSHAIllnessType) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c OSHAIllnessTypeCol) Gte(v worker.OSHAIllnessType) keel.Pred {
+func (c OSHAIllnessTypeCol) Eq(v workersafety.OSHAIllnessType) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c OSHAIllnessTypeCol) Ne(v workersafety.OSHAIllnessType) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c OSHAIllnessTypeCol) Gt(v workersafety.OSHAIllnessType) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c OSHAIllnessTypeCol) Gte(v workersafety.OSHAIllnessType) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c OSHAIllnessTypeCol) Lt(v worker.OSHAIllnessType) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c OSHAIllnessTypeCol) Lte(v worker.OSHAIllnessType) keel.Pred {
+func (c OSHAIllnessTypeCol) Lt(v workersafety.OSHAIllnessType) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c OSHAIllnessTypeCol) Lte(v workersafety.OSHAIllnessType) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c OSHAIllnessTypeCol) IsDistinctFrom(v worker.OSHAIllnessType) keel.Pred {
+func (c OSHAIllnessTypeCol) IsDistinctFrom(v workersafety.OSHAIllnessType) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c OSHAIllnessTypeCol) Between(lo, hi worker.OSHAIllnessType) keel.Pred {
+func (c OSHAIllnessTypeCol) Between(lo, hi workersafety.OSHAIllnessType) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c OSHAIllnessTypeCol) To(v worker.OSHAIllnessType) keel.Assignment {
+func (c OSHAIllnessTypeCol) To(v workersafety.OSHAIllnessType) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c OSHAIllnessTypeCol) In(vs ...worker.OSHAIllnessType) keel.Pred {
+func (c OSHAIllnessTypeCol) In(vs ...workersafety.OSHAIllnessType) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c OSHAIllnessTypeCol) NotIn(vs ...worker.OSHAIllnessType) keel.Pred {
+func (c OSHAIllnessTypeCol) NotIn(vs ...workersafety.OSHAIllnessType) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // OSHASummaryStatusCol is a column of worker.OSHASummaryStatus values.
 type OSHASummaryStatusCol struct{ keel.StringCol }
 
-func (c OSHASummaryStatusCol) Eq(v worker.OSHASummaryStatus) keel.Pred {
+func (c OSHASummaryStatusCol) Eq(v workersafety.OSHASummaryStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c OSHASummaryStatusCol) Ne(v worker.OSHASummaryStatus) keel.Pred {
+func (c OSHASummaryStatusCol) Ne(v workersafety.OSHASummaryStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c OSHASummaryStatusCol) Gt(v worker.OSHASummaryStatus) keel.Pred {
+func (c OSHASummaryStatusCol) Gt(v workersafety.OSHASummaryStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c OSHASummaryStatusCol) Gte(v worker.OSHASummaryStatus) keel.Pred {
+func (c OSHASummaryStatusCol) Gte(v workersafety.OSHASummaryStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c OSHASummaryStatusCol) Lt(v worker.OSHASummaryStatus) keel.Pred {
+func (c OSHASummaryStatusCol) Lt(v workersafety.OSHASummaryStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c OSHASummaryStatusCol) Lte(v worker.OSHASummaryStatus) keel.Pred {
+func (c OSHASummaryStatusCol) Lte(v workersafety.OSHASummaryStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c OSHASummaryStatusCol) IsDistinctFrom(v worker.OSHASummaryStatus) keel.Pred {
+func (c OSHASummaryStatusCol) IsDistinctFrom(v workersafety.OSHASummaryStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c OSHASummaryStatusCol) Between(lo, hi worker.OSHASummaryStatus) keel.Pred {
+func (c OSHASummaryStatusCol) Between(lo, hi workersafety.OSHASummaryStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c OSHASummaryStatusCol) To(v worker.OSHASummaryStatus) keel.Assignment {
+func (c OSHASummaryStatusCol) To(v workersafety.OSHASummaryStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c OSHASummaryStatusCol) In(vs ...worker.OSHASummaryStatus) keel.Pred {
+func (c OSHASummaryStatusCol) In(vs ...workersafety.OSHASummaryStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c OSHASummaryStatusCol) NotIn(vs ...worker.OSHASummaryStatus) keel.Pred {
+func (c OSHASummaryStatusCol) NotIn(vs ...workersafety.OSHASummaryStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // PTOAccrualMethodCol is a column of worker.PTOAccrualMethod values.
 type PTOAccrualMethodCol struct{ keel.StringCol }
 
-func (c PTOAccrualMethodCol) Eq(v worker.PTOAccrualMethod) keel.Pred {
+func (c PTOAccrualMethodCol) Eq(v pto.PTOAccrualMethod) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c PTOAccrualMethodCol) Ne(v worker.PTOAccrualMethod) keel.Pred {
+func (c PTOAccrualMethodCol) Ne(v pto.PTOAccrualMethod) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c PTOAccrualMethodCol) Gt(v worker.PTOAccrualMethod) keel.Pred {
+func (c PTOAccrualMethodCol) Gt(v pto.PTOAccrualMethod) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c PTOAccrualMethodCol) Gte(v worker.PTOAccrualMethod) keel.Pred {
+func (c PTOAccrualMethodCol) Gte(v pto.PTOAccrualMethod) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c PTOAccrualMethodCol) Lt(v worker.PTOAccrualMethod) keel.Pred {
+func (c PTOAccrualMethodCol) Lt(v pto.PTOAccrualMethod) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c PTOAccrualMethodCol) Lte(v worker.PTOAccrualMethod) keel.Pred {
+func (c PTOAccrualMethodCol) Lte(v pto.PTOAccrualMethod) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c PTOAccrualMethodCol) IsDistinctFrom(v worker.PTOAccrualMethod) keel.Pred {
+func (c PTOAccrualMethodCol) IsDistinctFrom(v pto.PTOAccrualMethod) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c PTOAccrualMethodCol) Between(lo, hi worker.PTOAccrualMethod) keel.Pred {
+func (c PTOAccrualMethodCol) Between(lo, hi pto.PTOAccrualMethod) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c PTOAccrualMethodCol) To(v worker.PTOAccrualMethod) keel.Assignment {
+func (c PTOAccrualMethodCol) To(v pto.PTOAccrualMethod) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c PTOAccrualMethodCol) In(vs ...worker.PTOAccrualMethod) keel.Pred {
+func (c PTOAccrualMethodCol) In(vs ...pto.PTOAccrualMethod) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c PTOAccrualMethodCol) NotIn(vs ...worker.PTOAccrualMethod) keel.Pred {
+func (c PTOAccrualMethodCol) NotIn(vs ...pto.PTOAccrualMethod) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // PTOLedgerActorTypeCol is a column of worker.PTOLedgerActorType values.
 type PTOLedgerActorTypeCol struct{ keel.StringCol }
 
-func (c PTOLedgerActorTypeCol) Eq(v worker.PTOLedgerActorType) keel.Pred {
+func (c PTOLedgerActorTypeCol) Eq(v pto.PTOLedgerActorType) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c PTOLedgerActorTypeCol) Ne(v worker.PTOLedgerActorType) keel.Pred {
+func (c PTOLedgerActorTypeCol) Ne(v pto.PTOLedgerActorType) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c PTOLedgerActorTypeCol) Gt(v worker.PTOLedgerActorType) keel.Pred {
+func (c PTOLedgerActorTypeCol) Gt(v pto.PTOLedgerActorType) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c PTOLedgerActorTypeCol) Gte(v worker.PTOLedgerActorType) keel.Pred {
+func (c PTOLedgerActorTypeCol) Gte(v pto.PTOLedgerActorType) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c PTOLedgerActorTypeCol) Lt(v worker.PTOLedgerActorType) keel.Pred {
+func (c PTOLedgerActorTypeCol) Lt(v pto.PTOLedgerActorType) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c PTOLedgerActorTypeCol) Lte(v worker.PTOLedgerActorType) keel.Pred {
+func (c PTOLedgerActorTypeCol) Lte(v pto.PTOLedgerActorType) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c PTOLedgerActorTypeCol) IsDistinctFrom(v worker.PTOLedgerActorType) keel.Pred {
+func (c PTOLedgerActorTypeCol) IsDistinctFrom(v pto.PTOLedgerActorType) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c PTOLedgerActorTypeCol) Between(lo, hi worker.PTOLedgerActorType) keel.Pred {
+func (c PTOLedgerActorTypeCol) Between(lo, hi pto.PTOLedgerActorType) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c PTOLedgerActorTypeCol) To(v worker.PTOLedgerActorType) keel.Assignment {
+func (c PTOLedgerActorTypeCol) To(v pto.PTOLedgerActorType) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c PTOLedgerActorTypeCol) In(vs ...worker.PTOLedgerActorType) keel.Pred {
+func (c PTOLedgerActorTypeCol) In(vs ...pto.PTOLedgerActorType) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c PTOLedgerActorTypeCol) NotIn(vs ...worker.PTOLedgerActorType) keel.Pred {
+func (c PTOLedgerActorTypeCol) NotIn(vs ...pto.PTOLedgerActorType) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // PTOLedgerEntryTypeCol is a column of worker.PTOLedgerEntryType values.
 type PTOLedgerEntryTypeCol struct{ keel.StringCol }
 
-func (c PTOLedgerEntryTypeCol) Eq(v worker.PTOLedgerEntryType) keel.Pred {
+func (c PTOLedgerEntryTypeCol) Eq(v pto.PTOLedgerEntryType) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c PTOLedgerEntryTypeCol) Ne(v worker.PTOLedgerEntryType) keel.Pred {
+func (c PTOLedgerEntryTypeCol) Ne(v pto.PTOLedgerEntryType) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c PTOLedgerEntryTypeCol) Gt(v worker.PTOLedgerEntryType) keel.Pred {
+func (c PTOLedgerEntryTypeCol) Gt(v pto.PTOLedgerEntryType) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c PTOLedgerEntryTypeCol) Gte(v worker.PTOLedgerEntryType) keel.Pred {
+func (c PTOLedgerEntryTypeCol) Gte(v pto.PTOLedgerEntryType) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c PTOLedgerEntryTypeCol) Lt(v worker.PTOLedgerEntryType) keel.Pred {
+func (c PTOLedgerEntryTypeCol) Lt(v pto.PTOLedgerEntryType) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c PTOLedgerEntryTypeCol) Lte(v worker.PTOLedgerEntryType) keel.Pred {
+func (c PTOLedgerEntryTypeCol) Lte(v pto.PTOLedgerEntryType) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c PTOLedgerEntryTypeCol) IsDistinctFrom(v worker.PTOLedgerEntryType) keel.Pred {
+func (c PTOLedgerEntryTypeCol) IsDistinctFrom(v pto.PTOLedgerEntryType) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c PTOLedgerEntryTypeCol) Between(lo, hi worker.PTOLedgerEntryType) keel.Pred {
+func (c PTOLedgerEntryTypeCol) Between(lo, hi pto.PTOLedgerEntryType) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c PTOLedgerEntryTypeCol) To(v worker.PTOLedgerEntryType) keel.Assignment {
+func (c PTOLedgerEntryTypeCol) To(v pto.PTOLedgerEntryType) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c PTOLedgerEntryTypeCol) In(vs ...worker.PTOLedgerEntryType) keel.Pred {
+func (c PTOLedgerEntryTypeCol) In(vs ...pto.PTOLedgerEntryType) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c PTOLedgerEntryTypeCol) NotIn(vs ...worker.PTOLedgerEntryType) keel.Pred {
+func (c PTOLedgerEntryTypeCol) NotIn(vs ...pto.PTOLedgerEntryType) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // PTOPolicyStatusCol is a column of worker.PTOPolicyStatus values.
 type PTOPolicyStatusCol struct{ keel.StringCol }
 
-func (c PTOPolicyStatusCol) Eq(v worker.PTOPolicyStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c PTOPolicyStatusCol) Ne(v worker.PTOPolicyStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c PTOPolicyStatusCol) Gt(v worker.PTOPolicyStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c PTOPolicyStatusCol) Gte(v worker.PTOPolicyStatus) keel.Pred {
+func (c PTOPolicyStatusCol) Eq(v pto.PTOPolicyStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c PTOPolicyStatusCol) Ne(v pto.PTOPolicyStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c PTOPolicyStatusCol) Gt(v pto.PTOPolicyStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c PTOPolicyStatusCol) Gte(v pto.PTOPolicyStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c PTOPolicyStatusCol) Lt(v worker.PTOPolicyStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c PTOPolicyStatusCol) Lte(v worker.PTOPolicyStatus) keel.Pred {
+func (c PTOPolicyStatusCol) Lt(v pto.PTOPolicyStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c PTOPolicyStatusCol) Lte(v pto.PTOPolicyStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c PTOPolicyStatusCol) IsDistinctFrom(v worker.PTOPolicyStatus) keel.Pred {
+func (c PTOPolicyStatusCol) IsDistinctFrom(v pto.PTOPolicyStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c PTOPolicyStatusCol) Between(lo, hi worker.PTOPolicyStatus) keel.Pred {
+func (c PTOPolicyStatusCol) Between(lo, hi pto.PTOPolicyStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c PTOPolicyStatusCol) To(v worker.PTOPolicyStatus) keel.Assignment {
+func (c PTOPolicyStatusCol) To(v pto.PTOPolicyStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c PTOPolicyStatusCol) In(vs ...worker.PTOPolicyStatus) keel.Pred {
+func (c PTOPolicyStatusCol) In(vs ...pto.PTOPolicyStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c PTOPolicyStatusCol) NotIn(vs ...worker.PTOPolicyStatus) keel.Pred {
+func (c PTOPolicyStatusCol) NotIn(vs ...pto.PTOPolicyStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -16311,37 +16327,37 @@ func (c PTOStatusCol) NotIn(vs ...worker.PTOStatus) keel.Pred {
 // PTOTerminationActionCol is a column of worker.PTOTerminationAction values.
 type PTOTerminationActionCol struct{ keel.StringCol }
 
-func (c PTOTerminationActionCol) Eq(v worker.PTOTerminationAction) keel.Pred {
+func (c PTOTerminationActionCol) Eq(v pto.PTOTerminationAction) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c PTOTerminationActionCol) Ne(v worker.PTOTerminationAction) keel.Pred {
+func (c PTOTerminationActionCol) Ne(v pto.PTOTerminationAction) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c PTOTerminationActionCol) Gt(v worker.PTOTerminationAction) keel.Pred {
+func (c PTOTerminationActionCol) Gt(v pto.PTOTerminationAction) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c PTOTerminationActionCol) Gte(v worker.PTOTerminationAction) keel.Pred {
+func (c PTOTerminationActionCol) Gte(v pto.PTOTerminationAction) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c PTOTerminationActionCol) Lt(v worker.PTOTerminationAction) keel.Pred {
+func (c PTOTerminationActionCol) Lt(v pto.PTOTerminationAction) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c PTOTerminationActionCol) Lte(v worker.PTOTerminationAction) keel.Pred {
+func (c PTOTerminationActionCol) Lte(v pto.PTOTerminationAction) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c PTOTerminationActionCol) IsDistinctFrom(v worker.PTOTerminationAction) keel.Pred {
+func (c PTOTerminationActionCol) IsDistinctFrom(v pto.PTOTerminationAction) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c PTOTerminationActionCol) Between(lo, hi worker.PTOTerminationAction) keel.Pred {
+func (c PTOTerminationActionCol) Between(lo, hi pto.PTOTerminationAction) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c PTOTerminationActionCol) To(v worker.PTOTerminationAction) keel.Assignment {
+func (c PTOTerminationActionCol) To(v pto.PTOTerminationAction) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c PTOTerminationActionCol) In(vs ...worker.PTOTerminationAction) keel.Pred {
+func (c PTOTerminationActionCol) In(vs ...pto.PTOTerminationAction) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c PTOTerminationActionCol) NotIn(vs ...worker.PTOTerminationAction) keel.Pred {
+func (c PTOTerminationActionCol) NotIn(vs ...pto.PTOTerminationAction) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -16369,285 +16385,285 @@ func (c PTOTypeCol) NotIn(vs ...worker.PTOType) keel.Pred {
 // PTOYearBasisCol is a column of worker.PTOYearBasis values.
 type PTOYearBasisCol struct{ keel.StringCol }
 
-func (c PTOYearBasisCol) Eq(v worker.PTOYearBasis) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PTOYearBasisCol) Ne(v worker.PTOYearBasis) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PTOYearBasisCol) Gt(v worker.PTOYearBasis) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PTOYearBasisCol) Gte(v worker.PTOYearBasis) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PTOYearBasisCol) Lt(v worker.PTOYearBasis) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PTOYearBasisCol) Lte(v worker.PTOYearBasis) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c PTOYearBasisCol) IsDistinctFrom(v worker.PTOYearBasis) keel.Pred {
+func (c PTOYearBasisCol) Eq(v pto.PTOYearBasis) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c PTOYearBasisCol) Ne(v pto.PTOYearBasis) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c PTOYearBasisCol) Gt(v pto.PTOYearBasis) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c PTOYearBasisCol) Gte(v pto.PTOYearBasis) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c PTOYearBasisCol) Lt(v pto.PTOYearBasis) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c PTOYearBasisCol) Lte(v pto.PTOYearBasis) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PTOYearBasisCol) IsDistinctFrom(v pto.PTOYearBasis) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c PTOYearBasisCol) Between(lo, hi worker.PTOYearBasis) keel.Pred {
+func (c PTOYearBasisCol) Between(lo, hi pto.PTOYearBasis) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c PTOYearBasisCol) To(v worker.PTOYearBasis) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c PTOYearBasisCol) In(vs ...worker.PTOYearBasis) keel.Pred {
+func (c PTOYearBasisCol) To(v pto.PTOYearBasis) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c PTOYearBasisCol) In(vs ...pto.PTOYearBasis) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c PTOYearBasisCol) NotIn(vs ...worker.PTOYearBasis) keel.Pred {
+func (c PTOYearBasisCol) NotIn(vs ...pto.PTOYearBasis) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // PayrollExportStatusCol is a column of worker.PayrollExportStatus values.
 type PayrollExportStatusCol struct{ keel.StringCol }
 
-func (c PayrollExportStatusCol) Eq(v worker.PayrollExportStatus) keel.Pred {
+func (c PayrollExportStatusCol) Eq(v timesheet.PayrollExportStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c PayrollExportStatusCol) Ne(v worker.PayrollExportStatus) keel.Pred {
+func (c PayrollExportStatusCol) Ne(v timesheet.PayrollExportStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c PayrollExportStatusCol) Gt(v worker.PayrollExportStatus) keel.Pred {
+func (c PayrollExportStatusCol) Gt(v timesheet.PayrollExportStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c PayrollExportStatusCol) Gte(v worker.PayrollExportStatus) keel.Pred {
+func (c PayrollExportStatusCol) Gte(v timesheet.PayrollExportStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c PayrollExportStatusCol) Lt(v worker.PayrollExportStatus) keel.Pred {
+func (c PayrollExportStatusCol) Lt(v timesheet.PayrollExportStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c PayrollExportStatusCol) Lte(v worker.PayrollExportStatus) keel.Pred {
+func (c PayrollExportStatusCol) Lte(v timesheet.PayrollExportStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c PayrollExportStatusCol) IsDistinctFrom(v worker.PayrollExportStatus) keel.Pred {
+func (c PayrollExportStatusCol) IsDistinctFrom(v timesheet.PayrollExportStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c PayrollExportStatusCol) Between(lo, hi worker.PayrollExportStatus) keel.Pred {
+func (c PayrollExportStatusCol) Between(lo, hi timesheet.PayrollExportStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c PayrollExportStatusCol) To(v worker.PayrollExportStatus) keel.Assignment {
+func (c PayrollExportStatusCol) To(v timesheet.PayrollExportStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c PayrollExportStatusCol) In(vs ...worker.PayrollExportStatus) keel.Pred {
+func (c PayrollExportStatusCol) In(vs ...timesheet.PayrollExportStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c PayrollExportStatusCol) NotIn(vs ...worker.PayrollExportStatus) keel.Pred {
+func (c PayrollExportStatusCol) NotIn(vs ...timesheet.PayrollExportStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // PolicyAudienceCol is a column of worker.PolicyAudience values.
 type PolicyAudienceCol struct{ keel.StringCol }
 
-func (c PolicyAudienceCol) Eq(v worker.PolicyAudience) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PolicyAudienceCol) Ne(v worker.PolicyAudience) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PolicyAudienceCol) Gt(v worker.PolicyAudience) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PolicyAudienceCol) Gte(v worker.PolicyAudience) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PolicyAudienceCol) Lt(v worker.PolicyAudience) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PolicyAudienceCol) Lte(v worker.PolicyAudience) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c PolicyAudienceCol) IsDistinctFrom(v worker.PolicyAudience) keel.Pred {
+func (c PolicyAudienceCol) Eq(v workerpolicy.PolicyAudience) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c PolicyAudienceCol) Ne(v workerpolicy.PolicyAudience) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c PolicyAudienceCol) Gt(v workerpolicy.PolicyAudience) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c PolicyAudienceCol) Gte(v workerpolicy.PolicyAudience) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c PolicyAudienceCol) Lt(v workerpolicy.PolicyAudience) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c PolicyAudienceCol) Lte(v workerpolicy.PolicyAudience) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PolicyAudienceCol) IsDistinctFrom(v workerpolicy.PolicyAudience) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c PolicyAudienceCol) Between(lo, hi worker.PolicyAudience) keel.Pred {
+func (c PolicyAudienceCol) Between(lo, hi workerpolicy.PolicyAudience) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c PolicyAudienceCol) To(v worker.PolicyAudience) keel.Assignment {
+func (c PolicyAudienceCol) To(v workerpolicy.PolicyAudience) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c PolicyAudienceCol) In(vs ...worker.PolicyAudience) keel.Pred {
+func (c PolicyAudienceCol) In(vs ...workerpolicy.PolicyAudience) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c PolicyAudienceCol) NotIn(vs ...worker.PolicyAudience) keel.Pred {
+func (c PolicyAudienceCol) NotIn(vs ...workerpolicy.PolicyAudience) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // PortalInvitationStatusCol is a column of worker.PortalInvitationStatus values.
 type PortalInvitationStatusCol struct{ keel.StringCol }
 
-func (c PortalInvitationStatusCol) Eq(v worker.PortalInvitationStatus) keel.Pred {
+func (c PortalInvitationStatusCol) Eq(v portalinvitation.PortalInvitationStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c PortalInvitationStatusCol) Ne(v worker.PortalInvitationStatus) keel.Pred {
+func (c PortalInvitationStatusCol) Ne(v portalinvitation.PortalInvitationStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c PortalInvitationStatusCol) Gt(v worker.PortalInvitationStatus) keel.Pred {
+func (c PortalInvitationStatusCol) Gt(v portalinvitation.PortalInvitationStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c PortalInvitationStatusCol) Gte(v worker.PortalInvitationStatus) keel.Pred {
+func (c PortalInvitationStatusCol) Gte(v portalinvitation.PortalInvitationStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c PortalInvitationStatusCol) Lt(v worker.PortalInvitationStatus) keel.Pred {
+func (c PortalInvitationStatusCol) Lt(v portalinvitation.PortalInvitationStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c PortalInvitationStatusCol) Lte(v worker.PortalInvitationStatus) keel.Pred {
+func (c PortalInvitationStatusCol) Lte(v portalinvitation.PortalInvitationStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c PortalInvitationStatusCol) IsDistinctFrom(v worker.PortalInvitationStatus) keel.Pred {
+func (c PortalInvitationStatusCol) IsDistinctFrom(v portalinvitation.PortalInvitationStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c PortalInvitationStatusCol) Between(lo, hi worker.PortalInvitationStatus) keel.Pred {
+func (c PortalInvitationStatusCol) Between(lo, hi portalinvitation.PortalInvitationStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c PortalInvitationStatusCol) To(v worker.PortalInvitationStatus) keel.Assignment {
+func (c PortalInvitationStatusCol) To(v portalinvitation.PortalInvitationStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c PortalInvitationStatusCol) In(vs ...worker.PortalInvitationStatus) keel.Pred {
+func (c PortalInvitationStatusCol) In(vs ...portalinvitation.PortalInvitationStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c PortalInvitationStatusCol) NotIn(vs ...worker.PortalInvitationStatus) keel.Pred {
+func (c PortalInvitationStatusCol) NotIn(vs ...portalinvitation.PortalInvitationStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // ProfileChangeStatusCol is a column of worker.ProfileChangeStatus values.
 type ProfileChangeStatusCol struct{ keel.StringCol }
 
-func (c ProfileChangeStatusCol) Eq(v worker.ProfileChangeStatus) keel.Pred {
+func (c ProfileChangeStatusCol) Eq(v profilechange.ProfileChangeStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c ProfileChangeStatusCol) Ne(v worker.ProfileChangeStatus) keel.Pred {
+func (c ProfileChangeStatusCol) Ne(v profilechange.ProfileChangeStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c ProfileChangeStatusCol) Gt(v worker.ProfileChangeStatus) keel.Pred {
+func (c ProfileChangeStatusCol) Gt(v profilechange.ProfileChangeStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c ProfileChangeStatusCol) Gte(v worker.ProfileChangeStatus) keel.Pred {
+func (c ProfileChangeStatusCol) Gte(v profilechange.ProfileChangeStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c ProfileChangeStatusCol) Lt(v worker.ProfileChangeStatus) keel.Pred {
+func (c ProfileChangeStatusCol) Lt(v profilechange.ProfileChangeStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c ProfileChangeStatusCol) Lte(v worker.ProfileChangeStatus) keel.Pred {
+func (c ProfileChangeStatusCol) Lte(v profilechange.ProfileChangeStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c ProfileChangeStatusCol) IsDistinctFrom(v worker.ProfileChangeStatus) keel.Pred {
+func (c ProfileChangeStatusCol) IsDistinctFrom(v profilechange.ProfileChangeStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ProfileChangeStatusCol) Between(lo, hi worker.ProfileChangeStatus) keel.Pred {
+func (c ProfileChangeStatusCol) Between(lo, hi profilechange.ProfileChangeStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ProfileChangeStatusCol) To(v worker.ProfileChangeStatus) keel.Assignment {
+func (c ProfileChangeStatusCol) To(v profilechange.ProfileChangeStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ProfileChangeStatusCol) In(vs ...worker.ProfileChangeStatus) keel.Pred {
+func (c ProfileChangeStatusCol) In(vs ...profilechange.ProfileChangeStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ProfileChangeStatusCol) NotIn(vs ...worker.ProfileChangeStatus) keel.Pred {
+func (c ProfileChangeStatusCol) NotIn(vs ...profilechange.ProfileChangeStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // RandomDrawStatusCol is a column of worker.RandomDrawStatus values.
 type RandomDrawStatusCol struct{ keel.StringCol }
 
-func (c RandomDrawStatusCol) Eq(v worker.RandomDrawStatus) keel.Pred {
+func (c RandomDrawStatusCol) Eq(v workerdot.RandomDrawStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c RandomDrawStatusCol) Ne(v worker.RandomDrawStatus) keel.Pred {
+func (c RandomDrawStatusCol) Ne(v workerdot.RandomDrawStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c RandomDrawStatusCol) Gt(v worker.RandomDrawStatus) keel.Pred {
+func (c RandomDrawStatusCol) Gt(v workerdot.RandomDrawStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c RandomDrawStatusCol) Gte(v worker.RandomDrawStatus) keel.Pred {
+func (c RandomDrawStatusCol) Gte(v workerdot.RandomDrawStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c RandomDrawStatusCol) Lt(v worker.RandomDrawStatus) keel.Pred {
+func (c RandomDrawStatusCol) Lt(v workerdot.RandomDrawStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c RandomDrawStatusCol) Lte(v worker.RandomDrawStatus) keel.Pred {
+func (c RandomDrawStatusCol) Lte(v workerdot.RandomDrawStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c RandomDrawStatusCol) IsDistinctFrom(v worker.RandomDrawStatus) keel.Pred {
+func (c RandomDrawStatusCol) IsDistinctFrom(v workerdot.RandomDrawStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RandomDrawStatusCol) Between(lo, hi worker.RandomDrawStatus) keel.Pred {
+func (c RandomDrawStatusCol) Between(lo, hi workerdot.RandomDrawStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RandomDrawStatusCol) To(v worker.RandomDrawStatus) keel.Assignment {
+func (c RandomDrawStatusCol) To(v workerdot.RandomDrawStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RandomDrawStatusCol) In(vs ...worker.RandomDrawStatus) keel.Pred {
+func (c RandomDrawStatusCol) In(vs ...workerdot.RandomDrawStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RandomDrawStatusCol) NotIn(vs ...worker.RandomDrawStatus) keel.Pred {
+func (c RandomDrawStatusCol) NotIn(vs ...workerdot.RandomDrawStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // RandomEntryStatusCol is a column of worker.RandomEntryStatus values.
 type RandomEntryStatusCol struct{ keel.StringCol }
 
-func (c RandomEntryStatusCol) Eq(v worker.RandomEntryStatus) keel.Pred {
+func (c RandomEntryStatusCol) Eq(v workerdot.RandomEntryStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c RandomEntryStatusCol) Ne(v worker.RandomEntryStatus) keel.Pred {
+func (c RandomEntryStatusCol) Ne(v workerdot.RandomEntryStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c RandomEntryStatusCol) Gt(v worker.RandomEntryStatus) keel.Pred {
+func (c RandomEntryStatusCol) Gt(v workerdot.RandomEntryStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c RandomEntryStatusCol) Gte(v worker.RandomEntryStatus) keel.Pred {
+func (c RandomEntryStatusCol) Gte(v workerdot.RandomEntryStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c RandomEntryStatusCol) Lt(v worker.RandomEntryStatus) keel.Pred {
+func (c RandomEntryStatusCol) Lt(v workerdot.RandomEntryStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c RandomEntryStatusCol) Lte(v worker.RandomEntryStatus) keel.Pred {
+func (c RandomEntryStatusCol) Lte(v workerdot.RandomEntryStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c RandomEntryStatusCol) IsDistinctFrom(v worker.RandomEntryStatus) keel.Pred {
+func (c RandomEntryStatusCol) IsDistinctFrom(v workerdot.RandomEntryStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RandomEntryStatusCol) Between(lo, hi worker.RandomEntryStatus) keel.Pred {
+func (c RandomEntryStatusCol) Between(lo, hi workerdot.RandomEntryStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RandomEntryStatusCol) To(v worker.RandomEntryStatus) keel.Assignment {
+func (c RandomEntryStatusCol) To(v workerdot.RandomEntryStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RandomEntryStatusCol) In(vs ...worker.RandomEntryStatus) keel.Pred {
+func (c RandomEntryStatusCol) In(vs ...workerdot.RandomEntryStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RandomEntryStatusCol) NotIn(vs ...worker.RandomEntryStatus) keel.Pred {
+func (c RandomEntryStatusCol) NotIn(vs ...workerdot.RandomEntryStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // RandomPeriodCol is a column of worker.RandomPeriod values.
 type RandomPeriodCol struct{ keel.StringCol }
 
-func (c RandomPeriodCol) Eq(v worker.RandomPeriod) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RandomPeriodCol) Ne(v worker.RandomPeriod) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RandomPeriodCol) Gt(v worker.RandomPeriod) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RandomPeriodCol) Gte(v worker.RandomPeriod) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RandomPeriodCol) Lt(v worker.RandomPeriod) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RandomPeriodCol) Lte(v worker.RandomPeriod) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c RandomPeriodCol) IsDistinctFrom(v worker.RandomPeriod) keel.Pred {
+func (c RandomPeriodCol) Eq(v workerdot.RandomPeriod) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c RandomPeriodCol) Ne(v workerdot.RandomPeriod) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c RandomPeriodCol) Gt(v workerdot.RandomPeriod) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c RandomPeriodCol) Gte(v workerdot.RandomPeriod) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c RandomPeriodCol) Lt(v workerdot.RandomPeriod) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c RandomPeriodCol) Lte(v workerdot.RandomPeriod) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RandomPeriodCol) IsDistinctFrom(v workerdot.RandomPeriod) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RandomPeriodCol) Between(lo, hi worker.RandomPeriod) keel.Pred {
+func (c RandomPeriodCol) Between(lo, hi workerdot.RandomPeriod) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RandomPeriodCol) To(v worker.RandomPeriod) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c RandomPeriodCol) In(vs ...worker.RandomPeriod) keel.Pred {
+func (c RandomPeriodCol) To(v workerdot.RandomPeriod) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c RandomPeriodCol) In(vs ...workerdot.RandomPeriod) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RandomPeriodCol) NotIn(vs ...worker.RandomPeriod) keel.Pred {
+func (c RandomPeriodCol) NotIn(vs ...workerdot.RandomPeriod) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // RecognitionKindCol is a column of worker.RecognitionKind values.
 type RecognitionKindCol struct{ keel.StringCol }
 
-func (c RecognitionKindCol) Eq(v worker.RecognitionKind) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c RecognitionKindCol) Ne(v worker.RecognitionKind) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c RecognitionKindCol) Gt(v worker.RecognitionKind) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c RecognitionKindCol) Gte(v worker.RecognitionKind) keel.Pred {
+func (c RecognitionKindCol) Eq(v workersafety.RecognitionKind) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c RecognitionKindCol) Ne(v workersafety.RecognitionKind) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c RecognitionKindCol) Gt(v workersafety.RecognitionKind) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c RecognitionKindCol) Gte(v workersafety.RecognitionKind) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c RecognitionKindCol) Lt(v worker.RecognitionKind) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c RecognitionKindCol) Lte(v worker.RecognitionKind) keel.Pred {
+func (c RecognitionKindCol) Lt(v workersafety.RecognitionKind) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c RecognitionKindCol) Lte(v workersafety.RecognitionKind) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c RecognitionKindCol) IsDistinctFrom(v worker.RecognitionKind) keel.Pred {
+func (c RecognitionKindCol) IsDistinctFrom(v workersafety.RecognitionKind) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RecognitionKindCol) Between(lo, hi worker.RecognitionKind) keel.Pred {
+func (c RecognitionKindCol) Between(lo, hi workersafety.RecognitionKind) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RecognitionKindCol) To(v worker.RecognitionKind) keel.Assignment {
+func (c RecognitionKindCol) To(v workersafety.RecognitionKind) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RecognitionKindCol) In(vs ...worker.RecognitionKind) keel.Pred {
+func (c RecognitionKindCol) In(vs ...workersafety.RecognitionKind) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RecognitionKindCol) NotIn(vs ...worker.RecognitionKind) keel.Pred {
+func (c RecognitionKindCol) NotIn(vs ...workersafety.RecognitionKind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -16691,89 +16707,89 @@ func (c ReturnToDutyStatusCol) NotIn(vs ...worker.ReturnToDutyStatus) keel.Pred 
 // ReviewStatusCol is a column of worker.ReviewStatus values.
 type ReviewStatusCol struct{ keel.StringCol }
 
-func (c ReviewStatusCol) Eq(v worker.ReviewStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ReviewStatusCol) Ne(v worker.ReviewStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ReviewStatusCol) Gt(v worker.ReviewStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ReviewStatusCol) Gte(v worker.ReviewStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ReviewStatusCol) Lt(v worker.ReviewStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ReviewStatusCol) Lte(v worker.ReviewStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c ReviewStatusCol) IsDistinctFrom(v worker.ReviewStatus) keel.Pred {
+func (c ReviewStatusCol) Eq(v workerreview.ReviewStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c ReviewStatusCol) Ne(v workerreview.ReviewStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c ReviewStatusCol) Gt(v workerreview.ReviewStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c ReviewStatusCol) Gte(v workerreview.ReviewStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c ReviewStatusCol) Lt(v workerreview.ReviewStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c ReviewStatusCol) Lte(v workerreview.ReviewStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ReviewStatusCol) IsDistinctFrom(v workerreview.ReviewStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ReviewStatusCol) Between(lo, hi worker.ReviewStatus) keel.Pred {
+func (c ReviewStatusCol) Between(lo, hi workerreview.ReviewStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ReviewStatusCol) To(v worker.ReviewStatus) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c ReviewStatusCol) In(vs ...worker.ReviewStatus) keel.Pred {
+func (c ReviewStatusCol) To(v workerreview.ReviewStatus) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c ReviewStatusCol) In(vs ...workerreview.ReviewStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ReviewStatusCol) NotIn(vs ...worker.ReviewStatus) keel.Pred {
+func (c ReviewStatusCol) NotIn(vs ...workerreview.ReviewStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // SafetyEventKindCol is a column of worker.SafetyEventKind values.
 type SafetyEventKindCol struct{ keel.StringCol }
 
-func (c SafetyEventKindCol) Eq(v worker.SafetyEventKind) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c SafetyEventKindCol) Ne(v worker.SafetyEventKind) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c SafetyEventKindCol) Gt(v worker.SafetyEventKind) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c SafetyEventKindCol) Gte(v worker.SafetyEventKind) keel.Pred {
+func (c SafetyEventKindCol) Eq(v workersafety.SafetyEventKind) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c SafetyEventKindCol) Ne(v workersafety.SafetyEventKind) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c SafetyEventKindCol) Gt(v workersafety.SafetyEventKind) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c SafetyEventKindCol) Gte(v workersafety.SafetyEventKind) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c SafetyEventKindCol) Lt(v worker.SafetyEventKind) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c SafetyEventKindCol) Lte(v worker.SafetyEventKind) keel.Pred {
+func (c SafetyEventKindCol) Lt(v workersafety.SafetyEventKind) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c SafetyEventKindCol) Lte(v workersafety.SafetyEventKind) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c SafetyEventKindCol) IsDistinctFrom(v worker.SafetyEventKind) keel.Pred {
+func (c SafetyEventKindCol) IsDistinctFrom(v workersafety.SafetyEventKind) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c SafetyEventKindCol) Between(lo, hi worker.SafetyEventKind) keel.Pred {
+func (c SafetyEventKindCol) Between(lo, hi workersafety.SafetyEventKind) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c SafetyEventKindCol) To(v worker.SafetyEventKind) keel.Assignment {
+func (c SafetyEventKindCol) To(v workersafety.SafetyEventKind) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c SafetyEventKindCol) In(vs ...worker.SafetyEventKind) keel.Pred {
+func (c SafetyEventKindCol) In(vs ...workersafety.SafetyEventKind) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c SafetyEventKindCol) NotIn(vs ...worker.SafetyEventKind) keel.Pred {
+func (c SafetyEventKindCol) NotIn(vs ...workersafety.SafetyEventKind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // SafetyEventStatusCol is a column of worker.SafetyEventStatus values.
 type SafetyEventStatusCol struct{ keel.StringCol }
 
-func (c SafetyEventStatusCol) Eq(v worker.SafetyEventStatus) keel.Pred {
+func (c SafetyEventStatusCol) Eq(v workersafety.SafetyEventStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c SafetyEventStatusCol) Ne(v worker.SafetyEventStatus) keel.Pred {
+func (c SafetyEventStatusCol) Ne(v workersafety.SafetyEventStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c SafetyEventStatusCol) Gt(v worker.SafetyEventStatus) keel.Pred {
+func (c SafetyEventStatusCol) Gt(v workersafety.SafetyEventStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c SafetyEventStatusCol) Gte(v worker.SafetyEventStatus) keel.Pred {
+func (c SafetyEventStatusCol) Gte(v workersafety.SafetyEventStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c SafetyEventStatusCol) Lt(v worker.SafetyEventStatus) keel.Pred {
+func (c SafetyEventStatusCol) Lt(v workersafety.SafetyEventStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c SafetyEventStatusCol) Lte(v worker.SafetyEventStatus) keel.Pred {
+func (c SafetyEventStatusCol) Lte(v workersafety.SafetyEventStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c SafetyEventStatusCol) IsDistinctFrom(v worker.SafetyEventStatus) keel.Pred {
+func (c SafetyEventStatusCol) IsDistinctFrom(v workersafety.SafetyEventStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c SafetyEventStatusCol) Between(lo, hi worker.SafetyEventStatus) keel.Pred {
+func (c SafetyEventStatusCol) Between(lo, hi workersafety.SafetyEventStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c SafetyEventStatusCol) To(v worker.SafetyEventStatus) keel.Assignment {
+func (c SafetyEventStatusCol) To(v workersafety.SafetyEventStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c SafetyEventStatusCol) In(vs ...worker.SafetyEventStatus) keel.Pred {
+func (c SafetyEventStatusCol) In(vs ...workersafety.SafetyEventStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c SafetyEventStatusCol) NotIn(vs ...worker.SafetyEventStatus) keel.Pred {
+func (c SafetyEventStatusCol) NotIn(vs ...workersafety.SafetyEventStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -16803,186 +16819,186 @@ func (c SafetyRatingCol) NotIn(vs ...worker.SafetyRating) keel.Pred {
 // SafetySeverityCol is a column of worker.SafetySeverity values.
 type SafetySeverityCol struct{ keel.StringCol }
 
-func (c SafetySeverityCol) Eq(v worker.SafetySeverity) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SafetySeverityCol) Ne(v worker.SafetySeverity) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SafetySeverityCol) Gt(v worker.SafetySeverity) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SafetySeverityCol) Gte(v worker.SafetySeverity) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SafetySeverityCol) Lt(v worker.SafetySeverity) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SafetySeverityCol) Lte(v worker.SafetySeverity) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c SafetySeverityCol) IsDistinctFrom(v worker.SafetySeverity) keel.Pred {
+func (c SafetySeverityCol) Eq(v workersafety.SafetySeverity) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c SafetySeverityCol) Ne(v workersafety.SafetySeverity) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c SafetySeverityCol) Gt(v workersafety.SafetySeverity) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c SafetySeverityCol) Gte(v workersafety.SafetySeverity) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c SafetySeverityCol) Lt(v workersafety.SafetySeverity) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c SafetySeverityCol) Lte(v workersafety.SafetySeverity) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SafetySeverityCol) IsDistinctFrom(v workersafety.SafetySeverity) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c SafetySeverityCol) Between(lo, hi worker.SafetySeverity) keel.Pred {
+func (c SafetySeverityCol) Between(lo, hi workersafety.SafetySeverity) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c SafetySeverityCol) To(v worker.SafetySeverity) keel.Assignment {
+func (c SafetySeverityCol) To(v workersafety.SafetySeverity) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c SafetySeverityCol) In(vs ...worker.SafetySeverity) keel.Pred {
+func (c SafetySeverityCol) In(vs ...workersafety.SafetySeverity) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c SafetySeverityCol) NotIn(vs ...worker.SafetySeverity) keel.Pred {
+func (c SafetySeverityCol) NotIn(vs ...workersafety.SafetySeverity) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // ShiftSwapStatusCol is a column of worker.ShiftSwapStatus values.
 type ShiftSwapStatusCol struct{ keel.StringCol }
 
-func (c ShiftSwapStatusCol) Eq(v worker.ShiftSwapStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c ShiftSwapStatusCol) Ne(v worker.ShiftSwapStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c ShiftSwapStatusCol) Gt(v worker.ShiftSwapStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c ShiftSwapStatusCol) Gte(v worker.ShiftSwapStatus) keel.Pred {
+func (c ShiftSwapStatusCol) Eq(v workerschedule.ShiftSwapStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c ShiftSwapStatusCol) Ne(v workerschedule.ShiftSwapStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c ShiftSwapStatusCol) Gt(v workerschedule.ShiftSwapStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c ShiftSwapStatusCol) Gte(v workerschedule.ShiftSwapStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c ShiftSwapStatusCol) Lt(v worker.ShiftSwapStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c ShiftSwapStatusCol) Lte(v worker.ShiftSwapStatus) keel.Pred {
+func (c ShiftSwapStatusCol) Lt(v workerschedule.ShiftSwapStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c ShiftSwapStatusCol) Lte(v workerschedule.ShiftSwapStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c ShiftSwapStatusCol) IsDistinctFrom(v worker.ShiftSwapStatus) keel.Pred {
+func (c ShiftSwapStatusCol) IsDistinctFrom(v workerschedule.ShiftSwapStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ShiftSwapStatusCol) Between(lo, hi worker.ShiftSwapStatus) keel.Pred {
+func (c ShiftSwapStatusCol) Between(lo, hi workerschedule.ShiftSwapStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ShiftSwapStatusCol) To(v worker.ShiftSwapStatus) keel.Assignment {
+func (c ShiftSwapStatusCol) To(v workerschedule.ShiftSwapStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ShiftSwapStatusCol) In(vs ...worker.ShiftSwapStatus) keel.Pred {
+func (c ShiftSwapStatusCol) In(vs ...workerschedule.ShiftSwapStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ShiftSwapStatusCol) NotIn(vs ...worker.ShiftSwapStatus) keel.Pred {
+func (c ShiftSwapStatusCol) NotIn(vs ...workerschedule.ShiftSwapStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // TimeEntrySourceCol is a column of worker.TimeEntrySource values.
 type TimeEntrySourceCol struct{ keel.StringCol }
 
-func (c TimeEntrySourceCol) Eq(v worker.TimeEntrySource) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c TimeEntrySourceCol) Ne(v worker.TimeEntrySource) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c TimeEntrySourceCol) Gt(v worker.TimeEntrySource) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c TimeEntrySourceCol) Gte(v worker.TimeEntrySource) keel.Pred {
+func (c TimeEntrySourceCol) Eq(v timesheet.TimeEntrySource) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c TimeEntrySourceCol) Ne(v timesheet.TimeEntrySource) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c TimeEntrySourceCol) Gt(v timesheet.TimeEntrySource) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c TimeEntrySourceCol) Gte(v timesheet.TimeEntrySource) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c TimeEntrySourceCol) Lt(v worker.TimeEntrySource) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c TimeEntrySourceCol) Lte(v worker.TimeEntrySource) keel.Pred {
+func (c TimeEntrySourceCol) Lt(v timesheet.TimeEntrySource) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c TimeEntrySourceCol) Lte(v timesheet.TimeEntrySource) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c TimeEntrySourceCol) IsDistinctFrom(v worker.TimeEntrySource) keel.Pred {
+func (c TimeEntrySourceCol) IsDistinctFrom(v timesheet.TimeEntrySource) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c TimeEntrySourceCol) Between(lo, hi worker.TimeEntrySource) keel.Pred {
+func (c TimeEntrySourceCol) Between(lo, hi timesheet.TimeEntrySource) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c TimeEntrySourceCol) To(v worker.TimeEntrySource) keel.Assignment {
+func (c TimeEntrySourceCol) To(v timesheet.TimeEntrySource) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c TimeEntrySourceCol) In(vs ...worker.TimeEntrySource) keel.Pred {
+func (c TimeEntrySourceCol) In(vs ...timesheet.TimeEntrySource) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c TimeEntrySourceCol) NotIn(vs ...worker.TimeEntrySource) keel.Pred {
+func (c TimeEntrySourceCol) NotIn(vs ...timesheet.TimeEntrySource) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // TimesheetStatusCol is a column of worker.TimesheetStatus values.
 type TimesheetStatusCol struct{ keel.StringCol }
 
-func (c TimesheetStatusCol) Eq(v worker.TimesheetStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c TimesheetStatusCol) Ne(v worker.TimesheetStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c TimesheetStatusCol) Gt(v worker.TimesheetStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c TimesheetStatusCol) Gte(v worker.TimesheetStatus) keel.Pred {
+func (c TimesheetStatusCol) Eq(v timesheet.TimesheetStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c TimesheetStatusCol) Ne(v timesheet.TimesheetStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c TimesheetStatusCol) Gt(v timesheet.TimesheetStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c TimesheetStatusCol) Gte(v timesheet.TimesheetStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c TimesheetStatusCol) Lt(v worker.TimesheetStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c TimesheetStatusCol) Lte(v worker.TimesheetStatus) keel.Pred {
+func (c TimesheetStatusCol) Lt(v timesheet.TimesheetStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c TimesheetStatusCol) Lte(v timesheet.TimesheetStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c TimesheetStatusCol) IsDistinctFrom(v worker.TimesheetStatus) keel.Pred {
+func (c TimesheetStatusCol) IsDistinctFrom(v timesheet.TimesheetStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c TimesheetStatusCol) Between(lo, hi worker.TimesheetStatus) keel.Pred {
+func (c TimesheetStatusCol) Between(lo, hi timesheet.TimesheetStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c TimesheetStatusCol) To(v worker.TimesheetStatus) keel.Assignment {
+func (c TimesheetStatusCol) To(v timesheet.TimesheetStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c TimesheetStatusCol) In(vs ...worker.TimesheetStatus) keel.Pred {
+func (c TimesheetStatusCol) In(vs ...timesheet.TimesheetStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c TimesheetStatusCol) NotIn(vs ...worker.TimesheetStatus) keel.Pred {
+func (c TimesheetStatusCol) NotIn(vs ...timesheet.TimesheetStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // TrainingCategoryCol is a column of worker.TrainingCategory values.
 type TrainingCategoryCol struct{ keel.StringCol }
 
-func (c TrainingCategoryCol) Eq(v worker.TrainingCategory) keel.Pred {
+func (c TrainingCategoryCol) Eq(v workertraining.TrainingCategory) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c TrainingCategoryCol) Ne(v worker.TrainingCategory) keel.Pred {
+func (c TrainingCategoryCol) Ne(v workertraining.TrainingCategory) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c TrainingCategoryCol) Gt(v worker.TrainingCategory) keel.Pred {
+func (c TrainingCategoryCol) Gt(v workertraining.TrainingCategory) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c TrainingCategoryCol) Gte(v worker.TrainingCategory) keel.Pred {
+func (c TrainingCategoryCol) Gte(v workertraining.TrainingCategory) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c TrainingCategoryCol) Lt(v worker.TrainingCategory) keel.Pred {
+func (c TrainingCategoryCol) Lt(v workertraining.TrainingCategory) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c TrainingCategoryCol) Lte(v worker.TrainingCategory) keel.Pred {
+func (c TrainingCategoryCol) Lte(v workertraining.TrainingCategory) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c TrainingCategoryCol) IsDistinctFrom(v worker.TrainingCategory) keel.Pred {
+func (c TrainingCategoryCol) IsDistinctFrom(v workertraining.TrainingCategory) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c TrainingCategoryCol) Between(lo, hi worker.TrainingCategory) keel.Pred {
+func (c TrainingCategoryCol) Between(lo, hi workertraining.TrainingCategory) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c TrainingCategoryCol) To(v worker.TrainingCategory) keel.Assignment {
+func (c TrainingCategoryCol) To(v workertraining.TrainingCategory) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c TrainingCategoryCol) In(vs ...worker.TrainingCategory) keel.Pred {
+func (c TrainingCategoryCol) In(vs ...workertraining.TrainingCategory) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c TrainingCategoryCol) NotIn(vs ...worker.TrainingCategory) keel.Pred {
+func (c TrainingCategoryCol) NotIn(vs ...workertraining.TrainingCategory) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // TrainingDeliveryCol is a column of worker.TrainingDelivery values.
 type TrainingDeliveryCol struct{ keel.StringCol }
 
-func (c TrainingDeliveryCol) Eq(v worker.TrainingDelivery) keel.Pred {
+func (c TrainingDeliveryCol) Eq(v workertraining.TrainingDelivery) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c TrainingDeliveryCol) Ne(v worker.TrainingDelivery) keel.Pred {
+func (c TrainingDeliveryCol) Ne(v workertraining.TrainingDelivery) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c TrainingDeliveryCol) Gt(v worker.TrainingDelivery) keel.Pred {
+func (c TrainingDeliveryCol) Gt(v workertraining.TrainingDelivery) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c TrainingDeliveryCol) Gte(v worker.TrainingDelivery) keel.Pred {
+func (c TrainingDeliveryCol) Gte(v workertraining.TrainingDelivery) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c TrainingDeliveryCol) Lt(v worker.TrainingDelivery) keel.Pred {
+func (c TrainingDeliveryCol) Lt(v workertraining.TrainingDelivery) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c TrainingDeliveryCol) Lte(v worker.TrainingDelivery) keel.Pred {
+func (c TrainingDeliveryCol) Lte(v workertraining.TrainingDelivery) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c TrainingDeliveryCol) IsDistinctFrom(v worker.TrainingDelivery) keel.Pred {
+func (c TrainingDeliveryCol) IsDistinctFrom(v workertraining.TrainingDelivery) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c TrainingDeliveryCol) Between(lo, hi worker.TrainingDelivery) keel.Pred {
+func (c TrainingDeliveryCol) Between(lo, hi workertraining.TrainingDelivery) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c TrainingDeliveryCol) To(v worker.TrainingDelivery) keel.Assignment {
+func (c TrainingDeliveryCol) To(v workertraining.TrainingDelivery) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c TrainingDeliveryCol) In(vs ...worker.TrainingDelivery) keel.Pred {
+func (c TrainingDeliveryCol) In(vs ...workertraining.TrainingDelivery) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c TrainingDeliveryCol) NotIn(vs ...worker.TrainingDelivery) keel.Pred {
+func (c TrainingDeliveryCol) NotIn(vs ...workertraining.TrainingDelivery) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -17014,25 +17030,25 @@ func (c TrainingHealthCol) NotIn(vs ...worker.TrainingHealth) keel.Pred {
 // TrainingStatusCol is a column of worker.TrainingStatus values.
 type TrainingStatusCol struct{ keel.StringCol }
 
-func (c TrainingStatusCol) Eq(v worker.TrainingStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c TrainingStatusCol) Ne(v worker.TrainingStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c TrainingStatusCol) Gt(v worker.TrainingStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c TrainingStatusCol) Gte(v worker.TrainingStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c TrainingStatusCol) Lt(v worker.TrainingStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c TrainingStatusCol) Lte(v worker.TrainingStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c TrainingStatusCol) IsDistinctFrom(v worker.TrainingStatus) keel.Pred {
+func (c TrainingStatusCol) Eq(v workertraining.TrainingStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c TrainingStatusCol) Ne(v workertraining.TrainingStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c TrainingStatusCol) Gt(v workertraining.TrainingStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c TrainingStatusCol) Gte(v workertraining.TrainingStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c TrainingStatusCol) Lt(v workertraining.TrainingStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c TrainingStatusCol) Lte(v workertraining.TrainingStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c TrainingStatusCol) IsDistinctFrom(v workertraining.TrainingStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c TrainingStatusCol) Between(lo, hi worker.TrainingStatus) keel.Pred {
+func (c TrainingStatusCol) Between(lo, hi workertraining.TrainingStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c TrainingStatusCol) To(v worker.TrainingStatus) keel.Assignment {
+func (c TrainingStatusCol) To(v workertraining.TrainingStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c TrainingStatusCol) In(vs ...worker.TrainingStatus) keel.Pred {
+func (c TrainingStatusCol) In(vs ...workertraining.TrainingStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c TrainingStatusCol) NotIn(vs ...worker.TrainingStatus) keel.Pred {
+func (c TrainingStatusCol) NotIn(vs ...workertraining.TrainingStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -17062,36 +17078,36 @@ func (c WorkerTypeCol) NotIn(vs ...worker.WorkerType) keel.Pred {
 // WorkersCompClaimStatusCol is a column of worker.WorkersCompClaimStatus values.
 type WorkersCompClaimStatusCol struct{ keel.StringCol }
 
-func (c WorkersCompClaimStatusCol) Eq(v worker.WorkersCompClaimStatus) keel.Pred {
+func (c WorkersCompClaimStatusCol) Eq(v workersafety.WorkersCompClaimStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c WorkersCompClaimStatusCol) Ne(v worker.WorkersCompClaimStatus) keel.Pred {
+func (c WorkersCompClaimStatusCol) Ne(v workersafety.WorkersCompClaimStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c WorkersCompClaimStatusCol) Gt(v worker.WorkersCompClaimStatus) keel.Pred {
+func (c WorkersCompClaimStatusCol) Gt(v workersafety.WorkersCompClaimStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c WorkersCompClaimStatusCol) Gte(v worker.WorkersCompClaimStatus) keel.Pred {
+func (c WorkersCompClaimStatusCol) Gte(v workersafety.WorkersCompClaimStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c WorkersCompClaimStatusCol) Lt(v worker.WorkersCompClaimStatus) keel.Pred {
+func (c WorkersCompClaimStatusCol) Lt(v workersafety.WorkersCompClaimStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c WorkersCompClaimStatusCol) Lte(v worker.WorkersCompClaimStatus) keel.Pred {
+func (c WorkersCompClaimStatusCol) Lte(v workersafety.WorkersCompClaimStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c WorkersCompClaimStatusCol) IsDistinctFrom(v worker.WorkersCompClaimStatus) keel.Pred {
+func (c WorkersCompClaimStatusCol) IsDistinctFrom(v workersafety.WorkersCompClaimStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c WorkersCompClaimStatusCol) Between(lo, hi worker.WorkersCompClaimStatus) keel.Pred {
+func (c WorkersCompClaimStatusCol) Between(lo, hi workersafety.WorkersCompClaimStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c WorkersCompClaimStatusCol) To(v worker.WorkersCompClaimStatus) keel.Assignment {
+func (c WorkersCompClaimStatusCol) To(v workersafety.WorkersCompClaimStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c WorkersCompClaimStatusCol) In(vs ...worker.WorkersCompClaimStatus) keel.Pred {
+func (c WorkersCompClaimStatusCol) In(vs ...workersafety.WorkersCompClaimStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c WorkersCompClaimStatusCol) NotIn(vs ...worker.WorkersCompClaimStatus) keel.Pred {
+func (c WorkersCompClaimStatusCol) NotIn(vs ...workersafety.WorkersCompClaimStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }

@@ -13,18 +13,18 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-func (r *DisciplinaryLadderResolver) HighestLevel(ctx context.Context, obj *worker.DisciplinaryLadder) (*worker.DisciplinaryLevel, error) {
+func (r *DisciplinaryLadderResolver) HighestLevel(ctx context.Context, obj *workersafety.DisciplinaryLadder) (*workersafety.DisciplinaryLevel, error) {
 	return disciplinaryLevelPtr(obj.HighestLevel), nil
 }
 
-func (r *MutationResolver) CreateWorkerSafetyEvent(ctx context.Context, input gqlmodel.WorkerSafetyEventInput) (*worker.WorkerSafetyEvent, error) {
+func (r *MutationResolver) CreateWorkerSafetyEvent(ctx context.Context, input gqlmodel.WorkerSafetyEventInput) (*workersafety.WorkerSafetyEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func (r *MutationResolver) CreateWorkerSafetyEvent(ctx context.Context, input gq
 	return r.WorkerSafetyService.CreateEvent(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) UpdateWorkerSafetyEvent(ctx context.Context, input gqlmodel.UpdateWorkerSafetyEventInput) (*worker.WorkerSafetyEvent, error) {
+func (r *MutationResolver) UpdateWorkerSafetyEvent(ctx context.Context, input gqlmodel.UpdateWorkerSafetyEventInput) (*workersafety.WorkerSafetyEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (r *MutationResolver) UpdateWorkerSafetyEvent(ctx context.Context, input gq
 	return r.WorkerSafetyService.UpdateEvent(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) CloseWorkerSafetyEvent(ctx context.Context, input gqlmodel.SafetyEventStatusInput) (*worker.WorkerSafetyEvent, error) {
+func (r *MutationResolver) CloseWorkerSafetyEvent(ctx context.Context, input gqlmodel.SafetyEventStatusInput) (*workersafety.WorkerSafetyEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpClose)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (r *MutationResolver) CloseWorkerSafetyEvent(ctx context.Context, input gql
 	return r.WorkerSafetyService.CloseEvent(ctx, req)
 }
 
-func (r *MutationResolver) ReviewWorkerSafetyEvent(ctx context.Context, input gqlmodel.SafetyEventStatusInput) (*worker.WorkerSafetyEvent, error) {
+func (r *MutationResolver) ReviewWorkerSafetyEvent(ctx context.Context, input gqlmodel.SafetyEventStatusInput) (*workersafety.WorkerSafetyEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpClose)
 	if err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func (r *MutationResolver) ReviewWorkerSafetyEvent(ctx context.Context, input gq
 	return r.WorkerSafetyService.ReviewEvent(ctx, req)
 }
 
-func (r *MutationResolver) ReopenWorkerSafetyEvent(ctx context.Context, input gqlmodel.SafetyEventStatusInput) (*worker.WorkerSafetyEvent, error) {
+func (r *MutationResolver) ReopenWorkerSafetyEvent(ctx context.Context, input gqlmodel.SafetyEventStatusInput) (*workersafety.WorkerSafetyEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpClose)
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func (r *MutationResolver) IssueDisciplinaryAction(ctx context.Context, input gq
 	return r.WorkerSafetyService.IssueAction(ctx, req)
 }
 
-func (r *MutationResolver) RescindDisciplinaryAction(ctx context.Context, input gqlmodel.RescindDisciplinaryActionInput) (*worker.WorkerDisciplinaryAction, error) {
+func (r *MutationResolver) RescindDisciplinaryAction(ctx context.Context, input gqlmodel.RescindDisciplinaryActionInput) (*workersafety.WorkerDisciplinaryAction, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDisciplinaryAction, permission.OpCancel)
 	if err != nil {
 		return nil, err
@@ -136,7 +136,7 @@ func (r *MutationResolver) RescindDisciplinaryAction(ctx context.Context, input 
 	})
 }
 
-func (r *MutationResolver) GiveWorkerRecognition(ctx context.Context, input gqlmodel.WorkerRecognitionInput) (*worker.WorkerRecognition, error) {
+func (r *MutationResolver) GiveWorkerRecognition(ctx context.Context, input gqlmodel.WorkerRecognitionInput) (*workersafety.WorkerRecognition, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerRecognition, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func (r *MutationResolver) DeleteWorkerRecognition(ctx context.Context, id strin
 	return true, nil
 }
 
-func (r *MutationResolver) AcknowledgeMyDisciplinaryAction(ctx context.Context, id string, comment *string) (*worker.WorkerDisciplinaryAction, error) {
+func (r *MutationResolver) AcknowledgeMyDisciplinaryAction(ctx context.Context, id string, comment *string) (*workersafety.WorkerDisciplinaryAction, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -176,7 +176,7 @@ func (r *MutationResolver) AcknowledgeMyDisciplinaryAction(ctx context.Context, 
 	return r.DriverPortalService.AcknowledgeMyDisciplinaryAction(ctx, base.TenantInfo(authCtx), actionID, base.StringValue(comment))
 }
 
-func (r *QueryResolver) WorkerSafetyEvents(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*worker.WorkerSafetyEvent, error) {
+func (r *QueryResolver) WorkerSafetyEvents(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*workersafety.WorkerSafetyEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -197,7 +197,7 @@ func (r *QueryResolver) WorkerSafetyEvents(ctx context.Context, workerID *string
 	})
 }
 
-func (r *QueryResolver) WorkerSafetyEvent(ctx context.Context, id string) (*worker.WorkerSafetyEvent, error) {
+func (r *QueryResolver) WorkerSafetyEvent(ctx context.Context, id string) (*workersafety.WorkerSafetyEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -210,7 +210,7 @@ func (r *QueryResolver) WorkerSafetyEvent(ctx context.Context, id string) (*work
 	return r.WorkerSafetyService.GetEvent(ctx, base.TenantInfo(authCtx), eventID)
 }
 
-func (r *QueryResolver) WorkerSafetyScorecard(ctx context.Context, workerID string) (*worker.SafetyScorecard, error) {
+func (r *QueryResolver) WorkerSafetyScorecard(ctx context.Context, workerID string) (*workersafety.SafetyScorecard, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -223,7 +223,7 @@ func (r *QueryResolver) WorkerSafetyScorecard(ctx context.Context, workerID stri
 	return r.WorkerSafetyService.Scorecard(ctx, base.TenantInfo(authCtx), wid)
 }
 
-func (r *QueryResolver) WorkerDisciplinaryActions(ctx context.Context, workerID string) ([]*worker.WorkerDisciplinaryAction, error) {
+func (r *QueryResolver) WorkerDisciplinaryActions(ctx context.Context, workerID string) ([]*workersafety.WorkerDisciplinaryAction, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDisciplinaryAction, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -236,7 +236,7 @@ func (r *QueryResolver) WorkerDisciplinaryActions(ctx context.Context, workerID 
 	return r.WorkerSafetyService.ListActions(ctx, base.TenantInfo(authCtx), wid)
 }
 
-func (r *QueryResolver) WorkerDisciplinaryLadder(ctx context.Context, workerID string) (*worker.DisciplinaryLadder, error) {
+func (r *QueryResolver) WorkerDisciplinaryLadder(ctx context.Context, workerID string) (*workersafety.DisciplinaryLadder, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDisciplinaryAction, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -249,7 +249,7 @@ func (r *QueryResolver) WorkerDisciplinaryLadder(ctx context.Context, workerID s
 	return r.WorkerSafetyService.Ladder(ctx, base.TenantInfo(authCtx), wid)
 }
 
-func (r *QueryResolver) WorkerRecognitions(ctx context.Context, workerID string) ([]*worker.WorkerRecognition, error) {
+func (r *QueryResolver) WorkerRecognitions(ctx context.Context, workerID string) ([]*workersafety.WorkerRecognition, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerRecognition, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -262,18 +262,18 @@ func (r *QueryResolver) WorkerRecognitions(ctx context.Context, workerID string)
 	return r.WorkerSafetyService.ListRecognitions(ctx, base.TenantInfo(authCtx), wid, false)
 }
 
-func (r *QueryResolver) DefaultSafetyPoints(ctx context.Context, kind worker.SafetyEventKind, severity worker.SafetySeverity, preventable *bool, inspectionResult *worker.InspectionResult) (int, error) {
+func (r *QueryResolver) DefaultSafetyPoints(ctx context.Context, kind workersafety.SafetyEventKind, severity workersafety.SafetySeverity, preventable *bool, inspectionResult *workersafety.InspectionResult) (int, error) {
 	if _, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpRead); err != nil {
 		return 0, err
 	}
-	result := worker.InspectionResultNone
+	result := workersafety.InspectionResultNone
 	if inspectionResult != nil {
 		result = *inspectionResult
 	}
-	return int(worker.DefaultSafetyPoints(kind, severity, base.BoolValue(preventable), result)), nil
+	return int(workersafety.DefaultSafetyPoints(kind, severity, base.BoolValue(preventable), result)), nil
 }
 
-func (r *QueryResolver) MySafetyScorecard(ctx context.Context) (*worker.SafetyScorecard, error) {
+func (r *QueryResolver) MySafetyScorecard(ctx context.Context) (*workersafety.SafetyScorecard, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -281,7 +281,7 @@ func (r *QueryResolver) MySafetyScorecard(ctx context.Context) (*worker.SafetySc
 	return r.DriverPortalService.MySafetyScorecard(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) MyRecognitions(ctx context.Context) ([]*worker.WorkerRecognition, error) {
+func (r *QueryResolver) MyRecognitions(ctx context.Context) ([]*workersafety.WorkerRecognition, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -289,7 +289,7 @@ func (r *QueryResolver) MyRecognitions(ctx context.Context) ([]*worker.WorkerRec
 	return r.DriverPortalService.MyRecognitions(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) MyDisciplinaryActions(ctx context.Context) ([]*worker.WorkerDisciplinaryAction, error) {
+func (r *QueryResolver) MyDisciplinaryActions(ctx context.Context) ([]*workersafety.WorkerDisciplinaryAction, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -297,51 +297,51 @@ func (r *QueryResolver) MyDisciplinaryActions(ctx context.Context) ([]*worker.Wo
 	return r.DriverPortalService.MyDisciplinaryActions(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *SafetyScorecardResolver) HighestDiscipline(ctx context.Context, obj *worker.SafetyScorecard) (*worker.DisciplinaryLevel, error) {
+func (r *SafetyScorecardResolver) HighestDiscipline(ctx context.Context, obj *workersafety.SafetyScorecard) (*workersafety.DisciplinaryLevel, error) {
 	return disciplinaryLevelPtr(obj.HighestDiscipline), nil
 }
 
-func (r *SafetyScorecardResolver) DaysSinceLastEvent(ctx context.Context, obj *worker.SafetyScorecard) (*int, error) {
+func (r *SafetyScorecardResolver) DaysSinceLastEvent(ctx context.Context, obj *workersafety.SafetyScorecard) (*int, error) {
 	return int64PtrToInt(obj.DaysSinceLastEvent), nil
 }
 
-func (r *WorkerDisciplinaryActionResolver) SuspensionDays(ctx context.Context, obj *worker.WorkerDisciplinaryAction) (*int, error) {
+func (r *WorkerDisciplinaryActionResolver) SuspensionDays(ctx context.Context, obj *workersafety.WorkerDisciplinaryAction) (*int, error) {
 	return base.Int32Ptr(obj.SuspensionDays), nil
 }
 
-func (r *WorkerDisciplinaryActionResolver) SafetyEventID(ctx context.Context, obj *worker.WorkerDisciplinaryAction) (*string, error) {
+func (r *WorkerDisciplinaryActionResolver) SafetyEventID(ctx context.Context, obj *workersafety.WorkerDisciplinaryAction) (*string, error) {
 	return base.IDPtr(obj.SafetyEventID), nil
 }
 
-func (r *WorkerDisciplinaryActionResolver) DocumentID(ctx context.Context, obj *worker.WorkerDisciplinaryAction) (*string, error) {
+func (r *WorkerDisciplinaryActionResolver) DocumentID(ctx context.Context, obj *workersafety.WorkerDisciplinaryAction) (*string, error) {
 	return base.IDPtr(obj.DocumentID), nil
 }
 
-func (r *WorkerDisciplinaryActionResolver) IssuedByID(ctx context.Context, obj *worker.WorkerDisciplinaryAction) (*string, error) {
+func (r *WorkerDisciplinaryActionResolver) IssuedByID(ctx context.Context, obj *workersafety.WorkerDisciplinaryAction) (*string, error) {
 	return base.IDPtr(obj.IssuedByID), nil
 }
 
-func (r *WorkerDisciplinaryActionResolver) RescindedByID(ctx context.Context, obj *worker.WorkerDisciplinaryAction) (*string, error) {
+func (r *WorkerDisciplinaryActionResolver) RescindedByID(ctx context.Context, obj *workersafety.WorkerDisciplinaryAction) (*string, error) {
 	return base.IDPtr(obj.RescindedByID), nil
 }
 
-func (r *WorkerDisciplinaryActionResolver) Active(ctx context.Context, obj *worker.WorkerDisciplinaryAction) (bool, error) {
+func (r *WorkerDisciplinaryActionResolver) Active(ctx context.Context, obj *workersafety.WorkerDisciplinaryAction) (bool, error) {
 	return obj.IsActive(timeutils.NowUnix()), nil
 }
 
-func (r *WorkerRecognitionResolver) AwardedByID(ctx context.Context, obj *worker.WorkerRecognition) (*string, error) {
+func (r *WorkerRecognitionResolver) AwardedByID(ctx context.Context, obj *workersafety.WorkerRecognition) (*string, error) {
 	return base.IDPtr(obj.AwardedByID), nil
 }
 
-func (r *WorkerSafetyEventResolver) ActivePoints(ctx context.Context, obj *worker.WorkerSafetyEvent) (int, error) {
+func (r *WorkerSafetyEventResolver) ActivePoints(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (int, error) {
 	return int(obj.ActivePoints(timeutils.NowUnix())), nil
 }
 
-func (r *WorkerSafetyEventResolver) ShipmentID(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error) {
+func (r *WorkerSafetyEventResolver) ShipmentID(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error) {
 	return base.IDPtr(obj.ShipmentID), nil
 }
 
-func (r *WorkerSafetyEventResolver) InspectionLevel(ctx context.Context, obj *worker.WorkerSafetyEvent) (*int, error) {
+func (r *WorkerSafetyEventResolver) InspectionLevel(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*int, error) {
 	if obj.InspectionLevel == nil {
 		return nil, nil //nolint:nilnil // absent level renders as null
 	}
@@ -349,7 +349,7 @@ func (r *WorkerSafetyEventResolver) InspectionLevel(ctx context.Context, obj *wo
 	return &level, nil
 }
 
-func (r *WorkerSafetyEventResolver) InspectionResult(ctx context.Context, obj *worker.WorkerSafetyEvent) (*worker.InspectionResult, error) {
+func (r *WorkerSafetyEventResolver) InspectionResult(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*workersafety.InspectionResult, error) {
 	if !obj.InspectionResult.IsSet() {
 		return nil, nil //nolint:nilnil // only inspections carry a result
 	}
@@ -357,27 +357,27 @@ func (r *WorkerSafetyEventResolver) InspectionResult(ctx context.Context, obj *w
 	return &result, nil
 }
 
-func (r *WorkerSafetyEventResolver) FineAmount(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error) {
+func (r *WorkerSafetyEventResolver) FineAmount(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error) {
 	return base.NullDecimalPtr(obj.FineAmount), nil
 }
 
-func (r *WorkerSafetyEventResolver) CostAmount(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error) {
+func (r *WorkerSafetyEventResolver) CostAmount(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error) {
 	return base.NullDecimalPtr(obj.CostAmount), nil
 }
 
-func (r *WorkerSafetyEventResolver) DocumentID(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error) {
+func (r *WorkerSafetyEventResolver) DocumentID(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error) {
 	return base.IDPtr(obj.DocumentID), nil
 }
 
-func (r *WorkerSafetyEventResolver) RecordedByID(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error) {
+func (r *WorkerSafetyEventResolver) RecordedByID(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error) {
 	return base.IDPtr(obj.RecordedByID), nil
 }
 
-func (r *WorkerSafetyEventResolver) ClosedByID(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error) {
+func (r *WorkerSafetyEventResolver) ClosedByID(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error) {
 	return base.IDPtr(obj.ClosedByID), nil
 }
 
-func (r *WorkerSafetyEventResolver) Violations(ctx context.Context, obj *worker.WorkerSafetyEvent) ([]*worker.WorkerSafetyViolation, error) {
+func (r *WorkerSafetyEventResolver) Violations(ctx context.Context, obj *workersafety.WorkerSafetyEvent) ([]*workersafety.WorkerSafetyViolation, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpRead)
 	if err != nil {
 		return nil, err

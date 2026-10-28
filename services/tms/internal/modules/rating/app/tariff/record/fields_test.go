@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/record"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -307,38 +307,38 @@ func day(year int, month time.Month, date int) time.Time {
 func TestHolidaysForExpandsRecurringHolidaysAcrossTheRatingYears(t *testing.T) {
 	t.Parallel()
 
-	rows := []*worker.OrgHoliday{
+	rows := []*pto.OrgHoliday{
 		{
 			Name:           "Christmas Day",
 			HolidayDate:    day(2019, time.December, 25).Unix(),
-			Kind:           worker.HolidayKindHoliday,
+			Kind:           pto.HolidayKindHoliday,
 			RecursAnnually: true,
 		},
 		{
 			Name:        "Company picnic",
 			HolidayDate: day(2026, time.July, 10).Unix(),
-			Kind:        worker.HolidayKindHoliday,
+			Kind:        pto.HolidayKindHoliday,
 		},
 		{
 			Name:        "Old closure",
 			HolidayDate: day(2020, time.March, 3).Unix(),
-			Kind:        worker.HolidayKindHoliday,
+			Kind:        pto.HolidayKindHoliday,
 		},
 		{
 			Name:        "Year-end freeze",
 			HolidayDate: day(2026, time.December, 28).Unix(),
-			Kind:        worker.HolidayKindBlackout,
+			Kind:        pto.HolidayKindBlackout,
 		},
 		{
 			Name:           "Recurring freeze",
 			HolidayDate:    day(2026, time.December, 30).Unix(),
-			Kind:           worker.HolidayKindBlackout,
+			Kind:           pto.HolidayKindBlackout,
 			RecursAnnually: true,
 		},
 		{
 			Name:           "Leap day",
 			HolidayDate:    day(2024, time.February, 29).Unix(),
-			Kind:           worker.HolidayKindHoliday,
+			Kind:           pto.HolidayKindHoliday,
 			RecursAnnually: true,
 		},
 		nil,
@@ -361,17 +361,17 @@ func TestHolidaysForExpandsRecurringHolidaysAcrossTheRatingYears(t *testing.T) {
 func TestHolidaysForSendsOneEntryForADuplicatedHoliday(t *testing.T) {
 	t.Parallel()
 
-	rows := []*worker.OrgHoliday{
+	rows := []*pto.OrgHoliday{
 		{
 			Name:           "Independence Day",
 			HolidayDate:    day(2020, time.July, 4).Unix(),
-			Kind:           worker.HolidayKindHoliday,
+			Kind:           pto.HolidayKindHoliday,
 			RecursAnnually: true,
 		},
 		{
 			Name:        "Independence Day",
 			HolidayDate: day(2026, time.July, 4).Unix(),
-			Kind:        worker.HolidayKindHoliday,
+			Kind:        pto.HolidayKindHoliday,
 		},
 	}
 

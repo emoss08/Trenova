@@ -12,12 +12,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *MutationResolver) ClockIn(ctx context.Context, input gqlmodel.ClockInput) (*worker.TimeClockEntry, error) {
+func (r *MutationResolver) ClockIn(ctx context.Context, input gqlmodel.ClockInput) (*timesheet.TimeClockEntry, error) {
 	authCtx, workerID, err := r.RequireTimesheetWorkerScope(ctx, permission.OpCreate, input.WorkerID)
 	if err != nil {
 		return nil, err
@@ -26,7 +27,7 @@ func (r *MutationResolver) ClockIn(ctx context.Context, input gqlmodel.ClockInpu
 	return r.TimesheetService.ClockIn(ctx, &timesheetservice.ClockRequest{
 		WorkerID:   workerID,
 		At:         base.Int64Value(input.At),
-		Source:     worker.TimeEntrySourceClock,
+		Source:     timesheet.TimeEntrySourceClock,
 		PayCodeID:  mustOptionalID(input.PayCodeID),
 		Note:       base.StringValue(input.Note),
 		TenantInfo: base.TenantInfo(authCtx),
@@ -34,7 +35,7 @@ func (r *MutationResolver) ClockIn(ctx context.Context, input gqlmodel.ClockInpu
 	})
 }
 
-func (r *MutationResolver) ClockOut(ctx context.Context, input gqlmodel.ClockInput) (*worker.TimeClockEntry, error) {
+func (r *MutationResolver) ClockOut(ctx context.Context, input gqlmodel.ClockInput) (*timesheet.TimeClockEntry, error) {
 	authCtx, workerID, err := r.RequireTimesheetWorkerScope(ctx, permission.OpCreate, input.WorkerID)
 	if err != nil {
 		return nil, err
@@ -50,7 +51,7 @@ func (r *MutationResolver) ClockOut(ctx context.Context, input gqlmodel.ClockInp
 	})
 }
 
-func (r *MutationResolver) RecordTimeEntry(ctx context.Context, input gqlmodel.RecordTimeEntryInput) (*worker.TimeClockEntry, error) {
+func (r *MutationResolver) RecordTimeEntry(ctx context.Context, input gqlmodel.RecordTimeEntryInput) (*timesheet.TimeClockEntry, error) {
 	authCtx, workerID, err := r.RequireTimesheetWorkerScope(ctx, permission.OpUpdate, input.WorkerID)
 	if err != nil {
 		return nil, err
@@ -98,7 +99,7 @@ func (r *MutationResolver) DeleteTimeEntry(ctx context.Context, input gqlmodel.D
 	return true, nil
 }
 
-func (r *MutationResolver) TransitionTimesheet(ctx context.Context, input gqlmodel.TransitionTimesheetInput) (*worker.Timesheet, error) {
+func (r *MutationResolver) TransitionTimesheet(ctx context.Context, input gqlmodel.TransitionTimesheetInput) (*timesheet.Timesheet, error) {
 	sheetID, err := pulid.MustParse(input.ID)
 	if err != nil {
 		return nil, base.InvalidIDError("id", "Timesheet is invalid")
@@ -125,7 +126,7 @@ func (r *MutationResolver) TransitionTimesheet(ctx context.Context, input gqlmod
 		ctx,
 		permission.ResourceTimesheet,
 		timesheetPermissionFor(input.Status),
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		sheet.WorkerID,
 	); err != nil {
 		return nil, err
@@ -140,7 +141,7 @@ func (r *MutationResolver) TransitionTimesheet(ctx context.Context, input gqlmod
 	})
 }
 
-func (r *MutationResolver) GeneratePayrollExport(ctx context.Context, input gqlmodel.GeneratePayrollExportInput) (*worker.PayrollExport, error) {
+func (r *MutationResolver) GeneratePayrollExport(ctx context.Context, input gqlmodel.GeneratePayrollExportInput) (*timesheet.PayrollExport, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceTimesheet, permission.OpExport)
 	if err != nil {
 		return nil, err
@@ -155,7 +156,7 @@ func (r *MutationResolver) GeneratePayrollExport(ctx context.Context, input gqlm
 	})
 }
 
-func (r *MutationResolver) VoidPayrollExport(ctx context.Context, input gqlmodel.VoidPayrollExportInput) (*worker.PayrollExport, error) {
+func (r *MutationResolver) VoidPayrollExport(ctx context.Context, input gqlmodel.VoidPayrollExportInput) (*timesheet.PayrollExport, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceTimesheet, permission.OpExport)
 	if err != nil {
 		return nil, err
@@ -174,12 +175,12 @@ func (r *MutationResolver) VoidPayrollExport(ctx context.Context, input gqlmodel
 	})
 }
 
-func (r *QueryResolver) Timesheets(ctx context.Context, filter *gqlmodel.TimesheetFilterInput) ([]*worker.Timesheet, error) {
+func (r *QueryResolver) Timesheets(ctx context.Context, filter *gqlmodel.TimesheetFilterInput) ([]*timesheet.Timesheet, error) {
 	authCtx, managerIDs, err := r.RequireListTeamScope(
 		ctx,
 		permission.ResourceTimesheet,
 		permission.OpRead,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 	)
 	if err != nil {
 		return nil, err
@@ -213,7 +214,7 @@ func (r *QueryResolver) Timesheets(ctx context.Context, filter *gqlmodel.Timeshe
 	return r.TimesheetService.ListTimesheets(ctx, req)
 }
 
-func (r *QueryResolver) Timesheet(ctx context.Context, id string) (*worker.Timesheet, error) {
+func (r *QueryResolver) Timesheet(ctx context.Context, id string) (*timesheet.Timesheet, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceTimesheet, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -237,7 +238,7 @@ func (r *QueryResolver) Timesheet(ctx context.Context, id string) (*worker.Times
 		ctx,
 		permission.ResourceTimesheet,
 		permission.OpRead,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		sheet.WorkerID,
 	); err != nil {
 		return nil, err
@@ -246,7 +247,7 @@ func (r *QueryResolver) Timesheet(ctx context.Context, id string) (*worker.Times
 	return sheet, nil
 }
 
-func (r *QueryResolver) TimeClockEntries(ctx context.Context, workerID string, from *int, to *int, limit *int) ([]*worker.TimeClockEntry, error) {
+func (r *QueryResolver) TimeClockEntries(ctx context.Context, workerID string, from *int, to *int, limit *int) ([]*timesheet.TimeClockEntry, error) {
 	authCtx, id, err := r.RequireTimesheetWorkerScope(ctx, permission.OpRead, workerID)
 	if err != nil {
 		return nil, err
@@ -261,7 +262,7 @@ func (r *QueryResolver) TimeClockEntries(ctx context.Context, workerID string, f
 	})
 }
 
-func (r *QueryResolver) OpenTimeClockEntry(ctx context.Context, workerID string) (*worker.TimeClockEntry, error) {
+func (r *QueryResolver) OpenTimeClockEntry(ctx context.Context, workerID string) (*timesheet.TimeClockEntry, error) {
 	authCtx, id, err := r.RequireTimesheetWorkerScope(ctx, permission.OpRead, workerID)
 	if err != nil {
 		return nil, err
@@ -270,12 +271,12 @@ func (r *QueryResolver) OpenTimeClockEntry(ctx context.Context, workerID string)
 	return r.TimesheetService.OpenEntry(ctx, base.TenantInfo(authCtx), id)
 }
 
-func (r *QueryResolver) OpenTimeClockEntries(ctx context.Context, teamOnly *bool, limit *int) ([]*worker.TimeClockEntry, error) {
+func (r *QueryResolver) OpenTimeClockEntries(ctx context.Context, teamOnly *bool, limit *int) ([]*timesheet.TimeClockEntry, error) {
 	authCtx, managerIDs, err := r.RequireListTeamScope(
 		ctx,
 		permission.ResourceTimesheet,
 		permission.OpRead,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 	)
 	if err != nil {
 		return nil, err
@@ -297,7 +298,7 @@ func (r *QueryResolver) OpenTimeClockEntries(ctx context.Context, teamOnly *bool
 	return r.TimesheetService.ListEntries(ctx, req)
 }
 
-func (r *QueryResolver) PayrollExports(ctx context.Context, limit *int) ([]*worker.PayrollExport, error) {
+func (r *QueryResolver) PayrollExports(ctx context.Context, limit *int) ([]*timesheet.PayrollExport, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceTimesheet, permission.OpExport)
 	if err != nil {
 		return nil, err
@@ -309,7 +310,7 @@ func (r *QueryResolver) PayrollExports(ctx context.Context, limit *int) ([]*work
 	})
 }
 
-func (r *QueryResolver) PayrollExport(ctx context.Context, id string) (*worker.PayrollExport, error) {
+func (r *QueryResolver) PayrollExport(ctx context.Context, id string) (*timesheet.PayrollExport, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceTimesheet, permission.OpExport)
 	if err != nil {
 		return nil, err

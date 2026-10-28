@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -88,15 +88,15 @@ func (h *bulkHarness) worker() pulid.ID {
 }
 
 func (h *bulkHarness) course(code string) pulid.ID {
-	c := &worker.TrainingCourse{
+	c := &workertraining.TrainingCourse{
 		ID:                      pulid.MustNew("trnc_"),
 		OrganizationID:          h.tenant.OrgID,
 		BusinessUnitID:          h.tenant.BuID,
 		Code:                    code,
 		Name:                    code,
-		Category:                worker.TrainingCategorySafety,
+		Category:                workertraining.TrainingCategorySafety,
 		Status:                  domaintypes.StatusActive,
-		Delivery:                worker.TrainingDeliveryClassroom,
+		Delivery:                workertraining.TrainingDeliveryClassroom,
 		IsRequired:              true,
 		RequiredForDriverTypes:  []worker.DriverType{},
 		RenewalWindowDays:       30,

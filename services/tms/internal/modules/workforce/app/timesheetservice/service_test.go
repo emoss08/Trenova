@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,12 +21,12 @@ const day = int64(86400)
 type fakeTimesheetRepo struct {
 	workerports.TimesheetRepository
 
-	openEntry  *worker.TimeClockEntry
-	entries    []*worker.TimeClockEntry
-	sheet      *worker.Timesheet
-	sheets     []*worker.Timesheet
-	saved      *worker.Timesheet
-	export     *worker.PayrollExport
+	openEntry  *timesheet.TimeClockEntry
+	entries    []*timesheet.TimeClockEntry
+	sheet      *timesheet.Timesheet
+	sheets     []*timesheet.Timesheet
+	saved      *timesheet.Timesheet
+	export     *timesheet.PayrollExport
 	stamped    []pulid.ID
 	stampCount int
 	cleared    int
@@ -36,14 +38,14 @@ func (r *fakeTimesheetRepo) GetOpenEntry(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	_ pulid.ID,
-) (*worker.TimeClockEntry, error) {
+) (*timesheet.TimeClockEntry, error) {
 	return r.openEntry, nil
 }
 
 func (r *fakeTimesheetRepo) CreateEntry(
 	_ context.Context,
-	entity *worker.TimeClockEntry,
-) (*worker.TimeClockEntry, error) {
+	entity *timesheet.TimeClockEntry,
+) (*timesheet.TimeClockEntry, error) {
 	entity.ID = pulid.MustNew("tce_")
 	r.entries = append(r.entries, entity)
 	return entity, nil
@@ -51,15 +53,15 @@ func (r *fakeTimesheetRepo) CreateEntry(
 
 func (r *fakeTimesheetRepo) UpdateEntry(
 	_ context.Context,
-	entity *worker.TimeClockEntry,
-) (*worker.TimeClockEntry, error) {
+	entity *timesheet.TimeClockEntry,
+) (*timesheet.TimeClockEntry, error) {
 	return entity, nil
 }
 
 func (r *fakeTimesheetRepo) GetEntryByID(
 	_ context.Context,
 	req *workerports.GetTimeClockEntryByIDRequest,
-) (*worker.TimeClockEntry, error) {
+) (*timesheet.TimeClockEntry, error) {
 	for _, entry := range r.entries {
 		if entry.ID == req.ID {
 			return entry, nil
@@ -79,14 +81,14 @@ func (r *fakeTimesheetRepo) DeleteEntry(
 func (r *fakeTimesheetRepo) ListEntries(
 	_ context.Context,
 	_ *workerports.ListTimeClockEntriesRequest,
-) ([]*worker.TimeClockEntry, error) {
+) ([]*timesheet.TimeClockEntry, error) {
 	return r.entries, nil
 }
 
 func (r *fakeTimesheetRepo) GetOrCreateTimesheet(
 	_ context.Context,
-	entity *worker.Timesheet,
-) (*worker.Timesheet, error) {
+	entity *timesheet.Timesheet,
+) (*timesheet.Timesheet, error) {
 	if r.sheet != nil {
 		return r.sheet, nil
 	}
@@ -98,14 +100,14 @@ func (r *fakeTimesheetRepo) GetOrCreateTimesheet(
 func (r *fakeTimesheetRepo) GetTimesheetByID(
 	_ context.Context,
 	_ *workerports.GetTimesheetByIDRequest,
-) (*worker.Timesheet, error) {
+) (*timesheet.Timesheet, error) {
 	return r.sheet, nil
 }
 
 func (r *fakeTimesheetRepo) UpdateTimesheet(
 	_ context.Context,
-	entity *worker.Timesheet,
-) (*worker.Timesheet, error) {
+	entity *timesheet.Timesheet,
+) (*timesheet.Timesheet, error) {
 	r.saved = entity
 	r.sheet = entity
 	return entity, nil
@@ -133,14 +135,14 @@ func (r *fakeTimesheetRepo) ApprovedLeaveRanges(
 func (r *fakeTimesheetRepo) ListTimesheets(
 	_ context.Context,
 	_ *workerports.ListTimesheetsRequest,
-) ([]*worker.Timesheet, error) {
+) ([]*timesheet.Timesheet, error) {
 	return r.sheets, nil
 }
 
 func (r *fakeTimesheetRepo) CreateExport(
 	_ context.Context,
-	entity *worker.PayrollExport,
-) (*worker.PayrollExport, error) {
+	entity *timesheet.PayrollExport,
+) (*timesheet.PayrollExport, error) {
 	entity.ID = pulid.MustNew("pxb_")
 	r.export = entity
 	return entity, nil
@@ -148,8 +150,8 @@ func (r *fakeTimesheetRepo) CreateExport(
 
 func (r *fakeTimesheetRepo) UpdateExport(
 	_ context.Context,
-	entity *worker.PayrollExport,
-) (*worker.PayrollExport, error) {
+	entity *timesheet.PayrollExport,
+) (*timesheet.PayrollExport, error) {
 	r.export = entity
 	return entity, nil
 }
@@ -157,7 +159,7 @@ func (r *fakeTimesheetRepo) UpdateExport(
 func (r *fakeTimesheetRepo) GetExportByID(
 	_ context.Context,
 	_ *workerports.GetPayrollExportByIDRequest,
-) (*worker.PayrollExport, error) {
+) (*timesheet.PayrollExport, error) {
 	return r.export, nil
 }
 
@@ -214,26 +216,26 @@ func mondayAt(hour int) int64 {
 }
 
 func weekStart() int64 {
-	return worker.StartOfWeekUTC(mondayAt(0), time.UTC)
+	return workerschedule.StartOfWeekUTC(mondayAt(0), time.UTC)
 }
 
-func openSheet() *worker.Timesheet {
-	return &worker.Timesheet{
+func openSheet() *timesheet.Timesheet {
+	return &timesheet.Timesheet{
 		ID:                       pulid.MustNew("tsh_"),
 		WorkerID:                 "wrk_1",
-		Status:                   worker.TimesheetOpen,
+		Status:                   timesheet.TimesheetOpen,
 		PeriodStart:              weekStart(),
 		PeriodEnd:                weekStart() + 7*day,
 		OvertimeThresholdMinutes: 2400,
 	}
 }
 
-func entry(startHour, endHour int) *worker.TimeClockEntry {
+func entry(startHour, endHour int) *timesheet.TimeClockEntry {
 	end := mondayAt(endHour)
-	return &worker.TimeClockEntry{
+	return &timesheet.TimeClockEntry{
 		ID:           pulid.MustNew("tce_"),
 		WorkerID:     "wrk_1",
-		Source:       worker.TimeEntrySourceClock,
+		Source:       timesheet.TimeEntrySourceClock,
 		ClockedInAt:  mondayAt(startHour),
 		ClockedOutAt: &end,
 	}
@@ -260,7 +262,7 @@ func TestClockIn_RefusesAContractor(t *testing.T) {
 func TestClockIn_RefusesASecondPunch(t *testing.T) {
 	t.Parallel()
 
-	repo := &fakeTimesheetRepo{openEntry: &worker.TimeClockEntry{
+	repo := &fakeTimesheetRepo{openEntry: &timesheet.TimeClockEntry{
 		ID:          pulid.MustNew("tce_"),
 		WorkerID:    "wrk_1",
 		ClockedInAt: mondayAt(8),
@@ -335,15 +337,15 @@ func TestClockOut_RollsTheWeekUp(t *testing.T) {
 	sheet := openSheet()
 	repo := &fakeTimesheetRepo{
 		sheet: sheet,
-		openEntry: &worker.TimeClockEntry{
+		openEntry: &timesheet.TimeClockEntry{
 			ID:          pulid.MustNew("tce_"),
 			WorkerID:    "wrk_1",
-			Source:      worker.TimeEntrySourceClock,
+			Source:      timesheet.TimeEntrySourceClock,
 			TimesheetID: sheet.ID,
 			ClockedInAt: mondayAt(8),
 		},
 	}
-	repo.entries = []*worker.TimeClockEntry{entry(8, 17)}
+	repo.entries = []*timesheet.TimeClockEntry{entry(8, 17)}
 
 	updated, err := newService(repo, employee()).ClockOut(
 		t.Context(),
@@ -389,7 +391,7 @@ func TestRecordEntry_RefusedOnceTheWeekIsSubmitted(t *testing.T) {
 	t.Parallel()
 
 	sheet := openSheet()
-	sheet.Status = worker.TimesheetSubmitted
+	sheet.Status = timesheet.TimesheetSubmitted
 	repo := &fakeTimesheetRepo{sheet: sheet}
 
 	_, err := newService(repo, employee()).RecordEntry(
@@ -433,7 +435,7 @@ func TestTransition_EnforcesTheStateMachine(t *testing.T) {
 		t.Context(),
 		&timesheetservice.TransitionTimesheetRequest{
 			ID:         sheet.ID,
-			Status:     worker.TimesheetApproved,
+			Status:     timesheet.TimesheetApproved,
 			TenantInfo: tenant(),
 		},
 	)
@@ -453,7 +455,7 @@ func TestTransition_RefusesAnEmptyWeek(t *testing.T) {
 		t.Context(),
 		&timesheetservice.TransitionTimesheetRequest{
 			ID:         repo.sheet.ID,
-			Status:     worker.TimesheetSubmitted,
+			Status:     timesheet.TimesheetSubmitted,
 			TenantInfo: tenant(),
 		},
 	)
@@ -469,19 +471,19 @@ func TestTransition_FreezesTheTotalsAtSubmit(t *testing.T) {
 
 	repo := &fakeTimesheetRepo{
 		sheet:   openSheet(),
-		entries: []*worker.TimeClockEntry{entry(8, 17), entry(18, 20)},
+		entries: []*timesheet.TimeClockEntry{entry(8, 17), entry(18, 20)},
 	}
 	service := newService(repo, employee())
 
 	submitted, err := service.Transition(t.Context(), &timesheetservice.TransitionTimesheetRequest{
 		ID:         repo.sheet.ID,
-		Status:     worker.TimesheetSubmitted,
+		Status:     timesheet.TimesheetSubmitted,
 		TenantInfo: tenant(),
 		UserID:     pulid.MustNew("usr_"),
 	})
 
 	require.NoError(t, err)
-	assert.Equal(t, worker.TimesheetSubmitted, submitted.Status)
+	assert.Equal(t, timesheet.TimesheetSubmitted, submitted.Status)
 	require.NotNil(t, submitted.SubmittedAt)
 	assert.Equal(t, int32(660), submitted.RegularMinutes)
 
@@ -490,7 +492,7 @@ func TestTransition_FreezesTheTotalsAtSubmit(t *testing.T) {
 	repo.entries = append(repo.entries, entry(20, 22))
 	rejected, err := service.Transition(t.Context(), &timesheetservice.TransitionTimesheetRequest{
 		ID:         repo.sheet.ID,
-		Status:     worker.TimesheetRejected,
+		Status:     timesheet.TimesheetRejected,
 		Note:       "Check Monday",
 		TenantInfo: tenant(),
 		UserID:     pulid.MustNew("usr_"),
@@ -506,14 +508,14 @@ func TestTransition_AWorkerCannotApproveTheirOwnWeek(t *testing.T) {
 	t.Parallel()
 
 	sheet := openSheet()
-	sheet.Status = worker.TimesheetSubmitted
+	sheet.Status = timesheet.TimesheetSubmitted
 	repo := &fakeTimesheetRepo{sheet: sheet}
 
 	_, err := newService(repo, employee()).Transition(
 		t.Context(),
 		&timesheetservice.TransitionTimesheetRequest{
 			ID:            sheet.ID,
-			Status:        worker.TimesheetApproved,
+			Status:        timesheet.TimesheetApproved,
 			ActorWorkerID: "wrk_1",
 			TenantInfo:    tenant(),
 		},
@@ -532,7 +534,7 @@ func TestTransition_AWorkerCannotSubmitSomebodyElsesWeek(t *testing.T) {
 		t.Context(),
 		&timesheetservice.TransitionTimesheetRequest{
 			ID:            repo.sheet.ID,
-			Status:        worker.TimesheetSubmitted,
+			Status:        timesheet.TimesheetSubmitted,
 			ActorWorkerID: "wrk_2",
 			TenantInfo:    tenant(),
 		},
@@ -549,16 +551,16 @@ func TestTransition_ResubmissionClearsTheOldApproval(t *testing.T) {
 
 	approvedAt := mondayAt(9)
 	sheet := openSheet()
-	sheet.Status = worker.TimesheetRejected
+	sheet.Status = timesheet.TimesheetRejected
 	sheet.ApprovedAt = &approvedAt
 	sheet.ApprovedByID = pulid.MustNew("usr_")
-	repo := &fakeTimesheetRepo{sheet: sheet, entries: []*worker.TimeClockEntry{entry(8, 17)}}
+	repo := &fakeTimesheetRepo{sheet: sheet, entries: []*timesheet.TimeClockEntry{entry(8, 17)}}
 
 	updated, err := newService(repo, employee()).Transition(
 		t.Context(),
 		&timesheetservice.TransitionTimesheetRequest{
 			ID:         sheet.ID,
-			Status:     worker.TimesheetSubmitted,
+			Status:     timesheet.TimesheetSubmitted,
 			TenantInfo: tenant(),
 		},
 	)
@@ -592,16 +594,16 @@ func TestGenerateExport_LocksTheSheetsItCarried(t *testing.T) {
 	t.Parallel()
 
 	first := openSheet()
-	first.Status = worker.TimesheetApproved
+	first.Status = timesheet.TimesheetApproved
 	first.RegularMinutes = 2400
 	first.OvertimeMinutes = 120
 
 	second := openSheet()
 	second.ID = pulid.MustNew("tsh_")
-	second.Status = worker.TimesheetApproved
+	second.Status = timesheet.TimesheetApproved
 	second.RegularMinutes = 1800
 
-	repo := &fakeTimesheetRepo{sheets: []*worker.Timesheet{first, second}}
+	repo := &fakeTimesheetRepo{sheets: []*timesheet.Timesheet{first, second}}
 
 	export, err := newService(repo, employee()).GenerateExport(
 		t.Context(),
@@ -618,16 +620,16 @@ func TestGenerateExport_LocksTheSheetsItCarried(t *testing.T) {
 	assert.Equal(t, int32(4200), export.RegularMinutes)
 	assert.Equal(t, int32(120), export.OvertimeMinutes)
 	assert.Len(t, repo.stamped, 2)
-	assert.Equal(t, worker.PayrollExportGenerated, export.Status)
+	assert.Equal(t, timesheet.PayrollExportGenerated, export.Status)
 }
 
 // Voiding a run reopens every week in it, so it is refused without a reason.
 func TestVoidExport_NeedsAReason(t *testing.T) {
 	t.Parallel()
 
-	repo := &fakeTimesheetRepo{export: &worker.PayrollExport{
+	repo := &fakeTimesheetRepo{export: &timesheet.PayrollExport{
 		ID:          pulid.MustNew("pxb_"),
-		Status:      worker.PayrollExportGenerated,
+		Status:      timesheet.PayrollExportGenerated,
 		PeriodStart: weekStart(),
 		PeriodEnd:   weekStart() + 7*day,
 	}}
@@ -645,9 +647,9 @@ func TestVoidExport_NeedsAReason(t *testing.T) {
 func TestVoidExport_ReopensTheWeeksItCarried(t *testing.T) {
 	t.Parallel()
 
-	repo := &fakeTimesheetRepo{export: &worker.PayrollExport{
+	repo := &fakeTimesheetRepo{export: &timesheet.PayrollExport{
 		ID:          pulid.MustNew("pxb_"),
-		Status:      worker.PayrollExportGenerated,
+		Status:      timesheet.PayrollExportGenerated,
 		PeriodStart: weekStart(),
 		PeriodEnd:   weekStart() + 7*day,
 	}}
@@ -662,7 +664,7 @@ func TestVoidExport_ReopensTheWeeksItCarried(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	assert.Equal(t, worker.PayrollExportVoided, voided.Status)
+	assert.Equal(t, timesheet.PayrollExportVoided, voided.Status)
 	require.NotNil(t, voided.VoidedAt)
 	assert.Equal(t, 1, repo.cleared)
 }
@@ -676,14 +678,14 @@ func TestClockOut_CountsApprovedLeaveInsideTheWeek(t *testing.T) {
 	sheet := openSheet()
 	repo := &fakeTimesheetRepo{
 		sheet: sheet,
-		openEntry: &worker.TimeClockEntry{
+		openEntry: &timesheet.TimeClockEntry{
 			ID:          pulid.MustNew("tce_"),
 			WorkerID:    "wrk_1",
-			Source:      worker.TimeEntrySourceClock,
+			Source:      timesheet.TimeEntrySourceClock,
 			TimesheetID: sheet.ID,
 			ClockedInAt: mondayAt(8),
 		},
-		entries: []*worker.TimeClockEntry{entry(8, 17)},
+		entries: []*timesheet.TimeClockEntry{entry(8, 17)},
 		// Friday before the week through the Monday of it: one day inside.
 		leave: []workerports.RotaRangeRow{{
 			WorkerID: "wrk_1",

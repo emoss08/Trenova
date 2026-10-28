@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -32,17 +33,17 @@ func TestListsNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 	}
 
 	for _, wrk := range []*worker.Worker{team.Direct, team.ViaFleet, team.Outsider} {
-		err := workerdb.Timesheets.Create(ctx, db, &worker.Timesheet{
+		err := workerdb.Timesheets.Create(ctx, db, &timesheet.Timesheet{
 			ID:             pulid.MustNew("tsh_"),
 			OrganizationID: data.Organization.ID,
 			BusinessUnitID: data.BusinessUnit.ID,
 			WorkerID:       wrk.ID,
-			Status:         worker.TimesheetOpen,
+			Status:         timesheet.TimesheetOpen,
 			PeriodStart:    1_700_000_000,
 			PeriodEnd:      1_700_604_800,
 		})
 		require.NoError(t, err)
-		err = workerdb.TimeClockEntries.Create(ctx, db, &worker.TimeClockEntry{
+		err = workerdb.TimeClockEntries.Create(ctx, db, &timesheet.TimeClockEntry{
 			ID:             pulid.MustNew("tce_"),
 			OrganizationID: data.Organization.ID,
 			BusinessUnitID: data.BusinessUnit.ID,

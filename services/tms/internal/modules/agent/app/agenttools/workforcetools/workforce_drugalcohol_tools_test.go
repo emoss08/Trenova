@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,11 +23,11 @@ type fakeDrugAlcohol struct {
 	DrugAlcoholKeeper
 
 	guard *agenttoolstest.WriteGuard
-	test  *worker.WorkerDOTTest
-	draw  *worker.DOTRandomDraw
-	entry *worker.DOTRandomDrawEntry
+	test  *workerdot.WorkerDOTTest
+	draw  *workerdot.DOTRandomDraw
+	entry *workerdot.DOTRandomDrawEntry
 
-	recorded  *worker.WorkerDOTTest
+	recorded  *workerdot.WorkerDOTTest
 	cancelled []string
 	drawn     *workerdrugalcoholservice.RunDrawRequest
 	finalized []pulid.ID
@@ -37,26 +37,26 @@ type fakeDrugAlcohol struct {
 func newFakeDrugAlcohol() *fakeDrugAlcohol {
 	return &fakeDrugAlcohol{
 		guard: &agenttoolstest.WriteGuard{},
-		test: &worker.WorkerDOTTest{
+		test: &workerdot.WorkerDOTTest{
 			ID:        pulid.MustNew("wdt_"),
 			WorkerID:  pulid.MustNew("wrk_"),
-			TestType:  worker.DOTTestRandom,
-			Substance: worker.DOTSubstanceDrug,
-			Status:    worker.DOTTestStatusScheduled,
-			Result:    worker.DOTResultPending,
+			TestType:  workerdot.DOTTestRandom,
+			Substance: workerdot.DOTSubstanceDrug,
+			Status:    workerdot.DOTTestStatusScheduled,
+			Result:    workerdot.DOTResultPending,
 			Version:   2,
 		},
-		draw: &worker.DOTRandomDraw{
+		draw: &workerdot.DOTRandomDraw{
 			ID:        pulid.MustNew("drdraw_"),
 			PeriodKey: "2026-Q3",
-			Status:    worker.RandomDrawStatusDraft,
+			Status:    workerdot.RandomDrawStatusDraft,
 			Version:   1,
 		},
-		entry: &worker.DOTRandomDrawEntry{
+		entry: &workerdot.DOTRandomDrawEntry{
 			ID:        pulid.MustNew("drde_"),
-			Substance: worker.DOTSubstanceDrug,
+			Substance: workerdot.DOTSubstanceDrug,
 			Rank:      1,
-			Status:    worker.RandomEntrySelected,
+			Status:    workerdot.RandomEntrySelected,
 			Version:   1,
 		},
 	}
@@ -64,10 +64,10 @@ func newFakeDrugAlcohol() *fakeDrugAlcohol {
 
 func (f *fakeDrugAlcohol) PlanRecordTest(
 	_ context.Context,
-	entity *worker.WorkerDOTTest,
+	entity *workerdot.WorkerDOTTest,
 	userID pulid.ID,
-) (*worker.WorkerDOTTest, error) {
-	if entity.TestType == worker.DOTTestPostAccident && entity.Reason == "" {
+) (*workerdot.WorkerDOTTest, error) {
+	if entity.TestType == workerdot.DOTTestPostAccident && entity.Reason == "" {
 		return nil, errortypes.NewValidationError("reason", errortypes.ErrRequired,
 			"A post-accident test records what happened")
 	}
@@ -78,9 +78,9 @@ func (f *fakeDrugAlcohol) PlanRecordTest(
 
 func (f *fakeDrugAlcohol) RecordTest(
 	ctx context.Context,
-	entity *worker.WorkerDOTTest,
+	entity *workerdot.WorkerDOTTest,
 	userID pulid.ID,
-) (*worker.WorkerDOTTest, error) {
+) (*workerdot.WorkerDOTTest, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -99,12 +99,12 @@ func (f *fakeDrugAlcohol) PlanCancelTest(
 	pulid.ID,
 	string,
 ) (*workerdrugalcoholservice.TestChange, error) {
-	if f.test.Result != worker.DOTResultPending {
+	if f.test.Result != workerdot.DOTResultPending {
 		return nil, errortypes.NewValidationError("status", errortypes.ErrInvalidOperation,
 			"A test with a result cannot be cancelled")
 	}
 	after := *f.test
-	after.Status = worker.DOTTestStatusCancelled
+	after.Status = workerdot.DOTTestStatusCancelled
 	return &workerdrugalcoholservice.TestChange{Before: f.test, After: &after}, nil
 }
 
@@ -114,7 +114,7 @@ func (f *fakeDrugAlcohol) CancelTest(
 	_ pulid.ID,
 	reason string,
 	_ pulid.ID,
-) (*worker.WorkerDOTTest, error) {
+) (*workerdot.WorkerDOTTest, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -125,11 +125,11 @@ func (f *fakeDrugAlcohol) CancelTest(
 func (f *fakeDrugAlcohol) PlanRunDraw(
 	_ context.Context,
 	req *workerdrugalcoholservice.RunDrawRequest,
-) (*worker.DOTRandomDraw, error) {
-	return &worker.DOTRandomDraw{
+) (*workerdot.DOTRandomDraw, error) {
+	return &workerdot.DOTRandomDraw{
 		PoolID:          req.PoolID,
 		PeriodKey:       "2026-Q3",
-		Status:          worker.RandomDrawStatusDraft,
+		Status:          workerdot.RandomDrawStatusDraft,
 		PoolSize:        40,
 		DrugSelected:    5,
 		AlcoholSelected: 1,
@@ -139,7 +139,7 @@ func (f *fakeDrugAlcohol) PlanRunDraw(
 func (f *fakeDrugAlcohol) RunDraw(
 	_ context.Context,
 	req *workerdrugalcoholservice.RunDrawRequest,
-) (*worker.DOTRandomDraw, error) {
+) (*workerdot.DOTRandomDraw, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func (f *fakeDrugAlcohol) PlanFinalizeDraw(
 	pulid.ID,
 ) (*workerdrugalcoholservice.DrawChange, error) {
 	after := *f.draw
-	after.Status = worker.RandomDrawStatusFinal
+	after.Status = workerdot.RandomDrawStatusFinal
 	return &workerdrugalcoholservice.DrawChange{Before: f.draw, After: &after}, nil
 }
 
@@ -162,7 +162,7 @@ func (f *fakeDrugAlcohol) FinalizeDraw(
 	_ pagination.TenantInfo,
 	id pulid.ID,
 	_ pulid.ID,
-) (*worker.DOTRandomDraw, error) {
+) (*workerdot.DOTRandomDraw, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -174,7 +174,7 @@ func (f *fakeDrugAlcohol) PlanUpdateDrawEntry(
 	_ context.Context,
 	req *workerdrugalcoholservice.UpdateEntryRequest,
 ) (*workerdrugalcoholservice.EntryChange, error) {
-	if req.Status == worker.RandomEntryExcused && req.ExcuseReason == "" {
+	if req.Status == workerdot.RandomEntryExcused && req.ExcuseReason == "" {
 		return nil, errortypes.NewValidationError("excuseReason", errortypes.ErrRequired,
 			"An excused selection says why")
 	}
@@ -187,7 +187,7 @@ func (f *fakeDrugAlcohol) PlanUpdateDrawEntry(
 func (f *fakeDrugAlcohol) UpdateDrawEntry(
 	_ context.Context,
 	req *workerdrugalcoholservice.UpdateEntryRequest,
-) (*worker.DOTRandomDrawEntry, error) {
+) (*workerdot.DOTRandomDrawEntry, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -221,8 +221,8 @@ func TestScheduleDOTTest_RecordsAnOrderAndNoResult(t *testing.T) {
 	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, tests.recorded)
-	assert.Equal(t, worker.DOTTestStatusScheduled, tests.recorded.Status)
-	assert.Equal(t, worker.DOTResultPending, tests.recorded.Result)
+	assert.Equal(t, workerdot.DOTTestStatusScheduled, tests.recorded.Status)
+	assert.Equal(t, workerdot.DOTResultPending, tests.recorded.Result)
 	assert.True(t, tests.recorded.IsDOT)
 	assert.Contains(t, result.IDs, paramDOTTestID)
 	assert.Equal(t, permission.ResourceWorkerDOTTest, tool.Policy().Resource)
@@ -262,7 +262,7 @@ func TestCancelDOTTest_RefusesATestWithAResult(t *testing.T) {
 	)
 	assert.Equal(
 		t,
-		string(worker.DOTTestStatusCancelled),
+		string(workerdot.DOTTestStatusCancelled),
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 0),
@@ -274,7 +274,7 @@ func TestCancelDOTTest_RefusesATestWithAResult(t *testing.T) {
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 	assert.False(t, tool.Policy().Reversible)
 
-	tests.test.Result = worker.DOTResultNegative
+	tests.test.Result = workerdot.DOTResultNegative
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
@@ -350,5 +350,5 @@ func TestUpdateDOTRandomSelection_AnExcuseSaysWhy(t *testing.T) {
 	assert.Contains(t, preview.Summary, "Excused")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, draws.moved)
-	assert.Equal(t, worker.RandomEntryExcused, draws.moved.Status)
+	assert.Equal(t, workerdot.RandomEntryExcused, draws.moved.Status)
 }

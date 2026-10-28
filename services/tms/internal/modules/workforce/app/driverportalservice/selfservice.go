@@ -5,7 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -133,7 +135,7 @@ func (s *Service) AcknowledgeMyPolicy(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	req *AcknowledgeMyPolicyRequest,
-) (*worker.WorkerPolicyAcknowledgement, error) {
+) (*workerpolicy.WorkerPolicyAcknowledgement, error) {
 	if err := s.requireSelfService(); err != nil {
 		return nil, err
 	}
@@ -157,7 +159,7 @@ func (s *Service) AcknowledgeMyPolicy(
 func (s *Service) MyProfileChangeRequests(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*worker.WorkerProfileChangeRequest, error) {
+) ([]*profilechange.WorkerProfileChangeRequest, error) {
 	if err := s.requireSelfService(); err != nil {
 		return nil, err
 	}
@@ -177,7 +179,7 @@ func (s *Service) WithdrawMyProfileChange(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerProfileChangeRequest, error) {
+) (*profilechange.WorkerProfileChangeRequest, error) {
 	if err := s.requireSelfService(); err != nil {
 		return nil, err
 	}

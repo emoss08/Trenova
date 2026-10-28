@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -61,25 +61,25 @@ func New(p Params) *Service {
 func (s *Service) List(
 	ctx context.Context,
 	req *workerports.ListPTOPoliciesRequest,
-) (*pagination.CursorListResult[*worker.PTOPolicy], error) {
+) (*pagination.CursorListResult[*pto.PTOPolicy], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
 	req *workerports.PTOPolicySelectOptionsRequest,
-) (*pagination.ListResult[*worker.PTOPolicy], error) {
+) (*pagination.ListResult[*pto.PTOPolicy], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
 	req *workerports.GetPTOPolicyByIDRequest,
-) (*worker.PTOPolicy, error) {
+) (*pto.PTOPolicy, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
-func (s *Service) validate(ctx context.Context, entity *worker.PTOPolicy) error {
+func (s *Service) validate(ctx context.Context, entity *pto.PTOPolicy) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 
@@ -101,7 +101,7 @@ func (s *Service) validate(ctx context.Context, entity *worker.PTOPolicy) error 
 		}
 	}
 
-	if entity.IsDefault && entity.Status != worker.PTOPolicyStatusActive {
+	if entity.IsDefault && entity.Status != pto.PTOPolicyStatusActive {
 		multiErr.Add("isDefault", errortypes.ErrInvalid, "Only an active policy can be the default")
 	}
 
@@ -113,9 +113,9 @@ func (s *Service) validate(ctx context.Context, entity *worker.PTOPolicy) error 
 
 func (s *Service) Create(
 	ctx context.Context,
-	entity *worker.PTOPolicy,
+	entity *pto.PTOPolicy,
 	userID pulid.ID,
-) (*worker.PTOPolicy, error) {
+) (*pto.PTOPolicy, error) {
 	log := s.l.With(zap.String("operation", "Create"), zap.String("userID", userID.String()))
 
 	if err := s.validate(ctx, entity); err != nil {
@@ -136,9 +136,9 @@ func (s *Service) Create(
 
 func (s *Service) Update(
 	ctx context.Context,
-	entity *worker.PTOPolicy,
+	entity *pto.PTOPolicy,
 	userID pulid.ID,
-) (*worker.PTOPolicy, error) {
+) (*pto.PTOPolicy, error) {
 	log := s.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
 
 	original, err := s.repo.GetByID(ctx, &workerports.GetPTOPolicyByIDRequest{
@@ -154,8 +154,8 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if original.Status == worker.PTOPolicyStatusActive &&
-		entity.Status != worker.PTOPolicyStatusActive {
+	if original.Status == pto.PTOPolicyStatusActive &&
+		entity.Status != pto.PTOPolicyStatusActive {
 		if err = s.requireNoOpenAssignments(ctx, entity); err != nil {
 			return nil, err
 		}
@@ -183,23 +183,23 @@ type StatusChangeRequest struct {
 func (s *Service) Archive(
 	ctx context.Context,
 	req *StatusChangeRequest,
-) (*worker.PTOPolicy, error) {
-	return s.changeStatus(ctx, req, worker.PTOPolicyStatusInactive, permission.OpArchive)
+) (*pto.PTOPolicy, error) {
+	return s.changeStatus(ctx, req, pto.PTOPolicyStatusInactive, permission.OpArchive)
 }
 
 func (s *Service) Restore(
 	ctx context.Context,
 	req *StatusChangeRequest,
-) (*worker.PTOPolicy, error) {
-	return s.changeStatus(ctx, req, worker.PTOPolicyStatusActive, permission.OpRestore)
+) (*pto.PTOPolicy, error) {
+	return s.changeStatus(ctx, req, pto.PTOPolicyStatusActive, permission.OpRestore)
 }
 
 func (s *Service) changeStatus(
 	ctx context.Context,
 	req *StatusChangeRequest,
-	target worker.PTOPolicyStatus,
+	target pto.PTOPolicyStatus,
 	operation permission.Operation,
-) (*worker.PTOPolicy, error) {
+) (*pto.PTOPolicy, error) {
 	log := s.l.With(zap.String("operation", string(operation)), zap.String("id", req.ID.String()))
 
 	original, err := s.repo.GetByID(ctx, &workerports.GetPTOPolicyByIDRequest{
@@ -224,7 +224,7 @@ func (s *Service) changeStatus(
 	updated := *original
 	updated.Rules = original.Rules
 	updated.Status = target
-	if target == worker.PTOPolicyStatusInactive {
+	if target == pto.PTOPolicyStatusInactive {
 		if err = s.requireNoOpenAssignments(ctx, &updated); err != nil {
 			return nil, err
 		}
@@ -243,7 +243,7 @@ func (s *Service) changeStatus(
 	return saved, nil
 }
 
-func (s *Service) CountOpenAssignments(ctx context.Context, entity *worker.PTOPolicy) (int, error) {
+func (s *Service) CountOpenAssignments(ctx context.Context, entity *pto.PTOPolicy) (int, error) {
 	return s.repo.CountOpenAssignments(ctx, &workerports.CountOpenPTOAssignmentsRequest{
 		TenantInfo: tenantOf(entity),
 		PolicyID:   entity.ID,
@@ -261,7 +261,7 @@ func (s *Service) CountOpenAssignmentsByIDs(
 	})
 }
 
-func (s *Service) requireNoOpenAssignments(ctx context.Context, entity *worker.PTOPolicy) error {
+func (s *Service) requireNoOpenAssignments(ctx context.Context, entity *pto.PTOPolicy) error {
 	count, err := s.CountOpenAssignments(ctx, entity)
 	if err != nil {
 		return err
@@ -286,7 +286,7 @@ func pluralSuffix(count int) string {
 }
 
 func (s *Service) audit(
-	current, previous *worker.PTOPolicy,
+	current, previous *pto.PTOPolicy,
 	operation permission.Operation,
 	userID pulid.ID,
 	comment string,
@@ -313,7 +313,7 @@ func (s *Service) audit(
 
 func (s *Service) publish(
 	ctx context.Context,
-	entity *worker.PTOPolicy,
+	entity *pto.PTOPolicy,
 	operation permission.Operation,
 	userID pulid.ID,
 ) {
@@ -334,6 +334,6 @@ func (s *Service) publish(
 	}
 }
 
-func tenantOf(entity *worker.PTOPolicy) pagination.TenantInfo {
+func tenantOf(entity *pto.PTOPolicy) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }

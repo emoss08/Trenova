@@ -3,6 +3,20 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"bytes"
 	"fmt"
 	"io"
@@ -2500,7 +2514,7 @@ type CompleteAccountingAuthorizationInput struct {
 
 type CompleteClearinghouseQueryInput struct {
 	QueryID        string                     `json:"queryId"`
-	Result         worker.ClearinghouseResult `json:"result"`
+	Result         workerdot.ClearinghouseResult `json:"result"`
 	CompletedAt    *int                       `json:"completedAt,omitempty"`
 	ViolationCount *int                       `json:"violationCount,omitempty"`
 	Reference      *string                    `json:"reference,omitempty"`
@@ -2888,7 +2902,7 @@ type DOTRandomPoolConnection struct {
 }
 
 type DOTRandomPoolEdge struct {
-	Node   *worker.DOTRandomPool `json:"node"`
+	Node   *workerdot.DOTRandomPool `json:"node"`
 	Cursor string                `json:"cursor"`
 }
 
@@ -2897,7 +2911,7 @@ type DOTRandomPoolInput struct {
 	Name                string              `json:"name"`
 	Description         *string             `json:"description,omitempty"`
 	Status              *domaintypes.Status `json:"status,omitempty"`
-	Period              worker.RandomPeriod `json:"period"`
+	Period              workerdot.RandomPeriod `json:"period"`
 	DrugRatePercent     int                 `json:"drugRatePercent"`
 	AlcoholRatePercent  int                 `json:"alcoholRatePercent"`
 	IncludedDriverTypes []string            `json:"includedDriverTypes,omitempty"`
@@ -3048,7 +3062,7 @@ type DelegateApprovalInput struct {
 	// naming somebody else needs the manage grant.
 	DelegatorID *string               `json:"delegatorId,omitempty"`
 	DelegateID  string                `json:"delegateId"`
-	Scope       *worker.ApprovalScope `json:"scope,omitempty"`
+	Scope       *approvaldelegation.ApprovalScope `json:"scope,omitempty"`
 	StartsAt    *int                  `json:"startsAt,omitempty"`
 	EndsAt      *int                  `json:"endsAt,omitempty"`
 	Reason      *string               `json:"reason,omitempty"`
@@ -6387,7 +6401,7 @@ type IssueCustomerTrackingLinkPayload struct {
 
 type IssueDisciplinaryActionInput struct {
 	WorkerID       string                   `json:"workerId"`
-	Level          worker.DisciplinaryLevel `json:"level"`
+	Level          workersafety.DisciplinaryLevel `json:"level"`
 	Reason         string                   `json:"reason"`
 	Details        *string                  `json:"details,omitempty"`
 	OccurredAt     *int                     `json:"occurredAt,omitempty"`
@@ -6776,7 +6790,7 @@ type OpenInvoiceDisputeInput struct {
 type OpenLeaveCaseInput struct {
 	WorkerID               string                 `json:"workerId"`
 	LeaveType              *worker.LeaveType      `json:"leaveType,omitempty"`
-	Frequency              *worker.LeaveFrequency `json:"frequency,omitempty"`
+	Frequency              *workerleave.LeaveFrequency `json:"frequency,omitempty"`
 	Reason                 *string                `json:"reason,omitempty"`
 	MilitaryCaregiver      *bool                  `json:"militaryCaregiver,omitempty"`
 	RequestedAt            *int                   `json:"requestedAt,omitempty"`
@@ -6844,7 +6858,7 @@ type OrderLeg struct {
 type OrgHolidayInput struct {
 	Name           string             `json:"name"`
 	HolidayDate    int                `json:"holidayDate"`
-	Kind           worker.HolidayKind `json:"kind"`
+	Kind           pto.HolidayKind `json:"kind"`
 	RecursAnnually bool               `json:"recursAnnually"`
 	Description    *string            `json:"description,omitempty"`
 	Version        *int               `json:"version,omitempty"`
@@ -6900,7 +6914,7 @@ type PTOPoliciesInput struct {
 	FieldFilters []*FieldFilterInput     `json:"fieldFilters,omitempty"`
 	FilterGroups []*FilterGroupInput     `json:"filterGroups,omitempty"`
 	Sort         []*SortFieldInput       `json:"sort,omitempty"`
-	Status       *worker.PTOPolicyStatus `json:"status,omitempty"`
+	Status       *pto.PTOPolicyStatus `json:"status,omitempty"`
 }
 
 type PTOPolicyConnection struct {
@@ -6912,7 +6926,7 @@ type PTOPolicyConnection struct {
 }
 
 type PTOPolicyEdge struct {
-	Node   *worker.PTOPolicy `json:"node"`
+	Node   *pto.PTOPolicy `json:"node"`
 	Cursor string            `json:"cursor"`
 }
 
@@ -6920,9 +6934,9 @@ type PTOPolicyInput struct {
 	Name              string                 `json:"name"`
 	Code              string                 `json:"code"`
 	Description       *string                `json:"description,omitempty"`
-	Status            worker.PTOPolicyStatus `json:"status"`
+	Status            pto.PTOPolicyStatus `json:"status"`
 	IsDefault         bool                   `json:"isDefault"`
-	YearBasis         worker.PTOYearBasis    `json:"yearBasis"`
+	YearBasis         pto.PTOYearBasis    `json:"yearBasis"`
 	CountWeekends     bool                   `json:"countWeekends"`
 	WaitingPeriodDays int                    `json:"waitingPeriodDays"`
 	RequiresApproval  bool                   `json:"requiresApproval"`
@@ -6935,13 +6949,13 @@ type PTOPolicyInput struct {
 
 type PTOPolicyRuleInput struct {
 	PTOType             worker.PTOType               `json:"ptoType"`
-	AccrualMethod       worker.PTOAccrualMethod      `json:"accrualMethod"`
+	AccrualMethod       pto.PTOAccrualMethod      `json:"accrualMethod"`
 	AccrualAmountDays   string                       `json:"accrualAmountDays"`
 	MaxBalanceDays      *string                      `json:"maxBalanceDays,omitempty"`
 	CarryoverCapDays    *string                      `json:"carryoverCapDays,omitempty"`
 	CarryoverExpiryDays *int                         `json:"carryoverExpiryDays,omitempty"`
 	Tiers               []*PTOAccrualTierInput       `json:"tiers,omitempty"`
-	OnTermination       *worker.PTOTerminationAction `json:"onTermination,omitempty"`
+	OnTermination       *pto.PTOTerminationAction `json:"onTermination,omitempty"`
 }
 
 // What a screen needs and what a person or a role would see on it, from the
@@ -7180,7 +7194,7 @@ type PerformanceReviewTemplateConnection struct {
 }
 
 type PerformanceReviewTemplateEdge struct {
-	Node   *worker.PerformanceReviewTemplate `json:"node"`
+	Node   *workerreview.PerformanceReviewTemplate `json:"node"`
 	Cursor string                            `json:"cursor"`
 }
 
@@ -7206,7 +7220,7 @@ type PerformanceReviewTemplatesInput struct {
 }
 
 type PolicyCompliance struct {
-	Policy      *worker.WorkerPolicy   `json:"policy"`
+	Policy      *workerpolicy.WorkerPolicy   `json:"policy"`
 	Signed      int                    `json:"signed"`
 	Outstanding int                    `json:"outstanding"`
 	Rows        []*PolicyComplianceRow `json:"rows"`
@@ -7250,7 +7264,7 @@ type PrepareAccountingCertificateInput struct {
 
 type ProfileChangeFilterInput struct {
 	WorkerID *string                      `json:"workerId,omitempty"`
-	Statuses []worker.ProfileChangeStatus `json:"statuses,omitempty"`
+	Statuses []profilechange.ProfileChangeStatus `json:"statuses,omitempty"`
 	// Narrows the queue to the people a manager answers for.
 	TeamOnly *bool `json:"teamOnly,omitempty"`
 	Limit    *int  `json:"limit,omitempty"`
@@ -7598,11 +7612,11 @@ type RecentDecision struct {
 
 type RecordClearinghouseQueryInput struct {
 	WorkerID          string                        `json:"workerId"`
-	QueryType         worker.ClearinghouseQueryType `json:"queryType"`
+	QueryType         workerdot.ClearinghouseQueryType `json:"queryType"`
 	RequestedAt       *int                          `json:"requestedAt,omitempty"`
 	ConsentObtainedAt *int                          `json:"consentObtainedAt,omitempty"`
 	ConsentExpiresAt  *int                          `json:"consentExpiresAt,omitempty"`
-	Result            *worker.ClearinghouseResult   `json:"result,omitempty"`
+	Result            *workerdot.ClearinghouseResult   `json:"result,omitempty"`
 	CompletedAt       *int                          `json:"completedAt,omitempty"`
 	ViolationCount    *int                          `json:"violationCount,omitempty"`
 	Reference         *string                       `json:"reference,omitempty"`
@@ -7612,10 +7626,10 @@ type RecordClearinghouseQueryInput struct {
 
 type RecordDOTTestInput struct {
 	WorkerID             string                  `json:"workerId"`
-	TestType             worker.DOTTestType      `json:"testType"`
-	Substance            worker.DOTTestSubstance `json:"substance"`
-	Status               *worker.DOTTestStatus   `json:"status,omitempty"`
-	Result               *worker.DOTTestResult   `json:"result,omitempty"`
+	TestType             workerdot.DOTTestType      `json:"testType"`
+	Substance            workerdot.DOTTestSubstance `json:"substance"`
+	Status               *workerdot.DOTTestStatus   `json:"status,omitempty"`
+	Result               *workerdot.DOTTestResult   `json:"result,omitempty"`
 	IsDOT                *bool                   `json:"isDot,omitempty"`
 	Reason               *string                 `json:"reason,omitempty"`
 	ScheduledAt          *int                    `json:"scheduledAt,omitempty"`
@@ -7636,7 +7650,7 @@ type RecordDOTTestInput struct {
 
 type RecordDOTTestResultInput struct {
 	TestID        string               `json:"testId"`
-	Result        worker.DOTTestResult `json:"result"`
+	Result        workerdot.DOTTestResult `json:"result"`
 	ResultAt      *int                 `json:"resultAt,omitempty"`
 	LabName       *string              `json:"labName,omitempty"`
 	MroName       *string              `json:"mroName,omitempty"`
@@ -7650,7 +7664,7 @@ type RecordDOTTestResultInput struct {
 
 type RecordDOTViolationInput struct {
 	WorkerID                  string                  `json:"workerId"`
-	ViolationType             worker.DOTViolationType `json:"violationType"`
+	ViolationType             workerdot.DOTViolationType `json:"violationType"`
 	OccurredAt                int                     `json:"occurredAt"`
 	SourceTestID              *string                 `json:"sourceTestId,omitempty"`
 	ReportedToClearinghouseAt *int                    `json:"reportedToClearinghouseAt,omitempty"`
@@ -7671,8 +7685,8 @@ type RecordEmploymentVerificationInput struct {
 	EmployedFrom      *int                                 `json:"employedFrom,omitempty"`
 	EmployedTo        *int                                 `json:"employedTo,omitempty"`
 	WasDOTRegulated   *bool                                `json:"wasDotRegulated,omitempty"`
-	Status            *worker.EmploymentVerificationStatus `json:"status,omitempty"`
-	Method            *worker.EmploymentVerificationMethod `json:"method,omitempty"`
+	Status            *employment.EmploymentVerificationStatus `json:"status,omitempty"`
+	Method            *employment.EmploymentVerificationMethod `json:"method,omitempty"`
 	RequestedAt       *int                                 `json:"requestedAt,omitempty"`
 	Notes             *string                              `json:"notes,omitempty"`
 }
@@ -7688,7 +7702,7 @@ type RecordFactoringFundingInput struct {
 
 type RecordLeaveCertificationInput struct {
 	CaseID               string                          `json:"caseId"`
-	Status               worker.LeaveCertificationStatus `json:"status"`
+	Status               workerleave.LeaveCertificationStatus `json:"status"`
 	ReceivedAt           *int                            `json:"receivedAt,omitempty"`
 	RecertificationDueAt *int                            `json:"recertificationDueAt,omitempty"`
 	DocumentID           *string                         `json:"documentId,omitempty"`
@@ -7726,7 +7740,7 @@ type RecordSafetyViolationInput struct {
 	SafetyEventID string `json:"safetyEventId"`
 	// Left empty, the BASIC falls back to what the event itself implies, so a clerk
 	// keying an inspection does not have to classify every line to record one.
-	Basic          *worker.CSABasic `json:"basic,omitempty"`
+	Basic          *workersafety.CSABasic `json:"basic,omitempty"`
 	Code           *string          `json:"code,omitempty"`
 	Description    string           `json:"description"`
 	SeverityWeight *int             `json:"severityWeight,omitempty"`
@@ -7748,7 +7762,7 @@ type RecordTimeEntryInput struct {
 
 type RecordWorkerEmploymentEventInput struct {
 	WorkerID    string                     `json:"workerId"`
-	Kind        worker.EmploymentEventKind `json:"kind"`
+	Kind        employment.EmploymentEventKind `json:"kind"`
 	EffectiveAt int                        `json:"effectiveAt"`
 	Reason      *string                    `json:"reason,omitempty"`
 	Notes       *string                    `json:"notes,omitempty"`
@@ -7770,9 +7784,9 @@ type RecordWorkerInjuryInput struct {
 	WorkerID         string                         `json:"workerId"`
 	OccurredAt       int                            `json:"occurredAt"`
 	Description      string                         `json:"description"`
-	Classification   *worker.OSHACaseClassification `json:"classification,omitempty"`
-	IllnessType      *worker.OSHAIllnessType        `json:"illnessType,omitempty"`
-	Treatment        *worker.InjuryTreatment        `json:"treatment,omitempty"`
+	Classification   *workersafety.OSHACaseClassification `json:"classification,omitempty"`
+	IllnessType      *workersafety.OSHAIllnessType        `json:"illnessType,omitempty"`
+	Treatment        *workersafety.InjuryTreatment        `json:"treatment,omitempty"`
 	ReportedAt       *int                           `json:"reportedAt,omitempty"`
 	ReturnedToWorkAt *int                           `json:"returnedToWorkAt,omitempty"`
 	Location         *string                        `json:"location,omitempty"`
@@ -7781,7 +7795,7 @@ type RecordWorkerInjuryInput struct {
 	DaysAway         *int                           `json:"daysAway,omitempty"`
 	DaysRestricted   *int                           `json:"daysRestricted,omitempty"`
 	PrivacyCase      *bool                          `json:"privacyCase,omitempty"`
-	ClaimStatus      *worker.WorkersCompClaimStatus `json:"claimStatus,omitempty"`
+	ClaimStatus      *workersafety.WorkersCompClaimStatus `json:"claimStatus,omitempty"`
 	ClaimNumber      *string                        `json:"claimNumber,omitempty"`
 	ClaimCarrier     *string                        `json:"claimCarrier,omitempty"`
 	ClaimFiledAt     *int                           `json:"claimFiledAt,omitempty"`
@@ -8470,7 +8484,7 @@ type ReviewGoalInput struct {
 	ID     *string                  `json:"id,omitempty"`
 	Title  string                   `json:"title"`
 	DueAt  *int                     `json:"dueAt,omitempty"`
-	Status *worker.ReviewGoalStatus `json:"status,omitempty"`
+	Status *workerreview.ReviewGoalStatus `json:"status,omitempty"`
 }
 
 type ReviewInboundMessageInput struct {
@@ -8568,7 +8582,7 @@ type Rota struct {
 type RotaDay struct {
 	// The day this row describes, as the Unix timestamp of its start.
 	Date  int                 `json:"date"`
-	State worker.RotaDayState `json:"state"`
+	State workerschedule.RotaDayState `json:"state"`
 	// Whether the pattern covers this day, whatever the state ended up being. It is
 	// what makes a conflict visible: a day that is both scheduled and TimeOff is a
 	// hole in the roster, and a day that is only TimeOff is not.
@@ -8578,7 +8592,7 @@ type RotaDay struct {
 	// The driver's own statement about this weekday, carried through even when
 	// something stronger decided the state, so the rota can show where dispatch
 	// overrode it rather than hiding the override.
-	Preference      *worker.AvailabilityPreference `json:"preference,omitempty"`
+	Preference      *workerschedule.AvailabilityPreference `json:"preference,omitempty"`
 	AssignmentCount int                            `json:"assignmentCount"`
 	// A day the pattern rosters somebody onto that they cannot work.
 	IsConflict bool `json:"isConflict"`
@@ -8889,7 +8903,7 @@ type SetAgentAccessInput struct {
 type SetAvailabilityPreferenceInput struct {
 	WorkerID   string                        `json:"workerId"`
 	DayOfWeek  int                           `json:"dayOfWeek"`
-	Preference worker.AvailabilityPreference `json:"preference"`
+	Preference workerschedule.AvailabilityPreference `json:"preference"`
 	Note       *string                       `json:"note,omitempty"`
 }
 
@@ -8914,7 +8928,7 @@ type SetMyAIFeedbackInput struct {
 
 type SetMyAvailabilityInput struct {
 	DayOfWeek  int                           `json:"dayOfWeek"`
-	Preference worker.AvailabilityPreference `json:"preference"`
+	Preference workerschedule.AvailabilityPreference `json:"preference"`
 	Note       *string                       `json:"note,omitempty"`
 }
 
@@ -11281,7 +11295,7 @@ type TenderShipmentsResult struct {
 
 type TimesheetFilterInput struct {
 	WorkerID *string                  `json:"workerId,omitempty"`
-	Statuses []worker.TimesheetStatus `json:"statuses,omitempty"`
+	Statuses []timesheet.TimesheetStatus `json:"statuses,omitempty"`
 	From     *int                     `json:"from,omitempty"`
 	To       *int                     `json:"to,omitempty"`
 	// Narrows the queue to the people a manager answers for.
@@ -11458,7 +11472,7 @@ type TrainingCourseConnection struct {
 }
 
 type TrainingCourseEdge struct {
-	Node   *worker.TrainingCourse `json:"node"`
+	Node   *workertraining.TrainingCourse `json:"node"`
 	Cursor string                 `json:"cursor"`
 }
 
@@ -11466,9 +11480,9 @@ type TrainingCourseInput struct {
 	Code                    string                  `json:"code"`
 	Name                    string                  `json:"name"`
 	Description             *string                 `json:"description,omitempty"`
-	Category                worker.TrainingCategory `json:"category"`
+	Category                workertraining.TrainingCategory `json:"category"`
 	Status                  domaintypes.Status      `json:"status"`
-	Delivery                worker.TrainingDelivery `json:"delivery"`
+	Delivery                workertraining.TrainingDelivery `json:"delivery"`
 	ContentURL              *string                 `json:"contentUrl,omitempty"`
 	DurationMinutes         int                     `json:"durationMinutes"`
 	PassingScore            *string                 `json:"passingScore,omitempty"`
@@ -11490,18 +11504,18 @@ type TrainingCoursesInput struct {
 	FilterGroups []*FilterGroupInput      `json:"filterGroups,omitempty"`
 	Sort         []*SortFieldInput        `json:"sort,omitempty"`
 	Status       *domaintypes.Status      `json:"status,omitempty"`
-	Category     *worker.TrainingCategory `json:"category,omitempty"`
+	Category     *workertraining.TrainingCategory `json:"category,omitempty"`
 }
 
 type TransitionShiftSwapInput struct {
 	ID     string                 `json:"id"`
-	Status worker.ShiftSwapStatus `json:"status"`
+	Status workerschedule.ShiftSwapStatus `json:"status"`
 	Note   *string                `json:"note,omitempty"`
 }
 
 type TransitionTimesheetInput struct {
 	ID     string                 `json:"id"`
-	Status worker.TimesheetStatus `json:"status"`
+	Status timesheet.TimesheetStatus `json:"status"`
 	Note   *string                `json:"note,omitempty"`
 }
 
@@ -11681,7 +11695,7 @@ type UpdateCustomerTrackingProfileInput struct {
 
 type UpdateDOTRandomDrawEntryInput struct {
 	EntryID      string                   `json:"entryId"`
-	Status       worker.RandomEntryStatus `json:"status"`
+	Status       workerdot.RandomEntryStatus `json:"status"`
 	ExcuseReason *string                  `json:"excuseReason,omitempty"`
 }
 
@@ -11731,8 +11745,8 @@ type UpdateEmploymentVerificationInput struct {
 	EmployedFrom                  *int                                 `json:"employedFrom,omitempty"`
 	EmployedTo                    *int                                 `json:"employedTo,omitempty"`
 	WasDOTRegulated               *bool                                `json:"wasDotRegulated,omitempty"`
-	Status                        *worker.EmploymentVerificationStatus `json:"status,omitempty"`
-	Method                        *worker.EmploymentVerificationMethod `json:"method,omitempty"`
+	Status                        *employment.EmploymentVerificationStatus `json:"status,omitempty"`
+	Method                        *employment.EmploymentVerificationMethod `json:"method,omitempty"`
 	RequestedAt                   *int                                 `json:"requestedAt,omitempty"`
 	ResponseReceivedAt            *int                                 `json:"responseReceivedAt,omitempty"`
 	DrugAlcoholResponseReceivedAt *int                                 `json:"drugAlcoholResponseReceivedAt,omitempty"`
@@ -11837,7 +11851,7 @@ type UpdateJobPositionInput struct {
 type UpdateLeaveCaseInput struct {
 	CaseID                 string                 `json:"caseId"`
 	LeaveType              *worker.LeaveType      `json:"leaveType,omitempty"`
-	Frequency              *worker.LeaveFrequency `json:"frequency,omitempty"`
+	Frequency              *workerleave.LeaveFrequency `json:"frequency,omitempty"`
 	Reason                 *string                `json:"reason,omitempty"`
 	MilitaryCaregiver      *bool                  `json:"militaryCaregiver,omitempty"`
 	StartsAt               *int                   `json:"startsAt,omitempty"`
@@ -11848,7 +11862,7 @@ type UpdateLeaveCaseInput struct {
 }
 
 type UpdateLeaveControlInput struct {
-	MeasurementMethod      *worker.LeaveMeasurementMethod `json:"measurementMethod,omitempty"`
+	MeasurementMethod      *workerleave.LeaveMeasurementMethod `json:"measurementMethod,omitempty"`
 	EntitlementWeeks       *string                        `json:"entitlementWeeks,omitempty"`
 	MilitaryCaregiverWeeks *string                        `json:"militaryCaregiverWeeks,omitempty"`
 	WorkweekHours          *string                        `json:"workweekHours,omitempty"`
@@ -12009,7 +12023,7 @@ type UpdateReportViewInput struct {
 
 type UpdateSafetyViolationInput struct {
 	ID             string           `json:"id"`
-	Basic          *worker.CSABasic `json:"basic,omitempty"`
+	Basic          *workersafety.CSABasic `json:"basic,omitempty"`
 	Code           *string          `json:"code,omitempty"`
 	Description    string           `json:"description"`
 	SeverityWeight *int             `json:"severityWeight,omitempty"`
@@ -12047,10 +12061,10 @@ type UpdateWorkerCredentialInput struct {
 
 type UpdateWorkerInjuryInput struct {
 	InjuryID         string                         `json:"injuryId"`
-	Classification   *worker.OSHACaseClassification `json:"classification,omitempty"`
-	IllnessType      *worker.OSHAIllnessType        `json:"illnessType,omitempty"`
-	Treatment        *worker.InjuryTreatment        `json:"treatment,omitempty"`
-	Status           *worker.InjuryCaseStatus       `json:"status,omitempty"`
+	Classification   *workersafety.OSHACaseClassification `json:"classification,omitempty"`
+	IllnessType      *workersafety.OSHAIllnessType        `json:"illnessType,omitempty"`
+	Treatment        *workersafety.InjuryTreatment        `json:"treatment,omitempty"`
+	Status           *workersafety.InjuryCaseStatus       `json:"status,omitempty"`
 	OccurredAt       *int                           `json:"occurredAt,omitempty"`
 	ReportedAt       *int                           `json:"reportedAt,omitempty"`
 	ReturnedToWorkAt *int                           `json:"returnedToWorkAt,omitempty"`
@@ -12061,7 +12075,7 @@ type UpdateWorkerInjuryInput struct {
 	DaysAway         *int                           `json:"daysAway,omitempty"`
 	DaysRestricted   *int                           `json:"daysRestricted,omitempty"`
 	PrivacyCase      *bool                          `json:"privacyCase,omitempty"`
-	ClaimStatus      *worker.WorkersCompClaimStatus `json:"claimStatus,omitempty"`
+	ClaimStatus      *workersafety.WorkersCompClaimStatus `json:"claimStatus,omitempty"`
 	ClaimNumber      *string                        `json:"claimNumber,omitempty"`
 	ClaimCarrier     *string                        `json:"claimCarrier,omitempty"`
 	ClaimFiledAt     *int                           `json:"claimFiledAt,omitempty"`
@@ -12082,8 +12096,8 @@ type UpdateWorkerPTOInput struct {
 
 type UpdateWorkerSafetyEventInput struct {
 	ID               string                   `json:"id"`
-	Kind             worker.SafetyEventKind   `json:"kind"`
-	Severity         worker.SafetySeverity    `json:"severity"`
+	Kind             workersafety.SafetyEventKind   `json:"kind"`
+	Severity         workersafety.SafetySeverity    `json:"severity"`
 	OccurredAt       int                      `json:"occurredAt"`
 	Location         *string                  `json:"location,omitempty"`
 	Description      string                   `json:"description"`
@@ -12093,7 +12107,7 @@ type UpdateWorkerSafetyEventInput struct {
 	ReferenceNumber  *string                  `json:"referenceNumber,omitempty"`
 	ShipmentID       *string                  `json:"shipmentId,omitempty"`
 	InspectionLevel  *int                     `json:"inspectionLevel,omitempty"`
-	InspectionResult *worker.InspectionResult `json:"inspectionResult,omitempty"`
+	InspectionResult *workersafety.InspectionResult `json:"inspectionResult,omitempty"`
 	OutOfService     *bool                    `json:"outOfService,omitempty"`
 	FineAmount       *string                  `json:"fineAmount,omitempty"`
 	CostAmount       *string                  `json:"costAmount,omitempty"`
@@ -12317,7 +12331,7 @@ type WorkerChecklistTemplateConnection struct {
 }
 
 type WorkerChecklistTemplateEdge struct {
-	Node   *worker.WorkerChecklistTemplate `json:"node"`
+	Node   *workerchecklist.WorkerChecklistTemplate `json:"node"`
 	Cursor string                          `json:"cursor"`
 }
 
@@ -12325,8 +12339,8 @@ type WorkerChecklistTemplateInput struct {
 	Code        string                              `json:"code"`
 	Name        string                              `json:"name"`
 	Description *string                             `json:"description,omitempty"`
-	Kind        worker.ChecklistKind                `json:"kind"`
-	Trigger     worker.ChecklistTrigger             `json:"trigger"`
+	Kind        workerchecklist.ChecklistKind                `json:"kind"`
+	Trigger     workerchecklist.ChecklistTrigger             `json:"trigger"`
 	Status      domaintypes.Status                  `json:"status"`
 	IsDefault   bool                                `json:"isDefault"`
 	Items       []*WorkerChecklistTemplateItemInput `json:"items"`
@@ -12336,10 +12350,10 @@ type WorkerChecklistTemplateInput struct {
 type WorkerChecklistTemplateItemInput struct {
 	Label            string                   `json:"label"`
 	Description      *string                  `json:"description,omitempty"`
-	Kind             worker.ChecklistItemKind `json:"kind"`
+	Kind             workerchecklist.ChecklistItemKind `json:"kind"`
 	Required         bool                     `json:"required"`
 	DueOffsetDays    int                      `json:"dueOffsetDays"`
-	Owner            worker.ChecklistOwner    `json:"owner"`
+	Owner            workerchecklist.ChecklistOwner    `json:"owner"`
 	CredentialTypeID *string                  `json:"credentialTypeId,omitempty"`
 	DocumentTypeID   *string                  `json:"documentTypeId,omitempty"`
 }
@@ -12352,8 +12366,8 @@ type WorkerChecklistTemplatesInput struct {
 	FilterGroups []*FilterGroupInput      `json:"filterGroups,omitempty"`
 	Sort         []*SortFieldInput        `json:"sort,omitempty"`
 	Status       *domaintypes.Status      `json:"status,omitempty"`
-	Kind         *worker.ChecklistKind    `json:"kind,omitempty"`
-	Trigger      *worker.ChecklistTrigger `json:"trigger,omitempty"`
+	Kind         *workerchecklist.ChecklistKind    `json:"kind,omitempty"`
+	Trigger      *workerchecklist.ChecklistTrigger `json:"trigger,omitempty"`
 }
 
 type WorkerConnection struct {
@@ -12387,7 +12401,7 @@ type WorkerCredentialTypeConnection struct {
 }
 
 type WorkerCredentialTypeEdge struct {
-	Node   *worker.WorkerCredentialType `json:"node"`
+	Node   *workercredential.WorkerCredentialType `json:"node"`
 	Cursor string                       `json:"cursor"`
 }
 
@@ -12395,7 +12409,7 @@ type WorkerCredentialTypeInput struct {
 	Code                   string                    `json:"code"`
 	Name                   string                    `json:"name"`
 	Description            *string                   `json:"description,omitempty"`
-	Category               worker.CredentialCategory `json:"category"`
+	Category               workercredential.CredentialCategory `json:"category"`
 	Status                 domaintypes.Status        `json:"status"`
 	IsRequired             bool                      `json:"isRequired"`
 	RequiredForDriverTypes []worker.DriverType       `json:"requiredForDriverTypes,omitempty"`
@@ -12415,7 +12429,7 @@ type WorkerCredentialTypesInput struct {
 	FilterGroups []*FilterGroupInput        `json:"filterGroups,omitempty"`
 	Sort         []*SortFieldInput          `json:"sort,omitempty"`
 	Status       *domaintypes.Status        `json:"status,omitempty"`
-	Category     *worker.CredentialCategory `json:"category,omitempty"`
+	Category     *workercredential.CredentialCategory `json:"category,omitempty"`
 }
 
 type WorkerEdge struct {
@@ -12551,7 +12565,7 @@ type WorkerPTOLedgerConnection struct {
 }
 
 type WorkerPTOLedgerEdge struct {
-	Node   *worker.WorkerPTOLedgerEntry `json:"node"`
+	Node   *pto.WorkerPTOLedgerEntry `json:"node"`
 	Cursor string                       `json:"cursor"`
 }
 
@@ -12564,7 +12578,7 @@ type WorkerPTOLedgerInput struct {
 	Sort          []*SortFieldInput          `json:"sort,omitempty"`
 	WorkerID      *string                    `json:"workerId,omitempty"`
 	PTOType       *worker.PTOType            `json:"ptoType,omitempty"`
-	EntryType     *worker.PTOLedgerEntryType `json:"entryType,omitempty"`
+	EntryType     *pto.PTOLedgerEntryType `json:"entryType,omitempty"`
 	EffectiveFrom *int                       `json:"effectiveFrom,omitempty"`
 	EffectiveTo   *int                       `json:"effectiveTo,omitempty"`
 	IncludeWorker *bool                      `json:"includeWorker,omitempty"`
@@ -12587,14 +12601,14 @@ type WorkerPolicyInput struct {
 	DocumentID        *string               `json:"documentId,omitempty"`
 	VersionLabel      string                `json:"versionLabel"`
 	RequiresSignature bool                  `json:"requiresSignature"`
-	AppliesTo         worker.PolicyAudience `json:"appliesTo"`
+	AppliesTo         workerpolicy.PolicyAudience `json:"appliesTo"`
 	EffectiveFrom     *int                  `json:"effectiveFrom,omitempty"`
 	Status            *domaintypes.Status   `json:"status,omitempty"`
 }
 
 type WorkerRecognitionInput struct {
 	WorkerID        string                 `json:"workerId"`
-	Kind            worker.RecognitionKind `json:"kind"`
+	Kind            workersafety.RecognitionKind `json:"kind"`
 	Title           string                 `json:"title"`
 	Message         *string                `json:"message,omitempty"`
 	OccurredAt      *int                   `json:"occurredAt,omitempty"`
@@ -12603,8 +12617,8 @@ type WorkerRecognitionInput struct {
 
 type WorkerSafetyEventInput struct {
 	WorkerID    string                 `json:"workerId"`
-	Kind        worker.SafetyEventKind `json:"kind"`
-	Severity    worker.SafetySeverity  `json:"severity"`
+	Kind        workersafety.SafetyEventKind `json:"kind"`
+	Severity    workersafety.SafetySeverity  `json:"severity"`
 	OccurredAt  int                    `json:"occurredAt"`
 	Location    *string                `json:"location,omitempty"`
 	Description string                 `json:"description"`
@@ -12615,7 +12629,7 @@ type WorkerSafetyEventInput struct {
 	ReferenceNumber  *string                  `json:"referenceNumber,omitempty"`
 	ShipmentID       *string                  `json:"shipmentId,omitempty"`
 	InspectionLevel  *int                     `json:"inspectionLevel,omitempty"`
-	InspectionResult *worker.InspectionResult `json:"inspectionResult,omitempty"`
+	InspectionResult *workersafety.InspectionResult `json:"inspectionResult,omitempty"`
 	OutOfService     *bool                    `json:"outOfService,omitempty"`
 	FineAmount       *string                  `json:"fineAmount,omitempty"`
 	CostAmount       *string                  `json:"costAmount,omitempty"`

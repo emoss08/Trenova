@@ -12,52 +12,52 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *DOTRandomDrawResolver) DrawnByID(ctx context.Context, obj *worker.DOTRandomDraw) (*string, error) {
+func (r *DOTRandomDrawResolver) DrawnByID(ctx context.Context, obj *workerdot.DOTRandomDraw) (*string, error) {
 	return base.IDPtr(obj.DrawnByID), nil
 }
 
-func (r *DOTRandomDrawResolver) FinalizedAt(ctx context.Context, obj *worker.DOTRandomDraw) (*int, error) {
+func (r *DOTRandomDrawResolver) FinalizedAt(ctx context.Context, obj *workerdot.DOTRandomDraw) (*int, error) {
 	return base.IntPtr(obj.FinalizedAt), nil
 }
 
-func (r *DOTRandomDrawResolver) Entries(ctx context.Context, obj *worker.DOTRandomDraw) ([]*worker.DOTRandomDrawEntry, error) {
+func (r *DOTRandomDrawResolver) Entries(ctx context.Context, obj *workerdot.DOTRandomDraw) ([]*workerdot.DOTRandomDrawEntry, error) {
 	if obj.Entries == nil {
-		return []*worker.DOTRandomDrawEntry{}, nil
+		return []*workerdot.DOTRandomDrawEntry{}, nil
 	}
 	return obj.Entries, nil
 }
 
-func (r *DOTRandomDrawEntryResolver) NotifiedAt(ctx context.Context, obj *worker.DOTRandomDrawEntry) (*int, error) {
+func (r *DOTRandomDrawEntryResolver) NotifiedAt(ctx context.Context, obj *workerdot.DOTRandomDrawEntry) (*int, error) {
 	return base.IntPtr(obj.NotifiedAt), nil
 }
 
-func (r *DOTRandomDrawEntryResolver) CompletedAt(ctx context.Context, obj *worker.DOTRandomDrawEntry) (*int, error) {
+func (r *DOTRandomDrawEntryResolver) CompletedAt(ctx context.Context, obj *workerdot.DOTRandomDrawEntry) (*int, error) {
 	return base.IntPtr(obj.CompletedAt), nil
 }
 
-func (r *DOTRandomDrawEntryResolver) TestID(ctx context.Context, obj *worker.DOTRandomDrawEntry) (*string, error) {
+func (r *DOTRandomDrawEntryResolver) TestID(ctx context.Context, obj *workerdot.DOTRandomDrawEntry) (*string, error) {
 	return base.IDPtr(obj.TestID), nil
 }
 
-func (r *DOTRandomPoolResolver) MeetsDOTMinimums(ctx context.Context, obj *worker.DOTRandomPool) (bool, error) {
+func (r *DOTRandomPoolResolver) MeetsDOTMinimums(ctx context.Context, obj *workerdot.DOTRandomPool) (bool, error) {
 	return obj.MeetsDOTMinimums(), nil
 }
 
-func (r *DrugAlcoholStandingResolver) LastClearinghouseQueryAt(ctx context.Context, obj *worker.DrugAlcoholStanding) (*int, error) {
+func (r *DrugAlcoholStandingResolver) LastClearinghouseQueryAt(ctx context.Context, obj *workerdot.DrugAlcoholStanding) (*int, error) {
 	return base.IntPtr(obj.LastClearinghouseQueryAt), nil
 }
 
-func (r *DrugAlcoholStandingResolver) NextClearinghouseQueryDue(ctx context.Context, obj *worker.DrugAlcoholStanding) (*int, error) {
+func (r *DrugAlcoholStandingResolver) NextClearinghouseQueryDue(ctx context.Context, obj *workerdot.DrugAlcoholStanding) (*int, error) {
 	return base.IntPtr(obj.NextClearinghouseQueryDue), nil
 }
 
-func (r *MutationResolver) RecordDOTTest(ctx context.Context, input gqlmodel.RecordDOTTestInput) (*worker.WorkerDOTTest, error) {
+func (r *MutationResolver) RecordDOTTest(ctx context.Context, input gqlmodel.RecordDOTTestInput) (*workerdot.WorkerDOTTest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (r *MutationResolver) RecordDOTTest(ctx context.Context, input gqlmodel.Rec
 	return r.WorkerDrugAlcoholService.RecordTest(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) RecordDOTTestResult(ctx context.Context, input gqlmodel.RecordDOTTestResultInput) (*worker.WorkerDOTTest, error) {
+func (r *MutationResolver) RecordDOTTestResult(ctx context.Context, input gqlmodel.RecordDOTTestResultInput) (*workerdot.WorkerDOTTest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func (r *MutationResolver) RecordDOTTestResult(ctx context.Context, input gqlmod
 	return r.WorkerDrugAlcoholService.RecordResult(ctx, req)
 }
 
-func (r *MutationResolver) CancelDOTTest(ctx context.Context, id string, reason string) (*worker.WorkerDOTTest, error) {
+func (r *MutationResolver) CancelDOTTest(ctx context.Context, id string, reason string) (*workerdot.WorkerDOTTest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpCancel)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func (r *MutationResolver) CancelDOTTest(ctx context.Context, id string, reason 
 	)
 }
 
-func (r *MutationResolver) RecordDOTViolation(ctx context.Context, input gqlmodel.RecordDOTViolationInput) (*worker.WorkerDOTViolation, error) {
+func (r *MutationResolver) RecordDOTViolation(ctx context.Context, input gqlmodel.RecordDOTViolationInput) (*workerdot.WorkerDOTViolation, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -115,7 +115,7 @@ func (r *MutationResolver) RecordDOTViolation(ctx context.Context, input gqlmode
 	return r.WorkerDrugAlcoholService.RecordViolation(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) UpdateDOTViolation(ctx context.Context, input gqlmodel.UpdateDOTViolationInput) (*worker.WorkerDOTViolation, error) {
+func (r *MutationResolver) UpdateDOTViolation(ctx context.Context, input gqlmodel.UpdateDOTViolationInput) (*workerdot.WorkerDOTViolation, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ func (r *MutationResolver) UpdateDOTViolation(ctx context.Context, input gqlmode
 	return r.WorkerDrugAlcoholService.UpdateViolation(ctx, req)
 }
 
-func (r *MutationResolver) RecordClearinghouseQuery(ctx context.Context, input gqlmodel.RecordClearinghouseQueryInput) (*worker.WorkerClearinghouseQuery, error) {
+func (r *MutationResolver) RecordClearinghouseQuery(ctx context.Context, input gqlmodel.RecordClearinghouseQueryInput) (*workerdot.WorkerClearinghouseQuery, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func (r *MutationResolver) RecordClearinghouseQuery(ctx context.Context, input g
 	return r.WorkerDrugAlcoholService.RecordQuery(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) CompleteClearinghouseQuery(ctx context.Context, input gqlmodel.CompleteClearinghouseQueryInput) (*worker.WorkerClearinghouseQuery, error) {
+func (r *MutationResolver) CompleteClearinghouseQuery(ctx context.Context, input gqlmodel.CompleteClearinghouseQueryInput) (*workerdot.WorkerClearinghouseQuery, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -154,7 +154,7 @@ func (r *MutationResolver) CompleteClearinghouseQuery(ctx context.Context, input
 	return r.WorkerDrugAlcoholService.CompleteQuery(ctx, req)
 }
 
-func (r *MutationResolver) CreateDOTRandomPool(ctx context.Context, input gqlmodel.DOTRandomPoolInput) (*worker.DOTRandomPool, error) {
+func (r *MutationResolver) CreateDOTRandomPool(ctx context.Context, input gqlmodel.DOTRandomPoolInput) (*workerdot.DOTRandomPool, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func (r *MutationResolver) CreateDOTRandomPool(ctx context.Context, input gqlmod
 	return r.WorkerDrugAlcoholService.CreatePool(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) UpdateDOTRandomPool(ctx context.Context, id string, version int, input gqlmodel.DOTRandomPoolInput) (*worker.DOTRandomPool, error) {
+func (r *MutationResolver) UpdateDOTRandomPool(ctx context.Context, id string, version int, input gqlmodel.DOTRandomPoolInput) (*workerdot.DOTRandomPool, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -181,7 +181,7 @@ func (r *MutationResolver) UpdateDOTRandomPool(ctx context.Context, id string, v
 	return r.WorkerDrugAlcoholService.UpdatePool(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) RunDOTRandomDraw(ctx context.Context, input gqlmodel.RunDOTRandomDrawInput) (*worker.DOTRandomDraw, error) {
+func (r *MutationResolver) RunDOTRandomDraw(ctx context.Context, input gqlmodel.RunDOTRandomDrawInput) (*workerdot.DOTRandomDraw, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -201,7 +201,7 @@ func (r *MutationResolver) RunDOTRandomDraw(ctx context.Context, input gqlmodel.
 	})
 }
 
-func (r *MutationResolver) FinalizeDOTRandomDraw(ctx context.Context, id string) (*worker.DOTRandomDraw, error) {
+func (r *MutationResolver) FinalizeDOTRandomDraw(ctx context.Context, id string) (*workerdot.DOTRandomDraw, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -219,7 +219,7 @@ func (r *MutationResolver) FinalizeDOTRandomDraw(ctx context.Context, id string)
 	)
 }
 
-func (r *MutationResolver) CancelDOTRandomDraw(ctx context.Context, id string, reason string) (*worker.DOTRandomDraw, error) {
+func (r *MutationResolver) CancelDOTRandomDraw(ctx context.Context, id string, reason string) (*workerdot.DOTRandomDraw, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -238,7 +238,7 @@ func (r *MutationResolver) CancelDOTRandomDraw(ctx context.Context, id string, r
 	)
 }
 
-func (r *MutationResolver) UpdateDOTRandomDrawEntry(ctx context.Context, input gqlmodel.UpdateDOTRandomDrawEntryInput) (*worker.DOTRandomDrawEntry, error) {
+func (r *MutationResolver) UpdateDOTRandomDrawEntry(ctx context.Context, input gqlmodel.UpdateDOTRandomDrawEntryInput) (*workerdot.DOTRandomDrawEntry, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -265,7 +265,7 @@ func (r *MutationResolver) UpdateDOTRandomDrawEntry(ctx context.Context, input g
 	)
 }
 
-func (r *QueryResolver) WorkerDOTTests(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*worker.WorkerDOTTest, error) {
+func (r *QueryResolver) WorkerDOTTests(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*workerdot.WorkerDOTTest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -286,7 +286,7 @@ func (r *QueryResolver) WorkerDOTTests(ctx context.Context, workerID *string, op
 	})
 }
 
-func (r *QueryResolver) WorkerDOTTest(ctx context.Context, id string) (*worker.WorkerDOTTest, error) {
+func (r *QueryResolver) WorkerDOTTest(ctx context.Context, id string) (*workerdot.WorkerDOTTest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -299,7 +299,7 @@ func (r *QueryResolver) WorkerDOTTest(ctx context.Context, id string) (*worker.W
 	return r.WorkerDrugAlcoholService.GetTest(ctx, base.TenantInfo(authCtx), testID)
 }
 
-func (r *QueryResolver) OpenDOTTests(ctx context.Context) ([]*worker.WorkerDOTTest, error) {
+func (r *QueryResolver) OpenDOTTests(ctx context.Context) ([]*workerdot.WorkerDOTTest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -312,7 +312,7 @@ func (r *QueryResolver) OpenDOTTests(ctx context.Context) ([]*worker.WorkerDOTTe
 	})
 }
 
-func (r *QueryResolver) WorkerDOTViolations(ctx context.Context, workerID string) ([]*worker.WorkerDOTViolation, error) {
+func (r *QueryResolver) WorkerDOTViolations(ctx context.Context, workerID string) ([]*workerdot.WorkerDOTViolation, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -329,7 +329,7 @@ func (r *QueryResolver) WorkerDOTViolations(ctx context.Context, workerID string
 	return r.WorkerDrugAlcoholService.ListViolations(ctx, base.TenantInfo(authCtx), id)
 }
 
-func (r *QueryResolver) WorkerClearinghouseQueries(ctx context.Context, workerID string) ([]*worker.WorkerClearinghouseQuery, error) {
+func (r *QueryResolver) WorkerClearinghouseQueries(ctx context.Context, workerID string) ([]*workerdot.WorkerClearinghouseQuery, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -346,7 +346,7 @@ func (r *QueryResolver) WorkerClearinghouseQueries(ctx context.Context, workerID
 	return r.WorkerDrugAlcoholService.ListQueries(ctx, base.TenantInfo(authCtx), id)
 }
 
-func (r *QueryResolver) WorkerDrugAlcoholStanding(ctx context.Context, workerID string) (*worker.DrugAlcoholStanding, error) {
+func (r *QueryResolver) WorkerDrugAlcoholStanding(ctx context.Context, workerID string) (*workerdot.DrugAlcoholStanding, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -406,7 +406,7 @@ func (r *QueryResolver) DOTRandomPools(ctx context.Context, input gqlmodel.DOTRa
 	return randomPoolCursorConnectionToModel(result)
 }
 
-func (r *QueryResolver) DOTRandomPool(ctx context.Context, id string) (*worker.DOTRandomPool, error) {
+func (r *QueryResolver) DOTRandomPool(ctx context.Context, id string) (*workerdot.DOTRandomPool, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -419,7 +419,7 @@ func (r *QueryResolver) DOTRandomPool(ctx context.Context, id string) (*worker.D
 	return r.WorkerDrugAlcoholService.GetPool(ctx, base.TenantInfo(authCtx), poolID)
 }
 
-func (r *QueryResolver) DOTRandomDraws(ctx context.Context, poolID *string) ([]*worker.DOTRandomDraw, error) {
+func (r *QueryResolver) DOTRandomDraws(ctx context.Context, poolID *string) ([]*workerdot.DOTRandomDraw, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -438,7 +438,7 @@ func (r *QueryResolver) DOTRandomDraws(ctx context.Context, poolID *string) ([]*
 	})
 }
 
-func (r *QueryResolver) DOTRandomDraw(ctx context.Context, id string) (*worker.DOTRandomDraw, error) {
+func (r *QueryResolver) DOTRandomDraw(ctx context.Context, id string) (*workerdot.DOTRandomDraw, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDOTRandomPool, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -451,7 +451,7 @@ func (r *QueryResolver) DOTRandomDraw(ctx context.Context, id string) (*worker.D
 	return r.WorkerDrugAlcoholService.GetDraw(ctx, base.TenantInfo(authCtx), drawID)
 }
 
-func (r *QueryResolver) WorkerRandomSelections(ctx context.Context, workerID string) ([]*worker.DOTRandomDrawEntry, error) {
+func (r *QueryResolver) WorkerRandomSelections(ctx context.Context, workerID string) ([]*workerdot.DOTRandomDrawEntry, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -477,102 +477,102 @@ func (r *QueryResolver) WorkerRandomSelections(ctx context.Context, workerID str
 	)
 }
 
-func (r *WorkerClearinghouseQueryResolver) ConsentObtainedAt(ctx context.Context, obj *worker.WorkerClearinghouseQuery) (*int, error) {
+func (r *WorkerClearinghouseQueryResolver) ConsentObtainedAt(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*int, error) {
 	return base.IntPtr(obj.ConsentObtainedAt), nil
 }
 
-func (r *WorkerClearinghouseQueryResolver) ConsentExpiresAt(ctx context.Context, obj *worker.WorkerClearinghouseQuery) (*int, error) {
+func (r *WorkerClearinghouseQueryResolver) ConsentExpiresAt(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*int, error) {
 	return base.IntPtr(obj.ConsentExpiresAt), nil
 }
 
-func (r *WorkerClearinghouseQueryResolver) CompletedAt(ctx context.Context, obj *worker.WorkerClearinghouseQuery) (*int, error) {
+func (r *WorkerClearinghouseQueryResolver) CompletedAt(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*int, error) {
 	return base.IntPtr(obj.CompletedAt), nil
 }
 
-func (r *WorkerClearinghouseQueryResolver) DocumentID(ctx context.Context, obj *worker.WorkerClearinghouseQuery) (*string, error) {
+func (r *WorkerClearinghouseQueryResolver) DocumentID(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*string, error) {
 	return base.IDPtr(obj.DocumentID), nil
 }
 
-func (r *WorkerClearinghouseQueryResolver) PerformedByID(ctx context.Context, obj *worker.WorkerClearinghouseQuery) (*string, error) {
+func (r *WorkerClearinghouseQueryResolver) PerformedByID(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*string, error) {
 	return base.IDPtr(obj.PerformedByID), nil
 }
 
-func (r *WorkerDOTTestResolver) ScheduledAt(ctx context.Context, obj *worker.WorkerDOTTest) (*int, error) {
+func (r *WorkerDOTTestResolver) ScheduledAt(ctx context.Context, obj *workerdot.WorkerDOTTest) (*int, error) {
 	return base.IntPtr(obj.ScheduledAt), nil
 }
 
-func (r *WorkerDOTTestResolver) CollectedAt(ctx context.Context, obj *worker.WorkerDOTTest) (*int, error) {
+func (r *WorkerDOTTestResolver) CollectedAt(ctx context.Context, obj *workerdot.WorkerDOTTest) (*int, error) {
 	return base.IntPtr(obj.CollectedAt), nil
 }
 
-func (r *WorkerDOTTestResolver) ResultAt(ctx context.Context, obj *worker.WorkerDOTTest) (*int, error) {
+func (r *WorkerDOTTestResolver) ResultAt(ctx context.Context, obj *workerdot.WorkerDOTTest) (*int, error) {
 	return base.IntPtr(obj.ResultAt), nil
 }
 
-func (r *WorkerDOTTestResolver) MroVerifiedAt(ctx context.Context, obj *worker.WorkerDOTTest) (*int, error) {
+func (r *WorkerDOTTestResolver) MroVerifiedAt(ctx context.Context, obj *workerdot.WorkerDOTTest) (*int, error) {
 	return base.IntPtr(obj.MROVerifiedAt), nil
 }
 
-func (r *WorkerDOTTestResolver) AlcoholConcentration(ctx context.Context, obj *worker.WorkerDOTTest) (*string, error) {
+func (r *WorkerDOTTestResolver) AlcoholConcentration(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error) {
 	return base.DecimalPtrString(obj.AlcoholConcentration), nil
 }
 
-func (r *WorkerDOTTestResolver) SafetyEventID(ctx context.Context, obj *worker.WorkerDOTTest) (*string, error) {
+func (r *WorkerDOTTestResolver) SafetyEventID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error) {
 	return base.IDPtr(obj.SafetyEventID), nil
 }
 
-func (r *WorkerDOTTestResolver) DrawEntryID(ctx context.Context, obj *worker.WorkerDOTTest) (*string, error) {
+func (r *WorkerDOTTestResolver) DrawEntryID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error) {
 	return base.IDPtr(obj.DrawEntryID), nil
 }
 
-func (r *WorkerDOTTestResolver) DocumentID(ctx context.Context, obj *worker.WorkerDOTTest) (*string, error) {
+func (r *WorkerDOTTestResolver) DocumentID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error) {
 	return base.IDPtr(obj.DocumentID), nil
 }
 
-func (r *WorkerDOTTestResolver) OrderedByID(ctx context.Context, obj *worker.WorkerDOTTest) (*string, error) {
+func (r *WorkerDOTTestResolver) OrderedByID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error) {
 	return base.IDPtr(obj.OrderedByID), nil
 }
 
-func (r *WorkerDOTTestResolver) RecordedByID(ctx context.Context, obj *worker.WorkerDOTTest) (*string, error) {
+func (r *WorkerDOTTestResolver) RecordedByID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error) {
 	return base.IDPtr(obj.RecordedByID), nil
 }
 
-func (r *WorkerDOTViolationResolver) SourceTestID(ctx context.Context, obj *worker.WorkerDOTViolation) (*string, error) {
+func (r *WorkerDOTViolationResolver) SourceTestID(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*string, error) {
 	return base.IDPtr(obj.SourceTestID), nil
 }
 
-func (r *WorkerDOTViolationResolver) ReportedToClearinghouseAt(ctx context.Context, obj *worker.WorkerDOTViolation) (*int, error) {
+func (r *WorkerDOTViolationResolver) ReportedToClearinghouseAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error) {
 	return base.IntPtr(obj.ReportedToClearinghouseAt), nil
 }
 
-func (r *WorkerDOTViolationResolver) SapReferredAt(ctx context.Context, obj *worker.WorkerDOTViolation) (*int, error) {
+func (r *WorkerDOTViolationResolver) SapReferredAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error) {
 	return base.IntPtr(obj.SAPReferredAt), nil
 }
 
-func (r *WorkerDOTViolationResolver) SapEvaluationCompletedAt(ctx context.Context, obj *worker.WorkerDOTViolation) (*int, error) {
+func (r *WorkerDOTViolationResolver) SapEvaluationCompletedAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error) {
 	return base.IntPtr(obj.SAPEvaluationCompletedAt), nil
 }
 
-func (r *WorkerDOTViolationResolver) RtdTestID(ctx context.Context, obj *worker.WorkerDOTViolation) (*string, error) {
+func (r *WorkerDOTViolationResolver) RtdTestID(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*string, error) {
 	return base.IDPtr(obj.RTDTestID), nil
 }
 
-func (r *WorkerDOTViolationResolver) RtdCompletedAt(ctx context.Context, obj *worker.WorkerDOTViolation) (*int, error) {
+func (r *WorkerDOTViolationResolver) RtdCompletedAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error) {
 	return base.IntPtr(obj.RTDCompletedAt), nil
 }
 
-func (r *WorkerDOTViolationResolver) FollowUpEndsAt(ctx context.Context, obj *worker.WorkerDOTViolation) (*int, error) {
+func (r *WorkerDOTViolationResolver) FollowUpEndsAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error) {
 	return base.IntPtr(obj.FollowUpEndsAt), nil
 }
 
-func (r *WorkerDOTViolationResolver) ResolvedAt(ctx context.Context, obj *worker.WorkerDOTViolation) (*int, error) {
+func (r *WorkerDOTViolationResolver) ResolvedAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error) {
 	return base.IntPtr(obj.ResolvedAt), nil
 }
 
-func (r *WorkerDOTViolationResolver) DocumentID(ctx context.Context, obj *worker.WorkerDOTViolation) (*string, error) {
+func (r *WorkerDOTViolationResolver) DocumentID(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*string, error) {
 	return base.IDPtr(obj.DocumentID), nil
 }
 
-func (r *WorkerDOTViolationResolver) RecordedByID(ctx context.Context, obj *worker.WorkerDOTViolation) (*string, error) {
+func (r *WorkerDOTViolationResolver) RecordedByID(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*string, error) {
 	return base.IDPtr(obj.RecordedByID), nil
 }

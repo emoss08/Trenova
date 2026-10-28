@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -14,13 +14,13 @@ import (
 func shiftTemplateFromInput(
 	input gqlmodel.ShiftTemplateInput,
 	tenant pagination.TenantInfo,
-) *worker.ShiftTemplate {
+) *workerschedule.ShiftTemplate {
 	status := domaintypes.StatusActive
 	if input.Status != nil {
 		status = *input.Status
 	}
 
-	return &worker.ShiftTemplate{
+	return &workerschedule.ShiftTemplate{
 		OrganizationID:  tenant.OrgID,
 		BusinessUnitID:  tenant.BuID,
 		Status:          status,
@@ -38,7 +38,7 @@ func shiftTemplateFromInput(
 func shiftAssignmentFromInput(
 	input gqlmodel.AssignShiftInput,
 	tenant pagination.TenantInfo,
-) (*worker.WorkerShiftAssignment, error) {
+) (*workerschedule.WorkerShiftAssignment, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, base.InvalidIDError("workerId", "Worker is invalid")
@@ -48,7 +48,7 @@ func shiftAssignmentFromInput(
 		return nil, base.InvalidIDError("shiftTemplateId", "Shift is invalid")
 	}
 
-	return &worker.WorkerShiftAssignment{
+	return &workerschedule.WorkerShiftAssignment{
 		OrganizationID:   tenant.OrgID,
 		BusinessUnitID:   tenant.BuID,
 		WorkerID:         workerID,
@@ -62,13 +62,13 @@ func shiftAssignmentFromInput(
 func availabilityPreferenceFromInput(
 	input gqlmodel.SetAvailabilityPreferenceInput,
 	tenant pagination.TenantInfo,
-) (*worker.WorkerAvailabilityPreference, error) {
+) (*workerschedule.WorkerAvailabilityPreference, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, base.InvalidIDError("workerId", "Worker is invalid")
 	}
 
-	return &worker.WorkerAvailabilityPreference{
+	return &workerschedule.WorkerAvailabilityPreference{
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
 		WorkerID:       workerID,
@@ -81,7 +81,7 @@ func availabilityPreferenceFromInput(
 func shiftSwapFromInput(
 	input gqlmodel.ProposeShiftSwapInput,
 	tenant pagination.TenantInfo,
-) (*worker.ShiftSwapRequest, error) {
+) (*workerschedule.ShiftSwapRequest, error) {
 	requestingID, err := pulid.MustParse(input.RequestingWorkerID)
 	if err != nil {
 		return nil, base.InvalidIDError("requestingWorkerId", "Worker is invalid")
@@ -91,7 +91,7 @@ func shiftSwapFromInput(
 		return nil, base.InvalidIDError("counterpartyWorkerId", "Worker is invalid")
 	}
 
-	entity := &worker.ShiftSwapRequest{
+	entity := &workerschedule.ShiftSwapRequest{
 		OrganizationID:       tenant.OrgID,
 		BusinessUnitID:       tenant.BuID,
 		RequestingWorkerID:   requestingID,
@@ -110,7 +110,7 @@ func shiftSwapFromInput(
 // rotaToGQL carries the composed board out. The state is a domain string and
 // the enum is a generated one; they are spelled the same on purpose, so the
 // conversion stays a cast rather than a switch that drifts.
-func rotaToGQL(rota *worker.Rota) *gqlmodel.Rota {
+func rotaToGQL(rota *workerschedule.Rota) *gqlmodel.Rota {
 	if rota == nil {
 		return &gqlmodel.Rota{Rows: []*gqlmodel.RotaRow{}}
 	}
@@ -146,7 +146,7 @@ func rotaToGQL(rota *worker.Rota) *gqlmodel.Rota {
 	return out
 }
 
-func rotaDayToGQL(day worker.RotaDay) *gqlmodel.RotaDay {
+func rotaDayToGQL(day workerschedule.RotaDay) *gqlmodel.RotaDay {
 	out := &gqlmodel.RotaDay{
 		Date:            int(day.Date),
 		State:           day.State,
@@ -169,15 +169,15 @@ func rotaDayToGQL(day worker.RotaDay) *gqlmodel.RotaDay {
 // swapPermissionFor maps the answer onto the grant it needs. Accepting and
 // declining are the counterparty's own act and are gated by read, because the
 // service refuses an answer from anybody but the driver it was offered to.
-func swapPermissionFor(status worker.ShiftSwapStatus) permission.Operation {
+func swapPermissionFor(status workerschedule.ShiftSwapStatus) permission.Operation {
 	switch status {
-	case worker.SwapApproved:
+	case workerschedule.SwapApproved:
 		return permission.OpApprove
-	case worker.SwapRejected:
+	case workerschedule.SwapRejected:
 		return permission.OpReject
-	case worker.SwapWithdrawn:
+	case workerschedule.SwapWithdrawn:
 		return permission.OpCancel
-	case worker.SwapAccepted, worker.SwapDeclined, worker.SwapProposed:
+	case workerschedule.SwapAccepted, workerschedule.SwapDeclined, workerschedule.SwapProposed:
 		return permission.OpRead
 	default:
 		return permission.OpApprove

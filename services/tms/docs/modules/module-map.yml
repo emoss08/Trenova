@@ -292,9 +292,26 @@ modules:
   workforce:
     level: 5
     domain:
+      - approvaldelegation
+      - employment
       - permit
+      - portalinvitation
+      - profilechange
+      - pto
       - telematics
+      - timesheet
       - worker
+      - workerchecklist
+      - workercompliance
+      - workercredential
+      - workerdot
+      - workerleave
+      - workerpolicy
+      - workerreview
+      - workersafety
+      - workerschedule
+      - workersyncdrift
+      - workertraining
     service:
       - benefitsservice
       - drivernotificationservice

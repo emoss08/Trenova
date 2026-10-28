@@ -13,13 +13,15 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // CreateWorkerPolicy is the resolver for the createWorkerPolicy field.
-func (r *MutationResolver) CreateWorkerPolicy(ctx context.Context, input gqlmodel.WorkerPolicyInput) (*worker.WorkerPolicy, error) {
+func (r *MutationResolver) CreateWorkerPolicy(ctx context.Context, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerPolicy, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -38,7 +40,7 @@ func (r *MutationResolver) CreateWorkerPolicy(ctx context.Context, input gqlmode
 }
 
 // UpdateWorkerPolicy is the resolver for the updateWorkerPolicy field.
-func (r *MutationResolver) UpdateWorkerPolicy(ctx context.Context, id string, input gqlmodel.WorkerPolicyInput) (*worker.WorkerPolicy, error) {
+func (r *MutationResolver) UpdateWorkerPolicy(ctx context.Context, id string, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerPolicy, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -63,7 +65,7 @@ func (r *MutationResolver) UpdateWorkerPolicy(ctx context.Context, id string, in
 }
 
 // DecideProfileChange is the resolver for the decideProfileChange field.
-func (r *MutationResolver) DecideProfileChange(ctx context.Context, input gqlmodel.DecideProfileChangeInput) (*worker.WorkerProfileChangeRequest, error) {
+func (r *MutationResolver) DecideProfileChange(ctx context.Context, input gqlmodel.DecideProfileChangeInput) (*profilechange.WorkerProfileChangeRequest, error) {
 	requestID, err := pulid.MustParse(input.ID)
 	if err != nil {
 		return nil, base.InvalidIDError("id", "Request is invalid")
@@ -95,7 +97,7 @@ func (r *MutationResolver) DecideProfileChange(ctx context.Context, input gqlmod
 		ctx,
 		permission.ResourceProfileChangeRequest,
 		operation,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		request.WorkerID,
 	); err != nil {
 		return nil, err
@@ -112,7 +114,7 @@ func (r *MutationResolver) DecideProfileChange(ctx context.Context, input gqlmod
 }
 
 // WorkerPolicies is the resolver for the workerPolicies field.
-func (r *QueryResolver) WorkerPolicies(ctx context.Context, activeOnly *bool, limit *int) ([]*worker.WorkerPolicy, error) {
+func (r *QueryResolver) WorkerPolicies(ctx context.Context, activeOnly *bool, limit *int) ([]*workerpolicy.WorkerPolicy, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerPolicy, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -126,7 +128,7 @@ func (r *QueryResolver) WorkerPolicies(ctx context.Context, activeOnly *bool, li
 }
 
 // WorkerPolicy is the resolver for the workerPolicy field.
-func (r *QueryResolver) WorkerPolicy(ctx context.Context, id string) (*worker.WorkerPolicy, error) {
+func (r *QueryResolver) WorkerPolicy(ctx context.Context, id string) (*workerpolicy.WorkerPolicy, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerPolicy, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -161,7 +163,7 @@ func (r *QueryResolver) WorkerPolicyCompliance(ctx context.Context, id string) (
 }
 
 // WorkerPolicyAcknowledgements is the resolver for the workerPolicyAcknowledgements field.
-func (r *QueryResolver) WorkerPolicyAcknowledgements(ctx context.Context, workerID string) ([]*worker.WorkerPolicyAcknowledgement, error) {
+func (r *QueryResolver) WorkerPolicyAcknowledgements(ctx context.Context, workerID string) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerPolicy, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -182,12 +184,12 @@ func (r *QueryResolver) WorkerPolicyAcknowledgements(ctx context.Context, worker
 }
 
 // ProfileChangeRequests is the resolver for the profileChangeRequests field.
-func (r *QueryResolver) ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*worker.WorkerProfileChangeRequest, error) {
+func (r *QueryResolver) ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*profilechange.WorkerProfileChangeRequest, error) {
 	authCtx, managerIDs, err := r.RequireListTeamScope(
 		ctx,
 		permission.ResourceProfileChangeRequest,
 		permission.OpRead,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 	)
 	if err != nil {
 		return nil, err
@@ -219,7 +221,7 @@ func (r *QueryResolver) ProfileChangeRequests(ctx context.Context, filter *gqlmo
 }
 
 // Changes is the resolver for the changes field.
-func (r *WorkerProfileChangeRequestResolver) Changes(ctx context.Context, obj *worker.WorkerProfileChangeRequest) ([]*gqlmodel.ProfileFieldChange, error) {
+func (r *WorkerProfileChangeRequestResolver) Changes(ctx context.Context, obj *profilechange.WorkerProfileChangeRequest) ([]*gqlmodel.ProfileFieldChange, error) {
 	out := make([]*gqlmodel.ProfileFieldChange, 0, len(obj.Changes))
 	for _, change := range obj.Changes {
 		out = append(out, &gqlmodel.ProfileFieldChange{

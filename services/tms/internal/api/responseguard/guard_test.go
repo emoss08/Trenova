@@ -19,7 +19,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -73,7 +78,12 @@ func serveRaw(
 
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
-		authctx.SetAuthContext(c, pulid.MustNew("usr_"), pulid.MustNew("bu_"), pulid.MustNew("org_"))
+		authctx.SetAuthContext(
+			c,
+			pulid.MustNew("usr_"),
+			pulid.MustNew("bu_"),
+			pulid.MustNew("org_"),
+		)
 		c.Next()
 	})
 	if opts.install {
@@ -188,7 +198,12 @@ func object(t *testing.T, value any, path ...any) map[string]any {
 func TestShipmentShowsItsDriversNameAndWithholdsTheRestWithoutWorkerRead(t *testing.T) {
 	t.Parallel()
 
-	body, header := serve(t, []permission.Resource{permission.ResourceWorker}, dispatchedShipment(), guarded)
+	body, header := serve(
+		t,
+		[]permission.Resource{permission.ResourceWorker},
+		dispatchedShipment(),
+		guarded,
+	)
 
 	primary := object(t, body, "moves", 0, "assignment", "primaryWorker")
 	assert.Equal(t, "Dana", primary["firstName"])
@@ -261,7 +276,12 @@ func TestGuardLeavesTheHandlersValueUntouched(t *testing.T) {
 	t.Parallel()
 
 	entity := dispatchedShipment()
-	serve(t, []permission.Resource{permission.ResourceWorker, permission.ResourceCustomer}, entity, guarded)
+	serve(
+		t,
+		[]permission.Resource{permission.ResourceWorker, permission.ResourceCustomer},
+		entity,
+		guarded,
+	)
 
 	assert.Equal(t, "12 Home Street", entity.Moves[0].Assignment.PrimaryWorker.AddressLine1)
 	assert.Equal(t, "ERP-77", entity.Customer.ExternalID)
@@ -513,7 +533,7 @@ func TestALeaveCaseAWorkerCarriesNeedsLeaveRead(t *testing.T) {
 		planner:  newPlanner(newKindTable(registry)),
 		registry: registry,
 	}
-	kind, ok := newKindTable(registry).kindOf(reflect.TypeFor[worker.WorkerLeaveCase]())
+	kind, ok := newKindTable(registry).kindOf(reflect.TypeFor[workerleave.WorkerLeaveCase]())
 	require.True(t, ok)
 	require.Equal(t, permission.ResourceWorkerLeave, kind)
 
@@ -526,17 +546,17 @@ func TestALeaveCaseAWorkerCarriesNeedsLeaveRead(t *testing.T) {
 		"a credential is still part of its worker")
 
 	type result struct {
-		Worker     *worker.Worker            `json:"worker"`
-		LeaveCases []*worker.WorkerLeaveCase `json:"leaveCases"`
+		Worker     *worker.Worker                 `json:"worker"`
+		LeaveCases []*workerleave.WorkerLeaveCase `json:"leaveCases"`
 	}
 	value := result{
 		Worker: driver(),
-		LeaveCases: []*worker.WorkerLeaveCase{{
+		LeaveCases: []*workerleave.WorkerLeaveCase{{
 			ID:                  pulid.MustNew("wlc_"),
 			LeaveType:           worker.LeaveTypeMedical,
 			Reason:              "Surgery",
 			Notes:               "Certified by the surgeon",
-			CertificationStatus: worker.CertificationReceived,
+			CertificationStatus: workerleave.CertificationReceived,
 		}},
 	}
 
@@ -570,11 +590,11 @@ func TestADrugTestAWorkerCarriesNeedsDOTTestRead(t *testing.T) {
 	registry := refview.Default().Registry()
 	kinds := newKindTable(registry)
 	for typ, want := range map[reflect.Type]permission.Resource{
-		reflect.TypeFor[worker.WorkerDOTTest]():              permission.ResourceWorkerDOTTest,
-		reflect.TypeFor[worker.WorkerDOTViolation]():         permission.ResourceWorkerDOTTest,
-		reflect.TypeFor[worker.WorkerInjury]():               permission.ResourceWorkerInjury,
-		reflect.TypeFor[worker.TimeClockEntry]():             permission.ResourceTimesheet,
-		reflect.TypeFor[worker.WorkerProfileChangeRequest](): permission.ResourceProfileChangeRequest,
+		reflect.TypeFor[workerdot.WorkerDOTTest]():                  permission.ResourceWorkerDOTTest,
+		reflect.TypeFor[workerdot.WorkerDOTViolation]():             permission.ResourceWorkerDOTTest,
+		reflect.TypeFor[workersafety.WorkerInjury]():                permission.ResourceWorkerInjury,
+		reflect.TypeFor[timesheet.TimeClockEntry]():                 permission.ResourceTimesheet,
+		reflect.TypeFor[profilechange.WorkerProfileChangeRequest](): permission.ResourceProfileChangeRequest,
 	} {
 		kind, ok := kinds.kindOf(typ)
 		require.True(t, ok, typ.String())
@@ -582,20 +602,25 @@ func TestADrugTestAWorkerCarriesNeedsDOTTestRead(t *testing.T) {
 	}
 
 	type result struct {
-		Worker *worker.Worker          `json:"worker"`
-		Tests  []*worker.WorkerDOTTest `json:"tests"`
+		Worker *worker.Worker             `json:"worker"`
+		Tests  []*workerdot.WorkerDOTTest `json:"tests"`
 	}
 	value := result{
 		Worker: driver(),
-		Tests: []*worker.WorkerDOTTest{{
+		Tests: []*workerdot.WorkerDOTTest{{
 			ID:            pulid.MustNew("wdot_"),
-			Result:        worker.DOTResultNegative,
+			Result:        workerdot.DOTResultNegative,
 			CollectorName: "Pat Collector",
 			MROName:       "Dr. Reviewer",
 		}},
 	}
 
-	body, header := serve(t, []permission.Resource{permission.ResourceWorkerDOTTest}, value, guarded)
+	body, header := serve(
+		t,
+		[]permission.Resource{permission.ResourceWorkerDOTTest},
+		value,
+		guarded,
+	)
 	assert.Equal(t, "dana@example.com", object(t, body, "worker")["email"],
 		"the worker reader still sees the worker")
 	test := object(t, body, "tests", 0)

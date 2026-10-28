@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerteam"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"go.uber.org/zap"
@@ -124,7 +125,7 @@ func (r *repository) RotaLeaveRanges(
 			Pick(c.WorkerID, c.StartsAt, c.EndsAt.Coalesce(int64(0))).
 			Where(
 				c.WorkerID.InQuery(rosterQuery(req)),
-				c.Status.Eq(worker.LeaveCaseApproved),
+				c.Status.Eq(workerleave.LeaveCaseApproved),
 				c.StartsAt.Lt(req.WeekEnd),
 				keel.Or(c.EndsAt.IsNull(), c.EndsAt.Gte(req.WeekStart)),
 			))

@@ -4,30 +4,30 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func (h *harness) manualTemplate() *worker.WorkerChecklistTemplate {
-	manual := &worker.WorkerChecklistTemplate{
+func (h *harness) manualTemplate() *workerchecklist.WorkerChecklistTemplate {
+	manual := &workerchecklist.WorkerChecklistTemplate{
 		ID:             pulid.MustNew("wclt_"),
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		Code:           "AUDIT",
 		Name:           "Annual file audit",
-		Kind:           worker.ChecklistKindCustom,
-		Trigger:        worker.ChecklistTriggerManual,
+		Kind:           workerchecklist.ChecklistKindCustom,
+		Trigger:        workerchecklist.ChecklistTriggerManual,
 		Status:         domaintypes.StatusActive,
-		Items: []*worker.WorkerChecklistTemplateItem{
+		Items: []*workerchecklist.WorkerChecklistTemplateItem{
 			{
 				ID:       pulid.MustNew("wclti_"),
 				Label:    "Review file",
-				Kind:     worker.ChecklistItemTask,
+				Kind:     workerchecklist.ChecklistItemTask,
 				Required: true,
-				Owner:    worker.ChecklistOwnerHR,
+				Owner:    workerchecklist.ChecklistOwnerHR,
 			},
 		},
 	}
@@ -88,9 +88,9 @@ func TestPlanItems_SettleAndReopenWithoutWriting(t *testing.T) {
 		ID: item.ID, TenantInfo: h.tenant, Note: " Checked ", UserID: h.userID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.ChecklistItemDone, done.Item.After.Status)
+	assert.Equal(t, workerchecklist.ChecklistItemDone, done.Item.After.Status)
 	assert.Equal(t, "Checked", done.Item.After.Note)
-	assert.Equal(t, worker.ChecklistItemPending, h.repo.items[item.ID].Status)
+	assert.Equal(t, workerchecklist.ChecklistItemPending, h.repo.items[item.ID].Status)
 
 	pending, err := h.svc.PlanReopenItem(t.Context(), &workerchecklistservice.ReopenItemRequest{
 		ID: item.ID, TenantInfo: h.tenant,
@@ -103,6 +103,6 @@ func TestPlanItems_SettleAndReopenWithoutWriting(t *testing.T) {
 		ID: started.ID, TenantInfo: h.tenant, Reason: "Started by mistake",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.ChecklistStatusCancelled, cancel.After.Status)
-	assert.Equal(t, worker.ChecklistStatusOpen, h.repo.checklists[started.ID].Status)
+	assert.Equal(t, workerchecklist.ChecklistStatusCancelled, cancel.After.Status)
+	assert.Equal(t, workerchecklist.ChecklistStatusOpen, h.repo.checklists[started.ID].Status)
 }

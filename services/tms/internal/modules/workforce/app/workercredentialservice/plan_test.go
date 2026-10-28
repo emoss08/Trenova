@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -23,7 +23,7 @@ func TestPlanCreate_NamesWhatARenewalArchives(t *testing.T) {
 		UserID: h.userID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.CredentialStatusActive, planned.Credential.Status)
+	assert.Equal(t, workercredential.CredentialStatusActive, planned.Credential.Status)
 	assert.Equal(t, "FORKLIFT", planned.Credential.CredentialType.Code)
 	assert.Nil(t, planned.Superseded)
 	assert.Empty(t, h.repo.createReqs)
@@ -61,8 +61,8 @@ func TestPlanCreate_NamesWhatARenewalArchives(t *testing.T) {
 		ID: first.ID, TenantInfo: h.tenant, Reason: "Left the company", UserID: h.userID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.CredentialStatusArchived, archive.After.Status)
-	assert.Equal(t, worker.CredentialStatusActive, h.repo.credentials[first.ID].Status)
+	assert.Equal(t, workercredential.CredentialStatusArchived, archive.After.Status)
+	assert.Equal(t, workercredential.CredentialStatusActive, h.repo.credentials[first.ID].Status)
 }
 
 func TestUpdateKeepsTheStoredNumberForAnEditorWithoutPersonalDetails(t *testing.T) {

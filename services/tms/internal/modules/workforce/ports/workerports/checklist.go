@@ -3,7 +3,9 @@ package workerports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -13,15 +15,15 @@ import (
 type ChecklistSpawner interface {
 	SpawnForEvent(
 		ctx context.Context,
-		event *worker.WorkerEmploymentEvent,
+		event *employment.WorkerEmploymentEvent,
 		wrk *worker.Worker,
 		userID pulid.ID,
-	) (*worker.WorkerChecklist, error)
+	) (*workerchecklist.WorkerChecklist, error)
 	// CloseForEvent cancels the open checklists the event makes moot and
 	// reports how many it closed.
 	CloseForEvent(
 		ctx context.Context,
-		event *worker.WorkerEmploymentEvent,
+		event *employment.WorkerEmploymentEvent,
 		wrk *worker.Worker,
 		userID pulid.ID,
 	) (int, error)

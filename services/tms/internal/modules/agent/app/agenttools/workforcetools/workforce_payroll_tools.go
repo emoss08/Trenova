@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -48,7 +48,7 @@ type PayrollExporter interface {
 	GenerateExport(
 		ctx context.Context,
 		req *timesheetservice.GenerateExportRequest,
-	) (*worker.PayrollExport, error)
+	) (*timesheet.PayrollExport, error)
 	PlanVoidExport(
 		ctx context.Context,
 		req *timesheetservice.VoidExportRequest,
@@ -56,20 +56,23 @@ type PayrollExporter interface {
 	VoidExport(
 		ctx context.Context,
 		req *timesheetservice.VoidExportRequest,
-	) (*worker.PayrollExport, error)
+	) (*timesheet.PayrollExport, error)
 }
 
 func PayrollToolProviders() []any {
 	return []any{provideGeneratePayrollExportTool, provideVoidPayrollExportTool}
 }
 
-func payrollExportRecord(export *worker.PayrollExport) toolpreview.Record {
+func payrollExportRecord(export *timesheet.PayrollExport) toolpreview.Record {
 	return wfRecord(permission.ResourceTimesheet, export.ID,
 		fmt.Sprintf("Payroll run %s to %s", common.DayText(export.PeriodStart),
 			common.DayText(export.PeriodEnd-common.SecondsPerDay)), export.Version)
 }
 
-func payrollExportResult(action string, export *worker.PayrollExport) *agent.ToolExecutionResult {
+func payrollExportResult(
+	action string,
+	export *timesheet.PayrollExport,
+) *agent.ToolExecutionResult {
 	return &agent.ToolExecutionResult{
 		Action: action,
 		Kind:   kindPayrollExport,

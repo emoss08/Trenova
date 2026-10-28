@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,7 +22,7 @@ import (
 func (s *Service) ListEvents(
 	ctx context.Context,
 	req *workerports.ListWorkerSafetyEventsRequest,
-) ([]*worker.WorkerSafetyEvent, error) {
+) ([]*workersafety.WorkerSafetyEvent, error) {
 	return s.repo.ListEvents(ctx, req)
 }
 
@@ -30,7 +30,7 @@ func (s *Service) GetEvent(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	return s.repo.GetEventByID(ctx, &workerports.GetWorkerSafetyEventByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
@@ -40,19 +40,19 @@ func (s *Service) GetEvent(
 }
 
 // prepareEvent normalises a row, fills in derived fields and validates it.
-func (s *Service) prepareEvent(ctx context.Context, entity *worker.WorkerSafetyEvent) error {
+func (s *Service) prepareEvent(ctx context.Context, entity *workersafety.WorkerSafetyEvent) error {
 	entity.Description = strings.TrimSpace(entity.Description)
 	entity.Location = strings.TrimSpace(entity.Location)
 	entity.ReferenceNumber = strings.TrimSpace(entity.ReferenceNumber)
 	entity.Resolution = strings.TrimSpace(entity.Resolution)
-	if entity.Kind != worker.SafetyEventInspection {
-		entity.InspectionResult = worker.InspectionResultNone
+	if entity.Kind != workersafety.SafetyEventInspection {
+		entity.InspectionResult = workersafety.InspectionResultNone
 		entity.InspectionLevel = nil
 		entity.OutOfService = false
-	} else if entity.InspectionResult == worker.InspectionResultOutOfService {
+	} else if entity.InspectionResult == workersafety.InspectionResultOutOfService {
 		entity.OutOfService = true
 	}
-	if entity.Kind != worker.SafetyEventAccident {
+	if entity.Kind != workersafety.SafetyEventAccident {
 		entity.Preventable = false
 	}
 	entity.DefaultPointsExpiry()
@@ -103,9 +103,9 @@ func (s *Service) requireWorkerDocument(
 // severity when the caller leaves them at zero and has not said otherwise.
 func (s *Service) CreateEvent(
 	ctx context.Context,
-	entity *worker.WorkerSafetyEvent,
+	entity *workersafety.WorkerSafetyEvent,
 	userID pulid.ID,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	log := s.l.With(
 		zap.String("operation", "CreateEvent"),
 		zap.String("workerId", entity.WorkerID.String()),
@@ -140,7 +140,7 @@ func (s *Service) CreateEvent(
 
 func (s *Service) prepareCreateEvent(
 	ctx context.Context,
-	entity *worker.WorkerSafetyEvent,
+	entity *workersafety.WorkerSafetyEvent,
 	userID pulid.ID,
 ) error {
 	if _, err := s.loadWorker(ctx, eventTenant(entity), entity.WorkerID); err != nil {
@@ -148,9 +148,9 @@ func (s *Service) prepareCreateEvent(
 	}
 	entity.RecordedByID = userID
 	if entity.Status == "" {
-		entity.Status = worker.SafetyEventStatusOpen
+		entity.Status = workersafety.SafetyEventStatusOpen
 	}
-	if entity.Status == worker.SafetyEventStatusClosed {
+	if entity.Status == workersafety.SafetyEventStatusClosed {
 		now := timeutils.NowUnix()
 		entity.ClosedAt = &now
 		entity.ClosedByID = userID
@@ -162,9 +162,9 @@ func (s *Service) prepareCreateEvent(
 // (Close does that so the resolution is always captured).
 func (s *Service) UpdateEvent(
 	ctx context.Context,
-	entity *worker.WorkerSafetyEvent,
+	entity *workersafety.WorkerSafetyEvent,
 	userID pulid.ID,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	log := s.l.With(zap.String("operation", "UpdateEvent"), zap.String("id", entity.ID.String()))
 
 	change, err := s.planUpdateEvent(ctx, entity)
@@ -197,8 +197,8 @@ func (s *Service) UpdateEvent(
 
 func (s *Service) planUpdateEvent(
 	ctx context.Context,
-	entity *worker.WorkerSafetyEvent,
-) (*kernelports.RecordChange[worker.WorkerSafetyEvent], error) {
+	entity *workersafety.WorkerSafetyEvent,
+) (*kernelports.RecordChange[workersafety.WorkerSafetyEvent], error) {
 	original, err := s.repo.GetEventByID(ctx, &workerports.GetWorkerSafetyEventByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: eventTenant(entity),
@@ -226,7 +226,10 @@ func (s *Service) planUpdateEvent(
 	if err = s.prepareEvent(ctx, entity); err != nil {
 		return nil, err
 	}
-	return &kernelports.RecordChange[worker.WorkerSafetyEvent]{Before: original, After: entity}, nil
+	return &kernelports.RecordChange[workersafety.WorkerSafetyEvent]{
+		Before: original,
+		After:  entity,
+	}, nil
 }
 
 type EventStatusRequest struct {
@@ -241,11 +244,11 @@ type EventStatusRequest struct {
 func (s *Service) CloseEvent(
 	ctx context.Context,
 	req *EventStatusRequest,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	return s.moveEvent(
 		ctx,
 		req,
-		worker.SafetyEventStatusClosed,
+		workersafety.SafetyEventStatusClosed,
 		permission.OpClose,
 		"Safety event closed",
 	)
@@ -255,11 +258,11 @@ func (s *Service) CloseEvent(
 func (s *Service) ReviewEvent(
 	ctx context.Context,
 	req *EventStatusRequest,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	return s.moveEvent(
 		ctx,
 		req,
-		worker.SafetyEventStatusUnderReview,
+		workersafety.SafetyEventStatusUnderReview,
 		permission.OpUpdate,
 		"Safety event under review",
 	)
@@ -269,11 +272,11 @@ func (s *Service) ReviewEvent(
 func (s *Service) ReopenEvent(
 	ctx context.Context,
 	req *EventStatusRequest,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	return s.moveEvent(
 		ctx,
 		req,
-		worker.SafetyEventStatusOpen,
+		workersafety.SafetyEventStatusOpen,
 		permission.OpReopen,
 		"Safety event reopened",
 	)
@@ -282,10 +285,10 @@ func (s *Service) ReopenEvent(
 func (s *Service) moveEvent(
 	ctx context.Context,
 	req *EventStatusRequest,
-	target worker.SafetyEventStatus,
+	target workersafety.SafetyEventStatus,
 	operation permission.Operation,
 	comment string,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	log := s.l.With(zap.String("operation", string(operation)), zap.String("id", req.ID.String()))
 
 	change, err := s.planMoveEvent(ctx, req, target)
@@ -315,8 +318,8 @@ func (s *Service) moveEvent(
 func (s *Service) planMoveEvent(
 	ctx context.Context,
 	req *EventStatusRequest,
-	target worker.SafetyEventStatus,
-) (*kernelports.RecordChange[worker.WorkerSafetyEvent], error) {
+	target workersafety.SafetyEventStatus,
+) (*kernelports.RecordChange[workersafety.WorkerSafetyEvent], error) {
 	original, err := s.repo.GetEventByID(ctx, &workerports.GetWorkerSafetyEventByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
@@ -333,7 +336,7 @@ func (s *Service) planMoveEvent(
 	}
 	if original.Status == target {
 		unchanged := *original
-		return &kernelports.RecordChange[worker.WorkerSafetyEvent]{
+		return &kernelports.RecordChange[workersafety.WorkerSafetyEvent]{
 			Before: original,
 			After:  &unchanged,
 		}, nil
@@ -342,14 +345,14 @@ func (s *Service) planMoveEvent(
 	updated := *original
 	updated.Status = target
 	switch target {
-	case worker.SafetyEventStatusClosed:
+	case workersafety.SafetyEventStatusClosed:
 		now := timeutils.NowUnix()
 		updated.ClosedAt = &now
 		updated.ClosedByID = req.UserID
 		if resolution := strings.TrimSpace(req.Resolution); resolution != "" {
 			updated.Resolution = resolution
 		}
-	case worker.SafetyEventStatusOpen, worker.SafetyEventStatusUnderReview:
+	case workersafety.SafetyEventStatusOpen, workersafety.SafetyEventStatusUnderReview:
 		updated.ClosedAt = nil
 		updated.ClosedByID = pulid.Nil
 	}
@@ -358,7 +361,7 @@ func (s *Service) planMoveEvent(
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
-	return &kernelports.RecordChange[worker.WorkerSafetyEvent]{
+	return &kernelports.RecordChange[workersafety.WorkerSafetyEvent]{
 		Before: original,
 		After:  &updated,
 	}, nil

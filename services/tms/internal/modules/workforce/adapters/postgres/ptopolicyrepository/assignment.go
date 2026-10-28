@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -37,11 +37,11 @@ func policyLoads(include bool) []keel.Loader {
 func (r *repository) ListAssignments(
 	ctx context.Context,
 	req *workerports.ListPTOAssignmentsRequest,
-) ([]*worker.WorkerPTOPolicyAssignment, error) {
+) ([]*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*worker.WorkerPTOPolicyAssignment, error) {
+		func(ctx context.Context) ([]*pto.WorkerPTOPolicyAssignment, error) {
 			a := workerdb.WorkerPTOPolicyAssignments
 			entities, err := a.Where(a.WorkerID.Eq(req.WorkerID)).
 				Load(policyLoads(req.IncludePolicy)...).
@@ -60,11 +60,11 @@ func (r *repository) ListAssignments(
 func (r *repository) GetAssignmentByID(
 	ctx context.Context,
 	req *workerports.GetPTOAssignmentByIDRequest,
-) (*worker.WorkerPTOPolicyAssignment, error) {
+) (*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerPTOPolicyAssignment, error) {
+		func(ctx context.Context) (*pto.WorkerPTOPolicyAssignment, error) {
 			a := workerdb.WorkerPTOPolicyAssignments
 			entity, err := a.Where(a.ID.Eq(req.ID)).
 				Load(policyWithRules()).
@@ -80,7 +80,7 @@ func (r *repository) GetAssignmentByID(
 
 func activeAssignmentQuery(
 	req *workerports.GetPTOAssignmentRequest,
-) *keel.Query[*worker.WorkerPTOPolicyAssignment] {
+) *keel.Query[*pto.WorkerPTOPolicyAssignment] {
 	a := workerdb.WorkerPTOPolicyAssignments
 	active := a.EffectiveTo.IsNull()
 	if req.AsOf > 0 {
@@ -98,11 +98,11 @@ func activeAssignmentQuery(
 func (r *repository) GetActiveAssignment(
 	ctx context.Context,
 	req *workerports.GetPTOAssignmentRequest,
-) (*worker.WorkerPTOPolicyAssignment, error) {
+) (*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerPTOPolicyAssignment, error) {
+		func(ctx context.Context) (*pto.WorkerPTOPolicyAssignment, error) {
 			entity, err := activeAssignmentQuery(req).First(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, assignmentErrors.Map(err, "")
@@ -115,12 +115,12 @@ func (r *repository) GetActiveAssignment(
 
 func (r *repository) CreateAssignment(
 	ctx context.Context,
-	entity *worker.WorkerPTOPolicyAssignment,
-) (*worker.WorkerPTOPolicyAssignment, error) {
+	entity *pto.WorkerPTOPolicyAssignment,
+) (*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerPTOPolicyAssignment, error) {
+		func(ctx context.Context) (*pto.WorkerPTOPolicyAssignment, error) {
 			err := workerdb.WorkerPTOPolicyAssignments.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to create PTO assignment", zap.Error(err))
@@ -134,12 +134,12 @@ func (r *repository) CreateAssignment(
 
 func (r *repository) UpdateAssignment(
 	ctx context.Context,
-	entity *worker.WorkerPTOPolicyAssignment,
-) (*worker.WorkerPTOPolicyAssignment, error) {
+	entity *pto.WorkerPTOPolicyAssignment,
+) (*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerPTOPolicyAssignment, error) {
+		func(ctx context.Context) (*pto.WorkerPTOPolicyAssignment, error) {
 			err := workerdb.WorkerPTOPolicyAssignments.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update PTO assignment", zap.Error(err))
@@ -154,11 +154,11 @@ func (r *repository) UpdateAssignment(
 func (r *repository) ListOpenAssignments(
 	ctx context.Context,
 	req *workerports.ListOpenPTOAssignmentsRequest,
-) ([]*worker.WorkerPTOPolicyAssignment, error) {
+) ([]*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*worker.WorkerPTOPolicyAssignment, error) {
+		func(ctx context.Context) ([]*pto.WorkerPTOPolicyAssignment, error) {
 			limit := req.Limit
 			if limit <= 0 {
 				limit = defaultOpenAssignmentPageSize

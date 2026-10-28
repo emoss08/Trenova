@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,7 +23,7 @@ func (s *Service) ListActions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) ([]*worker.WorkerDisciplinaryAction, error) {
+) ([]*workersafety.WorkerDisciplinaryAction, error) {
 	return s.repo.ListActions(ctx, &workerports.ListWorkerDisciplinaryActionsRequest{
 		TenantInfo:    tenantInfo,
 		WorkerID:      workerID,
@@ -36,7 +37,7 @@ func (s *Service) Ladder(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (*worker.DisciplinaryLadder, error) {
+) (*workersafety.DisciplinaryLadder, error) {
 	actions, err := s.repo.ListActions(ctx, &workerports.ListWorkerDisciplinaryActionsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
@@ -44,13 +45,13 @@ func (s *Service) Ladder(
 	if err != nil {
 		return nil, err
 	}
-	return worker.BuildDisciplinaryLadder(actions, timeutils.NowUnix()), nil
+	return workersafety.BuildDisciplinaryLadder(actions, timeutils.NowUnix()), nil
 }
 
 type IssueActionRequest struct {
 	TenantInfo     pagination.TenantInfo
 	WorkerID       pulid.ID
-	Level          worker.DisciplinaryLevel
+	Level          workersafety.DisciplinaryLevel
 	Reason         string
 	Details        string
 	OccurredAt     *int64
@@ -66,8 +67,8 @@ type IssueActionRequest struct {
 
 // IssueActionResult is the action plus what it did to employment.
 type IssueActionResult struct {
-	Action          *worker.WorkerDisciplinaryAction
-	EmploymentEvent *worker.WorkerEmploymentEvent
+	Action          *workersafety.WorkerDisciplinaryAction
+	EmploymentEvent *employment.WorkerEmploymentEvent
 }
 
 // IssueAction records a rung on the ladder. Suspensions and terminations can
@@ -105,12 +106,12 @@ func (s *Service) IssueAction(
 	}
 
 	now := timeutils.NowUnix()
-	entity := &worker.WorkerDisciplinaryAction{
+	entity := &workersafety.WorkerDisciplinaryAction{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		WorkerID:       req.WorkerID,
 		Level:          req.Level,
-		Status:         worker.DisciplinaryStatusActive,
+		Status:         workersafety.DisciplinaryStatusActive,
 		Reason:         strings.TrimSpace(req.Reason),
 		Details:        strings.TrimSpace(req.Details),
 		OccurredAt:     req.OccurredAt,
@@ -160,14 +161,14 @@ func (s *Service) IssueAction(
 	s.refreshRollupQuietly(ctx, req.TenantInfo, created.WorkerID)
 
 	if req.RecordEmploymentEvent && s.employment != nil {
-		kind := worker.EmploymentEventKind("")
+		kind := employment.EmploymentEventKind("")
 		switch req.Level {
-		case worker.DisciplinaryLevelSuspension:
-			kind = worker.EmploymentEventSuspended
-		case worker.DisciplinaryLevelTermination:
-			kind = worker.EmploymentEventTerminated
-		case worker.DisciplinaryLevelCoaching, worker.DisciplinaryLevelVerbalWarning,
-			worker.DisciplinaryLevelWrittenWarning, worker.DisciplinaryLevelFinalWarning:
+		case workersafety.DisciplinaryLevelSuspension:
+			kind = employment.EmploymentEventSuspended
+		case workersafety.DisciplinaryLevelTermination:
+			kind = employment.EmploymentEventTerminated
+		case workersafety.DisciplinaryLevelCoaching, workersafety.DisciplinaryLevelVerbalWarning,
+			workersafety.DisciplinaryLevelWrittenWarning, workersafety.DisciplinaryLevelFinalWarning:
 		}
 		if kind != "" {
 			recorded, recordErr := s.employment.Record(ctx, &workeremploymentservice.RecordRequest{
@@ -217,14 +218,14 @@ type ActionStatusRequest struct {
 func (s *Service) RescindAction(
 	ctx context.Context,
 	req *ActionStatusRequest,
-) (*worker.WorkerDisciplinaryAction, error) {
+) (*workersafety.WorkerDisciplinaryAction, error) {
 	log := s.l.With(zap.String("operation", "RescindAction"), zap.String("id", req.ID.String()))
 
 	original, err := s.loadAction(ctx, req.TenantInfo, req.ID, req.Version)
 	if err != nil {
 		return nil, err
 	}
-	if original.Status == worker.DisciplinaryStatusRescinded {
+	if original.Status == workersafety.DisciplinaryStatusRescinded {
 		return original, nil
 	}
 	reason := strings.TrimSpace(req.Reason)
@@ -238,7 +239,7 @@ func (s *Service) RescindAction(
 
 	now := timeutils.NowUnix()
 	updated := *original
-	updated.Status = worker.DisciplinaryStatusRescinded
+	updated.Status = workersafety.DisciplinaryStatusRescinded
 	updated.RescindedAt = &now
 	updated.RescindedByID = req.UserID
 	updated.RescindReason = reason
@@ -271,7 +272,7 @@ func (s *Service) AcknowledgeAction(
 	id pulid.ID,
 	workerID pulid.ID,
 	comment string,
-) (*worker.WorkerDisciplinaryAction, error) {
+) (*workersafety.WorkerDisciplinaryAction, error) {
 	original, err := s.loadAction(ctx, tenantInfo, id, 0)
 	if err != nil {
 		return nil, err
@@ -301,7 +302,7 @@ func (s *Service) loadAction(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 	version int64,
-) (*worker.WorkerDisciplinaryAction, error) {
+) (*workersafety.WorkerDisciplinaryAction, error) {
 	original, err := s.repo.GetActionByID(ctx, &workerports.GetWorkerDisciplinaryActionByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,

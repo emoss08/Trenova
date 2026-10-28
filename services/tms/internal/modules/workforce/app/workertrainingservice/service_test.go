@@ -5,15 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,15 +30,15 @@ const day = int64(86400)
 
 type fakeRepo struct {
 	workerports.WorkerTrainingRepository
-	courses []*worker.TrainingCourse
-	records []*worker.WorkerTrainingRecord
+	courses []*workertraining.TrainingCourse
+	records []*workertraining.WorkerTrainingRecord
 }
 
 func (f *fakeRepo) ListActiveCourses(
 	context.Context,
 	pagination.TenantInfo,
-) ([]*worker.TrainingCourse, error) {
-	out := make([]*worker.TrainingCourse, 0, len(f.courses))
+) ([]*workertraining.TrainingCourse, error) {
+	out := make([]*workertraining.TrainingCourse, 0, len(f.courses))
 	for _, c := range f.courses {
 		if c.Status == domaintypes.StatusActive {
 			out = append(out, c)
@@ -50,7 +50,7 @@ func (f *fakeRepo) ListActiveCourses(
 func (f *fakeRepo) GetCourseByID(
 	_ context.Context,
 	req *workerports.GetTrainingCourseByIDRequest,
-) (*worker.TrainingCourse, error) {
+) (*workertraining.TrainingCourse, error) {
 	for _, c := range f.courses {
 		if c.ID == req.ID {
 			return c, nil
@@ -62,8 +62,8 @@ func (f *fakeRepo) GetCourseByID(
 func (f *fakeRepo) ListForWorker(
 	_ context.Context,
 	req *workerports.ListWorkerTrainingRequest,
-) ([]*worker.WorkerTrainingRecord, error) {
-	out := make([]*worker.WorkerTrainingRecord, 0, len(f.records))
+) ([]*workertraining.WorkerTrainingRecord, error) {
+	out := make([]*workertraining.WorkerTrainingRecord, 0, len(f.records))
 	for _, r := range f.records {
 		if r.WorkerID != req.WorkerID {
 			continue
@@ -86,7 +86,7 @@ func (f *fakeRepo) ListForWorker(
 func (f *fakeRepo) GetByID(
 	_ context.Context,
 	req *workerports.GetWorkerTrainingByIDRequest,
-) (*worker.WorkerTrainingRecord, error) {
+) (*workertraining.WorkerTrainingRecord, error) {
 	for _, r := range f.records {
 		if r.ID == req.ID {
 			copied := *r
@@ -103,8 +103,8 @@ func (f *fakeRepo) GetByID(
 
 func (f *fakeRepo) Create(
 	_ context.Context,
-	entity *worker.WorkerTrainingRecord,
-) (*worker.WorkerTrainingRecord, error) {
+	entity *workertraining.WorkerTrainingRecord,
+) (*workertraining.WorkerTrainingRecord, error) {
 	for _, r := range f.records {
 		if r.WorkerID == entity.WorkerID && r.CourseID == entity.CourseID && r.IsOpen() &&
 			entity.IsOpen() {
@@ -118,8 +118,8 @@ func (f *fakeRepo) Create(
 
 func (f *fakeRepo) Update(
 	_ context.Context,
-	entity *worker.WorkerTrainingRecord,
-) (*worker.WorkerTrainingRecord, error) {
+	entity *workertraining.WorkerTrainingRecord,
+) (*workertraining.WorkerTrainingRecord, error) {
 	for i, r := range f.records {
 		if r.ID == entity.ID {
 			entity.Version = r.Version + 1
@@ -185,17 +185,17 @@ func newHarness(t *testing.T) *harness {
 func (h *harness) course(
 	code string,
 	required bool,
-	mutate func(*worker.TrainingCourse),
-) *worker.TrainingCourse {
-	c := &worker.TrainingCourse{
+	mutate func(*workertraining.TrainingCourse),
+) *workertraining.TrainingCourse {
+	c := &workertraining.TrainingCourse{
 		ID:                      pulid.MustNew("trnc_"),
 		OrganizationID:          h.tenant.OrgID,
 		BusinessUnitID:          h.tenant.BuID,
 		Code:                    code,
 		Name:                    code,
-		Category:                worker.TrainingCategorySafety,
+		Category:                workertraining.TrainingCategorySafety,
 		Status:                  domaintypes.StatusActive,
-		Delivery:                worker.TrainingDeliveryClassroom,
+		Delivery:                workertraining.TrainingDeliveryClassroom,
 		IsRequired:              required,
 		RequiredForDriverTypes:  []worker.DriverType{},
 		RenewalWindowDays:       30,
@@ -212,24 +212,24 @@ func (h *harness) course(
 func TestAssignRequired_OpensOnlyTheGaps(t *testing.T) {
 	h := newHarness(t)
 	orientation := h.course("ORIENT", true, nil)
-	hazmat := h.course("HAZMAT", true, func(c *worker.TrainingCourse) {
+	hazmat := h.course("HAZMAT", true, func(c *workertraining.TrainingCourse) {
 		c.RequiredForDriverTypes = []worker.DriverType{worker.DriverTypeOTR}
 	})
-	h.course("LOCAL", true, func(c *worker.TrainingCourse) {
+	h.course("LOCAL", true, func(c *workertraining.TrainingCourse) {
 		c.RequiredForDriverTypes = []worker.DriverType{worker.DriverTypeLocal}
 	})
 	h.course("OPTIONAL", false, nil)
 	completed := h.now - 100*day
-	h.repo.records = append(h.repo.records, &worker.WorkerTrainingRecord{
+	h.repo.records = append(h.repo.records, &workertraining.WorkerTrainingRecord{
 		ID: pulid.MustNew("wtrn_"), WorkerID: h.wrk.ID, CourseID: orientation.ID,
-		Status: worker.TrainingStatusCompleted, CompletedAt: &completed,
+		Status: workertraining.TrainingStatusCompleted, CompletedAt: &completed,
 	})
 
 	created, err := h.svc.AssignRequired(context.Background(), h.tenant, h.wrk.ID, h.userID)
 	require.NoError(t, err)
 	require.Len(t, created, 1, "only the missing OTR course is opened")
 	assert.Equal(t, hazmat.ID, created[0].CourseID)
-	assert.Equal(t, worker.TrainingStatusAssigned, created[0].Status)
+	assert.Equal(t, workertraining.TrainingStatusAssigned, created[0].Status)
 	require.NotNil(t, created[0].DueAt)
 	assert.Equal(
 		t,
@@ -248,7 +248,7 @@ func TestAssign_RefusesInactiveAndPastDue(t *testing.T) {
 	retired := h.course(
 		"OLD",
 		false,
-		func(c *worker.TrainingCourse) { c.Status = domaintypes.StatusInactive },
+		func(c *workertraining.TrainingCourse) { c.Status = domaintypes.StatusInactive },
 	)
 	live := h.course("LIVE", false, nil)
 
@@ -270,7 +270,7 @@ func TestAssign_RefusesInactiveAndPastDue(t *testing.T) {
 
 func TestComplete_ScoresAndSetsExpiry(t *testing.T) {
 	h := newHarness(t)
-	scored := h.course("SCORED", true, func(c *worker.TrainingCourse) {
+	scored := h.course("SCORED", true, func(c *workertraining.TrainingCourse) {
 		c.PassingScore = decimal.NewNullDecimal(decimal.NewFromInt(80))
 		months := int32(12)
 		c.ValidityMonths = &months
@@ -291,7 +291,7 @@ func TestComplete_ScoresAndSetsExpiry(t *testing.T) {
 		TenantInfo: h.tenant, ID: record.ID, Score: decimal.NewNullDecimal(decimal.NewFromInt(60)), UserID: h.userID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.TrainingStatusFailed, failed.Status)
+	assert.Equal(t, workertraining.TrainingStatusFailed, failed.Status)
 	assert.Nil(t, failed.ExpiresAt)
 	require.NotNil(t, failed.Passed)
 	assert.False(t, *failed.Passed)
@@ -311,7 +311,7 @@ func TestComplete_ScoresAndSetsExpiry(t *testing.T) {
 		UserID:      h.userID,
 	})
 	require.NoError(t, err, "a completion can be filed without an open record")
-	assert.Equal(t, worker.TrainingStatusCompleted, direct.Status)
+	assert.Equal(t, workertraining.TrainingStatusCompleted, direct.Status)
 	require.NotNil(t, direct.ExpiresAt)
 	assert.Equal(
 		t,
@@ -359,7 +359,7 @@ func TestComplete_DocumentMustBelongToWorker(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, ownDoc, saved.DocumentID)
-	assert.Equal(t, worker.TrainingStatusCompleted, saved.Status)
+	assert.Equal(t, workertraining.TrainingStatusCompleted, saved.Status)
 }
 
 func TestWaiveAndCancel(t *testing.T) {
@@ -381,7 +381,7 @@ func TestWaiveAndCancel(t *testing.T) {
 		TenantInfo: h.tenant, ID: record.ID, Reason: "Equivalent certificate on file", UserID: h.userID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.TrainingStatusWaived, waived.Status)
+	assert.Equal(t, workertraining.TrainingStatusWaived, waived.Status)
 
 	summary, err := h.svc.Summary(context.Background(), h.tenant, h.wrk.ID)
 	require.NoError(t, err)
@@ -395,12 +395,12 @@ func TestWaiveAndCancel(t *testing.T) {
 
 func TestPortalStartAndAcknowledge(t *testing.T) {
 	h := newHarness(t)
-	selfServe := h.course("ONLINE", true, func(c *worker.TrainingCourse) {
-		c.Delivery = worker.TrainingDeliveryOnline
+	selfServe := h.course("ONLINE", true, func(c *workertraining.TrainingCourse) {
+		c.Delivery = workertraining.TrainingDeliveryOnline
 		c.ContentURL = "https://lms.example.com/1"
 	})
-	scored := h.course("SCORED", true, func(c *worker.TrainingCourse) {
-		c.Delivery = worker.TrainingDeliveryOnline
+	scored := h.course("SCORED", true, func(c *workertraining.TrainingCourse) {
+		c.Delivery = workertraining.TrainingDeliveryOnline
 		c.ContentURL = "https://lms.example.com/2"
 		c.PassingScore = decimal.NewNullDecimal(decimal.NewFromInt(80))
 	})
@@ -418,14 +418,14 @@ func TestPortalStartAndAcknowledge(t *testing.T) {
 
 	started, err := h.svc.Start(context.Background(), h.tenant, open1.ID, h.wrk.ID)
 	require.NoError(t, err)
-	assert.Equal(t, worker.TrainingStatusInProgress, started.Status)
+	assert.Equal(t, workertraining.TrainingStatusInProgress, started.Status)
 	require.NotNil(t, started.StartedAt)
 
 	done, err := h.svc.Acknowledge(context.Background(), h.tenant, open1.ID, h.wrk.ID)
 	require.NoError(t, err)
 	assert.Equal(
 		t,
-		worker.TrainingStatusCompleted,
+		workertraining.TrainingStatusCompleted,
 		done.Status,
 		"unscored self-serve courses finish on acknowledgement",
 	)
@@ -435,7 +435,7 @@ func TestPortalStartAndAcknowledge(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(
 		t,
-		worker.TrainingStatusInProgress,
+		workertraining.TrainingStatusInProgress,
 		pending.Status,
 		"scored courses wait for the office",
 	)

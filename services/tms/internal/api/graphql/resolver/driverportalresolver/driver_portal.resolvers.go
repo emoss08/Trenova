@@ -23,7 +23,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,7 +43,7 @@ func (r *MutationResolver) InviteWorkerToPortal(ctx context.Context, input gqlmo
 		ctx,
 		permission.ResourceDriverPortal,
 		permission.OpCreate,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		workerID,
 	)
 	if err != nil {
@@ -64,7 +68,7 @@ func (r *MutationResolver) RevokeWorkerPortalAccess(ctx context.Context, workerI
 		ctx,
 		permission.ResourceDriverPortal,
 		permission.OpCancel,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		id,
 	)
 	if err != nil {
@@ -309,7 +313,7 @@ func (r *MutationResolver) RequestMyPTO(ctx context.Context, input gqlmodel.Requ
 	)
 }
 
-func (r *MutationResolver) AcknowledgeMyPolicy(ctx context.Context, input gqlmodel.AcknowledgeMyPolicyInput) (*worker.WorkerPolicyAcknowledgement, error) {
+func (r *MutationResolver) AcknowledgeMyPolicy(ctx context.Context, input gqlmodel.AcknowledgeMyPolicyInput) (*workerpolicy.WorkerPolicyAcknowledgement, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -333,7 +337,7 @@ func (r *MutationResolver) AcknowledgeMyPolicy(ctx context.Context, input gqlmod
 	)
 }
 
-func (r *MutationResolver) WithdrawMyProfileChange(ctx context.Context, id string) (*worker.WorkerProfileChangeRequest, error) {
+func (r *MutationResolver) WithdrawMyProfileChange(ctx context.Context, id string) (*profilechange.WorkerProfileChangeRequest, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -347,7 +351,7 @@ func (r *MutationResolver) WithdrawMyProfileChange(ctx context.Context, id strin
 	return r.DriverPortalService.WithdrawMyProfileChange(ctx, base.TenantInfo(authCtx), requestID)
 }
 
-func (r *MutationResolver) SetMyAvailability(ctx context.Context, input gqlmodel.SetMyAvailabilityInput) (*worker.WorkerAvailabilityPreference, error) {
+func (r *MutationResolver) SetMyAvailability(ctx context.Context, input gqlmodel.SetMyAvailabilityInput) (*workerschedule.WorkerAvailabilityPreference, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -364,7 +368,7 @@ func (r *MutationResolver) SetMyAvailability(ctx context.Context, input gqlmodel
 	)
 }
 
-func (r *MutationResolver) ProposeMyShiftSwap(ctx context.Context, input gqlmodel.ProposeMyShiftSwapInput) (*worker.ShiftSwapRequest, error) {
+func (r *MutationResolver) ProposeMyShiftSwap(ctx context.Context, input gqlmodel.ProposeMyShiftSwapInput) (*workerschedule.ShiftSwapRequest, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -388,7 +392,7 @@ func (r *MutationResolver) ProposeMyShiftSwap(ctx context.Context, input gqlmode
 	return r.DriverPortalService.ProposeMyShiftSwap(ctx, base.TenantInfo(authCtx), req)
 }
 
-func (r *MutationResolver) RespondToMyShiftSwap(ctx context.Context, input gqlmodel.RespondToMyShiftSwapInput) (*worker.ShiftSwapRequest, error) {
+func (r *MutationResolver) RespondToMyShiftSwap(ctx context.Context, input gqlmodel.RespondToMyShiftSwapInput) (*workerschedule.ShiftSwapRequest, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -403,7 +407,7 @@ func (r *MutationResolver) RespondToMyShiftSwap(ctx context.Context, input gqlmo
 		ctx,
 		base.TenantInfo(authCtx),
 		swapID,
-		worker.ShiftSwapStatus(input.Response),
+		workerschedule.ShiftSwapStatus(input.Response),
 		base.StringValue(input.Note),
 	)
 }
@@ -586,7 +590,7 @@ func (r *QueryResolver) WorkerPortalStatus(ctx context.Context, workerID string)
 		ctx,
 		permission.ResourceDriverPortal,
 		permission.OpRead,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		id,
 	)
 	if err != nil {
@@ -814,7 +818,7 @@ func (r *QueryResolver) MyPolicyDocumentURL(ctx context.Context, policyID string
 	return r.DriverPortalService.MyPolicyDocumentURL(ctx, base.TenantInfo(authCtx), id)
 }
 
-func (r *QueryResolver) MyProfileChangeRequests(ctx context.Context) ([]*worker.WorkerProfileChangeRequest, error) {
+func (r *QueryResolver) MyProfileChangeRequests(ctx context.Context) ([]*profilechange.WorkerProfileChangeRequest, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -836,7 +840,7 @@ func (r *QueryResolver) MySchedule(ctx context.Context, at *int, weeks *int) (*d
 	)
 }
 
-func (r *QueryResolver) MyAvailability(ctx context.Context) ([]*worker.WorkerAvailabilityPreference, error) {
+func (r *QueryResolver) MyAvailability(ctx context.Context) ([]*workerschedule.WorkerAvailabilityPreference, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err

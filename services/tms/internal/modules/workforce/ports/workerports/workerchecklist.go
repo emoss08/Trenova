@@ -3,7 +3,7 @@ package workerports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -30,14 +30,14 @@ type ChecklistTemplateCodeExistsRequest struct {
 }
 
 type GetDefaultChecklistTemplateRequest struct {
-	TenantInfo pagination.TenantInfo   `json:"tenantInfo"`
-	Trigger    worker.ChecklistTrigger `json:"trigger"`
+	TenantInfo pagination.TenantInfo            `json:"tenantInfo"`
+	Trigger    workerchecklist.ChecklistTrigger `json:"trigger"`
 }
 
 type ClearDefaultChecklistTemplateRequest struct {
-	TenantInfo pagination.TenantInfo   `json:"tenantInfo"`
-	Trigger    worker.ChecklistTrigger `json:"trigger"`
-	ExceptID   pulid.ID                `json:"exceptId"`
+	TenantInfo pagination.TenantInfo            `json:"tenantInfo"`
+	Trigger    workerchecklist.ChecklistTrigger `json:"trigger"`
+	ExceptID   pulid.ID                         `json:"exceptId"`
 }
 
 type ListWorkerChecklistsRequest struct {
@@ -73,28 +73,28 @@ type WorkerChecklistRepository interface {
 	ListTemplates(
 		ctx context.Context,
 		req *ListChecklistTemplatesRequest,
-	) (*pagination.CursorListResult[*worker.WorkerChecklistTemplate], error)
+	) (*pagination.CursorListResult[*workerchecklist.WorkerChecklistTemplate], error)
 	ListActiveTemplates(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) ([]*worker.WorkerChecklistTemplate, error)
+	) ([]*workerchecklist.WorkerChecklistTemplate, error)
 	GetTemplateByID(
 		ctx context.Context,
 		req *GetChecklistTemplateByIDRequest,
-	) (*worker.WorkerChecklistTemplate, error)
+	) (*workerchecklist.WorkerChecklistTemplate, error)
 	GetDefaultTemplate(
 		ctx context.Context,
 		req *GetDefaultChecklistTemplateRequest,
-	) (*worker.WorkerChecklistTemplate, error)
+	) (*workerchecklist.WorkerChecklistTemplate, error)
 	TemplateCodeExists(ctx context.Context, req *ChecklistTemplateCodeExistsRequest) (bool, error)
 	CreateTemplate(
 		ctx context.Context,
-		entity *worker.WorkerChecklistTemplate,
-	) (*worker.WorkerChecklistTemplate, error)
+		entity *workerchecklist.WorkerChecklistTemplate,
+	) (*workerchecklist.WorkerChecklistTemplate, error)
 	UpdateTemplate(
 		ctx context.Context,
-		entity *worker.WorkerChecklistTemplate,
-	) (*worker.WorkerChecklistTemplate, error)
+		entity *workerchecklist.WorkerChecklistTemplate,
+	) (*workerchecklist.WorkerChecklistTemplate, error)
 	ClearDefaultTemplate(ctx context.Context, req *ClearDefaultChecklistTemplateRequest) error
 	CountOpenChecklists(ctx context.Context, req *CountOpenChecklistsRequest) (int, error)
 	CountOpenChecklistsByTemplateIDs(
@@ -105,16 +105,22 @@ type WorkerChecklistRepository interface {
 	ListForWorker(
 		ctx context.Context,
 		req *ListWorkerChecklistsRequest,
-	) ([]*worker.WorkerChecklist, error)
+	) ([]*workerchecklist.WorkerChecklist, error)
 	GetByID(
 		ctx context.Context,
 		req *GetWorkerChecklistByIDRequest,
-	) (*worker.WorkerChecklist, error)
+	) (*workerchecklist.WorkerChecklist, error)
 	GetItemByID(
 		ctx context.Context,
 		req *GetWorkerChecklistItemByIDRequest,
-	) (*worker.WorkerChecklistItem, error)
-	Create(ctx context.Context, entity *worker.WorkerChecklist) (*worker.WorkerChecklist, error)
-	Update(ctx context.Context, entity *worker.WorkerChecklist) (*worker.WorkerChecklist, error)
-	UpdateItems(ctx context.Context, items []*worker.WorkerChecklistItem) error
+	) (*workerchecklist.WorkerChecklistItem, error)
+	Create(
+		ctx context.Context,
+		entity *workerchecklist.WorkerChecklist,
+	) (*workerchecklist.WorkerChecklist, error)
+	Update(
+		ctx context.Context,
+		entity *workerchecklist.WorkerChecklist,
+	) (*workerchecklist.WorkerChecklist, error)
+	UpdateItems(ctx context.Context, items []*workerchecklist.WorkerChecklistItem) error
 }

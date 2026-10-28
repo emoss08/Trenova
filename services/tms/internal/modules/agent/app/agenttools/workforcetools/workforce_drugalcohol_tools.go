@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -45,19 +45,19 @@ const kindDOTTest = "DOT test"
 
 const kindRandomPick = "random selection"
 
-var dotTestTypes = agenttoolschema.Source("worker.dotTestType", worker.DOTTestTypeValues())
+var dotTestTypes = agenttoolschema.Source("worker.dotTestType", workerdot.DOTTestTypeValues())
 
 var dotTestSubstances = agenttoolschema.Source(
 	"worker.dotTestSubstance",
-	worker.DOTTestSubstanceValues(),
+	workerdot.DOTTestSubstanceValues(),
 )
 
 var randomSelectionMoves = agenttoolschema.Source(
 	"dotRandomSelection.agentMove",
-	[]worker.RandomEntryStatus{
-		worker.RandomEntryNotified,
-		worker.RandomEntryExcused,
-		worker.RandomEntryMissed,
+	[]workerdot.RandomEntryStatus{
+		workerdot.RandomEntryNotified,
+		workerdot.RandomEntryExcused,
+		workerdot.RandomEntryMissed,
 	},
 )
 
@@ -85,14 +85,14 @@ var drawFields = []string{
 type DrugAlcoholKeeper interface {
 	PlanRecordTest(
 		ctx context.Context,
-		entity *worker.WorkerDOTTest,
+		entity *workerdot.WorkerDOTTest,
 		userID pulid.ID,
-	) (*worker.WorkerDOTTest, error)
+	) (*workerdot.WorkerDOTTest, error)
 	RecordTest(
 		ctx context.Context,
-		entity *worker.WorkerDOTTest,
+		entity *workerdot.WorkerDOTTest,
 		userID pulid.ID,
-	) (*worker.WorkerDOTTest, error)
+	) (*workerdot.WorkerDOTTest, error)
 	PlanCancelTest(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -105,15 +105,15 @@ type DrugAlcoholKeeper interface {
 		id pulid.ID,
 		reason string,
 		userID pulid.ID,
-	) (*worker.WorkerDOTTest, error)
+	) (*workerdot.WorkerDOTTest, error)
 	PlanRunDraw(
 		ctx context.Context,
 		req *workerdrugalcoholservice.RunDrawRequest,
-	) (*worker.DOTRandomDraw, error)
+	) (*workerdot.DOTRandomDraw, error)
 	RunDraw(
 		ctx context.Context,
 		req *workerdrugalcoholservice.RunDrawRequest,
-	) (*worker.DOTRandomDraw, error)
+	) (*workerdot.DOTRandomDraw, error)
 	PlanFinalizeDraw(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -124,7 +124,7 @@ type DrugAlcoholKeeper interface {
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
 		userID pulid.ID,
-	) (*worker.DOTRandomDraw, error)
+	) (*workerdot.DOTRandomDraw, error)
 	PlanCancelDraw(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -137,7 +137,7 @@ type DrugAlcoholKeeper interface {
 		id pulid.ID,
 		reason string,
 		userID pulid.ID,
-	) (*worker.DOTRandomDraw, error)
+	) (*workerdot.DOTRandomDraw, error)
 	PlanUpdateDrawEntry(
 		ctx context.Context,
 		req *workerdrugalcoholservice.UpdateEntryRequest,
@@ -145,7 +145,7 @@ type DrugAlcoholKeeper interface {
 	UpdateDrawEntry(
 		ctx context.Context,
 		req *workerdrugalcoholservice.UpdateEntryRequest,
-	) (*worker.DOTRandomDrawEntry, error)
+	) (*workerdot.DOTRandomDrawEntry, error)
 }
 
 func DrugAlcoholToolProviders() []any {
@@ -159,18 +159,18 @@ func DrugAlcoholToolProviders() []any {
 	}
 }
 
-func dotTestRecord(test *worker.WorkerDOTTest) toolpreview.Record {
+func dotTestRecord(test *workerdot.WorkerDOTTest) toolpreview.Record {
 	return wfRecord(permission.ResourceWorkerDOTTest, test.ID,
 		fmt.Sprintf("%s %s test", test.TestType.Label(), strings.ToLower(string(test.Substance))),
 		test.Version)
 }
 
-func drawRecord(draw *worker.DOTRandomDraw) toolpreview.Record {
+func drawRecord(draw *workerdot.DOTRandomDraw) toolpreview.Record {
 	return wfRecord(permission.ResourceDOTRandomPool, draw.ID,
 		"Random testing round "+draw.PeriodKey, draw.Version)
 }
 
-func scheduledTestFrom(params *agenttoolports.ToolExecuteParams) (*worker.WorkerDOTTest, error) {
+func scheduledTestFrom(params *agenttoolports.ToolExecuteParams) (*workerdot.WorkerDOTTest, error) {
 	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
 	if err != nil {
 		return nil, err
@@ -203,14 +203,14 @@ func scheduledTestFrom(params *agenttoolports.ToolExecuteParams) (*worker.Worker
 	if err != nil {
 		return nil, err
 	}
-	test := &worker.WorkerDOTTest{
+	test := &workerdot.WorkerDOTTest{
 		OrganizationID: params.OrganizationID,
 		BusinessUnitID: params.BusinessUnitID,
 		WorkerID:       workerID,
 		TestType:       testType,
 		Substance:      substance,
-		Status:         worker.DOTTestStatusScheduled,
-		Result:         worker.DOTResultPending,
+		Status:         workerdot.DOTTestStatusScheduled,
+		Result:         workerdot.DOTResultPending,
 		IsDOT:          isDOT,
 		Reason:         reason,
 		ScheduledAt:    scheduledAt,
@@ -265,21 +265,21 @@ func newScheduleDOTTestTool(tests DrugAlcoholKeeper) agenttoolports.AgentTool {
 	spec.SearchTerms = []string{"drug test", "alcohol test", "random test", "collection"}
 
 	return common.NewReportingReceivableTool(spec,
-		common.ReceivablePlan[*worker.WorkerDOTTest, *worker.WorkerDOTTest]{
+		common.ReceivablePlan[*workerdot.WorkerDOTTest, *workerdot.WorkerDOTTest]{
 			Request: scheduledTestFrom,
 			Plan: func(
 				ctx context.Context,
-				test *worker.WorkerDOTTest,
+				test *workerdot.WorkerDOTTest,
 				params *agenttoolports.ToolExecuteParams,
-			) (*worker.WorkerDOTTest, error) {
+			) (*workerdot.WorkerDOTTest, error) {
 				return tests.PlanRecordTest(ctx, test, params.Actor.UserID)
 			},
-			Refused: func(*worker.WorkerDOTTest) string {
+			Refused: func(*workerdot.WorkerDOTTest) string {
 				return "Would schedule a drug or alcohol test."
 			},
 			Render: func(
-				_ *worker.WorkerDOTTest,
-				planned *worker.WorkerDOTTest,
+				_ *workerdot.WorkerDOTTest,
+				planned *workerdot.WorkerDOTTest,
 			) (*agent.ToolPreview, error) {
 				change, err := toolpreview.Create(
 					wfRecord(permission.ResourceWorkerDOTTest, pulid.Nil, "New test", 0),
@@ -295,7 +295,7 @@ func newScheduleDOTTestTool(tests DrugAlcoholKeeper) agenttoolports.AgentTool {
 			},
 			Run: func(
 				ctx context.Context,
-				test *worker.WorkerDOTTest,
+				test *workerdot.WorkerDOTTest,
 				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				created, err := tests.RecordTest(ctx, test, params.Actor.UserID)
@@ -446,14 +446,14 @@ func newRunDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentTool {
 	spec.SearchTerms = []string{"random drug test", "random selection", "testing pool"}
 
 	return common.NewReceivableTool(spec, common.ReceivablePlan[
-		*workerdrugalcoholservice.RunDrawRequest, *worker.DOTRandomDraw,
+		*workerdrugalcoholservice.RunDrawRequest, *workerdot.DOTRandomDraw,
 	]{
 		Request: drawRequestFrom,
 		Plan: func(
 			ctx context.Context,
 			req *workerdrugalcoholservice.RunDrawRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*worker.DOTRandomDraw, error) {
+		) (*workerdot.DOTRandomDraw, error) {
 			return draws.PlanRunDraw(ctx, req)
 		},
 		Refused: func(*workerdrugalcoholservice.RunDrawRequest) string {
@@ -461,7 +461,7 @@ func newRunDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentTool {
 		},
 		Render: func(
 			_ *workerdrugalcoholservice.RunDrawRequest,
-			planned *worker.DOTRandomDraw,
+			planned *workerdot.DOTRandomDraw,
 		) (*agent.ToolPreview, error) {
 			label := "Random testing round " + planned.PeriodKey
 			if planned.Pool != nil {

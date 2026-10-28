@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/teamscope"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -87,14 +87,14 @@ func TestRequire_NoGrantOrNoCheckerIsRefused(t *testing.T) {
 
 type managers struct {
 	ids   []pulid.ID
-	scope worker.ApprovalScope
+	scope approvaldelegation.ApprovalScope
 }
 
 func (m *managers) ManagerIDs(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	_ pulid.ID,
-	scope worker.ApprovalScope,
+	scope approvaldelegation.ApprovalScope,
 	_ int64,
 ) ([]pulid.ID, map[pulid.ID]pulid.ID, error) {
 	m.scope = scope
@@ -109,7 +109,7 @@ func TestNarrow_ATeamGrantNamesTheManagersAndAWiderOneNone(t *testing.T) {
 	req := request(pulid.Nil)
 	req.Resource = permission.ResourceWorkerLeave
 	req.Operation = permission.OpRead
-	req.ApprovalScope = worker.ApprovalScopeTimeOff
+	req.ApprovalScope = approvaldelegation.ApprovalScopeTimeOff
 
 	narrowed, err := teamscope.ListGuard{
 		Permissions: &grant{allowed: true, scope: permission.DataScopeTeam},
@@ -117,7 +117,7 @@ func TestNarrow_ATeamGrantNamesTheManagersAndAWiderOneNone(t *testing.T) {
 	}.Narrow(t.Context(), req)
 	require.NoError(t, err)
 	assert.Equal(t, []pulid.ID{manager}, narrowed)
-	assert.Equal(t, worker.ApprovalScopeTimeOff, team.scope)
+	assert.Equal(t, approvaldelegation.ApprovalScopeTimeOff, team.scope)
 
 	whole, err := teamscope.ListGuard{
 		Permissions: &grant{allowed: true, scope: permission.DataScopeOrganization},

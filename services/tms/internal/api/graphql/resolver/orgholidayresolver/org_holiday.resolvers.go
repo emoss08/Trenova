@@ -11,12 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *MutationResolver) CreateOrgHoliday(ctx context.Context, input gqlmodel.OrgHolidayInput) (*worker.OrgHoliday, error) {
+func (r *MutationResolver) CreateOrgHoliday(ctx context.Context, input gqlmodel.OrgHolidayInput) (*pto.OrgHoliday, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceOrgHoliday, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -25,7 +25,7 @@ func (r *MutationResolver) CreateOrgHoliday(ctx context.Context, input gqlmodel.
 	return r.OrgHolidayService.Create(ctx, orgHolidayFromInput(&input, pulid.Nil, base.TenantInfo(authCtx)), authCtx.UserID)
 }
 
-func (r *MutationResolver) UpdateOrgHoliday(ctx context.Context, id string, input gqlmodel.OrgHolidayInput) (*worker.OrgHoliday, error) {
+func (r *MutationResolver) UpdateOrgHoliday(ctx context.Context, id string, input gqlmodel.OrgHolidayInput) (*pto.OrgHoliday, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceOrgHoliday, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (r *MutationResolver) DeleteOrgHoliday(ctx context.Context, id string) (boo
 	return true, nil
 }
 
-func (r *QueryResolver) OrgHolidays(ctx context.Context, year *int) ([]*worker.OrgHoliday, error) {
+func (r *QueryResolver) OrgHolidays(ctx context.Context, year *int) ([]*pto.OrgHoliday, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceOrgHoliday, permission.OpRead)
 	if err != nil {
 		return nil, err

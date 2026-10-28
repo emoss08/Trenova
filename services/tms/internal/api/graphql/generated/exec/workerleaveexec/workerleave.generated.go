@@ -3,6 +3,7 @@
 package workerleaveexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"context"
 	"errors"
 
@@ -31,7 +32,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveControl)
+					obj := o.(*workerleave.LeaveControl)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -41,7 +42,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveControl)
+					obj := o.(*workerleave.LeaveControl)
 					return obj.MeasurementMethod, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNLeaveMeasurementMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveMeasurementMethod),
@@ -53,7 +54,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveControl)
+					obj := o.(*workerleave.LeaveControl)
 					return gqlexec.Resolver[resolverLeaveControl](ec, "LeaveControl").EntitlementWeeks(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -65,7 +66,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveControl)
+					obj := o.(*workerleave.LeaveControl)
 					return gqlexec.Resolver[resolverLeaveControl](ec, "LeaveControl").MilitaryCaregiverWeeks(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -77,7 +78,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveControl)
+					obj := o.(*workerleave.LeaveControl)
 					return gqlexec.Resolver[resolverLeaveControl](ec, "LeaveControl").WorkweekHours(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -87,7 +88,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveControl)
+					obj := o.(*workerleave.LeaveControl)
 					return obj.EligibilityMonths, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -97,7 +98,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveControl)
+					obj := o.(*workerleave.LeaveControl)
 					return obj.EligibilityHours, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -107,7 +108,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveControl)
+					obj := o.(*workerleave.LeaveControl)
 					return obj.CertificationDueDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -117,7 +118,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveControl)
+					obj := o.(*workerleave.LeaveControl)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -129,7 +130,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveEntitlement)
+					obj := o.(*workerleave.LeaveEntitlement)
 					return obj.Method, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNLeaveMeasurementMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveMeasurementMethod),
@@ -140,7 +141,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "LeaveWindow",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveEntitlement)
+					obj := o.(*workerleave.LeaveEntitlement)
 					return obj.Window, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNLeaveWindow2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveWindow),
@@ -152,7 +153,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveEntitlement)
+					obj := o.(*workerleave.LeaveEntitlement)
 					return gqlexec.Resolver[resolverLeaveEntitlement](ec, "LeaveEntitlement").TotalHours(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -164,7 +165,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveEntitlement)
+					obj := o.(*workerleave.LeaveEntitlement)
 					return gqlexec.Resolver[resolverLeaveEntitlement](ec, "LeaveEntitlement").UsedHours(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -176,7 +177,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveEntitlement)
+					obj := o.(*workerleave.LeaveEntitlement)
 					return gqlexec.Resolver[resolverLeaveEntitlement](ec, "LeaveEntitlement").RemainingHours(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -188,7 +189,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveEntitlement)
+					obj := o.(*workerleave.LeaveEntitlement)
 					return gqlexec.Resolver[resolverLeaveEntitlement](ec, "LeaveEntitlement").TotalWeeks(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -200,7 +201,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveEntitlement)
+					obj := o.(*workerleave.LeaveEntitlement)
 					return gqlexec.Resolver[resolverLeaveEntitlement](ec, "LeaveEntitlement").UsedWeeks(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -212,7 +213,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveEntitlement)
+					obj := o.(*workerleave.LeaveEntitlement)
 					return gqlexec.Resolver[resolverLeaveEntitlement](ec, "LeaveEntitlement").RemainingWeeks(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -222,7 +223,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveEntitlement)
+					obj := o.(*workerleave.LeaveEntitlement)
 					return obj.Exhausted, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -232,7 +233,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveEntitlement)
+					obj := o.(*workerleave.LeaveEntitlement)
 					return obj.EligibleOnTenure, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -242,7 +243,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveEntitlement)
+					obj := o.(*workerleave.LeaveEntitlement)
 					return obj.MonthsEmployed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -252,7 +253,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveEntitlement)
+					obj := o.(*workerleave.LeaveEntitlement)
 					return obj.OpenCaseCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -262,7 +263,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveEntitlement)
+					obj := o.(*workerleave.LeaveEntitlement)
 					return obj.MilitaryCaregiver, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -274,7 +275,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveWindow)
+					obj := o.(*workerleave.LeaveWindow)
 					return obj.From, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -284,7 +285,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.LeaveWindow)
+					obj := o.(*workerleave.LeaveWindow)
 					return obj.Through, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -495,7 +496,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -505,7 +506,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -515,7 +516,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -525,7 +526,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -535,7 +536,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.LeaveType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveType),
@@ -545,7 +546,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNLeaveCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCaseStatus),
@@ -555,7 +556,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.Frequency, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNLeaveFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveFrequency),
@@ -564,7 +565,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "reason",
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.Reason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -574,7 +575,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.FMLADesignated, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -584,7 +585,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.MilitaryCaregiver, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -594,7 +595,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.RequestedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -604,7 +605,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.StartsAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -615,7 +616,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").EndsAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -626,7 +627,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").DecidedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -637,7 +638,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").ClosedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -647,7 +648,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.CertificationStatus, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCertificationStatus),
@@ -658,7 +659,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").CertificationRequestedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -669,7 +670,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").CertificationDueAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -680,7 +681,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").CertificationReceivedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -691,7 +692,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").RecertificationDueAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -703,7 +704,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").CertificationLate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -714,7 +715,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").EligibilityHoursWorked(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
@@ -725,7 +726,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").EmploymentEventID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -736,7 +737,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -745,7 +746,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "notes",
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.Notes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -755,7 +756,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -765,7 +766,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -775,7 +776,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -785,7 +786,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.Worker, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
@@ -795,7 +796,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "WorkerCredentialDocument",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return obj.Document, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocument),
@@ -808,7 +809,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "WorkerLeaveEntry",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveCase)
+					obj := o.(*workerleave.WorkerLeaveCase)
 					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").Entries(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveEntryᚄ),
@@ -820,7 +821,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveEntry)
+					obj := o.(*workerleave.WorkerLeaveEntry)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -830,7 +831,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveEntry)
+					obj := o.(*workerleave.WorkerLeaveEntry)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -840,7 +841,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveEntry)
+					obj := o.(*workerleave.WorkerLeaveEntry)
 					return obj.LeaveCaseID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -850,7 +851,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveEntry)
+					obj := o.(*workerleave.WorkerLeaveEntry)
 					return obj.UsedOn, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -862,7 +863,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveEntry)
+					obj := o.(*workerleave.WorkerLeaveEntry)
 					return gqlexec.Resolver[resolverWorkerLeaveEntry](ec, "WorkerLeaveEntry").Hours(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -872,7 +873,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveEntry)
+					obj := o.(*workerleave.WorkerLeaveEntry)
 					return obj.CountsAgainstEntitlement, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -883,7 +884,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveEntry)
+					obj := o.(*workerleave.WorkerLeaveEntry)
 					return gqlexec.Resolver[resolverWorkerLeaveEntry](ec, "WorkerLeaveEntry").PTOID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -892,7 +893,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "notes",
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveEntry)
+					obj := o.(*workerleave.WorkerLeaveEntry)
 					return obj.Notes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -902,7 +903,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerLeaveEntry)
+					obj := o.(*workerleave.WorkerLeaveEntry)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -929,59 +930,59 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverLeaveControl interface {
-	EntitlementWeeks(ctx context.Context, obj *worker.LeaveControl) (string, error)
-	MilitaryCaregiverWeeks(ctx context.Context, obj *worker.LeaveControl) (string, error)
-	WorkweekHours(ctx context.Context, obj *worker.LeaveControl) (string, error)
+	EntitlementWeeks(ctx context.Context, obj *workerleave.LeaveControl) (string, error)
+	MilitaryCaregiverWeeks(ctx context.Context, obj *workerleave.LeaveControl) (string, error)
+	WorkweekHours(ctx context.Context, obj *workerleave.LeaveControl) (string, error)
 }
 
 type resolverLeaveEntitlement interface {
-	TotalHours(ctx context.Context, obj *worker.LeaveEntitlement) (string, error)
-	UsedHours(ctx context.Context, obj *worker.LeaveEntitlement) (string, error)
-	RemainingHours(ctx context.Context, obj *worker.LeaveEntitlement) (string, error)
-	TotalWeeks(ctx context.Context, obj *worker.LeaveEntitlement) (string, error)
-	UsedWeeks(ctx context.Context, obj *worker.LeaveEntitlement) (string, error)
-	RemainingWeeks(ctx context.Context, obj *worker.LeaveEntitlement) (string, error)
+	TotalHours(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
+	UsedHours(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
+	RemainingHours(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
+	TotalWeeks(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
+	UsedWeeks(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
+	RemainingWeeks(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
 }
 
 type resolverMutation interface {
-	OpenLeaveCase(ctx context.Context, input gqlmodel.OpenLeaveCaseInput) (*worker.WorkerLeaveCase, error)
-	UpdateLeaveCase(ctx context.Context, input gqlmodel.UpdateLeaveCaseInput) (*worker.WorkerLeaveCase, error)
-	DecideLeaveCase(ctx context.Context, input gqlmodel.DecideLeaveCaseInput) (*worker.WorkerLeaveCase, error)
-	CloseLeaveCase(ctx context.Context, id string) (*worker.WorkerLeaveCase, error)
-	RequestLeaveCertification(ctx context.Context, caseID string, dueAt *int) (*worker.WorkerLeaveCase, error)
-	RecordLeaveCertification(ctx context.Context, input gqlmodel.RecordLeaveCertificationInput) (*worker.WorkerLeaveCase, error)
-	RecordLeaveDay(ctx context.Context, input gqlmodel.RecordLeaveDayInput) (*worker.WorkerLeaveEntry, error)
-	UpdateLeaveDay(ctx context.Context, input gqlmodel.UpdateLeaveDayInput) (*worker.WorkerLeaveEntry, error)
+	OpenLeaveCase(ctx context.Context, input gqlmodel.OpenLeaveCaseInput) (*workerleave.WorkerLeaveCase, error)
+	UpdateLeaveCase(ctx context.Context, input gqlmodel.UpdateLeaveCaseInput) (*workerleave.WorkerLeaveCase, error)
+	DecideLeaveCase(ctx context.Context, input gqlmodel.DecideLeaveCaseInput) (*workerleave.WorkerLeaveCase, error)
+	CloseLeaveCase(ctx context.Context, id string) (*workerleave.WorkerLeaveCase, error)
+	RequestLeaveCertification(ctx context.Context, caseID string, dueAt *int) (*workerleave.WorkerLeaveCase, error)
+	RecordLeaveCertification(ctx context.Context, input gqlmodel.RecordLeaveCertificationInput) (*workerleave.WorkerLeaveCase, error)
+	RecordLeaveDay(ctx context.Context, input gqlmodel.RecordLeaveDayInput) (*workerleave.WorkerLeaveEntry, error)
+	UpdateLeaveDay(ctx context.Context, input gqlmodel.UpdateLeaveDayInput) (*workerleave.WorkerLeaveEntry, error)
 	DeleteLeaveDay(ctx context.Context, id string) (bool, error)
-	UpdateLeaveControl(ctx context.Context, input gqlmodel.UpdateLeaveControlInput) (*worker.LeaveControl, error)
+	UpdateLeaveControl(ctx context.Context, input gqlmodel.UpdateLeaveControlInput) (*workerleave.LeaveControl, error)
 }
 
 type resolverQuery interface {
-	LeaveControl(ctx context.Context) (*worker.LeaveControl, error)
-	WorkerLeaveCases(ctx context.Context, workerID *string, openOnly *bool, certificationOutstandingOnly *bool, limit *int) ([]*worker.WorkerLeaveCase, error)
-	WorkerLeaveCase(ctx context.Context, id string) (*worker.WorkerLeaveCase, error)
-	WorkerLeaveEntitlement(ctx context.Context, workerID string, asOf *int) (*worker.LeaveEntitlement, error)
-	LeaveCertificationsOutstanding(ctx context.Context) ([]*worker.WorkerLeaveCase, error)
+	LeaveControl(ctx context.Context) (*workerleave.LeaveControl, error)
+	WorkerLeaveCases(ctx context.Context, workerID *string, openOnly *bool, certificationOutstandingOnly *bool, limit *int) ([]*workerleave.WorkerLeaveCase, error)
+	WorkerLeaveCase(ctx context.Context, id string) (*workerleave.WorkerLeaveCase, error)
+	WorkerLeaveEntitlement(ctx context.Context, workerID string, asOf *int) (*workerleave.LeaveEntitlement, error)
+	LeaveCertificationsOutstanding(ctx context.Context) ([]*workerleave.WorkerLeaveCase, error)
 }
 
 type resolverWorkerLeaveCase interface {
-	EndsAt(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	DecidedAt(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	ClosedAt(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	CertificationRequestedAt(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	CertificationDueAt(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	CertificationReceivedAt(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	RecertificationDueAt(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	CertificationLate(ctx context.Context, obj *worker.WorkerLeaveCase) (bool, error)
-	EligibilityHoursWorked(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	EmploymentEventID(ctx context.Context, obj *worker.WorkerLeaveCase) (*string, error)
-	DocumentID(ctx context.Context, obj *worker.WorkerLeaveCase) (*string, error)
-	Entries(ctx context.Context, obj *worker.WorkerLeaveCase) ([]*worker.WorkerLeaveEntry, error)
+	EndsAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	DecidedAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	ClosedAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	CertificationRequestedAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	CertificationDueAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	CertificationReceivedAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	RecertificationDueAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	CertificationLate(ctx context.Context, obj *workerleave.WorkerLeaveCase) (bool, error)
+	EligibilityHoursWorked(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	EmploymentEventID(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*string, error)
+	DocumentID(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*string, error)
+	Entries(ctx context.Context, obj *workerleave.WorkerLeaveCase) ([]*workerleave.WorkerLeaveEntry, error)
 }
 
 type resolverWorkerLeaveEntry interface {
-	Hours(ctx context.Context, obj *worker.WorkerLeaveEntry) (string, error)
-	PTOID(ctx context.Context, obj *worker.WorkerLeaveEntry) (*string, error)
+	Hours(ctx context.Context, obj *workerleave.WorkerLeaveEntry) (string, error)
+	PTOID(ctx context.Context, obj *workerleave.WorkerLeaveEntry) (*string, error)
 }
 
 var (
@@ -1717,9 +1718,9 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCertificationStatus(ctx context.Context, ec *gqlexec.Exec, v any) (worker.LeaveCertificationStatus, error) {
+func unmarshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCertificationStatus(ctx context.Context, ec *gqlexec.Exec, v any) (workerleave.LeaveCertificationStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.LeaveCertificationStatus(tmp)
+	res := workerleave.LeaveCertificationStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -1790,21 +1791,21 @@ func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, e
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOLeaveFrequency2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveFrequency(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.LeaveFrequency, error) {
+func unmarshalOLeaveFrequency2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveFrequency(ctx context.Context, ec *gqlexec.Exec, v any) (*workerleave.LeaveFrequency, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.LeaveFrequency(tmp)
+	res := workerleave.LeaveFrequency(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOLeaveMeasurementMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveMeasurementMethod(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.LeaveMeasurementMethod, error) {
+func unmarshalOLeaveMeasurementMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveMeasurementMethod(ctx context.Context, ec *gqlexec.Exec, v any) (*workerleave.LeaveMeasurementMethod, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.LeaveMeasurementMethod(tmp)
+	res := workerleave.LeaveMeasurementMethod(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -1881,7 +1882,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNLeaveCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCaseStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveCaseStatus) graphql.Marshaler {
+func marshalNLeaveCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCaseStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerleave.LeaveCaseStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1889,7 +1890,7 @@ func marshalNLeaveCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return res
 }
 
-func marshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCertificationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveCertificationStatus) graphql.Marshaler {
+func marshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCertificationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerleave.LeaveCertificationStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1897,7 +1898,7 @@ func marshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNLeaveControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.LeaveControl) graphql.Marshaler {
+func marshalNLeaveControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerleave.LeaveControl) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1905,7 +1906,7 @@ func marshalNLeaveControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return ec.MarshalType(ctx, sel, "LeaveControl", v)
 }
 
-func marshalNLeaveEntitlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveEntitlement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.LeaveEntitlement) graphql.Marshaler {
+func marshalNLeaveEntitlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveEntitlement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerleave.LeaveEntitlement) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1913,7 +1914,7 @@ func marshalNLeaveEntitlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return ec.MarshalType(ctx, sel, "LeaveEntitlement", v)
 }
 
-func marshalNLeaveFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveFrequency(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveFrequency) graphql.Marshaler {
+func marshalNLeaveFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveFrequency(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerleave.LeaveFrequency) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1921,7 +1922,7 @@ func marshalNLeaveFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodule
 	return res
 }
 
-func marshalNLeaveMeasurementMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveMeasurementMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveMeasurementMethod) graphql.Marshaler {
+func marshalNLeaveMeasurementMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveMeasurementMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerleave.LeaveMeasurementMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1929,7 +1930,7 @@ func marshalNLeaveMeasurementMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNLeaveWindow2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveWindow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveWindow) graphql.Marshaler {
+func marshalNLeaveWindow2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveWindow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerleave.LeaveWindow) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "LeaveWindow", &v)
 }
 
@@ -1941,15 +1942,15 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNWorkerLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCaseᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerLeaveCase) graphql.Marshaler {
-	return gqlexec.List[*worker.WorkerLeaveCase]{
+func marshalNWorkerLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCaseᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerleave.WorkerLeaveCase) graphql.Marshaler {
+	return gqlexec.List[*workerleave.WorkerLeaveCase]{
 		Elem:        marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCase,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCase(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerLeaveCase) graphql.Marshaler {
+func marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCase(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerleave.WorkerLeaveCase) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1957,15 +1958,15 @@ func marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmo
 	return ec.MarshalType(ctx, sel, "WorkerLeaveCase", v)
 }
 
-func marshalNWorkerLeaveEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerLeaveEntry) graphql.Marshaler {
-	return gqlexec.List[*worker.WorkerLeaveEntry]{
+func marshalNWorkerLeaveEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerleave.WorkerLeaveEntry) graphql.Marshaler {
+	return gqlexec.List[*workerleave.WorkerLeaveEntry]{
 		Elem:        marshalNWorkerLeaveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveEntry,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerLeaveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerLeaveEntry) graphql.Marshaler {
+func marshalNWorkerLeaveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerleave.WorkerLeaveEntry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

@@ -3,7 +3,7 @@ package workerports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -75,22 +75,28 @@ type WorkerTrainingRepository interface {
 	ListCourses(
 		ctx context.Context,
 		req *ListTrainingCoursesRequest,
-	) (*pagination.CursorListResult[*worker.TrainingCourse], error)
+	) (*pagination.CursorListResult[*workertraining.TrainingCourse], error)
 	ListActiveCourses(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) ([]*worker.TrainingCourse, error)
+	) ([]*workertraining.TrainingCourse, error)
 	CourseSelectOptions(
 		ctx context.Context,
 		req *TrainingCourseSelectOptionsRequest,
-	) (*pagination.ListResult[*worker.TrainingCourse], error)
+	) (*pagination.ListResult[*workertraining.TrainingCourse], error)
 	GetCourseByID(
 		ctx context.Context,
 		req *GetTrainingCourseByIDRequest,
-	) (*worker.TrainingCourse, error)
+	) (*workertraining.TrainingCourse, error)
 	CourseCodeExists(ctx context.Context, req *TrainingCourseCodeExistsRequest) (bool, error)
-	CreateCourse(ctx context.Context, entity *worker.TrainingCourse) (*worker.TrainingCourse, error)
-	UpdateCourse(ctx context.Context, entity *worker.TrainingCourse) (*worker.TrainingCourse, error)
+	CreateCourse(
+		ctx context.Context,
+		entity *workertraining.TrainingCourse,
+	) (*workertraining.TrainingCourse, error)
+	UpdateCourse(
+		ctx context.Context,
+		entity *workertraining.TrainingCourse,
+	) (*workertraining.TrainingCourse, error)
 	CountRecordsByCourse(ctx context.Context, req *CountTrainingRecordsRequest) (int, error)
 	CountRecordsByCourseIDs(
 		ctx context.Context,
@@ -100,25 +106,25 @@ type WorkerTrainingRepository interface {
 	ListForWorker(
 		ctx context.Context,
 		req *ListWorkerTrainingRequest,
-	) ([]*worker.WorkerTrainingRecord, error)
+	) ([]*workertraining.WorkerTrainingRecord, error)
 	GetByID(
 		ctx context.Context,
 		req *GetWorkerTrainingByIDRequest,
-	) (*worker.WorkerTrainingRecord, error)
+	) (*workertraining.WorkerTrainingRecord, error)
 	Create(
 		ctx context.Context,
-		entity *worker.WorkerTrainingRecord,
-	) (*worker.WorkerTrainingRecord, error)
+		entity *workertraining.WorkerTrainingRecord,
+	) (*workertraining.WorkerTrainingRecord, error)
 	Update(
 		ctx context.Context,
-		entity *worker.WorkerTrainingRecord,
-	) (*worker.WorkerTrainingRecord, error)
+		entity *workertraining.WorkerTrainingRecord,
+	) (*workertraining.WorkerTrainingRecord, error)
 	ListDue(
 		ctx context.Context,
 		req *ListTrainingRemindersRequest,
-	) ([]*worker.WorkerTrainingRecord, error)
+	) ([]*workertraining.WorkerTrainingRecord, error)
 	ListExpiring(
 		ctx context.Context,
 		req *ListTrainingRemindersRequest,
-	) ([]*worker.WorkerTrainingRecord, error)
+	) ([]*workertraining.WorkerTrainingRecord, error)
 }

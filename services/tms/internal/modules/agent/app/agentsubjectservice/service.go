@@ -37,7 +37,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -767,7 +767,7 @@ func (s *Service) workerCredentials(
 		}
 		if credential.ExpiresAt != nil {
 			row["expiresAt"] = *credential.ExpiresAt
-			row["daysUntilExpiry"] = worker.DaysUntil(*credential.ExpiresAt, now)
+			row["daysUntilExpiry"] = workercredential.DaysUntil(*credential.ExpiresAt, now)
 		}
 		rows = append(rows, row)
 	}

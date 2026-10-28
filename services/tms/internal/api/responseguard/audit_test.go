@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,7 +40,7 @@ func auditedRecords() []auditedRecord {
 		{
 			resource: permission.ResourceWorkerCredential,
 			build: func() permission.FieldWithholder {
-				return &worker.WorkerCredential{Number: "CDL-445566"}
+				return &workercredential.WorkerCredential{Number: "CDL-445566"}
 			},
 		},
 	}
@@ -186,7 +187,12 @@ func TestAnAuditEntryResponseWithholdsItsProtectedFields(t *testing.T) {
 		}
 	}
 
-	body, _ := serve(t, []permission.Resource{permission.ResourceProtectedMargins}, entry(), guarded)
+	body, _ := serve(
+		t,
+		[]permission.Resource{permission.ResourceProtectedMargins},
+		entry(),
+		guarded,
+	)
 	assert.Nil(t, object(t, body, "currentState")["targetMarginPercent"])
 	assert.Equal(t, "6.5", object(t, body, "currentState")["milesPerGallon"])
 	assert.Nil(t, object(t, body, "changes", "targetMarginPercent")["to"])

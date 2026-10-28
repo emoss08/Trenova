@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/keel/seed"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -73,27 +74,27 @@ func (s *WorkerEmploymentEventSeed) plan(
 	index int,
 	now int64,
 	adminID pulid.ID,
-) []*worker.WorkerEmploymentEvent {
+) []*employment.WorkerEmploymentEvent {
 	if wrk.Profile == nil || wrk.Profile.HireDate <= 0 {
 		return nil
 	}
 	hire := wrk.Profile.HireDate
-	events := []*worker.WorkerEmploymentEvent{
+	events := []*employment.WorkerEmploymentEvent{
 		{
 			ID:          deterministicID("wee_", wrk.ID.String()+"Hired"),
-			Kind:        worker.EmploymentEventHired,
+			Kind:        employment.EmploymentEventHired,
 			EffectiveAt: hire,
 			ToValues: map[string]string{
-				worker.EmploymentValueHireDate: fmt.Sprintf("%d", hire),
-				worker.EmploymentValueStatus:   "Active",
+				employment.EmploymentValueHireDate: fmt.Sprintf("%d", hire),
+				employment.EmploymentValueStatus:   "Active",
 			},
 			FromValues: map[string]string{},
 		},
 	}
 	if hire+90*employmentSeedDay < now {
-		events = append(events, &worker.WorkerEmploymentEvent{
+		events = append(events, &employment.WorkerEmploymentEvent{
 			ID:           deterministicID("wee_", wrk.ID.String()+":Probation"),
-			Kind:         worker.EmploymentEventProbationEnded,
+			Kind:         employment.EmploymentEventProbationEnded,
 			EffectiveAt:  hire + 90*employmentSeedDay,
 			Notes:        "Completed the 90-day probation period with a clean safety record.",
 			RecordedByID: adminID,
@@ -102,29 +103,29 @@ func (s *WorkerEmploymentEventSeed) plan(
 		})
 	}
 	if index%3 == 1 && hire+400*employmentSeedDay < now {
-		events = append(events, &worker.WorkerEmploymentEvent{
+		events = append(events, &employment.WorkerEmploymentEvent{
 			ID:           deterministicID("wee_", wrk.ID.String()+":Rate"),
-			Kind:         worker.EmploymentEventRateChanged,
+			Kind:         employment.EmploymentEventRateChanged,
 			EffectiveAt:  hire + 365*employmentSeedDay,
 			Reason:       "Annual review",
 			RecordedByID: adminID,
-			FromValues:   map[string]string{worker.EmploymentValueRate: "0.58"},
+			FromValues:   map[string]string{employment.EmploymentValueRate: "0.58"},
 			ToValues: map[string]string{
-				worker.EmploymentValueRate:     "0.62",
-				worker.EmploymentValueRateUnit: "per mile",
+				employment.EmploymentValueRate:     "0.62",
+				employment.EmploymentValueRateUnit: "per mile",
 			},
 		})
 	}
 	if index%4 == 2 && hire+500*employmentSeedDay < now {
-		events = append(events, &worker.WorkerEmploymentEvent{
+		events = append(events, &employment.WorkerEmploymentEvent{
 			ID:           deterministicID("wee_", wrk.ID.String()+":Promoted"),
-			Kind:         worker.EmploymentEventPromoted,
+			Kind:         employment.EmploymentEventPromoted,
 			EffectiveAt:  hire + 500*employmentSeedDay,
 			Reason:       "Moved to the regional board",
 			RecordedByID: adminID,
-			FromValues:   map[string]string{worker.EmploymentValueDriverType: "Local"},
+			FromValues:   map[string]string{employment.EmploymentValueDriverType: "Local"},
 			ToValues: map[string]string{
-				worker.EmploymentValueDriverType: wrk.DriverType.String(),
+				employment.EmploymentValueDriverType: wrk.DriverType.String(),
 			},
 		})
 	}

@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,10 +23,10 @@ type fakeCredentials struct {
 	CredentialKeeper
 
 	guard      *agenttoolstest.WriteGuard
-	credential *worker.WorkerCredential
+	credential *workercredential.WorkerCredential
 
 	created  *workercredentialservice.CreateRequest
-	updated  *worker.WorkerCredential
+	updated  *workercredential.WorkerCredential
 	attached *workercredentialservice.AttachDocumentRequest
 	archived *workercredentialservice.StatusRequest
 }
@@ -36,12 +36,12 @@ func newFakeCredentials() *fakeCredentials {
 	expires := int64(1_800_000_000)
 	return &fakeCredentials{
 		guard: &agenttoolstest.WriteGuard{},
-		credential: &worker.WorkerCredential{
+		credential: &workercredential.WorkerCredential{
 			ID:               pulid.MustNew("wcred_"),
 			WorkerID:         pulid.MustNew("wrk_"),
 			CredentialTypeID: pulid.MustNew("wct_"),
-			CredentialType:   &worker.WorkerCredentialType{Name: "Medical card"},
-			Status:           worker.CredentialStatusActive,
+			CredentialType:   &workercredential.WorkerCredentialType{Name: "Medical card"},
+			Status:           workercredential.CredentialStatusActive,
 			Number:           "MC-1001",
 			ExpiresAt:        &expires,
 			VerifiedAt:       &verifiedAt,
@@ -54,7 +54,7 @@ func (f *fakeCredentials) Get(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	copied := *f.credential
 	return &copied, nil
 }
@@ -79,7 +79,7 @@ func (f *fakeCredentials) PlanCreate(
 func (f *fakeCredentials) Create(
 	_ context.Context,
 	req *workercredentialservice.CreateRequest,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (f *fakeCredentials) Create(
 
 func (f *fakeCredentials) PlanUpdate(
 	_ context.Context,
-	entity *worker.WorkerCredential,
+	entity *workercredential.WorkerCredential,
 	_ *permissionports.RequestActor,
 ) (*workercredentialservice.CredentialChange, error) {
 	after := *entity
@@ -101,9 +101,9 @@ func (f *fakeCredentials) PlanUpdate(
 
 func (f *fakeCredentials) Update(
 	_ context.Context,
-	entity *worker.WorkerCredential,
+	entity *workercredential.WorkerCredential,
 	_ *permissionports.RequestActor,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (f *fakeCredentials) PlanAttachDocument(
 func (f *fakeCredentials) AttachDocument(
 	_ context.Context,
 	req *workercredentialservice.AttachDocumentRequest,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -136,14 +136,14 @@ func (f *fakeCredentials) PlanArchive(
 	*workercredentialservice.StatusRequest,
 ) (*workercredentialservice.CredentialChange, error) {
 	after := *f.credential
-	after.Status = worker.CredentialStatusArchived
+	after.Status = workercredential.CredentialStatusArchived
 	return &workercredentialservice.CredentialChange{Before: f.credential, After: &after}, nil
 }
 
 func (f *fakeCredentials) Archive(
 	_ context.Context,
 	req *workercredentialservice.StatusRequest,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}

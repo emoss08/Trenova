@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,22 +20,22 @@ import (
 // fakeRepo holds rows so case numbering and the certification guards can be
 // exercised for real rather than asserted against canned returns.
 type fakeRepo struct {
-	injuries  map[pulid.ID]*worker.WorkerInjury
-	summaries map[int16]*worker.OSHAAnnualSummary
+	injuries  map[pulid.ID]*workersafety.WorkerInjury
+	summaries map[int16]*workersafety.OSHAAnnualSummary
 }
 
 func newFakeRepo() *fakeRepo {
 	return &fakeRepo{
-		injuries:  map[pulid.ID]*worker.WorkerInjury{},
-		summaries: map[int16]*worker.OSHAAnnualSummary{},
+		injuries:  map[pulid.ID]*workersafety.WorkerInjury{},
+		summaries: map[int16]*workersafety.OSHAAnnualSummary{},
 	}
 }
 
 func (f *fakeRepo) ListInjuries(
 	_ context.Context,
 	req *workerports.ListWorkerInjuriesRequest,
-) ([]*worker.WorkerInjury, error) {
-	out := make([]*worker.WorkerInjury, 0, len(f.injuries))
+) ([]*workersafety.WorkerInjury, error) {
+	out := make([]*workersafety.WorkerInjury, 0, len(f.injuries))
 	for _, injury := range f.injuries {
 		if !req.WorkerID.IsNil() && injury.WorkerID != req.WorkerID {
 			continue
@@ -57,7 +57,7 @@ func (f *fakeRepo) ListInjuries(
 func (f *fakeRepo) GetInjuryByID(
 	_ context.Context,
 	req *workerports.GetWorkerInjuryByIDRequest,
-) (*worker.WorkerInjury, error) {
+) (*workersafety.WorkerInjury, error) {
 	injury, ok := f.injuries[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("case not found")
@@ -67,8 +67,8 @@ func (f *fakeRepo) GetInjuryByID(
 
 func (f *fakeRepo) CreateInjury(
 	_ context.Context,
-	entity *worker.WorkerInjury,
-) (*worker.WorkerInjury, error) {
+	entity *workersafety.WorkerInjury,
+) (*workersafety.WorkerInjury, error) {
 	if entity.ID.IsNil() {
 		entity.ID = pulid.MustNew("winj_")
 	}
@@ -78,8 +78,8 @@ func (f *fakeRepo) CreateInjury(
 
 func (f *fakeRepo) UpdateInjury(
 	_ context.Context,
-	entity *worker.WorkerInjury,
-) (*worker.WorkerInjury, error) {
+	entity *workersafety.WorkerInjury,
+) (*workersafety.WorkerInjury, error) {
 	f.injuries[entity.ID] = entity
 	return entity, nil
 }
@@ -108,15 +108,15 @@ func (f *fakeRepo) NextCaseNumber(
 func (f *fakeRepo) GetSummary(
 	_ context.Context,
 	req *workerports.GetOSHASummaryRequest,
-) (*worker.OSHAAnnualSummary, error) {
+) (*workersafety.OSHAAnnualSummary, error) {
 	return f.summaries[req.Year], nil
 }
 
 func (f *fakeRepo) ListSummaries(
 	_ context.Context,
 	_ *workerports.ListOSHASummariesRequest,
-) ([]*worker.OSHAAnnualSummary, error) {
-	out := make([]*worker.OSHAAnnualSummary, 0, len(f.summaries))
+) ([]*workersafety.OSHAAnnualSummary, error) {
+	out := make([]*workersafety.OSHAAnnualSummary, 0, len(f.summaries))
 	for _, summary := range f.summaries {
 		out = append(out, summary)
 	}
@@ -125,8 +125,8 @@ func (f *fakeRepo) ListSummaries(
 
 func (f *fakeRepo) CreateSummary(
 	_ context.Context,
-	entity *worker.OSHAAnnualSummary,
-) (*worker.OSHAAnnualSummary, error) {
+	entity *workersafety.OSHAAnnualSummary,
+) (*workersafety.OSHAAnnualSummary, error) {
 	if entity.ID.IsNil() {
 		entity.ID = pulid.MustNew("osum_")
 	}
@@ -136,8 +136,8 @@ func (f *fakeRepo) CreateSummary(
 
 func (f *fakeRepo) UpdateSummary(
 	_ context.Context,
-	entity *worker.OSHAAnnualSummary,
-) (*worker.OSHAAnnualSummary, error) {
+	entity *workersafety.OSHAAnnualSummary,
+) (*workersafety.OSHAAnnualSummary, error) {
 	f.summaries[entity.Year] = entity
 	return entity, nil
 }
@@ -180,8 +180,8 @@ func newHarness(t *testing.T) *harness {
 // 2026-01-15
 const occurred2026 = int64(1_768_435_200)
 
-func (h *harness) newCase() *worker.WorkerInjury {
-	return &worker.WorkerInjury{
+func (h *harness) newCase() *workersafety.WorkerInjury {
+	return &workersafety.WorkerInjury{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
@@ -213,12 +213,12 @@ func TestRecordInjury_SuggestsTheClassification(t *testing.T) {
 	h := newHarness(t)
 
 	entity := h.newCase()
-	entity.Treatment = worker.TreatmentMedical
+	entity.Treatment = workersafety.TreatmentMedical
 
 	created, err := h.svc.RecordInjury(t.Context(), entity, h.userID)
 	require.NoError(t, err)
 
-	assert.Equal(t, worker.CaseOtherRecordable, created.Classification)
+	assert.Equal(t, workersafety.CaseOtherRecordable, created.Classification)
 	assert.True(t, created.IsRecordable())
 }
 
@@ -227,12 +227,12 @@ func TestRecordInjury_FirstAidIsNotRecordable(t *testing.T) {
 	h := newHarness(t)
 
 	entity := h.newCase()
-	entity.Treatment = worker.TreatmentFirstAid
+	entity.Treatment = workersafety.TreatmentFirstAid
 
 	created, err := h.svc.RecordInjury(t.Context(), entity, h.userID)
 	require.NoError(t, err)
 
-	assert.Equal(t, worker.CaseFirstAidOnly, created.Classification)
+	assert.Equal(t, workersafety.CaseFirstAidOnly, created.Classification)
 	assert.False(t, created.IsRecordable())
 }
 
@@ -244,7 +244,7 @@ func TestRecordInjury_ClearsDatesOnAnUnfiledClaim(t *testing.T) {
 
 	entity := h.newCase()
 	filed := occurred2026 + 86400
-	entity.ClaimStatus = worker.ClaimNotFiled
+	entity.ClaimStatus = workersafety.ClaimNotFiled
 	entity.ClaimFiledAt = &filed
 
 	created, err := h.svc.RecordInjury(t.Context(), entity, h.userID)
@@ -258,12 +258,12 @@ func TestLog_CountsOnlyRecordableCases(t *testing.T) {
 	h := newHarness(t)
 
 	medical := h.newCase()
-	medical.Treatment = worker.TreatmentMedical
+	medical.Treatment = workersafety.TreatmentMedical
 	_, err := h.svc.RecordInjury(t.Context(), medical, h.userID)
 	require.NoError(t, err)
 
 	firstAid := h.newCase()
-	firstAid.Treatment = worker.TreatmentFirstAid
+	firstAid.Treatment = workersafety.TreatmentFirstAid
 	_, err = h.svc.RecordInjury(t.Context(), firstAid, h.userID)
 	require.NoError(t, err)
 
@@ -284,7 +284,7 @@ func TestLog_RatesOnceHoursAreRecorded(t *testing.T) {
 	h := newHarness(t)
 
 	medical := h.newCase()
-	medical.Treatment = worker.TreatmentMedical
+	medical.Treatment = workersafety.TreatmentMedical
 	_, err := h.svc.RecordInjury(t.Context(), medical, h.userID)
 	require.NoError(t, err)
 
@@ -306,7 +306,7 @@ func TestLog_RatesOnceHoursAreRecorded(t *testing.T) {
 	assert.InDelta(t, 1.0, *log.TotalRecordableIncidentRate, 0.0001)
 }
 
-func (h *harness) draftSummary(t *testing.T) *worker.OSHAAnnualSummary {
+func (h *harness) draftSummary(t *testing.T) *workersafety.OSHAAnnualSummary {
 	t.Helper()
 	hours := int64(83_200)
 	employees := int32(40)
@@ -331,7 +331,7 @@ func TestSaveSummary_SetsThePostingWindow(t *testing.T) {
 
 	saved := h.draftSummary(t)
 
-	from, through := worker.PostingWindow(2026)
+	from, through := workersafety.PostingWindow(2026)
 	require.NotNil(t, saved.PostedFrom)
 	require.NotNil(t, saved.PostedThrough)
 	assert.Equal(t, from, *saved.PostedFrom)
@@ -346,7 +346,7 @@ func TestCertifySummary_RecordsWhoSigned(t *testing.T) {
 	certified, err := h.svc.CertifySummary(t.Context(), h.tenant, 2026, h.userID)
 	require.NoError(t, err)
 
-	assert.Equal(t, worker.SummaryCertified, certified.Status)
+	assert.Equal(t, workersafety.SummaryCertified, certified.Status)
 	require.NotNil(t, certified.CertifiedAt)
 	assert.Equal(t, h.userID, certified.CertifiedByID)
 }
@@ -359,8 +359,8 @@ func TestCertifySummary_RefusedWhileCasesAreStillOpen(t *testing.T) {
 	h.draftSummary(t)
 
 	open := h.newCase()
-	open.Treatment = worker.TreatmentMedical
-	open.Status = worker.InjuryCaseOpen
+	open.Treatment = workersafety.TreatmentMedical
+	open.Status = workersafety.InjuryCaseOpen
 	_, err := h.svc.RecordInjury(t.Context(), open, h.userID)
 	require.NoError(t, err)
 
@@ -412,7 +412,7 @@ func TestUncertifySummary_ClearsTheSignature(t *testing.T) {
 	reopened, err := h.svc.UncertifySummary(t.Context(), h.tenant, 2026, h.userID)
 	require.NoError(t, err)
 
-	assert.Equal(t, worker.SummaryDraft, reopened.Status)
+	assert.Equal(t, workersafety.SummaryDraft, reopened.Status)
 	assert.Nil(t, reopened.CertifiedAt)
 	assert.True(t, reopened.CertifiedByID.IsNil())
 
@@ -431,13 +431,13 @@ func TestUpdateInjury_ClosingACaseKeepsItOnTheLog(t *testing.T) {
 	h := newHarness(t)
 
 	entity := h.newCase()
-	entity.Treatment = worker.TreatmentMedical
+	entity.Treatment = workersafety.TreatmentMedical
 	created, err := h.svc.RecordInjury(t.Context(), entity, h.userID)
 	require.NoError(t, err)
 
-	closed := worker.InjuryCaseClosed
+	closed := workersafety.InjuryCaseClosed
 	days := int32(4)
-	classification := worker.CaseDaysAway
+	classification := workersafety.CaseDaysAway
 	updated, err := h.svc.UpdateInjury(t.Context(), &workerinjuryservice.UpdateInjuryRequest{
 		TenantInfo:     h.tenant,
 		InjuryID:       created.ID,
@@ -448,7 +448,7 @@ func TestUpdateInjury_ClosingACaseKeepsItOnTheLog(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, worker.InjuryCaseClosed, updated.Status)
+	assert.Equal(t, workersafety.InjuryCaseClosed, updated.Status)
 	assert.Equal(t, int32(4), updated.DaysAway)
 
 	log, err := h.svc.Log(t.Context(), h.tenant, 2026)

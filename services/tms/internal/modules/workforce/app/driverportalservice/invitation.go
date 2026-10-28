@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -34,7 +35,7 @@ type InviteWorkerRequest struct {
 }
 
 type InviteWorkerResult struct {
-	Invitation *worker.PortalInvitation
+	Invitation *portalinvitation.PortalInvitation
 	InviteURL  string
 	EmailSent  bool
 }
@@ -42,8 +43,8 @@ type InviteWorkerResult struct {
 type PortalStatus struct {
 	Linked            bool
 	PortalUser        *tenant.User
-	PendingInvitation *worker.PortalInvitation
-	Invitations       []*worker.PortalInvitation
+	PendingInvitation *portalinvitation.PortalInvitation
+	Invitations       []*portalinvitation.PortalInvitation
 }
 
 type InvitationPreview struct {
@@ -112,13 +113,13 @@ func (s *Service) InviteWorker(
 	}
 
 	now := timeutils.NowUnix()
-	invitation := &worker.PortalInvitation{
+	invitation := &portalinvitation.PortalInvitation{
 		BusinessUnitID: req.TenantInfo.BuID,
 		OrganizationID: req.TenantInfo.OrgID,
 		WorkerID:       req.WorkerID,
 		Email:          inviteEmail,
 		TokenHash:      tokenHash,
-		Status:         worker.PortalInvitationStatusPending,
+		Status:         portalinvitation.PortalInvitationStatusPending,
 		ExpiresAt:      now + invitationTTLSeconds,
 		InvitedByID:    actor.UserID,
 	}
@@ -396,7 +397,7 @@ func (s *Service) AcceptInvitation(
 func (s *Service) lookupAcceptableInvitation(
 	ctx context.Context,
 	token string,
-) (*worker.PortalInvitation, error) {
+) (*portalinvitation.PortalInvitation, error) {
 	if token == "" {
 		return nil, errortypes.NewValidationError(
 			"token",

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -124,7 +124,7 @@ func (s *Service) UpdateMyContactInfo(
 	if control.RequireContactChangeApproval && s.selfService != nil {
 		if _, err = s.selfService.SubmitChange(ctx, &selfserviceservice.SubmitChangeRequest{
 			Worker: wrk,
-			Wanted: worker.ContactSnapshot{
+			Wanted: profilechange.ContactSnapshot{
 				PhoneNumber:           strings.TrimSpace(req.PhoneNumber),
 				AddressLine1:          strings.TrimSpace(req.AddressLine1),
 				AddressLine2:          strings.TrimSpace(req.AddressLine2),

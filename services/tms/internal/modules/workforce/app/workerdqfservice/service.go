@@ -18,7 +18,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -44,7 +47,7 @@ type CredentialSummarizer interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
-	) (*worker.WorkerCredentialSummary, error)
+	) (*workercredential.WorkerCredentialSummary, error)
 }
 
 // PacketSummarizer is the slice of the document service this needs: which
@@ -64,7 +67,7 @@ type DrugAlcoholStander interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
-	) (worker.DrugAlcoholStanding, error)
+	) (workerdot.DrugAlcoholStanding, error)
 }
 
 type Params struct {
@@ -148,7 +151,7 @@ func (s *Service) File(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (*worker.DQFFile, error) {
+) (*workercompliance.DQFFile, error) {
 	wrk, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:             workerID,
 		TenantInfo:     tenantInfo,
@@ -159,10 +162,10 @@ func (s *Service) File(
 	}
 
 	var (
-		credentials   *worker.WorkerCredentialSummary
+		credentials   *workercredential.WorkerCredentialSummary
 		documents     *documentpacketrule.PacketSummary
-		verifications []*worker.WorkerEmploymentVerification
-		standing      worker.DrugAlcoholStanding
+		verifications []*employment.WorkerEmploymentVerification
+		standing      workerdot.DrugAlcoholStanding
 	)
 
 	group, groupCtx := errgroup.WithContext(ctx)
@@ -208,7 +211,7 @@ func (s *Service) File(
 		return nil, err
 	}
 
-	in := worker.DQFInput{
+	in := workercompliance.DQFInput{
 		WorkerID:      workerID,
 		Credentials:   credentials,
 		Documents:     documents,
@@ -224,7 +227,7 @@ func (s *Service) File(
 		in.TerminationDate = wrk.Profile.TerminationDate
 	}
 
-	return worker.BuildDQF(in), nil
+	return workercompliance.BuildDQF(in), nil
 }
 
 // retentionDays reads the organisation's hold period. A tenant with no
@@ -235,7 +238,7 @@ func (s *Service) retentionDays(
 	tenantInfo pagination.TenantInfo,
 ) int {
 	if s.retentionRepo == nil {
-		return worker.DefaultDQFRetentionDays
+		return workercompliance.DefaultDQFRetentionDays
 	}
 	retention, err := s.retentionRepo.Get(ctx, tenantports.GetDataRetentionRequest{
 		OrgID: tenantInfo.OrgID,
@@ -245,7 +248,7 @@ func (s *Service) retentionDays(
 		if err != nil {
 			s.l.Warn("failed to read data retention settings", zap.Error(err))
 		}
-		return worker.DefaultDQFRetentionDays
+		return workercompliance.DefaultDQFRetentionDays
 	}
 	return retention.DriverQualificationRetentionPeriod
 }
@@ -325,7 +328,7 @@ func (s *Service) publish(
 }
 
 func verificationTenant(
-	entity *worker.WorkerEmploymentVerification,
+	entity *employment.WorkerEmploymentVerification,
 ) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }

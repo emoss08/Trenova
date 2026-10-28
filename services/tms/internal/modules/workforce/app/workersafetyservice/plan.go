@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -13,15 +13,15 @@ import (
 )
 
 type (
-	EventChange     = kernelports.RecordChange[worker.WorkerSafetyEvent]
-	ViolationChange = kernelports.RecordChange[worker.WorkerSafetyViolation]
+	EventChange     = kernelports.RecordChange[workersafety.WorkerSafetyEvent]
+	ViolationChange = kernelports.RecordChange[workersafety.WorkerSafetyViolation]
 )
 
 func (s *Service) PlanCreateEvent(
 	ctx context.Context,
-	entity *worker.WorkerSafetyEvent,
+	entity *workersafety.WorkerSafetyEvent,
 	userID pulid.ID,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	planned := *entity
 	if err := s.prepareCreateEvent(ctx, &planned, userID); err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (s *Service) PlanCreateEvent(
 
 func (s *Service) PlanUpdateEvent(
 	ctx context.Context,
-	entity *worker.WorkerSafetyEvent,
+	entity *workersafety.WorkerSafetyEvent,
 ) (*EventChange, error) {
 	planned := *entity
 	return s.planUpdateEvent(ctx, &planned)
@@ -41,28 +41,28 @@ func (s *Service) PlanCloseEvent(
 	ctx context.Context,
 	req *EventStatusRequest,
 ) (*EventChange, error) {
-	return s.planMoveEvent(ctx, req, worker.SafetyEventStatusClosed)
+	return s.planMoveEvent(ctx, req, workersafety.SafetyEventStatusClosed)
 }
 
 func (s *Service) PlanReviewEvent(
 	ctx context.Context,
 	req *EventStatusRequest,
 ) (*EventChange, error) {
-	return s.planMoveEvent(ctx, req, worker.SafetyEventStatusUnderReview)
+	return s.planMoveEvent(ctx, req, workersafety.SafetyEventStatusUnderReview)
 }
 
 func (s *Service) PlanReopenEvent(
 	ctx context.Context,
 	req *EventStatusRequest,
 ) (*EventChange, error) {
-	return s.planMoveEvent(ctx, req, worker.SafetyEventStatusOpen)
+	return s.planMoveEvent(ctx, req, workersafety.SafetyEventStatusOpen)
 }
 
 func (s *Service) PlanDeleteEvent(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	original, err := s.repo.GetEventByID(ctx, &workerports.GetWorkerSafetyEventByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
@@ -82,9 +82,9 @@ func (s *Service) PlanDeleteEvent(
 
 func (s *Service) PlanGiveRecognition(
 	ctx context.Context,
-	entity *worker.WorkerRecognition,
+	entity *workersafety.WorkerRecognition,
 	userID pulid.ID,
-) (*worker.WorkerRecognition, error) {
+) (*workersafety.WorkerRecognition, error) {
 	planned := *entity
 	if _, err := s.prepareRecognition(ctx, &planned, userID); err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (s *Service) PlanDeleteRecognition(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerRecognition, error) {
+) (*workersafety.WorkerRecognition, error) {
 	return s.repo.GetRecognitionByID(ctx, &workerports.GetWorkerRecognitionByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
@@ -106,7 +106,7 @@ func (s *Service) PlanDeleteRecognition(
 func (s *Service) PlanRecordViolation(
 	ctx context.Context,
 	req *RecordViolationRequest,
-) (*worker.WorkerSafetyViolation, error) {
+) (*workersafety.WorkerSafetyViolation, error) {
 	event, err := s.repo.GetEventByID(ctx, &workerports.GetWorkerSafetyEventByIDRequest{
 		ID:         req.SafetyEventID,
 		TenantInfo: req.TenantInfo,
@@ -115,7 +115,7 @@ func (s *Service) PlanRecordViolation(
 		return nil, err
 	}
 
-	entity := &worker.WorkerSafetyViolation{
+	entity := &workersafety.WorkerSafetyViolation{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		SafetyEventID:  event.ID,
@@ -130,7 +130,7 @@ func (s *Service) PlanRecordViolation(
 		entity.SeverityWeight = 1
 	}
 	if entity.Basic == "" {
-		entity.Basic = worker.SuggestedBasic(event.Kind, event.InspectionResult)
+		entity.Basic = workersafety.SuggestedBasic(event.Kind, event.InspectionResult)
 	}
 
 	multiErr := errortypes.NewMultiError()
@@ -183,7 +183,7 @@ func (s *Service) GetViolation(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerSafetyViolation, error) {
+) (*workersafety.WorkerSafetyViolation, error) {
 	return s.repo.GetViolationByID(ctx, &workerports.GetWorkerSafetyViolationByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
@@ -194,6 +194,6 @@ func (s *Service) PlanDeleteViolation(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerSafetyViolation, error) {
+) (*workersafety.WorkerSafetyViolation, error) {
 	return s.GetViolation(ctx, tenantInfo, id)
 }

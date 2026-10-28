@@ -13,13 +13,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-func (r *MutationResolver) CreateShiftTemplate(ctx context.Context, input gqlmodel.ShiftTemplateInput) (*worker.ShiftTemplate, error) {
+func (r *MutationResolver) CreateShiftTemplate(ctx context.Context, input gqlmodel.ShiftTemplateInput) (*workerschedule.ShiftTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceShiftTemplate, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -32,7 +33,7 @@ func (r *MutationResolver) CreateShiftTemplate(ctx context.Context, input gqlmod
 	})
 }
 
-func (r *MutationResolver) UpdateShiftTemplate(ctx context.Context, id string, input gqlmodel.ShiftTemplateInput) (*worker.ShiftTemplate, error) {
+func (r *MutationResolver) UpdateShiftTemplate(ctx context.Context, id string, input gqlmodel.ShiftTemplateInput) (*workerschedule.ShiftTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceShiftTemplate, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -53,7 +54,7 @@ func (r *MutationResolver) UpdateShiftTemplate(ctx context.Context, id string, i
 	})
 }
 
-func (r *MutationResolver) AssignWorkerShift(ctx context.Context, input gqlmodel.AssignShiftInput) (*worker.WorkerShiftAssignment, error) {
+func (r *MutationResolver) AssignWorkerShift(ctx context.Context, input gqlmodel.AssignShiftInput) (*workerschedule.WorkerShiftAssignment, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, base.InvalidIDError("workerId", "Worker is invalid")
@@ -63,7 +64,7 @@ func (r *MutationResolver) AssignWorkerShift(ctx context.Context, input gqlmodel
 		ctx,
 		permission.ResourceWorkerSchedule,
 		permission.OpAssign,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		workerID,
 	)
 	if err != nil {
@@ -82,7 +83,7 @@ func (r *MutationResolver) AssignWorkerShift(ctx context.Context, input gqlmodel
 	})
 }
 
-func (r *MutationResolver) EndWorkerShiftAssignment(ctx context.Context, id string, effectiveTo int) (*worker.WorkerShiftAssignment, error) {
+func (r *MutationResolver) EndWorkerShiftAssignment(ctx context.Context, id string, effectiveTo int) (*workerschedule.WorkerShiftAssignment, error) {
 	assignmentID, err := pulid.MustParse(id)
 	if err != nil {
 		return nil, base.InvalidIDError("id", "Assignment is invalid")
@@ -105,7 +106,7 @@ func (r *MutationResolver) EndWorkerShiftAssignment(ctx context.Context, id stri
 		ctx,
 		permission.ResourceWorkerSchedule,
 		permission.OpAssign,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		assignment.WorkerID,
 	); err != nil {
 		return nil, err
@@ -119,7 +120,7 @@ func (r *MutationResolver) EndWorkerShiftAssignment(ctx context.Context, id stri
 	})
 }
 
-func (r *MutationResolver) SetWorkerAvailabilityPreference(ctx context.Context, input gqlmodel.SetAvailabilityPreferenceInput) (*worker.WorkerAvailabilityPreference, error) {
+func (r *MutationResolver) SetWorkerAvailabilityPreference(ctx context.Context, input gqlmodel.SetAvailabilityPreferenceInput) (*workerschedule.WorkerAvailabilityPreference, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, base.InvalidIDError("workerId", "Worker is invalid")
@@ -129,7 +130,7 @@ func (r *MutationResolver) SetWorkerAvailabilityPreference(ctx context.Context, 
 		ctx,
 		permission.ResourceWorkerSchedule,
 		permission.OpUpdate,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		workerID,
 	)
 	if err != nil {
@@ -148,7 +149,7 @@ func (r *MutationResolver) SetWorkerAvailabilityPreference(ctx context.Context, 
 	})
 }
 
-func (r *MutationResolver) ProposeShiftSwap(ctx context.Context, input gqlmodel.ProposeShiftSwapInput) (*worker.ShiftSwapRequest, error) {
+func (r *MutationResolver) ProposeShiftSwap(ctx context.Context, input gqlmodel.ProposeShiftSwapInput) (*workerschedule.ShiftSwapRequest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceShiftSwap, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -166,7 +167,7 @@ func (r *MutationResolver) ProposeShiftSwap(ctx context.Context, input gqlmodel.
 	})
 }
 
-func (r *MutationResolver) TransitionShiftSwap(ctx context.Context, input gqlmodel.TransitionShiftSwapInput) (*worker.ShiftSwapRequest, error) {
+func (r *MutationResolver) TransitionShiftSwap(ctx context.Context, input gqlmodel.TransitionShiftSwapInput) (*workerschedule.ShiftSwapRequest, error) {
 	swapID, err := pulid.MustParse(input.ID)
 	if err != nil {
 		return nil, base.InvalidIDError("id", "Swap is invalid")
@@ -189,7 +190,7 @@ func (r *MutationResolver) TransitionShiftSwap(ctx context.Context, input gqlmod
 	})
 }
 
-func (r *QueryResolver) ShiftTemplates(ctx context.Context, activeOnly *bool, limit *int) ([]*worker.ShiftTemplate, error) {
+func (r *QueryResolver) ShiftTemplates(ctx context.Context, activeOnly *bool, limit *int) ([]*workerschedule.ShiftTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceShiftTemplate, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -202,7 +203,7 @@ func (r *QueryResolver) ShiftTemplates(ctx context.Context, activeOnly *bool, li
 	})
 }
 
-func (r *QueryResolver) ShiftTemplate(ctx context.Context, id string) (*worker.ShiftTemplate, error) {
+func (r *QueryResolver) ShiftTemplate(ctx context.Context, id string) (*workerschedule.ShiftTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceShiftTemplate, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -216,7 +217,7 @@ func (r *QueryResolver) ShiftTemplate(ctx context.Context, id string) (*worker.S
 	return r.SchedulingService.GetTemplate(ctx, base.TenantInfo(authCtx), templateID)
 }
 
-func (r *QueryResolver) WorkerShiftAssignments(ctx context.Context, workerID string, activeOnly *bool) ([]*worker.WorkerShiftAssignment, error) {
+func (r *QueryResolver) WorkerShiftAssignments(ctx context.Context, workerID string, activeOnly *bool) ([]*workerschedule.WorkerShiftAssignment, error) {
 	id, err := pulid.MustParse(workerID)
 	if err != nil {
 		return nil, base.InvalidIDError("workerId", "Worker is invalid")
@@ -226,7 +227,7 @@ func (r *QueryResolver) WorkerShiftAssignments(ctx context.Context, workerID str
 		ctx,
 		permission.ResourceWorkerSchedule,
 		permission.OpRead,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		id,
 	)
 	if err != nil {
@@ -245,7 +246,7 @@ func (r *QueryResolver) WorkerShiftAssignments(ctx context.Context, workerID str
 	return r.SchedulingService.ListAssignments(ctx, req)
 }
 
-func (r *QueryResolver) WorkerAvailabilityPreferences(ctx context.Context, workerID string) ([]*worker.WorkerAvailabilityPreference, error) {
+func (r *QueryResolver) WorkerAvailabilityPreferences(ctx context.Context, workerID string) ([]*workerschedule.WorkerAvailabilityPreference, error) {
 	id, err := pulid.MustParse(workerID)
 	if err != nil {
 		return nil, base.InvalidIDError("workerId", "Worker is invalid")
@@ -255,7 +256,7 @@ func (r *QueryResolver) WorkerAvailabilityPreferences(ctx context.Context, worke
 		ctx,
 		permission.ResourceWorkerSchedule,
 		permission.OpRead,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		id,
 	)
 	if err != nil {
@@ -271,7 +272,7 @@ func (r *QueryResolver) WorkerAvailabilityPreferences(ctx context.Context, worke
 	)
 }
 
-func (r *QueryResolver) ShiftSwapRequests(ctx context.Context, workerID *string, openOnly *bool, since *int, limit *int) ([]*worker.ShiftSwapRequest, error) {
+func (r *QueryResolver) ShiftSwapRequests(ctx context.Context, workerID *string, openOnly *bool, since *int, limit *int) ([]*workerschedule.ShiftSwapRequest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceShiftSwap, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -292,7 +293,7 @@ func (r *QueryResolver) ShiftSwapRequests(ctx context.Context, workerID *string,
 	})
 }
 
-func (r *QueryResolver) ShiftSwapRequest(ctx context.Context, id string) (*worker.ShiftSwapRequest, error) {
+func (r *QueryResolver) ShiftSwapRequest(ctx context.Context, id string) (*workerschedule.ShiftSwapRequest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceShiftSwap, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -338,7 +339,7 @@ func (r *QueryResolver) Rota(ctx context.Context, filter *gqlmodel.RotaFilterInp
 	return rotaToGQL(rota), nil
 }
 
-func (r *ShiftTemplateResolver) ActiveAssignmentCount(ctx context.Context, obj *worker.ShiftTemplate) (int, error) {
+func (r *ShiftTemplateResolver) ActiveAssignmentCount(ctx context.Context, obj *workerschedule.ShiftTemplate) (int, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceShiftTemplate, permission.OpRead)
 	if err != nil {
 		return 0, err

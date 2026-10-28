@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -172,7 +172,7 @@ func (a *Activities) collectCredentialObligations(
 			if !due || cred.Worker.UserID.IsNil() {
 				continue
 			}
-			daysLeft := worker.DaysUntil(*cred.ExpiresAt, state.now)
+			daysLeft := workercredential.DaysUntil(*cred.ExpiresAt, state.now)
 			if daysLeft > digestHorizon(control.DriverDigestCadence) {
 				continue
 			}
@@ -243,7 +243,7 @@ func (a *Activities) collectTrainingList(
 			if !due || record.Worker.UserID.IsNil() {
 				continue
 			}
-			daysLeft := worker.DaysUntil(*at, state.now)
+			daysLeft := workercredential.DaysUntil(*at, state.now)
 			if daysLeft > digestHorizon(control.DriverDigestCadence) {
 				continue
 			}

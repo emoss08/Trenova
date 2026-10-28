@@ -13,13 +13,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *MutationResolver) CreatePerformanceReviewTemplate(ctx context.Context, input gqlmodel.PerformanceReviewTemplateInput) (*worker.PerformanceReviewTemplate, error) {
+func (r *MutationResolver) CreatePerformanceReviewTemplate(ctx context.Context, input gqlmodel.PerformanceReviewTemplateInput) (*workerreview.PerformanceReviewTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePerformanceReviewTemplate, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func (r *MutationResolver) CreatePerformanceReviewTemplate(ctx context.Context, 
 	return r.PerformanceReviewService.CreateTemplate(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) UpdatePerformanceReviewTemplate(ctx context.Context, id string, input gqlmodel.PerformanceReviewTemplateInput) (*worker.PerformanceReviewTemplate, error) {
+func (r *MutationResolver) UpdatePerformanceReviewTemplate(ctx context.Context, id string, input gqlmodel.PerformanceReviewTemplateInput) (*workerreview.PerformanceReviewTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePerformanceReviewTemplate, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (r *MutationResolver) UpdatePerformanceReviewTemplate(ctx context.Context, 
 	return r.PerformanceReviewService.UpdateTemplate(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) ArchivePerformanceReviewTemplate(ctx context.Context, id string, version *int) (*worker.PerformanceReviewTemplate, error) {
+func (r *MutationResolver) ArchivePerformanceReviewTemplate(ctx context.Context, id string, version *int) (*workerreview.PerformanceReviewTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePerformanceReviewTemplate, permission.OpArchive)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (r *MutationResolver) ArchivePerformanceReviewTemplate(ctx context.Context,
 	})
 }
 
-func (r *MutationResolver) RestorePerformanceReviewTemplate(ctx context.Context, id string, version *int) (*worker.PerformanceReviewTemplate, error) {
+func (r *MutationResolver) RestorePerformanceReviewTemplate(ctx context.Context, id string, version *int) (*workerreview.PerformanceReviewTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePerformanceReviewTemplate, permission.OpRestore)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (r *MutationResolver) RestorePerformanceReviewTemplate(ctx context.Context,
 	})
 }
 
-func (r *MutationResolver) CreatePerformanceReview(ctx context.Context, input gqlmodel.CreatePerformanceReviewInput) (*worker.PerformanceReview, error) {
+func (r *MutationResolver) CreatePerformanceReview(ctx context.Context, input gqlmodel.CreatePerformanceReviewInput) (*workerreview.PerformanceReview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePerformanceReview, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (r *MutationResolver) CreatePerformanceReview(ctx context.Context, input gq
 	})
 }
 
-func (r *MutationResolver) UpdatePerformanceReview(ctx context.Context, input gqlmodel.UpdatePerformanceReviewInput) (*worker.PerformanceReview, error) {
+func (r *MutationResolver) UpdatePerformanceReview(ctx context.Context, input gqlmodel.UpdatePerformanceReviewInput) (*workerreview.PerformanceReview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePerformanceReview, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -111,7 +111,7 @@ func (r *MutationResolver) UpdatePerformanceReview(ctx context.Context, input gq
 	return r.PerformanceReviewService.UpdateReview(ctx, req)
 }
 
-func (r *MutationResolver) SubmitPerformanceReview(ctx context.Context, input gqlmodel.PerformanceReviewStatusInput) (*worker.PerformanceReview, error) {
+func (r *MutationResolver) SubmitPerformanceReview(ctx context.Context, input gqlmodel.PerformanceReviewStatusInput) (*workerreview.PerformanceReview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePerformanceReview, permission.OpSubmit)
 	if err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func (r *MutationResolver) SubmitPerformanceReview(ctx context.Context, input gq
 	return r.PerformanceReviewService.SubmitReview(ctx, req)
 }
 
-func (r *MutationResolver) ReopenPerformanceReview(ctx context.Context, input gqlmodel.PerformanceReviewStatusInput) (*worker.PerformanceReview, error) {
+func (r *MutationResolver) ReopenPerformanceReview(ctx context.Context, input gqlmodel.PerformanceReviewStatusInput) (*workerreview.PerformanceReview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePerformanceReview, permission.OpClose)
 	if err != nil {
 		return nil, err
@@ -137,7 +137,7 @@ func (r *MutationResolver) ReopenPerformanceReview(ctx context.Context, input gq
 	return r.PerformanceReviewService.ReopenReview(ctx, req)
 }
 
-func (r *MutationResolver) ClosePerformanceReview(ctx context.Context, input gqlmodel.PerformanceReviewStatusInput) (*worker.PerformanceReview, error) {
+func (r *MutationResolver) ClosePerformanceReview(ctx context.Context, input gqlmodel.PerformanceReviewStatusInput) (*workerreview.PerformanceReview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePerformanceReview, permission.OpClose)
 	if err != nil {
 		return nil, err
@@ -165,7 +165,7 @@ func (r *MutationResolver) DeletePerformanceReview(ctx context.Context, id strin
 	return true, nil
 }
 
-func (r *MutationResolver) AcknowledgeMyReview(ctx context.Context, id string, comment *string) (*worker.PerformanceReview, error) {
+func (r *MutationResolver) AcknowledgeMyReview(ctx context.Context, id string, comment *string) (*workerreview.PerformanceReview, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -177,23 +177,23 @@ func (r *MutationResolver) AcknowledgeMyReview(ctx context.Context, id string, c
 	return r.DriverPortalService.AcknowledgeMyReview(ctx, base.TenantInfo(authCtx), reviewID, base.StringValue(comment))
 }
 
-func (r *PerformanceReviewResolver) ReviewerID(ctx context.Context, obj *worker.PerformanceReview) (*string, error) {
+func (r *PerformanceReviewResolver) ReviewerID(ctx context.Context, obj *workerreview.PerformanceReview) (*string, error) {
 	return base.IDPtr(obj.ReviewerID), nil
 }
 
-func (r *PerformanceReviewResolver) OverallScore(ctx context.Context, obj *worker.PerformanceReview) (*string, error) {
+func (r *PerformanceReviewResolver) OverallScore(ctx context.Context, obj *workerreview.PerformanceReview) (*string, error) {
 	return base.NullDecimalPtr(obj.OverallScore), nil
 }
 
-func (r *PerformanceReviewResolver) ClosedByID(ctx context.Context, obj *worker.PerformanceReview) (*string, error) {
+func (r *PerformanceReviewResolver) ClosedByID(ctx context.Context, obj *workerreview.PerformanceReview) (*string, error) {
 	return base.IDPtr(obj.ClosedByID), nil
 }
 
-func (r *PerformanceReviewTemplateResolver) CadenceMonths(ctx context.Context, obj *worker.PerformanceReviewTemplate) (*int, error) {
+func (r *PerformanceReviewTemplateResolver) CadenceMonths(ctx context.Context, obj *workerreview.PerformanceReviewTemplate) (*int, error) {
 	return base.Int32Ptr(obj.CadenceMonths), nil
 }
 
-func (r *PerformanceReviewTemplateResolver) OpenReviewCount(ctx context.Context, obj *worker.PerformanceReviewTemplate) (int, error) {
+func (r *PerformanceReviewTemplateResolver) OpenReviewCount(ctx context.Context, obj *workerreview.PerformanceReviewTemplate) (int, error) {
 	if loaders.Available(ctx) {
 		return loaders.PerformanceReviewTemplateOpenReviewCount(ctx, obj.ID.String())
 	}
@@ -232,7 +232,7 @@ func (r *QueryResolver) PerformanceReviewTemplates(ctx context.Context, input gq
 	return reviewTemplateCursorConnectionToModel(result)
 }
 
-func (r *QueryResolver) PerformanceReviewTemplate(ctx context.Context, id string) (*worker.PerformanceReviewTemplate, error) {
+func (r *QueryResolver) PerformanceReviewTemplate(ctx context.Context, id string) (*workerreview.PerformanceReviewTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePerformanceReviewTemplate, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -247,7 +247,7 @@ func (r *QueryResolver) PerformanceReviewTemplate(ctx context.Context, id string
 	})
 }
 
-func (r *QueryResolver) ActivePerformanceReviewTemplates(ctx context.Context) ([]*worker.PerformanceReviewTemplate, error) {
+func (r *QueryResolver) ActivePerformanceReviewTemplates(ctx context.Context) ([]*workerreview.PerformanceReviewTemplate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePerformanceReview, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -256,7 +256,7 @@ func (r *QueryResolver) ActivePerformanceReviewTemplates(ctx context.Context) ([
 	return r.PerformanceReviewService.ActiveTemplates(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) WorkerPerformanceReviews(ctx context.Context, workerID string) ([]*worker.PerformanceReview, error) {
+func (r *QueryResolver) WorkerPerformanceReviews(ctx context.Context, workerID string) ([]*workerreview.PerformanceReview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePerformanceReview, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -269,7 +269,7 @@ func (r *QueryResolver) WorkerPerformanceReviews(ctx context.Context, workerID s
 	return r.PerformanceReviewService.ListReviews(ctx, base.TenantInfo(authCtx), wid, nil)
 }
 
-func (r *QueryResolver) PerformanceReview(ctx context.Context, id string) (*worker.PerformanceReview, error) {
+func (r *QueryResolver) PerformanceReview(ctx context.Context, id string) (*workerreview.PerformanceReview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePerformanceReview, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -282,7 +282,7 @@ func (r *QueryResolver) PerformanceReview(ctx context.Context, id string) (*work
 	return r.PerformanceReviewService.GetReview(ctx, base.TenantInfo(authCtx), reviewID)
 }
 
-func (r *QueryResolver) MyReviews(ctx context.Context) ([]*worker.PerformanceReview, error) {
+func (r *QueryResolver) MyReviews(ctx context.Context) ([]*workerreview.PerformanceReview, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -290,6 +290,6 @@ func (r *QueryResolver) MyReviews(ctx context.Context) ([]*worker.PerformanceRev
 	return r.DriverPortalService.MyReviews(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *ReviewRatingResolver) Score(ctx context.Context, obj *worker.ReviewRating) (*int, error) {
+func (r *ReviewRatingResolver) Score(ctx context.Context, obj *workerreview.ReviewRating) (*int, error) {
 	return base.Int32Ptr(obj.Score), nil
 }

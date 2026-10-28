@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,14 +20,14 @@ const day = int64(86400)
 type fakeSchedulingRepo struct {
 	workerports.SchedulingRepository
 
-	template        *worker.ShiftTemplate
-	templates       []*worker.ShiftTemplate
-	assignments     []*worker.WorkerShiftAssignment
-	updated         []*worker.WorkerShiftAssignment
+	template        *workerschedule.ShiftTemplate
+	templates       []*workerschedule.ShiftTemplate
+	assignments     []*workerschedule.WorkerShiftAssignment
+	updated         []*workerschedule.WorkerShiftAssignment
 	assignmentCount int
-	swap            *worker.ShiftSwapRequest
-	savedSwap       *worker.ShiftSwapRequest
-	preferences     []*worker.WorkerAvailabilityPreference
+	swap            *workerschedule.ShiftSwapRequest
+	savedSwap       *workerschedule.ShiftSwapRequest
+	preferences     []*workerschedule.WorkerAvailabilityPreference
 	workers         []workerports.RotaWorkerRow
 	timeOff         []workerports.RotaRangeRow
 	leave           []workerports.RotaRangeRow
@@ -37,21 +37,21 @@ type fakeSchedulingRepo struct {
 func (r *fakeSchedulingRepo) GetTemplateByID(
 	_ context.Context,
 	_ *workerports.GetShiftTemplateByIDRequest,
-) (*worker.ShiftTemplate, error) {
+) (*workerschedule.ShiftTemplate, error) {
 	return r.template, nil
 }
 
 func (r *fakeSchedulingRepo) ListTemplates(
 	_ context.Context,
 	_ *workerports.ListShiftTemplatesRequest,
-) ([]*worker.ShiftTemplate, error) {
+) ([]*workerschedule.ShiftTemplate, error) {
 	return r.templates, nil
 }
 
 func (r *fakeSchedulingRepo) UpdateTemplate(
 	_ context.Context,
-	entity *worker.ShiftTemplate,
-) (*worker.ShiftTemplate, error) {
+	entity *workerschedule.ShiftTemplate,
+) (*workerschedule.ShiftTemplate, error) {
 	return entity, nil
 }
 
@@ -66,22 +66,22 @@ func (r *fakeSchedulingRepo) CountTemplateAssignments(
 func (r *fakeSchedulingRepo) ListAssignments(
 	_ context.Context,
 	_ *workerports.ListShiftAssignmentsRequest,
-) ([]*worker.WorkerShiftAssignment, error) {
+) ([]*workerschedule.WorkerShiftAssignment, error) {
 	return r.assignments, nil
 }
 
 func (r *fakeSchedulingRepo) CreateAssignment(
 	_ context.Context,
-	entity *worker.WorkerShiftAssignment,
-) (*worker.WorkerShiftAssignment, error) {
+	entity *workerschedule.WorkerShiftAssignment,
+) (*workerschedule.WorkerShiftAssignment, error) {
 	entity.ID = pulid.MustNew("wsa_")
 	return entity, nil
 }
 
 func (r *fakeSchedulingRepo) UpdateAssignment(
 	_ context.Context,
-	entity *worker.WorkerShiftAssignment,
-) (*worker.WorkerShiftAssignment, error) {
+	entity *workerschedule.WorkerShiftAssignment,
+) (*workerschedule.WorkerShiftAssignment, error) {
 	r.updated = append(r.updated, entity)
 	return entity, nil
 }
@@ -89,14 +89,14 @@ func (r *fakeSchedulingRepo) UpdateAssignment(
 func (r *fakeSchedulingRepo) GetSwapByID(
 	_ context.Context,
 	_ *workerports.GetShiftSwapByIDRequest,
-) (*worker.ShiftSwapRequest, error) {
+) (*workerschedule.ShiftSwapRequest, error) {
 	return r.swap, nil
 }
 
 func (r *fakeSchedulingRepo) UpdateSwap(
 	_ context.Context,
-	entity *worker.ShiftSwapRequest,
-) (*worker.ShiftSwapRequest, error) {
+	entity *workerschedule.ShiftSwapRequest,
+) (*workerschedule.ShiftSwapRequest, error) {
 	r.savedSwap = entity
 	return entity, nil
 }
@@ -104,7 +104,7 @@ func (r *fakeSchedulingRepo) UpdateSwap(
 func (r *fakeSchedulingRepo) ListPreferences(
 	_ context.Context,
 	_ *workerports.ListAvailabilityPreferencesRequest,
-) ([]*worker.WorkerAvailabilityPreference, error) {
+) ([]*workerschedule.WorkerAvailabilityPreference, error) {
 	return r.preferences, nil
 }
 
@@ -144,8 +144,8 @@ func tenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 }
 
-func activeTemplate(cycleWeeks int16) *worker.ShiftTemplate {
-	return &worker.ShiftTemplate{
+func activeTemplate(cycleWeeks int16) *workerschedule.ShiftTemplate {
+	return &workerschedule.ShiftTemplate{
 		ID:              pulid.MustNew("shft_"),
 		Status:          domaintypes.StatusActive,
 		Code:            "DAY",
@@ -167,7 +167,7 @@ func TestAssignShift_EndsThePriorAssignmentTheDayBefore(t *testing.T) {
 	t.Parallel()
 
 	template := activeTemplate(1)
-	prior := &worker.WorkerShiftAssignment{
+	prior := &workerschedule.WorkerShiftAssignment{
 		ID:              pulid.MustNew("wsa_"),
 		WorkerID:        "wrk_1",
 		ShiftTemplateID: template.ID,
@@ -175,11 +175,11 @@ func TestAssignShift_EndsThePriorAssignmentTheDayBefore(t *testing.T) {
 	}
 	repo := &fakeSchedulingRepo{
 		template:    template,
-		assignments: []*worker.WorkerShiftAssignment{prior},
+		assignments: []*workerschedule.WorkerShiftAssignment{prior},
 	}
 
 	created, err := newService(repo).AssignShift(t.Context(), &schedulingservice.AssignShiftRequest{
-		Entity: &worker.WorkerShiftAssignment{
+		Entity: &workerschedule.WorkerShiftAssignment{
 			WorkerID:        "wrk_1",
 			ShiftTemplateID: template.ID,
 			EffectiveFrom:   mondayEpoch(),
@@ -200,7 +200,7 @@ func TestAssignShift_RefusesAnAssignmentStartingLater(t *testing.T) {
 	t.Parallel()
 
 	template := activeTemplate(1)
-	future := &worker.WorkerShiftAssignment{
+	future := &workerschedule.WorkerShiftAssignment{
 		ID:              pulid.MustNew("wsa_"),
 		WorkerID:        "wrk_1",
 		ShiftTemplateID: template.ID,
@@ -208,11 +208,11 @@ func TestAssignShift_RefusesAnAssignmentStartingLater(t *testing.T) {
 	}
 	repo := &fakeSchedulingRepo{
 		template:    template,
-		assignments: []*worker.WorkerShiftAssignment{future},
+		assignments: []*workerschedule.WorkerShiftAssignment{future},
 	}
 
 	_, err := newService(repo).AssignShift(t.Context(), &schedulingservice.AssignShiftRequest{
-		Entity: &worker.WorkerShiftAssignment{
+		Entity: &workerschedule.WorkerShiftAssignment{
 			WorkerID:        "wrk_1",
 			ShiftTemplateID: template.ID,
 			EffectiveFrom:   mondayEpoch(),
@@ -234,7 +234,7 @@ func TestAssignShift_RefusesAnOffsetBeyondTheCycle(t *testing.T) {
 	repo := &fakeSchedulingRepo{template: template}
 
 	_, err := newService(repo).AssignShift(t.Context(), &schedulingservice.AssignShiftRequest{
-		Entity: &worker.WorkerShiftAssignment{
+		Entity: &workerschedule.WorkerShiftAssignment{
 			WorkerID:         "wrk_1",
 			ShiftTemplateID:  template.ID,
 			EffectiveFrom:    mondayEpoch(),
@@ -255,7 +255,7 @@ func TestAssignShift_RefusesARetiredShift(t *testing.T) {
 	repo := &fakeSchedulingRepo{template: template}
 
 	_, err := newService(repo).AssignShift(t.Context(), &schedulingservice.AssignShiftRequest{
-		Entity: &worker.WorkerShiftAssignment{
+		Entity: &workerschedule.WorkerShiftAssignment{
 			WorkerID:        "wrk_1",
 			ShiftTemplateID: template.ID,
 			EffectiveFrom:   mondayEpoch(),
@@ -292,17 +292,17 @@ func TestTransitionSwap_EnforcesTheStateMachine(t *testing.T) {
 	t.Parallel()
 
 	// The office cannot approve a swap the colleague has not answered.
-	repo := &fakeSchedulingRepo{swap: &worker.ShiftSwapRequest{
+	repo := &fakeSchedulingRepo{swap: &workerschedule.ShiftSwapRequest{
 		ID:                   pulid.MustNew("sswp_"),
 		RequestingWorkerID:   "wrk_1",
 		CounterpartyWorkerID: "wrk_2",
-		Status:               worker.SwapProposed,
+		Status:               workerschedule.SwapProposed,
 		ShiftDate:            mondayEpoch(),
 	}}
 
 	_, err := newService(repo).TransitionSwap(t.Context(), &schedulingservice.TransitionSwapRequest{
 		ID:         "sswp_1",
-		Status:     worker.SwapApproved,
+		Status:     workerschedule.SwapApproved,
 		TenantInfo: tenant(),
 	})
 
@@ -314,11 +314,11 @@ func TestTransitionSwap_EnforcesTheStateMachine(t *testing.T) {
 func TestTransitionSwap_StampsTheDecision(t *testing.T) {
 	t.Parallel()
 
-	repo := &fakeSchedulingRepo{swap: &worker.ShiftSwapRequest{
+	repo := &fakeSchedulingRepo{swap: &workerschedule.ShiftSwapRequest{
 		ID:                   pulid.MustNew("sswp_"),
 		RequestingWorkerID:   "wrk_1",
 		CounterpartyWorkerID: "wrk_2",
-		Status:               worker.SwapAccepted,
+		Status:               workerschedule.SwapAccepted,
 		ShiftDate:            mondayEpoch(),
 	}}
 	decider := pulid.MustNew("usr_")
@@ -327,7 +327,7 @@ func TestTransitionSwap_StampsTheDecision(t *testing.T) {
 		t.Context(),
 		&schedulingservice.TransitionSwapRequest{
 			ID:         "sswp_1",
-			Status:     worker.SwapApproved,
+			Status:     workerschedule.SwapApproved,
 			TenantInfo: tenant(),
 			UserID:     decider,
 		},
@@ -344,17 +344,17 @@ func TestTransitionSwap_StampsTheDecision(t *testing.T) {
 func TestTransitionSwap_OnlyTheCounterpartyCanAnswer(t *testing.T) {
 	t.Parallel()
 
-	repo := &fakeSchedulingRepo{swap: &worker.ShiftSwapRequest{
+	repo := &fakeSchedulingRepo{swap: &workerschedule.ShiftSwapRequest{
 		ID:                   pulid.MustNew("sswp_"),
 		RequestingWorkerID:   "wrk_1",
 		CounterpartyWorkerID: "wrk_2",
-		Status:               worker.SwapProposed,
+		Status:               workerschedule.SwapProposed,
 		ShiftDate:            mondayEpoch(),
 	}}
 
 	_, err := newService(repo).TransitionSwap(t.Context(), &schedulingservice.TransitionSwapRequest{
 		ID:            "sswp_1",
-		Status:        worker.SwapAccepted,
+		Status:        workerschedule.SwapAccepted,
 		ActorWorkerID: "wrk_3",
 		TenantInfo:    tenant(),
 	})
@@ -366,17 +366,17 @@ func TestTransitionSwap_OnlyTheCounterpartyCanAnswer(t *testing.T) {
 func TestTransitionSwap_OnlyTheRequesterCanWithdraw(t *testing.T) {
 	t.Parallel()
 
-	repo := &fakeSchedulingRepo{swap: &worker.ShiftSwapRequest{
+	repo := &fakeSchedulingRepo{swap: &workerschedule.ShiftSwapRequest{
 		ID:                   pulid.MustNew("sswp_"),
 		RequestingWorkerID:   "wrk_1",
 		CounterpartyWorkerID: "wrk_2",
-		Status:               worker.SwapProposed,
+		Status:               workerschedule.SwapProposed,
 		ShiftDate:            mondayEpoch(),
 	}}
 
 	_, err := newService(repo).TransitionSwap(t.Context(), &schedulingservice.TransitionSwapRequest{
 		ID:            "sswp_1",
-		Status:        worker.SwapWithdrawn,
+		Status:        workerschedule.SwapWithdrawn,
 		ActorWorkerID: "wrk_2",
 		TenantInfo:    tenant(),
 	})
@@ -388,17 +388,17 @@ func TestTransitionSwap_OnlyTheRequesterCanWithdraw(t *testing.T) {
 func TestTransitionSwap_ADriverCannotDecideTheirOwnSwap(t *testing.T) {
 	t.Parallel()
 
-	repo := &fakeSchedulingRepo{swap: &worker.ShiftSwapRequest{
+	repo := &fakeSchedulingRepo{swap: &workerschedule.ShiftSwapRequest{
 		ID:                   pulid.MustNew("sswp_"),
 		RequestingWorkerID:   "wrk_1",
 		CounterpartyWorkerID: "wrk_2",
-		Status:               worker.SwapAccepted,
+		Status:               workerschedule.SwapAccepted,
 		ShiftDate:            mondayEpoch(),
 	}}
 
 	_, err := newService(repo).TransitionSwap(t.Context(), &schedulingservice.TransitionSwapRequest{
 		ID:            "sswp_1",
-		Status:        worker.SwapApproved,
+		Status:        workerschedule.SwapApproved,
 		ActorWorkerID: "wrk_1",
 		TenantInfo:    tenant(),
 	})
@@ -413,7 +413,7 @@ func TestProposeSwap_RefusesADayThatHasPassed(t *testing.T) {
 	repo := &fakeSchedulingRepo{}
 
 	_, err := newService(repo).ProposeSwap(t.Context(), &schedulingservice.ProposeSwapRequest{
-		Entity: &worker.ShiftSwapRequest{
+		Entity: &workerschedule.ShiftSwapRequest{
 			RequestingWorkerID:   "wrk_1",
 			CounterpartyWorkerID: "wrk_2",
 			ShiftDate:            time.Now().AddDate(0, 0, -3).Unix(),
@@ -432,7 +432,7 @@ func TestRota_OpenEndedLeaveCoversTheRestOfTheWeek(t *testing.T) {
 
 	template := activeTemplate(1)
 	repo := &fakeSchedulingRepo{
-		templates: []*worker.ShiftTemplate{template},
+		templates: []*workerschedule.ShiftTemplate{template},
 		workers: []workerports.RotaWorkerRow{{
 			WorkerID:        "wrk_1",
 			FirstName:       "Ada",
@@ -456,9 +456,9 @@ func TestRota_OpenEndedLeaveCoversTheRestOfTheWeek(t *testing.T) {
 	row := rota.Rows[0]
 	// The week starts on the Sunday before, so Monday through Saturday are the
 	// days the open case covers.
-	assert.Equal(t, worker.RotaOff, row.Days[0].State)
+	assert.Equal(t, workerschedule.RotaOff, row.Days[0].State)
 	for i := 1; i < 7; i++ {
-		assert.Equal(t, worker.RotaLeave, row.Days[i].State, "day %d", i)
+		assert.Equal(t, workerschedule.RotaLeave, row.Days[i].State, "day %d", i)
 	}
 	assert.Equal(t, 5, row.Conflicts)
 }
@@ -471,7 +471,7 @@ func TestRota_AlternatesAcrossWeeks(t *testing.T) {
 
 	template := activeTemplate(2)
 	repo := &fakeSchedulingRepo{
-		templates: []*worker.ShiftTemplate{template},
+		templates: []*workerschedule.ShiftTemplate{template},
 		workers: []workerports.RotaWorkerRow{{
 			WorkerID:        "wrk_1",
 			FirstName:       "Ada",
@@ -497,7 +497,7 @@ func TestRota_AlternatesAcrossWeeks(t *testing.T) {
 	assert.Equal(t, 5, firstWeek+secondWeek)
 }
 
-func scheduledIn(days []worker.RotaDay) int {
+func scheduledIn(days []workerschedule.RotaDay) int {
 	count := 0
 	for _, day := range days {
 		if day.Scheduled {
@@ -515,7 +515,7 @@ func TestRota_CountsAnAssignmentOnADayOffAsAConflict(t *testing.T) {
 	template := activeTemplate(1)
 	tuesday := mondayEpoch() + day
 	repo := &fakeSchedulingRepo{
-		templates: []*worker.ShiftTemplate{template},
+		templates: []*workerschedule.ShiftTemplate{template},
 		workers: []workerports.RotaWorkerRow{{
 			WorkerID:        "wrk_1",
 			FirstName:       "Ada",
@@ -541,7 +541,7 @@ func TestRota_CountsAnAssignmentOnADayOffAsAConflict(t *testing.T) {
 
 	require.NoError(t, err)
 	tuesdayCell := rota.Rows[0].Days[2]
-	assert.Equal(t, worker.RotaTimeOff, tuesdayCell.State)
+	assert.Equal(t, workerschedule.RotaTimeOff, tuesdayCell.State)
 	assert.Equal(t, 2, tuesdayCell.AssignmentCount)
 	assert.True(t, tuesdayCell.IsConflict())
 	assert.Equal(t, 1, rota.Conflicts)

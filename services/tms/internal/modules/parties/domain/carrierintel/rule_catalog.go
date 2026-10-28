@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -46,7 +46,7 @@ var (
 )
 
 func allBasicNames() []string {
-	basics := worker.AllCSABasics()
+	basics := workersafety.AllCSABasics()
 	names := make([]string, 0, len(basics))
 	for _, b := range basics {
 		names = append(names, b.String())

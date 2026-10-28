@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +21,7 @@ type TeamDirectory interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		userID pulid.ID,
-		scope worker.ApprovalScope,
+		scope approvaldelegation.ApprovalScope,
 		asOf int64,
 	) ([]pulid.ID, map[pulid.ID]pulid.ID, error)
 }
@@ -179,7 +179,7 @@ func (s *Service) team(
 			UserID: principal.UserID,
 		},
 		principal.UserID,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		0,
 	)
 	if err != nil {

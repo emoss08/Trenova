@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -220,7 +221,7 @@ func (s *Service) RefreshRollup(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (*worker.SafetyScorecard, error) {
+) (*workersafety.SafetyScorecard, error) {
 	card, err := s.Scorecard(ctx, tenantInfo, workerID)
 	if err != nil {
 		return nil, err
@@ -243,7 +244,7 @@ func (s *Service) Scorecard(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (*worker.SafetyScorecard, error) {
+) (*workersafety.SafetyScorecard, error) {
 	if _, err := s.loadWorker(ctx, tenantInfo, workerID); err != nil {
 		return nil, err
 	}
@@ -268,7 +269,7 @@ func (s *Service) Scorecard(
 	if err != nil {
 		return nil, err
 	}
-	return worker.BuildSafetyScorecard(
+	return workersafety.BuildSafetyScorecard(
 		workerID,
 		events,
 		actions,
@@ -277,15 +278,15 @@ func (s *Service) Scorecard(
 	), nil
 }
 
-func eventTenant(entity *worker.WorkerSafetyEvent) pagination.TenantInfo {
+func eventTenant(entity *workersafety.WorkerSafetyEvent) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 
-func actionTenant(entity *worker.WorkerDisciplinaryAction) pagination.TenantInfo {
+func actionTenant(entity *workersafety.WorkerDisciplinaryAction) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 
-func recognitionTenant(entity *worker.WorkerRecognition) pagination.TenantInfo {
+func recognitionTenant(entity *workersafety.WorkerRecognition) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 

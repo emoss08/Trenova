@@ -3,13 +3,13 @@
 package orgholidayexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"context"
 	"errors"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -66,7 +66,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OrgHoliday)
+					obj := o.(*pto.OrgHoliday)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -76,7 +76,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OrgHoliday)
+					obj := o.(*pto.OrgHoliday)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -86,7 +86,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OrgHoliday)
+					obj := o.(*pto.OrgHoliday)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -96,7 +96,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OrgHoliday)
+					obj := o.(*pto.OrgHoliday)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -106,7 +106,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OrgHoliday)
+					obj := o.(*pto.OrgHoliday)
 					return obj.HolidayDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -116,7 +116,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OrgHoliday)
+					obj := o.(*pto.OrgHoliday)
 					return obj.Kind, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNOrgHolidayKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐHolidayKind),
@@ -126,7 +126,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OrgHoliday)
+					obj := o.(*pto.OrgHoliday)
 					return obj.RecursAnnually, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -135,7 +135,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "description",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OrgHoliday)
+					obj := o.(*pto.OrgHoliday)
 					return obj.Description, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -145,7 +145,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OrgHoliday)
+					obj := o.(*pto.OrgHoliday)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -155,7 +155,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OrgHoliday)
+					obj := o.(*pto.OrgHoliday)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -165,7 +165,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OrgHoliday)
+					obj := o.(*pto.OrgHoliday)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -198,13 +198,13 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverMutation interface {
-	CreateOrgHoliday(ctx context.Context, input gqlmodel.OrgHolidayInput) (*worker.OrgHoliday, error)
-	UpdateOrgHoliday(ctx context.Context, id string, input gqlmodel.OrgHolidayInput) (*worker.OrgHoliday, error)
+	CreateOrgHoliday(ctx context.Context, input gqlmodel.OrgHolidayInput) (*pto.OrgHoliday, error)
+	UpdateOrgHoliday(ctx context.Context, id string, input gqlmodel.OrgHolidayInput) (*pto.OrgHoliday, error)
 	DeleteOrgHoliday(ctx context.Context, id string) (bool, error)
 }
 
 type resolverQuery interface {
-	OrgHolidays(ctx context.Context, year *int) ([]*worker.OrgHoliday, error)
+	OrgHolidays(ctx context.Context, year *int) ([]*pto.OrgHoliday, error)
 }
 
 var (
@@ -356,9 +356,9 @@ func unmarshalNOrgHolidayInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNOrgHolidayKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐHolidayKind(ctx context.Context, ec *gqlexec.Exec, v any) (worker.HolidayKind, error) {
+func unmarshalNOrgHolidayKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐHolidayKind(ctx context.Context, ec *gqlexec.Exec, v any) (pto.HolidayKind, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.HolidayKind(tmp)
+	res := pto.HolidayKind(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -412,15 +412,15 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNOrgHoliday2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOrgHolidayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.OrgHoliday) graphql.Marshaler {
-	return gqlexec.List[*worker.OrgHoliday]{
+func marshalNOrgHoliday2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOrgHolidayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*pto.OrgHoliday) graphql.Marshaler {
+	return gqlexec.List[*pto.OrgHoliday]{
 		Elem:        marshalNOrgHoliday2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOrgHoliday,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNOrgHoliday2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOrgHoliday(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.OrgHoliday) graphql.Marshaler {
+func marshalNOrgHoliday2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOrgHoliday(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *pto.OrgHoliday) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -428,7 +428,7 @@ func marshalNOrgHoliday2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules
 	return ec.MarshalType(ctx, sel, "OrgHoliday", v)
 }
 
-func marshalNOrgHolidayKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐHolidayKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.HolidayKind) graphql.Marshaler {
+func marshalNOrgHolidayKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐHolidayKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pto.HolidayKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

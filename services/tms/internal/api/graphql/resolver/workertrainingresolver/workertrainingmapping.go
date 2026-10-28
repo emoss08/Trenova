@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -17,13 +18,13 @@ func trainingCourseFromInput(
 	input *gqlmodel.TrainingCourseInput,
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*worker.TrainingCourse, error) {
+) (*workertraining.TrainingCourse, error) {
 	passingScore, err := base.ParseNullDecimalField("passingScore", input.PassingScore)
 	if err != nil {
 		return nil, err
 	}
 
-	entity := &worker.TrainingCourse{
+	entity := &workertraining.TrainingCourse{
 		ID:             id,
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
@@ -120,12 +121,12 @@ func completeTrainingRequestFromInput(
 }
 
 func trainingCourseCursorConnectionToModel(
-	result *pagination.CursorListResult[*worker.TrainingCourse],
+	result *pagination.CursorListResult[*workertraining.TrainingCourse],
 ) (*gqlmodel.TrainingCourseConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
 		result,
-		func(node *worker.TrainingCourse, cursor string) *gqlmodel.TrainingCourseEdge {
+		func(node *workertraining.TrainingCourse, cursor string) *gqlmodel.TrainingCourseEdge {
 			return &gqlmodel.TrainingCourseEdge{Node: node, Cursor: cursor}
 		},
 	)
@@ -147,7 +148,7 @@ func trainingCourseCursorConnectionToModel(
 	}, nil
 }
 
-func trainingCategoryString(category *worker.TrainingCategory) string {
+func trainingCategoryString(category *workertraining.TrainingCategory) string {
 	if category == nil {
 		return ""
 	}

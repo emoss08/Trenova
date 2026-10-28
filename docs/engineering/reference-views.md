@@ -71,7 +71,7 @@ Internal.
   guard walks the value by reflection with a plan cached per Go type: a domain struct named for a
   resource is that kind (`customer.Customer`, `worker.Worker`), `namedKinds` holds the few whose
   name does not spell theirs (`shipment.Stop`, `billingqueue.BillingQueueItem`,
-  `worker.WorkerLeaveCase`, `worker.TimeClockEntry`, `worker.WorkerDOTViolation`), and any other
+  `workerleave.WorkerLeaveCase`, `timesheet.TimeClockEntry`, `workerdot.WorkerDOTViolation`), and any other
   struct is part of the record that carries it. The value a route returns (each item of a list or
   page) is the root record; a record of a kind reached through it is linked, unless it is part of
   the root's family (a shipment's moves and stops), and so on down. A linked record of a kind the

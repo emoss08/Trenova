@@ -6,16 +6,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,8 +31,8 @@ const day = int64(86400)
 // fakeRepo is an in-memory WorkerCredentialRepository: enough state to drive
 // the service's branching without a database.
 type fakeRepo struct {
-	types       map[pulid.ID]*worker.WorkerCredentialType
-	credentials map[pulid.ID]*worker.WorkerCredential
+	types       map[pulid.ID]*workercredential.WorkerCredentialType
+	credentials map[pulid.ID]*workercredential.WorkerCredential
 	createReqs  []*workerports.CreateWorkerCredentialRequest
 	expiring    *workerports.ListExpiringWorkerCredentialsRequest
 	ensured     int
@@ -40,23 +40,23 @@ type fakeRepo struct {
 
 func newFakeRepo() *fakeRepo {
 	return &fakeRepo{
-		types:       map[pulid.ID]*worker.WorkerCredentialType{},
-		credentials: map[pulid.ID]*worker.WorkerCredential{},
+		types:       map[pulid.ID]*workercredential.WorkerCredentialType{},
+		credentials: map[pulid.ID]*workercredential.WorkerCredential{},
 	}
 }
 
 func (f *fakeRepo) ListTypes(
 	context.Context,
 	*workerports.ListCredentialTypesRequest,
-) (*pagination.CursorListResult[*worker.WorkerCredentialType], error) {
-	return &pagination.CursorListResult[*worker.WorkerCredentialType]{}, nil
+) (*pagination.CursorListResult[*workercredential.WorkerCredentialType], error) {
+	return &pagination.CursorListResult[*workercredential.WorkerCredentialType]{}, nil
 }
 
 func (f *fakeRepo) ListActiveTypes(
 	context.Context,
 	pagination.TenantInfo,
-) ([]*worker.WorkerCredentialType, error) {
-	out := make([]*worker.WorkerCredentialType, 0, len(f.types))
+) ([]*workercredential.WorkerCredentialType, error) {
+	out := make([]*workercredential.WorkerCredentialType, 0, len(f.types))
 	for _, typ := range f.types {
 		if typ.Status == domaintypes.StatusActive {
 			out = append(out, typ)
@@ -68,14 +68,14 @@ func (f *fakeRepo) ListActiveTypes(
 func (f *fakeRepo) TypeSelectOptions(
 	_ context.Context,
 	_ *workerports.WorkerCredentialTypeSelectOptionsRequest,
-) (*pagination.ListResult[*worker.WorkerCredentialType], error) {
-	out := make([]*worker.WorkerCredentialType, 0, len(f.types))
+) (*pagination.ListResult[*workercredential.WorkerCredentialType], error) {
+	out := make([]*workercredential.WorkerCredentialType, 0, len(f.types))
 	for _, typ := range f.types {
 		if typ.Status == domaintypes.StatusActive {
 			out = append(out, typ)
 		}
 	}
-	return &pagination.ListResult[*worker.WorkerCredentialType]{
+	return &pagination.ListResult[*workercredential.WorkerCredentialType]{
 		Items:      out,
 		Total:      len(out),
 		TotalExact: true,
@@ -85,7 +85,7 @@ func (f *fakeRepo) TypeSelectOptions(
 func (f *fakeRepo) GetTypeByID(
 	_ context.Context,
 	req *workerports.GetCredentialTypeByIDRequest,
-) (*worker.WorkerCredentialType, error) {
+) (*workercredential.WorkerCredentialType, error) {
 	typ, ok := f.types[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("type")
@@ -102,8 +102,8 @@ func (f *fakeRepo) TypeCodeExists(
 
 func (f *fakeRepo) CreateType(
 	_ context.Context,
-	entity *worker.WorkerCredentialType,
-) (*worker.WorkerCredentialType, error) {
+	entity *workercredential.WorkerCredentialType,
+) (*workercredential.WorkerCredentialType, error) {
 	entity.ID = pulid.MustNew("wct_")
 	f.types[entity.ID] = entity
 	return entity, nil
@@ -111,8 +111,8 @@ func (f *fakeRepo) CreateType(
 
 func (f *fakeRepo) UpdateType(
 	_ context.Context,
-	entity *worker.WorkerCredentialType,
-) (*worker.WorkerCredentialType, error) {
+	entity *workercredential.WorkerCredentialType,
+) (*workercredential.WorkerCredentialType, error) {
 	entity.Version++
 	f.types[entity.ID] = entity
 	return entity, nil
@@ -121,7 +121,7 @@ func (f *fakeRepo) UpdateType(
 func (f *fakeRepo) EnsureSystemTypes(
 	context.Context,
 	pagination.TenantInfo,
-	[]*worker.WorkerCredentialType,
+	[]*workercredential.WorkerCredentialType,
 ) (int, error) {
 	f.ensured++
 	return 0, nil
@@ -158,8 +158,8 @@ func (f *fakeRepo) CountCredentialsByTypeIDs(
 func (f *fakeRepo) ListForWorker(
 	_ context.Context,
 	req *workerports.ListWorkerCredentialsRequest,
-) ([]*worker.WorkerCredential, error) {
-	out := make([]*worker.WorkerCredential, 0, len(f.credentials))
+) ([]*workercredential.WorkerCredential, error) {
+	out := make([]*workercredential.WorkerCredential, 0, len(f.credentials))
 	for _, cred := range f.credentials {
 		if !slices.Contains(req.WorkerIDs, cred.WorkerID) {
 			continue
@@ -172,7 +172,7 @@ func (f *fakeRepo) ListForWorker(
 		}
 		out = append(out, cred)
 	}
-	slices.SortFunc(out, func(a, b *worker.WorkerCredential) int {
+	slices.SortFunc(out, func(a, b *workercredential.WorkerCredential) int {
 		return strings.Compare(a.ID.String(), b.ID.String())
 	})
 	return out, nil
@@ -181,7 +181,7 @@ func (f *fakeRepo) ListForWorker(
 func (f *fakeRepo) GetByID(
 	_ context.Context,
 	req *workerports.GetWorkerCredentialByIDRequest,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	cred, ok := f.credentials[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("credential")
@@ -196,13 +196,13 @@ func (f *fakeRepo) GetByID(
 func (f *fakeRepo) Create(
 	_ context.Context,
 	req *workerports.CreateWorkerCredentialRequest,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	f.createReqs = append(f.createReqs, req)
 	if req.SupersedeReason != "" {
 		for _, cred := range f.credentials {
 			if cred.WorkerID == req.Entity.WorkerID &&
 				cred.CredentialTypeID == req.Entity.CredentialTypeID && cred.IsActive() {
-				cred.Status = worker.CredentialStatusArchived
+				cred.Status = workercredential.CredentialStatusArchived
 				cred.ArchiveReason = req.SupersedeReason
 			}
 		}
@@ -224,8 +224,8 @@ func (f *fakeRepo) Create(
 
 func (f *fakeRepo) Update(
 	_ context.Context,
-	entity *worker.WorkerCredential,
-) (*worker.WorkerCredential, error) {
+	entity *workercredential.WorkerCredential,
+) (*workercredential.WorkerCredential, error) {
 	entity.Version++
 	f.credentials[entity.ID] = entity
 	return entity, nil
@@ -234,7 +234,7 @@ func (f *fakeRepo) Update(
 func (f *fakeRepo) ListExpiring(
 	_ context.Context,
 	req *workerports.ListExpiringWorkerCredentialsRequest,
-) ([]*worker.WorkerCredential, error) {
+) ([]*workercredential.WorkerCredential, error) {
 	f.expiring = req
 	return nil, nil
 }
@@ -246,9 +246,9 @@ type harness struct {
 	docRepo    *documentportsmock.MockDocumentRepository
 	tenant     pagination.TenantInfo
 	wrk        *worker.Worker
-	cdl        *worker.WorkerCredentialType
-	medCard    *worker.WorkerCredentialType
-	forklift   *worker.WorkerCredentialType
+	cdl        *workercredential.WorkerCredentialType
+	medCard    *workercredential.WorkerCredentialType
+	forklift   *workercredential.WorkerCredentialType
 	userID     pulid.ID
 }
 
@@ -301,14 +301,14 @@ func newHarnessSeeing(t *testing.T, fields permissionports.FieldAccess) *harness
 		Return(wrk, nil).
 		Maybe()
 
-	addType := func(code string, required, requiresDoc bool, field worker.CredentialProfileField) *worker.WorkerCredentialType {
-		typ := &worker.WorkerCredentialType{
+	addType := func(code string, required, requiresDoc bool, field workercredential.CredentialProfileField) *workercredential.WorkerCredentialType {
+		typ := &workercredential.WorkerCredentialType{
 			ID:                pulid.MustNew("wct_"),
 			OrganizationID:    tenant.OrgID,
 			BusinessUnitID:    tenant.BuID,
 			Code:              code,
 			Name:              code,
-			Category:          worker.CredentialCategoryOther,
+			Category:          workercredential.CredentialCategoryOther,
 			Status:            domaintypes.StatusActive,
 			IsRequired:        required,
 			RequiresDocument:  requiresDoc,
@@ -336,18 +336,28 @@ func newHarnessSeeing(t *testing.T, fields permissionports.FieldAccess) *harness
 		docRepo:    docRepo,
 		tenant:     tenant,
 		wrk:        wrk,
-		cdl:        addType("CDL", true, true, worker.CredentialProfileFieldLicenseExpiry),
-		medCard:    addType("MED_CARD", true, true, worker.CredentialProfileFieldMedicalCardExpiry),
-		forklift:   addType("FORKLIFT", false, false, worker.CredentialProfileFieldNone),
-		userID:     pulid.MustNew("usr_"),
+		cdl: addType(
+			"CDL",
+			true,
+			true,
+			workercredential.CredentialProfileFieldLicenseExpiry,
+		),
+		medCard: addType(
+			"MED_CARD",
+			true,
+			true,
+			workercredential.CredentialProfileFieldMedicalCardExpiry,
+		),
+		forklift: addType("FORKLIFT", false, false, workercredential.CredentialProfileFieldNone),
+		userID:   pulid.MustNew("usr_"),
 	}
 }
 
 func (h *harness) credential(
-	typ *worker.WorkerCredentialType,
+	typ *workercredential.WorkerCredentialType,
 	expiry int64,
-) *worker.WorkerCredential {
-	return &worker.WorkerCredential{
+) *workercredential.WorkerCredential {
+	return &workercredential.WorkerCredential{
 		OrganizationID:   h.tenant.OrgID,
 		BusinessUnitID:   h.tenant.BuID,
 		WorkerID:         h.wrk.ID,
@@ -383,10 +393,10 @@ func TestCreate_MirrorsProfileAndRefreshesCompliance(t *testing.T) {
 		UserID: h.userID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.CredentialStatusActive, created.Status)
+	assert.Equal(t, workercredential.CredentialStatusActive, created.Status)
 
 	require.NotNil(t, patched)
-	assert.Equal(t, worker.CredentialProfileFieldMedicalCardExpiry, patched.Field)
+	assert.Equal(t, workercredential.CredentialProfileFieldMedicalCardExpiry, patched.Field)
 	assert.Equal(t, expiry, *patched.ExpiresAt)
 	assert.Empty(t, patched.Number, "only the CDL carries its number onto the profile")
 
@@ -428,8 +438,8 @@ func TestCreate_RenewSupersedesActiveCredential(t *testing.T) {
 	require.Len(t, h.repo.createReqs, 3)
 	assert.Equal(t, "Superseded by renewal", h.repo.createReqs[2].SupersedeReason)
 	assert.Equal(t, h.userID, h.repo.createReqs[2].SupersededByID)
-	assert.Equal(t, worker.CredentialStatusArchived, h.repo.credentials[first.ID].Status)
-	assert.Equal(t, worker.CredentialStatusActive, h.repo.credentials[second.ID].Status)
+	assert.Equal(t, workercredential.CredentialStatusArchived, h.repo.credentials[first.ID].Status)
+	assert.Equal(t, workercredential.CredentialStatusActive, h.repo.credentials[second.ID].Status)
 }
 
 func TestCreate_TypeRequirements(t *testing.T) {
@@ -594,7 +604,7 @@ func TestSyncFromProfile(t *testing.T) {
 
 	require.NoError(t, h.svc.SyncFromProfile(t.Context(), h.wrk, h.userID))
 
-	byType := func(typ *worker.WorkerCredentialType) *worker.WorkerCredential {
+	byType := func(typ *workercredential.WorkerCredentialType) *workercredential.WorkerCredential {
 		for _, cred := range h.repo.credentials {
 			if cred.CredentialTypeID == typ.ID && cred.IsActive() {
 				return cred
@@ -670,5 +680,5 @@ func TestSummary_SeedsSystemTypesOnce(t *testing.T) {
 
 func TestDaysUntilAgreesWithForecastWindow(t *testing.T) {
 	now := int64(1_800_000_000)
-	assert.Equal(t, int64(7), worker.DaysUntil(now+7*day, now))
+	assert.Equal(t, int64(7), workercredential.DaysUntil(now+7*day, now))
 }

@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -92,30 +92,30 @@ func (s *PTOPolicySeed) Run(ctx context.Context, sr *seed.Run) error {
 	return nil
 }
 
-func standardPTOPolicy(refs *ptoSeedRefs) *worker.PTOPolicy {
-	return &worker.PTOPolicy{
+func standardPTOPolicy(refs *ptoSeedRefs) *pto.PTOPolicy {
+	return &pto.PTOPolicy{
 		OrganizationID:    refs.orgID,
 		BusinessUnitID:    refs.buID,
 		Name:              "Standard Driver",
 		Code:              ptoPolicyStandardCode,
 		Description:       "Default accrual policy for company drivers",
-		Status:            worker.PTOPolicyStatusActive,
+		Status:            pto.PTOPolicyStatusActive,
 		IsDefault:         true,
-		YearBasis:         worker.PTOYearBasisCalendarYear,
+		YearBasis:         pto.PTOYearBasisCalendarYear,
 		CountWeekends:     true,
 		WaitingPeriodDays: 90,
 		RequiresApproval:  true,
 		EnforceBalance:    true,
-		Rules: []*worker.PTOPolicyRule{
+		Rules: []*pto.PTOPolicyRule{
 			{
 				PTOType:             worker.PTOTypeVacation,
-				AccrualMethod:       worker.PTOAccrualMethodMonthly,
+				AccrualMethod:       pto.PTOAccrualMethodMonthly,
 				AccrualAmountDays:   decimal.RequireFromString("0.83"),
 				MaxBalanceDays:      decimal.NewNullDecimal(decimal.NewFromInt(20)),
 				CarryoverCapDays:    decimal.NewNullDecimal(decimal.NewFromInt(5)),
 				CarryoverExpiryDays: 90,
-				OnTermination:       worker.PTOTerminationPayOut,
-				Tiers: []worker.PTOAccrualTier{
+				OnTermination:       pto.PTOTerminationPayOut,
+				Tiers: []pto.PTOAccrualTier{
 					{
 						MinMonths:         24,
 						AccrualAmountDays: decimal.RequireFromString("1.25"),
@@ -130,49 +130,49 @@ func standardPTOPolicy(refs *ptoSeedRefs) *worker.PTOPolicy {
 			},
 			{
 				PTOType:           worker.PTOTypeSick,
-				AccrualMethod:     worker.PTOAccrualMethodFixedAnnualGrant,
+				AccrualMethod:     pto.PTOAccrualMethodFixedAnnualGrant,
 				AccrualAmountDays: decimal.NewFromInt(5),
 				MaxBalanceDays:    decimal.NewNullDecimal(decimal.NewFromInt(10)),
 				CarryoverCapDays:  decimal.NewNullDecimal(decimal.Zero),
 
-				OnTermination: worker.PTOTerminationForfeit,
+				OnTermination: pto.PTOTerminationForfeit,
 
-				Tiers: []worker.PTOAccrualTier{},
+				Tiers: []pto.PTOAccrualTier{},
 			},
 			{
 				PTOType:           worker.PTOTypePersonal,
-				AccrualMethod:     worker.PTOAccrualMethodFixedAnnualGrant,
+				AccrualMethod:     pto.PTOAccrualMethodFixedAnnualGrant,
 				AccrualAmountDays: decimal.NewFromInt(2),
 				CarryoverCapDays:  decimal.NewNullDecimal(decimal.Zero),
 
-				OnTermination: worker.PTOTerminationForfeit,
+				OnTermination: pto.PTOTerminationForfeit,
 
-				Tiers: []worker.PTOAccrualTier{},
+				Tiers: []pto.PTOAccrualTier{},
 			},
 		},
 	}
 }
 
-func ownerOperatorPTOPolicy(refs *ptoSeedRefs) *worker.PTOPolicy {
-	return &worker.PTOPolicy{
+func ownerOperatorPTOPolicy(refs *ptoSeedRefs) *pto.PTOPolicy {
+	return &pto.PTOPolicy{
 		OrganizationID:   refs.orgID,
 		BusinessUnitID:   refs.buID,
 		Name:             "Owner Operator",
 		Code:             ptoPolicyOwnerOpCode,
 		Description:      "Tracks time off for owner-operators without enforcing a balance",
-		Status:           worker.PTOPolicyStatusActive,
-		YearBasis:        worker.PTOYearBasisCalendarYear,
+		Status:           pto.PTOPolicyStatusActive,
+		YearBasis:        pto.PTOYearBasisCalendarYear,
 		CountWeekends:    true,
 		EnforceBalance:   false,
 		RequiresApproval: true,
-		Rules: []*worker.PTOPolicyRule{
+		Rules: []*pto.PTOPolicyRule{
 			{
 				PTOType:       worker.PTOTypeVacation,
-				AccrualMethod: worker.PTOAccrualMethodNone,
+				AccrualMethod: pto.PTOAccrualMethodNone,
 
-				OnTermination: worker.PTOTerminationForfeit,
+				OnTermination: pto.PTOTerminationForfeit,
 
-				Tiers: []worker.PTOAccrualTier{},
+				Tiers: []pto.PTOAccrualTier{},
 			},
 		},
 	}
@@ -182,8 +182,8 @@ func (s *PTOPolicySeed) ensurePolicy(
 	ctx context.Context,
 	db *keel.DB,
 	refs *ptoSeedRefs,
-	policy *worker.PTOPolicy,
-) (*worker.PTOPolicy, error) {
+	policy *pto.PTOPolicy,
+) (*pto.PTOPolicy, error) {
 	existing, err := workerdb.PTOPolicies.AllTenants().Load(workerdb.PTOPolicies.Rules()).Where(
 		workerdb.PTOPolicies.OrganizationID.Eq(refs.orgID),
 		workerdb.PTOPolicies.BusinessUnitID.Eq(refs.buID),
@@ -214,8 +214,8 @@ func (s *PTOPolicySeed) ensurePolicy(
 func (s *PTOPolicySeed) syncRuleFollowOns(
 	ctx context.Context,
 	db *keel.DB,
-	existing *worker.PTOPolicy,
-	desired *worker.PTOPolicy,
+	existing *pto.PTOPolicy,
+	desired *pto.PTOPolicy,
 ) error {
 	for _, rule := range existing.Rules {
 		want := desired.RuleFor(rule.PTOType)
@@ -253,7 +253,7 @@ func (s *PTOPolicySeed) enrolWorker(
 	ctx context.Context,
 	db *keel.DB,
 	refs *ptoSeedRefs,
-	policy *worker.PTOPolicy,
+	policy *pto.PTOPolicy,
 	wrk *worker.Worker,
 ) error {
 	exists, err := workerdb.WorkerPTOPolicyAssignments.AllTenants().Where(
@@ -276,7 +276,7 @@ func (s *PTOPolicySeed) enrolWorker(
 		termination = wrk.Profile.TerminationDate
 	}
 
-	assignment := &worker.WorkerPTOPolicyAssignment{
+	assignment := &pto.WorkerPTOPolicyAssignment{
 		OrganizationID: refs.orgID,
 		BusinessUnitID: refs.buID,
 		WorkerID:       wrk.ID,
@@ -295,7 +295,7 @@ func (s *PTOPolicySeed) enrolWorker(
 	}
 
 	for _, rule := range policy.Rules {
-		bal := &worker.WorkerPTOBalance{
+		bal := &pto.WorkerPTOBalance{
 			OrganizationID: refs.orgID,
 			BusinessUnitID: refs.buID,
 			WorkerID:       wrk.ID,
@@ -305,16 +305,16 @@ func (s *PTOPolicySeed) enrolWorker(
 			return err
 		}
 
-		entries := make([]*worker.WorkerPTOLedgerEntry, 0, 16)
+		entries := make([]*pto.WorkerPTOLedgerEntry, 0, 16)
 		if days, ok := opening[rule.PTOType]; ok {
-			entry := &worker.WorkerPTOLedgerEntry{
-				EntryType:    worker.PTOLedgerEntryOpeningBalance,
+			entry := &pto.WorkerPTOLedgerEntry{
+				EntryType:    pto.PTOLedgerEntryOpeningBalance,
 				AmountDays:   days,
 				EffectiveAt:  hireDate,
 				PeriodKey:    "OB:" + assignment.ID.String(),
 				AssignmentID: assignment.ID,
 				PTOPolicyID:  policy.ID,
-				ActorType:    worker.PTOLedgerActorUser,
+				ActorType:    pto.PTOLedgerActorUser,
 				CreatedByID:  refs.adminID,
 			}
 			bal.Apply(entry)
@@ -334,14 +334,14 @@ func (s *PTOPolicySeed) enrolWorker(
 		for _, planned := range plan {
 			if planned.Deferred {
 				if amount, posts := ptoledgerservice.ResolveExpiry(bal, planned, rule); posts {
-					entry := &worker.WorkerPTOLedgerEntry{
+					entry := &pto.WorkerPTOLedgerEntry{
 						EntryType:    planned.EntryType,
 						AmountDays:   amount,
 						EffectiveAt:  planned.EffectiveAt,
 						PeriodKey:    planned.PeriodKey,
 						AssignmentID: assignment.ID,
 						PTOPolicyID:  policy.ID,
-						ActorType:    worker.PTOLedgerActorSystem,
+						ActorType:    pto.PTOLedgerActorSystem,
 					}
 					bal.Apply(entry)
 					entries = append(entries, entry)
@@ -349,7 +349,7 @@ func (s *PTOPolicySeed) enrolWorker(
 				ptoledgerservice.AdvanceCursor(bal, planned, rule)
 				continue
 			}
-			if planned.EntryType != worker.PTOLedgerEntryAccrual {
+			if planned.EntryType != pto.PTOLedgerEntryAccrual {
 				continue
 			}
 			amount := planned.NominalDays
@@ -363,14 +363,14 @@ func (s *PTOPolicySeed) enrolWorker(
 			if !amount.IsPositive() {
 				continue
 			}
-			entry := &worker.WorkerPTOLedgerEntry{
-				EntryType:    worker.PTOLedgerEntryAccrual,
+			entry := &pto.WorkerPTOLedgerEntry{
+				EntryType:    pto.PTOLedgerEntryAccrual,
 				AmountDays:   amount,
 				EffectiveAt:  planned.EffectiveAt,
 				PeriodKey:    planned.PeriodKey,
 				AssignmentID: assignment.ID,
 				PTOPolicyID:  policy.ID,
-				ActorType:    worker.PTOLedgerActorSystem,
+				ActorType:    pto.PTOLedgerActorSystem,
 			}
 			bal.Apply(entry)
 			entries = append(entries, entry)

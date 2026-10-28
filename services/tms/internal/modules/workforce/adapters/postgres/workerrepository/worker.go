@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersyncdrift"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -177,13 +179,13 @@ func (r *repository) credentialTypeID(ctx context.Context, code string) (pulid.I
 
 // validCredential is a worker's active credential of a type that has not
 // expired, through the index on the worker's active credential of each type.
-func validCredential(typeID pulid.ID, now int64) *keel.Query[*worker.WorkerCredential] {
+func validCredential(typeID pulid.ID, now int64) *keel.Query[*workercredential.WorkerCredential] {
 	c := workerdb.WorkerCredentials
 
 	return c.Where(
 		c.WorkerID.EqCol(workerdb.Workers.ID),
 		c.CredentialTypeID.Eq(typeID),
-		c.Status.Eq(worker.CredentialStatusActive),
+		c.Status.Eq(workercredential.CredentialStatusActive),
 		keel.Or(c.ExpiresAt.IsNull(), c.ExpiresAt.Gte(now)),
 	)
 }
@@ -357,10 +359,10 @@ func (r *repository) ReplaceWorkerSyncDrifts(
 			return nil
 		}
 
-		models := make([]*worker.WorkerSyncDrift, 0, len(drifts))
+		models := make([]*workersyncdrift.WorkerSyncDrift, 0, len(drifts))
 		for idx := range drifts {
 			drift := drifts[idx]
-			models = append(models, &worker.WorkerSyncDrift{
+			models = append(models, &workersyncdrift.WorkerSyncDrift{
 				WorkerID:        drift.WorkerID,
 				DriftType:       drift.DriftType,
 				WorkerName:      drift.WorkerName,
@@ -414,25 +416,29 @@ func (r *repository) ListWorkerSyncDrifts(
 	)
 }
 
-func credentialFieldColumn(field worker.CredentialProfileField) (keel.Int64Col, error) {
+func credentialFieldColumn(field workercredential.CredentialProfileField) (keel.Int64Col, error) {
 	wp := workerdb.WorkerProfiles
 	switch field {
-	case worker.CredentialProfileFieldLicenseExpiry:
+	case workercredential.CredentialProfileFieldLicenseExpiry:
 		return wp.LicenseExpiry, nil
-	case worker.CredentialProfileFieldHazmatExpiry:
+	case workercredential.CredentialProfileFieldHazmatExpiry:
 		return wp.HazmatExpiry, nil
-	case worker.CredentialProfileFieldMedicalCardExpiry:
+	case workercredential.CredentialProfileFieldMedicalCardExpiry:
 		return wp.MedicalCardExpiry, nil
-	case worker.CredentialProfileFieldTWICExpiry:
+	case workercredential.CredentialProfileFieldTWICExpiry:
 		return wp.TWICExpiry, nil
-	case worker.CredentialProfileFieldPhysicalDueDate:
+	case workercredential.CredentialProfileFieldPhysicalDueDate:
 		return wp.PhysicalDueDate, nil
-	case worker.CredentialProfileFieldMVRDueDate:
+	case workercredential.CredentialProfileFieldMVRDueDate:
 		return wp.MVRDueDate, nil
-	case worker.CredentialProfileFieldNone:
+	case workercredential.CredentialProfileFieldNone:
 	}
 
-	return keel.Int64Col{}, fmt.Errorf("%w: %s", worker.ErrInvalidCredentialProfileField, field)
+	return keel.Int64Col{}, fmt.Errorf(
+		"%w: %s",
+		workercredential.ErrInvalidCredentialProfileField,
+		field,
+	)
 }
 
 func credentialFieldAssignments(
@@ -443,7 +449,7 @@ func credentialFieldAssignments(
 	sets := []keel.Assignment{wp.Version.Increment(0)}
 	hasExpiry := req.ExpiresAt != nil && *req.ExpiresAt > 0
 
-	if req.Field == worker.CredentialProfileFieldLicenseExpiry {
+	if req.Field == workercredential.CredentialProfileFieldLicenseExpiry {
 		if hasExpiry {
 			sets = append(sets, column.To(*req.ExpiresAt))
 		}
@@ -465,7 +471,7 @@ func (r *repository) PatchProfileCredentialField(
 	req *workerports.PatchProfileCredentialFieldRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if req.Field == worker.CredentialProfileFieldNone {
+		if req.Field == workercredential.CredentialProfileFieldNone {
 			return nil
 		}
 

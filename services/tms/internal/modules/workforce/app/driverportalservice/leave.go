@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,11 +20,11 @@ type LeaveReader interface {
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
 		asOf int64,
-	) (worker.LeaveEntitlement, error)
+	) (workerleave.LeaveEntitlement, error)
 	ListCases(
 		ctx context.Context,
 		req *workerports.ListLeaveCasesRequest,
-	) ([]*worker.WorkerLeaveCase, error)
+	) ([]*workerleave.WorkerLeaveCase, error)
 	CountCases(
 		ctx context.Context,
 		req *workerports.ListLeaveCasesRequest,
@@ -34,18 +35,18 @@ type LeaveReader interface {
 // what is owed, and how much of it they have taken. The office's notes and the
 // decision-maker stay in the office.
 type PortalLeaveCase struct {
-	ID                  string                          `json:"id"`
-	LeaveType           worker.LeaveType                `json:"leaveType"`
-	Status              worker.LeaveCaseStatus          `json:"status"`
-	Frequency           worker.LeaveFrequency           `json:"frequency"`
-	FMLADesignated      bool                            `json:"fmlaDesignated"`
-	Reason              string                          `json:"reason"`
-	StartsAt            int64                           `json:"startsAt"`
-	EndsAt              *int64                          `json:"endsAt"`
-	DecidedAt           *int64                          `json:"decidedAt"`
-	CertificationStatus worker.LeaveCertificationStatus `json:"certificationStatus"`
-	CertificationDueAt  *int64                          `json:"certificationDueAt"`
-	CertificationLate   bool                            `json:"certificationLate"`
+	ID                  string                               `json:"id"`
+	LeaveType           worker.LeaveType                     `json:"leaveType"`
+	Status              workerleave.LeaveCaseStatus          `json:"status"`
+	Frequency           workerleave.LeaveFrequency           `json:"frequency"`
+	FMLADesignated      bool                                 `json:"fmlaDesignated"`
+	Reason              string                               `json:"reason"`
+	StartsAt            int64                                `json:"startsAt"`
+	EndsAt              *int64                               `json:"endsAt"`
+	DecidedAt           *int64                               `json:"decidedAt"`
+	CertificationStatus workerleave.LeaveCertificationStatus `json:"certificationStatus"`
+	CertificationDueAt  *int64                               `json:"certificationDueAt"`
+	CertificationLate   bool                                 `json:"certificationLate"`
 	// HoursUsed is what has been recorded against this case, whether or not it
 	// was charged to the entitlement. A driver counts the days they were away.
 	HoursUsed string `json:"hoursUsed"`
@@ -56,8 +57,8 @@ type PortalLeaveCase struct {
 // PortalLeave is the driver's leave standing: the balance and the cases it was
 // drawn down by, which are only meaningful beside each other.
 type PortalLeave struct {
-	Entitlement worker.LeaveEntitlement `json:"entitlement"`
-	Cases       []*PortalLeaveCase      `json:"cases"`
+	Entitlement workerleave.LeaveEntitlement `json:"entitlement"`
+	Cases       []*PortalLeaveCase           `json:"cases"`
 }
 
 // MyLeave reads the signed-in driver's own leave standing. The worker is
@@ -100,7 +101,7 @@ func (s *Service) MyLeave(
 	return &PortalLeave{Entitlement: entitlement, Cases: views}, nil
 }
 
-func portalLeaveCase(entity *worker.WorkerLeaveCase, now int64) *PortalLeaveCase {
+func portalLeaveCase(entity *workerleave.WorkerLeaveCase, now int64) *PortalLeaveCase {
 	used := decimal.Zero
 	charged := decimal.Zero
 	for _, entry := range entity.Entries {

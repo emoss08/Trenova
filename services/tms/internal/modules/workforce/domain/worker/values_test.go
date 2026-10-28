@@ -1,8 +1,14 @@
-package worker
+package worker_test
 
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,22 +34,22 @@ func assertEveryValueIsValid[T validatable](t *testing.T, values []T, invalid T)
 func TestValues_AreEveryValidValueOnce(t *testing.T) {
 	t.Parallel()
 
-	assertEveryValueIsValid(t, SafetyEventKindValues(), "Fire")
-	assertEveryValueIsValid(t, SafetySeverityValues(), "Trivial")
-	assertEveryValueIsValid(t, InspectionResultValues(), "Maybe")
-	assertEveryValueIsValid(t, RecognitionKindValues(), "Medal")
-	assertEveryValueIsValid(t, DOTTestTypeValues(), "Annual")
-	assertEveryValueIsValid(t, DOTTestSubstanceValues(), "Caffeine")
-	assertEveryValueIsValid(t, LeaveTypeValues(), "Sabbatical")
-	assertEveryValueIsValid(t, LeaveFrequencyValues(), "Weekly")
-	assertEveryValueIsValid(t, EmploymentVerificationStatusValues(), "Lost")
-	assertEveryValueIsValid(t, EmploymentVerificationMethodValues(), "Pigeon")
-	assertEveryValueIsValid(t, OSHACaseClassificationValues(), "Minor")
-	assertEveryValueIsValid(t, OSHAIllnessTypeValues(), "Cold")
-	assertEveryValueIsValid(t, InjuryTreatmentValues(), "Surgery")
-	assertEveryValueIsValid(t, InjuryCaseStatusValues(), "Pending")
-	assertEveryValueIsValid(t, WorkersCompClaimStatusValues(), "Appealed")
-	assertEveryValueIsValid(t, PTOTypeValues(), "Sabbatical")
-	assertEveryValueIsValid(t, ReviewGoalStatusValues(), "Blocked")
-	assert.Len(t, InspectionResultValues(), 3, "no result is not a value to choose")
+	assertEveryValueIsValid(t, workersafety.SafetyEventKindValues(), "Fire")
+	assertEveryValueIsValid(t, workersafety.SafetySeverityValues(), "Trivial")
+	assertEveryValueIsValid(t, workersafety.InspectionResultValues(), "Maybe")
+	assertEveryValueIsValid(t, workersafety.RecognitionKindValues(), "Medal")
+	assertEveryValueIsValid(t, workerdot.DOTTestTypeValues(), "Annual")
+	assertEveryValueIsValid(t, workerdot.DOTTestSubstanceValues(), "Caffeine")
+	assertEveryValueIsValid(t, worker.LeaveTypeValues(), "Sabbatical")
+	assertEveryValueIsValid(t, workerleave.LeaveFrequencyValues(), "Weekly")
+	assertEveryValueIsValid(t, employment.EmploymentVerificationStatusValues(), "Lost")
+	assertEveryValueIsValid(t, employment.EmploymentVerificationMethodValues(), "Pigeon")
+	assertEveryValueIsValid(t, workersafety.OSHACaseClassificationValues(), "Minor")
+	assertEveryValueIsValid(t, workersafety.OSHAIllnessTypeValues(), "Cold")
+	assertEveryValueIsValid(t, workersafety.InjuryTreatmentValues(), "Surgery")
+	assertEveryValueIsValid(t, workersafety.InjuryCaseStatusValues(), "Pending")
+	assertEveryValueIsValid(t, workersafety.WorkersCompClaimStatusValues(), "Appealed")
+	assertEveryValueIsValid(t, worker.PTOTypeValues(), "Sabbatical")
+	assertEveryValueIsValid(t, workerreview.ReviewGoalStatusValues(), "Blocked")
+	assert.Len(t, workersafety.InspectionResultValues(), 3, "no result is not a value to choose")
 }

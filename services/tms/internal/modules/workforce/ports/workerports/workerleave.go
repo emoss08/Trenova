@@ -3,7 +3,7 @@ package workerports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -59,48 +59,51 @@ type WorkerLeaveRepository interface {
 	GetControl(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (*worker.LeaveControl, error)
+	) (*workerleave.LeaveControl, error)
 	UpdateControl(
 		ctx context.Context,
-		entity *worker.LeaveControl,
-	) (*worker.LeaveControl, error)
+		entity *workerleave.LeaveControl,
+	) (*workerleave.LeaveControl, error)
 
-	ListCases(ctx context.Context, req *ListLeaveCasesRequest) ([]*worker.WorkerLeaveCase, error)
+	ListCases(
+		ctx context.Context,
+		req *ListLeaveCasesRequest,
+	) ([]*workerleave.WorkerLeaveCase, error)
 	// CountCases answers how many cases match without carrying them back. The
 	// home tile only ever needs the number.
 	CountCases(ctx context.Context, req *ListLeaveCasesRequest) (int, error)
 	GetCaseByID(
 		ctx context.Context,
 		req *GetLeaveCaseByIDRequest,
-	) (*worker.WorkerLeaveCase, error)
+	) (*workerleave.WorkerLeaveCase, error)
 	CreateCase(
 		ctx context.Context,
-		entity *worker.WorkerLeaveCase,
-	) (*worker.WorkerLeaveCase, error)
+		entity *workerleave.WorkerLeaveCase,
+	) (*workerleave.WorkerLeaveCase, error)
 	UpdateCase(
 		ctx context.Context,
-		entity *worker.WorkerLeaveCase,
-	) (*worker.WorkerLeaveCase, error)
+		entity *workerleave.WorkerLeaveCase,
+	) (*workerleave.WorkerLeaveCase, error)
 
 	ListEntries(
 		ctx context.Context,
 		req *ListLeaveEntriesRequest,
-	) ([]*worker.WorkerLeaveEntry, error)
+	) ([]*workerleave.WorkerLeaveEntry, error)
 	ListEntriesByCaseIDs(
 		ctx context.Context,
 		req *ListLeaveEntriesByCaseIDsRequest,
-	) (map[pulid.ID][]*worker.WorkerLeaveEntry, error)
+	) (map[pulid.ID][]*workerleave.WorkerLeaveEntry, error)
 	GetEntryByID(
 		ctx context.Context,
 		req *GetLeaveEntryByIDRequest,
-	) (*worker.WorkerLeaveEntry, error)
+	) (*workerleave.WorkerLeaveEntry, error)
 	CreateEntry(
 		ctx context.Context,
-		entity *worker.WorkerLeaveEntry,
-	) (*worker.WorkerLeaveEntry, error)
+		entity *workerleave.WorkerLeaveEntry,
+	) (*workerleave.WorkerLeaveEntry, error)
 	UpdateEntry(
 		ctx context.Context,
-		entity *worker.WorkerLeaveEntry,
-	) (*worker.WorkerLeaveEntry, error)
+		entity *workerleave.WorkerLeaveEntry,
+	) (*workerleave.WorkerLeaveEntry, error)
 	DeleteEntry(ctx context.Context, req *GetLeaveEntryByIDRequest) error
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,7 +40,7 @@ type RotaRequest struct {
 // Rota draws the board. It is four grouped queries and a pure composition:
 // the pattern says what was planned, and time off, leave, dispatch and the
 // driver's own preference each say what happened to it.
-func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*worker.Rota, error) {
+func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*workerschedule.Rota, error) {
 	at := req.At
 	if at <= 0 {
 		at = timeutils.NowUnix()
@@ -53,7 +53,7 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*worker.Rota, err
 		weeks = maxRotaWeeks
 	}
 
-	weekStart := worker.StartOfWeekUTC(at, time.UTC)
+	weekStart := workerschedule.StartOfWeekUTC(at, time.UTC)
 	weekEnd := time.Unix(weekStart, 0).UTC().AddDate(0, 0, daysInWeek*weeks).Unix()
 
 	query := &workerports.RotaQuery{
@@ -70,7 +70,7 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*worker.Rota, err
 		timeOff   []workerports.RotaRangeRow
 		leave     []workerports.RotaRangeRow
 		assigned  []workerports.RotaDayRow
-		templates map[pulid.ID]*worker.ShiftTemplate
+		templates map[pulid.ID]*workerschedule.ShiftTemplate
 	)
 
 	group, groupCtx := errgroup.WithContext(ctx)
@@ -115,7 +115,7 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*worker.Rota, err
 		if err != nil {
 			return err
 		}
-		templates = make(map[pulid.ID]*worker.ShiftTemplate, len(rows))
+		templates = make(map[pulid.ID]*workerschedule.ShiftTemplate, len(rows))
 		for _, template := range rows {
 			templates[template.ID] = template
 		}
@@ -139,9 +139,9 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*worker.Rota, err
 	leaveDays := expandRanges(leave, weekStart, weekEnd)
 	assignedDays := indexDays(assigned)
 
-	inputs := make([]worker.RotaWorkerInput, 0, len(workers))
+	inputs := make([]workerschedule.RotaWorkerInput, 0, len(workers))
 	for _, row := range workers {
-		inputs = append(inputs, worker.RotaWorkerInput{
+		inputs = append(inputs, workerschedule.RotaWorkerInput{
 			WorkerID:         row.WorkerID,
 			Name:             fmt.Sprintf("%s %s", row.FirstName, row.LastName),
 			FleetCode:        row.FleetCode,
@@ -155,7 +155,7 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*worker.Rota, err
 		})
 	}
 
-	rota := worker.BuildRota(worker.RotaInput{
+	rota := workerschedule.BuildRota(workerschedule.RotaInput{
 		WeekStart: weekStart,
 		Weeks:     weeks,
 		Location:  time.UTC,
@@ -172,8 +172,8 @@ func (s *Service) gatherPreferences(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workers []workerports.RotaWorkerRow,
-) (map[pulid.ID]map[int16]worker.AvailabilityPreference, error) {
-	out := make(map[pulid.ID]map[int16]worker.AvailabilityPreference, len(workers))
+) (map[pulid.ID]map[int16]workerschedule.AvailabilityPreference, error) {
+	out := make(map[pulid.ID]map[int16]workerschedule.AvailabilityPreference, len(workers))
 	if len(workers) == 0 {
 		return out, nil
 	}
@@ -188,7 +188,7 @@ func (s *Service) gatherPreferences(
 	for _, row := range rows {
 		byDay, ok := out[row.WorkerID]
 		if !ok {
-			byDay = make(map[int16]worker.AvailabilityPreference, daysInWeek)
+			byDay = make(map[int16]workerschedule.AvailabilityPreference, daysInWeek)
 			out[row.WorkerID] = byDay
 		}
 		byDay[row.DayOfWeek] = row.Preference

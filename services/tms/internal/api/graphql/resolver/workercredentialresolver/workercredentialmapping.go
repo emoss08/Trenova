@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,8 +16,8 @@ func workerCredentialTypeFromInput(
 	input *gqlmodel.WorkerCredentialTypeInput,
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) *worker.WorkerCredentialType {
-	entity := &worker.WorkerCredentialType{
+) *workercredential.WorkerCredentialType {
+	entity := &workercredential.WorkerCredentialType{
 		ID:                     id,
 		OrganizationID:         tenantInfo.OrgID,
 		BusinessUnitID:         tenantInfo.BuID,
@@ -48,7 +49,7 @@ func workerCredentialTypeFromInput(
 func workerCredentialFromInput(
 	input *gqlmodel.WorkerCredentialInput,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -74,12 +75,12 @@ func workerCredentialFromInput(
 		)
 	}
 
-	return &worker.WorkerCredential{
+	return &workercredential.WorkerCredential{
 		OrganizationID:   tenantInfo.OrgID,
 		BusinessUnitID:   tenantInfo.BuID,
 		WorkerID:         workerID,
 		CredentialTypeID: typeID,
-		Status:           worker.CredentialStatusActive,
+		Status:           workercredential.CredentialStatusActive,
 		Number:           base.StringValue(input.Number),
 		IssuingAuthority: base.StringValue(input.IssuingAuthority),
 		IssuedAt:         base.Int64Ptr(input.IssuedAt),
@@ -92,7 +93,7 @@ func workerCredentialFromInput(
 func workerCredentialFromUpdateInput(
 	input *gqlmodel.UpdateWorkerCredentialInput,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	id, err := pulid.MustParse(input.ID)
 	if err != nil {
 		return nil, err
@@ -106,7 +107,7 @@ func workerCredentialFromUpdateInput(
 		)
 	}
 
-	return &worker.WorkerCredential{
+	return &workercredential.WorkerCredential{
 		ID:               id,
 		OrganizationID:   tenantInfo.OrgID,
 		BusinessUnitID:   tenantInfo.BuID,
@@ -121,12 +122,12 @@ func workerCredentialFromUpdateInput(
 }
 
 func workerCredentialTypeCursorConnectionToModel(
-	result *pagination.CursorListResult[*worker.WorkerCredentialType],
+	result *pagination.CursorListResult[*workercredential.WorkerCredentialType],
 ) (*gqlmodel.WorkerCredentialTypeConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
 		result,
-		func(node *worker.WorkerCredentialType, cursor string) *gqlmodel.WorkerCredentialTypeEdge {
+		func(node *workercredential.WorkerCredentialType, cursor string) *gqlmodel.WorkerCredentialTypeEdge {
 			return &gqlmodel.WorkerCredentialTypeEdge{Node: node, Cursor: cursor}
 		},
 	)
@@ -148,7 +149,7 @@ func workerCredentialTypeCursorConnectionToModel(
 	}, nil
 }
 
-func credentialCategoryString(category *worker.CredentialCategory) string {
+func credentialCategoryString(category *workercredential.CredentialCategory) string {
 	if category == nil {
 		return ""
 	}

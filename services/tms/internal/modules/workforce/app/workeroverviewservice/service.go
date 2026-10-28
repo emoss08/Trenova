@@ -11,6 +11,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +33,7 @@ type CredentialSummarizer interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
-	) (*worker.WorkerCredentialSummary, error)
+	) (*workercredential.WorkerCredentialSummary, error)
 }
 
 // TrainingSummarizer is the slice of the training service this needs.
@@ -36,7 +42,7 @@ type TrainingSummarizer interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
-	) (*worker.WorkerTrainingSummary, error)
+	) (*workertraining.WorkerTrainingSummary, error)
 }
 
 // SafetyScorer is the slice of the safety service this needs.
@@ -45,7 +51,7 @@ type SafetyScorer interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
-	) (*worker.SafetyScorecard, error)
+	) (*workersafety.SafetyScorecard, error)
 }
 
 // ChecklistLister is the slice of the checklist service this needs.
@@ -55,7 +61,7 @@ type ChecklistLister interface {
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
 		includeClosed bool,
-	) ([]*worker.WorkerChecklist, error)
+	) ([]*workerchecklist.WorkerChecklist, error)
 }
 
 // BalanceReader is the slice of the PTO ledger this needs: one worker's
@@ -97,8 +103,8 @@ type ReviewLister interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
-		statuses []worker.ReviewStatus,
-	) ([]*worker.PerformanceReview, error)
+		statuses []workerreview.ReviewStatus,
+	) ([]*workerreview.PerformanceReview, error)
 }
 
 // Sections says which parts of the record the caller may read. The resolver
@@ -131,15 +137,15 @@ func All() Sections {
 type Overview struct {
 	Worker       *worker.Worker
 	AsOf         int64
-	Standing     worker.Standing
-	Concerns     []worker.Concern
-	Credentials  *worker.WorkerCredentialSummary
-	Training     *worker.WorkerTrainingSummary
-	Safety       *worker.SafetyScorecard
-	Checklist    *worker.WorkerChecklist
+	Standing     workercompliance.Standing
+	Concerns     []workercompliance.Concern
+	Credentials  *workercredential.WorkerCredentialSummary
+	Training     *workertraining.WorkerTrainingSummary
+	Safety       *workersafety.SafetyScorecard
+	Checklist    *workerchecklist.WorkerChecklist
 	PTO          []*ptoledgerservice.BalanceView
-	OpenReview   *worker.PerformanceReview
-	LastReview   *worker.PerformanceReview
+	OpenReview   *workerreview.PerformanceReview
+	LastReview   *workerreview.PerformanceReview
 	NextReviewAt *int64
 }
 
@@ -242,13 +248,13 @@ func (s *Service) Get(
 	// Each goroutine writes its own local and nothing is read until Wait
 	// returns, so there is no shared state to reason about.
 	var (
-		credentials  *worker.WorkerCredentialSummary
-		training     *worker.WorkerTrainingSummary
-		safety       *worker.SafetyScorecard
-		checklist    *worker.WorkerChecklist
+		credentials  *workercredential.WorkerCredentialSummary
+		training     *workertraining.WorkerTrainingSummary
+		safety       *workersafety.SafetyScorecard
+		checklist    *workerchecklist.WorkerChecklist
 		balances     []*ptoledgerservice.BalanceView
-		openReview   *worker.PerformanceReview
-		lastReview   *worker.PerformanceReview
+		openReview   *workerreview.PerformanceReview
+		lastReview   *workerreview.PerformanceReview
 		nextReviewAt *int64
 	)
 	group, groupCtx := errgroup.WithContext(ctx)
@@ -318,15 +324,17 @@ func (s *Service) Get(
 		LastReview:   lastReview,
 		NextReviewAt: nextReviewAt,
 	}
-	overview.Standing, overview.Concerns = worker.BuildStanding(worker.StandingInput{
-		Worker:      wrk,
-		Credentials: credentials,
-		Training:    training,
-		Safety:      safety,
-		Checklist:   checklist,
-		ReviewDueAt: nextReviewAt,
-		Now:         overview.AsOf,
-	})
+	overview.Standing, overview.Concerns = workercompliance.BuildStanding(
+		workercompliance.StandingInput{
+			Worker:      wrk,
+			Credentials: credentials,
+			Training:    training,
+			Safety:      safety,
+			Checklist:   checklist,
+			ReviewDueAt: nextReviewAt,
+			Now:         overview.AsOf,
+		},
+	)
 	return overview, nil
 }
 
@@ -403,7 +411,7 @@ func (s *Service) RosterAttention(
 			groupCtx,
 			&workerports.CountPerformanceReviewsRequest{
 				TenantInfo: tenantInfo,
-				Statuses:   []worker.ReviewStatus{worker.ReviewStatusSubmitted},
+				Statuses:   []workerreview.ReviewStatus{workerreview.ReviewStatusSubmitted},
 			},
 		)
 		return err
@@ -453,8 +461,10 @@ func (s *Service) RosterAttention(
 // newestOpenChecklist picks the one the office should be working on. A worker
 // can have several open at once — onboarding plus an equipment handover, say —
 // and the most recently started is the live one.
-func newestOpenChecklist(checklists []*worker.WorkerChecklist) *worker.WorkerChecklist {
-	var newest *worker.WorkerChecklist
+func newestOpenChecklist(
+	checklists []*workerchecklist.WorkerChecklist,
+) *workerchecklist.WorkerChecklist {
+	var newest *workerchecklist.WorkerChecklist
 	for _, checklist := range checklists {
 		if checklist == nil || !checklist.IsOpen() {
 			continue
@@ -470,8 +480,8 @@ func newestOpenChecklist(checklists []*worker.WorkerChecklist) *worker.WorkerChe
 // when the next one falls due. The due date comes from the last closed review
 // rather than the open one: a review already under way is not also overdue.
 func summariseReviews(
-	reviews []*worker.PerformanceReview,
-) (open *worker.PerformanceReview, last *worker.PerformanceReview, nextAt *int64) {
+	reviews []*workerreview.PerformanceReview,
+) (open *workerreview.PerformanceReview, last *workerreview.PerformanceReview, nextAt *int64) {
 	for _, review := range reviews {
 		if review == nil {
 			continue

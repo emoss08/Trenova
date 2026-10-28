@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -24,16 +25,16 @@ func keysOf(plan []PlannedEntry) []string {
 }
 
 func TestSchedule_PerPayPeriodFollowsTheSettlementCalendar(t *testing.T) {
-	rule := worker.PTOPolicyRule{
+	rule := pto.PTOPolicyRule{
 		PTOType:           worker.PTOTypeVacation,
-		AccrualMethod:     worker.PTOAccrualMethodPerPayPeriod,
+		AccrualMethod:     pto.PTOAccrualMethodPerPayPeriod,
 		AccrualAmountDays: decimal.RequireFromString("0.5"),
 	}
 	// Biweekly periods closing on Saturday (end day 6): period end is the
 	// midnight after the most recent Saturday, i.e. a Sunday 00:00 UTC.
 	in := CalcInput{
 		Rule:      rule,
-		YearBasis: worker.PTOYearBasisCalendarYear,
+		YearBasis: pto.PTOYearBasisCalendarYear,
 		HireDate:  utcDay(2026, time.January, 5),
 		Loc:       time.UTC,
 		AsOf:      utcDay(2026, time.March, 1),
@@ -44,7 +45,7 @@ func TestSchedule_PerPayPeriodFollowsTheSettlementCalendar(t *testing.T) {
 	keys := keysOf(plan)
 	require.NotEmpty(t, keys)
 	for _, entry := range plan {
-		assert.Equal(t, worker.PTOLedgerEntryAccrual, entry.EntryType)
+		assert.Equal(t, pto.PTOLedgerEntryAccrual, entry.EntryType)
 		assert.True(t, entry.NominalDays.Equal(decimal.RequireFromString("0.5")))
 		day := time.Unix(entry.EffectiveAt, 0).UTC()
 		assert.Equal(
@@ -85,12 +86,12 @@ func TestSchedule_PerPayPeriodFollowsTheSettlementCalendar(t *testing.T) {
 }
 
 func TestSchedule_TenureTiersRaiseAccrualAndCap(t *testing.T) {
-	rule := worker.PTOPolicyRule{
+	rule := pto.PTOPolicyRule{
 		PTOType:           worker.PTOTypeVacation,
-		AccrualMethod:     worker.PTOAccrualMethodMonthly,
+		AccrualMethod:     pto.PTOAccrualMethodMonthly,
 		AccrualAmountDays: decimal.NewFromInt(1),
 		MaxBalanceDays:    decimal.NewNullDecimal(decimal.NewFromInt(10)),
-		Tiers: []worker.PTOAccrualTier{
+		Tiers: []pto.PTOAccrualTier{
 			{
 				MinMonths:         12,
 				AccrualAmountDays: decimal.NewFromInt(2),
@@ -100,7 +101,7 @@ func TestSchedule_TenureTiersRaiseAccrualAndCap(t *testing.T) {
 	}
 	in := CalcInput{
 		Rule:           rule,
-		YearBasis:      worker.PTOYearBasisCalendarYear,
+		YearBasis:      pto.PTOYearBasisCalendarYear,
 		HireDate:       utcDay(2025, time.March, 1),
 		Loc:            time.UTC,
 		AsOf:           utcDay(2026, time.April, 15),

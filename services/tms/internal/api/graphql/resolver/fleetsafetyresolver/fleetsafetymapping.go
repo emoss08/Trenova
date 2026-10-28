@@ -1,7 +1,7 @@
 package fleetsafetyresolver
 
 import (
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -24,7 +24,7 @@ func violationWeight(value *int) (int16, error) {
 
 // basicValue leaves an unstated BASIC empty so the service can fall back to
 // what the event itself implies.
-func basicValue(value *worker.CSABasic) worker.CSABasic {
+func basicValue(value *workersafety.CSABasic) workersafety.CSABasic {
 	if value == nil {
 		return ""
 	}

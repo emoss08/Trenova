@@ -3,13 +3,15 @@ package selectoptionsresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -96,14 +98,14 @@ func TestWorkerCredentialTypeSelectOptionItem_CarriesFormDrivingMeta(t *testing.
 	t.Parallel()
 
 	validityMonths := int32(48)
-	item := workerCredentialTypeSelectOptionItem(&worker.WorkerCredentialType{
+	item := workerCredentialTypeSelectOptionItem(&workercredential.WorkerCredentialType{
 		ID:               pulid.MustNew("wct_"),
 		Code:             "CDL",
 		Name:             "Commercial Driver License",
 		Description:      "State issued CDL",
 		RequiresNumber:   true,
 		RequiresDocument: true,
-		ProfileField:     worker.CredentialProfileFieldLicenseExpiry,
+		ProfileField:     workercredential.CredentialProfileFieldLicenseExpiry,
 		ValidityMonths:   &validityMonths,
 		CreatedAt:        1780415885,
 	})
@@ -113,7 +115,7 @@ func TestWorkerCredentialTypeSelectOptionItem_CarriesFormDrivingMeta(t *testing.
 	assert.Equal(t, true, item.option.Meta["requiresDocument"])
 	assert.Equal(
 		t,
-		string(worker.CredentialProfileFieldLicenseExpiry),
+		string(workercredential.CredentialProfileFieldLicenseExpiry),
 		item.option.Meta["profileField"],
 	)
 	assert.Equal(t, int32(48), item.option.Meta["validityMonths"])
@@ -125,7 +127,7 @@ func TestWorkerCredentialTypeSelectOptionItem_CarriesFormDrivingMeta(t *testing.
 func TestWorkerCredentialTypeSelectOptionItem_NilValidityStaysNull(t *testing.T) {
 	t.Parallel()
 
-	item := workerCredentialTypeSelectOptionItem(&worker.WorkerCredentialType{
+	item := workerCredentialTypeSelectOptionItem(&workercredential.WorkerCredentialType{
 		ID:   pulid.MustNew("wct_"),
 		Code: "TWIC",
 		Name: "TWIC Card",
@@ -138,7 +140,7 @@ func TestWorkerCredentialTypeSelectOptionItem_NilValidityStaysNull(t *testing.T)
 func TestTrainingCourseSelectOptionItem_ScoredCourse(t *testing.T) {
 	t.Parallel()
 
-	item := trainingCourseSelectOptionItem(&worker.TrainingCourse{
+	item := trainingCourseSelectOptionItem(&workertraining.TrainingCourse{
 		ID:                     pulid.MustNew("trnc_"),
 		Code:                   "HAZMAT",
 		Name:                   "Hazmat Refresher",
@@ -159,7 +161,7 @@ func TestTrainingCourseSelectOptionItem_ScoredCourse(t *testing.T) {
 func TestTrainingCourseSelectOptionItem_UnscoredCourseSendsNull(t *testing.T) {
 	t.Parallel()
 
-	item := trainingCourseSelectOptionItem(&worker.TrainingCourse{
+	item := trainingCourseSelectOptionItem(&workertraining.TrainingCourse{
 		ID:   pulid.MustNew("trnc_"),
 		Code: "ORIENT",
 		Name: "Orientation",
@@ -173,13 +175,13 @@ func TestPerformanceReviewTemplateSelectOptionItem(t *testing.T) {
 	t.Parallel()
 
 	cadence := int32(12)
-	item := performanceReviewTemplateSelectOptionItem(&worker.PerformanceReviewTemplate{
+	item := performanceReviewTemplateSelectOptionItem(&workerreview.PerformanceReviewTemplate{
 		ID:            pulid.MustNew("prt_"),
 		Code:          "ANNUAL",
 		Name:          "Annual Driver Review",
 		IsDefault:     true,
 		CadenceMonths: &cadence,
-		Items:         []worker.ReviewItem{{Label: "Safety"}, {Label: "Service"}},
+		Items:         []workerreview.ReviewItem{{Label: "Safety"}, {Label: "Service"}},
 		CreatedAt:     1780415887,
 	})
 
@@ -192,19 +194,19 @@ func TestPerformanceReviewTemplateSelectOptionItem(t *testing.T) {
 func TestPTOPolicySelectOptionItem(t *testing.T) {
 	t.Parallel()
 
-	item := ptoPolicySelectOptionItem(&worker.PTOPolicy{
+	item := ptoPolicySelectOptionItem(&pto.PTOPolicy{
 		ID:               pulid.MustNew("ptop_"),
 		Code:             "STD",
 		Name:             "Standard PTO",
 		Description:      "Accrues per period",
 		IsDefault:        true,
-		YearBasis:        worker.PTOYearBasisCalendarYear,
+		YearBasis:        pto.PTOYearBasisCalendarYear,
 		RequiresApproval: true,
 		CreatedAt:        1780415888,
 	})
 
 	assert.Equal(t, "Standard PTO", item.option.Label)
-	assert.Equal(t, string(worker.PTOYearBasisCalendarYear), item.option.Meta["yearBasis"])
+	assert.Equal(t, string(pto.PTOYearBasisCalendarYear), item.option.Meta["yearBasis"])
 	assert.Equal(t, true, item.option.Meta["requiresApproval"])
 }
 
@@ -250,7 +252,9 @@ func TestSelectOptionInt16Filter(t *testing.T) {
 	assert.Equal(t, int16(0), selectOptionInt16Filter(map[string]any{}, "planYear"))
 }
 
-func TestJournalEntrySelectOptionItem_NamesTheEntryByNumberAndCarriesOnlyItsReferenceView(t *testing.T) {
+func TestJournalEntrySelectOptionItem_NamesTheEntryByNumberAndCarriesOnlyItsReferenceView(
+	t *testing.T,
+) {
 	t.Parallel()
 
 	entity := &journalentry.JournalEntry{

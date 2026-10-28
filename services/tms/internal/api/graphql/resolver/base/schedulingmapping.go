@@ -3,7 +3,7 @@ package base
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,7 +38,7 @@ func (r *Core) RotaManagerIDs(
 		ctx,
 		tenant,
 		userID,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		0,
 	)
 	if err != nil {

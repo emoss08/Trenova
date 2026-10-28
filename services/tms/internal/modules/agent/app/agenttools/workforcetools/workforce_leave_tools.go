@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -57,7 +58,7 @@ var leaveTypes = agenttoolschema.Source("worker.leaveType", worker.LeaveTypeValu
 
 var leaveFrequencies = agenttoolschema.Source(
 	"worker.leaveFrequency",
-	worker.LeaveFrequencyValues(),
+	workerleave.LeaveFrequencyValues(),
 )
 
 var leaveCaseFields = []string{
@@ -75,14 +76,14 @@ var leaveDayFields = []string{
 type LeaveKeeper interface {
 	PlanOpenCase(
 		ctx context.Context,
-		entity *worker.WorkerLeaveCase,
+		entity *workerleave.WorkerLeaveCase,
 		userID pulid.ID,
-	) (*worker.WorkerLeaveCase, error)
+	) (*workerleave.WorkerLeaveCase, error)
 	OpenCase(
 		ctx context.Context,
-		entity *worker.WorkerLeaveCase,
+		entity *workerleave.WorkerLeaveCase,
 		userID pulid.ID,
-	) (*worker.WorkerLeaveCase, error)
+	) (*workerleave.WorkerLeaveCase, error)
 	PlanUpdateCase(
 		ctx context.Context,
 		req *workerleaveservice.UpdateCaseRequest,
@@ -90,7 +91,7 @@ type LeaveKeeper interface {
 	UpdateCase(
 		ctx context.Context,
 		req *workerleaveservice.UpdateCaseRequest,
-	) (*worker.WorkerLeaveCase, error)
+	) (*workerleave.WorkerLeaveCase, error)
 	PlanCloseCase(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -101,7 +102,7 @@ type LeaveKeeper interface {
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
 		userID pulid.ID,
-	) (*worker.WorkerLeaveCase, error)
+	) (*workerleave.WorkerLeaveCase, error)
 	PlanRequestCertification(
 		ctx context.Context,
 		req *workerleaveservice.RequestCertificationRequest,
@@ -109,15 +110,15 @@ type LeaveKeeper interface {
 	RequestCertification(
 		ctx context.Context,
 		req *workerleaveservice.RequestCertificationRequest,
-	) (*worker.WorkerLeaveCase, error)
+	) (*workerleave.WorkerLeaveCase, error)
 	PlanRecordDay(
 		ctx context.Context,
 		req *workerleaveservice.RecordDayRequest,
-	) (*worker.WorkerLeaveEntry, error)
+	) (*workerleave.WorkerLeaveEntry, error)
 	RecordDay(
 		ctx context.Context,
 		req *workerleaveservice.RecordDayRequest,
-	) (*worker.WorkerLeaveEntry, error)
+	) (*workerleave.WorkerLeaveEntry, error)
 	PlanUpdateDay(
 		ctx context.Context,
 		req *workerleaveservice.UpdateDayRequest,
@@ -125,12 +126,12 @@ type LeaveKeeper interface {
 	UpdateDay(
 		ctx context.Context,
 		req *workerleaveservice.UpdateDayRequest,
-	) (*worker.WorkerLeaveEntry, error)
+	) (*workerleave.WorkerLeaveEntry, error)
 	PlanDeleteDay(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*worker.WorkerLeaveEntry, error)
+	) (*workerleave.WorkerLeaveEntry, error)
 	DeleteDay(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -163,13 +164,13 @@ func leaveDayIDProperty() map[string]any {
 	)
 }
 
-func leaveCaseRecord(entity *worker.WorkerLeaveCase) toolpreview.Record {
+func leaveCaseRecord(entity *workerleave.WorkerLeaveCase) toolpreview.Record {
 	return wfRecord(permission.ResourceWorkerLeave, entity.ID,
 		fmt.Sprintf("%s leave from %s", entity.LeaveType, common.DayText(entity.StartsAt)),
 		entity.Version)
 }
 
-func leaveDayRecord(entry *worker.WorkerLeaveEntry) toolpreview.Record {
+func leaveDayRecord(entry *workerleave.WorkerLeaveEntry) toolpreview.Record {
 	return wfRecord(permission.ResourceWorkerLeave, entry.ID,
 		"Leave on "+common.DayText(entry.UsedOn), entry.Version)
 }
@@ -195,7 +196,7 @@ func leaveCaseProperties() map[string]any {
 	}
 }
 
-func applyLeaveCaseOpen(entity *worker.WorkerLeaveCase, params map[string]any) error {
+func applyLeaveCaseOpen(entity *workerleave.WorkerLeaveCase, params map[string]any) error {
 	var err error
 	if kind, given, kindErr := common.OptionalEnum(params, paramLeaveType,
 		leaveTypes.Values); kindErr != nil {
@@ -260,8 +261,8 @@ func newOpenLeaveCaseTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.Ag
 	spec.SearchTerms = []string{"FMLA", "leave of absence", "medical leave"}
 
 	return common.NewReportingReceivableTool(spec,
-		common.ReceivablePlan[*worker.WorkerLeaveCase, *worker.WorkerLeaveCase]{
-			Request: func(params *agenttoolports.ToolExecuteParams) (*worker.WorkerLeaveCase, error) {
+		common.ReceivablePlan[*workerleave.WorkerLeaveCase, *workerleave.WorkerLeaveCase]{
+			Request: func(params *agenttoolports.ToolExecuteParams) (*workerleave.WorkerLeaveCase, error) {
 				workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
 				if err != nil {
 					return nil, err
@@ -274,7 +275,7 @@ func newOpenLeaveCaseTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.Ag
 				if err != nil {
 					return nil, err
 				}
-				entity := &worker.WorkerLeaveCase{
+				entity := &workerleave.WorkerLeaveCase{
 					OrganizationID: params.OrganizationID,
 					BusinessUnitID: params.BusinessUnitID,
 					WorkerID:       workerID,
@@ -287,22 +288,22 @@ func newOpenLeaveCaseTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.Ag
 			},
 			Settle: func(
 				ctx context.Context,
-				entity *worker.WorkerLeaveCase,
+				entity *workerleave.WorkerLeaveCase,
 				params *agenttoolports.ToolExecuteParams,
 			) error {
 				return scope.worker(ctx, params, permission.OpCreate, entity.WorkerID)
 			},
 			Plan: func(
 				ctx context.Context,
-				entity *worker.WorkerLeaveCase,
+				entity *workerleave.WorkerLeaveCase,
 				params *agenttoolports.ToolExecuteParams,
-			) (*worker.WorkerLeaveCase, error) {
+			) (*workerleave.WorkerLeaveCase, error) {
 				return cases.PlanOpenCase(ctx, entity, params.Actor.UserID)
 			},
-			Refused: func(*worker.WorkerLeaveCase) string { return "Would open a leave case." },
+			Refused: func(*workerleave.WorkerLeaveCase) string { return "Would open a leave case." },
 			Render: func(
-				_ *worker.WorkerLeaveCase,
-				planned *worker.WorkerLeaveCase,
+				_ *workerleave.WorkerLeaveCase,
+				planned *workerleave.WorkerLeaveCase,
 			) (*agent.ToolPreview, error) {
 				change, err := toolpreview.Create(
 					wfRecord(permission.ResourceWorkerLeave, pulid.Nil, "New leave case", 0),
@@ -317,7 +318,7 @@ func newOpenLeaveCaseTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.Ag
 			},
 			Run: func(
 				ctx context.Context,
-				entity *worker.WorkerLeaveCase,
+				entity *workerleave.WorkerLeaveCase,
 				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				created, err := cases.OpenCase(ctx, entity, params.Actor.UserID)
@@ -682,7 +683,7 @@ func newRecordLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 	}, paramLeaveCaseID, paramUsedOn, paramLeaveHours)
 
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
-		*workerleaveservice.RecordDayRequest, *worker.WorkerLeaveEntry,
+		*workerleaveservice.RecordDayRequest, *workerleave.WorkerLeaveEntry,
 	]{
 		Request: recordLeaveDayRequest,
 		Settle: func(
@@ -696,7 +697,7 @@ func newRecordLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 			ctx context.Context,
 			req *workerleaveservice.RecordDayRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*worker.WorkerLeaveEntry, error) {
+		) (*workerleave.WorkerLeaveEntry, error) {
 			return cases.PlanRecordDay(ctx, req)
 		},
 		Refused: func(*workerleaveservice.RecordDayRequest) string {
@@ -704,7 +705,7 @@ func newRecordLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 		},
 		Render: func(
 			_ *workerleaveservice.RecordDayRequest,
-			planned *worker.WorkerLeaveEntry,
+			planned *workerleave.WorkerLeaveEntry,
 		) (*agent.ToolPreview, error) {
 			change, err := toolpreview.Create(
 				wfRecord(permission.ResourceWorkerLeave, pulid.Nil,
@@ -854,7 +855,7 @@ func newDeleteLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 
 	return common.NewReceivableTool(
 		spec,
-		common.ReceivablePlan[*recordDelete, *worker.WorkerLeaveEntry]{
+		common.ReceivablePlan[*recordDelete, *workerleave.WorkerLeaveEntry]{
 			Request: recordDeleteFrom(paramLeaveEntryID),
 			Settle: func(
 				ctx context.Context,
@@ -867,11 +868,11 @@ func newDeleteLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 				ctx context.Context,
 				req *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*worker.WorkerLeaveEntry, error) {
+			) (*workerleave.WorkerLeaveEntry, error) {
 				return cases.PlanDeleteDay(ctx, req.tenant, req.id)
 			},
 			Refused: func(*recordDelete) string { return "Would remove a day of leave." },
-			Render: func(_ *recordDelete, entry *worker.WorkerLeaveEntry) (*agent.ToolPreview, error) {
+			Render: func(_ *recordDelete, entry *workerleave.WorkerLeaveEntry) (*agent.ToolPreview, error) {
 				change, err := toolpreview.Delete(
 					leaveDayRecord(entry),
 					entry,

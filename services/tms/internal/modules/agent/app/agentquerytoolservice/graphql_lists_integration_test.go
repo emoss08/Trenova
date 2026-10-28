@@ -95,6 +95,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldvaluerepository"
@@ -583,10 +584,10 @@ func convertedListCases(
 			tool: "worker_list_training_courses", marked: inactive, readsActiveByDefault: true,
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				row, err := training.CreateCourse(ctx, &worker.TrainingCourse{
+				row, err := training.CreateCourse(ctx, &workertraining.TrainingCourse{
 					BusinessUnitID: bu, OrganizationID: org, Status: statusOf(marked),
-					Code: label, Name: "Course " + label, Category: worker.TrainingCategorySafety,
-					Delivery: worker.TrainingDeliveryOnline, DurationMinutes: 30,
+					Code: label, Name: "Course " + label, Category: workertraining.TrainingCategorySafety,
+					Delivery: workertraining.TrainingDeliveryOnline, DurationMinutes: 30,
 				})
 				return created(row, err)
 			},

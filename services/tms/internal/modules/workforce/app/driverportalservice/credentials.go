@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,18 +21,18 @@ const credentialResourceType = "worker_credential"
 // PortalCredential is the driver's view of one credential slot: enough to know
 // what is due and to upload a renewal, without the office-only fields.
 type PortalCredential struct {
-	ID               pulid.ID                  `json:"id"`
-	CredentialTypeID pulid.ID                  `json:"credentialTypeId"`
-	Name             string                    `json:"name"`
-	Category         worker.CredentialCategory `json:"category"`
-	Health           worker.CredentialHealth   `json:"health"`
-	DaysUntilExpiry  *int64                    `json:"daysUntilExpiry"`
-	ExpiresAt        *int64                    `json:"expiresAt"`
-	NumberMasked     string                    `json:"numberMasked"`
-	Required         bool                      `json:"required"`
-	Verified         bool                      `json:"verified"`
-	RequiresDocument bool                      `json:"requiresDocument"`
-	DocumentID       pulid.ID                  `json:"documentId"`
+	ID               pulid.ID                            `json:"id"`
+	CredentialTypeID pulid.ID                            `json:"credentialTypeId"`
+	Name             string                              `json:"name"`
+	Category         workercredential.CredentialCategory `json:"category"`
+	Health           workercredential.CredentialHealth   `json:"health"`
+	DaysUntilExpiry  *int64                              `json:"daysUntilExpiry"`
+	ExpiresAt        *int64                              `json:"expiresAt"`
+	NumberMasked     string                              `json:"numberMasked"`
+	Required         bool                                `json:"required"`
+	Verified         bool                                `json:"verified"`
+	RequiresDocument bool                                `json:"requiresDocument"`
+	DocumentID       pulid.ID                            `json:"documentId"`
 }
 
 func (s *Service) MyCredentials(
@@ -140,7 +141,7 @@ func (s *Service) notifyCredentialUpload(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	wrk *worker.Worker,
-	cred *worker.WorkerCredential,
+	cred *workercredential.WorkerCredential,
 ) {
 	name := cred.ID.String()
 	if cred.CredentialType != nil {

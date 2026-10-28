@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,17 +13,21 @@ func TestPlanVerifications_FileNothing(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t, employedProfile())
 
-	planned, err := h.svc.PlanRecordVerification(t.Context(), &worker.WorkerEmploymentVerification{
-		OrganizationID: h.tenant.OrgID,
-		BusinessUnitID: h.tenant.BuID,
-		WorkerID:       h.workerID,
-		EmployerName:   "  Prior Carrier  ",
-	}, h.userID)
+	planned, err := h.svc.PlanRecordVerification(
+		t.Context(),
+		&employment.WorkerEmploymentVerification{
+			OrganizationID: h.tenant.OrgID,
+			BusinessUnitID: h.tenant.BuID,
+			WorkerID:       h.workerID,
+			EmployerName:   "  Prior Carrier  ",
+		},
+		h.userID,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, h.userID, planned.RequestedByID)
 	assert.Empty(t, h.repo.verifications)
 
-	created, err := h.svc.RecordVerification(t.Context(), &worker.WorkerEmploymentVerification{
+	created, err := h.svc.RecordVerification(t.Context(), &employment.WorkerEmploymentVerification{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
@@ -36,8 +40,8 @@ func TestPlanVerifications_FileNothing(t *testing.T) {
 
 	requested, err := h.svc.PlanMarkRequested(t.Context(), h.tenant, created.ID)
 	require.NoError(t, err)
-	assert.Equal(t, worker.VerificationRequested, requested.After.Status)
-	assert.NotEqual(t, worker.VerificationRequested, h.repo.verifications[created.ID].Status)
+	assert.Equal(t, employment.VerificationRequested, requested.After.Status)
+	assert.NotEqual(t, employment.VerificationRequested, h.repo.verifications[created.ID].Status)
 
 	_, err = h.svc.MarkRequested(t.Context(), h.tenant, created.ID, h.userID)
 	require.NoError(t, err)

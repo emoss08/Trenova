@@ -35,17 +35,3 @@ func (wp *WorkerProfile) KeepFields(stored *WorkerProfile, visible permission.Fi
 	wp.TWICCardNumber = stored.TWICCardNumber
 	wp.LastDrugTest = stored.LastDrugTest
 }
-
-func (c *WorkerCredential) WithholdFields(visible permission.FieldGroupSet) {
-	if c == nil || visible.Has(permission.FieldGroupPersonal) {
-		return
-	}
-	c.Number = ""
-}
-
-func (c *WorkerCredential) KeepFields(stored *WorkerCredential, visible permission.FieldGroupSet) {
-	if c == nil || stored == nil || visible.Has(permission.FieldGroupPersonal) {
-		return
-	}
-	c.Number = stored.Number
-}

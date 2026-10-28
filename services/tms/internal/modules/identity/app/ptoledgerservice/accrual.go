@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -176,7 +176,7 @@ func (s *Service) RunAccrualForWorker(
 	}
 
 	result.WorkersProcessed = 1
-	if actor.Type == worker.PTOLedgerActorUser && !actor.UserID.IsNil() {
+	if actor.Type == pto.PTOLedgerActorUser && !actor.UserID.IsNil() {
 		if err = s.auditService.LogAction(&auditports.LogActionParams{
 			Resource:       permission.ResourceWorkerPTO,
 			ResourceID:     workerID.String(),
@@ -199,12 +199,12 @@ func (s *Service) postPlanned(
 	ctx context.Context,
 	key workerports.PTOBalanceKey,
 	resolved *ResolvedPolicy,
-	rule *worker.PTOPolicyRule,
+	rule *pto.PTOPolicyRule,
 	planned PlannedEntry,
 	actor Actor,
 	result *AccrualRunResult,
 ) error {
-	entry := &worker.WorkerPTOLedgerEntry{
+	entry := &pto.WorkerPTOLedgerEntry{
 		EntryType:    planned.EntryType,
 		AmountDays:   planned.NominalDays,
 		EffectiveAt:  planned.EffectiveAt,
@@ -222,13 +222,13 @@ func (s *Service) postPlanned(
 		entry: entry,
 		actor: actor,
 		rule:  &capRule,
-		onApplied: func(bal *worker.WorkerPTOBalance) {
+		onApplied: func(bal *pto.WorkerPTOBalance) {
 			AdvanceCursor(bal, planned, rule)
 		},
 	}
 
 	if planned.Deferred {
-		params.resolve = func(bal *worker.WorkerPTOBalance) (decimal.Decimal, bool) {
+		params.resolve = func(bal *pto.WorkerPTOBalance) (decimal.Decimal, bool) {
 			return ResolveExpiry(bal, planned, rule)
 		}
 	}
@@ -253,10 +253,10 @@ func (s *Service) postPlanned(
 func (s *Service) payPeriodFor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	policy *worker.PTOPolicy,
+	policy *pto.PTOPolicy,
 ) (*PayPeriodSpec, error) {
 	for _, rule := range policy.Rules {
-		if rule != nil && rule.AccrualMethod == worker.PTOAccrualMethodPerPayPeriod {
+		if rule != nil && rule.AccrualMethod == pto.PTOAccrualMethodPerPayPeriod {
 			return s.PayPeriodSpec(ctx, tenantInfo)
 		}
 	}
@@ -264,9 +264,9 @@ func (s *Service) payPeriodFor(
 }
 
 func ResolveExpiry(
-	bal *worker.WorkerPTOBalance,
+	bal *pto.WorkerPTOBalance,
 	planned PlannedEntry,
-	rule *worker.PTOPolicyRule,
+	rule *pto.PTOPolicyRule,
 ) (decimal.Decimal, bool) {
 	switch {
 	case strings.HasPrefix(planned.PeriodKey, periodKeyCarryover):
@@ -289,7 +289,7 @@ func ResolveExpiry(
 	}
 }
 
-func AdvanceCursor(bal *worker.WorkerPTOBalance, planned PlannedEntry, rule *worker.PTOPolicyRule) {
+func AdvanceCursor(bal *pto.WorkerPTOBalance, planned PlannedEntry, rule *pto.PTOPolicyRule) {
 	switch {
 	case strings.HasPrefix(planned.PeriodKey, periodKeyCarryover):
 		bal.LastRolloverKey = planned.PeriodKey
@@ -320,16 +320,16 @@ func (s *Service) advanceCursorOnly(
 	ctx context.Context,
 	key workerports.PTOBalanceKey,
 	planned PlannedEntry,
-	rule *worker.PTOPolicyRule,
+	rule *pto.PTOPolicyRule,
 ) error {
 	_, err := s.post(ctx, postParams{
 		key:   key,
-		entry: &worker.WorkerPTOLedgerEntry{EntryType: planned.EntryType},
+		entry: &pto.WorkerPTOLedgerEntry{EntryType: planned.EntryType},
 		actor: SystemActor(),
-		resolve: func(_ *worker.WorkerPTOBalance) (decimal.Decimal, bool) {
+		resolve: func(_ *pto.WorkerPTOBalance) (decimal.Decimal, bool) {
 			return decimal.Zero, false
 		},
-		onApplied: func(bal *worker.WorkerPTOBalance) {
+		onApplied: func(bal *pto.WorkerPTOBalance) {
 			AdvanceCursor(bal, planned, rule)
 		},
 	})

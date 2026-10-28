@@ -3,7 +3,7 @@ package workerports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -107,19 +107,19 @@ type SchedulingRepository interface {
 	ListTemplates(
 		ctx context.Context,
 		req *ListShiftTemplatesRequest,
-	) ([]*worker.ShiftTemplate, error)
+	) ([]*workerschedule.ShiftTemplate, error)
 	GetTemplateByID(
 		ctx context.Context,
 		req *GetShiftTemplateByIDRequest,
-	) (*worker.ShiftTemplate, error)
+	) (*workerschedule.ShiftTemplate, error)
 	CreateTemplate(
 		ctx context.Context,
-		entity *worker.ShiftTemplate,
-	) (*worker.ShiftTemplate, error)
+		entity *workerschedule.ShiftTemplate,
+	) (*workerschedule.ShiftTemplate, error)
 	UpdateTemplate(
 		ctx context.Context,
-		entity *worker.ShiftTemplate,
-	) (*worker.ShiftTemplate, error)
+		entity *workerschedule.ShiftTemplate,
+	) (*workerschedule.ShiftTemplate, error)
 	CountTemplateAssignments(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -133,45 +133,48 @@ type SchedulingRepository interface {
 	ListAssignments(
 		ctx context.Context,
 		req *ListShiftAssignmentsRequest,
-	) ([]*worker.WorkerShiftAssignment, error)
+	) ([]*workerschedule.WorkerShiftAssignment, error)
 	GetAssignmentByID(
 		ctx context.Context,
 		req *GetShiftAssignmentByIDRequest,
-	) (*worker.WorkerShiftAssignment, error)
+	) (*workerschedule.WorkerShiftAssignment, error)
 	CreateAssignment(
 		ctx context.Context,
-		entity *worker.WorkerShiftAssignment,
-	) (*worker.WorkerShiftAssignment, error)
+		entity *workerschedule.WorkerShiftAssignment,
+	) (*workerschedule.WorkerShiftAssignment, error)
 	UpdateAssignment(
 		ctx context.Context,
-		entity *worker.WorkerShiftAssignment,
-	) (*worker.WorkerShiftAssignment, error)
+		entity *workerschedule.WorkerShiftAssignment,
+	) (*workerschedule.WorkerShiftAssignment, error)
 
 	ListPreferences(
 		ctx context.Context,
 		req *ListAvailabilityPreferencesRequest,
-	) ([]*worker.WorkerAvailabilityPreference, error)
+	) ([]*workerschedule.WorkerAvailabilityPreference, error)
 	// UpsertPreference writes one weekday's preference, replacing whatever was
 	// there. A worker has exactly one statement per weekday, so an insert that
 	// collided would be a duplicate rather than a second opinion.
 	UpsertPreference(
 		ctx context.Context,
-		entity *worker.WorkerAvailabilityPreference,
-	) (*worker.WorkerAvailabilityPreference, error)
+		entity *workerschedule.WorkerAvailabilityPreference,
+	) (*workerschedule.WorkerAvailabilityPreference, error)
 
-	ListSwaps(ctx context.Context, req *ListShiftSwapsRequest) ([]*worker.ShiftSwapRequest, error)
+	ListSwaps(
+		ctx context.Context,
+		req *ListShiftSwapsRequest,
+	) ([]*workerschedule.ShiftSwapRequest, error)
 	GetSwapByID(
 		ctx context.Context,
 		req *GetShiftSwapByIDRequest,
-	) (*worker.ShiftSwapRequest, error)
+	) (*workerschedule.ShiftSwapRequest, error)
 	CreateSwap(
 		ctx context.Context,
-		entity *worker.ShiftSwapRequest,
-	) (*worker.ShiftSwapRequest, error)
+		entity *workerschedule.ShiftSwapRequest,
+	) (*workerschedule.ShiftSwapRequest, error)
 	UpdateSwap(
 		ctx context.Context,
-		entity *worker.ShiftSwapRequest,
-	) (*worker.ShiftSwapRequest, error)
+		entity *workerschedule.ShiftSwapRequest,
+	) (*workerschedule.ShiftSwapRequest, error)
 
 	// The rota's four reads. Each is a grouped query over a week rather than a
 	// walk: a fifty-driver rota is four queries, not two hundred.

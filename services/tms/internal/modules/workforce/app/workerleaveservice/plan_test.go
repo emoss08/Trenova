@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,7 +16,7 @@ func TestPlanOpenCase_FillsTheCaseWithoutFilingIt(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	planned, err := h.svc.PlanOpenCase(t.Context(), &worker.WorkerLeaveCase{
+	planned, err := h.svc.PlanOpenCase(t.Context(), &workerleave.WorkerLeaveCase{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
@@ -23,7 +24,7 @@ func TestPlanOpenCase_FillsTheCaseWithoutFilingIt(t *testing.T) {
 		Reason:         "  Surgery  ",
 	}, h.userID)
 	require.NoError(t, err)
-	assert.Equal(t, worker.LeaveCasePending, planned.Status)
+	assert.Equal(t, workerleave.LeaveCasePending, planned.Status)
 	assert.Equal(t, worker.LeaveTypeFMLA, planned.LeaveType)
 	assert.Equal(t, "Surgery", planned.Reason)
 	assert.Equal(t, h.userID, planned.RecordedByID)
@@ -51,16 +52,16 @@ func TestPlanCaseChanges_LeaveTheCaseAsItIs(t *testing.T) {
 	cert, err := h.svc.PlanRequestCertification(t.Context(),
 		&workerleaveservice.RequestCertificationRequest{TenantInfo: h.tenant, CaseID: open.ID})
 	require.NoError(t, err)
-	assert.Equal(t, worker.CertificationRequested, cert.After.CertificationStatus)
+	assert.Equal(t, workerleave.CertificationRequested, cert.After.CertificationStatus)
 	require.NotNil(t, cert.After.CertificationDueAt)
-	assert.Equal(t, worker.CertificationNotRequired, h.repo.cases[open.ID].CertificationStatus)
+	assert.Equal(t, workerleave.CertificationNotRequired, h.repo.cases[open.ID].CertificationStatus)
 
 	approved := h.approved(t, true)
 	closing, err := h.svc.PlanCloseCase(t.Context(), h.tenant, approved.ID)
 	require.NoError(t, err)
-	assert.Equal(t, worker.LeaveCaseClosed, closing.After.Status)
+	assert.Equal(t, workerleave.LeaveCaseClosed, closing.After.Status)
 	assert.NotNil(t, closing.After.ClosedAt)
-	assert.Equal(t, worker.LeaveCaseApproved, h.repo.cases[approved.ID].Status)
+	assert.Equal(t, workerleave.LeaveCaseApproved, h.repo.cases[approved.ID].Status)
 }
 
 func TestPlanDays_CountAsTheCaseCountsNow(t *testing.T) {

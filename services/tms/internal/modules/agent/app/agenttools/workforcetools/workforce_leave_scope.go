@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/teamscope"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -57,7 +57,7 @@ func (s LeaveScope) worker(
 		Resource:      permission.ResourceWorkerLeave,
 		Operation:     operation,
 		WorkerID:      workerID,
-		ApprovalScope: worker.ApprovalScopeTimeOff,
+		ApprovalScope: approvaldelegation.ApprovalScopeTimeOff,
 	})
 }
 

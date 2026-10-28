@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,7 +13,7 @@ import (
 func leaveCaseFromInput(
 	input *gqlmodel.OpenLeaveCaseInput,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerLeaveCase, error) {
+) (*workerleave.WorkerLeaveCase, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -31,7 +31,7 @@ func leaveCaseFromInput(
 		)
 	}
 
-	entity := &worker.WorkerLeaveCase{
+	entity := &workerleave.WorkerLeaveCase{
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
 		WorkerID:          workerID,

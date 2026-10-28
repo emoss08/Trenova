@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +19,7 @@ import (
 
 type fakePayroll struct {
 	guard  *agenttoolstest.WriteGuard
-	export *worker.PayrollExport
+	export *timesheet.PayrollExport
 	ready  int
 
 	generated *timesheetservice.GenerateExportRequest
@@ -30,9 +30,9 @@ func newFakePayroll() *fakePayroll {
 	return &fakePayroll{
 		guard: &agenttoolstest.WriteGuard{},
 		ready: 3,
-		export: &worker.PayrollExport{
+		export: &timesheet.PayrollExport{
 			ID:             pulid.MustNew("pxb_"),
-			Status:         worker.PayrollExportGenerated,
+			Status:         timesheet.PayrollExportGenerated,
 			PeriodStart:    1_789_516_800,
 			PeriodEnd:      1_790_726_400,
 			TimesheetCount: 12,
@@ -54,8 +54,8 @@ func (f *fakePayroll) PlanGenerateExport(
 		ids = append(ids, pulid.MustNew("wts_"))
 	}
 	return &timesheetservice.ExportPlan{
-		Export: &worker.PayrollExport{
-			Status:         worker.PayrollExportGenerated,
+		Export: &timesheet.PayrollExport{
+			Status:         timesheet.PayrollExportGenerated,
 			PeriodStart:    req.PeriodStart,
 			PeriodEnd:      req.PeriodEnd,
 			TimesheetCount: int32(f.ready), //nolint:gosec // a test's handful of weeks
@@ -67,7 +67,7 @@ func (f *fakePayroll) PlanGenerateExport(
 func (f *fakePayroll) GenerateExport(
 	_ context.Context,
 	req *timesheetservice.GenerateExportRequest,
-) (*worker.PayrollExport, error) {
+) (*timesheet.PayrollExport, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -79,19 +79,19 @@ func (f *fakePayroll) PlanVoidExport(
 	context.Context,
 	*timesheetservice.VoidExportRequest,
 ) (*timesheetservice.ExportChange, error) {
-	if f.export.Status == worker.PayrollExportVoided {
+	if f.export.Status == timesheet.PayrollExportVoided {
 		return nil, errortypes.NewValidationError("status", errortypes.ErrInvalidOperation,
 			"That run has already been voided")
 	}
 	after := *f.export
-	after.Status = worker.PayrollExportVoided
+	after.Status = timesheet.PayrollExportVoided
 	return &timesheetservice.ExportChange{Before: f.export, After: &after}, nil
 }
 
 func (f *fakePayroll) VoidExport(
 	_ context.Context,
 	req *timesheetservice.VoidExportRequest,
-) (*worker.PayrollExport, error) {
+) (*timesheet.PayrollExport, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -174,7 +174,7 @@ func TestVoidPayrollExport_KeepsTheReason(t *testing.T) {
 	require.NotNil(t, payroll.voided)
 	assert.Equal(t, "Two weeks were approved in error", payroll.voided.Reason)
 
-	payroll.export.Status = worker.PayrollExportVoided
+	payroll.export.Status = timesheet.PayrollExportVoided
 	require.Error(
 		t,
 		tool.(agenttoolports.ToolValidator).Validate(

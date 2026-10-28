@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -68,22 +69,22 @@ func typeOrder() []keel.Order {
 func (r *repository) ListTypes(
 	ctx context.Context,
 	req *workerports.ListCredentialTypesRequest,
-) (*pagination.CursorListResult[*worker.WorkerCredentialType], error) {
+) (*pagination.CursorListResult[*workercredential.WorkerCredentialType], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerCredentialType], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*workercredential.WorkerCredentialType], error) {
 			t := workerdb.WorkerCredentialTypes
 			q := t.Where(
 				keel.When(req.Status != "", t.Status.Eq(domaintypes.Status(req.Status))),
 				keel.When(
 					req.Category != "",
-					t.Category.Eq(worker.CredentialCategory(req.Category)),
+					t.Category.Eq(workercredential.CredentialCategory(req.Category)),
 				),
 			)
 
 			result, err := listquery.Connection(ctx, r.db.Keel(ctx), q,
-				&listquery.Request[worker.WorkerCredentialType]{
+				&listquery.Request[workercredential.WorkerCredentialType]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 				})
@@ -100,29 +101,33 @@ func (r *repository) ListTypes(
 func (r *repository) ListActiveTypes(
 	ctx context.Context,
 	_ pagination.TenantInfo,
-) ([]*worker.WorkerCredentialType, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerCredentialType, error) {
-		t := workerdb.WorkerCredentialTypes
-		entities, err := t.Where(t.Status.Eq(domaintypes.StatusActive)).
-			Order(typeOrder()...).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list active credential types", zap.Error(err))
-			return nil, err
-		}
+) ([]*workercredential.WorkerCredentialType, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workercredential.WorkerCredentialType, error) {
+			t := workerdb.WorkerCredentialTypes
+			entities, err := t.Where(t.Status.Eq(domaintypes.StatusActive)).
+				Order(typeOrder()...).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list active credential types", zap.Error(err))
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) TypeSelectOptions(
 	ctx context.Context,
 	req *workerports.WorkerCredentialTypeSelectOptionsRequest,
-) (*pagination.ListResult[*worker.WorkerCredentialType], error) {
+) (*pagination.ListResult[*workercredential.WorkerCredentialType], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*worker.WorkerCredentialType], error) {
+		func(ctx context.Context) (*pagination.ListResult[*workercredential.WorkerCredentialType], error) {
 			t := workerdb.WorkerCredentialTypes
 			q := t.Pick(
 				t.ID,
@@ -161,15 +166,19 @@ func (r *repository) TypeSelectOptions(
 func (r *repository) GetTypeByID(
 	ctx context.Context,
 	req *workerports.GetCredentialTypeByIDRequest,
-) (*worker.WorkerCredentialType, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerCredentialType, error) {
-		entity, err := workerdb.WorkerCredentialTypes.Get(ctx, r.db.Keel(ctx), req.ID)
-		if err != nil {
-			return nil, typeErrors.Map(err, req.ID.String())
-		}
+) (*workercredential.WorkerCredentialType, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workercredential.WorkerCredentialType, error) {
+			entity, err := workerdb.WorkerCredentialTypes.Get(ctx, r.db.Keel(ctx), req.ID)
+			if err != nil {
+				return nil, typeErrors.Map(err, req.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) TypeCodeExists(
@@ -193,39 +202,47 @@ func (r *repository) TypeCodeExists(
 
 func (r *repository) CreateType(
 	ctx context.Context,
-	entity *worker.WorkerCredentialType,
-) (*worker.WorkerCredentialType, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerCredentialType, error) {
-		if err := workerdb.WorkerCredentialTypes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to create credential type", zap.Error(err))
-			return nil, typeErrors.Map(err, entity.ID.String())
-		}
+	entity *workercredential.WorkerCredentialType,
+) (*workercredential.WorkerCredentialType, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workercredential.WorkerCredentialType, error) {
+			if err := workerdb.WorkerCredentialTypes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+				r.l.Error("failed to create credential type", zap.Error(err))
+				return nil, typeErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) UpdateType(
 	ctx context.Context,
-	entity *worker.WorkerCredentialType,
-) (*worker.WorkerCredentialType, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerCredentialType, error) {
-		if err := workerdb.WorkerCredentialTypes.Save(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to update credential type", zap.Error(err))
-			return nil, typeErrors.Map(err, entity.ID.String())
-		}
+	entity *workercredential.WorkerCredentialType,
+) (*workercredential.WorkerCredentialType, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workercredential.WorkerCredentialType, error) {
+			if err := workerdb.WorkerCredentialTypes.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+				r.l.Error("failed to update credential type", zap.Error(err))
+				return nil, typeErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) EnsureSystemTypes(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	types []*worker.WorkerCredentialType,
+	types []*workercredential.WorkerCredentialType,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		rows := make([]*worker.WorkerCredentialType, 0, len(types))
+		rows := make([]*workercredential.WorkerCredentialType, 0, len(types))
 		for _, typ := range types {
 			if typ == nil {
 				continue
@@ -262,7 +279,7 @@ func (r *repository) CountCredentialsByType(
 		c := workerdb.WorkerCredentials
 		count, err := c.Where(
 			c.CredentialTypeID.Eq(req.TypeID),
-			keel.When(req.ActiveOnly, c.Status.Eq(worker.CredentialStatusActive)),
+			keel.When(req.ActiveOnly, c.Status.Eq(workercredential.CredentialStatusActive)),
 		).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count credentials by type", zap.Error(err))
@@ -288,7 +305,7 @@ func (r *repository) CountCredentialsByTypeIDs(
 			Pick(c.CredentialTypeID, keel.Count()).
 			Where(
 				c.CredentialTypeID.In(req.TypeIDs...),
-				keel.When(req.ActiveOnly, c.Status.Eq(worker.CredentialStatusActive)),
+				keel.When(req.ActiveOnly, c.Status.Eq(workercredential.CredentialStatusActive)),
 			))
 		if err != nil {
 			r.l.Error("failed to count credentials by type ids", zap.Error(err))
@@ -307,69 +324,84 @@ func (r *repository) CountCredentialsByTypeIDs(
 func (r *repository) ListForWorker(
 	ctx context.Context,
 	req *workerports.ListWorkerCredentialsRequest,
-) ([]*worker.WorkerCredential, error) {
+) ([]*workercredential.WorkerCredential, error) {
 	if len(req.WorkerIDs) == 0 {
-		return []*worker.WorkerCredential{}, nil
+		return []*workercredential.WorkerCredential{}, nil
 	}
 
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerCredential, error) {
-		c := workerdb.WorkerCredentials
-		loads := append(
-			listquery.When(req.IncludeType, c.CredentialType()),
-			listquery.When(req.IncludeDocument, c.Document())...,
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workercredential.WorkerCredential, error) {
+			c := workerdb.WorkerCredentials
+			loads := append(
+				listquery.When(req.IncludeType, c.CredentialType()),
+				listquery.When(req.IncludeDocument, c.Document())...,
+			)
 
-		entities, err := c.Where(
-			c.WorkerID.In(req.WorkerIDs...),
-			keel.When(!req.IncludeArchived, c.Status.Eq(worker.CredentialStatusActive)),
-		).
-			Load(loads...).
-			Order(c.WorkerID.Asc(), c.Status.Asc(), c.CreatedAt.Desc(), c.ID.Asc()).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list worker credentials", zap.Error(err))
-			return nil, err
-		}
+			entities, err := c.Where(
+				c.WorkerID.In(req.WorkerIDs...),
+				keel.When(
+					!req.IncludeArchived,
+					c.Status.Eq(workercredential.CredentialStatusActive),
+				),
+			).
+				Load(loads...).
+				Order(c.WorkerID.Asc(), c.Status.Asc(), c.CreatedAt.Desc(), c.ID.Asc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list worker credentials", zap.Error(err))
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req *workerports.GetWorkerCredentialByIDRequest,
-) (*worker.WorkerCredential, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerCredential, error) {
-		c := workerdb.WorkerCredentials
-		loads := make([]keel.Loader, 0, 3)
-		loads = append(loads, listquery.When(req.IncludeType, c.CredentialType())...)
-		loads = append(loads, listquery.When(req.IncludeWorker, c.Worker().Profile())...)
-		loads = append(loads, listquery.When(req.IncludeDocument, c.Document())...)
+) (*workercredential.WorkerCredential, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workercredential.WorkerCredential, error) {
+			c := workerdb.WorkerCredentials
+			loads := make([]keel.Loader, 0, 3)
+			loads = append(loads, listquery.When(req.IncludeType, c.CredentialType())...)
+			loads = append(loads, listquery.When(req.IncludeWorker, c.Worker().Profile())...)
+			loads = append(loads, listquery.When(req.IncludeDocument, c.Document())...)
 
-		entity, err := c.Where(c.ID.Eq(req.ID)).Load(loads...).One(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, credentialErrors.Map(err, req.ID.String())
-		}
+			entity, err := c.Where(c.ID.Eq(req.ID)).Load(loads...).One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, credentialErrors.Map(err, req.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	req *workerports.CreateWorkerCredentialRequest,
-) (*worker.WorkerCredential, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerCredential, error) {
-		if err := r.create(ctx, req); err != nil {
-			r.l.Error("failed to create worker credential", zap.Error(err))
-			return nil, dberror.MapRetryableTransactionError(
-				credentialErrors.Map(err, req.Entity.ID.String()),
-				"Credential is busy. Retry the request.",
-			)
-		}
+) (*workercredential.WorkerCredential, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workercredential.WorkerCredential, error) {
+			if err := r.create(ctx, req); err != nil {
+				r.l.Error("failed to create worker credential", zap.Error(err))
+				return nil, dberror.MapRetryableTransactionError(
+					credentialErrors.Map(err, req.Entity.ID.String()),
+					"Credential is busy. Retry the request.",
+				)
+			}
 
-		return req.Entity, nil
-	})
+			return req.Entity, nil
+		},
+	)
 }
 
 func (r *repository) create(
@@ -384,11 +416,11 @@ func (r *repository) create(
 		_, err := c.Where(
 			c.WorkerID.Eq(entity.WorkerID),
 			c.CredentialTypeID.Eq(entity.CredentialTypeID),
-			c.Status.Eq(worker.CredentialStatusActive),
+			c.Status.Eq(workercredential.CredentialStatusActive),
 		).Update(
 			ctx,
 			db,
-			c.Status.To(worker.CredentialStatusArchived),
+			c.Status.To(workercredential.CredentialStatusArchived),
 			c.ArchivedAt.To(timeutils.NowUnix()),
 			c.ArchivedByID.To(req.SupersededByID),
 			c.ArchiveReason.To(req.SupersedeReason),
@@ -403,16 +435,20 @@ func (r *repository) create(
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *worker.WorkerCredential,
-) (*worker.WorkerCredential, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerCredential, error) {
-		if err := workerdb.WorkerCredentials.Save(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to update worker credential", zap.Error(err))
-			return nil, credentialErrors.Map(err, entity.ID.String())
-		}
+	entity *workercredential.WorkerCredential,
+) (*workercredential.WorkerCredential, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workercredential.WorkerCredential, error) {
+			if err := workerdb.WorkerCredentials.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+				r.l.Error("failed to update worker credential", zap.Error(err))
+				return nil, credentialErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func expiryWindow(
@@ -432,7 +468,7 @@ func expiryWindow(
 func expiringQuery(
 	ctx context.Context,
 	req *workerports.ListExpiringWorkerCredentialsRequest,
-) *keel.Query[*worker.WorkerCredential] {
+) *keel.Query[*workercredential.WorkerCredential] {
 	c := workerdb.WorkerCredentials
 	ct := c.CredentialType()
 	grace, horizon := expiryWindow(req)
@@ -447,7 +483,7 @@ func expiringQuery(
 	}
 
 	q := c.Where(
-		c.Status.Eq(worker.CredentialStatusActive),
+		c.Status.Eq(workercredential.CredentialStatusActive),
 		keel.When(!req.AnyExpiry, c.ExpiresAt.Between(grace, horizon)),
 		c.Worker().Status.Eq(domaintypes.StatusActive),
 		ct.Status.Eq(domaintypes.StatusActive),
@@ -474,7 +510,7 @@ func expiringQuery(
 func (r *repository) ListExpiring(
 	ctx context.Context,
 	req *workerports.ListExpiringWorkerCredentialsRequest,
-) ([]*worker.WorkerCredential, error) {
+) ([]*workercredential.WorkerCredential, error) {
 	if req.TenantInfo.OrgID.IsNil() {
 		ctx = dbscope.WithSystem(
 			ctx,
@@ -485,13 +521,17 @@ func (r *repository) ListExpiring(
 		return nil, errExpiringKeysetBySoonest
 	}
 
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerCredential, error) {
-		entities, err := expiringQuery(ctx, req).List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list expiring worker credentials", zap.Error(err))
-			return nil, fmt.Errorf("list expiring worker credentials: %w", err)
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workercredential.WorkerCredential, error) {
+			entities, err := expiringQuery(ctx, req).List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list expiring worker credentials", zap.Error(err))
+				return nil, fmt.Errorf("list expiring worker credentials: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }

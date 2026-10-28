@@ -15,7 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -55,7 +57,7 @@ type teamStructure struct {
 func (s *teamStructure) ListDelegations(
 	context.Context,
 	*workerports.ListApprovalDelegationsRequest,
-) ([]*worker.ApprovalDelegation, error) {
+) ([]*approvaldelegation.ApprovalDelegation, error) {
 	return nil, nil
 }
 
@@ -73,7 +75,7 @@ func (s *teamStructure) ManagesWorker(
 type teamLeaveCases struct {
 	workerports.WorkerLeaveRepository
 
-	cases   []*worker.WorkerLeaveCase
+	cases   []*workerleave.WorkerLeaveCase
 	team    *teamStructure
 	mu      sync.Mutex
 	scopes  [][]pulid.ID
@@ -83,13 +85,13 @@ type teamLeaveCases struct {
 func (r *teamLeaveCases) ListCases(
 	_ context.Context,
 	req *workerports.ListLeaveCasesRequest,
-) ([]*worker.WorkerLeaveCase, error) {
+) ([]*workerleave.WorkerLeaveCase, error) {
 	r.mu.Lock()
 	r.scopes = append(r.scopes, req.ManagerIDs)
 	r.workers = append(r.workers, req.WorkerID)
 	r.mu.Unlock()
 
-	out := make([]*worker.WorkerLeaveCase, 0, len(r.cases))
+	out := make([]*workerleave.WorkerLeaveCase, 0, len(r.cases))
 	for _, leave := range r.cases {
 		if req.WorkerID.IsNotNil() && leave.WorkerID != req.WorkerID {
 			continue
@@ -111,15 +113,15 @@ func (r *teamLeaveCases) reads() int {
 	return len(r.scopes)
 }
 
-func leaveCaseFor(workerID pulid.ID) *worker.WorkerLeaveCase {
-	return &worker.WorkerLeaveCase{
+func leaveCaseFor(workerID pulid.ID) *workerleave.WorkerLeaveCase {
+	return &workerleave.WorkerLeaveCase{
 		ID:        pulid.MustNew("wlc_"),
 		WorkerID:  workerID,
 		LeaveType: worker.LeaveTypeFMLA,
-		Status:    worker.LeaveCaseApproved,
-		Frequency: worker.LeaveContinuous,
+		Status:    workerleave.LeaveCaseApproved,
+		Frequency: workerleave.LeaveContinuous,
 		StartsAt:  1_788_000_000,
-		Entries:   []*worker.WorkerLeaveEntry{},
+		Entries:   []*workerleave.WorkerLeaveEntry{},
 	}
 }
 
@@ -133,7 +135,7 @@ func TestLeaveCases_ATeamGrantReadsOnlyTheTeamThroughGraphQL(t *testing.T) {
 	member, stranger := pulid.MustNew("wrk_"), pulid.MustNew("wrk_")
 	team := &teamStructure{manager: person.UserID, members: map[pulid.ID]bool{member: true}}
 	mine, theirs := leaveCaseFor(member), leaveCaseFor(stranger)
-	repo := &teamLeaveCases{cases: []*worker.WorkerLeaveCase{mine, theirs}, team: team}
+	repo := &teamLeaveCases{cases: []*workerleave.WorkerLeaveCase{mine, theirs}, team: team}
 	engine := &teamLeaveGrant{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{
 		Engine: engine,

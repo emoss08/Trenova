@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/teamscope"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -50,7 +50,7 @@ const maxCycleOffsetWeeks = 7
 
 var availabilityPreferences = agenttoolschema.Source(
 	"worker.availabilityPreference",
-	worker.AvailabilityPreferenceValues(),
+	workerschedule.AvailabilityPreferenceValues(),
 )
 
 var weekdays = agenttoolschema.Source("time.weekday", weekdayNames())
@@ -78,11 +78,11 @@ type scheduleKeeper interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*worker.WorkerShiftAssignment, error)
+	) (*workerschedule.WorkerShiftAssignment, error)
 	AssignShift(
 		ctx context.Context,
 		req *schedulingservice.AssignShiftRequest,
-	) (*worker.WorkerShiftAssignment, error)
+	) (*workerschedule.WorkerShiftAssignment, error)
 	PreviewAssignShift(
 		ctx context.Context,
 		req *schedulingservice.AssignShiftRequest,
@@ -90,7 +90,7 @@ type scheduleKeeper interface {
 	EndAssignment(
 		ctx context.Context,
 		req *schedulingservice.EndAssignmentRequest,
-	) (*worker.WorkerShiftAssignment, error)
+	) (*workerschedule.WorkerShiftAssignment, error)
 	PreviewEndAssignment(
 		ctx context.Context,
 		req *schedulingservice.EndAssignmentRequest,
@@ -98,7 +98,7 @@ type scheduleKeeper interface {
 	SetPreference(
 		ctx context.Context,
 		req *schedulingservice.SetPreferenceRequest,
-	) (*worker.WorkerAvailabilityPreference, error)
+	) (*workerschedule.WorkerAvailabilityPreference, error)
 	PreviewSetPreference(
 		ctx context.Context,
 		req *schedulingservice.SetPreferenceRequest,
@@ -106,12 +106,14 @@ type scheduleKeeper interface {
 	ProposeSwap(
 		ctx context.Context,
 		req *schedulingservice.ProposeSwapRequest,
-	) (*worker.ShiftSwapRequest, error)
-	PreviewProposeSwap(req *schedulingservice.ProposeSwapRequest) (*worker.ShiftSwapRequest, error)
+	) (*workerschedule.ShiftSwapRequest, error)
+	PreviewProposeSwap(
+		req *schedulingservice.ProposeSwapRequest,
+	) (*workerschedule.ShiftSwapRequest, error)
 	TransitionSwap(
 		ctx context.Context,
 		req *schedulingservice.TransitionSwapRequest,
-	) (*worker.ShiftSwapRequest, error)
+	) (*workerschedule.ShiftSwapRequest, error)
 	PreviewTransitionSwap(
 		ctx context.Context,
 		req *schedulingservice.TransitionSwapRequest,
@@ -167,7 +169,7 @@ func requireWeekday(params map[string]any, key string) (int16, error) {
 	return 0, fmt.Errorf("parameter %q must be a weekday", key)
 }
 
-func shiftAssignmentRecord(assignment *worker.WorkerShiftAssignment) toolpreview.Record {
+func shiftAssignmentRecord(assignment *workerschedule.WorkerShiftAssignment) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceWorkerSchedule,
 		ID:       assignment.ID,
@@ -176,7 +178,7 @@ func shiftAssignmentRecord(assignment *worker.WorkerShiftAssignment) toolpreview
 	}
 }
 
-func swapRecord(swap *worker.ShiftSwapRequest) toolpreview.Record {
+func swapRecord(swap *workerschedule.ShiftSwapRequest) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceShiftSwap,
 		ID:       swap.ID,
@@ -556,8 +558,8 @@ func NewSetWorkerAvailabilityPreferenceTool(
 }
 
 type preferenceView struct {
-	Preference worker.AvailabilityPreference `json:"preference"`
-	Note       string                        `json:"note"`
+	Preference workerschedule.AvailabilityPreference `json:"preference"`
+	Note       string                                `json:"note"`
 }
 
 func renderPreference(
@@ -631,13 +633,13 @@ func NewProposeShiftSwapTool(schedules scheduleKeeper) agenttoolports.AgentTool 
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return common.TargetOf(params, paramRequestingWorkerID, permission.ResourceWorker)
 		},
-	}, common.ReceivablePlan[*schedulingservice.ProposeSwapRequest, *worker.ShiftSwapRequest]{
+	}, common.ReceivablePlan[*schedulingservice.ProposeSwapRequest, *workerschedule.ShiftSwapRequest]{
 		Request: proposeSwapRequest,
 		Plan: func(
 			_ context.Context,
 			req *schedulingservice.ProposeSwapRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*worker.ShiftSwapRequest, error) {
+		) (*workerschedule.ShiftSwapRequest, error) {
 			entity := *req.Entity
 
 			return schedules.PreviewProposeSwap(&schedulingservice.ProposeSwapRequest{
@@ -672,7 +674,7 @@ func NewProposeShiftSwapTool(schedules scheduleKeeper) agenttoolports.AgentTool 
 
 func renderShiftSwapProposal(
 	_ *schedulingservice.ProposeSwapRequest,
-	swap *worker.ShiftSwapRequest,
+	swap *workerschedule.ShiftSwapRequest,
 ) (*agent.ToolPreview, error) {
 	change, err := toolpreview.Create(
 		toolpreview.Record{Resource: permission.ResourceShiftSwap, Label: "New shift swap"},
@@ -723,7 +725,7 @@ func proposeSwapRequest(
 	}
 
 	return &schedulingservice.ProposeSwapRequest{
-		Entity: &worker.ShiftSwapRequest{
+		Entity: &workerschedule.ShiftSwapRequest{
 			RequestingWorkerID:    requesting,
 			CounterpartyWorkerID:  counterparty,
 			ShiftDate:             shiftDate,
@@ -740,7 +742,7 @@ type swapDecisionSpec struct {
 	description string
 	rationale   string
 	operation   permission.Operation
-	status      worker.ShiftSwapStatus
+	status      workerschedule.ShiftSwapStatus
 	verb        string
 	egress      agent.EgressClass
 	maxTier     agent.AutonomyTier
@@ -855,7 +857,7 @@ func NewApproveShiftSwapTool(schedules scheduleKeeper) agenttoolports.AgentTool 
 		rationale: "Changes who works a day; approving is the office's decision, so " +
 			"only a person makes it.",
 		operation:  permission.OpApprove,
-		status:     worker.SwapApproved,
+		status:     workerschedule.SwapApproved,
 		verb:       "approve",
 		egress:     agent.EgressDriverVisible,
 		maxTier:    agent.TierPropose,
@@ -872,7 +874,7 @@ func NewRejectShiftSwapTool(schedules scheduleKeeper) agenttoolports.AgentTool {
 		rationale: "Refuses a request the workers read in their portal; a person approves " +
 			"each refusal.",
 		operation: permission.OpReject,
-		status:    worker.SwapRejected,
+		status:    workerschedule.SwapRejected,
 		verb:      "reject",
 		egress:    agent.EgressDriverVisible,
 		maxTier:   agent.TierActWithApproval,
@@ -887,7 +889,7 @@ func NewWithdrawShiftSwapTool(schedules scheduleKeeper) agenttoolports.AgentTool
 		rationale: "Takes back a request the workers read in their portal; a person " +
 			"approves each withdrawal.",
 		operation: permission.OpCancel,
-		status:    worker.SwapWithdrawn,
+		status:    workerschedule.SwapWithdrawn,
 		verb:      "withdraw",
 		egress:    agent.EgressDriverVisible,
 		maxTier:   agent.TierActWithApproval,
@@ -922,7 +924,7 @@ func assignShiftRequest(
 	}
 
 	return &schedulingservice.AssignShiftRequest{
-		Entity: &worker.WorkerShiftAssignment{
+		Entity: &workerschedule.WorkerShiftAssignment{
 			WorkerID:         workerID,
 			ShiftTemplateID:  templateID,
 			EffectiveFrom:    from,
@@ -956,7 +958,7 @@ func preferenceRequest(
 	}
 
 	return &schedulingservice.SetPreferenceRequest{
-		Entity: &worker.WorkerAvailabilityPreference{
+		Entity: &workerschedule.WorkerAvailabilityPreference{
 			WorkerID:   workerID,
 			DayOfWeek:  day,
 			Preference: preference,

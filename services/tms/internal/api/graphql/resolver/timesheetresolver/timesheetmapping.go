@@ -3,25 +3,25 @@ package timesheetresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // timesheetPermissionFor maps the answer onto the grant it needs. Handing a
 // week over is not the same act as signing it off, and a carrier that lets
 // everybody submit still wants approval held to a shorter list.
-func timesheetPermissionFor(status worker.TimesheetStatus) permission.Operation {
+func timesheetPermissionFor(status timesheet.TimesheetStatus) permission.Operation {
 	switch status {
-	case worker.TimesheetSubmitted:
+	case timesheet.TimesheetSubmitted:
 		return permission.OpSubmit
-	case worker.TimesheetApproved:
+	case timesheet.TimesheetApproved:
 		return permission.OpApprove
-	case worker.TimesheetRejected:
+	case timesheet.TimesheetRejected:
 		return permission.OpReject
-	case worker.TimesheetOpen:
+	case timesheet.TimesheetOpen:
 		// Taking an approval back is the approver's act.
 		return permission.OpApprove
-	case worker.TimesheetLocked:
+	case timesheet.TimesheetLocked:
 		return permission.OpExport
 	default:
 		return permission.OpApprove

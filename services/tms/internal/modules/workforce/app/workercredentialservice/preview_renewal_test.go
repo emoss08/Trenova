@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
@@ -32,7 +32,7 @@ func TestPreviewRenewal_IsTheAskRequestRenewalSends(t *testing.T) {
 	h.wrk.FirstName, h.wrk.LastName = "Marcus", "Dell"
 	cdl := h.credential(h.cdl, 1_900_000_000)
 	cdl.ID = pulid.MustNew("wcred_")
-	cdl.Status = worker.CredentialStatusActive
+	cdl.Status = workercredential.CredentialStatusActive
 	h.repo.credentials[cdl.ID] = cdl
 
 	resolver := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)

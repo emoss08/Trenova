@@ -3,7 +3,7 @@ package driverportalservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -13,15 +13,15 @@ import (
 func (s *Service) MyReviews(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*worker.PerformanceReview, error) {
+) ([]*workerreview.PerformanceReview, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	return s.reviews.ListReviews(ctx, tenantInfo, wrk.ID, []worker.ReviewStatus{
-		worker.ReviewStatusSubmitted,
-		worker.ReviewStatusAcknowledged,
-		worker.ReviewStatusClosed,
+	return s.reviews.ListReviews(ctx, tenantInfo, wrk.ID, []workerreview.ReviewStatus{
+		workerreview.ReviewStatusSubmitted,
+		workerreview.ReviewStatusAcknowledged,
+		workerreview.ReviewStatusClosed,
 	})
 }
 
@@ -32,7 +32,7 @@ func (s *Service) AcknowledgeMyReview(
 	tenantInfo pagination.TenantInfo,
 	reviewID pulid.ID,
 	comment string,
-) (*worker.PerformanceReview, error) {
+) (*workerreview.PerformanceReview, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err

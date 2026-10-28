@@ -3,7 +3,7 @@ package driverportalservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -13,7 +13,7 @@ import (
 func (s *Service) MySafetyScorecard(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*worker.SafetyScorecard, error) {
+) (*workersafety.SafetyScorecard, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -25,7 +25,7 @@ func (s *Service) MySafetyScorecard(
 func (s *Service) MyRecognitions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*worker.WorkerRecognition, error) {
+) ([]*workersafety.WorkerRecognition, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func (s *Service) MyRecognitions(
 func (s *Service) MyDisciplinaryActions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*worker.WorkerDisciplinaryAction, error) {
+) ([]*workersafety.WorkerDisciplinaryAction, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func (s *Service) AcknowledgeMyDisciplinaryAction(
 	tenantInfo pagination.TenantInfo,
 	actionID pulid.ID,
 	comment string,
-) (*worker.WorkerDisciplinaryAction, error) {
+) (*workersafety.WorkerDisciplinaryAction, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -42,9 +43,9 @@ type PendingPTODaysRequest struct {
 }
 
 type HasPTOLedgerEntryRequest struct {
-	TenantInfo  pagination.TenantInfo     `json:"tenantInfo"`
-	SourcePTOID pulid.ID                  `json:"sourcePtoId"`
-	EntryType   worker.PTOLedgerEntryType `json:"entryType"`
+	TenantInfo  pagination.TenantInfo  `json:"tenantInfo"`
+	SourcePTOID pulid.ID               `json:"sourcePtoId"`
+	EntryType   pto.PTOLedgerEntryType `json:"entryType"`
 }
 
 type PTOBalanceSummary struct {
@@ -58,28 +59,28 @@ type PTOBalanceSummary struct {
 
 type PTOLedgerRepository interface {
 	EnsureBalance(ctx context.Context, key *PTOBalanceKey) error
-	LockBalance(ctx context.Context, key *PTOBalanceKey) (*worker.WorkerPTOBalance, error)
-	GetBalance(ctx context.Context, key *PTOBalanceKey) (*worker.WorkerPTOBalance, error)
+	LockBalance(ctx context.Context, key *PTOBalanceKey) (*pto.WorkerPTOBalance, error)
+	GetBalance(ctx context.Context, key *PTOBalanceKey) (*pto.WorkerPTOBalance, error)
 	ListBalances(
 		ctx context.Context,
 		req *ListPTOBalancesRequest,
-	) ([]*worker.WorkerPTOBalance, error)
+	) ([]*pto.WorkerPTOBalance, error)
 	ListOrgBalances(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) ([]*worker.WorkerPTOBalance, error)
+	) ([]*pto.WorkerPTOBalance, error)
 	UpdateBalance(
 		ctx context.Context,
-		entity *worker.WorkerPTOBalance,
-	) (*worker.WorkerPTOBalance, error)
+		entity *pto.WorkerPTOBalance,
+	) (*pto.WorkerPTOBalance, error)
 	InsertEntry(
 		ctx context.Context,
-		entry *worker.WorkerPTOLedgerEntry,
-	) (*worker.WorkerPTOLedgerEntry, error)
+		entry *pto.WorkerPTOLedgerEntry,
+	) (*pto.WorkerPTOLedgerEntry, error)
 	ListEntries(
 		ctx context.Context,
 		req *ListPTOLedgerRequest,
-	) (*pagination.CursorListResult[*worker.WorkerPTOLedgerEntry], error)
+	) (*pagination.CursorListResult[*pto.WorkerPTOLedgerEntry], error)
 	SumEntries(ctx context.Context, key *PTOBalanceKey) (decimal.Decimal, int64, error)
 	PendingDays(ctx context.Context, req *PendingPTODaysRequest) (decimal.Decimal, error)
 	HasEntry(ctx context.Context, req *HasPTOLedgerEntryRequest) (bool, error)

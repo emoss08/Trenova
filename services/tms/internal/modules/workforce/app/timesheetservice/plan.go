@@ -4,17 +4,17 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-type ExportChange = kernelports.RecordChange[worker.PayrollExport]
+type ExportChange = kernelports.RecordChange[timesheet.PayrollExport]
 
 type ExportPlan struct {
-	Export       *worker.PayrollExport
+	Export       *timesheet.PayrollExport
 	TimesheetIDs []pulid.ID
 }
 
@@ -24,7 +24,7 @@ func (s *Service) PlanGenerateExport(
 ) (*ExportPlan, error) {
 	sheets, err := s.repo.ListTimesheets(ctx, &workerports.ListTimesheetsRequest{
 		TenantInfo:     req.TenantInfo,
-		Statuses:       []worker.TimesheetStatus{worker.TimesheetApproved},
+		Statuses:       []timesheet.TimesheetStatus{timesheet.TimesheetApproved},
 		From:           req.PeriodStart,
 		To:             req.PeriodEnd,
 		UnexportedOnly: true,
@@ -41,10 +41,10 @@ func (s *Service) PlanGenerateExport(
 	}
 
 	now := timeutils.NowUnix()
-	export := &worker.PayrollExport{
+	export := &timesheet.PayrollExport{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
-		Status:         worker.PayrollExportGenerated,
+		Status:         timesheet.PayrollExportGenerated,
 		PeriodStart:    req.PeriodStart,
 		PeriodEnd:      req.PeriodEnd,
 		GeneratedAt:    &now,
@@ -80,7 +80,7 @@ func (s *Service) PlanVoidExport(
 	if err != nil {
 		return nil, err
 	}
-	if original.Status == worker.PayrollExportVoided {
+	if original.Status == timesheet.PayrollExportVoided {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
@@ -90,7 +90,7 @@ func (s *Service) PlanVoidExport(
 
 	export := *original
 	now := timeutils.NowUnix()
-	export.Status = worker.PayrollExportVoided
+	export.Status = timesheet.PayrollExportVoided
 	export.VoidedAt = &now
 	export.VoidReason = req.Reason
 

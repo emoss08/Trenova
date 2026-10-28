@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -69,7 +70,7 @@ func (r *ListRequest) fallingDue() bool {
 func (s *Service) List(
 	ctx context.Context,
 	req *ListRequest,
-) ([]*worker.WorkerCredential, error) {
+) ([]*workercredential.WorkerCredential, error) {
 	if req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"tenantInfo",
@@ -99,7 +100,7 @@ func (s *Service) List(
 	if err != nil {
 		return nil, err
 	}
-	out := make([]*worker.WorkerCredential, 0, len(held))
+	out := make([]*workercredential.WorkerCredential, 0, len(held))
 	for _, credential := range held {
 		if admitted(credential, code, req.RequiredOnly) {
 			out = append(out, credential)
@@ -120,7 +121,7 @@ func (s *Service) listAcross(
 	ctx context.Context,
 	req *ListRequest,
 	code string,
-) ([]*worker.WorkerCredential, error) {
+) ([]*workercredential.WorkerCredential, error) {
 	horizon := DefaultExpiryHorizonDays
 	if req.ExpiringWithinDays > 0 {
 		horizon = min(req.ExpiringWithinDays, MaxExpiryHorizonDays)
@@ -148,7 +149,7 @@ func (s *Service) listAcross(
 	})
 }
 
-func admitted(credential *worker.WorkerCredential, code string, requiredOnly bool) bool {
+func admitted(credential *workercredential.WorkerCredential, code string, requiredOnly bool) bool {
 	kind := credential.CredentialType
 	if requiredOnly && (kind == nil || !kind.IsRequired) {
 		return false
@@ -161,7 +162,7 @@ func (s *Service) Get(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	return s.repo.GetByID(ctx, &workerports.GetWorkerCredentialByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
@@ -171,7 +172,7 @@ func (s *Service) Get(
 }
 
 type CreateRequest struct {
-	Entity *worker.WorkerCredential
+	Entity *workercredential.WorkerCredential
 	// Renew archives the worker's current active credential of the same type
 	// so this one takes its slot; without it a second active row is refused.
 	Renew  bool
@@ -181,7 +182,7 @@ type CreateRequest struct {
 func (s *Service) Create(
 	ctx context.Context,
 	req *CreateRequest,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	entity := req.Entity
 	log := s.l.With(
 		zap.String("operation", "Create"),
@@ -217,9 +218,9 @@ func (s *Service) Create(
 
 func (s *Service) Update(
 	ctx context.Context,
-	entity *worker.WorkerCredential,
+	entity *workercredential.WorkerCredential,
 	actor *permissionports.RequestActor,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	log := s.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
 	userID := actor.UserIDOrNil()
 
@@ -244,7 +245,7 @@ func (s *Service) Update(
 
 // factsChanged reports whether the fields a verifier vouched for moved, in
 // which case the verification stamp no longer applies.
-func (s *Service) factsChanged(original, next *worker.WorkerCredential) bool {
+func (s *Service) factsChanged(original, next *workercredential.WorkerCredential) bool {
 	return original.Number != next.Number ||
 		original.IssuingAuthority != next.IssuingAuthority ||
 		!equalInt64Ptr(original.IssuedAt, next.IssuedAt) ||
@@ -270,7 +271,7 @@ type StatusRequest struct {
 func (s *Service) Verify(
 	ctx context.Context,
 	req *StatusRequest,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	log := s.l.With(zap.String("operation", "Verify"), zap.String("id", req.ID.String()))
 
 	original, err := s.loadForChange(ctx, req)
@@ -321,7 +322,7 @@ func (s *Service) Verify(
 func (s *Service) Archive(
 	ctx context.Context,
 	req *StatusRequest,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	log := s.l.With(zap.String("operation", "Archive"), zap.String("id", req.ID.String()))
 
 	change, err := s.PlanArchive(ctx, req)
@@ -360,7 +361,7 @@ type AttachDocumentRequest struct {
 func (s *Service) AttachDocument(
 	ctx context.Context,
 	req *AttachDocumentRequest,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	log := s.l.With(zap.String("operation", "AttachDocument"), zap.String("id", req.ID.String()))
 
 	change, err := s.PlanAttachDocument(ctx, req)
@@ -394,7 +395,7 @@ func (s *Service) AttachDocument(
 func (s *Service) loadForChange(
 	ctx context.Context,
 	req *StatusRequest,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	original, err := s.repo.GetByID(ctx, &workerports.GetWorkerCredentialByIDRequest{
 		ID:          req.ID,
 		TenantInfo:  req.TenantInfo,
@@ -417,19 +418,19 @@ func (s *Service) loadForChange(
 // type so callers can hang it on the saved row without a second read.
 func (s *Service) prepare(
 	ctx context.Context,
-	entity *worker.WorkerCredential,
-) (*worker.WorkerCredentialType, error) {
+	entity *workercredential.WorkerCredential,
+) (*workercredential.WorkerCredentialType, error) {
 	entity.Number = strings.TrimSpace(entity.Number)
 	entity.IssuingAuthority = strings.TrimSpace(entity.IssuingAuthority)
 	entity.Notes = strings.TrimSpace(entity.Notes)
 	if entity.Status == "" {
-		entity.Status = worker.CredentialStatusActive
+		entity.Status = workercredential.CredentialStatusActive
 	}
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 
-	var credentialType *worker.WorkerCredentialType
+	var credentialType *workercredential.WorkerCredentialType
 	if !entity.CredentialTypeID.IsNil() {
 		typ, err := s.repo.GetTypeByID(ctx, &workerports.GetCredentialTypeByIDRequest{
 			ID:         entity.CredentialTypeID,
@@ -463,7 +464,7 @@ func (s *Service) prepare(
 
 func (s *Service) validateDocumentOwnership(
 	ctx context.Context,
-	entity *worker.WorkerCredential,
+	entity *workercredential.WorkerCredential,
 ) error {
 	doc, err := s.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         entity.DocumentID,
@@ -502,7 +503,7 @@ func (s *Service) loadWorker(
 // the profile column it backs, re-grade the worker, and tell connected clients.
 func (s *Service) afterChange(
 	ctx context.Context,
-	entity *worker.WorkerCredential,
+	entity *workercredential.WorkerCredential,
 	operation permission.Operation,
 	userID pulid.ID,
 ) {
@@ -521,7 +522,7 @@ func (s *Service) afterChange(
 // CDL) onto the worker profile. Archiving leaves the column alone unless no
 // active credential of that type remains, in which case the nullable columns
 // are cleared; the CDL column is NOT NULL and is never cleared.
-func (s *Service) mirrorToProfile(ctx context.Context, entity *worker.WorkerCredential) {
+func (s *Service) mirrorToProfile(ctx context.Context, entity *workercredential.WorkerCredential) {
 	if entity.CredentialType == nil || !entity.CredentialType.ProfileField.IsSet() {
 		return
 	}
@@ -539,7 +540,7 @@ func (s *Service) mirrorToProfile(ctx context.Context, entity *worker.WorkerCred
 			req.Number = entity.Number
 		}
 	} else {
-		if field == worker.CredentialProfileFieldLicenseExpiry {
+		if field == workercredential.CredentialProfileFieldLicenseExpiry {
 			return
 		}
 		active, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
@@ -571,7 +572,7 @@ func (s *Service) Summary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (*worker.WorkerCredentialSummary, error) {
+) (*workercredential.WorkerCredentialSummary, error) {
 	wrk, err := s.loadWorker(ctx, tenantInfo, workerID)
 	if err != nil {
 		return nil, err
@@ -583,7 +584,7 @@ func (s *Service) summarize(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	wrk *worker.Worker,
-) (*worker.WorkerCredentialSummary, error) {
+) (*workercredential.WorkerCredentialSummary, error) {
 	types, err := s.ActiveTypes(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -597,7 +598,12 @@ func (s *Service) summarize(
 	if err != nil {
 		return nil, err
 	}
-	return worker.BuildCredentialSummary(wrk, types, credentials, timeutils.NowUnix()), nil
+	return workercredential.BuildCredentialSummary(
+		wrk,
+		types,
+		credentials,
+		timeutils.NowUnix(),
+	), nil
 }
 
 // RefreshCompliance re-grades the worker and writes the roll-up onto the
@@ -606,7 +612,7 @@ func (s *Service) RefreshCompliance(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (*worker.WorkerCredentialSummary, error) {
+) (*workercredential.WorkerCredentialSummary, error) {
 	wrk, err := s.loadWorker(ctx, tenantInfo, workerID)
 	if err != nil {
 		return nil, err
@@ -667,7 +673,7 @@ func (s *Service) SyncFromProfile(ctx context.Context, wrk *worker.Worker, userI
 	if err != nil {
 		return err
 	}
-	activeByType := make(map[pulid.ID]*worker.WorkerCredential, len(credentials))
+	activeByType := make(map[pulid.ID]*workercredential.WorkerCredential, len(credentials))
 	for _, cred := range credentials {
 		activeByType[cred.CredentialTypeID] = cred
 	}
@@ -724,16 +730,16 @@ func (s *Service) SyncFromProfile(ctx context.Context, wrk *worker.Worker, userI
 func (s *Service) createFromProfile(
 	ctx context.Context,
 	wrk *worker.Worker,
-	typ *worker.WorkerCredentialType,
+	typ *workercredential.WorkerCredentialType,
 	expiry *int64,
 	number string,
 ) error {
-	entity := &worker.WorkerCredential{
+	entity := &workercredential.WorkerCredential{
 		OrganizationID:   wrk.OrganizationID,
 		BusinessUnitID:   wrk.BusinessUnitID,
 		WorkerID:         wrk.ID,
 		CredentialTypeID: typ.ID,
-		Status:           worker.CredentialStatusActive,
+		Status:           workercredential.CredentialStatusActive,
 		Number:           number,
 		ExpiresAt:        expiry,
 	}
@@ -746,8 +752,8 @@ func (s *Service) createFromProfile(
 
 func (s *Service) updateFromProfile(
 	ctx context.Context,
-	existing *worker.WorkerCredential,
-	typ *worker.WorkerCredentialType,
+	existing *workercredential.WorkerCredential,
+	typ *workercredential.WorkerCredentialType,
 	expiry *int64,
 	number string,
 ) error {
@@ -766,16 +772,16 @@ func (s *Service) updateFromProfile(
 
 func (s *Service) archiveFromProfile(
 	ctx context.Context,
-	existing *worker.WorkerCredential,
-	typ *worker.WorkerCredentialType,
+	existing *workercredential.WorkerCredential,
+	typ *workercredential.WorkerCredentialType,
 	userID pulid.ID,
 ) error {
-	if typ.ProfileField == worker.CredentialProfileFieldLicenseExpiry {
+	if typ.ProfileField == workercredential.CredentialProfileFieldLicenseExpiry {
 		return nil
 	}
 	now := timeutils.NowUnix()
 	updated := *existing
-	updated.Status = worker.CredentialStatusArchived
+	updated.Status = workercredential.CredentialStatusArchived
 	updated.ArchivedAt = &now
 	updated.ArchivedByID = userID
 	updated.ArchiveReason = clearedOnProfile
@@ -785,8 +791,8 @@ func (s *Service) archiveFromProfile(
 
 // ExpiryForecastItem is one credential inside the look-ahead window.
 type ExpiryForecastItem struct {
-	Credential      *worker.WorkerCredential
-	Health          worker.CredentialHealth
+	Credential      *workercredential.WorkerCredential
+	Health          workercredential.CredentialHealth
 	DaysUntilExpiry int64
 }
 
@@ -836,7 +842,7 @@ func (s *Service) ExpiryForecast(
 			item.DaysUntilExpiry = *days
 		}
 		forecast.Items = append(forecast.Items, item)
-		if health == worker.CredentialHealthExpired {
+		if health == workercredential.CredentialHealthExpired {
 			forecast.ExpiredCount++
 		} else {
 			forecast.ExpiringCount++

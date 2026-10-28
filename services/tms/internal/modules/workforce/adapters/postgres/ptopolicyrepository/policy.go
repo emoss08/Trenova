@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -56,26 +56,26 @@ func statusFilter(status string) keel.Pred {
 		return nil
 	}
 
-	return workerdb.PTOPolicies.Status.Eq(worker.PTOPolicyStatus(status))
+	return workerdb.PTOPolicies.Status.Eq(pto.PTOPolicyStatus(status))
 }
 
 func (r *repository) List(
 	ctx context.Context,
 	req *workerports.ListPTOPoliciesRequest,
-) (*pagination.CursorListResult[*worker.PTOPolicy], error) {
+) (*pagination.CursorListResult[*pto.PTOPolicy], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*worker.PTOPolicy], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*pto.PTOPolicy], error) {
 			p := workerdb.PTOPolicies
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
 				p.Where(statusFilter(req.Status)),
-				&listquery.Request[worker.PTOPolicy]{
+				&listquery.Request[pto.PTOPolicy]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[*worker.PTOPolicy]) *keel.Query[*worker.PTOPolicy] {
+					Shape: func(q *keel.Query[*pto.PTOPolicy]) *keel.Query[*pto.PTOPolicy] {
 						return q.Load(listquery.When(req.IncludeRules, orderedRules())...)
 					},
 				},
@@ -93,11 +93,11 @@ func (r *repository) List(
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *workerports.PTOPolicySelectOptionsRequest,
-) (*pagination.ListResult[*worker.PTOPolicy], error) {
+) (*pagination.ListResult[*pto.PTOPolicy], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*worker.PTOPolicy], error) {
+		func(ctx context.Context) (*pagination.ListResult[*pto.PTOPolicy], error) {
 			p := workerdb.PTOPolicies
 			q := p.Pick(
 				p.ID,
@@ -109,7 +109,7 @@ func (r *repository) SelectOptions(
 				p.RequiresApproval,
 				p.CreatedAt,
 			).
-				Where(p.Status.Eq(worker.PTOPolicyStatusActive)).
+				Where(p.Status.Eq(pto.PTOPolicyStatusActive)).
 				Load(orderedRules()).
 				Order(p.IsDefault.Desc(), p.Name.Asc())
 
@@ -133,8 +133,8 @@ func (r *repository) SelectOptions(
 func (r *repository) GetByID(
 	ctx context.Context,
 	req *workerports.GetPTOPolicyByIDRequest,
-) (*worker.PTOPolicy, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PTOPolicy, error) {
+) (*pto.PTOPolicy, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pto.PTOPolicy, error) {
 		p := workerdb.PTOPolicies
 		entity, err := p.Where(p.ID.Eq(req.ID)).
 			Load(listquery.When(req.IncludeRules, orderedRules())...).
@@ -150,10 +150,10 @@ func (r *repository) GetByID(
 func (r *repository) GetDefault(
 	ctx context.Context,
 	_ pagination.TenantInfo,
-) (*worker.PTOPolicy, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PTOPolicy, error) {
+) (*pto.PTOPolicy, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pto.PTOPolicy, error) {
 		p := workerdb.PTOPolicies
-		entity, err := p.Where(p.IsDefault.IsTrue(), p.Status.Eq(worker.PTOPolicyStatusActive)).
+		entity, err := p.Where(p.IsDefault.IsTrue(), p.Status.Eq(pto.PTOPolicyStatusActive)).
 			Load(orderedRules()).
 			Order(p.CreatedAt.Asc()).
 			First(ctx, r.db.Keel(ctx))
@@ -187,8 +187,8 @@ func (r *repository) CodeExists(
 	})
 }
 
-func stampRules(entity *worker.PTOPolicy, resetIDs bool) []*worker.PTOPolicyRule {
-	rules := make([]*worker.PTOPolicyRule, 0, len(entity.Rules))
+func stampRules(entity *pto.PTOPolicy, resetIDs bool) []*pto.PTOPolicyRule {
+	rules := make([]*pto.PTOPolicyRule, 0, len(entity.Rules))
 	for i, rule := range entity.Rules {
 		if rule == nil {
 			continue
@@ -207,7 +207,7 @@ func stampRules(entity *worker.PTOPolicy, resetIDs bool) []*worker.PTOPolicyRule
 	return rules
 }
 
-func (r *repository) insertRules(ctx context.Context, rules []*worker.PTOPolicyRule) error {
+func (r *repository) insertRules(ctx context.Context, rules []*pto.PTOPolicyRule) error {
 	if len(rules) == 0 {
 		return nil
 	}
@@ -217,9 +217,9 @@ func (r *repository) insertRules(ctx context.Context, rules []*worker.PTOPolicyR
 
 func (r *repository) Create(
 	ctx context.Context,
-	entity *worker.PTOPolicy,
-) (*worker.PTOPolicy, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PTOPolicy, error) {
+	entity *pto.PTOPolicy,
+) (*pto.PTOPolicy, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pto.PTOPolicy, error) {
 		if err := r.create(ctx, entity); err != nil {
 			r.l.Error("failed to create PTO policy", zap.Error(err))
 			return nil, dberror.MapRetryableTransactionError(
@@ -232,7 +232,7 @@ func (r *repository) Create(
 	})
 }
 
-func (r *repository) create(ctx context.Context, entity *worker.PTOPolicy) error {
+func (r *repository) create(ctx context.Context, entity *pto.PTOPolicy) error {
 	if entity.IsDefault {
 		if err := r.ClearDefault(ctx, &workerports.ClearDefaultPTOPolicyRequest{}); err != nil {
 			return err
@@ -248,9 +248,9 @@ func (r *repository) create(ctx context.Context, entity *worker.PTOPolicy) error
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *worker.PTOPolicy,
-) (*worker.PTOPolicy, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PTOPolicy, error) {
+	entity *pto.PTOPolicy,
+) (*pto.PTOPolicy, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pto.PTOPolicy, error) {
 		if err := r.update(ctx, entity); err != nil {
 			r.l.Error(
 				"failed to update PTO policy",
@@ -267,7 +267,7 @@ func (r *repository) Update(
 	})
 }
 
-func (r *repository) update(ctx context.Context, entity *worker.PTOPolicy) error {
+func (r *repository) update(ctx context.Context, entity *pto.PTOPolicy) error {
 	if entity.IsDefault {
 		err := r.ClearDefault(ctx, &workerports.ClearDefaultPTOPolicyRequest{ExceptID: entity.ID})
 		if err != nil {

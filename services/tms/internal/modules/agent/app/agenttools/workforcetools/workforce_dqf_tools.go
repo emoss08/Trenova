@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -72,12 +72,12 @@ const verificationFollowUp = verificationRequestMove("FollowUp")
 
 var verificationStatuses = agenttoolschema.Source(
 	"worker.employmentVerificationStatus",
-	worker.EmploymentVerificationStatusValues(),
+	employment.EmploymentVerificationStatusValues(),
 )
 
 var verificationMethods = agenttoolschema.Source(
 	"worker.employmentVerificationMethod",
-	worker.EmploymentVerificationMethodValues(),
+	employment.EmploymentVerificationMethodValues(),
 )
 
 var verificationRequestMoves = agenttoolschema.Source(
@@ -97,14 +97,14 @@ var verificationFields = []string{
 type VerificationKeeper interface {
 	PlanRecordVerification(
 		ctx context.Context,
-		entity *worker.WorkerEmploymentVerification,
+		entity *employment.WorkerEmploymentVerification,
 		userID pulid.ID,
-	) (*worker.WorkerEmploymentVerification, error)
+	) (*employment.WorkerEmploymentVerification, error)
 	RecordVerification(
 		ctx context.Context,
-		entity *worker.WorkerEmploymentVerification,
+		entity *employment.WorkerEmploymentVerification,
 		userID pulid.ID,
-	) (*worker.WorkerEmploymentVerification, error)
+	) (*employment.WorkerEmploymentVerification, error)
 	PlanUpdateVerification(
 		ctx context.Context,
 		req *workerdqfservice.UpdateVerificationRequest,
@@ -112,7 +112,7 @@ type VerificationKeeper interface {
 	UpdateVerification(
 		ctx context.Context,
 		req *workerdqfservice.UpdateVerificationRequest,
-	) (*worker.WorkerEmploymentVerification, error)
+	) (*employment.WorkerEmploymentVerification, error)
 	PlanMarkRequested(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -123,7 +123,7 @@ type VerificationKeeper interface {
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
 		userID pulid.ID,
-	) (*worker.WorkerEmploymentVerification, error)
+	) (*employment.WorkerEmploymentVerification, error)
 	PlanRecordFollowUp(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -134,12 +134,12 @@ type VerificationKeeper interface {
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
 		userID pulid.ID,
-	) (*worker.WorkerEmploymentVerification, error)
+	) (*employment.WorkerEmploymentVerification, error)
 	PlanDeleteVerification(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*worker.WorkerEmploymentVerification, error)
+	) (*employment.WorkerEmploymentVerification, error)
 	DeleteVerification(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -165,7 +165,7 @@ func verificationIDProperty() map[string]any {
 	)
 }
 
-func verificationRecord(entity *worker.WorkerEmploymentVerification) toolpreview.Record {
+func verificationRecord(entity *employment.WorkerEmploymentVerification) toolpreview.Record {
 	return wfRecord(permission.ResourceQualification, entity.ID, entity.EmployerName,
 		entity.Version)
 }
@@ -209,20 +209,20 @@ func newRecordEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 		"qualification file", "DQ file"}
 
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
-		*worker.WorkerEmploymentVerification, *worker.WorkerEmploymentVerification,
+		*employment.WorkerEmploymentVerification, *employment.WorkerEmploymentVerification,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
-		) (*worker.WorkerEmploymentVerification, error) {
+		) (*employment.WorkerEmploymentVerification, error) {
 			workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
 			if err != nil {
 				return nil, err
 			}
-			entity := &worker.WorkerEmploymentVerification{
+			entity := &employment.WorkerEmploymentVerification{
 				OrganizationID: params.OrganizationID,
 				BusinessUnitID: params.BusinessUnitID,
 				WorkerID:       workerID,
-				Status:         worker.VerificationPending,
+				Status:         employment.VerificationPending,
 			}
 			req := &workerdqfservice.UpdateVerificationRequest{}
 			if err = applyVerificationEmployer(req, params.Params); err != nil {
@@ -236,17 +236,17 @@ func newRecordEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 		},
 		Plan: func(
 			ctx context.Context,
-			entity *worker.WorkerEmploymentVerification,
+			entity *employment.WorkerEmploymentVerification,
 			params *agenttoolports.ToolExecuteParams,
-		) (*worker.WorkerEmploymentVerification, error) {
+		) (*employment.WorkerEmploymentVerification, error) {
 			return dqf.PlanRecordVerification(ctx, entity, params.Actor.UserID)
 		},
-		Refused: func(*worker.WorkerEmploymentVerification) string {
+		Refused: func(*employment.WorkerEmploymentVerification) string {
 			return "Would file a previous employer on the qualification file."
 		},
 		Render: func(
-			_ *worker.WorkerEmploymentVerification,
-			planned *worker.WorkerEmploymentVerification,
+			_ *employment.WorkerEmploymentVerification,
+			planned *employment.WorkerEmploymentVerification,
 		) (*agent.ToolPreview, error) {
 			change, err := toolpreview.Create(
 				wfRecord(permission.ResourceQualification, pulid.Nil, planned.EmployerName, 0),
@@ -260,7 +260,7 @@ func newRecordEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 		},
 		Run: func(
 			ctx context.Context,
-			entity *worker.WorkerEmploymentVerification,
+			entity *employment.WorkerEmploymentVerification,
 			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := dqf.RecordVerification(ctx, entity, params.Actor.UserID)
@@ -319,7 +319,7 @@ func applyVerificationEmployer(
 }
 
 func copyVerificationEmployer(
-	entity *worker.WorkerEmploymentVerification,
+	entity *employment.WorkerEmploymentVerification,
 	req *workerdqfservice.UpdateVerificationRequest,
 ) {
 	for _, field := range []struct {
@@ -573,7 +573,7 @@ func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agenttoolpo
 			log *verificationRequestLog,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
-			var saved *worker.WorkerEmploymentVerification
+			var saved *employment.WorkerEmploymentVerification
 			var err error
 			action := "marked requested"
 			if log.move == verificationRequested {
@@ -608,19 +608,19 @@ func newDeleteEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 
 	return common.NewReceivableTool(
 		spec,
-		common.ReceivablePlan[*recordDelete, *worker.WorkerEmploymentVerification]{
+		common.ReceivablePlan[*recordDelete, *employment.WorkerEmploymentVerification]{
 			Request: recordDeleteFrom(paramVerificationID),
 			Plan: func(
 				ctx context.Context,
 				req *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*worker.WorkerEmploymentVerification, error) {
+			) (*employment.WorkerEmploymentVerification, error) {
 				return dqf.PlanDeleteVerification(ctx, req.tenant, req.id)
 			},
 			Refused: func(*recordDelete) string { return "Would remove a previous employer." },
 			Render: func(
 				_ *recordDelete,
-				entity *worker.WorkerEmploymentVerification,
+				entity *employment.WorkerEmploymentVerification,
 			) (*agent.ToolPreview, error) {
 				change, err := toolpreview.Delete(verificationRecord(entity), entity,
 					wfOptions(verificationFields...)...)

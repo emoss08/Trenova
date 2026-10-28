@@ -592,7 +592,7 @@ Two hooks carry what a repository row did that the screen's resolver does not, a
 named in the spec rather than hidden in a fetch: `rank` orders a page that matched a free-text
 query when the call chose no order (`worker_list` puts the closest name first), and `shape`
 applies a domain rule to each row given what was withheld (`worker_list` folds a NonCompliant
-credential into `canBeAssigned`, as `worker.Standing` does, and keeps the credential dates
+credential into `canBeAssigned`, as `workercompliance.Standing` does, and keeps the credential dates
 present and null when nothing is on file).
 
 The parameters are derived when the tool is built, not when the code is generated, because the

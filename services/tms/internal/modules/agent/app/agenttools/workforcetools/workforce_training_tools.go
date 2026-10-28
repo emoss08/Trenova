@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,11 +59,11 @@ type TrainingKeeper interface {
 	PlanAssign(
 		ctx context.Context,
 		req *workertrainingservice.AssignRequest,
-	) (*worker.WorkerTrainingRecord, error)
+	) (*workertraining.WorkerTrainingRecord, error)
 	Assign(
 		ctx context.Context,
 		req *workertrainingservice.AssignRequest,
-	) (*worker.WorkerTrainingRecord, error)
+	) (*workertraining.WorkerTrainingRecord, error)
 	PlanBulkAssign(
 		ctx context.Context,
 		req *workertrainingservice.BulkAssignRequest,
@@ -76,13 +76,13 @@ type TrainingKeeper interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
-	) ([]*worker.TrainingCourse, error)
+	) ([]*workertraining.TrainingCourse, error)
 	AssignRequired(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
 		userID pulid.ID,
-	) ([]*worker.WorkerTrainingRecord, error)
+	) ([]*workertraining.WorkerTrainingRecord, error)
 	PlanComplete(
 		ctx context.Context,
 		req *workertrainingservice.CompleteRequest,
@@ -90,7 +90,7 @@ type TrainingKeeper interface {
 	Complete(
 		ctx context.Context,
 		req *workertrainingservice.CompleteRequest,
-	) (*worker.WorkerTrainingRecord, error)
+	) (*workertraining.WorkerTrainingRecord, error)
 	PlanWaive(
 		ctx context.Context,
 		req *workertrainingservice.StatusRequest,
@@ -98,7 +98,7 @@ type TrainingKeeper interface {
 	Waive(
 		ctx context.Context,
 		req *workertrainingservice.StatusRequest,
-	) (*worker.WorkerTrainingRecord, error)
+	) (*workertraining.WorkerTrainingRecord, error)
 	PlanCancel(
 		ctx context.Context,
 		req *workertrainingservice.StatusRequest,
@@ -106,7 +106,7 @@ type TrainingKeeper interface {
 	Cancel(
 		ctx context.Context,
 		req *workertrainingservice.StatusRequest,
-	) (*worker.WorkerTrainingRecord, error)
+	) (*workertraining.WorkerTrainingRecord, error)
 	PlanAttachDocument(
 		ctx context.Context,
 		req *workertrainingservice.AttachDocumentRequest,
@@ -114,7 +114,7 @@ type TrainingKeeper interface {
 	AttachDocument(
 		ctx context.Context,
 		req *workertrainingservice.AttachDocumentRequest,
-	) (*worker.WorkerTrainingRecord, error)
+	) (*workertraining.WorkerTrainingRecord, error)
 }
 
 func TrainingToolProviders() []any {
@@ -132,7 +132,7 @@ func trainingIDProperty() map[string]any {
 		"worker_list_training")
 }
 
-func trainingRecord(record *worker.WorkerTrainingRecord) toolpreview.Record {
+func trainingRecord(record *workertraining.WorkerTrainingRecord) toolpreview.Record {
 	label := "Training"
 	if record.Course != nil {
 		label = record.Course.Name
@@ -200,7 +200,7 @@ func (a *trainingAssignment) plan(
 			return nil, err
 		}
 		return &workertrainingservice.BulkAssignPlan{
-			Records: []*worker.WorkerTrainingRecord{record},
+			Records: []*workertraining.WorkerTrainingRecord{record},
 		}, nil
 	}
 	return training.PlanBulkAssign(ctx, a.bulk)
@@ -309,7 +309,7 @@ func newAssignRequiredWorkerTrainingTool(training TrainingKeeper) agenttoolports
 
 	return common.NewReportingReceivableTool(
 		spec,
-		common.ReceivablePlan[*requiredTraining, []*worker.TrainingCourse]{
+		common.ReceivablePlan[*requiredTraining, []*workertraining.TrainingCourse]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*requiredTraining, error) {
 				workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
 				if err != nil {
@@ -322,21 +322,21 @@ func newAssignRequiredWorkerTrainingTool(training TrainingKeeper) agenttoolports
 				ctx context.Context,
 				req *requiredTraining,
 				_ *agenttoolports.ToolExecuteParams,
-			) ([]*worker.TrainingCourse, error) {
+			) ([]*workertraining.TrainingCourse, error) {
 				return training.PlanAssignRequired(ctx, req.tenant, req.workerID)
 			},
 			Refused: func(*requiredTraining) string {
 				return "Would assign the worker their required training."
 			},
-			Render: func(req *requiredTraining, courses []*worker.TrainingCourse) (*agent.ToolPreview, error) {
+			Render: func(req *requiredTraining, courses []*workertraining.TrainingCourse) (*agent.ToolPreview, error) {
 				changes := make([]*agent.RecordChange, 0, len(courses))
 				for _, course := range courses {
 					change, err := toolpreview.Create(
 						wfRecord(permission.ResourceWorkerTraining, pulid.Nil, course.Name, 0),
-						&worker.WorkerTrainingRecord{
+						&workertraining.WorkerTrainingRecord{
 							WorkerID: req.workerID,
 							CourseID: course.ID,
-							Status:   worker.TrainingStatusAssigned,
+							Status:   workertraining.TrainingStatusAssigned,
 						}, wfOptions(wfFieldWorkerID, paramCourseID, common.FieldStatus)...)
 					if err != nil {
 						return nil, err
@@ -527,7 +527,7 @@ func newRecordTrainingCompletionTool(training TrainingKeeper) agenttoolports.Age
 				return nil, err
 			}
 			outcome := "a pass"
-			if change.After.Status == worker.TrainingStatusFailed {
+			if change.After.Status == workertraining.TrainingStatusFailed {
 				outcome = "a fail below the passing mark"
 			}
 			return toolpreview.Build(fmt.Sprintf("Would record %s as %s.",
@@ -703,7 +703,7 @@ func newCloseWorkerTrainingTool(training TrainingKeeper) agenttoolports.AgentToo
 			closing *trainingClosing,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
-			var saved *worker.WorkerTrainingRecord
+			var saved *workertraining.WorkerTrainingRecord
 			var err error
 			action := "waived"
 			if closing.close == trainingWaive {

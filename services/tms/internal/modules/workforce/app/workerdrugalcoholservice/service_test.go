@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,33 +24,33 @@ import (
 // draws — a fake that actually holds rows exercises that; a mock that returns
 // canned values does not.
 type fakeRepo struct {
-	tests      map[pulid.ID]*worker.WorkerDOTTest
-	violations map[pulid.ID]*worker.WorkerDOTViolation
-	queries    map[pulid.ID]*worker.WorkerClearinghouseQuery
-	entries    map[pulid.ID]*worker.DOTRandomDrawEntry
-	draws      map[pulid.ID]*worker.DOTRandomDraw
-	pools      map[pulid.ID]*worker.DOTRandomPool
-	defaults   *worker.DOTRandomPool
+	tests      map[pulid.ID]*workerdot.WorkerDOTTest
+	violations map[pulid.ID]*workerdot.WorkerDOTViolation
+	queries    map[pulid.ID]*workerdot.WorkerClearinghouseQuery
+	entries    map[pulid.ID]*workerdot.DOTRandomDrawEntry
+	draws      map[pulid.ID]*workerdot.DOTRandomDraw
+	pools      map[pulid.ID]*workerdot.DOTRandomPool
+	defaults   *workerdot.DOTRandomPool
 	candidates []pulid.ID
 	rollups    []workerports.DrugAlcoholRollup
 }
 
 func newFakeRepo() *fakeRepo {
 	return &fakeRepo{
-		tests:      map[pulid.ID]*worker.WorkerDOTTest{},
-		violations: map[pulid.ID]*worker.WorkerDOTViolation{},
-		queries:    map[pulid.ID]*worker.WorkerClearinghouseQuery{},
-		entries:    map[pulid.ID]*worker.DOTRandomDrawEntry{},
-		draws:      map[pulid.ID]*worker.DOTRandomDraw{},
-		pools:      map[pulid.ID]*worker.DOTRandomPool{},
+		tests:      map[pulid.ID]*workerdot.WorkerDOTTest{},
+		violations: map[pulid.ID]*workerdot.WorkerDOTViolation{},
+		queries:    map[pulid.ID]*workerdot.WorkerClearinghouseQuery{},
+		entries:    map[pulid.ID]*workerdot.DOTRandomDrawEntry{},
+		draws:      map[pulid.ID]*workerdot.DOTRandomDraw{},
+		pools:      map[pulid.ID]*workerdot.DOTRandomPool{},
 	}
 }
 
 func (f *fakeRepo) ListTests(
 	_ context.Context,
 	req *workerports.ListWorkerDOTTestsRequest,
-) ([]*worker.WorkerDOTTest, error) {
-	out := make([]*worker.WorkerDOTTest, 0, len(f.tests))
+) ([]*workerdot.WorkerDOTTest, error) {
+	out := make([]*workerdot.WorkerDOTTest, 0, len(f.tests))
 	for _, test := range f.tests {
 		if !req.WorkerID.IsNil() && test.WorkerID != req.WorkerID {
 			continue
@@ -66,7 +66,7 @@ func (f *fakeRepo) ListTests(
 func (f *fakeRepo) GetTestByID(
 	_ context.Context,
 	req *workerports.GetWorkerDOTTestByIDRequest,
-) (*worker.WorkerDOTTest, error) {
+) (*workerdot.WorkerDOTTest, error) {
 	test, ok := f.tests[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("test not found")
@@ -76,8 +76,8 @@ func (f *fakeRepo) GetTestByID(
 
 func (f *fakeRepo) CreateTest(
 	_ context.Context,
-	entity *worker.WorkerDOTTest,
-) (*worker.WorkerDOTTest, error) {
+	entity *workerdot.WorkerDOTTest,
+) (*workerdot.WorkerDOTTest, error) {
 	if entity.ID.IsNil() {
 		entity.ID = pulid.MustNew("wdot_")
 	}
@@ -87,8 +87,8 @@ func (f *fakeRepo) CreateTest(
 
 func (f *fakeRepo) UpdateTest(
 	_ context.Context,
-	entity *worker.WorkerDOTTest,
-) (*worker.WorkerDOTTest, error) {
+	entity *workerdot.WorkerDOTTest,
+) (*workerdot.WorkerDOTTest, error) {
 	f.tests[entity.ID] = entity
 	return entity, nil
 }
@@ -96,8 +96,8 @@ func (f *fakeRepo) UpdateTest(
 func (f *fakeRepo) ListViolations(
 	_ context.Context,
 	req *workerports.ListWorkerDOTViolationsRequest,
-) ([]*worker.WorkerDOTViolation, error) {
-	out := make([]*worker.WorkerDOTViolation, 0, len(f.violations))
+) ([]*workerdot.WorkerDOTViolation, error) {
+	out := make([]*workerdot.WorkerDOTViolation, 0, len(f.violations))
 	for _, violation := range f.violations {
 		if !req.WorkerID.IsNil() && violation.WorkerID != req.WorkerID {
 			continue
@@ -110,7 +110,7 @@ func (f *fakeRepo) ListViolations(
 func (f *fakeRepo) GetViolationByID(
 	_ context.Context,
 	req *workerports.GetWorkerDOTViolationByIDRequest,
-) (*worker.WorkerDOTViolation, error) {
+) (*workerdot.WorkerDOTViolation, error) {
 	violation, ok := f.violations[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("violation not found")
@@ -122,7 +122,7 @@ func (f *fakeRepo) GetOpenViolation(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	workerID pulid.ID,
-) (*worker.WorkerDOTViolation, error) {
+) (*workerdot.WorkerDOTViolation, error) {
 	for _, violation := range f.violations {
 		if violation.WorkerID == workerID && !violation.IsResolved() {
 			return violation, nil
@@ -133,8 +133,8 @@ func (f *fakeRepo) GetOpenViolation(
 
 func (f *fakeRepo) CreateViolation(
 	_ context.Context,
-	entity *worker.WorkerDOTViolation,
-) (*worker.WorkerDOTViolation, error) {
+	entity *workerdot.WorkerDOTViolation,
+) (*workerdot.WorkerDOTViolation, error) {
 	if entity.ID.IsNil() {
 		entity.ID = pulid.MustNew("wdotv_")
 	}
@@ -144,8 +144,8 @@ func (f *fakeRepo) CreateViolation(
 
 func (f *fakeRepo) UpdateViolation(
 	_ context.Context,
-	entity *worker.WorkerDOTViolation,
-) (*worker.WorkerDOTViolation, error) {
+	entity *workerdot.WorkerDOTViolation,
+) (*workerdot.WorkerDOTViolation, error) {
 	f.violations[entity.ID] = entity
 	return entity, nil
 }
@@ -153,8 +153,8 @@ func (f *fakeRepo) UpdateViolation(
 func (f *fakeRepo) ListQueries(
 	_ context.Context,
 	req *workerports.ListClearinghouseQueriesRequest,
-) ([]*worker.WorkerClearinghouseQuery, error) {
-	out := make([]*worker.WorkerClearinghouseQuery, 0, len(f.queries))
+) ([]*workerdot.WorkerClearinghouseQuery, error) {
+	out := make([]*workerdot.WorkerClearinghouseQuery, 0, len(f.queries))
 	for _, query := range f.queries {
 		if !req.WorkerID.IsNil() && query.WorkerID != req.WorkerID {
 			continue
@@ -167,7 +167,7 @@ func (f *fakeRepo) ListQueries(
 func (f *fakeRepo) GetQueryByID(
 	_ context.Context,
 	req *workerports.GetClearinghouseQueryByIDRequest,
-) (*worker.WorkerClearinghouseQuery, error) {
+) (*workerdot.WorkerClearinghouseQuery, error) {
 	query, ok := f.queries[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("query not found")
@@ -177,8 +177,8 @@ func (f *fakeRepo) GetQueryByID(
 
 func (f *fakeRepo) CreateQuery(
 	_ context.Context,
-	entity *worker.WorkerClearinghouseQuery,
-) (*worker.WorkerClearinghouseQuery, error) {
+	entity *workerdot.WorkerClearinghouseQuery,
+) (*workerdot.WorkerClearinghouseQuery, error) {
 	if entity.ID.IsNil() {
 		entity.ID = pulid.MustNew("wchq_")
 	}
@@ -188,8 +188,8 @@ func (f *fakeRepo) CreateQuery(
 
 func (f *fakeRepo) UpdateQuery(
 	_ context.Context,
-	entity *worker.WorkerClearinghouseQuery,
-) (*worker.WorkerClearinghouseQuery, error) {
+	entity *workerdot.WorkerClearinghouseQuery,
+) (*workerdot.WorkerClearinghouseQuery, error) {
 	f.queries[entity.ID] = entity
 	return entity, nil
 }
@@ -197,14 +197,14 @@ func (f *fakeRepo) UpdateQuery(
 func (f *fakeRepo) ListPools(
 	_ context.Context,
 	_ *workerports.ListDOTRandomPoolsRequest,
-) (*pagination.CursorListResult[*worker.DOTRandomPool], error) {
-	return &pagination.CursorListResult[*worker.DOTRandomPool]{}, nil
+) (*pagination.CursorListResult[*workerdot.DOTRandomPool], error) {
+	return &pagination.CursorListResult[*workerdot.DOTRandomPool]{}, nil
 }
 
 func (f *fakeRepo) GetPoolByID(
 	_ context.Context,
 	req *workerports.GetDOTRandomPoolByIDRequest,
-) (*worker.DOTRandomPool, error) {
+) (*workerdot.DOTRandomPool, error) {
 	pool, ok := f.pools[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("pool not found")
@@ -215,7 +215,7 @@ func (f *fakeRepo) GetPoolByID(
 func (f *fakeRepo) GetDefaultPool(
 	_ context.Context,
 	_ pagination.TenantInfo,
-) (*worker.DOTRandomPool, error) {
+) (*workerdot.DOTRandomPool, error) {
 	return f.defaults, nil
 }
 
@@ -228,8 +228,8 @@ func (f *fakeRepo) PoolCodeExists(
 
 func (f *fakeRepo) CreatePool(
 	_ context.Context,
-	entity *worker.DOTRandomPool,
-) (*worker.DOTRandomPool, error) {
+	entity *workerdot.DOTRandomPool,
+) (*workerdot.DOTRandomPool, error) {
 	if entity.ID.IsNil() {
 		entity.ID = pulid.MustNew("drpool_")
 	}
@@ -239,8 +239,8 @@ func (f *fakeRepo) CreatePool(
 
 func (f *fakeRepo) UpdatePool(
 	_ context.Context,
-	entity *worker.DOTRandomPool,
-) (*worker.DOTRandomPool, error) {
+	entity *workerdot.DOTRandomPool,
+) (*workerdot.DOTRandomPool, error) {
 	f.pools[entity.ID] = entity
 	return entity, nil
 }
@@ -256,8 +256,8 @@ func (f *fakeRepo) ClearDefaultPool(
 func (f *fakeRepo) ListDraws(
 	_ context.Context,
 	_ *workerports.ListDOTRandomDrawsRequest,
-) ([]*worker.DOTRandomDraw, error) {
-	out := make([]*worker.DOTRandomDraw, 0, len(f.draws))
+) ([]*workerdot.DOTRandomDraw, error) {
+	out := make([]*workerdot.DOTRandomDraw, 0, len(f.draws))
 	for _, draw := range f.draws {
 		out = append(out, draw)
 	}
@@ -267,7 +267,7 @@ func (f *fakeRepo) ListDraws(
 func (f *fakeRepo) GetDrawByID(
 	_ context.Context,
 	req *workerports.GetDOTRandomDrawByIDRequest,
-) (*worker.DOTRandomDraw, error) {
+) (*workerdot.DOTRandomDraw, error) {
 	draw, ok := f.draws[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("draw not found")
@@ -278,10 +278,10 @@ func (f *fakeRepo) GetDrawByID(
 func (f *fakeRepo) GetDrawByPeriod(
 	_ context.Context,
 	req *workerports.GetDOTRandomDrawByPeriodRequest,
-) (*worker.DOTRandomDraw, error) {
+) (*workerdot.DOTRandomDraw, error) {
 	for _, draw := range f.draws {
 		if draw.PoolID == req.PoolID && draw.PeriodKey == req.PeriodKey &&
-			draw.Status != worker.RandomDrawStatusCancelled {
+			draw.Status != workerdot.RandomDrawStatusCancelled {
 			return draw, nil
 		}
 	}
@@ -290,9 +290,9 @@ func (f *fakeRepo) GetDrawByPeriod(
 
 func (f *fakeRepo) CreateDrawWithEntries(
 	_ context.Context,
-	draw *worker.DOTRandomDraw,
-	entries []*worker.DOTRandomDrawEntry,
-) (*worker.DOTRandomDraw, error) {
+	draw *workerdot.DOTRandomDraw,
+	entries []*workerdot.DOTRandomDrawEntry,
+) (*workerdot.DOTRandomDraw, error) {
 	if draw.ID.IsNil() {
 		draw.ID = pulid.MustNew("drdraw_")
 	}
@@ -310,8 +310,8 @@ func (f *fakeRepo) CreateDrawWithEntries(
 
 func (f *fakeRepo) UpdateDraw(
 	_ context.Context,
-	entity *worker.DOTRandomDraw,
-) (*worker.DOTRandomDraw, error) {
+	entity *workerdot.DOTRandomDraw,
+) (*workerdot.DOTRandomDraw, error) {
 	f.draws[entity.ID] = entity
 	return entity, nil
 }
@@ -326,8 +326,8 @@ func (f *fakeRepo) ListPoolCandidates(
 func (f *fakeRepo) ListDrawEntries(
 	_ context.Context,
 	req *workerports.ListDOTRandomDrawEntriesRequest,
-) ([]*worker.DOTRandomDrawEntry, error) {
-	out := make([]*worker.DOTRandomDrawEntry, 0, len(f.entries))
+) ([]*workerdot.DOTRandomDrawEntry, error) {
+	out := make([]*workerdot.DOTRandomDrawEntry, 0, len(f.entries))
 	for _, entry := range f.entries {
 		if !req.DrawID.IsNil() && entry.DrawID != req.DrawID {
 			continue
@@ -340,7 +340,7 @@ func (f *fakeRepo) ListDrawEntries(
 func (f *fakeRepo) GetDrawEntryByID(
 	_ context.Context,
 	req *workerports.GetDOTRandomDrawEntryByIDRequest,
-) (*worker.DOTRandomDrawEntry, error) {
+) (*workerdot.DOTRandomDrawEntry, error) {
 	entry, ok := f.entries[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("entry not found")
@@ -350,8 +350,8 @@ func (f *fakeRepo) GetDrawEntryByID(
 
 func (f *fakeRepo) UpdateDrawEntry(
 	_ context.Context,
-	entity *worker.DOTRandomDrawEntry,
-) (*worker.DOTRandomDrawEntry, error) {
+	entity *workerdot.DOTRandomDrawEntry,
+) (*workerdot.DOTRandomDrawEntry, error) {
 	f.entries[entity.ID] = entity
 	return entity, nil
 }
@@ -407,31 +407,31 @@ func newHarness(t *testing.T) *harness {
 }
 
 func (h *harness) newTest(
-	testType worker.DOTTestType,
-	substance worker.DOTTestSubstance,
-) *worker.WorkerDOTTest {
+	testType workerdot.DOTTestType,
+	substance workerdot.DOTTestSubstance,
+) *workerdot.WorkerDOTTest {
 	collected := int64(1_700_000_000)
-	return &worker.WorkerDOTTest{
+	return &workerdot.WorkerDOTTest{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
 		TestType:       testType,
 		Substance:      substance,
-		Status:         worker.DOTTestStatusCollected,
-		Result:         worker.DOTResultPending,
+		Status:         workerdot.DOTTestStatusCollected,
+		Result:         workerdot.DOTResultPending,
 		CollectedAt:    &collected,
 	}
 }
 
-func (h *harness) openViolation(t *testing.T) *worker.WorkerDOTViolation {
+func (h *harness) openViolation(t *testing.T) *workerdot.WorkerDOTViolation {
 	t.Helper()
-	violation := &worker.WorkerDOTViolation{
+	violation := &workerdot.WorkerDOTViolation{
 		ID:             pulid.MustNew("wdotv_"),
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
-		ViolationType:  worker.DOTViolationPositiveTest,
-		Status:         worker.DOTViolationStatusOpen,
+		ViolationType:  workerdot.DOTViolationPositiveTest,
+		Status:         workerdot.DOTViolationStatusOpen,
 		OccurredAt:     1_700_000_000,
 	}
 	h.repo.violations[violation.ID] = violation
@@ -447,7 +447,7 @@ func TestRecordResult_ViolatingResultOpensAViolation(t *testing.T) {
 
 	created, err := h.svc.RecordTest(
 		t.Context(),
-		h.newTest(worker.DOTTestRandom, worker.DOTSubstanceDrug),
+		h.newTest(workerdot.DOTTestRandom, workerdot.DOTSubstanceDrug),
 		h.userID,
 	)
 	require.NoError(t, err)
@@ -455,7 +455,7 @@ func TestRecordResult_ViolatingResultOpensAViolation(t *testing.T) {
 	_, err = h.svc.RecordResult(t.Context(), &workerdrugalcoholservice.RecordResultRequest{
 		TenantInfo: h.tenant,
 		TestID:     created.ID,
-		Result:     worker.DOTResultPositive,
+		Result:     workerdot.DOTResultPositive,
 		ResultAt:   1_700_100_000,
 		UserID:     h.userID,
 	})
@@ -464,7 +464,7 @@ func TestRecordResult_ViolatingResultOpensAViolation(t *testing.T) {
 	violation, err := h.repo.GetOpenViolation(t.Context(), h.tenant, h.workerID)
 	require.NoError(t, err)
 	require.NotNil(t, violation)
-	assert.Equal(t, worker.DOTViolationPositiveTest, violation.ViolationType)
+	assert.Equal(t, workerdot.DOTViolationPositiveTest, violation.ViolationType)
 	assert.Equal(t, created.ID, violation.SourceTestID)
 	assert.True(t, violation.Prohibits())
 }
@@ -476,7 +476,7 @@ func TestRecordResult_RefusalOpensARefusalViolation(t *testing.T) {
 
 	created, err := h.svc.RecordTest(
 		t.Context(),
-		h.newTest(worker.DOTTestRandom, worker.DOTSubstanceDrug),
+		h.newTest(workerdot.DOTTestRandom, workerdot.DOTSubstanceDrug),
 		h.userID,
 	)
 	require.NoError(t, err)
@@ -484,7 +484,7 @@ func TestRecordResult_RefusalOpensARefusalViolation(t *testing.T) {
 	_, err = h.svc.RecordResult(t.Context(), &workerdrugalcoholservice.RecordResultRequest{
 		TenantInfo: h.tenant,
 		TestID:     created.ID,
-		Result:     worker.DOTResultAdulterated,
+		Result:     workerdot.DOTResultAdulterated,
 		UserID:     h.userID,
 	})
 	require.NoError(t, err)
@@ -492,7 +492,7 @@ func TestRecordResult_RefusalOpensARefusalViolation(t *testing.T) {
 	violation, err := h.repo.GetOpenViolation(t.Context(), h.tenant, h.workerID)
 	require.NoError(t, err)
 	require.NotNil(t, violation)
-	assert.Equal(t, worker.DOTViolationTestRefusal, violation.ViolationType)
+	assert.Equal(t, workerdot.DOTViolationTestRefusal, violation.ViolationType)
 }
 
 // The concentration decides the result. A clerk who files a 0.11 as negative
@@ -503,7 +503,7 @@ func TestRecordResult_AlcoholConcentrationGradesItself(t *testing.T) {
 
 	created, err := h.svc.RecordTest(
 		t.Context(),
-		h.newTest(worker.DOTTestRandom, worker.DOTSubstanceAlcohol),
+		h.newTest(workerdot.DOTTestRandom, workerdot.DOTSubstanceAlcohol),
 		h.userID,
 	)
 	require.NoError(t, err)
@@ -512,17 +512,17 @@ func TestRecordResult_AlcoholConcentrationGradesItself(t *testing.T) {
 	updated, err := h.svc.RecordResult(t.Context(), &workerdrugalcoholservice.RecordResultRequest{
 		TenantInfo:           h.tenant,
 		TestID:               created.ID,
-		Result:               worker.DOTResultNegative,
+		Result:               workerdot.DOTResultNegative,
 		AlcoholConcentration: &reading,
 		UserID:               h.userID,
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, worker.DOTResultPositive, updated.Result)
+	assert.Equal(t, workerdot.DOTResultPositive, updated.Result)
 	violation, err := h.repo.GetOpenViolation(t.Context(), h.tenant, h.workerID)
 	require.NoError(t, err)
 	require.NotNil(t, violation)
-	assert.Equal(t, worker.DOTViolationAlcoholUse, violation.ViolationType)
+	assert.Equal(t, workerdot.DOTViolationAlcoholUse, violation.ViolationType)
 }
 
 func TestRecordResult_AlcoholNeedsAConcentration(t *testing.T) {
@@ -531,7 +531,7 @@ func TestRecordResult_AlcoholNeedsAConcentration(t *testing.T) {
 
 	created, err := h.svc.RecordTest(
 		t.Context(),
-		h.newTest(worker.DOTTestRandom, worker.DOTSubstanceAlcohol),
+		h.newTest(workerdot.DOTTestRandom, workerdot.DOTSubstanceAlcohol),
 		h.userID,
 	)
 	require.NoError(t, err)
@@ -539,7 +539,7 @@ func TestRecordResult_AlcoholNeedsAConcentration(t *testing.T) {
 	_, err = h.svc.RecordResult(t.Context(), &workerdrugalcoholservice.RecordResultRequest{
 		TenantInfo: h.tenant,
 		TestID:     created.ID,
-		Result:     worker.DOTResultNegative,
+		Result:     workerdot.DOTResultNegative,
 		UserID:     h.userID,
 	})
 
@@ -555,7 +555,7 @@ func TestRecordResult_CompletedTestIsTerminal(t *testing.T) {
 
 	created, err := h.svc.RecordTest(
 		t.Context(),
-		h.newTest(worker.DOTTestRandom, worker.DOTSubstanceDrug),
+		h.newTest(workerdot.DOTTestRandom, workerdot.DOTSubstanceDrug),
 		h.userID,
 	)
 	require.NoError(t, err)
@@ -563,7 +563,7 @@ func TestRecordResult_CompletedTestIsTerminal(t *testing.T) {
 	req := &workerdrugalcoholservice.RecordResultRequest{
 		TenantInfo: h.tenant,
 		TestID:     created.ID,
-		Result:     worker.DOTResultNegative,
+		Result:     workerdot.DOTResultNegative,
 		UserID:     h.userID,
 	}
 	_, err = h.svc.RecordResult(t.Context(), req)
@@ -583,7 +583,7 @@ func TestRecordResult_ReturnToDutyRefusedBeforeSAPEvaluation(t *testing.T) {
 
 	created, err := h.svc.RecordTest(
 		t.Context(),
-		h.newTest(worker.DOTTestReturnToDuty, worker.DOTSubstanceDrug),
+		h.newTest(workerdot.DOTTestReturnToDuty, workerdot.DOTSubstanceDrug),
 		h.userID,
 	)
 	require.NoError(t, err)
@@ -591,7 +591,7 @@ func TestRecordResult_ReturnToDutyRefusedBeforeSAPEvaluation(t *testing.T) {
 	_, err = h.svc.RecordResult(t.Context(), &workerdrugalcoholservice.RecordResultRequest{
 		TenantInfo: h.tenant,
 		TestID:     created.ID,
-		Result:     worker.DOTResultNegative,
+		Result:     workerdot.DOTResultNegative,
 		UserID:     h.userID,
 	})
 
@@ -607,11 +607,11 @@ func TestRecordResult_ReturnToDutyReleasesTheDriver(t *testing.T) {
 	evaluated := int64(1_700_020_000)
 	violation.SAPReferredAt = &referred
 	violation.SAPEvaluationCompletedAt = &evaluated
-	violation.Status = worker.DOTViolationStatusRTDPending
+	violation.Status = workerdot.DOTViolationStatusRTDPending
 
 	created, err := h.svc.RecordTest(
 		t.Context(),
-		h.newTest(worker.DOTTestReturnToDuty, worker.DOTSubstanceDrug),
+		h.newTest(workerdot.DOTTestReturnToDuty, workerdot.DOTSubstanceDrug),
 		h.userID,
 	)
 	require.NoError(t, err)
@@ -619,7 +619,7 @@ func TestRecordResult_ReturnToDutyReleasesTheDriver(t *testing.T) {
 	_, err = h.svc.RecordResult(t.Context(), &workerdrugalcoholservice.RecordResultRequest{
 		TenantInfo: h.tenant,
 		TestID:     created.ID,
-		Result:     worker.DOTResultNegative,
+		Result:     workerdot.DOTResultNegative,
 		UserID:     h.userID,
 	})
 	require.NoError(t, err)
@@ -627,11 +627,11 @@ func TestRecordResult_ReturnToDutyReleasesTheDriver(t *testing.T) {
 	updated, err := h.repo.GetOpenViolation(t.Context(), h.tenant, h.workerID)
 	require.NoError(t, err)
 	require.NotNil(t, updated)
-	assert.Equal(t, worker.DOTViolationStatusFollowUp, updated.Status)
+	assert.Equal(t, workerdot.DOTViolationStatusFollowUp, updated.Status)
 	assert.False(t, updated.Prohibits())
 	// The SAP sets the programme; where none has been recorded the regulation's
 	// floor applies rather than nothing at all.
-	assert.Equal(t, int32(worker.MinimumFollowUpTests), updated.FollowUpTestCount)
+	assert.Equal(t, int32(workerdot.MinimumFollowUpTests), updated.FollowUpTestCount)
 }
 
 // The last follow-up test closes the violation on its own. Leaving it open
@@ -649,11 +649,11 @@ func TestRecordResult_FollowUpProgrammeResolvesItself(t *testing.T) {
 	violation.RTDCompletedAt = &returned
 	violation.FollowUpTestCount = 2
 	violation.FollowUpTestsCompleted = 1
-	violation.Status = worker.DOTViolationStatusFollowUp
+	violation.Status = workerdot.DOTViolationStatusFollowUp
 
 	created, err := h.svc.RecordTest(
 		t.Context(),
-		h.newTest(worker.DOTTestFollowUp, worker.DOTSubstanceDrug),
+		h.newTest(workerdot.DOTTestFollowUp, workerdot.DOTSubstanceDrug),
 		h.userID,
 	)
 	require.NoError(t, err)
@@ -661,7 +661,7 @@ func TestRecordResult_FollowUpProgrammeResolvesItself(t *testing.T) {
 	_, err = h.svc.RecordResult(t.Context(), &workerdrugalcoholservice.RecordResultRequest{
 		TenantInfo: h.tenant,
 		TestID:     created.ID,
-		Result:     worker.DOTResultNegative,
+		Result:     workerdot.DOTResultNegative,
 		UserID:     h.userID,
 	})
 	require.NoError(t, err)
@@ -669,7 +669,7 @@ func TestRecordResult_FollowUpProgrammeResolvesItself(t *testing.T) {
 	open, err := h.repo.GetOpenViolation(t.Context(), h.tenant, h.workerID)
 	require.NoError(t, err)
 	assert.Nil(t, open, "the programme is finished, so nothing should still be open")
-	assert.Equal(t, worker.DOTViolationStatusResolved, violation.Status)
+	assert.Equal(t, workerdot.DOTViolationStatusResolved, violation.Status)
 	require.NotNil(t, violation.ResolvedAt)
 }
 
@@ -683,7 +683,7 @@ func TestRecordResult_SecondViolationJoinsTheOpenOne(t *testing.T) {
 
 	created, err := h.svc.RecordTest(
 		t.Context(),
-		h.newTest(worker.DOTTestRandom, worker.DOTSubstanceDrug),
+		h.newTest(workerdot.DOTTestRandom, workerdot.DOTSubstanceDrug),
 		h.userID,
 	)
 	require.NoError(t, err)
@@ -691,7 +691,7 @@ func TestRecordResult_SecondViolationJoinsTheOpenOne(t *testing.T) {
 	_, err = h.svc.RecordResult(t.Context(), &workerdrugalcoholservice.RecordResultRequest{
 		TenantInfo: h.tenant,
 		TestID:     created.ID,
-		Result:     worker.DOTResultPositive,
+		Result:     workerdot.DOTResultPositive,
 		UserID:     h.userID,
 	})
 	require.NoError(t, err)
@@ -705,41 +705,41 @@ func TestRecordTest_ClosesTheRandomSelection(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	entry := &worker.DOTRandomDrawEntry{
+	entry := &workerdot.DOTRandomDrawEntry{
 		ID:             pulid.MustNew("drde_"),
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
-		Substance:      worker.DOTSubstanceDrug,
-		Status:         worker.RandomEntryNotified,
+		Substance:      workerdot.DOTSubstanceDrug,
+		Status:         workerdot.RandomEntryNotified,
 	}
 	h.repo.entries[entry.ID] = entry
 
-	test := h.newTest(worker.DOTTestRandom, worker.DOTSubstanceDrug)
+	test := h.newTest(workerdot.DOTTestRandom, workerdot.DOTSubstanceDrug)
 	test.DrawEntryID = entry.ID
-	test.Status = worker.DOTTestStatusCompleted
-	test.Result = worker.DOTResultNegative
+	test.Status = workerdot.DOTTestStatusCompleted
+	test.Result = workerdot.DOTResultNegative
 	resultAt := int64(1_700_100_000)
 	test.ResultAt = &resultAt
 
 	created, err := h.svc.RecordTest(t.Context(), test, h.userID)
 	require.NoError(t, err)
 
-	assert.Equal(t, worker.RandomEntryCompleted, entry.Status)
+	assert.Equal(t, workerdot.RandomEntryCompleted, entry.Status)
 	assert.Equal(t, created.ID, entry.TestID)
 	require.NotNil(t, entry.CompletedAt)
 }
 
-func newPool(tenant pagination.TenantInfo) *worker.DOTRandomPool {
-	return &worker.DOTRandomPool{
+func newPool(tenant pagination.TenantInfo) *workerdot.DOTRandomPool {
+	return &workerdot.DOTRandomPool{
 		ID:                 pulid.MustNew("drpool_"),
 		OrganizationID:     tenant.OrgID,
 		BusinessUnitID:     tenant.BuID,
 		Code:               "DOT",
 		Name:               "DOT Random Pool",
-		Period:             worker.RandomPeriodQuarterly,
-		DrugRatePercent:    worker.DOTMinimumDrugRatePercent,
-		AlcoholRatePercent: worker.DOTMinimumAlcoholRatePercent,
+		Period:             workerdot.RandomPeriodQuarterly,
+		DrugRatePercent:    workerdot.DOTMinimumDrugRatePercent,
+		AlcoholRatePercent: workerdot.DOTMinimumAlcoholRatePercent,
 		IsDefault:          true,
 	}
 }
@@ -772,7 +772,7 @@ func TestRunDraw_SelectsToTargetAndRecordsItsEvidence(t *testing.T) {
 	// Without the seed and the method the selection is unverifiable, which is
 	// the whole point of keeping the round.
 	assert.NotEmpty(t, draw.Seed)
-	assert.Equal(t, worker.RandomSelectionMethod, draw.Method)
+	assert.Equal(t, workerdot.RandomSelectionMethod, draw.Method)
 	assert.NotEmpty(t, draw.PeriodKey)
 	assert.Greater(t, draw.PeriodEnd, draw.PeriodStart)
 }
@@ -836,21 +836,21 @@ func TestUpdateDrawEntry_CompletionIsNotSetByHand(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	entry := &worker.DOTRandomDrawEntry{
+	entry := &workerdot.DOTRandomDrawEntry{
 		ID:             pulid.MustNew("drde_"),
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		DrawID:         pulid.MustNew("drdraw_"),
 		WorkerID:       h.workerID,
-		Substance:      worker.DOTSubstanceDrug,
-		Status:         worker.RandomEntrySelected,
+		Substance:      workerdot.DOTSubstanceDrug,
+		Status:         workerdot.RandomEntrySelected,
 	}
 	h.repo.entries[entry.ID] = entry
 
 	_, err := h.svc.UpdateDrawEntry(t.Context(), &workerdrugalcoholservice.UpdateEntryRequest{
 		TenantInfo: h.tenant,
 		EntryID:    entry.ID,
-		Status:     worker.RandomEntryCompleted,
+		Status:     workerdot.RandomEntryCompleted,
 		UserID:     h.userID,
 	})
 
@@ -862,11 +862,11 @@ func TestCompleteQuery_RefreshesTheStanding(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	query, err := h.svc.RecordQuery(t.Context(), &worker.WorkerClearinghouseQuery{
+	query, err := h.svc.RecordQuery(t.Context(), &workerdot.WorkerClearinghouseQuery{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
-		QueryType:      worker.ClearinghouseQueryAnnualLimited,
+		QueryType:      workerdot.ClearinghouseQueryAnnualLimited,
 		RequestedAt:    1_700_000_000,
 	}, h.userID)
 	require.NoError(t, err)
@@ -874,7 +874,7 @@ func TestCompleteQuery_RefreshesTheStanding(t *testing.T) {
 	_, err = h.svc.CompleteQuery(t.Context(), &workerdrugalcoholservice.CompleteQueryRequest{
 		TenantInfo:     h.tenant,
 		QueryID:        query.ID,
-		Result:         worker.ClearinghouseResultViolationsFound,
+		Result:         workerdot.ClearinghouseResultViolationsFound,
 		CompletedAt:    1_700_100_000,
 		ViolationCount: 1,
 		UserID:         h.userID,
@@ -891,11 +891,11 @@ func TestCompleteQuery_AnsweredQueryCannotBeAnsweredAgain(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	query, err := h.svc.RecordQuery(t.Context(), &worker.WorkerClearinghouseQuery{
+	query, err := h.svc.RecordQuery(t.Context(), &workerdot.WorkerClearinghouseQuery{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
-		QueryType:      worker.ClearinghouseQueryAnnualLimited,
+		QueryType:      workerdot.ClearinghouseQueryAnnualLimited,
 		RequestedAt:    1_700_000_000,
 	}, h.userID)
 	require.NoError(t, err)
@@ -903,7 +903,7 @@ func TestCompleteQuery_AnsweredQueryCannotBeAnsweredAgain(t *testing.T) {
 	req := &workerdrugalcoholservice.CompleteQueryRequest{
 		TenantInfo:  h.tenant,
 		QueryID:     query.ID,
-		Result:      worker.ClearinghouseResultNoViolations,
+		Result:      workerdot.ClearinghouseResultNoViolations,
 		CompletedAt: 1_700_100_000,
 		UserID:      h.userID,
 	}
@@ -920,11 +920,11 @@ func TestRecordViolation_RefusesASecondOpenOne(t *testing.T) {
 	h := newHarness(t)
 	h.openViolation(t)
 
-	_, err := h.svc.RecordViolation(t.Context(), &worker.WorkerDOTViolation{
+	_, err := h.svc.RecordViolation(t.Context(), &workerdot.WorkerDOTViolation{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
-		ViolationType:  worker.DOTViolationActualKnowledge,
+		ViolationType:  workerdot.DOTViolationActualKnowledge,
 		OccurredAt:     1_700_200_000,
 	}, h.userID)
 
@@ -939,12 +939,12 @@ func TestStanding_ProhibitionOutranksPassedTests(t *testing.T) {
 
 	created, err := h.svc.RecordTest(
 		t.Context(),
-		h.newTest(worker.DOTTestPreEmployment, worker.DOTSubstanceDrug),
+		h.newTest(workerdot.DOTTestPreEmployment, workerdot.DOTSubstanceDrug),
 		h.userID,
 	)
 	require.NoError(t, err)
-	created.Status = worker.DOTTestStatusCompleted
-	created.Result = worker.DOTResultNegative
+	created.Status = workerdot.DOTTestStatusCompleted
+	created.Result = workerdot.DOTResultNegative
 
 	standing, err := h.svc.Standing(t.Context(), h.tenant, h.workerID)
 	require.NoError(t, err)
@@ -964,7 +964,7 @@ func TestRecordResult_ReturnToDutyRefusalLeavesNothingBehind(t *testing.T) {
 
 	created, err := h.svc.RecordTest(
 		t.Context(),
-		h.newTest(worker.DOTTestReturnToDuty, worker.DOTSubstanceDrug),
+		h.newTest(workerdot.DOTTestReturnToDuty, workerdot.DOTSubstanceDrug),
 		h.userID,
 	)
 	require.NoError(t, err)
@@ -972,7 +972,7 @@ func TestRecordResult_ReturnToDutyRefusalLeavesNothingBehind(t *testing.T) {
 	_, err = h.svc.RecordResult(t.Context(), &workerdrugalcoholservice.RecordResultRequest{
 		TenantInfo: h.tenant,
 		TestID:     created.ID,
-		Result:     worker.DOTResultNegative,
+		Result:     workerdot.DOTResultNegative,
 		UserID:     h.userID,
 	})
 	require.Error(t, err)
@@ -982,7 +982,7 @@ func TestRecordResult_ReturnToDutyRefusalLeavesNothingBehind(t *testing.T) {
 	stored := h.repo.tests[created.ID]
 	require.NotNil(t, stored)
 	assert.True(t, stored.IsOpen(), "the refused result must not have been written")
-	assert.Equal(t, worker.DOTResultPending, stored.Result)
+	assert.Equal(t, workerdot.DOTResultPending, stored.Result)
 }
 
 // The same guard has to hold for a test recorded already-completed, which is
@@ -992,9 +992,9 @@ func TestRecordTest_ReturnToDutyRecordedCompleteIsRefusedBeforeInsert(t *testing
 	h := newHarness(t)
 	h.openViolation(t)
 
-	test := h.newTest(worker.DOTTestReturnToDuty, worker.DOTSubstanceDrug)
-	test.Status = worker.DOTTestStatusCompleted
-	test.Result = worker.DOTResultNegative
+	test := h.newTest(workerdot.DOTTestReturnToDuty, workerdot.DOTSubstanceDrug)
+	test.Status = workerdot.DOTTestStatusCompleted
+	test.Result = workerdot.DOTResultNegative
 	resultAt := int64(1_700_100_000)
 	test.ResultAt = &resultAt
 

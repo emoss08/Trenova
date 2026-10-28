@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -46,7 +46,7 @@ type CredentialKeeper interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*worker.WorkerCredential, error)
+	) (*workercredential.WorkerCredential, error)
 	PlanCreate(
 		ctx context.Context,
 		req *workercredentialservice.CreateRequest,
@@ -54,17 +54,17 @@ type CredentialKeeper interface {
 	Create(
 		ctx context.Context,
 		req *workercredentialservice.CreateRequest,
-	) (*worker.WorkerCredential, error)
+	) (*workercredential.WorkerCredential, error)
 	PlanUpdate(
 		ctx context.Context,
-		entity *worker.WorkerCredential,
+		entity *workercredential.WorkerCredential,
 		actor *permissionports.RequestActor,
 	) (*workercredentialservice.CredentialChange, error)
 	Update(
 		ctx context.Context,
-		entity *worker.WorkerCredential,
+		entity *workercredential.WorkerCredential,
 		actor *permissionports.RequestActor,
-	) (*worker.WorkerCredential, error)
+	) (*workercredential.WorkerCredential, error)
 	PlanArchive(
 		ctx context.Context,
 		req *workercredentialservice.StatusRequest,
@@ -72,7 +72,7 @@ type CredentialKeeper interface {
 	Archive(
 		ctx context.Context,
 		req *workercredentialservice.StatusRequest,
-	) (*worker.WorkerCredential, error)
+	) (*workercredential.WorkerCredential, error)
 	PlanAttachDocument(
 		ctx context.Context,
 		req *workercredentialservice.AttachDocumentRequest,
@@ -80,7 +80,7 @@ type CredentialKeeper interface {
 	AttachDocument(
 		ctx context.Context,
 		req *workercredentialservice.AttachDocumentRequest,
-	) (*worker.WorkerCredential, error)
+	) (*workercredential.WorkerCredential, error)
 }
 
 func CredentialToolProviders() []any {
@@ -97,7 +97,7 @@ func credentialIDProperty() map[string]any {
 		"worker_list_credentials")
 }
 
-func credentialRecord(credential *worker.WorkerCredential) toolpreview.Record {
+func credentialRecord(credential *workercredential.WorkerCredential) toolpreview.Record {
 	label := "Credential"
 	if credential.CredentialType != nil {
 		label = credential.CredentialType.Name
@@ -119,7 +119,7 @@ func credentialFactProperties() map[string]any {
 	}
 }
 
-func applyCredentialFacts(entity *worker.WorkerCredential, params map[string]any) error {
+func applyCredentialFacts(entity *workercredential.WorkerCredential, params map[string]any) error {
 	var err error
 	if number, numErr := common.OptionalBoundedText(params, paramCredentialNumber,
 		maxCredentialField); numErr != nil {
@@ -177,7 +177,7 @@ func credentialCreateFrom(
 	if err != nil {
 		return nil, err
 	}
-	entity := &worker.WorkerCredential{
+	entity := &workercredential.WorkerCredential{
 		OrganizationID:   params.OrganizationID,
 		BusinessUnitID:   params.BusinessUnitID,
 		WorkerID:         workerID,
@@ -248,7 +248,7 @@ func newRecordWorkerCredentialTool(credentials CredentialKeeper) agenttoolports.
 				credentialRecord(plan.Credential).Label)
 			if plan.Superseded != nil {
 				archived := *plan.Superseded
-				archived.Status = worker.CredentialStatusArchived
+				archived.Status = workercredential.CredentialStatusArchived
 				superseded, supErr := toolpreview.Changed(credentialRecord(plan.Superseded),
 					plan.Superseded, &archived, wfOptions(common.FieldStatus)...)
 				if supErr != nil {
@@ -282,7 +282,7 @@ type credentialEdit struct {
 func (e *credentialEdit) entity(
 	ctx context.Context,
 	credentials CredentialKeeper,
-) (*worker.WorkerCredential, error) {
+) (*workercredential.WorkerCredential, error) {
 	current, err := credentials.Get(ctx, common.TenantFrom(*e.params), e.id)
 	if err != nil {
 		return nil, err

@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/jobs/ptojobs/ptocontract"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -27,7 +27,7 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
-func (r *MutationResolver) CreatePTOPolicy(ctx context.Context, input gqlmodel.PTOPolicyInput) (*worker.PTOPolicy, error) {
+func (r *MutationResolver) CreatePTOPolicy(ctx context.Context, input gqlmodel.PTOPolicyInput) (*pto.PTOPolicy, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePTOPolicy, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (r *MutationResolver) CreatePTOPolicy(ctx context.Context, input gqlmodel.P
 	return r.PtoPolicyService.Create(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) UpdatePTOPolicy(ctx context.Context, id string, input gqlmodel.PTOPolicyInput) (*worker.PTOPolicy, error) {
+func (r *MutationResolver) UpdatePTOPolicy(ctx context.Context, id string, input gqlmodel.PTOPolicyInput) (*pto.PTOPolicy, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePTOPolicy, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (r *MutationResolver) UpdatePTOPolicy(ctx context.Context, id string, input
 	return r.PtoPolicyService.Update(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) ArchivePTOPolicy(ctx context.Context, id string, version *int) (*worker.PTOPolicy, error) {
+func (r *MutationResolver) ArchivePTOPolicy(ctx context.Context, id string, version *int) (*pto.PTOPolicy, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePTOPolicy, permission.OpArchive)
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func (r *MutationResolver) ArchivePTOPolicy(ctx context.Context, id string, vers
 	})
 }
 
-func (r *MutationResolver) RestorePTOPolicy(ctx context.Context, id string, version *int) (*worker.PTOPolicy, error) {
+func (r *MutationResolver) RestorePTOPolicy(ctx context.Context, id string, version *int) (*pto.PTOPolicy, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePTOPolicy, permission.OpRestore)
 	if err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ func (r *MutationResolver) AssignWorkerPTOPolicy(ctx context.Context, input gqlm
 	})
 }
 
-func (r *MutationResolver) EndWorkerPTOPolicyAssignment(ctx context.Context, input gqlmodel.EndWorkerPTOPolicyAssignmentInput) (*worker.WorkerPTOPolicyAssignment, error) {
+func (r *MutationResolver) EndWorkerPTOPolicyAssignment(ctx context.Context, input gqlmodel.EndWorkerPTOPolicyAssignmentInput) (*pto.WorkerPTOPolicyAssignment, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePTOPolicy, permission.OpAssign)
 	if err != nil {
 		return nil, err
@@ -148,7 +148,7 @@ func (r *MutationResolver) EndWorkerPTOPolicyAssignment(ctx context.Context, inp
 	})
 }
 
-func (r *MutationResolver) AdjustWorkerPTOBalance(ctx context.Context, input gqlmodel.AdjustWorkerPTOBalanceInput) (*worker.WorkerPTOLedgerEntry, error) {
+func (r *MutationResolver) AdjustWorkerPTOBalance(ctx context.Context, input gqlmodel.AdjustWorkerPTOBalanceInput) (*pto.WorkerPTOLedgerEntry, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerPTO, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -254,11 +254,11 @@ func (r *MutationResolver) RunPTOAccrual(ctx context.Context, input gqlmodel.Run
 	}, nil
 }
 
-func (r *PTOAccrualTierResolver) AccrualAmountDays(ctx context.Context, obj *worker.PTOAccrualTier) (string, error) {
+func (r *PTOAccrualTierResolver) AccrualAmountDays(ctx context.Context, obj *pto.PTOAccrualTier) (string, error) {
 	return base.DecimalString(obj.AccrualAmountDays), nil
 }
 
-func (r *PTOAccrualTierResolver) MaxBalanceDays(ctx context.Context, obj *worker.PTOAccrualTier) (*string, error) {
+func (r *PTOAccrualTierResolver) MaxBalanceDays(ctx context.Context, obj *pto.PTOAccrualTier) (*string, error) {
 	return base.NullDecimalStringPtr(obj.MaxBalanceDays), nil
 }
 
@@ -334,26 +334,26 @@ func (r *PTOLiabilityRowResolver) LiabilityDays(ctx context.Context, obj *ptoled
 	return base.DecimalString(obj.LiabilityDays), nil
 }
 
-func (r *PTOPolicyResolver) NegativeFloorDays(ctx context.Context, obj *worker.PTOPolicy) (string, error) {
+func (r *PTOPolicyResolver) NegativeFloorDays(ctx context.Context, obj *pto.PTOPolicy) (string, error) {
 	return base.DecimalString(obj.NegativeFloorDays), nil
 }
 
-func (r *PTOPolicyResolver) OpenAssignmentCount(ctx context.Context, obj *worker.PTOPolicy) (int, error) {
+func (r *PTOPolicyResolver) OpenAssignmentCount(ctx context.Context, obj *pto.PTOPolicy) (int, error) {
 	if loaders.Available(ctx) {
 		return loaders.PTOPolicyOpenAssignmentCount(ctx, obj.ID.String())
 	}
 	return r.PtoPolicyService.CountOpenAssignments(ctx, obj)
 }
 
-func (r *PTOPolicyRuleResolver) AccrualAmountDays(ctx context.Context, obj *worker.PTOPolicyRule) (string, error) {
+func (r *PTOPolicyRuleResolver) AccrualAmountDays(ctx context.Context, obj *pto.PTOPolicyRule) (string, error) {
 	return base.DecimalString(obj.AccrualAmountDays), nil
 }
 
-func (r *PTOPolicyRuleResolver) MaxBalanceDays(ctx context.Context, obj *worker.PTOPolicyRule) (*string, error) {
+func (r *PTOPolicyRuleResolver) MaxBalanceDays(ctx context.Context, obj *pto.PTOPolicyRule) (*string, error) {
 	return base.NullDecimalStringPtr(obj.MaxBalanceDays), nil
 }
 
-func (r *PTOPolicyRuleResolver) CarryoverCapDays(ctx context.Context, obj *worker.PTOPolicyRule) (*string, error) {
+func (r *PTOPolicyRuleResolver) CarryoverCapDays(ctx context.Context, obj *pto.PTOPolicyRule) (*string, error) {
 	return base.NullDecimalStringPtr(obj.CarryoverCapDays), nil
 }
 
@@ -392,7 +392,7 @@ func (r *QueryResolver) PTOPolicies(ctx context.Context, input gqlmodel.PTOPolic
 	return ptoPolicyCursorConnectionToModel(result)
 }
 
-func (r *QueryResolver) PTOPolicy(ctx context.Context, id string) (*worker.PTOPolicy, error) {
+func (r *QueryResolver) PTOPolicy(ctx context.Context, id string) (*pto.PTOPolicy, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePTOPolicy, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -410,7 +410,7 @@ func (r *QueryResolver) PTOPolicy(ctx context.Context, id string) (*worker.PTOPo
 	})
 }
 
-func (r *QueryResolver) WorkerPTOPolicyAssignments(ctx context.Context, workerID string) ([]*worker.WorkerPTOPolicyAssignment, error) {
+func (r *QueryResolver) WorkerPTOPolicyAssignments(ctx context.Context, workerID string) ([]*pto.WorkerPTOPolicyAssignment, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePTOPolicy, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -514,7 +514,7 @@ func (r *QueryResolver) WorkerPTOAvailability(ctx context.Context, input gqlmode
 	if err != nil {
 		return nil, err
 	}
-	days := worker.ComputePTODays(int64(input.StartDate), int64(input.EndDate), loc, countWeekends, holidays)
+	days := pto.ComputePTODays(int64(input.StartDate), int64(input.EndDate), loc, countWeekends, holidays)
 
 	return r.PtoLedgerService.CheckAvailability(ctx, &ptoledgerservice.AvailabilityRequest{
 		TenantInfo:   info,
@@ -600,42 +600,42 @@ func (r *WorkerPTOBalanceResolver) MaxBalanceDays(ctx context.Context, obj *ptol
 	return base.NullDecimalStringPtr(obj.MaxBalanceDays), nil
 }
 
-func (r *WorkerPTOLedgerEntryResolver) AmountDays(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (string, error) {
+func (r *WorkerPTOLedgerEntryResolver) AmountDays(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (string, error) {
 	return base.DecimalString(obj.AmountDays), nil
 }
 
-func (r *WorkerPTOLedgerEntryResolver) BalanceAfterDays(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (string, error) {
+func (r *WorkerPTOLedgerEntryResolver) BalanceAfterDays(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (string, error) {
 	return base.DecimalString(obj.BalanceAfterDays), nil
 }
 
-func (r *WorkerPTOLedgerEntryResolver) PeriodKey(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error) {
+func (r *WorkerPTOLedgerEntryResolver) PeriodKey(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error) {
 	return stringutils.Ptr(obj.PeriodKey), nil
 }
 
-func (r *WorkerPTOLedgerEntryResolver) SourcePTOID(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error) {
+func (r *WorkerPTOLedgerEntryResolver) SourcePTOID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error) {
 	return base.IDPtr(obj.SourcePTOID), nil
 }
 
-func (r *WorkerPTOLedgerEntryResolver) AssignmentID(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error) {
+func (r *WorkerPTOLedgerEntryResolver) AssignmentID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error) {
 	return base.IDPtr(obj.AssignmentID), nil
 }
 
-func (r *WorkerPTOLedgerEntryResolver) PTOPolicyID(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error) {
+func (r *WorkerPTOLedgerEntryResolver) PTOPolicyID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error) {
 	return base.IDPtr(obj.PTOPolicyID), nil
 }
 
-func (r *WorkerPTOLedgerEntryResolver) CreatedByID(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error) {
+func (r *WorkerPTOLedgerEntryResolver) CreatedByID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error) {
 	return base.IDPtr(obj.CreatedByID), nil
 }
 
-func (r *WorkerPTOLedgerEntryResolver) Note(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error) {
+func (r *WorkerPTOLedgerEntryResolver) Note(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error) {
 	return stringutils.Ptr(obj.Note), nil
 }
 
-func (r *WorkerPTOPolicyAssignmentResolver) PTOPolicy(ctx context.Context, obj *worker.WorkerPTOPolicyAssignment) (*worker.PTOPolicy, error) {
+func (r *WorkerPTOPolicyAssignmentResolver) PTOPolicy(ctx context.Context, obj *pto.WorkerPTOPolicyAssignment) (*pto.PTOPolicy, error) {
 	return obj.Policy, nil
 }
 
-func (r *WorkerPTOPolicyAssignmentResolver) AssignedByID(ctx context.Context, obj *worker.WorkerPTOPolicyAssignment) (*string, error) {
+func (r *WorkerPTOPolicyAssignmentResolver) AssignedByID(ctx context.Context, obj *pto.WorkerPTOPolicyAssignment) (*string, error) {
 	return base.IDPtr(obj.AssignedByID), nil
 }

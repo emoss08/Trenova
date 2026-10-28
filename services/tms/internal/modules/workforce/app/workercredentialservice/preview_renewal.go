@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -16,7 +16,7 @@ var errRenewalUndeliverable = errors.New(
 // RenewalPreview is a renewal ask as the driver would receive it and the
 // papers it names.
 type RenewalPreview struct {
-	Credentials  []*worker.WorkerCredential
+	Credentials  []*workercredential.WorkerCredential
 	Notification *notificationports.DriverNotificationPreview
 }
 

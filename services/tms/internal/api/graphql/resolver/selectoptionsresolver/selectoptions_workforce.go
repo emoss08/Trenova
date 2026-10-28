@@ -6,7 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -50,7 +53,7 @@ func (r *Deps) resolveWorkerCredentialTypeSelectOptions(
 }
 
 func workerCredentialTypeSelectOptionItem(
-	entity *worker.WorkerCredentialType,
+	entity *workercredential.WorkerCredentialType,
 ) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		&gqlmodel.SelectOption{
@@ -110,7 +113,9 @@ func (r *Deps) resolveTrainingCourseSelectOptions(
 	)
 }
 
-func trainingCourseSelectOptionItem(entity *worker.TrainingCourse) selectOptionConnectionItem {
+func trainingCourseSelectOptionItem(
+	entity *workertraining.TrainingCourse,
+) selectOptionConnectionItem {
 	meta := map[string]any{
 		"code":                   entity.Code,
 		"category":               string(entity.Category),
@@ -175,7 +180,7 @@ func (r *Deps) resolvePerformanceReviewTemplateSelectOptions(
 }
 
 func performanceReviewTemplateSelectOptionItem(
-	entity *worker.PerformanceReviewTemplate,
+	entity *workerreview.PerformanceReviewTemplate,
 ) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		&gqlmodel.SelectOption{
@@ -230,7 +235,7 @@ func (r *Deps) resolvePTOPolicySelectOptions(
 	)
 }
 
-func ptoPolicySelectOptionItem(entity *worker.PTOPolicy) selectOptionConnectionItem {
+func ptoPolicySelectOptionItem(entity *pto.PTOPolicy) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		&gqlmodel.SelectOption{
 			ID:          entity.ID.String(),
@@ -316,7 +321,7 @@ func int32Value(value *int32) any {
 // ptoPolicyTrackedTypes is what the assignment form turns into one opening
 // balance row per type, so a policy with no rules has to report an empty list
 // rather than a null the form would have to guard.
-func ptoPolicyTrackedTypes(entity *worker.PTOPolicy) []string {
+func ptoPolicyTrackedTypes(entity *pto.PTOPolicy) []string {
 	types := make([]string, 0, len(entity.Rules))
 	for _, rule := range entity.Rules {
 		types = append(types, string(rule.PTOType))

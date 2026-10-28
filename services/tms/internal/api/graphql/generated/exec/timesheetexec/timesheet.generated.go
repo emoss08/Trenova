@@ -3,6 +3,7 @@
 package timesheetexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"context"
 	"errors"
 
@@ -122,7 +123,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -132,7 +133,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -142,7 +143,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -152,7 +153,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPayrollExportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExportStatus),
@@ -162,7 +163,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.PeriodStart, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -172,7 +173,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.PeriodEnd, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -182,7 +183,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.TimesheetCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -192,7 +193,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.RegularMinutes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -202,7 +203,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.OvertimeMinutes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -212,7 +213,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.PaidLeaveMinutes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -221,7 +222,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "generatedAt",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.GeneratedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -230,7 +231,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "generatedById",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.GeneratedByID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -239,7 +240,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "voidedAt",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.VoidedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -248,7 +249,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "voidReason",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.VoidReason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -257,7 +258,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "note",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.Note, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -267,7 +268,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.PayrollExport)
+					obj := o.(*timesheet.PayrollExport)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -464,7 +465,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -474,7 +475,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -484,7 +485,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -494,7 +495,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -503,7 +504,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "timesheetId",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.TimesheetID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -513,7 +514,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.Source, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimeEntrySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeEntrySource),
@@ -523,7 +524,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.ClockedInAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -532,7 +533,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "clockedOutAt",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.ClockedOutAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -542,7 +543,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.BreakMinutes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -551,7 +552,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "payCodeId",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.PayCodeID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -560,7 +561,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "note",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.Note, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -569,7 +570,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "editedById",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.EditedByID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -578,7 +579,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "editReason",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.EditReason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -588,7 +589,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -599,7 +600,7 @@ var Shard = &gqlexec.Shard{
 				IsMethod: true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.PaidMinutes(), nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -609,7 +610,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.TimeClockEntry)
+					obj := o.(*timesheet.TimeClockEntry)
 					return obj.Worker, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
@@ -621,7 +622,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -631,7 +632,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -641,7 +642,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -651,7 +652,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -661,7 +662,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimesheetStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetStatus),
@@ -671,7 +672,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.PeriodStart, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -681,7 +682,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.PeriodEnd, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -691,7 +692,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.RegularMinutes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -701,7 +702,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.OvertimeMinutes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -711,7 +712,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.PaidLeaveMinutes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -721,7 +722,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.EntryCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -731,7 +732,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.OvertimeThresholdMinutes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -740,7 +741,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "submittedAt",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.SubmittedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -749,7 +750,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "submittedById",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.SubmittedByID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -758,7 +759,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "approvedAt",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.ApprovedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -767,7 +768,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "approvedById",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.ApprovedByID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -776,7 +777,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "decisionNote",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.DecisionNote, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -785,7 +786,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "payrollExportId",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.PayrollExportID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -795,7 +796,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -806,7 +807,7 @@ var Shard = &gqlexec.Shard{
 				IsMethod: true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.TotalMinutes(), nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -816,7 +817,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.Worker, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
@@ -826,7 +827,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "TimeClockEntry",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Timesheet)
+					obj := o.(*timesheet.Timesheet)
 					return obj.Entries, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntryᚄ),
@@ -849,23 +850,23 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverMutation interface {
-	ClockIn(ctx context.Context, input gqlmodel.ClockInput) (*worker.TimeClockEntry, error)
-	ClockOut(ctx context.Context, input gqlmodel.ClockInput) (*worker.TimeClockEntry, error)
-	RecordTimeEntry(ctx context.Context, input gqlmodel.RecordTimeEntryInput) (*worker.TimeClockEntry, error)
+	ClockIn(ctx context.Context, input gqlmodel.ClockInput) (*timesheet.TimeClockEntry, error)
+	ClockOut(ctx context.Context, input gqlmodel.ClockInput) (*timesheet.TimeClockEntry, error)
+	RecordTimeEntry(ctx context.Context, input gqlmodel.RecordTimeEntryInput) (*timesheet.TimeClockEntry, error)
 	DeleteTimeEntry(ctx context.Context, input gqlmodel.DeleteTimeEntryInput) (bool, error)
-	TransitionTimesheet(ctx context.Context, input gqlmodel.TransitionTimesheetInput) (*worker.Timesheet, error)
-	GeneratePayrollExport(ctx context.Context, input gqlmodel.GeneratePayrollExportInput) (*worker.PayrollExport, error)
-	VoidPayrollExport(ctx context.Context, input gqlmodel.VoidPayrollExportInput) (*worker.PayrollExport, error)
+	TransitionTimesheet(ctx context.Context, input gqlmodel.TransitionTimesheetInput) (*timesheet.Timesheet, error)
+	GeneratePayrollExport(ctx context.Context, input gqlmodel.GeneratePayrollExportInput) (*timesheet.PayrollExport, error)
+	VoidPayrollExport(ctx context.Context, input gqlmodel.VoidPayrollExportInput) (*timesheet.PayrollExport, error)
 }
 
 type resolverQuery interface {
-	Timesheets(ctx context.Context, filter *gqlmodel.TimesheetFilterInput) ([]*worker.Timesheet, error)
-	Timesheet(ctx context.Context, id string) (*worker.Timesheet, error)
-	TimeClockEntries(ctx context.Context, workerID string, from *int, to *int, limit *int) ([]*worker.TimeClockEntry, error)
-	OpenTimeClockEntry(ctx context.Context, workerID string) (*worker.TimeClockEntry, error)
-	OpenTimeClockEntries(ctx context.Context, teamOnly *bool, limit *int) ([]*worker.TimeClockEntry, error)
-	PayrollExports(ctx context.Context, limit *int) ([]*worker.PayrollExport, error)
-	PayrollExport(ctx context.Context, id string) (*worker.PayrollExport, error)
+	Timesheets(ctx context.Context, filter *gqlmodel.TimesheetFilterInput) ([]*timesheet.Timesheet, error)
+	Timesheet(ctx context.Context, id string) (*timesheet.Timesheet, error)
+	TimeClockEntries(ctx context.Context, workerID string, from *int, to *int, limit *int) ([]*timesheet.TimeClockEntry, error)
+	OpenTimeClockEntry(ctx context.Context, workerID string) (*timesheet.TimeClockEntry, error)
+	OpenTimeClockEntries(ctx context.Context, teamOnly *bool, limit *int) ([]*timesheet.TimeClockEntry, error)
+	PayrollExports(ctx context.Context, limit *int) ([]*timesheet.PayrollExport, error)
+	PayrollExport(ctx context.Context, id string) (*timesheet.PayrollExport, error)
 	PayrollExportRows(ctx context.Context, id string) ([]*timesheetservice.PayrollExportRow, error)
 }
 
@@ -1508,9 +1509,9 @@ func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (stri
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNTimesheetStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetStatus(ctx context.Context, ec *gqlexec.Exec, v any) (worker.TimesheetStatus, error) {
+func unmarshalNTimesheetStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetStatus(ctx context.Context, ec *gqlexec.Exec, v any) (timesheet.TimesheetStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.TimesheetStatus(tmp)
+	res := timesheet.TimesheetStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -1569,7 +1570,7 @@ func unmarshalOTimesheetFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOTimesheetStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]worker.TimesheetStatus, error) {
+func unmarshalOTimesheetStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]timesheet.TimesheetStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -1616,15 +1617,15 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNPayrollExport2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExportᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.PayrollExport) graphql.Marshaler {
-	return gqlexec.List[*worker.PayrollExport]{
+func marshalNPayrollExport2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExportᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*timesheet.PayrollExport) graphql.Marshaler {
+	return gqlexec.List[*timesheet.PayrollExport]{
 		Elem:        marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExport,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.PayrollExport) graphql.Marshaler {
+func marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *timesheet.PayrollExport) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1648,7 +1649,7 @@ func marshalNPayrollExportRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return ec.MarshalType(ctx, sel, "PayrollExportRow", v)
 }
 
-func marshalNPayrollExportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExportStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.PayrollExportStatus) graphql.Marshaler {
+func marshalNPayrollExportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExportStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v timesheet.PayrollExportStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1664,15 +1665,15 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalNTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.TimeClockEntry) graphql.Marshaler {
-	return gqlexec.List[*worker.TimeClockEntry]{
+func marshalNTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*timesheet.TimeClockEntry) graphql.Marshaler {
+	return gqlexec.List[*timesheet.TimeClockEntry]{
 		Elem:        marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntry,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.TimeClockEntry) graphql.Marshaler {
+func marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *timesheet.TimeClockEntry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1680,7 +1681,7 @@ func marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return ec.MarshalType(ctx, sel, "TimeClockEntry", v)
 }
 
-func marshalNTimeEntrySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeEntrySource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.TimeEntrySource) graphql.Marshaler {
+func marshalNTimeEntrySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeEntrySource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v timesheet.TimeEntrySource) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1688,15 +1689,15 @@ func marshalNTimeEntrySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return res
 }
 
-func marshalNTimesheet2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.Timesheet) graphql.Marshaler {
-	return gqlexec.List[*worker.Timesheet]{
+func marshalNTimesheet2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*timesheet.Timesheet) graphql.Marshaler {
+	return gqlexec.List[*timesheet.Timesheet]{
 		Elem:        marshalNTimesheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheet,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNTimesheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheet(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Timesheet) graphql.Marshaler {
+func marshalNTimesheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheet(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *timesheet.Timesheet) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1704,7 +1705,7 @@ func marshalNTimesheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules�
 	return ec.MarshalType(ctx, sel, "Timesheet", v)
 }
 
-func marshalNTimesheetStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.TimesheetStatus) graphql.Marshaler {
+func marshalNTimesheetStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v timesheet.TimesheetStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1730,14 +1731,14 @@ func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalOTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.TimeClockEntry) graphql.Marshaler {
-	return gqlexec.List[*worker.TimeClockEntry]{
+func marshalOTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*timesheet.TimeClockEntry) graphql.Marshaler {
+	return gqlexec.List[*timesheet.TimeClockEntry]{
 		Elem:        marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntry,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalOTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.TimeClockEntry) graphql.Marshaler {
+func marshalOTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *timesheet.TimeClockEntry) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

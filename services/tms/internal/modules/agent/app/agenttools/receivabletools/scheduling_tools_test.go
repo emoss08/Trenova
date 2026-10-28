@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/teamscope"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -54,8 +54,8 @@ func (f *fakeTeams) CanActFor(
 
 type fakeSchedules struct {
 	guard      *agenttoolstest.WriteGuard
-	assignment *worker.WorkerShiftAssignment
-	swap       *worker.ShiftSwapRequest
+	assignment *workerschedule.WorkerShiftAssignment
+	swap       *workerschedule.ShiftSwapRequest
 
 	assigned    *schedulingservice.AssignShiftRequest
 	ended       *schedulingservice.EndAssignmentRequest
@@ -67,17 +67,17 @@ type fakeSchedules struct {
 func newFakeSchedules() *fakeSchedules {
 	return &fakeSchedules{
 		guard: &agenttoolstest.WriteGuard{},
-		assignment: &worker.WorkerShiftAssignment{
+		assignment: &workerschedule.WorkerShiftAssignment{
 			ID:              pulid.MustNew("wsa_"),
 			WorkerID:        pulid.MustNew("wrk_"),
 			ShiftTemplateID: pulid.MustNew("shft_"),
 			EffectiveFrom:   1_800_000_000,
 			Version:         2,
 		},
-		swap: &worker.ShiftSwapRequest{
+		swap: &workerschedule.ShiftSwapRequest{
 			ID:                 pulid.MustNew("sswp_"),
 			RequestingWorkerID: pulid.MustNew("wrk_"),
-			Status:             worker.SwapAccepted,
+			Status:             workerschedule.SwapAccepted,
 			ShiftDate:          1_900_000_000,
 			Version:            4,
 		},
@@ -88,14 +88,14 @@ func (f *fakeSchedules) GetAssignment(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*worker.WorkerShiftAssignment, error) {
+) (*workerschedule.WorkerShiftAssignment, error) {
 	return f.assignment, nil
 }
 
 func (f *fakeSchedules) AssignShift(
 	_ context.Context,
 	req *schedulingservice.AssignShiftRequest,
-) (*worker.WorkerShiftAssignment, error) {
+) (*workerschedule.WorkerShiftAssignment, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -112,8 +112,8 @@ func (f *fakeSchedules) PreviewAssignShift(
 ) (*schedulingservice.ShiftAssignmentPlan, error) {
 	return &schedulingservice.ShiftAssignmentPlan{
 		Created:  req.Entity,
-		Template: &worker.ShiftTemplate{Name: "Early days"},
-		Ended:    []*worker.WorkerShiftAssignment{f.assignment},
+		Template: &workerschedule.ShiftTemplate{Name: "Early days"},
+		Ended:    []*workerschedule.WorkerShiftAssignment{f.assignment},
 		EndedAt:  req.Entity.EffectiveFrom - 86_400,
 	}, nil
 }
@@ -121,7 +121,7 @@ func (f *fakeSchedules) PreviewAssignShift(
 func (f *fakeSchedules) EndAssignment(
 	_ context.Context,
 	req *schedulingservice.EndAssignmentRequest,
-) (*worker.WorkerShiftAssignment, error) {
+) (*workerschedule.WorkerShiftAssignment, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (f *fakeSchedules) PreviewEndAssignment(
 func (f *fakeSchedules) SetPreference(
 	_ context.Context,
 	req *schedulingservice.SetPreferenceRequest,
-) (*worker.WorkerAvailabilityPreference, error) {
+) (*workerschedule.WorkerAvailabilityPreference, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (f *fakeSchedules) PreviewSetPreference(
 func (f *fakeSchedules) ProposeSwap(
 	_ context.Context,
 	req *schedulingservice.ProposeSwapRequest,
-) (*worker.ShiftSwapRequest, error) {
+) (*workerschedule.ShiftSwapRequest, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -176,8 +176,8 @@ func (f *fakeSchedules) ProposeSwap(
 
 func (f *fakeSchedules) PreviewProposeSwap(
 	req *schedulingservice.ProposeSwapRequest,
-) (*worker.ShiftSwapRequest, error) {
-	req.Entity.Status = worker.SwapProposed
+) (*workerschedule.ShiftSwapRequest, error) {
+	req.Entity.Status = workerschedule.SwapProposed
 
 	return req.Entity, nil
 }
@@ -185,7 +185,7 @@ func (f *fakeSchedules) PreviewProposeSwap(
 func (f *fakeSchedules) TransitionSwap(
 	_ context.Context,
 	req *schedulingservice.TransitionSwapRequest,
-) (*worker.ShiftSwapRequest, error) {
+) (*workerschedule.ShiftSwapRequest, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -350,7 +350,7 @@ func TestSetWorkerAvailabilityPreference_ReadsTheWeekdayByName(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, schedules.preferred)
 	assert.Equal(t, int16(time.Saturday), schedules.preferred.Entity.DayOfWeek)
-	assert.Equal(t, worker.AvailabilityUnavailable, schedules.preferred.Entity.Preference)
+	assert.Equal(t, workerschedule.AvailabilityUnavailable, schedules.preferred.Entity.Preference)
 	assert.Equal(t, permission.OpUpdate, tool.Policy().Operation)
 
 	for name, raw := range map[string]map[string]any{
@@ -407,12 +407,12 @@ func TestShiftSwapDecisions_EachNamesItsOwnPermission(t *testing.T) {
 	for _, tc := range []struct {
 		tool      agenttoolports.AgentTool
 		operation permission.Operation
-		status    worker.ShiftSwapStatus
+		status    workerschedule.ShiftSwapStatus
 		maxTier   agent.AutonomyTier
 	}{
-		{NewApproveShiftSwapTool(schedules), permission.OpApprove, worker.SwapApproved, agent.TierPropose},
-		{NewRejectShiftSwapTool(schedules), permission.OpReject, worker.SwapRejected, agent.TierActWithApproval},
-		{NewWithdrawShiftSwapTool(schedules), permission.OpCancel, worker.SwapWithdrawn, agent.TierActWithApproval},
+		{NewApproveShiftSwapTool(schedules), permission.OpApprove, workerschedule.SwapApproved, agent.TierPropose},
+		{NewRejectShiftSwapTool(schedules), permission.OpReject, workerschedule.SwapRejected, agent.TierActWithApproval},
+		{NewWithdrawShiftSwapTool(schedules), permission.OpCancel, workerschedule.SwapWithdrawn, agent.TierActWithApproval},
 	} {
 		policy := tc.tool.Policy()
 		assert.Equal(t, tc.operation, policy.Operation, policy.Name)

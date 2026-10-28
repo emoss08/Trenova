@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -56,7 +56,7 @@ func (s *Service) ListYear(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	year int,
-) ([]*worker.OrgHoliday, error) {
+) ([]*pto.OrgHoliday, error) {
 	if year <= 0 {
 		year = time.Now().UTC().Year()
 	}
@@ -74,15 +74,15 @@ func (s *Service) ListYear(
 func (s *Service) Calendar(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*worker.HolidayCalendar, error) {
+) (*pto.HolidayCalendar, error) {
 	rows, err := s.repo.List(ctx, &workerports.ListOrgHolidaysRequest{TenantInfo: tenantInfo})
 	if err != nil {
 		return nil, err
 	}
-	return worker.NewHolidayCalendar(rows), nil
+	return pto.NewHolidayCalendar(rows), nil
 }
 
-func normalize(entity *worker.OrgHoliday) {
+func normalize(entity *pto.OrgHoliday) {
 	entity.Name = strings.TrimSpace(entity.Name)
 	entity.Description = strings.TrimSpace(entity.Description)
 	if entity.HolidayDate > 0 {
@@ -91,15 +91,15 @@ func normalize(entity *worker.OrgHoliday) {
 			Unix()
 	}
 	if entity.Kind == "" {
-		entity.Kind = worker.HolidayKindHoliday
+		entity.Kind = pto.HolidayKindHoliday
 	}
 }
 
 func (s *Service) Create(
 	ctx context.Context,
-	entity *worker.OrgHoliday,
+	entity *pto.OrgHoliday,
 	userID pulid.ID,
-) (*worker.OrgHoliday, error) {
+) (*pto.OrgHoliday, error) {
 	log := s.l.With(zap.String("operation", "Create"))
 	normalize(entity)
 	multiErr := errortypes.NewMultiError()
@@ -121,9 +121,9 @@ func (s *Service) Create(
 
 func (s *Service) Update(
 	ctx context.Context,
-	entity *worker.OrgHoliday,
+	entity *pto.OrgHoliday,
 	userID pulid.ID,
-) (*worker.OrgHoliday, error) {
+) (*pto.OrgHoliday, error) {
 	log := s.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
 	normalize(entity)
 	multiErr := errortypes.NewMultiError()
@@ -180,7 +180,7 @@ func (s *Service) Delete(
 }
 
 func (s *Service) audit(
-	current, previous *worker.OrgHoliday,
+	current, previous *pto.OrgHoliday,
 	operation permission.Operation,
 	userID pulid.ID,
 	comment string,
@@ -210,7 +210,7 @@ func (s *Service) audit(
 
 func (s *Service) publish(
 	ctx context.Context,
-	entity *worker.OrgHoliday,
+	entity *pto.OrgHoliday,
 	operation permission.Operation,
 	userID pulid.ID,
 ) {
@@ -231,6 +231,6 @@ func (s *Service) publish(
 	}
 }
 
-func tenantOf(entity *worker.OrgHoliday) pagination.TenantInfo {
+func tenantOf(entity *pto.OrgHoliday) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }

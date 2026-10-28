@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,7 +30,7 @@ func (r *Core) RequireTeamScope(
 	ctx context.Context,
 	resource permission.Resource,
 	operation permission.Operation,
-	approvalScope worker.ApprovalScope,
+	approvalScope approvaldelegation.ApprovalScope,
 	workerID pulid.ID,
 ) (*authctx.AuthContext, pulid.ID, error) {
 	authCtx, ok := gqlctx.AuthContext(ctx)
@@ -107,7 +107,7 @@ func (r *Core) RequirePTOTeamScope(
 		ctx,
 		permission.ResourceWorkerPTO,
 		operation,
-		worker.ApprovalScopeTimeOff,
+		approvaldelegation.ApprovalScopeTimeOff,
 		pto.WorkerID,
 	)
 }
@@ -123,7 +123,7 @@ func (r *Core) RequireListTeamScope(
 	ctx context.Context,
 	resource permission.Resource,
 	operation permission.Operation,
-	approvalScope worker.ApprovalScope,
+	approvalScope approvaldelegation.ApprovalScope,
 ) (*authctx.AuthContext, []pulid.ID, error) {
 	authCtx, ok := gqlctx.AuthContext(ctx)
 	if !ok || authCtx == nil {

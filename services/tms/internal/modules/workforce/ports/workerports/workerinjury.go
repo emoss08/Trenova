@@ -3,7 +3,7 @@ package workerports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -55,13 +55,19 @@ type WorkerInjuryRepository interface {
 	ListInjuries(
 		ctx context.Context,
 		req *ListWorkerInjuriesRequest,
-	) ([]*worker.WorkerInjury, error)
+	) ([]*workersafety.WorkerInjury, error)
 	GetInjuryByID(
 		ctx context.Context,
 		req *GetWorkerInjuryByIDRequest,
-	) (*worker.WorkerInjury, error)
-	CreateInjury(ctx context.Context, entity *worker.WorkerInjury) (*worker.WorkerInjury, error)
-	UpdateInjury(ctx context.Context, entity *worker.WorkerInjury) (*worker.WorkerInjury, error)
+	) (*workersafety.WorkerInjury, error)
+	CreateInjury(
+		ctx context.Context,
+		entity *workersafety.WorkerInjury,
+	) (*workersafety.WorkerInjury, error)
+	UpdateInjury(
+		ctx context.Context,
+		entity *workersafety.WorkerInjury,
+	) (*workersafety.WorkerInjury, error)
 	DeleteInjury(ctx context.Context, req *GetWorkerInjuryByIDRequest) error
 	NextCaseNumber(ctx context.Context, req *NextCaseNumberRequest) (int32, error)
 
@@ -71,17 +77,17 @@ type WorkerInjuryRepository interface {
 	GetSummary(
 		ctx context.Context,
 		req *GetOSHASummaryRequest,
-	) (*worker.OSHAAnnualSummary, error)
+	) (*workersafety.OSHAAnnualSummary, error)
 	ListSummaries(
 		ctx context.Context,
 		req *ListOSHASummariesRequest,
-	) ([]*worker.OSHAAnnualSummary, error)
+	) ([]*workersafety.OSHAAnnualSummary, error)
 	CreateSummary(
 		ctx context.Context,
-		entity *worker.OSHAAnnualSummary,
-	) (*worker.OSHAAnnualSummary, error)
+		entity *workersafety.OSHAAnnualSummary,
+	) (*workersafety.OSHAAnnualSummary, error)
 	UpdateSummary(
 		ctx context.Context,
-		entity *worker.OSHAAnnualSummary,
-	) (*worker.OSHAAnnualSummary, error)
+		entity *workersafety.OSHAAnnualSummary,
+	) (*workersafety.OSHAAnnualSummary, error)
 }

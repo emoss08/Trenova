@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,14 +20,14 @@ import (
 type TerminationSettlement struct {
 	PaidOutDays   decimal.Decimal
 	ForfeitedDays decimal.Decimal
-	Entries       []*worker.WorkerPTOLedgerEntry
+	Entries       []*pto.WorkerPTOLedgerEntry
 }
 
 // PlannedSettlement is one balance to close, decided by the rule's
 // termination action. Pure so the planner is testable without a database.
 type PlannedSettlement struct {
 	PTOType   worker.PTOType
-	EntryType worker.PTOLedgerEntryType
+	EntryType pto.PTOLedgerEntryType
 	Days      decimal.Decimal
 }
 
@@ -35,24 +36,24 @@ type PlannedSettlement struct {
 // produce nothing; a negative balance is a receivable for payroll, not a
 // ledger event.
 func PlanTerminationSettlement(
-	balances []*worker.WorkerPTOBalance,
-	policy *worker.PTOPolicy,
+	balances []*pto.WorkerPTOBalance,
+	policy *pto.PTOPolicy,
 ) []PlannedSettlement {
 	plan := make([]PlannedSettlement, 0, len(balances))
 	for _, bal := range balances {
 		if bal == nil || !bal.BalanceDays.IsPositive() {
 			continue
 		}
-		var rule *worker.PTOPolicyRule
+		var rule *pto.PTOPolicyRule
 		if policy != nil {
 			rule = policy.RuleFor(bal.PTOType)
 		}
 		if rule == nil {
 			continue
 		}
-		entryType := worker.PTOLedgerEntryForfeiture
-		if rule.TerminationAction() == worker.PTOTerminationPayOut {
-			entryType = worker.PTOLedgerEntryPayout
+		entryType := pto.PTOLedgerEntryForfeiture
+		if rule.TerminationAction() == pto.PTOTerminationPayOut {
+			entryType = pto.PTOLedgerEntryPayout
 		}
 		plan = append(plan, PlannedSettlement{
 			PTOType:   bal.PTOType,
@@ -97,7 +98,7 @@ func (s *Service) SettleOnTermination(
 
 	periodKey := fmt.Sprintf("%s%d", periodKeyTermination, effectiveAt)
 	for _, planned := range PlanTerminationSettlement(balances, resolved.Policy) {
-		entry := &worker.WorkerPTOLedgerEntry{
+		entry := &pto.WorkerPTOLedgerEntry{
 			EntryType:    planned.EntryType,
 			EffectiveAt:  effectiveAt,
 			PeriodKey:    periodKey,
@@ -113,7 +114,7 @@ func (s *Service) SettleOnTermination(
 			},
 			entry: entry,
 			actor: actor,
-			resolve: func(bal *worker.WorkerPTOBalance) (decimal.Decimal, bool) {
+			resolve: func(bal *pto.WorkerPTOBalance) (decimal.Decimal, bool) {
 				if !bal.BalanceDays.IsPositive() {
 					return decimal.Zero, false
 				}
@@ -123,7 +124,7 @@ func (s *Service) SettleOnTermination(
 		switch {
 		case postErr == nil:
 			result.Entries = append(result.Entries, posted)
-			if planned.EntryType == worker.PTOLedgerEntryPayout {
+			if planned.EntryType == pto.PTOLedgerEntryPayout {
 				result.PaidOutDays = result.PaidOutDays.Add(posted.AmountDays.Neg())
 			} else {
 				result.ForfeitedDays = result.ForfeitedDays.Add(posted.AmountDays.Neg())
@@ -150,7 +151,7 @@ type LiabilityRow struct {
 	PendingDays   decimal.Decimal
 	AccruedYTD    decimal.Decimal
 	UsedYTD       decimal.Decimal
-	OnTermination worker.PTOTerminationAction
+	OnTermination pto.PTOTerminationAction
 	// LiabilityDays is the balance the organisation would owe if the worker
 	// left today: the positive balance for PayOut rules, zero otherwise.
 	LiabilityDays decimal.Decimal
@@ -169,8 +170,8 @@ type LiabilityReport struct {
 // resolved policy. Rows are sorted by liability, then balance, descending.
 func AggregateLiability(
 	asOf int64,
-	balances []*worker.WorkerPTOBalance,
-	policies map[pulid.ID]*worker.PTOPolicy,
+	balances []*pto.WorkerPTOBalance,
+	policies map[pulid.ID]*pto.PTOPolicy,
 ) *LiabilityReport {
 	report := &LiabilityReport{AsOf: asOf, Rows: make([]*LiabilityRow, 0, len(balances))}
 	workers := make(map[pulid.ID]struct{}, len(balances))
@@ -185,7 +186,7 @@ func AggregateLiability(
 			BalanceDays:   bal.BalanceDays,
 			AccruedYTD:    bal.AccruedYTDDays,
 			UsedYTD:       bal.UsedYTDDays,
-			OnTermination: worker.PTOTerminationForfeit,
+			OnTermination: pto.PTOTerminationForfeit,
 		}
 		if policy := policies[bal.WorkerID]; policy != nil {
 			if rule := policy.RuleFor(bal.PTOType); rule != nil {
@@ -193,7 +194,7 @@ func AggregateLiability(
 			}
 		}
 		if bal.BalanceDays.IsPositive() {
-			if row.OnTermination == worker.PTOTerminationPayOut {
+			if row.OnTermination == pto.PTOTerminationPayOut {
 				row.LiabilityDays = bal.BalanceDays
 				report.LiabilityDays = report.LiabilityDays.Add(bal.BalanceDays)
 			} else {
@@ -226,7 +227,7 @@ func (s *Service) LiabilityReport(
 		return nil, err
 	}
 
-	policies := make(map[pulid.ID]*worker.PTOPolicy, 16)
+	policies := make(map[pulid.ID]*pto.PTOPolicy, 16)
 	seen := make(map[pulid.ID]bool, 16)
 	for _, bal := range balances {
 		if seen[bal.WorkerID] {

@@ -3,7 +3,7 @@ package workerports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -30,9 +30,9 @@ type GetTimeClockEntryByIDRequest struct {
 }
 
 type ListTimesheetsRequest struct {
-	TenantInfo pagination.TenantInfo    `json:"tenantInfo"`
-	WorkerID   pulid.ID                 `json:"workerId"`
-	Statuses   []worker.TimesheetStatus `json:"statuses"`
+	TenantInfo pagination.TenantInfo       `json:"tenantInfo"`
+	WorkerID   pulid.ID                    `json:"workerId"`
+	Statuses   []timesheet.TimesheetStatus `json:"statuses"`
 	// PeriodStart pins one week; From and To scan a range of them.
 	PeriodStart int64 `json:"periodStart"`
 	From        int64 `json:"from"`
@@ -69,45 +69,48 @@ type StampExportRequest struct {
 	TenantInfo   pagination.TenantInfo
 	ExportID     pulid.ID
 	TimesheetIDs []pulid.ID
-	Status       worker.TimesheetStatus
+	Status       timesheet.TimesheetStatus
 }
 
 type TimesheetRepository interface {
 	ListEntries(
 		ctx context.Context,
 		req *ListTimeClockEntriesRequest,
-	) ([]*worker.TimeClockEntry, error)
+	) ([]*timesheet.TimeClockEntry, error)
 	GetEntryByID(
 		ctx context.Context,
 		req *GetTimeClockEntryByIDRequest,
-	) (*worker.TimeClockEntry, error)
+	) (*timesheet.TimeClockEntry, error)
 	// GetOpenEntry is the punch a worker is currently on, if any. It is a
 	// query of its own rather than a filter because every clock action asks it.
 	GetOpenEntry(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
-	) (*worker.TimeClockEntry, error)
+	) (*timesheet.TimeClockEntry, error)
 	CreateEntry(
 		ctx context.Context,
-		entity *worker.TimeClockEntry,
-	) (*worker.TimeClockEntry, error)
+		entity *timesheet.TimeClockEntry,
+	) (*timesheet.TimeClockEntry, error)
 	UpdateEntry(
 		ctx context.Context,
-		entity *worker.TimeClockEntry,
-	) (*worker.TimeClockEntry, error)
+		entity *timesheet.TimeClockEntry,
+	) (*timesheet.TimeClockEntry, error)
 	DeleteEntry(ctx context.Context, req *GetTimeClockEntryByIDRequest) error
 
-	ListTimesheets(ctx context.Context, req *ListTimesheetsRequest) ([]*worker.Timesheet, error)
-	GetTimesheetByID(ctx context.Context, req *GetTimesheetByIDRequest) (*worker.Timesheet, error)
+	ListTimesheets(ctx context.Context, req *ListTimesheetsRequest) ([]*timesheet.Timesheet, error)
+	GetTimesheetByID(
+		ctx context.Context,
+		req *GetTimesheetByIDRequest,
+	) (*timesheet.Timesheet, error)
 	// GetOrCreateTimesheet is the week a punch belongs to. Insert-on-conflict
 	// rather than read-then-write: two punches landing at once would otherwise
 	// both find no sheet and both try to make one.
 	GetOrCreateTimesheet(
 		ctx context.Context,
-		entity *worker.Timesheet,
-	) (*worker.Timesheet, error)
-	UpdateTimesheet(ctx context.Context, entity *worker.Timesheet) (*worker.Timesheet, error)
+		entity *timesheet.Timesheet,
+	) (*timesheet.Timesheet, error)
+	UpdateTimesheet(ctx context.Context, entity *timesheet.Timesheet) (*timesheet.Timesheet, error)
 	// AttachEntries rolls a week's loose punches onto the sheet they belong to.
 	AttachEntries(
 		ctx context.Context,
@@ -120,19 +123,19 @@ type TimesheetRepository interface {
 	ListExports(
 		ctx context.Context,
 		req *ListPayrollExportsRequest,
-	) ([]*worker.PayrollExport, error)
+	) ([]*timesheet.PayrollExport, error)
 	GetExportByID(
 		ctx context.Context,
 		req *GetPayrollExportByIDRequest,
-	) (*worker.PayrollExport, error)
+	) (*timesheet.PayrollExport, error)
 	CreateExport(
 		ctx context.Context,
-		entity *worker.PayrollExport,
-	) (*worker.PayrollExport, error)
+		entity *timesheet.PayrollExport,
+	) (*timesheet.PayrollExport, error)
 	UpdateExport(
 		ctx context.Context,
-		entity *worker.PayrollExport,
-	) (*worker.PayrollExport, error)
+		entity *timesheet.PayrollExport,
+	) (*timesheet.PayrollExport, error)
 	StampExport(ctx context.Context, req *StampExportRequest) (int, error)
 	// ApprovedLeaveRanges is the approved time off overlapping a window, as the
 	// spans it is stored as. It is read here rather than through the time-off

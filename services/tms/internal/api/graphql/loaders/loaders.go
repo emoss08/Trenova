@@ -49,7 +49,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -270,9 +272,9 @@ type set struct {
 	invoiceByID                               *dataloadgen.Loader[string, *invoice.Invoice]
 	glAccountByID                             *dataloadgen.Loader[string, *glaccount.GLAccount]
 	routingGuideWithEntriesByID               *dataloadgen.Loader[string, *tender.RoutingGuide]
-	workerDQFVerificationsByWorkerID          *dataloadgen.Loader[string, []*worker.WorkerEmploymentVerification]
-	workerLeaveEntriesByCaseID                *dataloadgen.Loader[string, []*worker.WorkerLeaveEntry]
-	workerSafetyViolationsByEventID           *dataloadgen.Loader[string, []*worker.WorkerSafetyViolation]
+	workerDQFVerificationsByWorkerID          *dataloadgen.Loader[string, []*employment.WorkerEmploymentVerification]
+	workerLeaveEntriesByCaseID                *dataloadgen.Loader[string, []*workerleave.WorkerLeaveEntry]
+	workerSafetyViolationsByEventID           *dataloadgen.Loader[string, []*workersafety.WorkerSafetyViolation]
 	fiscalPeriodsByFiscalYearID               *dataloadgen.Loader[string, []*fiscalperiod.FiscalPeriod]
 	agentDecisionsByProposalID                *dataloadgen.Loader[string, []*agent.AgentDecision]
 	agentPlanStepsByPlanID                    *dataloadgen.Loader[string, []*agent.AgentProposal]

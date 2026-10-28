@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -60,7 +61,7 @@ type GetWorkerCredentialByIDRequest struct {
 }
 
 type CreateWorkerCredentialRequest struct {
-	Entity *worker.WorkerCredential `json:"entity"`
+	Entity *workercredential.WorkerCredential `json:"entity"`
 	// SupersedeReason, when set, archives any other active credential of the
 	// same type for the worker inside the same transaction so the new row can
 	// take the single active slot.
@@ -101,11 +102,11 @@ type ListExpiringWorkerCredentialsRequest struct {
 }
 
 type PatchProfileCredentialFieldRequest struct {
-	TenantInfo pagination.TenantInfo         `json:"tenantInfo"`
-	WorkerID   pulid.ID                      `json:"workerId"`
-	Field      worker.CredentialProfileField `json:"field"`
-	ExpiresAt  *int64                        `json:"expiresAt"`
-	Number     string                        `json:"number"`
+	TenantInfo pagination.TenantInfo                   `json:"tenantInfo"`
+	WorkerID   pulid.ID                                `json:"workerId"`
+	Field      workercredential.CredentialProfileField `json:"field"`
+	ExpiresAt  *int64                                  `json:"expiresAt"`
+	Number     string                                  `json:"number"`
 }
 
 type UpdateProfileQualificationRequest struct {
@@ -147,32 +148,32 @@ type WorkerCredentialRepository interface {
 	ListTypes(
 		ctx context.Context,
 		req *ListCredentialTypesRequest,
-	) (*pagination.CursorListResult[*worker.WorkerCredentialType], error)
+	) (*pagination.CursorListResult[*workercredential.WorkerCredentialType], error)
 	ListActiveTypes(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) ([]*worker.WorkerCredentialType, error)
+	) ([]*workercredential.WorkerCredentialType, error)
 	TypeSelectOptions(
 		ctx context.Context,
 		req *WorkerCredentialTypeSelectOptionsRequest,
-	) (*pagination.ListResult[*worker.WorkerCredentialType], error)
+	) (*pagination.ListResult[*workercredential.WorkerCredentialType], error)
 	GetTypeByID(
 		ctx context.Context,
 		req *GetCredentialTypeByIDRequest,
-	) (*worker.WorkerCredentialType, error)
+	) (*workercredential.WorkerCredentialType, error)
 	TypeCodeExists(ctx context.Context, req *CredentialTypeCodeExistsRequest) (bool, error)
 	CreateType(
 		ctx context.Context,
-		entity *worker.WorkerCredentialType,
-	) (*worker.WorkerCredentialType, error)
+		entity *workercredential.WorkerCredentialType,
+	) (*workercredential.WorkerCredentialType, error)
 	UpdateType(
 		ctx context.Context,
-		entity *worker.WorkerCredentialType,
-	) (*worker.WorkerCredentialType, error)
+		entity *workercredential.WorkerCredentialType,
+	) (*workercredential.WorkerCredentialType, error)
 	EnsureSystemTypes(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-		types []*worker.WorkerCredentialType,
+		types []*workercredential.WorkerCredentialType,
 	) (int, error)
 	CountCredentialsByType(ctx context.Context, req *CountCredentialsByTypeRequest) (int, error)
 	CountCredentialsByTypeIDs(
@@ -183,18 +184,21 @@ type WorkerCredentialRepository interface {
 	ListForWorker(
 		ctx context.Context,
 		req *ListWorkerCredentialsRequest,
-	) ([]*worker.WorkerCredential, error)
+	) ([]*workercredential.WorkerCredential, error)
 	GetByID(
 		ctx context.Context,
 		req *GetWorkerCredentialByIDRequest,
-	) (*worker.WorkerCredential, error)
+	) (*workercredential.WorkerCredential, error)
 	Create(
 		ctx context.Context,
 		req *CreateWorkerCredentialRequest,
-	) (*worker.WorkerCredential, error)
-	Update(ctx context.Context, entity *worker.WorkerCredential) (*worker.WorkerCredential, error)
+	) (*workercredential.WorkerCredential, error)
+	Update(
+		ctx context.Context,
+		entity *workercredential.WorkerCredential,
+	) (*workercredential.WorkerCredential, error)
 	ListExpiring(
 		ctx context.Context,
 		req *ListExpiringWorkerCredentialsRequest,
-	) ([]*worker.WorkerCredential, error)
+	) ([]*workercredential.WorkerCredential, error)
 }

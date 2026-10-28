@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,8 +19,8 @@ func checklistTemplateFromInput(
 	input *gqlmodel.WorkerChecklistTemplateInput,
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerChecklistTemplate, error) {
-	entity := &worker.WorkerChecklistTemplate{
+) (*workerchecklist.WorkerChecklistTemplate, error) {
+	entity := &workerchecklist.WorkerChecklistTemplate{
 		ID:             id,
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
@@ -32,7 +32,7 @@ func checklistTemplateFromInput(
 		Status:         input.Status,
 		IsDefault:      input.IsDefault,
 		Version:        int64(base.IntValue(input.Version)),
-		Items:          make([]*worker.WorkerChecklistTemplateItem, 0, len(input.Items)),
+		Items:          make([]*workerchecklist.WorkerChecklistTemplateItem, 0, len(input.Items)),
 	}
 	for i, item := range input.Items {
 		if item == nil {
@@ -54,7 +54,7 @@ func checklistTemplateFromInput(
 				"Document type is invalid",
 			)
 		}
-		entity.Items = append(entity.Items, &worker.WorkerChecklistTemplateItem{
+		entity.Items = append(entity.Items, &workerchecklist.WorkerChecklistTemplateItem{
 			OrganizationID:   tenantInfo.OrgID,
 			BusinessUnitID:   tenantInfo.BuID,
 			Label:            strings.TrimSpace(item.Label),
@@ -72,12 +72,12 @@ func checklistTemplateFromInput(
 }
 
 func checklistTemplateCursorConnectionToModel(
-	result *pagination.CursorListResult[*worker.WorkerChecklistTemplate],
+	result *pagination.CursorListResult[*workerchecklist.WorkerChecklistTemplate],
 ) (*gqlmodel.WorkerChecklistTemplateConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
 		result,
-		func(node *worker.WorkerChecklistTemplate, cursor string) *gqlmodel.WorkerChecklistTemplateEdge {
+		func(node *workerchecklist.WorkerChecklistTemplate, cursor string) *gqlmodel.WorkerChecklistTemplateEdge {
 			return &gqlmodel.WorkerChecklistTemplateEdge{Node: node, Cursor: cursor}
 		},
 	)
@@ -99,14 +99,14 @@ func checklistTemplateCursorConnectionToModel(
 	}, nil
 }
 
-func checklistKindString(kind *worker.ChecklistKind) string {
+func checklistKindString(kind *workerchecklist.ChecklistKind) string {
 	if kind == nil {
 		return ""
 	}
 	return string(*kind)
 }
 
-func checklistTriggerString(trigger *worker.ChecklistTrigger) string {
+func checklistTriggerString(trigger *workerchecklist.ChecklistTrigger) string {
 	if trigger == nil {
 		return ""
 	}

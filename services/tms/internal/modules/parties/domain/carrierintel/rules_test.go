@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -49,8 +49,8 @@ func healthyProfile() *carrierintel.Profile {
 			OutOfServiceOrder: new(false),
 		},
 		Basics: []carrierintel.BasicMeasure{
-			{Basic: worker.BasicUnsafeDriving, Percentile: new(20.0)},
-			{Basic: worker.BasicHOSCompliance, Percentile: new(35.0)},
+			{Basic: workersafety.BasicUnsafeDriving, Percentile: new(20.0)},
+			{Basic: workersafety.BasicHOSCompliance, Percentile: new(35.0)},
 		},
 		Operations: &carrierintel.Operations{MCS150At: new(testNow - 100*timeutils.SecondsPerDay)},
 		Network:    &carrierintel.Network{SharedPhones: new(0)},

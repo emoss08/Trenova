@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -95,25 +95,25 @@ func (m safetyEventMove) done() string {
 
 var safetyEventKinds = agenttoolschema.Source(
 	"worker.safetyEventKind",
-	worker.SafetyEventKindValues(),
+	workersafety.SafetyEventKindValues(),
 )
 
 var safetySeverities = agenttoolschema.Source(
 	"worker.safetySeverity",
-	worker.SafetySeverityValues(),
+	workersafety.SafetySeverityValues(),
 )
 
 var inspectionResults = agenttoolschema.Source(
 	"worker.inspectionResult",
-	worker.InspectionResultValues(),
+	workersafety.InspectionResultValues(),
 )
 
 var recognitionKinds = agenttoolschema.Source(
 	"worker.recognitionKind",
-	worker.RecognitionKindValues(),
+	workersafety.RecognitionKindValues(),
 )
 
-var csaBasics = agenttoolschema.Source("worker.csaBasic", worker.AllCSABasics())
+var csaBasics = agenttoolschema.Source("worker.csaBasic", workersafety.AllCSABasics())
 
 var safetyEventMoves = agenttoolschema.Source(
 	"workerSafetyEvent.agentMove",
@@ -132,26 +132,26 @@ type SafetyKeeper interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*worker.WorkerSafetyEvent, error)
+	) (*workersafety.WorkerSafetyEvent, error)
 	PlanCreateEvent(
 		ctx context.Context,
-		entity *worker.WorkerSafetyEvent,
+		entity *workersafety.WorkerSafetyEvent,
 		userID pulid.ID,
-	) (*worker.WorkerSafetyEvent, error)
+	) (*workersafety.WorkerSafetyEvent, error)
 	CreateEvent(
 		ctx context.Context,
-		entity *worker.WorkerSafetyEvent,
+		entity *workersafety.WorkerSafetyEvent,
 		userID pulid.ID,
-	) (*worker.WorkerSafetyEvent, error)
+	) (*workersafety.WorkerSafetyEvent, error)
 	PlanUpdateEvent(
 		ctx context.Context,
-		entity *worker.WorkerSafetyEvent,
+		entity *workersafety.WorkerSafetyEvent,
 	) (*workersafetyservice.EventChange, error)
 	UpdateEvent(
 		ctx context.Context,
-		entity *worker.WorkerSafetyEvent,
+		entity *workersafety.WorkerSafetyEvent,
 		userID pulid.ID,
-	) (*worker.WorkerSafetyEvent, error)
+	) (*workersafety.WorkerSafetyEvent, error)
 	PlanCloseEvent(
 		ctx context.Context,
 		req *workersafetyservice.EventStatusRequest,
@@ -159,7 +159,7 @@ type SafetyKeeper interface {
 	CloseEvent(
 		ctx context.Context,
 		req *workersafetyservice.EventStatusRequest,
-	) (*worker.WorkerSafetyEvent, error)
+	) (*workersafety.WorkerSafetyEvent, error)
 	PlanReviewEvent(
 		ctx context.Context,
 		req *workersafetyservice.EventStatusRequest,
@@ -167,7 +167,7 @@ type SafetyKeeper interface {
 	ReviewEvent(
 		ctx context.Context,
 		req *workersafetyservice.EventStatusRequest,
-	) (*worker.WorkerSafetyEvent, error)
+	) (*workersafety.WorkerSafetyEvent, error)
 	PlanReopenEvent(
 		ctx context.Context,
 		req *workersafetyservice.EventStatusRequest,
@@ -175,12 +175,12 @@ type SafetyKeeper interface {
 	ReopenEvent(
 		ctx context.Context,
 		req *workersafetyservice.EventStatusRequest,
-	) (*worker.WorkerSafetyEvent, error)
+	) (*workersafety.WorkerSafetyEvent, error)
 	PlanDeleteEvent(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*worker.WorkerSafetyEvent, error)
+	) (*workersafety.WorkerSafetyEvent, error)
 	DeleteEvent(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -189,19 +189,19 @@ type SafetyKeeper interface {
 	) error
 	PlanGiveRecognition(
 		ctx context.Context,
-		entity *worker.WorkerRecognition,
+		entity *workersafety.WorkerRecognition,
 		userID pulid.ID,
-	) (*worker.WorkerRecognition, error)
+	) (*workersafety.WorkerRecognition, error)
 	GiveRecognition(
 		ctx context.Context,
-		entity *worker.WorkerRecognition,
+		entity *workersafety.WorkerRecognition,
 		userID pulid.ID,
-	) (*worker.WorkerRecognition, error)
+	) (*workersafety.WorkerRecognition, error)
 	PlanDeleteRecognition(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*worker.WorkerRecognition, error)
+	) (*workersafety.WorkerRecognition, error)
 	DeleteRecognition(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -211,11 +211,11 @@ type SafetyKeeper interface {
 	PlanRecordViolation(
 		ctx context.Context,
 		req *workersafetyservice.RecordViolationRequest,
-	) (*worker.WorkerSafetyViolation, error)
+	) (*workersafety.WorkerSafetyViolation, error)
 	RecordViolation(
 		ctx context.Context,
 		req *workersafetyservice.RecordViolationRequest,
-	) (*worker.WorkerSafetyViolation, error)
+	) (*workersafety.WorkerSafetyViolation, error)
 	PlanUpdateViolation(
 		ctx context.Context,
 		req *workersafetyservice.UpdateViolationRequest,
@@ -223,17 +223,17 @@ type SafetyKeeper interface {
 	UpdateViolation(
 		ctx context.Context,
 		req *workersafetyservice.UpdateViolationRequest,
-	) (*worker.WorkerSafetyViolation, error)
+	) (*workersafety.WorkerSafetyViolation, error)
 	GetViolation(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*worker.WorkerSafetyViolation, error)
+	) (*workersafety.WorkerSafetyViolation, error)
 	PlanDeleteViolation(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*worker.WorkerSafetyViolation, error)
+	) (*workersafety.WorkerSafetyViolation, error)
 	DeleteViolation(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -261,7 +261,7 @@ func safetyEventIDProperty() map[string]any {
 		"worker_list_safety_events")
 }
 
-func safetyEventRecord(event *worker.WorkerSafetyEvent) toolpreview.Record {
+func safetyEventRecord(event *workersafety.WorkerSafetyEvent) toolpreview.Record {
 	return wfRecord(permission.ResourceWorkerSafetyEvent, event.ID,
 		fmt.Sprintf("%s %s", event.Severity, strings.ToLower(event.Kind.String())), event.Version)
 }
@@ -307,7 +307,7 @@ type safetyEventRequired struct {
 }
 
 func applySafetyEventParams(
-	entity *worker.WorkerSafetyEvent,
+	entity *workersafety.WorkerSafetyEvent,
 	params map[string]any,
 	required safetyEventRequired,
 ) error {
@@ -318,7 +318,7 @@ func applySafetyEventParams(
 }
 
 func applySafetyEventCore(
-	entity *worker.WorkerSafetyEvent,
+	entity *workersafety.WorkerSafetyEvent,
 	params map[string]any,
 	required safetyEventRequired,
 ) error {
@@ -361,7 +361,7 @@ func applySafetyEventCore(
 	return nil
 }
 
-func applySafetyEventDetail(entity *worker.WorkerSafetyEvent, params map[string]any) error {
+func applySafetyEventDetail(entity *workersafety.WorkerSafetyEvent, params map[string]any) error {
 	var err error
 	location, locErr := common.OptionalBoundedText(params, paramEventLocation, wfShortChars)
 	if locErr != nil {
@@ -403,7 +403,7 @@ func applySafetyEventDetail(entity *worker.WorkerSafetyEvent, params map[string]
 	return applySafetyEventRefs(entity, params)
 }
 
-func applySafetyEventRefs(entity *worker.WorkerSafetyEvent, params map[string]any) error {
+func applySafetyEventRefs(entity *workersafety.WorkerSafetyEvent, params map[string]any) error {
 	shipmentID, err := common.OptionalID(params, common.FieldShipmentID)
 	if err != nil {
 		return err
@@ -432,7 +432,7 @@ func applySafetyEventRefs(entity *worker.WorkerSafetyEvent, params map[string]an
 }
 
 func applySafetyPoints(
-	entity *worker.WorkerSafetyEvent,
+	entity *workersafety.WorkerSafetyEvent,
 	params map[string]any,
 	defaulted bool,
 ) error {
@@ -444,7 +444,7 @@ func applySafetyPoints(
 	case points != nil:
 		entity.Points = int32(*points) //nolint:gosec // bounded by the schema's maximum
 	case defaulted:
-		entity.Points = worker.DefaultSafetyPoints(
+		entity.Points = workersafety.DefaultSafetyPoints(
 			entity.Kind, entity.Severity, entity.Preventable, entity.InspectionResult,
 		)
 	}
@@ -469,17 +469,17 @@ func newOpenWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentTool 
 	spec.SearchTerms = []string{"accident", "incident", "inspection", "citation", "near miss"}
 
 	return common.NewReportingReceivableTool(spec,
-		common.ReceivablePlan[*worker.WorkerSafetyEvent, *worker.WorkerSafetyEvent]{
-			Request: func(params *agenttoolports.ToolExecuteParams) (*worker.WorkerSafetyEvent, error) {
+		common.ReceivablePlan[*workersafety.WorkerSafetyEvent, *workersafety.WorkerSafetyEvent]{
+			Request: func(params *agenttoolports.ToolExecuteParams) (*workersafety.WorkerSafetyEvent, error) {
 				workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
 				if err != nil {
 					return nil, err
 				}
-				entity := &worker.WorkerSafetyEvent{
+				entity := &workersafety.WorkerSafetyEvent{
 					OrganizationID: params.OrganizationID,
 					BusinessUnitID: params.BusinessUnitID,
 					WorkerID:       workerID,
-					Status:         worker.SafetyEventStatusOpen,
+					Status:         workersafety.SafetyEventStatusOpen,
 				}
 				if err = applySafetyEventParams(entity, params.Params, safetyEventRequired{
 					kind: true, severity: true, occurred: true, description: true,
@@ -490,17 +490,17 @@ func newOpenWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentTool 
 			},
 			Plan: func(
 				ctx context.Context,
-				entity *worker.WorkerSafetyEvent,
+				entity *workersafety.WorkerSafetyEvent,
 				params *agenttoolports.ToolExecuteParams,
-			) (*worker.WorkerSafetyEvent, error) {
+			) (*workersafety.WorkerSafetyEvent, error) {
 				return events.PlanCreateEvent(ctx, entity, params.Actor.UserID)
 			},
-			Refused: func(*worker.WorkerSafetyEvent) string {
+			Refused: func(*workersafety.WorkerSafetyEvent) string {
 				return "Would record a safety event on the driver's record."
 			},
 			Render: func(
-				_ *worker.WorkerSafetyEvent,
-				planned *worker.WorkerSafetyEvent,
+				_ *workersafety.WorkerSafetyEvent,
+				planned *workersafety.WorkerSafetyEvent,
 			) (*agent.ToolPreview, error) {
 				change, err := toolpreview.Create(
 					wfRecord(permission.ResourceWorkerSafetyEvent, pulid.Nil,
@@ -519,7 +519,7 @@ func newOpenWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentTool 
 			},
 			Run: func(
 				ctx context.Context,
-				entity *worker.WorkerSafetyEvent,
+				entity *workersafety.WorkerSafetyEvent,
 				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				created, err := events.CreateEvent(ctx, entity, params.Actor.UserID)
@@ -540,7 +540,7 @@ type safetyEventEdit struct {
 func (e *safetyEventEdit) entity(
 	ctx context.Context,
 	events SafetyKeeper,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	current, err := events.GetEvent(ctx, common.TenantFrom(*e.params), e.id)
 	if err != nil {
 		return nil, err
@@ -655,7 +655,7 @@ func (m *safetyEventStatusMove) plan(
 func (m *safetyEventStatusMove) run(
 	ctx context.Context,
 	events SafetyKeeper,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	switch m.move {
 	case safetyEventClose:
 		return events.CloseEvent(ctx, m.req)
@@ -813,19 +813,19 @@ func newDeleteWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentToo
 
 	return common.NewReceivableTool(
 		spec,
-		common.ReceivablePlan[*recordDelete, *worker.WorkerSafetyEvent]{
+		common.ReceivablePlan[*recordDelete, *workersafety.WorkerSafetyEvent]{
 			Request: recordDeleteFrom(paramSafetyEventID),
 			Plan: func(
 				ctx context.Context,
 				del *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*worker.WorkerSafetyEvent, error) {
+			) (*workersafety.WorkerSafetyEvent, error) {
 				return events.PlanDeleteEvent(ctx, del.tenant, del.id)
 			},
 			Refused: func(*recordDelete) string {
 				return "Would delete a safety event from the driver's record."
 			},
-			Render: func(_ *recordDelete, event *worker.WorkerSafetyEvent) (*agent.ToolPreview, error) {
+			Render: func(_ *recordDelete, event *workersafety.WorkerSafetyEvent) (*agent.ToolPreview, error) {
 				change, err := toolpreview.Delete(safetyEventRecord(event), event,
 					wfOptions(safetyEventFields...)...)
 				if err != nil {
@@ -846,7 +846,9 @@ func newDeleteWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentToo
 	)
 }
 
-func recognitionFrom(params *agenttoolports.ToolExecuteParams) (*worker.WorkerRecognition, error) {
+func recognitionFrom(
+	params *agenttoolports.ToolExecuteParams,
+) (*workersafety.WorkerRecognition, error) {
 	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
 	if err != nil {
 		return nil, err
@@ -867,7 +869,7 @@ func recognitionFrom(params *agenttoolports.ToolExecuteParams) (*worker.WorkerRe
 	if err != nil {
 		return nil, err
 	}
-	entity := &worker.WorkerRecognition{
+	entity := &workersafety.WorkerRecognition{
 		OrganizationID:  params.OrganizationID,
 		BusinessUnitID:  params.BusinessUnitID,
 		WorkerID:        workerID,
@@ -914,21 +916,21 @@ func newGiveWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentTool 
 	spec.SearchTerms = []string{"safe miles award", "recognize driver", "safety award", "praise"}
 
 	return common.NewReportingReceivableTool(spec,
-		common.ReceivablePlan[*worker.WorkerRecognition, *worker.WorkerRecognition]{
+		common.ReceivablePlan[*workersafety.WorkerRecognition, *workersafety.WorkerRecognition]{
 			Request: recognitionFrom,
 			Plan: func(
 				ctx context.Context,
-				entity *worker.WorkerRecognition,
+				entity *workersafety.WorkerRecognition,
 				params *agenttoolports.ToolExecuteParams,
-			) (*worker.WorkerRecognition, error) {
+			) (*workersafety.WorkerRecognition, error) {
 				return events.PlanGiveRecognition(ctx, entity, params.Actor.UserID)
 			},
-			Refused: func(*worker.WorkerRecognition) string {
+			Refused: func(*workersafety.WorkerRecognition) string {
 				return "Would recognise the driver."
 			},
 			Render: func(
-				_ *worker.WorkerRecognition,
-				planned *worker.WorkerRecognition,
+				_ *workersafety.WorkerRecognition,
+				planned *workersafety.WorkerRecognition,
 			) (*agent.ToolPreview, error) {
 				change, err := toolpreview.Create(
 					wfRecord(permission.ResourceWorkerRecognition, pulid.Nil, planned.Title, 0),
@@ -944,7 +946,7 @@ func newGiveWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentTool 
 			},
 			Run: func(
 				ctx context.Context,
-				entity *worker.WorkerRecognition,
+				entity *workersafety.WorkerRecognition,
 				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				created, err := events.GiveRecognition(ctx, entity, params.Actor.UserID)
@@ -978,17 +980,17 @@ func newDeleteWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentToo
 
 	return common.NewReceivableTool(
 		spec,
-		common.ReceivablePlan[*recordDelete, *worker.WorkerRecognition]{
+		common.ReceivablePlan[*recordDelete, *workersafety.WorkerRecognition]{
 			Request: recordDeleteFrom(paramRecognitionID),
 			Plan: func(
 				ctx context.Context,
 				del *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*worker.WorkerRecognition, error) {
+			) (*workersafety.WorkerRecognition, error) {
 				return events.PlanDeleteRecognition(ctx, del.tenant, del.id)
 			},
 			Refused: func(*recordDelete) string { return "Would remove a recognition." },
-			Render: func(_ *recordDelete, rec *worker.WorkerRecognition) (*agent.ToolPreview, error) {
+			Render: func(_ *recordDelete, rec *workersafety.WorkerRecognition) (*agent.ToolPreview, error) {
 				change, err := toolpreview.Delete(
 					wfRecord(permission.ResourceWorkerRecognition, rec.ID, rec.Title, rec.Version),
 					rec, wfOptions(recognitionFields...)...)
@@ -1014,7 +1016,7 @@ var violationFields = []string{
 	paramSeverityWeight, paramOutOfService,
 }
 
-func violationRecord(violation *worker.WorkerSafetyViolation) toolpreview.Record {
+func violationRecord(violation *workersafety.WorkerSafetyViolation) toolpreview.Record {
 	label := violation.Description
 	if violation.Code != "" {
 		label = violation.Code + " " + label
@@ -1066,7 +1068,7 @@ func newRecordSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 	spec.SearchTerms = []string{"roadside violation", "inspection violation", "add violation"}
 
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
-		*workersafetyservice.RecordViolationRequest, *worker.WorkerSafetyViolation,
+		*workersafetyservice.RecordViolationRequest, *workersafety.WorkerSafetyViolation,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
@@ -1114,7 +1116,7 @@ func newRecordSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 			ctx context.Context,
 			req *workersafetyservice.RecordViolationRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*worker.WorkerSafetyViolation, error) {
+		) (*workersafety.WorkerSafetyViolation, error) {
 			return events.PlanRecordViolation(ctx, req)
 		},
 		Refused: func(*workersafetyservice.RecordViolationRequest) string {
@@ -1122,7 +1124,7 @@ func newRecordSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 		},
 		Render: func(
 			_ *workersafetyservice.RecordViolationRequest,
-			planned *worker.WorkerSafetyViolation,
+			planned *workersafety.WorkerSafetyViolation,
 		) (*agent.ToolPreview, error) {
 			change, err := toolpreview.Create(
 				wfRecord(permission.ResourceWorkerSafetyEvent, pulid.Nil, "New violation", 0),
@@ -1289,19 +1291,19 @@ func newDeleteSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 
 	return common.NewReceivableTool(
 		spec,
-		common.ReceivablePlan[*recordDelete, *worker.WorkerSafetyViolation]{
+		common.ReceivablePlan[*recordDelete, *workersafety.WorkerSafetyViolation]{
 			Request: recordDeleteFrom(paramViolationID),
 			Plan: func(
 				ctx context.Context,
 				del *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*worker.WorkerSafetyViolation, error) {
+			) (*workersafety.WorkerSafetyViolation, error) {
 				return events.PlanDeleteViolation(ctx, del.tenant, del.id)
 			},
 			Refused: func(*recordDelete) string { return "Would remove a cited violation." },
 			Render: func(
 				_ *recordDelete,
-				violation *worker.WorkerSafetyViolation,
+				violation *workersafety.WorkerSafetyViolation,
 			) (*agent.ToolPreview, error) {
 				change, err := toolpreview.Delete(violationRecord(violation), violation,
 					wfOptions(violationFields...)...)

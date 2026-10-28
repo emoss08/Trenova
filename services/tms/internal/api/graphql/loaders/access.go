@@ -50,7 +50,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -556,11 +558,11 @@ func (f *RoutingGuideWithEntriesByIDLoaderFactory) Attach(
 func WorkerDQFVerificationsByWorkerID(
 	ctx context.Context,
 	key string,
-) ([]*worker.WorkerEmploymentVerification, error) {
+) ([]*employment.WorkerEmploymentVerification, error) {
 	return load(
 		ctx,
 		key,
-		func(s *set) *dataloadgen.Loader[string, []*worker.WorkerEmploymentVerification] {
+		func(s *set) *dataloadgen.Loader[string, []*employment.WorkerEmploymentVerification] {
 			return s.workerDQFVerificationsByWorkerID
 		},
 	)
@@ -581,10 +583,14 @@ func (f *WorkerDQFVerificationsByWorkerIDLoaderFactory) Attach(
 func WorkerLeaveEntriesByCaseID(
 	ctx context.Context,
 	key string,
-) ([]*worker.WorkerLeaveEntry, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*worker.WorkerLeaveEntry] {
-		return s.workerLeaveEntriesByCaseID
-	})
+) ([]*workerleave.WorkerLeaveEntry, error) {
+	return load(
+		ctx,
+		key,
+		func(s *set) *dataloadgen.Loader[string, []*workerleave.WorkerLeaveEntry] {
+			return s.workerLeaveEntriesByCaseID
+		},
+	)
 }
 
 func (f *WorkerLeaveEntriesByCaseIDLoaderFactory) Attach(
@@ -599,11 +605,11 @@ func (f *WorkerLeaveEntriesByCaseIDLoaderFactory) Attach(
 func WorkerSafetyViolationsByEventID(
 	ctx context.Context,
 	key string,
-) ([]*worker.WorkerSafetyViolation, error) {
+) ([]*workersafety.WorkerSafetyViolation, error) {
 	return load(
 		ctx,
 		key,
-		func(s *set) *dataloadgen.Loader[string, []*worker.WorkerSafetyViolation] {
+		func(s *set) *dataloadgen.Loader[string, []*workersafety.WorkerSafetyViolation] {
 			return s.workerSafetyViolationsByEventID
 		},
 	)

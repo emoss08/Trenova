@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -184,7 +184,7 @@ func (a *Activities) CredentialExpirySweepActivity(
 // recordDueDriver files one paper under its driver. The map is what makes
 // the raise once per driver per pass however many papers reached a mark.
 func (s *sweepState) recordDueDriver(
-	cred *worker.WorkerCredential,
+	cred *workercredential.WorkerCredential,
 	tenantInfo pagination.TenantInfo,
 	daysLeft int64,
 ) {
@@ -236,7 +236,7 @@ func (a *Activities) raiseDueDrivers(ctx context.Context, state *sweepState) {
 func (a *Activities) sweepCredential(
 	ctx context.Context,
 	state *sweepState,
-	cred *worker.WorkerCredential,
+	cred *workercredential.WorkerCredential,
 ) error {
 	if cred.Worker == nil || cred.CredentialType == nil || cred.ExpiresAt == nil {
 		return nil
@@ -248,7 +248,7 @@ func (a *Activities) sweepCredential(
 	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 	state.touchedWorkers[cred.WorkerID] = tenantInfo
 
-	daysLeft := worker.DaysUntil(*cred.ExpiresAt, state.now)
+	daysLeft := workercredential.DaysUntil(*cred.ExpiresAt, state.now)
 	if daysLeft > sweepHorizonDays || daysLeft < -sweepGraceDays {
 		return nil
 	}
@@ -336,7 +336,7 @@ func (a *Activities) driverRemindersEnabled(
 // acts on rather than a clock time, so this formats the calendar date in UTC —
 // which is the day the compliance sweep itself used to decide the credential was
 // expiring.
-func credentialExpiryDate(cred *worker.WorkerCredential) string {
+func credentialExpiryDate(cred *workercredential.WorkerCredential) string {
 	if cred.ExpiresAt == nil {
 		return ""
 	}
@@ -363,7 +363,7 @@ func (a *Activities) alreadySent(
 func (a *Activities) notifyDriver(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	cred *worker.WorkerCredential,
+	cred *workercredential.WorkerCredential,
 	daysLeft int64,
 ) (bool, error) {
 	correlation := fmt.Sprintf("cred-driver-%s", cred.ID)
@@ -390,7 +390,7 @@ func (a *Activities) notifyDriver(
 func (a *Activities) alertCompliance(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	cred *worker.WorkerCredential,
+	cred *workercredential.WorkerCredential,
 	daysLeft int64,
 	expired bool,
 ) (bool, error) {

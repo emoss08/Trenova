@@ -4,17 +4,17 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type InjuryChange = kernelports.RecordChange[worker.WorkerInjury]
+type InjuryChange = kernelports.RecordChange[workersafety.WorkerInjury]
 
 func (s *Service) prepareRecord(
 	ctx context.Context,
-	entity *worker.WorkerInjury,
+	entity *workersafety.WorkerInjury,
 	userID pulid.ID,
 ) error {
 	tenantInfo := injuryTenant(entity)
@@ -44,9 +44,9 @@ func (s *Service) prepareRecord(
 
 func (s *Service) PlanRecordInjury(
 	ctx context.Context,
-	entity *worker.WorkerInjury,
+	entity *workersafety.WorkerInjury,
 	userID pulid.ID,
-) (*worker.WorkerInjury, error) {
+) (*workersafety.WorkerInjury, error) {
 	planned := *entity
 	if err := s.prepareRecord(ctx, &planned, userID); err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (s *Service) PlanDeleteInjury(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerInjury, error) {
+) (*workersafety.WorkerInjury, error) {
 	return s.repo.GetInjuryByID(ctx, &workerports.GetWorkerInjuryByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,

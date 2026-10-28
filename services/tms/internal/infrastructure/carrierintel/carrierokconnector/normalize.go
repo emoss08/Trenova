@@ -7,21 +7,21 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/shared/carrierok"
 	"github.com/emoss08/trenova/shared/jsonflex"
 )
 
 const riskFactorBOC3OnFile = "boc3_on_file"
 
-var basicCategories = map[carrierok.BasicCategory]worker.CSABasic{
-	carrierok.BasicUnsafeDriving:       worker.BasicUnsafeDriving,
-	carrierok.BasicHoursOfService:      worker.BasicHOSCompliance,
-	carrierok.BasicVehicleMaintenance:  worker.BasicVehicleMaintenance,
-	carrierok.BasicControlledSubstance: worker.BasicControlledSubstances,
-	carrierok.BasicDriverFitness:       worker.BasicDriverFitness,
-	carrierok.BasicHazardousMaterials:  worker.BasicHazmatCompliance,
-	carrierok.BasicCrashIndicator:      worker.BasicCrashIndicator,
+var basicCategories = map[carrierok.BasicCategory]workersafety.CSABasic{
+	carrierok.BasicUnsafeDriving:       workersafety.BasicUnsafeDriving,
+	carrierok.BasicHoursOfService:      workersafety.BasicHOSCompliance,
+	carrierok.BasicVehicleMaintenance:  workersafety.BasicVehicleMaintenance,
+	carrierok.BasicControlledSubstance: workersafety.BasicControlledSubstances,
+	carrierok.BasicDriverFitness:       workersafety.BasicDriverFitness,
+	carrierok.BasicHazardousMaterials:  workersafety.BasicHazmatCompliance,
+	carrierok.BasicCrashIndicator:      workersafety.BasicCrashIndicator,
 }
 
 var networkKinds = map[carrierok.NetworkLinkKind]carrierintel.NetworkKind{

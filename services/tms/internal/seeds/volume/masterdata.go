@@ -9,32 +9,32 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/postgis"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturerdb"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
-	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory/locationcategorydb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial/hazardousmaterialdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturerdb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory/locationcategorydb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial/hazardousmaterialdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -327,7 +327,10 @@ func (g *generator) mdVaryBillingProfile(profile *customer.CustomerBillingProfil
 	profile.SendPaymentReminders = g.fake.chance(0.8)
 	if g.fake.chance(0.1) {
 		profile.ApplyLateCharges = true
-		profile.LateChargeRate = decimal.NullDecimal{Decimal: decimal.NewFromFloat(1.5), Valid: true}
+		profile.LateChargeRate = decimal.NullDecimal{
+			Decimal: decimal.NewFromFloat(1.5),
+			Valid:   true,
+		}
 		profile.GracePeriodDays = int16(g.fake.between(5, 15))
 	}
 	if g.fake.chance(0.05) {
@@ -659,37 +662,233 @@ func mdDry(
 }
 
 var mdCommodityCatalog = []mdCommodityDef{
-	mdDry("Canned Vegetables", "Palletized canned vegetables, shrink-wrapped", commodity.FreightClass55, 2100, true, false),
-	mdDry("Bottled Water", "Cased bottled water on 48x40 pallets", commodity.FreightClass55, 2300, false, false),
-	mdDry("Soft Drinks", "Cased carbonated beverages", commodity.FreightClass60, 2200, false, false),
-	mdDry("Breakfast Cereal", "Cased cereal, light and cube-heavy", commodity.FreightClass150, 650, true, false),
-	mdDry("Snack Foods", "Chips and snacks in corrugated cases", commodity.FreightClass175, 450, true, true),
-	mdDry("Paper Towels", "Household paper products, cube-out freight", commodity.FreightClass150, 500, true, false),
-	mdDry("Corrugated Boxes", "Flattened corrugated cartons on pallets", commodity.FreightClass70, 1400, true, false),
-	mdDry("Plastic Resin", "Polyethylene resin pellets in gaylord boxes", commodity.FreightClass55, 1650, false, false),
-	mdDry("Household Appliances", "Boxed major appliances", commodity.FreightClass125, 320, false, true),
-	mdDry("Flat-Pack Furniture", "Ready-to-assemble furniture cartons", commodity.FreightClass125, 700, true, false),
+	mdDry(
+		"Canned Vegetables",
+		"Palletized canned vegetables, shrink-wrapped",
+		commodity.FreightClass55,
+		2100,
+		true,
+		false,
+	),
+	mdDry(
+		"Bottled Water",
+		"Cased bottled water on 48x40 pallets",
+		commodity.FreightClass55,
+		2300,
+		false,
+		false,
+	),
+	mdDry(
+		"Soft Drinks",
+		"Cased carbonated beverages",
+		commodity.FreightClass60,
+		2200,
+		false,
+		false,
+	),
+	mdDry(
+		"Breakfast Cereal",
+		"Cased cereal, light and cube-heavy",
+		commodity.FreightClass150,
+		650,
+		true,
+		false,
+	),
+	mdDry(
+		"Snack Foods",
+		"Chips and snacks in corrugated cases",
+		commodity.FreightClass175,
+		450,
+		true,
+		true,
+	),
+	mdDry(
+		"Paper Towels",
+		"Household paper products, cube-out freight",
+		commodity.FreightClass150,
+		500,
+		true,
+		false,
+	),
+	mdDry(
+		"Corrugated Boxes",
+		"Flattened corrugated cartons on pallets",
+		commodity.FreightClass70,
+		1400,
+		true,
+		false,
+	),
+	mdDry(
+		"Plastic Resin",
+		"Polyethylene resin pellets in gaylord boxes",
+		commodity.FreightClass55,
+		1650,
+		false,
+		false,
+	),
+	mdDry(
+		"Household Appliances",
+		"Boxed major appliances",
+		commodity.FreightClass125,
+		320,
+		false,
+		true,
+	),
+	mdDry(
+		"Flat-Pack Furniture",
+		"Ready-to-assemble furniture cartons",
+		commodity.FreightClass125,
+		700,
+		true,
+		false,
+	),
 	mdDry("Mattresses", "Compressed boxed mattresses", commodity.FreightClass200, 380, true, false),
-	mdDry("Consumer Electronics", "Boxed televisions and small electronics", commodity.FreightClass92_5, 600, false, true),
-	mdDry("Auto Parts", "Mixed automotive aftermarket parts", commodity.FreightClass85, 1200, true, false),
+	mdDry(
+		"Consumer Electronics",
+		"Boxed televisions and small electronics",
+		commodity.FreightClass92_5,
+		600,
+		false,
+		true,
+	),
+	mdDry(
+		"Auto Parts",
+		"Mixed automotive aftermarket parts",
+		commodity.FreightClass85,
+		1200,
+		true,
+		false,
+	),
 	mdDry("Tires", "Floor-loaded passenger tires", commodity.FreightClass110, 25, true, false),
-	mdDry("Pet Food", "Bagged dry pet food on pallets", commodity.FreightClass60, 2000, true, false),
-	mdDry("Bagged Cement", "Portland cement in 94 lb bags", commodity.FreightClass50, 3000, false, false),
-	mdDry("Building Insulation", "Compressed fiberglass insulation rolls", commodity.FreightClass250, 300, true, false),
-	mdDry("Ceramic Tile", "Boxed floor tile, heavy and dense", commodity.FreightClass60, 2500, false, true),
-	mdDry("Glass Containers", "Empty glass bottles and jars on tiers", commodity.FreightClass85, 1800, false, true),
-	mdDry("Aluminum Cans", "Empty beverage cans on tier sheets", commodity.FreightClass250, 400, true, false),
-	mdDry("Cotton Apparel", "Boxed apparel and textiles", commodity.FreightClass100, 500, true, false),
-	mdDry("Medical Supplies", "Boxed disposable medical supplies", commodity.FreightClass100, 450, true, true),
-	mdDry("Pharmaceuticals", "Packaged over-the-counter pharmaceuticals", commodity.FreightClass92_5, 550, true, true),
-	mdDry("Sporting Goods", "Mixed boxed sporting goods", commodity.FreightClass125, 400, true, false),
-	mdDry("Hardware", "Fasteners, tools and hardware on pallets", commodity.FreightClass70, 1500, true, false),
-	mdDry("Lawn and Garden", "Bagged soil, mulch and fertilizer", commodity.FreightClass55, 2400, false, false),
-	mdDry("Solar Panels", "Crated photovoltaic modules", commodity.FreightClass125, 1100, false, true),
-	mdDry("Lithium-Free Batteries", "Alkaline consumer batteries", commodity.FreightClass65, 1500, true, false),
-	mdDry("Office Paper", "Cased copy paper on pallets", commodity.FreightClass55, 2000, true, false),
+	mdDry(
+		"Pet Food",
+		"Bagged dry pet food on pallets",
+		commodity.FreightClass60,
+		2000,
+		true,
+		false,
+	),
+	mdDry(
+		"Bagged Cement",
+		"Portland cement in 94 lb bags",
+		commodity.FreightClass50,
+		3000,
+		false,
+		false,
+	),
+	mdDry(
+		"Building Insulation",
+		"Compressed fiberglass insulation rolls",
+		commodity.FreightClass250,
+		300,
+		true,
+		false,
+	),
+	mdDry(
+		"Ceramic Tile",
+		"Boxed floor tile, heavy and dense",
+		commodity.FreightClass60,
+		2500,
+		false,
+		true,
+	),
+	mdDry(
+		"Glass Containers",
+		"Empty glass bottles and jars on tiers",
+		commodity.FreightClass85,
+		1800,
+		false,
+		true,
+	),
+	mdDry(
+		"Aluminum Cans",
+		"Empty beverage cans on tier sheets",
+		commodity.FreightClass250,
+		400,
+		true,
+		false,
+	),
+	mdDry(
+		"Cotton Apparel",
+		"Boxed apparel and textiles",
+		commodity.FreightClass100,
+		500,
+		true,
+		false,
+	),
+	mdDry(
+		"Medical Supplies",
+		"Boxed disposable medical supplies",
+		commodity.FreightClass100,
+		450,
+		true,
+		true,
+	),
+	mdDry(
+		"Pharmaceuticals",
+		"Packaged over-the-counter pharmaceuticals",
+		commodity.FreightClass92_5,
+		550,
+		true,
+		true,
+	),
+	mdDry(
+		"Sporting Goods",
+		"Mixed boxed sporting goods",
+		commodity.FreightClass125,
+		400,
+		true,
+		false,
+	),
+	mdDry(
+		"Hardware",
+		"Fasteners, tools and hardware on pallets",
+		commodity.FreightClass70,
+		1500,
+		true,
+		false,
+	),
+	mdDry(
+		"Lawn and Garden",
+		"Bagged soil, mulch and fertilizer",
+		commodity.FreightClass55,
+		2400,
+		false,
+		false,
+	),
+	mdDry(
+		"Solar Panels",
+		"Crated photovoltaic modules",
+		commodity.FreightClass125,
+		1100,
+		false,
+		true,
+	),
+	mdDry(
+		"Lithium-Free Batteries",
+		"Alkaline consumer batteries",
+		commodity.FreightClass65,
+		1500,
+		true,
+		false,
+	),
+	mdDry(
+		"Office Paper",
+		"Cased copy paper on pallets",
+		commodity.FreightClass55,
+		2000,
+		true,
+		false,
+	),
 	mdDry("Beer", "Cased and kegged beer", commodity.FreightClass60, 2200, false, false),
-	mdDry("Wine and Spirits", "Cased wine and spirits", commodity.FreightClass65, 1600, false, true),
+	mdDry(
+		"Wine and Spirits",
+		"Cased wine and spirits",
+		commodity.FreightClass65,
+		1600,
+		false,
+		true,
+	),
 	mdDry("Grain Sacks", "Bagged grain and flour", commodity.FreightClass50, 2600, true, false),
 	mdReefer("Fresh Produce", "Mixed fresh fruits and vegetables", 34, 38, 1500),
 	mdReefer("Frozen Foods", "Frozen prepared meals and vegetables", -10, 0, 1800),
@@ -701,11 +900,39 @@ var mdCommodityCatalog = []mdCommodityDef{
 	mdReefer("Fresh Flowers", "Cut flowers in buckets", 34, 36, 400),
 	mdReefer("Chocolate and Candy", "Temperature-sensitive confectionery", 55, 65, 900),
 	mdReefer("Vaccines and Biologics", "Cold-chain pharmaceuticals", 36, 46, 300),
-	mdDry("Steel Coils", "Hot rolled steel coils, chained and tarped", commodity.FreightClass50, 40000, false, false),
-	mdDry("Structural Steel", "Steel beams and I-beams", commodity.FreightClass50, 4000, false, false),
-	mdDry("Dimensional Lumber", "Banded softwood lumber units", commodity.FreightClass55, 2500, true, false),
+	mdDry(
+		"Steel Coils",
+		"Hot rolled steel coils, chained and tarped",
+		commodity.FreightClass50,
+		40000,
+		false,
+		false,
+	),
+	mdDry(
+		"Structural Steel",
+		"Steel beams and I-beams",
+		commodity.FreightClass50,
+		4000,
+		false,
+		false,
+	),
+	mdDry(
+		"Dimensional Lumber",
+		"Banded softwood lumber units",
+		commodity.FreightClass55,
+		2500,
+		true,
+		false,
+	),
 	mdDry("Plywood", "Banded plywood and OSB sheets", commodity.FreightClass55, 2800, true, false),
-	mdDry("Concrete Pipe", "Precast concrete pipe sections", commodity.FreightClass50, 6000, false, false),
+	mdDry(
+		"Concrete Pipe",
+		"Precast concrete pipe sections",
+		commodity.FreightClass50,
+		6000,
+		false,
+		false,
+	),
 	mdDry("Machinery", "Crated industrial machinery", commodity.FreightClass85, 5000, false, true),
 	{
 		name: "Paint and Coatings", description: "Flammable paint in pails and drums",
@@ -735,7 +962,10 @@ func (g *generator) mdCommodities(ctx context.Context, tx *keel.DB) error {
 		return err
 	}
 	hm := hazardousmaterialdb.HazardousMaterials
-	hazmats, err := hm.Pick(hm.ID).Where(hm.Status.Eq(domaintypes.StatusActive)).Order(hm.ID.Asc()).All(ctx, tx)
+	hazmats, err := hm.Pick(hm.ID).
+		Where(hm.Status.Eq(domaintypes.StatusActive)).
+		Order(hm.ID.Asc()).
+		All(ctx, tx)
 	if err != nil {
 		return fmt.Errorf("load hazardous materials: %w", err)
 	}
@@ -895,7 +1125,10 @@ func (g *generator) mdEquipment(ctx context.Context, tx *keel.DB) (*mdEquipment,
 		}
 	}
 	if len(equipment.tractorTypes) == 0 || len(equipment.trailerTypes) == 0 {
-		return nil, fmt.Errorf("%w: no active tractor or trailer equipment types", ErrMissingSeedData)
+		return nil, fmt.Errorf(
+			"%w: no active tractor or trailer equipment types",
+			ErrMissingSeedData,
+		)
 	}
 
 	if err := g.mdManufacturers(ctx, tx, equipment); err != nil {
@@ -911,7 +1144,11 @@ func (g *generator) mdEquipment(ctx context.Context, tx *keel.DB) (*mdEquipment,
 	return equipment, nil
 }
 
-func (g *generator) mdManufacturers(ctx context.Context, tx *keel.DB, equipment *mdEquipment) error {
+func (g *generator) mdManufacturers(
+	ctx context.Context,
+	tx *keel.DB,
+	equipment *mdEquipment,
+) error {
 	existing, err := equipmentmanufacturerdb.EquipmentManufacturers.Query().All(ctx, tx)
 	if err != nil {
 		return fmt.Errorf("load equipment manufacturers: %w", err)
@@ -1000,7 +1237,12 @@ func (g *generator) mdFleetCodes(ctx context.Context, tx *keel.DB) ([]pulid.ID, 
 }
 
 var (
-	mdDriverTypes       = []worker.DriverType{worker.DriverTypeOTR, worker.DriverTypeRegional, worker.DriverTypeLocal, worker.DriverTypeTeam}
+	mdDriverTypes = []worker.DriverType{
+		worker.DriverTypeOTR,
+		worker.DriverTypeRegional,
+		worker.DriverTypeLocal,
+		worker.DriverTypeTeam,
+	}
 	mdDriverTypeWeights = []int{45, 30, 20, 5}
 	mdEndorsements      = []worker.EndorsementType{
 		worker.EndorsementTypeNone,
@@ -1220,7 +1462,10 @@ func (g *generator) mdProfile(
 		profile.TWICExpiry = ptr(now + g.fake.between64(90*mdDay, 5*year))
 	}
 	if g.fake.chance(0.05) {
-		profile.CDLRestrictions = pick(g.fake, []string{"L - No air brakes", "E - No manual transmission", "K - Intrastate only"})
+		profile.CDLRestrictions = pick(
+			g.fake,
+			[]string{"L - No air brakes", "E - No manual transmission", "K - Intrastate only"},
+		)
 	}
 
 	switch roll := g.fake.intn(100); {
@@ -1232,13 +1477,21 @@ func (g *generator) mdProfile(
 
 	switch roll := g.fake.intn(100); {
 	case roll < 55:
-		profile.SafetyRating, profile.SafetyScore = worker.SafetyRatingExcellent, int16(g.fake.between(90, 100))
+		profile.SafetyRating, profile.SafetyScore = worker.SafetyRatingExcellent, int16(
+			g.fake.between(90, 100),
+		)
 	case roll < 85:
-		profile.SafetyRating, profile.SafetyScore = worker.SafetyRatingGood, int16(g.fake.between(80, 89))
+		profile.SafetyRating, profile.SafetyScore = worker.SafetyRatingGood, int16(
+			g.fake.between(80, 89),
+		)
 	case roll < 95:
-		profile.SafetyRating, profile.SafetyScore = worker.SafetyRatingWatch, int16(g.fake.between(65, 79))
+		profile.SafetyRating, profile.SafetyScore = worker.SafetyRatingWatch, int16(
+			g.fake.between(65, 79),
+		)
 	default:
-		profile.SafetyRating, profile.SafetyScore = worker.SafetyRatingAtRisk, int16(g.fake.between(40, 64))
+		profile.SafetyRating, profile.SafetyScore = worker.SafetyRatingAtRisk, int16(
+			g.fake.between(40, 64),
+		)
 	}
 
 	next := min(licenseExpiry, medicalExpiry)
@@ -1279,7 +1532,7 @@ func (g *generator) mdPTO(workerID pulid.ID, now int64) *worker.WorkerPTO {
 		Type:           pick(g.fake, mdPTOTypes),
 		StartDate:      start,
 		EndDate:        end,
-		Days:           worker.ComputePTODays(start, end, nil, true, nil),
+		Days:           pto.ComputePTODays(start, end, nil, true, nil),
 		Reason:         pick(g.fake, mdPTOReasons),
 		Status:         worker.PTOStatusRequested,
 	}
@@ -1305,8 +1558,18 @@ func (g *generator) mdPTO(workerID pulid.ID, now int64) *worker.WorkerPTO {
 }
 
 var (
-	mdLessors        = []string{"Penske Truck Leasing", "Ryder System", "Element Fleet", "Wheels Inc"}
-	mdTrailerLessors = []string{"XTRA Lease", "Premier Trailer Leasing", "Star Leasing", "Wells Fargo Equipment Finance"}
+	mdLessors = []string{
+		"Penske Truck Leasing",
+		"Ryder System",
+		"Element Fleet",
+		"Wheels Inc",
+	}
+	mdTrailerLessors = []string{
+		"XTRA Lease",
+		"Premier Trailer Leasing",
+		"Star Leasing",
+		"Wells Fargo Equipment Finance",
+	}
 )
 
 func (g *generator) mdTrailerTypeWeights(types []*equipmenttype.EquipmentType) []int {

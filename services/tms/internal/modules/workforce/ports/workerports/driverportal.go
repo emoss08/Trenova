@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,10 +27,10 @@ type ListPortalInvitationsRequest struct {
 }
 
 type ActivatePortalAccessRequest struct {
-	Invitation      *worker.PortalInvitation `json:"invitation"`
-	User            *tenant.User             `json:"user"`
-	RoleName        string                   `json:"roleName"`
-	RoleDescription string                   `json:"roleDescription"`
+	Invitation      *portalinvitation.PortalInvitation `json:"invitation"`
+	User            *tenant.User                       `json:"user"`
+	RoleName        string                             `json:"roleName"`
+	RoleDescription string                             `json:"roleDescription"`
 }
 
 type ListWorkerLoadsRequest struct {
@@ -42,28 +43,28 @@ type ListWorkerLoadsRequest struct {
 type PortalAccessRepository interface {
 	CreateInvitation(
 		ctx context.Context,
-		entity *worker.PortalInvitation,
-	) (*worker.PortalInvitation, error)
+		entity *portalinvitation.PortalInvitation,
+	) (*portalinvitation.PortalInvitation, error)
 	UpdateInvitation(
 		ctx context.Context,
-		entity *worker.PortalInvitation,
-	) (*worker.PortalInvitation, error)
+		entity *portalinvitation.PortalInvitation,
+	) (*portalinvitation.PortalInvitation, error)
 	GetInvitationByID(
 		ctx context.Context,
 		req GetPortalInvitationByIDRequest,
-	) (*worker.PortalInvitation, error)
+	) (*portalinvitation.PortalInvitation, error)
 	GetInvitationByTokenHash(
 		ctx context.Context,
 		tokenHash string,
-	) (*worker.PortalInvitation, error)
+	) (*portalinvitation.PortalInvitation, error)
 	GetPendingInvitationForWorker(
 		ctx context.Context,
 		req GetPendingPortalInvitationRequest,
-	) (*worker.PortalInvitation, error)
+	) (*portalinvitation.PortalInvitation, error)
 	ListInvitations(
 		ctx context.Context,
 		req *ListPortalInvitationsRequest,
-	) ([]*worker.PortalInvitation, error)
+	) ([]*portalinvitation.PortalInvitation, error)
 	GetWorkerByUserID(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

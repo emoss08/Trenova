@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -26,7 +27,7 @@ func outOfServiceCount() keel.Agg {
 
 	return keel.Count().Filter(keel.Or(
 		e.OutOfService.IsTrue(),
-		e.InspectionResult.Eq(worker.InspectionResultOutOfService),
+		e.InspectionResult.Eq(workersafety.InspectionResultOutOfService),
 	))
 }
 
@@ -53,7 +54,7 @@ func rosterScope(req *workerports.FleetSafetyRequest) *keel.Query[*worker.Worker
 func eventScope(
 	req *workerports.FleetSafetyRequest,
 	since int64,
-) *keel.Query[*worker.WorkerSafetyEvent] {
+) *keel.Query[*workersafety.WorkerSafetyEvent] {
 	e := workerdb.WorkerSafetyEvents
 	w := workerdb.Workers
 
@@ -157,7 +158,7 @@ func (r *repository) FleetKinds(
 						sumOrZero(e.Points.Sum()),
 						keel.Count().Filter(e.Preventable.IsTrue()),
 						outOfServiceCount(),
-						keel.Count().Filter(e.Status.Ne(worker.SafetyEventStatusClosed)),
+						keel.Count().Filter(e.Status.Ne(workersafety.SafetyEventStatusClosed)),
 					))
 			if err != nil {
 				r.l.Error("failed to group fleet safety by kind", zap.Error(err))
@@ -181,10 +182,12 @@ func csaBucketExpr(now int64) keel.Int64Expr {
 		Else(keel.Int64(2))
 }
 
-func fleetBasicsQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.WorkerSafetyEvent] {
+func fleetBasicsQuery(
+	req *workerports.FleetSafetyRequest,
+) *keel.Query[*workersafety.WorkerSafetyEvent] {
 	e := workerdb.WorkerSafetyEvents
 	v := workerdb.WorkerSafetyViolations
-	since := timeutils.AddMonthsUTC(req.Now, -worker.SafetyPointsRetentionMonths)
+	since := timeutils.AddMonthsUTC(req.Now, -workersafety.SafetyPointsRetentionMonths)
 	bucket := csaBucketExpr(req.Now)
 
 	return eventScope(req, since).
@@ -235,7 +238,7 @@ func (r *repository) FleetEventBasics(
 		func(ctx context.Context) ([]workerports.FleetSafetyEventBasicRow, error) {
 			e := workerdb.WorkerSafetyEvents
 			v := workerdb.WorkerSafetyViolations
-			since := timeutils.AddMonthsUTC(req.Now, -worker.SafetyPointsRetentionMonths)
+			since := timeutils.AddMonthsUTC(req.Now, -workersafety.SafetyPointsRetentionMonths)
 			bucket := csaBucketExpr(req.Now)
 
 			rows, err := keel.Into[workerports.FleetSafetyEventBasicRow](ctx, r.db.Keel(ctx),
@@ -260,13 +263,15 @@ func (r *repository) FleetEventBasics(
 	)
 }
 
-func fleetTrendQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.WorkerSafetyEvent] {
+func fleetTrendQuery(
+	req *workerports.FleetSafetyRequest,
+) *keel.Query[*workersafety.WorkerSafetyEvent] {
 	e := workerdb.WorkerSafetyEvents
 	since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
 	period := keel.Epoch(
 		keel.DateTrunc("month", keel.ToTimestamp(e.OccurredAt).AtTimeZone(keel.Text("UTC"))),
 	)
-	accident := e.Kind.Eq(worker.SafetyEventAccident)
+	accident := e.Kind.Eq(workersafety.SafetyEventAccident)
 
 	return eventScope(req, since).
 		Group(period).
@@ -275,8 +280,8 @@ func fleetTrendQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.Wo
 			keel.Count(),
 			keel.Count().Filter(accident),
 			keel.Count().Filter(keel.And(accident, e.Preventable.IsTrue())),
-			keel.Count().Filter(e.Kind.Eq(worker.SafetyEventCitation)),
-			keel.Count().Filter(e.Kind.Eq(worker.SafetyEventInspection)),
+			keel.Count().Filter(e.Kind.Eq(workersafety.SafetyEventCitation)),
+			keel.Count().Filter(e.Kind.Eq(workersafety.SafetyEventInspection)),
 			outOfServiceCount(),
 			sumOrZero(e.Points.Sum()),
 		).
@@ -350,9 +355,9 @@ func fleetRankingQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.
 			activePoints,
 			keel.CountOf(e.ID).Filter(e.OccurredAt.Gte(since)),
 			e.OccurredAt.Max().Filter(e.Kind.In(
-				worker.SafetyEventAccident,
-				worker.SafetyEventIncident,
-				worker.SafetyEventCitation,
+				workersafety.SafetyEventAccident,
+				workersafety.SafetyEventIncident,
+				workersafety.SafetyEventCitation,
 			)),
 		).
 		Order(order...)

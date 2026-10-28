@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -49,7 +51,9 @@ func (r *Deps) resolveShiftTemplateSelectOptions(
 	return selectOptionConnection(items, len(items), 0)
 }
 
-func shiftTemplateSelectOptionItem(entity *worker.ShiftTemplate) selectOptionConnectionItem {
+func shiftTemplateSelectOptionItem(
+	entity *workerschedule.ShiftTemplate,
+) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		&gqlmodel.SelectOption{
 			ID:          entity.ID.String(),
@@ -110,7 +114,7 @@ func (r *Deps) resolveWorkerPolicySelectOptions(
 	return selectOptionConnection(items, len(items), 0)
 }
 
-func workerPolicySelectOptionItem(entity *worker.WorkerPolicy) selectOptionConnectionItem {
+func workerPolicySelectOptionItem(entity *workerpolicy.WorkerPolicy) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		&gqlmodel.SelectOption{
 			ID:          entity.ID.String(),

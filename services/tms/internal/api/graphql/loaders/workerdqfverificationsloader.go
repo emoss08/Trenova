@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +16,7 @@ type employmentVerificationsByWorkerIDsLister interface {
 	ListVerificationsByWorkerIDs(
 		ctx context.Context,
 		req *workerports.ListEmploymentVerificationsByWorkerIDsRequest,
-	) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error)
+	) (map[pulid.ID][]*employment.WorkerEmploymentVerification, error)
 }
 
 type WorkerDQFVerificationsByWorkerIDLoaderFactoryParams struct {
@@ -39,15 +39,15 @@ func NewWorkerDQFVerificationsByWorkerIDLoaderFactory(
 
 func newWorkerDQFVerificationsByWorkerIDLoader(f *WorkerDQFVerificationsByWorkerIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, []*worker.WorkerEmploymentVerification] {
+) *dataloadgen.Loader[string, []*employment.WorkerEmploymentVerification] {
 	return newLoader(f.batchFunc(tenantInfo))
 }
 
 func (f *WorkerDQFVerificationsByWorkerIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
-) batchFetchFunc[[]*worker.WorkerEmploymentVerification] {
+) batchFetchFunc[[]*employment.WorkerEmploymentVerification] {
 	return batchGroupFunc(
-		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error) {
+		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*employment.WorkerEmploymentVerification, error) {
 			return f.verifications.ListVerificationsByWorkerIDs(
 				ctx,
 				&workerports.ListEmploymentVerificationsByWorkerIDsRequest{

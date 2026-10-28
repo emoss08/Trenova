@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -134,10 +134,10 @@ func (s *Service) publish(
 	}
 }
 
-func templateTenant(entity *worker.WorkerChecklistTemplate) pagination.TenantInfo {
+func templateTenant(entity *workerchecklist.WorkerChecklistTemplate) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 
-func checklistTenant(entity *worker.WorkerChecklist) pagination.TenantInfo {
+func checklistTenant(entity *workerchecklist.WorkerChecklist) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }

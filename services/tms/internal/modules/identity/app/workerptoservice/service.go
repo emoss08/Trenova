@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -700,7 +701,7 @@ func (s *Service) prepareLedgerFields(
 	excludeID pulid.ID,
 ) (*ptoledgerservice.AvailabilityResult, error) {
 	if s.ledger == nil {
-		entity.Days = worker.ComputePTODays(entity.StartDate, entity.EndDate, nil, true, nil)
+		entity.Days = pto.ComputePTODays(entity.StartDate, entity.EndDate, nil, true, nil)
 		return nil, nil
 	}
 
@@ -730,7 +731,7 @@ func (s *Service) prepareLedgerFields(
 			"These dates fall on a blackout: {0}", blocked[0].Name,
 		)
 	}
-	entity.Days = worker.ComputePTODays(
+	entity.Days = pto.ComputePTODays(
 		entity.StartDate,
 		entity.EndDate,
 		loc,

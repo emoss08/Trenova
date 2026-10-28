@@ -3,6 +3,12 @@
 package workeroverviewexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"context"
 	"errors"
 
@@ -56,7 +62,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Concern)
+					obj := o.(*workercompliance.Concern)
 					return obj.Severity, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerConcernSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐConcernSeverity),
@@ -66,7 +72,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Concern)
+					obj := o.(*workercompliance.Concern)
 					return obj.Code, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -76,7 +82,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Concern)
+					obj := o.(*workercompliance.Concern)
 					return obj.Headline, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -86,7 +92,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Concern)
+					obj := o.(*workercompliance.Concern)
 					return obj.Detail, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -96,7 +102,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.Concern)
+					obj := o.(*workercompliance.Concern)
 					return obj.Tab, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -390,19 +396,19 @@ func marshalNWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋw
 	return ec.MarshalType(ctx, sel, "Worker", v)
 }
 
-func marshalNWorkerConcern2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐConcern(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.Concern) graphql.Marshaler {
+func marshalNWorkerConcern2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐConcern(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.Concern) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "WorkerConcern", &v)
 }
 
-func marshalNWorkerConcern2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐConcernᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []worker.Concern) graphql.Marshaler {
-	return gqlexec.List[worker.Concern]{
+func marshalNWorkerConcern2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐConcernᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []workercompliance.Concern) graphql.Marshaler {
+	return gqlexec.List[workercompliance.Concern]{
 		Elem:        marshalNWorkerConcern2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐConcern,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerConcernSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐConcernSeverity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ConcernSeverity) graphql.Marshaler {
+func marshalNWorkerConcernSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐConcernSeverity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.ConcernSeverity) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -434,7 +440,7 @@ func marshalNWorkerRosterAttention2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "WorkerRosterAttention", v)
 }
 
-func marshalNWorkerStanding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐStanding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.Standing) graphql.Marshaler {
+func marshalNWorkerStanding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐStanding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.Standing) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -450,14 +456,14 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.PerformanceReview) graphql.Marshaler {
+func marshalOPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerreview.PerformanceReview) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "PerformanceReview", v)
 }
 
-func marshalOSafetyScorecard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐSafetyScorecard(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.SafetyScorecard) graphql.Marshaler {
+func marshalOSafetyScorecard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐSafetyScorecard(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workersafety.SafetyScorecard) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -472,14 +478,14 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	return res
 }
 
-func marshalOWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklist(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerChecklist) graphql.Marshaler {
+func marshalOWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklist(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerchecklist.WorkerChecklist) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WorkerChecklist", v)
 }
 
-func marshalOWorkerCredentialSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerCredentialSummary) graphql.Marshaler {
+func marshalOWorkerCredentialSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercredential.WorkerCredentialSummary) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -493,7 +499,7 @@ func marshalOWorkerPTOBalance2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalOWorkerTrainingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerTrainingSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerTrainingSummary) graphql.Marshaler {
+func marshalOWorkerTrainingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerTrainingSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workertraining.WorkerTrainingSummary) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

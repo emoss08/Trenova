@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,19 +14,19 @@ import (
 )
 
 type (
-	ChecklistChange = kernelports.RecordChange[worker.WorkerChecklist]
-	ItemChange      = kernelports.RecordChange[worker.WorkerChecklistItem]
+	ChecklistChange = kernelports.RecordChange[workerchecklist.WorkerChecklist]
+	ItemChange      = kernelports.RecordChange[workerchecklist.WorkerChecklistItem]
 )
 
 type StartPlan struct {
-	Checklist *worker.WorkerChecklist
-	Template  *worker.WorkerChecklistTemplate
+	Checklist *workerchecklist.WorkerChecklist
+	Template  *workerchecklist.WorkerChecklistTemplate
 	Existing  bool
 }
 
 type ItemPlan struct {
 	Item      ItemChange
-	Checklist *worker.WorkerChecklist
+	Checklist *workerchecklist.WorkerChecklist
 }
 
 func (s *Service) PlanStart(ctx context.Context, req *StartRequest) (*StartPlan, error) {
@@ -46,7 +46,7 @@ func (s *Service) PlanStart(ctx context.Context, req *StartRequest) (*StartPlan,
 		)
 	}
 	fromEvent := !req.SourceEventID.IsNil()
-	if !fromEvent && template.Trigger != worker.ChecklistTriggerManual {
+	if !fromEvent && template.Trigger != workerchecklist.ChecklistTriggerManual {
 		return nil, errortypes.NewValidationError(
 			"templateId",
 			errortypes.ErrInvalidOperation,
@@ -94,38 +94,38 @@ func (s *Service) PlanStart(ctx context.Context, req *StartRequest) (*StartPlan,
 }
 
 func (s *Service) PlanCompleteItem(ctx context.Context, req *ItemRequest) (*ItemPlan, error) {
-	return s.planSettleItem(ctx, req, worker.ChecklistItemDone)
+	return s.planSettleItem(ctx, req, workerchecklist.ChecklistItemDone)
 }
 
 func (s *Service) PlanSkipItem(ctx context.Context, req *ItemRequest) (*ItemPlan, error) {
-	return s.planSettleItem(ctx, req, worker.ChecklistItemSkipped)
+	return s.planSettleItem(ctx, req, workerchecklist.ChecklistItemSkipped)
 }
 
 func (s *Service) PlanMarkItemNotApplicable(
 	ctx context.Context,
 	req *ItemRequest,
 ) (*ItemPlan, error) {
-	return s.planSettleItem(ctx, req, worker.ChecklistItemNotApplicable)
+	return s.planSettleItem(ctx, req, workerchecklist.ChecklistItemNotApplicable)
 }
 
-func settleNoteRequired(status worker.ChecklistItemStatus, note string) error {
+func settleNoteRequired(status workerchecklist.ChecklistItemStatus, note string) error {
 	if strings.TrimSpace(note) != "" {
 		return nil
 	}
 	switch status {
-	case worker.ChecklistItemSkipped:
+	case workerchecklist.ChecklistItemSkipped:
 		return errortypes.NewValidationError(
 			"note",
 			errortypes.ErrRequired,
 			"Say why this item is being skipped",
 		)
-	case worker.ChecklistItemNotApplicable:
+	case workerchecklist.ChecklistItemNotApplicable:
 		return errortypes.NewValidationError(
 			"note",
 			errortypes.ErrRequired,
 			"Say why this item does not apply",
 		)
-	case worker.ChecklistItemPending, worker.ChecklistItemDone:
+	case workerchecklist.ChecklistItemPending, workerchecklist.ChecklistItemDone:
 		return nil
 	}
 	return nil
@@ -134,7 +134,7 @@ func settleNoteRequired(status worker.ChecklistItemStatus, note string) error {
 func (s *Service) loadItem(
 	ctx context.Context,
 	req *ReopenItemRequest,
-) (*worker.WorkerChecklistItem, *worker.WorkerChecklist, error) {
+) (*workerchecklist.WorkerChecklistItem, *workerchecklist.WorkerChecklist, error) {
 	item, err := s.repo.GetItemByID(ctx, &workerports.GetWorkerChecklistItemByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
@@ -162,7 +162,7 @@ func (s *Service) loadItem(
 func (s *Service) planSettleItem(
 	ctx context.Context,
 	req *ItemRequest,
-	status worker.ChecklistItemStatus,
+	status workerchecklist.ChecklistItemStatus,
 ) (*ItemPlan, error) {
 	if err := settleNoteRequired(status, req.Note); err != nil {
 		return nil, err
@@ -228,7 +228,7 @@ func (s *Service) PlanReopenItem(ctx context.Context, req *ReopenItemRequest) (*
 	}
 	item := *original
 	if original.Status.Settled() {
-		item.Status = worker.ChecklistItemPending
+		item.Status = workerchecklist.ChecklistItemPending
 		item.CompletedAt = nil
 		item.CompletedByID = pulid.Nil
 		item.AutoCompleted = false
@@ -259,7 +259,7 @@ func (s *Service) PlanCancel(ctx context.Context, req *CancelRequest) (*Checklis
 	checklist := *original
 	if original.IsOpen() {
 		now := timeutils.NowUnix()
-		checklist.Status = worker.ChecklistStatusCancelled
+		checklist.Status = workerchecklist.ChecklistStatusCancelled
 		checklist.CancelledAt = &now
 		checklist.CancelReason = strings.TrimSpace(req.Reason)
 	}

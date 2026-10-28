@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +23,7 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-func (r *MutationResolver) CreateTrainingCourse(ctx context.Context, input gqlmodel.TrainingCourseInput) (*worker.TrainingCourse, error) {
+func (r *MutationResolver) CreateTrainingCourse(ctx context.Context, input gqlmodel.TrainingCourseInput) (*workertraining.TrainingCourse, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceTrainingCourse, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -35,7 +36,7 @@ func (r *MutationResolver) CreateTrainingCourse(ctx context.Context, input gqlmo
 	return r.WorkerTrainingService.CreateCourse(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) UpdateTrainingCourse(ctx context.Context, id string, input gqlmodel.TrainingCourseInput) (*worker.TrainingCourse, error) {
+func (r *MutationResolver) UpdateTrainingCourse(ctx context.Context, id string, input gqlmodel.TrainingCourseInput) (*workertraining.TrainingCourse, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceTrainingCourse, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -52,7 +53,7 @@ func (r *MutationResolver) UpdateTrainingCourse(ctx context.Context, id string, 
 	return r.WorkerTrainingService.UpdateCourse(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) ArchiveTrainingCourse(ctx context.Context, id string, version *int) (*worker.TrainingCourse, error) {
+func (r *MutationResolver) ArchiveTrainingCourse(ctx context.Context, id string, version *int) (*workertraining.TrainingCourse, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceTrainingCourse, permission.OpArchive)
 	if err != nil {
 		return nil, err
@@ -70,7 +71,7 @@ func (r *MutationResolver) ArchiveTrainingCourse(ctx context.Context, id string,
 	})
 }
 
-func (r *MutationResolver) RestoreTrainingCourse(ctx context.Context, id string, version *int) (*worker.TrainingCourse, error) {
+func (r *MutationResolver) RestoreTrainingCourse(ctx context.Context, id string, version *int) (*workertraining.TrainingCourse, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceTrainingCourse, permission.OpRestore)
 	if err != nil {
 		return nil, err
@@ -88,7 +89,7 @@ func (r *MutationResolver) RestoreTrainingCourse(ctx context.Context, id string,
 	})
 }
 
-func (r *MutationResolver) AssignWorkerTraining(ctx context.Context, input gqlmodel.AssignWorkerTrainingInput) (*worker.WorkerTrainingRecord, error) {
+func (r *MutationResolver) AssignWorkerTraining(ctx context.Context, input gqlmodel.AssignWorkerTrainingInput) (*workertraining.WorkerTrainingRecord, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerTraining, permission.OpAssign)
 	if err != nil {
 		return nil, err
@@ -112,7 +113,7 @@ func (r *MutationResolver) AssignWorkerTraining(ctx context.Context, input gqlmo
 	})
 }
 
-func (r *MutationResolver) AssignRequiredWorkerTraining(ctx context.Context, workerID string) ([]*worker.WorkerTrainingRecord, error) {
+func (r *MutationResolver) AssignRequiredWorkerTraining(ctx context.Context, workerID string) ([]*workertraining.WorkerTrainingRecord, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerTraining, permission.OpAssign)
 	if err != nil {
 		return nil, err
@@ -125,7 +126,7 @@ func (r *MutationResolver) AssignRequiredWorkerTraining(ctx context.Context, wor
 	return r.WorkerTrainingService.AssignRequired(ctx, base.TenantInfo(authCtx), wid, authCtx.UserID)
 }
 
-func (r *MutationResolver) CompleteWorkerTraining(ctx context.Context, input gqlmodel.CompleteWorkerTrainingInput) (*worker.WorkerTrainingRecord, error) {
+func (r *MutationResolver) CompleteWorkerTraining(ctx context.Context, input gqlmodel.CompleteWorkerTrainingInput) (*workertraining.WorkerTrainingRecord, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerTraining, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -138,7 +139,7 @@ func (r *MutationResolver) CompleteWorkerTraining(ctx context.Context, input gql
 	return r.WorkerTrainingService.Complete(ctx, req)
 }
 
-func (r *MutationResolver) WaiveWorkerTraining(ctx context.Context, input gqlmodel.WaiveWorkerTrainingInput) (*worker.WorkerTrainingRecord, error) {
+func (r *MutationResolver) WaiveWorkerTraining(ctx context.Context, input gqlmodel.WaiveWorkerTrainingInput) (*workertraining.WorkerTrainingRecord, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerTraining, permission.OpCancel)
 	if err != nil {
 		return nil, err
@@ -157,7 +158,7 @@ func (r *MutationResolver) WaiveWorkerTraining(ctx context.Context, input gqlmod
 	})
 }
 
-func (r *MutationResolver) CancelWorkerTraining(ctx context.Context, input gqlmodel.CancelWorkerTrainingInput) (*worker.WorkerTrainingRecord, error) {
+func (r *MutationResolver) CancelWorkerTraining(ctx context.Context, input gqlmodel.CancelWorkerTrainingInput) (*workertraining.WorkerTrainingRecord, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerTraining, permission.OpCancel)
 	if err != nil {
 		return nil, err
@@ -176,7 +177,7 @@ func (r *MutationResolver) CancelWorkerTraining(ctx context.Context, input gqlmo
 	})
 }
 
-func (r *MutationResolver) AttachWorkerTrainingDocument(ctx context.Context, input gqlmodel.AttachWorkerTrainingDocumentInput) (*worker.WorkerTrainingRecord, error) {
+func (r *MutationResolver) AttachWorkerTrainingDocument(ctx context.Context, input gqlmodel.AttachWorkerTrainingDocumentInput) (*workertraining.WorkerTrainingRecord, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerTraining, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -253,7 +254,7 @@ func (r *PortalTrainingResolver) ID(ctx context.Context, obj *driverportalservic
 	return base.IDPtr(obj.ID), nil
 }
 
-func (r *PortalTrainingResolver) Status(ctx context.Context, obj *driverportalservice.PortalTraining) (*worker.TrainingStatus, error) {
+func (r *PortalTrainingResolver) Status(ctx context.Context, obj *driverportalservice.PortalTraining) (*workertraining.TrainingStatus, error) {
 	if obj.Status == "" {
 		return nil, nil //nolint:nilnil // nothing assigned yet renders as null
 	}
@@ -299,7 +300,7 @@ func (r *QueryResolver) TrainingCourses(ctx context.Context, input gqlmodel.Trai
 	return trainingCourseCursorConnectionToModel(result)
 }
 
-func (r *QueryResolver) TrainingCourse(ctx context.Context, id string) (*worker.TrainingCourse, error) {
+func (r *QueryResolver) TrainingCourse(ctx context.Context, id string) (*workertraining.TrainingCourse, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceTrainingCourse, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -315,7 +316,7 @@ func (r *QueryResolver) TrainingCourse(ctx context.Context, id string) (*worker.
 	})
 }
 
-func (r *QueryResolver) ActiveTrainingCourses(ctx context.Context) ([]*worker.TrainingCourse, error) {
+func (r *QueryResolver) ActiveTrainingCourses(ctx context.Context) ([]*workertraining.TrainingCourse, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerTraining, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -323,7 +324,7 @@ func (r *QueryResolver) ActiveTrainingCourses(ctx context.Context) ([]*worker.Tr
 	return r.WorkerTrainingService.ActiveCourses(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) WorkerTrainingRecords(ctx context.Context, workerID string, includeClosed *bool) ([]*worker.WorkerTrainingRecord, error) {
+func (r *QueryResolver) WorkerTrainingRecords(ctx context.Context, workerID string, includeClosed *bool) ([]*workertraining.WorkerTrainingRecord, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerTraining, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -340,7 +341,7 @@ func (r *QueryResolver) WorkerTrainingRecords(ctx context.Context, workerID stri
 	return r.WorkerTrainingService.ListForWorker(ctx, base.TenantInfo(authCtx), wid, closed)
 }
 
-func (r *QueryResolver) WorkerTrainingRecord(ctx context.Context, id string) (*worker.WorkerTrainingRecord, error) {
+func (r *QueryResolver) WorkerTrainingRecord(ctx context.Context, id string) (*workertraining.WorkerTrainingRecord, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerTraining, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -353,7 +354,7 @@ func (r *QueryResolver) WorkerTrainingRecord(ctx context.Context, id string) (*w
 	return r.WorkerTrainingService.Get(ctx, base.TenantInfo(authCtx), recordID)
 }
 
-func (r *QueryResolver) WorkerTrainingSummary(ctx context.Context, workerID string) (*worker.WorkerTrainingSummary, error) {
+func (r *QueryResolver) WorkerTrainingSummary(ctx context.Context, workerID string) (*workertraining.WorkerTrainingSummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerTraining, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -374,41 +375,41 @@ func (r *QueryResolver) MyTraining(ctx context.Context) ([]*driverportalservice.
 	return r.DriverPortalService.MyTraining(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *TrainingCourseResolver) PassingScore(ctx context.Context, obj *worker.TrainingCourse) (*string, error) {
+func (r *TrainingCourseResolver) PassingScore(ctx context.Context, obj *workertraining.TrainingCourse) (*string, error) {
 	return base.NullDecimalPtr(obj.PassingScore), nil
 }
 
-func (r *TrainingCourseResolver) OpenRecordCount(ctx context.Context, obj *worker.TrainingCourse) (int, error) {
+func (r *TrainingCourseResolver) OpenRecordCount(ctx context.Context, obj *workertraining.TrainingCourse) (int, error) {
 	if loaders.Available(ctx) {
 		return loaders.TrainingCourseOpenRecordCount(ctx, obj.ID.String())
 	}
 	return r.WorkerTrainingService.CountOpenRecords(ctx, obj)
 }
 
-func (r *WorkerTrainingRecordResolver) Score(ctx context.Context, obj *worker.WorkerTrainingRecord) (*string, error) {
+func (r *WorkerTrainingRecordResolver) Score(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error) {
 	return base.NullDecimalPtr(obj.Score), nil
 }
 
-func (r *WorkerTrainingRecordResolver) DocumentID(ctx context.Context, obj *worker.WorkerTrainingRecord) (*string, error) {
+func (r *WorkerTrainingRecordResolver) DocumentID(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error) {
 	return base.IDPtr(obj.DocumentID), nil
 }
 
-func (r *WorkerTrainingRecordResolver) AssignedByID(ctx context.Context, obj *worker.WorkerTrainingRecord) (*string, error) {
+func (r *WorkerTrainingRecordResolver) AssignedByID(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error) {
 	return base.IDPtr(obj.AssignedByID), nil
 }
 
-func (r *WorkerTrainingRecordResolver) RecordedByID(ctx context.Context, obj *worker.WorkerTrainingRecord) (*string, error) {
+func (r *WorkerTrainingRecordResolver) RecordedByID(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error) {
 	return base.IDPtr(obj.RecordedByID), nil
 }
 
-func (r *WorkerTrainingRecordResolver) Health(ctx context.Context, obj *worker.WorkerTrainingRecord) (worker.TrainingHealth, error) {
+func (r *WorkerTrainingRecordResolver) Health(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (worker.TrainingHealth, error) {
 	return obj.Health(timeutils.NowUnix()), nil
 }
 
-func (r *WorkerTrainingRecordResolver) DaysUntilDue(ctx context.Context, obj *worker.WorkerTrainingRecord) (*int, error) {
+func (r *WorkerTrainingRecordResolver) DaysUntilDue(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*int, error) {
 	return base.IntPtr(obj.DaysUntilDue(timeutils.NowUnix())), nil
 }
 
-func (r *WorkerTrainingRecordResolver) DaysUntilExpiry(ctx context.Context, obj *worker.WorkerTrainingRecord) (*int, error) {
+func (r *WorkerTrainingRecordResolver) DaysUntilExpiry(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*int, error) {
 	return base.IntPtr(obj.DaysUntilExpiry(timeutils.NowUnix())), nil
 }

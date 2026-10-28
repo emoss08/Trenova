@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -59,7 +59,7 @@ func (r *MutationResolver) RecordWorkerEmploymentEvent(ctx context.Context, inpu
 	})
 }
 
-func (r *MutationResolver) AmendWorkerEmploymentEvent(ctx context.Context, input gqlmodel.AmendWorkerEmploymentEventInput) (*worker.WorkerEmploymentEvent, error) {
+func (r *MutationResolver) AmendWorkerEmploymentEvent(ctx context.Context, input gqlmodel.AmendWorkerEmploymentEventInput) (*employment.WorkerEmploymentEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerEmploymentEvent, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (r *MutationResolver) AmendWorkerEmploymentEvent(ctx context.Context, input
 	})
 }
 
-func (r *QueryResolver) WorkerEmploymentEvents(ctx context.Context, workerID string, kinds []worker.EmploymentEventKind) ([]*worker.WorkerEmploymentEvent, error) {
+func (r *QueryResolver) WorkerEmploymentEvents(ctx context.Context, workerID string, kinds []employment.EmploymentEventKind) ([]*employment.WorkerEmploymentEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerEmploymentEvent, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (r *QueryResolver) WorkerEmploymentEvents(ctx context.Context, workerID str
 	return r.WorkerEmploymentService.List(ctx, base.TenantInfo(authCtx), wid, kinds)
 }
 
-func (r *QueryResolver) WorkerEmploymentEvent(ctx context.Context, id string) (*worker.WorkerEmploymentEvent, error) {
+func (r *QueryResolver) WorkerEmploymentEvent(ctx context.Context, id string) (*employment.WorkerEmploymentEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerEmploymentEvent, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -123,22 +123,22 @@ func (r *WorkerEmploymentCascadeResolver) PTOForfeitedDays(ctx context.Context, 
 	return base.DecimalString(obj.PTOForfeitedDays), nil
 }
 
-func (r *WorkerEmploymentEventResolver) FromValues(ctx context.Context, obj *worker.WorkerEmploymentEvent) ([]*gqlmodel.WorkerEmploymentValue, error) {
+func (r *WorkerEmploymentEventResolver) FromValues(ctx context.Context, obj *employment.WorkerEmploymentEvent) ([]*gqlmodel.WorkerEmploymentValue, error) {
 	return employmentValues(obj.FromValues), nil
 }
 
-func (r *WorkerEmploymentEventResolver) ToValues(ctx context.Context, obj *worker.WorkerEmploymentEvent) ([]*gqlmodel.WorkerEmploymentValue, error) {
+func (r *WorkerEmploymentEventResolver) ToValues(ctx context.Context, obj *employment.WorkerEmploymentEvent) ([]*gqlmodel.WorkerEmploymentValue, error) {
 	return employmentValues(obj.ToValues), nil
 }
 
-func (r *WorkerEmploymentEventResolver) DocumentID(ctx context.Context, obj *worker.WorkerEmploymentEvent) (*string, error) {
+func (r *WorkerEmploymentEventResolver) DocumentID(ctx context.Context, obj *employment.WorkerEmploymentEvent) (*string, error) {
 	return base.IDPtr(obj.DocumentID), nil
 }
 
-func (r *WorkerEmploymentEventResolver) RecordedByID(ctx context.Context, obj *worker.WorkerEmploymentEvent) (*string, error) {
+func (r *WorkerEmploymentEventResolver) RecordedByID(ctx context.Context, obj *employment.WorkerEmploymentEvent) (*string, error) {
 	return base.IDPtr(obj.RecordedByID), nil
 }
 
-func (r *WorkerEmploymentEventResolver) AmendedByID(ctx context.Context, obj *worker.WorkerEmploymentEvent) (*string, error) {
+func (r *WorkerEmploymentEventResolver) AmendedByID(ctx context.Context, obj *employment.WorkerEmploymentEvent) (*string, error) {
 	return base.IDPtr(obj.AmendedByID), nil
 }

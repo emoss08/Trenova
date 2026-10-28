@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -72,97 +73,121 @@ func New(p Params) workerports.PortalAccessRepository {
 
 func (r *portalAccessRepository) CreateInvitation(
 	ctx context.Context,
-	entity *worker.PortalInvitation,
-) (*worker.PortalInvitation, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
-		if err := workerdb.PortalInvitations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			return nil, fmt.Errorf(
-				"create portal invitation: %w",
-				invitationErrors.Map(err, entity.ID.String()),
-			)
-		}
-		return entity, nil
-	})
+	entity *portalinvitation.PortalInvitation,
+) (*portalinvitation.PortalInvitation, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*portalinvitation.PortalInvitation, error) {
+			if err := workerdb.PortalInvitations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+				return nil, fmt.Errorf(
+					"create portal invitation: %w",
+					invitationErrors.Map(err, entity.ID.String()),
+				)
+			}
+			return entity, nil
+		},
+	)
 }
 
 func (r *portalAccessRepository) UpdateInvitation(
 	ctx context.Context,
-	entity *worker.PortalInvitation,
-) (*worker.PortalInvitation, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
-		if err := workerdb.PortalInvitations.Save(ctx, r.db.Keel(ctx), entity); err != nil {
-			return nil, invitationErrors.Map(err, entity.ID.String())
-		}
-		return entity, nil
-	})
+	entity *portalinvitation.PortalInvitation,
+) (*portalinvitation.PortalInvitation, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*portalinvitation.PortalInvitation, error) {
+			if err := workerdb.PortalInvitations.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+				return nil, invitationErrors.Map(err, entity.ID.String())
+			}
+			return entity, nil
+		},
+	)
 }
 
 func (r *portalAccessRepository) GetInvitationByID(
 	ctx context.Context,
 	req workerports.GetPortalInvitationByIDRequest,
-) (*worker.PortalInvitation, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
-		pi := workerdb.PortalInvitations
-		entity, err := pi.Where(pi.ID.Eq(req.ID)).Load(pi.Worker()).One(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, invitationErrors.Map(err, req.ID.String())
-		}
-		return entity, nil
-	})
+) (*portalinvitation.PortalInvitation, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*portalinvitation.PortalInvitation, error) {
+			pi := workerdb.PortalInvitations
+			entity, err := pi.Where(pi.ID.Eq(req.ID)).Load(pi.Worker()).One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, invitationErrors.Map(err, req.ID.String())
+			}
+			return entity, nil
+		},
+	)
 }
 
 func (r *portalAccessRepository) GetInvitationByTokenHash(
 	ctx context.Context,
 	tokenHash string,
-) (*worker.PortalInvitation, error) {
+) (*portalinvitation.PortalInvitation, error) {
 	ctx = dbscope.WithSystem(ctx, resolveInvitationScopeReason)
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
-		pi := workerdb.PortalInvitations
-		entity, err := pi.AllTenants().
-			Where(pi.TokenHash.Eq(tokenHash)).
-			Load(pi.Worker().Organization()).
-			One(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, invitationErrors.Map(err, "")
-		}
-		return entity, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*portalinvitation.PortalInvitation, error) {
+			pi := workerdb.PortalInvitations
+			entity, err := pi.AllTenants().
+				Where(pi.TokenHash.Eq(tokenHash)).
+				Load(pi.Worker().Organization()).
+				One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, invitationErrors.Map(err, "")
+			}
+			return entity, nil
+		},
+	)
 }
 
 func (r *portalAccessRepository) GetPendingInvitationForWorker(
 	ctx context.Context,
 	req workerports.GetPendingPortalInvitationRequest,
-) (*worker.PortalInvitation, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
-		pi := workerdb.PortalInvitations
-		entity, err := pi.Where(
-			pi.WorkerID.Eq(req.WorkerID),
-			pi.Status.Eq(worker.PortalInvitationStatusPending),
-		).
-			Order(pi.CreatedAt.Desc()).
-			First(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, invitationErrors.Map(err, req.WorkerID.String())
-		}
-		return entity, nil
-	})
+) (*portalinvitation.PortalInvitation, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*portalinvitation.PortalInvitation, error) {
+			pi := workerdb.PortalInvitations
+			entity, err := pi.Where(
+				pi.WorkerID.Eq(req.WorkerID),
+				pi.Status.Eq(portalinvitation.PortalInvitationStatusPending),
+			).
+				Order(pi.CreatedAt.Desc()).
+				First(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, invitationErrors.Map(err, req.WorkerID.String())
+			}
+			return entity, nil
+		},
+	)
 }
 
 func (r *portalAccessRepository) ListInvitations(
 	ctx context.Context,
 	req *workerports.ListPortalInvitationsRequest,
-) ([]*worker.PortalInvitation, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.PortalInvitation, error) {
-		pi := workerdb.PortalInvitations
-		items, err := pi.Where(keel.When(!req.WorkerID.IsNil(), pi.WorkerID.Eq(req.WorkerID))).
-			Load(pi.InvitedBy()).
-			Order(pi.CreatedAt.Desc()).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("list portal invitations: %w", err)
-		}
-		return items, nil
-	})
+) ([]*portalinvitation.PortalInvitation, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*portalinvitation.PortalInvitation, error) {
+			pi := workerdb.PortalInvitations
+			items, err := pi.Where(keel.When(!req.WorkerID.IsNil(), pi.WorkerID.Eq(req.WorkerID))).
+				Load(pi.InvitedBy()).
+				Order(pi.CreatedAt.Desc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("list portal invitations: %w", err)
+			}
+			return items, nil
+		},
+	)
 }
 
 func (r *portalAccessRepository) GetWorkerByUserID(
@@ -284,7 +309,7 @@ func (r *portalAccessRepository) ActivatePortalAccess(
 
 		pi := workerdb.PortalInvitations
 		now := timeutils.NowUnix()
-		invitation.Status = worker.PortalInvitationStatusAccepted
+		invitation.Status = portalinvitation.PortalInvitationStatusAccepted
 		invitation.AcceptedAt = &now
 		invitation.AcceptedUserID = &req.User.ID
 		if err = pi.Save(
@@ -307,8 +332,8 @@ func (r *portalAccessRepository) ActivatePortalAccess(
 
 func (r *portalAccessRepository) lockInvitation(
 	ctx context.Context,
-	ref *worker.PortalInvitation,
-) (*worker.PortalInvitation, error) {
+	ref *portalinvitation.PortalInvitation,
+) (*portalinvitation.PortalInvitation, error) {
 	pi := workerdb.PortalInvitations
 	invitation, err := pi.Where(pi.ID.Eq(ref.ID)).
 		Lock(keel.ForUpdate).
@@ -328,7 +353,7 @@ func (r *portalAccessRepository) lockInvitation(
 
 func (r *portalAccessRepository) lockWorker(
 	ctx context.Context,
-	invitation *worker.PortalInvitation,
+	invitation *portalinvitation.PortalInvitation,
 ) (*worker.Worker, error) {
 	w := workerdb.Workers
 	wrk, err := w.Where(w.ID.Eq(invitation.WorkerID)).
@@ -370,7 +395,7 @@ func (r *portalAccessRepository) ensureEmailAvailable(ctx context.Context, email
 
 func (r *portalAccessRepository) ensureDriverRole(
 	ctx context.Context,
-	invitation *worker.PortalInvitation,
+	invitation *portalinvitation.PortalInvitation,
 	req *workerports.ActivatePortalAccessRequest,
 ) (*permission.Role, error) {
 	ro := permissiondb.Roles
@@ -401,7 +426,7 @@ func (r *portalAccessRepository) ensureDriverRole(
 
 func (r *portalAccessRepository) uniqueUsername(
 	ctx context.Context,
-	invitation *worker.PortalInvitation,
+	invitation *portalinvitation.PortalInvitation,
 	base string,
 ) (string, error) {
 	u := tenantdb.Users
@@ -457,8 +482,8 @@ func (r *portalAccessRepository) RevokePortalAccess(
 		pi := workerdb.PortalInvitations
 		if _, err = pi.Where(
 			pi.WorkerID.Eq(workerID),
-			pi.Status.Eq(worker.PortalInvitationStatusPending),
-		).Update(ctx, db, pi.Status.To(worker.PortalInvitationStatusRevoked)); err != nil {
+			pi.Status.Eq(portalinvitation.PortalInvitationStatusPending),
+		).Update(ctx, db, pi.Status.To(portalinvitation.PortalInvitationStatusRevoked)); err != nil {
 			return fmt.Errorf("revoke pending invitations: %w", err)
 		}
 

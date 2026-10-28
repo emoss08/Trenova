@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -15,13 +15,13 @@ func ptoPolicyFromInput(
 	input *gqlmodel.PTOPolicyInput,
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*worker.PTOPolicy, error) {
+) (*pto.PTOPolicy, error) {
 	floor, err := base.ParseNullDecimalField("negativeFloorDays", input.NegativeFloorDays)
 	if err != nil {
 		return nil, err
 	}
 
-	entity := &worker.PTOPolicy{
+	entity := &pto.PTOPolicy{
 		ID:                id,
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
@@ -38,7 +38,7 @@ func ptoPolicyFromInput(
 		AllowNegative:     input.AllowNegative,
 		NegativeFloorDays: floor.Decimal,
 		Version:           int64(base.IntValue(input.Version)),
-		Rules:             make([]*worker.PTOPolicyRule, 0, len(input.Rules)),
+		Rules:             make([]*pto.PTOPolicyRule, 0, len(input.Rules)),
 	}
 
 	for i, ruleInput := range input.Rules {
@@ -72,11 +72,11 @@ func ptoPolicyFromInput(
 		if tErr != nil {
 			return nil, tErr
 		}
-		onTermination := worker.PTOTerminationForfeit
+		onTermination := pto.PTOTerminationForfeit
 		if ruleInput.OnTermination != nil {
 			onTermination = *ruleInput.OnTermination
 		}
-		entity.Rules = append(entity.Rules, &worker.PTOPolicyRule{
+		entity.Rules = append(entity.Rules, &pto.PTOPolicyRule{
 			OrganizationID:    tenantInfo.OrgID,
 			BusinessUnitID:    tenantInfo.BuID,
 			PTOPolicyID:       id,
@@ -102,8 +102,8 @@ func ptoPolicyFromInput(
 func ptoTiersFromInput(
 	prefix string,
 	inputs []*gqlmodel.PTOAccrualTierInput,
-) ([]worker.PTOAccrualTier, error) {
-	tiers := make([]worker.PTOAccrualTier, 0, len(inputs))
+) ([]pto.PTOAccrualTier, error) {
+	tiers := make([]pto.PTOAccrualTier, 0, len(inputs))
 	for i, tierInput := range inputs {
 		if tierInput == nil {
 			continue
@@ -124,7 +124,7 @@ func ptoTiersFromInput(
 		if err != nil {
 			return nil, err
 		}
-		tiers = append(tiers, worker.PTOAccrualTier{
+		tiers = append(tiers, pto.PTOAccrualTier{
 			MinMonths:         int32(tierInput.MinMonths), //nolint:gosec // bounded by validation
 			AccrualAmountDays: amount,
 			MaxBalanceDays:    maxBalance,
@@ -134,12 +134,12 @@ func ptoTiersFromInput(
 }
 
 func ptoPolicyCursorConnectionToModel(
-	result *pagination.CursorListResult[*worker.PTOPolicy],
+	result *pagination.CursorListResult[*pto.PTOPolicy],
 ) (*gqlmodel.PTOPolicyConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
 		result,
-		func(node *worker.PTOPolicy, cursor string) *gqlmodel.PTOPolicyEdge {
+		func(node *pto.PTOPolicy, cursor string) *gqlmodel.PTOPolicyEdge {
 			return &gqlmodel.PTOPolicyEdge{Node: node, Cursor: cursor}
 		},
 	)
@@ -162,12 +162,12 @@ func ptoPolicyCursorConnectionToModel(
 }
 
 func ptoLedgerCursorConnectionToModel(
-	result *pagination.CursorListResult[*worker.WorkerPTOLedgerEntry],
+	result *pagination.CursorListResult[*pto.WorkerPTOLedgerEntry],
 ) (*gqlmodel.WorkerPTOLedgerConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
 		result,
-		func(node *worker.WorkerPTOLedgerEntry, cursor string) *gqlmodel.WorkerPTOLedgerEdge {
+		func(node *pto.WorkerPTOLedgerEntry, cursor string) *gqlmodel.WorkerPTOLedgerEdge {
 			return &gqlmodel.WorkerPTOLedgerEdge{Node: node, Cursor: cursor}
 		},
 	)
@@ -199,14 +199,14 @@ func plannedEntriesToPointers(
 	return out
 }
 
-func ptoPolicyStatusString(status *worker.PTOPolicyStatus) string {
+func ptoPolicyStatusString(status *pto.PTOPolicyStatus) string {
 	if status == nil {
 		return ""
 	}
 	return string(*status)
 }
 
-func ptoLedgerEntryTypeString(entryType *worker.PTOLedgerEntryType) string {
+func ptoLedgerEntryTypeString(entryType *pto.PTOLedgerEntryType) string {
 	if entryType == nil {
 		return ""
 	}

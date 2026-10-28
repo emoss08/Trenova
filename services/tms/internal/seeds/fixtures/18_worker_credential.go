@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -39,7 +39,7 @@ type credentialSeedRefs struct {
 	buID    pulid.ID
 	adminID pulid.ID
 	now     int64
-	types   map[string]*worker.WorkerCredentialType
+	types   map[string]*workercredential.WorkerCredentialType
 }
 
 func (s *WorkerCredentialSeed) Run(ctx context.Context, sr *seed.Run) error {
@@ -93,7 +93,7 @@ func (s *WorkerCredentialSeed) ensureTypes(
 	db *keel.DB,
 	refs *credentialSeedRefs,
 ) error {
-	rows := worker.SystemCredentialTypes()
+	rows := workercredential.SystemCredentialTypes()
 	for _, row := range rows {
 		row.OrganizationID = refs.orgID
 		row.BusinessUnitID = refs.buID
@@ -112,7 +112,7 @@ func (s *WorkerCredentialSeed) ensureTypes(
 	if err != nil {
 		return err
 	}
-	refs.types = make(map[string]*worker.WorkerCredentialType, len(existing))
+	refs.types = make(map[string]*workercredential.WorkerCredentialType, len(existing))
 	for _, typ := range existing {
 		refs.types[typ.Code] = typ
 	}
@@ -259,12 +259,12 @@ func (s *WorkerCredentialSeed) seedWorker(
 			continue
 		}
 
-		entity := &worker.WorkerCredential{
+		entity := &workercredential.WorkerCredential{
 			OrganizationID:   refs.orgID,
 			BusinessUnitID:   refs.buID,
 			WorkerID:         wrk.ID,
 			CredentialTypeID: typ.ID,
-			Status:           worker.CredentialStatusActive,
+			Status:           workercredential.CredentialStatusActive,
 			Number:           item.number,
 			IssuingAuthority: item.authority,
 			Notes:            item.notes,
@@ -295,7 +295,7 @@ func (s *WorkerCredentialSeed) seedWorker(
 		inserted, err := workerdb.WorkerCredentials.CreateOrSkip(
 			ctx,
 			db,
-			[]*worker.WorkerCredential{entity},
+			[]*workercredential.WorkerCredential{entity},
 		)
 		if err != nil {
 			return err
@@ -339,12 +339,12 @@ func (s *WorkerCredentialSeed) deriveCompliance(
 		return fmt.Errorf("load credentials: %w", err)
 	}
 
-	types := make([]*worker.WorkerCredentialType, 0, len(refs.types))
+	types := make([]*workercredential.WorkerCredentialType, 0, len(refs.types))
 	for _, typ := range refs.types {
 		types = append(types, typ)
 	}
 
-	summary := worker.BuildCredentialSummary(wrk, types, credentials, refs.now)
+	summary := workercredential.BuildCredentialSummary(wrk, types, credentials, refs.now)
 
 	wp := workerdb.WorkerProfiles
 	_, err = wp.AllTenants().Where(
@@ -361,23 +361,24 @@ func (s *WorkerCredentialSeed) mirror(
 	db *keel.DB,
 	refs *credentialSeedRefs,
 	wrk *worker.Worker,
-	field worker.CredentialProfileField,
-	entity *worker.WorkerCredential,
+	field workercredential.CredentialProfileField,
+	entity *workercredential.WorkerCredential,
 ) error {
 	wp := workerdb.WorkerProfiles
 	var column keel.Col
 	switch field {
-	case worker.CredentialProfileFieldMedicalCardExpiry:
+	case workercredential.CredentialProfileFieldMedicalCardExpiry:
 		column = wp.MedicalCardExpiry.Col
-	case worker.CredentialProfileFieldPhysicalDueDate:
+	case workercredential.CredentialProfileFieldPhysicalDueDate:
 		column = wp.PhysicalDueDate.Col
-	case worker.CredentialProfileFieldMVRDueDate:
+	case workercredential.CredentialProfileFieldMVRDueDate:
 		column = wp.MVRDueDate.Col
-	case worker.CredentialProfileFieldTWICExpiry:
+	case workercredential.CredentialProfileFieldTWICExpiry:
 		column = wp.TWICExpiry.Col
-	case worker.CredentialProfileFieldHazmatExpiry:
+	case workercredential.CredentialProfileFieldHazmatExpiry:
 		column = wp.HazmatExpiry.Col
-	case worker.CredentialProfileFieldLicenseExpiry, worker.CredentialProfileFieldNone:
+	case workercredential.CredentialProfileFieldLicenseExpiry,
+		workercredential.CredentialProfileFieldNone:
 		return nil
 	}
 	_, err := wp.AllTenants().Where(

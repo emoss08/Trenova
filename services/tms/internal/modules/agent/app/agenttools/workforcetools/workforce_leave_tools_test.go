@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/teamscope"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,10 +28,10 @@ type fakeLeave struct {
 	LeaveKeeper
 
 	guard *agenttoolstest.WriteGuard
-	lcase *worker.WorkerLeaveCase
-	entry *worker.WorkerLeaveEntry
+	lcase *workerleave.WorkerLeaveCase
+	entry *workerleave.WorkerLeaveEntry
 
-	opened   *worker.WorkerLeaveCase
+	opened   *workerleave.WorkerLeaveCase
 	updated  *workerleaveservice.UpdateCaseRequest
 	closed   []pulid.ID
 	recorded *workerleaveservice.RecordDayRequest
@@ -42,15 +43,15 @@ func newFakeLeave() *fakeLeave {
 	caseID := pulid.MustNew("wlc_")
 	return &fakeLeave{
 		guard: &agenttoolstest.WriteGuard{},
-		lcase: &worker.WorkerLeaveCase{
+		lcase: &workerleave.WorkerLeaveCase{
 			ID:        caseID,
 			WorkerID:  workerID,
 			LeaveType: worker.LeaveTypeFMLA,
-			Status:    worker.LeaveCaseApproved,
+			Status:    workerleave.LeaveCaseApproved,
 			StartsAt:  1_788_000_000,
 			Version:   3,
 		},
-		entry: &worker.WorkerLeaveEntry{
+		entry: &workerleave.WorkerLeaveEntry{
 			ID:                       pulid.MustNew("wle_"),
 			WorkerID:                 workerID,
 			LeaveCaseID:              caseID,
@@ -64,23 +65,23 @@ func newFakeLeave() *fakeLeave {
 
 func (f *fakeLeave) PlanOpenCase(
 	_ context.Context,
-	entity *worker.WorkerLeaveCase,
+	entity *workerleave.WorkerLeaveCase,
 	_ pulid.ID,
-) (*worker.WorkerLeaveCase, error) {
+) (*workerleave.WorkerLeaveCase, error) {
 	if entity.LeaveType == "" {
 		return nil, errortypes.NewValidationError("leaveType", errortypes.ErrRequired,
 			"Leave type is required")
 	}
 	planned := *entity
-	planned.Status = worker.LeaveCasePending
+	planned.Status = workerleave.LeaveCasePending
 	return &planned, nil
 }
 
 func (f *fakeLeave) OpenCase(
 	ctx context.Context,
-	entity *worker.WorkerLeaveCase,
+	entity *workerleave.WorkerLeaveCase,
 	userID pulid.ID,
-) (*worker.WorkerLeaveCase, error) {
+) (*workerleave.WorkerLeaveCase, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -107,7 +108,7 @@ func (f *fakeLeave) PlanUpdateCase(
 func (f *fakeLeave) UpdateCase(
 	_ context.Context,
 	req *workerleaveservice.UpdateCaseRequest,
-) (*worker.WorkerLeaveCase, error) {
+) (*workerleave.WorkerLeaveCase, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -120,12 +121,12 @@ func (f *fakeLeave) PlanCloseCase(
 	pagination.TenantInfo,
 	pulid.ID,
 ) (*workerleaveservice.CaseChange, error) {
-	if f.lcase.Status == worker.LeaveCasePending {
+	if f.lcase.Status == workerleave.LeaveCasePending {
 		return nil, errortypes.NewValidationError("status", errortypes.ErrInvalidOperation,
 			"A pending case is decided before it is closed")
 	}
 	after := *f.lcase
-	after.Status = worker.LeaveCaseClosed
+	after.Status = workerleave.LeaveCaseClosed
 	return &workerleaveservice.CaseChange{Before: f.lcase, After: &after}, nil
 }
 
@@ -134,7 +135,7 @@ func (f *fakeLeave) CloseCase(
 	_ pagination.TenantInfo,
 	id pulid.ID,
 	_ pulid.ID,
-) (*worker.WorkerLeaveCase, error) {
+) (*workerleave.WorkerLeaveCase, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -145,8 +146,8 @@ func (f *fakeLeave) CloseCase(
 func (f *fakeLeave) PlanRecordDay(
 	_ context.Context,
 	req *workerleaveservice.RecordDayRequest,
-) (*worker.WorkerLeaveEntry, error) {
-	return &worker.WorkerLeaveEntry{
+) (*workerleave.WorkerLeaveEntry, error) {
+	return &workerleave.WorkerLeaveEntry{
 		WorkerID:                 f.lcase.WorkerID,
 		LeaveCaseID:              req.CaseID,
 		UsedOn:                   req.UsedOn,
@@ -158,7 +159,7 @@ func (f *fakeLeave) PlanRecordDay(
 func (f *fakeLeave) RecordDay(
 	_ context.Context,
 	req *workerleaveservice.RecordDayRequest,
-) (*worker.WorkerLeaveEntry, error) {
+) (*workerleave.WorkerLeaveEntry, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -170,7 +171,7 @@ func (f *fakeLeave) PlanDeleteDay(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*worker.WorkerLeaveEntry, error) {
+) (*workerleave.WorkerLeaveEntry, error) {
 	return f.entry, nil
 }
 
@@ -269,7 +270,7 @@ func TestCloseLeaveCase_IsAPersonsDecision(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
 	assert.Equal(t, []pulid.ID{cases.lcase.ID}, cases.closed)
 
-	cases.lcase.Status = worker.LeaveCasePending
+	cases.lcase.Status = workerleave.LeaveCasePending
 	require.Error(
 		t,
 		tool.(agenttoolports.ToolValidator).Validate(

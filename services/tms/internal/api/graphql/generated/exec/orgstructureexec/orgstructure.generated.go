@@ -3,6 +3,7 @@
 package orgstructureexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"context"
 	"errors"
 
@@ -35,7 +36,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -45,7 +46,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -55,7 +56,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -65,7 +66,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return obj.DelegatorID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -75,7 +76,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return obj.DelegateID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -85,7 +86,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return obj.Scope, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNApprovalScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐApprovalScope),
@@ -95,7 +96,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return obj.StartsAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -106,7 +107,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return gqlexec.Resolver[resolverApprovalDelegation](ec, "ApprovalDelegation").EndsAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -115,7 +116,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "reason",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return obj.Reason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -126,7 +127,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return gqlexec.Resolver[resolverApprovalDelegation](ec, "ApprovalDelegation").RevokedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -137,7 +138,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return gqlexec.Resolver[resolverApprovalDelegation](ec, "ApprovalDelegation").RevokedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -148,7 +149,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return gqlexec.Resolver[resolverApprovalDelegation](ec, "ApprovalDelegation").CreatedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -158,7 +159,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -168,7 +169,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -178,7 +179,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -188,7 +189,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return obj.Delegator, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
@@ -198,7 +199,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.ApprovalDelegation)
+					obj := o.(*approvaldelegation.ApprovalDelegation)
 					return obj.Delegate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
@@ -890,10 +891,10 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverApprovalDelegation interface {
-	EndsAt(ctx context.Context, obj *worker.ApprovalDelegation) (*int, error)
-	RevokedAt(ctx context.Context, obj *worker.ApprovalDelegation) (*int, error)
-	RevokedByID(ctx context.Context, obj *worker.ApprovalDelegation) (*string, error)
-	CreatedByID(ctx context.Context, obj *worker.ApprovalDelegation) (*string, error)
+	EndsAt(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*int, error)
+	RevokedAt(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*int, error)
+	RevokedByID(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*string, error)
+	CreatedByID(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*string, error)
 }
 
 type resolverJobPosition interface {
@@ -905,8 +906,8 @@ type resolverMutation interface {
 	UpdateJobPosition(ctx context.Context, input gqlmodel.UpdateJobPositionInput) (*worker.JobPosition, error)
 	AssignWorkerPosition(ctx context.Context, workerID string, positionID *string) (bool, error)
 	AssignUserPosition(ctx context.Context, userID string, positionID *string) (bool, error)
-	DelegateApproval(ctx context.Context, input gqlmodel.DelegateApprovalInput) (*worker.ApprovalDelegation, error)
-	RevokeApprovalDelegation(ctx context.Context, id string) (*worker.ApprovalDelegation, error)
+	DelegateApproval(ctx context.Context, input gqlmodel.DelegateApprovalInput) (*approvaldelegation.ApprovalDelegation, error)
+	RevokeApprovalDelegation(ctx context.Context, id string) (*approvaldelegation.ApprovalDelegation, error)
 }
 
 type resolverQuery interface {
@@ -915,7 +916,7 @@ type resolverQuery interface {
 	Headcount(ctx context.Context) (*orgstructureservice.Headcount, error)
 	JobPositionHolders(ctx context.Context, id string) ([]*gqlmodel.PositionHolder, error)
 	MyTeam(ctx context.Context, includeInactive *bool) ([]*gqlmodel.TeamMember, error)
-	ApprovalDelegations(ctx context.Context, delegatorID *string, delegateID *string, activeOnly *bool) ([]*worker.ApprovalDelegation, error)
+	ApprovalDelegations(ctx context.Context, delegatorID *string, delegateID *string, activeOnly *bool) ([]*approvaldelegation.ApprovalDelegation, error)
 }
 
 var (
@@ -1381,12 +1382,12 @@ func unmarshalNUpdateJobPositionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOApprovalScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐApprovalScope(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.ApprovalScope, error) {
+func unmarshalOApprovalScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐApprovalScope(ctx context.Context, ec *gqlexec.Exec, v any) (*approvaldelegation.ApprovalScope, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.ApprovalScope(tmp)
+	res := approvaldelegation.ApprovalScope(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -1439,15 +1440,15 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNApprovalDelegation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐApprovalDelegationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.ApprovalDelegation) graphql.Marshaler {
-	return gqlexec.List[*worker.ApprovalDelegation]{
+func marshalNApprovalDelegation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐApprovalDelegationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*approvaldelegation.ApprovalDelegation) graphql.Marshaler {
+	return gqlexec.List[*approvaldelegation.ApprovalDelegation]{
 		Elem:        marshalNApprovalDelegation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐApprovalDelegation,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNApprovalDelegation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐApprovalDelegation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.ApprovalDelegation) graphql.Marshaler {
+func marshalNApprovalDelegation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐApprovalDelegation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *approvaldelegation.ApprovalDelegation) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1455,7 +1456,7 @@ func marshalNApprovalDelegation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "ApprovalDelegation", v)
 }
 
-func marshalNApprovalScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐApprovalScope(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ApprovalScope) graphql.Marshaler {
+func marshalNApprovalScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐApprovalScope(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v approvaldelegation.ApprovalScope) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

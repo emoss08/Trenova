@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -12,7 +12,7 @@ import (
 func workerPolicyFromInput(
 	input gqlmodel.WorkerPolicyInput,
 	tenant pagination.TenantInfo,
-) (*worker.WorkerPolicy, error) {
+) (*workerpolicy.WorkerPolicy, error) {
 	documentID, err := base.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, base.InvalidIDError("documentId", "Document is invalid")
@@ -23,7 +23,7 @@ func workerPolicyFromInput(
 		status = *input.Status
 	}
 
-	return &worker.WorkerPolicy{
+	return &workerpolicy.WorkerPolicy{
 		OrganizationID:    tenant.OrgID,
 		BusinessUnitID:    tenant.BuID,
 		Status:            status,

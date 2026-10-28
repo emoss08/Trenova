@@ -3,7 +3,8 @@ package workerports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -48,14 +49,14 @@ type PolicyComplianceRequest struct {
 	TenantInfo   pagination.TenantInfo
 	PolicyID     pulid.ID
 	VersionLabel string
-	AppliesTo    worker.PolicyAudience
+	AppliesTo    workerpolicy.PolicyAudience
 	Limit        int
 }
 
 type ListProfileChangeRequestsRequest struct {
-	TenantInfo pagination.TenantInfo        `json:"tenantInfo"`
-	WorkerID   pulid.ID                     `json:"workerId"`
-	Statuses   []worker.ProfileChangeStatus `json:"statuses"`
+	TenantInfo pagination.TenantInfo               `json:"tenantInfo"`
+	WorkerID   pulid.ID                            `json:"workerId"`
+	Statuses   []profilechange.ProfileChangeStatus `json:"statuses"`
 	// ManagerIDs narrows the queue to the people a manager answers for.
 	ManagerIDs    []pulid.ID `json:"managerIds"`
 	IncludeWorker bool       `json:"includeWorker"`
@@ -72,22 +73,28 @@ type SelfServiceRepository interface {
 	ListPolicies(
 		ctx context.Context,
 		req *ListWorkerPoliciesRequest,
-	) ([]*worker.WorkerPolicy, error)
+	) ([]*workerpolicy.WorkerPolicy, error)
 	GetPolicyByID(
 		ctx context.Context,
 		req *GetWorkerPolicyByIDRequest,
-	) (*worker.WorkerPolicy, error)
-	CreatePolicy(ctx context.Context, entity *worker.WorkerPolicy) (*worker.WorkerPolicy, error)
-	UpdatePolicy(ctx context.Context, entity *worker.WorkerPolicy) (*worker.WorkerPolicy, error)
+	) (*workerpolicy.WorkerPolicy, error)
+	CreatePolicy(
+		ctx context.Context,
+		entity *workerpolicy.WorkerPolicy,
+	) (*workerpolicy.WorkerPolicy, error)
+	UpdatePolicy(
+		ctx context.Context,
+		entity *workerpolicy.WorkerPolicy,
+	) (*workerpolicy.WorkerPolicy, error)
 
 	ListAcknowledgements(
 		ctx context.Context,
 		req *ListPolicyAcknowledgementsRequest,
-	) ([]*worker.WorkerPolicyAcknowledgement, error)
+	) ([]*workerpolicy.WorkerPolicyAcknowledgement, error)
 	CreateAcknowledgement(
 		ctx context.Context,
-		entity *worker.WorkerPolicyAcknowledgement,
-	) (*worker.WorkerPolicyAcknowledgement, error)
+		entity *workerpolicy.WorkerPolicyAcknowledgement,
+	) (*workerpolicy.WorkerPolicyAcknowledgement, error)
 	// CountAcknowledgements is how many signatures a version carries, which is
 	// what decides whether its words may still change.
 	CountAcknowledgements(
@@ -106,17 +113,17 @@ type SelfServiceRepository interface {
 	ListChangeRequests(
 		ctx context.Context,
 		req *ListProfileChangeRequestsRequest,
-	) ([]*worker.WorkerProfileChangeRequest, error)
+	) ([]*profilechange.WorkerProfileChangeRequest, error)
 	GetChangeRequestByID(
 		ctx context.Context,
 		req *GetProfileChangeRequestByIDRequest,
-	) (*worker.WorkerProfileChangeRequest, error)
+	) (*profilechange.WorkerProfileChangeRequest, error)
 	CreateChangeRequest(
 		ctx context.Context,
-		entity *worker.WorkerProfileChangeRequest,
-	) (*worker.WorkerProfileChangeRequest, error)
+		entity *profilechange.WorkerProfileChangeRequest,
+	) (*profilechange.WorkerProfileChangeRequest, error)
 	UpdateChangeRequest(
 		ctx context.Context,
-		entity *worker.WorkerProfileChangeRequest,
-	) (*worker.WorkerProfileChangeRequest, error)
+		entity *profilechange.WorkerProfileChangeRequest,
+	) (*profilechange.WorkerProfileChangeRequest, error)
 }

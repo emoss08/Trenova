@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -71,8 +71,8 @@ func limitOr(requested, fallback int) int {
 func (r *repository) ListTemplates(
 	ctx context.Context,
 	req *workerports.ListShiftTemplatesRequest,
-) ([]*worker.ShiftTemplate, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.ShiftTemplate, error) {
+) ([]*workerschedule.ShiftTemplate, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*workerschedule.ShiftTemplate, error) {
 		t := workerdb.ShiftTemplates
 		entities, err := t.Where(keel.When(req.ActiveOnly, t.Status.Eq(domaintypes.StatusActive))).
 			Order(t.Name.Asc()).
@@ -90,8 +90,8 @@ func (r *repository) ListTemplates(
 func (r *repository) GetTemplateByID(
 	ctx context.Context,
 	req *workerports.GetShiftTemplateByIDRequest,
-) (*worker.ShiftTemplate, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.ShiftTemplate, error) {
+) (*workerschedule.ShiftTemplate, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerschedule.ShiftTemplate, error) {
 		entity, err := workerdb.ShiftTemplates.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, templateErrors.Map(err, req.ID.String())
@@ -103,9 +103,9 @@ func (r *repository) GetTemplateByID(
 
 func (r *repository) CreateTemplate(
 	ctx context.Context,
-	entity *worker.ShiftTemplate,
-) (*worker.ShiftTemplate, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.ShiftTemplate, error) {
+	entity *workerschedule.ShiftTemplate,
+) (*workerschedule.ShiftTemplate, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*workerschedule.ShiftTemplate, error) {
 		if err := workerdb.ShiftTemplates.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create shift template", zap.Error(err))
 			return nil, templateErrors.Map(err, entity.ID.String())
@@ -117,9 +117,9 @@ func (r *repository) CreateTemplate(
 
 func (r *repository) UpdateTemplate(
 	ctx context.Context,
-	entity *worker.ShiftTemplate,
-) (*worker.ShiftTemplate, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.ShiftTemplate, error) {
+	entity *workerschedule.ShiftTemplate,
+) (*workerschedule.ShiftTemplate, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*workerschedule.ShiftTemplate, error) {
 		if err := workerdb.ShiftTemplates.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update shift template", zap.Error(err))
 			return nil, templateErrors.Map(err, entity.ID.String())
@@ -178,84 +178,100 @@ func (r *repository) CountTemplateAssignmentsByIDs(
 func (r *repository) ListAssignments(
 	ctx context.Context,
 	req *workerports.ListShiftAssignmentsRequest,
-) ([]*worker.WorkerShiftAssignment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerShiftAssignment, error) {
-		a := workerdb.WorkerShiftAssignments
-		var activeAt keel.Pred
-		if req.ActiveAt > 0 {
-			activeAt = keel.And(
-				a.EffectiveFrom.Lte(req.ActiveAt),
-				keel.Or(a.EffectiveTo.IsNull(), a.EffectiveTo.Gte(req.ActiveAt)),
-			)
-		}
+) ([]*workerschedule.WorkerShiftAssignment, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workerschedule.WorkerShiftAssignment, error) {
+			a := workerdb.WorkerShiftAssignments
+			var activeAt keel.Pred
+			if req.ActiveAt > 0 {
+				activeAt = keel.And(
+					a.EffectiveFrom.Lte(req.ActiveAt),
+					keel.Or(a.EffectiveTo.IsNull(), a.EffectiveTo.Gte(req.ActiveAt)),
+				)
+			}
 
-		entities, err := a.Where(
-			keel.When(req.WorkerID.IsNotNil(), a.WorkerID.Eq(req.WorkerID)),
-			activeAt,
-		).
-			Load(listquery.When(req.IncludeTemplate, a.ShiftTemplate())...).
-			Order(a.EffectiveFrom.Desc()).
-			Limit(limitOr(req.Limit, defaultAssignmentPageSize)).
-			List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list shift assignments", zap.Error(err))
-			return nil, fmt.Errorf("list shift assignments: %w", err)
-		}
+			entities, err := a.Where(
+				keel.When(req.WorkerID.IsNotNil(), a.WorkerID.Eq(req.WorkerID)),
+				activeAt,
+			).
+				Load(listquery.When(req.IncludeTemplate, a.ShiftTemplate())...).
+				Order(a.EffectiveFrom.Desc()).
+				Limit(limitOr(req.Limit, defaultAssignmentPageSize)).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list shift assignments", zap.Error(err))
+				return nil, fmt.Errorf("list shift assignments: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) GetAssignmentByID(
 	ctx context.Context,
 	req *workerports.GetShiftAssignmentByIDRequest,
-) (*worker.WorkerShiftAssignment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerShiftAssignment, error) {
-		entity, err := workerdb.WorkerShiftAssignments.Get(ctx, r.db.Keel(ctx), req.ID)
-		if err != nil {
-			return nil, assignmentErrors.Map(err, req.ID.String())
-		}
+) (*workerschedule.WorkerShiftAssignment, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workerschedule.WorkerShiftAssignment, error) {
+			entity, err := workerdb.WorkerShiftAssignments.Get(ctx, r.db.Keel(ctx), req.ID)
+			if err != nil {
+				return nil, assignmentErrors.Map(err, req.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) CreateAssignment(
 	ctx context.Context,
-	entity *worker.WorkerShiftAssignment,
-) (*worker.WorkerShiftAssignment, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerShiftAssignment, error) {
-		if err := workerdb.WorkerShiftAssignments.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to create shift assignment", zap.Error(err))
-			return nil, assignmentErrors.Map(err, entity.ID.String())
-		}
+	entity *workerschedule.WorkerShiftAssignment,
+) (*workerschedule.WorkerShiftAssignment, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workerschedule.WorkerShiftAssignment, error) {
+			if err := workerdb.WorkerShiftAssignments.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+				r.l.Error("failed to create shift assignment", zap.Error(err))
+				return nil, assignmentErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) UpdateAssignment(
 	ctx context.Context,
-	entity *worker.WorkerShiftAssignment,
-) (*worker.WorkerShiftAssignment, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerShiftAssignment, error) {
-		if err := workerdb.WorkerShiftAssignments.Save(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to update shift assignment", zap.Error(err))
-			return nil, assignmentErrors.Map(err, entity.ID.String())
-		}
+	entity *workerschedule.WorkerShiftAssignment,
+) (*workerschedule.WorkerShiftAssignment, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workerschedule.WorkerShiftAssignment, error) {
+			if err := workerdb.WorkerShiftAssignments.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+				r.l.Error("failed to update shift assignment", zap.Error(err))
+				return nil, assignmentErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) ListPreferences(
 	ctx context.Context,
 	req *workerports.ListAvailabilityPreferencesRequest,
-) ([]*worker.WorkerAvailabilityPreference, error) {
+) ([]*workerschedule.WorkerAvailabilityPreference, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*worker.WorkerAvailabilityPreference, error) {
+		func(ctx context.Context) ([]*workerschedule.WorkerAvailabilityPreference, error) {
 			p := workerdb.WorkerAvailabilityPreferences
 			// An empty worker reads the whole roster's stated availability,
 			// which is what the rota needs: seven rows a worker at most, so
@@ -278,15 +294,15 @@ func (r *repository) ListPreferences(
 // correction rather than a second opinion.
 func (r *repository) UpsertPreference(
 	ctx context.Context,
-	entity *worker.WorkerAvailabilityPreference,
-) (*worker.WorkerAvailabilityPreference, error) {
+	entity *workerschedule.WorkerAvailabilityPreference,
+) (*workerschedule.WorkerAvailabilityPreference, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerAvailabilityPreference, error) {
+		func(ctx context.Context) (*workerschedule.WorkerAvailabilityPreference, error) {
 			db := r.db.Keel(ctx)
 			p := workerdb.WorkerAvailabilityPreferences
-			_, err := p.Upsert(ctx, db, []*worker.WorkerAvailabilityPreference{entity},
+			_, err := p.Upsert(ctx, db, []*workerschedule.WorkerAvailabilityPreference{entity},
 				keel.OnConflict(p.OrganizationID, p.BusinessUnitID, p.WorkerID, p.DayOfWeek).
 					Update(p.Preference, p.Note))
 			if err != nil {
@@ -305,7 +321,9 @@ func (r *repository) UpsertPreference(
 	)
 }
 
-func swapsQuery(req *workerports.ListShiftSwapsRequest) *keel.Query[*worker.ShiftSwapRequest] {
+func swapsQuery(
+	req *workerports.ListShiftSwapsRequest,
+) *keel.Query[*workerschedule.ShiftSwapRequest] {
 	s := workerdb.ShiftSwapRequests
 
 	return s.Where(
@@ -313,7 +331,10 @@ func swapsQuery(req *workerports.ListShiftSwapsRequest) *keel.Query[*worker.Shif
 			s.RequestingWorkerID.Eq(req.WorkerID),
 			s.CounterpartyWorkerID.Eq(req.WorkerID),
 		)),
-		keel.When(req.OpenOnly, s.Status.In(worker.SwapProposed, worker.SwapAccepted)),
+		keel.When(
+			req.OpenOnly,
+			s.Status.In(workerschedule.SwapProposed, workerschedule.SwapAccepted),
+		),
 		keel.When(req.Since > 0, s.ShiftDate.Gte(req.Since)),
 	).
 		Load(listquery.When(req.IncludeWorkers, s.RequestingWorker(), s.CounterpartyWorker())...).
@@ -324,56 +345,72 @@ func swapsQuery(req *workerports.ListShiftSwapsRequest) *keel.Query[*worker.Shif
 func (r *repository) ListSwaps(
 	ctx context.Context,
 	req *workerports.ListShiftSwapsRequest,
-) ([]*worker.ShiftSwapRequest, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.ShiftSwapRequest, error) {
-		entities, err := swapsQuery(req).List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list shift swaps", zap.Error(err))
-			return nil, fmt.Errorf("list shift swaps: %w", err)
-		}
+) ([]*workerschedule.ShiftSwapRequest, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workerschedule.ShiftSwapRequest, error) {
+			entities, err := swapsQuery(req).List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list shift swaps", zap.Error(err))
+				return nil, fmt.Errorf("list shift swaps: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) GetSwapByID(
 	ctx context.Context,
 	req *workerports.GetShiftSwapByIDRequest,
-) (*worker.ShiftSwapRequest, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.ShiftSwapRequest, error) {
-		entity, err := workerdb.ShiftSwapRequests.Get(ctx, r.db.Keel(ctx), req.ID)
-		if err != nil {
-			return nil, swapErrors.Map(err, req.ID.String())
-		}
+) (*workerschedule.ShiftSwapRequest, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workerschedule.ShiftSwapRequest, error) {
+			entity, err := workerdb.ShiftSwapRequests.Get(ctx, r.db.Keel(ctx), req.ID)
+			if err != nil {
+				return nil, swapErrors.Map(err, req.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) CreateSwap(
 	ctx context.Context,
-	entity *worker.ShiftSwapRequest,
-) (*worker.ShiftSwapRequest, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.ShiftSwapRequest, error) {
-		if err := workerdb.ShiftSwapRequests.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to create shift swap", zap.Error(err))
-			return nil, swapErrors.Map(err, entity.ID.String())
-		}
+	entity *workerschedule.ShiftSwapRequest,
+) (*workerschedule.ShiftSwapRequest, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workerschedule.ShiftSwapRequest, error) {
+			if err := workerdb.ShiftSwapRequests.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+				r.l.Error("failed to create shift swap", zap.Error(err))
+				return nil, swapErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) UpdateSwap(
 	ctx context.Context,
-	entity *worker.ShiftSwapRequest,
-) (*worker.ShiftSwapRequest, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.ShiftSwapRequest, error) {
-		if err := workerdb.ShiftSwapRequests.Save(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to update shift swap", zap.Error(err))
-			return nil, swapErrors.Map(err, entity.ID.String())
-		}
+	entity *workerschedule.ShiftSwapRequest,
+) (*workerschedule.ShiftSwapRequest, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workerschedule.ShiftSwapRequest, error) {
+			if err := workerdb.ShiftSwapRequests.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+				r.l.Error("failed to update shift swap", zap.Error(err))
+				return nil, swapErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }

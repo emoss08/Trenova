@@ -3,7 +3,7 @@ package workerports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -77,16 +77,16 @@ type PTOPolicyRepository interface {
 	List(
 		ctx context.Context,
 		req *ListPTOPoliciesRequest,
-	) (*pagination.CursorListResult[*worker.PTOPolicy], error)
+	) (*pagination.CursorListResult[*pto.PTOPolicy], error)
 	SelectOptions(
 		ctx context.Context,
 		req *PTOPolicySelectOptionsRequest,
-	) (*pagination.ListResult[*worker.PTOPolicy], error)
-	GetByID(ctx context.Context, req *GetPTOPolicyByIDRequest) (*worker.PTOPolicy, error)
-	GetDefault(ctx context.Context, tenantInfo pagination.TenantInfo) (*worker.PTOPolicy, error)
+	) (*pagination.ListResult[*pto.PTOPolicy], error)
+	GetByID(ctx context.Context, req *GetPTOPolicyByIDRequest) (*pto.PTOPolicy, error)
+	GetDefault(ctx context.Context, tenantInfo pagination.TenantInfo) (*pto.PTOPolicy, error)
 	CodeExists(ctx context.Context, req *PTOPolicyCodeExistsRequest) (bool, error)
-	Create(ctx context.Context, entity *worker.PTOPolicy) (*worker.PTOPolicy, error)
-	Update(ctx context.Context, entity *worker.PTOPolicy) (*worker.PTOPolicy, error)
+	Create(ctx context.Context, entity *pto.PTOPolicy) (*pto.PTOPolicy, error)
+	Update(ctx context.Context, entity *pto.PTOPolicy) (*pto.PTOPolicy, error)
 	ClearDefault(ctx context.Context, req *ClearDefaultPTOPolicyRequest) error
 	CountOpenAssignments(ctx context.Context, req *CountOpenPTOAssignmentsRequest) (int, error)
 	CountOpenAssignmentsByIDs(
@@ -97,26 +97,26 @@ type PTOPolicyRepository interface {
 	ListAssignments(
 		ctx context.Context,
 		req *ListPTOAssignmentsRequest,
-	) ([]*worker.WorkerPTOPolicyAssignment, error)
+	) ([]*pto.WorkerPTOPolicyAssignment, error)
 	GetAssignmentByID(
 		ctx context.Context,
 		req *GetPTOAssignmentByIDRequest,
-	) (*worker.WorkerPTOPolicyAssignment, error)
+	) (*pto.WorkerPTOPolicyAssignment, error)
 	GetActiveAssignment(
 		ctx context.Context,
 		req *GetPTOAssignmentRequest,
-	) (*worker.WorkerPTOPolicyAssignment, error)
+	) (*pto.WorkerPTOPolicyAssignment, error)
 	CreateAssignment(
 		ctx context.Context,
-		entity *worker.WorkerPTOPolicyAssignment,
-	) (*worker.WorkerPTOPolicyAssignment, error)
+		entity *pto.WorkerPTOPolicyAssignment,
+	) (*pto.WorkerPTOPolicyAssignment, error)
 	UpdateAssignment(
 		ctx context.Context,
-		entity *worker.WorkerPTOPolicyAssignment,
-	) (*worker.WorkerPTOPolicyAssignment, error)
+		entity *pto.WorkerPTOPolicyAssignment,
+	) (*pto.WorkerPTOPolicyAssignment, error)
 	ListOpenAssignments(
 		ctx context.Context,
 		req *ListOpenPTOAssignmentsRequest,
-	) ([]*worker.WorkerPTOPolicyAssignment, error)
+	) ([]*pto.WorkerPTOPolicyAssignment, error)
 	ListTenantsWithOpenAssignments(ctx context.Context) ([]pagination.TenantInfo, error)
 }

@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/fmcsa"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
@@ -320,10 +320,22 @@ func TestClient_LookupRejectsUnsupportedIdentifiers(t *testing.T) {
 	_, err := bound.client.Lookup(t.Context(), &carrierintelports.CarrierIntelLookupRequest{
 		Identifier: carrierintelports.CarrierIntelIdentifier{Company: "Sandbox"},
 	})
-	assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorUnsupported))
+	assert.True(
+		t,
+		carrierintelports.IsCarrierIntelErrorKind(
+			err,
+			carrierintelports.CarrierIntelErrorUnsupported,
+		),
+	)
 
 	_, err = bound.client.Lookup(t.Context(), &carrierintelports.CarrierIntelLookupRequest{})
-	assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorInvalidRequest))
+	assert.True(
+		t,
+		carrierintelports.IsCarrierIntelErrorKind(
+			err,
+			carrierintelports.CarrierIntelErrorInvalidRequest,
+		),
+	)
 	assert.Equal(t, int32(0), hits.Load())
 	assert.Empty(t, bound.log.all())
 }
@@ -423,8 +435,17 @@ func TestClient_SearchAndAutocomplete(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, empty.Items)
 
-	_, err = bound.client.Search(t.Context(), &carrierintelports.CarrierIntelSearchRequest{EIN: "364123456"})
-	assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorUnsupported))
+	_, err = bound.client.Search(
+		t.Context(),
+		&carrierintelports.CarrierIntelSearchRequest{EIN: "364123456"},
+	)
+	assert.True(
+		t,
+		carrierintelports.IsCarrierIntelErrorKind(
+			err,
+			carrierintelports.CarrierIntelErrorUnsupported,
+		),
+	)
 
 	suggestions, err := bound.client.Autocomplete(t.Context(), "sandbox", 5)
 	require.NoError(t, err)
@@ -505,7 +526,7 @@ func TestNormalizeComposite(t *testing.T) {
 	assert.Equal(t, "C", safety.LatestReviewType)
 
 	require.Len(t, profile.Basics, 2)
-	hos := profile.Basic(worker.BasicHOSCompliance)
+	hos := profile.Basic(workersafety.BasicHOSCompliance)
 	require.NotNil(t, hos)
 	require.NotNil(t, hos.Percentile)
 	assert.InDelta(t, 72.4, *hos.Percentile, 0.0001)
@@ -515,7 +536,7 @@ func TestNormalizeComposite(t *testing.T) {
 	assert.True(t, hos.RoadsideAlert)
 	assert.False(t, hos.ACIndicator)
 
-	unsafe := profile.Basic(worker.BasicUnsafeDriving)
+	unsafe := profile.Basic(workersafety.BasicUnsafeDriving)
 	require.NotNil(t, unsafe)
 	assert.Nil(t, unsafe.Percentile)
 	assert.False(t, unsafe.Alert)
@@ -577,17 +598,17 @@ func TestOutOfServiceOrder(t *testing.T) {
 func TestCSABasicFromLabel(t *testing.T) {
 	t.Parallel()
 
-	cases := map[string]worker.CSABasic{
-		"Unsafe Driving":                 worker.BasicUnsafeDriving,
-		"HOS Compliance":                 worker.BasicHOSCompliance,
-		"Hours-of-Service Compliance":    worker.BasicHOSCompliance,
-		"Driver Fitness":                 worker.BasicDriverFitness,
-		"Drugs/Alcohol":                  worker.BasicControlledSubstances,
-		"Controlled Substances/Alcohol":  worker.BasicControlledSubstances,
-		"Vehicle Maint.":                 worker.BasicVehicleMaintenance,
-		"HM Compliance":                  worker.BasicHazmatCompliance,
-		"Hazardous Materials Compliance": worker.BasicHazmatCompliance,
-		"Crash Indicator":                worker.BasicCrashIndicator,
+	cases := map[string]workersafety.CSABasic{
+		"Unsafe Driving":                 workersafety.BasicUnsafeDriving,
+		"HOS Compliance":                 workersafety.BasicHOSCompliance,
+		"Hours-of-Service Compliance":    workersafety.BasicHOSCompliance,
+		"Driver Fitness":                 workersafety.BasicDriverFitness,
+		"Drugs/Alcohol":                  workersafety.BasicControlledSubstances,
+		"Controlled Substances/Alcohol":  workersafety.BasicControlledSubstances,
+		"Vehicle Maint.":                 workersafety.BasicVehicleMaintenance,
+		"HM Compliance":                  workersafety.BasicHazmatCompliance,
+		"Hazardous Materials Compliance": workersafety.BasicHazmatCompliance,
+		"Crash Indicator":                workersafety.BasicCrashIndicator,
 	}
 	for label, want := range cases {
 		got, ok := csaBasicFromLabel(label)

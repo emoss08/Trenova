@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -35,7 +35,7 @@ func New(p Params) workerports.OrgHolidayRepository {
 	}
 }
 
-func listQuery(req *workerports.ListOrgHolidaysRequest) *keel.Query[*worker.OrgHoliday] {
+func listQuery(req *workerports.ListOrgHolidaysRequest) *keel.Query[*pto.OrgHoliday] {
 	h := workerdb.OrgHolidays
 	var window keel.Pred
 	if req.From > 0 || req.To > 0 {
@@ -54,8 +54,8 @@ func listQuery(req *workerports.ListOrgHolidaysRequest) *keel.Query[*worker.OrgH
 func (r *repository) List(
 	ctx context.Context,
 	req *workerports.ListOrgHolidaysRequest,
-) ([]*worker.OrgHoliday, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.OrgHoliday, error) {
+) ([]*pto.OrgHoliday, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*pto.OrgHoliday, error) {
 		entities, err := listQuery(req).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list org holidays", zap.Error(err))
@@ -69,8 +69,8 @@ func (r *repository) List(
 func (r *repository) GetByID(
 	ctx context.Context,
 	req *workerports.GetOrgHolidayByIDRequest,
-) (*worker.OrgHoliday, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.OrgHoliday, error) {
+) (*pto.OrgHoliday, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pto.OrgHoliday, error) {
 		entity, err := workerdb.OrgHolidays.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, holidayErrors.Map(err, req.ID.String())
@@ -82,9 +82,9 @@ func (r *repository) GetByID(
 
 func (r *repository) Create(
 	ctx context.Context,
-	entity *worker.OrgHoliday,
-) (*worker.OrgHoliday, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.OrgHoliday, error) {
+	entity *pto.OrgHoliday,
+) (*pto.OrgHoliday, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pto.OrgHoliday, error) {
 		if err := workerdb.OrgHolidays.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create org holiday", zap.Error(err))
 			return nil, holidayErrors.Map(err, entity.ID.String())
@@ -96,9 +96,9 @@ func (r *repository) Create(
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *worker.OrgHoliday,
-) (*worker.OrgHoliday, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.OrgHoliday, error) {
+	entity *pto.OrgHoliday,
+) (*pto.OrgHoliday, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pto.OrgHoliday, error) {
 		if err := workerdb.OrgHolidays.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update org holiday", zap.Error(err))
 			return nil, holidayErrors.Map(err, entity.ID.String())
@@ -110,7 +110,7 @@ func (r *repository) Update(
 
 func (r *repository) Delete(ctx context.Context, req *workerports.GetOrgHolidayByIDRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		err := workerdb.OrgHolidays.DeleteRow(ctx, r.db.Keel(ctx), &worker.OrgHoliday{ID: req.ID})
+		err := workerdb.OrgHolidays.DeleteRow(ctx, r.db.Keel(ctx), &pto.OrgHoliday{ID: req.ID})
 		if err != nil {
 			r.l.Error("failed to delete org holiday", zap.Error(err))
 			return holidayErrors.Map(err, req.ID.String())

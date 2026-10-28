@@ -13,13 +13,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *MutationResolver) RecordWorkerInjury(ctx context.Context, input gqlmodel.RecordWorkerInjuryInput) (*worker.WorkerInjury, error) {
+func (r *MutationResolver) RecordWorkerInjury(ctx context.Context, input gqlmodel.RecordWorkerInjuryInput) (*workersafety.WorkerInjury, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerInjury, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func (r *MutationResolver) RecordWorkerInjury(ctx context.Context, input gqlmode
 	return r.WorkerInjuryService.RecordInjury(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) UpdateWorkerInjury(ctx context.Context, input gqlmodel.UpdateWorkerInjuryInput) (*worker.WorkerInjury, error) {
+func (r *MutationResolver) UpdateWorkerInjury(ctx context.Context, input gqlmodel.UpdateWorkerInjuryInput) (*workersafety.WorkerInjury, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerInjury, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func (r *MutationResolver) DeleteWorkerInjury(ctx context.Context, id string) (b
 	return true, nil
 }
 
-func (r *MutationResolver) SaveOshaSummary(ctx context.Context, input gqlmodel.SaveOSHASummaryInput) (*worker.OSHAAnnualSummary, error) {
+func (r *MutationResolver) SaveOshaSummary(ctx context.Context, input gqlmodel.SaveOSHASummaryInput) (*workersafety.OSHAAnnualSummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerInjury, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (r *MutationResolver) SaveOshaSummary(ctx context.Context, input gqlmodel.S
 	)
 }
 
-func (r *MutationResolver) CertifyOshaSummary(ctx context.Context, year int) (*worker.OSHAAnnualSummary, error) {
+func (r *MutationResolver) CertifyOshaSummary(ctx context.Context, year int) (*workersafety.OSHAAnnualSummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerInjury, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (r *MutationResolver) CertifyOshaSummary(ctx context.Context, year int) (*w
 	)
 }
 
-func (r *MutationResolver) UncertifyOshaSummary(ctx context.Context, year int) (*worker.OSHAAnnualSummary, error) {
+func (r *MutationResolver) UncertifyOshaSummary(ctx context.Context, year int) (*workersafety.OSHAAnnualSummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerInjury, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -106,31 +106,31 @@ func (r *MutationResolver) UncertifyOshaSummary(ctx context.Context, year int) (
 	)
 }
 
-func (r *OSHAAnnualSummaryResolver) TotalHoursWorked(ctx context.Context, obj *worker.OSHAAnnualSummary) (int, error) {
+func (r *OSHAAnnualSummaryResolver) TotalHoursWorked(ctx context.Context, obj *workersafety.OSHAAnnualSummary) (int, error) {
 	return int(obj.TotalHoursWorked), nil
 }
 
-func (r *OSHAAnnualSummaryResolver) CertifiedAt(ctx context.Context, obj *worker.OSHAAnnualSummary) (*int, error) {
+func (r *OSHAAnnualSummaryResolver) CertifiedAt(ctx context.Context, obj *workersafety.OSHAAnnualSummary) (*int, error) {
 	return base.IntPtr(obj.CertifiedAt), nil
 }
 
-func (r *OSHAAnnualSummaryResolver) CertifiedByID(ctx context.Context, obj *worker.OSHAAnnualSummary) (*string, error) {
+func (r *OSHAAnnualSummaryResolver) CertifiedByID(ctx context.Context, obj *workersafety.OSHAAnnualSummary) (*string, error) {
 	return base.IDPtr(obj.CertifiedByID), nil
 }
 
-func (r *OSHAAnnualSummaryResolver) PostedFrom(ctx context.Context, obj *worker.OSHAAnnualSummary) (*int, error) {
+func (r *OSHAAnnualSummaryResolver) PostedFrom(ctx context.Context, obj *workersafety.OSHAAnnualSummary) (*int, error) {
 	return base.IntPtr(obj.PostedFrom), nil
 }
 
-func (r *OSHAAnnualSummaryResolver) PostedThrough(ctx context.Context, obj *worker.OSHAAnnualSummary) (*int, error) {
+func (r *OSHAAnnualSummaryResolver) PostedThrough(ctx context.Context, obj *workersafety.OSHAAnnualSummary) (*int, error) {
 	return base.IntPtr(obj.PostedThrough), nil
 }
 
-func (r *OSHAAnnualSummaryResolver) SubmittedAt(ctx context.Context, obj *worker.OSHAAnnualSummary) (*int, error) {
+func (r *OSHAAnnualSummaryResolver) SubmittedAt(ctx context.Context, obj *workersafety.OSHAAnnualSummary) (*int, error) {
 	return base.IntPtr(obj.SubmittedAt), nil
 }
 
-func (r *QueryResolver) WorkerInjuries(ctx context.Context, workerID *string, caseYear *int, recordableOnly *bool, openOnly *bool, limit *int) ([]*worker.WorkerInjury, error) {
+func (r *QueryResolver) WorkerInjuries(ctx context.Context, workerID *string, caseYear *int, recordableOnly *bool, openOnly *bool, limit *int) ([]*workersafety.WorkerInjury, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerInjury, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -161,7 +161,7 @@ func (r *QueryResolver) WorkerInjuries(ctx context.Context, workerID *string, ca
 	})
 }
 
-func (r *QueryResolver) WorkerInjury(ctx context.Context, id string) (*worker.WorkerInjury, error) {
+func (r *QueryResolver) WorkerInjury(ctx context.Context, id string) (*workersafety.WorkerInjury, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerInjury, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -183,7 +183,7 @@ func (r *QueryResolver) OshaLog(ctx context.Context, year *int) (*workerinjuryse
 	return r.WorkerInjuryService.Log(ctx, base.TenantInfo(authCtx), int16(base.IntValue(year)))
 }
 
-func (r *QueryResolver) OshaSummaries(ctx context.Context) ([]*worker.OSHAAnnualSummary, error) {
+func (r *QueryResolver) OshaSummaries(ctx context.Context) ([]*workersafety.OSHAAnnualSummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerInjury, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -192,34 +192,34 @@ func (r *QueryResolver) OshaSummaries(ctx context.Context) ([]*worker.OSHAAnnual
 	return r.WorkerInjuryService.ListSummaries(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *WorkerInjuryResolver) Recordable(ctx context.Context, obj *worker.WorkerInjury) (bool, error) {
+func (r *WorkerInjuryResolver) Recordable(ctx context.Context, obj *workersafety.WorkerInjury) (bool, error) {
 	return obj.IsRecordable(), nil
 }
 
-func (r *WorkerInjuryResolver) ReportedAt(ctx context.Context, obj *worker.WorkerInjury) (*int, error) {
+func (r *WorkerInjuryResolver) ReportedAt(ctx context.Context, obj *workersafety.WorkerInjury) (*int, error) {
 	return base.IntPtr(obj.ReportedAt), nil
 }
 
-func (r *WorkerInjuryResolver) ReturnedToWorkAt(ctx context.Context, obj *worker.WorkerInjury) (*int, error) {
+func (r *WorkerInjuryResolver) ReturnedToWorkAt(ctx context.Context, obj *workersafety.WorkerInjury) (*int, error) {
 	return base.IntPtr(obj.ReturnedToWorkAt), nil
 }
 
-func (r *WorkerInjuryResolver) LogName(ctx context.Context, obj *worker.WorkerInjury) (string, error) {
+func (r *WorkerInjuryResolver) LogName(ctx context.Context, obj *workersafety.WorkerInjury) (string, error) {
 	return obj.LogName(), nil
 }
 
-func (r *WorkerInjuryResolver) ClaimFiledAt(ctx context.Context, obj *worker.WorkerInjury) (*int, error) {
+func (r *WorkerInjuryResolver) ClaimFiledAt(ctx context.Context, obj *workersafety.WorkerInjury) (*int, error) {
 	return base.IntPtr(obj.ClaimFiledAt), nil
 }
 
-func (r *WorkerInjuryResolver) ClaimClosedAt(ctx context.Context, obj *worker.WorkerInjury) (*int, error) {
+func (r *WorkerInjuryResolver) ClaimClosedAt(ctx context.Context, obj *workersafety.WorkerInjury) (*int, error) {
 	return base.IntPtr(obj.ClaimClosedAt), nil
 }
 
-func (r *WorkerInjuryResolver) SafetyEventID(ctx context.Context, obj *worker.WorkerInjury) (*string, error) {
+func (r *WorkerInjuryResolver) SafetyEventID(ctx context.Context, obj *workersafety.WorkerInjury) (*string, error) {
 	return base.IDPtr(obj.SafetyEventID), nil
 }
 
-func (r *WorkerInjuryResolver) DocumentID(ctx context.Context, obj *worker.WorkerInjury) (*string, error) {
+func (r *WorkerInjuryResolver) DocumentID(ctx context.Context, obj *workersafety.WorkerInjury) (*string, error) {
 	return base.IDPtr(obj.DocumentID), nil
 }

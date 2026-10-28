@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/pkg/authctx"
 )
 
@@ -75,7 +75,7 @@ func (r *Deps) AttentionAccess(
 		ctx,
 		permission.ResourceWorkerLeave,
 		permission.OpRead,
-		worker.ApprovalScopeTimeOff,
+		approvaldelegation.ApprovalScopeTimeOff,
 	)
 	if err != nil {
 		return access, err

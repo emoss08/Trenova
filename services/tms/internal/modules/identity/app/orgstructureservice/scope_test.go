@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,7 +17,7 @@ import (
 // delegated to this user, and do these managers cover this worker.
 type scopeRepo struct {
 	workerports.OrgStructureRepository
-	delegations []*worker.ApprovalDelegation
+	delegations []*approvaldelegation.ApprovalDelegation
 	// manages maps a manager onto the workers they cover.
 	manages map[pulid.ID]map[pulid.ID]bool
 	// asked records every ManagesWorker call, so a test can prove the check
@@ -28,8 +28,8 @@ type scopeRepo struct {
 func (r *scopeRepo) ListDelegations(
 	_ context.Context,
 	req *workerports.ListApprovalDelegationsRequest,
-) ([]*worker.ApprovalDelegation, error) {
-	out := make([]*worker.ApprovalDelegation, 0, len(r.delegations))
+) ([]*approvaldelegation.ApprovalDelegation, error) {
+	out := make([]*approvaldelegation.ApprovalDelegation, 0, len(r.delegations))
 	for _, row := range r.delegations {
 		if !req.DelegateID.IsNil() && row.DelegateID != req.DelegateID {
 			continue
@@ -88,7 +88,7 @@ func TestCanActFor_TheirOwnPeople(t *testing.T) {
 		TenantInfo: scopeTenant(),
 		UserID:     managerUser,
 		WorkerID:   teamWorker,
-		Scope:      worker.ApprovalScopeTimeOff,
+		Scope:      approvaldelegation.ApprovalScopeTimeOff,
 		AsOf:       asOf,
 	})
 	require.NoError(t, err)
@@ -123,11 +123,11 @@ func TestCanActFor_ThroughADelegation(t *testing.T) {
 	t.Parallel()
 
 	repo := &scopeRepo{
-		delegations: []*worker.ApprovalDelegation{
+		delegations: []*approvaldelegation.ApprovalDelegation{
 			{
 				DelegatorID: managerUser,
 				DelegateID:  coverUser,
-				Scope:       worker.ApprovalScopeTimeOff,
+				Scope:       approvaldelegation.ApprovalScopeTimeOff,
 				StartsAt:    asOf - 86400,
 			},
 		},
@@ -138,7 +138,7 @@ func TestCanActFor_ThroughADelegation(t *testing.T) {
 		TenantInfo: scopeTenant(),
 		UserID:     coverUser,
 		WorkerID:   teamWorker,
-		Scope:      worker.ApprovalScopeTimeOff,
+		Scope:      approvaldelegation.ApprovalScopeTimeOff,
 		AsOf:       asOf,
 	})
 	require.NoError(t, err)
@@ -153,11 +153,11 @@ func TestCanActFor_DelegationDoesNotCoverAnotherScope(t *testing.T) {
 	t.Parallel()
 
 	repo := &scopeRepo{
-		delegations: []*worker.ApprovalDelegation{
+		delegations: []*approvaldelegation.ApprovalDelegation{
 			{
 				DelegatorID: managerUser,
 				DelegateID:  coverUser,
-				Scope:       worker.ApprovalScopeExpenses,
+				Scope:       approvaldelegation.ApprovalScopeExpenses,
 				StartsAt:    asOf - 86400,
 			},
 		},
@@ -168,7 +168,7 @@ func TestCanActFor_DelegationDoesNotCoverAnotherScope(t *testing.T) {
 		TenantInfo: scopeTenant(),
 		UserID:     coverUser,
 		WorkerID:   teamWorker,
-		Scope:      worker.ApprovalScopeTimeOff,
+		Scope:      approvaldelegation.ApprovalScopeTimeOff,
 		AsOf:       asOf,
 	})
 	require.NoError(t, err)
@@ -181,11 +181,11 @@ func TestCanActFor_RevokedDelegationStopsAnswering(t *testing.T) {
 
 	revoked := asOf - 3600
 	repo := &scopeRepo{
-		delegations: []*worker.ApprovalDelegation{
+		delegations: []*approvaldelegation.ApprovalDelegation{
 			{
 				DelegatorID: managerUser,
 				DelegateID:  coverUser,
-				Scope:       worker.ApprovalScopeAll,
+				Scope:       approvaldelegation.ApprovalScopeAll,
 				StartsAt:    asOf - 86400,
 				RevokedAt:   &revoked,
 			},
@@ -210,11 +210,11 @@ func TestCanActFor_DelegationFromSomebodyWhoManagesNobody(t *testing.T) {
 	t.Parallel()
 
 	repo := &scopeRepo{
-		delegations: []*worker.ApprovalDelegation{
+		delegations: []*approvaldelegation.ApprovalDelegation{
 			{
 				DelegatorID: strangerUser,
 				DelegateID:  coverUser,
-				Scope:       worker.ApprovalScopeAll,
+				Scope:       approvaldelegation.ApprovalScopeAll,
 				StartsAt:    asOf - 86400,
 			},
 		},
@@ -258,17 +258,17 @@ func TestManagerIDs_IncludesActiveDelegatorsOnly(t *testing.T) {
 
 	ended := asOf - 3600
 	repo := &scopeRepo{
-		delegations: []*worker.ApprovalDelegation{
+		delegations: []*approvaldelegation.ApprovalDelegation{
 			{
 				DelegatorID: managerUser,
 				DelegateID:  coverUser,
-				Scope:       worker.ApprovalScopeAll,
+				Scope:       approvaldelegation.ApprovalScopeAll,
 				StartsAt:    asOf - 86400,
 			},
 			{
 				DelegatorID: strangerUser,
 				DelegateID:  coverUser,
-				Scope:       worker.ApprovalScopeAll,
+				Scope:       approvaldelegation.ApprovalScopeAll,
 				StartsAt:    asOf - 200000,
 				EndsAt:      &ended,
 			},
@@ -279,7 +279,7 @@ func TestManagerIDs_IncludesActiveDelegatorsOnly(t *testing.T) {
 		t.Context(),
 		scopeTenant(),
 		coverUser,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		asOf,
 	)
 	require.NoError(t, err)

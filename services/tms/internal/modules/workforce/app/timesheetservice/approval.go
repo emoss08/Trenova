@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,7 +16,7 @@ import (
 // TransitionTimesheetRequest moves a week along.
 type TransitionTimesheetRequest struct {
 	ID     pulid.ID
-	Status worker.TimesheetStatus
+	Status timesheet.TimesheetStatus
 	Note   string
 	// ActorWorkerID is set when the request comes from the worker whose week it
 	// is: they may hand their own week over and nothing else.
@@ -31,7 +31,7 @@ type TransitionTimesheetRequest struct {
 func (s *Service) Transition(
 	ctx context.Context,
 	req *TransitionTimesheetRequest,
-) (*worker.Timesheet, error) {
+) (*timesheet.Timesheet, error) {
 	sheet, err := s.repo.GetTimesheetByID(ctx, &workerports.GetTimesheetByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
@@ -57,7 +57,7 @@ func (s *Service) Transition(
 				"That is not your timesheet",
 			)
 		}
-		if req.Status != worker.TimesheetSubmitted {
+		if req.Status != timesheet.TimesheetSubmitted {
 			return nil, errortypes.NewValidationError(
 				"status",
 				errortypes.ErrInvalidOperation,
@@ -68,7 +68,7 @@ func (s *Service) Transition(
 
 	// The last roll-up before the numbers are frozen. After this the totals
 	// are the record rather than a summary of one.
-	if req.Status == worker.TimesheetSubmitted {
+	if req.Status == timesheet.TimesheetSubmitted {
 		if err = s.recalculate(ctx, req.TenantInfo, sheet.ID); err != nil {
 			return nil, err
 		}
@@ -97,20 +97,20 @@ func (s *Service) Transition(
 	}
 
 	switch req.Status {
-	case worker.TimesheetSubmitted:
+	case timesheet.TimesheetSubmitted:
 		sheet.SubmittedAt = &now
 		sheet.SubmittedByID = req.UserID
 		// A resubmission is a fresh decision, so the old one is cleared rather
 		// than left to read as an approval of numbers that have since changed.
 		sheet.ApprovedAt = nil
 		sheet.ApprovedByID = pulid.Nil
-	case worker.TimesheetApproved:
+	case timesheet.TimesheetApproved:
 		sheet.ApprovedAt = &now
 		sheet.ApprovedByID = req.UserID
-	case worker.TimesheetRejected, worker.TimesheetOpen:
+	case timesheet.TimesheetRejected, timesheet.TimesheetOpen:
 		sheet.ApprovedAt = nil
 		sheet.ApprovedByID = pulid.Nil
-	case worker.TimesheetLocked:
+	case timesheet.TimesheetLocked:
 	}
 
 	multiErr := errortypes.NewMultiError()
@@ -138,17 +138,17 @@ func (s *Service) Transition(
 	return updated, nil
 }
 
-func timesheetOperation(status worker.TimesheetStatus) permission.Operation {
+func timesheetOperation(status timesheet.TimesheetStatus) permission.Operation {
 	switch status {
-	case worker.TimesheetSubmitted:
+	case timesheet.TimesheetSubmitted:
 		return permission.OpSubmit
-	case worker.TimesheetApproved:
+	case timesheet.TimesheetApproved:
 		return permission.OpApprove
-	case worker.TimesheetRejected:
+	case timesheet.TimesheetRejected:
 		return permission.OpReject
-	case worker.TimesheetLocked:
+	case timesheet.TimesheetLocked:
 		return permission.OpLock
-	case worker.TimesheetOpen:
+	case timesheet.TimesheetOpen:
 		return permission.OpReopen
 	default:
 		return permission.OpUpdate
@@ -185,7 +185,7 @@ type GenerateExportRequest struct {
 func (s *Service) GenerateExport(
 	ctx context.Context,
 	req *GenerateExportRequest,
-) (*worker.PayrollExport, error) {
+) (*timesheet.PayrollExport, error) {
 	plan, err := s.PlanGenerateExport(ctx, req)
 	if err != nil {
 		return nil, err
@@ -201,7 +201,7 @@ func (s *Service) GenerateExport(
 		TenantInfo:   req.TenantInfo,
 		ExportID:     created.ID,
 		TimesheetIDs: ids,
-		Status:       worker.TimesheetLocked,
+		Status:       timesheet.TimesheetLocked,
 	})
 	if err != nil {
 		return nil, err
@@ -232,8 +232,8 @@ func (s *Service) GenerateExport(
 func (s *Service) reconcileExport(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	export *worker.PayrollExport,
-) (*worker.PayrollExport, error) {
+	export *timesheet.PayrollExport,
+) (*timesheet.PayrollExport, error) {
 	sheets, err := s.repo.ListTimesheets(ctx, &workerports.ListTimesheetsRequest{
 		TenantInfo: tenantInfo,
 		ExportID:   export.ID,
@@ -292,7 +292,7 @@ func (s *Service) ExportRows(
 func (s *Service) ListExports(
 	ctx context.Context,
 	req *workerports.ListPayrollExportsRequest,
-) ([]*worker.PayrollExport, error) {
+) ([]*timesheet.PayrollExport, error) {
 	return s.repo.ListExports(ctx, req)
 }
 
@@ -300,7 +300,7 @@ func (s *Service) GetExport(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.PayrollExport, error) {
+) (*timesheet.PayrollExport, error) {
 	return s.repo.GetExportByID(ctx, &workerports.GetPayrollExportByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
@@ -322,7 +322,7 @@ type VoidExportRequest struct {
 func (s *Service) VoidExport(
 	ctx context.Context,
 	req *VoidExportRequest,
-) (*worker.PayrollExport, error) {
+) (*timesheet.PayrollExport, error) {
 	change, err := s.PlanVoidExport(ctx, req)
 	if err != nil {
 		return nil, err

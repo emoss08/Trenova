@@ -268,22 +268,22 @@ models:
         resolver: true
   PTOPolicyStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOPolicyStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOPolicyStatus
   PTOYearBasis:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOYearBasis
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOYearBasis
   PTOAccrualMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOAccrualMethod
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOAccrualMethod
   PTOLedgerEntryType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOLedgerEntryType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOLedgerEntryType
   PTOLedgerActorType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOLedgerActorType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOLedgerActorType
   PTOPolicy:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOPolicy
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOPolicy
     fields:
       negativeFloorDays:
         resolver: true
@@ -291,7 +291,7 @@ models:
         resolver: true
   PTOPolicyRule:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOPolicyRule
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOPolicyRule
     fields:
       accrualAmountDays:
         resolver: true
@@ -301,16 +301,16 @@ models:
         resolver: true
   WorkerCredentialCategory:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.CredentialCategory
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential.CredentialCategory
   WorkerCredentialStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.CredentialStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential.CredentialStatus
   WorkerCredentialHealth:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.CredentialHealth
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential.CredentialHealth
   WorkerCredentialType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerCredentialType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential.WorkerCredentialType
     fields:
       profileField:
         resolver: true
@@ -321,7 +321,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/domain/document.Document
   WorkerCredential:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerCredential
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential.WorkerCredential
     fields:
       documentId:
         resolver: true
@@ -335,10 +335,10 @@ models:
         resolver: true
   WorkerCredentialSummaryItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.CredentialSummaryItem
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential.CredentialSummaryItem
   WorkerCredentialSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerCredentialSummary
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential.WorkerCredentialSummary
   CredentialExpiryForecastItem:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice.ExpiryForecastItem
@@ -355,10 +355,10 @@ models:
         resolver: true
   WorkerEmploymentEventKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.EmploymentEventKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/employment.EmploymentEventKind
   WorkerEmploymentEvent:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerEmploymentEvent
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/employment.WorkerEmploymentEvent
     fields:
       fromValues:
         resolver: true
@@ -383,31 +383,31 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice.RecordResult
   WorkerChecklistKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ChecklistKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.ChecklistKind
   WorkerChecklistTrigger:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ChecklistTrigger
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.ChecklistTrigger
   WorkerChecklistItemKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ChecklistItemKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.ChecklistItemKind
   WorkerChecklistOwner:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ChecklistOwner
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.ChecklistOwner
   WorkerChecklistStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ChecklistStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.ChecklistStatus
   WorkerChecklistItemStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ChecklistItemStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.ChecklistItemStatus
   WorkerChecklistTemplate:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerChecklistTemplate
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.WorkerChecklistTemplate
     fields:
       openChecklistCount:
         resolver: true
   WorkerChecklistTemplateItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerChecklistTemplateItem
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.WorkerChecklistTemplateItem
     fields:
       credentialTypeId:
         resolver: true
@@ -417,7 +417,7 @@ models:
         resolver: true
   WorkerChecklist:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerChecklist
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.WorkerChecklist
     fields:
       templateId:
         resolver: true
@@ -429,13 +429,13 @@ models:
         resolver: true
   WorkerChecklistProgress:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ChecklistProgress
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.ChecklistProgress
     fields:
       complete:
         resolver: true
   WorkerChecklistItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerChecklistItem
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.WorkerChecklistItem
     fields:
       overdue:
         resolver: true
@@ -451,10 +451,10 @@ models:
         resolver: true
   PTOTerminationAction:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOTerminationAction
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOTerminationAction
   PTOAccrualTier:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOAccrualTier
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOAccrualTier
     fields:
       accrualAmountDays:
         resolver: true
@@ -487,25 +487,25 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveType
   OrgHolidayKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.HolidayKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.HolidayKind
   OrgHoliday:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.OrgHoliday
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.OrgHoliday
   TrainingCategory:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TrainingCategory
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining.TrainingCategory
   TrainingDelivery:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TrainingDelivery
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining.TrainingDelivery
   WorkerTrainingStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TrainingStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining.TrainingStatus
   WorkerTrainingHealth:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TrainingHealth
   TrainingCourse:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TrainingCourse
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining.TrainingCourse
     fields:
       passingScore:
         resolver: true
@@ -513,7 +513,7 @@ models:
         resolver: true
   WorkerTrainingRecord:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerTrainingRecord
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining.WorkerTrainingRecord
     fields:
       documentId:
         resolver: true
@@ -531,10 +531,10 @@ models:
         resolver: true
   WorkerTrainingSummaryItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TrainingSummaryItem
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining.TrainingSummaryItem
   WorkerTrainingSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerTrainingSummary
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining.WorkerTrainingSummary
   BulkAssignTrainingPayload:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice.BulkAssignResult
@@ -553,22 +553,22 @@ models:
         resolver: true
   LeaveMeasurementMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveMeasurementMethod
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.LeaveMeasurementMethod
   LeaveCaseStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveCaseStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.LeaveCaseStatus
   LeaveFrequency:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveFrequency
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.LeaveFrequency
   LeaveCertificationStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveCertificationStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.LeaveCertificationStatus
   LeaveWindow:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveWindow
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.LeaveWindow
   LeaveControl:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveControl
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.LeaveControl
     fields:
       entitlementWeeks:
         resolver: true
@@ -578,7 +578,7 @@ models:
         resolver: true
   LeaveEntitlement:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveEntitlement
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.LeaveEntitlement
     fields:
       totalHours:
         resolver: true
@@ -594,7 +594,7 @@ models:
         resolver: true
   WorkerLeaveCase:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerLeaveCase
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.WorkerLeaveCase
     fields:
       endsAt:
         resolver: true
@@ -622,7 +622,7 @@ models:
         resolver: true
   WorkerLeaveEntry:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerLeaveEntry
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.WorkerLeaveEntry
     fields:
       hours:
         resolver: true
@@ -630,31 +630,31 @@ models:
         resolver: true
   OSHACaseClassification:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.OSHACaseClassification
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.OSHACaseClassification
   OSHAIllnessType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.OSHAIllnessType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.OSHAIllnessType
   InjuryTreatment:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.InjuryTreatment
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.InjuryTreatment
   InjuryCaseStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.InjuryCaseStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.InjuryCaseStatus
   WorkersCompClaimStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkersCompClaimStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.WorkersCompClaimStatus
   OSHASummaryStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.OSHASummaryStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.OSHASummaryStatus
   OSHASummaryTotals:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.OSHASummaryTotals
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.OSHASummaryTotals
   OSHALog:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice.OSHALog
   OSHAAnnualSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.OSHAAnnualSummary
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.OSHAAnnualSummary
     fields:
       certifiedAt:
         resolver: true
@@ -670,7 +670,7 @@ models:
         resolver: true
   WorkerInjury:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerInjury
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.WorkerInjury
     fields:
       recordable:
         resolver: true
@@ -690,19 +690,19 @@ models:
         resolver: true
   EmploymentVerificationStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.EmploymentVerificationStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/employment.EmploymentVerificationStatus
   EmploymentVerificationMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.EmploymentVerificationMethod
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/employment.EmploymentVerificationMethod
   DQFSection:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DQFSection
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.DQFSection
   DQFItemStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DQFItemStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.DQFItemStatus
   DQFItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DQFItem
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.DQFItem
     fields:
       regulation:
         resolver: true
@@ -710,7 +710,7 @@ models:
         resolver: true
   DQFFile:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DQFFile
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.DQFFile
     fields:
       terminationDate:
         resolver: true
@@ -723,7 +723,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.DQFRetentionCandidate
   WorkerEmploymentVerification:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerEmploymentVerification
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/employment.WorkerEmploymentVerification
     fields:
       employedFrom:
         resolver: true
@@ -741,22 +741,22 @@ models:
         resolver: true
   DOTTestType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTTestType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTTestType
   DOTTestSubstance:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTTestSubstance
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTTestSubstance
   DOTTestStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTTestStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTTestStatus
   DOTTestResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTTestResult
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTTestResult
   DOTViolationType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTViolationType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTViolationType
   DOTViolationStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTViolationStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTViolationStatus
   ReturnToDutyStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ReturnToDutyStatus
@@ -765,22 +765,22 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DrugAlcoholStatus
   ClearinghouseQueryType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ClearinghouseQueryType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.ClearinghouseQueryType
   ClearinghouseResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ClearinghouseResult
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.ClearinghouseResult
   RandomPeriod:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.RandomPeriod
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.RandomPeriod
   RandomDrawStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.RandomDrawStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.RandomDrawStatus
   RandomEntryStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.RandomEntryStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.RandomEntryStatus
   WorkerDOTTest:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerDOTTest
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.WorkerDOTTest
     fields:
       scheduledAt:
         resolver: true
@@ -804,7 +804,7 @@ models:
         resolver: true
   WorkerDOTViolation:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerDOTViolation
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.WorkerDOTViolation
     fields:
       sourceTestId:
         resolver: true
@@ -828,7 +828,7 @@ models:
         resolver: true
   WorkerClearinghouseQuery:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerClearinghouseQuery
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.WorkerClearinghouseQuery
     fields:
       consentObtainedAt:
         resolver: true
@@ -842,13 +842,13 @@ models:
         resolver: true
   DOTRandomPool:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTRandomPool
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTRandomPool
     fields:
       meetsDotMinimums:
         resolver: true
   DOTRandomDraw:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTRandomDraw
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTRandomDraw
     fields:
       drawnById:
         resolver: true
@@ -858,7 +858,7 @@ models:
         resolver: true
   DOTRandomDrawEntry:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTRandomDrawEntry
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTRandomDrawEntry
     fields:
       notifiedAt:
         resolver: true
@@ -868,7 +868,7 @@ models:
         resolver: true
   DrugAlcoholStanding:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DrugAlcoholStanding
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DrugAlcoholStanding
     fields:
       lastClearinghouseQueryAt:
         resolver: true
@@ -876,22 +876,22 @@ models:
         resolver: true
   SafetyEventKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.SafetyEventKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.SafetyEventKind
   SafetySeverity:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.SafetySeverity
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.SafetySeverity
   SafetyEventStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.SafetyEventStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.SafetyEventStatus
   InspectionResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.InspectionResult
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.InspectionResult
   SafetyRating:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.SafetyRating
   CSABasic:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.CSABasic
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.CSABasic
   CarrierIntelSection:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.Section
@@ -1250,61 +1250,61 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.DeductionKind
   AvailabilityPreference:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.AvailabilityPreference
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.AvailabilityPreference
   ShiftSwapStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ShiftSwapStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.ShiftSwapStatus
   ShiftTemplate:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ShiftTemplate
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.ShiftTemplate
     fields:
       activeAssignmentCount:
         resolver: true
   WorkerShiftAssignment:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerShiftAssignment
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.WorkerShiftAssignment
   WorkerAvailabilityPreference:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerAvailabilityPreference
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.WorkerAvailabilityPreference
   ShiftSwapRequest:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ShiftSwapRequest
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.ShiftSwapRequest
   TimeEntrySource:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TimeEntrySource
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet.TimeEntrySource
   TimesheetStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TimesheetStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet.TimesheetStatus
   PayrollExportStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PayrollExportStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet.PayrollExportStatus
   TimeClockEntry:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TimeClockEntry
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet.TimeClockEntry
   Timesheet:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.Timesheet
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet.Timesheet
   PayrollExport:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PayrollExport
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet.PayrollExport
   PayrollExportRow:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice.PayrollExportRow
   PolicyAudience:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PolicyAudience
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy.PolicyAudience
   ProfileChangeStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ProfileChangeStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange.ProfileChangeStatus
   WorkerPolicy:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerPolicy
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy.WorkerPolicy
   WorkerPolicyAcknowledgement:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerPolicyAcknowledgement
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy.WorkerPolicyAcknowledgement
   WorkerProfileChangeRequest:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerProfileChangeRequest
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange.WorkerProfileChangeRequest
     fields:
       changes:
         resolver: true
@@ -1319,7 +1319,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalShiftDay
   RotaDayState:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.RotaDayState
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.RotaDayState
   PortalShiftSwap:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalShiftSwap
@@ -1342,7 +1342,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice.TotalCompensation
   ApprovalScope:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ApprovalScope
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation.ApprovalScope
   JobPosition:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.JobPosition
@@ -1351,7 +1351,7 @@ models:
         resolver: true
   ApprovalDelegation:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ApprovalDelegation
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation.ApprovalDelegation
     fields:
       endsAt:
         resolver: true
@@ -1372,43 +1372,43 @@ models:
       - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.DriverDigestCadence
   WorkerSafetyViolation:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerSafetyViolation
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.WorkerSafetyViolation
   FleetSafety:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.FleetSafety
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.FleetSafety
   FleetSafetyBasic:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.FleetSafetyBasic
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.FleetSafetyBasic
   FleetSafetyKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.FleetSafetyKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.FleetSafetyKind
   FleetSafetyTerminal:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.FleetSafetyTerminal
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.FleetSafetyTerminal
     fields:
       fleetCodeId:
         resolver: true
   FleetSafetyTrendPoint:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.FleetSafetyTrendPoint
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.FleetSafetyTrendPoint
   FleetSafetyRank:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.FleetSafetyRank
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.FleetSafetyRank
     fields:
       fleetCodeId:
         resolver: true
   FleetSafetyRatingCount:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.FleetSafetyRatingCount
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.FleetSafetyRatingCount
   WorkerStanding:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.Standing
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.Standing
   WorkerConcernSeverity:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ConcernSeverity
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.ConcernSeverity
   WorkerConcern:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.Concern
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.Concern
   WorkerOverview:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice.Overview
@@ -1420,16 +1420,16 @@ models:
         resolver: true
   DisciplinaryLevel:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DisciplinaryLevel
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.DisciplinaryLevel
   DisciplinaryStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DisciplinaryStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.DisciplinaryStatus
   RecognitionKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.RecognitionKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.RecognitionKind
   WorkerSafetyEvent:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerSafetyEvent
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.WorkerSafetyEvent
     fields:
       activePoints:
         resolver: true
@@ -1453,7 +1453,7 @@ models:
         resolver: true
   SafetyScorecard:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.SafetyScorecard
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.SafetyScorecard
     fields:
       highestDiscipline:
         resolver: true
@@ -1461,7 +1461,7 @@ models:
         resolver: true
   WorkerDisciplinaryAction:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerDisciplinaryAction
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.WorkerDisciplinaryAction
     fields:
       suspensionDays:
         resolver: true
@@ -1477,13 +1477,13 @@ models:
         resolver: true
   DisciplinaryLadder:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DisciplinaryLadder
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.DisciplinaryLadder
     fields:
       highestLevel:
         resolver: true
   WorkerRecognition:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerRecognition
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.WorkerRecognition
     fields:
       awardedById:
         resolver: true
@@ -1492,25 +1492,25 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice.IssueActionResult
   PerformanceReviewStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ReviewStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview.ReviewStatus
   ReviewGoalStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ReviewGoalStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview.ReviewGoalStatus
   ReviewItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ReviewItem
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview.ReviewItem
   ReviewRating:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ReviewRating
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview.ReviewRating
     fields:
       score:
         resolver: true
   ReviewGoal:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ReviewGoal
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview.ReviewGoal
   PerformanceReviewTemplate:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PerformanceReviewTemplate
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview.PerformanceReviewTemplate
     fields:
       cadenceMonths:
         resolver: true
@@ -1518,7 +1518,7 @@ models:
         resolver: true
   PerformanceReview:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PerformanceReview
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview.PerformanceReview
     fields:
       reviewerId:
         resolver: true
@@ -1528,7 +1528,7 @@ models:
         resolver: true
   WorkerPTOPolicyAssignment:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerPTOPolicyAssignment
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.WorkerPTOPolicyAssignment
     fields:
       ptoPolicy:
         resolver: true
@@ -1536,7 +1536,7 @@ models:
         resolver: true
   WorkerPTOLedgerEntry:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerPTOLedgerEntry
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.WorkerPTOLedgerEntry
     fields:
       amountDays:
         resolver: true
@@ -5129,10 +5129,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.Status
   PortalInvitationStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PortalInvitationStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation.PortalInvitationStatus
   PortalInvitation:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PortalInvitation
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation.PortalInvitation
   WorkerPortalStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalStatus

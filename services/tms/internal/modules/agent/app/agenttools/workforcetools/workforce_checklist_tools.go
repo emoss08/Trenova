@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -69,7 +69,7 @@ type ChecklistKeeper interface {
 	Start(
 		ctx context.Context,
 		req *workerchecklistservice.StartRequest,
-	) (*worker.WorkerChecklist, error)
+	) (*workerchecklist.WorkerChecklist, error)
 	PlanCompleteItem(
 		ctx context.Context,
 		req *workerchecklistservice.ItemRequest,
@@ -77,7 +77,7 @@ type ChecklistKeeper interface {
 	CompleteItem(
 		ctx context.Context,
 		req *workerchecklistservice.ItemRequest,
-	) (*worker.WorkerChecklist, error)
+	) (*workerchecklist.WorkerChecklist, error)
 	PlanSkipItem(
 		ctx context.Context,
 		req *workerchecklistservice.ItemRequest,
@@ -85,7 +85,7 @@ type ChecklistKeeper interface {
 	SkipItem(
 		ctx context.Context,
 		req *workerchecklistservice.ItemRequest,
-	) (*worker.WorkerChecklist, error)
+	) (*workerchecklist.WorkerChecklist, error)
 	PlanMarkItemNotApplicable(
 		ctx context.Context,
 		req *workerchecklistservice.ItemRequest,
@@ -93,7 +93,7 @@ type ChecklistKeeper interface {
 	MarkItemNotApplicable(
 		ctx context.Context,
 		req *workerchecklistservice.ItemRequest,
-	) (*worker.WorkerChecklist, error)
+	) (*workerchecklist.WorkerChecklist, error)
 	PlanReopenItem(
 		ctx context.Context,
 		req *workerchecklistservice.ReopenItemRequest,
@@ -101,7 +101,7 @@ type ChecklistKeeper interface {
 	ReopenItem(
 		ctx context.Context,
 		req *workerchecklistservice.ReopenItemRequest,
-	) (*worker.WorkerChecklist, error)
+	) (*workerchecklist.WorkerChecklist, error)
 	PlanCancel(
 		ctx context.Context,
 		req *workerchecklistservice.CancelRequest,
@@ -109,7 +109,7 @@ type ChecklistKeeper interface {
 	Cancel(
 		ctx context.Context,
 		req *workerchecklistservice.CancelRequest,
-	) (*worker.WorkerChecklist, error)
+	) (*workerchecklist.WorkerChecklist, error)
 }
 
 func ChecklistToolProviders() []any {
@@ -120,7 +120,7 @@ func ChecklistToolProviders() []any {
 	}
 }
 
-func checklistRecord(checklist *worker.WorkerChecklist) toolpreview.Record {
+func checklistRecord(checklist *workerchecklist.WorkerChecklist) toolpreview.Record {
 	return wfRecord(permission.ResourceWorkerChecklist, checklist.ID, checklist.Name,
 		checklist.Version)
 }
@@ -285,7 +285,7 @@ func (c *checklistItemChange) plan(
 func (c *checklistItemChange) run(
 	ctx context.Context,
 	checklists ChecklistKeeper,
-) (*worker.WorkerChecklist, error) {
+) (*workerchecklist.WorkerChecklist, error) {
 	switch c.move {
 	case checklistItemComplete:
 		return checklists.CompleteItem(ctx, c.item)
@@ -476,7 +476,7 @@ func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Age
 				return nil, err
 			}
 			summary := "Would cancel " + change.Before.Name + "."
-			if change.Before.Status != worker.ChecklistStatusOpen {
+			if change.Before.Status != workerchecklist.ChecklistStatusOpen {
 				summary = fmt.Sprintf("%s is already %s; nothing would change.",
 					change.Before.Name, strings.ToLower(string(change.Before.Status)))
 			}

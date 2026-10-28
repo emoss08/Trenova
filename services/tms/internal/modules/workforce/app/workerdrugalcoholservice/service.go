@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -153,18 +153,18 @@ func (s *Service) Standing(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (worker.DrugAlcoholStanding, error) {
+) (workerdot.DrugAlcoholStanding, error) {
 	tests, err := s.repo.ListTests(ctx, &workerports.ListWorkerDOTTestsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
 	if err != nil {
-		return worker.DrugAlcoholStanding{}, err
+		return workerdot.DrugAlcoholStanding{}, err
 	}
 
 	violation, err := s.repo.GetOpenViolation(ctx, tenantInfo, workerID)
 	if err != nil {
-		return worker.DrugAlcoholStanding{}, err
+		return workerdot.DrugAlcoholStanding{}, err
 	}
 
 	queries, err := s.repo.ListQueries(ctx, &workerports.ListClearinghouseQueriesRequest{
@@ -172,10 +172,10 @@ func (s *Service) Standing(
 		WorkerID:   workerID,
 	})
 	if err != nil {
-		return worker.DrugAlcoholStanding{}, err
+		return workerdot.DrugAlcoholStanding{}, err
 	}
 
-	return worker.EvaluateDrugAlcoholStanding(worker.DrugAlcoholInput{
+	return workerdot.EvaluateDrugAlcoholStanding(workerdot.DrugAlcoholInput{
 		Tests:         tests,
 		OpenViolation: violation,
 		Queries:       queries,
@@ -189,10 +189,10 @@ func (s *Service) RefreshRollup(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (worker.DrugAlcoholStanding, error) {
+) (workerdot.DrugAlcoholStanding, error) {
 	standing, err := s.Standing(ctx, tenantInfo, workerID)
 	if err != nil {
-		return worker.DrugAlcoholStanding{}, err
+		return workerdot.DrugAlcoholStanding{}, err
 	}
 
 	if err = s.repo.UpdateProfileRollup(ctx, &workerports.UpdateDrugAlcoholRollupRequest{
@@ -205,7 +205,7 @@ func (s *Service) RefreshRollup(
 			NextClearinghouseQueryDue: standing.NextClearinghouseQueryDue,
 		},
 	}); err != nil {
-		return worker.DrugAlcoholStanding{}, err
+		return workerdot.DrugAlcoholStanding{}, err
 	}
 
 	return standing, nil
@@ -226,14 +226,14 @@ func (s *Service) refreshRollupQuietly(
 	}
 }
 
-func testTenant(entity *worker.WorkerDOTTest) pagination.TenantInfo {
+func testTenant(entity *workerdot.WorkerDOTTest) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 
-func violationTenant(entity *worker.WorkerDOTViolation) pagination.TenantInfo {
+func violationTenant(entity *workerdot.WorkerDOTViolation) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 
-func queryTenant(entity *worker.WorkerClearinghouseQuery) pagination.TenantInfo {
+func queryTenant(entity *workerdot.WorkerClearinghouseQuery) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }

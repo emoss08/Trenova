@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,15 +22,15 @@ type fakeSafety struct {
 	SafetyKeeper
 
 	guard       *agenttoolstest.WriteGuard
-	event       *worker.WorkerSafetyEvent
-	violation   *worker.WorkerSafetyViolation
-	recognition *worker.WorkerRecognition
+	event       *workersafety.WorkerSafetyEvent
+	violation   *workersafety.WorkerSafetyViolation
+	recognition *workersafety.WorkerRecognition
 
-	created   *worker.WorkerSafetyEvent
-	updated   *worker.WorkerSafetyEvent
+	created   *workersafety.WorkerSafetyEvent
+	updated   *workersafety.WorkerSafetyEvent
 	moved     []*workersafetyservice.EventStatusRequest
 	deleted   []pulid.ID
-	given     *worker.WorkerRecognition
+	given     *workersafety.WorkerRecognition
 	cited     *workersafetyservice.RecordViolationRequest
 	corrected *workersafetyservice.UpdateViolationRequest
 }
@@ -40,31 +40,31 @@ func newFakeSafety() *fakeSafety {
 	eventID := pulid.MustNew("wsev_")
 	return &fakeSafety{
 		guard: &agenttoolstest.WriteGuard{},
-		event: &worker.WorkerSafetyEvent{
+		event: &workersafety.WorkerSafetyEvent{
 			ID:          eventID,
 			WorkerID:    workerID,
-			Kind:        worker.SafetyEventInspection,
-			Severity:    worker.SafetySeverityModerate,
-			Status:      worker.SafetyEventStatusOpen,
+			Kind:        workersafety.SafetyEventInspection,
+			Severity:    workersafety.SafetySeverityModerate,
+			Status:      workersafety.SafetyEventStatusOpen,
 			OccurredAt:  1_790_000_000,
 			Description: "Level 1 inspection at the Seymour scale",
 			Points:      3,
 			Version:     4,
 		},
-		violation: &worker.WorkerSafetyViolation{
+		violation: &workersafety.WorkerSafetyViolation{
 			ID:             pulid.MustNew("wsvi_"),
 			SafetyEventID:  eventID,
 			WorkerID:       workerID,
-			Basic:          worker.BasicVehicleMaintenance,
+			Basic:          workersafety.BasicVehicleMaintenance,
 			Code:           "393.47(e)",
 			Description:    "Brake out of adjustment",
 			SeverityWeight: 4,
 			Version:        2,
 		},
-		recognition: &worker.WorkerRecognition{
+		recognition: &workersafety.WorkerRecognition{
 			ID:       pulid.MustNew("wrec_"),
 			WorkerID: workerID,
-			Kind:     worker.RecognitionKindTenure,
+			Kind:     workersafety.RecognitionKindTenure,
 			Title:    "Five years",
 			Version:  1,
 		},
@@ -75,16 +75,16 @@ func (f *fakeSafety) GetEvent(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	copied := *f.event
 	return &copied, nil
 }
 
 func (f *fakeSafety) PlanCreateEvent(
 	_ context.Context,
-	entity *worker.WorkerSafetyEvent,
+	entity *workersafety.WorkerSafetyEvent,
 	userID pulid.ID,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	planned := *entity
 	planned.RecordedByID = userID
 	return &planned, nil
@@ -92,9 +92,9 @@ func (f *fakeSafety) PlanCreateEvent(
 
 func (f *fakeSafety) CreateEvent(
 	_ context.Context,
-	entity *worker.WorkerSafetyEvent,
+	entity *workersafety.WorkerSafetyEvent,
 	_ pulid.ID,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -106,16 +106,16 @@ func (f *fakeSafety) CreateEvent(
 
 func (f *fakeSafety) PlanUpdateEvent(
 	_ context.Context,
-	entity *worker.WorkerSafetyEvent,
+	entity *workersafety.WorkerSafetyEvent,
 ) (*workersafetyservice.EventChange, error) {
 	return &workersafetyservice.EventChange{Before: f.event, After: entity}, nil
 }
 
 func (f *fakeSafety) UpdateEvent(
 	_ context.Context,
-	entity *worker.WorkerSafetyEvent,
+	entity *workersafety.WorkerSafetyEvent,
 	_ pulid.ID,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (f *fakeSafety) UpdateEvent(
 
 func (f *fakeSafety) planMove(
 	req *workersafetyservice.EventStatusRequest,
-	status worker.SafetyEventStatus,
+	status workersafety.SafetyEventStatus,
 ) *workersafetyservice.EventChange {
 	after := *f.event
 	after.Status = status
@@ -135,7 +135,7 @@ func (f *fakeSafety) planMove(
 
 func (f *fakeSafety) move(
 	req *workersafetyservice.EventStatusRequest,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -147,13 +147,13 @@ func (f *fakeSafety) PlanCloseEvent(
 	_ context.Context,
 	req *workersafetyservice.EventStatusRequest,
 ) (*workersafetyservice.EventChange, error) {
-	return f.planMove(req, worker.SafetyEventStatusClosed), nil
+	return f.planMove(req, workersafety.SafetyEventStatusClosed), nil
 }
 
 func (f *fakeSafety) CloseEvent(
 	_ context.Context,
 	req *workersafetyservice.EventStatusRequest,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	return f.move(req)
 }
 
@@ -161,13 +161,13 @@ func (f *fakeSafety) PlanReviewEvent(
 	_ context.Context,
 	req *workersafetyservice.EventStatusRequest,
 ) (*workersafetyservice.EventChange, error) {
-	return f.planMove(req, worker.SafetyEventStatusUnderReview), nil
+	return f.planMove(req, workersafety.SafetyEventStatusUnderReview), nil
 }
 
 func (f *fakeSafety) ReviewEvent(
 	_ context.Context,
 	req *workersafetyservice.EventStatusRequest,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	return f.move(req)
 }
 
@@ -175,7 +175,7 @@ func (f *fakeSafety) PlanDeleteEvent(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*worker.WorkerSafetyEvent, error) {
+) (*workersafety.WorkerSafetyEvent, error) {
 	if f.event.IsClosed() {
 		return nil, errortypes.NewValidationError("status", errortypes.ErrInvalidOperation,
 			"Closed events are part of the record and cannot be deleted. Reopen it first")
@@ -198,17 +198,17 @@ func (f *fakeSafety) DeleteEvent(
 
 func (f *fakeSafety) PlanGiveRecognition(
 	_ context.Context,
-	entity *worker.WorkerRecognition,
+	entity *workersafety.WorkerRecognition,
 	_ pulid.ID,
-) (*worker.WorkerRecognition, error) {
+) (*workersafety.WorkerRecognition, error) {
 	return entity, nil
 }
 
 func (f *fakeSafety) GiveRecognition(
 	_ context.Context,
-	entity *worker.WorkerRecognition,
+	entity *workersafety.WorkerRecognition,
 	_ pulid.ID,
-) (*worker.WorkerRecognition, error) {
+) (*workersafety.WorkerRecognition, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -221,11 +221,11 @@ func (f *fakeSafety) GiveRecognition(
 func (f *fakeSafety) PlanRecordViolation(
 	_ context.Context,
 	req *workersafetyservice.RecordViolationRequest,
-) (*worker.WorkerSafetyViolation, error) {
-	return &worker.WorkerSafetyViolation{
+) (*workersafety.WorkerSafetyViolation, error) {
+	return &workersafety.WorkerSafetyViolation{
 		SafetyEventID:  req.SafetyEventID,
 		WorkerID:       f.event.WorkerID,
-		Basic:          worker.BasicVehicleMaintenance,
+		Basic:          workersafety.BasicVehicleMaintenance,
 		Description:    req.Description,
 		SeverityWeight: max(req.SeverityWeight, 1),
 	}, nil
@@ -234,7 +234,7 @@ func (f *fakeSafety) PlanRecordViolation(
 func (f *fakeSafety) RecordViolation(
 	_ context.Context,
 	req *workersafetyservice.RecordViolationRequest,
-) (*worker.WorkerSafetyViolation, error) {
+) (*workersafety.WorkerSafetyViolation, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -246,7 +246,7 @@ func (f *fakeSafety) GetViolation(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*worker.WorkerSafetyViolation, error) {
+) (*workersafety.WorkerSafetyViolation, error) {
 	copied := *f.violation
 	return &copied, nil
 }
@@ -264,7 +264,7 @@ func (f *fakeSafety) PlanUpdateViolation(
 func (f *fakeSafety) UpdateViolation(
 	_ context.Context,
 	req *workersafetyservice.UpdateViolationRequest,
-) (*worker.WorkerSafetyViolation, error) {
+) (*workersafety.WorkerSafetyViolation, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -305,8 +305,12 @@ func TestOpenWorkerSafetyEvent_TakesTheHouseScaleForPoints(t *testing.T) {
 	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, events.created)
-	assert.Equal(t, worker.DefaultSafetyPoints(worker.SafetyEventAccident,
-		worker.SafetySeverityMajor, true, worker.InspectionResultNone), events.created.Points)
+	assert.Equal(t, workersafety.DefaultSafetyPoints(
+		workersafety.SafetyEventAccident,
+		workersafety.SafetySeverityMajor,
+		true,
+		workersafety.InspectionResultNone,
+	), events.created.Points)
 	assert.True(t, events.created.FineAmount.Valid)
 	assert.Equal(t, params.OrganizationID, events.created.OrganizationID)
 	assert.Contains(t, result.IDs, paramSafetyEventID)
@@ -398,7 +402,7 @@ func TestChangeWorkerSafetyEventStatus_ClosingNeedsAResolution(t *testing.T) {
 	)
 	assert.Equal(
 		t,
-		string(worker.SafetyEventStatusClosed),
+		string(workersafety.SafetyEventStatusClosed),
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 0),
@@ -440,7 +444,7 @@ func TestDeleteWorkerSafetyEvent_RefusesAClosedEvent(t *testing.T) {
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 	assert.False(t, tool.Policy().Reversible)
 
-	events.event.Status = worker.SafetyEventStatusClosed
+	events.event.Status = workersafety.SafetyEventStatusClosed
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 	assert.Empty(t, events.deleted)
 }

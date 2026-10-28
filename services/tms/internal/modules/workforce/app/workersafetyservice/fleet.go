@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,7 +50,7 @@ func (r *FleetRequest) normalise() {
 // concurrently because they touch unrelated tables and the page shows them
 // together; any of them failing fails the call, since a silently missing
 // section would read as "nothing happening there".
-func (s *Service) Fleet(ctx context.Context, req *FleetRequest) (*worker.FleetSafety, error) {
+func (s *Service) Fleet(ctx context.Context, req *FleetRequest) (*workersafety.FleetSafety, error) {
 	req.normalise()
 
 	base := &workerports.FleetSafetyRequest{
@@ -145,16 +146,16 @@ type fleetInput struct {
 	best      []workerports.FleetSafetyRankRow
 }
 
-func composeFleet(in *fleetInput) *worker.FleetSafety {
-	out := &worker.FleetSafety{
+func composeFleet(in *fleetInput) *workersafety.FleetSafety {
+	out := &workersafety.FleetSafety{
 		AsOf:         in.req.AsOf,
 		WindowMonths: int32(in.req.WindowMonths), //nolint:gosec // bounded above
-		Ratings:      make([]worker.FleetSafetyRatingCount, 0, len(in.ratings)),
-		Kinds:        make([]worker.FleetSafetyKind, 0, len(in.kinds)),
-		Terminals:    make([]worker.FleetSafetyTerminal, 0, len(in.terminals)),
-		Trend:        make([]worker.FleetSafetyTrendPoint, 0, len(in.trend)),
-		Worst:        make([]worker.FleetSafetyRank, 0, len(in.worst)),
-		Best:         make([]worker.FleetSafetyRank, 0, len(in.best)),
+		Ratings:      make([]workersafety.FleetSafetyRatingCount, 0, len(in.ratings)),
+		Kinds:        make([]workersafety.FleetSafetyKind, 0, len(in.kinds)),
+		Terminals:    make([]workersafety.FleetSafetyTerminal, 0, len(in.terminals)),
+		Trend:        make([]workersafety.FleetSafetyTrendPoint, 0, len(in.trend)),
+		Worst:        make([]workersafety.FleetSafetyRank, 0, len(in.worst)),
+		Best:         make([]workersafety.FleetSafetyRank, 0, len(in.best)),
 	}
 
 	var totalScore int32
@@ -162,7 +163,7 @@ func composeFleet(in *fleetInput) *worker.FleetSafety {
 		workers := int32(row.Workers) //nolint:gosec // a headcount
 		out.Workers += workers
 		totalScore += int32(row.TotalScore) //nolint:gosec // a score sum
-		out.Ratings = append(out.Ratings, worker.FleetSafetyRatingCount{
+		out.Ratings = append(out.Ratings, workersafety.FleetSafetyRatingCount{
 			Rating:  row.Rating,
 			Workers: workers,
 		})
@@ -174,10 +175,10 @@ func composeFleet(in *fleetInput) *worker.FleetSafety {
 		case worker.SafetyRatingExcellent, worker.SafetyRatingGood:
 		}
 	}
-	out.AverageScore = worker.AverageScore(totalScore, out.Workers)
+	out.AverageScore = workersafety.AverageScore(totalScore, out.Workers)
 
 	for _, row := range in.kinds {
-		kind := worker.FleetSafetyKind{
+		kind := workersafety.FleetSafetyKind{
 			Kind:         row.Kind,
 			Events:       int32(row.Events),       //nolint:gosec // a count
 			Points:       int32(row.Points),       //nolint:gosec // a point sum
@@ -194,7 +195,7 @@ func composeFleet(in *fleetInput) *worker.FleetSafety {
 
 	for _, row := range in.terminals {
 		workers := int32(row.Workers) //nolint:gosec // a headcount
-		out.Terminals = append(out.Terminals, worker.FleetSafetyTerminal{
+		out.Terminals = append(out.Terminals, workersafety.FleetSafetyTerminal{
 			FleetCodeID: row.FleetCodeID,
 			Code:        row.FleetCodeCode,
 			Description: row.FleetCodeDescription,
@@ -206,7 +207,7 @@ func composeFleet(in *fleetInput) *worker.FleetSafety {
 			Watch: int32(
 				row.Watch,
 			), //nolint:gosec // a count
-			AverageScore: worker.AverageScore(
+			AverageScore: workersafety.AverageScore(
 				int32(row.TotalScore),
 				workers,
 			), //nolint:gosec // a score sum
@@ -214,7 +215,7 @@ func composeFleet(in *fleetInput) *worker.FleetSafety {
 	}
 
 	for _, row := range in.trend {
-		out.Trend = append(out.Trend, worker.FleetSafetyTrendPoint{
+		out.Trend = append(out.Trend, workersafety.FleetSafetyTrendPoint{
 			PeriodStart:  row.PeriodStart,
 			Events:       int32(row.Events),       //nolint:gosec // a count
 			Accidents:    int32(row.Accidents),    //nolint:gosec // a count
@@ -226,9 +227,9 @@ func composeFleet(in *fleetInput) *worker.FleetSafety {
 		})
 	}
 
-	violationInputs := make([]worker.FleetSafetyBasicInput, 0, len(in.basics))
+	violationInputs := make([]workersafety.FleetSafetyBasicInput, 0, len(in.basics))
 	for _, row := range in.basics {
-		violationInputs = append(violationInputs, worker.FleetSafetyBasicInput{
+		violationInputs = append(violationInputs, workersafety.FleetSafetyBasicInput{
 			Basic:        row.Basic,
 			Bucket:       row.Bucket,
 			Violations:   int32(row.Violations),   //nolint:gosec // a count
@@ -236,9 +237,9 @@ func composeFleet(in *fleetInput) *worker.FleetSafety {
 			OutOfService: int32(row.OutOfService), //nolint:gosec // a count
 		})
 	}
-	eventInputs := make([]worker.FleetSafetyEventBasicInput, 0, len(in.inferred))
+	eventInputs := make([]workersafety.FleetSafetyEventBasicInput, 0, len(in.inferred))
 	for _, row := range in.inferred {
-		eventInputs = append(eventInputs, worker.FleetSafetyEventBasicInput{
+		eventInputs = append(eventInputs, workersafety.FleetSafetyEventBasicInput{
 			Kind:             row.Kind,
 			InspectionResult: row.InspectionResult,
 			Bucket:           row.Bucket,
@@ -247,7 +248,7 @@ func composeFleet(in *fleetInput) *worker.FleetSafety {
 			OutOfService:     int32(row.OutOfService), //nolint:gosec // a count
 		})
 	}
-	out.Basics = worker.BuildFleetBasics(violationInputs, eventInputs)
+	out.Basics = workersafety.BuildFleetBasics(violationInputs, eventInputs)
 	for _, basic := range out.Basics {
 		if basic.Inferred {
 			out.BasicsInferred = true
@@ -261,10 +262,10 @@ func composeFleet(in *fleetInput) *worker.FleetSafety {
 	return out
 }
 
-func toRanks(rows []workerports.FleetSafetyRankRow) []worker.FleetSafetyRank {
-	ranks := make([]worker.FleetSafetyRank, 0, len(rows))
+func toRanks(rows []workerports.FleetSafetyRankRow) []workersafety.FleetSafetyRank {
+	ranks := make([]workersafety.FleetSafetyRank, 0, len(rows))
 	for _, row := range rows {
-		ranks = append(ranks, worker.FleetSafetyRank{
+		ranks = append(ranks, workersafety.FleetSafetyRank{
 			WorkerID:     row.WorkerID,
 			Name:         row.FirstName + " " + row.LastName,
 			FleetCodeID:  row.FleetCodeID,

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -136,7 +137,7 @@ func (s *Service) publish(
 func (s *Service) notifyDriver(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	review *worker.PerformanceReview,
+	review *workerreview.PerformanceReview,
 	reviewerName string,
 ) {
 	if s.driverNotify == nil {
@@ -167,10 +168,10 @@ func (s *Service) loadWorker(
 	})
 }
 
-func templateTenant(entity *worker.PerformanceReviewTemplate) pagination.TenantInfo {
+func templateTenant(entity *workerreview.PerformanceReviewTemplate) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 
-func reviewTenant(entity *worker.PerformanceReview) pagination.TenantInfo {
+func reviewTenant(entity *workerreview.PerformanceReview) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }

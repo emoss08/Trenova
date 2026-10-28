@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,20 +16,20 @@ func reviewTemplateFromInput(
 	input *gqlmodel.PerformanceReviewTemplateInput,
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) *worker.PerformanceReviewTemplate {
-	items := make([]worker.ReviewItem, 0, len(input.Items))
+) *workerreview.PerformanceReviewTemplate {
+	items := make([]workerreview.ReviewItem, 0, len(input.Items))
 	for _, item := range input.Items {
 		if item == nil {
 			continue
 		}
-		items = append(items, worker.ReviewItem{
+		items = append(items, workerreview.ReviewItem{
 			Key:         strings.TrimSpace(item.Key),
 			Label:       strings.TrimSpace(item.Label),
 			Description: strings.TrimSpace(base.StringValue(item.Description)),
 			Weight:      int32(item.Weight), //nolint:gosec // bounded by validation
 		})
 	}
-	entity := &worker.PerformanceReviewTemplate{
+	entity := &workerreview.PerformanceReviewTemplate{
 		ID:             id,
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
@@ -57,24 +57,27 @@ func updateReviewRequestFromInput(
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Review is invalid")
 	}
-	ratings := make([]worker.ReviewRating, 0, len(input.Ratings))
+	ratings := make([]workerreview.ReviewRating, 0, len(input.Ratings))
 	for _, rating := range input.Ratings {
 		if rating == nil {
 			continue
 		}
-		entry := worker.ReviewRating{Key: rating.Key, Comment: base.StringValue(rating.Comment)}
+		entry := workerreview.ReviewRating{
+			Key:     rating.Key,
+			Comment: base.StringValue(rating.Comment),
+		}
 		if rating.Score != nil {
 			score := int32(*rating.Score) //nolint:gosec // bounded by validation
 			entry.Score = &score
 		}
 		ratings = append(ratings, entry)
 	}
-	goals := make([]worker.ReviewGoal, 0, len(input.Goals))
+	goals := make([]workerreview.ReviewGoal, 0, len(input.Goals))
 	for _, goal := range input.Goals {
 		if goal == nil {
 			continue
 		}
-		entry := worker.ReviewGoal{
+		entry := workerreview.ReviewGoal{
 			ID:    base.StringValue(goal.ID),
 			Title: goal.Title,
 			DueAt: base.Int64Ptr(goal.DueAt),
@@ -118,12 +121,12 @@ func reviewStatusRequestFromInput(
 }
 
 func reviewTemplateCursorConnectionToModel(
-	result *pagination.CursorListResult[*worker.PerformanceReviewTemplate],
+	result *pagination.CursorListResult[*workerreview.PerformanceReviewTemplate],
 ) (*gqlmodel.PerformanceReviewTemplateConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
 		result,
-		func(node *worker.PerformanceReviewTemplate, cursor string) *gqlmodel.PerformanceReviewTemplateEdge {
+		func(node *workerreview.PerformanceReviewTemplate, cursor string) *gqlmodel.PerformanceReviewTemplateEdge {
 			return &gqlmodel.PerformanceReviewTemplateEdge{Node: node, Cursor: cursor}
 		},
 	)

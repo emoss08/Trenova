@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -76,7 +77,7 @@ type PtoBalanceAdjuster interface {
 	Adjust(
 		ctx context.Context,
 		req *ptoledgerservice.AdjustRequest,
-	) (*worker.WorkerPTOLedgerEntry, error)
+	) (*pto.WorkerPTOLedgerEntry, error)
 }
 
 func PtoToolProviders() []any {

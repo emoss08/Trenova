@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/shopspring/decimal"
 )
 
@@ -37,8 +37,8 @@ type PayPeriodSpec struct {
 }
 
 type CalcInput struct {
-	Rule            worker.PTOPolicyRule
-	YearBasis       worker.PTOYearBasis
+	Rule            pto.PTOPolicyRule
+	YearBasis       pto.PTOYearBasis
 	WaitingDays     int32
 	HireDate        int64
 	TerminationDate *int64
@@ -51,7 +51,7 @@ type CalcInput struct {
 }
 
 type PlannedEntry struct {
-	EntryType   worker.PTOLedgerEntryType
+	EntryType   pto.PTOLedgerEntryType
 	PeriodKey   string
 	EffectiveAt int64
 	NominalDays decimal.Decimal
@@ -63,7 +63,7 @@ type PlannedEntry struct {
 }
 
 func (e PlannedEntry) IsRollover() bool {
-	return e.EntryType == worker.PTOLedgerEntryExpiry
+	return e.EntryType == pto.PTOLedgerEntryExpiry
 }
 
 func dateOf(unix int64, loc *time.Location) time.Time {
@@ -105,7 +105,7 @@ func yearStarts(in CalcInput, hire, floor, horizon time.Time, loc *time.Location
 	starts := make([]time.Time, 0, 4)
 	for year := floor.Year(); year <= horizon.Year()+1; year++ {
 		var start time.Time
-		if in.YearBasis == worker.PTOYearBasisHireAnniversary {
+		if in.YearBasis == pto.PTOYearBasisHireAnniversary {
 			start = anniversary(hire, year, loc)
 		} else {
 			start = time.Date(year, time.January, 1, 0, 0, 0, 0, loc)
@@ -123,7 +123,7 @@ func accrualAt(
 	at time.Time,
 	loc *time.Location,
 ) (decimal.Decimal, decimal.NullDecimal) {
-	tenure := worker.TenureMonths(in.HireDate, at.Unix(), loc)
+	tenure := pto.TenureMonths(in.HireDate, at.Unix(), loc)
 	return in.Rule.AmountFor(tenure), in.Rule.MaxBalanceFor(tenure)
 }
 
@@ -209,7 +209,7 @@ func Schedule(in CalcInput) []PlannedEntry {
 			carryKey := periodKeyCarryover + label
 			if RolloverDue(carryKey, in.LastRolloverKey) {
 				plan = append(plan, PlannedEntry{
-					EntryType:   worker.PTOLedgerEntryExpiry,
+					EntryType:   pto.PTOLedgerEntryExpiry,
 					PeriodKey:   carryKey,
 					EffectiveAt: start.Unix(),
 					Deferred:    true,
@@ -221,7 +221,7 @@ func Schedule(in CalcInput) []PlannedEntry {
 				expiresAt := start.AddDate(0, 0, int(in.Rule.CarryoverExpiryDays))
 				if !expiresAt.After(horizon) {
 					plan = append(plan, PlannedEntry{
-						EntryType:   worker.PTOLedgerEntryExpiry,
+						EntryType:   pto.PTOLedgerEntryExpiry,
 						PeriodKey:   expiryKey,
 						EffectiveAt: expiresAt.Unix(),
 						Deferred:    true,
@@ -231,13 +231,13 @@ func Schedule(in CalcInput) []PlannedEntry {
 			}
 		}
 
-		if in.Rule.AccrualMethod == worker.PTOAccrualMethodFixedAnnualGrant &&
+		if in.Rule.AccrualMethod == pto.PTOAccrualMethodFixedAnnualGrant &&
 			in.Rule.Accrues() {
 			grantKey := periodKeyAnnualGrant + label
 			if grantKey > in.LastAccrualKey && !start.Before(eligibleFrom) {
 				amount, cap := accrualAt(in, start, loc)
 				plan = append(plan, PlannedEntry{
-					EntryType:      worker.PTOLedgerEntryAccrual,
+					EntryType:      pto.PTOLedgerEntryAccrual,
 					PeriodKey:      grantKey,
 					EffectiveAt:    start.Unix(),
 					NominalDays:    amount,
@@ -248,7 +248,7 @@ func Schedule(in CalcInput) []PlannedEntry {
 		}
 	}
 
-	if in.Rule.AccrualMethod == worker.PTOAccrualMethodMonthly && in.Rule.Accrues() {
+	if in.Rule.AccrualMethod == pto.PTOAccrualMethodMonthly && in.Rule.Accrues() {
 		for ms := firstOfMonthOnOrAfter(maxTime(eligibleFrom, floor.AddDate(0, 0, 1)), loc); !ms.After(horizon); ms = ms.AddDate(0, 1, 0) {
 			key := periodKeyMonthly + ms.Format("2006-01")
 			if key <= in.LastAccrualKey {
@@ -256,7 +256,7 @@ func Schedule(in CalcInput) []PlannedEntry {
 			}
 			amount, cap := accrualAt(in, ms, loc)
 			plan = append(plan, PlannedEntry{
-				EntryType:      worker.PTOLedgerEntryAccrual,
+				EntryType:      pto.PTOLedgerEntryAccrual,
 				PeriodKey:      key,
 				EffectiveAt:    ms.Unix(),
 				NominalDays:    amount,
@@ -266,7 +266,7 @@ func Schedule(in CalcInput) []PlannedEntry {
 		}
 	}
 
-	if in.Rule.AccrualMethod == worker.PTOAccrualMethodPerPayPeriod && in.Rule.Accrues() {
+	if in.Rule.AccrualMethod == pto.PTOAccrualMethodPerPayPeriod && in.Rule.Accrues() {
 		from := maxTime(eligibleFrom.AddDate(0, 0, -1), floor)
 		for _, end := range payPeriodEnds(in.PayPeriod, from, horizon) {
 			key := periodKeyPayPeriod + end.Format("2006-01-02")
@@ -275,7 +275,7 @@ func Schedule(in CalcInput) []PlannedEntry {
 			}
 			amount, cap := accrualAt(in, end, loc)
 			plan = append(plan, PlannedEntry{
-				EntryType:      worker.PTOLedgerEntryAccrual,
+				EntryType:      pto.PTOLedgerEntryAccrual,
 				PeriodKey:      key,
 				EffectiveAt:    end.Unix(),
 				NominalDays:    amount,
@@ -298,12 +298,12 @@ func Schedule(in CalcInput) []PlannedEntry {
 func ProjectedAccrual(
 	plan []PlannedEntry,
 	balance, carried decimal.Decimal,
-	rule worker.PTOPolicyRule,
+	rule pto.PTOPolicyRule,
 ) decimal.Decimal {
 	running := balance
 	for _, entry := range plan {
 		switch entry.EntryType {
-		case worker.PTOLedgerEntryAccrual:
+		case pto.PTOLedgerEntryAccrual:
 			amount := entry.NominalDays
 			cap := entry.MaxBalanceDays
 			if !cap.Valid {
@@ -318,7 +318,7 @@ func ProjectedAccrual(
 			if amount.IsPositive() {
 				running = running.Add(amount)
 			}
-		case worker.PTOLedgerEntryExpiry:
+		case pto.PTOLedgerEntryExpiry:
 			if entry.PeriodKey[:2] == periodKeyCarryover && rule.CarryoverCapDays.Valid {
 				excess := running.Sub(rule.CarryoverCapDays.Decimal)
 				if excess.IsPositive() {
@@ -334,10 +334,10 @@ func ProjectedAccrual(
 				}
 				carried = decimal.Zero
 			}
-		case worker.PTOLedgerEntryOpeningBalance, worker.PTOLedgerEntryUsage,
-			worker.PTOLedgerEntryReversal, worker.PTOLedgerEntryAdjustment,
-			worker.PTOLedgerEntryCarryover, worker.PTOLedgerEntryPayout,
-			worker.PTOLedgerEntryForfeiture:
+		case pto.PTOLedgerEntryOpeningBalance, pto.PTOLedgerEntryUsage,
+			pto.PTOLedgerEntryReversal, pto.PTOLedgerEntryAdjustment,
+			pto.PTOLedgerEntryCarryover, pto.PTOLedgerEntryPayout,
+			pto.PTOLedgerEntryForfeiture:
 		}
 	}
 	return running.Sub(balance)
