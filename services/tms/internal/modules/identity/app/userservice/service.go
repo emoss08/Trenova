@@ -712,9 +712,6 @@ func (s *Service) ChangeMyPassword(
 	user.Password = hashedPassword
 	user.MustChangePassword = false
 
-	if _, err = s.RevokeMyOtherSessions(ctx, scope); err != nil {
-		return nil, err
-	}
 	s.releasePasswordGate(ctx, scope)
 
 	if err = s.auditService.LogAction(&auditports.LogActionParams{
@@ -733,6 +730,10 @@ func (s *Service) ChangeMyPassword(
 		auditservice.WithRequest(ctx),
 	); err != nil {
 		s.l.Error("failed to log audit action", zap.Error(err))
+		return nil, err
+	}
+
+	if _, err = s.RevokeMyOtherSessions(ctx, scope); err != nil {
 		return nil, err
 	}
 
