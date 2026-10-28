@@ -647,6 +647,7 @@ func TestRuntimeToolsStayInside(t *testing.T) {
 		"find_tools":        agent.EgressNone,
 		"ask_user":          agent.EgressNone,
 		"publish_artifact":  agent.EgressPersonal,
+		"show_board":        agent.EgressPersonal,
 		"delegate_task":     agent.EgressNone,
 		"request_decision":  agent.EgressPersonal,
 		"withdraw_proposal": agent.EgressNone,
