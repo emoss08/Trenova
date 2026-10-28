@@ -9,10 +9,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/handlers/roleassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -28,6 +30,16 @@ var errNotFound = errors.New("role assignment not found")
 func setupRoleAssignmentHandler(
 	t *testing.T,
 	repo *permissionportsmock.MockRoleAssignmentRepository,
+) *roleassignmenthandler.Handler {
+	t.Helper()
+
+	return setupRoleAssignmentHandlerWithEngine(t, repo, &mocks.AllowAllPermissionEngine{})
+}
+
+func setupRoleAssignmentHandlerWithEngine(
+	t *testing.T,
+	repo *permissionportsmock.MockRoleAssignmentRepository,
+	engine permissionports.PermissionEngine,
 ) *roleassignmenthandler.Handler {
 	t.Helper()
 
@@ -52,7 +64,35 @@ func setupRoleAssignmentHandler(
 	return roleassignmenthandler.New(roleassignmenthandler.Params{
 		Service:      service,
 		ErrorHandler: errorHandler,
+		PermissionMiddleware: middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
+			PermissionEngine: engine,
+			ErrorHandler:     errorHandler,
+		}),
 	})
+}
+
+func TestRoleAssignmentHandler_RequiresUserRead(t *testing.T) {
+	t.Parallel()
+
+	for _, path := range []string{
+		"/api/v1/role-assignments/",
+		"/api/v1/role-assignments/" + pulid.MustNew("ura_").String(),
+		"/api/v1/role-assignments/select-options/",
+	} {
+		repo := permissionportsmock.NewMockRoleAssignmentRepository(t)
+		handler := setupRoleAssignmentHandlerWithEngine(t, repo, &mocks.DenyResourcesPermissionEngine{
+			Denied: []string{permission.ResourceUser.String()},
+		})
+
+		ginCtx := testutil.NewGinTestContext().
+			WithMethod(http.MethodGet).
+			WithPath(path).
+			WithDefaultAuthContext()
+		handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+		ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+		assert.Equal(t, http.StatusForbidden, ginCtx.ResponseCode(), path)
+	}
 }
 
 func TestRoleAssignmentHandler_List_Success(t *testing.T) {

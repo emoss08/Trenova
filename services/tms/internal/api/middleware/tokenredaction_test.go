@@ -133,3 +133,23 @@ func TestTokenRedactionMiddleware_PassesThroughWithoutToken(t *testing.T) {
 	logText := observedLogText(t, logs)
 	assert.NotContains(t, logText, redactedTokenPlaceholder)
 }
+
+func TestTokenRedactionMiddleware_RedactsWebhookAndMailboxTokens(t *testing.T) {
+	t.Parallel()
+
+	for _, route := range []struct{ pattern, path, secret string }{
+		{"/webhooks/email/postmark/:webhookToken/", "/webhooks/email/postmark/%s/", "whk_postmark_secret_value"},
+		{"/webhooks/inbound-mail/:mailboxToken/", "/webhooks/inbound-mail/%s/", "mbx_inbound_secret_value"},
+	} {
+		router, logs := newTokenRedactionTestRouter(t)
+		router.POST(route.pattern, func(c *gin.Context) { c.Status(http.StatusAccepted) })
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, httptest.NewRequest(http.MethodPost, fmt.Sprintf(route.path, route.secret), nil))
+
+		assert.Equal(t, http.StatusAccepted, w.Code)
+		logText := observedLogText(t, logs)
+		assert.NotContains(t, logText, route.secret, "a token that authenticates a webhook is never logged")
+		assert.Contains(t, logText, redactedTokenPlaceholder)
+	}
+}

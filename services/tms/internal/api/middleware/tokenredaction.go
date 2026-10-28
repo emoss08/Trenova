@@ -8,6 +8,8 @@ import (
 
 const redactedTokenPlaceholder = "REDACTED"
 
+var redactedPathParams = []string{"token", "webhookToken", "mailboxToken"}
+
 func NewTokenRedactionMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		_ = c.Query("token")
@@ -23,13 +25,15 @@ func NewTokenRedactionMiddleware() gin.HandlerFunc {
 			}
 		}
 
-		if v := c.Params.ByName("token"); v != "" {
-			c.Request.URL.Path = strings.ReplaceAll(
-				c.Request.URL.Path,
-				v,
-				redactedTokenPlaceholder,
-			)
-			c.Request.URL.RawPath = ""
+		for _, param := range redactedPathParams {
+			if v := c.Params.ByName(param); v != "" {
+				c.Request.URL.Path = strings.ReplaceAll(
+					c.Request.URL.Path,
+					v,
+					redactedTokenPlaceholder,
+				)
+				c.Request.URL.RawPath = ""
+			}
 		}
 
 		c.Next()

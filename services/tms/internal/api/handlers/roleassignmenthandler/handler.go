@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -18,31 +19,35 @@ import (
 type Params struct {
 	fx.In
 
-	Service      *roleassignmentservice.Service
-	ErrorHandler *helpers.ErrorHandler
+	Service              *roleassignmentservice.Service
+	ErrorHandler         *helpers.ErrorHandler
+	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
 	service *roleassignmentservice.Service
 	eh      *helpers.ErrorHandler
+	pm      *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
 		service: p.Service,
 		eh:      p.ErrorHandler,
+		pm:      p.PermissionMiddleware,
 	}
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/role-assignments")
+	readUsers := h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpRead)
 
-	api.GET("/", h.list)
-	api.GET("/:roleAssignmentID", h.get)
+	api.GET("/", readUsers, h.list)
+	api.GET("/:roleAssignmentID", readUsers, h.get)
 
 	selectOptions := api.Group("/select-options", responseguard.References())
-	selectOptions.GET("/", h.list)
-	selectOptions.GET("/:roleAssignmentID", h.get)
+	selectOptions.GET("/", readUsers, h.list)
+	selectOptions.GET("/:roleAssignmentID", readUsers, h.get)
 }
 
 // @Summary List role assignments
