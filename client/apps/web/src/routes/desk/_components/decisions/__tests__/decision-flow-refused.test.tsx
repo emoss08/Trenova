@@ -9,6 +9,7 @@ import type {
   ProposalPreviewRequest,
 } from "@/lib/graphql/agent-preview";
 import { toast } from "@trenova/shared/components/ui/toast";
+import { stubLayout } from "@/test/layout";
 import { DecisionFlow } from "../decision-flow";
 import type { PendingDecisionNode } from "../use-pending-decisions";
 import { planNode, proposalNode } from "./pending-fixtures";
@@ -58,14 +59,17 @@ vi.mock("../use-pending-decisions", async (importOriginal) => ({
 let info: MockInstance;
 let error: MockInstance;
 let warning: MockInstance;
+let restoreLayout = () => {};
 
 beforeEach(() => {
+  restoreLayout = stubLayout(320);
   info = vi.spyOn(toast, "info");
   error = vi.spyOn(toast, "error");
   warning = vi.spyOn(toast, "warning");
 });
 
 afterEach(() => {
+  restoreLayout();
   info.mockRestore();
   error.mockRestore();
   warning.mockRestore();

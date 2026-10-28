@@ -41,14 +41,22 @@ vi.mock("@/lib/queries/assistant", async (importOriginal) => {
     ...original,
     assistant: {
       ...original.assistant,
-      proposals: (threadId: string) => ({
-        queryKey: ["assistant-proposals", threadId],
-        queryFn: async () => ({ results: listed }),
-      }),
-      plans: (threadId: string) => ({
-        queryKey: ["assistant-plans", threadId],
-        queryFn: async () => ({ results: listedPlans }),
-      }),
+      // The cache helpers invalidate a factory by its `_def` scope, so the
+      // stand-ins carry one that prefixes the keys they hand out.
+      proposals: Object.assign(
+        (threadId: string) => ({
+          queryKey: ["assistant-proposals", threadId],
+          queryFn: async () => ({ results: listed }),
+        }),
+        { _def: ["assistant-proposals"] },
+      ),
+      plans: Object.assign(
+        (threadId: string) => ({
+          queryKey: ["assistant-plans", threadId],
+          queryFn: async () => ({ results: listedPlans }),
+        }),
+        { _def: ["assistant-plans"] },
+      ),
     },
   };
 });

@@ -528,7 +528,9 @@ describe("QualityTab", () => {
     table.openRow = answer as unknown as Record<string, unknown>;
     renderTab("ratings");
 
-    await screen.findByRole("region", { name: "Worst-Rated Answer table" });
+    // The open answer's sheet is modal, so the table behind it is hidden from
+    // the accessibility tree while it is open.
+    await screen.findByRole("region", { name: "Worst-Rated Answer table", hidden: true });
     expect(lastTable().graphql.extraVariables).toEqual({ window: 30 });
     const sheet = await screen.findByRole("complementary", {
       name: "What is the total on invoice 12?",

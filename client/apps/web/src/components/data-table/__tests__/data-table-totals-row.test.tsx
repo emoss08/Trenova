@@ -3,15 +3,29 @@ import { Table } from "@trenova/shared/components/ui/table";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DataTableTotalsRow } from "../data-table-totals-row";
 
-let resize: (() => void) | null = null;
+const observed = new Map<Element, () => void>();
 let footerHeight = 0;
 
+// The table's scroll area observes its own elements too, so each callback is
+// kept against what it observes and the footer's is the one fired.
 class FakeResizeObserver {
+  private readonly callback: () => void;
   constructor(callback: () => void) {
-    resize = callback;
+    this.callback = callback;
   }
-  observe() {}
-  disconnect() {}
+  observe(target: Element) {
+    observed.set(target, this.callback);
+  }
+  disconnect() {
+    for (const [target, callback] of observed) {
+      if (callback === this.callback) observed.delete(target);
+    }
+  }
+}
+
+function resizeFooter(container: HTMLElement) {
+  const footer = container.querySelector("tfoot");
+  if (footer) observed.get(footer)?.();
 }
 
 function Totals({ shown }: { shown: boolean }) {
@@ -42,7 +56,7 @@ describe("DataTableTotalsRow", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
-    resize = null;
+    observed.clear();
     footerHeight = 0;
   });
 
@@ -58,7 +72,7 @@ describe("DataTableTotalsRow", () => {
     const { container } = render(<Totals shown />);
 
     footerHeight = 55;
-    resize?.();
+    resizeFooter(container);
 
     expect(footerSpace(container)).toBe("55px");
   });
