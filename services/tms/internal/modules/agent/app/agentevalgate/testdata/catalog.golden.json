@@ -2486,7 +2486,7 @@
     },
     {
       "name": "agent_create_wait",
-      "description": "Park this work until something happens, instead of checking back. It waits for a stop's arrival or departure (StopArrival, StopDeparture: met when the truck is seen there or the time is recorded, so a load with no truck yet can be waited on), a reply about a shipment or from a carrier or customer (Reply), an appointment coming round (AppointmentNear), detention free time running out (FreeTimeEnding), a driver's drive time falling low (HOSDriveBelow), or a time (Time). When it ends, or gives up after giveUpAfterHours, you are started again here, told what happened and what you said you would do. A wait on something already true is refused with what is true now. Check now what can be checked now, such as a customer's notice preferences, and say what it means before you wait. After setting one, end your turn: say in one line what you are waiting for and what you will do then.",
+      "description": "Use it when someone asks to be told when something happens (\"let me know when it delivers\", \"tell me when the driver gets there\"): it parks the work until then, instead of checking back. It waits for a stop's arrival or departure (StopArrival, StopDeparture: met when the truck is seen there or the time is recorded), a reply about a shipment or from a carrier or customer (Reply), an appointment coming round (AppointmentNear), detention free time running out (FreeTimeEnding), a driver's drive time falling low (HOSDriveBelow), or a time (Time). When it ends, or gives up after giveUpAfterHours, you are started again here, told what happened and what you said you would do. A wait on something already true is refused with what is true now. After setting one, end your turn: say in one line what you wait for and what you will do then.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -3378,7 +3378,7 @@
     },
     {
       "name": "analysis_run",
-      "description": "Run a short Python script that calls the reads you hold and totals, compares or charts what they return. Use it for every record of a list, two sources reconciled, a report run or attached spreadsheet analyzed, or any figure no read gives; for one or two reads in a row, call the reads themselves. Call a read as trenova.<namespace>.<the rest of its name>(**parameters), as trenova.shipment.list(status=[\"InTransit\"]) for shipment_list; parameters and results are exactly the tool's. trenova.tools() lists what you may call, trenova.gather(a.defer(...), b.defer(...)) runs several at once, and a refused call raises trenova.Refused. The person sees only what it shows with show_figure, show_table and show_chart, kept as an analysis; what it prints and trenova.result(value) reach only you. A script changes nothing: a change it calls is proposed as one batch for a person to approve.",
+      "description": "Run a short Python script that calls the reads you hold and totals, compares or charts what they return. Use it for every record of a list, two sources reconciled, a report run or attached spreadsheet analyzed, or any figure no read gives; for one or two reads, call them yourself. Call shipment_list as trenova.shipment.list(status=[\"InTransit\"]), any read alike, with its own parameters. A list returns a dict: rows in items, and hasMore with nextCursor, which after= takes for the next page. A read taking ids, such as shipmentIds, takes them all at once. trenova.gather(a.defer(...), b.defer(...)) runs reads together; a refused one raises trenova.Refused. The person sees only show_figure, show_table and show_chart; print and trenova.result(value) reach only you. A script changes nothing: a change it calls is proposed as one batch for a person to approve.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -9127,7 +9127,7 @@
     },
     {
       "name": "dispatch_record_stop_actual",
-      "description": "Record that a driver arrived at or departed from a stop. This is what advances a shipment: the move's status and everything downstream follow from it. Get the move and stop ids from shipment_get, and only record what you were actually told happened — never infer an arrival from a departure, or the reverse. When you are told both (\"got there 5:50, left 7:05\"), record them in one call: action Arrive with occurredAt and departedAt.",
+      "description": "Record that a driver arrived at or departed from a stop. This is what advances a shipment: the move's status and everything downstream follow from it. Get the move and stop ids from shipment_get, and only record what you were actually told happened — never infer an arrival from a departure, or the reverse. When you are told both (\"got there 5:50, left 7:05\"), record them in one call: action Arrive with occurredAt and departedAt. A departure needs the stop's arrival first; when you were told only that the load is done (\"mark it done\") or only when it left a stop, record the stops you have both times for and mark the move Completed with dispatch_set_move_status rather than guess a time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -13715,16 +13715,12 @@
     },
     {
       "name": "equipment_list_tractors",
-      "description": "List tractors (power units) narrowed by status, ownership, or a registration or lease date. Use it for questions about which units are out of service, coming due for plates, or free now (hasInProgressMove false). Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, fuelType, hasFleetCode, hasInProgressMove, hasLastKnownLocation, hasOwnerWorker, hasSecondaryWorker, hasState, iftaQualified, includeEquipmentDetails, includeFleetDetails, includeWorkerDetails, lastKnownLocationId, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, model, ownerWorkerId, ownershipType, primaryWorkerId, registrationExpiryFrom/To, registrationNumber, secondaryWorkerId, status, updatedAtFrom/To, vin, yearMin/Max.",
+      "description": "List tractors (power units) narrowed by status, ownership, or a registration or lease date. Use it for questions about which units are out of service, coming due for plates, or free now (hasInProgressMove false). Name a unit by its unitNumber, never by its plate. Filters: createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, fuelType, hasFleetCode, hasInProgressMove, hasLastKnownLocation, hasOwnerWorker, hasSecondaryWorker, hasState, iftaQualified, includeEquipmentDetails, includeFleetDetails, includeWorkerDetails, lastKnownLocationId, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, model, ownerWorkerId, ownershipType, primaryWorkerId, registrationExpiryFrom/To, registrationNumber, secondaryWorkerId, status, unitNumber, updatedAtFrom/To, vin, yearMin/Max.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "after": {
             "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
-            "type": "string"
-          },
-          "code": {
-            "description": "Only records whose code contains this text.",
             "type": "string"
           },
           "createdAtFrom": {
@@ -13975,7 +13971,7 @@
             "x-enumOf": "list.sortDirection"
           },
           "status": {
-            "description": "Only records whose status is one of these. The unit's standing, not whether it is free now: Available means it may be dispatched, OutOfService means it cannot, AtMaintenance means it is in the shop, and Sold means it has left the fleet. An Available unit may still be on a move in progress.",
+            "description": "Only records whose status is one of these. The unit's standing, not whether it is free now: Available means it may be dispatched, OutOfService means it cannot, AtMaintenance means it is in the shop, and Sold means it has left the fleet. An Available unit may still be on a move in progress, and may still be booked for its next one: when the person names it, propose it and say what it is still finishing.",
             "items": {
               "enum": [
                 "Available",
@@ -13988,6 +13984,10 @@
             },
             "minItems": 1,
             "type": "array"
+          },
+          "unitNumber": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
           },
           "updatedAtFrom": {
             "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
@@ -14050,16 +14050,12 @@
     },
     {
       "name": "equipment_list_trailers",
-      "description": "List trailers narrowed by status, ownership, or a registration, lease or inspection date, each with its equipment type (dry van, reefer, flatbed). Use it for questions about which trailers are out of service, overdue for inspection, or free now (hasInProgressMove false). Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, hasFleetCode, hasInProgressMove, hasLastKnownLocation, hasOwnerWorker, hasRegistrationState, includeEquipmentDetails, includeFleetDetails, lastInspectionDateFrom/To, lastKnownLocationId, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, maxLoadWeightMin/Max, model, ownerWorkerId, ownershipType, registrationExpiryFrom/To, registrationNumber, status, updatedAtFrom/To, vin, yearMin/Max.",
+      "description": "List trailers narrowed by status, ownership, or a registration, lease or inspection date, each with its equipment type (dry van, reefer, flatbed). Use it for questions about which trailers are out of service, overdue for inspection, or free now (hasInProgressMove false). Name a unit by its unitNumber, never by its plate. Filters: createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, hasFleetCode, hasInProgressMove, hasLastKnownLocation, hasOwnerWorker, hasRegistrationState, includeEquipmentDetails, includeFleetDetails, lastInspectionDateFrom/To, lastKnownLocationId, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, maxLoadWeightMin/Max, model, ownerWorkerId, ownershipType, registrationExpiryFrom/To, registrationNumber, status, unitNumber, updatedAtFrom/To, vin, yearMin/Max.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "after": {
             "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
-            "type": "string"
-          },
-          "code": {
-            "description": "Only records whose code contains this text.",
             "type": "string"
           },
           "createdAtFrom": {
@@ -14282,7 +14278,7 @@
             "x-enumOf": "list.sortDirection"
           },
           "status": {
-            "description": "Only records whose status is one of these. The unit's standing, not whether it is free now: Available means it may be dispatched, OutOfService means it cannot, AtMaintenance means it is in the shop, and Sold means it has left the fleet. An Available unit may still be on a move in progress.",
+            "description": "Only records whose status is one of these. The unit's standing, not whether it is free now: Available means it may be dispatched, OutOfService means it cannot, AtMaintenance means it is in the shop, and Sold means it has left the fleet. An Available unit may still be on a move in progress, and may still be booked for its next one: when the person names it, propose it and say what it is still finishing.",
             "items": {
               "enum": [
                 "Available",
@@ -14295,6 +14291,10 @@
             },
             "minItems": 1,
             "type": "array"
+          },
+          "unitNumber": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
           },
           "updatedAtFrom": {
             "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
@@ -48817,7 +48817,7 @@
     },
     {
       "name": "shipment_get",
-      "description": "Read one shipment (load) by its id or PRO number. It shows the customer and rating, each move's stops with their windows in the stop's local time, who drives it and with what equipment, the holds on it now and its newest comments. Pass detail full only for a field the summary leaves out. Each hold carries the holdId shipment_update_hold and shipment_release_hold take. leftOutForAccess says when the holds or comments could not be read. Find it with shipment_list when you have only a customer, a place, a PO or a BOL.",
+      "description": "Read shipments (loads) by id, passing every load you need in one call, up to 25, or one by its PRO number. One load shows the customer and rating, each move's stops with their windows in the stop's local time, who drives it with what equipment, the holds on it now and its newest comments; pass detail full only for a field that summary leaves out. Several come as a table of each load's route, driver, holds in force with their notes and newest comment. Each hold carries the holdId shipment_update_hold and shipment_release_hold take. leftOutForAccess says when the holds or comments could not be read. Find loads with shipment_list when you have only a customer, a place, a PO or a BOL.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -48831,13 +48831,18 @@
             "x-enumOf": "shipment.detail"
           },
           "proNumber": {
-            "description": "The PRO number, when that is what the person gave you.",
+            "description": "The PRO number, when that is what the person gave you for one load.",
             "type": "string"
           },
-          "shipmentId": {
-            "description": "The shipment's id, from shipment_list, the page you are on, or this run's subject. Give this or proNumber.",
-            "type": "string",
-            "x-recordOf": "shipment"
+          "shipmentIds": {
+            "description": "The shipments' ids, from shipment_list, dispatch_get_board, the page you are on or this run's subject: every load you need, in one call. Give these or proNumber.",
+            "items": {
+              "type": "string",
+              "x-recordOf": "shipment"
+            },
+            "maxItems": 25,
+            "minItems": 1,
+            "type": "array"
           }
         },
         "type": "object"
@@ -48872,18 +48877,23 @@
     },
     {
       "name": "shipment_get_tracking",
-      "description": "Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate. It also shows who is on each move with what truck and the driver's remaining hours. A late or overdue stop's lateBy says how far past its window it is the way to say it (\"22h 00m\", \"3d 0h\"), not in minutes. Each open stop carries its projected arrival, slack and verdict, worked out from the truck's position, the carrier's check calls or the last departure with routed drive time, dwell and the driver's hours; estimate.basis says what it rests on and estimate.inputStale says when that is old. Call it an estimate and never a promise. Start here for any \"where is\", \"is it late\" or \"when will it arrive\" question; shipment_get has the commercial detail instead.",
+      "description": "Where shipments are and whether each will be on time; pass every load you want tracked in one call, up to 25. One load comes with each stop's window, actual arrival and lateness, the tractor's last position, who is on each move with what truck and the driver's remaining hours; several come as a table of each load's next stop, projected arrival, verdict, driver, position and flags. A late or overdue stop's lateBy says how far past its window it is the way to say it (\"22h 00m\"). The estimate is worked out from the truck's position, check calls or the last departure with drive time and hours; estimate.basis says what it rests on and inputStale says when that is old. Call it an estimate, never a promise. Start here for \"where is\", \"is it late\" or \"when will it arrive\"; shipment_get has the commercial detail.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "proNumber": {
-            "description": "The PRO number, when that is what the person gave you.",
+            "description": "The PRO number, when that is what the person gave you for one load.",
             "type": "string"
           },
-          "shipmentId": {
-            "description": "The shipment's id, from shipment_list, the page you are on, or this run's subject. Give this or proNumber.",
-            "type": "string",
-            "x-recordOf": "shipment"
+          "shipmentIds": {
+            "description": "The shipments' ids, from shipment_list, dispatch_get_board, the page you are on or this run's subject: every load you need, in one call. Give these or proNumber.",
+            "items": {
+              "type": "string",
+              "x-recordOf": "shipment"
+            },
+            "maxItems": 25,
+            "minItems": 1,
+            "type": "array"
           }
         },
         "type": "object"
@@ -48919,7 +48929,7 @@
     },
     {
       "name": "shipment_list",
-      "description": "Find shipments (loads) by the words people use for them, by status, by holds, or by filters on dates, charges and transfer status. Words match a pro number, BOL, the customer's PO or reference number, a customer's name or code, a stop's place or city, the driver or what it carries; several words each narrow, so \"sunbelt chicago\" finds Sunbelt's loads through Chicago, and a word that names several things narrows to any of them. With no words and no filters it lists the newest. Each row has the first pickup, the final stop, who drives each move, what it carries and the holds in force with the holdId shipment_release_hold takes, so onHold lists held loads in one call; open one with shipment_get only for more.",
+      "description": "Find shipments (loads) by the words people use for them, by status, by holds, or by filters on dates, charges and transfer status. Words match a pro number, BOL, the customer's PO or reference number, a customer's name or code, a stop's place or city, the driver or what it carries; several words each narrow, so \"sunbelt chicago\" finds Sunbelt's loads through Chicago, and a word that names several things narrows to any of them. With no words and no filters it lists the newest. Each row has the first pickup, the final stop, who drives each move, what it carries and the holds in force, each with its note, when it started and the holdId shipment_release_hold takes, so onHold lists held loads and why in one call. For more, pass every load you need to shipment_get at once.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
