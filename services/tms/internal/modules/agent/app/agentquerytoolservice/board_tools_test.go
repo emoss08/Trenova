@@ -12,8 +12,9 @@ import (
 )
 
 /*
-The board's urgency follows the pickup window, so a load already picked up
-reads Late whether or not it is behind on delivery. Asked for "the late
+The board's urgency once followed the pickup window alone, so a load already
+picked up read Late whether or not it was behind on delivery; it now follows
+the delivery once the load is picked up. Asked for "the late
 freshhaul reefer", Haiku saw SEED-SHP-010, on the road and past its delivery
 window, beside ten loads nobody had picked up, all Late, and asked which was
 meant; asked what is running late, gpt-6-luna listed 40 of 78 Late moves and

@@ -61,15 +61,16 @@ type BoardMove struct {
 	OriginWindowEnd    *int64   `json:"originWindowEnd"`
 	OriginActualArrive *int64   `json:"originActualArrival"`
 
-	DestinationStopID      pulid.ID `json:"destinationStopId"`
-	DestinationLocationID  pulid.ID `json:"destinationLocationId"`
-	DestinationName        string   `json:"destinationName"`
-	DestinationCity        string   `json:"destinationCity"`
-	DestinationState       string   `json:"destinationState"`
-	DestinationLatitude    *float64 `json:"destinationLatitude"`
-	DestinationLongitude   *float64 `json:"destinationLongitude"`
-	DestinationWindowStart int64    `json:"destinationWindowStart"`
-	DestinationWindowEnd   *int64   `json:"destinationWindowEnd"`
+	DestinationStopID       pulid.ID `json:"destinationStopId"`
+	DestinationLocationID   pulid.ID `json:"destinationLocationId"`
+	DestinationName         string   `json:"destinationName"`
+	DestinationCity         string   `json:"destinationCity"`
+	DestinationState        string   `json:"destinationState"`
+	DestinationLatitude     *float64 `json:"destinationLatitude"`
+	DestinationLongitude    *float64 `json:"destinationLongitude"`
+	DestinationWindowStart  int64    `json:"destinationWindowStart"`
+	DestinationWindowEnd    *int64   `json:"destinationWindowEnd"`
+	DestinationActualArrive *int64   `json:"destinationActualArrival"`
 
 	AssignmentID          pulid.ID               `json:"assignmentId"`
 	AssignedWorkerID      pulid.ID               `json:"assignedWorkerId"`
