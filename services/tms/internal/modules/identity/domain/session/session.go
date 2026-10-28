@@ -50,8 +50,8 @@ type Session struct {
 
 	RoleActivationRequired bool `json:"-"`
 	// MustChangePassword is copied off the user at login so every later request can be
-	// gated without another user lookup. It is refreshed on the next sign-in, which is
-	// the only moment it can change for a session that already exists.
+	// gated without another user lookup. It is refreshed on the next sign-in, and the
+	// session that makes the change has it cleared at once, or that session stays refused.
 	MustChangePassword bool `json:"mustChangePassword"`
 	// Locale is copied off the user for the same reason as MustChangePassword: every
 	// request needs it to render errors, and a session already in flight must not pay for

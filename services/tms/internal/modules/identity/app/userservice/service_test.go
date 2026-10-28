@@ -573,13 +573,24 @@ func TestChangeMyPassword_Success(t *testing.T) {
 		TenantInfo:         tenantInfo,
 		IncludeMemberships: true,
 	}).Return(user, nil).Once()
-	current := &session.Session{ID: pulid.MustNew("ses_"), UserID: user.ID}
+	current := &session.Session{
+		ID:                 pulid.MustNew("ses_"),
+		UserID:             user.ID,
+		MustChangePassword: true,
+	}
 	elsewhere := &session.Session{ID: pulid.MustNew("ses_"), UserID: user.ID}
 	deps.sessionRepo.EXPECT().
 		ListForUser(mock.Anything, user.ID).
 		Return([]*session.Session{current, elsewhere}, nil).
 		Once()
 	deps.sessionRepo.EXPECT().Delete(mock.Anything, elsewhere.ID).Return(nil).Once()
+	deps.sessionRepo.EXPECT().Get(mock.Anything, current.ID).Return(current, nil).Once()
+	deps.sessionRepo.EXPECT().
+		Update(mock.Anything, mock.MatchedBy(func(sess *session.Session) bool {
+			return sess.ID == current.ID && !sess.MustChangePassword
+		})).
+		Return(nil).
+		Once()
 
 	result, err := deps.svc.ChangeMyPassword(
 		ctx,

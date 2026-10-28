@@ -1082,6 +1082,7 @@ func TestUserHandler_ChangeMyPassword_Success(t *testing.T) {
 		Return([]*session.Session{current, elsewhere}, nil).
 		Once()
 	sessions.EXPECT().Delete(mock.Anything, elsewhere.ID).Return(nil).Once()
+	sessions.EXPECT().Get(mock.Anything, current.ID).Return(current, nil).Once()
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo, sessionRepo: sessions})
 

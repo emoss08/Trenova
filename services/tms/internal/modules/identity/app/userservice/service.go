@@ -610,6 +610,31 @@ func (s *Service) UpdateMySettings(
 	return updated, nil
 }
 
+func (s *Service) releasePasswordGate(ctx context.Context, scope SessionScope) {
+	if scope.CurrentSessionID.IsNil() {
+		return
+	}
+
+	log := s.l.With(
+		zap.String("operation", "releasePasswordGate"),
+		zap.String("sessionID", scope.CurrentSessionID.String()),
+	)
+
+	sess, err := s.sr.Get(ctx, scope.CurrentSessionID)
+	if err != nil {
+		log.Error("failed to load session to lift the password change demand", zap.Error(err))
+		return
+	}
+	if sess.UserID != scope.TenantInfo.UserID || !sess.MustChangePassword {
+		return
+	}
+
+	sess.MustChangePassword = false
+	if err = s.sr.Update(ctx, sess); err != nil {
+		log.Error("failed to lift the password change demand from the session", zap.Error(err))
+	}
+}
+
 func (s *Service) refreshSessionLocale(
 	ctx context.Context,
 	sessionID, userID pulid.ID,
@@ -690,6 +715,7 @@ func (s *Service) ChangeMyPassword(
 	if _, err = s.RevokeMyOtherSessions(ctx, scope); err != nil {
 		return nil, err
 	}
+	s.releasePasswordGate(ctx, scope)
 
 	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceUser,
