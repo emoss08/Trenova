@@ -691,6 +691,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.pushHandler.RegisterRoutes(protected)
 	r.notificationPreferenceHandler.RegisterRoutes(protected)
 	r.organizationHandler.RegisterRoutes(protected)
+	r.versionHandler.RegisterRoutes(protected)
 	r.onboardingHandler.RegisterRoutes(protected)
 	r.dataRetentionHandler.RegisterRoutes(protected)
 	r.iamHandler.RegisterRoutes(protected)

@@ -3,6 +3,8 @@ package versionhandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -38,14 +40,17 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/system")
-	api.GET("/version", h.getVersion)
+	api.GET("/update-status", h.getUpdateStatus)
+	api.POST(
+		"/check-updates",
+		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
+		h.checkUpdates,
+	)
 }
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/system")
 	api.GET("/version", h.getVersion)
-	api.GET("/update-status", h.getUpdateStatus)
-	api.POST("/check-updates", h.checkUpdates)
 }
 
 func (h *Handler) getVersion(c *gin.Context) {
