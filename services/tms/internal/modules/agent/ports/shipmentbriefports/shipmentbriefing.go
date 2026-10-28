@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 type ShipmentBriefingSegment struct {
-	Text   string                `json:"text"`
-	Filter *shipment.QuickFilter `json:"filter,omitempty"`
+	Text   string                   `json:"text"`
+	Filter *quickfilter.QuickFilter `json:"filter,omitempty"`
 }
 
 type ShipmentBriefing struct {

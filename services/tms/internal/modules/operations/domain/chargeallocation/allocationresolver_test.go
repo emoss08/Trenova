@@ -1,9 +1,10 @@
-package shipment
+package chargeallocation
 
 import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -18,8 +19,8 @@ func allocDec(value string) decimal.Decimal {
 	return decimal.RequireFromString(value)
 }
 
-func allocationShipment(freight string, charges ...*AdditionalCharge) *Shipment {
-	return &Shipment{
+func allocationShipment(freight string, charges ...*shipment.AdditionalCharge) *shipment.Shipment {
+	return &shipment.Shipment{
 		ID:                  pulid.MustNew("shp_"),
 		OrganizationID:      pulid.MustNew("org_"),
 		BusinessUnitID:      pulid.MustNew("bu_"),
@@ -30,8 +31,8 @@ func allocationShipment(freight string, charges ...*AdditionalCharge) *Shipment 
 	}
 }
 
-func flatCharge(amount string, unit int16) *AdditionalCharge {
-	return &AdditionalCharge{
+func flatCharge(amount string, unit int16) *shipment.AdditionalCharge {
+	return &shipment.AdditionalCharge{
 		ID:                  pulid.MustNew("ac_"),
 		AccessorialChargeID: pulid.MustNew("acc_"),
 		Method:              accessorialcharge.MethodFlat,
@@ -40,8 +41,8 @@ func flatCharge(amount string, unit int16) *AdditionalCharge {
 	}
 }
 
-func percentCharge(percent string) *AdditionalCharge {
-	return &AdditionalCharge{
+func percentCharge(percent string) *shipment.AdditionalCharge {
+	return &shipment.AdditionalCharge{
 		ID:                  pulid.MustNew("ac_"),
 		AccessorialChargeID: pulid.MustNew("acc_"),
 		Method:              accessorialcharge.MethodPercentage,
@@ -51,38 +52,41 @@ func percentCharge(percent string) *AdditionalCharge {
 }
 
 func percentAllocation(
-	kind ChargeAllocationKind,
+	kind shipment.ChargeAllocationKind,
 	payer pulid.ID,
 	percent string,
 	sequence int16,
-) *ChargeAllocation {
-	return &ChargeAllocation{
+) *shipment.ChargeAllocation {
+	return &shipment.ChargeAllocation{
 		ID:               pulid.MustNew("chal_"),
 		ChargeKind:       kind,
 		BillToCustomerID: payer,
-		Method:           ChargeAllocationMethodPercent,
+		Method:           shipment.ChargeAllocationMethodPercent,
 		Percent:          decimal.NewNullDecimal(allocDec(percent)),
 		Sequence:         sequence,
 	}
 }
 
 func amountAllocation(
-	kind ChargeAllocationKind,
+	kind shipment.ChargeAllocationKind,
 	payer pulid.ID,
 	amount string,
 	sequence int16,
-) *ChargeAllocation {
-	return &ChargeAllocation{
+) *shipment.ChargeAllocation {
+	return &shipment.ChargeAllocation{
 		ID:               pulid.MustNew("chal_"),
 		ChargeKind:       kind,
 		BillToCustomerID: payer,
-		Method:           ChargeAllocationMethodAmount,
+		Method:           shipment.ChargeAllocationMethodAmount,
 		Amount:           decimal.NewNullDecimal(allocDec(amount)),
 		Sequence:         sequence,
 	}
 }
 
-func forCharge(allocation *ChargeAllocation, charge *AdditionalCharge) *ChargeAllocation {
+func forCharge(
+	allocation *shipment.ChargeAllocation,
+	charge *shipment.AdditionalCharge,
+) *shipment.ChargeAllocation {
 	id := charge.ID
 	allocation.AdditionalChargeID = &id
 	return allocation
@@ -140,9 +144,15 @@ func TestResolveShares_IntelPaysFreightAndAmdPaysAccessorials(t *testing.T) {
 	intel := shp.CustomerID
 	amd := pulid.MustNew("cus_")
 
-	resolution, err := ResolveShares(t.Context(), shp, []*ChargeAllocation{
-		forCharge(percentAllocation(ChargeAllocationKindAccessorial, amd, "100", 0), detention),
-		forCharge(percentAllocation(ChargeAllocationKindAccessorial, amd, "100", 0), lumper),
+	resolution, err := ResolveShares(t.Context(), shp, []*shipment.ChargeAllocation{
+		forCharge(
+			percentAllocation(shipment.ChargeAllocationKindAccessorial, amd, "100", 0),
+			detention,
+		),
+		forCharge(
+			percentAllocation(shipment.ChargeAllocationKindAccessorial, amd, "100", 0),
+			lumper,
+		),
 	})
 	require.NoError(t, err)
 
@@ -156,7 +166,7 @@ func TestResolveShares_IntelPaysFreightAndAmdPaysAccessorials(t *testing.T) {
 	assert.True(t, intelShare.AccessorialAmount.IsZero())
 	assert.True(t, intelShare.TotalAmount.Equal(allocDec("2450")))
 	require.Len(t, intelShare.Charges, 1)
-	assert.Equal(t, ChargeAllocationKindFreight, intelShare.Charges[0].Kind)
+	assert.Equal(t, shipment.ChargeAllocationKindFreight, intelShare.Charges[0].Kind)
 
 	amdShare := resolution.ShareFor(amd)
 	require.NotNil(t, amdShare)
@@ -165,7 +175,7 @@ func TestResolveShares_IntelPaysFreightAndAmdPaysAccessorials(t *testing.T) {
 	assert.True(t, amdShare.TotalAmount.Equal(allocDec("270")))
 	require.Len(t, amdShare.Charges, 2)
 	for _, charge := range amdShare.Charges {
-		assert.Equal(t, ChargeAllocationKindAccessorial, charge.Kind)
+		assert.Equal(t, shipment.ChargeAllocationKindAccessorial, charge.Kind)
 		assert.False(t, charge.Partial, "a whole charge redirected to another payer is not partial")
 		assert.True(t, charge.AllocationID.IsNotNil())
 	}
@@ -181,9 +191,9 @@ func TestResolveShares_PercentFreightSplitPutsTheRemainderOnTheLastRow(t *testin
 	first := shp.CustomerID
 	second := pulid.MustNew("cus_")
 
-	resolution, err := ResolveShares(t.Context(), shp, []*ChargeAllocation{
-		percentAllocation(ChargeAllocationKindFreight, second, "40", 1),
-		percentAllocation(ChargeAllocationKindFreight, first, "60", 0),
+	resolution, err := ResolveShares(t.Context(), shp, []*shipment.ChargeAllocation{
+		percentAllocation(shipment.ChargeAllocationKindFreight, second, "40", 1),
+		percentAllocation(shipment.ChargeAllocationKindFreight, first, "60", 0),
 	})
 	require.NoError(t, err)
 	require.Len(t, resolution.Shares, 2)
@@ -209,10 +219,10 @@ func TestResolveShares_ThreeWaySplitStillSumsToTheCharge(t *testing.T) {
 	b := pulid.MustNew("cus_")
 	c := pulid.MustNew("cus_")
 
-	resolution, err := ResolveShares(t.Context(), shp, []*ChargeAllocation{
-		percentAllocation(ChargeAllocationKindFreight, a, "33.333333", 0),
-		percentAllocation(ChargeAllocationKindFreight, b, "33.333333", 1),
-		percentAllocation(ChargeAllocationKindFreight, c, "33.333334", 2),
+	resolution, err := ResolveShares(t.Context(), shp, []*shipment.ChargeAllocation{
+		percentAllocation(shipment.ChargeAllocationKindFreight, a, "33.333333", 0),
+		percentAllocation(shipment.ChargeAllocationKindFreight, b, "33.333333", 1),
+		percentAllocation(shipment.ChargeAllocationKindFreight, c, "33.333334", 2),
 	})
 	require.NoError(t, err)
 
@@ -232,11 +242,17 @@ func TestResolveShares_PercentageAccessorialIsComputedOnFullFreightThenSplit(t *
 	first := shp.CustomerID
 	second := pulid.MustNew("cus_")
 
-	resolution, err := ResolveShares(t.Context(), shp, []*ChargeAllocation{
-		percentAllocation(ChargeAllocationKindFreight, first, "60", 0),
-		percentAllocation(ChargeAllocationKindFreight, second, "40", 1),
-		forCharge(percentAllocation(ChargeAllocationKindAccessorial, first, "60", 0), fuel),
-		forCharge(percentAllocation(ChargeAllocationKindAccessorial, second, "40", 1), fuel),
+	resolution, err := ResolveShares(t.Context(), shp, []*shipment.ChargeAllocation{
+		percentAllocation(shipment.ChargeAllocationKindFreight, first, "60", 0),
+		percentAllocation(shipment.ChargeAllocationKindFreight, second, "40", 1),
+		forCharge(
+			percentAllocation(shipment.ChargeAllocationKindAccessorial, first, "60", 0),
+			fuel,
+		),
+		forCharge(
+			percentAllocation(shipment.ChargeAllocationKindAccessorial, second, "40", 1),
+			fuel,
+		),
 	})
 	require.NoError(t, err)
 
@@ -245,7 +261,7 @@ func TestResolveShares_PercentageAccessorialIsComputedOnFullFreightThenSplit(t *
 	assert.Equal(t, "60.00", resolution.ShareFor(first).AccessorialAmount.StringFixed(2))
 	assert.Equal(t, "40.00", resolution.ShareFor(second).AccessorialAmount.StringFixed(2))
 	fuelShare := resolution.ShareFor(second).Charges[1]
-	assert.Equal(t, ChargeAllocationKindAccessorial, fuelShare.Kind)
+	assert.Equal(t, shipment.ChargeAllocationKindAccessorial, fuelShare.Kind)
 	assert.True(t, fuelShare.ChargeTotal.Equal(allocDec("100")))
 }
 
@@ -256,12 +272,15 @@ func TestResolveShares_AmountRowsMustAddUpToTheCharge(t *testing.T) {
 	shp := allocationShipment("500", charge)
 	other := pulid.MustNew("cus_")
 
-	_, err := ResolveShares(t.Context(), shp, []*ChargeAllocation{
+	_, err := ResolveShares(t.Context(), shp, []*shipment.ChargeAllocation{
 		forCharge(
-			amountAllocation(ChargeAllocationKindAccessorial, shp.CustomerID, "60", 0),
+			amountAllocation(shipment.ChargeAllocationKindAccessorial, shp.CustomerID, "60", 0),
 			charge,
 		),
-		forCharge(amountAllocation(ChargeAllocationKindAccessorial, other, "39.99", 1), charge),
+		forCharge(
+			amountAllocation(shipment.ChargeAllocationKindAccessorial, other, "39.99", 1),
+			charge,
+		),
 	})
 	require.Error(t, err)
 
@@ -278,9 +297,9 @@ func TestResolveShares_ExactAmountRowsAreAccepted(t *testing.T) {
 	shp := allocationShipment("500")
 	other := pulid.MustNew("cus_")
 
-	resolution, err := ResolveShares(t.Context(), shp, []*ChargeAllocation{
-		amountAllocation(ChargeAllocationKindFreight, shp.CustomerID, "300", 0),
-		amountAllocation(ChargeAllocationKindFreight, other, "200", 1),
+	resolution, err := ResolveShares(t.Context(), shp, []*shipment.ChargeAllocation{
+		amountAllocation(shipment.ChargeAllocationKindFreight, shp.CustomerID, "300", 0),
+		amountAllocation(shipment.ChargeAllocationKindFreight, other, "200", 1),
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "300.00", resolution.ShareFor(shp.CustomerID).FreightAmount.StringFixed(2))
@@ -294,9 +313,9 @@ func TestResolveShares_MixedMethodsOnOneChargeAreRefused(t *testing.T) {
 	shp := allocationShipment("500")
 	other := pulid.MustNew("cus_")
 
-	_, err := ResolveShares(t.Context(), shp, []*ChargeAllocation{
-		percentAllocation(ChargeAllocationKindFreight, shp.CustomerID, "60", 0),
-		amountAllocation(ChargeAllocationKindFreight, other, "200", 1),
+	_, err := ResolveShares(t.Context(), shp, []*shipment.ChargeAllocation{
+		percentAllocation(shipment.ChargeAllocationKindFreight, shp.CustomerID, "60", 0),
+		amountAllocation(shipment.ChargeAllocationKindFreight, other, "200", 1),
 	})
 	require.Error(t, err)
 
@@ -312,9 +331,9 @@ func TestResolveShares_OrdersTheDefaultPayerFirstThenByID(t *testing.T) {
 	payerZ := pulid.ID("cus_ZZZ")
 	payerA := pulid.ID("cus_AAA")
 
-	resolution, err := ResolveShares(t.Context(), shp, []*ChargeAllocation{
-		percentAllocation(ChargeAllocationKindFreight, payerZ, "50", 0),
-		percentAllocation(ChargeAllocationKindFreight, payerA, "50", 1),
+	resolution, err := ResolveShares(t.Context(), shp, []*shipment.ChargeAllocation{
+		percentAllocation(shipment.ChargeAllocationKindFreight, payerZ, "50", 0),
+		percentAllocation(shipment.ChargeAllocationKindFreight, payerA, "50", 1),
 	})
 	require.NoError(t, err)
 
@@ -352,8 +371,8 @@ func TestResolveShares_RedirectingAWholeChargeIsASplit(t *testing.T) {
 	shp := allocationShipment("300")
 	other := pulid.MustNew("cus_")
 
-	resolution, err := ResolveShares(t.Context(), shp, []*ChargeAllocation{
-		percentAllocation(ChargeAllocationKindFreight, other, "100", 0),
+	resolution, err := ResolveShares(t.Context(), shp, []*shipment.ChargeAllocation{
+		percentAllocation(shipment.ChargeAllocationKindFreight, other, "100", 0),
 	})
 	require.NoError(t, err)
 
@@ -376,15 +395,15 @@ func TestResolveShares_IgnoresOrderChargeRowsAndUnknownTargets(t *testing.T) {
 	shp := allocationShipment("500", charge)
 	other := pulid.MustNew("cus_")
 	orderChargeID := pulid.MustNew("ordchg_")
-	orphan := percentAllocation(ChargeAllocationKindAccessorial, other, "100", 0)
+	orphan := percentAllocation(shipment.ChargeAllocationKindAccessorial, other, "100", 0)
 
-	resolution, err := ResolveShares(t.Context(), shp, []*ChargeAllocation{
+	resolution, err := ResolveShares(t.Context(), shp, []*shipment.ChargeAllocation{
 		{
 			ID:               pulid.MustNew("chal_"),
-			ChargeKind:       ChargeAllocationKindOrderCharge,
+			ChargeKind:       shipment.ChargeAllocationKindOrderCharge,
 			OrderChargeID:    &orderChargeID,
 			BillToCustomerID: other,
-			Method:           ChargeAllocationMethodPercent,
+			Method:           shipment.ChargeAllocationMethodPercent,
 			Percent:          decimal.NewNullDecimal(decimal.NewFromInt(100)),
 		},
 		orphan,
@@ -416,13 +435,13 @@ func TestResolveOrderChargeShares(t *testing.T) {
 	resolution, err := ResolveOrderChargeShares(
 		t.Context(),
 		[]OrderChargeRef{brokerage, fuel},
-		[]*ChargeAllocation{
+		[]*shipment.ChargeAllocation{
 			{
 				ID:               pulid.MustNew("chal_"),
-				ChargeKind:       ChargeAllocationKindOrderCharge,
+				ChargeKind:       shipment.ChargeAllocationKindOrderCharge,
 				OrderChargeID:    &fuelID,
 				BillToCustomerID: other,
-				Method:           ChargeAllocationMethodPercent,
+				Method:           shipment.ChargeAllocationMethodPercent,
 				Percent:          decimal.NewNullDecimal(decimal.NewFromInt(100)),
 			},
 		},
@@ -438,7 +457,7 @@ func TestResolveOrderChargeShares(t *testing.T) {
 	require.Len(t, defaultShare.Charges, 1)
 	assert.Equal(t, brokerage.ID, defaultShare.Charges[0].OrderChargeID)
 	assert.Equal(t, "Customs brokerage", defaultShare.Charges[0].Description)
-	assert.Equal(t, ChargeAllocationKindOrderCharge, defaultShare.Charges[0].Kind)
+	assert.Equal(t, shipment.ChargeAllocationKindOrderCharge, defaultShare.Charges[0].Kind)
 	assert.True(t, defaultShare.Charges[0].AllocationID.IsNil())
 	assert.Equal(t, "250.00", defaultShare.AccessorialAmount.StringFixed(2))
 
@@ -457,13 +476,13 @@ func TestResolveOrderChargeShares_BadAllocationNamesTheCharge(t *testing.T) {
 	_, err := ResolveOrderChargeShares(
 		t.Context(),
 		[]OrderChargeRef{{ID: chargeID, Description: "Brokerage", Amount: allocDec("100")}},
-		[]*ChargeAllocation{
+		[]*shipment.ChargeAllocation{
 			{
 				ID:               pulid.MustNew("chal_"),
-				ChargeKind:       ChargeAllocationKindOrderCharge,
+				ChargeKind:       shipment.ChargeAllocationKindOrderCharge,
 				OrderChargeID:    &chargeID,
 				BillToCustomerID: pulid.MustNew("cus_"),
-				Method:           ChargeAllocationMethodPercent,
+				Method:           shipment.ChargeAllocationMethodPercent,
 				Percent:          decimal.NewNullDecimal(decimal.NewFromInt(50)),
 			},
 		},
@@ -506,17 +525,17 @@ func TestValidateAllocations(t *testing.T) {
 		foreign.ID:  foreign,
 	}
 
-	locked := percentAllocation(ChargeAllocationKindFreight, active.ID, "100", 0)
-	rows := []*ChargeAllocation{
-		percentAllocation(ChargeAllocationKindFreight, active.ID, "25", 0),
-		percentAllocation(ChargeAllocationKindFreight, inactive.ID, "25", 1),
-		percentAllocation(ChargeAllocationKindFreight, foreign.ID, "25", 2),
-		percentAllocation(ChargeAllocationKindFreight, missing, "25", 3),
+	locked := percentAllocation(shipment.ChargeAllocationKindFreight, active.ID, "100", 0)
+	rows := []*shipment.ChargeAllocation{
+		percentAllocation(shipment.ChargeAllocationKindFreight, active.ID, "25", 0),
+		percentAllocation(shipment.ChargeAllocationKindFreight, inactive.ID, "25", 1),
+		percentAllocation(shipment.ChargeAllocationKindFreight, foreign.ID, "25", 2),
+		percentAllocation(shipment.ChargeAllocationKindFreight, missing, "25", 3),
 		locked,
 		{
-			ChargeKind:       ChargeAllocationKindFreight,
+			ChargeKind:       shipment.ChargeAllocationKindFreight,
 			BillToCustomerID: active.ID,
-			Method:           ChargeAllocationMethodPercent,
+			Method:           shipment.ChargeAllocationMethodPercent,
 		},
 	}
 
@@ -545,8 +564,8 @@ func TestValidateAllocations(t *testing.T) {
 	assert.False(t, ValidateAllocations(&ValidateAllocationsParams{
 		TenantOrgID: orgID,
 		TenantBuID:  buID,
-		Allocations: []*ChargeAllocation{
-			percentAllocation(ChargeAllocationKindFreight, active.ID, "100", 0),
+		Allocations: []*shipment.ChargeAllocation{
+			percentAllocation(shipment.ChargeAllocationKindFreight, active.ID, "100", 0),
 		},
 		Customers: customers,
 	}).HasErrors())
@@ -562,28 +581,28 @@ func TestChargeAllocation_TargetIDAndValidation(t *testing.T) {
 	assert.Equal(
 		t,
 		shipmentID,
-		(&ChargeAllocation{ChargeKind: ChargeAllocationKindFreight, ShipmentID: &shipmentID}).TargetID(),
+		(&shipment.ChargeAllocation{ChargeKind: shipment.ChargeAllocationKindFreight, ShipmentID: &shipmentID}).TargetID(),
 	)
 	assert.Equal(
 		t,
 		chargeID,
-		(&ChargeAllocation{ChargeKind: ChargeAllocationKindAccessorial, AdditionalChargeID: &chargeID}).TargetID(),
+		(&shipment.ChargeAllocation{ChargeKind: shipment.ChargeAllocationKindAccessorial, AdditionalChargeID: &chargeID}).TargetID(),
 	)
 	assert.Equal(
 		t,
 		orderChargeID,
-		(&ChargeAllocation{ChargeKind: ChargeAllocationKindOrderCharge, OrderChargeID: &orderChargeID}).TargetID(),
+		(&shipment.ChargeAllocation{ChargeKind: shipment.ChargeAllocationKindOrderCharge, OrderChargeID: &orderChargeID}).TargetID(),
 	)
-	assert.True(t, (&ChargeAllocation{}).TargetID().IsNil())
-	var none *ChargeAllocation
+	assert.True(t, (&shipment.ChargeAllocation{}).TargetID().IsNil())
+	var none *shipment.ChargeAllocation
 	assert.True(t, none.TargetID().IsNil())
 	assert.False(t, none.IsInvoiced())
 
 	multiErr := errortypes.NewMultiError()
-	(&ChargeAllocation{
-		ChargeKind:       ChargeAllocationKindAccessorial,
+	(&shipment.ChargeAllocation{
+		ChargeKind:       shipment.ChargeAllocationKindAccessorial,
 		BillToCustomerID: pulid.MustNew("cus_"),
-		Method:           ChargeAllocationMethodAmount,
+		Method:           shipment.ChargeAllocationMethodAmount,
 		Amount:           decimal.NewNullDecimal(decimal.NewFromInt(10)),
 		Percent:          decimal.NewNullDecimal(decimal.NewFromInt(10)),
 	}).Validate(multiErr)
@@ -596,10 +615,10 @@ func TestChargeAllocation_TargetIDAndValidation(t *testing.T) {
 
 	multiErr = errortypes.NewMultiError()
 	idx := 0
-	(&ChargeAllocation{
-		ChargeKind:            ChargeAllocationKindAccessorial,
+	(&shipment.ChargeAllocation{
+		ChargeKind:            shipment.ChargeAllocationKindAccessorial,
 		BillToCustomerID:      pulid.MustNew("cus_"),
-		Method:                ChargeAllocationMethodPercent,
+		Method:                shipment.ChargeAllocationMethodPercent,
 		Percent:               decimal.NewNullDecimal(decimal.NewFromInt(100)),
 		AdditionalChargeIndex: &idx,
 	}).Validate(multiErr)

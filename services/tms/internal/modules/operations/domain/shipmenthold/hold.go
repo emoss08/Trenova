@@ -1,4 +1,4 @@
-package shipment
+package shipmenthold
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,7 +41,7 @@ type ShipmentHold struct {
 	HoldReason   *holdreason.HoldReason `json:"holdReason,omitempty" keel:"belongs:hold_reason_id"`
 	CreatedBy    *tenant.User           `json:"createdBy,omitempty"  keel:"belongs:created_by_id"`
 	ReleasedBy   *tenant.User           `json:"releasedBy,omitempty" keel:"belongs:released_by_id"`
-	Shipment     *Shipment              `json:"-"                    keel:"belongs:shipment_id"`
+	Shipment     *shipment.Shipment     `json:"-"                    keel:"belongs:shipment_id"`
 	BusinessUnit *tenant.BusinessUnit   `json:"-"`
 	Organization *tenant.Organization   `json:"-"`
 }

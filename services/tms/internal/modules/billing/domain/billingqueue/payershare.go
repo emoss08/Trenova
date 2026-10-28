@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -81,7 +82,7 @@ func BuildPayerShare(
 	}
 	result.ShipmentTotal = shp.TotalChargeAmount.Decimal
 
-	resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
+	resolution, err := chargeallocation.ResolveShares(ctx, shp, shp.ChargeAllocations)
 	var refused *errortypes.Error
 	switch {
 	case errors.As(err, &refused):
@@ -144,7 +145,7 @@ func BuildPayerShare(
 	return result, nil
 }
 
-func newPayerShareLine(charge *shipment.AllocatedCharge) *PayerShareLine {
+func newPayerShareLine(charge *chargeallocation.AllocatedCharge) *PayerShareLine {
 	line := &PayerShareLine{
 		Kind:        charge.Kind,
 		ChargeTotal: charge.ChargeTotal,
@@ -174,7 +175,7 @@ func accessorialDescription(charge *shipment.AdditionalCharge) string {
 	return "Accessorial charge"
 }
 
-func lineKey(charge *shipment.AllocatedCharge) string {
+func lineKey(charge *chargeallocation.AllocatedCharge) string {
 	if charge.Charge != nil {
 		return charge.Charge.ID.String()
 	}

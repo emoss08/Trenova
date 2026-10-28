@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -63,7 +64,7 @@ func (f *namedOrders) MatchOrderReferences(
 }
 
 type fakeActiveHolds struct {
-	holds []*shipment.ShipmentHold
+	holds []*shipmenthold.ShipmentHold
 	calls int
 	asked []pulid.ID
 }
@@ -71,11 +72,11 @@ type fakeActiveHolds struct {
 func (f *fakeActiveHolds) ActiveHolds(
 	_ context.Context,
 	req *shipmentports.ActiveHoldsRequest,
-) ([]*shipment.ShipmentHold, error) {
+) ([]*shipmenthold.ShipmentHold, error) {
 	f.calls++
 	f.asked = append(f.asked, req.ShipmentIDs...)
 
-	out := make([]*shipment.ShipmentHold, 0, len(f.holds))
+	out := make([]*shipmenthold.ShipmentHold, 0, len(f.holds))
 	for _, hold := range f.holds {
 		if slices.Contains(req.ShipmentIDs, hold.ShipmentID) {
 			out = append(out, hold)
@@ -214,7 +215,7 @@ func heldShipments() ([]*shipment.Shipment, *fakeActiveHolds) {
 	free := &shipment.Shipment{
 		ID: pulid.MustNew("shp_"), ProNumber: "S-2", Status: shipment.StatusAssigned,
 	}
-	holds := &fakeActiveHolds{holds: []*shipment.ShipmentHold{{
+	holds := &fakeActiveHolds{holds: []*shipmenthold.ShipmentHold{{
 		ID:            pulid.MustNew("shh_"),
 		ShipmentID:    held.ID,
 		Type:          holdreason.HoldTypeFinance,

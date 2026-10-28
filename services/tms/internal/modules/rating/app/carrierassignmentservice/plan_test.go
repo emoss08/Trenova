@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -118,7 +119,7 @@ func (f *planFixture) expectShipmentRead() {
 			context.Context,
 			*shipmentports.GetShipmentByIDRequest,
 		) (*shipment.Shipment, error) {
-			return shipment.CloneForUpdate(f.original), nil
+			return shipmentcoverage.CloneForUpdate(f.original), nil
 		}).
 		Once()
 	f.controls.EXPECT().

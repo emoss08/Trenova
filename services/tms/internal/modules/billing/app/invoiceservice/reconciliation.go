@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -100,7 +101,7 @@ func reconciliationLegTotal(
 		return shp.TotalChargeAmount.Decimal, nil
 	}
 
-	resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
+	resolution, err := chargeallocation.ResolveShares(ctx, shp, shp.ChargeAllocations)
 	var refused *errortypes.Error
 	switch {
 	case errors.As(err, &refused):

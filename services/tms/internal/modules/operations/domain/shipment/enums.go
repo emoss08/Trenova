@@ -427,16 +427,6 @@ func (c MoveCoverageType) IsValid() bool {
 	return false
 }
 
-type HoldSource string
-
-const (
-	HoldSourceUser = HoldSource("User")
-	HoldSourceRule = HoldSource("Rule")
-	HoldSourceAPI  = HoldSource("API")
-	HoldSourceELD  = HoldSource("ELD")
-	HoldSourceEDI  = HoldSource("EDI")
-)
-
 type CarrierAssignmentStatus string
 
 const (

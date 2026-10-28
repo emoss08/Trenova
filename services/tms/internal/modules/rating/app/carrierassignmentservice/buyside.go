@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
@@ -250,7 +251,7 @@ func contractAccessorials(
 		applicable = append(applicable, row)
 	}
 
-	priced, err := shipment.PriceAgreementAccessorials(
+	priced, err := shipmentrating.PriceAgreementAccessorials(
 		ctx,
 		parts.entity.AccessorialMeasures(),
 		applicable,

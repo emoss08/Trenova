@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/hashutils"
@@ -42,8 +42,8 @@ func (t Trigger) IsValid() bool {
 func (t Trigger) String() string { return string(t) }
 
 type Segment struct {
-	Text   string                `json:"text"`
-	Filter *shipment.QuickFilter `json:"filter,omitempty"`
+	Text   string                   `json:"text"`
+	Filter *quickfilter.QuickFilter `json:"filter,omitempty"`
 }
 
 type Wording struct {

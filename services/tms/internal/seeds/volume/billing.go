@@ -9,31 +9,31 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear/fiscalyeardb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/pkg/keelkinds"
-
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -95,10 +95,22 @@ var bilSentBackReasons = []struct {
 	code billingqueue.ExceptionReasonCode
 	note string
 }{
-	{billingqueue.ExceptionMissingDocumentation, "Stop times missing on delivery; please update actuals"},
-	{billingqueue.ExceptionAccessorialDispute, "Detention not entered though the driver reported three hours"},
-	{billingqueue.ExceptionMissingReferenceNumber, "BOL number on the shipment does not match the paperwork"},
-	{billingqueue.ExceptionCustomerInformationError, "Delivery appointment shows the wrong consignee"},
+	{
+		billingqueue.ExceptionMissingDocumentation,
+		"Stop times missing on delivery; please update actuals",
+	},
+	{
+		billingqueue.ExceptionAccessorialDispute,
+		"Detention not entered though the driver reported three hours",
+	},
+	{
+		billingqueue.ExceptionMissingReferenceNumber,
+		"BOL number on the shipment does not match the paperwork",
+	},
+	{
+		billingqueue.ExceptionCustomerInformationError,
+		"Delivery appointment shows the wrong consignee",
+	},
 }
 
 var bilMemoReasons = []string{
@@ -341,7 +353,13 @@ func (g *generator) bilConfigureAccounts(
 	ctx context.Context,
 	control *tenant.AccountingControl,
 ) error {
-	byCode, err := g.glAccountsByCode(ctx, bilAccountCash, bilAccountAR, bilAccountRevenue, bilAccountUnapplied)
+	byCode, err := g.glAccountsByCode(
+		ctx,
+		bilAccountCash,
+		bilAccountAR,
+		bilAccountRevenue,
+		bilAccountUnapplied,
+	)
 	if err != nil {
 		return err
 	}
@@ -353,8 +371,16 @@ func (g *generator) bilConfigureAccounts(
 		field  *pulid.ID
 	}{
 		{column: ac.DefaultARAccountID, code: bilAccountAR, field: &control.DefaultARAccountID},
-		{column: ac.DefaultRevenueAccountID, code: bilAccountRevenue, field: &control.DefaultRevenueAccountID},
-		{column: ac.DefaultCashAccountID, code: bilAccountCash, field: &control.DefaultCashAccountID},
+		{
+			column: ac.DefaultRevenueAccountID,
+			code:   bilAccountRevenue,
+			field:  &control.DefaultRevenueAccountID,
+		},
+		{
+			column: ac.DefaultCashAccountID,
+			code:   bilAccountCash,
+			field:  &control.DefaultCashAccountID,
+		},
 		{
 			column: ac.DefaultUnappliedCashAccountID,
 			code:   bilAccountUnapplied,
@@ -671,7 +697,7 @@ func (g *generator) bilLines(r *shipmentRecord) []*invoice.InvoiceLine {
 		if fl.Rate != nil {
 			freight.Rate = decimal.NewNullDecimal(*fl.Rate)
 			if fl.Quantity != nil && fl.Quantity.IsPositive() &&
-				fl.Rate.Mul(*fl.Quantity).Round(shipment.SharePlaces).Equal(fl.Amount) {
+				fl.Rate.Mul(*fl.Quantity).Round(chargeallocation.SharePlaces).Equal(fl.Amount) {
 				freight.Quantity = *fl.Quantity
 				freight.UnitPrice = *fl.Rate
 			}
@@ -1357,10 +1383,16 @@ func (g *generator) bilPayment(
 func bilRemittanceMemo(numbers []string, unappliedMinor int64) string {
 	memo := "Remittance for " + numbers[0]
 	if len(numbers) > 1 {
-		memo = fmt.Sprintf("Remittance for %d invoices: %s", len(numbers), strings.Join(numbers, ", "))
+		memo = fmt.Sprintf(
+			"Remittance for %d invoices: %s",
+			len(numbers),
+			strings.Join(numbers, ", "),
+		)
 	}
 	if unappliedMinor > 0 {
-		memo += "; " + money.DecimalFromMinor(unappliedMinor).StringFixed(2) + " with no remittance detail"
+		memo += "; " + money.DecimalFromMinor(unappliedMinor).
+			StringFixed(2) +
+			" with no remittance detail"
 	}
 	return memo
 }
@@ -1628,7 +1660,11 @@ func (g *generator) bilWrite(ctx context.Context, tx *keel.DB, rows *bilRows) er
 	return g.bilApplyBalances(ctx, tx, rows.balances)
 }
 
-func (g *generator) bilLinkInvoices(ctx context.Context, tx *keel.DB, links []bilItemInvoice) error {
+func (g *generator) bilLinkInvoices(
+	ctx context.Context,
+	tx *keel.DB,
+	links []bilItemInvoice,
+) error {
 	for begin := 0; begin < len(links); begin += backdateChunk {
 		chunk := links[begin:min(begin+backdateChunk, len(links))]
 		items := make([]string, len(chunk))

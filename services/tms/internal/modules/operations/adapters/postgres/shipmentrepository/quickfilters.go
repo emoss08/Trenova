@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -137,46 +138,46 @@ func QuickFilterConditions(opts *shipmentports.ShipmentOptions) ([]keel.Pred, er
 
 func QuickFilterCondition(
 	basis *shipmentports.ShipmentQuickFilterBasis,
-	spec shipment.QuickFilterSpec,
+	spec quickfilter.QuickFilterSpec,
 ) (keel.Pred, error) {
 	if basis == nil || basis.Location == nil {
 		return nil, ErrQuickFilterBasisMissing
 	}
 
 	switch spec.Filter {
-	case shipment.QuickFilterLate:
+	case quickfilter.QuickFilterLate:
 		return StageCondition(shipment.StageLate), nil
-	case shipment.QuickFilterUncovered:
+	case quickfilter.QuickFilterUncovered:
 		return StageCondition(shipment.StageNeedsCoverage), nil
-	case shipment.QuickFilterMoving:
+	case quickfilter.QuickFilterMoving:
 		return StageCondition(shipment.StageMoving), nil
-	case shipment.QuickFilterDeliveringToday:
+	case quickfilter.QuickFilterDeliveringToday:
 		day := LocalDayOf(basis.Now, basis.Location)
 		return deliveryWithin(day.Start, day.End), nil
-	case shipment.QuickFilterDeliveryHour:
+	case quickfilter.QuickFilterDeliveryHour:
 		if spec.Hour == nil {
 			return nil, ErrQuickFilterParameterMissing
 		}
 		start := LocalHourStart(basis.Now, basis.Location, *spec.Hour)
 		return deliveryWithin(start, start+secondsPerHour), nil
-	case shipment.QuickFilterPickupWindow:
+	case quickfilter.QuickFilterPickupWindow:
 		if spec.WindowStartMinutes == nil {
 			return nil, ErrQuickFilterParameterMissing
 		}
 		return pickupWindowCondition(basis.Now.Unix(), spec), nil
-	case shipment.QuickFilterReefer:
+	case quickfilter.QuickFilterReefer:
 		return reeferCondition(), nil
-	case shipment.QuickFilterLowMargin:
+	case quickfilter.QuickFilterLowMargin:
 		if basis.Margin == nil {
 			return nil, ErrQuickFilterMarginMissing
 		}
 		return lowMarginCondition(basis.Margin), nil
-	case shipment.QuickFilterDetention:
+	case quickfilter.QuickFilterDetention:
 		if basis.Detention == nil {
 			return nil, ErrQuickFilterDetentionMissing
 		}
 		return DetentionCondition(basis.Now.Unix(), basis.Detention), nil
-	case shipment.QuickFilterReadyToBill:
+	case quickfilter.QuickFilterReadyToBill:
 		return BillingTransferCandidateCondition(), nil
 	default:
 		return nil, ErrQuickFilterUnknown
@@ -198,7 +199,7 @@ func deliveryWithin(start, end int64) keel.Pred {
 	)
 }
 
-func pickupWindowCondition(now int64, spec shipment.QuickFilterSpec) keel.Pred {
+func pickupWindowCondition(now int64, spec quickfilter.QuickFilterSpec) keel.Pred {
 	st := shipmentdb.Stops.As(quickStopAlias)
 	pickup := FirstPickupStop(st, shipmentdb.ShipmentMoves.As(quickMoveAlias)).
 		Pick(st.ScheduledWindowStart)

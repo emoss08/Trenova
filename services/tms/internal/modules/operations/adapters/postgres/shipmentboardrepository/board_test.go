@@ -4,7 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -38,7 +39,7 @@ func testScope() *shipmentboardports.ShipmentBoardScope {
 	}
 }
 
-func renderGroupSummary(t *testing.T, groupBy shipment.BoardGrouping) (string, []any) {
+func renderGroupSummary(t *testing.T, groupBy boardgrouping.BoardGrouping) (string, []any) {
 	t.Helper()
 
 	q, err := groupSummaryQuery(shipmentdb.Shipments.Query(), groupBy, "America/Chicago")
@@ -50,7 +51,7 @@ func renderGroupSummary(t *testing.T, groupBy shipment.BoardGrouping) (string, [
 func TestGroupSummaryBucketsShipDatesByLocalDayOfTheFirstPickup(t *testing.T) {
 	t.Parallel()
 
-	sql, args := renderGroupSummary(t, shipment.BoardGroupingShipDate)
+	sql, args := renderGroupSummary(t, boardgrouping.BoardGroupingShipDate)
 
 	assert.Contains(t, sql, `LEFT JOIN "stops" grp_stop ON`)
 	assert.Contains(t, sql, `grp_stop."id" = (SELECT end_stp."id"`)
@@ -75,7 +76,7 @@ func TestGroupSummaryBucketsShipDatesByLocalDayOfTheFirstPickup(t *testing.T) {
 func TestGroupSummaryBucketsDeliveryDatesByTheLastDelivery(t *testing.T) {
 	t.Parallel()
 
-	sql, _ := renderGroupSummary(t, shipment.BoardGroupingDeliveryDate)
+	sql, _ := renderGroupSummary(t, boardgrouping.BoardGroupingDeliveryDate)
 
 	assert.Contains(
 		t,
@@ -88,7 +89,7 @@ func TestGroupSummaryBucketsDeliveryDatesByTheLastDelivery(t *testing.T) {
 func TestGroupSummaryOrdersCustomersTheWayTheBoardSortsThem(t *testing.T) {
 	t.Parallel()
 
-	sql, _ := renderGroupSummary(t, shipment.BoardGroupingCustomer)
+	sql, _ := renderGroupSummary(t, boardgrouping.BoardGroupingCustomer)
 
 	assert.Contains(t, sql, `LEFT JOIN "customers"`)
 	assert.Contains(t, sql, `GROUP BY s."customer_id", `)
@@ -98,7 +99,7 @@ func TestGroupSummaryOrdersCustomersTheWayTheBoardSortsThem(t *testing.T) {
 func TestGroupSummaryPutsShipmentsWithoutAnOwnerLast(t *testing.T) {
 	t.Parallel()
 
-	sql, _ := renderGroupSummary(t, shipment.BoardGroupingOwner)
+	sql, _ := renderGroupSummary(t, boardgrouping.BoardGroupingOwner)
 
 	assert.Contains(t, sql, `LEFT JOIN "users"`)
 	assert.Contains(t, sql, `SELECT coalesce(s."owner_id", $3), coalesce(o."name", $4), count(*)`)
@@ -110,7 +111,7 @@ func TestGroupSummaryRefusesAnUnknownGrouping(t *testing.T) {
 
 	_, err := groupSummaryQuery(
 		shipmentdb.Shipments.Query(),
-		shipment.BoardGrouping("Stage"),
+		boardgrouping.BoardGrouping("Stage"),
 		"UTC",
 	)
 	require.ErrorIs(t, err, ErrUnsupportedGrouping)
@@ -141,9 +142,9 @@ func TestQuickFilterTotalsIsOneQuery(t *testing.T) {
 	totals, err := quickFilterTotalsQuery(
 		q,
 		testScope().Options.QuickFilterBasis,
-		[]shipment.QuickFilterSpec{
-			shipment.Quick(shipment.QuickFilterLate),
-			shipment.Quick(shipment.QuickFilterDetention),
+		[]quickfilter.QuickFilterSpec{
+			quickfilter.Quick(quickfilter.QuickFilterLate),
+			quickfilter.Quick(quickfilter.QuickFilterDetention),
 		},
 	)
 	require.NoError(t, err)

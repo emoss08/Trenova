@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
@@ -42,7 +43,7 @@ func (s *Service) CreateFromShipments(
 // payerPlan is one payer's part of a shipment, resolved before the transaction
 // so every number is minted and every guard checked before anything is written.
 type payerPlan struct {
-	Share    *shipment.PayerShare
+	Share    *chargeallocation.PayerShare
 	Customer *customer.Customer
 	Number   string
 }
@@ -98,7 +99,7 @@ func (s *Service) CreateInvoicesFromShipments(
 		return nil, err
 	}
 
-	resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
+	resolution, err := chargeallocation.ResolveShares(ctx, shp, shp.ChargeAllocations)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +129,7 @@ func (s *Service) planPayer(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	shp *shipment.Shipment,
-	share *shipment.PayerShare,
+	share *chargeallocation.PayerShare,
 	offCycleReason string,
 ) (*payerPlan, error) {
 	cus, err := s.checkPayer(ctx, tenantInfo, shp, share, offCycleReason)
@@ -382,7 +383,7 @@ func (s *Service) CreateInvoicesFromOrder(
 type orderPayerBucket struct {
 	PayerID pulid.ID
 	Legs    []*shipment.Shipment
-	Shares  map[pulid.ID]*shipment.PayerShare
+	Shares  map[pulid.ID]*chargeallocation.PayerShare
 	IsSplit bool
 }
 
@@ -396,7 +397,7 @@ func bucketLegsByPayer(
 ) ([]*orderPayerBucket, error) {
 	byPayer := make(map[pulid.ID]*orderPayerBucket, 2)
 	for _, leg := range legs {
-		resolution, err := shipment.ResolveShares(ctx, leg, leg.ChargeAllocations)
+		resolution, err := chargeallocation.ResolveShares(ctx, leg, leg.ChargeAllocations)
 		if err != nil {
 			return nil, err
 		}
@@ -405,7 +406,7 @@ func bucketLegsByPayer(
 			if !ok {
 				bucket = &orderPayerBucket{
 					PayerID: share.PayerID,
-					Shares:  make(map[pulid.ID]*shipment.PayerShare, len(legs)),
+					Shares:  make(map[pulid.ID]*chargeallocation.PayerShare, len(legs)),
 				}
 				byPayer[share.PayerID] = bucket
 			}
@@ -541,18 +542,18 @@ func orderChargeShareFor(
 	charges []*order.OrderCharge,
 	defaultPayerID pulid.ID,
 	payerID pulid.ID,
-) (*shipment.PayerShare, bool, error) {
+) (*chargeallocation.PayerShare, bool, error) {
 	if len(charges) == 0 {
 		return nil, false, nil
 	}
 
-	refs := make([]shipment.OrderChargeRef, 0, len(charges))
+	refs := make([]chargeallocation.OrderChargeRef, 0, len(charges))
 	allocations := make([]*shipment.ChargeAllocation, 0, len(charges))
 	for _, charge := range charges {
 		if charge == nil {
 			continue
 		}
-		refs = append(refs, shipment.OrderChargeRef{
+		refs = append(refs, chargeallocation.OrderChargeRef{
 			ID:          charge.ID,
 			Description: charge.Description,
 			Amount:      charge.Amount,
@@ -560,7 +561,12 @@ func orderChargeShareFor(
 		allocations = append(allocations, charge.Allocations...)
 	}
 
-	resolution, err := shipment.ResolveOrderChargeShares(ctx, refs, allocations, defaultPayerID)
+	resolution, err := chargeallocation.ResolveOrderChargeShares(
+		ctx,
+		refs,
+		allocations,
+		defaultPayerID,
+	)
 	if err != nil {
 		return nil, false, err
 	}
@@ -572,7 +578,7 @@ func orderChargeShareFor(
 
 	// A share for the default payer also carries the implicit rows of charges
 	// allocated wholly to somebody else with a zero amount; drop them.
-	kept := make([]shipment.AllocatedCharge, 0, len(share.Charges))
+	kept := make([]chargeallocation.AllocatedCharge, 0, len(share.Charges))
 	for _, charge := range share.Charges {
 		if charge.Amount.IsZero() && charge.AllocationID.IsNil() && charge.Partial {
 			continue
@@ -675,7 +681,7 @@ func (s *Service) markOrderChargeSharesInvoiced(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
-	share *shipment.PayerShare,
+	share *chargeallocation.PayerShare,
 	created *invoice.Invoice,
 ) error {
 	if share == nil || len(share.Charges) == 0 {

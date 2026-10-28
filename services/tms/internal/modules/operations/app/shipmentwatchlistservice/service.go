@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentboardcache"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentquickfilterservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -127,7 +128,7 @@ func (s *Service) Watchlist(
 type watchlistInputs struct {
 	basis     *shipmentports.ShipmentQuickFilterBasis
 	control   *tenant.ShipmentControl
-	windows   []shipment.PickupWindowBounds
+	windows   []pickupwindow.PickupWindowBounds
 	totals    []shipmentboardports.ShipmentQuickFilterTotal
 	rows      []*shipmentboardports.ShipmentDeliveryRow
 	next      *shipmentboardports.ShipmentPickupRow
@@ -169,7 +170,7 @@ func (s *Service) compute(
 	in := &watchlistInputs{
 		basis:   basis,
 		control: control,
-		windows: shipment.PickupWindowsAt(basis.Now, basis.Location),
+		windows: pickupwindow.PickupWindowsAt(basis.Now, basis.Location),
 	}
 	req := &shipmentboardports.ShipmentWatchlistRequest{TenantInfo: tenantInfo, Basis: basis}
 
@@ -226,10 +227,14 @@ func (s *Service) compute(
 	}, nil
 }
 
-func totalSpecs(windows []shipment.PickupWindowBounds) []shipment.QuickFilterSpec {
-	specs := make([]shipment.QuickFilterSpec, totalWindowsOffset, totalWindowsOffset+len(windows))
-	specs[totalUncovered] = shipment.Quick(shipment.QuickFilterUncovered)
-	specs[totalReadyToBill] = shipment.Quick(shipment.QuickFilterReadyToBill)
+func totalSpecs(windows []pickupwindow.PickupWindowBounds) []quickfilter.QuickFilterSpec {
+	specs := make(
+		[]quickfilter.QuickFilterSpec,
+		totalWindowsOffset,
+		totalWindowsOffset+len(windows),
+	)
+	specs[totalUncovered] = quickfilter.Quick(quickfilter.QuickFilterUncovered)
+	specs[totalReadyToBill] = quickfilter.Quick(quickfilter.QuickFilterReadyToBill)
 	for _, window := range windows {
 		specs = append(specs, window.Spec())
 	}

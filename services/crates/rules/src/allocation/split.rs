@@ -1,4 +1,4 @@
-//! Dividing charges between payers, as `shipment.ResolveShares` and
+//! Dividing charges between payers, as `chargeallocation.ResolveShares` and
 //! `ResolveOrderChargeShares` do.
 //!
 //! Each charge is divided on its own:

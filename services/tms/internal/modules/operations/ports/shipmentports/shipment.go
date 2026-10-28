@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,22 +23,22 @@ type ShipmentOptions struct {
 	IncludeRoute            bool   `form:"-"                       json:"-"                       query:"-"`
 	IncludeCommodities      bool   `form:"-"                       json:"-"                       query:"-"`
 
-	IDs              []pulid.ID                 `form:"-" json:"-" query:"-"`
-	Statuses         []shipment.Status          `form:"-" json:"-" query:"-"`
-	CustomerIDs      []pulid.ID                 `form:"-" json:"-" query:"-"`
-	StopLocationIDs  []pulid.ID                 `form:"-" json:"-" query:"-"`
-	PartyGroups      []ShipmentPartyGroup       `form:"-" json:"-" query:"-"`
-	ActiveHold       *bool                      `form:"-" json:"-" query:"-"`
-	HoldReasonCodes  []string                   `form:"-" json:"-" query:"-"`
-	WorkerIDs        []pulid.ID                 `form:"-" json:"-" query:"-"`
-	TractorIDs       []pulid.ID                 `form:"-" json:"-" query:"-"`
-	TrailerIDs       []pulid.ID                 `form:"-" json:"-" query:"-"`
-	CarrierIDs       []pulid.ID                 `form:"-" json:"-" query:"-"`
-	CommodityIDs     []pulid.ID                 `form:"-" json:"-" query:"-"`
-	ShipmentTypeIDs  []pulid.ID                 `form:"-" json:"-" query:"-"`
-	QuickFilters     []shipment.QuickFilterSpec `form:"-" json:"-" query:"-"`
-	Timezone         string                     `form:"-" json:"-" query:"-"`
-	QuickFilterBasis *ShipmentQuickFilterBasis  `form:"-" json:"-" query:"-"`
+	IDs              []pulid.ID                    `form:"-" json:"-" query:"-"`
+	Statuses         []shipment.Status             `form:"-" json:"-" query:"-"`
+	CustomerIDs      []pulid.ID                    `form:"-" json:"-" query:"-"`
+	StopLocationIDs  []pulid.ID                    `form:"-" json:"-" query:"-"`
+	PartyGroups      []ShipmentPartyGroup          `form:"-" json:"-" query:"-"`
+	ActiveHold       *bool                         `form:"-" json:"-" query:"-"`
+	HoldReasonCodes  []string                      `form:"-" json:"-" query:"-"`
+	WorkerIDs        []pulid.ID                    `form:"-" json:"-" query:"-"`
+	TractorIDs       []pulid.ID                    `form:"-" json:"-" query:"-"`
+	TrailerIDs       []pulid.ID                    `form:"-" json:"-" query:"-"`
+	CarrierIDs       []pulid.ID                    `form:"-" json:"-" query:"-"`
+	CommodityIDs     []pulid.ID                    `form:"-" json:"-" query:"-"`
+	ShipmentTypeIDs  []pulid.ID                    `form:"-" json:"-" query:"-"`
+	QuickFilters     []quickfilter.QuickFilterSpec `form:"-" json:"-" query:"-"`
+	Timezone         string                        `form:"-" json:"-" query:"-"`
+	QuickFilterBasis *ShipmentQuickFilterBasis     `form:"-" json:"-" query:"-"`
 	// LateAt, when set, keeps the shipments running late at that instant:
 	// a stop not yet reached whose window closed before it.
 	LateAt int64 `form:"-" json:"-" query:"-"`

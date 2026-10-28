@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -43,7 +44,7 @@ func (f *fakeUnassigner) plan(
 			"Only fresh assigned shipment moves can be unassigned",
 		)
 	}
-	after := shipment.CloneForUpdate(entity)
+	after := shipmentcoverage.CloneForUpdate(entity)
 	after.Status = shipment.StatusNew
 	after.Moves[0].Status = shipment.MoveStatusNew
 	after.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned
@@ -313,7 +314,7 @@ func (f *fakeMoveStatuses) PreviewUpdateStatus(
 		plan.MovesBefore = append(plan.MovesBefore, move)
 		plan.MovesAfter = append(plan.MovesAfter, &after)
 	}
-	derived := shipment.CloneForUpdate(f.shipment)
+	derived := shipmentcoverage.CloneForUpdate(f.shipment)
 	derived.Status = shipment.StatusCompleted
 	plan.ShipmentsAfter = []*shipment.Shipment{derived}
 

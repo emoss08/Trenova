@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -65,7 +66,7 @@ func TestForShipmentSharePartialFreightCarriesItsShare(t *testing.T) {
 	shp.CustomerID = pulid.MustNew("cus_")
 	splitEverything(shp, shp.CustomerID, "60")
 
-	resolution, err := shipment.ResolveShares(t.Context(), shp, shp.ChargeAllocations)
+	resolution, err := chargeallocation.ResolveShares(t.Context(), shp, shp.ChargeAllocations)
 	require.NoError(t, err)
 	share := resolution.ShareFor(shp.CustomerID)
 	require.NotNil(t, share)
@@ -118,7 +119,7 @@ func TestForShipmentShareFullShareMatchesForShipment(t *testing.T) {
 	})
 	shp.CustomerID = pulid.MustNew("cus_")
 
-	resolution, err := shipment.ResolveShares(t.Context(), shp, nil)
+	resolution, err := chargeallocation.ResolveShares(t.Context(), shp, nil)
 	require.NoError(t, err)
 
 	viaShare := invoicelines.ForShipmentShare(
@@ -148,7 +149,7 @@ func TestForShipmentShareNegatesCreditMemoPartialShares(t *testing.T) {
 	shp.CustomerID = pulid.MustNew("cus_")
 	splitEverything(shp, shp.CustomerID, "25")
 
-	resolution, err := shipment.ResolveShares(t.Context(), shp, shp.ChargeAllocations)
+	resolution, err := chargeallocation.ResolveShares(t.Context(), shp, shp.ChargeAllocations)
 	require.NoError(t, err)
 
 	lines := invoicelines.ForShipmentShare(
@@ -173,7 +174,7 @@ func TestForShipmentShareWithNilShipmentOrEmptyShare(t *testing.T) {
 	lines := invoicelines.ForShipmentShare(
 		billingqueue.BillTypeInvoice,
 		shp,
-		&shipment.PayerShare{PayerID: pulid.MustNew("cus_")},
+		&chargeallocation.PayerShare{PayerID: pulid.MustNew("cus_")},
 		1,
 	)
 	assert.Empty(t, lines, "a payer with no charges gets no lines")
@@ -187,7 +188,7 @@ func TestForOrderChargeShare(t *testing.T) {
 
 	whole := invoicelines.ForOrderChargeShare(
 		billingqueue.BillTypeInvoice,
-		shipment.AllocatedCharge{
+		chargeallocation.AllocatedCharge{
 			Kind:          shipment.ChargeAllocationKindOrderCharge,
 			OrderChargeID: chargeID,
 			Description:   "Customs brokerage",
@@ -207,7 +208,7 @@ func TestForOrderChargeShare(t *testing.T) {
 
 	partial := invoicelines.ForOrderChargeShare(
 		billingqueue.BillTypeCreditMemo,
-		shipment.AllocatedCharge{
+		chargeallocation.AllocatedCharge{
 			Kind:          shipment.ChargeAllocationKindOrderCharge,
 			OrderChargeID: chargeID,
 			AllocationID:  allocationID,
@@ -230,17 +231,17 @@ func TestShareDescription(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		charge shipment.AllocatedCharge
+		charge chargeallocation.AllocatedCharge
 		want   string
 	}{
 		{
 			name:   "whole charge keeps the plain description",
-			charge: shipment.AllocatedCharge{Percent: decimal.NewNullDecimal(dec("100"))},
+			charge: chargeallocation.AllocatedCharge{Percent: decimal.NewNullDecimal(dec("100"))},
 			want:   "Freight charge",
 		},
 		{
 			name: "trailing zeros are trimmed",
-			charge: shipment.AllocatedCharge{
+			charge: chargeallocation.AllocatedCharge{
 				Partial: true,
 				Percent: decimal.NewNullDecimal(dec("33.50")),
 			},
@@ -248,7 +249,7 @@ func TestShareDescription(t *testing.T) {
 		},
 		{
 			name: "whole percents read without decimals",
-			charge: shipment.AllocatedCharge{
+			charge: chargeallocation.AllocatedCharge{
 				Partial: true,
 				Percent: decimal.NewNullDecimal(dec("60.00")),
 			},
@@ -256,7 +257,7 @@ func TestShareDescription(t *testing.T) {
 		},
 		{
 			name:   "amount shares without a percent say partial",
-			charge: shipment.AllocatedCharge{Partial: true},
+			charge: chargeallocation.AllocatedCharge{Partial: true},
 			want:   "Freight charge (partial share)",
 		},
 	}

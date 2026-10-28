@@ -1,9 +1,10 @@
-package shipment_test
+package commentbody_test
 
 import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/commentbody"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,7 +60,7 @@ func entityRefNode(entityType string, id pulid.ID, label string) map[string]any 
 
 func validateBody(body map[string]any) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
-	shipment.ValidateCommentBody(body, multiErr)
+	commentbody.ValidateCommentBody(body, multiErr)
 	if multiErr.HasErrors() {
 		return multiErr
 	}
@@ -221,7 +222,7 @@ func TestRenderCommentBodyText(t *testing.T) {
 		},
 	)
 
-	text := shipment.RenderCommentBodyText(body)
+	text := commentbody.RenderCommentBodyText(body)
 	assert.Equal(
 		t,
 		"Hello @Jane see #S-1\nline one\nline two\n3. third\n4. fourth",
@@ -232,9 +233,9 @@ func TestRenderCommentBodyText(t *testing.T) {
 func TestRenderCommentBodyText_HandlesMalformedInput(t *testing.T) {
 	t.Parallel()
 
-	assert.Empty(t, shipment.RenderCommentBodyText(nil))
-	assert.Empty(t, shipment.RenderCommentBodyText(map[string]any{"type": "garbage"}))
-	assert.Empty(t, shipment.RenderCommentBodyText(map[string]any{
+	assert.Empty(t, commentbody.RenderCommentBodyText(nil))
+	assert.Empty(t, commentbody.RenderCommentBodyText(map[string]any{"type": "garbage"}))
+	assert.Empty(t, commentbody.RenderCommentBodyText(map[string]any{
 		"type":    "doc",
 		"content": []any{"not-a-node", 42, nil},
 	}))
@@ -254,7 +255,7 @@ func TestExtractMentionUserIDs_DedupesAndSkipsInvalid(t *testing.T) {
 		),
 	)
 
-	ids := shipment.ExtractMentionUserIDs(body)
+	ids := commentbody.ExtractMentionUserIDs(body)
 	assert.Equal(t, []pulid.ID{userA, userB}, ids)
 }
 
@@ -272,10 +273,10 @@ func TestExtractEntityRefs_DedupesByTypeAndID(t *testing.T) {
 		),
 	)
 
-	refs := shipment.ExtractEntityRefs(body)
+	refs := commentbody.ExtractEntityRefs(body)
 	require.Len(t, refs, 2)
-	assert.Equal(t, shipment.CommentEntityRefShipment, refs[0].EntityType)
+	assert.Equal(t, commentbody.CommentEntityRefShipment, refs[0].EntityType)
 	assert.Equal(t, shipmentID, refs[0].EntityID)
-	assert.Equal(t, shipment.CommentEntityRefWorker, refs[1].EntityType)
+	assert.Equal(t, commentbody.CommentEntityRefWorker, refs[1].EntityType)
 	assert.Equal(t, workerID, refs[1].EntityID)
 }

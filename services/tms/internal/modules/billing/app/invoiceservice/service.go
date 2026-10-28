@@ -35,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
@@ -179,7 +180,7 @@ type invoiceDependencies struct {
 	BillingControl *tenant.BillingControl
 	// Share is the payer's slice of the shipment's charges; Shipper is the
 	// ordering customer when it is not the payer.
-	Share       *shipment.PayerShare
+	Share       *chargeallocation.PayerShare
 	Shipper     *customer.Customer
 	IsSplitBill bool
 }
@@ -1061,7 +1062,7 @@ func (s *Service) getInvoiceDependencies(
 		return deps, nil
 	}
 
-	resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
+	resolution, err := chargeallocation.ResolveShares(ctx, shp, shp.ChargeAllocations)
 	if err != nil {
 		return nil, err
 	}
@@ -1166,8 +1167,8 @@ type buildInvoiceParams struct {
 	// are each leg's slice for the payer; a leg with no entry is billed in full.
 	// OrderChargeShare is the payer's slice of the order's own charges.
 	Shipper          *customer.Customer
-	Shares           map[pulid.ID]*shipment.PayerShare
-	OrderChargeShare *shipment.PayerShare
+	Shares           map[pulid.ID]*chargeallocation.PayerShare
+	OrderChargeShare *chargeallocation.PayerShare
 	IsSplitBill      bool
 }
 
@@ -1351,13 +1352,13 @@ func applyShipper(entity *invoice.Invoice, p *buildInvoiceParams) {
 
 func sharesForLeg(
 	shp *shipment.Shipment,
-	share *shipment.PayerShare,
-) map[pulid.ID]*shipment.PayerShare {
+	share *chargeallocation.PayerShare,
+) map[pulid.ID]*chargeallocation.PayerShare {
 	if shp == nil || share == nil {
 		return nil
 	}
 
-	return map[pulid.ID]*shipment.PayerShare{shp.ID: share}
+	return map[pulid.ID]*chargeallocation.PayerShare{shp.ID: share}
 }
 
 func legsFromShipment(shp *shipment.Shipment) []*shipment.Shipment {
@@ -1558,13 +1559,13 @@ func sumLinesByType(
 func legShare(
 	ctx context.Context,
 	leg *shipment.Shipment,
-	shares map[pulid.ID]*shipment.PayerShare,
-) (*shipment.PayerShare, error) {
+	shares map[pulid.ID]*chargeallocation.PayerShare,
+) (*chargeallocation.PayerShare, error) {
 	if share := shares[leg.ID]; share != nil {
 		return share, nil
 	}
 
-	resolution, err := shipment.ResolveShares(ctx, leg, nil)
+	resolution, err := chargeallocation.ResolveShares(ctx, leg, nil)
 	if err != nil {
 		return nil, err
 	}

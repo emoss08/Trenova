@@ -3,6 +3,7 @@ package shipmentmoveports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/movesplit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -226,8 +227,8 @@ type SplitMoveRequest struct {
 	Weight                *int64                `json:"weight,omitempty"`
 }
 
-func (r *SplitMoveRequest) Spec() *shipment.MoveSplitSpec {
-	return &shipment.MoveSplitSpec{
+func (r *SplitMoveRequest) Spec() *movesplit.MoveSplitSpec {
+	return &movesplit.MoveSplitSpec{
 		NewDeliveryLocationID: r.NewDeliveryLocationID,
 		RelayPickupStart:      r.SplitPickupTimes.ScheduledWindowStart,
 		RelayPickupEnd:        r.SplitPickupTimes.ScheduledWindowEnd,

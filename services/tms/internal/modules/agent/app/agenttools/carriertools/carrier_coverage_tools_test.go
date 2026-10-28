@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
@@ -96,7 +97,7 @@ func (f *fakeCarrierCoverage) PreviewAssignToMove(
 	}
 	created.SyncTotals(nil)
 
-	after := shipment.CloneForUpdate(f.shipment)
+	after := shipmentcoverage.CloneForUpdate(f.shipment)
 	after.Status = shipment.StatusAssigned
 	after.Moves[0].Status = shipment.MoveStatusAssigned
 	after.Moves[0].CoverageType = shipment.MoveCoverageTypeCarrier
@@ -138,7 +139,7 @@ func (f *fakeCarrierCoverage) PreviewCancel(
 			"Carrier assignment not found within your organization",
 		)
 	}
-	after := shipment.CloneForUpdate(f.shipment)
+	after := shipmentcoverage.CloneForUpdate(f.shipment)
 	after.Status = shipment.StatusNew
 	after.Moves[0].Status = shipment.MoveStatusNew
 	after.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned

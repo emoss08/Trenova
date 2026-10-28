@@ -12,7 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/movesplit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -482,14 +484,14 @@ func TestDuplicateShipment_ReadsTheFirstPickupWhereItIs(t *testing.T) {
 
 type fakeHoldUpdater struct {
 	guard   *agenttoolstest.WriteGuard
-	current *shipment.ShipmentHold
+	current *shipmenthold.ShipmentHold
 	updated *shipmentholdports.UpdateShipmentHoldRequest
 }
 
 func (f *fakeHoldUpdater) GetByID(
 	context.Context,
 	*shipmentholdports.GetShipmentHoldByIDRequest,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	copied := *f.current
 
 	return &copied, nil
@@ -497,7 +499,7 @@ func (f *fakeHoldUpdater) GetByID(
 
 func (f *fakeHoldUpdater) apply(
 	req *shipmentholdports.UpdateShipmentHoldRequest,
-) *shipment.ShipmentHold {
+) *shipmenthold.ShipmentHold {
 	next := *f.current
 	next.Severity = req.Severity
 	next.Notes = req.Notes
@@ -513,7 +515,7 @@ func (f *fakeHoldUpdater) Update(
 	_ context.Context,
 	req *shipmentholdports.UpdateShipmentHoldRequest,
 	_ *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -526,12 +528,12 @@ func (f *fakeHoldUpdater) PreviewUpdate(
 	_ context.Context,
 	req *shipmentholdports.UpdateShipmentHoldRequest,
 	_ *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	return f.apply(req), nil
 }
 
-func activeHold() *shipment.ShipmentHold {
-	return &shipment.ShipmentHold{
+func activeHold() *shipmenthold.ShipmentHold {
+	return &shipmenthold.ShipmentHold{
 		ID:             pulid.MustNew("shh_"),
 		ShipmentID:     pulid.MustNew("shp_"),
 		Type:           holdreason.HoldType("Compliance"),
@@ -659,7 +661,7 @@ func (f *fakeMoveSplitter) PreviewSplitMove(
 
 	return &shipmentmoveports.MoveSplitPlan{
 		Move:  move,
-		Split: shipment.PlanMoveSplit(move, req.Spec()),
+		Split: movesplit.PlanMoveSplit(move, req.Spec()),
 	}, nil
 }
 

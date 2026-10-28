@@ -99,6 +99,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent/shipmenteventdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion/shipmentsuggestiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta/stopetadb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
@@ -602,7 +603,7 @@ func All() []*schema.Table {
 		shipmentdb.ShipmentCommoditiesSchema(),
 		tenantdb.ShipmentControlsSchema(),
 		shipmenteventdb.EventsSchema(),
-		shipmentdb.ShipmentHoldsSchema(),
+		shipmentholddb.ShipmentHoldsSchema(),
 		shipmentimportchatdb.ConversationsSchema(),
 		shipmentimportchatdb.TurnsSchema(),
 		shipmentdb.ShipmentMoveJurisdictionMilesSchema(),

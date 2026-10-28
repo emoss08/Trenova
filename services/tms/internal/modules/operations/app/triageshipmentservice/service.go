@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
@@ -52,7 +53,7 @@ type holdCreator interface {
 		ctx context.Context,
 		req *shipmentholdports.CreateShipmentHoldRequest,
 		actor *permissionports.RequestActor,
-	) (*shipment.ShipmentHold, error)
+	) (*shipmenthold.ShipmentHold, error)
 }
 
 type commentCreator interface {

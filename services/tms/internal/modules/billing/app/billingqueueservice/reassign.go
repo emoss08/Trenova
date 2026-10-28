@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/allocationcheck"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -31,9 +32,9 @@ var reassignableStatuses = map[billingqueue.Status]struct{}{
 type reassignPlan struct {
 	shipment    *shipment.Shipment
 	allocations []*shipment.ChargeAllocation
-	resolution  *shipment.ShareResolution
+	resolution  *chargeallocation.ShareResolution
 	active      []*billingqueue.BillingQueueItem
-	toCreate    []*shipment.PayerShare
+	toCreate    []*chargeallocation.PayerShare
 	toCancel    []*billingqueue.BillingQueueItem
 	description string
 }
@@ -212,7 +213,7 @@ func (s *service) planReassignment(
 		return nil, multiErr
 	}
 
-	resolution, err := shipment.ResolveShares(ctx, &candidate, merged)
+	resolution, err := chargeallocation.ResolveShares(ctx, &candidate, merged)
 	if err != nil {
 		return nil, err
 	}
@@ -358,7 +359,7 @@ func reassignRows(
 		return rows, nil
 	}
 
-	whole, err := shipment.BillsWholeChargeToPayer(ctx, shp, target, rows)
+	whole, err := chargeallocation.BillsWholeChargeToPayer(ctx, shp, target, rows)
 	if err != nil {
 		return nil, err
 	}
@@ -373,10 +374,10 @@ func reassignRows(
 // open queue item: payers who gained a share need one, and items whose payer now
 // pays nothing are canceled.
 func reconcileQueueItems(
-	resolution *shipment.ShareResolution,
+	resolution *chargeallocation.ShareResolution,
 	active []*billingqueue.BillingQueueItem,
-) (toCreate []*shipment.PayerShare, toCancel []*billingqueue.BillingQueueItem) {
-	paying := make(map[pulid.ID]*shipment.PayerShare, len(resolution.Shares))
+) (toCreate []*chargeallocation.PayerShare, toCancel []*billingqueue.BillingQueueItem) {
+	paying := make(map[pulid.ID]*chargeallocation.PayerShare, len(resolution.Shares))
 	for _, share := range resolution.Shares {
 		if share != nil && len(share.Charges) > 0 {
 			paying[share.PayerID] = share

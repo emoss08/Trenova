@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 )
@@ -49,17 +49,17 @@ type holdUpdater interface {
 	GetByID(
 		ctx context.Context,
 		req *shipmentholdports.GetShipmentHoldByIDRequest,
-	) (*shipment.ShipmentHold, error)
+	) (*shipmenthold.ShipmentHold, error)
 	Update(
 		ctx context.Context,
 		req *shipmentholdports.UpdateShipmentHoldRequest,
 		actor *permissionports.RequestActor,
-	) (*shipment.ShipmentHold, error)
+	) (*shipmenthold.ShipmentHold, error)
 	PreviewUpdate(
 		ctx context.Context,
 		req *shipmentholdports.UpdateShipmentHoldRequest,
 		actor *permissionports.RequestActor,
-	) (*shipment.ShipmentHold, error)
+	) (*shipmenthold.ShipmentHold, error)
 }
 
 type holdPatch struct {
@@ -73,12 +73,12 @@ type holdPatch struct {
 }
 
 type holdUpdatePlan struct {
-	before *shipment.ShipmentHold
-	after  *shipment.ShipmentHold
+	before *shipmenthold.ShipmentHold
+	after  *shipmenthold.ShipmentHold
 }
 
 func (p *holdPatch) request(
-	current *shipment.ShipmentHold,
+	current *shipmenthold.ShipmentHold,
 ) *shipmentholdports.UpdateShipmentHoldRequest {
 	req := &shipmentholdports.UpdateShipmentHoldRequest{
 		TenantInfo:        p.get.TenantInfo,

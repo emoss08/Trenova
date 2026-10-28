@@ -505,7 +505,7 @@ its carrier assignment's pay) is not gated: each figure is the working number of
 | Shipment profitability (`shipmentProfitability`, `Shipment.profitabilityEstimate`) | the whole payload: revenue, cost, profit, margin, break-even | `@protected` on the field that returns it; the client does not ask |
 | Fleet cost summary | `avgMarginPercent`, `unprofitableCount`, `totalRevenue` | `@protected` |
 | Shipment analytics (`/analytics?page=shipment`, Home KPIs) | `avgMarginPct`, `unprofitableCount` | `shipmentprovider/access.go`, and `@protected` on the GraphQL card |
-| Shipment board | the margin column and expanded row, the `LowMargin` quick filter (refused) and its count | `@protected`, `shipment.AuthorizeQuickFilters`, `ShipmentBoardScopeRequest.Margins` |
+| Shipment board | the margin column and expanded row, the `LowMargin` quick filter (refused) and its count | `@protected`, `quickfilter.AuthorizeQuickFilters`, `ShipmentBoardScopeRequest.Margins` |
 | Board brief | no thin-margin fact: the brief is shared by every board reader | `shipmentbriefingservice` counts no margin set |
 | Capacity matches | `marginPercent`, `quote` (beside the load's revenue) | `@protected` |
 | Tender offers | `counterMarginPercent` (`counterMargin` on REST); counter events and notifications state no figure | `@protected`, `tender.TenderOffer.WithholdFields`, `tender.EvaluateCounter` |

@@ -1,4 +1,4 @@
-package shipment
+package boardgrouping
 
 type BoardGrouping string
 
@@ -7,11 +7,6 @@ const (
 	BoardGroupingDeliveryDate = BoardGrouping("DeliveryDate")
 	BoardGroupingCustomer     = BoardGrouping("Customer")
 	BoardGroupingOwner        = BoardGrouping("Owner")
-)
-
-const (
-	ShipperStopRelationship   = "shipperStop"
-	ConsigneeStopRelationship = "consigneeStop"
 )
 
 func (g BoardGrouping) IsValid() bool {

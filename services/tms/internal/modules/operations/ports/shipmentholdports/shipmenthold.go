@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -204,23 +204,23 @@ type ShipmentHoldRepository interface {
 	ListByShipmentID(
 		ctx context.Context,
 		req *ListShipmentHoldsRequest,
-	) (*pagination.ListResult[*shipment.ShipmentHold], error)
+	) (*pagination.ListResult[*shipmenthold.ShipmentHold], error)
 	GetByID(
 		ctx context.Context,
 		req *GetShipmentHoldByIDRequest,
-	) (*shipment.ShipmentHold, error)
+	) (*shipmenthold.ShipmentHold, error)
 	Create(
 		ctx context.Context,
-		entity *shipment.ShipmentHold,
-	) (*shipment.ShipmentHold, error)
+		entity *shipmenthold.ShipmentHold,
+	) (*shipmenthold.ShipmentHold, error)
 	Update(
 		ctx context.Context,
-		entity *shipment.ShipmentHold,
-	) (*shipment.ShipmentHold, error)
+		entity *shipmenthold.ShipmentHold,
+	) (*shipmenthold.ShipmentHold, error)
 	Release(
 		ctx context.Context,
-		entity *shipment.ShipmentHold,
-	) (*shipment.ShipmentHold, error)
+		entity *shipmenthold.ShipmentHold,
+	) (*shipmenthold.ShipmentHold, error)
 	HasActiveDispatchHold(
 		ctx context.Context,
 		req *ActiveShipmentHoldRequest,

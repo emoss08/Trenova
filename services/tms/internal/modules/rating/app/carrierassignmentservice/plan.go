@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchguard"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -292,7 +293,7 @@ func (s *Service) projectCoverageChange(
 	moveID pulid.ID,
 	assignment *shipment.CarrierAssignment,
 ) (*shipment.Shipment, error) {
-	updated := shipment.CloneForUpdate(original)
+	updated := shipmentcoverage.CloneForUpdate(original)
 	targetMove := updated.FindMove(moveID)
 	if targetMove == nil {
 		return nil, errortypes.NewBusinessError("Shipment does not contain the target move").

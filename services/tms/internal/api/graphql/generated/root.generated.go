@@ -3,6 +3,7 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
@@ -3299,7 +3300,7 @@ type QueryResolver interface {
 	ShipmentPreviousRates(ctx context.Context, input gqlmodel.ShipmentPreviousRatesInput) (*gqlmodel.ShipmentPreviousRatesResponse, error)
 	ShipmentBoardCapabilities(ctx context.Context) (*gqlmodel.ShipmentBoardCapabilities, error)
 	ShipmentStageSummary(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentStageSummary, error)
-	ShipmentBoardGroups(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput, groupBy shipment.BoardGrouping) ([]*gqlmodel.ShipmentBoardGroup, error)
+	ShipmentBoardGroups(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput, groupBy boardgrouping.BoardGrouping) ([]*gqlmodel.ShipmentBoardGroup, error)
 	ShipmentQuickFilterCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentQuickFilterCount, error)
 	ShipmentBriefing(ctx context.Context, timezone string) (*gqlmodel.ShipmentBriefing, error)
 	ShipmentCapacity(ctx context.Context, kind gqlmodel.CapacityUnitKind) (*gqlmodel.ShipmentCapacity, error)

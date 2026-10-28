@@ -1,4 +1,4 @@
-package shipment
+package chargeallocation
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,11 +21,11 @@ var errSplitShape = errors.New("the rules module answered a split with the wrong
 
 // AllocatedCharge is one payer's slice of one charge.
 type AllocatedCharge struct {
-	Kind         ChargeAllocationKind
+	Kind         shipment.ChargeAllocationKind
 	AllocationID pulid.ID
 	// Method is how the charge was split; empty when it was billed whole.
-	Method        ChargeAllocationMethod
-	Charge        *AdditionalCharge
+	Method        shipment.ChargeAllocationMethod
+	Charge        *shipment.AdditionalCharge
 	OrderChargeID pulid.ID
 	Description   string
 	ChargeTotal   decimal.Decimal
@@ -89,7 +90,7 @@ type chargeGroup struct {
 	charge rules.AllocationCharge
 }
 
-func allocationRows(allocations []*ChargeAllocation) []rules.AllocationRow {
+func allocationRows(allocations []*shipment.ChargeAllocation) []rules.AllocationRow {
 	rows := make([]rules.AllocationRow, 0, len(allocations))
 	for _, allocation := range allocations {
 		rows = append(rows, rules.AllocationRow{
@@ -106,8 +107,8 @@ func allocationRows(allocations []*ChargeAllocation) []rules.AllocationRow {
 }
 
 func accessorialCharge(
-	charge *AdditionalCharge,
-	allocations []*ChargeAllocation,
+	charge *shipment.AdditionalCharge,
+	allocations []*shipment.ChargeAllocation,
 ) rules.AllocationCharge {
 	if charge == nil {
 		return rules.AllocationCharge{Kind: rules.AllocationKindAccessorial}
@@ -125,7 +126,7 @@ func accessorialCharge(
 func totalCharge(
 	kind string,
 	total decimal.Decimal,
-	allocations []*ChargeAllocation,
+	allocations []*shipment.ChargeAllocation,
 ) rules.AllocationCharge {
 	return rules.AllocationCharge{
 		Kind:        kind,
@@ -135,22 +136,22 @@ func totalCharge(
 }
 
 func groupAllocations(
-	allocations []*ChargeAllocation,
-) (freight []*ChargeAllocation, byCharge map[pulid.ID][]*ChargeAllocation) {
-	freight = make([]*ChargeAllocation, 0, len(allocations))
-	byCharge = make(map[pulid.ID][]*ChargeAllocation, len(allocations))
+	allocations []*shipment.ChargeAllocation,
+) (freight []*shipment.ChargeAllocation, byCharge map[pulid.ID][]*shipment.ChargeAllocation) {
+	freight = make([]*shipment.ChargeAllocation, 0, len(allocations))
+	byCharge = make(map[pulid.ID][]*shipment.ChargeAllocation, len(allocations))
 	for _, allocation := range allocations {
 		if allocation == nil {
 			continue
 		}
 		switch allocation.ChargeKind {
-		case ChargeAllocationKindFreight:
+		case shipment.ChargeAllocationKindFreight:
 			freight = append(freight, allocation)
-		case ChargeAllocationKindAccessorial:
+		case shipment.ChargeAllocationKindAccessorial:
 			if target := allocation.TargetID(); target.IsNotNil() {
 				byCharge[target] = append(byCharge[target], allocation)
 			}
-		case ChargeAllocationKindOrderCharge:
+		case shipment.ChargeAllocationKindOrderCharge:
 		}
 	}
 
@@ -218,7 +219,7 @@ func resolveGroups(
 			allocated := groups[i].base
 			allocated.ChargeTotal = charge.Total
 			allocated.AllocationID = pulid.ID(share.AllocationID)
-			allocated.Method = ChargeAllocationMethod(share.Method)
+			allocated.Method = shipment.ChargeAllocationMethod(share.Method)
 			allocated.Percent = share.Percent
 			allocated.Amount = share.Amount
 			allocated.Partial = share.Partial
@@ -231,8 +232,8 @@ func resolveGroups(
 
 func ResolveShares(
 	ctx context.Context,
-	shp *Shipment,
-	allocations []*ChargeAllocation,
+	shp *shipment.Shipment,
+	allocations []*shipment.ChargeAllocation,
 ) (*ShareResolution, error) {
 	if shp == nil {
 		return nil, errortypes.NewValidationError(
@@ -247,7 +248,7 @@ func ResolveShares(
 
 	groups := make([]chargeGroup, 0, len(shp.AdditionalCharges)+1)
 	groups = append(groups, chargeGroup{
-		base:   AllocatedCharge{Kind: ChargeAllocationKindFreight},
+		base:   AllocatedCharge{Kind: shipment.ChargeAllocationKindFreight},
 		field:  "freightAllocations",
 		charge: totalCharge(rules.AllocationKindFreight, freight, freightAllocations),
 	})
@@ -257,7 +258,7 @@ func ResolveShares(
 		}
 		groups = append(groups, chargeGroup{
 			base: AllocatedCharge{
-				Kind:   ChargeAllocationKindAccessorial,
+				Kind:   shipment.ChargeAllocationKindAccessorial,
 				Charge: charge,
 			},
 			field:  "additionalCharges[" + strconv.Itoa(i) + "].allocations",
@@ -270,9 +271,9 @@ func ResolveShares(
 
 func BillsWholeChargeToPayer(
 	ctx context.Context,
-	shp *Shipment,
-	charge *AdditionalCharge,
-	rows []*ChargeAllocation,
+	shp *shipment.Shipment,
+	charge *shipment.AdditionalCharge,
+	rows []*shipment.ChargeAllocation,
 ) (bool, error) {
 	if shp == nil {
 		return false, nil
@@ -310,12 +311,12 @@ type OrderChargeRef struct {
 func ResolveOrderChargeShares(
 	ctx context.Context,
 	charges []OrderChargeRef,
-	allocations []*ChargeAllocation,
+	allocations []*shipment.ChargeAllocation,
 	defaultPayerID pulid.ID,
 ) (*ShareResolution, error) {
-	byCharge := make(map[pulid.ID][]*ChargeAllocation, len(allocations))
+	byCharge := make(map[pulid.ID][]*shipment.ChargeAllocation, len(allocations))
 	for _, allocation := range allocations {
-		if allocation == nil || allocation.ChargeKind != ChargeAllocationKindOrderCharge {
+		if allocation == nil || allocation.ChargeKind != shipment.ChargeAllocationKindOrderCharge {
 			continue
 		}
 		if target := allocation.TargetID(); target.IsNotNil() {
@@ -327,7 +328,7 @@ func ResolveOrderChargeShares(
 	for i, charge := range charges {
 		groups = append(groups, chargeGroup{
 			base: AllocatedCharge{
-				Kind:          ChargeAllocationKindOrderCharge,
+				Kind:          shipment.ChargeAllocationKindOrderCharge,
 				OrderChargeID: charge.ID,
 				Description:   charge.Description,
 			},
@@ -348,7 +349,7 @@ func ResolveOrderChargeShares(
 type ValidateAllocationsParams struct {
 	TenantOrgID pulid.ID
 	TenantBuID  pulid.ID
-	Allocations []*ChargeAllocation
+	Allocations []*shipment.ChargeAllocation
 	Customers   map[pulid.ID]*customer.Customer
 	Locked      map[pulid.ID]struct{}
 	Field       string

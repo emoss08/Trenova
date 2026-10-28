@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -51,20 +52,20 @@ func (f *fakeHoldService) Create(
 	_ context.Context,
 	req *shipmentholdports.CreateShipmentHoldRequest,
 	_ *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	f.placed = req
 
-	return &shipment.ShipmentHold{ID: pulid.MustNew("shld_")}, f.err
+	return &shipmenthold.ShipmentHold{ID: pulid.MustNew("shld_")}, f.err
 }
 
 func (f *fakeHoldService) Release(
 	_ context.Context,
 	req *shipmentholdports.ReleaseShipmentHoldRequest,
 	_ *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	f.released = req
 
-	return &shipment.ShipmentHold{ID: req.HoldID}, f.err
+	return &shipmenthold.ShipmentHold{ID: req.HoldID}, f.err
 }
 
 type fakeShipmentService struct {

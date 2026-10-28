@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -249,14 +250,14 @@ func payerSharesForLegs(
 	ctx context.Context,
 	legs []*shipment.Shipment,
 	payerID pulid.ID,
-) (map[pulid.ID]*shipment.PayerShare, bool, error) {
-	shares := make(map[pulid.ID]*shipment.PayerShare, len(legs))
+) (map[pulid.ID]*chargeallocation.PayerShare, bool, error) {
+	shares := make(map[pulid.ID]*chargeallocation.PayerShare, len(legs))
 	isSplit := false
 	for _, leg := range legs {
 		if leg == nil {
 			continue
 		}
-		resolution, err := shipment.ResolveShares(ctx, leg, leg.ChargeAllocations)
+		resolution, err := chargeallocation.ResolveShares(ctx, leg, leg.ChargeAllocations)
 		if err != nil {
 			return nil, false, err
 		}

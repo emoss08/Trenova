@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
@@ -33,8 +33,8 @@ func TestShipmentHandler_ListHolds_Success(t *testing.T) {
 				req.Filter.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.Filter.TenantInfo.BuID == testutil.TestBuID
 		})).
-		Return(&pagination.ListResult[*shipment.ShipmentHold]{
-			Items: []*shipment.ShipmentHold{
+		Return(&pagination.ListResult[*shipmenthold.ShipmentHold]{
+			Items: []*shipmenthold.ShipmentHold{
 				{ID: pulid.MustNew("shh_"), ShipmentID: shipmentID},
 			},
 			Total:      1,
@@ -71,8 +71,8 @@ func TestShipmentHandler_CreateHold_Success(t *testing.T) {
 				req.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.TenantInfo.BuID == testutil.TestBuID
 		}), mock.AnythingOfType("*permissionports.RequestActor")).
-		RunAndReturn(func(_ context.Context, req *shipmentholdports.CreateShipmentHoldRequest, _ *permissionports.RequestActor) (*shipment.ShipmentHold, error) {
-			return &shipment.ShipmentHold{
+		RunAndReturn(func(_ context.Context, req *shipmentholdports.CreateShipmentHoldRequest, _ *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error) {
+			return &shipmenthold.ShipmentHold{
 				ID:             pulid.MustNew("shh_"),
 				ShipmentID:     req.ShipmentID,
 				OrganizationID: req.TenantInfo.OrgID,
@@ -81,7 +81,7 @@ func TestShipmentHandler_CreateHold_Success(t *testing.T) {
 				Type:           holdreason.HoldTypeOperational,
 				Severity:       holdreason.HoldSeverityBlocking,
 				ReasonCode:     "APPT",
-				Source:         shipment.HoldSourceUser,
+				Source:         shipmenthold.HoldSourceUser,
 				BlocksDispatch: true,
 				StartedAt:      100,
 			}, nil

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
@@ -25,7 +26,7 @@ func (s *Service) checkPayer(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	shp *shipment.Shipment,
-	share *shipment.PayerShare,
+	share *chargeallocation.PayerShare,
 	offCycleReason string,
 ) (*customer.Customer, error) {
 	exists, err := s.billingQueueRepo.ExistsByShipmentPayerAndType(
@@ -171,7 +172,7 @@ func (s *Service) buildBucketInvoice(
 	idx int,
 	anchor *billingqueue.BillingQueueItem,
 	orderCustomer *customer.Customer,
-) (*invoice.Invoice, *shipment.PayerShare, error) {
+) (*invoice.Invoice, *chargeallocation.PayerShare, error) {
 	bucket := plan.buckets[idx]
 	cus := plan.customers[idx]
 
@@ -262,7 +263,7 @@ func unnumberedAnchor(
 	tenantInfo pagination.TenantInfo,
 	leg *shipment.Shipment,
 	payerID pulid.ID,
-	share *shipment.PayerShare,
+	share *chargeallocation.PayerShare,
 ) *billingqueue.BillingQueueItem {
 	item := &billingqueue.BillingQueueItem{
 		ID:               pulid.MustNew("bqi_"),
@@ -369,7 +370,7 @@ func (s *Service) planShipmentDrafts(
 		return nil, err
 	}
 
-	resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
+	resolution, err := chargeallocation.ResolveShares(ctx, shp, shp.ChargeAllocations)
 	if err != nil {
 		return nil, err
 	}

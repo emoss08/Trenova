@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -112,7 +112,7 @@ func TestPrepareValidatesAndAttachesTheBasis(t *testing.T) {
 	assert.Nil(t, opts.QuickFilterBasis)
 
 	opts = &shipmentports.ShipmentOptions{
-		QuickFilters: []shipment.QuickFilterSpec{{Filter: shipment.QuickFilterDeliveryHour}},
+		QuickFilters: []quickfilter.QuickFilterSpec{{Filter: quickfilter.QuickFilterDeliveryHour}},
 		Timezone:     "UTC",
 	}
 	err := svc.Prepare(t.Context(), pagination.TenantInfo{}, opts)
@@ -120,8 +120,10 @@ func TestPrepareValidatesAndAttachesTheBasis(t *testing.T) {
 	require.ErrorAs(t, err, &multiErr)
 
 	opts = &shipmentports.ShipmentOptions{
-		QuickFilters: []shipment.QuickFilterSpec{shipment.Quick(shipment.QuickFilterDetention)},
-		Timezone:     "UTC",
+		QuickFilters: []quickfilter.QuickFilterSpec{
+			quickfilter.Quick(quickfilter.QuickFilterDetention),
+		},
+		Timezone: "UTC",
 	}
 	require.NoError(t, svc.Prepare(t.Context(), pagination.TenantInfo{}, opts))
 	require.NotNil(t, opts.QuickFilterBasis)

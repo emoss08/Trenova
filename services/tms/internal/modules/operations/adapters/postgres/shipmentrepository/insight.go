@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tableinsight"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -27,12 +27,12 @@ type insightSource struct {
 }
 
 type insightOptions struct {
-	Status                  string                     `json:"status"`
-	ActivityWindowStart     int64                      `json:"activityWindowStart"`
-	ActivityWindowEnd       int64                      `json:"activityWindowEnd"`
-	BillingTransferEligible bool                       `json:"billingTransferEligible"`
-	QuickFilters            []shipment.QuickFilterSpec `json:"quickFilters"`
-	Timezone                string                     `json:"timezone"`
+	Status                  string                        `json:"status"`
+	ActivityWindowStart     int64                         `json:"activityWindowStart"`
+	ActivityWindowEnd       int64                         `json:"activityWindowEnd"`
+	BillingTransferEligible bool                          `json:"billingTransferEligible"`
+	QuickFilters            []quickfilter.QuickFilterSpec `json:"quickFilters"`
+	Timezone                string                        `json:"timezone"`
 }
 
 func NewInsightSource(p InsightParams) tableinsight.Result {

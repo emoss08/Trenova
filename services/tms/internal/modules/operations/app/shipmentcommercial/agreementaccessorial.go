@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
@@ -74,7 +75,7 @@ func (c *Calculator) syncAgreementAccessorials(
 	}
 
 	applicable := applicableAccessorials(contract, entity, ratingDate(entity, c.now), pass)
-	charges, err := shipment.PriceAgreementAccessorials(
+	charges, err := shipmentrating.PriceAgreementAccessorials(
 		ctx,
 		entity.AccessorialMeasures(),
 		applicable,
@@ -114,7 +115,7 @@ func applicableAccessorials(
 
 func reconcileAgreementCharges(
 	entity *shipment.Shipment,
-	priced []shipment.PricedAgreementAccessorial,
+	priced []shipmentrating.PricedAgreementAccessorial,
 ) {
 	existing := make(map[pulid.ID]*shipment.AdditionalCharge, len(priced))
 	filtered := make([]*shipment.AdditionalCharge, 0, len(entity.AdditionalCharges)+len(priced))
@@ -143,7 +144,7 @@ func reconcileAgreementCharges(
 
 func agreementCharge(
 	entity *shipment.Shipment,
-	entry shipment.PricedAgreementAccessorial,
+	entry shipmentrating.PricedAgreementAccessorial,
 	existing *shipment.AdditionalCharge,
 ) *shipment.AdditionalCharge {
 	accessorialID := entry.Accessorial.ID

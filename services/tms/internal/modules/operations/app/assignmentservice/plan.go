@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/capabilityguard"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchguard"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -302,7 +303,7 @@ func (s *service) projectAssignment(
 	plan *assignmentPlan,
 	assignment *shipment.Assignment,
 ) (*shipment.Shipment, error) {
-	updatedShipment := shipment.CloneForUpdate(plan.original)
+	updatedShipment := shipmentcoverage.CloneForUpdate(plan.original)
 	targetMove := updatedShipment.FindMove(plan.moveID)
 	if targetMove == nil {
 		return nil, errMoveNotOnShipment(plan.moveID)
@@ -431,7 +432,7 @@ func (s *service) projectUnassign(
 	req *assignmentports.UnassignShipmentMoveRequest,
 	plan *unassignPlan,
 ) (*shipment.Shipment, error) {
-	updatedShipment := shipment.CloneForUpdate(plan.original)
+	updatedShipment := shipmentcoverage.CloneForUpdate(plan.original)
 	targetMove := updatedShipment.FindMove(req.ShipmentMoveID)
 	if targetMove == nil {
 		return nil, errMoveNotOnShipment(req.ShipmentMoveID)

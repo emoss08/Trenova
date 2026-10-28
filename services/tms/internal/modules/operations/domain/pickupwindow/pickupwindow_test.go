@@ -1,9 +1,10 @@
-package shipment
+package pickupwindow
 
 import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,6 +37,6 @@ func TestPickupWindowsAtPartitionsTheDay(t *testing.T) {
 
 	for _, window := range windows {
 		assert.True(t, window.Window.IsValid())
-		assert.Equal(t, QuickFilterPickupWindow, window.Spec().Filter)
+		assert.Equal(t, quickfilter.QuickFilterPickupWindow, window.Spec().Filter)
 	}
 }

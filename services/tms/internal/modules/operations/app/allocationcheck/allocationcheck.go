@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -60,7 +61,7 @@ func Validate(
 		return multiErr
 	}
 
-	multiErr = shipment.ValidateAllocations(&shipment.ValidateAllocationsParams{
+	multiErr = chargeallocation.ValidateAllocations(&chargeallocation.ValidateAllocationsParams{
 		TenantOrgID: entity.OrganizationID,
 		TenantBuID:  entity.BusinessUnitID,
 		Allocations: entity.ChargeAllocations,
@@ -73,7 +74,7 @@ func Validate(
 	}
 
 	preview := PreviewForResolution(entity)
-	if _, err := shipment.ResolveShares(ctx, preview, preview.ChargeAllocations); err != nil {
+	if _, err := chargeallocation.ResolveShares(ctx, preview, preview.ChargeAllocations); err != nil {
 		var typed *errortypes.Error
 		if errors.As(err, &typed) {
 			multiErr.Add(typed.Field, typed.Code, typed.Message, typed.Args...)

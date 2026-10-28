@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -571,11 +572,11 @@ func queryShipment(
 	tool := newGetShipmentTool(
 		&fakeShipmentGetter{entity: fixture.entity},
 		nil,
-		&fakeHoldLister{holds: []*shipment.ShipmentHold{{
+		&fakeHoldLister{holds: []*shipmenthold.ShipmentHold{{
 			ID:             pulid.MustNew("shh_"),
 			Type:           holdreason.HoldType("Compliance"),
 			Severity:       holdreason.HoldSeverityBlocking,
-			Source:         shipment.HoldSourceUser,
+			Source:         shipmenthold.HoldSourceUser,
 			BlocksDelivery: true,
 		}}},
 		permissions,

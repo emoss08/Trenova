@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -367,7 +368,11 @@ func syncTotals(t *testing.T, shp *shipment.Shipment) {
 	t.Helper()
 
 	freight := shp.FreightChargeAmount.Decimal
-	other, err := shipment.AdditionalChargeTotals(t.Context(), shp.AdditionalCharges, freight)
+	other, err := chargeallocation.AdditionalChargeTotals(
+		t.Context(),
+		shp.AdditionalCharges,
+		freight,
+	)
 	require.NoError(t, err)
 	shp.OtherChargeAmount = decimal.NewNullDecimal(other.Sum)
 	shp.TotalChargeAmount = decimal.NewNullDecimal(freight.Add(other.Sum))

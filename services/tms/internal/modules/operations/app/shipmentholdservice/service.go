@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -72,7 +72,7 @@ func (s *service) recordHoldEvent(
 	}
 }
 
-func tenantRefForHold(hold *shipment.ShipmentHold) shipmenteventservice.TenantRef {
+func tenantRefForHold(hold *shipmenthold.ShipmentHold) shipmenteventservice.TenantRef {
 	return shipmenteventservice.TenantRef{
 		OrganizationID: hold.OrganizationID,
 		BusinessUnitID: hold.BusinessUnitID,
@@ -82,7 +82,7 @@ func tenantRefForHold(hold *shipment.ShipmentHold) shipmenteventservice.TenantRe
 func (s *service) ListByShipmentID(
 	ctx context.Context,
 	req *shipmentholdports.ListShipmentHoldsRequest,
-) (*pagination.ListResult[*shipment.ShipmentHold], error) {
+) (*pagination.ListResult[*shipmenthold.ShipmentHold], error) {
 	if req == nil || req.Filter == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -108,7 +108,7 @@ func (s *service) ListByShipmentID(
 func (s *service) GetByID(
 	ctx context.Context,
 	req *shipmentholdports.GetShipmentHoldByIDRequest,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -127,7 +127,7 @@ func (s *service) Create(
 	ctx context.Context,
 	req *shipmentholdports.CreateShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	entity, err := s.planCreate(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -152,7 +152,7 @@ func (s *service) Update(
 	ctx context.Context,
 	req *shipmentholdports.UpdateShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	original, updated, err := s.planUpdate(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -184,7 +184,7 @@ func (s *service) Release(
 	ctx context.Context,
 	req *shipmentholdports.ReleaseShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	original, toRelease, err := s.planRelease(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -248,7 +248,7 @@ func (s *service) getActiveHoldReason(
 }
 
 func (s *service) logHoldAction(
-	entity *shipment.ShipmentHold,
+	entity *shipmenthold.ShipmentHold,
 	actor kernelports.AuditActor,
 	op permission.Operation,
 	previous any,
@@ -291,7 +291,7 @@ func (s *service) logHoldAction(
 
 func (s *service) publishHoldInvalidation(
 	ctx context.Context,
-	entity *shipment.ShipmentHold,
+	entity *shipmenthold.ShipmentHold,
 	actor kernelports.AuditActor,
 	action string,
 	payload any,
@@ -314,7 +314,7 @@ func (s *service) publishHoldInvalidation(
 }
 
 func applyCreateOverrides(
-	entity *shipment.ShipmentHold,
+	entity *shipmenthold.ShipmentHold,
 	req *shipmentholdports.CreateShipmentHoldRequest,
 ) {
 	if req.Severity != nil {
@@ -334,7 +334,7 @@ func applyCreateOverrides(
 	}
 }
 
-func validateHold(entity *shipment.ShipmentHold) *errortypes.MultiError {
+func validateHold(entity *shipmenthold.ShipmentHold) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 	if multiErr.HasErrors() {

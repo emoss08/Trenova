@@ -1,8 +1,9 @@
-package shipment
+package shipmentrating
 
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +14,7 @@ func TestRestoreSystemOwnedCharges_CallersCannotClaimSystemOwnership(t *testing.
 	detentionChargeID := pulid.MustNew("ac_")
 	manualChargeID := pulid.MustNew("ac_")
 
-	original := []*AdditionalCharge{
+	original := []*shipment.AdditionalCharge{
 		{
 			ID:                detentionChargeID,
 			IsSystemGenerated: true,
@@ -22,7 +23,7 @@ func TestRestoreSystemOwnedCharges_CallersCannotClaimSystemOwnership(t *testing.
 		{ID: manualChargeID},
 	}
 
-	updated := []*AdditionalCharge{
+	updated := []*shipment.AdditionalCharge{
 		{ID: detentionChargeID},
 		{ID: manualChargeID, IsSystemGenerated: true, IsDetention: true},
 		{IsSystemGenerated: true, IsDetention: true},
@@ -44,7 +45,7 @@ func TestRestoreSystemOwnedCharges_CallersCannotClaimSystemOwnership(t *testing.
 func TestRestoreSystemOwnedCharges_UnknownChargeIsTreatedAsManual(t *testing.T) {
 	t.Parallel()
 
-	updated := []*AdditionalCharge{
+	updated := []*shipment.AdditionalCharge{
 		{
 			ID:                pulid.MustNew("ac_"),
 			IsSystemGenerated: true,
@@ -69,7 +70,7 @@ func TestRestoreSystemOwnedCharges_ProtectsEveryOwnerColumn(t *testing.T) {
 	agreementChargeID := pulid.MustNew("ac_")
 	fuelChargeID := pulid.MustNew("ac_")
 
-	original := []*AdditionalCharge{
+	original := []*shipment.AdditionalCharge{
 		{
 			ID:                         agreementChargeID,
 			IsSystemGenerated:          true,
@@ -83,7 +84,7 @@ func TestRestoreSystemOwnedCharges_ProtectsEveryOwnerColumn(t *testing.T) {
 	}
 
 	forgedAccessorialID := pulid.MustNew("raga_")
-	updated := []*AdditionalCharge{
+	updated := []*shipment.AdditionalCharge{
 		{ID: agreementChargeID},
 		{ID: fuelChargeID},
 		{IsSystemGenerated: true, RateAgreementAccessorialID: &forgedAccessorialID},
@@ -102,30 +103,4 @@ func TestRestoreSystemOwnedCharges_ProtectsEveryOwnerColumn(t *testing.T) {
 	require.False(t, updated[2].IsSystemGenerated)
 	require.Nil(t, updated[2].RateAgreementAccessorialID,
 		"a new charge cannot claim a contract accessorial")
-}
-
-func TestAdditionalCharge_OwnerNamesExactlyOneEngine(t *testing.T) {
-	t.Parallel()
-
-	programID := pulid.MustNew("fsp_")
-	accessorialID := pulid.MustNew("raga_")
-
-	require.Equal(t, SystemOwnerNone, (&AdditionalCharge{}).Owner(),
-		"a charge nobody generated has no owner")
-	require.Equal(t, SystemOwnerNone,
-		(&AdditionalCharge{IsDetention: true}).Owner(),
-		"an owner column on a manual charge does not make it system owned")
-
-	require.Equal(t, SystemOwnerFuel, (&AdditionalCharge{
-		IsSystemGenerated:      true,
-		FuelSurchargeProgramID: &programID,
-	}).Owner())
-	require.Equal(t, SystemOwnerDetention, (&AdditionalCharge{
-		IsSystemGenerated: true,
-		IsDetention:       true,
-	}).Owner())
-	require.Equal(t, SystemOwnerAgreement, (&AdditionalCharge{
-		IsSystemGenerated:          true,
-		RateAgreementAccessorialID: &accessorialID,
-	}).Owner())
 }

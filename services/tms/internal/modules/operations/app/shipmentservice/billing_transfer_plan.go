@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -127,7 +128,7 @@ func (s *service) ListBillingTransferCandidates(
 type pendingReadiness struct {
 	index      int
 	entity     *shipment.Shipment
-	resolution *shipment.ShareResolution
+	resolution *chargeallocation.ShareResolution
 	markReady  bool
 }
 
@@ -176,7 +177,11 @@ func (s *service) planTransfers(
 			continue
 		}
 
-		resolution, shareErr := shipment.ResolveShares(ctx, entity, entity.ChargeAllocations)
+		resolution, shareErr := chargeallocation.ResolveShares(
+			ctx,
+			entity,
+			entity.ChargeAllocations,
+		)
 		if shareErr != nil {
 			refuse(&decisions[idx], shipmentbillingports.BillingTransferFailureUnexpected, shareErr)
 			continue

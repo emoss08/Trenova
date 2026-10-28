@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/shopspring/decimal"
@@ -102,19 +104,19 @@ func (s *service) planChargeUpdateFrom(
 
 	chargeNames := accessorialNames(shp.AdditionalCharges)
 	if req.AdditionalCharges != nil {
-		shipment.RestoreSystemOwnedCharges(shp.AdditionalCharges, req.AdditionalCharges)
+		shipmentrating.RestoreSystemOwnedCharges(shp.AdditionalCharges, req.AdditionalCharges)
 		shp.AdditionalCharges = req.AdditionalCharges
 	}
 
 	freight := shp.FreightChargeAmount.Decimal
-	other, err := shipment.AdditionalChargeTotals(ctx, shp.AdditionalCharges, freight)
+	other, err := chargeallocation.AdditionalChargeTotals(ctx, shp.AdditionalCharges, freight)
 	if err != nil {
 		return nil, err
 	}
 	shp.OtherChargeAmount = decimal.NewNullDecimal(other.Sum)
 	shp.TotalChargeAmount = decimal.NewNullDecimal(freight.Add(other.Sum))
 
-	rebalance, err := shipment.RebalanceAmountSplits(ctx, shp, shp.ChargeAllocations)
+	rebalance, err := chargeallocation.RebalanceAmountSplits(ctx, shp, shp.ChargeAllocations)
 	if err != nil {
 		return nil, err
 	}

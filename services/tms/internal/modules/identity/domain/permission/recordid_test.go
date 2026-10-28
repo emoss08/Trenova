@@ -47,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment/recurringshipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity/carriercapacitydb"
@@ -176,7 +177,7 @@ var minters = map[permission.Resource]minter{
 	),
 	permission.ResourceInboundMailbox:           prefixed(inboundmessagedb.MailboxesSchema()),
 	permission.ResourceShipmentStop:             prefixed(shipmentdb.StopsSchema()),
-	permission.ResourceShipmentHold:             prefixed(shipmentdb.ShipmentHoldsSchema()),
+	permission.ResourceShipmentHold:             prefixed(shipmentholddb.ShipmentHoldsSchema()),
 	permission.ResourceHoldReason:               prefixed(holdreasondb.HoldReasonsSchema()),
 	permission.ResourceServiceFailureReasonCode: prefixed(servicefailuredb.ReasonCodesSchema()),
 	permission.ResourcePermit:                   prefixed(permitdb.PermitsSchema()),

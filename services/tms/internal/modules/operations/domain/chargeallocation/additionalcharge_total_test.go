@@ -1,8 +1,9 @@
-package shipment_test
+package chargeallocation_test
 
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/shopspring/decimal"
@@ -91,7 +92,7 @@ func TestAdditionalChargeTotals_PricesEachChargeByItsMethod(t *testing.T) {
 		sum = sum.Add(decimal.RequireFromString(tt.expected))
 	}
 
-	totals, err := shipment.AdditionalChargeTotals(t.Context(), charges, base)
+	totals, err := chargeallocation.AdditionalChargeTotals(t.Context(), charges, base)
 	require.NoError(t, err)
 	require.Len(t, totals.Each, len(tests))
 
@@ -108,7 +109,11 @@ func TestAdditionalChargeTotals_PricesEachChargeByItsMethod(t *testing.T) {
 func TestAdditionalChargeTotals_NoChargesSumToZero(t *testing.T) {
 	t.Parallel()
 
-	totals, err := shipment.AdditionalChargeTotals(t.Context(), nil, decimal.NewFromInt(2450))
+	totals, err := chargeallocation.AdditionalChargeTotals(
+		t.Context(),
+		nil,
+		decimal.NewFromInt(2450),
+	)
 	require.NoError(t, err)
 
 	assert.Empty(t, totals.Each)

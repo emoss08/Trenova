@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -467,7 +468,7 @@ func (s *service) completePayers(
 // it. It reads nothing itself.
 func (s *service) readinessFrom(
 	entity *shipment.Shipment,
-	resolution *shipment.ShareResolution,
+	resolution *chargeallocation.ShareResolution,
 	sources *readinessSources,
 ) *shipmentbillingports.ShipmentBillingReadiness {
 	var profile *customer.CustomerBillingProfile
@@ -558,7 +559,7 @@ func (s *service) resolvePayerShares(
 	entity *shipment.Shipment,
 	tenantInfo pagination.TenantInfo,
 	detailsLoaded bool,
-) (*shipment.ShareResolution, error) {
+) (*chargeallocation.ShareResolution, error) {
 	source := entity
 	if !detailsLoaded &&
 		(entity.AdditionalCharges == nil || entity.ChargeAllocations == nil) &&
@@ -576,7 +577,7 @@ func (s *service) resolvePayerShares(
 		source = full
 	}
 
-	resolution, err := shipment.ResolveShares(ctx, source, source.ChargeAllocations)
+	resolution, err := chargeallocation.ResolveShares(ctx, source, source.ChargeAllocations)
 	if err != nil {
 		return nil, err
 	}
@@ -591,7 +592,7 @@ func (s *service) resolvePayerShares(
 func applyPayerReadiness(
 	readiness *shipmentbillingports.ShipmentBillingReadiness,
 	entity *shipment.Shipment,
-	resolution *shipment.ShareResolution,
+	resolution *chargeallocation.ShareResolution,
 	payersByID map[pulid.ID]*customer.Customer,
 	docs []*document.Document,
 ) {

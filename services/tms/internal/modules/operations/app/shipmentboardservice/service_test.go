@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -23,10 +25,10 @@ import (
 
 type stubBoardRepo struct {
 	stageRows   []*shipmentboardports.ShipmentStageSummaryRow
-	counts      map[shipment.QuickFilter]int
+	counts      map[quickfilter.QuickFilter]int
 	groupRows   []*shipmentboardports.ShipmentBoardGroupRow
 	lastScope   *shipmentboardports.ShipmentBoardScope
-	lastFilters []shipment.QuickFilterSpec
+	lastFilters []quickfilter.QuickFilterSpec
 	lastGroups  *shipmentboardports.SummarizeShipmentBoardGroupsQuery
 }
 
@@ -130,7 +132,7 @@ func (s stubMaps) GetClientRuntimeConfig(
 }
 
 func scopeRequest(
-	filters ...shipment.QuickFilterSpec,
+	filters ...quickfilter.QuickFilterSpec,
 ) *shipmentboardports.ShipmentBoardScopeRequest {
 	return &shipmentboardports.ShipmentBoardScopeRequest{
 		Filter:       &pagination.QueryOptions{},
@@ -141,7 +143,7 @@ func scopeRequest(
 }
 
 func scopeWithoutMargins(
-	filters ...shipment.QuickFilterSpec,
+	filters ...quickfilter.QuickFilterSpec,
 ) *shipmentboardports.ShipmentBoardScopeRequest {
 	req := scopeRequest(filters...)
 	req.Margins = false
@@ -200,7 +202,7 @@ func TestStageSummaryZeroFillsEveryStage(t *testing.T) {
 
 	rows, err := svc.StageSummary(
 		t.Context(),
-		scopeRequest(shipment.Quick(shipment.QuickFilterLowMargin)),
+		scopeRequest(quickfilter.Quick(quickfilter.QuickFilterLowMargin)),
 	)
 	require.NoError(t, err)
 	require.Len(t, rows, len(shipment.Stages()))
@@ -216,17 +218,17 @@ func TestStageSummaryZeroFillsEveryStage(t *testing.T) {
 func TestQuickFilterCountsCountsEveryCountableFilter(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubBoardRepo{counts: map[shipment.QuickFilter]int{shipment.QuickFilterLate: 3}}
+	repo := &stubBoardRepo{counts: map[quickfilter.QuickFilter]int{quickfilter.QuickFilterLate: 3}}
 	basis := &stubBasis{}
 	svc := NewWithDependencies(&Dependencies{Repo: repo, QuickFilters: basis})
 
 	rows, err := svc.QuickFilterCounts(t.Context(), scopeRequest())
 	require.NoError(t, err)
-	require.Len(t, rows, len(shipment.CountableQuickFilters()))
+	require.Len(t, rows, len(quickfilter.CountableQuickFilters()))
 	assert.Equal(t, 3, rows[0].Count)
 	assert.True(t, basis.last.Margin)
 	assert.True(t, basis.last.Detention)
-	assert.Len(t, repo.lastFilters, len(shipment.CountableQuickFilters()))
+	assert.Len(t, repo.lastFilters, len(quickfilter.CountableQuickFilters()))
 }
 
 func TestALowMarginFilterIsRefusedWithoutTheMarginsGroup(t *testing.T) {
@@ -238,7 +240,7 @@ func TestALowMarginFilterIsRefusedWithoutTheMarginsGroup(t *testing.T) {
 
 	_, err := svc.StageSummary(
 		t.Context(),
-		scopeWithoutMargins(shipment.Quick(shipment.QuickFilterLowMargin)),
+		scopeWithoutMargins(quickfilter.Quick(quickfilter.QuickFilterLowMargin)),
 	)
 	require.Error(t, err, "the loads it returns say which ones run thin")
 	assert.Nil(t, repo.lastScope, "nothing is read for a refused filter")
@@ -247,15 +249,15 @@ func TestALowMarginFilterIsRefusedWithoutTheMarginsGroup(t *testing.T) {
 func TestQuickFilterCountsLeaveOutTheLowMarginCountWithoutTheMarginsGroup(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubBoardRepo{counts: map[shipment.QuickFilter]int{shipment.QuickFilterLate: 3}}
+	repo := &stubBoardRepo{counts: map[quickfilter.QuickFilter]int{quickfilter.QuickFilterLate: 3}}
 	basis := &stubBasis{}
 	svc := NewWithDependencies(&Dependencies{Repo: repo, QuickFilters: basis})
 
 	rows, err := svc.QuickFilterCounts(t.Context(), scopeWithoutMargins())
 	require.NoError(t, err)
-	require.Len(t, rows, len(shipment.CountableQuickFilters())-1)
+	require.Len(t, rows, len(quickfilter.CountableQuickFilters())-1)
 	for _, row := range rows {
-		assert.NotEqual(t, shipment.QuickFilterLowMargin, row.Filter)
+		assert.NotEqual(t, quickfilter.QuickFilterLowMargin, row.Filter)
 	}
 	assert.False(t, basis.last.Margin, "no margin basis is resolved for a count nobody sees")
 }
@@ -270,12 +272,12 @@ func TestGroupSummaryCountsGroupsInTheBoardsScopeAndZone(t *testing.T) {
 	basis := &stubBasis{}
 	svc := NewWithDependencies(&Dependencies{Repo: repo, QuickFilters: basis})
 
-	req := scopeRequest(shipment.Quick(shipment.QuickFilterLate))
+	req := scopeRequest(quickfilter.Quick(quickfilter.QuickFilterLate))
 	groups, err := svc.GroupSummary(
 		t.Context(),
 		&shipmentboardports.SummarizeShipmentBoardGroupsRequest{
 			Scope:   req,
-			GroupBy: shipment.BoardGroupingDeliveryDate,
+			GroupBy: boardgrouping.BoardGroupingDeliveryDate,
 		},
 	)
 	require.NoError(t, err)
@@ -284,7 +286,7 @@ func TestGroupSummaryCountsGroupsInTheBoardsScopeAndZone(t *testing.T) {
 	assert.Equal(t, 5, groups[0].Count)
 	assert.True(t, groups[0].Revenue.Equal(decimal.NewFromInt(4200)))
 	assert.Empty(t, groups[1].Key)
-	assert.Equal(t, shipment.BoardGroupingDeliveryDate, repo.lastGroups.GroupBy)
+	assert.Equal(t, boardgrouping.BoardGroupingDeliveryDate, repo.lastGroups.GroupBy)
 	assert.Equal(t, req.Timezone, repo.lastGroups.Timezone)
 	assert.Len(t, repo.lastScope.Options.QuickFilters, 1)
 }
@@ -297,7 +299,7 @@ func TestGroupSummaryRefusesAGroupingTheBoardDoesNotOffer(t *testing.T) {
 
 	_, err := svc.GroupSummary(t.Context(), &shipmentboardports.SummarizeShipmentBoardGroupsRequest{
 		Scope:   scopeRequest(),
-		GroupBy: shipment.BoardGrouping("Stage"),
+		GroupBy: boardgrouping.BoardGrouping("Stage"),
 	})
 	require.Error(t, err)
 	assert.Nil(t, repo.lastGroups)

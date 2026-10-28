@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -104,7 +105,7 @@ func billingSplitSummaryToModel(
 		return []*gqlmodel.ShipmentBillingSplitSummary{}, nil
 	}
 
-	resolution, err := shipmentdomain.ResolveShares(ctx, entity, entity.ChargeAllocations)
+	resolution, err := chargeallocation.ResolveShares(ctx, entity, entity.ChargeAllocations)
 	var refused *errortypes.Error
 	switch {
 	case errors.As(err, &refused):
@@ -125,9 +126,9 @@ func billingSplitSummaryToModel(
 			PayerName:         name,
 			PayerCode:         code,
 			IsPrimary:         share.PayerID == resolution.DefaultPayerID,
-			FreightAmount:     share.FreightAmount.StringFixed(shipmentdomain.SharePlaces),
-			AccessorialAmount: share.AccessorialAmount.StringFixed(shipmentdomain.SharePlaces),
-			TotalAmount:       share.TotalAmount.StringFixed(shipmentdomain.SharePlaces),
+			FreightAmount:     share.FreightAmount.StringFixed(chargeallocation.SharePlaces),
+			AccessorialAmount: share.AccessorialAmount.StringFixed(chargeallocation.SharePlaces),
+			TotalAmount:       share.TotalAmount.StringFixed(chargeallocation.SharePlaces),
 			IsSplit:           resolution.IsSplit,
 		})
 	}

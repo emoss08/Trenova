@@ -3,7 +3,7 @@ package shipmentboardports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -33,11 +33,11 @@ type ShipmentDeliveryWatch struct {
 }
 
 type UncoveredWindowSummary struct {
-	Window       shipment.PickupWindow `json:"window"`
-	StartMinutes int                   `json:"startMinutes"`
-	EndMinutes   *int                  `json:"endMinutes"`
-	Count        int                   `json:"count"`
-	Revenue      decimal.Decimal       `json:"revenue"`
+	Window       pickupwindow.PickupWindow `json:"window"`
+	StartMinutes int                       `json:"startMinutes"`
+	EndMinutes   *int                      `json:"endMinutes"`
+	Count        int                       `json:"count"`
+	Revenue      decimal.Decimal           `json:"revenue"`
 }
 
 type NextUncoveredPickup struct {

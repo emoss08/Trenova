@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
@@ -51,7 +52,7 @@ func (c *Calculator) ContractCharges(
 		return nil, err
 	}
 
-	priced, err := shipment.PriceAgreementAccessorials(
+	priced, err := shipmentrating.PriceAgreementAccessorials(
 		ctx,
 		entity.AccessorialMeasures(),
 		applicable,

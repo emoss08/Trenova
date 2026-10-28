@@ -2,6 +2,7 @@ package shipmentservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 )
 
 // disengageAutoRating decides whether this save ends the contract's claim on a
@@ -18,7 +19,7 @@ func disengageAutoRating(original, updated *shipment.Shipment) bool {
 		return false
 	}
 
-	if !shipment.RatedFieldsEdited(original, updated) {
+	if !shipmentrating.RatedFieldsEdited(original, updated) {
 		return false
 	}
 

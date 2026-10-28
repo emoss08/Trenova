@@ -844,7 +844,7 @@ Output: per charge its exact `total` and either `shares` (in split order) or `er
 `allocation` is the row's index in that charge's `allocations`; an unallocated charge's one share
 has neither `allocation` nor `allocationId`, and `method: null`.
 
-The rules (`shipment.ResolveShares`, `ResolveOrderChargeShares`, `decimalutils.AllocatePercent`):
+The rules (`chargeallocation.ResolveShares`, `ResolveOrderChargeShares`, `decimalutils.AllocatePercent`):
 
 - No rows: the whole charge, rounded half to even to cents, to the default payer at 100%.
 - Every row must use the same method ("A charge must be split either by percent or by amount,

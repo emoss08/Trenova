@@ -6,7 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -38,7 +40,7 @@ func ForShipment(
 		return nil, nil
 	}
 
-	resolution, err := shipment.ResolveShares(ctx, shp, nil)
+	resolution, err := chargeallocation.ResolveShares(ctx, shp, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +54,7 @@ func ForShipment(
 func ForShipmentShare(
 	billType billingqueue.BillType,
 	shp *shipment.Shipment,
-	share *shipment.PayerShare,
+	share *chargeallocation.PayerShare,
 	startLineNumber int,
 ) []*invoice.InvoiceLine {
 	if shp == nil || share == nil {
@@ -89,7 +91,7 @@ func ForShipmentShare(
 // trailing section when the invoice is rendered.
 func ForOrderChargeShare(
 	billType billingqueue.BillType,
-	charge shipment.AllocatedCharge,
+	charge chargeallocation.AllocatedCharge,
 	lineNumber int,
 ) *invoice.InvoiceLine {
 	amount := SignedAmount(billType, charge.Amount)
@@ -108,7 +110,7 @@ func ForOrderChargeShare(
 
 // ShareDescription appends the billed share to a description when the line
 // bills less than the whole charge.
-func ShareDescription(base string, charge shipment.AllocatedCharge) string {
+func ShareDescription(base string, charge chargeallocation.AllocatedCharge) string {
 	if !charge.Partial {
 		return base
 	}
@@ -123,7 +125,7 @@ func ShareDescription(base string, charge shipment.AllocatedCharge) string {
 	return base + " (partial share)"
 }
 
-func stampShare(line *invoice.InvoiceLine, charge shipment.AllocatedCharge) {
+func stampShare(line *invoice.InvoiceLine, charge chargeallocation.AllocatedCharge) {
 	if !charge.Partial {
 		return
 	}
@@ -134,11 +136,11 @@ func stampShare(line *invoice.InvoiceLine, charge shipment.AllocatedCharge) {
 func freightLines(
 	billType billingqueue.BillType,
 	shp *shipment.Shipment,
-	charge shipment.AllocatedCharge,
+	charge chargeallocation.AllocatedCharge,
 	startLineNumber int,
 ) []*invoice.InvoiceLine {
 	billed := shp.BilledFreightLines(FreightDescription)
-	amounts := shipment.SplitFreightShare(billed, charge.Amount)
+	amounts := shipmentrating.SplitFreightShare(billed, charge.Amount)
 	templateID, templateName := ratedWith(shp)
 
 	out := make([]*invoice.InvoiceLine, 0, len(billed))
@@ -190,7 +192,7 @@ func itemized(
 		return decimal.Decimal{}, decimal.Decimal{}, false
 	}
 	unitPrice = amount.Div(*quantity)
-	if rate != nil && rate.Mul(*quantity).Round(shipment.SharePlaces).Equal(amount.Abs()) {
+	if rate != nil && rate.Mul(*quantity).Round(chargeallocation.SharePlaces).Equal(amount.Abs()) {
 		unitPrice = *rate
 		if amount.IsNegative() {
 			unitPrice = unitPrice.Neg()
@@ -202,7 +204,7 @@ func itemized(
 func accessorialLine(
 	billType billingqueue.BillType,
 	shp *shipment.Shipment,
-	allocated shipment.AllocatedCharge,
+	allocated chargeallocation.AllocatedCharge,
 	freight decimal.Decimal,
 	lineNumber int,
 ) *invoice.InvoiceLine {

@@ -277,29 +277,6 @@ func (s *Shipment) HasRateOverride() bool {
 	return s.RateOverrideAmount.Valid
 }
 
-func RestoreRateOwnedFields(original, updated *Shipment) {
-	if original == nil || updated == nil {
-		return
-	}
-
-	updated.RateOverrideAmount = original.RateOverrideAmount
-	updated.RateOverrideByID = original.RateOverrideByID
-	updated.RateOverrideAt = original.RateOverrideAt
-	updated.RateLocked = original.RateLocked
-	updated.RateQuoteID = original.RateQuoteID
-	updated.RateAgreementID = original.RateAgreementID
-	updated.RateAgreementRuleID = original.RateAgreementRuleID
-	updated.AutoRated = original.AutoRated
-	updated.AutoRatedAt = original.AutoRatedAt
-
-	if updated.RateOverrideReason == "" {
-		updated.RateOverrideReason = original.RateOverrideReason
-	}
-
-	updated.RatingDetail = original.RatingDetail
-	updated.FreightLines = original.FreightLines
-}
-
 func (s *Shipment) ClearRatingOutcome() {
 	s.FreightChargeAmount = decimal.NullDecimal{}
 	s.FreightLines = []FreightLine{}
@@ -325,50 +302,6 @@ func (s *Shipment) ClearAutoRating() {
 func (s *Shipment) MarkAutoRated(at int64) {
 	s.AutoRated = true
 	s.AutoRatedAt = &at
-}
-
-func RatedFieldsEdited(original, updated *Shipment) bool {
-	if original == nil || updated == nil {
-		return false
-	}
-
-	if original.FormulaTemplateID != updated.FormulaTemplateID {
-		return true
-	}
-
-	if !original.TariffInputs.Equal(updated.TariffInputs) {
-		return true
-	}
-
-	return agreementChargesEdited(original.AdditionalCharges, updated.AdditionalCharges)
-}
-
-func agreementChargesEdited(original, updated []*AdditionalCharge) bool {
-	remaining := make(map[pulid.ID]*AdditionalCharge, len(updated))
-	for _, charge := range updated {
-		if charge == nil || charge.ID.IsNil() {
-			continue
-		}
-		remaining[charge.ID] = charge
-	}
-
-	for _, charge := range original {
-		if charge == nil || charge.Owner() != SystemOwnerAgreement {
-			continue
-		}
-
-		current, kept := remaining[charge.ID]
-		if !kept {
-			return true
-		}
-
-		if current.Method != charge.Method || current.Unit != charge.Unit ||
-			!current.Amount.Equal(charge.Amount) {
-			return true
-		}
-	}
-
-	return false
 }
 
 func (s *Shipment) ApplyEntryMethodDefault(original *Shipment) {

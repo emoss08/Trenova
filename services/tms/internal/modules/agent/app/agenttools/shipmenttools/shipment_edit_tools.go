@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
@@ -168,7 +169,7 @@ func (t *rescheduleStopTool) plan(
 		return nil, err
 	}
 
-	after := shipment.CloneForUpdate(before)
+	after := shipmentcoverage.CloneForUpdate(before)
 	stop := stopOnShipment(after, stopID)
 	if stop == nil {
 		return nil, errortypes.NewValidationError("stopId", errortypes.ErrInvalid,
@@ -482,7 +483,7 @@ func (t *addShipmentChargeTool) plan(
 		AccessorialCharge:   accessorial,
 	}
 
-	after := shipment.CloneForUpdate(before)
+	after := shipmentcoverage.CloneForUpdate(before)
 	after.AdditionalCharges = append(slices.Clone(before.AdditionalCharges), charge)
 
 	return &shipmentChargePlan{

@@ -3,6 +3,7 @@ package shipmentboardservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -20,15 +21,15 @@ func (s *Service) scope(
 	}
 
 	multiErr := errortypes.NewMultiError()
-	shipment.ValidateQuickFilters(req.QuickFilters, multiErr)
+	quickfilter.ValidateQuickFilters(req.QuickFilters, multiErr)
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
-	if err := shipment.AuthorizeQuickFilters(req.QuickFilters, req.Margins); err != nil {
+	if err := quickfilter.AuthorizeQuickFilters(req.QuickFilters, req.Margins); err != nil {
 		return nil, err
 	}
 
-	margin, detention := shipment.QuickFiltersNeed(req.QuickFilters)
+	margin, detention := quickfilter.QuickFiltersNeed(req.QuickFilters)
 	basis, err := s.quickFilters.Resolve(ctx, &shipmentports.ResolveShipmentQuickFilterBasisRequest{
 		TenantInfo: req.Filter.TenantInfo,
 		Timezone:   req.Timezone,
@@ -140,16 +141,16 @@ func (s *Service) QuickFilterCounts(
 		return nil, err
 	}
 
-	filters := make([]shipment.QuickFilter, 0, len(shipment.CountableQuickFilters()))
-	for _, filter := range shipment.CountableQuickFilters() {
+	filters := make([]quickfilter.QuickFilter, 0, len(quickfilter.CountableQuickFilters()))
+	for _, filter := range quickfilter.CountableQuickFilters() {
 		if filter.NeedsMargin() && !req.Margins {
 			continue
 		}
 		filters = append(filters, filter)
 	}
-	specs := make([]shipment.QuickFilterSpec, 0, len(filters))
+	specs := make([]quickfilter.QuickFilterSpec, 0, len(filters))
 	for _, filter := range filters {
-		specs = append(specs, shipment.Quick(filter))
+		specs = append(specs, quickfilter.Quick(filter))
 	}
 
 	totals, err := s.repo.QuickFilterTotals(

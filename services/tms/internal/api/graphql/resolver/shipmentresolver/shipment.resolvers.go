@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
@@ -688,7 +689,7 @@ func (r *QueryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 		return nil, err
 	}
 	quickFilters := shipmentmapping.QuickFilterSpecsFromGraphQL(input.QuickFilters)
-	if err = shipmentdomain.AuthorizeQuickFilters(
+	if err = quickfilter.AuthorizeQuickFilters(
 		quickFilters,
 		r.VisibleFieldGroups(ctx, authCtx).Has(permission.FieldGroupMargins),
 	); err != nil {

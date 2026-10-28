@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
@@ -386,7 +386,7 @@ func (r *QueryResolver) ShipmentWatchlist(
 func (r *QueryResolver) ShipmentBoardGroups(
 	ctx context.Context,
 	input gqlmodel.ShipmentBoardScopeInput,
-	groupBy shipment.BoardGrouping,
+	groupBy boardgrouping.BoardGrouping,
 ) ([]*gqlmodel.ShipmentBoardGroup, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead)
 	if err != nil {

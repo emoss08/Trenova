@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,15 +24,15 @@ type savingHolds struct {
 	shipmentholdports.ShipmentHoldService
 
 	reason  *holdreason.HoldReason
-	current *shipment.ShipmentHold
-	saved   *shipment.ShipmentHold
+	current *shipmenthold.ShipmentHold
+	saved   *shipmenthold.ShipmentHold
 	guard   agenttoolstest.WriteGuard
 }
 
 func (f *savingHolds) plan(
 	req *shipmentholdports.CreateShipmentHoldRequest,
-) *shipment.ShipmentHold {
-	return &shipment.ShipmentHold{
+) *shipmenthold.ShipmentHold {
+	return &shipmenthold.ShipmentHold{
 		ShipmentID:     req.ShipmentID,
 		HoldReasonID:   &f.reason.ID,
 		Type:           f.reason.Type,
@@ -49,7 +49,7 @@ func (f *savingHolds) PreviewCreate(
 	_ context.Context,
 	req *shipmentholdports.CreateShipmentHoldRequest,
 	_ *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	if !f.reason.Active {
 		return nil, errortypes.NewValidationError(
 			"holdReasonId", errortypes.ErrInvalid, "Hold reason must be active",
@@ -63,7 +63,7 @@ func (f *savingHolds) Create(
 	_ context.Context,
 	req *shipmentholdports.CreateShipmentHoldRequest,
 	_ *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -76,13 +76,15 @@ func (f *savingHolds) Create(
 func (f *savingHolds) GetByID(
 	context.Context,
 	*shipmentholdports.GetShipmentHoldByIDRequest,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	copied := *f.current
 
 	return &copied, nil
 }
 
-func (f *savingHolds) release(actor *permissionports.RequestActor) (*shipment.ShipmentHold, error) {
+func (f *savingHolds) release(
+	actor *permissionports.RequestActor,
+) (*shipmenthold.ShipmentHold, error) {
 	if !f.current.IsActive() {
 		return nil, errortypes.NewBusinessError("Shipment hold is already released")
 	}
@@ -98,7 +100,7 @@ func (f *savingHolds) PreviewRelease(
 	_ context.Context,
 	_ *shipmentholdports.ReleaseShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	return f.release(actor)
 }
 
@@ -106,7 +108,7 @@ func (f *savingHolds) Release(
 	_ context.Context,
 	_ *shipmentholdports.ReleaseShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -189,7 +191,7 @@ func TestReleaseShipmentHold_PreviewMatchesWhatIsSaved(t *testing.T) {
 	t.Parallel()
 
 	reason := documentsHoldReason(true)
-	current := &shipment.ShipmentHold{
+	current := &shipmenthold.ShipmentHold{
 		ID:             pulid.MustNew("shld_"),
 		ShipmentID:     pulid.MustNew("shp_"),
 		Type:           reason.Type,
@@ -230,7 +232,7 @@ func TestReleaseShipmentHold_PreviewWarnsOnAHoldAlreadyReleased(t *testing.T) {
 	t.Parallel()
 
 	released := int64(100)
-	current := &shipment.ShipmentHold{ID: pulid.MustNew("shld_"), ReleasedAt: &released}
+	current := &shipmenthold.ShipmentHold{ID: pulid.MustNew("shld_"), ReleasedAt: &released}
 	holds := &savingHolds{reason: documentsHoldReason(true), current: current}
 	tool := shipmenttools.NewReleaseShipmentHoldTool(holds).(*shipmenttools.ReleaseShipmentHoldTool)
 

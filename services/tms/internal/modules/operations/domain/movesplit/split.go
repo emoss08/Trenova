@@ -1,6 +1,9 @@
-package shipment
+package movesplit
 
-import "github.com/emoss08/trenova/shared/pulid"
+import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/shared/pulid"
+)
 
 type MoveSplitSpec struct {
 	NewDeliveryLocationID pulid.ID
@@ -13,34 +16,34 @@ type MoveSplitSpec struct {
 }
 
 type MoveSplit struct {
-	RelayStop *Stop
-	NewMove   *ShipmentMove
+	RelayStop *shipment.Stop
+	NewMove   *shipment.ShipmentMove
 }
 
-func PlanMoveSplit(original *ShipmentMove, spec *MoveSplitSpec) *MoveSplit {
+func PlanMoveSplit(original *shipment.ShipmentMove, spec *MoveSplitSpec) *MoveSplit {
 	relay := *original.Stops[1]
-	relay.Type = StopTypeSplitDelivery
-	relay.Status = StopStatusNew
+	relay.Type = shipment.StopTypeSplitDelivery
+	relay.Status = shipment.StopStatusNew
 
-	newMove := &ShipmentMove{
+	newMove := &shipment.ShipmentMove{
 		ID:             pulid.MustNew("sm_"),
 		BusinessUnitID: original.BusinessUnitID,
 		OrganizationID: original.OrganizationID,
 		ShipmentID:     original.ShipmentID,
-		Status:         MoveStatusNew,
+		Status:         shipment.MoveStatusNew,
 		Loaded:         true,
 		Sequence:       original.Sequence + 1,
 		Distance:       original.Distance,
 	}
-	newMove.Stops = []*Stop{
+	newMove.Stops = []*shipment.Stop{
 		{
 			ID:                   pulid.MustNew("stp_"),
 			BusinessUnitID:       original.BusinessUnitID,
 			OrganizationID:       original.OrganizationID,
 			ShipmentMoveID:       newMove.ID,
 			LocationID:           relay.LocationID,
-			Status:               StopStatusNew,
-			Type:                 StopTypeSplitPickup,
+			Status:               shipment.StopStatusNew,
+			Type:                 shipment.StopTypeSplitPickup,
 			Sequence:             0,
 			Pieces:               spec.Pieces,
 			Weight:               spec.Weight,
@@ -53,8 +56,8 @@ func PlanMoveSplit(original *ShipmentMove, spec *MoveSplitSpec) *MoveSplit {
 			OrganizationID:       original.OrganizationID,
 			ShipmentMoveID:       newMove.ID,
 			LocationID:           spec.NewDeliveryLocationID,
-			Status:               StopStatusNew,
-			Type:                 StopTypeDelivery,
+			Status:               shipment.StopStatusNew,
+			Type:                 shipment.StopTypeDelivery,
 			Sequence:             1,
 			Pieces:               spec.Pieces,
 			Weight:               spec.Weight,

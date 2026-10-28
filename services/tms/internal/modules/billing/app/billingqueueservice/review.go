@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -457,7 +458,7 @@ func agreementPrices(
 		return map[pulid.ID]decimal.Decimal{}, nil
 	}
 
-	priced, err := shipment.PriceAgreementAccessorials(
+	priced, err := shipmentrating.PriceAgreementAccessorials(
 		ctx,
 		shp.AccessorialMeasures(),
 		accessorials,

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,11 +22,11 @@ func ChargeEditMoney(
 ) (*agent.MoneyPreview, error) {
 	freightBefore := before.FreightChargeAmount.Decimal
 	freightAfter := after.FreightChargeAmount.Decimal
-	totalsBefore, err := shipment.ChargeTotalsByCharge(ctx, before)
+	totalsBefore, err := chargeallocation.ChargeTotalsByCharge(ctx, before)
 	if err != nil {
 		return nil, err
 	}
-	totalsAfter, err := shipment.ChargeTotalsByCharge(ctx, after)
+	totalsAfter, err := chargeallocation.ChargeTotalsByCharge(ctx, after)
 	if err != nil {
 		return nil, err
 	}

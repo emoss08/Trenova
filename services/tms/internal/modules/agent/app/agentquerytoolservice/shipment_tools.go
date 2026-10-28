@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -253,7 +254,7 @@ func (t *getShipmentTool) activeHolds(
 	readable shipmentActivityAccess,
 	tenant pagination.TenantInfo,
 	shipmentID pulid.ID,
-) ([]*shipment.ShipmentHold, error) {
+) ([]*shipmenthold.ShipmentHold, error) {
 	if !readable.holds {
 		return nil, nil
 	}
@@ -272,7 +273,7 @@ func (t *getShipmentTool) activeHolds(
 		return nil, nil
 	}
 
-	active := make([]*shipment.ShipmentHold, 0, len(page.Items))
+	active := make([]*shipmenthold.ShipmentHold, 0, len(page.Items))
 	for _, hold := range page.Items {
 		if hold != nil && hold.ReleasedAt == nil {
 			active = append(active, hold)
@@ -598,7 +599,7 @@ type shipmentRowHold struct {
 	StartedAt  optionalDate `json:"startedAt"`
 }
 
-func rowHoldOf(hold *shipment.ShipmentHold) shipmentRowHold {
+func rowHoldOf(hold *shipmenthold.ShipmentHold) shipmentRowHold {
 	row := shipmentRowHold{
 		HoldID:     hold.ID.String(),
 		Reason:     string(hold.Type),

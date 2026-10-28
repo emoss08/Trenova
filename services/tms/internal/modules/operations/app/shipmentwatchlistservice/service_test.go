@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
@@ -130,7 +132,7 @@ func (stubBasis) Prepare(
 
 type stubBoard struct {
 	shipmentboardports.ShipmentBoardRepository
-	filters []shipment.QuickFilterSpec
+	filters []quickfilter.QuickFilterSpec
 }
 
 func (s *stubBoard) QuickFilterTotals(
@@ -259,14 +261,14 @@ func TestWatchlistComputesEverySection(t *testing.T) {
 
 	assert.Equal(t, 1, watch.Uncovered.Count)
 	require.Len(t, watch.Uncovered.Windows, 4)
-	assert.Equal(t, shipment.PickupWindowUnderTwoHours, watch.Uncovered.Windows[0].Window)
+	assert.Equal(t, pickupwindow.PickupWindowUnderTwoHours, watch.Uncovered.Windows[0].Window)
 	assert.Equal(t, 3, watch.Uncovered.Windows[0].Count)
 	assert.Equal(t, "Joliet", watch.Uncovered.Next.OriginCity)
 	assert.Equal(t, 2, watch.Billing.Count)
 	assert.Equal(t, 5, watch.Billing.MoreCustomers)
-	assert.Equal(t, shipment.QuickFilterUncovered, board.filters[0].Filter)
-	assert.Equal(t, shipment.QuickFilterReadyToBill, board.filters[1].Filter)
-	assert.Equal(t, shipment.QuickFilterPickupWindow, board.filters[2].Filter)
+	assert.Equal(t, quickfilter.QuickFilterUncovered, board.filters[0].Filter)
+	assert.Equal(t, quickfilter.QuickFilterReadyToBill, board.filters[1].Filter)
+	assert.Equal(t, quickfilter.QuickFilterPickupWindow, board.filters[2].Filter)
 
 	require.Equal(t, 1, watch.Detention.StopCount)
 	assert.True(t, watch.Detention.Amount.Equal(decimal.NewFromInt(90)))

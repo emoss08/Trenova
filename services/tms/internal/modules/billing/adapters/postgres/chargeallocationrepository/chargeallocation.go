@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
@@ -491,7 +492,7 @@ func (r *repository) RefreshQueueSnapshots(
 			return dberror.HandleNotFoundError(err, "Shipment")
 		}
 
-		resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
+		resolution, err := chargeallocation.ResolveShares(ctx, shp, shp.ChargeAllocations)
 		if err != nil {
 			return err
 		}

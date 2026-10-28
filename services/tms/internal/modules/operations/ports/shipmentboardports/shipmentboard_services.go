@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -25,7 +27,7 @@ type ShipmentBoardCapabilitiesReader interface {
 
 type ShipmentBoardScopeRequest struct {
 	Filter       *pagination.QueryOptions
-	QuickFilters []shipment.QuickFilterSpec
+	QuickFilters []quickfilter.QuickFilterSpec
 	Timezone     string
 	// Margins is whether the reader holds the margins field group. Without it
 	// a filter that selects loads by margin is refused and not counted.
@@ -55,7 +57,7 @@ type ShipmentBoardGroup struct {
 
 type SummarizeShipmentBoardGroupsRequest struct {
 	Scope   *ShipmentBoardScopeRequest
-	GroupBy shipment.BoardGrouping
+	GroupBy boardgrouping.BoardGrouping
 }
 
 type ShipmentBoardGroupSummarizer interface {
@@ -66,7 +68,7 @@ type ShipmentBoardGroupSummarizer interface {
 }
 
 type ShipmentQuickFilterCount struct {
-	Filter shipment.QuickFilter
+	Filter quickfilter.QuickFilter
 	Count  int
 }
 

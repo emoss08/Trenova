@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
@@ -509,7 +510,7 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	}
 	s.restoreAssignmentsForExistingMoves(original, entity)
 	s.restoreSystemOwnedAdditionalChargeFields(original, entity)
-	shipment.RestoreRateOwnedFields(original, entity)
+	shipmentrating.RestoreRateOwnedFields(original, entity)
 	departed := disengageAutoRating(original, entity)
 	if err = s.syncOrderMembershipForUpdate(ctx, original, entity); err != nil {
 		return nil, err

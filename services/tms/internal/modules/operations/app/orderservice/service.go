@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
@@ -963,7 +964,7 @@ func (s *Service) validateChargeAllocations(
 		}
 	}
 
-	multiErr := shipment.ValidateAllocations(&shipment.ValidateAllocationsParams{
+	multiErr := chargeallocation.ValidateAllocations(&chargeallocation.ValidateAllocationsParams{
 		TenantOrgID: tenantInfo.OrgID,
 		TenantBuID:  tenantInfo.BuID,
 		Allocations: allocations,
@@ -975,9 +976,9 @@ func (s *Service) validateChargeAllocations(
 		return multiErr
 	}
 
-	if _, err := shipment.ResolveOrderChargeShares(
+	if _, err := chargeallocation.ResolveOrderChargeShares(
 		ctx,
-		[]shipment.OrderChargeRef{
+		[]chargeallocation.OrderChargeRef{
 			{ID: chargeID, Description: charge.Description, Amount: charge.Amount},
 		},
 		allocations,

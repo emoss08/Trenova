@@ -1,4 +1,4 @@
-package shipment
+package quickfilter
 
 import (
 	"testing"

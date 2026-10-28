@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecontrol"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
@@ -98,7 +99,7 @@ func RegisterEntities() []any {
 		&shipment.ShipmentCommodity{},
 		&shipment.ShipmentComment{},
 		&shipment.ShipmentCommentMention{},
-		&shipment.ShipmentHold{},
+		&shipmenthold.ShipmentHold{},
 		&servicefailure.ReasonCode{},
 		&servicefailure.ServiceFailure{},
 		&shipment.Shipment{},

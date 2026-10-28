@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +38,7 @@ func (f *savingAssignments) plan(
 	if err != nil {
 		return nil, err
 	}
-	after := shipment.CloneForUpdate(f.shipment)
+	after := shipmentcoverage.CloneForUpdate(f.shipment)
 	move := after.FindMove(req.ShipmentMoveID)
 	move.Assignment = assignment
 	move.CoverageType = shipment.MoveCoverageTypeDriver

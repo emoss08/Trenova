@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
@@ -227,7 +228,7 @@ func hasHazmat(sm *shipmentdb.ShipmentMovesTable) keel.Expr {
 }
 
 func hasActiveHold(sm *shipmentdb.ShipmentMovesTable) keel.Expr {
-	h := shipmentdb.ShipmentHolds
+	h := shipmentholddb.ShipmentHolds
 	return keel.Exists(h.
 		Where(
 			h.ShipmentID.EqCol(sm.ShipmentID),

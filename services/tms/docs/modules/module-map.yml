@@ -502,6 +502,15 @@ modules:
       - recurringshipment
       - servicefailure
       - shipment
+      - boardgrouping
+      - chargeallocation
+      - commentbody
+      - movesplit
+      - pickupwindow
+      - quickfilter
+      - shipmentcoverage
+      - shipmenthold
+      - shipmentrating
       - shipmentevent
       - shipmentstate
       - shipmentsuggestion

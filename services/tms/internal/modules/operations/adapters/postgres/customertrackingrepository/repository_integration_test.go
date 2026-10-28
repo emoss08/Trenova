@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
@@ -393,7 +395,7 @@ func TestOnlyCustomerVisibleHoldsAndNotesAreShown(t *testing.T) {
 	h := newHarness(t)
 	graph := h.shipment(t, "VS-1", shipment.StatusInTransit)
 	hold := func(holdType holdreason.HoldType, visible, released bool) {
-		entity := &shipment.ShipmentHold{
+		entity := &shipmenthold.ShipmentHold{
 			ID:                pulid.MustNew("shh_"),
 			ShipmentID:        graph.Shipment.ID,
 			OrganizationID:    h.tenant.OrgID,
@@ -401,7 +403,7 @@ func TestOnlyCustomerVisibleHoldsAndNotesAreShown(t *testing.T) {
 			Type:              holdType,
 			Severity:          holdreason.HoldSeverityAdvisory,
 			ReasonCode:        "APPT",
-			Source:            shipment.HoldSourceUser,
+			Source:            shipmenthold.HoldSourceUser,
 			VisibleToCustomer: visible,
 			StartedAt:         h.now - 60,
 		}
@@ -409,7 +411,7 @@ func TestOnlyCustomerVisibleHoldsAndNotesAreShown(t *testing.T) {
 			at := h.now
 			entity.ReleasedAt = &at
 		}
-		require.NoError(t, shipmentdb.ShipmentHolds.Create(h.ctx, h.db, entity))
+		require.NoError(t, shipmentholddb.ShipmentHolds.Create(h.ctx, h.db, entity))
 	}
 	hold(holdreason.HoldTypeCustomer, true, false)
 	hold(holdreason.HoldTypeOperational, false, false)

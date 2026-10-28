@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -156,7 +157,7 @@ func (s *service) projectShipmentState(
 		return nil, nil, err
 	}
 
-	after = shipment.CloneForUpdate(before)
+	after = shipmentcoverage.CloneForUpdate(before)
 	for _, moveID := range req.MoveIDs {
 		if move := after.FindMove(moveID); move != nil {
 			move.Status = req.Status

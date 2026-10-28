@@ -1,10 +1,11 @@
-package shipment
+package commentbody
 
 import (
 	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -93,7 +94,7 @@ func ValidateCommentBody(body map[string]any, multiErr *errortypes.MultiError) {
 	if strings.TrimSpace(text) == "" {
 		multiErr.Add("body", errortypes.ErrInvalid, "Body must contain text content")
 	}
-	if len(text) > MaxCommentLength {
+	if len(text) > shipment.MaxCommentLength {
 		multiErr.Add(
 			"body",
 			errortypes.ErrInvalid,

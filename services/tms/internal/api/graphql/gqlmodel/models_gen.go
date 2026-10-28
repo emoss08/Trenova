@@ -3,6 +3,8 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -9437,7 +9439,7 @@ type ShipmentBriefing struct {
 type ShipmentBriefingSegment struct {
 	Text string `json:"text"`
 	// The quick filter the segment links to, when it names a set of shipments.
-	Filter *shipment.QuickFilter `json:"filter,omitempty"`
+	Filter *quickfilter.QuickFilter `json:"filter,omitempty"`
 }
 
 type ShipmentBulkTransferToBillingInput struct {
@@ -10488,12 +10490,12 @@ type ShipmentProfitabilityEstimate struct {
 }
 
 type ShipmentQuickFilterCount struct {
-	Filter shipment.QuickFilter `json:"filter"`
+	Filter quickfilter.QuickFilter `json:"filter"`
 	Count  int                  `json:"count"`
 }
 
 type ShipmentQuickFilterInput struct {
-	Filter shipment.QuickFilter `json:"filter"`
+	Filter quickfilter.QuickFilter `json:"filter"`
 	// Local hour of day (0-23) for DeliveryHour.
 	Hour *int `json:"hour,omitempty"`
 	// Minutes from now where a PickupWindow starts.
@@ -11569,7 +11571,7 @@ type UnassignDocumentTemplateInput struct {
 }
 
 type UncoveredWindowSummary struct {
-	Window       shipment.PickupWindow `json:"window"`
+	Window       pickupwindow.PickupWindow `json:"window"`
 	StartMinutes int                   `json:"startMinutes"`
 	// Null for the open-ended window.
 	EndMinutes *int   `json:"endMinutes,omitempty"`

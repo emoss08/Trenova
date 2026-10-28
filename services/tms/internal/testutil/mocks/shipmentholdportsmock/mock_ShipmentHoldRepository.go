@@ -5,10 +5,10 @@
 package shipmentholdportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"context"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -41,26 +41,26 @@ func (_m *MockShipmentHoldRepository) EXPECT() *MockShipmentHoldRepository_Expec
 }
 
 // Create provides a mock function for the type MockShipmentHoldRepository
-func (_mock *MockShipmentHoldRepository) Create(ctx context.Context, entity *shipment.ShipmentHold) (*shipment.ShipmentHold, error) {
+func (_mock *MockShipmentHoldRepository) Create(ctx context.Context, entity *shipmenthold.ShipmentHold) (*shipmenthold.ShipmentHold, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 *shipment.ShipmentHold
+	var r0 *shipmenthold.ShipmentHold
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.ShipmentHold) (*shipment.ShipmentHold, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmenthold.ShipmentHold) (*shipmenthold.ShipmentHold, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.ShipmentHold) *shipment.ShipmentHold); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmenthold.ShipmentHold) *shipmenthold.ShipmentHold); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*shipment.ShipmentHold)
+			r0 = ret.Get(0).(*shipmenthold.ShipmentHold)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipment.ShipmentHold) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmenthold.ShipmentHold) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -75,20 +75,20 @@ type MockShipmentHoldRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *shipment.ShipmentHold
+//   - entity *shipmenthold.ShipmentHold
 func (_e *MockShipmentHoldRepository_Expecter) Create(ctx any, entity any) *MockShipmentHoldRepository_Create_Call {
 	return &MockShipmentHoldRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
-func (_c *MockShipmentHoldRepository_Create_Call) Run(run func(ctx context.Context, entity *shipment.ShipmentHold)) *MockShipmentHoldRepository_Create_Call {
+func (_c *MockShipmentHoldRepository_Create_Call) Run(run func(ctx context.Context, entity *shipmenthold.ShipmentHold)) *MockShipmentHoldRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *shipment.ShipmentHold
+		var arg1 *shipmenthold.ShipmentHold
 		if args[1] != nil {
-			arg1 = args[1].(*shipment.ShipmentHold)
+			arg1 = args[1].(*shipmenthold.ShipmentHold)
 		}
 		run(
 			arg0,
@@ -98,34 +98,34 @@ func (_c *MockShipmentHoldRepository_Create_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockShipmentHoldRepository_Create_Call) Return(shipmentHold *shipment.ShipmentHold, err error) *MockShipmentHoldRepository_Create_Call {
+func (_c *MockShipmentHoldRepository_Create_Call) Return(shipmentHold *shipmenthold.ShipmentHold, err error) *MockShipmentHoldRepository_Create_Call {
 	_c.Call.Return(shipmentHold, err)
 	return _c
 }
 
-func (_c *MockShipmentHoldRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *shipment.ShipmentHold) (*shipment.ShipmentHold, error)) *MockShipmentHoldRepository_Create_Call {
+func (_c *MockShipmentHoldRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *shipmenthold.ShipmentHold) (*shipmenthold.ShipmentHold, error)) *MockShipmentHoldRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByID provides a mock function for the type MockShipmentHoldRepository
-func (_mock *MockShipmentHoldRepository) GetByID(ctx context.Context, req *shipmentholdports.GetShipmentHoldByIDRequest) (*shipment.ShipmentHold, error) {
+func (_mock *MockShipmentHoldRepository) GetByID(ctx context.Context, req *shipmentholdports.GetShipmentHoldByIDRequest) (*shipmenthold.ShipmentHold, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByID")
 	}
 
-	var r0 *shipment.ShipmentHold
+	var r0 *shipmenthold.ShipmentHold
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.GetShipmentHoldByIDRequest) (*shipment.ShipmentHold, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.GetShipmentHoldByIDRequest) (*shipmenthold.ShipmentHold, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.GetShipmentHoldByIDRequest) *shipment.ShipmentHold); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.GetShipmentHoldByIDRequest) *shipmenthold.ShipmentHold); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*shipment.ShipmentHold)
+			r0 = ret.Get(0).(*shipmenthold.ShipmentHold)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentholdports.GetShipmentHoldByIDRequest) error); ok {
@@ -166,12 +166,12 @@ func (_c *MockShipmentHoldRepository_GetByID_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockShipmentHoldRepository_GetByID_Call) Return(shipmentHold *shipment.ShipmentHold, err error) *MockShipmentHoldRepository_GetByID_Call {
+func (_c *MockShipmentHoldRepository_GetByID_Call) Return(shipmentHold *shipmenthold.ShipmentHold, err error) *MockShipmentHoldRepository_GetByID_Call {
 	_c.Call.Return(shipmentHold, err)
 	return _c
 }
 
-func (_c *MockShipmentHoldRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.GetShipmentHoldByIDRequest) (*shipment.ShipmentHold, error)) *MockShipmentHoldRepository_GetByID_Call {
+func (_c *MockShipmentHoldRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.GetShipmentHoldByIDRequest) (*shipmenthold.ShipmentHold, error)) *MockShipmentHoldRepository_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -309,23 +309,23 @@ func (_c *MockShipmentHoldRepository_HasActiveDispatchHold_Call) RunAndReturn(ru
 }
 
 // ListByShipmentID provides a mock function for the type MockShipmentHoldRepository
-func (_mock *MockShipmentHoldRepository) ListByShipmentID(ctx context.Context, req *shipmentholdports.ListShipmentHoldsRequest) (*pagination.ListResult[*shipment.ShipmentHold], error) {
+func (_mock *MockShipmentHoldRepository) ListByShipmentID(ctx context.Context, req *shipmentholdports.ListShipmentHoldsRequest) (*pagination.ListResult[*shipmenthold.ShipmentHold], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListByShipmentID")
 	}
 
-	var r0 *pagination.ListResult[*shipment.ShipmentHold]
+	var r0 *pagination.ListResult[*shipmenthold.ShipmentHold]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ListShipmentHoldsRequest) (*pagination.ListResult[*shipment.ShipmentHold], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ListShipmentHoldsRequest) (*pagination.ListResult[*shipmenthold.ShipmentHold], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ListShipmentHoldsRequest) *pagination.ListResult[*shipment.ShipmentHold]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ListShipmentHoldsRequest) *pagination.ListResult[*shipmenthold.ShipmentHold]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*shipment.ShipmentHold])
+			r0 = ret.Get(0).(*pagination.ListResult[*shipmenthold.ShipmentHold])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentholdports.ListShipmentHoldsRequest) error); ok {
@@ -366,37 +366,37 @@ func (_c *MockShipmentHoldRepository_ListByShipmentID_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockShipmentHoldRepository_ListByShipmentID_Call) Return(listResult *pagination.ListResult[*shipment.ShipmentHold], err error) *MockShipmentHoldRepository_ListByShipmentID_Call {
+func (_c *MockShipmentHoldRepository_ListByShipmentID_Call) Return(listResult *pagination.ListResult[*shipmenthold.ShipmentHold], err error) *MockShipmentHoldRepository_ListByShipmentID_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockShipmentHoldRepository_ListByShipmentID_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.ListShipmentHoldsRequest) (*pagination.ListResult[*shipment.ShipmentHold], error)) *MockShipmentHoldRepository_ListByShipmentID_Call {
+func (_c *MockShipmentHoldRepository_ListByShipmentID_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.ListShipmentHoldsRequest) (*pagination.ListResult[*shipmenthold.ShipmentHold], error)) *MockShipmentHoldRepository_ListByShipmentID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Release provides a mock function for the type MockShipmentHoldRepository
-func (_mock *MockShipmentHoldRepository) Release(ctx context.Context, entity *shipment.ShipmentHold) (*shipment.ShipmentHold, error) {
+func (_mock *MockShipmentHoldRepository) Release(ctx context.Context, entity *shipmenthold.ShipmentHold) (*shipmenthold.ShipmentHold, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Release")
 	}
 
-	var r0 *shipment.ShipmentHold
+	var r0 *shipmenthold.ShipmentHold
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.ShipmentHold) (*shipment.ShipmentHold, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmenthold.ShipmentHold) (*shipmenthold.ShipmentHold, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.ShipmentHold) *shipment.ShipmentHold); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmenthold.ShipmentHold) *shipmenthold.ShipmentHold); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*shipment.ShipmentHold)
+			r0 = ret.Get(0).(*shipmenthold.ShipmentHold)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipment.ShipmentHold) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmenthold.ShipmentHold) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -411,20 +411,20 @@ type MockShipmentHoldRepository_Release_Call struct {
 
 // Release is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *shipment.ShipmentHold
+//   - entity *shipmenthold.ShipmentHold
 func (_e *MockShipmentHoldRepository_Expecter) Release(ctx any, entity any) *MockShipmentHoldRepository_Release_Call {
 	return &MockShipmentHoldRepository_Release_Call{Call: _e.mock.On("Release", ctx, entity)}
 }
 
-func (_c *MockShipmentHoldRepository_Release_Call) Run(run func(ctx context.Context, entity *shipment.ShipmentHold)) *MockShipmentHoldRepository_Release_Call {
+func (_c *MockShipmentHoldRepository_Release_Call) Run(run func(ctx context.Context, entity *shipmenthold.ShipmentHold)) *MockShipmentHoldRepository_Release_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *shipment.ShipmentHold
+		var arg1 *shipmenthold.ShipmentHold
 		if args[1] != nil {
-			arg1 = args[1].(*shipment.ShipmentHold)
+			arg1 = args[1].(*shipmenthold.ShipmentHold)
 		}
 		run(
 			arg0,
@@ -434,37 +434,37 @@ func (_c *MockShipmentHoldRepository_Release_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockShipmentHoldRepository_Release_Call) Return(shipmentHold *shipment.ShipmentHold, err error) *MockShipmentHoldRepository_Release_Call {
+func (_c *MockShipmentHoldRepository_Release_Call) Return(shipmentHold *shipmenthold.ShipmentHold, err error) *MockShipmentHoldRepository_Release_Call {
 	_c.Call.Return(shipmentHold, err)
 	return _c
 }
 
-func (_c *MockShipmentHoldRepository_Release_Call) RunAndReturn(run func(ctx context.Context, entity *shipment.ShipmentHold) (*shipment.ShipmentHold, error)) *MockShipmentHoldRepository_Release_Call {
+func (_c *MockShipmentHoldRepository_Release_Call) RunAndReturn(run func(ctx context.Context, entity *shipmenthold.ShipmentHold) (*shipmenthold.ShipmentHold, error)) *MockShipmentHoldRepository_Release_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type MockShipmentHoldRepository
-func (_mock *MockShipmentHoldRepository) Update(ctx context.Context, entity *shipment.ShipmentHold) (*shipment.ShipmentHold, error) {
+func (_mock *MockShipmentHoldRepository) Update(ctx context.Context, entity *shipmenthold.ShipmentHold) (*shipmenthold.ShipmentHold, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 *shipment.ShipmentHold
+	var r0 *shipmenthold.ShipmentHold
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.ShipmentHold) (*shipment.ShipmentHold, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmenthold.ShipmentHold) (*shipmenthold.ShipmentHold, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.ShipmentHold) *shipment.ShipmentHold); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmenthold.ShipmentHold) *shipmenthold.ShipmentHold); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*shipment.ShipmentHold)
+			r0 = ret.Get(0).(*shipmenthold.ShipmentHold)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipment.ShipmentHold) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmenthold.ShipmentHold) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -479,20 +479,20 @@ type MockShipmentHoldRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *shipment.ShipmentHold
+//   - entity *shipmenthold.ShipmentHold
 func (_e *MockShipmentHoldRepository_Expecter) Update(ctx any, entity any) *MockShipmentHoldRepository_Update_Call {
 	return &MockShipmentHoldRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
-func (_c *MockShipmentHoldRepository_Update_Call) Run(run func(ctx context.Context, entity *shipment.ShipmentHold)) *MockShipmentHoldRepository_Update_Call {
+func (_c *MockShipmentHoldRepository_Update_Call) Run(run func(ctx context.Context, entity *shipmenthold.ShipmentHold)) *MockShipmentHoldRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *shipment.ShipmentHold
+		var arg1 *shipmenthold.ShipmentHold
 		if args[1] != nil {
-			arg1 = args[1].(*shipment.ShipmentHold)
+			arg1 = args[1].(*shipmenthold.ShipmentHold)
 		}
 		run(
 			arg0,
@@ -502,12 +502,12 @@ func (_c *MockShipmentHoldRepository_Update_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockShipmentHoldRepository_Update_Call) Return(shipmentHold *shipment.ShipmentHold, err error) *MockShipmentHoldRepository_Update_Call {
+func (_c *MockShipmentHoldRepository_Update_Call) Return(shipmentHold *shipmenthold.ShipmentHold, err error) *MockShipmentHoldRepository_Update_Call {
 	_c.Call.Return(shipmentHold, err)
 	return _c
 }
 
-func (_c *MockShipmentHoldRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *shipment.ShipmentHold) (*shipment.ShipmentHold, error)) *MockShipmentHoldRepository_Update_Call {
+func (_c *MockShipmentHoldRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *shipmenthold.ShipmentHold) (*shipmenthold.ShipmentHold, error)) *MockShipmentHoldRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

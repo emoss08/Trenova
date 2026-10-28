@@ -4721,16 +4721,16 @@ models:
       - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.OperationType
   ShipmentQuickFilter:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.QuickFilter
+      - github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter.QuickFilter
   ShipmentBoardGrouping:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.BoardGrouping
+      - github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping.BoardGrouping
   EtaVerdict:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.Verdict
   UncoveredPickupWindow:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.PickupWindow
+      - github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow.PickupWindow
   CarrierCapacityRateMethod:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity.RateMethod

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentholdrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/testutil"
@@ -58,8 +59,8 @@ func newHarness(t *testing.T) *harness {
 	}
 }
 
-func (h *harness) hold(severity holdreason.HoldSeverity) *shipment.ShipmentHold {
-	return &shipment.ShipmentHold{
+func (h *harness) hold(severity holdreason.HoldSeverity) *shipmenthold.ShipmentHold {
+	return &shipmenthold.ShipmentHold{
 		ShipmentID:     h.entity.ID,
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
@@ -78,7 +79,7 @@ func TestCreate_StoresTheHoldWithItsDefaults(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, created.ID.IsNil())
 	assert.Equal(t, holdreason.HoldSeverityAdvisory, created.Severity)
-	assert.Equal(t, shipment.HoldSourceUser, created.Source)
+	assert.Equal(t, shipmenthold.HoldSourceUser, created.Source)
 
 	_, err = h.repo.Create(h.ctx, h.hold(holdreason.HoldSeverityBlocking))
 	require.Error(t, err)

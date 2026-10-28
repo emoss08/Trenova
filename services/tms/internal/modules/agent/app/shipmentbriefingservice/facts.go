@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -28,20 +28,20 @@ func (f Facts) Counts() []int {
 	}
 }
 
-func (f Facts) Filters() []shipment.QuickFilter {
+func (f Facts) Filters() []quickfilter.QuickFilter {
 	candidates := []struct {
 		count  int
-		filter shipment.QuickFilter
+		filter quickfilter.QuickFilter
 	}{
-		{f.DeliveringToday, shipment.QuickFilterDeliveringToday},
-		{f.Moving, shipment.QuickFilterMoving},
-		{f.Late, shipment.QuickFilterLate},
-		{f.Uncovered, shipment.QuickFilterUncovered},
-		{f.Detention, shipment.QuickFilterDetention},
-		{f.ReadyToBill, shipment.QuickFilterReadyToBill},
+		{f.DeliveringToday, quickfilter.QuickFilterDeliveringToday},
+		{f.Moving, quickfilter.QuickFilterMoving},
+		{f.Late, quickfilter.QuickFilterLate},
+		{f.Uncovered, quickfilter.QuickFilterUncovered},
+		{f.Detention, quickfilter.QuickFilterDetention},
+		{f.ReadyToBill, quickfilter.QuickFilterReadyToBill},
 	}
 
-	out := make([]shipment.QuickFilter, 0, len(candidates))
+	out := make([]quickfilter.QuickFilter, 0, len(candidates))
 	for _, candidate := range candidates {
 		if candidate.count > 0 {
 			out = append(out, candidate.filter)
@@ -54,7 +54,10 @@ func text(value string) shipmentbriefports.ShipmentBriefingSegment {
 	return shipmentbriefports.ShipmentBriefingSegment{Text: value}
 }
 
-func linked(value string, filter shipment.QuickFilter) shipmentbriefports.ShipmentBriefingSegment {
+func linked(
+	value string,
+	filter quickfilter.QuickFilter,
+) shipmentbriefports.ShipmentBriefingSegment {
 	return shipmentbriefports.ShipmentBriefingSegment{Text: value, Filter: &filter}
 }
 
@@ -95,19 +98,19 @@ func Deterministic(f Facts) []shipmentbriefports.ShipmentBriefingSegment {
 		board = append(board, []shipmentbriefports.ShipmentBriefingSegment{linked(
 			loads(f.DeliveringToday)+" "+
 				stringutils.Pluralize("delivers", "deliver", f.DeliveringToday)+" today",
-			shipment.QuickFilterDeliveringToday,
+			quickfilter.QuickFilterDeliveringToday,
 		)})
 	}
 	if f.Moving > 0 {
 		board = append(board, []shipmentbriefports.ShipmentBriefingSegment{linked(
 			loads(f.Moving)+" "+stringutils.Pluralize("is", "are", f.Moving)+" moving on schedule",
-			shipment.QuickFilterMoving,
+			quickfilter.QuickFilterMoving,
 		)})
 	}
 	if f.Late > 0 {
 		clause := []shipmentbriefports.ShipmentBriefingSegment{linked(
 			loads(f.Late)+" "+stringutils.Pluralize("is", "are", f.Late)+" late",
-			shipment.QuickFilterLate,
+			quickfilter.QuickFilterLate,
 		)}
 		if reason := strings.TrimSpace(f.LateReason); reason != "" {
 			clause = append(clause, text(", mostly "+strings.ToLower(reason)))
@@ -120,21 +123,21 @@ func Deterministic(f Facts) []shipmentbriefports.ShipmentBriefingSegment {
 		followUp = append(followUp, []shipmentbriefports.ShipmentBriefingSegment{linked(
 			loads(f.Uncovered)+" still "+stringutils.Pluralize("needs", "need", f.Uncovered)+" "+
 				f.OperationType.CoverageNoun(),
-			shipment.QuickFilterUncovered,
+			quickfilter.QuickFilterUncovered,
 		)})
 	}
 	if f.Detention > 0 {
 		followUp = append(followUp, []shipmentbriefports.ShipmentBriefingSegment{linked(
 			loads(f.Detention)+" "+stringutils.Pluralize("is", "are", f.Detention)+
 				" accruing detention",
-			shipment.QuickFilterDetention,
+			quickfilter.QuickFilterDetention,
 		)})
 	}
 	if f.ReadyToBill > 0 {
 		followUp = append(followUp, []shipmentbriefports.ShipmentBriefingSegment{linked(
 			loads(f.ReadyToBill)+" "+stringutils.Pluralize("is", "are", f.ReadyToBill)+
 				" ready to bill",
-			shipment.QuickFilterReadyToBill,
+			quickfilter.QuickFilterReadyToBill,
 		)})
 	}
 

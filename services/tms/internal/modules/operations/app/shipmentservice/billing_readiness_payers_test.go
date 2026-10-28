@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
@@ -14,7 +15,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func splitReadinessFixture(t *testing.T) (*shipment.Shipment, *shipment.ShareResolution, pulid.ID) {
+func splitReadinessFixture(
+	t *testing.T,
+) (*shipment.Shipment, *chargeallocation.ShareResolution, pulid.ID) {
 	t.Helper()
 
 	entity := validShipmentForValidation()
@@ -42,7 +45,7 @@ func splitReadinessFixture(t *testing.T) (*shipment.Shipment, *shipment.ShareRes
 		},
 	}
 
-	resolution, err := shipment.ResolveShares(t.Context(), entity, entity.ChargeAllocations)
+	resolution, err := chargeallocation.ResolveShares(t.Context(), entity, entity.ChargeAllocations)
 	require.NoError(t, err)
 
 	return entity, resolution, amd
@@ -343,7 +346,11 @@ func TestPreviewForResolutionMapsPositionalAllocationsToPlaceholderIDs(t *testin
 		"the caller's allocation is untouched",
 	)
 
-	resolution, err := shipment.ResolveShares(t.Context(), preview, preview.ChargeAllocations)
+	resolution, err := chargeallocation.ResolveShares(
+		t.Context(),
+		preview,
+		preview.ChargeAllocations,
+	)
 	require.NoError(t, err)
 	share := resolution.ShareFor(payer)
 	require.NotNil(t, share)

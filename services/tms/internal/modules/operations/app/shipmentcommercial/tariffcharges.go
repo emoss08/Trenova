@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -131,7 +132,7 @@ func (c *Calculator) applyBill(
 }
 
 func billFreightLines(ctx context.Context, bill *tarifftypes.Bill) []shipment.FreightLine {
-	return shipment.FreightLinesFromBill(bill, func(kind tarifftypes.LineKind) string {
+	return shipmentrating.FreightLinesFromBill(bill, func(kind tarifftypes.LineKind) string {
 		return adjustmentLabel(ctx, kind)
 	})
 }

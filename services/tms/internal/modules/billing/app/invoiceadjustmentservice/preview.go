@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/effectiveversioncache"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -492,7 +492,7 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 			return nil, decimal.Zero, decimal.Zero, legErr
 		}
 
-		resolution, legErr := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
+		resolution, legErr := chargeallocation.ResolveShares(ctx, shp, shp.ChargeAllocations)
 		if legErr != nil {
 			return nil, decimal.Zero, decimal.Zero, legErr
 		}

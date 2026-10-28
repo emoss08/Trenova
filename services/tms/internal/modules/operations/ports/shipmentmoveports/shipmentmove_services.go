@@ -3,6 +3,7 @@ package shipmentmoveports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/movesplit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,7 +42,7 @@ type MoveStatusPlan struct {
 
 type MoveSplitPlan struct {
 	Move  *shipment.ShipmentMove
-	Split *shipment.MoveSplit
+	Split *movesplit.MoveSplit
 }
 
 type ShipmentMoveService interface {

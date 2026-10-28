@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -43,13 +44,13 @@ func TestBuildInvoiceEntityStampsTheShipperAndSplitOnAShipmentInvoice(t *testing
 	amd := pulid.MustNew("cus_")
 	freightSplit(leg, leg.CustomerID, amd, 60)
 
-	resolution, err := shipment.ResolveShares(t.Context(), leg, leg.ChargeAllocations)
+	resolution, err := chargeallocation.ResolveShares(t.Context(), leg, leg.ChargeAllocations)
 	require.NoError(t, err)
 
 	params := builderParams(invoice.ScopeShipment, leg)
 	params.Customer = &customer.Customer{ID: amd, Name: "AMD"}
 	params.Shipper = &customer.Customer{ID: leg.CustomerID, Name: "Intel"}
-	params.Shares = map[pulid.ID]*shipment.PayerShare{leg.ID: resolution.ShareFor(amd)}
+	params.Shares = map[pulid.ID]*chargeallocation.PayerShare{leg.ID: resolution.ShareFor(amd)}
 	params.IsSplitBill = resolution.IsSplit
 
 	entity := buildEntity(t, (&Service{l: zap.NewNop()}), params)
@@ -75,9 +76,9 @@ func TestBuildInvoiceEntityLeavesTheShipperOffAConsolidatedInvoice(t *testing.T)
 	freightSplit(legA, legA.CustomerID, payer, 50)
 	freightSplit(legB, legB.CustomerID, payer, 50)
 
-	shares := make(map[pulid.ID]*shipment.PayerShare, 2)
+	shares := make(map[pulid.ID]*chargeallocation.PayerShare, 2)
 	for _, leg := range []*shipment.Shipment{legA, legB} {
-		resolution, err := shipment.ResolveShares(t.Context(), leg, leg.ChargeAllocations)
+		resolution, err := chargeallocation.ResolveShares(t.Context(), leg, leg.ChargeAllocations)
 		require.NoError(t, err)
 		shares[leg.ID] = resolution.ShareFor(payer)
 	}
@@ -132,9 +133,9 @@ func TestBuildInvoiceEntityBillsTheOrderChargeShare(t *testing.T) {
 	leg := builderLeg("PRO-1", 100)
 	params := builderParams(invoice.ScopeOrder, leg)
 	params.Order = &order.Order{ID: pulid.MustNew("ord_"), OrderNumber: "ORD-9"}
-	params.OrderChargeShare = &shipment.PayerShare{
+	params.OrderChargeShare = &chargeallocation.PayerShare{
 		PayerID: params.Customer.ID,
-		Charges: []shipment.AllocatedCharge{
+		Charges: []chargeallocation.AllocatedCharge{
 			{
 				Kind:          shipment.ChargeAllocationKindOrderCharge,
 				OrderChargeID: pulid.MustNew("ordchg_"),
@@ -198,7 +199,12 @@ func TestOrderChargeShareFor(t *testing.T) {
 		assert.Nil(t, share)
 		assert.False(t, split)
 
-		share, split, err = orderChargeShareFor(t.Context(), charges, defaultPayer, pulid.MustNew("cus_"))
+		share, split, err = orderChargeShareFor(
+			t.Context(),
+			charges,
+			defaultPayer,
+			pulid.MustNew("cus_"),
+		)
 		require.NoError(t, err)
 		assert.Nil(t, share, "a payer with no share of any charge gets none")
 		assert.True(t, split)
@@ -244,7 +250,12 @@ func TestOrderChargeShareFor(t *testing.T) {
 				Amount:           decimal.NewNullDecimal(decimal.NewFromInt(79)),
 			}},
 		}
-		_, _, err := orderChargeShareFor(t.Context(), []*order.OrderCharge{bad}, defaultPayer, other)
+		_, _, err := orderChargeShareFor(
+			t.Context(),
+			[]*order.OrderCharge{bad},
+			defaultPayer,
+			other,
+		)
 		require.Error(t, err)
 		var typed *errortypes.Error
 		require.True(t, errors.As(err, &typed))
@@ -314,14 +325,22 @@ func TestPayerSharesForLegs(t *testing.T) {
 	freightSplit(legA, legA.CustomerID, payer, 70)
 	legB.BillToCustomerID = &payer
 
-	shares, isSplit, err := payerSharesForLegs(t.Context(), []*shipment.Shipment{legA, nil, legB}, payer)
+	shares, isSplit, err := payerSharesForLegs(
+		t.Context(),
+		[]*shipment.Shipment{legA, nil, legB},
+		payer,
+	)
 	require.NoError(t, err)
 	assert.True(t, isSplit)
 	require.Len(t, shares, 2)
 	assert.True(t, shares[legA.ID].TotalAmount.Equal(decimal.NewFromInt(30)))
 	assert.True(t, shares[legB.ID].TotalAmount.Equal(decimal.NewFromInt(300)))
 
-	_, _, err = payerSharesForLegs(t.Context(), []*shipment.Shipment{legA, legB}, pulid.MustNew("cus_"))
+	_, _, err = payerSharesForLegs(
+		t.Context(),
+		[]*shipment.Shipment{legA, legB},
+		pulid.MustNew("cus_"),
+	)
 	require.Error(t, err)
 	var typed *errortypes.Error
 	require.True(t, errors.As(err, &typed))

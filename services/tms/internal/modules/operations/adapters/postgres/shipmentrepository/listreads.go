@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -93,19 +95,19 @@ func NewActiveHoldReader(p ListReadParams) shipmentports.ActiveHoldReader {
 func (r *activeHoldReader) ActiveHolds(
 	ctx context.Context,
 	req *shipmentports.ActiveHoldsRequest,
-) ([]*shipment.ShipmentHold, error) {
+) ([]*shipmenthold.ShipmentHold, error) {
 	ids := holdShipmentIDs(req.ShipmentIDs)
 	if len(ids) == 0 {
 		return nil, nil
 	}
 
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.ShipmentHold, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmenthold.ShipmentHold, error) {
 		return activeHoldsQuery(ids).All(ctx, r.db.Keel(ctx))
 	})
 }
 
-func activeHoldsQuery(ids []pulid.ID) *keel.Query[*shipment.ShipmentHold] {
-	sh := shipmentdb.ShipmentHolds
+func activeHoldsQuery(ids []pulid.ID) *keel.Query[*shipmenthold.ShipmentHold] {
+	sh := shipmentholddb.ShipmentHolds
 
 	return sh.Where(sh.ShipmentID.In(ids...), sh.ReleasedAt.IsNull()).
 		Load(sh.HoldReason()).

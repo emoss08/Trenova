@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
@@ -60,17 +61,17 @@ func (r *Repository) GroupSummary(
 
 func groupSummaryQuery(
 	q *keel.Query[*shipment.Shipment],
-	groupBy shipment.BoardGrouping,
+	groupBy boardgrouping.BoardGrouping,
 	timezone string,
 ) (*keel.Query[*shipment.Shipment], error) {
 	switch groupBy {
-	case shipment.BoardGroupingShipDate:
+	case boardgrouping.BoardGroupingShipDate:
 		return dayGroups(q, shipment.PickupStopTypes(), false, timezone), nil
-	case shipment.BoardGroupingDeliveryDate:
+	case boardgrouping.BoardGroupingDeliveryDate:
 		return dayGroups(q, shipment.DeliveryStopTypes(), true, timezone), nil
-	case shipment.BoardGroupingCustomer:
+	case boardgrouping.BoardGroupingCustomer:
 		return customerGroups(q), nil
-	case shipment.BoardGroupingOwner:
+	case boardgrouping.BoardGroupingOwner:
 		return ownerGroups(q), nil
 	default:
 		return nil, ErrUnsupportedGrouping

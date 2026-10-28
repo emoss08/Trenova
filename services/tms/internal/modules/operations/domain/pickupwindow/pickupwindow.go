@@ -1,6 +1,10 @@
-package shipment
+package pickupwindow
 
-import "time"
+import (
+	"time"
+
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
+)
 
 type PickupWindow string
 
@@ -38,8 +42,8 @@ type PickupWindowBounds struct {
 	EndMinutes   *int
 }
 
-func (b PickupWindowBounds) Spec() QuickFilterSpec {
-	return PickupWindowFilter(b.StartMinutes, b.EndMinutes)
+func (b PickupWindowBounds) Spec() quickfilter.QuickFilterSpec {
+	return quickfilter.PickupWindowFilter(b.StartMinutes, b.EndMinutes)
 }
 
 func (b PickupWindowBounds) Empty() bool {

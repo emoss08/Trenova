@@ -1,14 +1,19 @@
-package shipment
+package chargeallocation
 
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func findStale(t *testing.T, shp *Shipment, allocations []*ChargeAllocation) []StaleAmountSplit {
+func findStale(
+	t *testing.T,
+	shp *shipment.Shipment,
+	allocations []*shipment.ChargeAllocation,
+) []StaleAmountSplit {
 	t.Helper()
 
 	rebalance, err := RebalanceAmountSplits(t.Context(), shp, allocations)
@@ -17,7 +22,11 @@ func findStale(t *testing.T, shp *Shipment, allocations []*ChargeAllocation) []S
 	return rebalance.Stale
 }
 
-func convertSplits(t *testing.T, shp *Shipment, allocations []*ChargeAllocation) int {
+func convertSplits(
+	t *testing.T,
+	shp *shipment.Shipment,
+	allocations []*shipment.ChargeAllocation,
+) int {
 	t.Helper()
 
 	rebalance, err := RebalanceAmountSplits(t.Context(), shp, allocations)
@@ -31,15 +40,15 @@ func TestRebalanceAmountSplits_FindsFreightAmountsNoLongerAddUp(t *testing.T) {
 
 	shp := allocationShipment("3000")
 	acme, peak := pulid.MustNew("cus_"), pulid.MustNew("cus_")
-	allocations := []*ChargeAllocation{
-		amountAllocation(ChargeAllocationKindFreight, peak, "1500", 0),
-		amountAllocation(ChargeAllocationKindFreight, acme, "1350", 1),
+	allocations := []*shipment.ChargeAllocation{
+		amountAllocation(shipment.ChargeAllocationKindFreight, peak, "1500", 0),
+		amountAllocation(shipment.ChargeAllocationKindFreight, acme, "1350", 1),
 	}
 
 	stale := findStale(t, shp, allocations)
 
 	require.Len(t, stale, 1)
-	assert.Equal(t, ChargeAllocationKindFreight, stale[0].Kind)
+	assert.Equal(t, shipment.ChargeAllocationKindFreight, stale[0].Kind)
 	assert.Equal(t, -1, stale[0].ChargeIndex)
 	assert.True(t, stale[0].AllocatedTotal.Equal(allocDec("2850")))
 	assert.True(t, stale[0].ChargeTotal.Equal(allocDec("3000")))
@@ -51,11 +60,17 @@ func TestRebalanceAmountSplits_FindsIgnoresPercentSplitsAndBalancedAmounts(t *te
 	detention := flatCharge("100", 1)
 	shp := allocationShipment("2850", detention)
 	acme, peak := pulid.MustNew("cus_"), pulid.MustNew("cus_")
-	allocations := []*ChargeAllocation{
-		amountAllocation(ChargeAllocationKindFreight, peak, "1500", 0),
-		amountAllocation(ChargeAllocationKindFreight, acme, "1350", 1),
-		forCharge(percentAllocation(ChargeAllocationKindAccessorial, peak, "60", 0), detention),
-		forCharge(percentAllocation(ChargeAllocationKindAccessorial, acme, "40", 1), detention),
+	allocations := []*shipment.ChargeAllocation{
+		amountAllocation(shipment.ChargeAllocationKindFreight, peak, "1500", 0),
+		amountAllocation(shipment.ChargeAllocationKindFreight, acme, "1350", 1),
+		forCharge(
+			percentAllocation(shipment.ChargeAllocationKindAccessorial, peak, "60", 0),
+			detention,
+		),
+		forCharge(
+			percentAllocation(shipment.ChargeAllocationKindAccessorial, acme, "40", 1),
+			detention,
+		),
 	}
 
 	assert.Empty(t, findStale(t, shp, allocations))
@@ -68,8 +83,11 @@ func TestRebalanceAmountSplits_FindsAccessorialIsNamedByItsIndex(t *testing.T) {
 	detention := flatCharge("200", 1)
 	shp := allocationShipment("1000", fuel, detention)
 	peak := pulid.MustNew("cus_")
-	allocations := []*ChargeAllocation{
-		forCharge(amountAllocation(ChargeAllocationKindAccessorial, peak, "150", 0), detention),
+	allocations := []*shipment.ChargeAllocation{
+		forCharge(
+			amountAllocation(shipment.ChargeAllocationKindAccessorial, peak, "150", 0),
+			detention,
+		),
 	}
 
 	stale := findStale(t, shp, allocations)
@@ -85,16 +103,16 @@ func TestRebalanceAmountSplits_ConvertsKeepsEachPayersProportion(t *testing.T) {
 
 	shp := allocationShipment("3000")
 	acme, peak := pulid.MustNew("cus_"), pulid.MustNew("cus_")
-	allocations := []*ChargeAllocation{
-		amountAllocation(ChargeAllocationKindFreight, peak, "1500", 0),
-		amountAllocation(ChargeAllocationKindFreight, acme, "1350", 1),
+	allocations := []*shipment.ChargeAllocation{
+		amountAllocation(shipment.ChargeAllocationKindFreight, peak, "1500", 0),
+		amountAllocation(shipment.ChargeAllocationKindFreight, acme, "1350", 1),
 	}
 
 	converted := convertSplits(t, shp, allocations)
 
 	assert.Equal(t, 1, converted)
 	for _, row := range allocations {
-		assert.Equal(t, ChargeAllocationMethodPercent, row.Method)
+		assert.Equal(t, shipment.ChargeAllocationMethodPercent, row.Method)
 		assert.False(t, row.Amount.Valid)
 	}
 	assert.Equal(t, "52.631579", allocations[0].Percent.Decimal.StringFixed(6))
@@ -112,13 +130,13 @@ func TestRebalanceAmountSplits_ConvertsLeavesBalancedSplitsAlone(t *testing.T) {
 
 	shp := allocationShipment("2850")
 	acme, peak := pulid.MustNew("cus_"), pulid.MustNew("cus_")
-	allocations := []*ChargeAllocation{
-		amountAllocation(ChargeAllocationKindFreight, peak, "1500", 0),
-		amountAllocation(ChargeAllocationKindFreight, acme, "1350", 1),
+	allocations := []*shipment.ChargeAllocation{
+		amountAllocation(shipment.ChargeAllocationKindFreight, peak, "1500", 0),
+		amountAllocation(shipment.ChargeAllocationKindFreight, acme, "1350", 1),
 	}
 
 	assert.Zero(t, convertSplits(t, shp, allocations))
-	assert.Equal(t, ChargeAllocationMethodAmount, allocations[0].Method)
+	assert.Equal(t, shipment.ChargeAllocationMethodAmount, allocations[0].Method)
 }
 
 func TestRebalanceAmountSplits_ConvertsThreeWaySplitTotalsExactlyOneHundred(t *testing.T) {
@@ -126,10 +144,10 @@ func TestRebalanceAmountSplits_ConvertsThreeWaySplitTotalsExactlyOneHundred(t *t
 
 	shp := allocationShipment("1000")
 	a, b, c := pulid.MustNew("cus_"), pulid.MustNew("cus_"), pulid.MustNew("cus_")
-	allocations := []*ChargeAllocation{
-		amountAllocation(ChargeAllocationKindFreight, a, "100", 0),
-		amountAllocation(ChargeAllocationKindFreight, b, "100", 1),
-		amountAllocation(ChargeAllocationKindFreight, c, "100", 2),
+	allocations := []*shipment.ChargeAllocation{
+		amountAllocation(shipment.ChargeAllocationKindFreight, a, "100", 0),
+		amountAllocation(shipment.ChargeAllocationKindFreight, b, "100", 1),
+		amountAllocation(shipment.ChargeAllocationKindFreight, c, "100", 2),
 	}
 
 	require.Equal(t, 1, convertSplits(t, shp, allocations))
@@ -147,19 +165,19 @@ func TestResolveShares_RecordsTheSplitMethodOnEachShare(t *testing.T) {
 	detention := flatCharge("100", 1)
 	shp := allocationShipment("2850", detention)
 	peak := pulid.MustNew("cus_")
-	allocations := []*ChargeAllocation{
-		amountAllocation(ChargeAllocationKindFreight, peak, "1500", 0),
-		amountAllocation(ChargeAllocationKindFreight, shp.CustomerID, "1350", 1),
+	allocations := []*shipment.ChargeAllocation{
+		amountAllocation(shipment.ChargeAllocationKindFreight, peak, "1500", 0),
+		amountAllocation(shipment.ChargeAllocationKindFreight, shp.CustomerID, "1350", 1),
 	}
 
 	resolution, err := ResolveShares(t.Context(), shp, allocations)
 	require.NoError(t, err)
 
 	for _, charge := range resolution.ShareFor(peak).Charges {
-		assert.Equal(t, ChargeAllocationMethodAmount, charge.Method)
+		assert.Equal(t, shipment.ChargeAllocationMethodAmount, charge.Method)
 	}
 	for _, charge := range resolution.ShareFor(shp.CustomerID).Charges {
-		if charge.Kind == ChargeAllocationKindAccessorial {
+		if charge.Kind == shipment.ChargeAllocationKindAccessorial {
 			assert.Empty(t, charge.Method, "an unsplit charge has no split method")
 		}
 	}

@@ -1,4 +1,4 @@
-package shipment
+package quickfilter
 
 import (
 	"github.com/emoss08/trenova/pkg/errortypes"

@@ -1,15 +1,12 @@
 package shipment
 
 import (
-	"context"
 	"errors"
-	"fmt"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
@@ -18,23 +15,23 @@ import (
 type AdditionalCharge struct {
 	keel.Table `keel:"additional_charges"`
 
-	ID                     pulid.ID                 `json:"id"                     keel:"id,pk,autoid:ac_"`
-	BusinessUnitID         pulid.ID                 `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID                 `json:"organizationId"         keel:"organization_id,pk,tenant"`
-	ShipmentID             pulid.ID                 `json:"shipmentId"             keel:"shipment_id,pk"`
-	AccessorialChargeID    pulid.ID                 `json:"accessorialChargeId"    keel:"accessorial_charge_id,pk"`
-	IsSystemGenerated      bool                     `json:"isSystemGenerated"      keel:"is_system_generated"`
-	Method                 accessorialcharge.Method `json:"method"                 keel:"method"`
-	Amount                 decimal.Decimal          `json:"amount"                 keel:"amount"`
-	Unit                   int16                    `json:"unit"                   keel:"unit"`
-	FuelSurchargeProgramID *pulid.ID                `json:"fuelSurchargeProgramId" keel:"fuel_surcharge_program_id"`
-	FuelSurchargeDetail    *FuelSurchargeDetail     `json:"fuelSurchargeDetail"    keel:"fuel_surcharge_detail,jsonb"`
-	IsDetention            bool                     `json:"isDetention"            keel:"is_detention"`
-	IsTariff               bool                     `json:"isTariff"               keel:"is_tariff"`
-	Label                  string                   `json:"label"                  keel:"label,nullzero"`
-	Quantity               decimal.NullDecimal      `json:"quantity"               keel:"quantity"`
-	Rate                   decimal.NullDecimal      `json:"rate"                   keel:"rate"`
-	RateUnit               string                   `json:"rateUnit"               keel:"rate_unit,nullzero"`
+	ID                     pulid.ID                 `json:"id"                         keel:"id,pk,autoid:ac_"`
+	BusinessUnitID         pulid.ID                 `json:"businessUnitId"             keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID                 `json:"organizationId"             keel:"organization_id,pk,tenant"`
+	ShipmentID             pulid.ID                 `json:"shipmentId"                 keel:"shipment_id,pk"`
+	AccessorialChargeID    pulid.ID                 `json:"accessorialChargeId"        keel:"accessorial_charge_id,pk"`
+	IsSystemGenerated      bool                     `json:"isSystemGenerated"          keel:"is_system_generated"`
+	Method                 accessorialcharge.Method `json:"method"                     keel:"method"`
+	Amount                 decimal.Decimal          `json:"amount"                     keel:"amount"`
+	Unit                   int16                    `json:"unit"                       keel:"unit"`
+	FuelSurchargeProgramID *pulid.ID                `json:"fuelSurchargeProgramId"     keel:"fuel_surcharge_program_id"`
+	FuelSurchargeDetail    *FuelSurchargeDetail     `json:"fuelSurchargeDetail"        keel:"fuel_surcharge_detail,jsonb"`
+	IsDetention            bool                     `json:"isDetention"                keel:"is_detention"`
+	IsTariff               bool                     `json:"isTariff"                   keel:"is_tariff"`
+	Label                  string                   `json:"label"                      keel:"label,nullzero"`
+	Quantity               decimal.NullDecimal      `json:"quantity"                   keel:"quantity"`
+	Rate                   decimal.NullDecimal      `json:"rate"                       keel:"rate"`
+	RateUnit               string                   `json:"rateUnit"                   keel:"rate_unit,nullzero"`
 	// RateAgreementAccessorialID marks a charge the contract's own accessorial
 	// schedule produced, and is what its reconciliation pass matches on.
 	RateAgreementAccessorialID *pulid.ID `json:"rateAgreementAccessorialId" keel:"rate_agreement_accessorial_id"`
@@ -82,117 +79,6 @@ func (a *AdditionalCharge) Validate(multiErr *errortypes.MultiError) {
 			}),
 		),
 	))
-}
-
-type ChargeTotals struct {
-	Each []decimal.Decimal
-	Sum  decimal.Decimal
-}
-
-func AdditionalChargeTotals(
-	ctx context.Context,
-	charges []*AdditionalCharge,
-	baseCharge decimal.Decimal,
-) (*ChargeTotals, error) {
-	if len(charges) == 0 {
-		return &ChargeTotals{Sum: decimal.Zero}, nil
-	}
-
-	req := &rules.AllocationChargesRequest{
-		Base:    baseCharge,
-		Charges: make([]rules.AllocationCharge, 0, len(charges)),
-	}
-	for _, charge := range charges {
-		req.Charges = append(req.Charges, accessorialCharge(charge, nil))
-	}
-
-	totals, err := rules.ChargeTotals(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("price additional charges: %w", err)
-	}
-	if len(totals.Totals) != len(charges) {
-		return nil, fmt.Errorf(
-			"%w: %d totals came back for %d charges",
-			errSplitShape,
-			len(totals.Totals),
-			len(charges),
-		)
-	}
-
-	return &ChargeTotals{Each: totals.Totals, Sum: totals.Sum}, nil
-}
-
-func ChargeTotalsByCharge(
-	ctx context.Context,
-	shp *Shipment,
-) (map[*AdditionalCharge]decimal.Decimal, error) {
-	if shp == nil {
-		return map[*AdditionalCharge]decimal.Decimal{}, nil
-	}
-
-	totals, err := AdditionalChargeTotals(
-		ctx,
-		shp.AdditionalCharges,
-		shp.FreightChargeAmount.Decimal,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	byCharge := make(map[*AdditionalCharge]decimal.Decimal, len(shp.AdditionalCharges))
-	for i, charge := range shp.AdditionalCharges {
-		if charge != nil {
-			byCharge[charge] = totals.Each[i]
-		}
-	}
-
-	return byCharge, nil
-}
-
-// RestoreSystemOwnedCharges re-seats the fields of an inbound charge set that
-// the rating engines own rather than the caller: whether a charge was machine
-// generated, and which engine owns it.
-//
-// No caller may claim any of them. A payload that drops the detention marker —
-// an older client, an integration, any editor that rebuilds the list from the
-// fields it cares about — would otherwise turn a detention charge into a manual
-// one and leave the next recalculation free to bill the same dwell twice. The
-// same is true of the agreement link: a contract accessorial that lost its
-// owner would stop being reconciled and would be added again on every save.
-//
-// Exactly one owner column is set on any system charge, which the database
-// enforces. That is what keeps three engines writing charges from ever billing
-// the same thing twice.
-func RestoreSystemOwnedCharges(original, updated []*AdditionalCharge) {
-	originals := make(map[pulid.ID]*AdditionalCharge, len(original))
-	for _, charge := range original {
-		if charge == nil || charge.ID.IsNil() {
-			continue
-		}
-		originals[charge.ID] = charge
-	}
-
-	for _, charge := range updated {
-		if charge == nil {
-			continue
-		}
-
-		source := originals[charge.ID]
-		if charge.ID.IsNil() || source == nil {
-			charge.IsSystemGenerated = false
-			charge.IsDetention = false
-			charge.IsTariff = false
-			charge.RateAgreementAccessorialID = nil
-			charge.FuelSurchargeProgramID = nil
-			continue
-		}
-
-		charge.IsSystemGenerated = source.IsSystemGenerated
-		charge.IsDetention = source.IsDetention
-		charge.IsTariff = source.IsTariff
-		charge.RateAgreementAccessorialID = source.RateAgreementAccessorialID
-		charge.FuelSurchargeProgramID = source.FuelSurchargeProgramID
-	}
 }
 
 // SystemOwner names the engine that owns a machine generated charge, which is

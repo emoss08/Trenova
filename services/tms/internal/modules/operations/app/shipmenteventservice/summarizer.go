@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -302,7 +303,7 @@ func BuildCarrierUnassigned(
 // BuildHoldPlaced emits a hold creation event.
 func BuildHoldPlaced(
 	tenant TenantRef,
-	hold *shipment.ShipmentHold,
+	hold *shipmenthold.ShipmentHold,
 	actor kernelports.AuditActor,
 ) *shipmenteventports.RecordShipmentEventParams {
 	return &shipmenteventports.RecordShipmentEventParams{
@@ -325,7 +326,7 @@ func BuildHoldPlaced(
 // BuildHoldUpdated emits a hold update event.
 func BuildHoldUpdated(
 	tenant TenantRef,
-	hold *shipment.ShipmentHold,
+	hold *shipmenthold.ShipmentHold,
 	actor kernelports.AuditActor,
 ) *shipmenteventports.RecordShipmentEventParams {
 	return &shipmenteventports.RecordShipmentEventParams{
@@ -346,7 +347,7 @@ func BuildHoldUpdated(
 // BuildHoldReleased emits a hold release event.
 func BuildHoldReleased(
 	tenant TenantRef,
-	hold *shipment.ShipmentHold,
+	hold *shipmenthold.ShipmentHold,
 	actor kernelports.AuditActor,
 ) *shipmenteventports.RecordShipmentEventParams {
 	return &shipmenteventports.RecordShipmentEventParams{

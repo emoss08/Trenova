@@ -1,8 +1,10 @@
-package shipment
+package shipmentrating
 
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/shopspring/decimal"
@@ -12,16 +14,7 @@ const centsPlaces = 2
 
 type PricedAgreementAccessorial struct {
 	Accessorial *rateagreement.RateAgreementAccessorial
-	Charge      *AdditionalCharge
-}
-
-func (sp *Shipment) AccessorialMeasures() *rateagreement.AccessorialMeasures {
-	return &rateagreement.AccessorialMeasures{
-		Miles:  sp.RatingMiles(),
-		Dwells: sp.DwellHours(),
-		Days:   sp.ServiceDays(),
-		Stops:  decimal.NewFromInt(int64(sp.RatedStopCount())),
-	}
+	Charge      *shipment.AdditionalCharge
 }
 
 func PriceAgreementAccessorials(
@@ -37,7 +30,10 @@ func PriceAgreementAccessorials(
 		if accessorial == nil {
 			continue
 		}
-		charge := &AdditionalCharge{Unit: 1, AccessorialChargeID: accessorial.AccessorialChargeID}
+		charge := &shipment.AdditionalCharge{
+			Unit:                1,
+			AccessorialChargeID: accessorial.AccessorialChargeID,
+		}
 		switch accessorial.Method {
 		case accessorialcharge.MethodPercentage:
 			charge.Method = accessorialcharge.MethodPercentage
@@ -84,11 +80,11 @@ func capPercentages(
 	if len(percentages) == 0 {
 		return nil
 	}
-	charges := make([]*AdditionalCharge, 0, len(percentages))
+	charges := make([]*shipment.AdditionalCharge, 0, len(percentages))
 	for _, index := range percentages {
 		charges = append(charges, priced[index].Charge)
 	}
-	totals, err := AdditionalChargeTotals(ctx, charges, freight)
+	totals, err := chargeallocation.AdditionalChargeTotals(ctx, charges, freight)
 	if err != nil {
 		return err
 	}
@@ -104,7 +100,10 @@ func capPercentages(
 	return nil
 }
 
-func pricedFlat(charge *AdditionalCharge, accessorial *rateagreement.RateAgreementAccessorial) {
+func pricedFlat(
+	charge *shipment.AdditionalCharge,
+	accessorial *rateagreement.RateAgreementAccessorial,
+) {
 	amount, _ := accessorial.Cap(accessorial.PricedAmount())
 	charge.Method = accessorialcharge.MethodFlat
 	charge.Amount = amount

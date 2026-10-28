@@ -3,7 +3,8 @@ package shipmentboardports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,7 +31,7 @@ type ShipmentBoardGroupRow struct {
 
 type SummarizeShipmentBoardGroupsQuery struct {
 	Scope    *ShipmentBoardScope
-	GroupBy  shipment.BoardGrouping
+	GroupBy  boardgrouping.BoardGrouping
 	Timezone string
 }
 
@@ -41,7 +42,7 @@ type ShipmentQuickFilterTotal struct {
 
 type CountShipmentQuickFiltersRequest struct {
 	Scope   *ShipmentBoardScope
-	Filters []shipment.QuickFilterSpec
+	Filters []quickfilter.QuickFilterSpec
 }
 
 type ShipmentBoardRepository interface {

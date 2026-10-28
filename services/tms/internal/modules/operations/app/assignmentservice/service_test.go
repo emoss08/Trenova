@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
@@ -122,7 +123,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 			_ context.Context,
 			_ *shipmentports.GetShipmentByIDRequest,
 		) (*shipment.Shipment, error) {
-			return shipment.CloneForUpdate(original), nil
+			return shipmentcoverage.CloneForUpdate(original), nil
 		}).
 		Once()
 	shipmentRepo.EXPECT().
@@ -314,7 +315,7 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
-		Return(shipment.CloneForUpdate(original), nil).
+		Return(shipmentcoverage.CloneForUpdate(original), nil).
 		Once()
 
 	holdRepo := shipmentholdportsmock.NewMockShipmentHoldRepository(t)
@@ -532,11 +533,11 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
-		Return(shipment.CloneForUpdate(original), nil).
+		Return(shipmentcoverage.CloneForUpdate(original), nil).
 		Once()
 	shipmentRepo.EXPECT().
 		Update(mock.Anything, mock.AnythingOfType("*shipment.Shipment")).
-		Return(shipment.CloneForUpdate(original), nil).
+		Return(shipmentcoverage.CloneForUpdate(original), nil).
 		Once()
 
 	holdRepo := shipmentholdportsmock.NewMockShipmentHoldRepository(t)
@@ -667,7 +668,7 @@ func newUnassignService(t *testing.T, params unassignServiceParams) *service {
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		RunAndReturn(func(_ context.Context, _ *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error) {
-			return shipment.CloneForUpdate(original), nil
+			return shipmentcoverage.CloneForUpdate(original), nil
 		}).
 		Once()
 	shipmentRepo.EXPECT().
@@ -1005,7 +1006,7 @@ func newAssignToMoveService(
 			_ context.Context,
 			_ *shipmentports.GetShipmentByIDRequest,
 		) (*shipment.Shipment, error) {
-			return shipment.CloneForUpdate(original), nil
+			return shipmentcoverage.CloneForUpdate(original), nil
 		}).
 		Once()
 	shipmentRepo.EXPECT().

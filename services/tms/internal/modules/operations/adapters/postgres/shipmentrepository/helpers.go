@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -215,7 +216,7 @@ func commodityPredicate(commodityIDs []pulid.ID) keel.Pred {
 }
 
 func activeHoldPredicate(opts *shipmentports.ShipmentOptions) keel.Pred {
-	sh := shipmentdb.ShipmentHolds
+	sh := shipmentholddb.ShipmentHolds
 	held := sh.Pick(sh.ShipmentID).Where(sh.ReleasedAt.IsNull())
 	if codes := holdReasonCodes(opts.HoldReasonCodes); len(codes) > 0 {
 		held = held.Where(sh.ReasonCode.Lower().In(codes...))

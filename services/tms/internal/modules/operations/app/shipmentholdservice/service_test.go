@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
@@ -66,20 +67,24 @@ func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 		Return(&holdreason.HoldReason{ID: reasonID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Type: holdreason.HoldTypeOperational, Code: "APPT_PENDING", Active: true, DefaultSeverity: holdreason.HoldSeverityAdvisory, DefaultBlocksDispatch: true, DefaultBlocksDelivery: false, DefaultBlocksBilling: false, DefaultVisibleToCustomer: false}, nil).
 		Once()
 
-	repo.EXPECT().Create(mock.Anything, mock.MatchedBy(func(entity *shipment.ShipmentHold) bool {
-		return entity.ShipmentID == shipmentID && entity.Type == holdreason.HoldTypeOperational &&
-			entity.ReasonCode == "APPT_PENDING" &&
-			entity.Severity == overrideSeverity &&
-			entity.VisibleToCustomer == overrideVisible &&
-			entity.BlocksDispatch &&
-			entity.Source == shipment.HoldSourceUser &&
-			entity.StartedAt == startedAt &&
-			entity.CreatedByID != nil &&
-			*entity.CreatedByID == testutil.TestUserID
-	})).RunAndReturn(func(_ context.Context, entity *shipment.ShipmentHold) (*shipment.ShipmentHold, error) {
-		entity.ID = pulid.MustNew("shh_")
-		return entity, nil
-	}).Once()
+	repo.EXPECT().
+		Create(mock.Anything, mock.MatchedBy(func(entity *shipmenthold.ShipmentHold) bool {
+			return entity.ShipmentID == shipmentID &&
+				entity.Type == holdreason.HoldTypeOperational &&
+				entity.ReasonCode == "APPT_PENDING" &&
+				entity.Severity == overrideSeverity &&
+				entity.VisibleToCustomer == overrideVisible &&
+				entity.BlocksDispatch &&
+				entity.Source == shipmenthold.HoldSourceUser &&
+				entity.StartedAt == startedAt &&
+				entity.CreatedByID != nil &&
+				*entity.CreatedByID == testutil.TestUserID
+		})).
+		RunAndReturn(func(_ context.Context, entity *shipmenthold.ShipmentHold) (*shipmenthold.ShipmentHold, error) {
+			entity.ID = pulid.MustNew("shh_")
+			return entity, nil
+		}).
+		Once()
 
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).
 		Run(func(params *auditports.LogActionParams, _ ...auditports.LogOption) {
@@ -139,7 +144,7 @@ func TestUpdate_RejectsReleasedHold(t *testing.T) {
 
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*shipmentholdports.GetShipmentHoldByIDRequest")).
-		Return(&shipment.ShipmentHold{ID: holdID, ShipmentID: shipmentID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Type: holdreason.HoldTypeOperational, Severity: holdreason.HoldSeverityAdvisory, Source: shipment.HoldSourceUser, StartedAt: 100, ReleasedAt: &releasedAt, Version: 1}, nil).
+		Return(&shipmenthold.ShipmentHold{ID: holdID, ShipmentID: shipmentID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Type: holdreason.HoldTypeOperational, Severity: holdreason.HoldSeverityAdvisory, Source: shipmenthold.HoldSourceUser, StartedAt: 100, ReleasedAt: &releasedAt, Version: 1}, nil).
 		Once()
 
 	updated, err := svc.Update(
@@ -191,15 +196,18 @@ func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*shipmentholdports.GetShipmentHoldByIDRequest")).
-		Return(&shipment.ShipmentHold{ID: holdID, ShipmentID: shipmentID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Type: holdreason.HoldTypeOperational, Severity: holdreason.HoldSeverityBlocking, Source: shipment.HoldSourceUser, StartedAt: 100, Version: 1}, nil).
+		Return(&shipmenthold.ShipmentHold{ID: holdID, ShipmentID: shipmentID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Type: holdreason.HoldTypeOperational, Severity: holdreason.HoldSeverityBlocking, Source: shipmenthold.HoldSourceUser, StartedAt: 100, Version: 1}, nil).
 		Once()
 
-	repo.EXPECT().Release(mock.Anything, mock.MatchedBy(func(entity *shipment.ShipmentHold) bool {
-		return entity.ReleasedAt != nil && entity.ReleasedByID != nil &&
-			*entity.ReleasedByID == testutil.TestUserID
-	})).RunAndReturn(func(_ context.Context, entity *shipment.ShipmentHold) (*shipment.ShipmentHold, error) {
-		return entity, nil
-	}).Once()
+	repo.EXPECT().
+		Release(mock.Anything, mock.MatchedBy(func(entity *shipmenthold.ShipmentHold) bool {
+			return entity.ReleasedAt != nil && entity.ReleasedByID != nil &&
+				*entity.ReleasedByID == testutil.TestUserID
+		})).
+		RunAndReturn(func(_ context.Context, entity *shipmenthold.ShipmentHold) (*shipmenthold.ShipmentHold, error) {
+			return entity, nil
+		}).
+		Once()
 
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).
 		Run(func(params *auditports.LogActionParams, _ ...auditports.LogOption) {

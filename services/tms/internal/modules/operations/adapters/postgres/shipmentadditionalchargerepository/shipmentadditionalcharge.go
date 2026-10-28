@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -160,7 +161,7 @@ func (r *repository) linkDetentionOccurrences(
 
 func (r *repository) reconcileHeaderTotals(ctx context.Context, entity *shipment.Shipment) error {
 	freight := entity.FreightChargeAmount.Decimal
-	totals, err := shipment.AdditionalChargeTotals(ctx, entity.AdditionalCharges, freight)
+	totals, err := chargeallocation.AdditionalChargeTotals(ctx, entity.AdditionalCharges, freight)
 	if err != nil {
 		return err
 	}

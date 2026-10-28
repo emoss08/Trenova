@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
@@ -29,7 +30,7 @@ func (s *service) activePermitHold(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	reason *holdreason.HoldReason,
-) *shipment.ShipmentHold {
+) *shipmenthold.ShipmentHold {
 	result, err := s.holdRepo.ListByShipmentID(ctx, &shipmentholdports.ListShipmentHoldsRequest{
 		ShipmentID: entity.ID,
 		Filter: &pagination.QueryOptions{
@@ -108,7 +109,7 @@ func (s *service) reconcileHold(
 	}
 
 	reasonID := reason.ID
-	hold := &shipment.ShipmentHold{
+	hold := &shipmenthold.ShipmentHold{
 		ShipmentID:        entity.ID,
 		OrganizationID:    entity.OrganizationID,
 		BusinessUnitID:    entity.BusinessUnitID,
@@ -117,7 +118,7 @@ func (s *service) reconcileHold(
 		Severity:          holdreason.HoldSeverityBlocking,
 		ReasonCode:        PermitRequiredHoldCode,
 		Notes:             notes,
-		Source:            shipment.HoldSourceRule,
+		Source:            shipmenthold.HoldSourceRule,
 		BlocksDispatch:    true,
 		VisibleToCustomer: false,
 		StartedAt:         timeutils.NowUnix(),

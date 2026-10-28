@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
@@ -149,7 +150,7 @@ func (r *Repository) QuickFilterTotals(
 func quickFilterTotalsQuery(
 	q *keel.Query[*shipment.Shipment],
 	basis *shipmentports.ShipmentQuickFilterBasis,
-	filters []shipment.QuickFilterSpec,
+	filters []quickfilter.QuickFilterSpec,
 ) (*keel.Query[*shipment.Shipment], error) {
 	counts := make([]keel.Int64Value, 0, len(filters))
 	revenues := make([]keel.StringValue, 0, len(filters))

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
@@ -232,7 +233,7 @@ func (c *Calculator) calculateCommercialTotals(
 		}
 	}
 
-	other, err := shipment.AdditionalChargeTotals(ctx, entity.AdditionalCharges, freight)
+	other, err := chargeallocation.AdditionalChargeTotals(ctx, entity.AdditionalCharges, freight)
 	if err != nil {
 		return nil, err
 	}
@@ -626,7 +627,7 @@ func nonFuelSurchargeChargeTotal(
 		charges = append(charges, charge)
 	}
 
-	totals, err := shipment.AdditionalChargeTotals(ctx, charges, baseCharge)
+	totals, err := chargeallocation.AdditionalChargeTotals(ctx, charges, baseCharge)
 	if err != nil {
 		return decimal.Zero, err
 	}

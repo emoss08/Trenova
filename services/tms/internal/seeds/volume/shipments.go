@@ -11,20 +11,18 @@ import (
 	_ "time/tzdata"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
-
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecalculation"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
@@ -32,6 +30,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -125,7 +126,7 @@ type shpBatch struct {
 	comments           []*shipment.ShipmentComment
 	mentions           []*shipment.ShipmentCommentMention
 	acks               []*shipment.ShipmentCommentAcknowledgment
-	holds              []*shipment.ShipmentHold
+	holds              []*shipmenthold.ShipmentHold
 	releases           []shpRelease
 	checkCalls         []*checkcall.CheckCall
 	stamps             map[string][]stamp
@@ -245,7 +246,9 @@ func (g *generator) shpLoadLookups(ctx context.Context) (*shpLookups, error) {
 	}
 
 	et := equipmenttypedb.EquipmentTypes
-	equipment, err := et.Where(et.Status.Eq(domaintypes.StatusActive)).Order(et.ID.Asc()).All(ctx, g.db)
+	equipment, err := et.Where(et.Status.Eq(domaintypes.StatusActive)).
+		Order(et.ID.Asc()).
+		All(ctx, g.db)
 	if err != nil {
 		return nil, fmt.Errorf("load equipment types: %w", err)
 	}
@@ -267,7 +270,9 @@ func (g *generator) shpLoadLookups(ctx context.Context) (*shpLookups, error) {
 	}
 
 	st := servicetypedb.ServiceTypes
-	services, err := st.Pick(st.ID, st.Code).Where(st.Status.Eq(domaintypes.StatusActive)).All(ctx, g.db)
+	services, err := st.Pick(st.ID, st.Code).
+		Where(st.Status.Eq(domaintypes.StatusActive)).
+		All(ctx, g.db)
 	if err != nil {
 		return nil, fmt.Errorf("load service types: %w", err)
 	}
@@ -276,7 +281,9 @@ func (g *generator) shpLoadLookups(ctx context.Context) (*shpLookups, error) {
 	}
 
 	sht := shipmenttypedb.ShipmentTypes
-	types, err := sht.Pick(sht.ID, sht.Code).Where(sht.Status.Eq(domaintypes.StatusActive)).All(ctx, g.db)
+	types, err := sht.Pick(sht.ID, sht.Code).
+		Where(sht.Status.Eq(domaintypes.StatusActive)).
+		All(ctx, g.db)
 	if err != nil {
 		return nil, fmt.Errorf("load shipment types: %w", err)
 	}
@@ -493,7 +500,10 @@ func (b *shpBuilder) lane(c *customerRecord) shpLane {
 			} else {
 				origin = pick(f, b.shippers)
 			}
-			lanes = append(lanes, shpLane{origin: origin, dest: b.farLocation(b.consignees, origin)})
+			lanes = append(
+				lanes,
+				shpLane{origin: origin, dest: b.farLocation(b.consignees, origin)},
+			)
 		}
 		b.lanes[c.ID] = lanes
 	}
@@ -733,7 +743,10 @@ func (b *shpBuilder) schedule(p *shpPlan) [][]*shpTimedStop {
 			case s == 0 && m == 0:
 				ts.arrival = ts.windowStart + b.lateness()
 			case s == 0:
-				ts.arrival = max(actualDeparture+f.between64(shpHour, 6*shpHour), ts.windowStart+b.lateness())
+				ts.arrival = max(
+					actualDeparture+f.between64(shpHour, 6*shpHour),
+					ts.windowStart+b.lateness(),
+				)
 			default:
 				drive := int64(float64(driveSeconds(ts.miles, p.team)) * (0.92 + f.float()*0.25))
 				ts.arrival = max(actualDeparture+drive, ts.windowStart-f.between64(0, 45*shpMinute))
@@ -920,11 +933,16 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 	bol := f.digits(10)
 
 	entity := &shipment.Shipment{
-		ID:                  shipmentID,
-		BusinessUnitID:      buID,
-		OrganizationID:      orgID,
-		ServiceTypeID:       pickID(f, b.look.serviceTypes, p.serviceCode, refs.serviceTypes),
-		ShipmentTypeID:      pickID(f, b.look.shipmentTypes, b.shipmentTypeCode(p), refs.shipmentTypes),
+		ID:             shipmentID,
+		BusinessUnitID: buID,
+		OrganizationID: orgID,
+		ServiceTypeID:  pickID(f, b.look.serviceTypes, p.serviceCode, refs.serviceTypes),
+		ShipmentTypeID: pickID(
+			f,
+			b.look.shipmentTypes,
+			b.shipmentTypeCode(p),
+			refs.shipmentTypes,
+		),
 		CustomerID:          p.customer.ID,
 		TractorTypeID:       b.look.tractorTypeID,
 		TrailerTypeID:       b.trailerType(b.trailerKind(p)),
@@ -1210,7 +1228,8 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 			if a.AckAt != nil {
 				assignUpdated = *a.AckAt
 			}
-			if move.Status == shipment.MoveStatusCompleted || move.Status == shipment.MoveStatusInTransit {
+			if move.Status == shipment.MoveStatusCompleted ||
+				move.Status == shipment.MoveStatusInTransit {
 				assignUpdated = max(assignUpdated, lastActual)
 			}
 			batch.assignments = append(batch.assignments, a)
@@ -1450,7 +1469,11 @@ func (b *shpBuilder) price(
 	case stops > 2 && !p.relay && roll < 0.5 && b.template(formulatemplate.StandardPerStop) != nil:
 		tmpl = b.template(formulatemplate.StandardPerStop)
 		baseRate = decimal.NewFromFloat(target / float64(stops)).Round(2)
-		unit = shpRateUnit{quantity: decimal.NewFromInt(int64(stops)), quantityUnit: "stop", rate: "/stop"}
+		unit = shpRateUnit{
+			quantity:     decimal.NewFromInt(int64(stops)),
+			quantityUnit: "stop",
+			rate:         "/stop",
+		}
 	case miles*rpm >= shpMinimumPrice && roll < 0.6 && b.template(formulatemplate.StandardPerMile) != nil:
 		tmpl = b.template(formulatemplate.StandardPerMile)
 		baseRate = decimal.NewFromFloat(rpm).Round(2)
@@ -1677,7 +1700,11 @@ func (b *shpBuilder) comments(
 	timeline [][]*shpTimedStop,
 ) {
 	f := b.g.fake
-	count := int(math.Round(float64(shpCountValues[f.weighted(shpCountWeights)]) * b.g.scale.commentRate / 2.4))
+	count := int(
+		math.Round(
+			float64(shpCountValues[f.weighted(shpCountWeights)]) * b.g.scale.commentRate / 2.4,
+		),
+	)
 	if count == 0 {
 		return
 	}
@@ -1687,7 +1714,13 @@ func (b *shpBuilder) comments(
 	last := lastMove[len(lastMove)-1]
 	origin := first.plan.loc
 	dest := last.plan.loc
-	lane := fmt.Sprintf("%s, %s → %s, %s", origin.City.Name, origin.City.State, dest.City.Name, dest.City.State)
+	lane := fmt.Sprintf(
+		"%s, %s → %s, %s",
+		origin.City.Name,
+		origin.City.State,
+		dest.City.Name,
+		dest.City.State,
+	)
 	commodity := p.commodities[0].commodity.Name
 	charged := make(map[string]bool, len(rec.Charges))
 	for _, c := range rec.Charges {
@@ -1731,22 +1764,47 @@ func (b *shpBuilder) comments(
 			if !last.appointment {
 				return
 			}
-			addSpec(shipment.CommentTypeAppointment, shipment.CommentVisibilityOperations,
-				shipment.CommentPriorityNormal, rec.CreatedAt, preEnd,
-				fmt.Sprintf("%s set the delivery appointment for %s. Driver to call 30 minutes out.",
-					dest.Name, deliveryAppt))
+			addSpec(
+				shipment.CommentTypeAppointment,
+				shipment.CommentVisibilityOperations,
+				shipment.CommentPriorityNormal,
+				rec.CreatedAt,
+				preEnd,
+				fmt.Sprintf(
+					"%s set the delivery appointment for %s. Driver to call 30 minutes out.",
+					dest.Name,
+					deliveryAppt,
+				),
+			)
 		},
 		func() {
-			addSpec(shipment.CommentTypePickupInstruction, shipment.CommentVisibilityDriver,
-				shipment.CommentPriorityNormal, rec.CreatedAt, preEnd,
-				fmt.Sprintf("PPE required at %s: vest, hard hat and steel toes. Check in at the guard shack%s.",
-					origin.Name, shpPORef(" with PO ", rec.PONumber, "")))
+			addSpec(
+				shipment.CommentTypePickupInstruction,
+				shipment.CommentVisibilityDriver,
+				shipment.CommentPriorityNormal,
+				rec.CreatedAt,
+				preEnd,
+				fmt.Sprintf(
+					"PPE required at %s: vest, hard hat and steel toes. Check in at the guard shack%s.",
+					origin.Name,
+					shpPORef(" with PO ", rec.PONumber, ""),
+				),
+			)
 		},
 		func() {
-			addSpec(shipment.CommentTypePickupInstruction, shipment.CommentVisibilityDriver,
-				shipment.CommentPriorityNormal, rec.CreatedAt, preEnd,
-				fmt.Sprintf("Shipper load, driver count: %d pieces, %d lbs of %s. Note any exceptions on the BOL.",
-					p.pieces, p.weight, commodity))
+			addSpec(
+				shipment.CommentTypePickupInstruction,
+				shipment.CommentVisibilityDriver,
+				shipment.CommentPriorityNormal,
+				rec.CreatedAt,
+				preEnd,
+				fmt.Sprintf(
+					"Shipper load, driver count: %d pieces, %d lbs of %s. Note any exceptions on the BOL.",
+					p.pieces,
+					p.weight,
+					commodity,
+				),
+			)
 		},
 		func() {
 			addSpec(shipment.CommentTypeDeliveryInstruction, shipment.CommentVisibilityDriver,
@@ -1754,20 +1812,43 @@ func (b *shpBuilder) comments(
 				shpDeliveryInstruction(f, dest, charged))
 		},
 		func() {
-			addSpec(shipment.CommentTypeDispatch, shipment.CommentVisibilityOperations,
-				shipment.CommentPriorityNormal, rec.CreatedAt, preEnd,
-				fmt.Sprintf("Built from tender for %s: %s, %.0f miles.", p.customer.Name, lane, rec.Miles))
+			addSpec(
+				shipment.CommentTypeDispatch,
+				shipment.CommentVisibilityOperations,
+				shipment.CommentPriorityNormal,
+				rec.CreatedAt,
+				preEnd,
+				fmt.Sprintf(
+					"Built from tender for %s: %s, %.0f miles.",
+					p.customer.Name,
+					lane,
+					rec.Miles,
+				),
+			)
 		},
 		func() {
-			addSpec(shipment.CommentTypeInternal, shipment.CommentVisibilityInternal,
-				shipment.CommentPriorityLow, rec.CreatedAt, preEnd,
-				fmt.Sprintf("%s wants proactive updates every 4 hours on this one.", p.customer.Name))
+			addSpec(
+				shipment.CommentTypeInternal,
+				shipment.CommentVisibilityInternal,
+				shipment.CommentPriorityLow,
+				rec.CreatedAt,
+				preEnd,
+				fmt.Sprintf(
+					"%s wants proactive updates every 4 hours on this one.",
+					p.customer.Name,
+				),
+			)
 		},
 		func() {
 			if p.hazmat {
-				addSpec(shipment.CommentTypeCompliance, shipment.CommentVisibilityDriver,
-					shipment.CommentPriorityHigh, rec.CreatedAt, preEnd,
-					"Hazmat load: placards on all four sides, H endorsement required, shipping papers within reach.")
+				addSpec(
+					shipment.CommentTypeCompliance,
+					shipment.CommentVisibilityDriver,
+					shipment.CommentPriorityHigh,
+					rec.CreatedAt,
+					preEnd,
+					"Hazmat load: placards on all four sides, H endorsement required, shipping papers within reach.",
+				)
 			} else if p.reefer {
 				addSpec(shipment.CommentTypePickupInstruction, shipment.CommentVisibilityDriver,
 					shipment.CommentPriorityHigh, rec.CreatedAt, preEnd,
@@ -1786,9 +1867,18 @@ func (b *shpBuilder) comments(
 		}
 		transit = []func(){
 			func() {
-				addSpec(shipment.CommentTypeDriverUpdate, shipment.CommentVisibilityOperations,
-					shipment.CommentPriorityNormal, departed, departed+2*shpHour,
-					fmt.Sprintf("Loaded and rolling from %s, seal %s.", origin.City.Name, f.digits(7)))
+				addSpec(
+					shipment.CommentTypeDriverUpdate,
+					shipment.CommentVisibilityOperations,
+					shipment.CommentPriorityNormal,
+					departed,
+					departed+2*shpHour,
+					fmt.Sprintf(
+						"Loaded and rolling from %s, seal %s.",
+						origin.City.Name,
+						f.digits(7),
+					),
+				)
 			},
 			func() {
 				addSpec(shipment.CommentTypeDriverUpdate, shipment.CommentVisibilityOperations,
@@ -1812,13 +1902,25 @@ func (b *shpBuilder) comments(
 					pick(f, []string{
 						"Tractor down with a DEF sensor fault; road service dispatched, ETA 2 hours.",
 						"Driver out of hours short of the receiver; delivering first thing tomorrow.",
-						fmt.Sprintf("Receiver at %s refused the appointment slot; working a reschedule.", dest.Name),
+						fmt.Sprintf(
+							"Receiver at %s refused the appointment slot; working a reschedule.",
+							dest.Name,
+						),
 					}))
 			},
 			func() {
-				addSpec(shipment.CommentTypeCustomerUpdate, shipment.CommentVisibilityCustomer,
-					shipment.CommentPriorityNormal, departed, transitEnd,
-					fmt.Sprintf("Update sent to %s: in transit, ETA %s.", p.customer.Name, deliveryAppt))
+				addSpec(
+					shipment.CommentTypeCustomerUpdate,
+					shipment.CommentVisibilityCustomer,
+					shipment.CommentPriorityNormal,
+					departed,
+					transitEnd,
+					fmt.Sprintf(
+						"Update sent to %s: in transit, ETA %s.",
+						p.customer.Name,
+						deliveryAppt,
+					),
+				)
 			},
 		}
 		if p.reefer {
@@ -1837,9 +1939,19 @@ func (b *shpBuilder) comments(
 		}
 		post = []func(){
 			func() {
-				addSpec(shipment.CommentTypeDocument, shipment.CommentVisibilityOperations,
-					shipment.CommentPriorityNormal, delivered, delivered+shpDay,
-					fmt.Sprintf("Clean POD signed by %s %s at %s.", f.firstName(), f.lastName(), dest.Name))
+				addSpec(
+					shipment.CommentTypeDocument,
+					shipment.CommentVisibilityOperations,
+					shipment.CommentPriorityNormal,
+					delivered,
+					delivered+shpDay,
+					fmt.Sprintf(
+						"Clean POD signed by %s %s at %s.",
+						f.firstName(),
+						f.lastName(),
+						dest.Name,
+					),
+				)
 			},
 			func() {
 				addSpec(shipment.CommentTypeCustomerUpdate, shipment.CommentVisibilityCustomer,
@@ -1853,10 +1965,18 @@ func (b *shpBuilder) comments(
 			},
 			func() {
 				if charged["DET"] {
-					addSpec(shipment.CommentTypeBilling, shipment.CommentVisibilityAccounting,
-						shipment.CommentPriorityHigh, delivered, postEnd,
-						fmt.Sprintf("Detention at %s approved by %s; added as an accessorial charge.",
-							dest.Name, p.customer.Name))
+					addSpec(
+						shipment.CommentTypeBilling,
+						shipment.CommentVisibilityAccounting,
+						shipment.CommentPriorityHigh,
+						delivered,
+						postEnd,
+						fmt.Sprintf(
+							"Detention at %s approved by %s; added as an accessorial charge.",
+							dest.Name,
+							p.customer.Name,
+						),
+					)
 				}
 			},
 			func() {
@@ -1916,7 +2036,8 @@ func (b *shpBuilder) comments(
 		if spec.typ == shipment.CommentTypeDriverUpdate && f.chance(0.4) {
 			c.Metadata[shipment.CommentMetadataOrigin] = shipment.CommentOriginDash
 		}
-		if entity.EntryMethod == shipment.EntryMethodEDI && spec.typ == shipment.CommentTypeAppointment &&
+		if entity.EntryMethod == shipment.EntryMethodEDI &&
+			spec.typ == shipment.CommentTypeAppointment &&
 			f.chance(0.5) {
 			c.Source = shipment.CommentSourceIntegration
 			c.Metadata[shipment.CommentMetadataOrigin] = shipment.CommentOriginEDI
@@ -1944,8 +2065,11 @@ func (b *shpBuilder) comments(
 						"content": []any{
 							map[string]any{"type": "text", "text": c.Comment + " "},
 							map[string]any{
-								"type":  "mention",
-								"attrs": map[string]any{"id": mentioned.ID.String(), "label": mentioned.Name},
+								"type": "mention",
+								"attrs": map[string]any{
+									"id":    mentioned.ID.String(),
+									"label": mentioned.Name,
+								},
 							},
 							map[string]any{"type": "text", "text": ask},
 						},
@@ -1972,7 +2096,8 @@ func (b *shpBuilder) comments(
 			updated = pinnedAt
 		}
 		if c.Type == shipment.CommentTypeException && c.ParentCommentID == nil {
-			if spec.priority == shipment.CommentPriorityUrgent && c.UserID.IsNotNil() && f.chance(0.5) {
+			if spec.priority == shipment.CommentPriorityUrgent && c.UserID.IsNotNil() &&
+				f.chance(0.5) {
 				c.RequiresAcknowledgment = true
 				seen := map[pulid.ID]bool{c.UserID: true}
 				for range f.between(1, 2) {
@@ -2014,15 +2139,26 @@ func (b *shpBuilder) comments(
 
 func shpDeliveryInstruction(f *faker, dest *locationRecord, charged map[string]bool) string {
 	options := []string{
-		fmt.Sprintf("Receiver at %s unloads doors 12-18 only. No deliveries after 14:00.", dest.Name),
+		fmt.Sprintf(
+			"Receiver at %s unloads doors 12-18 only. No deliveries after 14:00.",
+			dest.Name,
+		),
 		fmt.Sprintf("Seal must stay intact until the receiver at %s breaks it.", dest.Name),
 	}
 	if charged["LUMP"] {
-		options = append(options,
-			fmt.Sprintf("Lumper service at %s. Get a receipt; it bills back to the customer.", dest.Name))
+		options = append(
+			options,
+			fmt.Sprintf(
+				"Lumper service at %s. Get a receipt; it bills back to the customer.",
+				dest.Name,
+			),
+		)
 	}
 	if charged["RESDL"] {
-		options = append(options, fmt.Sprintf("Liftgate needed at %s, no dock available.", dest.Name))
+		options = append(
+			options,
+			fmt.Sprintf("Liftgate needed at %s, no dock available.", dest.Name),
+		)
 	}
 	return pick(f, options)
 }
@@ -2124,12 +2260,17 @@ func (b *shpBuilder) checkCalls(
 				if at <= *prev.ActualDeparture || at >= legEnd {
 					break
 				}
-				share := float64(at-*prev.ActualDeparture) / float64(max(legEnd-*prev.ActualDeparture, 1))
+				share := float64(
+					at-*prev.ActualDeparture,
+				) / float64(
+					max(legEnd-*prev.ActualDeparture, 1),
+				)
 				point := shpNearestCity(from, c, share)
 				add(move, pulid.Nil, checkcall.KindUpdate, at, point)
 				if entity.Status == shipment.StatusDelayed && stop.ActualArrival == nil {
 					last := batch.checkCalls[len(batch.checkCalls)-1]
-					if last.ShipmentID == entity.ID && last.Kind == checkcall.KindUpdate && !last.Delayed {
+					if last.ShipmentID == entity.ID && last.Kind == checkcall.KindUpdate &&
+						!last.Delayed {
 						last.Delayed = true
 						last.DelayReason = pick(f, shpDelayReasons)
 						last.EstimatedArrival = ptr(b.now + f.between64(shpHour, 8*shpHour))
@@ -2172,7 +2313,7 @@ func (b *shpBuilder) holds(batch *shpBatch, entity *shipment.Shipment, rec *ship
 	}
 	reason := pick(f, b.look.holdReasons)
 	author := b.user()
-	h := &shipment.ShipmentHold{
+	h := &shipmenthold.ShipmentHold{
 		ID:                idAt("shh_", started),
 		ShipmentID:        entity.ID,
 		BusinessUnitID:    b.g.refs.buID,
@@ -2182,7 +2323,7 @@ func (b *shpBuilder) holds(batch *shpBatch, entity *shipment.Shipment, rec *ship
 		Severity:          reason.DefaultSeverity,
 		ReasonCode:        reason.Code,
 		Notes:             pick(f, shpHoldNotes),
-		Source:            shipment.HoldSourceUser,
+		Source:            shipmenthold.HoldSourceUser,
 		BlocksDispatch:    reason.DefaultBlocksDispatch,
 		BlocksDelivery:    reason.DefaultBlocksDelivery,
 		BlocksBilling:     reason.DefaultBlocksBilling,
@@ -2192,7 +2333,10 @@ func (b *shpBuilder) holds(batch *shpBatch, entity *shipment.Shipment, rec *ship
 		Version:           1,
 	}
 	if released != nil {
-		batch.releases = append(batch.releases, shpRelease{id: h.ID, at: *released, by: b.user().ID})
+		batch.releases = append(
+			batch.releases,
+			shpRelease{id: h.ID, at: *released, by: b.user().ID},
+		)
 	}
 	batch.holds = append(batch.holds, h)
 	batch.stamp(shpTableHolds, h.ID, started, started)
@@ -2204,28 +2348,61 @@ func (b *shpBuilder) write(ctx context.Context, tx *keel.DB, batch *shpBatch) er
 		rows  int
 		run   func() error
 	}{
-		{shpTableOrders, len(batch.orders), func() error { return insertRows(ctx, tx, orderdb.Orders.Handle, batch.orders) }},
-		{shpTableShipments, len(batch.shipments), func() error { return insertRows(ctx, tx, shipmentdb.Shipments.Handle, batch.shipments) }},
-		{shpTableMoves, len(batch.moves), func() error { return insertRows(ctx, tx, shipmentdb.ShipmentMoves.Handle, batch.moves) }},
-		{shpTableStops, len(batch.stops), func() error { return insertRows(ctx, tx, shipmentdb.Stops.Handle, batch.stops) }},
+		{
+			shpTableOrders,
+			len(batch.orders),
+			func() error { return insertRows(ctx, tx, orderdb.Orders.Handle, batch.orders) },
+		},
+		{
+			shpTableShipments,
+			len(batch.shipments),
+			func() error { return insertRows(ctx, tx, shipmentdb.Shipments.Handle, batch.shipments) },
+		},
+		{
+			shpTableMoves,
+			len(batch.moves),
+			func() error { return insertRows(ctx, tx, shipmentdb.ShipmentMoves.Handle, batch.moves) },
+		},
+		{
+			shpTableStops,
+			len(batch.stops),
+			func() error { return insertRows(ctx, tx, shipmentdb.Stops.Handle, batch.stops) },
+		},
 		{shpTableAssignments, len(batch.assignments), func() error {
 			return insertRows(ctx, tx, shipmentdb.Assignments.Handle, batch.assignments)
 		}},
 		{shpTableCarrierAssignments, len(batch.carrierAssignments), func() error {
-			return insertRows(ctx, tx, shipmentdb.CarrierAssignments.Handle, batch.carrierAssignments)
+			return insertRows(
+				ctx,
+				tx,
+				shipmentdb.CarrierAssignments.Handle,
+				batch.carrierAssignments,
+			)
 		}},
 		{shpTableCommodities, len(batch.commodities), func() error {
 			return insertRows(ctx, tx, shipmentdb.ShipmentCommodities.Handle, batch.commodities)
 		}},
-		{shpTableCharges, len(batch.charges), func() error { return insertRows(ctx, tx, shipmentdb.AdditionalCharges.Handle, batch.charges) }},
-		{shpTableComments, len(batch.comments), func() error { return insertRows(ctx, tx, shipmentdb.ShipmentComments.Handle, batch.comments) }},
+		{
+			shpTableCharges,
+			len(batch.charges),
+			func() error { return insertRows(ctx, tx, shipmentdb.AdditionalCharges.Handle, batch.charges) },
+		},
+		{
+			shpTableComments,
+			len(batch.comments),
+			func() error { return insertRows(ctx, tx, shipmentdb.ShipmentComments.Handle, batch.comments) },
+		},
 		{"shipment_comment_mentions", len(batch.mentions), func() error {
 			return insertRows(ctx, tx, shipmentdb.ShipmentCommentMentions.Handle, batch.mentions)
 		}},
 		{"shipment_comment_acknowledgments", len(batch.acks), func() error {
 			return insertRows(ctx, tx, shipmentdb.ShipmentCommentAcknowledgments.Handle, batch.acks)
 		}},
-		{shpTableHolds, len(batch.holds), func() error { return insertRows(ctx, tx, shipmentdb.ShipmentHolds.Handle, batch.holds) }},
+		{
+			shpTableHolds,
+			len(batch.holds),
+			func() error { return insertRows(ctx, tx, shipmentholddb.ShipmentHolds.Handle, batch.holds) },
+		},
 		{"check_calls", len(batch.checkCalls), func() error {
 			return insertRows(ctx, tx, checkcalldb.CheckCalls.Handle, batch.checkCalls)
 		}},
@@ -2268,7 +2445,7 @@ func (b *shpBuilder) releaseHolds(ctx context.Context, tx *keel.DB, releases []s
 		ats[i] = r.at
 		bys[i] = r.by.String()
 	}
-	sh := shipmentdb.ShipmentHolds
+	sh := shipmentholddb.ShipmentHolds
 	d := keel.Unnest("d", []string{"id", "released_at", "released_by_id"}, ids, ats, bys)
 	if _, err := sh.With(d).Join(d, d.Col("id").EqCol(sh.ID)).Where(keel.True()).Update(
 		ctx,

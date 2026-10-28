@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -63,7 +64,7 @@ func previewUnassignService(
 			context.Context,
 			*shipmentports.GetShipmentByIDRequest,
 		) (*shipment.Shipment, error) {
-			return shipment.CloneForUpdate(original), nil
+			return shipmentcoverage.CloneForUpdate(original), nil
 		}).
 		Once()
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)

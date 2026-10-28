@@ -4,10 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -158,11 +159,11 @@ func TestBuildMoveStatusChangedClassification(t *testing.T) {
 func TestBuildHoldEvents(t *testing.T) {
 	t.Parallel()
 
-	hold := &shipment.ShipmentHold{
+	hold := &shipmenthold.ShipmentHold{
 		ID:         pulid.MustNew("shh_"),
 		ShipmentID: pulid.MustNew("shp_"),
 		Type:       "Operational",
-		Source:     shipment.HoldSourceUser,
+		Source:     shipmenthold.HoldSourceUser,
 	}
 	tenant := newTenant(t)
 

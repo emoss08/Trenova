@@ -1,8 +1,9 @@
-package shipment
+package shipmentrating
 
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
@@ -11,14 +12,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func autoRatedPair(t *testing.T) (*Shipment, *Shipment) {
+func autoRatedPair(t *testing.T) (*shipment.Shipment, *shipment.Shipment) {
 	t.Helper()
 
 	templateID := pulid.MustNew("fmt_")
 	agreementID := pulid.MustNew("ragr_")
 
-	build := func() *Shipment {
-		return &Shipment{
+	build := func() *shipment.Shipment {
+		return &shipment.Shipment{
 			FormulaTemplateID: templateID,
 			TariffInputs: tarifftypes.Inputs{
 				"rate": rules.QuantityValue(decimal.RequireFromString("2.15"), "$/mi"),
@@ -74,8 +75,8 @@ func TestRatedFieldsEdited_ContractAccessorialRepriced(t *testing.T) {
 	chargeID := pulid.MustNew("ac_")
 	accessorialID := pulid.MustNew("raga_")
 
-	contractCharge := func(amount int64) *AdditionalCharge {
-		return &AdditionalCharge{
+	contractCharge := func(amount int64) *shipment.AdditionalCharge {
+		return &shipment.AdditionalCharge{
 			ID:                         chargeID,
 			AccessorialChargeID:        pulid.MustNew("acc_"),
 			IsSystemGenerated:          true,
@@ -86,8 +87,8 @@ func TestRatedFieldsEdited_ContractAccessorialRepriced(t *testing.T) {
 		}
 	}
 
-	original.AdditionalCharges = []*AdditionalCharge{contractCharge(75)}
-	updated.AdditionalCharges = []*AdditionalCharge{contractCharge(25)}
+	original.AdditionalCharges = []*shipment.AdditionalCharge{contractCharge(75)}
+	updated.AdditionalCharges = []*shipment.AdditionalCharge{contractCharge(25)}
 
 	assert.True(t, RatedFieldsEdited(original, updated))
 }
@@ -98,7 +99,7 @@ func TestRatedFieldsEdited_ContractAccessorialRemoved(t *testing.T) {
 	original, updated := autoRatedPair(t)
 	accessorialID := pulid.MustNew("raga_")
 
-	original.AdditionalCharges = []*AdditionalCharge{
+	original.AdditionalCharges = []*shipment.AdditionalCharge{
 		{
 			ID:                         pulid.MustNew("ac_"),
 			IsSystemGenerated:          true,
@@ -120,7 +121,7 @@ func TestRatedFieldsEdited_IgnoresAChargeAddedByHand(t *testing.T) {
 	t.Parallel()
 
 	original, updated := autoRatedPair(t)
-	updated.AdditionalCharges = []*AdditionalCharge{
+	updated.AdditionalCharges = []*shipment.AdditionalCharge{
 		{
 			ID:                  pulid.MustNew("ac_"),
 			AccessorialChargeID: pulid.MustNew("acc_"),
@@ -142,8 +143,8 @@ func TestRatedFieldsEdited_IgnoresOtherEnginesCharges(t *testing.T) {
 	programID := pulid.MustNew("fsp_")
 	chargeID := pulid.MustNew("ac_")
 
-	fuelCharge := func(amount int64) *AdditionalCharge {
-		return &AdditionalCharge{
+	fuelCharge := func(amount int64) *shipment.AdditionalCharge {
+		return &shipment.AdditionalCharge{
 			ID:                     chargeID,
 			IsSystemGenerated:      true,
 			Method:                 accessorialcharge.MethodFlat,
@@ -153,8 +154,8 @@ func TestRatedFieldsEdited_IgnoresOtherEnginesCharges(t *testing.T) {
 		}
 	}
 
-	original.AdditionalCharges = []*AdditionalCharge{fuelCharge(120)}
-	updated.AdditionalCharges = []*AdditionalCharge{fuelCharge(140)}
+	original.AdditionalCharges = []*shipment.AdditionalCharge{fuelCharge(120)}
+	updated.AdditionalCharges = []*shipment.AdditionalCharge{fuelCharge(140)}
 
 	assert.False(t, RatedFieldsEdited(original, updated))
 }
@@ -176,34 +177,12 @@ func TestRestoreRateOwnedFields_ReSeatsTheAutoRatedMarker(t *testing.T) {
 	t.Parallel()
 
 	ratedAt := int64(7300)
-	original := &Shipment{AutoRated: true, AutoRatedAt: &ratedAt, RateLocked: true}
-	updated := &Shipment{}
+	original := &shipment.Shipment{AutoRated: true, AutoRatedAt: &ratedAt, RateLocked: true}
+	updated := &shipment.Shipment{}
 
 	RestoreRateOwnedFields(original, updated)
 
 	assert.True(t, updated.AutoRated)
 	assert.Equal(t, &ratedAt, updated.AutoRatedAt)
 	assert.True(t, updated.RateLocked)
-}
-
-func TestClearAutoRating(t *testing.T) {
-	t.Parallel()
-
-	ratedAt := int64(7300)
-	entity := &Shipment{AutoRated: true, AutoRatedAt: &ratedAt}
-
-	entity.ClearAutoRating()
-
-	assert.False(t, entity.AutoRated)
-	assert.Nil(t, entity.AutoRatedAt)
-}
-
-func TestMarkAutoRated(t *testing.T) {
-	t.Parallel()
-
-	entity := &Shipment{}
-	entity.MarkAutoRated(7300)
-
-	assert.True(t, entity.AutoRated)
-	assert.Equal(t, int64(7300), *entity.AutoRatedAt)
 }

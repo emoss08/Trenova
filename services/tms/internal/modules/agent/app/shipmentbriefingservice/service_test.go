@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
@@ -50,7 +50,7 @@ func TestDeterministicWording(t *testing.T) {
 		joined(segments),
 	)
 	require.NotNil(t, segments[0].Filter)
-	assert.Equal(t, shipment.QuickFilterDeliveringToday, *segments[0].Filter)
+	assert.Equal(t, quickfilter.QuickFilterDeliveringToday, *segments[0].Filter)
 
 	single := Deterministic(Facts{
 		Facts:         shipmentbrief.Facts{DeliveringToday: 1, Late: 1, Uncovered: 1},
@@ -86,17 +86,17 @@ func TestDeterministicWording(t *testing.T) {
 		"4 loads are moving on schedule. 1 load still needs a driver, 2 loads are accruing detention and 6 loads are ready to bill.",
 		joined(followUps),
 	)
-	linkedTo := make([]shipment.QuickFilter, 0, len(followUps))
+	linkedTo := make([]quickfilter.QuickFilter, 0, len(followUps))
 	for _, segment := range followUps {
 		if segment.Filter != nil {
 			linkedTo = append(linkedTo, *segment.Filter)
 		}
 	}
-	assert.Equal(t, []shipment.QuickFilter{
-		shipment.QuickFilterMoving,
-		shipment.QuickFilterUncovered,
-		shipment.QuickFilterDetention,
-		shipment.QuickFilterReadyToBill,
+	assert.Equal(t, []quickfilter.QuickFilter{
+		quickfilter.QuickFilterMoving,
+		quickfilter.QuickFilterUncovered,
+		quickfilter.QuickFilterDetention,
+		quickfilter.QuickFilterReadyToBill,
 	}, linkedTo)
 }
 
@@ -105,8 +105,8 @@ func TestAcceptNarration(t *testing.T) {
 
 	facts := &Facts{Facts: shipmentbrief.Facts{DeliveringToday: 140, Late: 32, Uncovered: 3}}
 	allowed := facts.Filters()
-	late := shipment.QuickFilterLate
-	moving := shipment.QuickFilterMoving
+	late := quickfilter.QuickFilterLate
+	moving := quickfilter.QuickFilterMoving
 
 	good := []shipmentbriefports.ShipmentBriefingSegment{
 		{Text: "32 late loads", Filter: &late},
@@ -163,7 +163,7 @@ func (*stubBasis) Prepare(
 
 type stubBoard struct {
 	shipmentboardports.ShipmentBoardRepository
-	counts map[shipment.QuickFilter]int
+	counts map[quickfilter.QuickFilter]int
 }
 
 func (b *stubBoard) QuickFilterTotals(
@@ -297,12 +297,12 @@ type fixture struct {
 	candidates *stubCandidates
 }
 
-func defaultCounts() map[shipment.QuickFilter]int {
-	return map[shipment.QuickFilter]int{
-		shipment.QuickFilterDeliveringToday: 30,
-		shipment.QuickFilterMoving:          12,
-		shipment.QuickFilterLate:            0,
-		shipment.QuickFilterUncovered:       4,
+func defaultCounts() map[quickfilter.QuickFilter]int {
+	return map[quickfilter.QuickFilter]int{
+		quickfilter.QuickFilterDeliveringToday: 30,
+		quickfilter.QuickFilterMoving:          12,
+		quickfilter.QuickFilterLate:            0,
+		quickfilter.QuickFilterUncovered:       4,
 	}
 }
 
@@ -380,7 +380,7 @@ func TestBriefingUsesGuardedNarration(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, briefing.Narrated)
 	require.Len(t, briefing.Segments, 2)
-	assert.Equal(t, shipment.QuickFilterUncovered, *briefing.Segments[0].Filter)
+	assert.Equal(t, quickfilter.QuickFilterUncovered, *briefing.Segments[0].Filter)
 	assert.Nil(t, briefing.Segments[1].Filter)
 
 	lying := newService(stubCompletion{
@@ -412,7 +412,7 @@ func TestBriefingIsWrittenOnceAndThenRead(t *testing.T) {
 	assert.Equal(t, 1, first.Generation)
 	modelCalls := calls
 
-	f.board.counts[shipment.QuickFilterMoving] = 99
+	f.board.counts[quickfilter.QuickFilterMoving] = 99
 	second, err := f.service.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	assert.Equal(t, modelCalls, calls, "reading the day's brief asks the model nothing")
@@ -428,13 +428,13 @@ func TestBriefingIsRewrittenWhenTheBoardIsCleared(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, f.briefs.rows, 1)
 
-	f.board.counts[shipment.QuickFilterLate] = 1
-	f.board.counts[shipment.QuickFilterUncovered] = 0
+	f.board.counts[quickfilter.QuickFilterLate] = 1
+	f.board.counts[quickfilter.QuickFilterUncovered] = 0
 	_, err = f.service.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	assert.Len(t, f.briefs.rows, 1, "a board with an issue still open keeps its brief")
 
-	f.board.counts[shipment.QuickFilterLate] = 0
+	f.board.counts[quickfilter.QuickFilterLate] = 0
 	cleared, err := f.service.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	require.Len(t, f.briefs.rows, 2)
@@ -451,7 +451,7 @@ func TestBriefingCountsOpenSuggestionsAsIssues(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured})
-	f.board.counts[shipment.QuickFilterUncovered] = 0
+	f.board.counts[quickfilter.QuickFilterUncovered] = 0
 	f.candidates.items = []*shipmentsuggestionports.ShipmentSuggestion{
 		{Key: "a", Title: "Approve detention"},
 	}
@@ -475,7 +475,7 @@ func TestBriefingStopsRewritingAfterTheDaysLimit(t *testing.T) {
 	require.NoError(t, err)
 	f.briefs.rows[0].Generation = maxGenerationsPerDay
 
-	f.board.counts[shipment.QuickFilterUncovered] = 0
+	f.board.counts[quickfilter.QuickFilterUncovered] = 0
 	_, err = f.service.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	assert.Len(t, f.briefs.rows, 1)
@@ -578,7 +578,7 @@ func TestOutputSchemaAsksForSegmentsLinkedToAllowedFilters(t *testing.T) {
 	t.Parallel()
 
 	schema := outputSchema(
-		[]shipment.QuickFilter{shipment.QuickFilterLate, shipment.QuickFilterMoving},
+		[]quickfilter.QuickFilter{quickfilter.QuickFilterLate, quickfilter.QuickFilterMoving},
 	)
 
 	assert.Equal(t, map[string]any{

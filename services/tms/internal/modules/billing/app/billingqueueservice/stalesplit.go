@@ -3,6 +3,7 @@ package billingqueueservice
 import (
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,7 +34,7 @@ func accessorialNames(charges []*shipment.AdditionalCharge) map[pulid.ID]string 
 // that no longer adds up. Each stale charge is named with what its split totals
 // and what the charge is now.
 func staleAmountSplitError(
-	stale []shipment.StaleAmountSplit,
+	stale []chargeallocation.StaleAmountSplit,
 	names map[pulid.ID]string,
 ) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
@@ -50,8 +51,8 @@ func staleAmountSplitError(
 			errortypes.ErrInvalidOperation,
 			"The {0} split no longer adds up: the payer amounts total {1} but the charge is now {2}. Convert the split to percentages to keep each payer's proportion, or change the split on the shipment.",
 			charge,
-			split.AllocatedTotal.StringFixed(shipment.SharePlaces),
-			split.ChargeTotal.StringFixed(shipment.SharePlaces),
+			split.AllocatedTotal.StringFixed(chargeallocation.SharePlaces),
+			split.ChargeTotal.StringFixed(chargeallocation.SharePlaces),
 		)
 	}
 

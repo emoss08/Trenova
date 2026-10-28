@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
@@ -122,7 +123,7 @@ var tableBackdates = map[string]tableBackdate{
 	"shipment_comment_mentions": backdater(shipmentdb.ShipmentCommentMentions.Handle),
 	"shipment_comments":         backdater(shipmentdb.ShipmentComments.Handle),
 	"shipment_commodities":      backdater(shipmentdb.ShipmentCommodities.Handle),
-	"shipment_holds":            backdater(shipmentdb.ShipmentHolds.Handle),
+	"shipment_holds":            backdater(shipmentholddb.ShipmentHolds.Handle),
 	"shipment_moves":            backdater(shipmentdb.ShipmentMoves.Handle),
 	"shipments":                 backdater(shipmentdb.Shipments.Handle),
 	"stops":                     backdater(shipmentdb.Stops.Handle),

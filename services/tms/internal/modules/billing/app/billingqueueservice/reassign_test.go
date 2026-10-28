@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -150,15 +151,19 @@ func TestReconcileQueueItems_CreatesForNewPayersAndCancelsForPayersWithNothing(t
 
 	f := newSplitShipment()
 	carrier := pulid.MustNew("cus_")
-	resolution := &shipment.ShareResolution{Shares: []*shipment.PayerShare{
+	resolution := &chargeallocation.ShareResolution{Shares: []*chargeallocation.PayerShare{
 		{PayerID: f.acme},
 		{
 			PayerID: f.peak,
-			Charges: []shipment.AllocatedCharge{{Kind: shipment.ChargeAllocationKindFreight}},
+			Charges: []chargeallocation.AllocatedCharge{
+				{Kind: shipment.ChargeAllocationKindFreight},
+			},
 		},
 		{
 			PayerID: carrier,
-			Charges: []shipment.AllocatedCharge{{Kind: shipment.ChargeAllocationKindAccessorial}},
+			Charges: []chargeallocation.AllocatedCharge{
+				{Kind: shipment.ChargeAllocationKindAccessorial},
+			},
 		},
 	}}
 
@@ -662,7 +667,11 @@ func TestUpdateCharges_ConvertsAStaleAmountSplitWhenAsked(t *testing.T) {
 	stale := cloneShipment(f.shipment)
 	stale.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(3000))
 
-	rebalance, err := shipment.RebalanceAmountSplits(t.Context(), stale, stale.ChargeAllocations)
+	rebalance, err := chargeallocation.RebalanceAmountSplits(
+		t.Context(),
+		stale,
+		stale.ChargeAllocations,
+	)
 	require.NoError(t, err)
 	refused := staleAmountSplitError(rebalance.Stale, accessorialNames(stale.AdditionalCharges))
 	require.Len(t, refused.Errors, 1)
@@ -670,7 +679,11 @@ func TestUpdateCharges_ConvertsAStaleAmountSplitWhenAsked(t *testing.T) {
 	assert.Contains(t, refused.Error(), "total 2850.00 but the charge is now 3000.00")
 
 	assert.Equal(t, 1, rebalance.ConvertToPercent())
-	after, err := shipment.RebalanceAmountSplits(t.Context(), stale, stale.ChargeAllocations)
+	after, err := chargeallocation.RebalanceAmountSplits(
+		t.Context(),
+		stale,
+		stale.ChargeAllocations,
+	)
 	require.NoError(t, err)
 	assert.Empty(t, after.Stale)
 	assert.Equal(

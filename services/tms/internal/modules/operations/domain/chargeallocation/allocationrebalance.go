@@ -1,16 +1,17 @@
-package shipment
+package chargeallocation
 
 import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
 type StaleAmountSplit struct {
-	Kind               ChargeAllocationKind
+	Kind               shipment.ChargeAllocationKind
 	AdditionalChargeID pulid.ID
 	ChargeIndex        int
 	AllocatedTotal     decimal.Decimal
@@ -18,7 +19,7 @@ type StaleAmountSplit struct {
 }
 
 type splitConversion struct {
-	rows     []*ChargeAllocation
+	rows     []*shipment.ChargeAllocation
 	percents []decimal.NullDecimal
 }
 
@@ -41,7 +42,7 @@ func (r *AmountSplitRebalance) ConvertToPercent() int {
 			if i >= len(conversion.percents) || !conversion.percents[i].Valid {
 				continue
 			}
-			row.Method = ChargeAllocationMethodPercent
+			row.Method = shipment.ChargeAllocationMethodPercent
 			row.Percent = conversion.percents[i]
 			row.Amount = decimal.NullDecimal{}
 		}
@@ -51,16 +52,16 @@ func (r *AmountSplitRebalance) ConvertToPercent() int {
 }
 
 type splitGroup struct {
-	kind        ChargeAllocationKind
+	kind        shipment.ChargeAllocationKind
 	chargeID    pulid.ID
 	chargeIndex int
-	rows        []*ChargeAllocation
+	rows        []*shipment.ChargeAllocation
 }
 
 func RebalanceAmountSplits(
 	ctx context.Context,
-	shp *Shipment,
-	allocations []*ChargeAllocation,
+	shp *shipment.Shipment,
+	allocations []*shipment.ChargeAllocation,
 ) (*AmountSplitRebalance, error) {
 	if shp == nil {
 		return &AmountSplitRebalance{}, nil
@@ -74,7 +75,7 @@ func RebalanceAmountSplits(
 	}
 	if len(freightRows) > 0 {
 		groups = append(groups, splitGroup{
-			kind:        ChargeAllocationKindFreight,
+			kind:        shipment.ChargeAllocationKindFreight,
 			chargeIndex: -1,
 			rows:        freightRows,
 		})
@@ -90,7 +91,7 @@ func RebalanceAmountSplits(
 		}
 		rows := byCharge[charge.ID]
 		groups = append(groups, splitGroup{
-			kind:        ChargeAllocationKindAccessorial,
+			kind:        shipment.ChargeAllocationKindAccessorial,
 			chargeID:    charge.ID,
 			chargeIndex: i,
 			rows:        rows,

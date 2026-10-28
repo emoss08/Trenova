@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking/customertrackingdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
@@ -199,7 +200,7 @@ func (r *factRepository) CustomerVisibleHolds(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]customertrackingports.PublicHold, error) {
-			hc := shipmentdb.ShipmentHolds
+			hc := shipmentholddb.ShipmentHolds
 			hr := holdreasondb.HoldReasons
 			rows, err := keel.Into[customertrackingports.PublicHold](ctx, r.db.Keel(ctx), hc.
 				LeftJoin(hr, hr.ID.EqCol(hc.HoldReasonID)).

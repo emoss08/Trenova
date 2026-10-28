@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,7 +50,7 @@ func (f *fakeReassigner) PreviewReassignCharge(
 	req *billingqueueports.ReassignChargeRequest,
 	_ *permissionports.RequestActor,
 ) (*billingqueueports.ReassignChargePreview, error) {
-	share := &shipment.PayerShare{
+	share := &chargeallocation.PayerShare{
 		PayerID:       req.Allocations[0].BillToCustomerID,
 		FreightAmount: decimal.RequireFromString("900"),
 		TotalAmount:   decimal.RequireFromString("900"),
@@ -59,8 +60,8 @@ func (f *fakeReassigner) PreviewReassignCharge(
 		Item:        &billingqueue.BillingQueueItem{ID: req.ItemID},
 		Shipment:    &shipment.Shipment{ProNumber: "PRO-4040"},
 		Description: "Freight",
-		Shares:      []*shipment.PayerShare{share},
-		ToCreate:    []*shipment.PayerShare{share},
+		Shares:      []*chargeallocation.PayerShare{share},
+		ToCreate:    []*chargeallocation.PayerShare{share},
 		ToCancel:    []*billingqueue.BillingQueueItem{f.canceled},
 	}, nil
 }

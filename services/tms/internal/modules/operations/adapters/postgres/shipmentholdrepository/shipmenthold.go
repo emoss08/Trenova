@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -46,24 +46,24 @@ func New(p Params) shipmentholdports.ShipmentHoldRepository {
 	}
 }
 
-func holdQuery() *keel.Query[*shipment.ShipmentHold] {
-	h := shipmentdb.ShipmentHolds
+func holdQuery() *keel.Query[*shipmenthold.ShipmentHold] {
+	h := shipmentholddb.ShipmentHolds
 	return h.Load(h.HoldReason(), h.CreatedBy(), h.ReleasedBy())
 }
 
 func (r *repository) ListByShipmentID(
 	ctx context.Context,
 	req *shipmentholdports.ListShipmentHoldsRequest,
-) (*pagination.ListResult[*shipment.ShipmentHold], error) {
+) (*pagination.ListResult[*shipmenthold.ShipmentHold], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*shipment.ShipmentHold], error) {
+		func(ctx context.Context) (*pagination.ListResult[*shipmenthold.ShipmentHold], error) {
 			if req.Filter.Pagination.Limit <= 0 {
 				req.Filter.Pagination.Limit = defaultHoldLimit
 			}
 
-			h := shipmentdb.ShipmentHolds
+			h := shipmentholddb.ShipmentHolds
 			counted := h.Where(h.ShipmentID.Eq(req.ShipmentID))
 			rows := holdQuery().
 				Where(h.ShipmentID.Eq(req.ShipmentID)).
@@ -75,7 +75,7 @@ func (r *repository) ListByShipmentID(
 				Limit(req.Filter.Pagination.Limit).
 				Offset(req.Filter.Pagination.Offset)
 
-			var holds []*shipment.ShipmentHold
+			var holds []*shipmenthold.ShipmentHold
 			var total keel.RowCount
 			if err := keel.Batch(
 				ctx,
@@ -94,9 +94,9 @@ func (r *repository) ListByShipmentID(
 func (r *repository) GetByID(
 	ctx context.Context,
 	req *shipmentholdports.GetShipmentHoldByIDRequest,
-) (*shipment.ShipmentHold, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentHold, error) {
-		h := shipmentdb.ShipmentHolds
+) (*shipmenthold.ShipmentHold, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmenthold.ShipmentHold, error) {
+		h := shipmentholddb.ShipmentHolds
 		entity, err := holdQuery().
 			Where(h.ID.Eq(req.HoldID), h.ShipmentID.Eq(req.ShipmentID)).
 			One(ctx, r.db.Keel(ctx))
@@ -110,10 +110,10 @@ func (r *repository) GetByID(
 
 func (r *repository) Create(
 	ctx context.Context,
-	entity *shipment.ShipmentHold,
-) (*shipment.ShipmentHold, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentHold, error) {
-		if err := shipmentdb.ShipmentHolds.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *shipmenthold.ShipmentHold,
+) (*shipmenthold.ShipmentHold, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipmenthold.ShipmentHold, error) {
+		if err := shipmentholddb.ShipmentHolds.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) &&
 				dberror.ExtractConstraintName(err) == activeHoldByTypeIndex {
 				return nil, errortypes.NewBusinessError("Shipment already has an active hold of this type").
@@ -135,10 +135,10 @@ func (r *repository) Create(
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *shipment.ShipmentHold,
-) (*shipment.ShipmentHold, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentHold, error) {
-		h := shipmentdb.ShipmentHolds
+	entity *shipmenthold.ShipmentHold,
+) (*shipmenthold.ShipmentHold, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipmenthold.ShipmentHold, error) {
+		h := shipmentholddb.ShipmentHolds
 		n, err := h.Where(
 			h.ID.Eq(entity.ID),
 			h.ShipmentID.Eq(entity.ShipmentID),
@@ -172,10 +172,10 @@ func (r *repository) Update(
 
 func (r *repository) Release(
 	ctx context.Context,
-	entity *shipment.ShipmentHold,
-) (*shipment.ShipmentHold, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentHold, error) {
-		h := shipmentdb.ShipmentHolds
+	entity *shipmenthold.ShipmentHold,
+) (*shipmenthold.ShipmentHold, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipmenthold.ShipmentHold, error) {
+		h := shipmentholddb.ShipmentHolds
 		n, err := h.Where(
 			h.ID.Eq(entity.ID),
 			h.ShipmentID.Eq(entity.ShipmentID),
@@ -205,14 +205,14 @@ func (r *repository) HasActiveDispatchHold(
 	ctx context.Context,
 	req *shipmentholdports.ActiveShipmentHoldRequest,
 ) (bool, error) {
-	return r.hasActiveBlockingHold(ctx, req, shipmentdb.ShipmentHolds.BlocksDispatch)
+	return r.hasActiveBlockingHold(ctx, req, shipmentholddb.ShipmentHolds.BlocksDispatch)
 }
 
 func (r *repository) HasActiveDeliveryHold(
 	ctx context.Context,
 	req *shipmentholdports.ActiveShipmentHoldRequest,
 ) (bool, error) {
-	return r.hasActiveBlockingHold(ctx, req, shipmentdb.ShipmentHolds.BlocksDelivery)
+	return r.hasActiveBlockingHold(ctx, req, shipmentholddb.ShipmentHolds.BlocksDelivery)
 }
 
 func (r *repository) hasActiveBlockingHold(
@@ -221,7 +221,7 @@ func (r *repository) hasActiveBlockingHold(
 	blocks keel.BoolCol,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		h := shipmentdb.ShipmentHolds
+		h := shipmentholddb.ShipmentHolds
 		exists, err := h.Where(
 			h.ShipmentID.Eq(req.ShipmentID),
 			h.ReleasedAt.IsNull(),
@@ -236,7 +236,7 @@ func (r *repository) hasActiveBlockingHold(
 	})
 }
 
-func tenantInfo(entity *shipment.ShipmentHold) pagination.TenantInfo {
+func tenantInfo(entity *shipmenthold.ShipmentHold) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,

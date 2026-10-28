@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -15,7 +15,7 @@ func (s *service) PreviewCreate(
 	ctx context.Context,
 	req *shipmentholdports.CreateShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	return s.planCreate(ctx, req, actor)
 }
 
@@ -23,7 +23,7 @@ func (s *service) PreviewRelease(
 	ctx context.Context,
 	req *shipmentholdports.ReleaseShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	_, toRelease, err := s.planRelease(ctx, req, actor)
 
 	return toRelease, err
@@ -33,7 +33,7 @@ func (s *service) PreviewUpdate(
 	ctx context.Context,
 	req *shipmentholdports.UpdateShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	_, updated, err := s.planUpdate(ctx, req, actor)
 
 	return updated, err
@@ -43,7 +43,7 @@ func (s *service) planUpdate(
 	ctx context.Context,
 	req *shipmentholdports.UpdateShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (original, updated *shipment.ShipmentHold, err error) {
+) (original, updated *shipmenthold.ShipmentHold, err error) {
 	if req == nil {
 		return nil, nil, errShipmentHoldRequestRequired()
 	}
@@ -89,7 +89,7 @@ func (s *service) planCreate(
 	ctx context.Context,
 	req *shipmentholdports.CreateShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	if req == nil {
 		return nil, errShipmentHoldRequestRequired()
 	}
@@ -116,7 +116,7 @@ func (s *service) planCreate(
 		startedAt = *req.StartedAt
 	}
 
-	entity := &shipment.ShipmentHold{
+	entity := &shipmenthold.ShipmentHold{
 		ShipmentID:        req.ShipmentID,
 		OrganizationID:    req.TenantInfo.OrgID,
 		BusinessUnitID:    req.TenantInfo.BuID,
@@ -125,7 +125,7 @@ func (s *service) planCreate(
 		Severity:          reason.DefaultSeverity,
 		ReasonCode:        reason.Code,
 		Notes:             strings.TrimSpace(req.Notes),
-		Source:            shipment.HoldSourceUser,
+		Source:            shipmenthold.HoldSourceUser,
 		BlocksDispatch:    reason.DefaultBlocksDispatch,
 		BlocksDelivery:    reason.DefaultBlocksDelivery,
 		BlocksBilling:     reason.DefaultBlocksBilling,
@@ -146,7 +146,7 @@ func (s *service) planRelease(
 	ctx context.Context,
 	req *shipmentholdports.ReleaseShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (original, released *shipment.ShipmentHold, err error) {
+) (original, released *shipmenthold.ShipmentHold, err error) {
 	if req == nil {
 		return nil, nil, errShipmentHoldRequestRequired()
 	}

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,8 +29,12 @@ func (f *fakeNewestComments) NewestComments(
 	return f.comments, nil
 }
 
-func noteHold(shipmentID pulid.ID, source shipment.HoldSource, note string) *shipment.ShipmentHold {
-	return &shipment.ShipmentHold{
+func noteHold(
+	shipmentID pulid.ID,
+	source shipmenthold.HoldSource,
+	note string,
+) *shipmenthold.ShipmentHold {
+	return &shipmenthold.ShipmentHold{
 		ID:             pulid.MustNew("shh_"),
 		ShipmentID:     shipmentID,
 		Type:           holdreason.HoldTypeOperational,
@@ -52,9 +57,9 @@ func TestShipmentList_RowsCarryTheHoldsNoteAndWhenItStarted(t *testing.T) {
 	t.Parallel()
 
 	items, _ := heldShipments()
-	holds := &fakeActiveHolds{holds: []*shipment.ShipmentHold{
-		noteHold(items[0].ID, shipment.HoldSourceUser, "Waiting on a corrected BOL."),
-		noteHold(items[1].ID, shipment.HoldSourceEDI, "partner text"),
+	holds := &fakeActiveHolds{holds: []*shipmenthold.ShipmentHold{
+		noteHold(items[0].ID, shipmenthold.HoldSourceUser, "Waiting on a corrected BOL."),
+		noteHold(items[1].ID, shipmenthold.HoldSourceEDI, "partner text"),
 	}}
 	tool := newShipmentListTool(&fakeShipmentRepo{items: items}, shipmentPartySources{}).
 		withHolds(holds, &fakePermissions{allowed: true})
@@ -85,8 +90,8 @@ func TestGetShipment_SeveralLoadsAreOneTableReadOnceForEachSource(t *testing.T) 
 		Status: shipment.StatusDelayed}
 	missing := pulid.MustNew("shp_")
 	repo := &fakeTrackingShipments{listed: []*shipment.Shipment{second, first}}
-	holds := &fakeActiveHolds{holds: []*shipment.ShipmentHold{
-		noteHold(first.ID, shipment.HoldSourceUser, "Holding for a new appointment."),
+	holds := &fakeActiveHolds{holds: []*shipmenthold.ShipmentHold{
+		noteHold(first.ID, shipmenthold.HoldSourceUser, "Holding for a new appointment."),
 	}}
 	comments := &fakeNewestComments{comments: []*shipment.ShipmentComment{
 		{

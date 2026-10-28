@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailuretrigger"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/movesplit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
@@ -406,7 +407,7 @@ func (s *service) PreviewSplitMove(
 
 	return &shipmentmoveports.MoveSplitPlan{
 		Move:  move,
-		Split: shipment.PlanMoveSplit(move, req.Spec()),
+		Split: movesplit.PlanMoveSplit(move, req.Spec()),
 	}, nil
 }
 

@@ -5,11 +5,11 @@
 package shipmentholdportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"context"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -42,23 +42,23 @@ func (_m *MockShipmentHoldService) EXPECT() *MockShipmentHoldService_Expecter {
 }
 
 // Create provides a mock function for the type MockShipmentHoldService
-func (_mock *MockShipmentHoldService) Create(ctx context.Context, req *shipmentholdports.CreateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipment.ShipmentHold, error) {
+func (_mock *MockShipmentHoldService) Create(ctx context.Context, req *shipmentholdports.CreateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 *shipment.ShipmentHold
+	var r0 *shipmenthold.ShipmentHold
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.CreateShipmentHoldRequest, *permissionports.RequestActor) (*shipment.ShipmentHold, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.CreateShipmentHoldRequest, *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.CreateShipmentHoldRequest, *permissionports.RequestActor) *shipment.ShipmentHold); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.CreateShipmentHoldRequest, *permissionports.RequestActor) *shipmenthold.ShipmentHold); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*shipment.ShipmentHold)
+			r0 = ret.Get(0).(*shipmenthold.ShipmentHold)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentholdports.CreateShipmentHoldRequest, *permissionports.RequestActor) error); ok {
@@ -105,34 +105,34 @@ func (_c *MockShipmentHoldService_Create_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *MockShipmentHoldService_Create_Call) Return(shipmentHold *shipment.ShipmentHold, err error) *MockShipmentHoldService_Create_Call {
+func (_c *MockShipmentHoldService_Create_Call) Return(shipmentHold *shipmenthold.ShipmentHold, err error) *MockShipmentHoldService_Create_Call {
 	_c.Call.Return(shipmentHold, err)
 	return _c
 }
 
-func (_c *MockShipmentHoldService_Create_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.CreateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipment.ShipmentHold, error)) *MockShipmentHoldService_Create_Call {
+func (_c *MockShipmentHoldService_Create_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.CreateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error)) *MockShipmentHoldService_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByID provides a mock function for the type MockShipmentHoldService
-func (_mock *MockShipmentHoldService) GetByID(ctx context.Context, req *shipmentholdports.GetShipmentHoldByIDRequest) (*shipment.ShipmentHold, error) {
+func (_mock *MockShipmentHoldService) GetByID(ctx context.Context, req *shipmentholdports.GetShipmentHoldByIDRequest) (*shipmenthold.ShipmentHold, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByID")
 	}
 
-	var r0 *shipment.ShipmentHold
+	var r0 *shipmenthold.ShipmentHold
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.GetShipmentHoldByIDRequest) (*shipment.ShipmentHold, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.GetShipmentHoldByIDRequest) (*shipmenthold.ShipmentHold, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.GetShipmentHoldByIDRequest) *shipment.ShipmentHold); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.GetShipmentHoldByIDRequest) *shipmenthold.ShipmentHold); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*shipment.ShipmentHold)
+			r0 = ret.Get(0).(*shipmenthold.ShipmentHold)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentholdports.GetShipmentHoldByIDRequest) error); ok {
@@ -173,34 +173,34 @@ func (_c *MockShipmentHoldService_GetByID_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *MockShipmentHoldService_GetByID_Call) Return(shipmentHold *shipment.ShipmentHold, err error) *MockShipmentHoldService_GetByID_Call {
+func (_c *MockShipmentHoldService_GetByID_Call) Return(shipmentHold *shipmenthold.ShipmentHold, err error) *MockShipmentHoldService_GetByID_Call {
 	_c.Call.Return(shipmentHold, err)
 	return _c
 }
 
-func (_c *MockShipmentHoldService_GetByID_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.GetShipmentHoldByIDRequest) (*shipment.ShipmentHold, error)) *MockShipmentHoldService_GetByID_Call {
+func (_c *MockShipmentHoldService_GetByID_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.GetShipmentHoldByIDRequest) (*shipmenthold.ShipmentHold, error)) *MockShipmentHoldService_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListByShipmentID provides a mock function for the type MockShipmentHoldService
-func (_mock *MockShipmentHoldService) ListByShipmentID(ctx context.Context, req *shipmentholdports.ListShipmentHoldsRequest) (*pagination.ListResult[*shipment.ShipmentHold], error) {
+func (_mock *MockShipmentHoldService) ListByShipmentID(ctx context.Context, req *shipmentholdports.ListShipmentHoldsRequest) (*pagination.ListResult[*shipmenthold.ShipmentHold], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListByShipmentID")
 	}
 
-	var r0 *pagination.ListResult[*shipment.ShipmentHold]
+	var r0 *pagination.ListResult[*shipmenthold.ShipmentHold]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ListShipmentHoldsRequest) (*pagination.ListResult[*shipment.ShipmentHold], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ListShipmentHoldsRequest) (*pagination.ListResult[*shipmenthold.ShipmentHold], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ListShipmentHoldsRequest) *pagination.ListResult[*shipment.ShipmentHold]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ListShipmentHoldsRequest) *pagination.ListResult[*shipmenthold.ShipmentHold]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*shipment.ShipmentHold])
+			r0 = ret.Get(0).(*pagination.ListResult[*shipmenthold.ShipmentHold])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentholdports.ListShipmentHoldsRequest) error); ok {
@@ -241,34 +241,34 @@ func (_c *MockShipmentHoldService_ListByShipmentID_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockShipmentHoldService_ListByShipmentID_Call) Return(listResult *pagination.ListResult[*shipment.ShipmentHold], err error) *MockShipmentHoldService_ListByShipmentID_Call {
+func (_c *MockShipmentHoldService_ListByShipmentID_Call) Return(listResult *pagination.ListResult[*shipmenthold.ShipmentHold], err error) *MockShipmentHoldService_ListByShipmentID_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockShipmentHoldService_ListByShipmentID_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.ListShipmentHoldsRequest) (*pagination.ListResult[*shipment.ShipmentHold], error)) *MockShipmentHoldService_ListByShipmentID_Call {
+func (_c *MockShipmentHoldService_ListByShipmentID_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.ListShipmentHoldsRequest) (*pagination.ListResult[*shipmenthold.ShipmentHold], error)) *MockShipmentHoldService_ListByShipmentID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Release provides a mock function for the type MockShipmentHoldService
-func (_mock *MockShipmentHoldService) Release(ctx context.Context, req *shipmentholdports.ReleaseShipmentHoldRequest, actor *permissionports.RequestActor) (*shipment.ShipmentHold, error) {
+func (_mock *MockShipmentHoldService) Release(ctx context.Context, req *shipmentholdports.ReleaseShipmentHoldRequest, actor *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Release")
 	}
 
-	var r0 *shipment.ShipmentHold
+	var r0 *shipmenthold.ShipmentHold
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ReleaseShipmentHoldRequest, *permissionports.RequestActor) (*shipment.ShipmentHold, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ReleaseShipmentHoldRequest, *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ReleaseShipmentHoldRequest, *permissionports.RequestActor) *shipment.ShipmentHold); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ReleaseShipmentHoldRequest, *permissionports.RequestActor) *shipmenthold.ShipmentHold); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*shipment.ShipmentHold)
+			r0 = ret.Get(0).(*shipmenthold.ShipmentHold)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentholdports.ReleaseShipmentHoldRequest, *permissionports.RequestActor) error); ok {
@@ -315,34 +315,34 @@ func (_c *MockShipmentHoldService_Release_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *MockShipmentHoldService_Release_Call) Return(shipmentHold *shipment.ShipmentHold, err error) *MockShipmentHoldService_Release_Call {
+func (_c *MockShipmentHoldService_Release_Call) Return(shipmentHold *shipmenthold.ShipmentHold, err error) *MockShipmentHoldService_Release_Call {
 	_c.Call.Return(shipmentHold, err)
 	return _c
 }
 
-func (_c *MockShipmentHoldService_Release_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.ReleaseShipmentHoldRequest, actor *permissionports.RequestActor) (*shipment.ShipmentHold, error)) *MockShipmentHoldService_Release_Call {
+func (_c *MockShipmentHoldService_Release_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.ReleaseShipmentHoldRequest, actor *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error)) *MockShipmentHoldService_Release_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type MockShipmentHoldService
-func (_mock *MockShipmentHoldService) Update(ctx context.Context, req *shipmentholdports.UpdateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipment.ShipmentHold, error) {
+func (_mock *MockShipmentHoldService) Update(ctx context.Context, req *shipmentholdports.UpdateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 *shipment.ShipmentHold
+	var r0 *shipmenthold.ShipmentHold
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.UpdateShipmentHoldRequest, *permissionports.RequestActor) (*shipment.ShipmentHold, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.UpdateShipmentHoldRequest, *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.UpdateShipmentHoldRequest, *permissionports.RequestActor) *shipment.ShipmentHold); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.UpdateShipmentHoldRequest, *permissionports.RequestActor) *shipmenthold.ShipmentHold); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*shipment.ShipmentHold)
+			r0 = ret.Get(0).(*shipmenthold.ShipmentHold)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentholdports.UpdateShipmentHoldRequest, *permissionports.RequestActor) error); ok {
@@ -389,34 +389,34 @@ func (_c *MockShipmentHoldService_Update_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *MockShipmentHoldService_Update_Call) Return(shipmentHold *shipment.ShipmentHold, err error) *MockShipmentHoldService_Update_Call {
+func (_c *MockShipmentHoldService_Update_Call) Return(shipmentHold *shipmenthold.ShipmentHold, err error) *MockShipmentHoldService_Update_Call {
 	_c.Call.Return(shipmentHold, err)
 	return _c
 }
 
-func (_c *MockShipmentHoldService_Update_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.UpdateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipment.ShipmentHold, error)) *MockShipmentHoldService_Update_Call {
+func (_c *MockShipmentHoldService_Update_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.UpdateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error)) *MockShipmentHoldService_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // PreviewCreate provides a mock function for the type MockShipmentHoldService
-func (_mock *MockShipmentHoldService) PreviewCreate(ctx context.Context, req *shipmentholdports.CreateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipment.ShipmentHold, error) {
+func (_mock *MockShipmentHoldService) PreviewCreate(ctx context.Context, req *shipmentholdports.CreateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PreviewCreate")
 	}
 
-	var r0 *shipment.ShipmentHold
+	var r0 *shipmenthold.ShipmentHold
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.CreateShipmentHoldRequest, *permissionports.RequestActor) (*shipment.ShipmentHold, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.CreateShipmentHoldRequest, *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.CreateShipmentHoldRequest, *permissionports.RequestActor) *shipment.ShipmentHold); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.CreateShipmentHoldRequest, *permissionports.RequestActor) *shipmenthold.ShipmentHold); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*shipment.ShipmentHold)
+			r0 = ret.Get(0).(*shipmenthold.ShipmentHold)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentholdports.CreateShipmentHoldRequest, *permissionports.RequestActor) error); ok {
@@ -463,34 +463,34 @@ func (_c *MockShipmentHoldService_PreviewCreate_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockShipmentHoldService_PreviewCreate_Call) Return(shipmentHold *shipment.ShipmentHold, err error) *MockShipmentHoldService_PreviewCreate_Call {
+func (_c *MockShipmentHoldService_PreviewCreate_Call) Return(shipmentHold *shipmenthold.ShipmentHold, err error) *MockShipmentHoldService_PreviewCreate_Call {
 	_c.Call.Return(shipmentHold, err)
 	return _c
 }
 
-func (_c *MockShipmentHoldService_PreviewCreate_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.CreateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipment.ShipmentHold, error)) *MockShipmentHoldService_PreviewCreate_Call {
+func (_c *MockShipmentHoldService_PreviewCreate_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.CreateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error)) *MockShipmentHoldService_PreviewCreate_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // PreviewRelease provides a mock function for the type MockShipmentHoldService
-func (_mock *MockShipmentHoldService) PreviewRelease(ctx context.Context, req *shipmentholdports.ReleaseShipmentHoldRequest, actor *permissionports.RequestActor) (*shipment.ShipmentHold, error) {
+func (_mock *MockShipmentHoldService) PreviewRelease(ctx context.Context, req *shipmentholdports.ReleaseShipmentHoldRequest, actor *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PreviewRelease")
 	}
 
-	var r0 *shipment.ShipmentHold
+	var r0 *shipmenthold.ShipmentHold
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ReleaseShipmentHoldRequest, *permissionports.RequestActor) (*shipment.ShipmentHold, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ReleaseShipmentHoldRequest, *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ReleaseShipmentHoldRequest, *permissionports.RequestActor) *shipment.ShipmentHold); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.ReleaseShipmentHoldRequest, *permissionports.RequestActor) *shipmenthold.ShipmentHold); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*shipment.ShipmentHold)
+			r0 = ret.Get(0).(*shipmenthold.ShipmentHold)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentholdports.ReleaseShipmentHoldRequest, *permissionports.RequestActor) error); ok {
@@ -537,34 +537,34 @@ func (_c *MockShipmentHoldService_PreviewRelease_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockShipmentHoldService_PreviewRelease_Call) Return(shipmentHold *shipment.ShipmentHold, err error) *MockShipmentHoldService_PreviewRelease_Call {
+func (_c *MockShipmentHoldService_PreviewRelease_Call) Return(shipmentHold *shipmenthold.ShipmentHold, err error) *MockShipmentHoldService_PreviewRelease_Call {
 	_c.Call.Return(shipmentHold, err)
 	return _c
 }
 
-func (_c *MockShipmentHoldService_PreviewRelease_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.ReleaseShipmentHoldRequest, actor *permissionports.RequestActor) (*shipment.ShipmentHold, error)) *MockShipmentHoldService_PreviewRelease_Call {
+func (_c *MockShipmentHoldService_PreviewRelease_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.ReleaseShipmentHoldRequest, actor *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error)) *MockShipmentHoldService_PreviewRelease_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // PreviewUpdate provides a mock function for the type MockShipmentHoldService
-func (_mock *MockShipmentHoldService) PreviewUpdate(ctx context.Context, req *shipmentholdports.UpdateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipment.ShipmentHold, error) {
+func (_mock *MockShipmentHoldService) PreviewUpdate(ctx context.Context, req *shipmentholdports.UpdateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PreviewUpdate")
 	}
 
-	var r0 *shipment.ShipmentHold
+	var r0 *shipmenthold.ShipmentHold
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.UpdateShipmentHoldRequest, *permissionports.RequestActor) (*shipment.ShipmentHold, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.UpdateShipmentHoldRequest, *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.UpdateShipmentHoldRequest, *permissionports.RequestActor) *shipment.ShipmentHold); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentholdports.UpdateShipmentHoldRequest, *permissionports.RequestActor) *shipmenthold.ShipmentHold); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*shipment.ShipmentHold)
+			r0 = ret.Get(0).(*shipmenthold.ShipmentHold)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentholdports.UpdateShipmentHoldRequest, *permissionports.RequestActor) error); ok {
@@ -611,12 +611,12 @@ func (_c *MockShipmentHoldService_PreviewUpdate_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockShipmentHoldService_PreviewUpdate_Call) Return(shipmentHold *shipment.ShipmentHold, err error) *MockShipmentHoldService_PreviewUpdate_Call {
+func (_c *MockShipmentHoldService_PreviewUpdate_Call) Return(shipmentHold *shipmenthold.ShipmentHold, err error) *MockShipmentHoldService_PreviewUpdate_Call {
 	_c.Call.Return(shipmentHold, err)
 	return _c
 }
 
-func (_c *MockShipmentHoldService_PreviewUpdate_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.UpdateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipment.ShipmentHold, error)) *MockShipmentHoldService_PreviewUpdate_Call {
+func (_c *MockShipmentHoldService_PreviewUpdate_Call) RunAndReturn(run func(ctx context.Context, req *shipmentholdports.UpdateShipmentHoldRequest, actor *permissionports.RequestActor) (*shipmenthold.ShipmentHold, error)) *MockShipmentHoldService_PreviewUpdate_Call {
 	_c.Call.Return(run)
 	return _c
 }

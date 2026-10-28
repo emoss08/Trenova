@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
@@ -37,7 +38,7 @@ func (r *Repository) ListDeliveriesToday(
 		func(ctx context.Context) ([]*shipmentboardports.ShipmentDeliveryRow, error) {
 			today, err := shipmentrepository.QuickFilterCondition(
 				req.Basis,
-				shipment.Quick(shipment.QuickFilterDeliveringToday),
+				quickfilter.Quick(quickfilter.QuickFilterDeliveringToday),
 			)
 			if err != nil {
 				return nil, err

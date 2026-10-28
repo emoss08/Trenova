@@ -38,7 +38,7 @@ var unprotectedMarginNames = map[string]string{
 // reader without the margins group is refused it.
 var marginEnumValues = map[string]string{
 	"ProtectedFieldGroup.Margins": "the group itself, which grants nothing on its own",
-	"ShipmentQuickFilter.LowMargin": "shipment.AuthorizeQuickFilters refuses the filter " +
+	"ShipmentQuickFilter.LowMargin": "quickfilter.AuthorizeQuickFilters refuses the filter " +
 		"and the board does not count it for a reader without the margins group",
 }
 

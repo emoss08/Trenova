@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -56,7 +57,7 @@ type shipmentActivity struct {
 
 func newShipmentActivity(
 	comments []*shipment.ShipmentComment,
-	holds []*shipment.ShipmentHold,
+	holds []*shipmenthold.ShipmentHold,
 ) *shipmentActivity {
 	activity := &shipmentActivity{
 		ActiveHolds:    make([]shipmentHoldRow, 0, len(holds)),
@@ -123,7 +124,7 @@ func commentAuthor(comment *shipment.ShipmentComment) string {
 	return strings.TrimSpace(comment.User.Name)
 }
 
-func holdRowOf(hold *shipment.ShipmentHold) shipmentHoldRow {
+func holdRowOf(hold *shipmenthold.ShipmentHold) shipmentHoldRow {
 	row := shipmentHoldRow{
 		HoldID:            hold.ID.String(),
 		Type:              string(hold.Type),
@@ -481,8 +482,8 @@ func freightLineTexts(lines []shipment.FreightLine) []string {
 	return out
 }
 
-func holdNote(hold *shipment.ShipmentHold) string {
-	if hold.Source != shipment.HoldSourceUser && hold.Source != shipment.HoldSourceRule {
+func holdNote(hold *shipmenthold.ShipmentHold) string {
+	if hold.Source != shipmenthold.HoldSourceUser && hold.Source != shipmenthold.HoldSourceRule {
 		return ""
 	}
 

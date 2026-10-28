@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 )
 
@@ -45,11 +45,11 @@ func PlacedHoldOptions() []toolpreview.Option {
 	}
 }
 
-func holdLabel(hold *shipment.ShipmentHold) string {
+func holdLabel(hold *shipmenthold.ShipmentHold) string {
 	return strings.TrimSpace(fmt.Sprintf("%s hold %s", hold.Type, hold.ReasonCode))
 }
 
-func holdBlocks(hold *shipment.ShipmentHold) string {
+func holdBlocks(hold *shipmenthold.ShipmentHold) string {
 	blocks := make([]string, 0, 3)
 	if hold.BlocksDispatch {
 		blocks = append(blocks, "dispatch")

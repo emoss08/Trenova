@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -63,7 +64,7 @@ func (s *service) restoreSystemOwnedAdditionalChargeFields(
 		originalCharges = original.AdditionalCharges
 	}
 
-	shipment.RestoreSystemOwnedCharges(originalCharges, updated.AdditionalCharges)
+	shipmentrating.RestoreSystemOwnedCharges(originalCharges, updated.AdditionalCharges)
 }
 
 func (s *service) restoreAssignmentsForExistingMoves(

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -239,11 +240,11 @@ func grossChargeChange(
 	beforeFreight := before.FreightChargeAmount.Decimal
 	afterFreight := after.FreightChargeAmount.Decimal
 	gross := afterFreight.Sub(beforeFreight).Abs()
-	totalsBefore, err := shipment.ChargeTotalsByCharge(ctx, before)
+	totalsBefore, err := chargeallocation.ChargeTotalsByCharge(ctx, before)
 	if err != nil {
 		return decimal.Zero, err
 	}
-	totalsAfter, err := shipment.ChargeTotalsByCharge(ctx, after)
+	totalsAfter, err := chargeallocation.ChargeTotalsByCharge(ctx, after)
 	if err != nil {
 		return decimal.Zero, err
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/movesplit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -354,7 +355,7 @@ func (r *repository) SplitMove(
 				return nil, err
 			}
 
-			split := shipment.PlanMoveSplit(originalMove, req.Spec())
+			split := movesplit.PlanMoveSplit(originalMove, req.Spec())
 
 			if err = r.shiftSubsequentMoveSequences(ctx, originalMove); err != nil {
 				return nil, err
