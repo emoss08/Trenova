@@ -61,6 +61,7 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
             text
           }
           state
+          place
           at
           tone
         }
@@ -82,6 +83,7 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
               text
             }
             state
+            place
             at
             tone
           }
@@ -145,6 +147,7 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
               text
             }
             state
+            place
             at
             tone
           }
@@ -185,6 +188,7 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
             text
           }
           state
+          place
           at
           tone
         }

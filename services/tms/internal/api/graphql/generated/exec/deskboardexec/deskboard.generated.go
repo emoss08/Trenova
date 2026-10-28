@@ -742,6 +742,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
 			{
+				Name:     "place",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskBoardRowMeasure)
+					return obj.Place, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
 				Name:     "tone",
 				NonNull:  true,
 				ChildErr: errNoChild0,

@@ -186,18 +186,23 @@ func measureText(measure *RowMeasure) string {
 	if measure == nil {
 		return ""
 	}
-	if measure.Measure == MeasureLateness {
-		switch {
-		case measure.State == MeasureDue:
-			return "not estimated"
-		case measure.State == MeasureProjected:
-			return "estimated " + FormatValue(&measure.Value) + " late"
-		case measure.Value.Number.IsZero():
-			return "on time"
-		}
+	if measure.Measure != MeasureLateness {
+		return FormatValue(&measure.Value)
+	}
+	text := FormatValue(&measure.Value)
+	switch {
+	case measure.State == MeasureDue:
+		text = "not estimated"
+	case measure.State == MeasureProjected:
+		text = "estimated " + text + " late"
+	case measure.Value.Number.IsZero():
+		text = "on time"
+	}
+	if measure.Place != "" {
+		text += " (" + measure.Place + ")"
 	}
 
-	return FormatValue(&measure.Value)
+	return text
 }
 
 func writeCompare(sb *strings.Builder, compare *FilledCompare) {

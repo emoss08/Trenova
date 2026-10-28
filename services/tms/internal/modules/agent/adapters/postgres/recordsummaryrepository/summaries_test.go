@@ -142,6 +142,7 @@ func TestLateness_MeasuresTheNextStopAgainstItsWindow(t *testing.T) {
 			assert.Equal(t, tc.state, measure.State)
 			assert.Equal(t, tc.behind, measure.Value.Number.IntPart())
 			assert.Equal(t, tc.tone, measure.Tone)
+			assert.Equal(t, "Memphis, TX", measure.Place)
 			assert.Equal(t, board.ValueDuration, measure.Value.Kind)
 		})
 	}

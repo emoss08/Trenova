@@ -80,7 +80,14 @@ describe("measureReading", () => {
 
   it("measures a late load against its appointment and the furthest behind", () => {
     const reading = measureReading(
-      { measure: "lateness", value: duration(50 * 60), state: "late", at: due, tone: "warn" },
+      {
+        measure: "lateness",
+        value: duration(50 * 60),
+        state: "late",
+        at: due,
+        place: "",
+        tone: "warn",
+      },
       100 * 60,
       NOW,
       t,
@@ -97,7 +104,14 @@ describe("measureReading", () => {
 
   it("says how late the estimate runs past a window still open", () => {
     const reading = measureReading(
-      { measure: "lateness", value: duration(6 * 60), state: "projected", at: due, tone: "warn" },
+      {
+        measure: "lateness",
+        value: duration(6 * 60),
+        state: "projected",
+        at: due,
+        place: "",
+        tone: "warn",
+      },
       60 * 60,
       NOW,
       t,
@@ -112,9 +126,41 @@ describe("measureReading", () => {
     });
   });
 
+  it("names the stop a load is measured at, so a multi-stop route says which window it missed", () => {
+    const late = measureReading(
+      {
+        measure: "lateness",
+        value: duration(2 * HOUR),
+        state: "late",
+        at: due,
+        place: "Seattle, WA",
+        tone: "warn",
+      },
+      2 * HOUR,
+      NOW,
+      t,
+    );
+    expect(late.against).toBe(`Due ${cardMomentAfter(NOW, due)} at Seattle, WA`);
+
+    const delivered = measureReading(
+      {
+        measure: "lateness",
+        value: duration(0),
+        state: "delivered",
+        at: due,
+        place: "Memphis, TN",
+        tone: "",
+      },
+      HOUR,
+      NOW,
+      t,
+    );
+    expect(delivered.against).toBe(`Delivered ${cardMomentAfter(NOW, due)} at Memphis, TN`);
+  });
+
   it("says a load due with no estimate is not estimated rather than on time", () => {
     const reading = measureReading(
-      { measure: "lateness", value: duration(0), state: "due", at: due, tone: "" },
+      { measure: "lateness", value: duration(0), state: "due", at: due, place: "", tone: "" },
       HOUR,
       NOW,
       t,
@@ -127,7 +173,14 @@ describe("measureReading", () => {
 
   it("says a held load waits at the stop", () => {
     const reading = measureReading(
-      { measure: "lateness", value: duration(HOUR), state: "held", at: due, tone: "warn" },
+      {
+        measure: "lateness",
+        value: duration(HOUR),
+        state: "held",
+        at: due,
+        place: "",
+        tone: "warn",
+      },
       HOUR,
       NOW,
       t,
@@ -139,7 +192,7 @@ describe("measureReading", () => {
 
   it("says a delivered load arrived on time, or how late, with no track", () => {
     const onTime = measureReading(
-      { measure: "lateness", value: duration(0), state: "delivered", at: due, tone: "" },
+      { measure: "lateness", value: duration(0), state: "delivered", at: due, place: "", tone: "" },
       HOUR,
       NOW,
       t,
@@ -149,7 +202,14 @@ describe("measureReading", () => {
     expect(onTime.fraction).toBe(0);
 
     const late = measureReading(
-      { measure: "lateness", value: duration(20 * 60), state: "delivered", at: null, tone: "" },
+      {
+        measure: "lateness",
+        value: duration(20 * 60),
+        state: "delivered",
+        at: null,
+        place: "",
+        tone: "",
+      },
       HOUR,
       NOW,
       t,
@@ -161,7 +221,14 @@ describe("measureReading", () => {
   it("says what an invoice still owes, or that it was paid", () => {
     expect(
       measureReading(
-        { measure: "amountDue", value: money("1200"), state: "open", at: null, tone: "" },
+        {
+          measure: "amountDue",
+          value: money("1200"),
+          state: "open",
+          at: null,
+          place: "",
+          tone: "",
+        },
         0,
         NOW,
         t,
@@ -169,7 +236,14 @@ describe("measureReading", () => {
     ).toBe("$1,200.00 due");
     expect(
       measureReading(
-        { measure: "amountDue", value: money("0"), state: "settled", at: null, tone: "" },
+        {
+          measure: "amountDue",
+          value: money("0"),
+          state: "settled",
+          at: null,
+          place: "",
+          tone: "",
+        },
         0,
         NOW,
         t,
@@ -191,6 +265,7 @@ describe("furthestOf", () => {
             value: duration(3 * HOUR),
             state: "late",
             at: null,
+            place: "",
             tone: "",
           },
         }),

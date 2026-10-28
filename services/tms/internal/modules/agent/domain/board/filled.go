@@ -72,6 +72,7 @@ type RowMeasure struct {
 	Value   Value        `json:"value"`
 	State   MeasureState `json:"state,omitempty"`
 	At      int64        `json:"at,omitempty"`
+	Place   string       `json:"place,omitempty"`
 	Tone    Tone         `json:"tone,omitempty"`
 }
 

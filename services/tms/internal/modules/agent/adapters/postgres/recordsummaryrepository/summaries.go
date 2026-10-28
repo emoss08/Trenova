@@ -346,6 +346,7 @@ func lateness(route []stopRow, now int64) (board.RowMeasure, bool) {
 			return board.RowMeasure{}, false
 		}
 		measure.At = due
+		measure.Place = place(stop)
 		switch {
 		case now <= due:
 			ahead(&measure, stop.Estimate, due)
@@ -369,6 +370,7 @@ func lateness(route []stopRow, now int64) (board.RowMeasure, bool) {
 		due := windowEnd(stop)
 		measure.State = board.MeasureDelivered
 		measure.At = *stop.Arrival
+		measure.Place = place(stop)
 		measure.Tone = board.ToneOK
 		if due > 0 && *stop.Arrival > due {
 			measure.Value.Number = decimal.NewFromInt(*stop.Arrival - due)

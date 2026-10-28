@@ -289,8 +289,10 @@ func TestMarkdownWritesTheBoardAsItIsReadNow(t *testing.T) {
 	summary := f.reads.Summaries[permission.ResourceShipment][f.shipments[1]]
 	summary.Measures[board.MeasureLateness] = lateness(0, board.MeasureDelivered)
 	f.reads.Summaries[permission.ResourceShipment][f.shipments[1]] = summary
+	projected := lateness(360, board.MeasureProjected)
+	projected.Place = "Seattle, WA"
 	f.reads.Summaries[permission.ResourceShipment][f.shipments[2]].Measures[board.MeasureLateness] =
-		lateness(360, board.MeasureProjected)
+		projected
 	f.reads.Summaries[permission.ResourceShipment][f.shipments[3]].Measures[board.MeasureLateness] =
 		lateness(0, board.MeasureDue)
 	filled := board.Assemble(f.board, f.reads)
@@ -314,7 +316,7 @@ func TestMarkdownWritesTheBoardAsItIsReadNow(t *testing.T) {
 		"| Shipment | Detail | Status | Behind |\n",
 		"| S2610-041 | Dallas, TX → Memphis, TN | InTransit | 1h 40m |\n",
 		"| S2610-042 | Dallas, TX → Memphis, TN | InTransit | on time |\n",
-		"| S2610-043 | Dallas, TX → Memphis, TN | InTransit | estimated 6m late |\n",
+		"| S2610-043 | Dallas, TX → Memphis, TN | InTransit | estimated 6m late (Seattle, WA) |\n",
 		"| S2610-044 | Dallas, TX → Memphis, TN | InTransit | not estimated |\n",
 		"2 shipments could not be read.\n",
 		"## 3. The history of shipment\n",

@@ -653,7 +653,10 @@ at most). The agent writes only words; every value is read by the server.
   analysis's table or chart by its artifact and index, a table view, or one record's history.
   Limits: 25 records a list, 120 a board, 12 checks; every text field's limit is its schema's
   `maxLength`, so the model writes within it the first time. Words are plain: `board.Parse`
-  drops markdown emphasis (`**`, `__`, backticks), since the board draws text as text. The
+  drops markdown emphasis (`**`, `__`, backticks), since the board draws text as text, and
+  refuses a figure written into the words (`board.Figures`: a duration, an amount, a percentage
+  or a count; record numbers, times of day and dates pass), since every figure is read live
+  from a block. The
   verdict and the words cite a block by its place as `[phrase][n]`, drawn as that exhibit's
   numeral; a cite past the last block or of a
   words block is refused, and so are amounts the agent did not read (the runtime's amounts
@@ -668,6 +671,8 @@ at most). The agent writes only words; every value is read by the server.
   Lateness measures the next open stop: past its window it is late (or held, at the stop);
   inside it, the stored projection (`stop_etas`, joined in the same read) decides `onTime`, or
   `projected` by how far the estimate runs past the window, or `due` when nothing is estimated.
+  The measure names the stop it is measured at (`place`), since a multi-stop row's route runs
+  from its first pickup to its last stop and the window missed can be one in between.
   A figure adds up only what happened: projected lateness is shown on its row, not counted.
 - **Credited to the conversation's agent.** The recorder made where a tool ran holds the
   thread's id alone, so the agent is read once (`artifactRecorder.agentThread`) before the

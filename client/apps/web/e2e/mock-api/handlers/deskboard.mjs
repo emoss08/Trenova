@@ -121,6 +121,7 @@ function lateRows(state) {
       value: dur((moved(state) ? Math.max(0, minutes - 90) : minutes) * MIN),
       state: moved(state) && minutes <= 110 ? "delivered" : standing,
       at: state.anchor - dueAgo,
+      place: lane.split(" → ").at(-1),
       tone: moved(state) && minutes <= 110 ? "" : "warn",
     }),
   );
@@ -375,6 +376,7 @@ function closeCard(state) {
       value: dur(days * day),
       state: "pending",
       at: state.anchor - days * day,
+      place: "",
       tone: "warn",
     }),
   );
@@ -384,6 +386,7 @@ function closeCard(state) {
       value: usd(amount),
       state: "open",
       at: state.anchor + days * day,
+      place: "",
       tone: "",
     }),
   );

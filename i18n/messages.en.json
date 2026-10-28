@@ -36194,7 +36194,7 @@
     ]
   },
   "At {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -77644,6 +77644,15 @@
       "routes/shipment"
     ]
   },
+  "Delivered {0} at {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Delivered {0}. Record the factor's funding once its report or remittance arrives.": {
     "sites": 1,
     "scope": [
@@ -87489,7 +87498,7 @@
     ]
   },
   "Due {0}": {
-    "sites": 13,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -87500,6 +87509,15 @@
       "routes/desk",
       "routes/ifta-return",
       "routes/shipment-tracking-public"
+    ]
+  },
+  "Due {0} at {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Due {0} · last {1}": {
