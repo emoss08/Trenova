@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentserviceportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -58,7 +58,7 @@ func (f *fakeRunRepo) SeedItems(
 
 type automaticFixture struct {
 	repo      *fakeRunRepo
-	shipments *shipmentportsmock.MockShipmentService
+	shipments *shipmentserviceportsmock.MockShipmentService
 	workflows *kernelportsmock.MockWorkflowStarter
 	svc       *Service
 	control   *tenant.BillingControl
@@ -70,7 +70,7 @@ func newAutomaticFixture(t *testing.T) *automaticFixture {
 
 	f := &automaticFixture{
 		repo:      &fakeRunRepo{},
-		shipments: shipmentportsmock.NewMockShipmentService(t),
+		shipments: shipmentserviceportsmock.NewMockShipmentService(t),
 		workflows: kernelportsmock.NewMockWorkflowStarter(t),
 		system:    pulid.MustNew("usr_"),
 		control: &tenant.BillingControl{
@@ -81,12 +81,20 @@ func newAutomaticFixture(t *testing.T) *automaticFixture {
 			BillingQueueTransferBatchSize: 50,
 		},
 	}
-	f.svc = &Service{runRepo: f.repo, workflows: f.workflows, shipments: f.shipments, l: zap.NewNop()}
+	f.svc = &Service{
+		runRepo:   f.repo,
+		workflows: f.workflows,
+		shipments: f.shipments,
+		l:         zap.NewNop(),
+	}
 
 	return f
 }
 
-func (f *automaticFixture) start(t *testing.T, now int64) (*billingtransfer.BillingTransferRun, error) {
+func (f *automaticFixture) start(
+	t *testing.T,
+	now int64,
+) (*billingtransfer.BillingTransferRun, error) {
 	t.Helper()
 
 	return f.svc.StartAutomatic(t.Context(), &AutomaticRunRequest{
@@ -102,8 +110,9 @@ func TestStartAutomaticTransfersTheEligibleShipments(t *testing.T) {
 	f := newAutomaticFixture(t)
 	ids := []pulid.ID{pulid.MustNew("shp_"), pulid.MustNew("shp_")}
 	f.shipments.EXPECT().
-		ListAutoTransferCandidateIDs(mock.Anything, mock.MatchedBy(func(req *shipmentports.ListAutoTransferCandidateIDsRequest) bool {
-			return req.Limit == 50 && req.ScanLimit == 250 && req.TenantInfo.OrgID == f.control.OrganizationID
+		ListAutoTransferCandidateIDs(mock.Anything, mock.MatchedBy(func(req *shipmentbillingports.ListAutoTransferCandidateIDsRequest) bool {
+			return req.Limit == 50 && req.ScanLimit == 250 &&
+				req.TenantInfo.OrgID == f.control.OrganizationID
 		})).
 		Return(ids, nil).
 		Once()
@@ -153,7 +162,10 @@ func TestStartAutomaticStartsNothingWhenNothingIsReady(t *testing.T) {
 	t.Parallel()
 
 	f := newAutomaticFixture(t)
-	f.shipments.EXPECT().ListAutoTransferCandidateIDs(mock.Anything, mock.Anything).Return(nil, nil).Once()
+	f.shipments.EXPECT().
+		ListAutoTransferCandidateIDs(mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Once()
 
 	run, err := f.start(t, 10_000)
 
@@ -182,7 +194,12 @@ func TestAutomaticBatchSize(t *testing.T) {
 
 	control.InvoiceDraftCreationMode = tenant.InvoiceDraftCreationModeAutomaticWhenTransferred
 	control.AutoInvoiceBatchSize = 40
-	assert.Equal(t, 40, AutomaticBatchSize(control), "no more drafts than the auto-invoice batch allows")
+	assert.Equal(
+		t,
+		40,
+		AutomaticBatchSize(control),
+		"no more drafts than the auto-invoice batch allows",
+	)
 
 	control.BillingQueueTransferBatchSize = billingtransfer.MaxRunShipments * 2
 	control.AutoInvoiceBatchSize = 0

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentimportchatports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,7 +34,7 @@ type Service struct {
 	pageThreads   assistantports.PageThreadRepository
 }
 
-var _ shipmentports.ShipmentImportAssistantService = (*Service)(nil)
+var _ shipmentimportassistantports.ShipmentImportAssistantService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
@@ -47,12 +47,16 @@ func New(p Params) *Service {
 
 func toHistoryMessages(
 	messages []shipmentimportchat.HistoryMessage,
-) []shipmentports.ShipmentImportChatMessage {
-	converted := make([]shipmentports.ShipmentImportChatMessage, 0, len(messages))
+) []shipmentimportassistantports.ShipmentImportChatMessage {
+	converted := make([]shipmentimportassistantports.ShipmentImportChatMessage, 0, len(messages))
 	for _, message := range messages {
-		toolCalls := make([]shipmentports.ShipmentImportToolCallRecord, 0, len(message.ToolCalls))
+		toolCalls := make(
+			[]shipmentimportassistantports.ShipmentImportToolCallRecord,
+			0,
+			len(message.ToolCalls),
+		)
 		for _, toolCall := range message.ToolCalls {
-			toolCalls = append(toolCalls, shipmentports.ShipmentImportToolCallRecord{
+			toolCalls = append(toolCalls, shipmentimportassistantports.ShipmentImportToolCallRecord{
 				Name:   toolCall.Name,
 				CallID: toolCall.CallID,
 				Status: toolCall.Status,
@@ -61,9 +65,13 @@ func toHistoryMessages(
 			})
 		}
 
-		suggestions := make([]shipmentports.ShipmentImportSuggestion, 0, len(message.Suggestions))
+		suggestions := make(
+			[]shipmentimportassistantports.ShipmentImportSuggestion,
+			0,
+			len(message.Suggestions),
+		)
 		for _, suggestion := range message.Suggestions {
-			suggestions = append(suggestions, shipmentports.ShipmentImportSuggestion{
+			suggestions = append(suggestions, shipmentimportassistantports.ShipmentImportSuggestion{
 				Label:       suggestion.Label,
 				Prompt:      suggestion.Prompt,
 				Type:        suggestion.Type,
@@ -73,7 +81,7 @@ func toHistoryMessages(
 			})
 		}
 
-		converted = append(converted, shipmentports.ShipmentImportChatMessage{
+		converted = append(converted, shipmentimportassistantports.ShipmentImportChatMessage{
 			ID:          message.ID,
 			Role:        message.Role,
 			Text:        message.Text,
@@ -211,7 +219,7 @@ func (s *Service) GetHistory(
 	ctx context.Context,
 	documentID string,
 	tenantInfo pagination.TenantInfo,
-) (*shipmentports.ShipmentImportChatHistoryResponse, error) {
+) (*shipmentimportassistantports.ShipmentImportChatHistoryResponse, error) {
 	id, err := pulid.Parse(documentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -226,7 +234,7 @@ func (s *Service) GetHistory(
 		return nil, err
 	}
 
-	return &shipmentports.ShipmentImportChatHistoryResponse{
+	return &shipmentimportassistantports.ShipmentImportChatHistoryResponse{
 		DocumentID:     documentID,
 		ConversationID: snapshot.ConversationID,
 		Status:         string(snapshot.Status),

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +31,7 @@ func TestBoardView_SaysWhatEachLateMoveIsLateFor(t *testing.T) {
 	arrived := now - 86_400
 	move := func(pro string, status shipment.Status, originArrive *int64, destEnd int64) *dispatchconsoleservice.BoardMove {
 		return &dispatchconsoleservice.BoardMove{
-			BoardMove: &shipmentports.BoardMove{
+			BoardMove: &dispatchboardports.BoardMove{
 				MoveID:                 pulid.MustNew("sm_"),
 				ShipmentID:             pulid.MustNew("shp_"),
 				ProNumber:              pro,
@@ -86,20 +86,23 @@ func TestLateness_MeasuresFromTheWindowsClose(t *testing.T) {
 
 	const now = int64(1_790_000_000)
 	end := now + 1800
-	open := &shipmentports.BoardMove{OriginWindowStart: now - 1800, OriginWindowEnd: &end}
+	open := &dispatchboardports.BoardMove{OriginWindowStart: now - 1800, OriginWindowEnd: &end}
 	what, seconds := lateness(open, now)
 	assert.Empty(t, what, "a move inside its pickup window is due, not late")
 	assert.Empty(t, lateFor(seconds))
 
 	closed := now - 22*3600
-	overdue := &shipmentports.BoardMove{OriginWindowStart: closed - 7200, OriginWindowEnd: &closed}
+	overdue := &dispatchboardports.BoardMove{
+		OriginWindowStart: closed - 7200,
+		OriginWindowEnd:   &closed,
+	}
 	what, seconds = lateness(overdue, now)
 	assert.Equal(t, "pick up", what)
 	assert.Equal(t, "22h 00m", lateFor(seconds))
 
 	arrived := now - 5*86_400
 	deadline := now - 3*86_400
-	delivering := &shipmentports.BoardMove{
+	delivering := &dispatchboardports.BoardMove{
 		OriginWindowStart:      arrived,
 		OriginActualArrive:     &arrived,
 		DestinationWindowStart: deadline - 3600,
@@ -125,7 +128,7 @@ func TestDispatchBoard_ReadsDueFirstAndPagesTheLateMoves(t *testing.T) {
 	delivering := func(pro string, behind int64) *dispatchconsoleservice.BoardMove {
 		deadline := now - behind
 		return &dispatchconsoleservice.BoardMove{
-			BoardMove: &shipmentports.BoardMove{
+			BoardMove: &dispatchboardports.BoardMove{
 				MoveID:                 pulid.MustNew("sm_"),
 				ShipmentID:             pulid.MustNew("shp_"),
 				ProNumber:              pro,

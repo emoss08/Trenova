@@ -8,7 +8,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
@@ -34,8 +34,8 @@ const severityWarning = "warning"
 
 func (s *service) CalculateLoadingOptimization(
 	ctx context.Context,
-	req *shipmentports.LoadingOptimizationRequest,
-) (*shipmentports.LoadingOptimizationResult, error) {
+	req *shipmentserviceports.LoadingOptimizationRequest,
+) (*shipmentserviceports.LoadingOptimizationResult, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
@@ -103,8 +103,8 @@ func (s *service) CalculateLoadingOptimization(
 
 type loadPlanParams struct {
 	commodityByID  map[pulid.ID]*commodity.Commodity
-	inputs         []shipmentports.LoadingCommodityInput
-	stops          []shipmentports.StopInfo
+	inputs         []shipmentserviceports.LoadingCommodityInput
+	stops          []shipmentserviceports.StopInfo
 	rules          []*hazmatsegregationrule.HazmatSegregationRule
 	trailerLength  float64
 	deckHeightFeet float64
@@ -114,7 +114,7 @@ type loadPlanParams struct {
 
 type placementCandidate struct {
 	commodity  *commodity.Commodity
-	input      shipmentports.LoadingCommodityInput
+	input      shipmentserviceports.LoadingCommodityInput
 	lengthFt   float64
 	widthFt    float64
 	heightFt   float64
@@ -134,11 +134,11 @@ func dimensionOrDefault(override *float64, fallback *float64) float64 {
 }
 
 func computeLoadEnvelope(
-	placements []shipmentports.CommodityPlacement,
+	placements []shipmentserviceports.CommodityPlacement,
 	trailerLength float64,
 	deckHeightFeet float64,
-) *shipmentports.LoadEnvelope {
-	envelope := &shipmentports.LoadEnvelope{DeckHeightFeet: deckHeightFeet}
+) *shipmentserviceports.LoadEnvelope {
+	envelope := &shipmentserviceports.LoadEnvelope{DeckHeightFeet: deckHeightFeet}
 
 	for _, placement := range placements {
 		envelope.LengthFeet = max(envelope.LengthFeet, placement.LengthFeet)
@@ -168,15 +168,17 @@ func computeLoadEnvelope(
 	return envelope
 }
 
-func envelopeWarnings(envelope *shipmentports.LoadEnvelope) []shipmentports.LoadingWarning {
+func envelopeWarnings(
+	envelope *shipmentserviceports.LoadEnvelope,
+) []shipmentserviceports.LoadingWarning {
 	if envelope == nil {
 		return nil
 	}
 
-	warnings := make([]shipmentports.LoadingWarning, 0, 3)
+	warnings := make([]shipmentserviceports.LoadingWarning, 0, 3)
 
 	if envelope.ExceedsLegalWidth {
-		warnings = append(warnings, shipmentports.LoadingWarning{
+		warnings = append(warnings, shipmentserviceports.LoadingWarning{
 			Type:     "oversize_width",
 			Severity: severityWarning,
 			Message: fmt.Sprintf(
@@ -186,7 +188,7 @@ func envelopeWarnings(envelope *shipmentports.LoadEnvelope) []shipmentports.Load
 	}
 
 	if envelope.ExceedsLegalHeight {
-		warnings = append(warnings, shipmentports.LoadingWarning{
+		warnings = append(warnings, shipmentserviceports.LoadingWarning{
 			Type:     "oversize_height",
 			Severity: severityWarning,
 			Message: fmt.Sprintf(
@@ -196,7 +198,7 @@ func envelopeWarnings(envelope *shipmentports.LoadEnvelope) []shipmentports.Load
 	}
 
 	if envelope.RearOverhangFeet > 0 {
-		warnings = append(warnings, shipmentports.LoadingWarning{
+		warnings = append(warnings, shipmentserviceports.LoadingWarning{
 			Type:     "rear_overhang",
 			Severity: severityWarning,
 			Message: fmt.Sprintf(
@@ -207,7 +209,7 @@ func envelopeWarnings(envelope *shipmentports.LoadEnvelope) []shipmentports.Load
 	return warnings
 }
 
-func buildLoadingPlan(p *loadPlanParams) *shipmentports.LoadingOptimizationResult {
+func buildLoadingPlan(p *loadPlanParams) *shipmentserviceports.LoadingOptimizationResult {
 	candidates := buildCandidates(p.commodityByID, p.inputs, p.trailerLength, p.maxWeight)
 	assignStopNumbers(candidates, p.stops)
 	sortCandidates(candidates, len(p.stops) > 0)
@@ -244,7 +246,7 @@ func buildLoadingPlan(p *loadPlanParams) *shipmentports.LoadingOptimizationResul
 		p.maxWeight,
 	)
 
-	return &shipmentports.LoadingOptimizationResult{
+	return &shipmentserviceports.LoadingOptimizationResult{
 		TrailerLengthFeet: p.trailerLength,
 		Envelope:          envelope,
 		TotalLinearFeet:   roundTo2(totalLinearFeet),
@@ -267,7 +269,7 @@ func buildLoadingPlan(p *loadPlanParams) *shipmentports.LoadingOptimizationResul
 
 func buildCandidates(
 	commodityByID map[pulid.ID]*commodity.Commodity,
-	inputs []shipmentports.LoadingCommodityInput,
+	inputs []shipmentserviceports.LoadingCommodityInput,
 	trailerLength float64,
 	maxWeight int64,
 ) []placementCandidate {
@@ -298,7 +300,7 @@ func buildCandidates(
 
 func estimateCommodityLength(
 	com *commodity.Commodity,
-	input shipmentports.LoadingCommodityInput,
+	input shipmentserviceports.LoadingCommodityInput,
 	trailerLength float64,
 	maxWeight int64,
 ) (float64, bool) {
@@ -314,7 +316,7 @@ func estimateCommodityLength(
 	return max(lengthFt, minEstimatedFt), true
 }
 
-func assignStopNumbers(candidates []placementCandidate, stops []shipmentports.StopInfo) {
+func assignStopNumbers(candidates []placementCandidate, stops []shipmentserviceports.StopInfo) {
 	if len(stops) <= 1 {
 		return
 	}
@@ -392,8 +394,8 @@ func placeCommodities(
 	rules []*hazmatsegregationrule.HazmatSegregationRule,
 	trailerLength float64,
 	checkHazmat bool,
-) []shipmentports.CommodityPlacement {
-	placements := make([]shipmentports.CommodityPlacement, 0, len(candidates))
+) []shipmentserviceports.CommodityPlacement {
+	placements := make([]shipmentserviceports.CommodityPlacement, 0, len(candidates))
 	cursor := 0.0
 	separatedPairs := make(map[pulid.ID]bool)
 
@@ -431,7 +433,7 @@ func placeCommodities(
 
 func adjustForHazmatDistance(
 	cand placementCandidate,
-	placed []shipmentports.CommodityPlacement,
+	placed []shipmentserviceports.CommodityPlacement,
 	rules []*hazmatsegregationrule.HazmatSegregationRule,
 	cursor float64,
 ) float64 {
@@ -455,8 +457,11 @@ func adjustForHazmatDistance(
 	return position
 }
 
-func buildPlacement(cand placementCandidate, position float64) shipmentports.CommodityPlacement {
-	p := shipmentports.CommodityPlacement{
+func buildPlacement(
+	cand placementCandidate,
+	position float64,
+) shipmentserviceports.CommodityPlacement {
+	p := shipmentserviceports.CommodityPlacement{
 		CommodityID:         cand.commodity.ID,
 		CommodityName:       cand.commodity.Name,
 		PositionFeet:        roundTo2(position),
@@ -485,9 +490,9 @@ func buildPlacement(cand placementCandidate, position float64) shipmentports.Com
 // --- Stop Dividers ---
 
 func computeStopDividers(
-	placements []shipmentports.CommodityPlacement,
-	stops []shipmentports.StopInfo,
-) []shipmentports.StopDivider {
+	placements []shipmentserviceports.CommodityPlacement,
+	stops []shipmentserviceports.StopInfo,
+) []shipmentserviceports.StopDivider {
 	if len(stops) == 0 {
 		return nil
 	}
@@ -520,16 +525,16 @@ func computeStopDividers(
 		}
 	}
 
-	dividers := make([]shipmentports.StopDivider, 0, len(bounds))
+	dividers := make([]shipmentserviceports.StopDivider, 0, len(bounds))
 	for stopNum, b := range bounds {
-		dividers = append(dividers, shipmentports.StopDivider{
+		dividers = append(dividers, shipmentserviceports.StopDivider{
 			PositionFeet: roundTo2(b.maxEnd),
 			StopNumber:   stopNum,
 			Label:        fmt.Sprintf("Stop %d: %s", stopNum, b.label),
 		})
 	}
 
-	slices.SortFunc(dividers, func(a, b shipmentports.StopDivider) int {
+	slices.SortFunc(dividers, func(a, b shipmentserviceports.StopDivider) int {
 		if a.PositionFeet < b.PositionFeet {
 			return -1
 		}
@@ -571,12 +576,12 @@ func findMatchingHazmatRuleByClass(
 }
 
 func evaluateHazmatZones(
-	placements []shipmentports.CommodityPlacement,
+	placements []shipmentserviceports.CommodityPlacement,
 	commodityByID map[pulid.ID]*commodity.Commodity,
 	rules []*hazmatsegregationrule.HazmatSegregationRule,
-) []shipmentports.HazmatZoneResult {
+) []shipmentserviceports.HazmatZoneResult {
 	hazmatPlacements := filterHazmatPlacements(placements)
-	zones := make([]shipmentports.HazmatZoneResult, 0)
+	zones := make([]shipmentserviceports.HazmatZoneResult, 0)
 
 	for i := range hazmatPlacements {
 		for j := i + 1; j < len(hazmatPlacements); j++ {
@@ -594,7 +599,7 @@ func evaluateHazmatZones(
 			}
 
 			actualDist := distanceBetweenPlacements(a, b)
-			zone := shipmentports.HazmatZoneResult{
+			zone := shipmentserviceports.HazmatZoneResult{
 				CommodityAID:       a.CommodityID,
 				CommodityBID:       b.CommodityID,
 				CommodityAName:     a.CommodityName,
@@ -628,9 +633,9 @@ func evaluateHazmatZones(
 }
 
 func filterHazmatPlacements(
-	placements []shipmentports.CommodityPlacement,
-) []shipmentports.CommodityPlacement {
-	result := make([]shipmentports.CommodityPlacement, 0)
+	placements []shipmentserviceports.CommodityPlacement,
+) []shipmentserviceports.CommodityPlacement {
+	result := make([]shipmentserviceports.CommodityPlacement, 0)
 	for _, p := range placements {
 		if p.IsHazmat {
 			result = append(result, p)
@@ -639,7 +644,7 @@ func filterHazmatPlacements(
 	return result
 }
 
-func distanceBetweenPlacements(a, b shipmentports.CommodityPlacement) float64 {
+func distanceBetweenPlacements(a, b shipmentserviceports.CommodityPlacement) float64 {
 	aEnd := a.PositionFeet + a.LengthFeet
 	bStart := b.PositionFeet
 	dist := bStart - aEnd
@@ -651,8 +656,8 @@ func distanceBetweenPlacements(a, b shipmentports.CommodityPlacement) float64 {
 }
 
 func hasBarrierBetween(
-	placements []shipmentports.CommodityPlacement,
-	a, b shipmentports.CommodityPlacement,
+	placements []shipmentserviceports.CommodityPlacement,
+	a, b shipmentserviceports.CommodityPlacement,
 ) bool {
 	for _, p := range placements {
 		if p.IsHazmat || p.CommodityID == a.CommodityID || p.CommodityID == b.CommodityID {
@@ -670,18 +675,18 @@ func hasBarrierBetween(
 // --- Warnings ---
 
 func generateWarnings(
-	placements []shipmentports.CommodityPlacement,
+	placements []shipmentserviceports.CommodityPlacement,
 	commodityByID map[pulid.ID]*commodity.Commodity,
 	totalLinearFeet float64,
 	totalWeight int64,
 	trailerLength float64,
 	maxWeight int64,
-	hazmatZones []shipmentports.HazmatZoneResult,
-) []shipmentports.LoadingWarning {
-	warnings := make([]shipmentports.LoadingWarning, 0)
+	hazmatZones []shipmentserviceports.HazmatZoneResult,
+) []shipmentserviceports.LoadingWarning {
+	warnings := make([]shipmentserviceports.LoadingWarning, 0)
 
 	if totalWeight > maxWeight {
-		warnings = append(warnings, shipmentports.LoadingWarning{
+		warnings = append(warnings, shipmentserviceports.LoadingWarning{
 			Type: "overweight",
 			Message: fmt.Sprintf(
 				"Total weight %s lbs exceeds maximum %s lbs",
@@ -693,7 +698,7 @@ func generateWarnings(
 	}
 
 	if totalLinearFeet > trailerLength {
-		warnings = append(warnings, shipmentports.LoadingWarning{
+		warnings = append(warnings, shipmentserviceports.LoadingWarning{
 			Type: "over_length",
 			Message: fmt.Sprintf(
 				"Total linear feet %.1f exceeds trailer capacity %.1f ft",
@@ -706,7 +711,7 @@ func generateWarnings(
 
 	for _, zone := range hazmatZones {
 		if !zone.Satisfied {
-			warnings = append(warnings, shipmentports.LoadingWarning{
+			warnings = append(warnings, shipmentserviceports.LoadingWarning{
 				Type: "hazmat_violation",
 				Message: fmt.Sprintf(
 					"Hazmat rule %q (%s) violated between %s and %s",
@@ -726,9 +731,9 @@ func generateWarnings(
 }
 
 func checkTemperatureConflicts(
-	placements []shipmentports.CommodityPlacement,
-) []shipmentports.LoadingWarning {
-	var warnings []shipmentports.LoadingWarning
+	placements []shipmentserviceports.CommodityPlacement,
+) []shipmentserviceports.LoadingWarning {
+	var warnings []shipmentserviceports.LoadingWarning
 
 	for i := range placements {
 		for j := i + 1; j < len(placements); j++ {
@@ -743,7 +748,7 @@ func checkTemperatureConflicts(
 			}
 
 			if *a.MaxTemp < *b.MinTemp || *b.MaxTemp < *a.MinTemp {
-				warnings = append(warnings, shipmentports.LoadingWarning{
+				warnings = append(warnings, shipmentserviceports.LoadingWarning{
 					Type: "temperature_conflict",
 					Message: fmt.Sprintf(
 						"%s (%d\u2013%d\u00b0F) and %s (%d\u2013%d\u00b0F) have incompatible temperature ranges and are placed adjacent",
@@ -765,9 +770,9 @@ func checkTemperatureConflicts(
 }
 
 func checkFragileStacking(
-	placements []shipmentports.CommodityPlacement,
-) []shipmentports.LoadingWarning {
-	var warnings []shipmentports.LoadingWarning
+	placements []shipmentserviceports.CommodityPlacement,
+) []shipmentserviceports.LoadingWarning {
+	var warnings []shipmentserviceports.LoadingWarning
 
 	for i := range placements {
 		if !placements[i].Fragile {
@@ -778,7 +783,7 @@ func checkFragileStacking(
 			if !placements[j].Stackable && placements[j].Weight > 2000 {
 				dist := distanceBetweenPlacements(placements[i], placements[j])
 				if dist < 1 {
-					warnings = append(warnings, shipmentports.LoadingWarning{
+					warnings = append(warnings, shipmentserviceports.LoadingWarning{
 						Type: "fragile_stacking",
 						Message: fmt.Sprintf(
 							"Fragile item %q is adjacent to heavy non-stackable item %q (%s lbs) \u2014 risk of damage during transit",
@@ -801,10 +806,10 @@ func checkFragileStacking(
 }
 
 func checkEstimatedLengths(
-	placements []shipmentports.CommodityPlacement,
+	placements []shipmentserviceports.CommodityPlacement,
 	commodityByID map[pulid.ID]*commodity.Commodity,
-) []shipmentports.LoadingWarning {
-	var warnings []shipmentports.LoadingWarning
+) []shipmentserviceports.LoadingWarning {
+	var warnings []shipmentserviceports.LoadingWarning
 
 	for _, p := range placements {
 		if !p.EstimatedLength {
@@ -814,7 +819,7 @@ func checkEstimatedLengths(
 		if com := commodityByID[p.CommodityID]; com != nil {
 			name = com.Name
 		}
-		warnings = append(warnings, shipmentports.LoadingWarning{
+		warnings = append(warnings, shipmentserviceports.LoadingWarning{
 			Type: "missing_linear_feet",
 			Message: fmt.Sprintf(
 				"Linear feet per unit not configured for %q \u2014 using estimated length",
@@ -830,7 +835,9 @@ func checkEstimatedLengths(
 
 // --- Axle Weights ---
 
-func computeAxleWeights(placements []shipmentports.CommodityPlacement) []shipmentports.AxleWeight {
+func computeAxleWeights(
+	placements []shipmentserviceports.CommodityPlacement,
+) []shipmentserviceports.AxleWeight {
 	var driveWeight, trailerWeight float64
 
 	for _, p := range placements {
@@ -846,7 +853,7 @@ func computeAxleWeights(placements []shipmentports.CommodityPlacement) []shipmen
 	driveW := int64(math.Round(driveWeight))
 	trailerW := int64(math.Round(trailerWeight))
 
-	return []shipmentports.AxleWeight{
+	return []shipmentserviceports.AxleWeight{
 		{Axle: "steer", Weight: 0, Limit: steerAxleLimitLbs, Percentage: 0, Compliant: true},
 		{
 			Axle:       "drive",
@@ -888,15 +895,15 @@ func computeUtilizationScore(linearFeetUtil, weightUtil float64) (int, string) {
 // --- Recommendations ---
 
 func generateRecommendations(
-	placements []shipmentports.CommodityPlacement,
-	axleWeights []shipmentports.AxleWeight,
-	hazmatZones []shipmentports.HazmatZoneResult,
+	placements []shipmentserviceports.CommodityPlacement,
+	axleWeights []shipmentserviceports.AxleWeight,
+	hazmatZones []shipmentserviceports.HazmatZoneResult,
 	totalLinearFeet float64,
 	totalWeight int64,
 	trailerLength float64,
 	maxWeight int64,
-) []shipmentports.LoadingRecommendation {
-	var recs []shipmentports.LoadingRecommendation
+) []shipmentserviceports.LoadingRecommendation {
+	var recs []shipmentserviceports.LoadingRecommendation
 
 	recs = append(recs, checkOverweight(placements, totalWeight, maxWeight)...)
 	recs = append(recs, checkOverLength(placements, totalLinearFeet, trailerLength)...)
@@ -910,9 +917,9 @@ func generateRecommendations(
 }
 
 func checkOverweight(
-	placements []shipmentports.CommodityPlacement,
+	placements []shipmentserviceports.CommodityPlacement,
 	totalWeight, maxWeight int64,
-) []shipmentports.LoadingRecommendation {
+) []shipmentserviceports.LoadingRecommendation {
 	if totalWeight <= maxWeight {
 		return nil
 	}
@@ -920,7 +927,7 @@ func checkOverweight(
 	excess := totalWeight - maxWeight
 	heaviest := findHeaviest(placements)
 
-	return []shipmentports.LoadingRecommendation{{
+	return []shipmentserviceports.LoadingRecommendation{{
 		Type:     "split",
 		Priority: "critical",
 		Title:    "Shipment exceeds weight limit",
@@ -936,16 +943,16 @@ func checkOverweight(
 }
 
 func checkOverLength(
-	placements []shipmentports.CommodityPlacement,
+	placements []shipmentserviceports.CommodityPlacement,
 	totalLinearFeet, trailerLength float64,
-) []shipmentports.LoadingRecommendation {
+) []shipmentserviceports.LoadingRecommendation {
 	if totalLinearFeet <= trailerLength {
 		return nil
 	}
 
 	longest := findLongest(placements)
 
-	return []shipmentports.LoadingRecommendation{{
+	return []shipmentserviceports.LoadingRecommendation{{
 		Type:     "split",
 		Priority: "critical",
 		Title:    "Cargo exceeds trailer length",
@@ -959,16 +966,16 @@ func checkOverLength(
 }
 
 func checkAxleViolations(
-	axleWeights []shipmentports.AxleWeight,
-) []shipmentports.LoadingRecommendation {
-	var recs []shipmentports.LoadingRecommendation
+	axleWeights []shipmentserviceports.AxleWeight,
+) []shipmentserviceports.LoadingRecommendation {
+	var recs []shipmentserviceports.LoadingRecommendation
 
 	for _, aw := range axleWeights {
 		if aw.Compliant || aw.Weight == 0 {
 			continue
 		}
 		excess := aw.Weight - aw.Limit
-		recs = append(recs, shipmentports.LoadingRecommendation{
+		recs = append(recs, shipmentserviceports.LoadingRecommendation{
 			Type:     "reorder",
 			Priority: "critical",
 			Title:    fmt.Sprintf("%s axle overweight", stringutils.CapitalizeFirst(aw.Axle)),
@@ -989,9 +996,9 @@ func checkAxleViolations(
 }
 
 func checkHazmatViolations(
-	hazmatZones []shipmentports.HazmatZoneResult,
-) []shipmentports.LoadingRecommendation {
-	var recs []shipmentports.LoadingRecommendation
+	hazmatZones []shipmentserviceports.HazmatZoneResult,
+) []shipmentserviceports.LoadingRecommendation {
+	var recs []shipmentserviceports.LoadingRecommendation
 
 	for _, zone := range hazmatZones {
 		if zone.Satisfied {
@@ -1006,7 +1013,7 @@ func checkHazmatViolations(
 				desc += fmt.Sprintf(" Increase separation by %.1f ft.", gap)
 			}
 		}
-		recs = append(recs, shipmentports.LoadingRecommendation{
+		recs = append(recs, shipmentserviceports.LoadingRecommendation{
 			Type:         "reorder",
 			Priority:     "critical",
 			Title:        "Hazmat segregation violation",
@@ -1020,9 +1027,9 @@ func checkHazmatViolations(
 }
 
 func checkWeightBalance(
-	axleWeights []shipmentports.AxleWeight,
+	axleWeights []shipmentserviceports.AxleWeight,
 	totalWeight int64,
-) []shipmentports.LoadingRecommendation {
+) []shipmentserviceports.LoadingRecommendation {
 	if len(axleWeights) < 3 || totalWeight == 0 {
 		return nil
 	}
@@ -1036,7 +1043,7 @@ func checkWeightBalance(
 
 	switch {
 	case ratio > 0.65:
-		return []shipmentports.LoadingRecommendation{
+		return []shipmentserviceports.LoadingRecommendation{
 			{
 				Type:        "reorder",
 				Priority:    "suggested",
@@ -1046,7 +1053,7 @@ func checkWeightBalance(
 			},
 		}
 	case ratio < 0.35:
-		return []shipmentports.LoadingRecommendation{
+		return []shipmentserviceports.LoadingRecommendation{
 			{
 				Type:        "reorder",
 				Priority:    "suggested",
@@ -1063,7 +1070,7 @@ func checkWeightBalance(
 func checkUtilization(
 	totalWeight, maxWeight int64,
 	totalLinearFeet, trailerLength float64,
-) []shipmentports.LoadingRecommendation {
+) []shipmentserviceports.LoadingRecommendation {
 	if totalWeight == 0 || maxWeight == 0 {
 		return nil
 	}
@@ -1072,7 +1079,7 @@ func checkUtilization(
 	linearUtil := safePercent(totalLinearFeet, trailerLength)
 
 	if weightUtil < 50 && linearUtil < 50 {
-		return []shipmentports.LoadingRecommendation{
+		return []shipmentserviceports.LoadingRecommendation{
 			{
 				Type:     "mode_change",
 				Priority: "optimization",
@@ -1091,8 +1098,8 @@ func checkUtilization(
 }
 
 func checkMissingDimensions(
-	placements []shipmentports.CommodityPlacement,
-) []shipmentports.LoadingRecommendation {
+	placements []shipmentserviceports.CommodityPlacement,
+) []shipmentserviceports.LoadingRecommendation {
 	var names []string
 	var ids []string
 
@@ -1112,7 +1119,7 @@ func checkMissingDimensions(
 		joinNames(names),
 	)
 
-	return []shipmentports.LoadingRecommendation{{
+	return []shipmentserviceports.LoadingRecommendation{{
 		Type:         "configure",
 		Priority:     "optimization",
 		Title:        "Missing commodity dimensions",
@@ -1136,8 +1143,10 @@ func joinNames(names []string) string {
 
 // --- Helpers ---
 
-func findHeaviest(placements []shipmentports.CommodityPlacement) shipmentports.CommodityPlacement {
-	var heaviest shipmentports.CommodityPlacement
+func findHeaviest(
+	placements []shipmentserviceports.CommodityPlacement,
+) shipmentserviceports.CommodityPlacement {
+	var heaviest shipmentserviceports.CommodityPlacement
 	for _, p := range placements {
 		if p.Weight > heaviest.Weight {
 			heaviest = p
@@ -1146,8 +1155,10 @@ func findHeaviest(placements []shipmentports.CommodityPlacement) shipmentports.C
 	return heaviest
 }
 
-func findLongest(placements []shipmentports.CommodityPlacement) shipmentports.CommodityPlacement {
-	var longest shipmentports.CommodityPlacement
+func findLongest(
+	placements []shipmentserviceports.CommodityPlacement,
+) shipmentserviceports.CommodityPlacement {
+	var longest shipmentserviceports.CommodityPlacement
 	for _, p := range placements {
 		if p.LengthFeet > longest.LengthFeet {
 			longest = p
@@ -1157,7 +1168,7 @@ func findLongest(placements []shipmentports.CommodityPlacement) shipmentports.Co
 }
 
 func computeTotals(
-	placements []shipmentports.CommodityPlacement,
+	placements []shipmentserviceports.CommodityPlacement,
 ) (totalLinearFeet float64, totalWeight int64) {
 	for _, p := range placements {
 		end := p.PositionFeet + p.LengthFeet

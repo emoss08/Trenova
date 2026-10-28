@@ -14,7 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentboardcache"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -41,16 +43,16 @@ type Params struct {
 	fx.In
 
 	Console         dispatchconsoleports.DispatchConsoleService
-	Capabilities    shipmentports.ShipmentBoardCapabilitiesReader
-	Watchlist       shipmentports.ShipmentWatchlistReader
-	Comments        shipmentports.ShipmentCommentService
+	Capabilities    shipmentboardports.ShipmentBoardCapabilitiesReader
+	Watchlist       shipmentboardports.ShipmentWatchlistReader
+	Comments        shipmentcommentports.ShipmentCommentService
 	Detention       *detentionservice.Service
 	Decisions       shipmentsuggestionports.ShipmentSuggestionDecisionRepository
-	AssignmentReads shipmentports.AssignmentRepository
+	AssignmentReads assignmentports.AssignmentRepository
 	Tenders         tenderports.TenderRepository
 	TenderGuard     tenderports.TenderGuard
-	Assignments     shipmentports.AssignmentService
-	Cache           shipmentports.ShipmentBoardCache `optional:"true"`
+	Assignments     assignmentports.AssignmentService
+	Cache           shipmentboardports.ShipmentBoardCache `optional:"true"`
 	Briefs          shipmentbriefports.ShipmentBriefRepository
 	Organizations   tenantports.OrganizationRepository
 	Logger          *zap.Logger
@@ -58,16 +60,16 @@ type Params struct {
 
 type Dependencies struct {
 	Console         dispatchconsoleports.DispatchConsoleService
-	Capabilities    shipmentports.ShipmentBoardCapabilitiesReader
-	Watchlist       shipmentports.ShipmentWatchlistReader
-	Comments        shipmentports.ShipmentCommentService
+	Capabilities    shipmentboardports.ShipmentBoardCapabilitiesReader
+	Watchlist       shipmentboardports.ShipmentWatchlistReader
+	Comments        shipmentcommentports.ShipmentCommentService
 	Detention       detentionDesk
 	Decisions       shipmentsuggestionports.ShipmentSuggestionDecisionRepository
-	AssignmentReads shipmentports.AssignmentRepository
+	AssignmentReads assignmentports.AssignmentRepository
 	Tenders         tenderports.TenderRepository
 	TenderGuard     tenderports.TenderGuard
-	Assignments     shipmentports.AssignmentService
-	Cache           shipmentports.ShipmentBoardCache
+	Assignments     assignmentports.AssignmentService
+	Cache           shipmentboardports.ShipmentBoardCache
 	Briefs          shipmentbriefports.ShipmentBriefRepository
 	Organizations   tenantports.OrganizationRepository
 	Logger          *zap.Logger
@@ -76,16 +78,16 @@ type Dependencies struct {
 
 type Service struct {
 	console         dispatchconsoleports.DispatchConsoleService
-	capabilities    shipmentports.ShipmentBoardCapabilitiesReader
-	watchlist       shipmentports.ShipmentWatchlistReader
-	comments        shipmentports.ShipmentCommentService
+	capabilities    shipmentboardports.ShipmentBoardCapabilitiesReader
+	watchlist       shipmentboardports.ShipmentWatchlistReader
+	comments        shipmentcommentports.ShipmentCommentService
 	detention       detentionDesk
 	decisions       shipmentsuggestionports.ShipmentSuggestionDecisionRepository
-	assignmentReads shipmentports.AssignmentRepository
+	assignmentReads assignmentports.AssignmentRepository
 	tenders         tenderports.TenderRepository
 	tenderGuard     tenderports.TenderGuard
-	assignments     shipmentports.AssignmentService
-	cache           shipmentports.ShipmentBoardCache
+	assignments     assignmentports.AssignmentService
+	cache           shipmentboardports.ShipmentBoardCache
 	briefs          shipmentbriefports.ShipmentBriefRepository
 	organizations   tenantports.OrganizationRepository
 	rules           []rule
@@ -221,7 +223,7 @@ func (s *Service) queue(
 		s.cache,
 		s.l,
 		&shipmentboardcache.Request{
-			Section:    shipmentports.ShipmentBoardSectionSuggestions,
+			Section:    shipmentboardports.ShipmentBoardSectionSuggestions,
 			TenantInfo: tenantInfo,
 			Timezone:   timezone,
 		},

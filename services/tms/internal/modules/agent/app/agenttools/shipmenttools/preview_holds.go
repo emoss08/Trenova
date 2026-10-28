@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 )
 
 var placedHoldFields = []string{
@@ -120,7 +120,7 @@ func (t *ReleaseShipmentHoldTool) Preview(
 		return nil, err
 	}
 
-	current, err := t.holds.GetByID(ctx, &shipmentports.GetShipmentHoldByIDRequest{
+	current, err := t.holds.GetByID(ctx, &shipmentholdports.GetShipmentHoldByIDRequest{
 		HoldID:     request.HoldID,
 		ShipmentID: request.ShipmentID,
 		TenantInfo: request.TenantInfo,

@@ -4,9 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
@@ -15,6 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentmoveportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -104,11 +104,11 @@ func newStopHarness(t *testing.T, stops ...*shipment.Stop) *stopHarness {
 	dispatch.EXPECT().GetOrCreate(mock.Anything, tenant.OrgID, tenant.BuID).
 		Return(&dispatchcontrol.DispatchControl{EnableAutoStopActuals: true}, nil).Maybe()
 
-	assignments := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignments := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignments.EXPECT().FindActiveByTractorID(mock.Anything, tenant, tractor).
 		Return(&shipment.Assignment{ShipmentMoveID: move.ID}, nil).Maybe()
 
-	moveRepo := shipmentportsmock.NewMockShipmentMoveRepository(t)
+	moveRepo := shipmentmoveportsmock.NewMockShipmentMoveRepository(t)
 	moveRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(move, nil).Maybe()
 
 	visits := &visitRecorder{}

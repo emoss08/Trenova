@@ -18,7 +18,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -52,36 +55,38 @@ func (f *console) GetMoveCandidates(
 }
 
 type capabilities struct {
-	caps shipmentports.ShipmentBoardCapabilities
+	caps shipmentboardports.ShipmentBoardCapabilities
 }
 
 func (f *capabilities) Capabilities(
 	context.Context,
 	pagination.TenantInfo,
-) (*shipmentports.ShipmentBoardCapabilities, error) {
+) (*shipmentboardports.ShipmentBoardCapabilities, error) {
 	return &f.caps, nil
 }
 
-type watchlist struct{ late []shipmentports.LateDelivery }
+type watchlist struct {
+	late []shipmentboardports.LateDelivery
+}
 
 func (f *watchlist) Watchlist(
 	context.Context,
 	pagination.TenantInfo,
 	string,
-) (*shipmentports.ShipmentWatchlist, error) {
-	return &shipmentports.ShipmentWatchlist{
-		Deliveries: shipmentports.ShipmentDeliveryWatch{WorstLate: f.late},
+) (*shipmentboardports.ShipmentWatchlist, error) {
+	return &shipmentboardports.ShipmentWatchlist{
+		Deliveries: shipmentboardports.ShipmentDeliveryWatch{WorstLate: f.late},
 	}, nil
 }
 
 type comments struct {
-	shipmentports.ShipmentCommentService
+	shipmentcommentports.ShipmentCommentService
 	byShipment map[pulid.ID][]*shipment.ShipmentComment
 }
 
 func (f *comments) ListByShipmentID(
 	_ context.Context,
-	req *shipmentports.ListShipmentCommentsRequest,
+	req *shipmentcommentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	return &pagination.CursorListResult[*shipment.ShipmentComment]{
 		Items: f.byShipment[req.ShipmentID],
@@ -173,13 +178,13 @@ func (f *guard) CancelLiveTenderForMove(
 }
 
 type assigner struct {
-	shipmentports.AssignmentService
+	assignmentports.AssignmentService
 	unassigned []pulid.ID
 }
 
 func (f *assigner) Unassign(
 	_ context.Context,
-	req *shipmentports.UnassignShipmentMoveRequest,
+	req *assignmentports.UnassignShipmentMoveRequest,
 ) error {
 	f.unassigned = append(f.unassigned, req.ShipmentMoveID)
 
@@ -187,7 +192,7 @@ func (f *assigner) Unassign(
 }
 
 type assignmentReads struct {
-	shipmentports.AssignmentRepository
+	assignmentports.AssignmentRepository
 	assignment *shipment.Assignment
 }
 
@@ -225,7 +230,7 @@ func newHarness(operation tenant.OperationType) *harness {
 			candidates: map[pulid.ID][]*dispatchcandidateservice.CandidateScore{},
 		},
 		caps: &capabilities{
-			caps: shipmentports.ShipmentBoardCapabilities{OperationType: operation, HOS: true},
+			caps: shipmentboardports.ShipmentBoardCapabilities{OperationType: operation, HOS: true},
 		},
 		watchlist: &watchlist{},
 		comments:  &comments{byShipment: map[pulid.ID][]*shipment.ShipmentComment{}},
@@ -266,7 +271,7 @@ func testTenant() pagination.TenantInfo {
 
 func uncovered(pro string, pickupIn time.Duration) *dispatchconsoleservice.BoardMove {
 	revenue := 3590.0
-	return &dispatchconsoleservice.BoardMove{BoardMove: &shipmentports.BoardMove{
+	return &dispatchconsoleservice.BoardMove{BoardMove: &dispatchboardports.BoardMove{
 		MoveID:            pulid.MustNew("smv_"),
 		ShipmentID:        pulid.MustNew("shp_"),
 		ProNumber:         pro,
@@ -378,21 +383,21 @@ func TestDelayNotice_SkipsCustomersAlreadyToldThisHour(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(tenant.OperationTypeAsset)
-	told := shipmentports.LateDelivery{
+	told := shipmentboardports.LateDelivery{
 		ShipmentID:   pulid.MustNew("shp_"),
 		ProNumber:    "S1",
 		DeltaMinutes: 202,
 		City:         "New Orleans",
 		CustomerName: "Cargill Protein",
 	}
-	untold := shipmentports.LateDelivery{
+	untold := shipmentboardports.LateDelivery{
 		ShipmentID:   pulid.MustNew("shp_"),
 		ProNumber:    "S2",
 		DeltaMinutes: 188,
 		City:         "Houston",
 		CustomerName: "PepsiCo",
 	}
-	h.watchlist.late = []shipmentports.LateDelivery{told, untold}
+	h.watchlist.late = []shipmentboardports.LateDelivery{told, untold}
 	h.comments.byShipment[told.ShipmentID] = []*shipment.ShipmentComment{{
 		CreatedAt: fixedNow.Add(-10 * time.Minute).Unix(),
 		Type:      shipment.CommentTypeCustomerUpdate,
@@ -420,7 +425,7 @@ func TestHoursOfService_WarnsAboutWorkingDriversRunningOut(t *testing.T) {
 	move.DestinationCity = "Nashville"
 	h.console.board.Moves = []*dispatchconsoleservice.BoardMove{move}
 	h.console.board.Drivers = []*dispatchconsoleservice.BoardDriver{{
-		BoardDriver: &shipmentports.BoardDriver{
+		BoardDriver: &dispatchboardports.BoardDriver{
 			WorkerID:  worker,
 			FirstName: "Tom",
 			LastName:  "Avery",

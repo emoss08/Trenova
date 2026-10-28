@@ -5,13 +5,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/stretchr/testify/assert"
 )
 
-func automaticReadiness() *shipmentports.ShipmentBillingReadiness {
-	return &shipmentports.ShipmentBillingReadiness{
-		Policy: shipmentports.ShipmentBillingReadinessPolicy{
+func automaticReadiness() *shipmentbillingports.ShipmentBillingReadiness {
+	return &shipmentbillingports.ShipmentBillingReadiness{
+		Policy: shipmentbillingports.ShipmentBillingReadinessPolicy{
 			BillingQueueTransferMode:              tenant.BillingQueueTransferModeAutomaticWhenReady,
 			ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelBlock,
 		},
@@ -36,7 +36,9 @@ func TestReadinessAllowsAutoTransfer(t *testing.T) {
 		"a payer who opted out of automatic transfer is left for a person")
 
 	blocked := automaticReadiness()
-	blocked.MissingRequirements = []shipmentports.ShipmentBillingRequirement{{DocumentTypeCode: "POD"}}
+	blocked.MissingRequirements = []shipmentbillingports.ShipmentBillingRequirement{
+		{DocumentTypeCode: "POD"},
+	}
 	assert.False(t, readinessAllowsAutoTransfer(shipment.StatusReadyToInvoice, blocked),
 		"a transfer billing policy would refuse is never attempted")
 

@@ -6,14 +6,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -82,21 +83,21 @@ func (f *mailer) Send(_ context.Context, req *emailports.SendEmailRequest) (*ema
 }
 
 type commentBook struct {
-	shipmentports.ShipmentCommentService
+	shipmentcommentports.ShipmentCommentService
 	existing []*shipment.ShipmentComment
-	created  []*shipmentports.CreateSystemShipmentCommentRequest
+	created  []*shipmentcommentports.CreateSystemShipmentCommentRequest
 }
 
 func (f *commentBook) ListByShipmentID(
 	context.Context,
-	*shipmentports.ListShipmentCommentsRequest,
+	*shipmentcommentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	return &pagination.CursorListResult[*shipment.ShipmentComment]{Items: f.existing}, nil
 }
 
 func (f *commentBook) CreateSystem(
 	_ context.Context,
-	req *shipmentports.CreateSystemShipmentCommentRequest,
+	req *shipmentcommentports.CreateSystemShipmentCommentRequest,
 ) (*shipment.ShipmentComment, error) {
 	f.created = append(f.created, req)
 
@@ -136,7 +137,10 @@ func newFixture(recipients string) *fixture {
 		now:      func() int64 { return testNow },
 	}
 	f.request = &NotifyDelayRequest{
-		TenantInfo:     pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: pulid.MustNew("org_"),
+			BuID:  pulid.MustNew("bu_"),
+		},
 		ShipmentID:     shipmentID,
 		Message:        "  The load is running about three hours behind the storm over I-80.  ",
 		IdempotencyKey: "idem-1",
@@ -169,7 +173,10 @@ func TestNotifyDelay_EmailsTheCustomersContactsAndRecordsIt(t *testing.T) {
 	assert.Equal(t, shipment.CommentOriginBoard, comment.Metadata[shipment.CommentMetadataOrigin])
 	assert.Equal(t, SourceDelayNotice, comment.Metadata[metadataSource])
 	assert.Equal(t, f.actor.UserID.String(), comment.Metadata[metadataSentBy])
-	assert.True(t, strings.HasPrefix(comment.Comment, "Emailed ops@cargill.example, dock@cargill.example:"))
+	assert.True(
+		t,
+		strings.HasPrefix(comment.Comment, "Emailed ops@cargill.example, dock@cargill.example:"),
+	)
 }
 
 func TestNotifyDelay_SendsNothingWhenTheCustomerWasJustTold(t *testing.T) {
@@ -230,6 +237,10 @@ func TestNotifyDelay_RecordsNothingWhenTheSendFails(t *testing.T) {
 	f := newFixture("ops@cargill.example")
 	f.mailer.err = errors.New("provider down")
 
-	require.ErrorContains(t, f.service.NotifyDelay(t.Context(), f.request, f.actor), "provider down")
+	require.ErrorContains(
+		t,
+		f.service.NotifyDelay(t.Context(), f.request, f.actor),
+		"provider down",
+	)
 	assert.Empty(t, f.comments.created)
 }

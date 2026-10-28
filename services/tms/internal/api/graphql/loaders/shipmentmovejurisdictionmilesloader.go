@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -14,14 +14,14 @@ import (
 type jurisdictionMilesByMoveIDsLister interface {
 	ListByMoveIDs(
 		ctx context.Context,
-		req shipmentports.ListJurisdictionMilesByMoveIDsRequest,
+		req shipmentdistanceports.ListJurisdictionMilesByMoveIDsRequest,
 	) ([]*shipment.ShipmentMoveJurisdictionMile, error)
 }
 
 type ShipmentMoveJurisdictionMilesByMoveIDLoaderFactoryParams struct {
 	fx.In
 
-	Repo shipmentports.ShipmentMoveJurisdictionMileRepository
+	Repo shipmentdistanceports.ShipmentMoveJurisdictionMileRepository
 }
 
 type ShipmentMoveJurisdictionMilesByMoveIDLoaderFactory struct {
@@ -50,7 +50,7 @@ func (f *ShipmentMoveJurisdictionMilesByMoveIDLoaderFactory) batchFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*shipment.ShipmentMoveJurisdictionMile, error) {
 			rows, err := f.miles.ListByMoveIDs(
 				ctx,
-				shipmentports.ListJurisdictionMilesByMoveIDsRequest{
+				shipmentdistanceports.ListJurisdictionMilesByMoveIDsRequest{
 					TenantInfo: tenantInfo,
 					MoveIDs:    ids,
 				},

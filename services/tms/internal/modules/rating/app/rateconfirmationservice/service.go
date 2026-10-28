@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -42,7 +43,7 @@ type Params struct {
 	Logger                *zap.Logger
 	DB                    kernelports.Transactor
 	Repo                  rateconfirmationports.RateConfirmationRepository
-	CarrierAssignmentRepo shipmentports.CarrierAssignmentRepository
+	CarrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
 	CarrierRepo           carrierports.CarrierRepository
 	ShipmentRepo          shipmentports.ShipmentRepository
 	OrgRepo               tenantports.OrganizationRepository
@@ -59,7 +60,7 @@ type Service struct {
 	l                     *zap.Logger
 	db                    kernelports.Transactor
 	repo                  rateconfirmationports.RateConfirmationRepository
-	carrierAssignmentRepo shipmentports.CarrierAssignmentRepository
+	carrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
 	carrierRepo           carrierports.CarrierRepository
 	shipmentRepo          shipmentports.ShipmentRepository
 	orgRepo               tenantports.OrganizationRepository
@@ -514,7 +515,7 @@ func (s *Service) confirmAssignment(
 ) error {
 	assignment, err := s.carrierAssignmentRepo.GetByID(
 		ctx,
-		&shipmentports.GetCarrierAssignmentByIDRequest{
+		&carrierassignmentports.GetCarrierAssignmentByIDRequest{
 			TenantInfo:          tenantInfo,
 			CarrierAssignmentID: assignmentID,
 		},
@@ -539,7 +540,7 @@ func (s *Service) revertAssignmentConfirmation(
 ) error {
 	assignment, err := s.carrierAssignmentRepo.GetByID(
 		ctx,
-		&shipmentports.GetCarrierAssignmentByIDRequest{
+		&carrierassignmentports.GetCarrierAssignmentByIDRequest{
 			TenantInfo:          tenantInfo,
 			CarrierAssignmentID: assignmentID,
 		},
@@ -635,7 +636,7 @@ func (s *Service) shipmentIDForMove(
 	if assignment != nil {
 		full, gErr := s.carrierAssignmentRepo.GetByID(
 			ctx,
-			&shipmentports.GetCarrierAssignmentByIDRequest{
+			&carrierassignmentports.GetCarrierAssignmentByIDRequest{
 				TenantInfo:          tenantInfo,
 				CarrierAssignmentID: assignment.ID,
 			},

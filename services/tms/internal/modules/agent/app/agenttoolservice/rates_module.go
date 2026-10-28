@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/reporttools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateimportservice"
@@ -143,14 +143,14 @@ func provideDeleteIFTAMileageEntryTool(entries *iftaservice.Service) agenttoolpo
 }
 
 func provideRecalculateMoveJurisdictionMilesTool(
-	router shipmentports.DistanceCalculationService,
+	router shipmentdistanceports.DistanceCalculationService,
 ) agenttoolports.AgentTool {
 	return receivabletools.NewRecalculateMoveJurisdictionMilesTool(router)
 }
 
 func provideBackfillJurisdictionMilesTool(
 	returns *iftaservice.Service,
-	router shipmentports.DistanceCalculationService,
+	router shipmentdistanceports.DistanceCalculationService,
 ) agenttoolports.AgentTool {
 	return receivabletools.NewBackfillJurisdictionMilesTool(returns, router)
 }

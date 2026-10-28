@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/chargeallocationportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
@@ -247,7 +248,7 @@ type reassignHarness struct {
 	shipmentRepo *shipmentportsmock.MockShipmentRepository
 	customerRepo *customerportsmock.MockCustomerRepository
 	invoiceRepo  *invoiceportsmock.MockInvoiceRepository
-	allocRepo    *shipmentportsmock.MockChargeAllocationRepository
+	allocRepo    *chargeallocationportsmock.MockChargeAllocationRepository
 }
 
 func newReassignHarness(t *testing.T) *reassignHarness {
@@ -259,7 +260,7 @@ func newReassignHarness(t *testing.T) *reassignHarness {
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		customerRepo: customerportsmock.NewMockCustomerRepository(t),
 		invoiceRepo:  invoiceportsmock.NewMockInvoiceRepository(t),
-		allocRepo:    shipmentportsmock.NewMockChargeAllocationRepository(t),
+		allocRepo:    chargeallocationportsmock.NewMockChargeAllocationRepository(t),
 	}
 	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()

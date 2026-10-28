@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -227,7 +228,7 @@ func TestBulkTransferToBilling_ReportsEachShipmentsOutcomeInRequestOrder(t *test
 
 	response, err := f.svc.BulkTransferToBilling(
 		t.Context(),
-		&shipmentports.BulkTransferShipmentToBillingRequest{
+		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs: []pulid.ID{clean.ID, missingDocs.ID, alreadyQueued.ID},
 			BillType:    billingqueue.BillTypeInvoice,
 		},
@@ -257,7 +258,11 @@ func TestBulkTransferToBilling_ReportsEachShipmentsOutcomeInRequestOrder(t *test
 	assert.Equal(t, "PRO-2", second.ProNumber)
 	assert.False(t, second.Success)
 	assert.Nil(t, second.Item)
-	assert.Equal(t, shipmentports.BillingTransferFailureRequirementsUnmet, second.FailureCode)
+	assert.Equal(
+		t,
+		shipmentbillingports.BillingTransferFailureRequirementsUnmet,
+		second.FailureCode,
+	)
 	assert.NotEmpty(t, second.Error)
 	require.Len(t, second.MissingRequirements, 1)
 	assert.Equal(t, "Proof of Delivery", second.MissingRequirements[0].DocumentTypeName)
@@ -266,7 +271,11 @@ func TestBulkTransferToBilling_ReportsEachShipmentsOutcomeInRequestOrder(t *test
 	assert.Equal(t, alreadyQueued.ID, third.ShipmentID)
 	assert.Equal(t, "PRO-3", third.ProNumber)
 	assert.False(t, third.Success)
-	assert.Equal(t, shipmentports.BillingTransferFailureAlreadyTransferred, third.FailureCode)
+	assert.Equal(
+		t,
+		shipmentbillingports.BillingTransferFailureAlreadyTransferred,
+		third.FailureCode,
+	)
 	assert.NotEmpty(t, third.Error)
 }
 
@@ -296,7 +305,7 @@ func TestBulkTransferToBilling_MarksCompletedShipmentsReadyBeforeTransferring(t 
 
 	response, err := f.svc.BulkTransferToBilling(
 		t.Context(),
-		&shipmentports.BulkTransferShipmentToBillingRequest{
+		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs:                 []pulid.ID{completed.ID},
 			BillType:                    billingqueue.BillTypeInvoice,
 			MarkCompletedReadyToInvoice: true,
@@ -323,7 +332,7 @@ func TestBulkTransferToBilling_LeavesCompletedShipmentsAloneWithoutOptIn(t *test
 
 	response, err := f.svc.BulkTransferToBilling(
 		t.Context(),
-		&shipmentports.BulkTransferShipmentToBillingRequest{
+		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs: []pulid.ID{completed.ID},
 			BillType:    billingqueue.BillTypeInvoice,
 		},
@@ -335,7 +344,7 @@ func TestBulkTransferToBilling_LeavesCompletedShipmentsAloneWithoutOptIn(t *test
 	result := response.Results[0]
 	assert.False(t, result.Success)
 	assert.False(t, result.MarkedReadyToInvoice)
-	assert.Equal(t, shipmentports.BillingTransferFailureInvalidStatus, result.FailureCode)
+	assert.Equal(t, shipmentbillingports.BillingTransferFailureInvalidStatus, result.FailureCode)
 	assert.Equal(t, "PRO-20", result.ProNumber)
 	f.repo.AssertNotCalled(t, "MarkReadyToInvoice", mock.Anything, mock.Anything)
 }
@@ -354,7 +363,7 @@ func TestBulkTransferToBilling_DoesNotMarkCompletedShipmentsThatFailReadiness(t 
 
 	response, err := f.svc.BulkTransferToBilling(
 		t.Context(),
-		&shipmentports.BulkTransferShipmentToBillingRequest{
+		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs:                 []pulid.ID{completed.ID},
 			BillType:                    billingqueue.BillTypeInvoice,
 			MarkCompletedReadyToInvoice: true,
@@ -367,7 +376,7 @@ func TestBulkTransferToBilling_DoesNotMarkCompletedShipmentsThatFailReadiness(t 
 	result := response.Results[0]
 	assert.False(t, result.Success)
 	assert.False(t, result.MarkedReadyToInvoice)
-	assert.Equal(t, shipmentports.BillingTransferFailureRateValidation, result.FailureCode)
+	assert.Equal(t, shipmentbillingports.BillingTransferFailureRateValidation, result.FailureCode)
 	require.Len(t, result.ValidationFailures, 1)
 	assert.Equal(t, "rate_missing_basis", result.ValidationFailures[0].Code)
 	f.repo.AssertNotCalled(t, "MarkReadyToInvoice", mock.Anything, mock.Anything)
@@ -393,7 +402,7 @@ func TestBulkTransferToBilling_ReportsMissingShipmentsAndKeepsGoing(t *testing.T
 
 	response, err := f.svc.BulkTransferToBilling(
 		t.Context(),
-		&shipmentports.BulkTransferShipmentToBillingRequest{
+		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs: []pulid.ID{missingID, clean.ID},
 			BillType:    billingqueue.BillTypeInvoice,
 		},
@@ -402,7 +411,11 @@ func TestBulkTransferToBilling_ReportsMissingShipmentsAndKeepsGoing(t *testing.T
 
 	require.NoError(t, err)
 	require.Len(t, response.Results, 2)
-	assert.Equal(t, shipmentports.BillingTransferFailureNotFound, response.Results[0].FailureCode)
+	assert.Equal(
+		t,
+		shipmentbillingports.BillingTransferFailureNotFound,
+		response.Results[0].FailureCode,
+	)
 	assert.Empty(t, response.Results[0].ProNumber)
 	assert.True(t, response.Results[1].Success)
 	assert.Equal(t, 1, response.SuccessCount)
@@ -424,7 +437,7 @@ func TestBulkTransferToBilling_ReportsAQueueConflictAsAlreadyTransferred(t *test
 
 	response, err := f.svc.BulkTransferToBilling(
 		t.Context(),
-		&shipmentports.BulkTransferShipmentToBillingRequest{
+		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs: []pulid.ID{raced.ID},
 			BillType:    billingqueue.BillTypeInvoice,
 		},
@@ -435,7 +448,7 @@ func TestBulkTransferToBilling_ReportsAQueueConflictAsAlreadyTransferred(t *test
 	require.Len(t, response.Results, 1)
 	assert.Equal(
 		t,
-		shipmentports.BillingTransferFailureAlreadyTransferred,
+		shipmentbillingports.BillingTransferFailureAlreadyTransferred,
 		response.Results[0].FailureCode,
 	)
 }
@@ -452,7 +465,7 @@ func TestBulkTransferToBilling_TransfersADuplicatedIDOnce(t *testing.T) {
 
 	response, err := f.svc.BulkTransferToBilling(
 		t.Context(),
-		&shipmentports.BulkTransferShipmentToBillingRequest{
+		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs: []pulid.ID{clean.ID, clean.ID},
 			BillType:    billingqueue.BillTypeInvoice,
 		},
@@ -468,8 +481,8 @@ func TestBulkTransferToBilling_TransfersADuplicatedIDOnce(t *testing.T) {
 func TestBulkTransferToBilling_RejectsEmptyAndOversizedRequests(t *testing.T) {
 	t.Parallel()
 
-	oversized := make([]pulid.ID, 0, shipmentports.MaxBulkTransferToBillingShipments+1)
-	for range shipmentports.MaxBulkTransferToBillingShipments + 1 {
+	oversized := make([]pulid.ID, 0, shipmentbillingports.MaxBulkTransferToBillingShipments+1)
+	for range shipmentbillingports.MaxBulkTransferToBillingShipments + 1 {
 		oversized = append(oversized, pulid.MustNew("shp_"))
 	}
 
@@ -484,7 +497,7 @@ func TestBulkTransferToBilling_RejectsEmptyAndOversizedRequests(t *testing.T) {
 
 			response, err := f.svc.BulkTransferToBilling(
 				t.Context(),
-				&shipmentports.BulkTransferShipmentToBillingRequest{
+				&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 					ShipmentIDs: ids,
 					BillType:    billingqueue.BillTypeInvoice,
 				},
@@ -503,22 +516,22 @@ func TestBulkTransferToBilling_RejectsEmptyAndOversizedRequests(t *testing.T) {
 func TestBillingTransferPolicyViolation(t *testing.T) {
 	t.Parallel()
 
-	missingDocument := []shipmentports.ShipmentBillingRequirement{
+	missingDocument := []shipmentbillingports.ShipmentBillingRequirement{
 		{DocumentTypeName: "Proof of Delivery"},
 	}
-	rateFailure := []shipmentports.ShipmentBillingValidation{
+	rateFailure := []shipmentbillingports.ShipmentBillingValidation{
 		{Code: "rate_variance_requires_action"},
 	}
 
 	tests := []struct {
 		name      string
-		readiness *shipmentports.ShipmentBillingReadiness
-		want      shipmentports.BillingTransferFailureCode
+		readiness *shipmentbillingports.ShipmentBillingReadiness
+		want      shipmentbillingports.BillingTransferFailureCode
 	}{
 		{
 			name: "clean freight transfers",
-			readiness: &shipmentports.ShipmentBillingReadiness{
-				Policy: shipmentports.ShipmentBillingReadinessPolicy{
+			readiness: &shipmentbillingports.ShipmentBillingReadiness{
+				Policy: shipmentbillingports.ShipmentBillingReadinessPolicy{
 					ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelBlock,
 					RateValidationEnforcement:             tenant.EnforcementLevelBlock,
 				},
@@ -527,39 +540,39 @@ func TestBillingTransferPolicyViolation(t *testing.T) {
 		},
 		{
 			name: "blocked requirements",
-			readiness: &shipmentports.ShipmentBillingReadiness{
-				Policy: shipmentports.ShipmentBillingReadinessPolicy{
+			readiness: &shipmentbillingports.ShipmentBillingReadiness{
+				Policy: shipmentbillingports.ShipmentBillingReadinessPolicy{
 					ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelBlock,
 				},
 				MissingRequirements: missingDocument,
 			},
-			want: shipmentports.BillingTransferFailureRequirementsUnmet,
+			want: shipmentbillingports.BillingTransferFailureRequirementsUnmet,
 		},
 		{
 			name: "blocked rate validation",
-			readiness: &shipmentports.ShipmentBillingReadiness{
-				Policy: shipmentports.ShipmentBillingReadinessPolicy{
+			readiness: &shipmentbillingports.ShipmentBillingReadiness{
+				Policy: shipmentbillingports.ShipmentBillingReadinessPolicy{
 					RateValidationEnforcement: tenant.EnforcementLevelBlock,
 				},
 				ValidationFailures: rateFailure,
 			},
-			want: shipmentports.BillingTransferFailureRateValidation,
+			want: shipmentbillingports.BillingTransferFailureRateValidation,
 		},
 		{
 			name: "review items returned to operations",
-			readiness: &shipmentports.ShipmentBillingReadiness{
-				Policy: shipmentports.ShipmentBillingReadinessPolicy{
+			readiness: &shipmentbillingports.ShipmentBillingReadiness{
+				Policy: shipmentbillingports.ShipmentBillingReadinessPolicy{
 					RateValidationEnforcement:   tenant.EnforcementLevelRequireReview,
 					BillingExceptionDisposition: tenant.BillingExceptionDispositionReturnToOperations,
 				},
 				ValidationFailures: rateFailure,
 			},
-			want: shipmentports.BillingTransferFailureReturnToOperations,
+			want: shipmentbillingports.BillingTransferFailureReturnToOperations,
 		},
 		{
 			name: "review items routed to billing review still transfer",
-			readiness: &shipmentports.ShipmentBillingReadiness{
-				Policy: shipmentports.ShipmentBillingReadinessPolicy{
+			readiness: &shipmentbillingports.ShipmentBillingReadiness{
+				Policy: shipmentbillingports.ShipmentBillingReadinessPolicy{
 					RateValidationEnforcement:   tenant.EnforcementLevelRequireReview,
 					BillingExceptionDisposition: tenant.BillingExceptionDispositionRouteToBillingReview,
 				},
@@ -600,7 +613,7 @@ func TestListBillingTransferCandidateIDs(t *testing.T) {
 				return req.Filter.TenantInfo.OrgID == orgID &&
 					req.Filter.Query == "PRO" &&
 					req.Status == shipment.StatusCompleted &&
-					req.Limit == shipmentports.MaxBillingTransferCandidateIDs
+					req.Limit == shipmentbillingports.MaxBillingTransferCandidateIDs
 			})).
 			Return(&shipmentports.BillingTransferCandidateIDsResult{IDs: ids, TotalCount: 9000}, nil).
 			Once()
@@ -608,7 +621,7 @@ func TestListBillingTransferCandidateIDs(t *testing.T) {
 		svc := &service{l: zap.NewNop(), repo: repo}
 		response, err := svc.ListBillingTransferCandidateIDs(
 			t.Context(),
-			&shipmentports.ListBillingTransferCandidateIDsRequest{
+			&shipmentbillingports.ListBillingTransferCandidateIDsRequest{
 				Filter: &pagination.QueryOptions{
 					TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 					Query:      "PRO",
@@ -635,7 +648,7 @@ func TestListBillingTransferCandidateIDs(t *testing.T) {
 		svc := &service{l: zap.NewNop(), repo: repo}
 		response, err := svc.ListBillingTransferCandidateIDs(
 			t.Context(),
-			&shipmentports.ListBillingTransferCandidateIDsRequest{
+			&shipmentbillingports.ListBillingTransferCandidateIDsRequest{
 				Filter: &pagination.QueryOptions{
 					TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 				},
@@ -653,7 +666,7 @@ func TestListBillingTransferCandidateIDs(t *testing.T) {
 		svc := &service{l: zap.NewNop(), repo: shipmentportsmock.NewMockShipmentRepository(t)}
 		response, err := svc.ListBillingTransferCandidateIDs(
 			t.Context(),
-			&shipmentports.ListBillingTransferCandidateIDsRequest{
+			&shipmentbillingports.ListBillingTransferCandidateIDsRequest{
 				Filter: &pagination.QueryOptions{
 					TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 				},
@@ -695,13 +708,13 @@ func TestBulkTransferToBilling_ReportsEachOutcomeAsItHappens(t *testing.T) {
 		Return(nil, errortypes.NewNotFoundError("Shipment not found")).
 		Once()
 
-	var reported []shipmentports.BulkTransferToBillingResult
+	var reported []shipmentbillingports.BulkTransferToBillingResult
 	response, err := f.svc.BulkTransferToBilling(
 		t.Context(),
-		&shipmentports.BulkTransferShipmentToBillingRequest{
+		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs: []pulid.ID{first.ID, second.ID, missing.ID},
 			BillType:    billingqueue.BillTypeInvoice,
-			OnResult: func(result shipmentports.BulkTransferToBillingResult) {
+			OnResult: func(result shipmentbillingports.BulkTransferToBillingResult) {
 				reported = append(reported, result)
 			},
 		},
@@ -718,7 +731,7 @@ func TestBulkTransferToBilling_ReportsEachOutcomeAsItHappens(t *testing.T) {
 
 	assert.Equal(t, missing.ID, reported[2].ShipmentID)
 	assert.False(t, reported[2].Success)
-	assert.Equal(t, shipmentports.BillingTransferFailureNotFound, reported[2].FailureCode)
+	assert.Equal(t, shipmentbillingports.BillingTransferFailureNotFound, reported[2].FailureCode)
 
 	// What was reported along the way and what came back at the end have to be
 	// the same answers, or a caller that recorded progress would disagree with
@@ -762,7 +775,7 @@ func TestBulkTransferToBilling_SuppressesExceptionNotificationsWhenAsked(t *test
 
 	response, err := f.svc.BulkTransferToBilling(
 		t.Context(),
-		&shipmentports.BulkTransferShipmentToBillingRequest{
+		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs:                    []pulid.ID{missingDocs.ID},
 			BillType:                       billingqueue.BillTypeInvoice,
 			SuppressExceptionNotifications: true,
@@ -777,7 +790,7 @@ func TestBulkTransferToBilling_SuppressesExceptionNotificationsWhenAsked(t *test
 	// must not lose what was wrong with the shipment.
 	assert.False(t, response.Results[0].Success)
 	assert.Equal(t,
-		shipmentports.BillingTransferFailureRequirementsUnmet,
+		shipmentbillingports.BillingTransferFailureRequirementsUnmet,
 		response.Results[0].FailureCode,
 	)
 	require.Len(t, response.Results[0].MissingRequirements, 1)
@@ -815,7 +828,7 @@ func TestBulkTransferToBilling_ReadsTheBillingPolicyOncePerRun(t *testing.T) {
 
 	response, err := f.svc.BulkTransferToBilling(
 		t.Context(),
-		&shipmentports.BulkTransferShipmentToBillingRequest{
+		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs: ids,
 			BillType:    billingqueue.BillTypeInvoice,
 		},
@@ -858,7 +871,7 @@ func TestBulkTransferToBilling_DoesNotShareThePolicyAcrossRuns(t *testing.T) {
 	for _, entity := range []*shipment.Shipment{first, second} {
 		_, err := f.svc.BulkTransferToBilling(
 			t.Context(),
-			&shipmentports.BulkTransferShipmentToBillingRequest{
+			&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 				ShipmentIDs: []pulid.ID{entity.ID},
 				BillType:    billingqueue.BillTypeInvoice,
 			},

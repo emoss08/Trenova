@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"golang.org/x/sync/errgroup"
@@ -21,8 +21,8 @@ var boardAITasks = [...]aiprovider.Task{
 func (s *Service) Capabilities(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*shipmentports.ShipmentBoardCapabilities, error) {
-	out := new(shipmentports.ShipmentBoardCapabilities)
+) (*shipmentboardports.ShipmentBoardCapabilities, error) {
+	out := new(shipmentboardports.ShipmentBoardCapabilities)
 	g, gctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {

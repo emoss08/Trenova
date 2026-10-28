@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -39,7 +39,7 @@ func (s *Service) LogException(
 	}
 
 	blocksBilling := true
-	_, err = s.holds.Create(ctx, &shipmentports.CreateShipmentHoldRequest{
+	_, err = s.holds.Create(ctx, &shipmentholdports.CreateShipmentHoldRequest{
 		TenantInfo:    req.TenantInfo,
 		ShipmentID:    req.ShipmentID,
 		HoldReasonID:  reasonID,

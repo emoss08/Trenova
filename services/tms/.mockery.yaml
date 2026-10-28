@@ -276,7 +276,19 @@ packages:
   github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/operations/ports/detentionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports:
@@ -288,16 +300,49 @@ packages:
   github.com/emoss08/trenova/internal/modules/operations/ports/orderports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports:
@@ -309,6 +354,9 @@ packages:
   github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports:
     interfaces:
       TrackingEventService: {}
+  github.com/emoss08/trenova/internal/modules/operations/ports/triagelookupports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports:
     config:
       all: true

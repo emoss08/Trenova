@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -452,14 +452,14 @@ func TestShipmentEventToModel_RejectsUnknownType(t *testing.T) {
 func TestShipmentBillingReadinessToModel_MapsWarningContext(t *testing.T) {
 	t.Parallel()
 
-	model := shipmentBillingReadinessToModel(&shipmentports.ShipmentBillingReadiness{
+	model := shipmentBillingReadinessToModel(&shipmentbillingports.ShipmentBillingReadiness{
 		ShipmentID:     "shp_1",
 		ShipmentStatus: shipmentdomain.StatusCompleted,
-		Policy: shipmentports.ShipmentBillingReadinessPolicy{
+		Policy: shipmentbillingports.ShipmentBillingReadinessPolicy{
 			ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelWarn,
 			RateValidationEnforcement:             tenant.EnforcementLevelWarn,
 		},
-		Warnings: []shipmentports.ShipmentBillingWarning{
+		Warnings: []shipmentbillingports.ShipmentBillingWarning{
 			{
 				Code:    "missing_documents",
 				Message: "Missing documents",

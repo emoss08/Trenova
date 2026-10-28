@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -123,8 +123,8 @@ func (t *AssignMoveTool) Preview(
 }
 
 func (t *AssignMoveTool) assignmentChanges(
-	request *shipmentports.AssignShipmentMoveRequest,
-	plan *shipmentports.AssignmentPlan,
+	request *assignmentports.AssignShipmentMoveRequest,
+	plan *assignmentports.AssignmentPlan,
 ) ([]*agent.RecordChange, error) {
 	shipmentLabel := plan.ShipmentBefore.ProNumber
 	assignment, err := toolpreview.Create(toolpreview.Record{
@@ -149,7 +149,7 @@ func (t *AssignMoveTool) assignmentChanges(
 
 func (t *AssignMoveTool) check(
 	ctx context.Context,
-	request *shipmentports.AssignShipmentMoveRequest,
+	request *assignmentports.AssignShipmentMoveRequest,
 ) (*dispatchconsoleservice.AssignmentPreview, string, error) {
 	if t.console == nil {
 		return &dispatchconsoleservice.AssignmentPreview{}, "", nil
@@ -178,7 +178,7 @@ func (t *AssignMoveTool) check(
 	return check, "", nil
 }
 
-func equipmentInUseWarning(inUse []shipmentports.EquipmentInUse) string {
+func equipmentInUseWarning(inUse []assignmentports.EquipmentInUse) string {
 	parts := make([]string, 0, len(inUse))
 	for _, item := range inUse {
 		where := "another move still in progress"
@@ -194,7 +194,7 @@ func equipmentInUseWarning(inUse []shipmentports.EquipmentInUse) string {
 		"and say which."
 }
 
-func equipmentInUseLoads(inUse []shipmentports.EquipmentInUse) []string {
+func equipmentInUseLoads(inUse []assignmentports.EquipmentInUse) []string {
 	loads := make([]string, 0, len(inUse))
 	for _, item := range inUse {
 		if item.ProNumber != "" {

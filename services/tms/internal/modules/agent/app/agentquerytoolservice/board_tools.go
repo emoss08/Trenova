@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -356,7 +356,7 @@ const (
 // arrival recorded, or deliver, when it was picked up and its delivery
 // window has closed. A move inside its pickup window is due, not late, as
 // the board's urgency and the shipment list's late both read it.
-func lateness(move *shipmentports.BoardMove, now int64) (lateTo string, lateSeconds int64) {
+func lateness(move *dispatchboardports.BoardMove, now int64) (lateTo string, lateSeconds int64) {
 	if move.OriginActualArrive == nil || *move.OriginActualArrive <= 0 {
 		pickupClose := closeOf(move.OriginWindowStart, move.OriginWindowEnd)
 		if move.OriginWindowStart > 0 && pickupClose < now {

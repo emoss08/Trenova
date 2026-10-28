@@ -8,13 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/shared/assignmentsolver"
 	"github.com/shopspring/decimal"
 )
 
 type plannedAssignmentParams struct {
-	Move       *shipmentports.BoardMove
+	Move       *dispatchboardports.BoardMove
 	Score      *dispatchcandidateservice.CandidateScore
 	Tier       agent.AutonomyTier
 	Threshold  decimal.Decimal
@@ -92,7 +92,7 @@ func confidenceFor(score *dispatchcandidateservice.CandidateScore) decimal.Decim
 
 func rationaleFor(
 	score *dispatchcandidateservice.CandidateScore,
-	move *shipmentports.BoardMove,
+	move *dispatchboardports.BoardMove,
 ) string {
 	if score == nil {
 		return ""
@@ -124,7 +124,7 @@ func rationaleFor(
 
 func evidenceFor(
 	score *dispatchcandidateservice.CandidateScore,
-	move *shipmentports.BoardMove,
+	move *dispatchboardports.BoardMove,
 ) []agent.EvidenceRef {
 	evidence := make([]agent.EvidenceRef, 0, 3)
 
@@ -165,22 +165,24 @@ func evidenceFor(
 	return evidence
 }
 
-func originLabel(move *shipmentports.BoardMove) string {
+func originLabel(move *dispatchboardports.BoardMove) string {
 	if move.OriginCity == "" {
 		return move.OriginName
 	}
 	return fmt.Sprintf("%s, %s", move.OriginCity, move.OriginState)
 }
 
-func destinationLabel(move *shipmentports.BoardMove) string {
+func destinationLabel(move *dispatchboardports.BoardMove) string {
 	if move.DestinationCity == "" {
 		return move.DestinationName
 	}
 	return fmt.Sprintf("%s, %s", move.DestinationCity, move.DestinationState)
 }
 
-func moveStubFor(planned *dispatchconsoleports.DispatchPlannedAssignment) *shipmentports.BoardMove {
-	return &shipmentports.BoardMove{
+func moveStubFor(
+	planned *dispatchconsoleports.DispatchPlannedAssignment,
+) *dispatchboardports.BoardMove {
+	return &dispatchboardports.BoardMove{
 		MoveID:    planned.MoveID,
 		ProNumber: planned.ProNumber,
 	}

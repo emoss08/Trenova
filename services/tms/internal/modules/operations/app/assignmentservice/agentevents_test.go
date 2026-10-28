@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,7 +29,7 @@ func TestUnassign_PublishesMoveUnassignedEvent(t *testing.T) {
 	recorder := &agenteventstest.Recorder{}
 	svc.agentEvents = recorder
 
-	err := svc.Unassign(t.Context(), &shipmentports.UnassignShipmentMoveRequest{
+	err := svc.Unassign(t.Context(), &assignmentports.UnassignShipmentMoveRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentMoveID: moveID,
 	})

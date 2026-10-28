@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -375,7 +375,7 @@ func (s *Service) previewAssignment(
 ) error {
 	assignment, err := s.carrierAssignmentRepo.GetByID(
 		ctx,
-		&shipmentports.GetCarrierAssignmentByIDRequest{
+		&carrierassignmentports.GetCarrierAssignmentByIDRequest{
 			TenantInfo:          tenantInfo,
 			CarrierAssignmentID: out.Before.CarrierAssignmentID,
 		},

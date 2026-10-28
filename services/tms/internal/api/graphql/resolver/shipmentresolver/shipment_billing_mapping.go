@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -17,7 +17,7 @@ import (
 )
 
 func shipmentBillingReadinessToModel(
-	readiness *shipmentports.ShipmentBillingReadiness,
+	readiness *shipmentbillingports.ShipmentBillingReadiness,
 ) *gqlmodel.ShipmentBillingReadiness {
 	warnings := make([]*gqlmodel.ShipmentBillingWarning, 0, len(readiness.Warnings))
 	for _, item := range readiness.Warnings {
@@ -66,7 +66,7 @@ func shipmentBillingReadinessToModel(
 }
 
 func shipmentBillingPayersToModel(
-	payers []shipmentports.ShipmentBillingPayerReadiness,
+	payers []shipmentbillingports.ShipmentBillingPayerReadiness,
 ) []*gqlmodel.ShipmentBillingPayerReadiness {
 	out := make([]*gqlmodel.ShipmentBillingPayerReadiness, 0, len(payers))
 	for _, payer := range payers {
@@ -128,7 +128,7 @@ func shipmentBillingWarningContextToModel(
 }
 
 func shipmentBillingRequirementsToModel(
-	items []shipmentports.ShipmentBillingRequirement,
+	items []shipmentbillingports.ShipmentBillingRequirement,
 ) []*gqlmodel.ShipmentBillingRequirement {
 	out := make([]*gqlmodel.ShipmentBillingRequirement, 0, len(items))
 	for _, item := range items {
@@ -138,7 +138,7 @@ func shipmentBillingRequirementsToModel(
 }
 
 func shipmentBillingValidationsToModel(
-	items []shipmentports.ShipmentBillingValidation,
+	items []shipmentbillingports.ShipmentBillingValidation,
 ) []*gqlmodel.ShipmentBillingValidation {
 	out := make([]*gqlmodel.ShipmentBillingValidation, 0, len(items))
 	for _, item := range items {
@@ -152,7 +152,7 @@ func shipmentBillingValidationsToModel(
 }
 
 func shipmentBillingRequirementToModel(
-	item shipmentports.ShipmentBillingRequirement,
+	item shipmentbillingports.ShipmentBillingRequirement,
 ) *gqlmodel.ShipmentBillingRequirement {
 	return &gqlmodel.ShipmentBillingRequirement{
 		DocumentTypeID:   item.DocumentTypeID,
@@ -168,7 +168,7 @@ func shipmentBillingRequirementToModel(
 }
 
 func shipmentBillingIneligibleDocumentsToModel(
-	items []shipmentports.ShipmentBillingIneligibleDocument,
+	items []shipmentbillingports.ShipmentBillingIneligibleDocument,
 ) []*gqlmodel.ShipmentBillingIneligibleDocument {
 	out := make([]*gqlmodel.ShipmentBillingIneligibleDocument, 0, len(items))
 	for _, item := range items {
@@ -182,7 +182,7 @@ func shipmentBillingIneligibleDocumentsToModel(
 
 func bulkTransferToBillingToModel(
 	ctx context.Context,
-	response *shipmentports.BulkTransferToBillingResponse,
+	response *shipmentbillingports.BulkTransferToBillingResponse,
 ) (*gqlmodel.ShipmentBulkTransferToBillingResponse, error) {
 	locale := i18n.FromContext(ctx)
 	classifier := helpers.NewDefaultClassifier()
@@ -241,7 +241,7 @@ func bulkTransferToBillingToModel(
 }
 
 func billingTransferCandidateIDsToModel(
-	response *shipmentports.BillingTransferCandidateIDsResponse,
+	response *shipmentbillingports.BillingTransferCandidateIDsResponse,
 ) *gqlmodel.ShipmentBillingTransferCandidateIds {
 	ids := make([]string, 0, len(response.IDs))
 	for _, id := range response.IDs {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -29,7 +29,7 @@ type RecordReportedStopEventParams struct {
 	TenantInfo   pagination.TenantInfo
 	MoveID       pulid.ID
 	StopID       pulid.ID
-	Action       shipmentports.StopActualAction
+	Action       shipmentmoveports.StopActualAction
 	OccurredAt   *int64
 	DepartedAt   *int64
 	Source       trackingevent.Source

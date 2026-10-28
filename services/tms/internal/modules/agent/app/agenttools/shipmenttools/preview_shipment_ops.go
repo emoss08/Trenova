@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -29,7 +31,7 @@ var rerateFields = []string{
 
 func renderUncancel(
 	_ *shipmentports.UncancelShipmentRequest,
-	plan *shipmentports.ShipmentChangePreview,
+	plan *shipmentserviceports.ShipmentChangePreview,
 ) (*agent.ToolPreview, error) {
 	change, err := toolpreview.Changed(
 		common.ShipmentRecord(plan.Before),
@@ -53,7 +55,7 @@ func renderUncancel(
 
 func renderOwnershipTransfer(
 	_ *shipmentports.TransferOwnershipRequest,
-	plan *shipmentports.ShipmentChangePreview,
+	plan *shipmentserviceports.ShipmentChangePreview,
 ) (*agent.ToolPreview, error) {
 	change, err := toolpreview.Changed(
 		common.ShipmentRecord(plan.Before),
@@ -74,12 +76,12 @@ func renderOwnershipTransfer(
 }
 
 type reratePlan struct {
-	*shipmentports.ShipmentAutoRatePreview
+	*shipmentserviceports.ShipmentAutoRatePreview
 	money *agent.MoneyPreview
 }
 
 func renderRerate(
-	_ *shipmentports.AutoRateShipmentRequest,
+	_ *shipmentserviceports.AutoRateShipmentRequest,
 	plan *reratePlan,
 ) (*agent.ToolPreview, error) {
 	application := plan.Application
@@ -134,7 +136,7 @@ type moveDistanceView struct {
 
 func renderDistance(
 	_ *distanceRequest,
-	plan *shipmentports.ShipmentDistancePreview,
+	plan *shipmentdistanceports.ShipmentDistancePreview,
 ) (*agent.ToolPreview, error) {
 	before := make(map[pulid.ID]*shipment.ShipmentMove, len(plan.Before.Moves))
 	for _, move := range plan.Before.Moves {
@@ -201,7 +203,7 @@ func sameDistance(before, after *float64) bool {
 
 func renderDuplicate(
 	req *shipmentports.BulkDuplicateShipmentRequest,
-	plan *shipmentports.ShipmentDuplicatePreview,
+	plan *shipmentserviceports.ShipmentDuplicatePreview,
 ) (*agent.ToolPreview, error) {
 	changes := make([]*agent.RecordChange, 0, len(plan.Copies))
 	for idx, copied := range plan.Copies {

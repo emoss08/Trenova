@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
@@ -51,7 +51,7 @@ type Params struct {
 	PTORepo             workerports.WorkerPTORepository
 	EmailService        emailports.EmailService
 	Templates           documenttemplateports.DocumentTemplateResolver
-	CommentService      shipmentports.ShipmentCommentService
+	CommentService      shipmentcommentports.ShipmentCommentService
 	StopReporter        driverportalports.StopReporter
 	WorkerService       *workerservice.Service
 	DocumentService     *documentservice.Service
@@ -85,7 +85,7 @@ type Service struct {
 	ptoRepo             workerports.WorkerPTORepository
 	emailService        emailports.EmailService
 	templates           documenttemplateports.DocumentTemplateResolver
-	commentService      shipmentports.ShipmentCommentService
+	commentService      shipmentcommentports.ShipmentCommentService
 	stopReporter        driverportalports.StopReporter
 	workerService       *workerservice.Service
 	documentService     *documentservice.Service

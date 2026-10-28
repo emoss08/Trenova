@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
@@ -575,7 +575,7 @@ func (r *MutationResolver) RecalculateMoveJurisdictionMiles(ctx context.Context,
 
 	return r.DistanceCalculationService.RecalculateMoveJurisdictionMiles(
 		ctx,
-		shipmentports.RecalculateMoveJurisdictionMilesRequest{
+		shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest{
 			TenantInfo:     base.TenantInfo(authCtx),
 			ShipmentMoveID: moveID,
 			UserID:         authCtx.UserID,
@@ -591,7 +591,7 @@ func (r *MutationResolver) BackfillJurisdictionMiles(ctx context.Context, input 
 
 	result, err := r.DistanceCalculationService.BackfillJurisdictionMiles(
 		ctx,
-		shipmentports.BackfillJurisdictionMilesRequest{
+		shipmentdistanceports.BackfillJurisdictionMilesRequest{
 			TenantInfo: base.TenantInfo(authCtx),
 			Start:      int64(input.PeriodStart),
 			End:        int64(input.PeriodEnd),

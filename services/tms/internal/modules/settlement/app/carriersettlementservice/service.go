@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
@@ -42,7 +43,7 @@ type Params struct {
 	InvoiceMatchRepo  carriersettlementports.CarrierInvoiceMatchRepository
 	SettlementControl tenantports.CarrierSettlementControlRepository
 	CarrierRepo       carrierports.CarrierRepository
-	AssignmentRepo    shipmentports.CarrierAssignmentRepository
+	AssignmentRepo    carrierassignmentports.CarrierAssignmentRepository
 	ShipmentRepo      shipmentports.ShipmentRepository
 	EDIInvoiceRepo    ediports.EDICarrierInvoiceRepository
 	AccountingRepo    tenantports.AccountingControlRepository
@@ -65,7 +66,7 @@ type Service struct {
 	invoiceMatchRepo  carriersettlementports.CarrierInvoiceMatchRepository
 	settlementControl tenantports.CarrierSettlementControlRepository
 	carrierRepo       carrierports.CarrierRepository
-	assignmentRepo    shipmentports.CarrierAssignmentRepository
+	assignmentRepo    carrierassignmentports.CarrierAssignmentRepository
 	shipmentRepo      shipmentports.ShipmentRepository
 	ediInvoiceRepo    ediports.EDICarrierInvoiceRepository
 	accountingRepo    tenantports.AccountingControlRepository

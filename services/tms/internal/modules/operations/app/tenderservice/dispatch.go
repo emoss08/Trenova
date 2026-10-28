@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -446,9 +447,13 @@ func (s *Service) publishTenderShipmentInvalidation(
 	if offer.Tender == nil {
 		return
 	}
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationByUser(tenantInfo, offer.Tender.ShipmentID, action),
+		shipmentinvalidationports.ShipmentInvalidationByUser(
+			tenantInfo,
+			offer.Tender.ShipmentID,
+			action,
+		),
 	)
 }

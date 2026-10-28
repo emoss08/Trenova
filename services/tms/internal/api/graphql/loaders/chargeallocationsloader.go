@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -14,18 +14,18 @@ import (
 type chargeAllocationsLister interface {
 	ListByShipmentIDs(
 		ctx context.Context,
-		req *shipmentports.ListChargeAllocationsByShipmentIDsRequest,
+		req *chargeallocationports.ListChargeAllocationsByShipmentIDsRequest,
 	) (map[pulid.ID][]*shipment.ChargeAllocation, error)
 	ListByOrderChargeIDs(
 		ctx context.Context,
-		req *shipmentports.ListChargeAllocationsByOrderChargeIDsRequest,
+		req *chargeallocationports.ListChargeAllocationsByOrderChargeIDsRequest,
 	) (map[pulid.ID][]*shipment.ChargeAllocation, error)
 }
 
 type ChargeAllocationsByShipmentIDLoaderFactoryParams struct {
 	fx.In
 
-	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
+	ChargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 }
 
 type ChargeAllocationsByShipmentIDLoaderFactory struct {
@@ -53,7 +53,7 @@ func (f *ChargeAllocationsByShipmentIDLoaderFactory) batchFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*shipment.ChargeAllocation, error) {
 			return f.allocations.ListByShipmentIDs(
 				ctx,
-				&shipmentports.ListChargeAllocationsByShipmentIDsRequest{
+				&chargeallocationports.ListChargeAllocationsByShipmentIDsRequest{
 					TenantInfo:  tenantInfo,
 					ShipmentIDs: ids,
 				},
@@ -65,7 +65,7 @@ func (f *ChargeAllocationsByShipmentIDLoaderFactory) batchFunc(
 type ChargeAllocationsByOrderChargeIDLoaderFactoryParams struct {
 	fx.In
 
-	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
+	ChargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 }
 
 type ChargeAllocationsByOrderChargeIDLoaderFactory struct {
@@ -93,7 +93,7 @@ func (f *ChargeAllocationsByOrderChargeIDLoaderFactory) batchFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*shipment.ChargeAllocation, error) {
 			return f.allocations.ListByOrderChargeIDs(
 				ctx,
-				&shipmentports.ListChargeAllocationsByOrderChargeIDsRequest{
+				&chargeallocationports.ListChargeAllocationsByOrderChargeIDsRequest{
 					TenantInfo:     tenantInfo,
 					OrderChargeIDs: ids,
 				},

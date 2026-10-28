@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/holdreasonports"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/holdreasonportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,7 +31,7 @@ import (
 func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 	t.Parallel()
 
-	repo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	repo := shipmentholdportsmock.NewMockShipmentHoldRepository(t)
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	holdReasonRepo := holdreasonportsmock.NewMockHoldReasonRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
@@ -94,7 +96,7 @@ func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 		Return(nil).
 		Once()
 
-	created, err := svc.Create(t.Context(), &shipmentports.CreateShipmentHoldRequest{
+	created, err := svc.Create(t.Context(), &shipmentholdports.CreateShipmentHoldRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: testutil.TestOrgID,
 			BuID:  testutil.TestBuID,
@@ -115,7 +117,7 @@ func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 func TestUpdate_RejectsReleasedHold(t *testing.T) {
 	t.Parallel()
 
-	repo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	repo := shipmentholdportsmock.NewMockShipmentHoldRepository(t)
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	holdReasonRepo := holdreasonportsmock.NewMockHoldReasonRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
@@ -136,13 +138,13 @@ func TestUpdate_RejectsReleasedHold(t *testing.T) {
 	releasedAt := int64(500)
 
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentHoldByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentholdports.GetShipmentHoldByIDRequest")).
 		Return(&shipment.ShipmentHold{ID: holdID, ShipmentID: shipmentID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Type: holdreason.HoldTypeOperational, Severity: holdreason.HoldSeverityAdvisory, Source: shipment.HoldSourceUser, StartedAt: 100, ReleasedAt: &releasedAt, Version: 1}, nil).
 		Once()
 
 	updated, err := svc.Update(
 		t.Context(),
-		&shipmentports.UpdateShipmentHoldRequest{
+		&shipmentholdports.UpdateShipmentHoldRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: testutil.TestOrgID,
 				BuID:  testutil.TestBuID,
@@ -168,7 +170,7 @@ func TestUpdate_RejectsReleasedHold(t *testing.T) {
 func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 	t.Parallel()
 
-	repo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	repo := shipmentholdportsmock.NewMockShipmentHoldRepository(t)
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	holdReasonRepo := holdreasonportsmock.NewMockHoldReasonRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
@@ -188,7 +190,7 @@ func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 	shipmentID := pulid.MustNew("shp_")
 
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentHoldByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentholdports.GetShipmentHoldByIDRequest")).
 		Return(&shipment.ShipmentHold{ID: holdID, ShipmentID: shipmentID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Type: holdreason.HoldTypeOperational, Severity: holdreason.HoldSeverityBlocking, Source: shipment.HoldSourceUser, StartedAt: 100, Version: 1}, nil).
 		Once()
 
@@ -217,7 +219,7 @@ func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 
 	released, err := svc.Release(
 		t.Context(),
-		&shipmentports.ReleaseShipmentHoldRequest{
+		&shipmentholdports.ReleaseShipmentHoldRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID},
 			HoldID:     holdID,
 			ShipmentID: shipmentID,

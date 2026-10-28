@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -27,7 +28,7 @@ type Params struct {
 	ReasonCodeRepo  servicefailureports.ServiceFailureReasonCodeRepository
 	ShipmentRepo    shipmentports.ShipmentRepository
 	DispatchRepo    dispatchcontrolports.DispatchControlRepository
-	CommentService  shipmentports.ShipmentCommentService
+	CommentService  shipmentcommentports.ShipmentCommentService
 	AuditService    auditports.AuditService
 	Realtime        realtimeports.RealtimeService
 	OrderDerivation orderports.OrderDerivationService `optional:"true"`
@@ -46,7 +47,7 @@ type service struct {
 	reasonCodeRepo servicefailureports.ServiceFailureReasonCodeRepository
 	shipmentRepo   shipmentports.ShipmentRepository
 	dispatchRepo   dispatchcontrolports.DispatchControlRepository
-	commentService shipmentports.ShipmentCommentService
+	commentService shipmentcommentports.ShipmentCommentService
 	auditService   auditports.AuditService
 	realtime       realtimeports.RealtimeService
 	ediService     ediports.EDIService

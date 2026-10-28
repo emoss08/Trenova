@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
@@ -292,7 +292,7 @@ func applyIFTAMileageEntryInput(
 }
 
 func backfillResultToModel(
-	result *shipmentports.BackfillJurisdictionMilesResult,
+	result *shipmentdistanceports.BackfillJurisdictionMilesResult,
 ) *gqlmodel.JurisdictionMilesBackfillResult {
 	if result == nil {
 		return nil

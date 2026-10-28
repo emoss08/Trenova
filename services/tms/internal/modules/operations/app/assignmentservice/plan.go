@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchguard"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,7 +25,7 @@ type assignmentPlan struct {
 }
 
 func NewMoveAssignment(
-	req *shipmentports.AssignShipmentMoveRequest,
+	req *assignmentports.AssignShipmentMoveRequest,
 	existing *shipment.Assignment,
 ) (*shipment.Assignment, error) {
 	if existing != nil {
@@ -46,8 +47,8 @@ func NewMoveAssignment(
 
 func (s *service) PreviewAssignToMove(
 	ctx context.Context,
-	req *shipmentports.AssignShipmentMoveRequest,
-) (*shipmentports.AssignmentPlan, error) {
+	req *assignmentports.AssignShipmentMoveRequest,
+) (*assignmentports.AssignmentPlan, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
@@ -75,7 +76,7 @@ func (s *service) PreviewAssignToMove(
 		return nil, err
 	}
 
-	return &shipmentports.AssignmentPlan{
+	return &assignmentports.AssignmentPlan{
 		Assignment:     plan.assignment,
 		ShipmentBefore: plan.original,
 		ShipmentAfter:  updated,
@@ -92,12 +93,12 @@ func (s *service) equipmentInUse(
 	tenantInfo pagination.TenantInfo,
 	assignment *shipment.Assignment,
 	moveID pulid.ID,
-) ([]shipmentports.EquipmentInUse, error) {
+) ([]assignmentports.EquipmentInUse, error) {
 	if assignment == nil {
 		return nil, nil
 	}
 
-	found := make([]shipmentports.EquipmentInUse, 0, 2)
+	found := make([]assignmentports.EquipmentInUse, 0, 2)
 	check := func(kind string, id *pulid.ID, find func() (*shipment.Assignment, error)) error {
 		if id == nil || id.IsNil() {
 			return nil
@@ -106,7 +107,7 @@ func (s *service) equipmentInUse(
 		if err != nil || conflict == nil {
 			return err
 		}
-		inUse := shipmentports.EquipmentInUse{
+		inUse := assignmentports.EquipmentInUse{
 			Kind:           kind,
 			EquipmentID:    *id,
 			ShipmentMoveID: conflict.ShipmentMoveID,
@@ -357,8 +358,8 @@ type unassignPlan struct {
 // shipment as the coordinator re-derives it.
 func (s *service) PreviewUnassign(
 	ctx context.Context,
-	req *shipmentports.UnassignShipmentMoveRequest,
-) (*shipmentports.AssignmentPlan, error) {
+	req *assignmentports.UnassignShipmentMoveRequest,
+) (*assignmentports.AssignmentPlan, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
@@ -373,7 +374,7 @@ func (s *service) PreviewUnassign(
 		return nil, err
 	}
 
-	return &shipmentports.AssignmentPlan{
+	return &assignmentports.AssignmentPlan{
 		Assignment:     plan.existing,
 		ShipmentBefore: plan.original,
 		ShipmentAfter:  updated,
@@ -382,7 +383,7 @@ func (s *service) PreviewUnassign(
 
 func (s *service) planUnassign(
 	ctx context.Context,
-	req *shipmentports.UnassignShipmentMoveRequest,
+	req *assignmentports.UnassignShipmentMoveRequest,
 ) (*unassignPlan, error) {
 	move, err := s.repo.GetMoveByID(ctx, req.TenantInfo, req.ShipmentMoveID)
 	if err != nil {
@@ -427,7 +428,7 @@ func (s *service) planUnassign(
 // every derived status and charge recomputed, validated as an update.
 func (s *service) projectUnassign(
 	ctx context.Context,
-	req *shipmentports.UnassignShipmentMoveRequest,
+	req *assignmentports.UnassignShipmentMoveRequest,
 	plan *unassignPlan,
 ) (*shipment.Shipment, error) {
 	updatedShipment := shipment.CloneForUpdate(plan.original)

@@ -32,8 +32,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
@@ -72,8 +73,8 @@ type Params struct {
 	Logger        *zap.Logger
 	Waits         agentwaitports.AgentWaitRepository
 	Runs          agentruntimeports.AgentRunRepository
-	Moves         shipmentports.ShipmentMoveRepository
-	Assignments   shipmentports.AssignmentRepository
+	Moves         shipmentmoveports.ShipmentMoveRepository
+	Assignments   assignmentports.AssignmentRepository
 	Occurrences   detentionports.DetentionOccurrenceRepository
 	Telematics    telematicsports.TelematicsRepository
 	Carriers      carrierports.CarrierRepository

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
@@ -35,11 +36,15 @@ func New(p Params) *Repository {
 	return &Repository{db: p.DB, l: p.Logger.Named("postgres.shipment-board-repository")}
 }
 
-func NewBoardRepository(r *Repository) shipmentports.ShipmentBoardRepository { return r }
+func NewBoardRepository(r *Repository) shipmentboardports.ShipmentBoardRepository { return r }
 
-func NewWatchlistRepository(r *Repository) shipmentports.ShipmentWatchlistRepository { return r }
+func NewWatchlistRepository(
+	r *Repository,
+) shipmentboardports.ShipmentWatchlistRepository {
+	return r
+}
 
-func scoped(scope *shipmentports.ShipmentBoardScope) (*keel.Query[*shipment.Shipment], error) {
+func scoped(scope *shipmentboardports.ShipmentBoardScope) (*keel.Query[*shipment.Shipment], error) {
 	if scope == nil {
 		return nil, ErrScopeMissing
 	}
@@ -53,19 +58,19 @@ func revenueSum() keel.Expr {
 
 func (r *Repository) StageSummary(
 	ctx context.Context,
-	scope *shipmentports.ShipmentBoardScope,
-) ([]*shipmentports.ShipmentStageSummaryRow, error) {
+	scope *shipmentboardports.ShipmentBoardScope,
+) ([]*shipmentboardports.ShipmentStageSummaryRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*shipmentports.ShipmentStageSummaryRow, error) {
+		func(ctx context.Context) ([]*shipmentboardports.ShipmentStageSummaryRow, error) {
 			q, err := scoped(scope)
 			if err != nil {
 				return nil, err
 			}
 
 			sp := shipmentdb.Shipments
-			rows, err := keel.Into[shipmentports.ShipmentStageSummaryRow](
+			rows, err := keel.Into[shipmentboardports.ShipmentStageSummaryRow](
 				ctx,
 				r.db.Keel(ctx),
 				q.Group(sp.StageRank).
@@ -89,13 +94,13 @@ type quickFilterTotalsRow struct {
 
 func (r *Repository) QuickFilterTotals(
 	ctx context.Context,
-	req *shipmentports.CountShipmentQuickFiltersRequest,
-) ([]shipmentports.ShipmentQuickFilterTotal, error) {
+	req *shipmentboardports.CountShipmentQuickFiltersRequest,
+) ([]shipmentboardports.ShipmentQuickFilterTotal, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]shipmentports.ShipmentQuickFilterTotal, error) {
-			totals := make([]shipmentports.ShipmentQuickFilterTotal, len(req.Filters))
+		func(ctx context.Context) ([]shipmentboardports.ShipmentQuickFilterTotal, error) {
+			totals := make([]shipmentboardports.ShipmentQuickFilterTotal, len(req.Filters))
 			if len(req.Filters) == 0 {
 				return totals, nil
 			}

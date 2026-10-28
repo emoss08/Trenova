@@ -50,7 +50,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
@@ -301,9 +302,9 @@ type intakeToolParams struct {
 	fx.In
 
 	Logger    *zap.Logger
-	Shipments shipmentports.ShipmentService
+	Shipments shipmentserviceports.ShipmentService
 	Locations locationports.LocationRepository
-	Imports   shipmentports.ShipmentImportAssistantService `optional:"true"`
+	Imports   shipmentimportassistantports.ShipmentImportAssistantService `optional:"true"`
 }
 
 func provideCreateShipmentTool(p intakeToolParams) agenttoolports.AgentTool {
@@ -335,28 +336,28 @@ func provideCreateLocationTool(
 }
 
 func provideUpdateShipmentTool(
-	shipments shipmentports.ShipmentService,
+	shipments shipmentserviceports.ShipmentService,
 	partners *ediservice.Service,
 ) agenttoolports.AgentTool {
 	return operationstools.NewUpdateShipmentTool(shipments, partners)
 }
 
 func provideRescheduleStopTool(
-	shipments shipmentports.ShipmentService,
+	shipments shipmentserviceports.ShipmentService,
 	partners *ediservice.Service,
 ) agenttoolports.AgentTool {
 	return shipmenttools.NewRescheduleStopTool(shipments, partners)
 }
 
 func provideAddShipmentChargeTool(
-	shipments shipmentports.ShipmentService,
+	shipments shipmentserviceports.ShipmentService,
 	accessorials accessorialchargeports.AccessorialChargeRepository,
 ) agenttoolports.AgentTool {
 	return shipmenttools.NewAddShipmentChargeTool(shipments, accessorials)
 }
 
 func provideCancelShipmentTool(
-	shipments shipmentports.ShipmentService,
+	shipments shipmentserviceports.ShipmentService,
 	partners *ediservice.Service,
 	tenders *tenderservice.Service,
 ) agenttoolports.AgentTool {
@@ -398,7 +399,7 @@ func provideEscalateDetentionTool(detention *detentionservice.Service) agenttool
 }
 
 func provideTransferToBillingTool(
-	shipments shipmentports.ShipmentService,
+	shipments shipmentserviceports.ShipmentService,
 	runs *billingtransferservice.Service,
 ) agenttoolports.AgentTool {
 	return billingtools.NewTransferToBillingTool(shipments, runs)

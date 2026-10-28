@@ -3,6 +3,12 @@
 package agentread
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accessorialchargeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accountingsyncexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/briefingexec"
@@ -194,7 +200,6 @@ import (
 	tenderservice "github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	shipmenteventports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
-	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	trackingeventports "github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	carriercapacityservice "github.com/emoss08/trenova/internal/modules/parties/app/carriercapacityservice"
 	carrierintelservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
@@ -265,7 +270,7 @@ type ResolverParams struct {
 	AccountingMappingService     accountingsyncports.AccountingMappingService
 	AccountingSyncService        accountingsyncports.AccountingSyncService
 	AnalyticsService             kernelports.AnalyticsService
-	AssignmentService            shipmentports.AssignmentService
+	AssignmentService            assignmentports.AssignmentService
 	BriefingService              briefingports.BriefingService
 	CaptureReleaseService        *capturereleaseservice.Service
 	CaptureService               *captureservice.Service
@@ -287,7 +292,7 @@ type ResolverParams struct {
 	DetentionService             *detentionservice.Service
 	DispatchAutoAssignService    dispatchconsoleports.DispatchAutoAssignService
 	DispatchConsoleService       dispatchconsoleports.DispatchConsoleService
-	DistanceCalculationService   shipmentports.DistanceCalculationService `optional:"true"`
+	DistanceCalculationService   shipmentdistanceports.DistanceCalculationService `optional:"true"`
 	DocumentTypeService          *documenttypeservice.Service
 	DriverPayService             *driverpayservice.Service
 	DriverPortalService          *driverportalservice.Service
@@ -360,11 +365,11 @@ type ResolverParams struct {
 	ServiceTypeService           *servicetypeservice.Service
 	SettlementBatchRepo          driversettlementports.SettlementBatchRepository
 	SettlementControlService     *settlementcontrolservice.Service
-	ShipmentCommentService       shipmentports.ShipmentCommentService
+	ShipmentCommentService       shipmentcommentports.ShipmentCommentService
 	ShipmentEventService         shipmenteventports.ShipmentEventService
-	ShipmentImportAssistant      shipmentports.ShipmentImportAssistantService `optional:"true"`
-	ShipmentRatingReviewService  shipmentports.RatingReviewService
-	ShipmentService              shipmentports.ShipmentService
+	ShipmentImportAssistant      shipmentimportassistantports.ShipmentImportAssistantService `optional:"true"`
+	ShipmentRatingReviewService  ratingreviewports.RatingReviewService
+	ShipmentService              shipmentserviceports.ShipmentService
 	ShipmentTypeService          *shipmenttypeservice.Service
 	TableChangeAlertService      *tablechangealertservice.Service
 	TableExportService           *tableexportservice.Service

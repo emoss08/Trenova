@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -42,7 +42,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) shipmentports.ShipmentCommentRepository {
+func New(p Params) shipmentcommentports.ShipmentCommentRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.shipment-comment-repository"),
@@ -51,7 +51,7 @@ func New(p Params) shipmentports.ShipmentCommentRepository {
 
 func (r *repository) ListByShipmentID(
 	ctx context.Context,
-	req *shipmentports.ListShipmentCommentsRequest,
+	req *shipmentcommentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	return dbtx.Read(
 		ctx,
@@ -101,7 +101,7 @@ func (r *repository) ListByShipmentID(
 	)
 }
 
-func listConditions(req *shipmentports.ListShipmentCommentsRequest) []keel.Pred {
+func listConditions(req *shipmentcommentports.ListShipmentCommentsRequest) []keel.Pred {
 	sc := shipmentdb.ShipmentComments
 	f := req.Filters
 	replyMode := req.ParentCommentID != nil && !req.ParentCommentID.IsNil()
@@ -198,7 +198,7 @@ func withCommentRelations(
 
 func (r *repository) GetCountByShipmentID(
 	ctx context.Context,
-	req *shipmentports.GetShipmentCommentCountRequest,
+	req *shipmentcommentports.GetShipmentCommentCountRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		sc := shipmentdb.ShipmentComments
@@ -210,7 +210,7 @@ func (r *repository) GetCountByShipmentID(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *shipmentports.GetShipmentCommentByIDRequest,
+	req *shipmentcommentports.GetShipmentCommentByIDRequest,
 ) (*shipment.ShipmentComment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentComment, error) {
 		sc := shipmentdb.ShipmentComments
@@ -244,7 +244,7 @@ func (r *repository) Create(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &shipmentports.GetShipmentCommentByIDRequest{
+		return r.GetByID(ctx, &shipmentcommentports.GetShipmentCommentByIDRequest{
 			CommentID:  entity.ID,
 			ShipmentID: entity.ShipmentID,
 			TenantInfo: tenantInfo(entity),
@@ -290,7 +290,7 @@ func (r *repository) Update(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &shipmentports.GetShipmentCommentByIDRequest{
+		return r.GetByID(ctx, &shipmentcommentports.GetShipmentCommentByIDRequest{
 			CommentID:  entity.ID,
 			ShipmentID: entity.ShipmentID,
 			TenantInfo: tenantInfo(entity),
@@ -300,7 +300,7 @@ func (r *repository) Update(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req *shipmentports.DeleteShipmentCommentQuery,
+	req *shipmentcommentports.DeleteShipmentCommentQuery,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		sc := shipmentdb.ShipmentComments
@@ -316,7 +316,7 @@ func (r *repository) Delete(
 
 func (r *repository) SoftDelete(
 	ctx context.Context,
-	req *shipmentports.SoftDeleteShipmentCommentRequest,
+	req *shipmentcommentports.SoftDeleteShipmentCommentRequest,
 ) (*shipment.ShipmentComment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentComment, error) {
 		sc := shipmentdb.ShipmentComments
@@ -346,7 +346,7 @@ func (r *repository) SoftDelete(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &shipmentports.GetShipmentCommentByIDRequest{
+		return r.GetByID(ctx, &shipmentcommentports.GetShipmentCommentByIDRequest{
 			CommentID:  req.CommentID,
 			ShipmentID: req.ShipmentID,
 			TenantInfo: req.TenantInfo,
@@ -356,7 +356,7 @@ func (r *repository) SoftDelete(
 
 func (r *repository) SetPinned(
 	ctx context.Context,
-	req *shipmentports.SetShipmentCommentPinnedRequest,
+	req *shipmentcommentports.SetShipmentCommentPinnedRequest,
 ) (*shipment.ShipmentComment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentComment, error) {
 		sc := shipmentdb.ShipmentComments
@@ -381,7 +381,7 @@ func (r *repository) SetPinned(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &shipmentports.GetShipmentCommentByIDRequest{
+		return r.GetByID(ctx, &shipmentcommentports.GetShipmentCommentByIDRequest{
 			CommentID:  req.CommentID,
 			ShipmentID: req.ShipmentID,
 			TenantInfo: req.TenantInfo,
@@ -391,7 +391,7 @@ func (r *repository) SetPinned(
 
 func (r *repository) SetResolved(
 	ctx context.Context,
-	req *shipmentports.SetShipmentCommentResolvedRequest,
+	req *shipmentcommentports.SetShipmentCommentResolvedRequest,
 ) (*shipment.ShipmentComment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentComment, error) {
 		sc := shipmentdb.ShipmentComments
@@ -415,7 +415,7 @@ func (r *repository) SetResolved(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &shipmentports.GetShipmentCommentByIDRequest{
+		return r.GetByID(ctx, &shipmentcommentports.GetShipmentCommentByIDRequest{
 			CommentID:  req.CommentID,
 			ShipmentID: req.ShipmentID,
 			TenantInfo: req.TenantInfo,
@@ -425,7 +425,7 @@ func (r *repository) SetResolved(
 
 func (r *repository) Acknowledge(
 	ctx context.Context,
-	req *shipmentports.AcknowledgeShipmentCommentRequest,
+	req *shipmentcommentports.AcknowledgeShipmentCommentRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		ack := &shipment.ShipmentCommentAcknowledgment{
@@ -454,7 +454,7 @@ func (r *repository) Acknowledge(
 
 func (r *repository) CountReplies(
 	ctx context.Context,
-	req *shipmentports.GetShipmentCommentByIDRequest,
+	req *shipmentcommentports.GetShipmentCommentByIDRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		sc := shipmentdb.ShipmentComments
@@ -466,7 +466,7 @@ func (r *repository) CountReplies(
 
 func (r *repository) CountPinnedByShipmentID(
 	ctx context.Context,
-	req *shipmentports.GetShipmentCommentCountRequest,
+	req *shipmentcommentports.GetShipmentCommentCountRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		sc := shipmentdb.ShipmentComments

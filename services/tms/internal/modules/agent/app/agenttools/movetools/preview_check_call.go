@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -146,7 +146,7 @@ func (t *LogCheckCallTool) previewStopVisit(
 	created *agent.RecordChange,
 ) (*agent.ToolPreview, error) {
 	reportedAt := planned.CheckCall.ReportedAt
-	stopRequest := &shipmentports.RecordStopActualRequest{
+	stopRequest := &shipmentmoveports.RecordStopActualRequest{
 		TenantInfo: request.TenantInfo,
 		MoveID:     request.MoveID,
 		StopID:     request.Details.StopID,

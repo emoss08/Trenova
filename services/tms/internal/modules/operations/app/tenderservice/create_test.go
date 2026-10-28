@@ -4,11 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
@@ -19,7 +14,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -136,10 +138,10 @@ type createTestDeps struct {
 	tenderRepo            *fakeTenderRepo
 	guideRepo             *fakeGuideRepo
 	carrierRepo           *carrierportsmock.MockCarrierRepository
-	assignmentRepo        *shipmentportsmock.MockAssignmentRepository
-	carrierAssignmentRepo *shipmentportsmock.MockCarrierAssignmentRepository
+	assignmentRepo        *assignmentportsmock.MockAssignmentRepository
+	carrierAssignmentRepo *carrierassignmentportsmock.MockCarrierAssignmentRepository
 	shipmentRepo          *shipmentportsmock.MockShipmentRepository
-	holdRepo              *shipmentportsmock.MockShipmentHoldRepository
+	holdRepo              *shipmentholdportsmock.MockShipmentHoldRepository
 	workflows             *fakeWorkflowStarter
 	events                *recordingEventService
 	notifRepo             *notificationportsmock.MockNotificationRepository
@@ -154,10 +156,10 @@ func setupCreateTest(t *testing.T) *createTestDeps {
 		tenderRepo:            &fakeTenderRepo{},
 		guideRepo:             &fakeGuideRepo{},
 		carrierRepo:           carrierportsmock.NewMockCarrierRepository(t),
-		assignmentRepo:        shipmentportsmock.NewMockAssignmentRepository(t),
-		carrierAssignmentRepo: shipmentportsmock.NewMockCarrierAssignmentRepository(t),
+		assignmentRepo:        assignmentportsmock.NewMockAssignmentRepository(t),
+		carrierAssignmentRepo: carrierassignmentportsmock.NewMockCarrierAssignmentRepository(t),
 		shipmentRepo:          shipmentportsmock.NewMockShipmentRepository(t),
-		holdRepo:              shipmentportsmock.NewMockShipmentHoldRepository(t),
+		holdRepo:              shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		workflows:             &fakeWorkflowStarter{},
 		events:                &recordingEventService{},
 		notifRepo:             notificationportsmock.NewMockNotificationRepository(t),

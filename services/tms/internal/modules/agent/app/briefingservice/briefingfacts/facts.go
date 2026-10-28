@@ -27,7 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -78,7 +78,7 @@ type Facts struct {
 type Sources struct {
 	Watchtower  watchtowerports.WatchtowerRepository
 	Decisions   agentports.AgentDecisionQueueService
-	Board       shipmentports.DispatchConsoleRepository
+	Board       dispatchboardports.DispatchConsoleRepository
 	Credentials workerports.WorkerCredentialRepository
 	Billing     billingqueueports.BillingQueueRepository
 	Payments    customerpaymentports.CustomerPaymentRepository
@@ -283,7 +283,7 @@ func (b *Builder) coverage(ctx context.Context, req Request, facts *Facts) {
 		return
 	}
 
-	summary, err := b.sources.Board.GetBoardSummary(ctx, &shipmentports.DispatchBoardFilter{
+	summary, err := b.sources.Board.GetBoardSummary(ctx, &dispatchboardports.DispatchBoardFilter{
 		TenantInfo:     req.TenantInfo,
 		WindowStart:    req.Now,
 		WindowEnd:      req.Now + boardWindowHours*60*60,

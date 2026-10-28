@@ -2,7 +2,7 @@ package trackingeventservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -52,7 +52,7 @@ func validateReported(
 	}
 	if params.DepartedAt != nil {
 		switch {
-		case params.Action != shipmentports.StopActualActionArrive:
+		case params.Action != shipmentmoveports.StopActualActionArrive:
 			multiErr.Add(
 				"departedAt",
 				errortypes.ErrInvalid,
@@ -97,7 +97,7 @@ func addEventTime(multiErr *errortypes.MultiError, field string, at *int64) {
 	switch {
 	case *at <= 0:
 		multiErr.Add(field, errortypes.ErrInvalid, "Occurred at must be a valid timestamp")
-	case *at > timeutils.NowUnix()+shipmentports.StopActualClockSkewSeconds:
+	case *at > timeutils.NowUnix()+shipmentmoveports.StopActualClockSkewSeconds:
 		multiErr.Add(field, errortypes.ErrInvalid, "Occurred at cannot be in the future")
 	}
 }

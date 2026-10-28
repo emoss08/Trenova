@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -35,7 +36,7 @@ type Params struct {
 	ShipmentLinkRepo   ediports.EDIShipmentLinkRepository
 	TransferChangeRepo ediports.EDITransferChangeRepository
 	Realtime           realtimeports.RealtimeService
-	Invalidator        shipmentports.ShipmentInvalidator
+	Invalidator        shipmentinvalidationports.ShipmentInvalidator
 	Coordinator        *shipmentstate.Coordinator
 	OrderDerivation    orderports.OrderDerivationService
 }
@@ -48,7 +49,7 @@ type Observer struct {
 	shipmentLinkRepo   shipmentLinkRepository
 	transferChangeRepo transferChangeRepository
 	realtime           realtimeports.RealtimeService
-	invalidator        shipmentports.ShipmentInvalidator
+	invalidator        shipmentinvalidationports.ShipmentInvalidator
 	orderDerivation    orderports.OrderDerivationService
 	lifecycleApplier   *internaledilifecycle.Applier
 }
@@ -361,13 +362,17 @@ func (o *Observer) applyChange(
 
 func (o *Observer) publishResult(ctx context.Context, result syncContext) {
 	if result.updated != nil {
-		shipmentports.InvalidateShipments(ctx, o.invalidator, &shipmentports.ShipmentInvalidation{
-			OrganizationID: result.updated.OrganizationID,
-			BusinessUnitID: result.updated.BusinessUnitID,
-			Action:         "updated",
-			RecordID:       result.updated.ID,
-			Entity:         result.updated,
-		})
+		shipmentinvalidationports.InvalidateShipments(
+			ctx,
+			o.invalidator,
+			&shipmentinvalidationports.ShipmentInvalidation{
+				OrganizationID: result.updated.OrganizationID,
+				BusinessUnitID: result.updated.BusinessUnitID,
+				Action:         "updated",
+				RecordID:       result.updated.ID,
+				Entity:         result.updated,
+			},
+		)
 	}
 	if result.mirroredEvent != nil {
 		if err := realtimeinvalidation.Publish(

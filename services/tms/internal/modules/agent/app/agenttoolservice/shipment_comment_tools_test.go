@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,8 +27,8 @@ type fakeCommentModerator struct {
 	refusal  error
 	pinned   *bool
 	resolved *bool
-	updated  *shipmentports.UpdateShipmentCommentRequest
-	deleted  *shipmentports.DeleteShipmentCommentRequest
+	updated  *shipmentcommentports.UpdateShipmentCommentRequest
+	deleted  *shipmentcommentports.DeleteShipmentCommentRequest
 	replies  int64
 }
 
@@ -51,7 +51,7 @@ func (f *fakeCommentModerator) comment() *shipment.ShipmentComment {
 
 func (f *fakeCommentModerator) GetByID(
 	context.Context,
-	*shipmentports.GetShipmentCommentByIDRequest,
+	*shipmentcommentports.GetShipmentCommentByIDRequest,
 ) (*shipment.ShipmentComment, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
@@ -71,7 +71,7 @@ func (f *fakeCommentModerator) toggle(pinned, resolved *bool) (*shipment.Shipmen
 
 func (f *fakeCommentModerator) Pin(
 	context.Context,
-	*shipmentports.ToggleShipmentCommentRequest,
+	*shipmentcommentports.ToggleShipmentCommentRequest,
 	*permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	return f.toggle(shipmenttools.BoolPointer(true), nil)
@@ -79,7 +79,7 @@ func (f *fakeCommentModerator) Pin(
 
 func (f *fakeCommentModerator) Unpin(
 	context.Context,
-	*shipmentports.ToggleShipmentCommentRequest,
+	*shipmentcommentports.ToggleShipmentCommentRequest,
 	*permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	return f.toggle(shipmenttools.BoolPointer(false), nil)
@@ -87,7 +87,7 @@ func (f *fakeCommentModerator) Unpin(
 
 func (f *fakeCommentModerator) Resolve(
 	context.Context,
-	*shipmentports.ToggleShipmentCommentRequest,
+	*shipmentcommentports.ToggleShipmentCommentRequest,
 	*permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	return f.toggle(nil, shipmenttools.BoolPointer(true))
@@ -95,7 +95,7 @@ func (f *fakeCommentModerator) Resolve(
 
 func (f *fakeCommentModerator) Unresolve(
 	context.Context,
-	*shipmentports.ToggleShipmentCommentRequest,
+	*shipmentcommentports.ToggleShipmentCommentRequest,
 	*permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	return f.toggle(nil, shipmenttools.BoolPointer(false))
@@ -103,7 +103,7 @@ func (f *fakeCommentModerator) Unresolve(
 
 func (f *fakeCommentModerator) Update(
 	_ context.Context,
-	req *shipmentports.UpdateShipmentCommentRequest,
+	req *shipmentcommentports.UpdateShipmentCommentRequest,
 	_ *permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	if err := f.guard.Write(); err != nil {
@@ -116,7 +116,7 @@ func (f *fakeCommentModerator) Update(
 
 func (f *fakeCommentModerator) Delete(
 	_ context.Context,
-	req *shipmentports.DeleteShipmentCommentRequest,
+	req *shipmentcommentports.DeleteShipmentCommentRequest,
 	_ *permissionports.RequestActor,
 ) error {
 	if err := f.guard.Write(); err != nil {
@@ -129,10 +129,10 @@ func (f *fakeCommentModerator) Delete(
 
 func (f *fakeCommentModerator) PreviewPin(
 	_ context.Context,
-	_ *shipmentports.ToggleShipmentCommentRequest,
+	_ *shipmentcommentports.ToggleShipmentCommentRequest,
 	actor *permissionports.RequestActor,
 	pinned bool,
-) (*shipmentports.ShipmentCommentChange, error) {
+) (*shipmentcommentports.ShipmentCommentChange, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -147,15 +147,15 @@ func (f *fakeCommentModerator) PreviewPin(
 		after.PinnedByID = nil
 	}
 
-	return &shipmentports.ShipmentCommentChange{Before: before, After: &after}, nil
+	return &shipmentcommentports.ShipmentCommentChange{Before: before, After: &after}, nil
 }
 
 func (f *fakeCommentModerator) PreviewResolve(
 	_ context.Context,
-	_ *shipmentports.ToggleShipmentCommentRequest,
+	_ *shipmentcommentports.ToggleShipmentCommentRequest,
 	actor *permissionports.RequestActor,
 	resolved bool,
-) (*shipmentports.ShipmentCommentChange, error) {
+) (*shipmentcommentports.ShipmentCommentChange, error) {
 	before := f.comment()
 	after := *before
 	if resolved {
@@ -167,27 +167,27 @@ func (f *fakeCommentModerator) PreviewResolve(
 		after.ResolvedByID = nil
 	}
 
-	return &shipmentports.ShipmentCommentChange{Before: before, After: &after}, nil
+	return &shipmentcommentports.ShipmentCommentChange{Before: before, After: &after}, nil
 }
 
 func (f *fakeCommentModerator) PreviewUpdate(
 	_ context.Context,
-	req *shipmentports.UpdateShipmentCommentRequest,
+	req *shipmentcommentports.UpdateShipmentCommentRequest,
 	_ *permissionports.RequestActor,
-) (*shipmentports.ShipmentCommentChange, error) {
+) (*shipmentcommentports.ShipmentCommentChange, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
 
-	return &shipmentports.ShipmentCommentChange{Before: f.comment(), After: req.Entity}, nil
+	return &shipmentcommentports.ShipmentCommentChange{Before: f.comment(), After: req.Entity}, nil
 }
 
 func (f *fakeCommentModerator) PreviewDelete(
 	context.Context,
-	*shipmentports.DeleteShipmentCommentRequest,
+	*shipmentcommentports.DeleteShipmentCommentRequest,
 	*permissionports.RequestActor,
-) (*shipmentports.ShipmentCommentDeletion, error) {
-	return &shipmentports.ShipmentCommentDeletion{
+) (*shipmentcommentports.ShipmentCommentDeletion, error) {
+	return &shipmentcommentports.ShipmentCommentDeletion{
 		Comment:    f.comment(),
 		Tombstoned: f.replies > 0,
 	}, nil

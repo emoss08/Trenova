@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
@@ -376,10 +377,13 @@ func (s *Service) shipmentIDForAssignment(
 	if assignment.ShipmentMove != nil {
 		return assignment.ShipmentMove.ShipmentID, nil
 	}
-	full, err := s.assignmentRepo.GetByID(ctx, &shipmentports.GetCarrierAssignmentByIDRequest{
-		TenantInfo:          tenantInfo,
-		CarrierAssignmentID: assignment.ID,
-	})
+	full, err := s.assignmentRepo.GetByID(
+		ctx,
+		&carrierassignmentports.GetCarrierAssignmentByIDRequest{
+			TenantInfo:          tenantInfo,
+			CarrierAssignmentID: assignment.ID,
+		},
+	)
 	if err != nil {
 		return pulid.Nil, err
 	}

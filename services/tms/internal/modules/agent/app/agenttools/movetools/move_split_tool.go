@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -31,12 +31,12 @@ const paramNewDeliveryEnd = "newDeliveryEnd"
 type moveSplitter interface {
 	SplitMove(
 		ctx context.Context,
-		req *shipmentports.SplitMoveRequest,
-	) (*shipmentports.SplitMoveResponse, error)
+		req *shipmentmoveports.SplitMoveRequest,
+	) (*shipmentmoveports.SplitMoveResponse, error)
 	PreviewSplitMove(
 		ctx context.Context,
-		req *shipmentports.SplitMoveRequest,
-	) (*shipmentports.MoveSplitPlan, error)
+		req *shipmentmoveports.SplitMoveRequest,
+	) (*shipmentmoveports.MoveSplitPlan, error)
 }
 
 func NewSplitMoveTool(moves moveSplitter) agenttoolports.AgentTool {
@@ -93,22 +93,22 @@ func NewSplitMoveTool(moves moveSplitter) agenttoolports.AgentTool {
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return common.TargetOf(params, ParamMoveID, permission.ResourceShipmentMove)
 		},
-	}, common.ReceivablePlan[*shipmentports.SplitMoveRequest, *shipmentports.MoveSplitPlan]{
+	}, common.ReceivablePlan[*shipmentmoveports.SplitMoveRequest, *shipmentmoveports.MoveSplitPlan]{
 		Request: splitMoveRequest,
 		Plan: func(
 			ctx context.Context,
-			req *shipmentports.SplitMoveRequest,
+			req *shipmentmoveports.SplitMoveRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*shipmentports.MoveSplitPlan, error) {
+		) (*shipmentmoveports.MoveSplitPlan, error) {
 			return moves.PreviewSplitMove(ctx, req)
 		},
-		Refused: func(*shipmentports.SplitMoveRequest) string {
+		Refused: func(*shipmentmoveports.SplitMoveRequest) string {
 			return "Would split the move at a relay."
 		},
 		Render: renderMoveSplit,
 		Run: func(
 			ctx context.Context,
-			req *shipmentports.SplitMoveRequest,
+			req *shipmentmoveports.SplitMoveRequest,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			response, err := moves.SplitMove(ctx, req)
@@ -130,7 +130,7 @@ func NewSplitMoveTool(moves moveSplitter) agenttoolports.AgentTool {
 
 func splitMoveRequest(
 	params *agenttoolports.ToolExecuteParams,
-) (*shipmentports.SplitMoveRequest, error) {
+) (*shipmentmoveports.SplitMoveRequest, error) {
 	moveID, err := common.RequirePulid(params.Params, ParamMoveID)
 	if err != nil {
 		return nil, err
@@ -156,15 +156,15 @@ func splitMoveRequest(
 		return nil, err
 	}
 
-	req := &shipmentports.SplitMoveRequest{
+	req := &shipmentmoveports.SplitMoveRequest{
 		TenantInfo:            common.TenantFrom(*params),
 		MoveID:                moveID,
 		NewDeliveryLocationID: locationID,
-		SplitPickupTimes: shipmentports.SplitStopTimes{
+		SplitPickupTimes: shipmentmoveports.SplitStopTimes{
 			ScheduledWindowStart: relayStart,
 			ScheduledWindowEnd:   relayEnd,
 		},
-		NewDeliveryTimes: shipmentports.SplitStopTimes{
+		NewDeliveryTimes: shipmentmoveports.SplitStopTimes{
 			ScheduledWindowStart: deliveryStart,
 			ScheduledWindowEnd:   deliveryEnd,
 		},
@@ -220,8 +220,8 @@ var splitDateTimes = toolpreview.Types(map[string]assistantartifact.DisplayType{
 })
 
 func renderMoveSplit(
-	_ *shipmentports.SplitMoveRequest,
-	plan *shipmentports.MoveSplitPlan,
+	_ *shipmentmoveports.SplitMoveRequest,
+	plan *shipmentmoveports.MoveSplitPlan,
 ) (*agent.ToolPreview, error) {
 	original := plan.Move.Stops[1]
 	relay, err := toolpreview.Changed(

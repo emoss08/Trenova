@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
@@ -13,10 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/tenderjobs/tendercontract"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -144,7 +144,7 @@ func (s *signalingWorkflows) StartWorkflow(
 
 type counterDeps struct {
 	repo        *memoryTenderRepo
-	moves       *shipmentportsmock.MockAssignmentRepository
+	moves       *assignmentportsmock.MockAssignmentRepository
 	shipments   *shipmentportsmock.MockShipmentRepository
 	controls    *stubDispatchControls
 	permissions *stubPermissions
@@ -210,7 +210,7 @@ func setupCounter(t *testing.T, policy func(*dispatchcontrol.DispatchControl)) *
 
 	deps := &counterDeps{
 		repo:        &memoryTenderRepo{tenders: map[pulid.ID]*tender.Tender{entity.ID: entity}},
-		moves:       shipmentportsmock.NewMockAssignmentRepository(t),
+		moves:       assignmentportsmock.NewMockAssignmentRepository(t),
 		shipments:   shipmentportsmock.NewMockShipmentRepository(t),
 		controls:    &stubDispatchControls{control: control},
 		permissions: &stubPermissions{},
@@ -494,12 +494,12 @@ func TestACounterNobodyDecidedLapses(t *testing.T) {
 type recordingAssigner struct {
 	tenderports.CarrierMoveAssigner
 
-	assigned []*shipmentports.AssignMoveToCarrierRequest
+	assigned []*carrierassignmentports.AssignMoveToCarrierRequest
 }
 
 func (r *recordingAssigner) AssignToMove(
 	_ context.Context,
-	req *shipmentports.AssignMoveToCarrierRequest,
+	req *carrierassignmentports.AssignMoveToCarrierRequest,
 ) (*shipment.CarrierAssignment, error) {
 	r.assigned = append(r.assigned, req)
 	return &shipment.CarrierAssignment{ID: pulid.MustNew("casn_"), CarrierID: req.CarrierID}, nil

@@ -5,17 +5,16 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentmovehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentmoveportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/trackingeventportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/idempotency"
@@ -29,7 +28,7 @@ import (
 
 func setupShipmentMoveHandler(
 	t *testing.T,
-	service *shipmentportsmock.MockShipmentMoveService,
+	service *shipmentmoveportsmock.MockShipmentMoveService,
 ) *shipmentmovehandler.Handler {
 	t.Helper()
 	return setupShipmentMoveHandlerWithTracking(
@@ -41,7 +40,7 @@ func setupShipmentMoveHandler(
 
 func setupShipmentMoveHandlerWithTracking(
 	t *testing.T,
-	service *shipmentportsmock.MockShipmentMoveService,
+	service *shipmentmoveportsmock.MockShipmentMoveService,
 	tracking *trackingeventportsmock.MockTrackingEventService,
 ) *shipmentmovehandler.Handler {
 	t.Helper()
@@ -73,9 +72,9 @@ func TestShipmentMoveHandler_UpdateStatus_Success(t *testing.T) {
 	t.Parallel()
 
 	moveID := pulid.MustNew("sm_")
-	service := shipmentportsmock.NewMockShipmentMoveService(t)
+	service := shipmentmoveportsmock.NewMockShipmentMoveService(t)
 	service.EXPECT().
-		UpdateStatus(mock.Anything, mock.MatchedBy(func(req *shipmentports.UpdateMoveStatusRequest) bool {
+		UpdateStatus(mock.Anything, mock.MatchedBy(func(req *shipmentmoveports.UpdateMoveStatusRequest) bool {
 			return req.MoveID == moveID &&
 				req.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.Status == shipment.MoveStatusInTransit
@@ -99,7 +98,7 @@ func TestShipmentMoveHandler_UpdateStatus_Success(t *testing.T) {
 func TestShipmentMoveHandler_BulkUpdateStatus_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	handler := setupShipmentMoveHandler(t, shipmentportsmock.NewMockShipmentMoveService(t))
+	handler := setupShipmentMoveHandler(t, shipmentmoveportsmock.NewMockShipmentMoveService(t))
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/shipment-moves/bulk-update-status/").
@@ -131,7 +130,7 @@ func TestShipmentMoveHandler_RecordStopActual_Success(t *testing.T) {
 				return params.MoveID == moveID &&
 					params.StopID == stopID &&
 					params.TenantInfo.OrgID == testutil.TestOrgID &&
-					params.Action == shipmentports.StopActualActionArrive &&
+					params.Action == shipmentmoveports.StopActualActionArrive &&
 					params.Source == trackingevent.SourceDispatcher &&
 					params.ReportedByID == testutil.TestUserID &&
 					params.SourceKey == "" &&
@@ -147,7 +146,7 @@ func TestShipmentMoveHandler_RecordStopActual_Success(t *testing.T) {
 
 	handler := setupShipmentMoveHandlerWithTracking(
 		t,
-		shipmentportsmock.NewMockShipmentMoveService(t),
+		shipmentmoveportsmock.NewMockShipmentMoveService(t),
 		tracking,
 	)
 	ginCtx := testutil.NewGinTestContext().
@@ -177,7 +176,7 @@ func TestShipmentMoveHandler_RecordStopActual_UsesTheIdempotencyKey(t *testing.T
 		RecordReported(mock.Anything, mock.MatchedBy(
 			func(params *trackingeventports.RecordReportedStopEventParams) bool {
 				return params.SourceKey == "scoped-key" &&
-					params.Action == shipmentports.StopActualActionDepart &&
+					params.Action == shipmentmoveports.StopActualActionDepart &&
 					params.OccurredAt == nil
 			},
 		)).
@@ -190,7 +189,7 @@ func TestShipmentMoveHandler_RecordStopActual_UsesTheIdempotencyKey(t *testing.T
 
 	handler := setupShipmentMoveHandlerWithTracking(
 		t,
-		shipmentportsmock.NewMockShipmentMoveService(t),
+		shipmentmoveportsmock.NewMockShipmentMoveService(t),
 		tracking,
 	)
 	ginCtx := testutil.NewGinTestContext().
@@ -221,7 +220,7 @@ func TestShipmentMoveHandler_RecordStopActual_BusinessErrorPassthrough(t *testin
 
 	handler := setupShipmentMoveHandlerWithTracking(
 		t,
-		shipmentportsmock.NewMockShipmentMoveService(t),
+		shipmentmoveportsmock.NewMockShipmentMoveService(t),
 		tracking,
 	)
 	ginCtx := testutil.NewGinTestContext().
@@ -241,7 +240,7 @@ func TestShipmentMoveHandler_RecordStopActual_BadJSON(t *testing.T) {
 
 	moveID := pulid.MustNew("sm_")
 	stopID := pulid.MustNew("stp_")
-	handler := setupShipmentMoveHandler(t, shipmentportsmock.NewMockShipmentMoveService(t))
+	handler := setupShipmentMoveHandler(t, shipmentmoveportsmock.NewMockShipmentMoveService(t))
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath(
@@ -263,15 +262,15 @@ func TestShipmentMoveHandler_SplitMove_Success(t *testing.T) {
 
 	moveID := pulid.MustNew("sm_")
 	newDeliveryLocationID := pulid.MustNew("loc_")
-	service := shipmentportsmock.NewMockShipmentMoveService(t)
+	service := shipmentmoveportsmock.NewMockShipmentMoveService(t)
 	service.EXPECT().
-		SplitMove(mock.Anything, mock.MatchedBy(func(req *shipmentports.SplitMoveRequest) bool {
+		SplitMove(mock.Anything, mock.MatchedBy(func(req *shipmentmoveports.SplitMoveRequest) bool {
 			return req.MoveID == moveID &&
 				req.NewDeliveryLocationID == newDeliveryLocationID &&
 				req.TenantInfo.OrgID == testutil.TestOrgID
 		})).
-		RunAndReturn(func(_ context.Context, req *shipmentports.SplitMoveRequest) (*shipmentports.SplitMoveResponse, error) {
-			return &shipmentports.SplitMoveResponse{
+		RunAndReturn(func(_ context.Context, req *shipmentmoveports.SplitMoveRequest) (*shipmentmoveports.SplitMoveResponse, error) {
+			return &shipmentmoveports.SplitMoveResponse{
 				OriginalMove: &shipment.ShipmentMove{ID: req.MoveID},
 				NewMove:      &shipment.ShipmentMove{ID: pulid.MustNew("sm_")},
 			}, nil
@@ -300,7 +299,7 @@ func TestShipmentMoveHandler_SplitMove_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
 
-	var resp shipmentports.SplitMoveResponse
+	var resp shipmentmoveports.SplitMoveResponse
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	require.NotNil(t, resp.OriginalMove)
 	require.NotNil(t, resp.NewMove)

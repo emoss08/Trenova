@@ -3,6 +3,7 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
@@ -87,7 +88,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
@@ -7729,7 +7729,7 @@ type RecordMyAgentSuggestionInput struct {
 type RecordMyStopActionInput struct {
 	MoveID string                         `json:"moveId"`
 	StopID string                         `json:"stopId"`
-	Action shipmentports.StopActualAction `json:"action"`
+	Action shipmentmoveports.StopActualAction `json:"action"`
 	// When it happened on the device. Omitted means when the server receives it.
 	OccurredAt *int `json:"occurredAt,omitempty"`
 	// An id the device makes once per tap, so a resend after a dropped connection is recorded once.

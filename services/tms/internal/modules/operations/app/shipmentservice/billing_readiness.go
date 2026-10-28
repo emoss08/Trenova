@@ -17,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -41,7 +43,7 @@ func (s *service) GetBillingReadiness(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*shipmentports.ShipmentBillingReadiness, error) {
+) (*shipmentbillingports.ShipmentBillingReadiness, error) {
 	entity, err := s.repo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,
@@ -200,10 +202,10 @@ func (s *service) markReadyToInvoice(
 		s.l.Error("failed to log mark ready to invoice shipment action", zap.Error(err))
 	}
 
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationForRecord(
+		shipmentinvalidationports.ShipmentInvalidationForRecord(
 			updatedEntity,
 			p.Actor,
 			"updated",
@@ -331,7 +333,7 @@ func (s *service) billingControlFor(
 func (s *service) evaluateBillingReadiness(
 	ctx context.Context,
 	entity *shipment.Shipment,
-) (*shipmentports.ShipmentBillingReadiness, error) {
+) (*shipmentbillingports.ShipmentBillingReadiness, error) {
 	return s.evaluateBillingReadinessCached(ctx, entity, nil, false)
 }
 
@@ -346,7 +348,7 @@ func (s *service) evaluateBillingReadinessCached(
 	entity *shipment.Shipment,
 	cache *billingReadinessCache,
 	detailsLoaded bool,
-) (*shipmentports.ShipmentBillingReadiness, error) {
+) (*shipmentbillingports.ShipmentBillingReadiness, error) {
 	if s.customerRepo == nil || s.documentRepo == nil || s.billingRepo == nil {
 		return nil, errortypes.NewConflictError("Shipment billing readiness service is unavailable")
 	}
@@ -467,7 +469,7 @@ func (s *service) readinessFrom(
 	entity *shipment.Shipment,
 	resolution *shipment.ShareResolution,
 	sources *readinessSources,
-) *shipmentports.ShipmentBillingReadiness {
+) *shipmentbillingports.ShipmentBillingReadiness {
 	var profile *customer.CustomerBillingProfile
 	if payer := sources.payers[resolution.DefaultPayerID]; payer != nil {
 		profile = payer.BillingProfile
@@ -519,7 +521,7 @@ func (s *service) unresolvedServiceFailures(
 }
 
 func applyUnresolvedServiceFailures(
-	readiness *shipmentports.ShipmentBillingReadiness,
+	readiness *shipmentbillingports.ShipmentBillingReadiness,
 	unresolved []*servicefailure.ServiceFailure,
 ) {
 	if readiness == nil || len(unresolved) == 0 {
@@ -539,7 +541,7 @@ func applyUnresolvedServiceFailures(
 	readiness.ServiceFailureContext.HasUnresolved = true
 	readiness.ServiceFailureContext.UnresolvedCount = len(ids)
 	readiness.ServiceFailureContext.ServiceFailureIDs = ids
-	readiness.Warnings = append(readiness.Warnings, shipmentports.ShipmentBillingWarning{
+	readiness.Warnings = append(readiness.Warnings, shipmentbillingports.ShipmentBillingWarning{
 		Code:    "unresolved_service_failures",
 		Message: "Shipment has unresolved service failures",
 		Context: map[string]any{
@@ -587,7 +589,7 @@ func (s *service) resolvePayerShares(
 // a payer on credit hold blocks under the same enforcement as a missing
 // document, and auto-approval needs every payer's consent.
 func applyPayerReadiness(
-	readiness *shipmentports.ShipmentBillingReadiness,
+	readiness *shipmentbillingports.ShipmentBillingReadiness,
 	entity *shipment.Shipment,
 	resolution *shipment.ShareResolution,
 	payersByID map[pulid.ID]*customer.Customer,
@@ -597,7 +599,7 @@ func applyPayerReadiness(
 		return
 	}
 	readiness.Payers = make(
-		[]shipmentports.ShipmentBillingPayerReadiness,
+		[]shipmentbillingports.ShipmentBillingPayerReadiness,
 		0,
 		len(resolution.Shares),
 	)
@@ -613,7 +615,7 @@ func applyPayerReadiness(
 	for _, share := range resolution.Shares {
 		payer := payersByID[share.PayerID]
 		var profile *customer.CustomerBillingProfile
-		entry := shipmentports.ShipmentBillingPayerReadiness{
+		entry := shipmentbillingports.ShipmentBillingPayerReadiness{
 			PayerID:     share.PayerID,
 			IsPrimary:   share.PayerID == resolution.DefaultPayerID,
 			ShareAmount: share.TotalAmount,
@@ -647,7 +649,7 @@ func applyPayerReadiness(
 				entity.BOL == "" &&
 				!hasValidationCode(readiness.ValidationFailures, "missing_bol") {
 				readiness.ValidationFailures = append(readiness.ValidationFailures,
-					shipmentports.ShipmentBillingValidation{
+					shipmentbillingports.ShipmentBillingValidation{
 						Field:   "bol",
 						Code:    "missing_bol",
 						Message: "BOL is required before the shipment can be invoiced",
@@ -657,7 +659,7 @@ func applyPayerReadiness(
 
 		if entry.CreditHold {
 			readiness.ValidationFailures = append(readiness.ValidationFailures,
-				shipmentports.ShipmentBillingValidation{
+				shipmentbillingports.ShipmentBillingValidation{
 					Field:   "billToCustomerId",
 					Code:    "credit_hold",
 					Message: entry.PayerName + " is on credit hold and cannot be billed",
@@ -694,7 +696,10 @@ func applyPayerReadiness(
 	readiness.ShouldAutoApproveBilling = autoApprove && len(readiness.Payers) > 0
 }
 
-func hasValidationCode(failures []shipmentports.ShipmentBillingValidation, code string) bool {
+func hasValidationCode(
+	failures []shipmentbillingports.ShipmentBillingValidation,
+	code string,
+) bool {
 	for _, failure := range failures {
 		if failure.Code == code {
 			return true
@@ -709,18 +714,18 @@ func buildShipmentBillingReadiness(
 	billingProfile *customer.CustomerBillingProfile,
 	billingControl *tenant.BillingControl,
 	docs []*document.Document,
-) *shipmentports.ShipmentBillingReadiness {
-	readiness := &shipmentports.ShipmentBillingReadiness{
+) *shipmentbillingports.ShipmentBillingReadiness {
+	readiness := &shipmentbillingports.ShipmentBillingReadiness{
 		ShipmentID:          entity.ID.String(),
 		ShipmentStatus:      entity.Status,
-		Requirements:        []shipmentports.ShipmentBillingRequirement{},
-		MissingRequirements: []shipmentports.ShipmentBillingRequirement{},
-		ValidationFailures:  []shipmentports.ShipmentBillingValidation{},
-		Warnings:            []shipmentports.ShipmentBillingWarning{},
-		ServiceFailureContext: shipmentports.ShipmentServiceFailureBillingContext{
+		Requirements:        []shipmentbillingports.ShipmentBillingRequirement{},
+		MissingRequirements: []shipmentbillingports.ShipmentBillingRequirement{},
+		ValidationFailures:  []shipmentbillingports.ShipmentBillingValidation{},
+		Warnings:            []shipmentbillingports.ShipmentBillingWarning{},
+		ServiceFailureContext: shipmentbillingports.ShipmentServiceFailureBillingContext{
 			ServiceFailureIDs: []string{},
 		},
-		Policy: shipmentports.ShipmentBillingReadinessPolicy{
+		Policy: shipmentbillingports.ShipmentBillingReadinessPolicy{
 			ShipmentBillingRequirementEnforcement: resolveShipmentBillingRequirementEnforcement(
 				billingProfile,
 				billingControl,
@@ -764,7 +769,7 @@ func buildShipmentBillingReadiness(
 	readiness.Requirements = requirements
 	readiness.MissingRequirements = slices.DeleteFunc(
 		slices.Clone(requirements),
-		func(item shipmentports.ShipmentBillingRequirement) bool {
+		func(item shipmentbillingports.ShipmentBillingRequirement) bool {
 			return item.Satisfied
 		},
 	)
@@ -773,7 +778,7 @@ func buildShipmentBillingReadiness(
 		if billingProfile.RequireBOLNumber && entity.BOL == "" {
 			readiness.ValidationFailures = append(
 				readiness.ValidationFailures,
-				shipmentports.ShipmentBillingValidation{
+				shipmentbillingports.ShipmentBillingValidation{
 					Field:   "bol",
 					Code:    "missing_bol",
 					Message: "BOL is required before the shipment can be invoiced",
@@ -822,7 +827,7 @@ func buildShipmentBillingReadiness(
 // requires the shipment to still be Completed, and by the time anything asks
 // this question the shipment is already ReadyToInvoice.
 func shouldAutoApproveBilling(
-	policy shipmentports.ShipmentBillingReadinessPolicy,
+	policy shipmentbillingports.ShipmentBillingReadinessPolicy,
 	billingProfile *customer.CustomerBillingProfile,
 	requirementIssues bool,
 	rateIssues bool,
@@ -971,15 +976,15 @@ func enforcementRank(level tenant.EnforcementLevel) int {
 func buildDocumentRequirements(
 	documentTypes []*documenttype.DocumentType,
 	docs []*document.Document,
-) []shipmentports.ShipmentBillingRequirement {
+) []shipmentbillingports.ShipmentBillingRequirement {
 	if len(documentTypes) == 0 {
-		return []shipmentports.ShipmentBillingRequirement{}
+		return []shipmentbillingports.ShipmentBillingRequirement{}
 	}
 
 	now := timeutils.NowUnix()
 	accepted := make(map[pulid.ID][]string, len(documentTypes))
 	ineligible := make(
-		map[pulid.ID][]shipmentports.ShipmentBillingIneligibleDocument,
+		map[pulid.ID][]shipmentbillingports.ShipmentBillingIneligibleDocument,
 		len(documentTypes),
 	)
 	for _, doc := range docs {
@@ -996,14 +1001,14 @@ func buildDocumentRequirements(
 
 		ineligible[typeID] = append(
 			ineligible[typeID],
-			shipmentports.ShipmentBillingIneligibleDocument{
+			shipmentbillingports.ShipmentBillingIneligibleDocument{
 				DocumentID: doc.ID.String(),
 				Standing:   standing,
 			},
 		)
 	}
 
-	requirements := make([]shipmentports.ShipmentBillingRequirement, 0, len(documentTypes))
+	requirements := make([]shipmentbillingports.ShipmentBillingRequirement, 0, len(documentTypes))
 	for _, docType := range documentTypes {
 		if docType == nil {
 			continue
@@ -1015,10 +1020,10 @@ func buildDocumentRequirements(
 		}
 		rejected := ineligible[docType.ID]
 		if rejected == nil {
-			rejected = []shipmentports.ShipmentBillingIneligibleDocument{}
+			rejected = []shipmentbillingports.ShipmentBillingIneligibleDocument{}
 		}
 
-		requirements = append(requirements, shipmentports.ShipmentBillingRequirement{
+		requirements = append(requirements, shipmentbillingports.ShipmentBillingRequirement{
 			DocumentTypeID:      docType.ID.String(),
 			DocumentTypeCode:    docType.Code,
 			DocumentTypeName:    docType.Name,
@@ -1043,7 +1048,7 @@ func buildDocumentRequirements(
 func appendRateValidationFailure(
 	entity *shipment.Shipment,
 	billingControl *tenant.BillingControl,
-	readiness *shipmentports.ShipmentBillingReadiness,
+	readiness *shipmentbillingports.ShipmentBillingReadiness,
 ) {
 	result := evaluateRateValidation(
 		entity,
@@ -1056,7 +1061,7 @@ func appendRateValidationFailure(
 
 	readiness.ValidationFailures = append(
 		readiness.ValidationFailures,
-		shipmentports.ShipmentBillingValidation{
+		shipmentbillingports.ShipmentBillingValidation{
 			Field:   result.Field,
 			Code:    result.Code,
 			Message: result.Message,
@@ -1075,7 +1080,7 @@ func appendRateValidationFailure(
 func appendRateDepartureReasonFailure(
 	entity *shipment.Shipment,
 	billingControl *tenant.BillingControl,
-	readiness *shipmentports.ShipmentBillingReadiness,
+	readiness *shipmentbillingports.ShipmentBillingReadiness,
 ) {
 	if billingControl == nil || !billingControl.RequireRateOverrideReason {
 		return
@@ -1088,7 +1093,7 @@ func appendRateDepartureReasonFailure(
 
 	readiness.ValidationFailures = append(
 		readiness.ValidationFailures,
-		shipmentports.ShipmentBillingValidation{
+		shipmentbillingports.ShipmentBillingValidation{
 			Field:   "rateOverrideReason",
 			Code:    "rate_departure_reason_missing",
 			Message: "Your organization requires a reason when a shipment is not billed at its contract rate",
@@ -1153,7 +1158,7 @@ func calculateVariancePercent(
 }
 
 func hasValidationCodePrefix(
-	failures []shipmentports.ShipmentBillingValidation,
+	failures []shipmentbillingports.ShipmentBillingValidation,
 	prefix string,
 ) bool {
 	for _, failure := range failures {
@@ -1166,7 +1171,7 @@ func hasValidationCodePrefix(
 }
 
 func hasShipmentRequirementIssues(
-	readiness *shipmentports.ShipmentBillingReadiness,
+	readiness *shipmentbillingports.ShipmentBillingReadiness,
 ) bool {
 	if readiness == nil {
 		return false
@@ -1186,7 +1191,7 @@ func hasShipmentRequirementIssues(
 }
 
 func hasRateIssues(
-	readiness *shipmentports.ShipmentBillingReadiness,
+	readiness *shipmentbillingports.ShipmentBillingReadiness,
 ) bool {
 	if readiness == nil {
 		return false
@@ -1196,7 +1201,7 @@ func hasRateIssues(
 }
 
 func canProceedManually(
-	policy shipmentports.ShipmentBillingReadinessPolicy,
+	policy shipmentbillingports.ShipmentBillingReadinessPolicy,
 	requirementIssues bool,
 	rateIssues bool,
 ) bool {
@@ -1224,7 +1229,7 @@ func canProceedManually(
 }
 
 func canAutoProgress(
-	policy shipmentports.ShipmentBillingReadinessPolicy,
+	policy shipmentbillingports.ShipmentBillingReadinessPolicy,
 	requirementIssues bool,
 	rateIssues bool,
 ) bool {
@@ -1248,7 +1253,7 @@ func canAutoProgress(
 
 func (s *service) TransferToBilling(
 	ctx context.Context,
-	req *shipmentports.TransferShipmentToBillingRequest,
+	req *shipmentbillingports.TransferShipmentToBillingRequest,
 	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	if s.billingQueueService == nil {
@@ -1270,7 +1275,7 @@ func (s *service) TransferToBilling(
 // TransferToBillingItems queues a shipment and returns every payer's item.
 func (s *service) TransferToBillingItems(
 	ctx context.Context,
-	req *shipmentports.TransferShipmentToBillingRequest,
+	req *shipmentbillingports.TransferShipmentToBillingRequest,
 	actor *permissionports.RequestActor,
 ) (*billingqueueports.TransferToBillingResult, error) {
 	if s.billingQueueService == nil {
@@ -1297,7 +1302,7 @@ func (s *service) autoTransferToBillingQueue(
 	entity *shipment.Shipment,
 	actor *permissionports.RequestActor,
 ) {
-	if _, err := s.TransferToBilling(ctx, &shipmentports.TransferShipmentToBillingRequest{
+	if _, err := s.TransferToBilling(ctx, &shipmentbillingports.TransferShipmentToBillingRequest{
 		ShipmentID: entity.ID,
 		BillType:   billingqueue.BillTypeInvoice,
 	}, actor); err != nil {
@@ -1309,11 +1314,11 @@ func (s *service) autoTransferToBillingQueue(
 }
 
 func billingTransferPolicyViolation(
-	readiness *shipmentports.ShipmentBillingReadiness,
-) (shipmentports.BillingTransferFailureCode, error) {
+	readiness *shipmentbillingports.ShipmentBillingReadiness,
+) (shipmentbillingports.BillingTransferFailureCode, error) {
 	if readiness.Policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelBlock &&
 		hasShipmentRequirementIssues(readiness) {
-		return shipmentports.BillingTransferFailureRequirementsUnmet, errortypes.NewValidationError(
+		return shipmentbillingports.BillingTransferFailureRequirementsUnmet, errortypes.NewValidationError(
 			"billingReadiness",
 			errortypes.ErrInvalidOperation,
 			"Shipment billing requirements must be resolved before transfer to billing",
@@ -1322,7 +1327,7 @@ func billingTransferPolicyViolation(
 
 	if readiness.Policy.RateValidationEnforcement == tenant.EnforcementLevelBlock &&
 		hasRateIssues(readiness) {
-		return shipmentports.BillingTransferFailureRateValidation, errortypes.NewValidationError(
+		return shipmentbillingports.BillingTransferFailureRateValidation, errortypes.NewValidationError(
 			"rateValidation",
 			errortypes.ErrInvalidOperation,
 			"Rate validation must be resolved before transfer to billing",
@@ -1333,7 +1338,7 @@ func billingTransferPolicyViolation(
 		(readiness.Policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelRequireReview ||
 			readiness.Policy.RateValidationEnforcement == tenant.EnforcementLevelRequireReview) &&
 		(hasShipmentRequirementIssues(readiness) || hasRateIssues(readiness)) {
-		return shipmentports.BillingTransferFailureReturnToOperations, errortypes.NewValidationError(
+		return shipmentbillingports.BillingTransferFailureReturnToOperations, errortypes.NewValidationError(
 			"billingExceptionDisposition",
 			errortypes.ErrInvalidOperation,
 			"Shipment must be corrected in operations before it can be transferred to billing",
@@ -1346,7 +1351,7 @@ func billingTransferPolicyViolation(
 func (s *service) notifyBillingExceptions(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	readiness *shipmentports.ShipmentBillingReadiness,
+	readiness *shipmentbillingports.ShipmentBillingReadiness,
 ) {
 	requirementIssues := hasShipmentRequirementIssues(readiness)
 	rateIssues := hasRateIssues(readiness)

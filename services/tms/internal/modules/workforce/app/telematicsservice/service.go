@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
@@ -36,9 +38,9 @@ type Params struct {
 	RealtimeService     realtimeports.RealtimeService
 	Notifications       *notificationservice.Service
 	DriverNotify        *drivernotificationservice.Service `optional:"true"`
-	AssignmentRepo      shipmentports.AssignmentRepository
+	AssignmentRepo      assignmentports.AssignmentRepository
 	ShipmentRepo        shipmentports.ShipmentRepository
-	ShipmentMoveRepo    shipmentports.ShipmentMoveRepository
+	ShipmentMoveRepo    shipmentmoveports.ShipmentMoveRepository
 	StopVisits          telematicsports.StopVisitRecorder
 	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	CustomFieldValues   *customfieldservice.ValuesService
@@ -55,9 +57,9 @@ type Service struct {
 	realtimeService     realtimeports.RealtimeService
 	notifications       *notificationservice.Service
 	driverNotify        *drivernotificationservice.Service
-	assignmentRepo      shipmentports.AssignmentRepository
+	assignmentRepo      assignmentports.AssignmentRepository
 	shipmentRepo        shipmentports.ShipmentRepository
-	shipmentMoveRepo    shipmentports.ShipmentMoveRepository
+	shipmentMoveRepo    shipmentmoveports.ShipmentMoveRepository
 	stopVisits          telematicsports.StopVisitRecorder
 	dispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	customFieldValues   *customfieldservice.ValuesService

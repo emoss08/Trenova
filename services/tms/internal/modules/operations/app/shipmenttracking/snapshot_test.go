@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
@@ -109,7 +109,7 @@ func TestBuild_EstimatesArrivalFromTheTractorsPosition(t *testing.T) {
 		Shipment: sp,
 		Now:      now,
 		Timezone: "UTC",
-		Assignments: map[pulid.ID]*shipmentports.BoardMove{
+		Assignments: map[pulid.ID]*dispatchboardports.BoardMove{
 			move.ID: {
 				AssignedWorkerID:    workerID,
 				AssignedWorkerName:  "Maria Ortiz",
@@ -174,7 +174,7 @@ func TestBuild_ReadsTheStoredProjectionAndAStalePositionStale(t *testing.T) {
 		Shipment: sp,
 		Now:      now,
 		Timezone: "UTC",
-		Assignments: map[pulid.ID]*shipmentports.BoardMove{
+		Assignments: map[pulid.ID]*dispatchboardports.BoardMove{
 			move.ID: {AssignedTractorID: tractorID, CoverageType: "driver"},
 		},
 		Positions: map[pulid.ID]*telematics.VehiclePosition{
@@ -232,7 +232,7 @@ func TestBuild_SaysWhenThereIsNothingToEstimateFrom(t *testing.T) {
 		Shipment: sp,
 		Now:      now,
 		Timezone: "UTC",
-		Assignments: map[pulid.ID]*shipmentports.BoardMove{
+		Assignments: map[pulid.ID]*dispatchboardports.BoardMove{
 			move.ID: {AssignedTractorID: pulid.MustNew("trc_"), CoverageType: "driver"},
 		},
 	})

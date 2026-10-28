@@ -8,13 +8,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 )
 
 var (
 	_ shipmenteventports.ShipmentEventObserver = (*Relay)(nil)
-	_ shipmentports.MoveStatusObserver         = (*Relay)(nil)
+	_ shipmentserviceports.MoveStatusObserver  = (*Relay)(nil)
 )
 
 type shipmentReader interface {

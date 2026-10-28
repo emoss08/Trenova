@@ -1167,7 +1167,7 @@ findings:
       and the preview names both.
     fixedIn: uncommitted; verified by .deskbench/runs/20261009-214446-run (arrival and departure proposed in one call, load Completed)
     files:
-      - services/tms/internal/modules/operations/ports/shipmentports/shipmentmove.go
+      - services/tms/internal/modules/operations/ports/shipmentmoveports/shipmentmove.go
       - services/tms/internal/modules/operations/app/shipmentmoveservice/stopactual_plan.go
       - services/tms/internal/modules/operations/app/shipmentmoveservice/stopactuals.go
       - services/tms/internal/modules/agent/app/agenttools/movetools/move_tools.go

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,7 +23,7 @@ func TestProjectedTimeAvailable(t *testing.T) {
 		"a driver holding nothing is available now")
 
 	assert.Equal(t, int64(1_020_000), ProjectedTimeAvailable(
-		[]*shipmentports.WorkerCommitment{
+		[]*dispatchboardports.WorkerCommitment{
 			{WindowEnd: 1_010_000},
 			{WindowEnd: 1_020_000},
 			{WindowEnd: 1_005_000},
@@ -32,7 +32,7 @@ func TestProjectedTimeAvailable(t *testing.T) {
 	), "PTA is the end of the last committed move")
 
 	assert.Equal(t, now, ProjectedTimeAvailable(
-		[]*shipmentports.WorkerCommitment{{WindowEnd: now - 5_000}},
+		[]*dispatchboardports.WorkerCommitment{{WindowEnd: now - 5_000}},
 		now,
 	), "commitments already in the past do not push PTA backwards")
 }
@@ -43,14 +43,14 @@ func TestCurrentTrailer(t *testing.T) {
 	older := pulid.MustNew("tr_")
 	newer := pulid.MustNew("tr_")
 
-	trailerID, found := currentTrailer([]*shipmentports.WorkerCommitment{
+	trailerID, found := currentTrailer([]*dispatchboardports.WorkerCommitment{
 		{WindowEnd: 100, TrailerID: older},
 		{WindowEnd: 500, TrailerID: newer},
 	})
 	require.True(t, found)
 	assert.Equal(t, newer, trailerID, "the latest commitment's trailer is the current one")
 
-	_, found = currentTrailer([]*shipmentports.WorkerCommitment{{WindowEnd: 100}})
+	_, found = currentTrailer([]*dispatchboardports.WorkerCommitment{{WindowEnd: 100}})
 	assert.False(t, found, "a commitment without a trailer yields no continuity signal")
 
 	_, found = currentTrailer(nil)
@@ -63,21 +63,21 @@ func TestCurrentTrailer_ZeroWindowsNeverBeatRealOnes(t *testing.T) {
 	real := pulid.MustNew("tr_")
 	zero := pulid.MustNew("tr_")
 
-	trailerID, found := currentTrailer([]*shipmentports.WorkerCommitment{
+	trailerID, found := currentTrailer([]*dispatchboardports.WorkerCommitment{
 		{WindowEnd: 500, TrailerID: real},
 		{WindowEnd: 0, TrailerID: zero},
 	})
 	require.True(t, found)
 	assert.Equal(t, real, trailerID, "a zero window must not win the latest commitment")
 
-	trailerID, found = currentTrailer([]*shipmentports.WorkerCommitment{
+	trailerID, found = currentTrailer([]*dispatchboardports.WorkerCommitment{
 		{WindowEnd: 0, TrailerID: zero},
 		{WindowEnd: 500, TrailerID: real},
 	})
 	require.True(t, found)
 	assert.Equal(t, real, trailerID, "ordering must not change which commitment is latest")
 
-	trailerID, found = currentTrailer([]*shipmentports.WorkerCommitment{
+	trailerID, found = currentTrailer([]*dispatchboardports.WorkerCommitment{
 		{WindowEnd: 0, TrailerID: zero},
 	})
 	require.True(t, found)
@@ -90,21 +90,21 @@ func TestResolveTrailer_PrefersTheExistingAssignment(t *testing.T) {
 	assigned := pulid.MustNew("tr_")
 	previous := pulid.MustNew("tr_")
 
-	assert.Equal(t, assigned, resolveTrailer(&shipmentports.BoardMove{
+	assert.Equal(t, assigned, resolveTrailer(&dispatchboardports.BoardMove{
 		AssignedTrailerID:     assigned,
 		PreviousMoveTrailerID: previous,
 	}))
-	assert.Equal(t, previous, resolveTrailer(&shipmentports.BoardMove{
+	assert.Equal(t, previous, resolveTrailer(&dispatchboardports.BoardMove{
 		PreviousMoveTrailerID: previous,
 	}))
-	assert.True(t, resolveTrailer(&shipmentports.BoardMove{}).IsNil())
+	assert.True(t, resolveTrailer(&dispatchboardports.BoardMove{}).IsNil())
 }
 
 func TestMoveWindow_SpansOriginToLatestDestinationTime(t *testing.T) {
 	t.Parallel()
 
 	end := int64(900)
-	window := moveWindow(&shipmentports.BoardMove{
+	window := moveWindow(&dispatchboardports.BoardMove{
 		OriginWindowStart:      100,
 		DestinationWindowStart: 800,
 		DestinationWindowEnd:   &end,
@@ -113,7 +113,7 @@ func TestMoveWindow_SpansOriginToLatestDestinationTime(t *testing.T) {
 	assert.Equal(t, int64(100), window.Start)
 	assert.Equal(t, int64(900), window.End)
 
-	withoutEnd := moveWindow(&shipmentports.BoardMove{
+	withoutEnd := moveWindow(&dispatchboardports.BoardMove{
 		OriginWindowStart:      100,
 		DestinationWindowStart: 800,
 	})
@@ -161,8 +161,8 @@ func TestComputeTrip_DeadheadUnknownWithoutAPosition(t *testing.T) {
 	lat, lon := 41.0, -87.0
 
 	trip := svc.computeTrip(
-		&shipmentports.BoardDriver{TractorID: pulid.MustNew("trac_")},
-		&shipmentports.BoardMove{
+		&dispatchboardports.BoardDriver{TractorID: pulid.MustNew("trac_")},
+		&dispatchboardports.BoardMove{
 			Distance:          ptr(500),
 			OriginLatitude:    &lat,
 			OriginLongitude:   &lon,
@@ -196,8 +196,8 @@ func TestComputeTrip_DeadheadDrivesTheArrivalProjection(t *testing.T) {
 	}
 
 	trip := svc.computeTrip(
-		&shipmentports.BoardDriver{TractorID: tractorID},
-		&shipmentports.BoardMove{
+		&dispatchboardports.BoardDriver{TractorID: tractorID},
+		&dispatchboardports.BoardMove{
 			Distance:          ptr(300),
 			OriginLatitude:    &originLat,
 			OriginLongitude:   &originLon,
@@ -223,14 +223,14 @@ func TestComputeTrip_BusyDriverDepartsAtPTA(t *testing.T) {
 
 	snapshot := &FleetSnapshot{
 		Now: now,
-		CommitmentsByWorker: map[pulid.ID][]*shipmentports.WorkerCommitment{
+		CommitmentsByWorker: map[pulid.ID][]*dispatchboardports.WorkerCommitment{
 			workerID: {{WindowEnd: pta}},
 		},
 	}
 
 	trip := svc.computeTrip(
-		&shipmentports.BoardDriver{WorkerID: workerID},
-		&shipmentports.BoardMove{
+		&dispatchboardports.BoardDriver{WorkerID: workerID},
+		&dispatchboardports.BoardMove{
 			Distance:          ptr(200),
 			OriginWindowStart: now + 2*3600,
 		},
@@ -250,8 +250,8 @@ func TestComputeTrip_NoAppointmentLeavesSlackUnknown(t *testing.T) {
 	svc := &Service{}
 
 	trip := svc.computeTrip(
-		&shipmentports.BoardDriver{},
-		&shipmentports.BoardMove{Distance: ptr(200)},
+		&dispatchboardports.BoardDriver{},
+		&dispatchboardports.BoardMove{Distance: ptr(200)},
 		&FleetSnapshot{Now: 1_000_000},
 	)
 
@@ -294,8 +294,11 @@ func TestScoreDriver_StaleHOSNeverFeedsTheMarginFactor(t *testing.T) {
 	}
 
 	score := svc.scoreDriver(&scoreDriverParams{
-		Driver:   &shipmentports.BoardDriver{WorkerID: workerID, DriverType: worker.DriverTypeOTR},
-		Move:     &shipmentports.BoardMove{MoveID: pulid.MustNew("smv_"), Distance: ptr(200)},
+		Driver: &dispatchboardports.BoardDriver{
+			WorkerID:   workerID,
+			DriverType: worker.DriverTypeOTR,
+		},
+		Move:     &dispatchboardports.BoardMove{MoveID: pulid.MustNew("smv_"), Distance: ptr(200)},
 		Snapshot: snapshot,
 		Weights:  proximityWeights(),
 	})
@@ -327,8 +330,11 @@ func TestScoreDriver_NoTelematicsMeansNoHOSAnywhere(t *testing.T) {
 	}
 
 	score := svc.scoreDriver(&scoreDriverParams{
-		Driver: &shipmentports.BoardDriver{WorkerID: workerID, DriverType: worker.DriverTypeOTR},
-		Move: &shipmentports.BoardMove{
+		Driver: &dispatchboardports.BoardDriver{
+			WorkerID:   workerID,
+			DriverType: worker.DriverTypeOTR,
+		},
+		Move: &dispatchboardports.BoardMove{
 			MoveID:            pulid.MustNew("smv_"),
 			Distance:          ptr(200),
 			OriginWindowStart: now + 12*3600,
@@ -358,7 +364,7 @@ func TestDeadheadOrigin_MidRunDriverDepartsFromCommitmentDestination(t *testing.
 
 	snapshot := &FleetSnapshot{
 		Now: now,
-		CommitmentsByWorker: map[pulid.ID][]*shipmentports.WorkerCommitment{
+		CommitmentsByWorker: map[pulid.ID][]*dispatchboardports.WorkerCommitment{
 			workerID: {
 				{WindowEnd: now + 3600, DestLatitude: &destLat, DestLongitude: &destLon},
 				{WindowEnd: now + 2*3600, DestLatitude: new(36.0), DestLongitude: new(-91.0)},
@@ -370,7 +376,7 @@ func TestDeadheadOrigin_MidRunDriverDepartsFromCommitmentDestination(t *testing.
 	}
 
 	origin, ok := deadheadOrigin(
-		&shipmentports.BoardDriver{WorkerID: workerID, TractorID: tractorID},
+		&dispatchboardports.BoardDriver{WorkerID: workerID, TractorID: tractorID},
 		snapshot,
 	)
 
@@ -395,14 +401,14 @@ func TestDeadheadOrigin_IdleDriverUsesTheLivePosition(t *testing.T) {
 	}
 
 	origin, ok := deadheadOrigin(
-		&shipmentports.BoardDriver{WorkerID: workerID, TractorID: tractorID},
+		&dispatchboardports.BoardDriver{WorkerID: workerID, TractorID: tractorID},
 		snapshot,
 	)
 
 	require.True(t, ok)
 	assert.InDelta(t, 40.0, origin.lat, 0.001)
 
-	_, ok = deadheadOrigin(&shipmentports.BoardDriver{WorkerID: workerID}, snapshot)
+	_, ok = deadheadOrigin(&dispatchboardports.BoardDriver{WorkerID: workerID}, snapshot)
 	assert.False(t, ok, "no commitment destination and no position means no deadhead")
 }
 
@@ -436,7 +442,7 @@ func TestNextApprovedPTOStart_SkipsActiveAndDistantWindows(t *testing.T) {
 	t.Parallel()
 
 	now := int64(1_000_000)
-	timeOff := []*shipmentports.WorkerTimeOff{
+	timeOff := []*dispatchboardports.WorkerTimeOff{
 		{StartDate: now - 3600, EndDate: now + 3600},
 		{StartDate: now + 5*86400, EndDate: now + 6*86400},
 		{StartDate: now + 2*86400, EndDate: now + 3*86400},
@@ -456,8 +462,8 @@ func TestComputeTrip_ClosedWindowIsNotJudgedForLateness(t *testing.T) {
 	closed := now - 20*3600
 
 	trip := svc.computeTrip(
-		&shipmentports.BoardDriver{},
-		&shipmentports.BoardMove{
+		&dispatchboardports.BoardDriver{},
+		&dispatchboardports.BoardMove{
 			Distance:          ptr(200),
 			OriginWindowStart: closed - 4*3600,
 			OriginWindowEnd:   &closed,

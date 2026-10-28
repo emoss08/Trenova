@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -60,14 +61,14 @@ func (f *fakeTrackingShipments) List(
 }
 
 type fakeBoardMoves struct {
-	moves  []*shipmentports.BoardMove
-	filter *shipmentports.DispatchBoardFilter
+	moves  []*dispatchboardports.BoardMove
+	filter *dispatchboardports.DispatchBoardFilter
 }
 
 func (f *fakeBoardMoves) ListBoardMoves(
 	_ context.Context,
-	filter *shipmentports.DispatchBoardFilter,
-) ([]*shipmentports.BoardMove, error) {
+	filter *dispatchboardports.DispatchBoardFilter,
+) ([]*dispatchboardports.BoardMove, error) {
 	f.filter = filter
 
 	return f.moves, nil
@@ -169,7 +170,7 @@ func TestGetShipmentTracking_ComposesStopsAssignmentPositionAndHours(t *testing.
 	tractorID := pulid.MustNew("trc_")
 	workerID := pulid.MustNew("wrk_")
 	shipments := &fakeTrackingShipments{byID: map[pulid.ID]*shipment.Shipment{sp.ID: sp}}
-	board := &fakeBoardMoves{moves: []*shipmentports.BoardMove{{
+	board := &fakeBoardMoves{moves: []*dispatchboardports.BoardMove{{
 		MoveID:              move.ID,
 		AssignedWorkerID:    workerID,
 		AssignedWorkerName:  "Maria Ortiz",
@@ -358,14 +359,14 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 	board := &fakeBoard{board: &dispatchconsoleservice.Board{
 		WindowStart: 1_790_000_000,
 		WindowEnd:   1_790_000_000 + 86_400,
-		Summary: &shipmentports.BoardSummary{
+		Summary: &dispatchboardports.BoardSummary{
 			UncoveredMoves:   1,
 			LateMoves:        1,
 			AvailableDrivers: 1,
 		},
 		Moves: []*dispatchconsoleservice.BoardMove{
 			{
-				BoardMove: &shipmentports.BoardMove{
+				BoardMove: &dispatchboardports.BoardMove{
 					MoveID: pulid.MustNew(
 						"smv_",
 					), ShipmentID: pulid.MustNew("shp_"), ProNumber: "S1",
@@ -376,7 +377,7 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 				Urgency: dispatchconsoleservice.UrgencyLate, MinutesToPickup: -30,
 			},
 			{
-				BoardMove: &shipmentports.BoardMove{
+				BoardMove: &dispatchboardports.BoardMove{
 					MoveID: pulid.MustNew(
 						"smv_",
 					), ProNumber: "S2", AssignedWorkerName: "Maria Ortiz",
@@ -388,7 +389,7 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 			},
 		},
 		Drivers: []*dispatchconsoleservice.BoardDriver{{
-			BoardDriver: &shipmentports.BoardDriver{
+			BoardDriver: &dispatchboardports.BoardDriver{
 				WorkerID:    pulid.MustNew("wrk_"),
 				FirstName:   "Dan",
 				LastName:    "Lee",

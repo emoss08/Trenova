@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentimportchatports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -235,4 +235,4 @@ func TestCompleteHistoryMarksConversationCompletedAndClearsCache(t *testing.T) {
 
 var _ shipmentimportchatports.ShipmentImportChatRepository = (*chatRepoStub)(nil)
 var _ shipmentimportchatports.ShipmentImportChatCacheRepository = (*chatCacheRepoStub)(nil)
-var _ shipmentports.ShipmentImportAssistantService = (*Service)(nil)
+var _ shipmentimportassistantports.ShipmentImportAssistantService = (*Service)(nil)

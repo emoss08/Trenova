@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -73,9 +73,11 @@ func tenderDecisionChanges(outcome *tenderOutcome, orgID pulid.ID) ([]*agent.Rec
 
 	changes := []*agent.RecordChange{status}
 	if outcome.approval != nil && outcome.approval.Shipment != nil {
-		created, cErr := operationstools.EnteredShipmentChanges(&shipmentports.ShipmentCreatePlan{
-			Shipment: outcome.approval.Shipment,
-		})
+		created, cErr := operationstools.EnteredShipmentChanges(
+			&shipmentserviceports.ShipmentCreatePlan{
+				Shipment: outcome.approval.Shipment,
+			},
+		)
 		if cErr != nil {
 			return nil, cErr
 		}

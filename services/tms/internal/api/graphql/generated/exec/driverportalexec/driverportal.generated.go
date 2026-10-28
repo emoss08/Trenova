@@ -3,6 +3,7 @@
 package driverportalexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
@@ -17,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -5359,9 +5359,9 @@ func unmarshalNPortalPtoType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNPortalStopAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋshipmentportsᚐStopActualAction(ctx context.Context, ec *gqlexec.Exec, v any) (shipmentports.StopActualAction, error) {
+func unmarshalNPortalStopAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋshipmentportsᚐStopActualAction(ctx context.Context, ec *gqlexec.Exec, v any) (shipmentmoveports.StopActualAction, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := shipmentports.StopActualAction(tmp)
+	res := shipmentmoveports.StopActualAction(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

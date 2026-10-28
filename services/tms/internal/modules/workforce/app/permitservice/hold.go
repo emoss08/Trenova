@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
@@ -30,7 +30,7 @@ func (s *service) activePermitHold(
 	entity *shipment.Shipment,
 	reason *holdreason.HoldReason,
 ) *shipment.ShipmentHold {
-	result, err := s.holdRepo.ListByShipmentID(ctx, &shipmentports.ListShipmentHoldsRequest{
+	result, err := s.holdRepo.ListByShipmentID(ctx, &shipmentholdports.ListShipmentHoldsRequest{
 		ShipmentID: entity.ID,
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{

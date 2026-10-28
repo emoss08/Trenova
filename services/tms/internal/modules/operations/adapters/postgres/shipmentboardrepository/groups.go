@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"go.uber.org/zap"
 )
 
@@ -23,12 +23,12 @@ const (
 
 func (r *Repository) GroupSummary(
 	ctx context.Context,
-	req *shipmentports.SummarizeShipmentBoardGroupsQuery,
-) ([]*shipmentports.ShipmentBoardGroupRow, error) {
+	req *shipmentboardports.SummarizeShipmentBoardGroupsQuery,
+) ([]*shipmentboardports.ShipmentBoardGroupRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*shipmentports.ShipmentBoardGroupRow, error) {
+		func(ctx context.Context) ([]*shipmentboardports.ShipmentBoardGroupRow, error) {
 			if req == nil {
 				return nil, ErrScopeMissing
 			}
@@ -43,7 +43,7 @@ func (r *Repository) GroupSummary(
 				return nil, err
 			}
 
-			rows, err := keel.Into[shipmentports.ShipmentBoardGroupRow](ctx, r.db.Keel(ctx), q)
+			rows, err := keel.Into[shipmentboardports.ShipmentBoardGroupRow](ctx, r.db.Keel(ctx), q)
 			if err != nil {
 				r.l.Error(
 					"failed to summarize shipment board groups",

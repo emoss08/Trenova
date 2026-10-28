@@ -5,8 +5,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
@@ -25,9 +27,9 @@ type Params struct {
 	Config              *config.Config
 	Repo                checkcallports.CheckCallRepository
 	Links               checkcallports.TrackingLinkRepository
-	MoveRepo            shipmentports.ShipmentMoveRepository
+	MoveRepo            shipmentmoveports.ShipmentMoveRepository
 	ShipmentRepo        shipmentports.ShipmentRepository
-	CarrierAssignments  shipmentports.CarrierAssignmentRepository
+	CarrierAssignments  carrierassignmentports.CarrierAssignmentRepository
 	CarrierRepo         carrierports.CarrierRepository
 	OrgRepo             tenantports.OrganizationRepository
 	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
@@ -44,9 +46,9 @@ type Service struct {
 	cfg                 *config.Config
 	repo                checkcallports.CheckCallRepository
 	links               checkcallports.TrackingLinkRepository
-	moveRepo            shipmentports.ShipmentMoveRepository
+	moveRepo            shipmentmoveports.ShipmentMoveRepository
 	shipmentRepo        shipmentports.ShipmentRepository
-	carrierAssignments  shipmentports.CarrierAssignmentRepository
+	carrierAssignments  carrierassignmentports.CarrierAssignmentRepository
 	carrierRepo         carrierports.CarrierRepository
 	orgRepo             tenantports.OrganizationRepository
 	dispatchControlRepo dispatchcontrolports.DispatchControlRepository

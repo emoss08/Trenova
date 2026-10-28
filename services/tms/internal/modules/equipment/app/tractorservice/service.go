@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
@@ -29,7 +29,7 @@ type Params struct {
 	Logger                    *zap.Logger
 	DB                        kernelports.Transactor
 	Repo                      tractorports.TractorRepository
-	AssignmentRepo            shipmentports.AssignmentRepository
+	AssignmentRepo            assignmentports.AssignmentRepository
 	ContinuityRepo            equipmentcontinuityports.EquipmentContinuityRepository
 	LocationRepo              locationports.LocationRepository
 	Validator                 *Validator
@@ -42,7 +42,7 @@ type Service struct {
 	l                         *zap.Logger
 	db                        kernelports.Transactor
 	repo                      tractorports.TractorRepository
-	assignmentRepo            shipmentports.AssignmentRepository
+	assignmentRepo            assignmentports.AssignmentRepository
 	continuityRepo            equipmentcontinuityports.EquipmentContinuityRepository
 	locationRepo              locationports.LocationRepository
 	validator                 *Validator

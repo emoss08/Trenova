@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -70,7 +70,7 @@ func (s *Service) applyStopEvent(ctx context.Context, event *stopEvent) {
 		return
 	}
 
-	move, err := s.shipmentMoveRepo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	move, err := s.shipmentMoveRepo.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            assignment.ShipmentMoveID,
 		TenantInfo:        event.tenantInfo,
 		ExpandMoveDetails: true,

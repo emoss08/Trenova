@@ -27,7 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentserviceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -141,7 +141,7 @@ func serveExpandedShipment(
 			shipmentmoverepository.Params{DB: conn, Logger: zap.NewNop()},
 		),
 	})
-	service := shipmentportsmock.NewMockShipmentService(t)
+	service := shipmentserviceportsmock.NewMockShipmentService(t)
 	service.EXPECT().
 		Get(mock.Anything, mock.Anything).
 		RunAndReturn(func(requestCtx context.Context, req *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error) {

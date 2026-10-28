@@ -6,10 +6,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/shopspring/decimal"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
@@ -21,15 +17,20 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -65,7 +66,7 @@ func TestUpdateStatusIntegrationRecomputesShipmentStatus(t *testing.T) {
 		},
 	)
 
-	updated, err := svc.UpdateStatus(ctx, &shipmentports.UpdateMoveStatusRequest{
+	updated, err := svc.UpdateStatus(ctx, &shipmentmoveports.UpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     graph.Moves[0].ID,
 		Status:     shipment.MoveStatusAssigned,
@@ -111,7 +112,7 @@ func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
 		},
 	)
 
-	updated, err := svc.BulkUpdateStatus(ctx, &shipmentports.BulkUpdateMoveStatusRequest{
+	updated, err := svc.BulkUpdateStatus(ctx, &shipmentmoveports.BulkUpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveIDs:    []pulid.ID{graph.Moves[0].ID, graph.Moves[1].ID},
 		Status:     shipment.MoveStatusAssigned,
@@ -122,7 +123,7 @@ func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
 
 	persistedMoves, err := moveRepo.GetMovesByShipmentID(
 		ctx,
-		&shipmentports.GetMovesByShipmentIDRequest{
+		&shipmentmoveports.GetMovesByShipmentIDRequest{
 			ShipmentID:        graph.Shipment.ID,
 			TenantInfo:        tenantInfo,
 			ExpandMoveDetails: true,
@@ -173,17 +174,17 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	)
 
 	originalDelivery := graph.Moves[0].Stops[1]
-	response, err := svc.SplitMove(ctx, &shipmentports.SplitMoveRequest{
+	response, err := svc.SplitMove(ctx, &shipmentmoveports.SplitMoveRequest{
 		TenantInfo:            tenantInfo,
 		MoveID:                graph.Moves[0].ID,
 		NewDeliveryLocationID: newDestination.ID,
-		SplitPickupTimes: shipmentports.SplitStopTimes{
+		SplitPickupTimes: shipmentmoveports.SplitStopTimes{
 			ScheduledWindowStart: originalDelivery.EffectiveScheduledWindowEnd() + 1_800,
 			ScheduledWindowEnd: integrationInt64Ptr(
 				originalDelivery.EffectiveScheduledWindowEnd() + 3_600,
 			),
 		},
-		NewDeliveryTimes: shipmentports.SplitStopTimes{
+		NewDeliveryTimes: shipmentmoveports.SplitStopTimes{
 			ScheduledWindowStart: originalDelivery.EffectiveScheduledWindowEnd() + 7_200,
 			ScheduledWindowEnd: integrationInt64Ptr(
 				originalDelivery.EffectiveScheduledWindowEnd() + 9_000,
@@ -251,11 +252,11 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 	stopID := graph.Moves[0].Stops[0].ID
 
 	arrivedAt := timeutils.NowUnix() - 7_200
-	updated, err := svc.RecordStopActual(ctx, &shipmentports.RecordStopActualRequest{
+	updated, err := svc.RecordStopActual(ctx, &shipmentmoveports.RecordStopActualRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
 		StopID:     stopID,
-		Action:     shipmentports.StopActualActionArrive,
+		Action:     shipmentmoveports.StopActualActionArrive,
 		OccurredAt: &arrivedAt,
 	})
 	require.NoError(t, err)
@@ -263,11 +264,11 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 	assert.Equal(t, shipment.MoveStatusInTransit, updated.Status)
 
 	departedAt := arrivedAt + 1_800
-	updated, err = svc.RecordStopActual(ctx, &shipmentports.RecordStopActualRequest{
+	updated, err = svc.RecordStopActual(ctx, &shipmentmoveports.RecordStopActualRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
 		StopID:     stopID,
-		Action:     shipmentports.StopActualActionDepart,
+		Action:     shipmentmoveports.StopActualActionDepart,
 		OccurredAt: &departedAt,
 	})
 	require.NoError(t, err)
@@ -275,7 +276,7 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 
 	persistedMoves, err := moveRepo.GetMovesByShipmentID(
 		ctx,
-		&shipmentports.GetMovesByShipmentIDRequest{
+		&shipmentmoveports.GetMovesByShipmentIDRequest{
 			ShipmentID:        graph.Shipment.ID,
 			TenantInfo:        tenantInfo,
 			ExpandMoveDetails: true,
@@ -304,9 +305,9 @@ func newIntegrationService(
 	db *keel.DB,
 ) (
 	context.Context,
-	shipmentports.ShipmentMoveService,
+	shipmentmoveports.ShipmentMoveService,
 	shipmentports.ShipmentRepository,
-	shipmentports.ShipmentMoveRepository,
+	shipmentmoveports.ShipmentMoveRepository,
 	pagination.TenantInfo,
 	*testutil.ShipmentIntegrationFixture,
 	*tenantportsmock.MockShipmentControlRepository,
@@ -344,12 +345,12 @@ func newIntegrationService(
 		),
 	})
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		GetByMoveID(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, nil).
 		Maybe()
-	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	holdRepo := shipmentholdportsmock.NewMockShipmentHoldRepository(t)
 	holdRepo.EXPECT().
 		HasActiveDeliveryHold(mock.Anything, mock.Anything).
 		Return(false, nil).

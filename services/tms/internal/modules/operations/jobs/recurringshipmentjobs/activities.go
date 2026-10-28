@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -40,7 +40,7 @@ type ActivitiesParams struct {
 	Repo                recurringshipmentports.RecurringShipmentRepository
 	AuditService        auditports.AuditService
 	NotificationService *notificationservice.Service
-	Invalidator         shipmentports.ShipmentInvalidator
+	Invalidator         shipmentinvalidationports.ShipmentInvalidator
 	Logger              *zap.Logger
 }
 
@@ -48,7 +48,7 @@ type Activities struct {
 	repo         recurringshipmentports.RecurringShipmentRepository
 	auditService auditports.AuditService
 	notification *notificationservice.Service
-	invalidator  shipmentports.ShipmentInvalidator
+	invalidator  shipmentinvalidationports.ShipmentInvalidator
 	logger       *zap.Logger
 }
 
@@ -164,13 +164,17 @@ func (a *Activities) dispatchSeries(
 		log.Error("failed to log generated shipment audit action", zap.Error(auditErr))
 	}
 
-	shipmentports.InvalidateShipments(tenantCtx, a.invalidator, &shipmentports.ShipmentInvalidation{
-		OrganizationID: generation.Shipment.OrganizationID,
-		BusinessUnitID: generation.Shipment.BusinessUnitID,
-		Action:         "created",
-		RecordID:       generation.Shipment.ID,
-		Entity:         generation.Shipment,
-	})
+	shipmentinvalidationports.InvalidateShipments(
+		tenantCtx,
+		a.invalidator,
+		&shipmentinvalidationports.ShipmentInvalidation{
+			OrganizationID: generation.Shipment.OrganizationID,
+			BusinessUnitID: generation.Shipment.BusinessUnitID,
+			Action:         "created",
+			RecordID:       generation.Shipment.ID,
+			Entity:         generation.Shipment,
+		},
+	)
 
 	a.notifyIfExpired(tenantCtx, generation.Series)
 }

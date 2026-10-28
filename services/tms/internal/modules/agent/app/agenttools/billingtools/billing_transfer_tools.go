@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -39,17 +39,17 @@ const maxResultFailures = 3
 type billingTransferPlanner interface {
 	PlanBillingTransfers(
 		ctx context.Context,
-		req *shipmentports.PlanBillingTransfersRequest,
-	) (*shipmentports.BillingTransferPlan, error)
+		req *shipmentbillingports.PlanBillingTransfersRequest,
+	) (*shipmentbillingports.BillingTransferPlan, error)
 	BulkTransferToBilling(
 		ctx context.Context,
-		req *shipmentports.BulkTransferShipmentToBillingRequest,
+		req *shipmentbillingports.BulkTransferShipmentToBillingRequest,
 		actor *permissionports.RequestActor,
-	) (*shipmentports.BulkTransferToBillingResponse, error)
+	) (*shipmentbillingports.BulkTransferToBillingResponse, error)
 	ListBillingTransferCandidateIDs(
 		ctx context.Context,
-		req *shipmentports.ListBillingTransferCandidateIDsRequest,
-	) (*shipmentports.BillingTransferCandidateIDsResponse, error)
+		req *shipmentbillingports.ListBillingTransferCandidateIDsRequest,
+	) (*shipmentbillingports.BillingTransferCandidateIDsResponse, error)
 }
 
 // errBothSelections answers a call that names shipments and also asks for
@@ -129,7 +129,7 @@ func (t *TransferToBillingTool) ParamSchema() map[string]any {
 			toolschema.KeyDescription: "The shipments to transfer, by id from " +
 				"billing_list_transfer_candidates, when not allTransferable. Never guess one.",
 			toolschema.KeyMinItems: 1,
-			toolschema.KeyMaxItems: shipmentports.MaxBillingTransferCandidateIDs,
+			toolschema.KeyMaxItems: shipmentbillingports.MaxBillingTransferCandidateIDs,
 			toolschema.KeyItems: map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 			},
@@ -187,7 +187,7 @@ type transferRequest struct {
 }
 
 func (r transferRequest) background() bool {
-	return len(r.shipmentIDs) > shipmentports.MaxBulkTransferToBillingShipments
+	return len(r.shipmentIDs) > shipmentbillingports.MaxBulkTransferToBillingShipments
 }
 
 func (t *TransferToBillingTool) request(
@@ -237,7 +237,7 @@ func (t *TransferToBillingTool) request(
 	ids, err := common.RequirePulidSlice(
 		params.Params,
 		common.ParamShipmentIDs,
-		shipmentports.MaxBillingTransferCandidateIDs,
+		shipmentbillingports.MaxBillingTransferCandidateIDs,
 	)
 	if err != nil {
 		return transferRequest{}, err
@@ -304,11 +304,11 @@ func (t *TransferToBillingTool) transferable(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 	request *transferRequest,
-) ([]pulid.ID, *shipmentports.BillingTransferPlan, error) {
+) ([]pulid.ID, *shipmentbillingports.BillingTransferPlan, error) {
 	tenant := common.TenantFrom(*params)
 	candidates, err := t.shipments.ListBillingTransferCandidateIDs(
 		ctx,
-		&shipmentports.ListBillingTransferCandidateIDsRequest{
+		&shipmentbillingports.ListBillingTransferCandidateIDsRequest{
 			Filter: request.criteria.QueryOptions(tenant, pagination.Info{}),
 			Status: request.criteria.Status,
 		},
@@ -320,7 +320,7 @@ func (t *TransferToBillingTool) transferable(
 		return nil, nil, fmt.Errorf(
 			"%d shipments match, more than one transfer takes (%d); narrow the selection "+
 				"with status, customerId, query or a delivery window",
-			candidates.TotalCount, shipmentports.MaxBillingTransferCandidateIDs,
+			candidates.TotalCount, shipmentbillingports.MaxBillingTransferCandidateIDs,
 		)
 	}
 	if len(candidates.IDs) == 0 {
@@ -330,17 +330,20 @@ func (t *TransferToBillingTool) transferable(
 		)
 	}
 
-	plan, err := t.shipments.PlanBillingTransfers(ctx, &shipmentports.PlanBillingTransfersRequest{
-		TenantInfo:                  tenant,
-		ShipmentIDs:                 candidates.IDs,
-		MarkCompletedReadyToInvoice: request.markReady,
-	})
+	plan, err := t.shipments.PlanBillingTransfers(
+		ctx,
+		&shipmentbillingports.PlanBillingTransfersRequest{
+			TenantInfo:                  tenant,
+			ShipmentIDs:                 candidates.IDs,
+			MarkCompletedReadyToInvoice: request.markReady,
+		},
+	)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	going := &shipmentports.BillingTransferPlan{
-		Decisions: make([]shipmentports.BillingTransferDecision, 0, plan.Transfer),
+	going := &shipmentbillingports.BillingTransferPlan{
+		Decisions: make([]shipmentbillingports.BillingTransferDecision, 0, plan.Transfer),
 	}
 	ids := make([]pulid.ID, 0, plan.Transfer)
 	for idx := range plan.Decisions {
@@ -416,7 +419,7 @@ func (t *TransferToBillingTool) ExecuteWithResult(
 
 	response, err := t.shipments.BulkTransferToBilling(
 		ctx,
-		&shipmentports.BulkTransferShipmentToBillingRequest{
+		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs:                 request.shipmentIDs,
 			BillType:                    request.billType,
 			MarkCompletedReadyToInvoice: request.markReady,
@@ -462,7 +465,7 @@ func (t *TransferToBillingTool) startRun(
 	}, nil
 }
 
-func transferOutcome(response *shipmentports.BulkTransferToBillingResponse) string {
+func transferOutcome(response *shipmentbillingports.BulkTransferToBillingResponse) string {
 	outcome := fmt.Sprintf(
 		"%d of %d transferred",
 		response.SuccessCount,

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,7 +24,7 @@ import (
 // bury the failures worth reading.
 func (s *service) ListAutoTransferCandidateIDs(
 	ctx context.Context,
-	req *shipmentports.ListAutoTransferCandidateIDsRequest,
+	req *shipmentbillingports.ListAutoTransferCandidateIDsRequest,
 ) ([]pulid.ID, error) {
 	if req.Limit <= 0 {
 		return []pulid.ID{}, nil
@@ -98,7 +99,7 @@ func (s *service) autoTransferEligible(
 
 func readinessAllowsAutoTransfer(
 	status shipment.Status,
-	readiness *shipmentports.ShipmentBillingReadiness,
+	readiness *shipmentbillingports.ShipmentBillingReadiness,
 ) bool {
 	if readiness == nil ||
 		readiness.Policy.BillingQueueTransferMode != tenant.BillingQueueTransferModeAutomaticWhenReady {

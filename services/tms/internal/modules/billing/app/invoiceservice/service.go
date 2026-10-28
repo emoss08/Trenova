@@ -36,6 +36,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -84,7 +85,7 @@ type Params struct {
 	Stamper              *exchangeratestamp.Stamper
 	JournalRepo          journalentryports.JournalPostingRepository
 	AdjustmentRepo       invoiceadjustmentports.InvoiceAdjustmentRepository
-	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
+	ChargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	AdjustmentService    invoiceadjustmentports.InvoiceAdjustmentService `optional:"true"`
 	NotificationService  *notificationservice.Service
 	AccessorialRepo      accessorialchargeports.AccessorialChargeRepository
@@ -135,7 +136,7 @@ type Service struct {
 	stamper              *exchangeratestamp.Stamper
 	journalRepo          journalentryports.JournalPostingRepository
 	adjustmentRepo       invoiceadjustmentports.InvoiceAdjustmentRepository
-	chargeAllocationRepo shipmentports.ChargeAllocationRepository
+	chargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	adjustmentService    invoiceadjustmentports.InvoiceAdjustmentService
 	notificationService  *notificationservice.Service
 	accessorialRepo      accessorialchargeports.AccessorialChargeRepository

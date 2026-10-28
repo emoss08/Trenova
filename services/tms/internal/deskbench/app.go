@@ -25,7 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	temporallog "go.temporal.io/sdk/log"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
@@ -73,7 +73,7 @@ type deps struct {
 	RunRecords       agentruntimeports.AgentRunRepository
 	PriceReference   aiproviderports.ModelPriceReference `optional:"true"`
 	ActionTools      agenttoolports.AgentToolRegistry
-	Shipments        shipmentports.ShipmentService
+	Shipments        shipmentserviceports.ShipmentService
 }
 
 type Bench struct {

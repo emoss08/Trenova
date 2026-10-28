@@ -3,12 +3,14 @@ package shipmentcapacityservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +25,7 @@ func driver(
 	freeAt int64,
 ) *dispatchconsoleservice.BoardDriver {
 	return &dispatchconsoleservice.BoardDriver{
-		BoardDriver: &shipmentports.BoardDriver{
+		BoardDriver: &dispatchboardports.BoardDriver{
 			WorkerID:             pulid.MustNew("wrk_"),
 			FirstName:            first,
 			LastName:             last,
@@ -39,7 +41,7 @@ func driver(
 	}
 }
 
-func names(units []*shipmentports.CapacityUnit) []string {
+func names(units []*shipmentcapacityports.CapacityUnit) []string {
 	out := make([]string, 0, len(units))
 	for _, unit := range units {
 		out = append(out, unit.Name)
@@ -52,8 +54,18 @@ func TestDriverUnits_ReadyNowThenSoonestFreeAndNobodyElse(t *testing.T) {
 	t.Parallel()
 
 	finishingSoon := driver("Sam", "Cho", dispatchconsoleservice.AvailabilityFinishing, now+3600)
-	finishingSooner := driver("Elise", "Moreau", dispatchconsoleservice.AvailabilityFinishing, now+600)
-	finishingLate := driver("Brett", "Long", dispatchconsoleservice.AvailabilityFinishing, now+3*3600)
+	finishingSooner := driver(
+		"Elise",
+		"Moreau",
+		dispatchconsoleservice.AvailabilityFinishing,
+		now+600,
+	)
+	finishingLate := driver(
+		"Brett",
+		"Long",
+		dispatchconsoleservice.AvailabilityFinishing,
+		now+3*3600,
+	)
 	ready := driver("Lou", "Kerr", dispatchconsoleservice.AvailabilityOpen, now)
 	working := driver("Mae", "Lin", dispatchconsoleservice.AvailabilityWorking, now)
 	offBoard := driver("Abe", "North", dispatchconsoleservice.AvailabilityOpen, now)
@@ -68,9 +80,9 @@ func TestDriverUnits_ReadyNowThenSoonestFreeAndNobodyElse(t *testing.T) {
 	)
 
 	require.Equal(t, []string{"Lou Kerr", "Elise Moreau", "Sam Cho"}, names(units))
-	assert.Equal(t, shipmentports.CapacityGroupReadyNow, units[0].Group)
+	assert.Equal(t, shipmentcapacityports.CapacityGroupReadyNow, units[0].Group)
 	assert.Nil(t, units[0].FreeAt, "a driver free now has no free-at time")
-	assert.Equal(t, shipmentports.CapacityGroupWithinTwoHours, units[1].Group)
+	assert.Equal(t, shipmentcapacityports.CapacityGroupWithinTwoHours, units[1].Group)
 	require.NotNil(t, units[1].FreeAt)
 	assert.Equal(t, now+600, *units[1].FreeAt)
 	assert.Equal(t, "LK", units[0].Initials)
@@ -87,7 +99,7 @@ func TestDriverUnits_ShowHoursOnlyWhenAnELDReportedThem(t *testing.T) {
 	never.HOSRecordedAt = 0
 
 	withELD := driverUnits([]*dispatchconsoleservice.BoardDriver{fresh, stale, never}, now, true)
-	byName := map[string]*shipmentports.CapacityUnit{}
+	byName := map[string]*shipmentcapacityports.CapacityUnit{}
 	for _, unit := range withELD {
 		byName[unit.Name] = unit
 	}
@@ -103,8 +115,11 @@ func TestDriverUnits_ShowHoursOnlyWhenAnELDReportedThem(t *testing.T) {
 	assert.Nil(t, withoutELD[0].DriveRemainingMs)
 }
 
-func performance(answered, accepted, loads int, rate string) *shipmentports.CarrierPerformance {
-	perf := &shipmentports.CarrierPerformance{
+func performance(
+	answered, accepted, loads int,
+	rate string,
+) *shipmentboardports.CarrierPerformance {
+	perf := &shipmentboardports.CarrierPerformance{
 		OffersAnswered: answered,
 		OffersAccepted: accepted,
 		PerMileLoads:   loads,
@@ -119,7 +134,11 @@ func performance(answered, accepted, loads int, rate string) *shipmentports.Carr
 func TestCarrierUnits_PostedTrucksFirstThenCarriersThatUsuallyAccept(t *testing.T) {
 	t.Parallel()
 
-	posted := &carrier.Carrier{ID: pulid.MustNew("car_"), Name: "Heartland Express", MCNumber: "MC 10"}
+	posted := &carrier.Carrier{
+		ID:       pulid.MustNew("car_"),
+		Name:     "Heartland Express",
+		MCNumber: "MC 10",
+	}
 	reliable := &carrier.Carrier{ID: pulid.MustNew("car_"), Name: "Werner"}
 	tooFew := &carrier.Carrier{ID: pulid.MustNew("car_"), Name: "Covenant"}
 	unreliable := &carrier.Carrier{ID: pulid.MustNew("car_"), Name: "Marten"}
@@ -137,7 +156,7 @@ func TestCarrierUnits_PostedTrucksFirstThenCarriersThatUsuallyAccept(t *testing.
 				{CarrierID: posted.ID, TruckCount: 1, RateMethod: carriercapacity.RateMethodFlat},
 			},
 		},
-		performance: map[pulid.ID]*shipmentports.CarrierPerformance{
+		performance: map[pulid.ID]*shipmentboardports.CarrierPerformance{
 			posted.ID:     performance(10, 3, 0, ""),
 			reliable.ID:   performance(10, 9, 4, "2.35"),
 			tooFew.ID:     performance(2, 2, 0, ""),
@@ -152,7 +171,7 @@ func TestCarrierUnits_PostedTrucksFirstThenCarriersThatUsuallyAccept(t *testing.
 
 	require.Equal(t, []string{"Heartland Express", "Werner"}, names(units))
 	first := units[0]
-	assert.Equal(t, shipmentports.CapacityGroupTrucksPosted, first.Group)
+	assert.Equal(t, shipmentcapacityports.CapacityGroupTrucksPosted, first.Group)
 	require.NotNil(t, first.BadgeCount)
 	assert.Equal(t, 3, *first.BadgeCount, "trucks across every open posting")
 	assert.Equal(t, "Kansas City", first.City)
@@ -162,9 +181,14 @@ func TestCarrierUnits_PostedTrucksFirstThenCarriersThatUsuallyAccept(t *testing.
 	assert.True(t, first.Ring.Low, "30% acceptance is low")
 
 	second := units[1]
-	assert.Equal(t, shipmentports.CapacityGroupUsuallyAccept, second.Group)
+	assert.Equal(t, shipmentcapacityports.CapacityGroupUsuallyAccept, second.Group)
 	assert.Nil(t, second.BadgeCount)
-	assert.Equal(t, "2.35", second.RatePerMile.Decimal.String(), "history fills a missing posted rate")
+	assert.Equal(
+		t,
+		"2.35",
+		second.RatePerMile.Decimal.String(),
+		"history fills a missing posted rate",
+	)
 	require.NotNil(t, second.AcceptancePercent)
 	assert.InDelta(t, 90.0, *second.AcceptancePercent, 0.001)
 }
@@ -172,7 +196,7 @@ func TestCarrierUnits_PostedTrucksFirstThenCarriersThatUsuallyAccept(t *testing.
 func TestWeightedRatePerMile_WeighsByLoads(t *testing.T) {
 	t.Parallel()
 
-	rate := weightedRatePerMile(map[pulid.ID]*shipmentports.CarrierPerformance{
+	rate := weightedRatePerMile(map[pulid.ID]*shipmentboardports.CarrierPerformance{
 		pulid.MustNew("car_"): performance(0, 0, 3, "2.00"),
 		pulid.MustNew("car_"): performance(0, 0, 1, "3.00"),
 		pulid.MustNew("car_"): performance(0, 0, 0, ""),
@@ -183,10 +207,14 @@ func TestWeightedRatePerMile_WeighsByLoads(t *testing.T) {
 	assert.False(t, weightedRatePerMile(nil).Valid)
 }
 
-func boardMove(originState string, pickup int64, distance float64) *dispatchconsoleservice.BoardMove {
+func boardMove(
+	originState string,
+	pickup int64,
+	distance float64,
+) *dispatchconsoleservice.BoardMove {
 	revenue := 2000.0
 	return &dispatchconsoleservice.BoardMove{
-		BoardMove: &shipmentports.BoardMove{
+		BoardMove: &dispatchboardports.BoardMove{
 			MoveID:            pulid.MustNew("smv_"),
 			ShipmentID:        pulid.MustNew("shp_"),
 			OriginCity:        "Omaha",

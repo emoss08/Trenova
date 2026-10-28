@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -51,7 +51,7 @@ func normalizeDetails(in normalizeInput) (int64, *errortypes.MultiError) {
 	switch {
 	case reportedAt <= 0:
 		multiErr.Add("reportedAt", errortypes.ErrInvalid, "Reported time must be a valid timestamp")
-	case reportedAt > in.now+shipmentports.StopActualClockSkewSeconds:
+	case reportedAt > in.now+shipmentmoveports.StopActualClockSkewSeconds:
 		if in.policy == clampFutureTimes {
 			reportedAt = in.now
 		} else {

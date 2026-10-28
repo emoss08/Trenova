@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -39,7 +39,7 @@ func stopActualViewOf(move *shipment.ShipmentMove, stopID pulid.ID) *stopActualV
 	return view
 }
 
-func stopActualOptions(request *shipmentports.RecordStopActualRequest) []toolpreview.Option {
+func stopActualOptions(request *shipmentmoveports.RecordStopActualRequest) []toolpreview.Option {
 	opts := []toolpreview.Option{toolpreview.Labels(stopActualLabels)}
 	if request.OccurredAt == nil {
 		opts = append(opts, toolpreview.Volatile(stopActualTimes...))
@@ -63,7 +63,7 @@ func (t *RecordStopActualTool) Preview(
 
 	verb := "arrival at"
 	switch {
-	case request.Action == shipmentports.StopActualActionDepart:
+	case request.Action == shipmentmoveports.StopActualActionDepart:
 		verb = "departure from"
 	case request.DepartedAt != nil:
 		verb = "arrival at and departure from"

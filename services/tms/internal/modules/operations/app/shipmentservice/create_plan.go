@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,7 +24,7 @@ func (s *service) PreviewCreate(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	actor *permissionports.RequestActor,
-) (*shipmentports.ShipmentCreatePlan, error) {
+) (*shipmentserviceports.ShipmentCreatePlan, error) {
 	if entity == nil {
 		multiErr := errortypes.NewMultiError()
 		multiErr.Add("shipment", errortypes.ErrRequired, "Shipment is required")
@@ -37,7 +37,7 @@ func (s *service) PreviewCreate(
 		return nil, err
 	}
 
-	return &shipmentports.ShipmentCreatePlan{
+	return &shipmentserviceports.ShipmentCreatePlan{
 		Shipment:   entity,
 		Rating:     ratingOutcome(prepared.rating),
 		Advisories: prepared.advisories,
@@ -118,12 +118,14 @@ func (s *service) prepareCreate(
 	return &createPreparation{rating: rating, advisories: advisories}, nil
 }
 
-func ratingOutcome(rating *shipmentcommercial.ContractRating) *shipmentports.ShipmentRatingOutcome {
+func ratingOutcome(
+	rating *shipmentcommercial.ContractRating,
+) *shipmentserviceports.ShipmentRatingOutcome {
 	if rating == nil || rating.Quote == nil || !rating.Quote.Outcome.Priced() {
 		return nil
 	}
 
-	outcome := &shipmentports.ShipmentRatingOutcome{
+	outcome := &shipmentserviceports.ShipmentRatingOutcome{
 		Adopted:     rating.Adopted,
 		Amount:      rating.ContractAmount,
 		Currency:    quoteCurrency(rating.Quote),

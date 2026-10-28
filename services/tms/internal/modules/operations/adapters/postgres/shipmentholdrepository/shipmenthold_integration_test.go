@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentholdrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -24,7 +24,7 @@ import (
 
 type harness struct {
 	ctx      context.Context
-	repo     shipmentports.ShipmentHoldRepository
+	repo     shipmentholdports.ShipmentHoldRepository
 	tenant   pagination.TenantInfo
 	entity   *shipment.Shipment
 	otherCtx context.Context
@@ -90,7 +90,7 @@ func TestListAndBlockingHolds(t *testing.T) {
 	created, err := h.repo.Create(h.ctx, h.hold(holdreason.HoldSeverityBlocking))
 	require.NoError(t, err)
 
-	list, err := h.repo.ListByShipmentID(h.ctx, &shipmentports.ListShipmentHoldsRequest{
+	list, err := h.repo.ListByShipmentID(h.ctx, &shipmentholdports.ListShipmentHoldsRequest{
 		Filter:     &pagination.QueryOptions{TenantInfo: h.tenant},
 		ShipmentID: h.entity.ID,
 	})
@@ -98,7 +98,10 @@ func TestListAndBlockingHolds(t *testing.T) {
 	require.Equal(t, 1, list.Total)
 	assert.Equal(t, created.ID, list.Items[0].ID)
 
-	active := &shipmentports.ActiveShipmentHoldRequest{TenantInfo: h.tenant, ShipmentID: h.entity.ID}
+	active := &shipmentholdports.ActiveShipmentHoldRequest{
+		TenantInfo: h.tenant,
+		ShipmentID: h.entity.ID,
+	}
 	blocked, err := h.repo.HasActiveDispatchHold(h.ctx, active)
 	require.NoError(t, err)
 	assert.True(t, blocked)

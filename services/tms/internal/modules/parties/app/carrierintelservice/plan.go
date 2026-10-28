@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
@@ -380,10 +380,13 @@ func (s *Service) PlanVerifyEquipment(
 	ctx context.Context,
 	req *VerifyEquipmentRequest,
 ) (*carrierintel.CarrierEquipmentVerification, *carrier.Carrier, error) {
-	assignment, err := s.assignmentRepo.GetByID(ctx, &shipmentports.GetCarrierAssignmentByIDRequest{
-		TenantInfo:          req.TenantInfo,
-		CarrierAssignmentID: req.CarrierAssignmentID,
-	})
+	assignment, err := s.assignmentRepo.GetByID(
+		ctx,
+		&carrierassignmentports.GetCarrierAssignmentByIDRequest{
+			TenantInfo:          req.TenantInfo,
+			CarrierAssignmentID: req.CarrierAssignmentID,
+		},
+	)
 	if err != nil {
 		return nil, nil, err
 	}

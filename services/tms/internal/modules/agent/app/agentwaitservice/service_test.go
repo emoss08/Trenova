@@ -16,7 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
@@ -175,14 +176,14 @@ func (m *memoryWaits) MarkResumed(
 }
 
 type fakeMoves struct {
-	shipmentports.ShipmentMoveRepository
+	shipmentmoveports.ShipmentMoveRepository
 
 	move *shipment.ShipmentMove
 }
 
 func (f *fakeMoves) GetByID(
 	context.Context,
-	*shipmentports.GetMoveByIDRequest,
+	*shipmentmoveports.GetMoveByIDRequest,
 ) (*shipment.ShipmentMove, error) {
 	if f.move == nil {
 		return nil, errortypes.NewNotFoundError("Move not found")
@@ -769,7 +770,7 @@ func krogerDC() *location.Location {
 }
 
 type fakeAssignments struct {
-	shipmentports.AssignmentRepository
+	assignmentports.AssignmentRepository
 
 	tractor pulid.ID
 }

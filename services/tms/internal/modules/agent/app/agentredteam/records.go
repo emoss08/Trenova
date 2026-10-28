@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -47,7 +48,7 @@ func (d *shipmentDesk) GetByID(
 }
 
 type commentDesk struct {
-	shipmentports.ShipmentCommentRepository
+	shipmentcommentports.ShipmentCommentRepository
 
 	rec      *recorder
 	response map[string]any
@@ -55,7 +56,7 @@ type commentDesk struct {
 
 func (d *commentDesk) ListByShipmentID(
 	_ context.Context,
-	req *shipmentports.ListShipmentCommentsRequest,
+	req *shipmentcommentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	tenant := pagination.TenantInfo{}
 	if req.Filter != nil {

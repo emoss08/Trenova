@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/shopspring/decimal"
@@ -11,9 +12,9 @@ import (
 
 func (s *Service) scope(
 	ctx context.Context,
-	req *shipmentports.ShipmentBoardScopeRequest,
+	req *shipmentboardports.ShipmentBoardScopeRequest,
 	needAll bool,
-) (*shipmentports.ShipmentBoardScope, error) {
+) (*shipmentboardports.ShipmentBoardScope, error) {
 	if req == nil || req.Filter == nil {
 		return nil, errortypes.NewBusinessError("A shipment board scope is required")
 	}
@@ -38,7 +39,7 @@ func (s *Service) scope(
 		return nil, err
 	}
 
-	return &shipmentports.ShipmentBoardScope{
+	return &shipmentboardports.ShipmentBoardScope{
 		Filter: req.Filter,
 		Options: shipmentports.ShipmentOptions{
 			QuickFilters:     req.QuickFilters,
@@ -50,8 +51,8 @@ func (s *Service) scope(
 
 func (s *Service) StageSummary(
 	ctx context.Context,
-	req *shipmentports.ShipmentBoardScopeRequest,
-) ([]*shipmentports.ShipmentStageSummary, error) {
+	req *shipmentboardports.ShipmentBoardScopeRequest,
+) ([]*shipmentboardports.ShipmentStageSummary, error) {
 	scope, err := s.scope(ctx, req, false)
 	if err != nil {
 		return nil, err
@@ -67,8 +68,8 @@ func (s *Service) StageSummary(
 
 func (s *Service) GroupSummary(
 	ctx context.Context,
-	req *shipmentports.SummarizeShipmentBoardGroupsRequest,
-) ([]*shipmentports.ShipmentBoardGroup, error) {
+	req *shipmentboardports.SummarizeShipmentBoardGroupsRequest,
+) ([]*shipmentboardports.ShipmentBoardGroup, error) {
 	if req == nil || !req.GroupBy.IsValid() {
 		return nil, errortypes.NewValidationError(
 			"groupBy",
@@ -82,7 +83,7 @@ func (s *Service) GroupSummary(
 		return nil, err
 	}
 
-	rows, err := s.repo.GroupSummary(ctx, &shipmentports.SummarizeShipmentBoardGroupsQuery{
+	rows, err := s.repo.GroupSummary(ctx, &shipmentboardports.SummarizeShipmentBoardGroupsQuery{
 		Scope:    scope,
 		GroupBy:  req.GroupBy,
 		Timezone: req.Scope.Timezone,
@@ -91,9 +92,9 @@ func (s *Service) GroupSummary(
 		return nil, err
 	}
 
-	out := make([]*shipmentports.ShipmentBoardGroup, 0, len(rows))
+	out := make([]*shipmentboardports.ShipmentBoardGroup, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, &shipmentports.ShipmentBoardGroup{
+		out = append(out, &shipmentboardports.ShipmentBoardGroup{
 			Key:     row.Key,
 			Label:   row.Label,
 			Count:   row.Count,
@@ -105,17 +106,17 @@ func (s *Service) GroupSummary(
 }
 
 func ZeroFilledStageSummary(
-	rows []*shipmentports.ShipmentStageSummaryRow,
-) []*shipmentports.ShipmentStageSummary {
-	byRank := make(map[int16]*shipmentports.ShipmentStageSummaryRow, len(rows))
+	rows []*shipmentboardports.ShipmentStageSummaryRow,
+) []*shipmentboardports.ShipmentStageSummary {
+	byRank := make(map[int16]*shipmentboardports.ShipmentStageSummaryRow, len(rows))
 	for _, row := range rows {
 		byRank[row.StageRank] = row
 	}
 
 	stages := shipment.Stages()
-	out := make([]*shipmentports.ShipmentStageSummary, 0, len(stages))
+	out := make([]*shipmentboardports.ShipmentStageSummary, 0, len(stages))
 	for _, stage := range stages {
-		summary := &shipmentports.ShipmentStageSummary{
+		summary := &shipmentboardports.ShipmentStageSummary{
 			Stage:   stage,
 			Rank:    int(stage.Rank()),
 			Revenue: decimal.Zero,
@@ -132,8 +133,8 @@ func ZeroFilledStageSummary(
 
 func (s *Service) QuickFilterCounts(
 	ctx context.Context,
-	req *shipmentports.ShipmentBoardScopeRequest,
-) ([]*shipmentports.ShipmentQuickFilterCount, error) {
+	req *shipmentboardports.ShipmentBoardScopeRequest,
+) ([]*shipmentboardports.ShipmentQuickFilterCount, error) {
 	scope, err := s.scope(ctx, req, true)
 	if err != nil {
 		return nil, err
@@ -151,19 +152,22 @@ func (s *Service) QuickFilterCounts(
 		specs = append(specs, shipment.Quick(filter))
 	}
 
-	totals, err := s.repo.QuickFilterTotals(ctx, &shipmentports.CountShipmentQuickFiltersRequest{
-		Scope:   scope,
-		Filters: specs,
-	})
+	totals, err := s.repo.QuickFilterTotals(
+		ctx,
+		&shipmentboardports.CountShipmentQuickFiltersRequest{
+			Scope:   scope,
+			Filters: specs,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	out := make([]*shipmentports.ShipmentQuickFilterCount, 0, len(filters))
+	out := make([]*shipmentboardports.ShipmentQuickFilterCount, 0, len(filters))
 	for i, filter := range filters {
 		out = append(
 			out,
-			&shipmentports.ShipmentQuickFilterCount{Filter: filter, Count: totals[i].Count},
+			&shipmentboardports.ShipmentQuickFilterCount{Filter: filter, Count: totals[i].Count},
 		)
 	}
 

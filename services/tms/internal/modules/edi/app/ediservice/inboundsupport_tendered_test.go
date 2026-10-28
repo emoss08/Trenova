@@ -1,20 +1,20 @@
 package ediservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,7 +46,7 @@ func acceptedTenderOfferForTest() *tender.TenderOffer {
 func TestRecordTenderedShipmentStatus_WritesCommentAndEvent(t *testing.T) {
 	t.Parallel()
 
-	commentRepo := shipmentportsmock.NewMockShipmentCommentRepository(t)
+	commentRepo := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	eventRepo := shipmenteventportsmock.NewMockShipmentEventRepository(t)
 	service := &Service{
@@ -141,7 +141,7 @@ func TestRecordTenderedShipmentStatus_RequiresOfferWithTender(t *testing.T) {
 func TestRecordTenderedShipmentStatus_EventInsertFailureIsNonFatal(t *testing.T) {
 	t.Parallel()
 
-	commentRepo := shipmentportsmock.NewMockShipmentCommentRepository(t)
+	commentRepo := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	eventRepo := shipmenteventportsmock.NewMockShipmentEventRepository(t)
 	service := &Service{

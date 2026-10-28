@@ -3,10 +3,6 @@ package ediservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -14,6 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentserviceportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -71,7 +70,7 @@ func TestResolvePayloadShipmentEventIDResolves214Payload(t *testing.T) {
 	eventID := pulid.MustNew("se_")
 	shipmentID := pulid.MustNew("sp_")
 	eventRepo := shipmenteventportsmock.NewMockShipmentEventRepository(t)
-	shipmentSvc := shipmentportsmock.NewMockShipmentService(t)
+	shipmentSvc := shipmentserviceportsmock.NewMockShipmentService(t)
 	eventRepo.EXPECT().
 		GetByID(mock.Anything, shipmenteventports.GetShipmentEventByIDRequest{
 			ID:         eventID,

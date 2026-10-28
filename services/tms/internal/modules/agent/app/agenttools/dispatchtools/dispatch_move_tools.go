@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,11 +28,11 @@ const fieldMoveIDs = "moveIds"
 
 // moveUnassigner is the slice of the assignment service unassigning uses.
 type moveUnassigner interface {
-	Unassign(ctx context.Context, req *shipmentports.UnassignShipmentMoveRequest) error
+	Unassign(ctx context.Context, req *assignmentports.UnassignShipmentMoveRequest) error
 	PreviewUnassign(
 		ctx context.Context,
-		req *shipmentports.UnassignShipmentMoveRequest,
-	) (*shipmentports.AssignmentPlan, error)
+		req *assignmentports.UnassignShipmentMoveRequest,
+	) (*assignmentports.AssignmentPlan, error)
 }
 
 // moveStatusSetter is the slice of the shipment move service a status change
@@ -39,16 +40,16 @@ type moveUnassigner interface {
 type moveStatusSetter interface {
 	UpdateStatus(
 		ctx context.Context,
-		req *shipmentports.UpdateMoveStatusRequest,
+		req *shipmentmoveports.UpdateMoveStatusRequest,
 	) (*shipment.ShipmentMove, error)
 	BulkUpdateStatus(
 		ctx context.Context,
-		req *shipmentports.BulkUpdateMoveStatusRequest,
+		req *shipmentmoveports.BulkUpdateMoveStatusRequest,
 	) ([]*shipment.ShipmentMove, error)
 	PreviewUpdateStatus(
 		ctx context.Context,
-		req *shipmentports.BulkUpdateMoveStatusRequest,
-	) (*shipmentports.MoveStatusPlan, error)
+		req *shipmentmoveports.BulkUpdateMoveStatusRequest,
+	) (*shipmentmoveports.MoveStatusPlan, error)
 }
 
 // unassignMovesTool takes the driver and equipment off moves that have not
@@ -57,7 +58,7 @@ type UnassignMovesTool struct {
 	assignments moveUnassigner
 }
 
-func NewUnassignMovesTool(assignments shipmentports.AssignmentService) agenttoolports.AgentTool {
+func NewUnassignMovesTool(assignments assignmentports.AssignmentService) agenttoolports.AgentTool {
 	return &UnassignMovesTool{assignments: assignments}
 }
 
@@ -176,7 +177,7 @@ func (t *UnassignMovesTool) Execute(
 
 func (t *UnassignMovesTool) requests(
 	params *agenttoolports.ToolExecuteParams,
-) ([]*shipmentports.UnassignShipmentMoveRequest, error) {
+) ([]*assignmentports.UnassignShipmentMoveRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -186,9 +187,9 @@ func (t *UnassignMovesTool) requests(
 		return nil, err
 	}
 
-	requests := make([]*shipmentports.UnassignShipmentMoveRequest, 0, len(moveIDs))
+	requests := make([]*assignmentports.UnassignShipmentMoveRequest, 0, len(moveIDs))
 	for _, moveID := range moveIDs {
-		requests = append(requests, &shipmentports.UnassignShipmentMoveRequest{
+		requests = append(requests, &assignmentports.UnassignShipmentMoveRequest{
 			TenantInfo:     common.TenantFrom(*params),
 			ShipmentMoveID: moveID,
 		})
@@ -204,7 +205,7 @@ type UpdateMoveStatusTool struct {
 	moves moveStatusSetter
 }
 
-func NewUpdateMoveStatusTool(moves shipmentports.ShipmentMoveService) agenttoolports.AgentTool {
+func NewUpdateMoveStatusTool(moves shipmentmoveports.ShipmentMoveService) agenttoolports.AgentTool {
 	return &UpdateMoveStatusTool{moves: moves}
 }
 
@@ -308,7 +309,7 @@ func (t *UpdateMoveStatusTool) Execute(
 	}
 
 	if len(request.MoveIDs) == 1 {
-		_, err = t.moves.UpdateStatus(ctx, &shipmentports.UpdateMoveStatusRequest{
+		_, err = t.moves.UpdateStatus(ctx, &shipmentmoveports.UpdateMoveStatusRequest{
 			TenantInfo: request.TenantInfo,
 			MoveID:     request.MoveIDs[0],
 			Status:     request.Status,
@@ -324,7 +325,7 @@ func (t *UpdateMoveStatusTool) Execute(
 
 func (t *UpdateMoveStatusTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*shipmentports.BulkUpdateMoveStatusRequest, error) {
+) (*shipmentmoveports.BulkUpdateMoveStatusRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -338,7 +339,7 @@ func (t *UpdateMoveStatusTool) request(
 		return nil, err
 	}
 
-	return &shipmentports.BulkUpdateMoveStatusRequest{
+	return &shipmentmoveports.BulkUpdateMoveStatusRequest{
 		TenantInfo: common.TenantFrom(*params),
 		MoveIDs:    moveIDs,
 		Status:     status,

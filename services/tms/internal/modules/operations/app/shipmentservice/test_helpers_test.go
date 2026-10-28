@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentinvalidation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/shopspring/decimal"
@@ -32,6 +32,8 @@ func newTestCommercialCalculator(
 	})
 }
 
-func newTestInvalidator(realtime realtimeports.RealtimeService) shipmentports.ShipmentInvalidator {
+func newTestInvalidator(
+	realtime realtimeports.RealtimeService,
+) shipmentinvalidationports.ShipmentInvalidator {
 	return shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop())
 }

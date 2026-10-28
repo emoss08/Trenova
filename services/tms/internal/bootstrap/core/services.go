@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
@@ -55,23 +55,23 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	),
 	inboundmail.New,
 	fx.Annotate(
-		func(s *ediservice.Service) shipmentports.ShipmentMutationObserver { return s },
+		func(s *ediservice.Service) shipmentserviceports.ShipmentMutationObserver { return s },
 		fx.ResultTags(`group:"shipment_mutation_observers"`),
 	),
 	fx.Annotate(
-		func(s *driversettlementservice.Service) shipmentports.ShipmentMutationObserver { return s },
+		func(s *driversettlementservice.Service) shipmentserviceports.ShipmentMutationObserver { return s },
 		fx.ResultTags(`group:"shipment_mutation_observers"`),
 	),
 	fx.Annotate(
-		func(s *driversettlementservice.Service) shipmentports.MoveStatusObserver { return s },
+		func(s *driversettlementservice.Service) shipmentserviceports.MoveStatusObserver { return s },
 		fx.ResultTags(`group:"move_status_observers"`),
 	),
 	fx.Annotate(
-		func(s *carriersettlementservice.Service) shipmentports.ShipmentMutationObserver { return s },
+		func(s *carriersettlementservice.Service) shipmentserviceports.ShipmentMutationObserver { return s },
 		fx.ResultTags(`group:"shipment_mutation_observers"`),
 	),
 	fx.Annotate(
-		func(s *carriersettlementservice.Service) shipmentports.MoveStatusObserver { return s },
+		func(s *carriersettlementservice.Service) shipmentserviceports.MoveStatusObserver { return s },
 		fx.ResultTags(`group:"move_status_observers"`),
 	),
 	fx.Annotate(
@@ -134,7 +134,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	fx.Annotate(
 		func(
 			setter shipmentservice.MutationObserverSetter,
-			observers []shipmentports.ShipmentMutationObserver,
+			observers []shipmentserviceports.ShipmentMutationObserver,
 		) {
 			setter.SetShipmentMutationObservers(observers)
 		},

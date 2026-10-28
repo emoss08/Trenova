@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentboardcache"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -46,39 +47,39 @@ var factFilters = [...]shipment.QuickFilter{
 type Params struct {
 	fx.In
 
-	Board         shipmentports.ShipmentBoardRepository
-	Briefing      shipmentports.ShipmentBriefingRepository
+	Board         shipmentboardports.ShipmentBoardRepository
+	Briefing      shipmentboardports.ShipmentBriefingRepository
 	Briefs        shipmentbriefports.ShipmentBriefRepository
 	QuickFilters  shipmentports.ShipmentQuickFilterBasisResolver
 	Organizations tenantports.OrganizationRepository
 	Suggestions   shipmentbriefports.ShipmentSuggestionCandidates
 	Completion    llmports.CompletionService
-	Cache         shipmentports.ShipmentBoardCache
+	Cache         shipmentboardports.ShipmentBoardCache
 	Logger        *zap.Logger
 }
 
 type Dependencies struct {
-	Board         shipmentports.ShipmentBoardRepository
-	Briefing      shipmentports.ShipmentBriefingRepository
+	Board         shipmentboardports.ShipmentBoardRepository
+	Briefing      shipmentboardports.ShipmentBriefingRepository
 	Briefs        shipmentbriefports.ShipmentBriefRepository
 	QuickFilters  shipmentports.ShipmentQuickFilterBasisResolver
 	Organizations tenantports.OrganizationRepository
 	Suggestions   shipmentbriefports.ShipmentSuggestionCandidates
 	Completion    llmports.CompletionService
-	Cache         shipmentports.ShipmentBoardCache
+	Cache         shipmentboardports.ShipmentBoardCache
 	Logger        *zap.Logger
 	Now           func() time.Time
 }
 
 type Service struct {
-	board         shipmentports.ShipmentBoardRepository
-	briefing      shipmentports.ShipmentBriefingRepository
+	board         shipmentboardports.ShipmentBoardRepository
+	briefing      shipmentboardports.ShipmentBriefingRepository
 	briefs        shipmentbriefports.ShipmentBriefRepository
 	quickFilters  shipmentports.ShipmentQuickFilterBasisResolver
 	organizations tenantports.OrganizationRepository
 	suggestions   shipmentbriefports.ShipmentSuggestionCandidates
 	completion    llmports.CompletionService
-	cache         shipmentports.ShipmentBoardCache
+	cache         shipmentboardports.ShipmentBoardCache
 	l             *zap.Logger
 	now           func() time.Time
 }
@@ -203,7 +204,7 @@ func (s *Service) liveFacts(
 		s.cache,
 		s.l,
 		&shipmentboardcache.Request{
-			Section:    shipmentports.ShipmentBoardSectionBriefing,
+			Section:    shipmentboardports.ShipmentBoardSectionBriefing,
 			TenantInfo: tenantInfo,
 			Timezone:   timezone,
 			Variant:    liveFactsVariant,
@@ -342,8 +343,8 @@ func (s *Service) Facts(
 	g.Go(func() error {
 		totals, tErr := s.board.QuickFilterTotals(
 			gctx,
-			&shipmentports.CountShipmentQuickFiltersRequest{
-				Scope: &shipmentports.ShipmentBoardScope{
+			&shipmentboardports.CountShipmentQuickFiltersRequest{
+				Scope: &shipmentboardports.ShipmentBoardScope{
 					Filter:  &pagination.QueryOptions{TenantInfo: tenantInfo},
 					Options: shipmentports.ShipmentOptions{QuickFilterBasis: basis},
 				},

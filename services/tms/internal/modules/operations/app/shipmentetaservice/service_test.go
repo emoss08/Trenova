@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -37,13 +38,13 @@ func (s *stubShipments) ListTrackingShipments(
 }
 
 type stubBoard struct {
-	moves []*shipmentports.BoardMove
+	moves []*dispatchboardports.BoardMove
 }
 
 func (s *stubBoard) ListBoardMoves(
 	context.Context,
-	*shipmentports.DispatchBoardFilter,
-) ([]*shipmentports.BoardMove, error) {
+	*dispatchboardports.DispatchBoardFilter,
+) ([]*dispatchboardports.BoardMove, error) {
 	return s.moves, nil
 }
 
@@ -302,7 +303,7 @@ func newFixture(windowEndFromNow time.Duration) *fixture {
 	}
 	f.svc = NewWithDependencies(&Dependencies{
 		Shipments: &stubShipments{entities: []*shipment.Shipment{entity}},
-		Board: &stubBoard{moves: []*shipmentports.BoardMove{{
+		Board: &stubBoard{moves: []*dispatchboardports.BoardMove{{
 			MoveID:            moveID,
 			AssignedTractorID: tractor,
 			AssignedWorkerID:  workerID,

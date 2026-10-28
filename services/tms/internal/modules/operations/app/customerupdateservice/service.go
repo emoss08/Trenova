@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -36,7 +37,7 @@ type Params struct {
 	Inliner       documenttemplateports.AssetInliner
 	Customers     customerports.CustomerRepository
 	Shipments     shipmentports.ShipmentRepository
-	Comments      shipmentports.ShipmentCommentService
+	Comments      shipmentcommentports.ShipmentCommentService
 }
 
 type Service struct {
@@ -46,7 +47,7 @@ type Service struct {
 	inliner       documenttemplateports.AssetInliner
 	customers     customerports.CustomerRepository
 	shipments     shipmentports.ShipmentRepository
-	comments      shipmentports.ShipmentCommentService
+	comments      shipmentcommentports.ShipmentCommentService
 	now           func() int64
 }
 

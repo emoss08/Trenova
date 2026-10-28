@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -78,7 +78,7 @@ func (s *Service) StartAutomatic(
 	limit := AutomaticBatchSize(control)
 	shipmentIDs, err := s.shipments.ListAutoTransferCandidateIDs(
 		ctx,
-		&shipmentports.ListAutoTransferCandidateIDsRequest{
+		&shipmentbillingports.ListAutoTransferCandidateIDsRequest{
 			TenantInfo: tenantInfo,
 			Limit:      limit,
 			ScanLimit:  min(limit*automaticScanFactor, maxAutomaticScan),

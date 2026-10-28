@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,7 +25,7 @@ type Params struct {
 
 	Logger       *zap.Logger
 	DB           kernelports.Transactor
-	Repo         shipmentports.RatingReviewRepository
+	Repo         ratingreviewports.RatingReviewRepository
 	AuditService auditports.AuditService
 	Realtime     realtimeports.RealtimeService `optional:"true"`
 }
@@ -33,13 +33,13 @@ type Params struct {
 type Service struct {
 	l            *zap.Logger
 	db           kernelports.Transactor
-	repo         shipmentports.RatingReviewRepository
+	repo         ratingreviewports.RatingReviewRepository
 	auditService auditports.AuditService
 	realtime     realtimeports.RealtimeService
 	now          func() int64
 }
 
-var _ shipmentports.RatingReviewService = (*Service)(nil)
+var _ ratingreviewports.RatingReviewService = (*Service)(nil)
 
 //nolint:gocritic // fx param structs are passed by value
 func New(p Params) *Service {
@@ -55,7 +55,7 @@ func New(p Params) *Service {
 
 func (s *Service) Approve(
 	ctx context.Context,
-	req *shipmentports.ApproveRatingReviewRequest,
+	req *ratingreviewports.ApproveRatingReviewRequest,
 	actor *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	if req == nil || req.ShipmentID.IsNil() {

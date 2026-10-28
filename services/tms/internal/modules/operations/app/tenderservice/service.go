@@ -11,8 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -47,15 +51,15 @@ type Params struct {
 	Repo                  tenderports.TenderRepository
 	GuideRepo             tenderports.RoutingGuideRepository
 	CarrierRepo           carrierports.CarrierRepository
-	CarrierAssignmentRepo shipmentports.CarrierAssignmentRepository
-	AssignmentRepo        shipmentports.AssignmentRepository
+	CarrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
+	AssignmentRepo        assignmentports.AssignmentRepository
 	ShipmentRepo          shipmentports.ShipmentRepository
-	HoldRepo              shipmentports.ShipmentHoldRepository
+	HoldRepo              shipmentholdports.ShipmentHoldRepository
 	OrgRepo               tenantports.OrganizationRepository
 	Workflows             kernelports.WorkflowStarter
 	EventService          shipmenteventports.ShipmentEventService
 	AuditService          auditports.AuditService
-	Invalidator           shipmentports.ShipmentInvalidator
+	Invalidator           shipmentinvalidationports.ShipmentInvalidator
 	Config                *config.Config
 	Templates             documenttemplateports.DocumentTemplateResolver `optional:"true"`
 	EmailService          emailports.EmailService                        `optional:"true"`
@@ -73,15 +77,15 @@ type Service struct {
 	repo                  tenderports.TenderRepository
 	guideRepo             tenderports.RoutingGuideRepository
 	carrierRepo           carrierports.CarrierRepository
-	carrierAssignmentRepo shipmentports.CarrierAssignmentRepository
-	assignmentRepo        shipmentports.AssignmentRepository
+	carrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
+	assignmentRepo        assignmentports.AssignmentRepository
 	shipmentRepo          shipmentports.ShipmentRepository
-	holdRepo              shipmentports.ShipmentHoldRepository
+	holdRepo              shipmentholdports.ShipmentHoldRepository
 	orgRepo               tenantports.OrganizationRepository
 	workflows             kernelports.WorkflowStarter
 	eventService          shipmenteventports.ShipmentEventService
 	auditService          auditports.AuditService
-	invalidator           shipmentports.ShipmentInvalidator
+	invalidator           shipmentinvalidationports.ShipmentInvalidator
 	cfg                   *config.Config
 	templates             documenttemplateports.DocumentTemplateResolver
 	emailService          emailports.EmailService

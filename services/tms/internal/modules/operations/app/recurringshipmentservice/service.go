@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,7 +32,7 @@ type Params struct {
 	Validator    *Validator
 	AuditService auditports.AuditService
 	Realtime     realtimeports.RealtimeService `optional:"true"`
-	Invalidator  shipmentports.ShipmentInvalidator
+	Invalidator  shipmentinvalidationports.ShipmentInvalidator
 }
 
 type Service struct {
@@ -41,7 +41,7 @@ type Service struct {
 	validator    *Validator
 	auditService auditports.AuditService
 	realtime     realtimeports.RealtimeService
-	invalidator  shipmentports.ShipmentInvalidator
+	invalidator  shipmentinvalidationports.ShipmentInvalidator
 }
 
 func New(p Params) *Service {
@@ -277,16 +277,20 @@ func (s *Service) Generate(
 			log.Error("failed to log audit action", zap.Error(err))
 		}
 
-		shipmentports.InvalidateShipments(ctx, s.invalidator, &shipmentports.ShipmentInvalidation{
-			OrganizationID: result.Shipment.OrganizationID,
-			BusinessUnitID: result.Shipment.BusinessUnitID,
-			ActorUserID:    req.RequestedBy,
-			ActorType:      permissionports.PrincipalTypeUser,
-			ActorID:        req.RequestedBy,
-			Action:         "created",
-			RecordID:       result.Shipment.ID,
-			Entity:         result.Shipment,
-		})
+		shipmentinvalidationports.InvalidateShipments(
+			ctx,
+			s.invalidator,
+			&shipmentinvalidationports.ShipmentInvalidation{
+				OrganizationID: result.Shipment.OrganizationID,
+				BusinessUnitID: result.Shipment.BusinessUnitID,
+				ActorUserID:    req.RequestedBy,
+				ActorType:      permissionports.PrincipalTypeUser,
+				ActorID:        req.RequestedBy,
+				Action:         "created",
+				RecordID:       result.Shipment.ID,
+				Entity:         result.Shipment,
+			},
+		)
 	}
 
 	if result.Series != nil {

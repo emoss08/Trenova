@@ -13,7 +13,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,7 +34,7 @@ type fakeShipmentOperator struct {
 	existing   *shipment.Shipment
 	uncanceled *shipmentports.UncancelShipmentRequest
 	owner      *shipmentports.TransferOwnershipRequest
-	rerated    *shipmentports.AutoRateShipmentRequest
+	rerated    *shipmentserviceports.AutoRateShipmentRequest
 	unpriced   bool
 	measured   pulid.ID
 	duplicated *shipmentports.BulkDuplicateShipmentRequest
@@ -70,7 +74,7 @@ func (f *fakeShipmentOperator) Uncancel(
 func (f *fakeShipmentOperator) PreviewUncancel(
 	context.Context,
 	*shipmentports.UncancelShipmentRequest,
-) (*shipmentports.ShipmentChangePreview, error) {
+) (*shipmentserviceports.ShipmentChangePreview, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -78,7 +82,7 @@ func (f *fakeShipmentOperator) PreviewUncancel(
 	after := *before
 	after.ApplyUncancel()
 
-	return &shipmentports.ShipmentChangePreview{Before: before, After: &after}, nil
+	return &shipmentserviceports.ShipmentChangePreview{Before: before, After: &after}, nil
 }
 
 func (f *fakeShipmentOperator) TransferOwnership(
@@ -98,38 +102,38 @@ func (f *fakeShipmentOperator) PreviewTransferOwnership(
 	_ context.Context,
 	req *shipmentports.TransferOwnershipRequest,
 	_ *permissionports.RequestActor,
-) (*shipmentports.ShipmentChangePreview, error) {
+) (*shipmentserviceports.ShipmentChangePreview, error) {
 	before := f.shipment()
 	after := *before
 	after.OwnerID = req.OwnerID
 
-	return &shipmentports.ShipmentChangePreview{Before: before, After: &after}, nil
+	return &shipmentserviceports.ShipmentChangePreview{Before: before, After: &after}, nil
 }
 
 func (f *fakeShipmentOperator) AutoRate(
 	_ context.Context,
-	req *shipmentports.AutoRateShipmentRequest,
+	req *shipmentserviceports.AutoRateShipmentRequest,
 	_ *permissionports.RequestActor,
-) (*shipment.Shipment, *shipmentports.ContractRateApplication, error) {
+) (*shipment.Shipment, *shipmentserviceports.ContractRateApplication, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, nil, err
 	}
 	f.rerated = req
 
-	return f.shipment(), &shipmentports.ContractRateApplication{Applied: !f.unpriced}, nil
+	return f.shipment(), &shipmentserviceports.ContractRateApplication{Applied: !f.unpriced}, nil
 }
 
 func (f *fakeShipmentOperator) PreviewAutoRate(
 	context.Context,
-	*shipmentports.AutoRateShipmentRequest,
+	*shipmentserviceports.AutoRateShipmentRequest,
 	*permissionports.RequestActor,
-) (*shipmentports.ShipmentAutoRatePreview, error) {
+) (*shipmentserviceports.ShipmentAutoRatePreview, error) {
 	before := f.shipment()
 	if f.unpriced {
-		return &shipmentports.ShipmentAutoRatePreview{
+		return &shipmentserviceports.ShipmentAutoRatePreview{
 			Before: before,
 			After:  before,
-			Application: &shipmentports.ContractRateApplication{
+			Application: &shipmentserviceports.ContractRateApplication{
 				Outcome: ratequote.Outcome("NoMatch"),
 			},
 		}, nil
@@ -138,10 +142,10 @@ func (f *fakeShipmentOperator) PreviewAutoRate(
 	after.FreightChargeAmount = decimal.NewNullDecimal(decimal.RequireFromString("1250"))
 	after.TotalChargeAmount = decimal.NewNullDecimal(decimal.RequireFromString("1250"))
 
-	return &shipmentports.ShipmentAutoRatePreview{
+	return &shipmentserviceports.ShipmentAutoRatePreview{
 		Before: before,
 		After:  &after,
-		Application: &shipmentports.ContractRateApplication{
+		Application: &shipmentserviceports.ContractRateApplication{
 			Applied:       true,
 			AgreementName: "Acme 2026",
 		},
@@ -152,20 +156,20 @@ func (f *fakeShipmentOperator) RecalculateDistance(
 	_ context.Context,
 	shipmentID pulid.ID,
 	_ pagination.TenantInfo,
-) (*shipmentports.DistanceCalculationResponse, error) {
+) (*shipmentdistanceports.DistanceCalculationResponse, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.measured = shipmentID
 
-	return &shipmentports.DistanceCalculationResponse{TotalDistance: 412.5}, nil
+	return &shipmentdistanceports.DistanceCalculationResponse{TotalDistance: 412.5}, nil
 }
 
 func (f *fakeShipmentOperator) PreviewRecalculateDistance(
 	context.Context,
 	pulid.ID,
 	pagination.TenantInfo,
-) (*shipmentports.ShipmentDistancePreview, error) {
+) (*shipmentdistanceports.ShipmentDistancePreview, error) {
 	oldMiles, newMiles := 300.0, 412.5
 	moveID := pulid.MustNew("sm_")
 	before := *f.shipment()
@@ -173,10 +177,10 @@ func (f *fakeShipmentOperator) PreviewRecalculateDistance(
 	after := before
 	after.Moves = []*shipment.ShipmentMove{{ID: moveID, Distance: &newMiles, Version: 2}}
 
-	return &shipmentports.ShipmentDistancePreview{
+	return &shipmentdistanceports.ShipmentDistancePreview{
 		Before:   &before,
 		After:    &after,
-		Distance: &shipmentports.DistanceCalculationResponse{TotalDistance: newMiles},
+		Distance: &shipmentdistanceports.DistanceCalculationResponse{TotalDistance: newMiles},
 	}, nil
 }
 
@@ -195,7 +199,7 @@ func (f *fakeShipmentOperator) Duplicate(
 func (f *fakeShipmentOperator) PreviewDuplicate(
 	_ context.Context,
 	req *shipmentports.BulkDuplicateShipmentRequest,
-) (*shipmentports.ShipmentDuplicatePreview, error) {
+) (*shipmentserviceports.ShipmentDuplicatePreview, error) {
 	source := f.shipment()
 	copies := make([]*shipment.Shipment, 0, req.Count)
 	for range req.Count {
@@ -210,7 +214,7 @@ func (f *fakeShipmentOperator) PreviewDuplicate(
 		copies = append(copies, copied)
 	}
 
-	return &shipmentports.ShipmentDuplicatePreview{Source: source, Copies: copies}, nil
+	return &shipmentserviceports.ShipmentDuplicatePreview{Source: source, Copies: copies}, nil
 }
 
 func TestUncancelShipment_PreviewsTheReopenedShipmentAndWrites(t *testing.T) {
@@ -479,12 +483,12 @@ func TestDuplicateShipment_ReadsTheFirstPickupWhereItIs(t *testing.T) {
 type fakeHoldUpdater struct {
 	guard   *agenttoolstest.WriteGuard
 	current *shipment.ShipmentHold
-	updated *shipmentports.UpdateShipmentHoldRequest
+	updated *shipmentholdports.UpdateShipmentHoldRequest
 }
 
 func (f *fakeHoldUpdater) GetByID(
 	context.Context,
-	*shipmentports.GetShipmentHoldByIDRequest,
+	*shipmentholdports.GetShipmentHoldByIDRequest,
 ) (*shipment.ShipmentHold, error) {
 	copied := *f.current
 
@@ -492,7 +496,7 @@ func (f *fakeHoldUpdater) GetByID(
 }
 
 func (f *fakeHoldUpdater) apply(
-	req *shipmentports.UpdateShipmentHoldRequest,
+	req *shipmentholdports.UpdateShipmentHoldRequest,
 ) *shipment.ShipmentHold {
 	next := *f.current
 	next.Severity = req.Severity
@@ -507,7 +511,7 @@ func (f *fakeHoldUpdater) apply(
 
 func (f *fakeHoldUpdater) Update(
 	_ context.Context,
-	req *shipmentports.UpdateShipmentHoldRequest,
+	req *shipmentholdports.UpdateShipmentHoldRequest,
 	_ *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	if err := f.guard.Write(); err != nil {
@@ -520,7 +524,7 @@ func (f *fakeHoldUpdater) Update(
 
 func (f *fakeHoldUpdater) PreviewUpdate(
 	_ context.Context,
-	req *shipmentports.UpdateShipmentHoldRequest,
+	req *shipmentholdports.UpdateShipmentHoldRequest,
 	_ *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	return f.apply(req), nil
@@ -608,7 +612,7 @@ func TestUpdateShipmentHold_ShowingItToTheCustomerIsCustomerVisible(t *testing.T
 
 type fakeMoveSplitter struct {
 	guard *agenttoolstest.WriteGuard
-	split *shipmentports.SplitMoveRequest
+	split *shipmentmoveports.SplitMoveRequest
 }
 
 func splitSourceMove() *shipment.ShipmentMove {
@@ -634,26 +638,26 @@ func splitSourceMove() *shipment.ShipmentMove {
 
 func (f *fakeMoveSplitter) SplitMove(
 	_ context.Context,
-	req *shipmentports.SplitMoveRequest,
-) (*shipmentports.SplitMoveResponse, error) {
+	req *shipmentmoveports.SplitMoveRequest,
+) (*shipmentmoveports.SplitMoveResponse, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.split = req
 
-	return &shipmentports.SplitMoveResponse{
+	return &shipmentmoveports.SplitMoveResponse{
 		NewMove: &shipment.ShipmentMove{ID: pulid.MustNew("sm_")},
 	}, nil
 }
 
 func (f *fakeMoveSplitter) PreviewSplitMove(
 	_ context.Context,
-	req *shipmentports.SplitMoveRequest,
-) (*shipmentports.MoveSplitPlan, error) {
+	req *shipmentmoveports.SplitMoveRequest,
+) (*shipmentmoveports.MoveSplitPlan, error) {
 	move := splitSourceMove()
 	move.ID = req.MoveID
 
-	return &shipmentports.MoveSplitPlan{
+	return &shipmentmoveports.MoveSplitPlan{
 		Move:  move,
 		Split: shipment.PlanMoveSplit(move, req.Spec()),
 	}, nil

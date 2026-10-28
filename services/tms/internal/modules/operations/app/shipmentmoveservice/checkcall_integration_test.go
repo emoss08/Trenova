@@ -23,7 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/carrierrepository"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -56,7 +56,7 @@ type checkCallHarness struct {
 	svc        *checkcallservice.Service
 	links      checkcallports.TrackingLinkRepository
 	controls   dispatchcontrolports.DispatchControlRepository
-	moveRepo   shipmentports.ShipmentMoveRepository
+	moveRepo   shipmentmoveports.ShipmentMoveRepository
 	db         *keel.DB
 	tenantInfo pagination.TenantInfo
 	move       *shipment.ShipmentMove
@@ -78,17 +78,31 @@ func newCheckCallHarness(t *testing.T) (context.Context, *checkCallHarness) {
 		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
 		Return(&tenant.ShipmentControl{}, nil).
 		Maybe()
-	graph := testutil.CreateShipmentGraph(t, ctx, db, fixture, tenantInfo, testutil.ShipmentGraphParams{
-		BOL:          "BOL-CHECKCALL",
-		ProNumber:    "PRO-CHECKCALL",
-		ShipmentID:   pulid.MustNew("shp_"),
-		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusAssigned},
-	})
+	graph := testutil.CreateShipmentGraph(
+		t,
+		ctx,
+		db,
+		fixture,
+		tenantInfo,
+		testutil.ShipmentGraphParams{
+			BOL:          "BOL-CHECKCALL",
+			ProNumber:    "PRO-CHECKCALL",
+			ShipmentID:   pulid.MustNew("shp_"),
+			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusAssigned},
+		},
+	)
 	move := graph.Moves[0]
 
 	carrierID := pulid.MustNew("car_")
-	_, err := keel.Exec(ctx, db, `INSERT INTO carriers (id, business_unit_id, organization_id, code, name)
-		VALUES ($1, $2, $3, 'REDLINE', 'Redline Freight')`, carrierID, tenantInfo.BuID, tenantInfo.OrgID)
+	_, err := keel.Exec(
+		ctx,
+		db,
+		`INSERT INTO carriers (id, business_unit_id, organization_id, code, name)
+		VALUES ($1, $2, $3, 'REDLINE', 'Redline Freight')`,
+		carrierID,
+		tenantInfo.BuID,
+		tenantInfo.OrgID,
+	)
 	require.NoError(t, err)
 	_, err = keel.Exec(ctx, db, `INSERT INTO carrier_assignments (
 			id, business_unit_id, organization_id, shipment_move_id, carrier_id, status,
@@ -96,7 +110,12 @@ func newCheckCallHarness(t *testing.T) (context.Context, *checkCallHarness) {
 		) VALUES ($1, $2, $3, $4, $5, 'Confirmed', 1000, 1000, 1000, $6)`, pulid.MustNew("casn_"), tenantInfo.BuID, tenantInfo.OrgID, move.ID, carrierID,
 		timeutils.NowUnix()-10*secondsPerHourTest)
 	require.NoError(t, err)
-	_, err = keel.Exec(ctx, db, `UPDATE shipment_moves SET coverage_type = 'carrier' WHERE id = $1`, move.ID)
+	_, err = keel.Exec(
+		ctx,
+		db,
+		`UPDATE shipment_moves SET coverage_type = 'carrier' WHERE id = $1`,
+		move.ID,
+	)
 	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
@@ -122,7 +141,9 @@ func newCheckCallHarness(t *testing.T) (context.Context, *checkCallHarness) {
 		Config: &config.Config{
 			Tendering: config.TenderingConfig{PublicBaseURL: "https://app.example.com"},
 		},
-		Repo:         checkcallrepository.New(checkcallrepository.Params{DB: conn, Logger: zap.NewNop()}),
+		Repo: checkcallrepository.New(
+			checkcallrepository.Params{DB: conn, Logger: zap.NewNop()},
+		),
 		Links:        links,
 		MoveRepo:     moveRepo,
 		ShipmentRepo: shipmentRepo,
@@ -163,7 +184,7 @@ func (h *checkCallHarness) issue(t *testing.T, ctx context.Context) string {
 
 func (h *checkCallHarness) persisted(t *testing.T, ctx context.Context) *shipment.ShipmentMove {
 	t.Helper()
-	move, err := h.moveRepo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	move, err := h.moveRepo.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            h.move.ID,
 		TenantInfo:        h.tenantInfo,
 		ExpandMoveDetails: true,

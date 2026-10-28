@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,15 +20,15 @@ import (
 )
 
 type fakeMoveService struct {
-	shipmentports.ShipmentMoveService
+	shipmentmoveports.ShipmentMoveService
 
-	recorded *shipmentports.RecordStopActualRequest
+	recorded *shipmentmoveports.RecordStopActualRequest
 	err      error
 }
 
 func (f *fakeMoveService) RecordStopActual(
 	_ context.Context,
-	req *shipmentports.RecordStopActualRequest,
+	req *shipmentmoveports.RecordStopActualRequest,
 ) (*shipment.ShipmentMove, error) {
 	f.recorded = req
 
@@ -36,7 +36,7 @@ func (f *fakeMoveService) RecordStopActual(
 }
 
 type movesReporter struct {
-	moves shipmentports.ShipmentMoveService
+	moves shipmentmoveports.ShipmentMoveService
 	key   string
 	via   trackingevent.Source
 }
@@ -47,7 +47,7 @@ func (r *movesReporter) RecordReported(
 ) (*trackingeventports.StopEventResult, error) {
 	r.key = params.SourceKey
 	r.via = params.Source
-	move, err := r.moves.RecordStopActual(ctx, &shipmentports.RecordStopActualRequest{
+	move, err := r.moves.RecordStopActual(ctx, &shipmentmoveports.RecordStopActualRequest{
 		TenantInfo: params.TenantInfo,
 		MoveID:     params.MoveID,
 		StopID:     params.StopID,
@@ -61,7 +61,7 @@ func (r *movesReporter) RecordReported(
 	return &trackingeventports.StopEventResult{Move: move}, nil
 }
 
-func reportsFor(moves shipmentports.ShipmentMoveService) stopReporter {
+func reportsFor(moves shipmentmoveports.ShipmentMoveService) stopReporter {
 	if moves == nil {
 		return nil
 	}
@@ -94,7 +94,7 @@ func TestRecordStopActual_PassesTheActionThrough(t *testing.T) {
 		require.NotNil(t, moves.recorded)
 		assert.Equal(t, moveID, moves.recorded.MoveID)
 		assert.Equal(t, stopID, moves.recorded.StopID)
-		assert.Equal(t, shipmentports.StopActualAction(action), moves.recorded.Action)
+		assert.Equal(t, shipmentmoveports.StopActualAction(action), moves.recorded.Action)
 	}
 }
 
@@ -159,7 +159,7 @@ type fakeMoveStops struct {
 
 func (f *fakeMoveStops) GetByID(
 	_ context.Context,
-	req *shipmentports.GetMoveByIDRequest,
+	req *shipmentmoveports.GetMoveByIDRequest,
 ) (*shipment.ShipmentMove, error) {
 	f.asks++
 	f.move.ID = req.MoveID

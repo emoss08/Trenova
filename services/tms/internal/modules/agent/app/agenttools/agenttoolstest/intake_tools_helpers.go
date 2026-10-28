@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -48,13 +49,13 @@ func (f *FakeShipmentWriter) PreviewCreate(
 	_ context.Context,
 	entity *shipment.Shipment,
 	_ *permissionports.RequestActor,
-) (*shipmentports.ShipmentCreatePlan, error) {
+) (*shipmentserviceports.ShipmentCreatePlan, error) {
 	f.Previews++
 	if f.PreviewErr != nil {
 		return nil, f.PreviewErr
 	}
 
-	return &shipmentports.ShipmentCreatePlan{Shipment: entity}, nil
+	return &shipmentserviceports.ShipmentCreatePlan{Shipment: entity}, nil
 }
 
 func (f *FakeShipmentWriter) Update(

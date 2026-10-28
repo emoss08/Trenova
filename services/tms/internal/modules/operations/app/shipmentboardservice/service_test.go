@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -21,18 +22,18 @@ import (
 )
 
 type stubBoardRepo struct {
-	stageRows   []*shipmentports.ShipmentStageSummaryRow
+	stageRows   []*shipmentboardports.ShipmentStageSummaryRow
 	counts      map[shipment.QuickFilter]int
-	groupRows   []*shipmentports.ShipmentBoardGroupRow
-	lastScope   *shipmentports.ShipmentBoardScope
+	groupRows   []*shipmentboardports.ShipmentBoardGroupRow
+	lastScope   *shipmentboardports.ShipmentBoardScope
 	lastFilters []shipment.QuickFilterSpec
-	lastGroups  *shipmentports.SummarizeShipmentBoardGroupsQuery
+	lastGroups  *shipmentboardports.SummarizeShipmentBoardGroupsQuery
 }
 
 func (s *stubBoardRepo) GroupSummary(
 	_ context.Context,
-	req *shipmentports.SummarizeShipmentBoardGroupsQuery,
-) ([]*shipmentports.ShipmentBoardGroupRow, error) {
+	req *shipmentboardports.SummarizeShipmentBoardGroupsQuery,
+) ([]*shipmentboardports.ShipmentBoardGroupRow, error) {
 	s.lastScope = req.Scope
 	s.lastGroups = req
 	return s.groupRows, nil
@@ -40,19 +41,19 @@ func (s *stubBoardRepo) GroupSummary(
 
 func (s *stubBoardRepo) StageSummary(
 	_ context.Context,
-	scope *shipmentports.ShipmentBoardScope,
-) ([]*shipmentports.ShipmentStageSummaryRow, error) {
+	scope *shipmentboardports.ShipmentBoardScope,
+) ([]*shipmentboardports.ShipmentStageSummaryRow, error) {
 	s.lastScope = scope
 	return s.stageRows, nil
 }
 
 func (s *stubBoardRepo) QuickFilterTotals(
 	_ context.Context,
-	req *shipmentports.CountShipmentQuickFiltersRequest,
-) ([]shipmentports.ShipmentQuickFilterTotal, error) {
+	req *shipmentboardports.CountShipmentQuickFiltersRequest,
+) ([]shipmentboardports.ShipmentQuickFilterTotal, error) {
 	s.lastScope = req.Scope
 	s.lastFilters = req.Filters
-	totals := make([]shipmentports.ShipmentQuickFilterTotal, len(req.Filters))
+	totals := make([]shipmentboardports.ShipmentQuickFilterTotal, len(req.Filters))
 	for i, spec := range req.Filters {
 		totals[i].Count = s.counts[spec.Filter]
 	}
@@ -128,8 +129,10 @@ func (s stubMaps) GetClientRuntimeConfig(
 	return &integrationservice.RuntimeConfig{Ready: s.ready}, nil
 }
 
-func scopeRequest(filters ...shipment.QuickFilterSpec) *shipmentports.ShipmentBoardScopeRequest {
-	return &shipmentports.ShipmentBoardScopeRequest{
+func scopeRequest(
+	filters ...shipment.QuickFilterSpec,
+) *shipmentboardports.ShipmentBoardScopeRequest {
+	return &shipmentboardports.ShipmentBoardScopeRequest{
 		Filter:       &pagination.QueryOptions{},
 		QuickFilters: filters,
 		Timezone:     "UTC",
@@ -139,7 +142,7 @@ func scopeRequest(filters ...shipment.QuickFilterSpec) *shipmentports.ShipmentBo
 
 func scopeWithoutMargins(
 	filters ...shipment.QuickFilterSpec,
-) *shipmentports.ShipmentBoardScopeRequest {
+) *shipmentboardports.ShipmentBoardScopeRequest {
 	req := scopeRequest(filters...)
 	req.Margins = false
 	return req
@@ -189,7 +192,7 @@ func TestCapabilities(t *testing.T) {
 func TestStageSummaryZeroFillsEveryStage(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubBoardRepo{stageRows: []*shipmentports.ShipmentStageSummaryRow{
+	repo := &stubBoardRepo{stageRows: []*shipmentboardports.ShipmentStageSummaryRow{
 		{StageRank: shipment.StageMoving.Rank(), Count: 4, Revenue: decimal.NewFromInt(900)},
 	}}
 	basis := &stubBasis{}
@@ -260,7 +263,7 @@ func TestQuickFilterCountsLeaveOutTheLowMarginCountWithoutTheMarginsGroup(t *tes
 func TestGroupSummaryCountsGroupsInTheBoardsScopeAndZone(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubBoardRepo{groupRows: []*shipmentports.ShipmentBoardGroupRow{
+	repo := &stubBoardRepo{groupRows: []*shipmentboardports.ShipmentBoardGroupRow{
 		{Key: "2026-10-07", Count: 5, Revenue: decimal.NewFromInt(4200)},
 		{Key: "", Count: 1, Revenue: decimal.Zero},
 	}}
@@ -268,10 +271,13 @@ func TestGroupSummaryCountsGroupsInTheBoardsScopeAndZone(t *testing.T) {
 	svc := NewWithDependencies(&Dependencies{Repo: repo, QuickFilters: basis})
 
 	req := scopeRequest(shipment.Quick(shipment.QuickFilterLate))
-	groups, err := svc.GroupSummary(t.Context(), &shipmentports.SummarizeShipmentBoardGroupsRequest{
-		Scope:   req,
-		GroupBy: shipment.BoardGroupingDeliveryDate,
-	})
+	groups, err := svc.GroupSummary(
+		t.Context(),
+		&shipmentboardports.SummarizeShipmentBoardGroupsRequest{
+			Scope:   req,
+			GroupBy: shipment.BoardGroupingDeliveryDate,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, groups, 2)
 	assert.Equal(t, "2026-10-07", groups[0].Key)
@@ -289,7 +295,7 @@ func TestGroupSummaryRefusesAGroupingTheBoardDoesNotOffer(t *testing.T) {
 	repo := &stubBoardRepo{}
 	svc := NewWithDependencies(&Dependencies{Repo: repo, QuickFilters: &stubBasis{}})
 
-	_, err := svc.GroupSummary(t.Context(), &shipmentports.SummarizeShipmentBoardGroupsRequest{
+	_, err := svc.GroupSummary(t.Context(), &shipmentboardports.SummarizeShipmentBoardGroupsRequest{
 		Scope:   scopeRequest(),
 		GroupBy: shipment.BoardGrouping("Stage"),
 	})

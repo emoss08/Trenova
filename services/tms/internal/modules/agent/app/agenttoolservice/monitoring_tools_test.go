@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -321,21 +321,21 @@ func TestEmailCustomer_ReportsARecordFailureAfterTheSend(t *testing.T) {
 }
 
 type failingCommentWriter struct {
-	shipmentports.ShipmentCommentService
+	shipmentcommentports.ShipmentCommentService
 }
 
 // Nothing has gone to this customer yet; the failure under test is the
 // record after the send, not the guard before it.
 func (f *failingCommentWriter) ListByShipmentID(
 	context.Context,
-	*shipmentports.ListShipmentCommentsRequest,
+	*shipmentcommentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	return &pagination.CursorListResult[*shipment.ShipmentComment]{}, nil
 }
 
 func (failingCommentWriter) CreateSystem(
 	context.Context,
-	*shipmentports.CreateSystemShipmentCommentRequest,
+	*shipmentcommentports.CreateSystemShipmentCommentRequest,
 ) (*shipment.ShipmentComment, error) {
 	return nil, errors.New("thread locked")
 }

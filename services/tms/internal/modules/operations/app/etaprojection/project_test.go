@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/routeestimateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
@@ -77,7 +77,7 @@ func newFixture() *fixture {
 		input: &Input{
 			Now:      now,
 			Shipment: sp,
-			Assignments: map[pulid.ID]*shipmentports.BoardMove{
+			Assignments: map[pulid.ID]*dispatchboardports.BoardMove{
 				move.ID: {
 					MoveID:            move.ID,
 					AssignedWorkerID:  worker,
@@ -246,7 +246,7 @@ func TestProject_CarrierReportedArrival(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture()
-	f.input.Assignments[f.move.ID] = &shipmentports.BoardMove{
+	f.input.Assignments[f.move.ID] = &dispatchboardports.BoardMove{
 		MoveID:            f.move.ID,
 		CoverageType:      string(shipment.MoveCoverageTypeCarrier),
 		AssignedCarrierID: pulid.MustNew("car_"),

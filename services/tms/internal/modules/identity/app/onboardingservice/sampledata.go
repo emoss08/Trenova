@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/pkg/rules"
-	"github.com/emoss08/trenova/pkg/tarifftypes"
-
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
@@ -21,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
@@ -41,6 +38,8 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -104,7 +103,7 @@ type SampleDataParams struct {
 	FormulaTemplates *formulatemplateservice.Service
 	TemplateFinder   formulatemplateports.FormulaTemplateRepository
 	States           usstateports.UsStateRepository
-	Shipments        shipmentports.ShipmentService
+	Shipments        shipmentserviceports.ShipmentService
 }
 
 type SampleData struct {

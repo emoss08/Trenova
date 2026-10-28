@@ -14,25 +14,25 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type savingAssignments struct {
-	shipmentports.AssignmentService
+	assignmentports.AssignmentService
 
 	shipment *shipment.Shipment
 	existing *shipment.Assignment
 	saved    *shipment.Assignment
-	inUse    []shipmentports.EquipmentInUse
+	inUse    []assignmentports.EquipmentInUse
 	guard    agenttoolstest.WriteGuard
 }
 
 func (f *savingAssignments) plan(
-	req *shipmentports.AssignShipmentMoveRequest,
-) (*shipmentports.AssignmentPlan, error) {
+	req *assignmentports.AssignShipmentMoveRequest,
+) (*assignmentports.AssignmentPlan, error) {
 	assignment, err := assignmentservice.NewMoveAssignment(req, f.existing)
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (f *savingAssignments) plan(
 	move.Status = shipment.MoveStatusAssigned
 	after.Status = shipment.StatusAssigned
 
-	return &shipmentports.AssignmentPlan{
+	return &assignmentports.AssignmentPlan{
 		Assignment:     assignment,
 		ShipmentBefore: f.shipment,
 		ShipmentAfter:  after,
@@ -54,14 +54,14 @@ func (f *savingAssignments) plan(
 
 func (f *savingAssignments) PreviewAssignToMove(
 	_ context.Context,
-	req *shipmentports.AssignShipmentMoveRequest,
-) (*shipmentports.AssignmentPlan, error) {
+	req *assignmentports.AssignShipmentMoveRequest,
+) (*assignmentports.AssignmentPlan, error) {
 	return f.plan(req)
 }
 
 func (f *savingAssignments) AssignToMove(
 	_ context.Context,
-	req *shipmentports.AssignShipmentMoveRequest,
+	req *assignmentports.AssignShipmentMoveRequest,
 ) (*shipment.Assignment, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -214,7 +214,7 @@ func TestAssignMove_PreviewWarnsForEquipmentOnALoadInProgress(t *testing.T) {
 	entity := uncoveredShipment()
 	assignments := &savingAssignments{
 		shipment: entity,
-		inUse: []shipmentports.EquipmentInUse{{
+		inUse: []assignmentports.EquipmentInUse{{
 			Kind:           "trailer",
 			EquipmentID:    pulid.MustNew("tr_"),
 			ShipmentMoveID: pulid.MustNew("smv_"),

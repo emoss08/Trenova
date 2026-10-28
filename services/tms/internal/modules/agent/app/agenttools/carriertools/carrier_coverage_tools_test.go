@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -30,8 +30,8 @@ type fakeCarrierCoverage struct {
 	standing *rateconfirmation.RateConfirmation
 	refusal  error
 
-	assigned *shipmentports.AssignMoveToCarrierRequest
-	canceled *shipmentports.CancelCarrierAssignmentRequest
+	assigned *carrierassignmentports.AssignMoveToCarrierRequest
+	canceled *carrierassignmentports.CancelCarrierAssignmentRequest
 }
 
 func newFakeCarrierCoverage() *fakeCarrierCoverage {
@@ -74,7 +74,7 @@ func (f *fakeCarrierCoverage) retire(plan *carrierassignmentservice.CoveragePlan
 
 func (f *fakeCarrierCoverage) PreviewAssignToMove(
 	_ context.Context,
-	req *shipmentports.AssignMoveToCarrierRequest,
+	req *carrierassignmentports.AssignMoveToCarrierRequest,
 ) (*carrierassignmentservice.CoveragePlan, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
@@ -116,7 +116,7 @@ func (f *fakeCarrierCoverage) PreviewAssignToMove(
 
 func (f *fakeCarrierCoverage) AssignToMove(
 	_ context.Context,
-	req *shipmentports.AssignMoveToCarrierRequest,
+	req *carrierassignmentports.AssignMoveToCarrierRequest,
 ) (*shipment.CarrierAssignment, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ func (f *fakeCarrierCoverage) AssignToMove(
 
 func (f *fakeCarrierCoverage) PreviewCancel(
 	_ context.Context,
-	req *shipmentports.CancelCarrierAssignmentRequest,
+	req *carrierassignmentports.CancelCarrierAssignmentRequest,
 ) (*carrierassignmentservice.CoveragePlan, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
@@ -154,7 +154,7 @@ func (f *fakeCarrierCoverage) PreviewCancel(
 
 func (f *fakeCarrierCoverage) Cancel(
 	_ context.Context,
-	req *shipmentports.CancelCarrierAssignmentRequest,
+	req *carrierassignmentports.CancelCarrierAssignmentRequest,
 ) error {
 	if err := f.guard.Write(); err != nil {
 		return err
@@ -253,7 +253,10 @@ func TestAssignMoveToCarrier_RefusesARateThatIsNotARate(t *testing.T) {
 		"negative fuel":   {"fuelSurcharge": "-1"},
 		"bad accessorial": {"accessorials": []any{map[string]any{"description": "x", "amount": "-5"}}},
 	} {
-		err := tool.Validate(t.Context(), agenttoolstest.ExecuteParams(carriers.assignParams(extra)))
+		err := tool.Validate(
+			t.Context(),
+			agenttoolstest.ExecuteParams(carriers.assignParams(extra)),
+		)
 		require.Error(t, err, name)
 	}
 	assert.Nil(t, carriers.assigned)
@@ -285,9 +288,16 @@ func TestAssignMoveToCarrier_PreviewShowsTheAssignmentThePayAndTheCover(t *testi
 	carriers := newFakeCarrierCoverage()
 	tool := NewAssignMoveToCarrierTool(carriers).(*AssignMoveToCarrierTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &carriers.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(carriers.assignParams(nil)))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&carriers.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(
+				t.Context(),
+				agenttoolstest.ExecuteParams(carriers.assignParams(nil)),
+			)
+		},
+	)
 
 	created := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
@@ -310,12 +320,19 @@ func TestAssignMoveToCarrier_PreviewShowsTheCarrierItReplaces(t *testing.T) {
 	carriers.coverWith(shipment.CarrierAssignmentStatusConfirmed)
 	tool := NewAssignMoveToCarrierTool(carriers).(*AssignMoveToCarrierTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &carriers.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(carriers.assignParams(map[string]any{
-			"replace":                  true,
-			"overrideInsuranceWarning": true,
-		})))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&carriers.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(
+				t.Context(),
+				agenttoolstest.ExecuteParams(carriers.assignParams(map[string]any{
+					"replace":                  true,
+					"overrideInsuranceWarning": true,
+				})),
+			)
+		},
+	)
 
 	canceled := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, agent.PreviewOperationArchive, canceled.Operation)
@@ -334,9 +351,16 @@ func TestAssignMoveToCarrier_PreviewWarnsWhatTheServiceRefuses(t *testing.T) {
 	carriers.refusal = errortypes.NewBusinessError("Shipment move already has a carrier assignment")
 	tool := NewAssignMoveToCarrierTool(carriers).(*AssignMoveToCarrierTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &carriers.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(carriers.assignParams(nil)))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&carriers.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(
+				t.Context(),
+				agenttoolstest.ExecuteParams(carriers.assignParams(nil)),
+			)
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
@@ -348,12 +372,15 @@ func TestCancelCarrierAssignment_SendsTheMoveAndTheReason(t *testing.T) {
 	carriers := newFakeCarrierCoverage()
 	carriers.coverWith(shipment.CarrierAssignmentStatusPending)
 
-	require.NoError(t, NewCancelCarrierAssignmentTool(carriers).Execute(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{
-			common.PreviewFieldShipmentMoveID: carriers.moveID().String(),
-			common.FieldReason:                "  Carrier's truck broke down ",
-		},
-	)))
+	require.NoError(
+		t,
+		NewCancelCarrierAssignmentTool(carriers).Execute(t.Context(), agenttoolstest.ExecuteParams(
+			map[string]any{
+				common.PreviewFieldShipmentMoveID: carriers.moveID().String(),
+				common.FieldReason:                "  Carrier's truck broke down ",
+			},
+		)),
+	)
 
 	require.NotNil(t, carriers.canceled)
 	assert.Equal(t, carriers.moveID(), carriers.canceled.ShipmentMoveID)
@@ -366,7 +393,9 @@ func TestCancelCarrierAssignment_RequiresAReason(t *testing.T) {
 	carriers := newFakeCarrierCoverage()
 	err := NewCancelCarrierAssignmentTool(carriers).(*CancelCarrierAssignmentTool).Validate(
 		t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{common.PreviewFieldShipmentMoveID: carriers.moveID().String()}),
+		agenttoolstest.ExecuteParams(
+			map[string]any{common.PreviewFieldShipmentMoveID: carriers.moveID().String()},
+		),
 	)
 	require.Error(t, err)
 }
@@ -413,16 +442,24 @@ func TestCancelCarrierAssignment_PreviewShowsTheCarrierComingOff(t *testing.T) {
 	carriers.coverWith(shipment.CarrierAssignmentStatusConfirmed)
 	tool := NewCancelCarrierAssignmentTool(carriers).(*CancelCarrierAssignmentTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &carriers.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			common.PreviewFieldShipmentMoveID: carriers.moveID().String(),
-			common.FieldReason:                "Carrier fell off",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&carriers.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				common.PreviewFieldShipmentMoveID: carriers.moveID().String(),
+				common.FieldReason:                "Carrier fell off",
+			}))
+		},
+	)
 
 	canceled := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "Carrier on S-3001: Ridgeline Freight", canceled.Label)
-	assert.Equal(t, "Carrier fell off", agenttoolstest.FieldByPath(t, canceled, "cancellationReason").After)
+	assert.Equal(
+		t,
+		"Carrier fell off",
+		agenttoolstest.FieldByPath(t, canceled, "cancellationReason").After,
+	)
 	voided := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, carriers.standing.ID, voided.EntityID)
 	require.NotNil(t, voided.Version)

@@ -5165,7 +5165,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalComment
   PortalStopAction:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports.StopActualAction
+      - github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports.StopActualAction
   PortalComplianceProfile:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalComplianceProfile

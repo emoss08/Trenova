@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -72,7 +72,7 @@ type Params struct {
 	Conversations assistantports.ConversationRepository
 	Cases         deskcaseports.AssistantCaseRepository
 	Subjects      agentports.AgentSubjectRepository
-	Shipments     shipmentports.ShipmentService
+	Shipments     shipmentserviceports.ShipmentService
 	Waits         agentwaitports.AgentWaitService
 	Checklists    deskcaseports.CaseChecklistRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
@@ -90,7 +90,7 @@ type Service struct {
 
 	conversations assistantports.ConversationRepository
 	subjects      agentports.AgentSubjectRepository
-	shipments     shipmentports.ShipmentService
+	shipments     shipmentserviceports.ShipmentService
 	agentWaits    agentwaitports.AgentWaitService
 	checklists    deskcaseports.CaseChecklistRepository
 	definitions   agentdefinitionports.AgentDefinitionRepository

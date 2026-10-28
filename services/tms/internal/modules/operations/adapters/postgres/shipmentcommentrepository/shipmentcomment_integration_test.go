@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentcommentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -23,7 +23,7 @@ import (
 
 type harness struct {
 	ctx      context.Context
-	repo     shipmentports.ShipmentCommentRepository
+	repo     shipmentcommentports.ShipmentCommentRepository
 	tenant   pagination.TenantInfo
 	entity   *shipment.Shipment
 	otherCtx context.Context
@@ -78,7 +78,7 @@ func (h *harness) list(
 ) []*shipment.ShipmentComment {
 	t.Helper()
 
-	result, err := h.repo.ListByShipmentID(ctx, &shipmentports.ListShipmentCommentsRequest{
+	result, err := h.repo.ListByShipmentID(ctx, &shipmentcommentports.ListShipmentCommentsRequest{
 		Filter:          &pagination.QueryOptions{TenantInfo: h.tenant},
 		Cursor:          pagination.CursorInfo{IncludeTotalCount: true},
 		ShipmentID:      h.entity.ID,
@@ -107,10 +107,13 @@ func TestCreate_StoresTheCommentWithDefaultsMentionsAndReplies(t *testing.T) {
 	assert.Len(t, h.list(t, h.ctx, &root.ID), 1)
 	assert.Empty(t, h.list(t, h.otherCtx, nil), "another tenant never sees the thread")
 
-	count, err := h.repo.GetCountByShipmentID(h.ctx, &shipmentports.GetShipmentCommentCountRequest{
-		TenantInfo: h.tenant,
-		ShipmentID: h.entity.ID,
-	})
+	count, err := h.repo.GetCountByShipmentID(
+		h.ctx,
+		&shipmentcommentports.GetShipmentCommentCountRequest{
+			TenantInfo: h.tenant,
+			ShipmentID: h.entity.ID,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, 2, count)
 }
@@ -128,7 +131,7 @@ func TestCreate_UnderASystemScopeReReadsTheCommentInItsOwnTenant(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, h.tenant.OrgID, reply.OrganizationID)
 
-	reread, err := h.repo.GetByID(systemCtx, &shipmentports.GetShipmentCommentByIDRequest{
+	reread, err := h.repo.GetByID(systemCtx, &shipmentcommentports.GetShipmentCommentByIDRequest{
 		CommentID:  root.ID,
 		ShipmentID: h.entity.ID,
 		TenantInfo: h.tenant,
@@ -137,13 +140,17 @@ func TestCreate_UnderASystemScopeReReadsTheCommentInItsOwnTenant(t *testing.T) {
 	assert.Equal(t, int64(1), reread.ReplyCount)
 
 	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: h.tenant.BuID}
-	_, err = h.repo.GetByID(systemCtx, &shipmentports.GetShipmentCommentByIDRequest{
+	_, err = h.repo.GetByID(systemCtx, &shipmentcommentports.GetShipmentCommentByIDRequest{
 		CommentID:  root.ID,
 		ShipmentID: h.entity.ID,
 		TenantInfo: stranger,
 	})
 	require.Error(t, err)
-	assert.True(t, errortypes.IsNotFoundError(err), "a system read is still held to the named tenant")
+	assert.True(
+		t,
+		errortypes.IsNotFoundError(err),
+		"a system read is still held to the named tenant",
+	)
 }
 
 func TestPinAcknowledgeAndSoftDelete(t *testing.T) {
@@ -151,7 +158,7 @@ func TestPinAcknowledgeAndSoftDelete(t *testing.T) {
 	root, err := h.repo.Create(h.ctx, h.comment("Check the seal", nil))
 	require.NoError(t, err)
 
-	pinned, err := h.repo.SetPinned(h.ctx, &shipmentports.SetShipmentCommentPinnedRequest{
+	pinned, err := h.repo.SetPinned(h.ctx, &shipmentcommentports.SetShipmentCommentPinnedRequest{
 		TenantInfo: h.tenant,
 		ShipmentID: h.entity.ID,
 		CommentID:  root.ID,
@@ -161,7 +168,7 @@ func TestPinAcknowledgeAndSoftDelete(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, pinned.PinnedAt)
 
-	ack := &shipmentports.AcknowledgeShipmentCommentRequest{
+	ack := &shipmentcommentports.AcknowledgeShipmentCommentRequest{
 		TenantInfo: h.tenant,
 		ShipmentID: h.entity.ID,
 		CommentID:  root.ID,
@@ -174,7 +181,7 @@ func TestPinAcknowledgeAndSoftDelete(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, second, "a second acknowledgment is skipped")
 
-	deleted, err := h.repo.SoftDelete(h.ctx, &shipmentports.SoftDeleteShipmentCommentRequest{
+	deleted, err := h.repo.SoftDelete(h.ctx, &shipmentcommentports.SoftDeleteShipmentCommentRequest{
 		TenantInfo: h.tenant,
 		ShipmentID: h.entity.ID,
 		CommentID:  root.ID,

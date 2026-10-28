@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
@@ -39,8 +40,8 @@ type telematicsReader interface {
 type boardMoveLister interface {
 	ListBoardMoves(
 		ctx context.Context,
-		filter *shipmentports.DispatchBoardFilter,
-	) ([]*shipmentports.BoardMove, error)
+		filter *dispatchboardports.DispatchBoardFilter,
+	) ([]*dispatchboardports.BoardMove, error)
 }
 
 const (
@@ -299,13 +300,13 @@ func (t *getShipmentTrackingTool) assignments(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	moveIDs []pulid.ID,
-) (map[pulid.ID]*shipmentports.BoardMove, error) {
-	out := make(map[pulid.ID]*shipmentports.BoardMove, len(moveIDs))
+) (map[pulid.ID]*dispatchboardports.BoardMove, error) {
+	out := make(map[pulid.ID]*dispatchboardports.BoardMove, len(moveIDs))
 	if t.board == nil || len(moveIDs) == 0 {
 		return out, nil
 	}
 
-	moves, err := t.board.ListBoardMoves(ctx, &shipmentports.DispatchBoardFilter{
+	moves, err := t.board.ListBoardMoves(ctx, &dispatchboardports.DispatchBoardFilter{
 		TenantInfo:     tenant,
 		MoveIDs:        moveIDs,
 		MoveStatuses:   shipment.MoveStatuses(),

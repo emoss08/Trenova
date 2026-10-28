@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/trackingeventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -27,7 +27,7 @@ import (
 
 type trackingHarness struct {
 	tracking   *trackingeventservice.Service
-	moveRepo   shipmentports.ShipmentMoveRepository
+	moveRepo   shipmentmoveports.ShipmentMoveRepository
 	tenantInfo pagination.TenantInfo
 	move       *shipment.ShipmentMove
 	shipmentID pulid.ID
@@ -113,7 +113,7 @@ func (h *trackingHarness) record(
 
 func (h *trackingHarness) persisted(t *testing.T, ctx context.Context) *shipment.ShipmentMove {
 	t.Helper()
-	move, err := h.moveRepo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	move, err := h.moveRepo.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            h.move.ID,
 		TenantInfo:        h.tenantInfo,
 		ExpandMoveDetails: true,
@@ -275,7 +275,7 @@ func TestTrackingEventsIntegrationADispatcherReportOutranksTelematics(t *testing
 		TenantInfo: h.tenantInfo,
 		MoveID:     h.move.ID,
 		StopID:     h.move.Stops[0].ID,
-		Action:     shipmentports.StopActualActionArrive,
+		Action:     shipmentmoveports.StopActualActionArrive,
 		OccurredAt: &arrived,
 		Source:     trackingevent.SourceDispatcher,
 		SourceKey:  "idem-1",
@@ -295,7 +295,7 @@ func TestTrackingEventsIntegrationADispatcherReportOutranksTelematics(t *testing
 		TenantInfo: h.tenantInfo,
 		MoveID:     h.move.ID,
 		StopID:     h.move.Stops[0].ID,
-		Action:     shipmentports.StopActualActionDepart,
+		Action:     shipmentmoveports.StopActualActionDepart,
 		OccurredAt: &departed,
 		Source:     trackingevent.SourceDispatcher,
 		SourceKey:  "idem-2",
@@ -307,7 +307,7 @@ func TestTrackingEventsIntegrationADispatcherReportOutranksTelematics(t *testing
 		TenantInfo: h.tenantInfo,
 		MoveID:     h.move.ID,
 		StopID:     h.move.Stops[0].ID,
-		Action:     shipmentports.StopActualActionDepart,
+		Action:     shipmentmoveports.StopActualActionDepart,
 		OccurredAt: &departed,
 		Source:     trackingevent.SourceDispatcher,
 		SourceKey:  "idem-2",

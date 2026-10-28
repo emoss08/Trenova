@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -29,8 +30,8 @@ const positionLookbackSeconds = int64(24 * 60 * 60)
 type BoardMoveLister interface {
 	ListBoardMoves(
 		ctx context.Context,
-		filter *shipmentports.DispatchBoardFilter,
-	) ([]*shipmentports.BoardMove, error)
+		filter *dispatchboardports.DispatchBoardFilter,
+	) ([]*dispatchboardports.BoardMove, error)
 }
 
 type WorkerLister interface {
@@ -78,7 +79,7 @@ type ReaderParams struct {
 	fx.In
 
 	Shipments       shipmentports.ShipmentTrackingRepository
-	Console         shipmentports.DispatchConsoleRepository
+	Console         dispatchboardports.DispatchConsoleRepository
 	Telematics      telematicsports.TelematicsRepository
 	ServiceFailures servicefailureports.ServiceFailureRepository
 	StopEtas        stopetaports.Repository
@@ -88,7 +89,7 @@ type RefresherParams struct {
 	fx.In
 
 	Shipments        shipmentports.ShipmentTrackingRepository
-	Console          shipmentports.DispatchConsoleRepository
+	Console          dispatchboardports.DispatchConsoleRepository
 	Telematics       telematicsports.TelematicsRepository
 	ServiceFailures  servicefailureports.ServiceFailureRepository
 	StopEtas         stopetaports.Repository

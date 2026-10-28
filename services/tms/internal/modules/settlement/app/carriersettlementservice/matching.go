@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
@@ -215,14 +215,17 @@ func (s *Service) resolveMatchAssignment(
 	shipmentID pulid.ID,
 ) (*shipment.CarrierAssignment, error) {
 	if req.CarrierAssignmentID != nil && !req.CarrierAssignmentID.IsNil() {
-		return s.assignmentRepo.GetByID(ctx, &shipmentports.GetCarrierAssignmentByIDRequest{
-			TenantInfo:          req.TenantInfo,
-			CarrierAssignmentID: *req.CarrierAssignmentID,
-		})
+		return s.assignmentRepo.GetByID(
+			ctx,
+			&carrierassignmentports.GetCarrierAssignmentByIDRequest{
+				TenantInfo:          req.TenantInfo,
+				CarrierAssignmentID: *req.CarrierAssignmentID,
+			},
+		)
 	}
 	assignment, err := s.assignmentRepo.FindForMatching(
 		ctx,
-		&shipmentports.FindCarrierAssignmentForMatchingRequest{
+		&carrierassignmentports.FindCarrierAssignmentForMatchingRequest{
 			TenantInfo: req.TenantInfo,
 			CarrierID:  carrierID,
 			ProNumber:  proNumber,

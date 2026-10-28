@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -218,7 +218,7 @@ func (s *service) comment(ctx context.Context, params commentParams) {
 	params.metadata["serviceFailureStatus"] = string(params.entity.Status)
 	if _, err := s.commentService.CreateSystem(
 		ctx,
-		&shipmentports.CreateSystemShipmentCommentRequest{
+		&shipmentcommentports.CreateSystemShipmentCommentRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: params.entity.OrganizationID,
 				BuID:  params.entity.BusinessUnitID,

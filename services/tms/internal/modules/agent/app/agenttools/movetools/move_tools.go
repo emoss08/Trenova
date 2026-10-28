@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -19,7 +19,7 @@ import (
 type moveStopReader interface {
 	GetByID(
 		ctx context.Context,
-		req *shipmentports.GetMoveByIDRequest,
+		req *shipmentmoveports.GetMoveByIDRequest,
 	) (*shipment.ShipmentMove, error)
 }
 
@@ -31,13 +31,13 @@ type stopReporter interface {
 }
 
 type RecordStopActualTool struct {
-	moves     shipmentports.ShipmentMoveService
+	moves     shipmentmoveports.ShipmentMoveService
 	reports   stopReporter
 	moveStops moveStopReader
 }
 
 func newRecordStopActualTool(
-	moves shipmentports.ShipmentMoveService,
+	moves shipmentmoveports.ShipmentMoveService,
 	reports stopReporter,
 	moveStops moveStopReader,
 ) agenttoolports.AgentTool {
@@ -45,9 +45,9 @@ func newRecordStopActualTool(
 }
 
 func ProvideRecordStopActualTool(
-	moves shipmentports.ShipmentMoveService,
+	moves shipmentmoveports.ShipmentMoveService,
 	reports trackingeventports.TrackingEventService,
-	moveStops shipmentports.ShipmentMoveRepository,
+	moveStops shipmentmoveports.ShipmentMoveRepository,
 ) agenttoolports.AgentTool {
 	return newRecordStopActualTool(moves, reports, moveStops)
 }
@@ -161,7 +161,7 @@ func (t *RecordStopActualTool) Validate(
 func (t *RecordStopActualTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*shipmentports.RecordStopActualRequest, error) {
+) (*shipmentmoveports.RecordStopActualRequest, error) {
 	moveID, err := common.RequirePulid(params.Params, "moveId")
 	if err != nil {
 		return nil, err
@@ -183,7 +183,7 @@ func (t *RecordStopActualTool) request(
 		return nil, err
 	}
 
-	request := &shipmentports.RecordStopActualRequest{
+	request := &shipmentmoveports.RecordStopActualRequest{
 		TenantInfo: common.TenantFrom(*params),
 		MoveID:     moveID,
 		StopID:     stopID,
@@ -223,7 +223,7 @@ func (t *RecordStopActualTool) request(
 
 func (t *RecordStopActualTool) stopZone(
 	ctx context.Context,
-	request *shipmentports.RecordStopActualRequest,
+	request *shipmentmoveports.RecordStopActualRequest,
 	fallback string,
 ) (*time.Location, error) {
 	if t.moveStops == nil {
@@ -232,7 +232,7 @@ func (t *RecordStopActualTool) stopZone(
 		return zone, nil
 	}
 
-	move, err := t.moveStops.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	move, err := t.moveStops.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            request.MoveID,
 		TenantInfo:        request.TenantInfo,
 		ExpandMoveDetails: true,

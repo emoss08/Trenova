@@ -3,11 +3,10 @@ package carrierassignmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -47,7 +46,7 @@ func TestConfirmAssignmentLogsMoveAudit(t *testing.T) {
 		Status:         shipment.CarrierAssignmentStatusPending,
 	}
 
-	repo := shipmentportsmock.NewMockCarrierAssignmentRepository(t)
+	repo := carrierassignmentportsmock.NewMockCarrierAssignmentRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(entity, nil).Once()
 	repo.On("Update", mock.Anything, entity).Return(entity, nil).Once()
 
@@ -82,7 +81,7 @@ func TestConfirmAssignmentAlreadyConfirmedLogsNoAudit(t *testing.T) {
 		Status: shipment.CarrierAssignmentStatusConfirmed,
 	}
 
-	repo := shipmentportsmock.NewMockCarrierAssignmentRepository(t)
+	repo := carrierassignmentportsmock.NewMockCarrierAssignmentRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(entity, nil).Once()
 
 	audit := &recordingAuditService{}

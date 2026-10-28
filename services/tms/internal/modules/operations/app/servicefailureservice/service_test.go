@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/servicefailureportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -792,7 +793,7 @@ func TestGenerateServiceFailure214RecordsGeneratedAndDuplicateOnly(t *testing.T)
 			failure := serviceFailureLifecycleFixture(servicefailure.StatusReviewed)
 			ediSvc := ediportsmock.NewMockEDIService(t)
 			audit := auditportsmock.NewMockAuditService(t)
-			comments := shipmentportsmock.NewMockShipmentCommentService(t)
+			comments := shipmentcommentportsmock.NewMockShipmentCommentService(t)
 			svc := &service{
 				l:              zap.NewNop(),
 				ediService:     ediSvc,
@@ -814,7 +815,7 @@ func TestGenerateServiceFailure214RecordsGeneratedAndDuplicateOnly(t *testing.T)
 					Return(nil).
 					Once()
 				comments.EXPECT().
-					CreateSystem(mock.Anything, mock.AnythingOfType("*shipmentports.CreateSystemShipmentCommentRequest")).
+					CreateSystem(mock.Anything, mock.AnythingOfType("*shipmentcommentports.CreateSystemShipmentCommentRequest")).
 					Return(&shipment.ShipmentComment{}, nil).
 					Once()
 			}

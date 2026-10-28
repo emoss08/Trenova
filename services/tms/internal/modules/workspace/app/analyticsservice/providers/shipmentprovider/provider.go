@@ -21,8 +21,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta/stopetadb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert/weatheralertdb"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/pkg/lanequery"
@@ -51,7 +51,7 @@ type ProviderParams struct {
 	DB              *postgres.Connection
 	Logger          *zap.Logger
 	DispatchRepo    dispatchcontrolports.DispatchControlRepository
-	DispatchConsole shipmentports.DispatchConsoleRepository
+	DispatchConsole dispatchboardports.DispatchConsoleRepository
 	CostingService  *costingservice.Service
 	Views           permissionports.ReferenceViews
 	FieldAccess     permissionports.FieldAccess
@@ -61,7 +61,7 @@ type Provider struct {
 	l               *zap.Logger
 	db              *postgres.Connection
 	dispatchRepo    dispatchcontrolports.DispatchControlRepository
-	dispatchConsole shipmentports.DispatchConsoleRepository
+	dispatchConsole dispatchboardports.DispatchConsoleRepository
 	costingService  *costingservice.Service
 	views           permissionports.ReferenceViews
 	fieldAccess     permissionports.FieldAccess
@@ -322,7 +322,7 @@ func (p *Provider) getDispatch(
 		return nil, fmt.Errorf("load timezone %q: %w", tz, err)
 	}
 
-	summary, err := p.dispatchConsole.GetBoardSummary(ctx, &shipmentports.DispatchBoardFilter{
+	summary, err := p.dispatchConsole.GetBoardSummary(ctx, &dispatchboardports.DispatchBoardFilter{
 		TenantInfo:     pagination.TenantInfo{OrgID: opts.OrgID, BuID: opts.BuID},
 		WindowStart:    now,
 		WindowEnd:      now + dispatchWindowSeconds,

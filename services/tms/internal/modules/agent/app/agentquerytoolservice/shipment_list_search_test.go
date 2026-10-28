@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -323,14 +324,14 @@ func TestShipmentList_HoldsFollowTheReadersAccess(t *testing.T) {
 }
 
 type fakeCommentLister struct {
-	shipmentports.ShipmentCommentRepository
+	shipmentcommentports.ShipmentCommentRepository
 
 	comments []*shipment.ShipmentComment
 }
 
 func (f *fakeCommentLister) ListByShipmentID(
 	context.Context,
-	*shipmentports.ListShipmentCommentsRequest,
+	*shipmentcommentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	return &pagination.CursorListResult[*shipment.ShipmentComment]{Items: f.comments}, nil
 }

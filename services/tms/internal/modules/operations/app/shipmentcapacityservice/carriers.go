@@ -7,7 +7,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
@@ -30,7 +31,7 @@ const (
 
 type carrierFacts struct {
 	postings    map[pulid.ID][]*carriercapacity.Posting
-	performance map[pulid.ID]*shipmentports.CarrierPerformance
+	performance map[pulid.ID]*shipmentboardports.CarrierPerformance
 	carriers    map[pulid.ID]*carrier.Carrier
 }
 
@@ -51,7 +52,7 @@ func (s *Service) loadCarrierFacts(
 	}
 	performance, err := s.performance.ListCarrierPerformance(
 		ctx,
-		&shipmentports.ListCarrierPerformanceRequest{
+		&shipmentboardports.ListCarrierPerformanceRequest{
 			TenantInfo: tenantInfo,
 			Since:      now.Add(-performanceLookback).Unix(),
 			CarrierIDs: carrierIDs,
@@ -63,7 +64,7 @@ func (s *Service) loadCarrierFacts(
 
 	facts := &carrierFacts{
 		postings:    make(map[pulid.ID][]*carriercapacity.Posting, len(postings)),
-		performance: make(map[pulid.ID]*shipmentports.CarrierPerformance, len(performance)),
+		performance: make(map[pulid.ID]*shipmentboardports.CarrierPerformance, len(performance)),
 		carriers:    make(map[pulid.ID]*carrier.Carrier, len(postings)),
 	}
 	for _, posting := range postings {
@@ -101,7 +102,7 @@ func (s *Service) loadCarrierFacts(
 func (s *Service) carrierCapacity(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*shipmentports.ShipmentCapacity, error) {
+) (*shipmentcapacityports.ShipmentCapacity, error) {
 	facts, err := s.loadCarrierFacts(ctx, tenantInfo, nil)
 	if err != nil {
 		return nil, err
@@ -113,7 +114,7 @@ func (s *Service) carrierCapacity(
 		return nil, err
 	}
 
-	summary := &shipmentports.CarrierCapacitySummary{
+	summary := &shipmentcapacityports.CarrierCapacitySummary{
 		Posting:        len(facts.postings),
 		AvgRatePerMile: weightedRatePerMile(facts.performance),
 	}
@@ -128,34 +129,34 @@ func (s *Service) carrierCapacity(
 		}
 	}
 
-	return &shipmentports.ShipmentCapacity{
-		Kind:     shipmentports.CapacityUnitCarrier,
+	return &shipmentcapacityports.ShipmentCapacity{
+		Kind:     shipmentcapacityports.CapacityUnitCarrier,
 		Units:    carrierUnits(facts),
 		Carriers: summary,
 	}, nil
 }
 
-func carrierUnits(facts *carrierFacts) []*shipmentports.CapacityUnit {
-	units := make([]*shipmentports.CapacityUnit, 0, len(facts.carriers))
+func carrierUnits(facts *carrierFacts) []*shipmentcapacityports.CapacityUnit {
+	units := make([]*shipmentcapacityports.CapacityUnit, 0, len(facts.carriers))
 	for id, entity := range facts.carriers {
 		perf := facts.performance[id]
 		acceptance, answered := perf.AcceptancePercent()
 		postings := facts.postings[id]
 
-		var group shipmentports.CapacityGroup
+		var group shipmentcapacityports.CapacityGroup
 		switch {
 		case len(postings) > 0:
-			group = shipmentports.CapacityGroupTrucksPosted
+			group = shipmentcapacityports.CapacityGroupTrucksPosted
 		case answered && perf.OffersAnswered >= usuallyAcceptMinAnswers &&
 			acceptance >= usuallyAcceptPercent:
-			group = shipmentports.CapacityGroupUsuallyAccept
+			group = shipmentcapacityports.CapacityGroupUsuallyAccept
 		default:
 			continue
 		}
 
-		unit := &shipmentports.CapacityUnit{
+		unit := &shipmentcapacityports.CapacityUnit{
 			ID:          id,
-			Kind:        shipmentports.CapacityUnitCarrier,
+			Kind:        shipmentcapacityports.CapacityUnitCarrier,
 			Name:        entity.Name,
 			Initials:    stringutils.Initials(entity.Name),
 			Group:       group,
@@ -169,7 +170,7 @@ func carrierUnits(facts *carrierFacts) []*shipmentports.CapacityUnit {
 		if answered {
 			value := acceptance
 			unit.AcceptancePercent = &value
-			unit.Ring = &shipmentports.CapacityRing{
+			unit.Ring = &shipmentcapacityports.CapacityRing{
 				Value: acceptance,
 				Max:   percent,
 				Low:   acceptance < lowAcceptancePercent,
@@ -178,7 +179,7 @@ func carrierUnits(facts *carrierFacts) []*shipmentports.CapacityUnit {
 		units = append(units, unit)
 	}
 
-	slices.SortStableFunc(units, func(a, b *shipmentports.CapacityUnit) int {
+	slices.SortStableFunc(units, func(a, b *shipmentcapacityports.CapacityUnit) int {
 		return cmp.Or(
 			cmp.Compare(groupOrder(a.Group), groupOrder(b.Group)),
 			-cmp.Compare(acceptanceOf(a), acceptanceOf(b)),
@@ -189,7 +190,7 @@ func carrierUnits(facts *carrierFacts) []*shipmentports.CapacityUnit {
 	return units
 }
 
-func acceptanceOf(unit *shipmentports.CapacityUnit) float64 {
+func acceptanceOf(unit *shipmentcapacityports.CapacityUnit) float64 {
 	if unit.AcceptancePercent == nil {
 		return -1
 	}
@@ -219,7 +220,7 @@ func postingOrigin(posting *carriercapacity.Posting) string {
 
 func carrierRatePerMile(
 	postings []*carriercapacity.Posting,
-	perf *shipmentports.CarrierPerformance,
+	perf *shipmentboardports.CarrierPerformance,
 ) decimal.NullDecimal {
 	best := decimal.NullDecimal{}
 	for _, posting := range postings {
@@ -238,7 +239,7 @@ func carrierRatePerMile(
 }
 
 func weightedRatePerMile(
-	performance map[pulid.ID]*shipmentports.CarrierPerformance,
+	performance map[pulid.ID]*shipmentboardports.CarrierPerformance,
 ) decimal.NullDecimal {
 	total := decimal.Zero
 	loads := 0
@@ -315,7 +316,7 @@ func originMatches(posting *carriercapacity.Posting, move *dispatchconsoleservic
 
 func quoteFor(
 	posting *carriercapacity.Posting,
-	perf *shipmentports.CarrierPerformance,
+	perf *shipmentboardports.CarrierPerformance,
 	distance *float64,
 ) decimal.NullDecimal {
 	miles := decimal.Zero
@@ -352,7 +353,7 @@ func (s *Service) carrierMatches(
 	tenantInfo pagination.TenantInfo,
 	carrierID pulid.ID,
 	limit int,
-) ([]*shipmentports.CapacityMatch, error) {
+) ([]*shipmentcapacityports.CapacityMatch, error) {
 	facts, err := s.loadCarrierFacts(ctx, tenantInfo, []pulid.ID{carrierID})
 	if err != nil {
 		return nil, err
@@ -375,13 +376,13 @@ func (s *Service) carrierMatches(
 func rankCarrierMatches(
 	moves []*dispatchconsoleservice.BoardMove,
 	postings []*carriercapacity.Posting,
-	perf *shipmentports.CarrierPerformance,
+	perf *shipmentboardports.CarrierPerformance,
 	limit int,
-) []*shipmentports.CapacityMatch {
+) []*shipmentcapacityports.CapacityMatch {
 	acceptance, answered := perf.AcceptancePercent()
 
 	type scored struct {
-		match *shipmentports.CapacityMatch
+		match *shipmentcapacityports.CapacityMatch
 		fit   float64
 	}
 	ranked := make([]scored, 0, len(moves))
@@ -415,7 +416,7 @@ func rankCarrierMatches(
 		)
 	})
 
-	out := make([]*shipmentports.CapacityMatch, 0, min(limit, len(ranked)))
+	out := make([]*shipmentcapacityports.CapacityMatch, 0, min(limit, len(ranked)))
 	for _, entry := range ranked[:min(limit, len(ranked))] {
 		out = append(out, entry.match)
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -26,12 +26,12 @@ const inferredArrivalKeySuffix = ":arrival"
 
 type stopActuals214Plan struct {
 	target          stopActualTarget
-	action          shipmentports.StopActualAction
+	action          shipmentmoveports.StopActualAction
 	arriveIfMissing bool
 }
 
 func (p stopActuals214Plan) visit() shipment.VisitKind {
-	if p.action == shipmentports.StopActualActionDepart {
+	if p.action == shipmentmoveports.StopActualActionDepart {
 		return shipment.VisitDeparture
 	}
 	return shipment.VisitArrival
@@ -56,28 +56,28 @@ func stopActualsPlanForStatusCode(statusCode string) (stopActuals214Plan, bool) 
 	case "X3":
 		return stopActuals214Plan{
 			target: stopTargetOrigin,
-			action: shipmentports.StopActualActionArrive,
+			action: shipmentmoveports.StopActualActionArrive,
 		}, true
 	case "AF":
 		return stopActuals214Plan{
 			target: stopTargetOrigin,
-			action: shipmentports.StopActualActionDepart,
+			action: shipmentmoveports.StopActualActionDepart,
 		}, true
 	case "X1":
 		return stopActuals214Plan{
 			target: stopTargetDestination,
-			action: shipmentports.StopActualActionArrive,
+			action: shipmentmoveports.StopActualActionArrive,
 		}, true
 	case "D1":
 		return stopActuals214Plan{
 			target:          stopTargetDestination,
-			action:          shipmentports.StopActualActionDepart,
+			action:          shipmentmoveports.StopActualActionDepart,
 			arriveIfMissing: true,
 		}, true
 	case "CD":
 		return stopActuals214Plan{
 			target: stopTargetDestination,
-			action: shipmentports.StopActualActionDepart,
+			action: shipmentmoveports.StopActualActionDepart,
 		}, true
 	default:
 		return stopActuals214Plan{}, false
@@ -157,7 +157,7 @@ func (s *Service) resolveTendered214Target(
 			),
 		}, nil
 	}
-	move, err := s.shipmentMoveRepo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	move, err := s.shipmentMoveRepo.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            moveID,
 		TenantInfo:        req.TenantInfo,
 		ExpandMoveDetails: true,

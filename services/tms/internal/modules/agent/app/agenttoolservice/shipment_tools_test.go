@@ -13,14 +13,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeCommentService struct {
-	shipmentports.ShipmentCommentService
+	shipmentcommentports.ShipmentCommentService
 
 	created *shipment.ShipmentComment
 	err     error
@@ -37,16 +40,16 @@ func (f *fakeCommentService) Create(
 }
 
 type fakeHoldService struct {
-	shipmentports.ShipmentHoldService
+	shipmentholdports.ShipmentHoldService
 
-	placed   *shipmentports.CreateShipmentHoldRequest
-	released *shipmentports.ReleaseShipmentHoldRequest
+	placed   *shipmentholdports.CreateShipmentHoldRequest
+	released *shipmentholdports.ReleaseShipmentHoldRequest
 	err      error
 }
 
 func (f *fakeHoldService) Create(
 	_ context.Context,
-	req *shipmentports.CreateShipmentHoldRequest,
+	req *shipmentholdports.CreateShipmentHoldRequest,
 	_ *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	f.placed = req
@@ -56,7 +59,7 @@ func (f *fakeHoldService) Create(
 
 func (f *fakeHoldService) Release(
 	_ context.Context,
-	req *shipmentports.ReleaseShipmentHoldRequest,
+	req *shipmentholdports.ReleaseShipmentHoldRequest,
 	_ *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	f.released = req
@@ -65,7 +68,7 @@ func (f *fakeHoldService) Release(
 }
 
 type fakeShipmentService struct {
-	shipmentports.ShipmentService
+	shipmentserviceports.ShipmentService
 
 	canceled *shipmentports.CancelShipmentRequest
 	err      error

@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -17,8 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -154,13 +155,13 @@ func (r *memoryLinks) Touch(context.Context, pagination.TenantInfo, pulid.ID, in
 }
 
 type fakeMoves struct {
-	shipmentports.ShipmentMoveRepository
+	shipmentmoveports.ShipmentMoveRepository
 	move *shipment.ShipmentMove
 }
 
 func (f *fakeMoves) GetByID(
 	_ context.Context,
-	req *shipmentports.GetMoveByIDRequest,
+	req *shipmentmoveports.GetMoveByIDRequest,
 ) (*shipment.ShipmentMove, error) {
 	if f.move == nil || req.MoveID != f.move.ID {
 		return nil, errortypes.NewNotFoundError("Shipment move")
@@ -180,7 +181,7 @@ func (fakeShipments) GetByID(
 }
 
 type fakeAssignments struct {
-	shipmentports.CarrierAssignmentRepository
+	carrierassignmentports.CarrierAssignmentRepository
 	assignment *shipment.CarrierAssignment
 }
 
@@ -489,7 +490,7 @@ func TestLog_AnArrivalBecomesADispatcherTrackingEvent(t *testing.T) {
 	require.Len(t, h.tracking.reported, 1)
 	reported := h.tracking.reported[0]
 	assert.Equal(t, trackingevent.SourceAgent, reported.Source)
-	assert.Equal(t, shipmentports.StopActualActionArrive, reported.Action)
+	assert.Equal(t, shipmentmoveports.StopActualActionArrive, reported.Action)
 	assert.Equal(t, "run_1:call_2", reported.SourceKey)
 	assert.Equal(t, testNow-300, *reported.OccurredAt)
 	assert.Equal(t, h.delivery.ID, result.CheckCall.StopID)

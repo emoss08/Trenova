@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
-
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -26,7 +25,7 @@ var (
 	FreightTerms      = Source("shipment.freightTerms", shipment.FreightTermsValues())
 	StopActualActions = Source(
 		"shipmentMove.stopActualAction",
-		shipmentports.StopActualActionValues(),
+		shipmentmoveports.StopActualActionValues(),
 	)
 	SettableMoveStatuses = Source("shipmentMove.settableStatus", []shipment.MoveStatus{
 		shipment.MoveStatusInTransit,

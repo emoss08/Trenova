@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,7 +25,7 @@ import (
 type harness struct {
 	ctx      context.Context
 	db       *keel.DB
-	repo     shipmentports.ShipmentMoveRepository
+	repo     shipmentmoveports.ShipmentMoveRepository
 	tenant   pagination.TenantInfo
 	graph    *testutil.ShipmentGraph
 	otherCtx context.Context
@@ -70,7 +70,7 @@ func (h *harness) shipmentWithMoves(moves ...*shipment.ShipmentMove) *shipment.S
 func (h *harness) moves(t *testing.T) []*shipment.ShipmentMove {
 	t.Helper()
 
-	moves, err := h.repo.GetMovesByShipmentID(h.ctx, &shipmentports.GetMovesByShipmentIDRequest{
+	moves, err := h.repo.GetMovesByShipmentID(h.ctx, &shipmentmoveports.GetMovesByShipmentIDRequest{
 		ShipmentID:        h.graph.Shipment.ID,
 		TenantInfo:        h.tenant,
 		ExpandMoveDetails: true,
@@ -152,7 +152,7 @@ func TestUpdateStatus_UpdatesTheMoveUnderItsVersion(t *testing.T) {
 	h := newHarness(t)
 	move := h.graph.Moves[0]
 
-	updated, err := h.repo.UpdateStatus(h.ctx, &shipmentports.UpdateMoveStatusRequest{
+	updated, err := h.repo.UpdateStatus(h.ctx, &shipmentmoveports.UpdateMoveStatusRequest{
 		TenantInfo: h.tenant,
 		MoveID:     move.ID,
 		Status:     shipment.MoveStatusAssigned,
@@ -167,7 +167,7 @@ func TestBulkUpdateStatus_UpdatesEveryMoveAndRefusesAMissingOne(t *testing.T) {
 	h := newHarness(t)
 	move := h.graph.Moves[0]
 
-	updated, err := h.repo.BulkUpdateStatus(h.ctx, &shipmentports.BulkUpdateMoveStatusRequest{
+	updated, err := h.repo.BulkUpdateStatus(h.ctx, &shipmentmoveports.BulkUpdateMoveStatusRequest{
 		TenantInfo: h.tenant,
 		MoveIDs:    []pulid.ID{move.ID},
 		Status:     shipment.MoveStatusInTransit,
@@ -176,7 +176,7 @@ func TestBulkUpdateStatus_UpdatesEveryMoveAndRefusesAMissingOne(t *testing.T) {
 	require.Len(t, updated, 1)
 	assert.Equal(t, shipment.MoveStatusInTransit, updated[0].Status)
 
-	_, err = h.repo.BulkUpdateStatus(h.ctx, &shipmentports.BulkUpdateMoveStatusRequest{
+	_, err = h.repo.BulkUpdateStatus(h.ctx, &shipmentmoveports.BulkUpdateMoveStatusRequest{
 		TenantInfo: h.tenant,
 		MoveIDs:    []pulid.ID{move.ID, pulid.MustNew("sm_")},
 		Status:     shipment.MoveStatusNew,
@@ -204,7 +204,7 @@ func TestUpdateStopActuals_RefusesAStaleVersion(t *testing.T) {
 func TestGetByID_IsInvisibleToAnotherTenant(t *testing.T) {
 	h := newHarness(t)
 
-	_, err := h.repo.GetByID(h.otherCtx, &shipmentports.GetMoveByIDRequest{
+	_, err := h.repo.GetByID(h.otherCtx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID: h.graph.Moves[0].ID,
 	})
 	require.Error(t, err)

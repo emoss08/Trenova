@@ -29,8 +29,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
@@ -60,8 +62,8 @@ type Params struct {
 
 	Logger            *zap.Logger
 	BillingQueue      billingqueueports.BillingQueueService
-	Shipments         shipmentports.ShipmentService
-	Console           shipmentports.DispatchConsoleRepository                `optional:"true"`
+	Shipments         shipmentserviceports.ShipmentService
+	Console           dispatchboardports.DispatchConsoleRepository           `optional:"true"`
 	Content           documentports.DocumentContentService                   `optional:"true"`
 	Insights          insightports.InsightRepository                         `optional:"true"`
 	BankReceipts      bankreceiptports.BankReceiptService                    `optional:"true"`
@@ -95,8 +97,8 @@ type Params struct {
 type Service struct {
 	content           documentports.DocumentContentService
 	billingQueue      billingqueueports.BillingQueueService
-	shipments         shipmentports.ShipmentService
-	console           shipmentports.DispatchConsoleRepository
+	shipments         shipmentserviceports.ShipmentService
+	console           dispatchboardports.DispatchConsoleRepository
 	insights          insightports.InsightRepository
 	receipts          bankreceiptports.BankReceiptService
 	workItems         bankreceiptworkitemports.BankReceiptWorkItemRepository
@@ -309,8 +311,8 @@ func (s *Service) shipmentMove(
 func everyMove(
 	tenant pagination.TenantInfo,
 	moveIDs []pulid.ID,
-) *shipmentports.DispatchBoardFilter {
-	return &shipmentports.DispatchBoardFilter{
+) *dispatchboardports.DispatchBoardFilter {
+	return &dispatchboardports.DispatchBoardFilter{
 		TenantInfo:     tenant,
 		MoveIDs:        moveIDs,
 		MoveStatuses:   shipment.MoveStatuses(),
@@ -320,7 +322,7 @@ func everyMove(
 }
 
 type moveNotes struct {
-	*shipmentports.BoardMove
+	*dispatchboardports.BoardMove
 
 	Coverage *moveCoverage `json:"coverage,omitempty"`
 }
@@ -334,7 +336,7 @@ type moveCoverage struct {
 func (s *Service) moveCoverage(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	move *shipmentports.BoardMove,
+	move *dispatchboardports.BoardMove,
 ) *moveCoverage {
 	if s.dispatch == nil || move == nil || move.OriginWindowStart <= 0 {
 		return nil
@@ -402,7 +404,7 @@ func (s *Service) shipment(
 		return nil, fmt.Errorf("load shipment: %w", err)
 	}
 
-	assignments := make(map[pulid.ID]*shipmentports.BoardMove, len(entity.Moves))
+	assignments := make(map[pulid.ID]*dispatchboardports.BoardMove, len(entity.Moves))
 	if s.console != nil && len(entity.Moves) > 0 {
 		moveIDs := make([]pulid.ID, 0, len(entity.Moves))
 		for _, move := range entity.Moves {

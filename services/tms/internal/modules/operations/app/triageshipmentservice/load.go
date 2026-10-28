@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/triagelookupports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -99,7 +100,7 @@ func (s *Service) CreateLoad(
 	if instructions, ok := build.value(inboundmessage.LoadFieldInstructions); ok {
 		if _, commentErr := s.comments.CreateSystem(
 			ctx,
-			&shipmentports.CreateSystemShipmentCommentRequest{
+			&shipmentcommentports.CreateSystemShipmentCommentRequest{
 				TenantInfo: req.TenantInfo,
 				ShipmentID: created.ID,
 				Comment:    stringutils.TruncateRunes(instructions, instructionsMaxRunes),
@@ -232,7 +233,7 @@ func (s *Service) resolveCustomer(ctx context.Context, b *loadBuild) (pulid.ID, 
 		return pulid.Nil, nil
 	}
 
-	matches, err := s.lookup.FindCustomers(ctx, &shipmentports.TriageLookupQuery{
+	matches, err := s.lookup.FindCustomers(ctx, &triagelookupports.TriageLookupQuery{
 		TenantInfo: b.req.TenantInfo,
 		Text:       text,
 		Limit:      lookupLimit,
@@ -255,20 +256,22 @@ func (s *Service) resolveCustomer(ctx context.Context, b *loadBuild) (pulid.ID, 
 	return match.ID, nil
 }
 
-func pickRecord(matches []shipmentports.TriageRecordMatch) (shipmentports.TriageRecordMatch, bool) {
+func pickRecord(
+	matches []triagelookupports.TriageRecordMatch,
+) (triagelookupports.TriageRecordMatch, bool) {
 	switch {
 	case len(matches) == 0:
-		return shipmentports.TriageRecordMatch{}, false
+		return triagelookupports.TriageRecordMatch{}, false
 	case matches[0].Exact && (len(matches) == 1 || !matches[1].Exact):
 		return matches[0], true
 	case len(matches) == 1:
 		return matches[0], true
 	default:
-		return shipmentports.TriageRecordMatch{}, false
+		return triagelookupports.TriageRecordMatch{}, false
 	}
 }
 
-func unresolved(kind, text string, matches []shipmentports.TriageRecordMatch) string {
+func unresolved(kind, text string, matches []triagelookupports.TriageRecordMatch) string {
 	if len(matches) == 0 {
 		return fmt.Sprintf(
 			"No %s matches %q. Add it first, or write it as it is on file.",
@@ -357,7 +360,7 @@ func (s *Service) resolvePlace(
 	}
 
 	name, city, state := splitPlace(text)
-	matches, err := s.lookup.FindLocations(ctx, &shipmentports.TriageLocationQuery{
+	matches, err := s.lookup.FindLocations(ctx, &triagelookupports.TriageLocationQuery{
 		TenantInfo: b.req.TenantInfo,
 		Name:       name,
 		City:       city,
@@ -368,7 +371,7 @@ func (s *Service) resolvePlace(
 		return resolvedPlace{}, err
 	}
 	if len(matches) == 0 && name != "" && city != "" {
-		matches, err = s.lookup.FindLocations(ctx, &shipmentports.TriageLocationQuery{
+		matches, err = s.lookup.FindLocations(ctx, &triagelookupports.TriageLocationQuery{
 			TenantInfo: b.req.TenantInfo,
 			City:       city,
 			State:      state,
@@ -379,9 +382,9 @@ func (s *Service) resolvePlace(
 		}
 	}
 
-	records := make([]shipmentports.TriageRecordMatch, 0, len(matches))
+	records := make([]triagelookupports.TriageRecordMatch, 0, len(matches))
 	for _, match := range matches {
-		records = append(records, shipmentports.TriageRecordMatch{
+		records = append(records, triagelookupports.TriageRecordMatch{
 			ID: match.ID, Label: match.Label, Exact: match.Exact,
 		})
 	}
@@ -439,7 +442,7 @@ func (s *Service) applyEquipment(
 		return nil
 	}
 
-	matches, err := s.lookup.FindTrailerTypes(ctx, &shipmentports.TriageLookupQuery{
+	matches, err := s.lookup.FindTrailerTypes(ctx, &triagelookupports.TriageLookupQuery{
 		TenantInfo: b.req.TenantInfo,
 		Text:       text,
 		Limit:      lookupLimit,
@@ -555,7 +558,7 @@ func (s *Service) applyCommodity(
 		return nil
 	}
 
-	matches, err := s.lookup.FindCommodities(ctx, &shipmentports.TriageLookupQuery{
+	matches, err := s.lookup.FindCommodities(ctx, &triagelookupports.TriageLookupQuery{
 		TenantInfo: b.req.TenantInfo,
 		Text:       text,
 		Limit:      lookupLimit,

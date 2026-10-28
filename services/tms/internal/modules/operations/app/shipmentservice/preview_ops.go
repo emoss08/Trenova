@@ -5,7 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,7 +16,7 @@ import (
 func (s *service) PreviewUncancel(
 	ctx context.Context,
 	req *shipmentports.UncancelShipmentRequest,
-) (*shipmentports.ShipmentChangePreview, error) {
+) (*shipmentserviceports.ShipmentChangePreview, error) {
 	if req == nil {
 		return nil, uncancelRequestRequired()
 	}
@@ -25,7 +27,7 @@ func (s *service) PreviewUncancel(
 		return nil, err
 	}
 
-	return &shipmentports.ShipmentChangePreview{Before: original, After: restored}, nil
+	return &shipmentserviceports.ShipmentChangePreview{Before: original, After: restored}, nil
 }
 
 func (s *service) planUncancel(
@@ -84,7 +86,7 @@ func (s *service) PreviewTransferOwnership(
 	ctx context.Context,
 	req *shipmentports.TransferOwnershipRequest,
 	actor *permissionports.RequestActor,
-) (*shipmentports.ShipmentChangePreview, error) {
+) (*shipmentserviceports.ShipmentChangePreview, error) {
 	original, err := s.planTransferOwnership(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -93,7 +95,7 @@ func (s *service) PreviewTransferOwnership(
 	after := *original
 	after.OwnerID = req.OwnerID
 
-	return &shipmentports.ShipmentChangePreview{Before: original, After: &after}, nil
+	return &shipmentserviceports.ShipmentChangePreview{Before: original, After: &after}, nil
 }
 
 func (s *service) planTransferOwnership(
@@ -154,7 +156,7 @@ func (s *service) PreviewRecalculateDistance(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*shipmentports.ShipmentDistancePreview, error) {
+) (*shipmentdistanceports.ShipmentDistancePreview, error) {
 	if s.distanceCalculation == nil {
 		return nil, errortypes.NewBusinessError("distance calculation service is not configured")
 	}
@@ -165,13 +167,16 @@ func (s *service) PreviewRecalculateDistance(
 func (s *service) PreviewDuplicate(
 	ctx context.Context,
 	req *shipmentports.BulkDuplicateShipmentRequest,
-) (*shipmentports.ShipmentDuplicatePreview, error) {
+) (*shipmentserviceports.ShipmentDuplicatePreview, error) {
 	plan, err := s.planDuplicate(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return &shipmentports.ShipmentDuplicatePreview{Source: plan.Source, Copies: plan.Copies}, nil
+	return &shipmentserviceports.ShipmentDuplicatePreview{
+		Source: plan.Source,
+		Copies: plan.Copies,
+	}, nil
 }
 
 func (s *service) planDuplicate(

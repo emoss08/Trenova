@@ -4,7 +4,7 @@ import (
 	"cmp"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/shopspring/decimal"
 )
@@ -36,7 +36,7 @@ type currencyTally struct {
 
 type outcomeTally map[string]*currencyTally
 
-func (t outcomeTally) add(decision *shipmentports.BillingTransferDecision) {
+func (t outcomeTally) add(decision *shipmentbillingports.BillingTransferDecision) {
 	currency := cmp.Or(decision.CurrencyCode, money.DefaultCurrencyCode)
 	tally, ok := t[currency]
 	if !ok {
@@ -69,7 +69,7 @@ func (t outcomeTally) totals() []candidateTotal {
 }
 
 func candidateTotalsOf(
-	decisions []shipmentports.BillingTransferDecision,
+	decisions []shipmentbillingports.BillingTransferDecision,
 	everyMatch bool,
 ) candidateTotals {
 	transfer := outcomeTally{}
@@ -78,13 +78,13 @@ func candidateTotalsOf(
 	for idx := range decisions {
 		decision := &decisions[idx]
 		switch decision.Outcome {
-		case shipmentports.BillingTransferOutcomeTransfer:
+		case shipmentbillingports.BillingTransferOutcomeTransfer:
 			transfer.add(decision)
-		case shipmentports.BillingTransferOutcomeMarkReadyAndTransfer:
+		case shipmentbillingports.BillingTransferOutcomeMarkReadyAndTransfer:
 			markReady.add(decision)
-		case shipmentports.BillingTransferOutcomeRefused:
+		case shipmentbillingports.BillingTransferOutcomeRefused:
 			refused.add(decision)
-		case shipmentports.BillingTransferOutcomeReturnToOperations:
+		case shipmentbillingports.BillingTransferOutcomeReturnToOperations:
 		}
 	}
 

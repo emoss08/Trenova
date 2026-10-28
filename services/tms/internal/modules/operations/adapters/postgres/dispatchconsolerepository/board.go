@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
 	"go.uber.org/fx"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) shipmentports.DispatchConsoleRepository {
+func New(p Params) dispatchboardports.DispatchConsoleRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.dispatch-console-repository"),
@@ -51,9 +51,9 @@ func boardLimit(requested int) int {
 
 func (r *repository) ListBoardMoves(
 	ctx context.Context,
-	filter *shipmentports.DispatchBoardFilter,
-) ([]*shipmentports.BoardMove, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.BoardMove, error) {
+	filter *dispatchboardports.DispatchBoardFilter,
+) ([]*dispatchboardports.BoardMove, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*dispatchboardports.BoardMove, error) {
 		sm := shipmentdb.ShipmentMoves
 		sp := shipmentdb.Shipments
 		asn := assignments
@@ -138,7 +138,7 @@ func (r *repository) ListBoardMoves(
 			q = q.Offset(filter.Offset)
 		}
 
-		rows, err := keel.Into[shipmentports.BoardMove](ctx, r.db.Keel(ctx), q)
+		rows, err := keel.Into[dispatchboardports.BoardMove](ctx, r.db.Keel(ctx), q)
 		if err != nil {
 			return nil, fmt.Errorf("list dispatch board moves: %w", err)
 		}
@@ -149,7 +149,7 @@ func (r *repository) ListBoardMoves(
 
 // boardOrder is the board's order: by pickup window, or, for a reader that
 // wants the most urgent first, by when each move's next stop is due.
-func boardOrder(filter *shipmentports.DispatchBoardFilter) []keel.Order {
+func boardOrder(filter *dispatchboardports.DispatchBoardFilter) []keel.Order {
 	sm := shipmentdb.ShipmentMoves
 	if filter.DueFirst {
 		return []keel.Order{keel.Asc(dueAt()), sm.Sequence.Asc(), sm.ID.Asc()}

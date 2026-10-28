@@ -4,13 +4,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/carriersettlementportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carriersettlementportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,14 +21,14 @@ import (
 
 type accrualDeps struct {
 	costEvents  *carriersettlementportsmock.MockCarrierCostEventRepository
-	assignments *shipmentportsmock.MockCarrierAssignmentRepository
+	assignments *carrierassignmentportsmock.MockCarrierAssignmentRepository
 	svc         *Service
 }
 
 func setupAccrualTest(t *testing.T) *accrualDeps {
 	t.Helper()
 	costEvents := carriersettlementportsmock.NewMockCarrierCostEventRepository(t)
-	assignments := shipmentportsmock.NewMockCarrierAssignmentRepository(t)
+	assignments := carrierassignmentportsmock.NewMockCarrierAssignmentRepository(t)
 	svc := &Service{
 		l:              zap.NewNop(),
 		costEventRepo:  costEvents,
@@ -318,7 +318,7 @@ func TestUpsertCostEventSkipsCurrentPendingAndRepricesVersionBump(t *testing.T) 
 
 type reaccrueDeps struct {
 	costEvents  *carriersettlementportsmock.MockCarrierCostEventRepository
-	assignments *shipmentportsmock.MockCarrierAssignmentRepository
+	assignments *carrierassignmentportsmock.MockCarrierAssignmentRepository
 	shipments   *shipmentportsmock.MockShipmentRepository
 	control     *tenantportsmock.MockCarrierSettlementControlRepository
 	svc         *Service
@@ -327,7 +327,7 @@ type reaccrueDeps struct {
 func setupReaccrueTest(t *testing.T) *reaccrueDeps {
 	t.Helper()
 	costEvents := carriersettlementportsmock.NewMockCarrierCostEventRepository(t)
-	assignments := shipmentportsmock.NewMockCarrierAssignmentRepository(t)
+	assignments := carrierassignmentportsmock.NewMockCarrierAssignmentRepository(t)
 	shipments := shipmentportsmock.NewMockShipmentRepository(t)
 	control := tenantportsmock.NewMockCarrierSettlementControlRepository(t)
 	svc := &Service{

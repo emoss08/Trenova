@@ -10,12 +10,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
-func NewCarrierPerformanceRepository(r *Repository) shipmentports.CarrierPerformanceRepository {
+func NewCarrierPerformanceRepository(
+	r *Repository,
+) shipmentboardports.CarrierPerformanceRepository {
 	return r
 }
 
@@ -33,12 +35,12 @@ type rateRow struct {
 
 func (r *Repository) ListCarrierPerformance(
 	ctx context.Context,
-	req *shipmentports.ListCarrierPerformanceRequest,
-) ([]*shipmentports.CarrierPerformance, error) {
+	req *shipmentboardports.ListCarrierPerformanceRequest,
+) ([]*shipmentboardports.CarrierPerformance, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*shipmentports.CarrierPerformance, error) {
+		func(ctx context.Context) ([]*shipmentboardports.CarrierPerformance, error) {
 			var offers []offerTotalsRow
 			var rates []rateRow
 			if err := keel.Batch(
@@ -55,7 +57,7 @@ func (r *Repository) ListCarrierPerformance(
 	)
 }
 
-func offerTotalsQuery(req *shipmentports.ListCarrierPerformanceRequest) keel.Projection {
+func offerTotalsQuery(req *shipmentboardports.ListCarrierPerformanceRequest) keel.Projection {
 	to := tenderdb.TenderOffers
 	q := to.Group(to.CarrierID).
 		Pick(
@@ -75,7 +77,7 @@ func offerTotalsQuery(req *shipmentports.ListCarrierPerformanceRequest) keel.Pro
 	return q
 }
 
-func perMileRatesQuery(req *shipmentports.ListCarrierPerformanceRequest) keel.Projection {
+func perMileRatesQuery(req *shipmentboardports.ListCarrierPerformanceRequest) keel.Projection {
 	ca := shipmentdb.CarrierAssignments
 	q := ca.Group(ca.CarrierID).
 		Pick(ca.CarrierID, keel.Count(), keel.Avg(ca.BaseRate)).
@@ -94,13 +96,13 @@ func perMileRatesQuery(req *shipmentports.ListCarrierPerformanceRequest) keel.Pr
 func mergePerformance(
 	offers []offerTotalsRow,
 	rates []rateRow,
-) []*shipmentports.CarrierPerformance {
-	byCarrier := make(map[pulid.ID]*shipmentports.CarrierPerformance, len(offers)+len(rates))
-	entry := func(id pulid.ID) *shipmentports.CarrierPerformance {
+) []*shipmentboardports.CarrierPerformance {
+	byCarrier := make(map[pulid.ID]*shipmentboardports.CarrierPerformance, len(offers)+len(rates))
+	entry := func(id pulid.ID) *shipmentboardports.CarrierPerformance {
 		if existing, ok := byCarrier[id]; ok {
 			return existing
 		}
-		created := &shipmentports.CarrierPerformance{CarrierID: id}
+		created := &shipmentboardports.CarrierPerformance{CarrierID: id}
 		byCarrier[id] = created
 
 		return created
@@ -116,7 +118,7 @@ func mergePerformance(
 		perf.AvgRatePerMile = row.AvgRate
 	}
 
-	out := make([]*shipmentports.CarrierPerformance, 0, len(byCarrier))
+	out := make([]*shipmentboardports.CarrierPerformance, 0, len(byCarrier))
 	for _, perf := range byCarrier {
 		out = append(out, perf)
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/triagelookupports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -60,7 +61,7 @@ func (s *Service) ShipmentPeeks(
 }
 
 func buildPeek(
-	detail *shipmentports.TriagePeekDetail,
+	detail *triagelookupports.TriagePeekDetail,
 	summary *shipmentports.ShipmentSummary,
 	snapshot *shipmenttracking.Snapshot,
 ) *inboundmessageports.ShipmentPeek {
@@ -175,7 +176,7 @@ func (s *Service) CustomerShipments(
 ) (*inboundmessageports.TriageCustomerShipments, error) {
 	ids, thisWeek, err := s.lookup.CustomerShipments(
 		ctx,
-		&shipmentports.TriageCustomerShipmentsQuery{
+		&triagelookupports.TriageCustomerShipmentsQuery{
 			TenantInfo: req.TenantInfo,
 			CustomerID: req.CustomerID,
 			WeekStart:  req.WeekStart,

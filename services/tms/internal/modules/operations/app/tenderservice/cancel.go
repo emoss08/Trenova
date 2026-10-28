@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/tenderjobs/tendercontract"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -201,10 +201,14 @@ func (s *Service) CancelDirect(
 		Previous:   entity,
 		Current:    withdrawnTender(entity, tenantInfo, reason, now),
 	})
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationByUser(tenantInfo, entity.ShipmentID, "tender_canceled"),
+		shipmentinvalidationports.ShipmentInvalidationByUser(
+			tenantInfo,
+			entity.ShipmentID,
+			"tender_canceled",
+		),
 	)
 
 	return nil

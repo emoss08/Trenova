@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -16,8 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testScope() *shipmentports.ShipmentBoardScope {
-	return &shipmentports.ShipmentBoardScope{
+func testScope() *shipmentboardports.ShipmentBoardScope {
+	return &shipmentboardports.ShipmentBoardScope{
 		Filter: &pagination.QueryOptions{
 			FieldFilters: []domaintypes.FieldFilter{
 				{Field: "status", Operator: dbtype.OpEqual, Value: "New"},

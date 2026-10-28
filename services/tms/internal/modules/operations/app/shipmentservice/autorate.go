@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,7 +27,7 @@ func (s *service) PreviewContractRate(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	actor *permissionports.RequestActor,
-) (*shipmentports.ContractRateApplication, error) {
+) (*shipmentserviceports.ContractRateApplication, error) {
 	if entity == nil {
 		multiErr := errortypes.NewMultiError()
 		multiErr.Add("shipment", errortypes.ErrRequired, "Shipment is required")
@@ -63,9 +65,9 @@ func (s *service) PreviewContractRate(
 // than repriced, because its customer has seen the numbers.
 func (s *service) AutoRate(
 	ctx context.Context,
-	req *shipmentports.AutoRateShipmentRequest,
+	req *shipmentserviceports.AutoRateShipmentRequest,
 	actor *permissionports.RequestActor,
-) (*shipment.Shipment, *shipmentports.ContractRateApplication, error) {
+) (*shipment.Shipment, *shipmentserviceports.ContractRateApplication, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
 		zap.String("operation", "AutoRate"),
@@ -111,10 +113,10 @@ func (s *service) AutoRate(
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationForRecord(
+		shipmentinvalidationports.ShipmentInvalidationForRecord(
 			updatedEntity,
 			auditActor,
 			"auto-rate",
@@ -133,9 +135,9 @@ func (s *service) AutoRate(
 
 func (s *service) PreviewAutoRate(
 	ctx context.Context,
-	req *shipmentports.AutoRateShipmentRequest,
+	req *shipmentserviceports.AutoRateShipmentRequest,
 	actor *permissionports.RequestActor,
-) (*shipmentports.ShipmentAutoRatePreview, error) {
+) (*shipmentserviceports.ShipmentAutoRatePreview, error) {
 	plan, err := s.planAutoRate(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -148,7 +150,7 @@ func (s *service) PreviewAutoRate(
 		return nil, err
 	}
 
-	return &shipmentports.ShipmentAutoRatePreview{
+	return &shipmentserviceports.ShipmentAutoRatePreview{
 		Before:      plan.original,
 		After:       plan.entity,
 		Application: application,
@@ -164,7 +166,7 @@ type autoRatePlan struct {
 
 func (s *service) planAutoRate(
 	ctx context.Context,
-	req *shipmentports.AutoRateShipmentRequest,
+	req *shipmentserviceports.AutoRateShipmentRequest,
 	actor *permissionports.RequestActor,
 ) (*autoRatePlan, error) {
 	auditActor := actor.AuditActor()
@@ -251,8 +253,8 @@ func (s *service) describeContractRate(
 	entity *shipment.Shipment,
 	rated *ratequoteports.RatedShipment,
 	previousFreight decimal.NullDecimal,
-) (*shipmentports.ContractRateApplication, error) {
-	application := &shipmentports.ContractRateApplication{
+) (*shipmentserviceports.ContractRateApplication, error) {
+	application := &shipmentserviceports.ContractRateApplication{
 		Applied:             rated.Outcome.Priced(),
 		Outcome:             rated.Outcome,
 		AgreementID:         rated.AgreementID,
@@ -263,7 +265,7 @@ func (s *service) describeContractRate(
 		Inputs:              rated.TariffInputs,
 		FreightAmount:       rated.Amount,
 		FreightLines:        []shipment.FreightLine{},
-		Charges:             []shipmentports.ContractRateCharge{},
+		Charges:             []shipmentserviceports.ContractRateCharge{},
 		Refusal:             rated.Refusal,
 	}
 	if previousFreight.Valid {
@@ -297,8 +299,8 @@ func (s *service) describeContractRate(
 	return application, nil
 }
 
-func contractRateCharge(charge *shipment.AdditionalCharge) shipmentports.ContractRateCharge {
-	out := shipmentports.ContractRateCharge{
+func contractRateCharge(charge *shipment.AdditionalCharge) shipmentserviceports.ContractRateCharge {
+	out := shipmentserviceports.ContractRateCharge{
 		AccessorialChargeID: charge.AccessorialChargeID,
 		Owner:               charge.Owner(),
 		Label:               charge.Label,

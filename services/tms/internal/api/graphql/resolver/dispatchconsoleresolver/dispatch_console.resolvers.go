@@ -15,7 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -89,7 +90,7 @@ func (r *MutationResolver) DispatchUnassignMoves(ctx context.Context, moveIds []
 
 		unassignErr := r.AssignmentService.Unassign(
 			ctx,
-			&shipmentports.UnassignShipmentMoveRequest{
+			&assignmentports.UnassignShipmentMoveRequest{
 				TenantInfo:     tenant,
 				ShipmentMoveID: moveID,
 			},
@@ -146,7 +147,7 @@ func (r *MutationResolver) DispatchCancelCarrierAssignment(ctx context.Context, 
 		return false, err
 	}
 
-	if err = r.CarrierAssignmentService.Cancel(ctx, &shipmentports.CancelCarrierAssignmentRequest{
+	if err = r.CarrierAssignmentService.Cancel(ctx, &carrierassignmentports.CancelCarrierAssignmentRequest{
 		TenantInfo:     base.TenantInfo(authCtx),
 		ShipmentMoveID: parsedMoveID,
 		Reason:         reason,

@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,7 +34,7 @@ var ErrAlreadyTold = errors.New(
 
 func AlreadyTold(
 	ctx context.Context,
-	comments shipmentports.ShipmentCommentService,
+	comments shipmentcommentports.ShipmentCommentService,
 	tenant pagination.TenantInfo,
 	shipmentID pulid.ID,
 	now int64,
@@ -43,14 +43,14 @@ func AlreadyTold(
 		return false, nil
 	}
 
-	page, err := comments.ListByShipmentID(ctx, &shipmentports.ListShipmentCommentsRequest{
+	page, err := comments.ListByShipmentID(ctx, &shipmentcommentports.ListShipmentCommentsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: recentPageSize},
 		},
 		Cursor:     pagination.CursorInfo{Limit: recentPageSize},
 		ShipmentID: shipmentID,
-		Filters: shipmentports.ShipmentCommentListFilters{
+		Filters: shipmentcommentports.ShipmentCommentListFilters{
 			Types: []shipment.CommentType{shipment.CommentTypeCustomerUpdate},
 		},
 	})
@@ -152,7 +152,7 @@ type CommentParams struct {
 	Extra      map[string]any
 }
 
-func Comment(p *CommentParams) *shipmentports.CreateSystemShipmentCommentRequest {
+func Comment(p *CommentParams) *shipmentcommentports.CreateSystemShipmentCommentRequest {
 	metadata := map[string]any{
 		shipment.CommentMetadataOrigin: p.Origin,
 		metadataSource:                 p.Source,
@@ -163,7 +163,7 @@ func Comment(p *CommentParams) *shipmentports.CreateSystemShipmentCommentRequest
 		metadata[key] = value
 	}
 
-	return &shipmentports.CreateSystemShipmentCommentRequest{
+	return &shipmentcommentports.CreateSystemShipmentCommentRequest{
 		TenantInfo: p.Tenant,
 		ShipmentID: p.ShipmentID,
 		Comment: fmt.Sprintf(

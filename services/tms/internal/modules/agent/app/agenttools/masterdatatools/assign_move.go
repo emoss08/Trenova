@@ -9,16 +9,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 )
 
 type AssignMoveTool struct {
-	assignments shipmentports.AssignmentService
+	assignments assignmentports.AssignmentService
 	console     assignmentChecker
 }
 
 func NewAssignMoveTool(
-	assignments shipmentports.AssignmentService,
+	assignments assignmentports.AssignmentService,
 	console dispatchconsoleports.DispatchConsoleService,
 ) agenttoolports.AgentTool {
 	return &AssignMoveTool{assignments: assignments, console: console}
@@ -119,7 +119,7 @@ func (t *AssignMoveTool) Execute(
 
 func (t *AssignMoveTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*shipmentports.AssignShipmentMoveRequest, error) {
+) (*assignmentports.AssignShipmentMoveRequest, error) {
 	moveID, err := common.RequirePulid(params.Params, "shipmentMoveId")
 	if err != nil {
 		return nil, err
@@ -133,7 +133,7 @@ func (t *AssignMoveTool) request(
 		return nil, err
 	}
 
-	req := &shipmentports.AssignShipmentMoveRequest{
+	req := &assignmentports.AssignShipmentMoveRequest{
 		TenantInfo:      common.TenantFrom(*params),
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: workerID,

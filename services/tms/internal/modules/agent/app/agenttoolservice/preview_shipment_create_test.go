@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -21,7 +21,7 @@ import (
 )
 
 type pricingShipments struct {
-	rating    *shipmentports.ShipmentRatingOutcome
+	rating    *shipmentserviceports.ShipmentRatingOutcome
 	duplicate bool
 	refusal   error
 	saved     *shipment.Shipment
@@ -52,12 +52,12 @@ func (f *pricingShipments) PreviewCreate(
 	_ context.Context,
 	entity *shipment.Shipment,
 	_ *permissionports.RequestActor,
-) (*shipmentports.ShipmentCreatePlan, error) {
+) (*shipmentserviceports.ShipmentCreatePlan, error) {
 	if err := f.prepare(entity); err != nil {
 		return nil, err
 	}
 
-	return &shipmentports.ShipmentCreatePlan{Shipment: entity, Rating: f.rating}, nil
+	return &shipmentserviceports.ShipmentCreatePlan{Shipment: entity, Rating: f.rating}, nil
 }
 
 func (f *pricingShipments) Create(
@@ -95,7 +95,7 @@ func createShipmentParams() agenttoolports.ToolExecuteParams {
 func TestCreateShipment_PreviewMatchesWhatIsSaved(t *testing.T) {
 	t.Parallel()
 
-	shipments := &pricingShipments{rating: &shipmentports.ShipmentRatingOutcome{
+	shipments := &pricingShipments{rating: &shipmentserviceports.ShipmentRatingOutcome{
 		Adopted:       true,
 		Amount:        decimal.NewFromInt(1_850),
 		Currency:      "USD",
@@ -155,7 +155,7 @@ func TestCreateShipment_PreviewMatchesWhatIsSaved(t *testing.T) {
 func TestCreateShipment_PreviewNamesADepartureFromTheContract(t *testing.T) {
 	t.Parallel()
 
-	shipments := &pricingShipments{rating: &shipmentports.ShipmentRatingOutcome{
+	shipments := &pricingShipments{rating: &shipmentserviceports.ShipmentRatingOutcome{
 		Amount:   decimal.NewFromInt(1_700),
 		Currency: "USD",
 	}}

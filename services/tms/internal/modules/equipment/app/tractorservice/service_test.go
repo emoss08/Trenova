@@ -4,20 +4,19 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/locationportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tractorportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/locationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tractorportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,7 +28,7 @@ import (
 
 func newLocateTestService(
 	repo tractorports.TractorRepository,
-	assignmentRepo shipmentports.AssignmentRepository,
+	assignmentRepo assignmentports.AssignmentRepository,
 	continuityRepo equipmentcontinuityports.EquipmentContinuityRepository,
 	locationRepo locationports.LocationRepository,
 ) *Service {
@@ -71,7 +70,7 @@ func TestLocate_CreatesFirstContinuityRow(t *testing.T) {
 		Return(&location.Location{ID: locationID, OrganizationID: orgID, BusinessUnitID: buID}, nil).
 		Once()
 
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		FindInProgressByTractorID(mock.Anything, tenantInfo, tractorID, pulid.Nil).
 		Return(nil, nil).
@@ -149,7 +148,7 @@ func TestLocate_ReplacesCurrentContinuity(t *testing.T) {
 		Return(&location.Location{ID: newLocationID, OrganizationID: orgID, BusinessUnitID: buID}, nil).
 		Once()
 
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		FindInProgressByTractorID(mock.Anything, tenantInfo, tractorID, pulid.Nil).
 		Return(nil, nil).
@@ -218,7 +217,7 @@ func TestLocate_RejectsSameLocation(t *testing.T) {
 		Return(&location.Location{ID: locationID, OrganizationID: orgID, BusinessUnitID: buID}, nil).
 		Once()
 
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		FindInProgressByTractorID(mock.Anything, tenantInfo, tractorID, pulid.Nil).
 		Return(nil, nil).
@@ -276,7 +275,7 @@ func TestLocate_RejectsTractorAlreadyInProgress(t *testing.T) {
 		Once()
 
 	moveID := pulid.MustNew("sm_")
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		FindInProgressByTractorID(mock.Anything, tenantInfo, tractorID, pulid.Nil).
 		Return(&shipment.Assignment{
@@ -320,7 +319,7 @@ func TestLocate_PropagatesMissingTractor(t *testing.T) {
 		Once()
 
 	locationRepo := locationportsmock.NewMockLocationRepository(t)
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	continuityRepo := equipmentcontinuityportsmock.NewMockEquipmentContinuityRepository(t)
 	svc := newLocateTestService(repo, assignmentRepo, continuityRepo, locationRepo)
 	result, err := svc.Locate(t.Context(), &tractorports.LocateTractorRequest{
@@ -364,7 +363,7 @@ func TestLocate_PropagatesMissingLocation(t *testing.T) {
 		Return(nil, locationErr).
 		Once()
 
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	continuityRepo := equipmentcontinuityportsmock.NewMockEquipmentContinuityRepository(t)
 	svc := newLocateTestService(repo, assignmentRepo, continuityRepo, locationRepo)
 	result, err := svc.Locate(t.Context(), &tractorports.LocateTractorRequest{

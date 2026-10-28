@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/tenderjobs/tendercontract"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -776,10 +777,14 @@ func (s *Service) persistAndStart(
 		return nil, err
 	}
 
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationByUser(tenantInfo, entity.ShipmentID, "tender_created"),
+		shipmentinvalidationports.ShipmentInvalidationByUser(
+			tenantInfo,
+			entity.ShipmentID,
+			"tender_created",
+		),
 	)
 	s.markCarriersUsed(ctx, tenantInfo, entity.Offers)
 

@@ -110,7 +110,7 @@ Each resolver package gets a generated `Deps`:
 ```go
 type Deps struct {
 	*base.Core
-	ShipmentService shipmentports.ShipmentService
+	ShipmentService shipmentserviceports.ShipmentService
 	// ...only the Services fields this package's code names
 }
 

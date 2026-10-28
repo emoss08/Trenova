@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/routeestimateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,7 +30,7 @@ type Settings struct {
 type Input struct {
 	Now         int64
 	Shipment    *shipment.Shipment
-	Assignments map[pulid.ID]*shipmentports.BoardMove
+	Assignments map[pulid.ID]*dispatchboardports.BoardMove
 	Positions   map[pulid.ID]*telematics.VehiclePosition
 	HOS         map[pulid.ID]*telematics.WorkerHOSState
 	HOSExempt   map[pulid.ID]bool
@@ -149,7 +149,7 @@ func (p *Plan) chooseOrigin(lastDeparted *plannedStop) origin {
 	return origin{basis: stopeta.BasisNone}
 }
 
-func (p *Plan) positionFor(board *shipmentports.BoardMove) *telematics.VehiclePosition {
+func (p *Plan) positionFor(board *dispatchboardports.BoardMove) *telematics.VehiclePosition {
 	if board == nil || board.AssignedTractorID.IsNil() {
 		return nil
 	}

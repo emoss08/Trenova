@@ -10,19 +10,19 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 )
 
 func (r *repository) ListWorkerOnTimeStats(
 	ctx context.Context,
-	req *shipmentports.ListWorkloadRequest,
-) ([]*shipmentports.WorkerOnTimeStats, error) {
+	req *dispatchboardports.ListWorkloadRequest,
+) ([]*dispatchboardports.WorkerOnTimeStats, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*shipmentports.WorkerOnTimeStats, error) {
+		func(ctx context.Context) ([]*dispatchboardports.WorkerOnTimeStats, error) {
 			if len(req.WorkerIDs) == 0 {
-				return []*shipmentports.WorkerOnTimeStats{}, nil
+				return []*dispatchboardports.WorkerOnTimeStats{}, nil
 			}
 
 			asn := shipmentdb.Assignments
@@ -69,7 +69,7 @@ func (r *repository) ListWorkerOnTimeStats(
 					keel.When(req.Since > 0, sf.DetectedAt.Gte(req.Since)),
 				)
 
-			var onTime, faults []shipmentports.WorkerOnTimeStats
+			var onTime, faults []dispatchboardports.WorkerOnTimeStats
 			if err := keel.Batch(ctx, r.db.Keel(ctx),
 				keel.IntoSlice(arrivals, &onTime),
 				keel.IntoSlice(failures, &faults),
@@ -77,8 +77,8 @@ func (r *repository) ListWorkerOnTimeStats(
 				return nil, fmt.Errorf("list worker on-time stats: %w", err)
 			}
 
-			merged := make(map[string]*shipmentports.WorkerOnTimeStats, len(onTime))
-			entities := make([]*shipmentports.WorkerOnTimeStats, 0, len(onTime)+len(faults))
+			merged := make(map[string]*dispatchboardports.WorkerOnTimeStats, len(onTime))
+			entities := make([]*dispatchboardports.WorkerOnTimeStats, 0, len(onTime)+len(faults))
 			for i := range onTime {
 				row := &onTime[i]
 				merged[row.WorkerID.String()] = row
@@ -101,14 +101,14 @@ func (r *repository) ListWorkerOnTimeStats(
 
 func (r *repository) ListWorkerAcceptanceStats(
 	ctx context.Context,
-	req *shipmentports.ListWorkloadRequest,
-) ([]*shipmentports.WorkerAcceptanceStats, error) {
+	req *dispatchboardports.ListWorkloadRequest,
+) ([]*dispatchboardports.WorkerAcceptanceStats, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*shipmentports.WorkerAcceptanceStats, error) {
+		func(ctx context.Context) ([]*dispatchboardports.WorkerAcceptanceStats, error) {
 			if len(req.WorkerIDs) == 0 {
-				return []*shipmentports.WorkerAcceptanceStats{}, nil
+				return []*dispatchboardports.WorkerAcceptanceStats{}, nil
 			}
 
 			asn := shipmentdb.Assignments
@@ -116,25 +116,29 @@ func (r *repository) ListWorkerAcceptanceStats(
 				shipment.AssignmentAckAccepted,
 				shipment.AssignmentAckDeclined,
 			)
-			rows, err := keel.Into[shipmentports.WorkerAcceptanceStats](ctx, r.db.Keel(ctx), asn.
-				Group(asn.PrimaryWorkerID).
-				Pick(
-					asn.PrimaryWorkerID,
-					countIf(asn.AckStatus.Eq(shipment.AssignmentAckAccepted)),
-					countIf(asn.AckStatus.Eq(shipment.AssignmentAckDeclined)),
-					keel.CastFloat64(keel.NumericOf(
-						asn.AckAt.Sub(asn.CreatedAt).Avg().
-							Filter(keel.And(
-								answered,
-								asn.AckAt.IsNotNull(),
-								keel.Int64Of(asn.AckAt).GteExpr(asn.CreatedAt),
-							)),
-					).Coalesce(0)),
-				).
-				Where(
-					asn.PrimaryWorkerID.In(req.WorkerIDs...),
-					keel.When(req.Since > 0, asn.CreatedAt.Gte(req.Since)),
-				))
+			rows, err := keel.Into[dispatchboardports.WorkerAcceptanceStats](
+				ctx,
+				r.db.Keel(ctx),
+				asn.
+					Group(asn.PrimaryWorkerID).
+					Pick(
+						asn.PrimaryWorkerID,
+						countIf(asn.AckStatus.Eq(shipment.AssignmentAckAccepted)),
+						countIf(asn.AckStatus.Eq(shipment.AssignmentAckDeclined)),
+						keel.CastFloat64(keel.NumericOf(
+							asn.AckAt.Sub(asn.CreatedAt).Avg().
+								Filter(keel.And(
+									answered,
+									asn.AckAt.IsNotNull(),
+									keel.Int64Of(asn.AckAt).GteExpr(asn.CreatedAt),
+								)),
+						).Coalesce(0)),
+					).
+					Where(
+						asn.PrimaryWorkerID.In(req.WorkerIDs...),
+						keel.When(req.Since > 0, asn.CreatedAt.Gte(req.Since)),
+					),
+			)
 			if err != nil {
 				return nil, fmt.Errorf("list worker acceptance stats: %w", err)
 			}

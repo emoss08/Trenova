@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransfercriteria"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,25 +29,25 @@ func newTransferSelection() *transferSelection {
 	refused, returned := pulid.MustNew("shp_"), pulid.MustNew("shp_")
 	planner := &fakeTransferPlanner{
 		preview: true,
-		candidates: &shipmentports.BillingTransferCandidateIDsResponse{
+		candidates: &shipmentbillingports.BillingTransferCandidateIDsResponse{
 			IDs:        []pulid.ID{ready, marked, refused, returned},
 			TotalCount: 4,
 		},
-		plan: &shipmentports.BillingTransferPlan{
+		plan: &shipmentbillingports.BillingTransferPlan{
 			Transfer: 2,
 			Refused:  1,
 			Returned: 1,
-			Decisions: []shipmentports.BillingTransferDecision{
-				{ShipmentID: ready, Outcome: shipmentports.BillingTransferOutcomeTransfer},
+			Decisions: []shipmentbillingports.BillingTransferDecision{
+				{ShipmentID: ready, Outcome: shipmentbillingports.BillingTransferOutcomeTransfer},
 				{
 					ShipmentID: marked,
 					Status:     shipment.StatusCompleted,
-					Outcome:    shipmentports.BillingTransferOutcomeMarkReadyAndTransfer,
+					Outcome:    shipmentbillingports.BillingTransferOutcomeMarkReadyAndTransfer,
 				},
-				{ShipmentID: refused, Outcome: shipmentports.BillingTransferOutcomeRefused},
+				{ShipmentID: refused, Outcome: shipmentbillingports.BillingTransferOutcomeRefused},
 				{
 					ShipmentID: returned,
-					Outcome:    shipmentports.BillingTransferOutcomeReturnToOperations,
+					Outcome:    shipmentbillingports.BillingTransferOutcomeReturnToOperations,
 				},
 			},
 		},
@@ -69,16 +69,19 @@ func TestTransferToBilling_ResolvesEveryTransferableShipmentToIDs(t *testing.T) 
 	sel := newTransferSelection()
 	customerID := pulid.MustNew("cus_")
 
-	resolved, err := sel.tool.ResolveSelection(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		paramAllTransferable:                       true,
-		paramMarkCompletedReady:                    true,
-		common.ParamBillType:                       "Invoice",
-		billingtransfercriteria.ParamStatus:        "Completed",
-		billingtransfercriteria.ParamCustomerID:    customerID.String(),
-		billingtransfercriteria.ParamQuery:         "acme",
-		billingtransfercriteria.ParamDeliveredFrom: "2026-09-01",
-		billingtransfercriteria.ParamDeliveredTo:   "2026-09-15",
-	}))
+	resolved, err := sel.tool.ResolveSelection(
+		t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{
+			paramAllTransferable:                       true,
+			paramMarkCompletedReady:                    true,
+			common.ParamBillType:                       "Invoice",
+			billingtransfercriteria.ParamStatus:        "Completed",
+			billingtransfercriteria.ParamCustomerID:    customerID.String(),
+			billingtransfercriteria.ParamQuery:         "acme",
+			billingtransfercriteria.ParamDeliveredFrom: "2026-09-01",
+			billingtransfercriteria.ParamDeliveredTo:   "2026-09-15",
+		}),
+	)
 	require.NoError(t, err)
 
 	listed := sel.planner.listed
@@ -119,10 +122,10 @@ func TestTransferToBilling_RefusesACriteriaSelectionThatTransfersNothing(t *test
 	t.Parallel()
 
 	sel := newTransferSelection()
-	sel.planner.plan = &shipmentports.BillingTransferPlan{
+	sel.planner.plan = &shipmentbillingports.BillingTransferPlan{
 		Refused: 1,
-		Decisions: []shipmentports.BillingTransferDecision{
-			{ShipmentID: sel.refused, Outcome: shipmentports.BillingTransferOutcomeRefused},
+		Decisions: []shipmentbillingports.BillingTransferDecision{
+			{ShipmentID: sel.refused, Outcome: shipmentbillingports.BillingTransferOutcomeRefused},
 		},
 	}
 
@@ -131,7 +134,7 @@ func TestTransferToBilling_RefusesACriteriaSelectionThatTransfersNothing(t *test
 	}))
 	require.ErrorContains(t, err, "billing_list_transfer_candidates")
 
-	sel.planner.candidates = &shipmentports.BillingTransferCandidateIDsResponse{}
+	sel.planner.candidates = &shipmentbillingports.BillingTransferCandidateIDsResponse{}
 	sel.planner.planned = nil
 	_, err = sel.tool.ResolveSelection(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		paramAllTransferable: true,
@@ -144,7 +147,7 @@ func TestTransferToBilling_RefusesACriteriaSelectionPastWhatOneTransferHolds(t *
 	t.Parallel()
 
 	sel := newTransferSelection()
-	sel.planner.candidates.TotalCount = shipmentports.MaxBillingTransferCandidateIDs + 1
+	sel.planner.candidates.TotalCount = shipmentbillingports.MaxBillingTransferCandidateIDs + 1
 	sel.planner.candidates.Truncated = true
 
 	_, err := sel.tool.ResolveSelection(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
@@ -256,12 +259,15 @@ func TestTransferToBilling_SetsAsideTheFiltersANamedSelectionWasFoundBy(t *testi
 	sel := newTransferSelection()
 	named := sel.ready.String()
 
-	resolved, err := sel.tool.ResolveSelection(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamShipmentIDs:             []any{named},
-		paramMarkCompletedReady:             true,
-		billingtransfercriteria.ParamQuery:  "SEED-PAY-001",
-		billingtransfercriteria.ParamStatus: "Completed",
-	}))
+	resolved, err := sel.tool.ResolveSelection(
+		t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{
+			common.ParamShipmentIDs:             []any{named},
+			paramMarkCompletedReady:             true,
+			billingtransfercriteria.ParamQuery:  "SEED-PAY-001",
+			billingtransfercriteria.ParamStatus: "Completed",
+		}),
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, map[string]any{

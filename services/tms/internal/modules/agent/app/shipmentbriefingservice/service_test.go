@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -161,15 +162,15 @@ func (*stubBasis) Prepare(
 }
 
 type stubBoard struct {
-	shipmentports.ShipmentBoardRepository
+	shipmentboardports.ShipmentBoardRepository
 	counts map[shipment.QuickFilter]int
 }
 
 func (b *stubBoard) QuickFilterTotals(
 	_ context.Context,
-	req *shipmentports.CountShipmentQuickFiltersRequest,
-) ([]shipmentports.ShipmentQuickFilterTotal, error) {
-	out := make([]shipmentports.ShipmentQuickFilterTotal, len(req.Filters))
+	req *shipmentboardports.CountShipmentQuickFiltersRequest,
+) ([]shipmentboardports.ShipmentQuickFilterTotal, error) {
+	out := make([]shipmentboardports.ShipmentQuickFilterTotal, len(req.Filters))
 	for i, spec := range req.Filters {
 		out[i].Count = b.counts[spec.Filter]
 	}
@@ -181,8 +182,8 @@ type stubReasons struct{}
 func (stubReasons) LeadingLateReason(
 	context.Context,
 	pagination.TenantInfo,
-) (*shipmentports.ShipmentLateReason, error) {
-	return &shipmentports.ShipmentLateReason{Label: "Weather", Count: 1}, nil
+) (*shipmentboardports.ShipmentLateReason, error) {
+	return &shipmentboardports.ShipmentLateReason{Label: "Weather", Count: 1}, nil
 }
 
 type stubOrgs struct {

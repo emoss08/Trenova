@@ -3,17 +3,17 @@ package rateconfirmationservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +28,7 @@ import (
 // fails the test that runs it.
 type planTestDeps struct {
 	repo                  *fakeRateConRepo
-	carrierAssignmentRepo *shipmentportsmock.MockCarrierAssignmentRepository
+	carrierAssignmentRepo *carrierassignmentportsmock.MockCarrierAssignmentRepository
 	carrierRepo           *carrierportsmock.MockCarrierRepository
 	shipmentRepo          *shipmentportsmock.MockShipmentRepository
 	templates             *documenttemplateportsmock.MockDocumentTemplateResolver
@@ -41,7 +41,7 @@ func setupPlanTest(t *testing.T) *planTestDeps {
 
 	deps := &planTestDeps{
 		repo:                  newFakeRateConRepo(),
-		carrierAssignmentRepo: shipmentportsmock.NewMockCarrierAssignmentRepository(t),
+		carrierAssignmentRepo: carrierassignmentportsmock.NewMockCarrierAssignmentRepository(t),
 		carrierRepo:           carrierportsmock.NewMockCarrierRepository(t),
 		shipmentRepo:          shipmentportsmock.NewMockShipmentRepository(t),
 		templates:             documenttemplateportsmock.NewMockDocumentTemplateResolver(t),

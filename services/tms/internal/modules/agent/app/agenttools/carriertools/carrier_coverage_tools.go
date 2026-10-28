@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -51,16 +51,16 @@ const fieldAccessorialChargeID = "accessorialChargeId"
 type carrierCoverage interface {
 	AssignToMove(
 		ctx context.Context,
-		req *shipmentports.AssignMoveToCarrierRequest,
+		req *carrierassignmentports.AssignMoveToCarrierRequest,
 	) (*shipment.CarrierAssignment, error)
 	PreviewAssignToMove(
 		ctx context.Context,
-		req *shipmentports.AssignMoveToCarrierRequest,
+		req *carrierassignmentports.AssignMoveToCarrierRequest,
 	) (*carrierassignmentservice.CoveragePlan, error)
-	Cancel(ctx context.Context, req *shipmentports.CancelCarrierAssignmentRequest) error
+	Cancel(ctx context.Context, req *carrierassignmentports.CancelCarrierAssignmentRequest) error
 	PreviewCancel(
 		ctx context.Context,
-		req *shipmentports.CancelCarrierAssignmentRequest,
+		req *carrierassignmentports.CancelCarrierAssignmentRequest,
 	) (*carrierassignmentservice.CoveragePlan, error)
 }
 
@@ -234,7 +234,7 @@ type carrierAccessorialParam struct {
 // proposal could not show the pay a person is approving.
 func (t *AssignMoveToCarrierTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*shipmentports.AssignMoveToCarrierRequest, error) {
+) (*carrierassignmentports.AssignMoveToCarrierRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -268,7 +268,7 @@ func (t *AssignMoveToCarrierTool) request(
 		return nil, err
 	}
 
-	return &shipmentports.AssignMoveToCarrierRequest{
+	return &carrierassignmentports.AssignMoveToCarrierRequest{
 		TenantInfo:     common.TenantFrom(*params),
 		ShipmentMoveID: moveID,
 		CarrierID:      carrierID,
@@ -414,7 +414,7 @@ func (t *CancelCarrierAssignmentTool) Execute(
 
 func (t *CancelCarrierAssignmentTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*shipmentports.CancelCarrierAssignmentRequest, error) {
+) (*carrierassignmentports.CancelCarrierAssignmentRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -428,7 +428,7 @@ func (t *CancelCarrierAssignmentTool) request(
 		return nil, err
 	}
 
-	return &shipmentports.CancelCarrierAssignmentRequest{
+	return &carrierassignmentports.CancelCarrierAssignmentRequest{
 		TenantInfo:     common.TenantFrom(*params),
 		ShipmentMoveID: moveID,
 		Reason:         strings.TrimSpace(reason),
@@ -460,7 +460,7 @@ func carrierRateMethodArg(params map[string]any) (shipment.CarrierRateMethod, er
 
 func carrierAccessorialsArg(
 	params map[string]any,
-) ([]shipmentports.CarrierAccessorialInput, error) {
+) ([]carrierassignmentports.CarrierAccessorialInput, error) {
 	if _, present := params[fieldAccessorials]; !present {
 		return nil, nil
 	}
@@ -476,7 +476,7 @@ func carrierAccessorialsArg(
 		)
 	}
 
-	out := make([]shipmentports.CarrierAccessorialInput, 0, len(lines))
+	out := make([]carrierassignmentports.CarrierAccessorialInput, 0, len(lines))
 	for idx, line := range lines {
 		amount, err := common.DecimalArg(
 			map[string]any{fieldAmount: line.Amount},
@@ -486,7 +486,7 @@ func carrierAccessorialsArg(
 		if err != nil {
 			return nil, fmt.Errorf("accessorials[%d]: %w", idx, err)
 		}
-		input := shipmentports.CarrierAccessorialInput{
+		input := carrierassignmentports.CarrierAccessorialInput{
 			Description: strings.TrimSpace(line.Description),
 			Amount:      amount,
 		}

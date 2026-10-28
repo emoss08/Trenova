@@ -20,7 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -31,7 +31,7 @@ import (
 )
 
 type receivingShipments struct {
-	shipmentports.ShipmentService
+	shipmentserviceports.ShipmentService
 	conn    *postgres.Connection
 	tender  *editest.InternalTender
 	created []pulid.ID
@@ -210,7 +210,12 @@ func TestSetShipmentTenderStatus_FailsWhenTheScopeCannotSeeTheShipment(t *testin
 	)
 
 	require.Error(t, err)
-	assert.True(t, errortypes.IsNotFoundError(err), "an update that matches no row is not found: %v", err)
+	assert.True(
+		t,
+		errortypes.IsNotFoundError(err),
+		"an update that matches no row is not found: %v",
+		err,
+	)
 	status := h.tender.SourceTenderStatus(t)
 	require.NotNil(t, status)
 	assert.Equal(t, shipment.TenderStatusTendered, *status)

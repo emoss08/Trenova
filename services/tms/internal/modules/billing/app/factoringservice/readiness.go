@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -50,7 +50,7 @@ type ReadinessParams struct {
 	Attention     factoringports.WatchtowerReader `optional:"true"`
 	Invoices      invoiceports.InvoiceRepository
 	Documents     documentports.DocumentRepository
-	Shipments     shipmentports.ShipmentService `optional:"true"`
+	Shipments     shipmentserviceports.ShipmentService `optional:"true"`
 	Customers     customerports.CustomerRepository
 	Organizations tenantports.OrganizationRepository
 	Templates     documenttemplateports.DocumentTemplateResolver
@@ -70,7 +70,7 @@ type ReadinessService struct {
 	attention     factoringports.WatchtowerReader
 	invoices      invoiceports.InvoiceRepository
 	documents     documentports.DocumentRepository
-	shipments     shipmentports.ShipmentService
+	shipments     shipmentserviceports.ShipmentService
 	customers     customerports.CustomerRepository
 	organizations tenantports.OrganizationRepository
 	templates     documenttemplateports.DocumentTemplateResolver

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/shared/assignmentsolver"
 	"github.com/emoss08/trenova/shared/dispatchplanner"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,13 +16,13 @@ const horizonSearchSeed = int64(1)
 
 type horizonOracle struct {
 	candidates *dispatchcandidateservice.Service
-	moves      []*shipmentports.BoardMove
-	drivers    []*shipmentports.BoardDriver
+	moves      []*dispatchboardports.BoardMove
+	drivers    []*dispatchboardports.BoardDriver
 	snapshot   *dispatchcandidateservice.FleetSnapshot
 	control    *dispatchcontrol.DispatchControl
 	scores     [][]*dispatchcandidateservice.CandidateScore
 
-	baseCommitments map[pulid.ID][]*shipmentports.WorkerCommitment
+	baseCommitments map[pulid.ID][]*dispatchboardports.WorkerCommitment
 }
 
 func newHorizonOracle(
@@ -63,9 +63,9 @@ func (o *horizonOracle) Rebuild(
 }
 
 func cloneCommitments(
-	source map[pulid.ID][]*shipmentports.WorkerCommitment,
-) map[pulid.ID][]*shipmentports.WorkerCommitment {
-	cloned := make(map[pulid.ID][]*shipmentports.WorkerCommitment, len(source))
+	source map[pulid.ID][]*dispatchboardports.WorkerCommitment,
+) map[pulid.ID][]*dispatchboardports.WorkerCommitment {
+	cloned := make(map[pulid.ID][]*dispatchboardports.WorkerCommitment, len(source))
 	for workerID, commitments := range source {
 		cloned[workerID] = slices.Clone(commitments)
 	}
@@ -134,7 +134,7 @@ func (s *Service) solveHorizon(p *solveParams) *dispatchconsoleports.DispatchPla
 }
 
 type buildHorizonPlanParams struct {
-	Moves   []*shipmentports.BoardMove
+	Moves   []*dispatchboardports.BoardMove
 	Result  dispatchplanner.Result
 	Oracle  *horizonOracle
 	Control *dispatchcontrol.DispatchControl

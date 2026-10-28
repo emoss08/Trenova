@@ -25,7 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -58,8 +58,8 @@ type ActivitiesParams struct {
 	UsageProvider        platformcatalogports.UsageProvider `optional:"true"`
 	Redis                *goredis.Client                    `optional:"true"`
 	DocumentIntelligence documentports.DocumentContentService
-	ShipmentService      shipmentports.ShipmentService       `optional:"true"`
-	Triage               inboundmessageports.TriageEventSink `optional:"true"`
+	ShipmentService      shipmentserviceports.ShipmentService `optional:"true"`
+	Triage               inboundmessageports.TriageEventSink  `optional:"true"`
 }
 
 type Activities struct {
@@ -74,7 +74,7 @@ type Activities struct {
 	usageProvider        platformcatalogports.UsageProvider
 	redis                *goredis.Client
 	documentIntelligence documentports.DocumentContentService
-	shipmentService      shipmentports.ShipmentService
+	shipmentService      shipmentserviceports.ShipmentService
 	triage               inboundmessageports.TriageEventSink
 }
 

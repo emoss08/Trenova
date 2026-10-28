@@ -6,14 +6,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmovejurisdictionmilerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,7 +27,7 @@ const completedAt = int64(1_800_000_000)
 type fixture struct {
 	ctx        context.Context
 	db         *keel.DB
-	repo       shipmentports.ShipmentMoveJurisdictionMileRepository
+	repo       shipmentdistanceports.ShipmentMoveJurisdictionMileRepository
 	tenantInfo pagination.TenantInfo
 	shipmentID pulid.ID
 	locationID pulid.ID
@@ -170,10 +169,13 @@ func TestReplaceForMoveReplacesRows(t *testing.T) {
 	require.NoError(t, f.repo.ReplaceForMove(f.ctx, move))
 	assert.False(t, move.JurisdictionMilesDirty)
 
-	rows, err := f.repo.ListByMoveIDs(f.ctx, shipmentports.ListJurisdictionMilesByMoveIDsRequest{
-		TenantInfo: f.tenantInfo,
-		MoveIDs:    []pulid.ID{move.ID},
-	})
+	rows, err := f.repo.ListByMoveIDs(
+		f.ctx,
+		shipmentdistanceports.ListJurisdictionMilesByMoveIDsRequest{
+			TenantInfo: f.tenantInfo,
+			MoveIDs:    []pulid.ID{move.ID},
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, rows, 2)
 	assert.Equal(t, "TX", rows[0].JurisdictionCode)
@@ -185,10 +187,13 @@ func TestReplaceForMoveReplacesRows(t *testing.T) {
 	move.JurisdictionMiles = []*shipment.ShipmentMoveJurisdictionMile{row("US", "NM", 0, 30)}
 	require.NoError(t, f.repo.ReplaceForMove(f.ctx, move))
 
-	rows, err = f.repo.ListByMoveIDs(f.ctx, shipmentports.ListJurisdictionMilesByMoveIDsRequest{
-		TenantInfo: f.tenantInfo,
-		MoveIDs:    []pulid.ID{move.ID},
-	})
+	rows, err = f.repo.ListByMoveIDs(
+		f.ctx,
+		shipmentdistanceports.ListJurisdictionMilesByMoveIDsRequest{
+			TenantInfo: f.tenantInfo,
+			MoveIDs:    []pulid.ID{move.ID},
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, rows, 1)
 	assert.Equal(t, "NM", rows[0].JurisdictionCode)
@@ -196,10 +201,13 @@ func TestReplaceForMoveReplacesRows(t *testing.T) {
 	move.JurisdictionMiles = nil
 	require.NoError(t, f.repo.ReplaceForMove(f.ctx, move))
 
-	rows, err = f.repo.ListByMoveIDs(f.ctx, shipmentports.ListJurisdictionMilesByMoveIDsRequest{
-		TenantInfo: f.tenantInfo,
-		MoveIDs:    []pulid.ID{move.ID},
-	})
+	rows, err = f.repo.ListByMoveIDs(
+		f.ctx,
+		shipmentdistanceports.ListJurisdictionMilesByMoveIDsRequest{
+			TenantInfo: f.tenantInfo,
+			MoveIDs:    []pulid.ID{move.ID},
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, rows)
 }
@@ -211,23 +219,32 @@ func TestListByMoveIDsIsTenantIsolated(t *testing.T) {
 	require.NoError(t, f.repo.ReplaceForMove(f.ctx, move))
 
 	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	rows, err := f.repo.ListByMoveIDs(dbscope.WithTenant(f.ctx, stranger.DBTenant()), shipmentports.ListJurisdictionMilesByMoveIDsRequest{
-		TenantInfo: stranger,
-		MoveIDs:    []pulid.ID{move.ID},
-	})
+	rows, err := f.repo.ListByMoveIDs(
+		dbscope.WithTenant(f.ctx, stranger.DBTenant()),
+		shipmentdistanceports.ListJurisdictionMilesByMoveIDsRequest{
+			TenantInfo: stranger,
+			MoveIDs:    []pulid.ID{move.ID},
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, rows)
 
-	rows, err = f.repo.ListByMoveIDs(f.ctx, shipmentports.ListJurisdictionMilesByMoveIDsRequest{
-		TenantInfo: f.tenantInfo,
-		MoveIDs:    []pulid.ID{move.ID},
-	})
+	rows, err = f.repo.ListByMoveIDs(
+		f.ctx,
+		shipmentdistanceports.ListJurisdictionMilesByMoveIDsRequest{
+			TenantInfo: f.tenantInfo,
+			MoveIDs:    []pulid.ID{move.ID},
+		},
+	)
 	require.NoError(t, err)
 	assert.Len(t, rows, 1)
 
-	rows, err = f.repo.ListByMoveIDs(f.ctx, shipmentports.ListJurisdictionMilesByMoveIDsRequest{
-		TenantInfo: f.tenantInfo,
-	})
+	rows, err = f.repo.ListByMoveIDs(
+		f.ctx,
+		shipmentdistanceports.ListJurisdictionMilesByMoveIDsRequest{
+			TenantInfo: f.tenantInfo,
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, rows)
 }
@@ -236,7 +253,7 @@ func TestListUnattributedMovesCountsCompletedMovesInPeriod(t *testing.T) {
 	f := setup(t)
 	move := f.insertCompletedMove(t, 120, completedAt)
 
-	page, err := f.repo.ListUnattributedMoves(f.ctx, shipmentports.UnattributedMovesRequest{
+	page, err := f.repo.ListUnattributedMoves(f.ctx, shipmentdistanceports.UnattributedMovesRequest{
 		TenantInfo: f.tenantInfo,
 		Start:      completedAt - 100,
 		End:        completedAt + 100,
@@ -246,29 +263,38 @@ func TestListUnattributedMovesCountsCompletedMovesInPeriod(t *testing.T) {
 	assert.GreaterOrEqual(t, page.TotalMoves, 1)
 	assert.GreaterOrEqual(t, page.TotalMiles.InexactFloat64(), 120.0)
 
-	before, err := f.repo.ListUnattributedMoves(f.ctx, shipmentports.UnattributedMovesRequest{
-		TenantInfo: f.tenantInfo,
-		Start:      completedAt - 100,
-		End:        completedAt,
-	})
+	before, err := f.repo.ListUnattributedMoves(
+		f.ctx,
+		shipmentdistanceports.UnattributedMovesRequest{
+			TenantInfo: f.tenantInfo,
+			Start:      completedAt - 100,
+			End:        completedAt,
+		},
+	)
 	require.NoError(t, err)
 	assert.NotContains(t, before.MoveIDs, move.ID)
 
-	after, err := f.repo.ListUnattributedMoves(f.ctx, shipmentports.UnattributedMovesRequest{
-		TenantInfo: f.tenantInfo,
-		Start:      completedAt + 1,
-		End:        completedAt + 100,
-	})
+	after, err := f.repo.ListUnattributedMoves(
+		f.ctx,
+		shipmentdistanceports.UnattributedMovesRequest{
+			TenantInfo: f.tenantInfo,
+			Start:      completedAt + 1,
+			End:        completedAt + 100,
+		},
+	)
 	require.NoError(t, err)
 	assert.NotContains(t, after.MoveIDs, move.ID)
 
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	otherCtx := dbscope.WithTenant(f.ctx, other.DBTenant())
-	otherTenant, err := f.repo.ListUnattributedMoves(otherCtx, shipmentports.UnattributedMovesRequest{
-		TenantInfo: other,
-		Start:      completedAt - 100,
-		End:        completedAt + 100,
-	})
+	otherTenant, err := f.repo.ListUnattributedMoves(
+		otherCtx,
+		shipmentdistanceports.UnattributedMovesRequest{
+			TenantInfo: other,
+			Start:      completedAt - 100,
+			End:        completedAt + 100,
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, otherTenant.MoveIDs)
 	assert.Equal(t, 0, otherTenant.TotalMoves)
@@ -276,16 +302,19 @@ func TestListUnattributedMovesCountsCompletedMovesInPeriod(t *testing.T) {
 	move.JurisdictionMiles = []*shipment.ShipmentMoveJurisdictionMile{row("US", "TX", 0, 120)}
 	require.NoError(t, f.repo.ReplaceForMove(f.ctx, move))
 
-	attributed, err := f.repo.ListUnattributedMoves(f.ctx, shipmentports.UnattributedMovesRequest{
-		TenantInfo: f.tenantInfo,
-		Start:      completedAt - 100,
-		End:        completedAt + 100,
-	})
+	attributed, err := f.repo.ListUnattributedMoves(
+		f.ctx,
+		shipmentdistanceports.UnattributedMovesRequest{
+			TenantInfo: f.tenantInfo,
+			Start:      completedAt - 100,
+			End:        completedAt + 100,
+		},
+	)
 	require.NoError(t, err)
 	assert.NotContains(t, attributed.MoveIDs, move.ID)
 	assert.Equal(t, page.TotalMoves-1, attributed.TotalMoves)
 
-	_, err = f.repo.ListUnattributedMoves(f.ctx, shipmentports.UnattributedMovesRequest{
+	_, err = f.repo.ListUnattributedMoves(f.ctx, shipmentdistanceports.UnattributedMovesRequest{
 		TenantInfo: f.tenantInfo,
 		Start:      completedAt,
 		End:        completedAt,
@@ -297,7 +326,7 @@ func TestListUnattributedMovesSkipsMovesWithoutDistance(t *testing.T) {
 	f := setup(t)
 	move := f.insertCompletedMove(t, 0, completedAt)
 
-	page, err := f.repo.ListUnattributedMoves(f.ctx, shipmentports.UnattributedMovesRequest{
+	page, err := f.repo.ListUnattributedMoves(f.ctx, shipmentdistanceports.UnattributedMovesRequest{
 		TenantInfo: f.tenantInfo,
 		Start:      completedAt - 100,
 		End:        completedAt + 100,

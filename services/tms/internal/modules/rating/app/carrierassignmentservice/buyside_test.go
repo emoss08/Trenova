@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
@@ -410,8 +410,8 @@ func TestBuySideRating_UnpricedSellSideIsNotAMarginBreach(t *testing.T) {
 	assert.False(t, rating.Margin.Breached())
 }
 
-func appliedRequest() *shipmentports.AssignMoveToCarrierRequest {
-	return &shipmentports.AssignMoveToCarrierRequest{
+func appliedRequest() *carrierassignmentports.AssignMoveToCarrierRequest {
+	return &carrierassignmentports.AssignMoveToCarrierRequest{
 		CarrierID: pulid.MustNew("car_"),
 		AutoRate:  true,
 	}
@@ -431,7 +431,7 @@ func TestApplyBuySideRating_FillsTheRequestTheWayAPersonWould(t *testing.T) {
 		BaseRate:      money("1450"),
 		FuelSurcharge: money("210"),
 		RateQuoteID:   &quoteID,
-		Accessorials: []shipmentports.CarrierAccessorialInput{
+		Accessorials: []carrierassignmentports.CarrierAccessorialInput{
 			{AccessorialChargeID: chargeIDPtr(), Amount: money("125")},
 		},
 	})
@@ -448,7 +448,7 @@ func TestApplyBuySideRating_FillsTheRequestTheWayAPersonWould(t *testing.T) {
 func TestApplyBuySideRating_IsNotAskedForWhenARateWasTyped(t *testing.T) {
 	t.Parallel()
 
-	req := &shipmentports.AssignMoveToCarrierRequest{
+	req := &carrierassignmentports.AssignMoveToCarrierRequest{
 		CarrierID: pulid.MustNew("car_"),
 		AutoRate:  true,
 		BaseRate:  money("1600"),
@@ -460,7 +460,7 @@ func TestApplyBuySideRating_IsNotAskedForWhenARateWasTyped(t *testing.T) {
 func TestShouldAutoRate_IsSkippedWhenNotAskedFor(t *testing.T) {
 	t.Parallel()
 
-	assert.False(t, shouldAutoRate(&shipmentports.AssignMoveToCarrierRequest{}))
+	assert.False(t, shouldAutoRate(&carrierassignmentports.AssignMoveToCarrierRequest{}))
 }
 
 func TestShouldAutoRate_AppliesWhenAskedForAndNoRateWasTyped(t *testing.T) {

@@ -19,8 +19,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/idempotency"
@@ -248,7 +252,7 @@ func (r *MutationResolver) TransferShipmentToBillingItems(ctx context.Context, i
 	if err != nil {
 		return nil, err
 	}
-	transferred, err := r.ShipmentService.TransferToBillingItems(ctx, &shipmentports.TransferShipmentToBillingRequest{
+	transferred, err := r.ShipmentService.TransferToBillingItems(ctx, &shipmentbillingports.TransferShipmentToBillingRequest{
 		ShipmentID: shipmentID,
 		BillType:   parseBillType(input.BillType),
 	}, actorutil.FromAuthContext(authCtx))
@@ -269,7 +273,7 @@ func (r *MutationResolver) BulkTransferShipmentsToBilling(ctx context.Context, i
 	if err != nil {
 		return nil, err
 	}
-	response, err := r.ShipmentService.BulkTransferToBilling(ctx, &shipmentports.BulkTransferShipmentToBillingRequest{
+	response, err := r.ShipmentService.BulkTransferToBilling(ctx, &shipmentbillingports.BulkTransferShipmentToBillingRequest{
 		ShipmentIDs:                 shipmentIDs,
 		BillType:                    parseBillType(input.BillType),
 		MarkCompletedReadyToInvoice: base.BoolValue(input.MarkCompletedReadyToInvoice),
@@ -331,7 +335,7 @@ func (r *MutationResolver) AutoRateShipment(ctx context.Context, id string) (*gq
 		return nil, err
 	}
 
-	entity, application, err := r.ShipmentService.AutoRate(ctx, &shipmentports.AutoRateShipmentRequest{
+	entity, application, err := r.ShipmentService.AutoRate(ctx, &shipmentserviceports.AutoRateShipmentRequest{
 		ShipmentID: shipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: authCtx.OrganizationID,
@@ -560,7 +564,7 @@ func (r *MutationResolver) UpdateShipmentComment(ctx context.Context, shipmentID
 	if input.RequiresAcknowledgment != nil {
 		requiresAcknowledgment = *input.RequiresAcknowledgment
 	}
-	entity, err := r.ShipmentCommentService.Update(ctx, &shipmentports.UpdateShipmentCommentRequest{
+	entity, err := r.ShipmentCommentService.Update(ctx, &shipmentcommentports.UpdateShipmentCommentRequest{
 		Entity: &shipmentdomain.ShipmentComment{
 			ID:                     parsedCommentID,
 			BusinessUnitID:         authCtx.BusinessUnitID,
@@ -605,7 +609,7 @@ func (r *MutationResolver) DeleteShipmentComment(ctx context.Context, shipmentID
 	if err != nil {
 		return false, err
 	}
-	if err = r.ShipmentCommentService.Delete(ctx, &shipmentports.DeleteShipmentCommentRequest{
+	if err = r.ShipmentCommentService.Delete(ctx, &shipmentcommentports.DeleteShipmentCommentRequest{
 		ShipmentID: parsedShipmentID,
 		CommentID:  parsedCommentID,
 		TenantInfo: base.TenantInfo(authCtx),
@@ -837,7 +841,7 @@ func (r *QueryResolver) ShipmentComments(ctx context.Context, shipmentID string,
 		TenantInfo: base.TenantInfo(authCtx),
 		Limit:      page.Cursor.Limit,
 	})
-	result, err := r.ShipmentCommentService.ListByShipmentID(ctx, &shipmentports.ListShipmentCommentsRequest{
+	result, err := r.ShipmentCommentService.ListByShipmentID(ctx, &shipmentcommentports.ListShipmentCommentsRequest{
 		ShipmentID: parsedShipmentID,
 		Filter:     queryOptions,
 		Cursor:     page.Cursor,
@@ -875,7 +879,7 @@ func (r *QueryResolver) ShipmentCommentReplies(ctx context.Context, shipmentID s
 		TenantInfo: base.TenantInfo(authCtx),
 		Limit:      page.Cursor.Limit,
 	})
-	result, err := r.ShipmentCommentService.ListByShipmentID(ctx, &shipmentports.ListShipmentCommentsRequest{
+	result, err := r.ShipmentCommentService.ListByShipmentID(ctx, &shipmentcommentports.ListShipmentCommentsRequest{
 		ShipmentID:      parsedShipmentID,
 		ParentCommentID: &parsedCommentID,
 		Filter:          queryOptions,
@@ -898,7 +902,7 @@ func (r *QueryResolver) ShipmentCommentCount(ctx context.Context, shipmentID str
 	if err != nil {
 		return nil, err
 	}
-	count, err := r.ShipmentCommentService.GetCountByShipmentID(ctx, &shipmentports.GetShipmentCommentCountRequest{
+	count, err := r.ShipmentCommentService.GetCountByShipmentID(ctx, &shipmentcommentports.GetShipmentCommentCountRequest{
 		ShipmentID: parsedShipmentID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -958,7 +962,7 @@ func (r *QueryResolver) ShipmentBillingTransferCandidateIds(ctx context.Context,
 		status = shipmentdomain.Status(*input.Status)
 	}
 
-	response, err := r.ShipmentService.ListBillingTransferCandidateIDs(ctx, &shipmentports.ListBillingTransferCandidateIDsRequest{
+	response, err := r.ShipmentService.ListBillingTransferCandidateIDs(ctx, &shipmentbillingports.ListBillingTransferCandidateIDsRequest{
 		Filter: base.QueryOptionsFromGraphQL(&base.GqlListOptions{
 			TenantInfo:   base.TenantInfo(authCtx),
 			Query:        base.StringValue(input.Query),
@@ -1247,7 +1251,7 @@ func (r *MutationResolver) ApproveShipmentRatingReview(ctx context.Context, ship
 	if err != nil {
 		return nil, err
 	}
-	entity, err := r.ShipmentRatingReviewService.Approve(ctx, &shipmentports.ApproveRatingReviewRequest{
+	entity, err := r.ShipmentRatingReviewService.Approve(ctx, &ratingreviewports.ApproveRatingReviewRequest{
 		ShipmentID: id,
 		TenantInfo: base.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))

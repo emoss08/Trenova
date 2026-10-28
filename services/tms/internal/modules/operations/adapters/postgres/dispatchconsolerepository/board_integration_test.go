@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchconsolerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -47,7 +47,7 @@ func TestListBoardMoves_ReadsWhetherTheLoadArrivedAtItsDelivery(t *testing.T) {
 		DB:     postgres.NewTestConnection(db),
 		Logger: zap.NewNop(),
 	})
-	moves, err := repo.ListBoardMoves(ctx, &shipmentports.DispatchBoardFilter{
+	moves, err := repo.ListBoardMoves(ctx, &dispatchboardports.DispatchBoardFilter{
 		TenantInfo:     tenant,
 		WindowStart:    0,
 		WindowEnd:      time.Now().Unix() + 365*86_400,
@@ -103,7 +103,7 @@ func TestGetBoardSummary_CountsMovesByTheirNextStop(t *testing.T) {
 		DB:     postgres.NewTestConnection(db),
 		Logger: zap.NewNop(),
 	})
-	summaryWithDelivery := func(opens, closes int64) *shipmentports.BoardSummary {
+	summaryWithDelivery := func(opens, closes int64) *dispatchboardports.BoardSummary {
 		t.Helper()
 		_, updateErr := stp.Where(stp.ID.Eq(last.ID)).Update(ctx, db,
 			stp.ScheduledWindowStart.To(opens),
@@ -111,7 +111,7 @@ func TestGetBoardSummary_CountsMovesByTheirNextStop(t *testing.T) {
 		)
 		require.NoError(t, updateErr)
 
-		summary, summaryErr := repo.GetBoardSummary(ctx, &shipmentports.DispatchBoardFilter{
+		summary, summaryErr := repo.GetBoardSummary(ctx, &dispatchboardports.DispatchBoardFilter{
 			TenantInfo:     tenant,
 			WindowStart:    now,
 			WindowEnd:      now + 86_400,
@@ -138,7 +138,7 @@ func TestGetBoardSummary_CountsMovesByTheirNextStop(t *testing.T) {
 
 	// Not picked up, the pickup's window decides, by the same rule: due now
 	// while it is open, overdue once it has closed.
-	pickup := func(opens, closes int64) *shipmentports.BoardSummary {
+	pickup := func(opens, closes int64) *dispatchboardports.BoardSummary {
 		t.Helper()
 		_, updateErr := stp.Where(stp.ID.Eq(first.ID)).Update(ctx, db,
 			stp.ScheduledWindowStart.To(opens),

@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransfercriteria"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -23,8 +24,8 @@ const (
 type billingTransferCandidateLister interface {
 	ListBillingTransferCandidates(
 		ctx context.Context,
-		req *shipmentports.ListBillingTransferCandidatesRequest,
-	) (*shipmentports.BillingTransferCandidates, error)
+		req *shipmentbillingports.ListBillingTransferCandidatesRequest,
+	) (*shipmentbillingports.BillingTransferCandidates, error)
 }
 
 type listBillingTransferCandidatesTool struct {
@@ -32,7 +33,7 @@ type listBillingTransferCandidatesTool struct {
 }
 
 func newListBillingTransferCandidatesTool(
-	shipments shipmentports.ShipmentService,
+	shipments shipmentserviceports.ShipmentService,
 ) agenttoolports.AgentQueryTool {
 	return &listBillingTransferCandidatesTool{shipments: shipments}
 }
@@ -115,7 +116,7 @@ func (t *listBillingTransferCandidatesTool) Query(
 
 	candidates, err := t.shipments.ListBillingTransferCandidates(
 		ctx,
-		&shipmentports.ListBillingTransferCandidatesRequest{
+		&shipmentbillingports.ListBillingTransferCandidatesRequest{
 			Filter: selection.QueryOptions(
 				tenantOf(params),
 				pagination.Info{Limit: window.limit, Offset: window.offset},
@@ -136,7 +137,7 @@ func (t *listBillingTransferCandidatesTool) Query(
 		switch {
 		case decision.Outcome.Transfers():
 			result.PageTransfer++
-		case decision.Outcome == shipmentports.BillingTransferOutcomeReturnToOperations:
+		case decision.Outcome == shipmentbillingports.BillingTransferOutcomeReturnToOperations:
 			result.PageReturned++
 		default:
 			result.PageRefused++
@@ -168,7 +169,7 @@ func (t *listBillingTransferCandidatesTool) completedAlsoWaiting(
 	selection.Status = shipment.StatusCompleted
 	completed, err := t.shipments.ListBillingTransferCandidates(
 		ctx,
-		&shipmentports.ListBillingTransferCandidatesRequest{
+		&shipmentbillingports.ListBillingTransferCandidatesRequest{
 			Filter: selection.QueryOptions(
 				tenantOf(params),
 				pagination.Info{Limit: 1},
@@ -186,7 +187,9 @@ func (t *listBillingTransferCandidatesTool) completedAlsoWaiting(
 		"and count them when asked what is ready to bill.", completed.TotalCount)
 }
 
-func candidateRow(decision *shipmentports.BillingTransferDecision) billingTransferCandidateRow {
+func candidateRow(
+	decision *shipmentbillingports.BillingTransferDecision,
+) billingTransferCandidateRow {
 	row := billingTransferCandidateRow{
 		ID:        decision.ShipmentID.String(),
 		ProNumber: decision.ProNumber,

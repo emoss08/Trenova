@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -56,9 +57,9 @@ type Params struct {
 	JournalRepo        journalentryports.JournalPostingRepository
 	FiscalPeriodRepo   fiscalperiodports.FiscalPeriodRepository
 	DocumentRepo       documentports.DocumentRepository
-	OrderRepo          orderports.OrderRepository               `optional:"true"`
-	ChargeAllocRepo    shipmentports.ChargeAllocationRepository `optional:"true"`
-	OrderDerivation    orderports.OrderDerivationService        `optional:"true"`
+	OrderRepo          orderports.OrderRepository                       `optional:"true"`
+	ChargeAllocRepo    chargeallocationports.ChargeAllocationRepository `optional:"true"`
+	OrderDerivation    orderports.OrderDerivationService                `optional:"true"`
 	DetentionBilling   detentionports.DetentionBillingService
 	Validator          *Validator
 	AuditService       auditports.AuditService
@@ -92,7 +93,7 @@ type Service struct {
 	fiscalPeriodRepo   fiscalperiodports.FiscalPeriodRepository
 	documentRepo       documentports.DocumentRepository
 	orderRepo          orderports.OrderRepository
-	chargeAllocRepo    shipmentports.ChargeAllocationRepository
+	chargeAllocRepo    chargeallocationports.ChargeAllocationRepository
 	orderDerivation    orderports.OrderDerivationService
 	detentionBilling   detentionports.DetentionBillingService
 	validator          *Validator

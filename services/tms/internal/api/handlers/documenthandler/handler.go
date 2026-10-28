@@ -20,7 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,7 +41,7 @@ type Params struct {
 	UploadService          *documentuploadservice.Service
 	DocumentContentService documentports.DocumentContentService
 	ExtractionStatus       documentports.ExtractionStatusReader
-	ImportAssistant        shipmentports.ShipmentImportAssistantService
+	ImportAssistant        shipmentimportassistantports.ShipmentImportAssistantService
 	PageAssistant          assistantports.PageAssistant `optional:"true"`
 	ErrorHandler           *helpers.ErrorHandler
 	PermissionMiddleware   *middleware.PermissionMiddleware
@@ -54,7 +54,7 @@ type Handler struct {
 	uploadService   *documentuploadservice.Service
 	contentService  documentports.DocumentContentService
 	extraction      documentports.ExtractionStatusReader
-	importAssistant shipmentports.ShipmentImportAssistantService
+	importAssistant shipmentimportassistantports.ShipmentImportAssistantService
 	pageAssistant   assistantports.PageAssistant
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
@@ -123,7 +123,7 @@ func NewTestHandler(
 	service *documentservice.Service,
 	eh *helpers.ErrorHandler,
 	pm *middleware.PermissionMiddleware,
-	importAssistant ...shipmentports.ShipmentImportAssistantService,
+	importAssistant ...shipmentimportassistantports.ShipmentImportAssistantService,
 ) *Handler {
 	return NewTestHandlerWithConfig(service, eh, pm, &config.Config{}, importAssistant...)
 }
@@ -133,9 +133,9 @@ func NewTestHandlerWithConfig(
 	eh *helpers.ErrorHandler,
 	pm *middleware.PermissionMiddleware,
 	cfg *config.Config,
-	importAssistant ...shipmentports.ShipmentImportAssistantService,
+	importAssistant ...shipmentimportassistantports.ShipmentImportAssistantService,
 ) *Handler {
-	var assistant shipmentports.ShipmentImportAssistantService
+	var assistant shipmentimportassistantports.ShipmentImportAssistantService
 	if len(importAssistant) > 0 {
 		assistant = importAssistant[0]
 	}

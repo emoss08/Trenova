@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,7 +40,7 @@ type ruleInput struct {
 	timezone string
 	loc      *time.Location
 	now      time.Time
-	caps     *shipmentports.ShipmentBoardCapabilities
+	caps     *shipmentboardports.ShipmentBoardCapabilities
 	board    *dispatchconsoleservice.Board
 }
 

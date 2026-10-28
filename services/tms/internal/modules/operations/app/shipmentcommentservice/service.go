@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -58,7 +59,7 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	Repo                shipmentports.ShipmentCommentRepository
+	Repo                shipmentcommentports.ShipmentCommentRepository
 	ShipmentRepo        shipmentports.ShipmentRepository
 	UserRepo            tenantports.UserRepository
 	DocumentRepo        documentports.DocumentRepository
@@ -72,7 +73,7 @@ type Params struct {
 
 type service struct {
 	l                   *zap.Logger
-	repo                shipmentports.ShipmentCommentRepository
+	repo                shipmentcommentports.ShipmentCommentRepository
 	shipmentRepo        shipmentports.ShipmentRepository
 	userRepo            tenantports.UserRepository
 	documentRepo        documentports.DocumentRepository
@@ -84,7 +85,7 @@ type service struct {
 	notificationService *notificationservice.Service
 }
 
-func New(p Params) shipmentports.ShipmentCommentService {
+func New(p Params) shipmentcommentports.ShipmentCommentService {
 	return &service{
 		l:                   p.Logger.Named("service.shipment-comment"),
 		repo:                p.Repo,
@@ -102,7 +103,7 @@ func New(p Params) shipmentports.ShipmentCommentService {
 
 func (s *service) ListByShipmentID(
 	ctx context.Context,
-	req *shipmentports.ListShipmentCommentsRequest,
+	req *shipmentcommentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	if req == nil || req.Filter == nil {
 		return nil, errortypes.NewValidationError(
@@ -140,7 +141,7 @@ func (s *service) ListByShipmentID(
 
 func (s *service) GetCountByShipmentID(
 	ctx context.Context,
-	req *shipmentports.GetShipmentCommentCountRequest,
+	req *shipmentcommentports.GetShipmentCommentCountRequest,
 ) (int, error) {
 	if req == nil {
 		return 0, errortypes.NewValidationError(
@@ -258,7 +259,7 @@ func (s *service) resolveParentComment(
 		return nil, nil //nolint:nilnil // top-level comments have no parent
 	}
 
-	parent, err := s.repo.GetByID(ctx, &shipmentports.GetShipmentCommentByIDRequest{
+	parent, err := s.repo.GetByID(ctx, &shipmentcommentports.GetShipmentCommentByIDRequest{
 		CommentID:  *entity.ParentCommentID,
 		ShipmentID: entity.ShipmentID,
 		TenantInfo: pagination.TenantInfo{
@@ -289,7 +290,7 @@ func (s *service) resolveParentComment(
 
 func (s *service) CreateSystem(
 	ctx context.Context,
-	req *shipmentports.CreateSystemShipmentCommentRequest,
+	req *shipmentcommentports.CreateSystemShipmentCommentRequest,
 ) (*shipment.ShipmentComment, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -355,7 +356,7 @@ func (s *service) CreateSystem(
 
 func (s *service) Update(
 	ctx context.Context,
-	req *shipmentports.UpdateShipmentCommentRequest,
+	req *shipmentcommentports.UpdateShipmentCommentRequest,
 	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	original, entity, err := s.planUpdate(ctx, req, actor)
@@ -418,7 +419,7 @@ func (s *service) Update(
 
 func (s *service) Delete(
 	ctx context.Context,
-	req *shipmentports.DeleteShipmentCommentRequest,
+	req *shipmentcommentports.DeleteShipmentCommentRequest,
 	actor *permissionports.RequestActor,
 ) error {
 	original, replyCount, err := s.planDelete(ctx, req, actor)
@@ -426,7 +427,7 @@ func (s *service) Delete(
 		return err
 	}
 	userID := actor.UserID
-	repoReq := &shipmentports.DeleteShipmentCommentQuery{
+	repoReq := &shipmentcommentports.DeleteShipmentCommentQuery{
 		TenantInfo: req.TenantInfo,
 		ShipmentID: req.ShipmentID,
 		CommentID:  req.CommentID,
@@ -496,13 +497,13 @@ func (s *service) prepareCommentUpdate(
 
 func (s *service) tombstoneComment(
 	ctx context.Context,
-	req *shipmentports.DeleteShipmentCommentRequest,
+	req *shipmentcommentports.DeleteShipmentCommentRequest,
 	original *shipment.ShipmentComment,
 	userID pulid.ID,
 	auditActor kernelports.AuditActor,
 	auditComment string,
 ) error {
-	tombstone, err := s.repo.SoftDelete(ctx, &shipmentports.SoftDeleteShipmentCommentRequest{
+	tombstone, err := s.repo.SoftDelete(ctx, &shipmentcommentports.SoftDeleteShipmentCommentRequest{
 		TenantInfo: req.TenantInfo,
 		ShipmentID: req.ShipmentID,
 		CommentID:  req.CommentID,
@@ -767,7 +768,7 @@ func (s *service) populateMentions(
 
 func (s *service) getEditableComment(
 	ctx context.Context,
-	req *shipmentports.GetShipmentCommentByIDRequest,
+	req *shipmentcommentports.GetShipmentCommentByIDRequest,
 	userID pulid.ID,
 	asModerator bool,
 ) (*shipment.ShipmentComment, error) {

@@ -5,15 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/locationportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
@@ -31,6 +22,16 @@ import (
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/locationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -324,7 +325,7 @@ func TestLocate_RejectsBrandNewTrailer(t *testing.T) {
 		Return(&trailer.Trailer{ID: trailerID, OrganizationID: orgID, BusinessUnitID: buID}, nil).
 		Once()
 
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		FindInProgressByTrailerID(mock.Anything, tenantInfo, trailerID, pulid.Nil).
 		Return(nil, nil).
@@ -334,7 +335,7 @@ func TestLocate_RejectsBrandNewTrailer(t *testing.T) {
 	deps.svc.assignmentRepo = assignmentRepo
 	deps.svc.continuityRepo = continuityRepo
 	deps.svc.shipmentRepo = shipmentportsmock.NewMockShipmentRepository(t)
-	deps.svc.shipmentCommentRepo = shipmentportsmock.NewMockShipmentCommentRepository(t)
+	deps.svc.shipmentCommentRepo = shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	deps.svc.controlRepo = tenantportsmock.NewMockShipmentControlRepository(t)
 	deps.svc.locationRepo = locationportsmock.NewMockLocationRepository(t)
 	deps.svc.shipmentValidator = newTestShipmentValidator(t)
@@ -516,7 +517,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 		Return(&tenant.User{ID: systemUserID}, nil).
 		Once()
 
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		FindInProgressByTrailerID(mock.Anything, tenantInfo, trailerID, pulid.Nil).
 		Return(nil, nil).
@@ -554,7 +555,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 		Return(&location.Location{ID: newLocationID, OrganizationID: orgID, BusinessUnitID: buID, Name: "Greensboro Yard"}, nil).
 		Once()
 
-	commentRepo := shipmentportsmock.NewMockShipmentCommentRepository(t)
+	commentRepo := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	commentRepo.EXPECT().
 		Create(mock.Anything, mock.MatchedBy(func(comment *shipment.ShipmentComment) bool {
 			return comment.ShipmentID == shipmentID &&
@@ -606,7 +607,7 @@ func TestLocate_RejectsTrailerAlreadyInProgress(t *testing.T) {
 		Return(&trailer.Trailer{ID: trailerID, OrganizationID: orgID, BusinessUnitID: buID}, nil).
 		Once()
 
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		FindInProgressByTrailerID(mock.Anything, tenantInfo, trailerID, pulid.Nil).
 		Return(&shipment.Assignment{
@@ -620,7 +621,7 @@ func TestLocate_RejectsTrailerAlreadyInProgress(t *testing.T) {
 	deps.svc.assignmentRepo = assignmentRepo
 	deps.svc.continuityRepo = equipmentcontinuityportsmock.NewMockEquipmentContinuityRepository(t)
 	deps.svc.shipmentRepo = shipmentportsmock.NewMockShipmentRepository(t)
-	deps.svc.shipmentCommentRepo = shipmentportsmock.NewMockShipmentCommentRepository(t)
+	deps.svc.shipmentCommentRepo = shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	deps.svc.controlRepo = tenantportsmock.NewMockShipmentControlRepository(t)
 	deps.svc.locationRepo = locationportsmock.NewMockLocationRepository(t)
 	deps.svc.shipmentValidator = newTestShipmentValidator(t)

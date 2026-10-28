@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
@@ -45,8 +47,8 @@ const (
 
 type getShipmentTool struct {
 	repo          shipmentports.ShipmentRepository
-	comments      shipmentports.ShipmentCommentRepository
-	holds         shipmentports.ShipmentHoldRepository
+	comments      shipmentcommentports.ShipmentCommentRepository
+	holds         shipmentholdports.ShipmentHoldRepository
 	batchHolds    shipmentports.ActiveHoldReader
 	batchComments shipmentports.NewestCommentReader
 	access        fieldAccess
@@ -54,8 +56,8 @@ type getShipmentTool struct {
 
 func provideGetShipmentTool(
 	repo shipmentports.ShipmentRepository,
-	comments shipmentports.ShipmentCommentRepository,
-	holds shipmentports.ShipmentHoldRepository,
+	comments shipmentcommentports.ShipmentCommentRepository,
+	holds shipmentholdports.ShipmentHoldRepository,
 	batchHolds shipmentports.ActiveHoldReader,
 	batchComments shipmentports.NewestCommentReader,
 	permissions permissionports.PermissionEngine,
@@ -66,8 +68,8 @@ func provideGetShipmentTool(
 
 func newGetShipmentTool(
 	repo shipmentports.ShipmentRepository,
-	comments shipmentports.ShipmentCommentRepository,
-	holds shipmentports.ShipmentHoldRepository,
+	comments shipmentcommentports.ShipmentCommentRepository,
+	holds shipmentholdports.ShipmentHoldRepository,
 	permissions permissionports.PermissionEngine,
 ) *getShipmentTool {
 	return &getShipmentTool{
@@ -256,7 +258,7 @@ func (t *getShipmentTool) activeHolds(
 		return nil, nil
 	}
 
-	page, err := t.holds.ListByShipmentID(ctx, &shipmentports.ListShipmentHoldsRequest{
+	page, err := t.holds.ListByShipmentID(ctx, &shipmentholdports.ListShipmentHoldsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: maxShipmentHolds},
@@ -290,7 +292,7 @@ func (t *getShipmentTool) recentComments(
 		return nil, nil
 	}
 
-	page, err := t.comments.ListByShipmentID(ctx, &shipmentports.ListShipmentCommentsRequest{
+	page, err := t.comments.ListByShipmentID(ctx, &shipmentcommentports.ListShipmentCommentsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: maxShipmentComments},

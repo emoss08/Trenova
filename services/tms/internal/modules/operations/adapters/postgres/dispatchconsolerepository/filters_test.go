@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/stretchr/testify/require"
 )
@@ -18,7 +18,7 @@ const testWindowEnd = int64(1_700_172_800)
 
 func renderMoveFilters(
 	t *testing.T,
-	filter *shipmentports.DispatchBoardFilter,
+	filter *dispatchboardports.DispatchBoardFilter,
 ) (sql, args string) {
 	t.Helper()
 
@@ -35,7 +35,7 @@ func renderMoveFilters(
 func TestMoveFiltersKeepPastDueOpenMoves(t *testing.T) {
 	t.Parallel()
 
-	sql, args := renderMoveFilters(t, &shipmentports.DispatchBoardFilter{
+	sql, args := renderMoveFilters(t, &dispatchboardports.DispatchBoardFilter{
 		WindowStart: testWindowStart,
 		WindowEnd:   testWindowEnd,
 	})
@@ -61,7 +61,7 @@ func TestMoveFiltersKeepPastDueOpenMoves(t *testing.T) {
 func TestMoveFiltersDefaultToOpenStatuses(t *testing.T) {
 	t.Parallel()
 
-	sql, args := renderMoveFilters(t, &shipmentports.DispatchBoardFilter{})
+	sql, args := renderMoveFilters(t, &dispatchboardports.DispatchBoardFilter{})
 
 	require.Equal(t, "[bu_1 org_1]", args)
 	require.NotContains(t, sql, "coalesce(")
@@ -73,7 +73,7 @@ func TestMoveFiltersDefaultToOpenStatuses(t *testing.T) {
 func TestMoveFiltersHonorExplicitStatuses(t *testing.T) {
 	t.Parallel()
 
-	sql, args := renderMoveFilters(t, &shipmentports.DispatchBoardFilter{
+	sql, args := renderMoveFilters(t, &dispatchboardports.DispatchBoardFilter{
 		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusCompleted},
 		WindowStart:  testWindowStart,
 	})

@@ -18,8 +18,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
@@ -62,14 +65,14 @@ type Params struct {
 	TransferChangeRepo  ediports.EDITransferChangeRepository
 	TenderRecipientRepo ediports.EDITenderRecipientRepository
 	TenderChangeRepo    ediports.EDITenderChangeRepository
-	ShipmentCommentRepo shipmentports.ShipmentCommentRepository
+	ShipmentCommentRepo shipmentcommentports.ShipmentCommentRepository
 	UserRepo            tenantports.UserRepository
 	ShipmentRepo        shipmentports.ShipmentRepository
-	TenderRepo          tenderports.TenderRepository            `optional:"true"`
-	CarrierRepo         carrierports.CarrierRepository          `optional:"true"`
-	ShipmentMoveRepo    shipmentports.ShipmentMoveRepository    `optional:"true"`
-	TrackingEvents      trackingeventports.TrackingEventService `optional:"true"`
-	ShipmentSvc         shipmentports.ShipmentService
+	TenderRepo          tenderports.TenderRepository             `optional:"true"`
+	CarrierRepo         carrierports.CarrierRepository           `optional:"true"`
+	ShipmentMoveRepo    shipmentmoveports.ShipmentMoveRepository `optional:"true"`
+	TrackingEvents      trackingeventports.TrackingEventService  `optional:"true"`
+	ShipmentSvc         shipmentserviceports.ShipmentService
 	WorkflowStarter     kernelports.WorkflowStarter
 	AuditService        auditports.AuditService
 	Notifications       *notificationservice.Service
@@ -114,14 +117,14 @@ type Service struct {
 	transferChangeRepo  ediports.EDITransferChangeRepository
 	tenderRecipientRepo ediports.EDITenderRecipientRepository
 	tenderChangeRepo    ediports.EDITenderChangeRepository
-	shipmentCommentRepo shipmentports.ShipmentCommentRepository
+	shipmentCommentRepo shipmentcommentports.ShipmentCommentRepository
 	userRepo            tenantports.UserRepository
 	shipmentRepo        shipmentports.ShipmentRepository
 	tenderRepo          tenderports.TenderRepository
 	carrierRepo         carrierports.CarrierRepository
-	shipmentMoveRepo    shipmentports.ShipmentMoveRepository
+	shipmentMoveRepo    shipmentmoveports.ShipmentMoveRepository
 	trackingEvents      trackingeventports.TrackingEventService
-	shipmentSvc         shipmentports.ShipmentService
+	shipmentSvc         shipmentserviceports.ShipmentService
 	workflowStarter     kernelports.WorkflowStarter
 	auditService        auditports.AuditService
 	notifications       *notificationservice.Service

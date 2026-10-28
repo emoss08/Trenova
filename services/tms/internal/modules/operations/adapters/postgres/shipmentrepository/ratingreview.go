@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	"go.uber.org/fx"
 )
 
@@ -23,13 +23,13 @@ type ratingReviewRepository struct {
 }
 
 //nolint:gocritic // fx param structs are passed by value
-func NewRatingReviewRepository(p RatingReviewParams) shipmentports.RatingReviewRepository {
+func NewRatingReviewRepository(p RatingReviewParams) ratingreviewports.RatingReviewRepository {
 	return &ratingReviewRepository{db: p.DB}
 }
 
 func (r *ratingReviewRepository) GetForRatingReview(
 	ctx context.Context,
-	req *shipmentports.ApproveRatingReviewRequest,
+	req *ratingreviewports.ApproveRatingReviewRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
 		sp := shipmentdb.Shipments

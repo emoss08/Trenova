@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -354,7 +354,7 @@ type MyStopActionRequest struct {
 	TenantInfo    pagination.TenantInfo
 	MoveID        pulid.ID
 	StopID        pulid.ID
-	Action        shipmentports.StopActualAction
+	Action        shipmentmoveports.StopActualAction
 	OccurredAt    *int64
 	ClientEventID string
 }
@@ -391,7 +391,7 @@ func (s *Service) MyStopAction(ctx context.Context, req *MyStopActionRequest) er
 		TenantInfo:    tenantInfo,
 		MoveID:        req.MoveID,
 		StopID:        req.StopID,
-		Departure:     req.Action == shipmentports.StopActualActionDepart,
+		Departure:     req.Action == shipmentmoveports.StopActualActionDepart,
 		OccurredAt:    req.OccurredAt,
 		ClientEventID: req.ClientEventID,
 		ReportedByID:  tenantInfo.UserID,

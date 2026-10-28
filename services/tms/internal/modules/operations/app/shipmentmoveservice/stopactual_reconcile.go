@@ -6,23 +6,23 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func (s *service) ReconcileStopActuals(
 	ctx context.Context,
-	req *shipmentports.ReconcileStopActualsRequest,
-) (*shipmentports.ReconcileStopActualsResult, error) {
+	req *shipmentmoveports.ReconcileStopActualsRequest,
+) (*shipmentmoveports.ReconcileStopActualsResult, error) {
 	if multiErr := validateReconcileRequest(req); multiErr != nil {
 		return nil, multiErr
 	}
 
-	result := &shipmentports.ReconcileStopActualsResult{}
+	result := &shipmentmoveports.ReconcileStopActualsResult{}
 	var previousStatus shipment.MoveStatus
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		move, err := s.repo.GetByID(txCtx, &shipmentports.GetMoveByIDRequest{
+		move, err := s.repo.GetByID(txCtx, &shipmentmoveports.GetMoveByIDRequest{
 			MoveID:            req.MoveID,
 			TenantInfo:        req.TenantInfo,
 			ExpandMoveDetails: true,
@@ -62,7 +62,10 @@ func (s *service) ReconcileStopActuals(
 
 		result.Move, err = s.applyDerivedMoveStatus(
 			txCtx,
-			&shipmentports.RecordStopActualRequest{TenantInfo: req.TenantInfo, MoveID: req.MoveID},
+			&shipmentmoveports.RecordStopActualRequest{
+				TenantInfo: req.TenantInfo,
+				MoveID:     req.MoveID,
+			},
 			previousStatus,
 			targetStatus,
 		)
@@ -90,7 +93,7 @@ func (s *service) ReconcileStopActuals(
 }
 
 func validateReconcileRequest(
-	req *shipmentports.ReconcileStopActualsRequest,
+	req *shipmentmoveports.ReconcileStopActualsRequest,
 ) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
@@ -118,7 +121,7 @@ func validateReconcileRequest(
 func settleStopActuals(
 	ctx context.Context,
 	move *shipment.ShipmentMove,
-	plan shipmentports.StopActualPlanner,
+	plan shipmentmoveports.StopActualPlanner,
 ) ([]*shipment.Stop, []shipment.StopActualChange, error) {
 	touched := make([]*shipment.Stop, 0)
 	seen := make(map[pulid.ID]struct{})
@@ -154,7 +157,7 @@ func settleStopActuals(
 
 func (s *service) checkReconciledStatus(
 	ctx context.Context,
-	req *shipmentports.ReconcileStopActualsRequest,
+	req *shipmentmoveports.ReconcileStopActualsRequest,
 	move *shipment.ShipmentMove,
 	previousStatus, targetStatus shipment.MoveStatus,
 ) error {
@@ -185,26 +188,26 @@ func (s *service) checkReconciledStatus(
 }
 
 func recordedActions(
-	req *shipmentports.ReconcileStopActualsRequest,
+	req *shipmentmoveports.ReconcileStopActualsRequest,
 	changes []shipment.StopActualChange,
-) []*shipmentports.RecordStopActualRequest {
-	actions := make([]*shipmentports.RecordStopActualRequest, 0, 2*len(changes))
+) []*shipmentmoveports.RecordStopActualRequest {
+	actions := make([]*shipmentmoveports.RecordStopActualRequest, 0, 2*len(changes))
 	for _, change := range changes {
 		if change.Arrival != nil {
-			actions = append(actions, &shipmentports.RecordStopActualRequest{
+			actions = append(actions, &shipmentmoveports.RecordStopActualRequest{
 				TenantInfo: req.TenantInfo,
 				MoveID:     req.MoveID,
 				StopID:     change.StopID,
-				Action:     shipmentports.StopActualActionArrive,
+				Action:     shipmentmoveports.StopActualActionArrive,
 				OccurredAt: change.Arrival,
 			})
 		}
 		if change.Departure != nil {
-			actions = append(actions, &shipmentports.RecordStopActualRequest{
+			actions = append(actions, &shipmentmoveports.RecordStopActualRequest{
 				TenantInfo: req.TenantInfo,
 				MoveID:     req.MoveID,
 				StopID:     change.StopID,
-				Action:     shipmentports.StopActualActionDepart,
+				Action:     shipmentmoveports.StopActualActionDepart,
 				OccurredAt: change.Departure,
 			})
 		}

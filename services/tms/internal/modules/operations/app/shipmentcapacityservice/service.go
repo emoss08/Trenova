@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
@@ -56,9 +58,9 @@ type Params struct {
 	fx.In
 
 	Console      dispatchconsoleports.DispatchConsoleService
-	Capabilities shipmentports.ShipmentBoardCapabilitiesReader
+	Capabilities shipmentboardports.ShipmentBoardCapabilitiesReader
 	Postings     carriercapacityports.CarrierCapacityPostingRepository
-	Performance  shipmentports.CarrierPerformanceRepository
+	Performance  shipmentboardports.CarrierPerformanceRepository
 	Carriers     carrierports.CarrierRepository
 	Shipments    shipmentports.ShipmentRepository
 	RateQuotes   *ratequoteservice.Service
@@ -68,9 +70,9 @@ type Params struct {
 
 type Dependencies struct {
 	Console      dispatchconsoleports.DispatchConsoleService
-	Capabilities shipmentports.ShipmentBoardCapabilitiesReader
+	Capabilities shipmentboardports.ShipmentBoardCapabilitiesReader
 	Postings     carriercapacityports.CarrierCapacityPostingRepository
-	Performance  shipmentports.CarrierPerformanceRepository
+	Performance  shipmentboardports.CarrierPerformanceRepository
 	Carriers     carrierports.CarrierRepository
 	Shipments    shipmentports.ShipmentRepository
 	Shopper      shopper
@@ -81,9 +83,9 @@ type Dependencies struct {
 
 type Service struct {
 	console      dispatchconsoleports.DispatchConsoleService
-	capabilities shipmentports.ShipmentBoardCapabilitiesReader
+	capabilities shipmentboardports.ShipmentBoardCapabilitiesReader
 	postings     carriercapacityports.CarrierCapacityPostingRepository
-	performance  shipmentports.CarrierPerformanceRepository
+	performance  shipmentboardports.CarrierPerformanceRepository
 	carriers     carrierports.CarrierRepository
 	shipments    shipmentports.ShipmentRepository
 	shopper      shopper
@@ -93,9 +95,9 @@ type Service struct {
 }
 
 var (
-	_ shipmentports.ShipmentCapacityReader    = (*Service)(nil)
-	_ shipmentports.ShipmentCoverageSuggester = (*Service)(nil)
-	_ shipmentports.ShipmentTenderer          = (*Service)(nil)
+	_ shipmentcapacityports.ShipmentCapacityReader    = (*Service)(nil)
+	_ shipmentcapacityports.ShipmentCoverageSuggester = (*Service)(nil)
+	_ shipmentcapacityports.ShipmentTenderer          = (*Service)(nil)
 )
 
 //nolint:gocritic // dependency injection
@@ -137,21 +139,21 @@ func NewWithDependencies(d *Dependencies) *Service {
 	}
 }
 
-func NewCapacityReader(s *Service) shipmentports.ShipmentCapacityReader { return s }
+func NewCapacityReader(s *Service) shipmentcapacityports.ShipmentCapacityReader { return s }
 
-func NewCoverageSuggester(s *Service) shipmentports.ShipmentCoverageSuggester { return s }
+func NewCoverageSuggester(s *Service) shipmentcapacityports.ShipmentCoverageSuggester { return s }
 
-func NewTenderer(s *Service) shipmentports.ShipmentTenderer { return s }
+func NewTenderer(s *Service) shipmentcapacityports.ShipmentTenderer { return s }
 
 func (s *Service) Capacity(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	kind shipmentports.CapacityUnitKind,
-) (*shipmentports.ShipmentCapacity, error) {
+	kind shipmentcapacityports.CapacityUnitKind,
+) (*shipmentcapacityports.ShipmentCapacity, error) {
 	switch kind {
-	case shipmentports.CapacityUnitDriver:
+	case shipmentcapacityports.CapacityUnitDriver:
 		return s.driverCapacity(ctx, tenantInfo)
-	case shipmentports.CapacityUnitCarrier:
+	case shipmentcapacityports.CapacityUnitCarrier:
 		return s.carrierCapacity(ctx, tenantInfo)
 	default:
 		return nil, ErrUnknownKind
@@ -160,8 +162,8 @@ func (s *Service) Capacity(
 
 func (s *Service) Matches(
 	ctx context.Context,
-	req *shipmentports.CapacityMatchesRequest,
-) ([]*shipmentports.CapacityMatch, error) {
+	req *shipmentcapacityports.CapacityMatchesRequest,
+) ([]*shipmentcapacityports.CapacityMatch, error) {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultMatches
@@ -169,9 +171,9 @@ func (s *Service) Matches(
 	limit = min(limit, maxMatches)
 
 	switch req.Kind {
-	case shipmentports.CapacityUnitDriver:
+	case shipmentcapacityports.CapacityUnitDriver:
 		return s.driverMatches(ctx, req.TenantInfo, req.UnitID, limit)
-	case shipmentports.CapacityUnitCarrier:
+	case shipmentcapacityports.CapacityUnitCarrier:
 		return s.carrierMatches(ctx, req.TenantInfo, req.UnitID, limit)
 	default:
 		return nil, ErrUnknownKind

@@ -19,7 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
@@ -51,7 +51,7 @@ type Params struct {
 	NoticeRepo        detentionports.DetentionNoticeRepository
 	AnalyticsRepo     detentionports.DetentionAnalyticsRepository
 	CustomerRepo      customerports.CustomerRepository
-	CommentRepo       shipmentports.ShipmentCommentRepository
+	CommentRepo       shipmentcommentports.ShipmentCommentRepository
 	DocumentTypeRepo  documenttypeports.DocumentTypeRepository
 	EmailService      emailports.EmailService
 	UploadService     documentuploadports.DocumentUploadService
@@ -87,7 +87,7 @@ type Service struct {
 	noticeRepo        detentionports.DetentionNoticeRepository
 	analyticsRepo     detentionports.DetentionAnalyticsRepository
 	customerRepo      customerports.CustomerRepository
-	commentRepo       shipmentports.ShipmentCommentRepository
+	commentRepo       shipmentcommentports.ShipmentCommentRepository
 	documentTypeRepo  documenttypeports.DocumentTypeRepository
 	emailService      emailports.EmailService
 	uploadService     documentuploadports.DocumentUploadService

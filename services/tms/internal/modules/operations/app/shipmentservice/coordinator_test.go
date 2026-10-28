@@ -10,9 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
@@ -642,7 +644,7 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 
 	freight := decimal.Zero
 
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		FindInProgressByTractorID(
 			mock.Anything,
@@ -745,11 +747,11 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 
 	freight := decimal.Zero
 
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByTractorID(
 			mock.Anything,
-			mock.AnythingOfType("shipmentports.FindNearestActualTimelineEventRequest"),
+			mock.AnythingOfType("assignmentports.FindNearestActualTimelineEventRequest"),
 			tractorID,
 		).
 		Return(nil, nil).
@@ -757,7 +759,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByPrimaryWorkerID(
 			mock.Anything,
-			mock.AnythingOfType("shipmentports.FindNearestActualTimelineEventRequest"),
+			mock.AnythingOfType("assignmentports.FindNearestActualTimelineEventRequest"),
 			workerID,
 		).
 		Return(nil, nil).
@@ -765,10 +767,10 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 	assignmentRepo.EXPECT().
 		FindOverlappingActualWindowByTractorID(
 			mock.Anything,
-			mock.AnythingOfType("shipmentports.FindOverlappingActualTimelineWindowRequest"),
+			mock.AnythingOfType("assignmentports.FindOverlappingActualTimelineWindowRequest"),
 			tractorID,
 		).
-		Return(&shipmentports.ActualTimelineWindow{
+		Return(&assignmentports.ActualTimelineWindow{
 			StartTimestamp: 1773835200,
 			EndTimestamp:   1773837120,
 			ShipmentID:     pulid.MustNew("shp_"),
@@ -778,10 +780,10 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 	assignmentRepo.EXPECT().
 		FindOverlappingActualWindowByPrimaryWorkerID(
 			mock.Anything,
-			mock.AnythingOfType("shipmentports.FindOverlappingActualTimelineWindowRequest"),
+			mock.AnythingOfType("assignmentports.FindOverlappingActualTimelineWindowRequest"),
 			workerID,
 		).
-		Return(&shipmentports.ActualTimelineWindow{
+		Return(&assignmentports.ActualTimelineWindow{
 			StartTimestamp: 1773835200,
 			EndTimestamp:   1773837120,
 			ShipmentID:     pulid.MustNew("shp_"),
@@ -884,7 +886,7 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 
 	freight := decimal.Zero
 
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	firstMove := original.Moves[0]
 	firstTractorID := *firstMove.Assignment.TractorID
 	assignmentRepo.EXPECT().

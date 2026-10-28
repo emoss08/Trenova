@@ -9,16 +9,19 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 type AddShipmentCommentTool struct {
-	comments shipmentports.ShipmentCommentService
+	comments shipmentcommentports.ShipmentCommentService
 }
 
 func NewAddShipmentCommentTool(
-	comments shipmentports.ShipmentCommentService,
+	comments shipmentcommentports.ShipmentCommentService,
 ) agenttoolports.AgentTool {
 	return &AddShipmentCommentTool{comments: comments}
 }
@@ -194,10 +197,12 @@ func commentType(visibility shipment.CommentVisibility) shipment.CommentType {
 }
 
 type PlaceShipmentHoldTool struct {
-	holds shipmentports.ShipmentHoldService
+	holds shipmentholdports.ShipmentHoldService
 }
 
-func NewPlaceShipmentHoldTool(holds shipmentports.ShipmentHoldService) agenttoolports.AgentTool {
+func NewPlaceShipmentHoldTool(
+	holds shipmentholdports.ShipmentHoldService,
+) agenttoolports.AgentTool {
 	return &PlaceShipmentHoldTool{holds: holds}
 }
 
@@ -270,7 +275,7 @@ func (t *PlaceShipmentHoldTool) Execute(
 
 func (t *PlaceShipmentHoldTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*shipmentports.CreateShipmentHoldRequest, error) {
+) (*shipmentholdports.CreateShipmentHoldRequest, error) {
 	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 	if err != nil {
 		return nil, err
@@ -284,7 +289,7 @@ func (t *PlaceShipmentHoldTool) request(
 	// The blocking flags and severity are left unset on purpose: they default
 	// from the hold reason, which is policy the organization already decided.
 	// An agent choosing them would be quietly overriding that.
-	return &shipmentports.CreateShipmentHoldRequest{
+	return &shipmentholdports.CreateShipmentHoldRequest{
 		TenantInfo:   common.TenantFrom(*params),
 		ShipmentID:   shipmentID,
 		HoldReasonID: reasonID,
@@ -293,10 +298,12 @@ func (t *PlaceShipmentHoldTool) request(
 }
 
 type ReleaseShipmentHoldTool struct {
-	holds shipmentports.ShipmentHoldService
+	holds shipmentholdports.ShipmentHoldService
 }
 
-func NewReleaseShipmentHoldTool(holds shipmentports.ShipmentHoldService) agenttoolports.AgentTool {
+func NewReleaseShipmentHoldTool(
+	holds shipmentholdports.ShipmentHoldService,
+) agenttoolports.AgentTool {
 	return &ReleaseShipmentHoldTool{holds: holds}
 }
 
@@ -361,7 +368,7 @@ func (t *ReleaseShipmentHoldTool) Execute(
 
 func (t *ReleaseShipmentHoldTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*shipmentports.ReleaseShipmentHoldRequest, error) {
+) (*shipmentholdports.ReleaseShipmentHoldRequest, error) {
 	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 	if err != nil {
 		return nil, err
@@ -372,7 +379,7 @@ func (t *ReleaseShipmentHoldTool) request(
 		return nil, err
 	}
 
-	return &shipmentports.ReleaseShipmentHoldRequest{
+	return &shipmentholdports.ReleaseShipmentHoldRequest{
 		TenantInfo: common.TenantFrom(*params),
 		ShipmentID: shipmentID,
 		HoldID:     holdID,
@@ -380,13 +387,13 @@ func (t *ReleaseShipmentHoldTool) request(
 }
 
 type CancelShipmentTool struct {
-	shipments shipmentports.ShipmentService
+	shipments shipmentserviceports.ShipmentService
 	partners  common.ShipmentPartnerNotices
 	tenders   liveTenderReader
 }
 
 func NewCancelShipmentTool(
-	shipments shipmentports.ShipmentService,
+	shipments shipmentserviceports.ShipmentService,
 	partners common.ShipmentPartnerNotices,
 	tenders liveTenderReader,
 ) agenttoolports.AgentTool {

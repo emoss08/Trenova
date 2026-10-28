@@ -5,14 +5,14 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -132,13 +132,13 @@ func (m *memoryTenderRepo) BulkUpdateOfferStatus(
 type cancelingAssigner struct {
 	tenderports.CarrierMoveAssigner
 
-	canceled []*shipmentports.CancelCarrierAssignmentRequest
+	canceled []*carrierassignmentports.CancelCarrierAssignmentRequest
 	err      error
 }
 
 func (c *cancelingAssigner) Cancel(
 	_ context.Context,
-	req *shipmentports.CancelCarrierAssignmentRequest,
+	req *carrierassignmentports.CancelCarrierAssignmentRequest,
 ) error {
 	if c.err != nil {
 		return c.err
@@ -243,7 +243,7 @@ type noopInvalidator struct{}
 
 func (noopInvalidator) InvalidateShipments(
 	context.Context,
-	*shipmentports.ShipmentInvalidation,
+	*shipmentinvalidationports.ShipmentInvalidation,
 ) {
 }
 

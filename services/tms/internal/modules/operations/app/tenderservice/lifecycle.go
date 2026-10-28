@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -396,13 +397,16 @@ func (s *Service) assignAcceptedOffer(
 		}, nil
 	}
 
-	assignment, assignErr := s.assigner.AssignToMove(ctx, &shipmentports.AssignMoveToCarrierRequest{
-		TenantInfo:     tenantInfo,
-		ShipmentMoveID: offer.Tender.ShipmentMoveID,
-		CarrierID:      offer.CarrierID,
-		RateMethod:     offer.RateMethod,
-		BaseRate:       offer.AgreedRate(),
-	})
+	assignment, assignErr := s.assigner.AssignToMove(
+		ctx,
+		&carrierassignmentports.AssignMoveToCarrierRequest{
+			TenantInfo:     tenantInfo,
+			ShipmentMoveID: offer.Tender.ShipmentMoveID,
+			CarrierID:      offer.CarrierID,
+			RateMethod:     offer.RateMethod,
+			BaseRate:       offer.AgreedRate(),
+		},
+	)
 	if assignErr != nil {
 		if !isAssignBusinessFailure(assignErr) {
 			return nil, assignErr
@@ -629,10 +633,14 @@ func (s *Service) MarkExhausted(
 		Comment:    "Tender exhausted with no acceptance",
 		Current:    entity,
 	})
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationByUser(tenantInfo, entity.ShipmentID, "tender_exhausted"),
+		shipmentinvalidationports.ShipmentInvalidationByUser(
+			tenantInfo,
+			entity.ShipmentID,
+			"tender_exhausted",
+		),
 	)
 	s.escalateExhausted(ctx, tenantInfo, entity)
 

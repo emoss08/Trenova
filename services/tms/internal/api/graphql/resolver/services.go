@@ -92,11 +92,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carriercapacityservice"
@@ -183,27 +190,27 @@ type Params struct {
 	Logger                       *zap.Logger
 	AnalyticsService             kernelports.AnalyticsService
 	OrganizationService          tenantports.OrganizationService
-	ShipmentService              shipmentports.ShipmentService
-	ShipmentCommentService       shipmentports.ShipmentCommentService
-	ShipmentRatingReviewService  shipmentports.RatingReviewService
+	ShipmentService              shipmentserviceports.ShipmentService
+	ShipmentCommentService       shipmentcommentports.ShipmentCommentService
+	ShipmentRatingReviewService  ratingreviewports.RatingReviewService
 	ShipmentEventService         shipmenteventports.ShipmentEventService
 	TrackingEventService         trackingeventports.TrackingEventService
 	CheckCallService             checkcallports.CheckCallService
 	CustomerTrackingService      customertrackingports.CustomerTrackingService
 	CarrierCapacityService       *carriercapacityservice.Service
 	CustomerUpdateService        *customerupdateservice.Service
-	BoardCapacity                shipmentports.ShipmentCapacityReader
-	BoardCoverage                shipmentports.ShipmentCoverageSuggester
-	BoardTenderer                shipmentports.ShipmentTenderer
+	BoardCapacity                shipmentcapacityports.ShipmentCapacityReader
+	BoardCoverage                shipmentcapacityports.ShipmentCoverageSuggester
+	BoardTenderer                shipmentcapacityports.ShipmentTenderer
 	BoardSuggestions             shipmentsuggestionports.ShipmentSuggestionReader
 	BoardSuggestionDecider       shipmentsuggestionports.ShipmentSuggestionDecider
 	BoardBriefing                shipmentbriefports.ShipmentBriefingReader
-	BoardWatchlist               shipmentports.ShipmentWatchlistReader
-	BoardQuickFilterCounts       shipmentports.ShipmentQuickFilterCounter
-	BoardStageSummaries          shipmentports.ShipmentStageSummaryReader
-	BoardGroups                  shipmentports.ShipmentBoardGroupSummarizer
-	BoardCapabilities            shipmentports.ShipmentBoardCapabilitiesReader
-	ShipmentImportAssistant      shipmentports.ShipmentImportAssistantService `optional:"true"`
+	BoardWatchlist               shipmentboardports.ShipmentWatchlistReader
+	BoardQuickFilterCounts       shipmentboardports.ShipmentQuickFilterCounter
+	BoardStageSummaries          shipmentboardports.ShipmentStageSummaryReader
+	BoardGroups                  shipmentboardports.ShipmentBoardGroupSummarizer
+	BoardCapabilities            shipmentboardports.ShipmentBoardCapabilitiesReader
+	ShipmentImportAssistant      shipmentimportassistantports.ShipmentImportAssistantService `optional:"true"`
 	EquipmentManufacturerService *equipmentmanufacturerservice.Service
 	EDIService                   *ediservice.Service
 	EDIInboundService            *ediinboundservice.Service
@@ -292,7 +299,7 @@ type Params struct {
 	TelematicsService            *telematicsservice.Service
 	DispatchConsoleService       dispatchconsoleports.DispatchConsoleService
 	DispatchAutoAssignService    dispatchconsoleports.DispatchAutoAssignService
-	AssignmentService            shipmentports.AssignmentService
+	AssignmentService            assignmentports.AssignmentService
 	DocumentPacketRuleService    *documentpacketruleservice.Service
 	DocumentTemplateService      *documenttemplateservice.Service
 	DistanceOverrideService      *distanceoverrideservice.Service
@@ -414,35 +421,35 @@ type Params struct {
 	CarrierCostEventRepo         carriersettlementports.CarrierCostEventRepository
 	FuelPurchaseService          *fuelpurchaseservice.Service
 	IFTAService                  *iftaservice.Service
-	DistanceCalculationService   shipmentports.DistanceCalculationService `optional:"true"`
-	Config                       *config.Config                           `optional:"true"`
+	DistanceCalculationService   shipmentdistanceports.DistanceCalculationService `optional:"true"`
+	Config                       *config.Config                                   `optional:"true"`
 }
 
 type Services struct {
 	*base.Core
 	AnalyticsService             kernelports.AnalyticsService
 	OrganizationService          tenantports.OrganizationService
-	ShipmentService              shipmentports.ShipmentService
-	ShipmentCommentService       shipmentports.ShipmentCommentService
-	ShipmentRatingReviewService  shipmentports.RatingReviewService
+	ShipmentService              shipmentserviceports.ShipmentService
+	ShipmentCommentService       shipmentcommentports.ShipmentCommentService
+	ShipmentRatingReviewService  ratingreviewports.RatingReviewService
 	ShipmentEventService         shipmenteventports.ShipmentEventService
 	TrackingEventService         trackingeventports.TrackingEventService
 	CheckCallService             checkcallports.CheckCallService
 	CustomerTrackingService      customertrackingports.CustomerTrackingService
 	CarrierCapacityService       *carriercapacityservice.Service
 	CustomerUpdateService        *customerupdateservice.Service
-	BoardCapacity                shipmentports.ShipmentCapacityReader
-	BoardCoverage                shipmentports.ShipmentCoverageSuggester
-	BoardTenderer                shipmentports.ShipmentTenderer
+	BoardCapacity                shipmentcapacityports.ShipmentCapacityReader
+	BoardCoverage                shipmentcapacityports.ShipmentCoverageSuggester
+	BoardTenderer                shipmentcapacityports.ShipmentTenderer
 	BoardSuggestions             shipmentsuggestionports.ShipmentSuggestionReader
 	BoardSuggestionDecider       shipmentsuggestionports.ShipmentSuggestionDecider
 	BoardBriefing                shipmentbriefports.ShipmentBriefingReader
-	BoardWatchlist               shipmentports.ShipmentWatchlistReader
-	BoardQuickFilterCounts       shipmentports.ShipmentQuickFilterCounter
-	BoardStageSummaries          shipmentports.ShipmentStageSummaryReader
-	BoardGroups                  shipmentports.ShipmentBoardGroupSummarizer
-	BoardCapabilities            shipmentports.ShipmentBoardCapabilitiesReader
-	ShipmentImportAssistant      shipmentports.ShipmentImportAssistantService
+	BoardWatchlist               shipmentboardports.ShipmentWatchlistReader
+	BoardQuickFilterCounts       shipmentboardports.ShipmentQuickFilterCounter
+	BoardStageSummaries          shipmentboardports.ShipmentStageSummaryReader
+	BoardGroups                  shipmentboardports.ShipmentBoardGroupSummarizer
+	BoardCapabilities            shipmentboardports.ShipmentBoardCapabilitiesReader
+	ShipmentImportAssistant      shipmentimportassistantports.ShipmentImportAssistantService
 	EdiService                   *ediservice.Service
 	EdiInboundService            *ediinboundservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service
@@ -529,7 +536,7 @@ type Services struct {
 	TelematicsService            *telematicsservice.Service
 	DispatchConsoleService       dispatchconsoleports.DispatchConsoleService
 	DispatchAutoAssignService    dispatchconsoleports.DispatchAutoAssignService
-	AssignmentService            shipmentports.AssignmentService
+	AssignmentService            assignmentports.AssignmentService
 	DocumentPacketRuleService    *documentpacketruleservice.Service
 	DocumentTemplateService      *documenttemplateservice.Service
 	DistanceOverrideService      *distanceoverrideservice.Service
@@ -648,7 +655,7 @@ type Services struct {
 	CarrierCostEventRepo         carriersettlementports.CarrierCostEventRepository
 	FuelPurchaseService          *fuelpurchaseservice.Service
 	IftaService                  *iftaservice.Service
-	DistanceCalculationService   shipmentports.DistanceCalculationService
+	DistanceCalculationService   shipmentdistanceports.DistanceCalculationService
 	BillingTransferService       *billingtransferservice.Service
 	ReportingService             *reportingservice.Service
 }

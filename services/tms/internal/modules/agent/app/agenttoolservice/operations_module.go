@@ -16,7 +16,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
@@ -73,28 +76,32 @@ func operationsToolProviders() []any {
 	}
 }
 
-func provideUncancelShipmentTool(shipments shipmentports.ShipmentService) agenttoolports.AgentTool {
+func provideUncancelShipmentTool(
+	shipments shipmentserviceports.ShipmentService,
+) agenttoolports.AgentTool {
 	return shipmenttools.NewUncancelShipmentTool(shipments)
 }
 
 func provideTransferShipmentOwnershipTool(
-	shipments shipmentports.ShipmentService,
+	shipments shipmentserviceports.ShipmentService,
 ) agenttoolports.AgentTool {
 	return shipmenttools.NewTransferShipmentOwnershipTool(shipments)
 }
 
-func provideRerateShipmentTool(shipments shipmentports.ShipmentService) agenttoolports.AgentTool {
+func provideRerateShipmentTool(
+	shipments shipmentserviceports.ShipmentService,
+) agenttoolports.AgentTool {
 	return shipmenttools.NewRerateShipmentTool(shipments)
 }
 
 func provideRecalculateShipmentDistanceTool(
-	shipments shipmentports.ShipmentService,
+	shipments shipmentserviceports.ShipmentService,
 ) agenttoolports.AgentTool {
 	return shipmenttools.NewRecalculateShipmentDistanceTool(shipments)
 }
 
 func provideDuplicateShipmentTool(
-	shipments shipmentports.ShipmentService,
+	shipments shipmentserviceports.ShipmentService,
 	locations locationports.LocationRepository,
 ) agenttoolports.AgentTool {
 	return shipmenttools.NewDuplicateShipmentTool(shipmenttools.DuplicateShipmentDeps{
@@ -105,42 +112,42 @@ func provideDuplicateShipmentTool(
 }
 
 func provideUpdateShipmentHoldTool(
-	holds shipmentports.ShipmentHoldService,
+	holds shipmentholdports.ShipmentHoldService,
 ) agenttoolports.AgentTool {
 	return shipmenttools.NewUpdateShipmentHoldTool(holds)
 }
 
-func provideSplitMoveTool(moves shipmentports.ShipmentMoveService) agenttoolports.AgentTool {
+func provideSplitMoveTool(moves shipmentmoveports.ShipmentMoveService) agenttoolports.AgentTool {
 	return movetools.NewSplitMoveTool(moves)
 }
 
 func providePinShipmentCommentTool(
-	comments shipmentports.ShipmentCommentService,
+	comments shipmentcommentports.ShipmentCommentService,
 ) agenttoolports.AgentTool {
 	return shipmenttools.NewPinShipmentCommentTool(comments)
 }
 
 func provideUnpinShipmentCommentTool(
-	comments shipmentports.ShipmentCommentService,
+	comments shipmentcommentports.ShipmentCommentService,
 ) agenttoolports.AgentTool {
 	return shipmenttools.NewUnpinShipmentCommentTool(comments)
 }
 
 func provideResolveShipmentCommentTool(
-	comments shipmentports.ShipmentCommentService,
+	comments shipmentcommentports.ShipmentCommentService,
 ) agenttoolports.AgentTool {
 	return shipmenttools.NewResolveShipmentCommentTool(comments)
 }
 
 func provideEditShipmentCommentTool(
-	comments shipmentports.ShipmentCommentService,
+	comments shipmentcommentports.ShipmentCommentService,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentTool {
 	return shipmenttools.NewEditShipmentCommentTool(comments, permissions)
 }
 
 func provideDeleteShipmentCommentTool(
-	comments shipmentports.ShipmentCommentService,
+	comments shipmentcommentports.ShipmentCommentService,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentTool {
 	return shipmenttools.NewDeleteShipmentCommentTool(comments, permissions)

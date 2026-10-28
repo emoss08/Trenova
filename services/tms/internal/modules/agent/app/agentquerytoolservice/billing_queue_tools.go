@@ -14,7 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -243,7 +244,7 @@ type billingReadinessReader interface {
 		ctx context.Context,
 		shipmentID pulid.ID,
 		tenantInfo pagination.TenantInfo,
-	) (*shipmentports.ShipmentBillingReadiness, error)
+	) (*shipmentbillingports.ShipmentBillingReadiness, error)
 }
 
 type queueInvoiceReader interface {
@@ -262,7 +263,7 @@ type getBillingQueueItemTool struct {
 
 func newGetBillingQueueItemTool(
 	items billingqueueports.BillingQueueService,
-	shipments shipmentports.ShipmentService,
+	shipments shipmentserviceports.ShipmentService,
 	invoices invoiceports.InvoiceRepository,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentQueryTool {
@@ -641,7 +642,7 @@ func issueState(issue *billingqueue.Issue) string {
 	}
 }
 
-func readinessOf(readiness *shipmentports.ShipmentBillingReadiness) *billingQueueReadiness {
+func readinessOf(readiness *shipmentbillingports.ShipmentBillingReadiness) *billingQueueReadiness {
 	if readiness == nil {
 		return nil
 	}

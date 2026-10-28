@@ -7,10 +7,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/shipmentcontrolrepository"
@@ -26,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/accessorialchargerepository"
@@ -38,6 +35,8 @@ import (
 	"github.com/emoss08/trenova/internal/testutil"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -667,9 +666,14 @@ func TestCreateIntegration_RejectsHazmatSegregationConflicts(t *testing.T) {
 	assertErrorField(t, multiErr, "commodities[0].commodityId")
 	assertErrorField(t, multiErr, "commodities[1].commodityId")
 
-	count, getErr := keel.QueryValue[int64](ctx, db,
+	count, getErr := keel.QueryValue[int64](
+		ctx,
+		db,
 		"SELECT count(*) FROM shipments WHERE organization_id = $1 AND business_unit_id = $2 AND bol = $3",
-		tenantInfo.OrgID.String(), tenantInfo.BuID.String(), entity.BOL)
+		tenantInfo.OrgID.String(),
+		tenantInfo.BuID.String(),
+		entity.BOL,
+	)
 	require.NoError(t, getErr)
 	assert.Equal(t, int64(0), count)
 }
@@ -951,7 +955,7 @@ func newIntegrationShipmentService(
 	ctx context.Context,
 	db *keel.DB,
 ) (
-	shipmentports.ShipmentService,
+	shipmentserviceports.ShipmentService,
 	shipmentports.ShipmentRepository,
 	tenantports.ShipmentControlRepository,
 	accessorialchargeports.AccessorialChargeRepository,
@@ -969,7 +973,7 @@ func newIntegrationShipmentServiceWith(
 	db *keel.DB,
 	override func(*Params),
 ) (
-	shipmentports.ShipmentService,
+	shipmentserviceports.ShipmentService,
 	shipmentports.ShipmentRepository,
 	tenantports.ShipmentControlRepository,
 	accessorialchargeports.AccessorialChargeRepository,

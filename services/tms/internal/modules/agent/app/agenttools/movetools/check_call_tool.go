@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -47,8 +47,8 @@ type checkCallLogger interface {
 type stopActualPreviewer interface {
 	PreviewStopActual(
 		ctx context.Context,
-		req *shipmentports.RecordStopActualRequest,
-	) (*shipmentports.StopActualPlan, error)
+		req *shipmentmoveports.RecordStopActualRequest,
+	) (*shipmentmoveports.StopActualPlan, error)
 }
 
 type LogCheckCallTool struct {
@@ -67,8 +67,8 @@ func newLogCheckCallTool(
 
 func ProvideLogCheckCallTool(
 	checkCalls checkcallports.CheckCallService,
-	moves shipmentports.ShipmentMoveService,
-	moveStops shipmentports.ShipmentMoveRepository,
+	moves shipmentmoveports.ShipmentMoveService,
+	moveStops shipmentmoveports.ShipmentMoveRepository,
 ) agenttoolports.AgentTool {
 	return newLogCheckCallTool(checkCalls, moves, moveStops)
 }
@@ -275,7 +275,7 @@ func (t *LogCheckCallTool) zone(
 		return zone, nil
 	}
 
-	move, err := t.moveStops.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	move, err := t.moveStops.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            request.MoveID,
 		TenantInfo:        request.TenantInfo,
 		ExpandMoveDetails: true,

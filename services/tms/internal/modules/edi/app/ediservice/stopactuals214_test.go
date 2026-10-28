@@ -11,11 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentmoveportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/trackingeventportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -28,7 +29,7 @@ import (
 
 type stopActuals214Fixture struct {
 	service    *Service
-	moveRepo   *shipmentportsmock.MockShipmentMoveRepository
+	moveRepo   *shipmentmoveportsmock.MockShipmentMoveRepository
 	tracking   *trackingeventportsmock.MockTrackingEventService
 	tenantInfo pagination.TenantInfo
 	moveID     pulid.ID
@@ -41,10 +42,10 @@ type stopActuals214Fixture struct {
 func newStopActuals214Fixture(t *testing.T) *stopActuals214Fixture {
 	t.Helper()
 
-	commentRepo := shipmentportsmock.NewMockShipmentCommentRepository(t)
+	commentRepo := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	eventRepo := shipmenteventportsmock.NewMockShipmentEventRepository(t)
-	moveRepo := shipmentportsmock.NewMockShipmentMoveRepository(t)
+	moveRepo := shipmentmoveportsmock.NewMockShipmentMoveRepository(t)
 	tracking := trackingeventportsmock.NewMockTrackingEventService(t)
 
 	userRepo.EXPECT().
@@ -113,7 +114,7 @@ func (f *stopActuals214Fixture) move() *shipment.ShipmentMove {
 func (f *stopActuals214Fixture) expectMoveLoad() {
 	f.moveRepo.EXPECT().
 		GetByID(mock.MatchedBy(func(context.Context) bool { return true }), mock.MatchedBy(
-			func(req *shipmentports.GetMoveByIDRequest) bool {
+			func(req *shipmentmoveports.GetMoveByIDRequest) bool {
 				return req.MoveID == f.moveID &&
 					req.TenantInfo == f.tenantInfo &&
 					req.ExpandMoveDetails &&
@@ -341,7 +342,7 @@ func TestRecordTenderedShipmentStatus_MoveNotFoundDegradesToWarning(t *testing.T
 
 	fixture := newStopActuals214Fixture(t)
 	fixture.moveRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetMoveByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentmoveports.GetMoveByIDRequest")).
 		Return(nil, errortypes.NewNotFoundError("Shipment move")).
 		Once()
 
@@ -358,7 +359,7 @@ func TestRecordTenderedShipmentStatus_MoveNotFoundDegradesToWarning(t *testing.T
 func TestRecordTenderedShipmentStatus_MissingMoveServiceStaysCommentOnly(t *testing.T) {
 	t.Parallel()
 
-	commentRepo := shipmentportsmock.NewMockShipmentCommentRepository(t)
+	commentRepo := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	service := &Service{
 		l:                   zap.NewNop(),
@@ -403,39 +404,39 @@ func TestStopActualsPlanForStatusCode(t *testing.T) {
 		code            string
 		mapped          bool
 		target          stopActualTarget
-		action          shipmentports.StopActualAction
+		action          shipmentmoveports.StopActualAction
 		arriveIfMissing bool
 	}{
 		{
 			code:   "X3",
 			mapped: true,
 			target: stopTargetOrigin,
-			action: shipmentports.StopActualActionArrive,
+			action: shipmentmoveports.StopActualActionArrive,
 		},
 		{
 			code:   "AF",
 			mapped: true,
 			target: stopTargetOrigin,
-			action: shipmentports.StopActualActionDepart,
+			action: shipmentmoveports.StopActualActionDepart,
 		},
 		{
 			code:   "X1",
 			mapped: true,
 			target: stopTargetDestination,
-			action: shipmentports.StopActualActionArrive,
+			action: shipmentmoveports.StopActualActionArrive,
 		},
 		{
 			code:            "D1",
 			mapped:          true,
 			target:          stopTargetDestination,
-			action:          shipmentports.StopActualActionDepart,
+			action:          shipmentmoveports.StopActualActionDepart,
 			arriveIfMissing: true,
 		},
 		{
 			code:   "CD",
 			mapped: true,
 			target: stopTargetDestination,
-			action: shipmentports.StopActualActionDepart,
+			action: shipmentmoveports.StopActualActionDepart,
 		},
 		{code: "A3"},
 		{code: "SD"},

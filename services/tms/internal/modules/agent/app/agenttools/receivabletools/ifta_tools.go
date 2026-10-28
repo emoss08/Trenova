@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -121,16 +121,16 @@ type IftaMileageKeeper interface {
 type JurisdictionMileRouter interface {
 	PlanMoveJurisdictionMiles(
 		ctx context.Context,
-		req *shipmentports.RecalculateMoveJurisdictionMilesRequest,
-	) (*shipmentports.MoveJurisdictionMilesPlan, error)
+		req *shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest,
+	) (*shipmentdistanceports.MoveJurisdictionMilesPlan, error)
 	RecalculateMoveJurisdictionMiles(
 		ctx context.Context,
-		req shipmentports.RecalculateMoveJurisdictionMilesRequest,
+		req shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest,
 	) ([]*shipment.ShipmentMoveJurisdictionMile, error)
 	BackfillJurisdictionMiles(
 		ctx context.Context,
-		req shipmentports.BackfillJurisdictionMilesRequest,
-	) (*shipmentports.BackfillJurisdictionMilesResult, error)
+		req shipmentdistanceports.BackfillJurisdictionMilesRequest,
+	) (*shipmentdistanceports.BackfillJurisdictionMilesResult, error)
 }
 
 type iftaReturnView struct {
@@ -968,13 +968,13 @@ func NewDeleteIFTAMileageEntryTool(entries IftaMileageKeeper) agenttoolports.Age
 
 func moveJurisdictionRequest(
 	params *agenttoolports.ToolExecuteParams,
-) (shipmentports.RecalculateMoveJurisdictionMilesRequest, error) {
+) (shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest, error) {
 	moveID, err := common.RequirePulid(params.Params, common.ParamShipmentMoveID)
 	if err != nil {
-		return shipmentports.RecalculateMoveJurisdictionMilesRequest{}, err
+		return shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest{}, err
 	}
 
-	return shipmentports.RecalculateMoveJurisdictionMilesRequest{
+	return shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest{
 		TenantInfo:     common.TenantFrom(*params),
 		ShipmentMoveID: moveID,
 		UserID:         params.Actor.UserID,
@@ -1011,21 +1011,21 @@ func NewRecalculateMoveJurisdictionMilesTool(
 				permission.ResourceShipmentMove,
 			)
 		},
-	}), common.ReceivablePlan[shipmentports.RecalculateMoveJurisdictionMilesRequest, *shipmentports.MoveJurisdictionMilesPlan]{
+	}), common.ReceivablePlan[shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest, *shipmentdistanceports.MoveJurisdictionMilesPlan]{
 		Request: moveJurisdictionRequest,
 		Plan: func(
 			ctx context.Context,
-			req shipmentports.RecalculateMoveJurisdictionMilesRequest,
+			req shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*shipmentports.MoveJurisdictionMilesPlan, error) {
+		) (*shipmentdistanceports.MoveJurisdictionMilesPlan, error) {
 			return router.PlanMoveJurisdictionMiles(ctx, &req)
 		},
-		Refused: func(shipmentports.RecalculateMoveJurisdictionMilesRequest) string {
+		Refused: func(shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest) string {
 			return "Would ask for a move's jurisdiction miles again."
 		},
 		Render: func(
-			_ shipmentports.RecalculateMoveJurisdictionMilesRequest,
-			plan *shipmentports.MoveJurisdictionMilesPlan,
+			_ shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest,
+			plan *shipmentdistanceports.MoveJurisdictionMilesPlan,
 		) (*agent.ToolPreview, error) {
 			return toolpreview.Build(fmt.Sprintf(
 				"Would ask the routing provider for the state-by-state miles of the move "+
@@ -1036,7 +1036,7 @@ func NewRecalculateMoveJurisdictionMilesTool(
 		},
 		Run: func(
 			ctx context.Context,
-			req shipmentports.RecalculateMoveJurisdictionMilesRequest,
+			req shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := router.RecalculateMoveJurisdictionMiles(ctx, req)
@@ -1056,7 +1056,7 @@ func (b *backfillRequest) service(
 	returns IftaReturnKeeper,
 	params *agenttoolports.ToolExecuteParams,
 	dryRun bool,
-) (shipmentports.BackfillJurisdictionMilesRequest, error) {
+) (shipmentdistanceports.BackfillJurisdictionMilesRequest, error) {
 	info, err := returns.PeriodInfo(
 		ctx,
 		common.TenantFrom(*params),
@@ -1064,10 +1064,10 @@ func (b *backfillRequest) service(
 		b.period.Quarter,
 	)
 	if err != nil {
-		return shipmentports.BackfillJurisdictionMilesRequest{}, err
+		return shipmentdistanceports.BackfillJurisdictionMilesRequest{}, err
 	}
 
-	return shipmentports.BackfillJurisdictionMilesRequest{
+	return shipmentdistanceports.BackfillJurisdictionMilesRequest{
 		TenantInfo: common.TenantFrom(*params),
 		Start:      info.Start,
 		End:        info.End,
@@ -1097,7 +1097,7 @@ func NewBackfillJurisdictionMilesTool(
 			"nothing is sent to a customer or carrier, but each move is a billable request.",
 		Properties: properties,
 		Required:   []string{paramYear, paramQuarter},
-	}), common.ReceivablePlan[*backfillRequest, *shipmentports.BackfillJurisdictionMilesResult]{
+	}), common.ReceivablePlan[*backfillRequest, *shipmentdistanceports.BackfillJurisdictionMilesResult]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*backfillRequest, error) {
 			period, err := iftaPeriodFrom(params)
 			if err != nil {
@@ -1121,7 +1121,7 @@ func NewBackfillJurisdictionMilesTool(
 			ctx context.Context,
 			req *backfillRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*shipmentports.BackfillJurisdictionMilesResult, error) {
+		) (*shipmentdistanceports.BackfillJurisdictionMilesResult, error) {
 			dry, err := req.service(ctx, returns, params, true)
 			if err != nil {
 				return nil, err
@@ -1134,7 +1134,7 @@ func NewBackfillJurisdictionMilesTool(
 		},
 		Render: func(
 			req *backfillRequest,
-			result *shipmentports.BackfillJurisdictionMilesResult,
+			result *shipmentdistanceports.BackfillJurisdictionMilesResult,
 		) (*agent.ToolPreview, error) {
 			if result.UnattributedMoves == 0 {
 				return toolpreview.Build(fmt.Sprintf(

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,14 +19,14 @@ type Params struct {
 
 	RunRepo   billingtransferports.BillingTransferRunRepository
 	Workflows kernelports.WorkflowStarter
-	Shipments shipmentports.ShipmentService `optional:"true"`
+	Shipments shipmentserviceports.ShipmentService `optional:"true"`
 	Logger    *zap.Logger
 }
 
 type Service struct {
 	runRepo   billingtransferports.BillingTransferRunRepository
 	workflows kernelports.WorkflowStarter
-	shipments shipmentports.ShipmentService
+	shipments shipmentserviceports.ShipmentService
 	l         *zap.Logger
 }
 

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -173,9 +174,9 @@ func (f *FakeRenderer) RenderMessage(
 }
 
 type fakeCommentWriter struct {
-	shipmentports.ShipmentCommentService
+	shipmentcommentports.ShipmentCommentService
 
-	Created *shipmentports.CreateSystemShipmentCommentRequest `json:"-"`
+	Created *shipmentcommentports.CreateSystemShipmentCommentRequest `json:"-"`
 	// existing is what the repeat guard reads back before a send. Empty
 	// means nothing has gone to this customer yet.
 	Existing []*shipment.ShipmentComment `json:"-"`
@@ -183,14 +184,14 @@ type fakeCommentWriter struct {
 
 func (f *fakeCommentWriter) ListByShipmentID(
 	context.Context,
-	*shipmentports.ListShipmentCommentsRequest,
+	*shipmentcommentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	return &pagination.CursorListResult[*shipment.ShipmentComment]{Items: f.Existing}, nil
 }
 
 func (f *fakeCommentWriter) CreateSystem(
 	_ context.Context,
-	req *shipmentports.CreateSystemShipmentCommentRequest,
+	req *shipmentcommentports.CreateSystemShipmentCommentRequest,
 ) (*shipment.ShipmentComment, error) {
 	f.Created = req
 

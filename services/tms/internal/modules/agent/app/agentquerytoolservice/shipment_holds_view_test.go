@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,14 +31,14 @@ func (f *fakeShipmentGetter) GetByID(
 }
 
 type fakeHoldLister struct {
-	shipmentports.ShipmentHoldRepository
+	shipmentholdports.ShipmentHoldRepository
 
 	holds []*shipment.ShipmentHold
 }
 
 func (f *fakeHoldLister) ListByShipmentID(
 	context.Context,
-	*shipmentports.ListShipmentHoldsRequest,
+	*shipmentholdports.ListShipmentHoldsRequest,
 ) (*pagination.ListResult[*shipment.ShipmentHold], error) {
 	return &pagination.ListResult[*shipment.ShipmentHold]{Items: f.holds}, nil
 }

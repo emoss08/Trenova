@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,16 +32,16 @@ type billingTransferAttemptParams struct {
 
 type billingTransferAttempt struct {
 	entity      *shipment.Shipment
-	readiness   *shipmentports.ShipmentBillingReadiness
+	readiness   *shipmentbillingports.ShipmentBillingReadiness
 	item        *billingqueue.BillingQueueItem
 	items       []*billingqueue.BillingQueueItem
 	markedReady bool
-	failure     shipmentports.BillingTransferFailureCode
+	failure     shipmentbillingports.BillingTransferFailureCode
 	err         error
 }
 
 func (a *billingTransferAttempt) fail(
-	code shipmentports.BillingTransferFailureCode,
+	code shipmentbillingports.BillingTransferFailureCode,
 	err error,
 ) *billingTransferAttempt {
 	a.failure = code
@@ -50,9 +51,9 @@ func (a *billingTransferAttempt) fail(
 
 func (s *service) BulkTransferToBilling(
 	ctx context.Context,
-	req *shipmentports.BulkTransferShipmentToBillingRequest,
+	req *shipmentbillingports.BulkTransferShipmentToBillingRequest,
 	actor *permissionports.RequestActor,
-) (*shipmentports.BulkTransferToBillingResponse, error) {
+) (*shipmentbillingports.BulkTransferToBillingResponse, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
@@ -62,8 +63,8 @@ func (s *service) BulkTransferToBilling(
 
 	shipmentIDs := sliceutils.Dedupe(req.ShipmentIDs)
 	cache := new(billingReadinessCache)
-	response := &shipmentports.BulkTransferToBillingResponse{
-		Results:    make([]shipmentports.BulkTransferToBillingResult, 0, len(shipmentIDs)),
+	response := &shipmentbillingports.BulkTransferToBillingResponse{
+		Results:    make([]shipmentbillingports.BulkTransferToBillingResult, 0, len(shipmentIDs)),
 		TotalCount: len(shipmentIDs),
 	}
 
@@ -102,8 +103,8 @@ func (s *service) BulkTransferToBilling(
 
 func (s *service) ListBillingTransferCandidateIDs(
 	ctx context.Context,
-	req *shipmentports.ListBillingTransferCandidateIDsRequest,
-) (*shipmentports.BillingTransferCandidateIDsResponse, error) {
+	req *shipmentbillingports.ListBillingTransferCandidateIDsRequest,
+) (*shipmentbillingports.BillingTransferCandidateIDsResponse, error) {
 	if req.Status != "" && !req.Status.IsBillingTransferCandidate() {
 		return nil, errortypes.NewValidationError(
 			"status",
@@ -117,7 +118,7 @@ func (s *service) ListBillingTransferCandidateIDs(
 		&shipmentports.ListBillingTransferCandidateIDsQuery{
 			Filter: req.Filter,
 			Status: req.Status,
-			Limit:  shipmentports.MaxBillingTransferCandidateIDs,
+			Limit:  shipmentbillingports.MaxBillingTransferCandidateIDs,
 		},
 	)
 	if err != nil {
@@ -125,7 +126,7 @@ func (s *service) ListBillingTransferCandidateIDs(
 		return nil, err
 	}
 
-	return &shipmentports.BillingTransferCandidateIDsResponse{
+	return &shipmentbillingports.BillingTransferCandidateIDsResponse{
 		IDs:        result.IDs,
 		TotalCount: result.TotalCount,
 		Truncated:  result.TotalCount > len(result.IDs),
@@ -155,10 +156,10 @@ func (s *service) attemptBillingTransfer(
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return attempt.fail(shipmentports.BillingTransferFailureNotFound, err)
+			return attempt.fail(shipmentbillingports.BillingTransferFailureNotFound, err)
 		}
 		log.Error("failed to get shipment for billing transfer", zap.Error(err))
-		return attempt.fail(shipmentports.BillingTransferFailureUnexpected, err)
+		return attempt.fail(shipmentbillingports.BillingTransferFailureUnexpected, err)
 	}
 	attempt.entity = entity
 
@@ -170,7 +171,7 @@ func (s *service) attemptBillingTransfer(
 	readiness, err := s.evaluateBillingReadinessCached(ctx, entity, p.Cache, true)
 	if err != nil {
 		log.Error("failed to evaluate billing readiness for transfer", zap.Error(err))
-		return attempt.fail(shipmentports.BillingTransferFailureUnexpected, err)
+		return attempt.fail(shipmentbillingports.BillingTransferFailureUnexpected, err)
 	}
 	attempt.readiness = readiness
 	if !p.SuppressExceptionNotices {
@@ -192,10 +193,13 @@ func (s *service) attemptBillingTransfer(
 		})
 		if markErr != nil {
 			if errortypes.IsError(markErr) {
-				return attempt.fail(shipmentports.BillingTransferFailureInvalidStatus, markErr)
+				return attempt.fail(
+					shipmentbillingports.BillingTransferFailureInvalidStatus,
+					markErr,
+				)
 			}
 			log.Error("failed to mark shipment ready to invoice for transfer", zap.Error(markErr))
-			return attempt.fail(shipmentports.BillingTransferFailureUnexpected, markErr)
+			return attempt.fail(shipmentbillingports.BillingTransferFailureUnexpected, markErr)
 		}
 		attempt.markedReady = marked
 		entity = updated
@@ -221,10 +225,10 @@ func (s *service) attemptBillingTransfer(
 	)
 	if err != nil {
 		if errortypes.IsConflictError(err) {
-			return attempt.fail(shipmentports.BillingTransferFailureAlreadyTransferred, err)
+			return attempt.fail(shipmentbillingports.BillingTransferFailureAlreadyTransferred, err)
 		}
 		log.Error("failed to transfer shipment to billing", zap.Error(err))
-		return attempt.fail(shipmentports.BillingTransferFailureUnexpected, err)
+		return attempt.fail(shipmentbillingports.BillingTransferFailureUnexpected, err)
 	}
 	attempt.item = transferred.Primary
 	attempt.items = transferred.Items
@@ -235,7 +239,7 @@ func (s *service) attemptBillingTransfer(
 // autoApprovePayerIDs lists the payers whose own profile clears clean freight
 // through the queue, so a split shipment can auto-approve one payer's item while
 // another payer's waits for a biller.
-func autoApprovePayerIDs(readiness *shipmentports.ShipmentBillingReadiness) []pulid.ID {
+func autoApprovePayerIDs(readiness *shipmentbillingports.ShipmentBillingReadiness) []pulid.ID {
 	if readiness == nil {
 		return nil
 	}
@@ -252,14 +256,14 @@ func autoApprovePayerIDs(readiness *shipmentports.ShipmentBillingReadiness) []pu
 func newBulkTransferResult(
 	shipmentID pulid.ID,
 	attempt *billingTransferAttempt,
-) shipmentports.BulkTransferToBillingResult {
-	result := shipmentports.BulkTransferToBillingResult{
+) shipmentbillingports.BulkTransferToBillingResult {
+	result := shipmentbillingports.BulkTransferToBillingResult{
 		ShipmentID:           shipmentID,
 		MarkedReadyToInvoice: attempt.markedReady,
 		Item:                 attempt.item,
 		Items:                attempt.items,
-		MissingRequirements:  []shipmentports.ShipmentBillingRequirement{},
-		ValidationFailures:   []shipmentports.ShipmentBillingValidation{},
+		MissingRequirements:  []shipmentbillingports.ShipmentBillingRequirement{},
+		ValidationFailures:   []shipmentbillingports.ShipmentBillingValidation{},
 	}
 	if attempt.entity != nil {
 		result.ProNumber = attempt.entity.ProNumber
@@ -277,7 +281,7 @@ func newBulkTransferResult(
 	result.FailureCode = attempt.failure
 	result.Err = attempt.err
 	result.Error = unexpectedBillingTransferMessage
-	if attempt.failure != shipmentports.BillingTransferFailureUnexpected {
+	if attempt.failure != shipmentbillingports.BillingTransferFailureUnexpected {
 		result.Error = attempt.err.Error()
 	}
 

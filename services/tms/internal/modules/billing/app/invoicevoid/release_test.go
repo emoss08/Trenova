@@ -6,21 +6,22 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/detentionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/orderportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevoid"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/chargeallocationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/detentionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/orderportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +37,7 @@ type releaseFixture struct {
 	orderID      pulid.ID
 	queueRepo    *billingqueueportsmock.MockBillingQueueRepository
 	orderRepo    *orderportsmock.MockOrderRepository
-	allocRepo    *shipmentportsmock.MockChargeAllocationRepository
+	allocRepo    *chargeallocationportsmock.MockChargeAllocationRepository
 	shipmentRepo *shipmentportsmock.MockShipmentRepository
 	invoiceRepo  *invoiceportsmock.MockInvoiceRepository
 	derivation   *orderportsmock.MockOrderDerivationService
@@ -53,7 +54,7 @@ func newReleaseFixture(t *testing.T) *releaseFixture {
 		orderID:      pulid.MustNew("ord_"),
 		queueRepo:    billingqueueportsmock.NewMockBillingQueueRepository(t),
 		orderRepo:    orderportsmock.NewMockOrderRepository(t),
-		allocRepo:    shipmentportsmock.NewMockChargeAllocationRepository(t),
+		allocRepo:    chargeallocationportsmock.NewMockChargeAllocationRepository(t),
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		invoiceRepo:  invoiceportsmock.NewMockInvoiceRepository(t),
 		derivation:   orderportsmock.NewMockOrderDerivationService(t),
@@ -113,7 +114,7 @@ func (f *releaseFixture) expectCommonReleases(
 		Return(1, nil).
 		Once()
 	f.allocRepo.EXPECT().
-		ClearInvoice(mock.Anything, &shipmentports.ClearChargeAllocationsInvoiceRequest{TenantInfo: f.tenantInfo, InvoiceID: f.inv.ID}).
+		ClearInvoice(mock.Anything, &chargeallocationports.ClearChargeAllocationsInvoiceRequest{TenantInfo: f.tenantInfo, InvoiceID: f.inv.ID}).
 		Return(2, nil).
 		Once()
 }

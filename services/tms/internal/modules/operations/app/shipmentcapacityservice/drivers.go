@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -19,7 +19,7 @@ const msPerHour = float64(3_600_000)
 func (s *Service) driverCapacity(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*shipmentports.ShipmentCapacity, error) {
+) (*shipmentcapacityports.ShipmentCapacity, error) {
 	caps, err := s.capabilities.Capabilities(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -32,9 +32,9 @@ func (s *Service) driverCapacity(
 	}
 
 	units := driverUnits(board.Drivers, s.now().Unix(), caps.HOS)
-	summary := &shipmentports.DriverCapacitySummary{Uncovered: countUncovered(board.Moves)}
+	summary := &shipmentcapacityports.DriverCapacitySummary{Uncovered: countUncovered(board.Moves)}
 	for _, unit := range units {
-		if unit.Group == shipmentports.CapacityGroupReadyNow {
+		if unit.Group == shipmentcapacityports.CapacityGroupReadyNow {
 			summary.Ready++
 		} else {
 			summary.WithinTwoHours++
@@ -42,8 +42,8 @@ func (s *Service) driverCapacity(
 	}
 	summary.Short = max(0, summary.Uncovered-summary.Ready-summary.WithinTwoHours)
 
-	return &shipmentports.ShipmentCapacity{
-		Kind:    shipmentports.CapacityUnitDriver,
+	return &shipmentcapacityports.ShipmentCapacity{
+		Kind:    shipmentcapacityports.CapacityUnitDriver,
 		Units:   units,
 		Drivers: summary,
 	}, nil
@@ -64,29 +64,29 @@ func driverUnits(
 	drivers []*dispatchconsoleservice.BoardDriver,
 	now int64,
 	hos bool,
-) []*shipmentports.CapacityUnit {
+) []*shipmentcapacityports.CapacityUnit {
 	cutoff := now + int64(withinTwoHours.Seconds())
-	units := make([]*shipmentports.CapacityUnit, 0, len(drivers))
+	units := make([]*shipmentcapacityports.CapacityUnit, 0, len(drivers))
 	for _, driver := range drivers {
 		if driver == nil || driver.BoardDriver == nil || !driver.AvailableForDispatch {
 			continue
 		}
 
-		var group shipmentports.CapacityGroup
+		var group shipmentcapacityports.CapacityGroup
 		switch {
 		case driver.Availability == dispatchconsoleservice.AvailabilityOpen:
-			group = shipmentports.CapacityGroupReadyNow
+			group = shipmentcapacityports.CapacityGroupReadyNow
 		case driver.Availability == dispatchconsoleservice.AvailabilityFinishing &&
 			driver.ProjectedTimeAvailable <= cutoff:
-			group = shipmentports.CapacityGroupWithinTwoHours
+			group = shipmentcapacityports.CapacityGroupWithinTwoHours
 		default:
 			continue
 		}
 
 		name := strings.TrimSpace(driver.FirstName + " " + driver.LastName)
-		unit := &shipmentports.CapacityUnit{
+		unit := &shipmentcapacityports.CapacityUnit{
 			ID:        driver.WorkerID,
-			Kind:      shipmentports.CapacityUnitDriver,
+			Kind:      shipmentcapacityports.CapacityUnitDriver,
 			Name:      name,
 			Initials:  stringutils.Initials(name),
 			Group:     group,
@@ -94,7 +94,7 @@ func driverUnits(
 			UnitLabel: driver.TractorCode,
 			TractorID: driver.TractorID,
 		}
-		if group == shipmentports.CapacityGroupWithinTwoHours {
+		if group == shipmentcapacityports.CapacityGroupWithinTwoHours {
 			freeAt := driver.ProjectedTimeAvailable
 			unit.FreeAt = &freeAt
 		}
@@ -102,7 +102,7 @@ func driverUnits(
 			remaining := driver.DriveRemainingMs
 			hours := float64(remaining) / msPerHour
 			unit.DriveRemainingMs = &remaining
-			unit.Ring = &shipmentports.CapacityRing{
+			unit.Ring = &shipmentcapacityports.CapacityRing{
 				Value: hours,
 				Max:   hosMaxHours,
 				Low:   hours < hosLowHours,
@@ -111,7 +111,7 @@ func driverUnits(
 		units = append(units, unit)
 	}
 
-	slices.SortStableFunc(units, func(a, b *shipmentports.CapacityUnit) int {
+	slices.SortStableFunc(units, func(a, b *shipmentcapacityports.CapacityUnit) int {
 		return cmp.Or(
 			cmp.Compare(groupOrder(a.Group), groupOrder(b.Group)),
 			cmp.Compare(freeAtOf(a), freeAtOf(b)),
@@ -122,18 +122,20 @@ func driverUnits(
 	return units
 }
 
-func groupOrder(group shipmentports.CapacityGroup) int {
+func groupOrder(group shipmentcapacityports.CapacityGroup) int {
 	switch group {
-	case shipmentports.CapacityGroupReadyNow, shipmentports.CapacityGroupTrucksPosted:
+	case shipmentcapacityports.CapacityGroupReadyNow,
+		shipmentcapacityports.CapacityGroupTrucksPosted:
 		return 0
-	case shipmentports.CapacityGroupWithinTwoHours, shipmentports.CapacityGroupUsuallyAccept:
+	case shipmentcapacityports.CapacityGroupWithinTwoHours,
+		shipmentcapacityports.CapacityGroupUsuallyAccept:
 		return 1
 	default:
 		return 1
 	}
 }
 
-func freeAtOf(unit *shipmentports.CapacityUnit) int64 {
+func freeAtOf(unit *shipmentcapacityports.CapacityUnit) int64 {
 	if unit.FreeAt == nil {
 		return 0
 	}
@@ -154,7 +156,7 @@ func (s *Service) driverMatches(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 	limit int,
-) ([]*shipmentports.CapacityMatch, error) {
+) ([]*shipmentcapacityports.CapacityMatch, error) {
 	ranked, err := s.console.GetDriverMoves(ctx, &dispatchconsoleservice.DriverMovesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
@@ -164,7 +166,7 @@ func (s *Service) driverMatches(
 		return nil, err
 	}
 
-	matches := make([]*shipmentports.CapacityMatch, 0, limit)
+	matches := make([]*shipmentcapacityports.CapacityMatch, 0, limit)
 	for _, candidate := range ranked {
 		if len(matches) == limit {
 			break
@@ -185,13 +187,13 @@ func (s *Service) driverMatches(
 	return matches, nil
 }
 
-func matchFromMove(move *dispatchconsoleservice.BoardMove) *shipmentports.CapacityMatch {
+func matchFromMove(move *dispatchconsoleservice.BoardMove) *shipmentcapacityports.CapacityMatch {
 	revenue := decimal.Zero
 	if move.Revenue != nil {
 		revenue = decimal.NewFromFloat(*move.Revenue)
 	}
 
-	return &shipmentports.CapacityMatch{
+	return &shipmentcapacityports.CapacityMatch{
 		ShipmentID:      move.ShipmentID,
 		MoveID:          move.MoveID,
 		ProNumber:       move.ProNumber,

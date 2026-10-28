@@ -15,8 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/assignmentsolver"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,7 +41,7 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	ConsoleRepo         shipmentports.DispatchConsoleRepository
+	ConsoleRepo         dispatchboardports.DispatchConsoleRepository
 	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	AgentControlRepo    tenantports.AgentControlRepository
 	DefinitionRepo      agentdefinitionports.AgentDefinitionRepository
@@ -53,7 +53,7 @@ type Params struct {
 
 type Service struct {
 	l                   *zap.Logger
-	consoleRepo         shipmentports.DispatchConsoleRepository
+	consoleRepo         dispatchboardports.DispatchConsoleRepository
 	dispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	agentControlRepo    tenantports.AgentControlRepository
 	definitionRepo      agentdefinitionports.AgentDefinitionRepository
@@ -171,7 +171,7 @@ func buildFilter(
 	req *dispatchconsoleports.DispatchPlanRequest,
 	control *dispatchcontrol.DispatchControl,
 	now int64,
-) *shipmentports.DispatchBoardFilter {
+) *dispatchboardports.DispatchBoardFilter {
 	windowStart, windowEnd := dispatchcandidateservice.ResolveWindow(
 		req.WindowStart,
 		req.WindowEnd,
@@ -179,7 +179,7 @@ func buildFilter(
 		now,
 	)
 
-	return &shipmentports.DispatchBoardFilter{
+	return &dispatchboardports.DispatchBoardFilter{
 		TenantInfo:   req.TenantInfo,
 		WindowStart:  windowStart,
 		WindowEnd:    windowEnd,
@@ -190,7 +190,7 @@ func buildFilter(
 }
 
 type solveParams struct {
-	Moves    []*shipmentports.BoardMove
+	Moves    []*dispatchboardports.BoardMove
 	Snapshot *dispatchcandidateservice.FleetSnapshot
 	Control  *dispatchcontrol.DispatchControl
 	Policy   Policy
@@ -257,7 +257,7 @@ func (s *Service) solveImmediate(p *solveParams) *dispatchconsoleports.DispatchP
 }
 
 type buildPlanParams struct {
-	Moves    []*shipmentports.BoardMove
+	Moves    []*dispatchboardports.BoardMove
 	Solution assignmentsolver.Result
 	Scores   [][]*dispatchcandidateservice.CandidateScore
 	Control  *dispatchcontrol.DispatchControl
@@ -306,7 +306,7 @@ func buildPlan(p *buildPlanParams) *dispatchconsoleports.DispatchPlan {
 }
 
 func uncoveredFor(
-	move *shipmentports.BoardMove,
+	move *dispatchboardports.BoardMove,
 	scores []*dispatchcandidateservice.CandidateScore,
 	control *dispatchcontrol.DispatchControl,
 ) *dispatchconsoleports.DispatchUncoveredMove {

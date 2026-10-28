@@ -8,18 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
-	"github.com/emoss08/trenova/pkg/lading"
-
-	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/trackingeventportsmock"
-
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -28,12 +19,20 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentmoveportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/trackingeventportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/mock"
@@ -47,11 +46,11 @@ type tenderedCarrierFixture struct {
 	partner       *edi.EDIPartner
 	tenderRepo    *fakeTenderRepository
 	recipientRepo *ediportsmock.MockEDITenderRecipientRepository
-	commentRepo   *shipmentportsmock.MockShipmentCommentRepository
+	commentRepo   *shipmentcommentportsmock.MockShipmentCommentRepository
 	userRepo      *tenantportsmock.MockUserRepository
 	eventRepo     *shipmenteventportsmock.MockShipmentEventRepository
 	invoiceRepo   *ediportsmock.MockEDICarrierInvoiceRepository
-	moveRepo      *shipmentportsmock.MockShipmentMoveRepository
+	moveRepo      *shipmentmoveportsmock.MockShipmentMoveRepository
 	tracking      *trackingeventportsmock.MockTrackingEventService
 	matcher       *carrierportsmock.MockCarrierInvoiceAutoMatcher
 }
@@ -98,7 +97,7 @@ func buildTenderedCarrierFixture(t *testing.T, withStopActuals bool) *tenderedCa
 		},
 		tenderRepo:    &fakeTenderRepository{},
 		recipientRepo: ediportsmock.NewMockEDITenderRecipientRepository(t),
-		commentRepo:   shipmentportsmock.NewMockShipmentCommentRepository(t),
+		commentRepo:   shipmentcommentportsmock.NewMockShipmentCommentRepository(t),
 		userRepo:      tenantportsmock.NewMockUserRepository(t),
 		eventRepo:     shipmenteventportsmock.NewMockShipmentEventRepository(t),
 		invoiceRepo:   ediportsmock.NewMockEDICarrierInvoiceRepository(t),
@@ -115,7 +114,7 @@ func buildTenderedCarrierFixture(t *testing.T, withStopActuals bool) *tenderedCa
 		CarrierInvoiceRepo:  fixture.invoiceRepo,
 	}
 	if withStopActuals {
-		fixture.moveRepo = shipmentportsmock.NewMockShipmentMoveRepository(t)
+		fixture.moveRepo = shipmentmoveportsmock.NewMockShipmentMoveRepository(t)
 		fixture.tracking = trackingeventportsmock.NewMockTrackingEventService(t)
 		params.ShipmentMoveRepo = fixture.moveRepo
 		params.TrackingEvents = fixture.tracking
@@ -203,7 +202,10 @@ func parse214Transaction(t *testing.T, raw string) (*parsedTransaction, *shipmen
 	result, err := client.Run(t.Context(), encoded, request)
 	require.NoError(t, err)
 	for _, need := range result.Needs {
-		request.Lookups = append(request.Lookups, lading.LookupAnswer{Kind: need.Kind, Code: need.Code})
+		request.Lookups = append(
+			request.Lookups,
+			lading.LookupAnswer{Kind: need.Kind, Code: need.Code},
+		)
 	}
 	if len(request.Lookups) > 0 {
 		result, err = client.Run(t.Context(), encoded, request)
@@ -457,7 +459,7 @@ func TestRouteShipmentStatus_X3RecordsOriginArrivalWithEventTime(t *testing.T) {
 
 	move, origin, _ := fixture.tenderedMoveWithStops(moveID)
 	fixture.moveRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetMoveByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentmoveports.GetMoveByIDRequest) bool {
 			return req.MoveID == moveID && req.ExpandMoveDetails
 		})).
 		Return(move, nil).
@@ -512,7 +514,7 @@ func TestRouteShipmentStatus_D1RecordsArriveAndDepartAtDestination(t *testing.T)
 
 	move, _, destination := fixture.tenderedMoveWithStops(moveID)
 	fixture.moveRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetMoveByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentmoveports.GetMoveByIDRequest")).
 		Return(move, nil).
 		Once()
 	recordedEvents := fixture.expectTrackingEvents(move, 2)
@@ -563,7 +565,7 @@ func TestRouteShipmentStatus_StopActualBusinessErrorBecomesWarningKeepsComment(t
 
 	move, _, _ := fixture.tenderedMoveWithStops(moveID)
 	fixture.moveRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetMoveByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentmoveports.GetMoveByIDRequest")).
 		Return(move, nil).
 		Once()
 	fixture.tracking.EXPECT().
@@ -1069,7 +1071,7 @@ func TestRouteShipmentStatus_EveryAT7BecomesATimedTrackingEvent(t *testing.T) {
 		Stops:  []*shipment.Stop{origin, intermediate, final},
 	}
 	fixture.moveRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetMoveByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentmoveports.GetMoveByIDRequest")).
 		Return(move, nil).
 		Times(3)
 	recordedEvents := fixture.expectTrackingEvents(move, 3)

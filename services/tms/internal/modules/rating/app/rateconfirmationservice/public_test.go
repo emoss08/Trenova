@@ -4,11 +4,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
@@ -22,7 +21,7 @@ const invalidLinkCopy = "This rate confirmation link is no longer valid"
 
 type publicTestDeps struct {
 	repo                  *fakeRateConRepo
-	carrierAssignmentRepo *shipmentportsmock.MockCarrierAssignmentRepository
+	carrierAssignmentRepo *carrierassignmentportsmock.MockCarrierAssignmentRepository
 	svc                   *Service
 }
 
@@ -31,7 +30,7 @@ func setupPublicTest(t *testing.T) *publicTestDeps {
 
 	deps := &publicTestDeps{
 		repo:                  newFakeRateConRepo(),
-		carrierAssignmentRepo: shipmentportsmock.NewMockCarrierAssignmentRepository(t),
+		carrierAssignmentRepo: carrierassignmentportsmock.NewMockCarrierAssignmentRepository(t),
 	}
 	deps.svc = &Service{
 		l:                     zap.NewNop(),

@@ -78,9 +78,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
@@ -104,7 +106,7 @@ func SharedOptions() fx.Option {
 			shipmentcommentservice.New,
 			shipmentholdservice.New,
 			shipmentratingreviewservice.New,
-			func(s *shipmentratingreviewservice.Service) shipmentports.RatingReviewService { return s },
+			func(s *shipmentratingreviewservice.Service) ratingreviewports.RatingReviewService { return s },
 			routingguideservice.NewValidator,
 			routingguideservice.New,
 			detentionpolicyservice.New,
@@ -114,10 +116,10 @@ func SharedOptions() fx.Option {
 			shipmentcapacityservice.NewCapacityReader,
 			shipmentcapacityservice.NewCoverageSuggester,
 			shipmentcapacityservice.NewTenderer,
-			func(s *shipmentboardservice.Service) shipmentports.ShipmentBoardCapabilitiesReader { return s },
-			func(s *shipmentboardservice.Service) shipmentports.ShipmentStageSummaryReader { return s },
-			func(s *shipmentboardservice.Service) shipmentports.ShipmentBoardGroupSummarizer { return s },
-			func(s *shipmentboardservice.Service) shipmentports.ShipmentQuickFilterCounter { return s },
+			func(s *shipmentboardservice.Service) shipmentboardports.ShipmentBoardCapabilitiesReader { return s },
+			func(s *shipmentboardservice.Service) shipmentboardports.ShipmentStageSummaryReader { return s },
+			func(s *shipmentboardservice.Service) shipmentboardports.ShipmentBoardGroupSummarizer { return s },
+			func(s *shipmentboardservice.Service) shipmentboardports.ShipmentQuickFilterCounter { return s },
 			shipmentrepository.NewInsightSource,
 			weatheralertrepository.New,
 			dispatchcontrolrepository.New,
@@ -192,7 +194,7 @@ func SharedOptions() fx.Option {
 				fx.ResultTags(`group:"shipment_event_observers"`),
 			),
 			fx.Annotate(
-				func(r *triagedeliveryrelay.Relay) shipmentports.MoveStatusObserver { return r },
+				func(r *triagedeliveryrelay.Relay) shipmentserviceports.MoveStatusObserver { return r },
 				fx.ResultTags(`group:"move_status_observers"`),
 			),
 			fx.Annotate(
@@ -218,7 +220,7 @@ func SharedOptions() fx.Option {
 			),
 			fx.Annotate(
 				shipmentservice.New,
-				fx.As(new(shipmentports.ShipmentService)),
+				fx.As(new(shipmentserviceports.ShipmentService)),
 				fx.As(new(shipmentservice.MutationObserverSetter)),
 			),
 			tenderservice.New,

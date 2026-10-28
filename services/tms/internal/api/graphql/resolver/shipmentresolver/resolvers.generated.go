@@ -3,11 +3,14 @@
 package shipmentresolver
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	invoiceports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	kernelports "github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	shipmenteventports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
-	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	trackingeventports "github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	carriersettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	driversettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
@@ -16,12 +19,12 @@ import (
 type Deps struct {
 	*base.Core
 	AnalyticsService            kernelports.AnalyticsService
-	ShipmentService             shipmentports.ShipmentService
-	ShipmentCommentService      shipmentports.ShipmentCommentService
-	ShipmentRatingReviewService shipmentports.RatingReviewService
+	ShipmentService             shipmentserviceports.ShipmentService
+	ShipmentCommentService      shipmentcommentports.ShipmentCommentService
+	ShipmentRatingReviewService ratingreviewports.RatingReviewService
 	ShipmentEventService        shipmenteventports.ShipmentEventService
 	TrackingEventService        trackingeventports.TrackingEventService
-	ShipmentImportAssistant     shipmentports.ShipmentImportAssistantService
+	ShipmentImportAssistant     shipmentimportassistantports.ShipmentImportAssistantService
 	InvoiceService              invoiceports.InvoiceService
 	DriverSettlementRepo        driversettlementports.DriverSettlementRepository
 	CarrierSettlementRepo       carriersettlementports.CarrierSettlementRepository

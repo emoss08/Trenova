@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
@@ -656,10 +657,10 @@ type CustomerMailer struct {
 	Templates documenttemplateports.DocumentTemplateResolver `json:"-"`
 	orgRepo   tenantports.OrganizationRepository
 	inliner   documenttemplateports.AssetInliner
-	Customers customerports.CustomerRepository     `json:"-"`
-	Shipments shipmentports.ShipmentRepository     `json:"-"`
-	Comments  shipmentports.ShipmentCommentService `json:"-"`
-	Senders   emailports.EmailSenderResolver       `json:"-"`
+	Customers customerports.CustomerRepository            `json:"-"`
+	Shipments shipmentports.ShipmentRepository            `json:"-"`
+	Comments  shipmentcommentports.ShipmentCommentService `json:"-"`
+	Senders   emailports.EmailSenderResolver              `json:"-"`
 }
 
 type emailCustomerParams struct {
@@ -671,7 +672,7 @@ type emailCustomerParams struct {
 	Inliner   documenttemplateports.AssetInliner
 	Customers customerports.CustomerRepository
 	Shipments shipmentports.ShipmentRepository
-	Comments  shipmentports.ShipmentCommentService
+	Comments  shipmentcommentports.ShipmentCommentService
 	Senders   emailports.EmailSenderResolver `optional:"true"`
 }
 

@@ -164,7 +164,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
 	"go.uber.org/fx"
 )
 
@@ -397,7 +397,7 @@ func SharedOptions() fx.Option {
 			accountingbriefingservice.NewWriter,
 			aidocumentservice.New,
 			shipmentimportassistantservice.New,
-			func(s *shipmentimportassistantservice.Service) shipmentports.ShipmentImportAssistantService {
+			func(s *shipmentimportassistantservice.Service) shipmentimportassistantports.ShipmentImportAssistantService {
 				return s
 			},
 			aitraininghistoryservice.NewEmpty,

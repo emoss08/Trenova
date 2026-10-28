@@ -3,10 +3,10 @@ package shipmentboardresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 )
 
-func watchlistToModel(w *shipmentports.ShipmentWatchlist) *gqlmodel.ShipmentWatchlist {
+func watchlistToModel(w *shipmentboardports.ShipmentWatchlist) *gqlmodel.ShipmentWatchlist {
 	return &gqlmodel.ShipmentWatchlist{
 		Deliveries: deliveryWatchToModel(&w.Deliveries),
 		Uncovered:  uncoveredWatchToModel(&w.Uncovered),
@@ -15,7 +15,9 @@ func watchlistToModel(w *shipmentports.ShipmentWatchlist) *gqlmodel.ShipmentWatc
 	}
 }
 
-func deliveryWatchToModel(w *shipmentports.ShipmentDeliveryWatch) *gqlmodel.ShipmentDeliveryWatch {
+func deliveryWatchToModel(
+	w *shipmentboardports.ShipmentDeliveryWatch,
+) *gqlmodel.ShipmentDeliveryWatch {
 	buckets := make([]*gqlmodel.DeliveryHourBucket, 0, len(w.Buckets))
 	for _, bucket := range w.Buckets {
 		buckets = append(buckets, &gqlmodel.DeliveryHourBucket{
@@ -47,7 +49,7 @@ func deliveryWatchToModel(w *shipmentports.ShipmentDeliveryWatch) *gqlmodel.Ship
 }
 
 func uncoveredWatchToModel(
-	w *shipmentports.ShipmentUncoveredWatch,
+	w *shipmentboardports.ShipmentUncoveredWatch,
 ) *gqlmodel.ShipmentUncoveredWatch {
 	windows := make([]*gqlmodel.UncoveredWindowSummary, 0, len(w.Windows))
 	for _, window := range w.Windows {
@@ -78,7 +80,7 @@ func uncoveredWatchToModel(
 }
 
 func detentionWatchToModel(
-	w *shipmentports.ShipmentDetentionWatch,
+	w *shipmentboardports.ShipmentDetentionWatch,
 ) *gqlmodel.ShipmentDetentionWatch {
 	top := make([]*gqlmodel.DetentionAccrual, 0, len(w.Top))
 	for _, item := range w.Top {
@@ -103,7 +105,9 @@ func detentionWatchToModel(
 	}
 }
 
-func billingWatchToModel(w *shipmentports.ShipmentBillingWatch) *gqlmodel.ShipmentBillingWatch {
+func billingWatchToModel(
+	w *shipmentboardports.ShipmentBillingWatch,
+) *gqlmodel.ShipmentBillingWatch {
 	customers := make([]*gqlmodel.ReadyToBillCustomer, 0, len(w.Customers))
 	for _, customer := range w.Customers {
 		customers = append(customers, &gqlmodel.ReadyToBillCustomer{

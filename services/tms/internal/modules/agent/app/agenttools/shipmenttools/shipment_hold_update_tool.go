@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 )
 
@@ -48,22 +48,22 @@ var updatedHoldFields = []string{
 type holdUpdater interface {
 	GetByID(
 		ctx context.Context,
-		req *shipmentports.GetShipmentHoldByIDRequest,
+		req *shipmentholdports.GetShipmentHoldByIDRequest,
 	) (*shipment.ShipmentHold, error)
 	Update(
 		ctx context.Context,
-		req *shipmentports.UpdateShipmentHoldRequest,
+		req *shipmentholdports.UpdateShipmentHoldRequest,
 		actor *permissionports.RequestActor,
 	) (*shipment.ShipmentHold, error)
 	PreviewUpdate(
 		ctx context.Context,
-		req *shipmentports.UpdateShipmentHoldRequest,
+		req *shipmentholdports.UpdateShipmentHoldRequest,
 		actor *permissionports.RequestActor,
 	) (*shipment.ShipmentHold, error)
 }
 
 type holdPatch struct {
-	get               shipmentports.GetShipmentHoldByIDRequest
+	get               shipmentholdports.GetShipmentHoldByIDRequest
 	severity          *holdreason.HoldSeverity
 	notes             *string
 	blocksDispatch    *bool
@@ -79,8 +79,8 @@ type holdUpdatePlan struct {
 
 func (p *holdPatch) request(
 	current *shipment.ShipmentHold,
-) *shipmentports.UpdateShipmentHoldRequest {
-	req := &shipmentports.UpdateShipmentHoldRequest{
+) *shipmentholdports.UpdateShipmentHoldRequest {
+	req := &shipmentholdports.UpdateShipmentHoldRequest{
 		TenantInfo:        p.get.TenantInfo,
 		ShipmentID:        p.get.ShipmentID,
 		HoldID:            p.get.HoldID,
@@ -125,7 +125,7 @@ func readHoldPatch(params *agenttoolports.ToolExecuteParams) (*holdPatch, error)
 		return nil, err
 	}
 
-	patch := &holdPatch{get: shipmentports.GetShipmentHoldByIDRequest{
+	patch := &holdPatch{get: shipmentholdports.GetShipmentHoldByIDRequest{
 		HoldID:     holdID,
 		ShipmentID: shipmentID,
 		TenantInfo: common.TenantFrom(*params),

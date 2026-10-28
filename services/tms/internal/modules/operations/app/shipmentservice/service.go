@@ -26,10 +26,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
@@ -60,7 +65,7 @@ type shipmentTenantResource interface {
 }
 
 type MutationObserverSetter interface {
-	SetShipmentMutationObservers(observers []shipmentports.ShipmentMutationObserver)
+	SetShipmentMutationObservers(observers []shipmentserviceports.ShipmentMutationObserver)
 }
 
 type Params struct {
@@ -71,7 +76,7 @@ type Params struct {
 	Repo                 shipmentports.ShipmentRepository
 	OrderRepo            orderports.OrderRepository
 	CacheRepo            customerports.ShipmentCacheRepository
-	AssignmentRepo       shipmentports.AssignmentRepository
+	AssignmentRepo       assignmentports.AssignmentRepository
 	UserRepo             tenantports.UserRepository
 	ControlRepo          tenantports.ShipmentControlRepository
 	ModeProfileService   modeprofileports.ModeProfileService
@@ -82,7 +87,7 @@ type Params struct {
 	EquipmentTypeRepo    equipmenttypeports.EquipmentTypeRepository
 	AccessorialRepo      accessorialchargeports.AccessorialChargeRepository
 	CustomerRepo         customerports.CustomerRepository
-	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
+	ChargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	DocumentRepo         documentports.DocumentRepository
 	BillingRepo          tenantports.BillingControlRepository
 	NotificationService  *notificationservice.Service
@@ -97,12 +102,12 @@ type Params struct {
 	Coordinator          *shipmentstate.Coordinator
 	Commercial           *shipmentcommercial.Calculator
 	OrderDerivation      orderports.OrderDerivationService
-	DistanceCalculation  shipmentports.DistanceCalculationService `optional:"true"`
-	TenderGuard          tenderports.TenderGuard                  `optional:"true"`
-	AgentEvents          agentports.AgentEventPublisher           `optional:"true"`
-	Quota                platformplanports.QuotaGuard             `optional:"true"`
+	DistanceCalculation  shipmentdistanceports.DistanceCalculationService `optional:"true"`
+	TenderGuard          tenderports.TenderGuard                          `optional:"true"`
+	AgentEvents          agentports.AgentEventPublisher                   `optional:"true"`
+	Quota                platformplanports.QuotaGuard                     `optional:"true"`
 	QuickFilters         shipmentports.ShipmentQuickFilterBasisResolver
-	Invalidator          shipmentports.ShipmentInvalidator
+	Invalidator          shipmentinvalidationports.ShipmentInvalidator
 }
 
 type service struct {
@@ -111,7 +116,7 @@ type service struct {
 	repo                 shipmentports.ShipmentRepository
 	orderRepo            orderports.OrderRepository
 	cacheRepo            customerports.ShipmentCacheRepository
-	assignmentRepo       shipmentports.AssignmentRepository
+	assignmentRepo       assignmentports.AssignmentRepository
 	userRepo             tenantports.UserRepository
 	controlRepo          tenantports.ShipmentControlRepository
 	modeProfileService   modeprofileports.ModeProfileService
@@ -122,7 +127,7 @@ type service struct {
 	equipmentTypeRepo    equipmenttypeports.EquipmentTypeRepository
 	accessorialRepo      accessorialchargeports.AccessorialChargeRepository
 	customerRepo         customerports.CustomerRepository
-	chargeAllocationRepo shipmentports.ChargeAllocationRepository
+	chargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	documentRepo         documentports.DocumentRepository
 	billingRepo          tenantports.BillingControlRepository
 	notificationService  *notificationservice.Service
@@ -136,14 +141,14 @@ type service struct {
 	workflowStarter      kernelports.WorkflowStarter
 	coordinator          *shipmentstate.Coordinator
 	quickFilters         shipmentports.ShipmentQuickFilterBasisResolver
-	invalidator          shipmentports.ShipmentInvalidator
+	invalidator          shipmentinvalidationports.ShipmentInvalidator
 	commercial           *shipmentcommercial.Calculator
 	orderDerivation      orderports.OrderDerivationService
-	distanceCalculation  shipmentports.DistanceCalculationService
+	distanceCalculation  shipmentdistanceports.DistanceCalculationService
 	tenderGuard          tenderports.TenderGuard
 	agentEvents          agentports.AgentEventPublisher
 	quota                platformplanports.QuotaGuard
-	mutationObservers    []shipmentports.ShipmentMutationObserver
+	mutationObservers    []shipmentserviceports.ShipmentMutationObserver
 }
 
 func New(p Params) *service { //nolint:gocritic // stable API shape
@@ -188,8 +193,10 @@ func New(p Params) *service { //nolint:gocritic // stable API shape
 	}
 }
 
-func (s *service) SetShipmentMutationObservers(observers []shipmentports.ShipmentMutationObserver) {
-	s.mutationObservers = append([]shipmentports.ShipmentMutationObserver(nil), observers...)
+func (s *service) SetShipmentMutationObservers(
+	observers []shipmentserviceports.ShipmentMutationObserver,
+) {
+	s.mutationObservers = append([]shipmentserviceports.ShipmentMutationObserver(nil), observers...)
 }
 
 func (s *service) createNotification(
@@ -268,13 +275,13 @@ func (s *service) SelectOptions(
 func (s *service) GetUIPolicy(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*shipmentports.ShipmentUIPolicy, error) {
+) (*shipmentserviceports.ShipmentUIPolicy, error) {
 	control, err := s.getShipmentControl(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	policy := &shipmentports.ShipmentUIPolicy{
+	policy := &shipmentserviceports.ShipmentUIPolicy{
 		AllowMoveRemovals:      control.AllowMoveRemovals,
 		CheckForDuplicateBOLs:  control.CheckForDuplicateBOLs,
 		CheckHazmatSegregation: control.CheckHazmatSegregation,
@@ -422,10 +429,15 @@ func (s *service) announceCreated(
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationForRecord(created, auditActor, "created", created),
+		shipmentinvalidationports.ShipmentInvalidationForRecord(
+			created,
+			auditActor,
+			"created",
+			created,
+		),
 	)
 
 	agentports.PublishAgentEvent(ctx, s.agentEvents, agentports.AgentEvent{
@@ -592,10 +604,10 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationForRecord(
+		shipmentinvalidationports.ShipmentInvalidationForRecord(
 			updatedEntity,
 			auditActor,
 			"updated",
@@ -731,10 +743,10 @@ func (s *service) TransferOwnership(
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationForRecord(
+		shipmentinvalidationports.ShipmentInvalidationForRecord(
 			updatedEntity,
 			auditActor,
 			"ownership_transferred",
@@ -810,10 +822,15 @@ func (s *service) DelayShipments(
 	}
 
 	for _, entity := range delayedShipments {
-		shipmentports.InvalidateShipments(
+		shipmentinvalidationports.InvalidateShipments(
 			ctx,
 			s.invalidator,
-			shipmentports.ShipmentInvalidationForRecord(entity, auditActor, "delayed", entity),
+			shipmentinvalidationports.ShipmentInvalidationForRecord(
+				entity,
+				auditActor,
+				"delayed",
+				entity,
+			),
 		)
 	}
 
@@ -890,10 +907,10 @@ func (s *service) AutoCancelShipments(
 		auditActor = actor.AuditActor()
 	}
 
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationByActor(
+		shipmentinvalidationports.ShipmentInvalidationByActor(
 			req.TenantInfo,
 			auditActor,
 			pulid.Nil,
@@ -1128,10 +1145,10 @@ func (s *service) Cancel(
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationForRecord(
+		shipmentinvalidationports.ShipmentInvalidationForRecord(
 			updatedEntity,
 			auditActor,
 			"canceled",
@@ -1203,10 +1220,10 @@ func (s *service) Uncancel(
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationForRecord(
+		shipmentinvalidationports.ShipmentInvalidationForRecord(
 			updatedEntity,
 			auditActor,
 			"uncanceled",
@@ -1336,7 +1353,7 @@ func (s *service) CalculateTotals(
 func (s *service) CalculateDistance(
 	ctx context.Context,
 	entity *shipment.Shipment,
-) (*shipmentports.DistanceCalculationResponse, error) {
+) (*shipmentdistanceports.DistanceCalculationResponse, error) {
 	if s.distanceCalculation == nil {
 		return nil, errortypes.NewBusinessError("distance calculation service is not configured")
 	}
@@ -1350,7 +1367,7 @@ func (s *service) RecalculateDistance(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*shipmentports.DistanceCalculationResponse, error) {
+) (*shipmentdistanceports.DistanceCalculationResponse, error) {
 	if s.distanceCalculation == nil {
 		return nil, errortypes.NewBusinessError("distance calculation service is not configured")
 	}

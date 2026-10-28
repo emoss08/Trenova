@@ -10,8 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/triagelookupports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -46,7 +50,7 @@ type shipmentCreator interface {
 type holdCreator interface {
 	Create(
 		ctx context.Context,
-		req *shipmentports.CreateShipmentHoldRequest,
+		req *shipmentholdports.CreateShipmentHoldRequest,
 		actor *permissionports.RequestActor,
 	) (*shipment.ShipmentHold, error)
 }
@@ -54,7 +58,7 @@ type holdCreator interface {
 type commentCreator interface {
 	CreateSystem(
 		ctx context.Context,
-		req *shipmentports.CreateSystemShipmentCommentRequest,
+		req *shipmentcommentports.CreateSystemShipmentCommentRequest,
 	) (*shipment.ShipmentComment, error)
 }
 
@@ -93,10 +97,10 @@ type Params struct {
 	Logger      *zap.Logger
 	Tracking    shipmenttrackingports.ShipmentTrackingReader
 	Shipments   shipmentports.ShipmentRepository
-	Lookup      shipmentports.TriageLookupRepository
-	Creator     shipmentports.ShipmentService
-	Holds       shipmentports.ShipmentHoldService
-	Comments    shipmentports.ShipmentCommentService
+	Lookup      triagelookupports.TriageLookupRepository
+	Creator     shipmentserviceports.ShipmentService
+	Holds       shipmentholdports.ShipmentHoldService
+	Comments    shipmentcommentports.ShipmentCommentService
 	Occurrences detentionports.DetentionOccurrenceRepository
 	Detention   *detentionservice.Service
 	Credits     detentionports.BilledDetentionCreditor `optional:"true"`
@@ -106,7 +110,7 @@ type Service struct {
 	l           *zap.Logger
 	tracking    trackingReader
 	summaries   summaryReader
-	lookup      shipmentports.TriageLookupRepository
+	lookup      triagelookupports.TriageLookupRepository
 	creator     shipmentCreator
 	holds       holdCreator
 	comments    commentCreator

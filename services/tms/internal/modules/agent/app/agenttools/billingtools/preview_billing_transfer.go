@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 )
 
 // transferView is one shipment as the transfer leaves it: its status, its
@@ -71,7 +71,7 @@ func (t *TransferToBillingTool) previewPlan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 	request *transferRequest,
-) (*shipmentports.BillingTransferPlan, error) {
+) (*shipmentbillingports.BillingTransferPlan, error) {
 	if request.all {
 		ids, plan, err := t.transferable(ctx, params, request)
 		if err != nil {
@@ -84,10 +84,10 @@ func (t *TransferToBillingTool) previewPlan(
 
 	checked := request.shipmentIDs
 	if request.background() {
-		checked = checked[:shipmentports.MaxBulkTransferToBillingShipments]
+		checked = checked[:shipmentbillingports.MaxBulkTransferToBillingShipments]
 	}
 
-	return t.shipments.PlanBillingTransfers(ctx, &shipmentports.PlanBillingTransfersRequest{
+	return t.shipments.PlanBillingTransfers(ctx, &shipmentbillingports.PlanBillingTransfersRequest{
 		TenantInfo:                  common.TenantFrom(*params),
 		ShipmentIDs:                 checked,
 		MarkCompletedReadyToInvoice: request.markReady,
@@ -97,13 +97,13 @@ func (t *TransferToBillingTool) previewPlan(
 // refusalsFirst orders the shipments a person most needs to see ahead of the
 // ones that simply go, since a preview shows the first few records.
 func refusalsFirst(
-	decisions []shipmentports.BillingTransferDecision,
-) []*shipmentports.BillingTransferDecision {
-	ordered := make([]*shipmentports.BillingTransferDecision, 0, len(decisions))
+	decisions []shipmentbillingports.BillingTransferDecision,
+) []*shipmentbillingports.BillingTransferDecision {
+	ordered := make([]*shipmentbillingports.BillingTransferDecision, 0, len(decisions))
 	for idx := range decisions {
 		ordered = append(ordered, &decisions[idx])
 	}
-	slices.SortStableFunc(ordered, func(a, b *shipmentports.BillingTransferDecision) int {
+	slices.SortStableFunc(ordered, func(a, b *shipmentbillingports.BillingTransferDecision) int {
 		switch {
 		case a.Outcome.Transfers() == b.Outcome.Transfers():
 			return 0
@@ -117,7 +117,9 @@ func refusalsFirst(
 	return ordered
 }
 
-func transferChange(decision *shipmentports.BillingTransferDecision) (*agent.RecordChange, error) {
+func transferChange(
+	decision *shipmentbillingports.BillingTransferDecision,
+) (*agent.RecordChange, error) {
 	stage := string(decision.BillingTransferStatus)
 	if stage == "" {
 		stage = "Not transferred"
@@ -132,13 +134,13 @@ func transferChange(decision *shipmentports.BillingTransferDecision) (*agent.Rec
 	after.Issues = validationIssues(decision)
 
 	switch decision.Outcome {
-	case shipmentports.BillingTransferOutcomeMarkReadyAndTransfer:
+	case shipmentbillingports.BillingTransferOutcomeMarkReadyAndTransfer:
 		after.Status = string(shipment.StatusReadyToInvoice)
 		after.BillingTransferStatus = string(shipment.BillingTransferReadyForReview)
-	case shipmentports.BillingTransferOutcomeTransfer:
+	case shipmentbillingports.BillingTransferOutcomeTransfer:
 		after.BillingTransferStatus = string(shipment.BillingTransferReadyForReview)
-	case shipmentports.BillingTransferOutcomeRefused,
-		shipmentports.BillingTransferOutcomeReturnToOperations:
+	case shipmentbillingports.BillingTransferOutcomeRefused,
+		shipmentbillingports.BillingTransferOutcomeReturnToOperations:
 	}
 
 	label := decision.ProNumber
@@ -157,12 +159,12 @@ func transferChange(decision *shipmentports.BillingTransferDecision) (*agent.Rec
 	return toolpreview.Changed(record, before, &after, toolpreview.Labels(transferLabels))
 }
 
-func transferOutcomeText(decision *shipmentports.BillingTransferDecision) string {
+func transferOutcomeText(decision *shipmentbillingports.BillingTransferDecision) string {
 	switch decision.Outcome {
-	case shipmentports.BillingTransferOutcomeTransfer,
-		shipmentports.BillingTransferOutcomeMarkReadyAndTransfer:
+	case shipmentbillingports.BillingTransferOutcomeTransfer,
+		shipmentbillingports.BillingTransferOutcomeMarkReadyAndTransfer:
 		text := "Queued for a biller's review"
-		if decision.Outcome == shipmentports.BillingTransferOutcomeMarkReadyAndTransfer {
+		if decision.Outcome == shipmentbillingports.BillingTransferOutcomeMarkReadyAndTransfer {
 			text = "Marked ready to invoice and queued for a biller's review"
 		}
 		if decision.AutoApprove {
@@ -171,16 +173,16 @@ func transferOutcomeText(decision *shipmentports.BillingTransferDecision) string
 		}
 
 		return text
-	case shipmentports.BillingTransferOutcomeReturnToOperations:
+	case shipmentbillingports.BillingTransferOutcomeReturnToOperations:
 		return "Left with operations to correct: " + decision.Reason
-	case shipmentports.BillingTransferOutcomeRefused:
+	case shipmentbillingports.BillingTransferOutcomeRefused:
 		return fmt.Sprintf("Refused (%s): %s", decision.FailureCode, decision.Reason)
 	default:
 		return string(decision.Outcome)
 	}
 }
 
-func missingDocuments(decision *shipmentports.BillingTransferDecision) string {
+func missingDocuments(decision *shipmentbillingports.BillingTransferDecision) string {
 	names := make([]string, 0, len(decision.MissingRequirements))
 	for _, requirement := range decision.MissingRequirements {
 		names = append(names, requirement.DocumentTypeName)
@@ -189,7 +191,7 @@ func missingDocuments(decision *shipmentports.BillingTransferDecision) string {
 	return strings.Join(names, ", ")
 }
 
-func validationIssues(decision *shipmentports.BillingTransferDecision) string {
+func validationIssues(decision *shipmentbillingports.BillingTransferDecision) string {
 	messages := make([]string, 0, len(decision.ValidationFailures))
 	for _, failure := range decision.ValidationFailures {
 		messages = append(messages, failure.Message)
@@ -198,7 +200,10 @@ func validationIssues(decision *shipmentports.BillingTransferDecision) string {
 	return strings.Join(messages, "; ")
 }
 
-func transferSummary(request transferRequest, plan *shipmentports.BillingTransferPlan) string {
+func transferSummary(
+	request transferRequest,
+	plan *shipmentbillingports.BillingTransferPlan,
+) string {
 	counts := fmt.Sprintf("%d would transfer", plan.Transfer)
 	if plan.Refused > 0 {
 		counts += fmt.Sprintf(", %d would be refused", plan.Refused)

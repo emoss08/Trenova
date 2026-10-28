@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,7 +39,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) shipmentports.ShipmentHoldRepository {
+func New(p Params) shipmentholdports.ShipmentHoldRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.shipment-hold-repository"),
@@ -53,7 +53,7 @@ func holdQuery() *keel.Query[*shipment.ShipmentHold] {
 
 func (r *repository) ListByShipmentID(
 	ctx context.Context,
-	req *shipmentports.ListShipmentHoldsRequest,
+	req *shipmentholdports.ListShipmentHoldsRequest,
 ) (*pagination.ListResult[*shipment.ShipmentHold], error) {
 	return dbtx.Read(
 		ctx,
@@ -93,7 +93,7 @@ func (r *repository) ListByShipmentID(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *shipmentports.GetShipmentHoldByIDRequest,
+	req *shipmentholdports.GetShipmentHoldByIDRequest,
 ) (*shipment.ShipmentHold, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentHold, error) {
 		h := shipmentdb.ShipmentHolds
@@ -125,7 +125,7 @@ func (r *repository) Create(
 			)
 		}
 
-		return r.GetByID(ctx, &shipmentports.GetShipmentHoldByIDRequest{
+		return r.GetByID(ctx, &shipmentholdports.GetShipmentHoldByIDRequest{
 			HoldID:     entity.ID,
 			ShipmentID: entity.ShipmentID,
 			TenantInfo: tenantInfo(entity),
@@ -162,7 +162,7 @@ func (r *repository) Update(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &shipmentports.GetShipmentHoldByIDRequest{
+		return r.GetByID(ctx, &shipmentholdports.GetShipmentHoldByIDRequest{
 			HoldID:     entity.ID,
 			ShipmentID: entity.ShipmentID,
 			TenantInfo: tenantInfo(entity),
@@ -193,7 +193,7 @@ func (r *repository) Release(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &shipmentports.GetShipmentHoldByIDRequest{
+		return r.GetByID(ctx, &shipmentholdports.GetShipmentHoldByIDRequest{
 			HoldID:     entity.ID,
 			ShipmentID: entity.ShipmentID,
 			TenantInfo: tenantInfo(entity),
@@ -203,21 +203,21 @@ func (r *repository) Release(
 
 func (r *repository) HasActiveDispatchHold(
 	ctx context.Context,
-	req *shipmentports.ActiveShipmentHoldRequest,
+	req *shipmentholdports.ActiveShipmentHoldRequest,
 ) (bool, error) {
 	return r.hasActiveBlockingHold(ctx, req, shipmentdb.ShipmentHolds.BlocksDispatch)
 }
 
 func (r *repository) HasActiveDeliveryHold(
 	ctx context.Context,
-	req *shipmentports.ActiveShipmentHoldRequest,
+	req *shipmentholdports.ActiveShipmentHoldRequest,
 ) (bool, error) {
 	return r.hasActiveBlockingHold(ctx, req, shipmentdb.ShipmentHolds.BlocksDelivery)
 }
 
 func (r *repository) hasActiveBlockingHold(
 	ctx context.Context,
-	req *shipmentports.ActiveShipmentHoldRequest,
+	req *shipmentholdports.ActiveShipmentHoldRequest,
 	blocks keel.BoolCol,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,18 +31,18 @@ type Params struct {
 	DB           kernelports.Transactor
 	Logger       *zap.Logger
 	Repo         trackingeventports.TrackingEventRepository
-	MoveRepo     shipmentports.ShipmentMoveRepository
+	MoveRepo     shipmentmoveports.ShipmentMoveRepository
 	ShipmentRepo shipmentports.ShipmentRepository
-	MoveService  shipmentports.ShipmentMoveService
+	MoveService  shipmentmoveports.ShipmentMoveService
 }
 
 type Service struct {
 	db           kernelports.Transactor
 	l            *zap.Logger
 	repo         trackingeventports.TrackingEventRepository
-	moveRepo     shipmentports.ShipmentMoveRepository
+	moveRepo     shipmentmoveports.ShipmentMoveRepository
 	shipmentRepo shipmentports.ShipmentRepository
-	moveService  shipmentports.ShipmentMoveService
+	moveService  shipmentmoveports.ShipmentMoveService
 }
 
 func New(p Params) *Service { //nolint:gocritic // dependency injection
@@ -179,7 +180,7 @@ func (s *Service) RecordReported(
 			return err
 		}
 		if !inserted {
-			current, getErr := s.moveRepo.GetByID(txCtx, &shipmentports.GetMoveByIDRequest{
+			current, getErr := s.moveRepo.GetByID(txCtx, &shipmentmoveports.GetMoveByIDRequest{
 				MoveID:            params.MoveID,
 				TenantInfo:        params.TenantInfo,
 				ExpandMoveDetails: true,
@@ -193,7 +194,7 @@ func (s *Service) RecordReported(
 
 		recorded, err := s.moveService.RecordStopActual(
 			txCtx,
-			&shipmentports.RecordStopActualRequest{
+			&shipmentmoveports.RecordStopActualRequest{
 				TenantInfo: params.TenantInfo,
 				MoveID:     params.MoveID,
 				StopID:     params.StopID,
@@ -372,7 +373,7 @@ func (s *Service) reconcile(
 
 		result, err := s.moveService.ReconcileStopActuals(
 			txCtx,
-			&shipmentports.ReconcileStopActualsRequest{
+			&shipmentmoveports.ReconcileStopActualsRequest{
 				TenantInfo: tenantInfo,
 				MoveID:     moveID,
 				Plan: func(planCtx context.Context, move *shipment.ShipmentMove) ([]shipment.StopActualChange, error) {
@@ -439,7 +440,7 @@ func (s *Service) loadMove(
 	tenantInfo pagination.TenantInfo,
 	moveID, stopID pulid.ID,
 ) (*shipment.ShipmentMove, error) {
-	move, err := s.moveRepo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	move, err := s.moveRepo.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            moveID,
 		TenantInfo:        tenantInfo,
 		ExpandMoveDetails: true,
@@ -490,8 +491,8 @@ func replayed(
 	}
 }
 
-func visitForAction(action shipmentports.StopActualAction) shipment.VisitKind {
-	if action == shipmentports.StopActualActionDepart {
+func visitForAction(action shipmentmoveports.StopActualAction) shipment.VisitKind {
+	if action == shipmentmoveports.StopActualActionDepart {
 		return shipment.VisitDeparture
 	}
 	return shipment.VisitArrival

@@ -14,9 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -110,7 +110,7 @@ func (f *fakeExceptionService) Flag(
 // never does. It is taken from the actor so an agent cannot assign a driver
 // in another organization by naming that organization's ids.
 func TestAssignMove_UsesTheActorTenantAndPassesEveryId(t *testing.T) {
-	assignments := shipmentportsmock.NewMockAssignmentService(t)
+	assignments := assignmentportsmock.NewMockAssignmentService(t)
 	tool := masterdatatools.NewAssignMoveTool(assignments, nil)
 
 	orgID := pulid.MustNew("org_")
@@ -121,7 +121,7 @@ func TestAssignMove_UsesTheActorTenantAndPassesEveryId(t *testing.T) {
 	trailerID := pulid.MustNew("trl_")
 
 	assignments.EXPECT().
-		AssignToMove(mock.Anything, mock.MatchedBy(func(req *shipmentports.AssignShipmentMoveRequest) bool {
+		AssignToMove(mock.Anything, mock.MatchedBy(func(req *assignmentports.AssignShipmentMoveRequest) bool {
 			return req.TenantInfo.OrgID == orgID &&
 				req.TenantInfo.BuID == buID &&
 				req.ShipmentMoveID == moveID &&
@@ -151,7 +151,7 @@ func TestAssignMove_UsesTheActorTenantAndPassesEveryId(t *testing.T) {
 }
 
 func TestAssignMove_TenantMismatch_DoesNotCallPort(t *testing.T) {
-	assignments := shipmentportsmock.NewMockAssignmentService(t)
+	assignments := assignmentportsmock.NewMockAssignmentService(t)
 	tool := masterdatatools.NewAssignMoveTool(assignments, nil)
 
 	err := tool.Execute(t.Context(), agenttoolports.ToolExecuteParams{

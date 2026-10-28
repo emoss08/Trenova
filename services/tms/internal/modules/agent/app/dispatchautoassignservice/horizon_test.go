@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/shared/dispatchplanner"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,8 +16,8 @@ import (
 
 const horizonNow = int64(1_700_000_000)
 
-func horizonMove(pro string) *shipmentports.BoardMove {
-	return &shipmentports.BoardMove{MoveID: pulid.MustNew("mov_"), ProNumber: pro}
+func horizonMove(pro string) *dispatchboardports.BoardMove {
+	return &dispatchboardports.BoardMove{MoveID: pulid.MustNew("mov_"), ProNumber: pro}
 }
 
 func horizonScore(
@@ -39,18 +39,18 @@ func horizonScore(
 
 type horizonFixture struct {
 	oracle *horizonOracle
-	moves  []*shipmentports.BoardMove
+	moves  []*dispatchboardports.BoardMove
 }
 
 func newHorizonFixture(
-	moves []*shipmentports.BoardMove,
+	moves []*dispatchboardports.BoardMove,
 	scores [][]*dispatchcandidateservice.CandidateScore,
 ) horizonFixture {
-	drivers := make([]*shipmentports.BoardDriver, 0)
+	drivers := make([]*dispatchboardports.BoardDriver, 0)
 	if len(scores) > 0 {
-		drivers = make([]*shipmentports.BoardDriver, len(scores[0]))
+		drivers = make([]*dispatchboardports.BoardDriver, len(scores[0]))
 		for i := range drivers {
-			drivers[i] = &shipmentports.BoardDriver{WorkerID: pulid.MustNew("wrk_")}
+			drivers[i] = &dispatchboardports.BoardDriver{WorkerID: pulid.MustNew("wrk_")}
 		}
 	}
 
@@ -62,19 +62,19 @@ func newHorizonFixture(
 
 func horizonControls() (*dispatchcontrol.DispatchControl, Policy) {
 	return &dispatchcontrol.DispatchControl{
-		PlanningMode:             dispatchcontrol.PlanningModeHorizon,
-		HorizonMaxMovesPerDriver: 3,
-	}, Policy{
-		Enabled: true,
-		Tier:    agent.TierPropose,
-	}
+			PlanningMode:             dispatchcontrol.PlanningModeHorizon,
+			HorizonMaxMovesPerDriver: 3,
+		}, Policy{
+			Enabled: true,
+			Tier:    agent.TierPropose,
+		}
 }
 
 func TestBuildHorizonPlan_GroupsChainedMovesIntoOneTour(t *testing.T) {
 	t.Parallel()
 
 	worker := pulid.MustNew("wrk_")
-	moves := []*shipmentports.BoardMove{horizonMove("P1"), horizonMove("P2")}
+	moves := []*dispatchboardports.BoardMove{horizonMove("P1"), horizonMove("P2")}
 	fixture := newHorizonFixture(moves, [][]*dispatchcandidateservice.CandidateScore{
 		{horizonScore(worker, "Dana", 90, 10)},
 		{horizonScore(worker, "Dana", 80, 25)},
@@ -118,7 +118,7 @@ func TestBuildHorizonPlan_SeparateDriversGetSeparateTours(t *testing.T) {
 
 	first := pulid.MustNew("wrk_")
 	second := pulid.MustNew("wrk_")
-	moves := []*shipmentports.BoardMove{horizonMove("P1"), horizonMove("P2")}
+	moves := []*dispatchboardports.BoardMove{horizonMove("P1"), horizonMove("P2")}
 	fixture := newHorizonFixture(moves, [][]*dispatchcandidateservice.CandidateScore{
 		{horizonScore(first, "Dana", 90, 10), horizonScore(second, "Sam", 70, 40)},
 		{horizonScore(first, "Dana", 60, 50), horizonScore(second, "Sam", 85, 15)},
@@ -150,7 +150,7 @@ func TestBuildHorizonPlan_UnassignedMovesBecomeUncovered(t *testing.T) {
 	t.Parallel()
 
 	worker := pulid.MustNew("wrk_")
-	moves := []*shipmentports.BoardMove{horizonMove("P1"), horizonMove("P2")}
+	moves := []*dispatchboardports.BoardMove{horizonMove("P1"), horizonMove("P2")}
 	fixture := newHorizonFixture(moves, [][]*dispatchcandidateservice.CandidateScore{
 		{horizonScore(worker, "Dana", 90, 10)},
 		{nil},
@@ -179,7 +179,7 @@ func TestBuildHorizonPlan_CarriesProjectionsOntoAssignments(t *testing.T) {
 	t.Parallel()
 
 	worker := pulid.MustNew("wrk_")
-	moves := []*shipmentports.BoardMove{horizonMove("P1")}
+	moves := []*dispatchboardports.BoardMove{horizonMove("P1")}
 	scored := horizonScore(worker, "Dana", 90, 10)
 	scored.HOSProjectedDriveMs = 5 * 3600 * 1000
 	fixture := newHorizonFixture(moves, [][]*dispatchcandidateservice.CandidateScore{{scored}})
@@ -219,7 +219,7 @@ func TestSolve_RoutesOnPlanningMode(t *testing.T) {
 			dispatchcontrol.PlanningModeHorizon,
 		} {
 			plan := svc.solve(&solveParams{
-				Moves:    []*shipmentports.BoardMove{horizonMove("P1")},
+				Moves:    []*dispatchboardports.BoardMove{horizonMove("P1")},
 				Snapshot: &dispatchcandidateservice.FleetSnapshot{},
 				Control:  &dispatchcontrol.DispatchControl{PlanningMode: mode},
 				Policy:   policy,
@@ -259,7 +259,7 @@ func TestHorizonOracle_RebuildRestoresTheRealWorkload(t *testing.T) {
 	t.Parallel()
 
 	worker := pulid.MustNew("wrk_")
-	existing := &shipmentports.WorkerCommitment{
+	existing := &dispatchboardports.WorkerCommitment{
 		WorkerID:  worker,
 		MoveID:    pulid.MustNew("mov_"),
 		WindowEnd: horizonNow + 3600,
@@ -267,13 +267,13 @@ func TestHorizonOracle_RebuildRestoresTheRealWorkload(t *testing.T) {
 
 	snapshot := &dispatchcandidateservice.FleetSnapshot{
 		Now:     horizonNow,
-		Drivers: []*shipmentports.BoardDriver{{WorkerID: worker}},
-		CommitmentsByWorker: map[pulid.ID][]*shipmentports.WorkerCommitment{
+		Drivers: []*dispatchboardports.BoardDriver{{WorkerID: worker}},
+		CommitmentsByWorker: map[pulid.ID][]*dispatchboardports.WorkerCommitment{
 			worker: {existing},
 		},
 	}
 
-	moves := []*shipmentports.BoardMove{horizonMove("P1")}
+	moves := []*dispatchboardports.BoardMove{horizonMove("P1")}
 	control, _ := horizonControls()
 
 	oracle := newHorizonOracle(&solveParams{
@@ -306,13 +306,13 @@ func TestHorizonOracle_RebuildDoesNotMutateTheCapturedBaseline(t *testing.T) {
 	worker := pulid.MustNew("wrk_")
 	snapshot := &dispatchcandidateservice.FleetSnapshot{
 		Now:     horizonNow,
-		Drivers: []*shipmentports.BoardDriver{{WorkerID: worker}},
-		CommitmentsByWorker: map[pulid.ID][]*shipmentports.WorkerCommitment{
+		Drivers: []*dispatchboardports.BoardDriver{{WorkerID: worker}},
+		CommitmentsByWorker: map[pulid.ID][]*dispatchboardports.WorkerCommitment{
 			worker: {{WorkerID: worker, WindowEnd: horizonNow + 3600}},
 		},
 	}
 
-	moves := []*shipmentports.BoardMove{horizonMove("P1")}
+	moves := []*dispatchboardports.BoardMove{horizonMove("P1")}
 	control, _ := horizonControls()
 	oracle := newHorizonOracle(&solveParams{
 		Moves:    moves,
@@ -347,11 +347,11 @@ func TestSolveImmediate_IgnoresHorizonConfiguration(t *testing.T) {
 
 	build := func(control *dispatchcontrol.DispatchControl) *dispatchconsoleports.DispatchPlan {
 		return svc.solve(&solveParams{
-			Moves: []*shipmentports.BoardMove{horizonMove("P1"), horizonMove("P2")},
+			Moves: []*dispatchboardports.BoardMove{horizonMove("P1"), horizonMove("P2")},
 			Snapshot: &dispatchcandidateservice.FleetSnapshot{
 				Now:     horizonNow,
 				Control: control,
-				Drivers: []*shipmentports.BoardDriver{{WorkerID: pulid.MustNew("wrk_")}},
+				Drivers: []*dispatchboardports.BoardDriver{{WorkerID: pulid.MustNew("wrk_")}},
 			},
 			Control: control,
 			Policy:  policy,
@@ -389,11 +389,11 @@ func TestSolve_HorizonModeIsLabelledAsSuch(t *testing.T) {
 	control.HorizonSearchIterations = &disabled
 
 	plan := svc.solve(&solveParams{
-		Moves: []*shipmentports.BoardMove{horizonMove("P1")},
+		Moves: []*dispatchboardports.BoardMove{horizonMove("P1")},
 		Snapshot: &dispatchcandidateservice.FleetSnapshot{
 			Now:     horizonNow,
 			Control: control,
-			Drivers: []*shipmentports.BoardDriver{{WorkerID: pulid.MustNew("wrk_")}},
+			Drivers: []*dispatchboardports.BoardDriver{{WorkerID: pulid.MustNew("wrk_")}},
 		},
 		Control: control,
 		Policy:  policy,

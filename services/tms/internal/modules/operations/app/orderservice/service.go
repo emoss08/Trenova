@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -36,8 +38,8 @@ type Params struct {
 	AuditService         auditports.AuditService
 	Generator            seqgen.Generator
 	OrderDerivation      orderports.OrderDerivationService
-	ShipmentService      shipmentports.ShipmentService
-	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
+	ShipmentService      shipmentserviceports.ShipmentService
+	ChargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	CustomerRepo         customerports.CustomerRepository
 }
 
@@ -49,8 +51,8 @@ type Service struct {
 	auditService         auditports.AuditService
 	generator            seqgen.Generator
 	orderDerivation      orderports.OrderDerivationService
-	shipmentService      shipmentports.ShipmentService
-	chargeAllocationRepo shipmentports.ChargeAllocationRepository
+	shipmentService      shipmentserviceports.ShipmentService
+	chargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	customerRepo         customerports.CustomerRepository
 }
 
@@ -1018,7 +1020,7 @@ func (s *Service) syncChargeAllocations(
 
 	return s.chargeAllocationRepo.SyncForOrderCharge(
 		ctx,
-		&shipmentports.SyncOrderChargeAllocationsRequest{
+		&chargeallocationports.SyncOrderChargeAllocationsRequest{
 			TenantInfo:    tenantInfo,
 			OrderID:       charge.OrderID,
 			OrderChargeID: charge.ID,

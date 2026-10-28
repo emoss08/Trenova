@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -83,7 +84,7 @@ func (f *fakeShipmentService) PreviewCancel(
 	_ context.Context,
 	req *shipmentports.CancelShipmentRequest,
 	_ *permissionports.RequestActor,
-) (*shipmentports.ShipmentCancelPreview, error) {
+) (*shipmentserviceports.ShipmentCancelPreview, error) {
 	before := &shipment.Shipment{
 		ID:        req.ShipmentID,
 		ProNumber: "SHP-3001",
@@ -93,7 +94,7 @@ func (f *fakeShipmentService) PreviewCancel(
 	after := *before
 	after.ApplyCancel(req.CanceledByID, req.CanceledAt, req.CancelReason)
 
-	return &shipmentports.ShipmentCancelPreview{Before: before, After: &after}, nil
+	return &shipmentserviceports.ShipmentCancelPreview{Before: before, After: &after}, nil
 }
 
 func TestUpdateShipmentPreview_IsThePatchExecuteSaves(t *testing.T) {

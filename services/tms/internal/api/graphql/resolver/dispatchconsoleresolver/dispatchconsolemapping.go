@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 )
 
 func mapDispatchBoard(board *dispatchconsoleservice.Board) *gqlmodel.DispatchBoard {
@@ -36,7 +36,7 @@ func mapDispatchBoard(board *dispatchconsoleservice.Board) *gqlmodel.DispatchBoa
 }
 
 func mapDispatchSummary(
-	summary *shipmentports.BoardSummary,
+	summary *dispatchboardports.BoardSummary,
 ) *gqlmodel.DispatchBoardSummary {
 	if summary == nil {
 		return &gqlmodel.DispatchBoardSummary{}

@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentserviceportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
@@ -78,7 +78,7 @@ func TestShipmentHandler_Get_FormulaContentFollowsPermission(t *testing.T) {
 			t.Parallel()
 
 			shipmentID := pulid.MustNew("shp_")
-			service := shipmentportsmock.NewMockShipmentService(t)
+			service := shipmentserviceportsmock.NewMockShipmentService(t)
 			service.EXPECT().
 				Get(mock.Anything, mock.Anything).
 				Return(ratedShipment(shipmentID), nil).
@@ -120,7 +120,7 @@ func TestShipmentHandler_Get_FormulaContentFollowsPermission(t *testing.T) {
 func TestShipmentHandler_List_HidesFormulaContentWithoutFormulaRead(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
+	service := shipmentserviceportsmock.NewMockShipmentService(t)
 	service.EXPECT().
 		List(mock.Anything, mock.Anything).
 		Return(&pagination.CursorListResult[*shipment.Shipment]{
@@ -179,7 +179,7 @@ func TestShipmentHandler_TransferToBilling_HidesFormulaContentWithoutFormulaRead
 			t.Parallel()
 
 			shipmentID := pulid.MustNew("shp_")
-			service := shipmentportsmock.NewMockShipmentService(t)
+			service := shipmentserviceportsmock.NewMockShipmentService(t)
 			service.EXPECT().
 				TransferToBilling(mock.Anything, mock.Anything, mock.Anything).
 				Return(&billingqueue.BillingQueueItem{

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -27,7 +27,7 @@ type Params struct {
 	Repo         carriercapacityports.CarrierCapacityPostingRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
-	Invalidator  shipmentports.ShipmentInvalidator
+	Invalidator  shipmentinvalidationports.ShipmentInvalidator
 }
 
 type Service struct {
@@ -35,7 +35,7 @@ type Service struct {
 	repo         carriercapacityports.CarrierCapacityPostingRepository
 	validator    *Validator
 	auditService auditports.AuditService
-	invalidator  shipmentports.ShipmentInvalidator
+	invalidator  shipmentinvalidationports.ShipmentInvalidator
 }
 
 func New(p Params) *Service {
@@ -220,10 +220,10 @@ func (s *Service) invalidate(
 	entity *carriercapacity.Posting,
 	actor *permissionports.RequestActor,
 ) {
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationByActor(
+		shipmentinvalidationports.ShipmentInvalidationByActor(
 			pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
 			actor.AuditActorOrSystem(),
 			pulid.Nil,

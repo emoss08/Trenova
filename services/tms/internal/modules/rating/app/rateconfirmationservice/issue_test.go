@@ -3,16 +3,14 @@ package rateconfirmationservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-
-	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -22,7 +20,7 @@ import (
 
 type issueTestDeps struct {
 	repo                  *fakeRateConRepo
-	carrierAssignmentRepo *shipmentportsmock.MockCarrierAssignmentRepository
+	carrierAssignmentRepo *carrierassignmentportsmock.MockCarrierAssignmentRepository
 	carrierRepo           *carrierportsmock.MockCarrierRepository
 	svc                   *Service
 }
@@ -32,7 +30,7 @@ func setupIssueTest(t *testing.T) *issueTestDeps {
 
 	deps := &issueTestDeps{
 		repo:                  newFakeRateConRepo(),
-		carrierAssignmentRepo: shipmentportsmock.NewMockCarrierAssignmentRepository(t),
+		carrierAssignmentRepo: carrierassignmentportsmock.NewMockCarrierAssignmentRepository(t),
 		carrierRepo:           carrierportsmock.NewMockCarrierRepository(t),
 	}
 	deps.svc = &Service{

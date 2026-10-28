@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/idempotency"
@@ -39,7 +40,7 @@ func (r *MutationResolver) TenderShipments(
 		return nil, err
 	}
 
-	items := make([]shipmentports.TenderShipmentItem, 0, len(input.Items))
+	items := make([]shipmentcapacityports.TenderShipmentItem, 0, len(input.Items))
 	for idx, item := range input.Items {
 		shipmentID, parseErr := pulid.Parse(item.ShipmentID)
 		if parseErr != nil {
@@ -59,14 +60,17 @@ func (r *MutationResolver) TenderShipments(
 		}
 		items = append(
 			items,
-			shipmentports.TenderShipmentItem{ShipmentID: shipmentID, CarrierID: carrierID},
+			shipmentcapacityports.TenderShipmentItem{ShipmentID: shipmentID, CarrierID: carrierID},
 		)
 	}
 
-	result, err := r.BoardTenderer.TenderShipments(ctx, &shipmentports.TenderShipmentsRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		Items:      items,
-	})
+	result, err := r.BoardTenderer.TenderShipments(
+		ctx,
+		&shipmentcapacityports.TenderShipmentsRequest{
+			TenantInfo: base.TenantInfo(authCtx),
+			Items:      items,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +253,7 @@ func (r *QueryResolver) ShipmentCapacity(
 	capacity, err := r.BoardCapacity.Capacity(
 		ctx,
 		base.TenantInfo(authCtx),
-		shipmentports.CapacityUnitKind(kind),
+		shipmentcapacityports.CapacityUnitKind(kind),
 	)
 	if err != nil {
 		return nil, err
@@ -277,9 +281,9 @@ func (r *QueryResolver) CapacityUnitMatches(
 		)
 	}
 
-	request := &shipmentports.CapacityMatchesRequest{
+	request := &shipmentcapacityports.CapacityMatchesRequest{
 		TenantInfo: base.TenantInfo(authCtx),
-		Kind:       shipmentports.CapacityUnitKind(kind),
+		Kind:       shipmentcapacityports.CapacityUnitKind(kind),
 		UnitID:     id,
 	}
 	if limit != nil {
@@ -378,7 +382,7 @@ func (r *QueryResolver) ShipmentBoardGroups(
 
 	groups, err := r.BoardGroups.GroupSummary(
 		ctx,
-		&shipmentports.SummarizeShipmentBoardGroupsRequest{
+		&shipmentboardports.SummarizeShipmentBoardGroupsRequest{
 			Scope: scopeRequestFromGraphQL(
 				&input,
 				base.TenantInfo(authCtx),

@@ -10,10 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -27,7 +28,7 @@ import (
 )
 
 type commentServiceMocks struct {
-	repo         *shipmentportsmock.MockShipmentCommentRepository
+	repo         *shipmentcommentportsmock.MockShipmentCommentRepository
 	shipmentRepo *shipmentportsmock.MockShipmentRepository
 	userRepo     *tenantportsmock.MockUserRepository
 	docRepo      *documentportsmock.MockDocumentRepository
@@ -35,11 +36,13 @@ type commentServiceMocks struct {
 	realtime     *realtimeportsmock.MockRealtimeService
 }
 
-func newCommentService(t *testing.T) (shipmentports.ShipmentCommentService, commentServiceMocks) {
+func newCommentService(
+	t *testing.T,
+) (shipmentcommentports.ShipmentCommentService, commentServiceMocks) {
 	t.Helper()
 
 	m := commentServiceMocks{
-		repo:         shipmentportsmock.NewMockShipmentCommentRepository(t),
+		repo:         shipmentcommentportsmock.NewMockShipmentCommentRepository(t),
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		userRepo:     tenantportsmock.NewMockUserRepository(t),
 		docRepo:      documentportsmock.NewMockDocumentRepository(t),
@@ -79,7 +82,7 @@ func TestCreate_RejectsReplyToReply(t *testing.T) {
 	grandparentID := pulid.MustNew("shc_")
 
 	m.repo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentCommentByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentcommentports.GetShipmentCommentByIDRequest) bool {
 			return req.CommentID == parentID
 		})).
 		Return(&shipment.ShipmentComment{
@@ -308,7 +311,7 @@ func TestDelete_TombstonesWhenCommentHasReplies(t *testing.T) {
 
 	now := int64(1000)
 	m.repo.EXPECT().
-		SoftDelete(mock.Anything, mock.MatchedBy(func(req *shipmentports.SoftDeleteShipmentCommentRequest) bool {
+		SoftDelete(mock.Anything, mock.MatchedBy(func(req *shipmentcommentports.SoftDeleteShipmentCommentRequest) bool {
 			return req.CommentID == commentID && req.ActorID == testutil.TestUserID
 		})).
 		Return(&shipment.ShipmentComment{
@@ -331,7 +334,7 @@ func TestDelete_TombstonesWhenCommentHasReplies(t *testing.T) {
 		Return(nil).
 		Once()
 
-	err := svc.Delete(t.Context(), &shipmentports.DeleteShipmentCommentRequest{
+	err := svc.Delete(t.Context(), &shipmentcommentports.DeleteShipmentCommentRequest{
 		ShipmentID: shipmentID,
 		CommentID:  commentID,
 		TenantInfo: tenantScope(),
@@ -361,7 +364,7 @@ func TestDelete_HardDeletesWithoutReplies(t *testing.T) {
 		Once()
 	m.repo.EXPECT().CountReplies(mock.Anything, mock.Anything).Return(0, nil).Once()
 	m.repo.EXPECT().
-		Delete(mock.Anything, mock.MatchedBy(func(req *shipmentports.DeleteShipmentCommentQuery) bool {
+		Delete(mock.Anything, mock.MatchedBy(func(req *shipmentcommentports.DeleteShipmentCommentQuery) bool {
 			return req.CommentID == commentID
 		})).
 		Return(nil).
@@ -377,7 +380,7 @@ func TestDelete_HardDeletesWithoutReplies(t *testing.T) {
 		Return(nil).
 		Once()
 
-	err := svc.Delete(t.Context(), &shipmentports.DeleteShipmentCommentRequest{
+	err := svc.Delete(t.Context(), &shipmentcommentports.DeleteShipmentCommentRequest{
 		ShipmentID: shipmentID,
 		CommentID:  commentID,
 		TenantInfo: tenantScope(),
@@ -414,7 +417,7 @@ func TestDelete_ModeratorCanDeleteOthersComment(t *testing.T) {
 		Return(nil).
 		Once()
 
-	err := svc.Delete(t.Context(), &shipmentports.DeleteShipmentCommentRequest{
+	err := svc.Delete(t.Context(), &shipmentcommentports.DeleteShipmentCommentRequest{
 		ShipmentID:  shipmentID,
 		CommentID:   commentID,
 		TenantInfo:  tenantScope(),
@@ -464,7 +467,7 @@ func TestUpdate_ModeratorPreservesOriginalAuthor(t *testing.T) {
 		Return(nil).
 		Once()
 
-	updated, err := svc.Update(t.Context(), &shipmentports.UpdateShipmentCommentRequest{
+	updated, err := svc.Update(t.Context(), &shipmentcommentports.UpdateShipmentCommentRequest{
 		Entity: &shipment.ShipmentComment{
 			ID:             commentID,
 			ShipmentID:     shipmentID,
@@ -493,7 +496,7 @@ func TestUpdate_NonOwnerWithoutModeratorIsRejected(t *testing.T) {
 		BusinessUnitID: testutil.TestBuID,
 	}, nil).Once()
 
-	updated, err := svc.Update(t.Context(), &shipmentports.UpdateShipmentCommentRequest{
+	updated, err := svc.Update(t.Context(), &shipmentcommentports.UpdateShipmentCommentRequest{
 		Entity: &shipment.ShipmentComment{
 			ID:             pulid.MustNew("shc_"),
 			ShipmentID:     pulid.MustNew("shp_"),
@@ -528,7 +531,7 @@ func TestPin_EnforcesPinnedCap(t *testing.T) {
 		Return(shipment.MaxPinnedComments, nil).
 		Once()
 
-	pinned, err := svc.Pin(t.Context(), &shipmentports.ToggleShipmentCommentRequest{
+	pinned, err := svc.Pin(t.Context(), &shipmentcommentports.ToggleShipmentCommentRequest{
 		TenantInfo: tenantScope(),
 		ShipmentID: shipmentID,
 		CommentID:  commentID,
@@ -556,7 +559,7 @@ func TestPin_RejectsReplies(t *testing.T) {
 		BusinessUnitID:  testutil.TestBuID,
 	}, nil).Once()
 
-	pinned, err := svc.Pin(t.Context(), &shipmentports.ToggleShipmentCommentRequest{
+	pinned, err := svc.Pin(t.Context(), &shipmentcommentports.ToggleShipmentCommentRequest{
 		TenantInfo: tenantScope(),
 		ShipmentID: shipmentID,
 		CommentID:  commentID,
@@ -584,7 +587,7 @@ func TestPin_PublishesPinnedAction(t *testing.T) {
 	}, nil).Once()
 	m.repo.EXPECT().CountPinnedByShipmentID(mock.Anything, mock.Anything).Return(0, nil).Once()
 	m.repo.EXPECT().
-		SetPinned(mock.Anything, mock.MatchedBy(func(req *shipmentports.SetShipmentCommentPinnedRequest) bool {
+		SetPinned(mock.Anything, mock.MatchedBy(func(req *shipmentcommentports.SetShipmentCommentPinnedRequest) bool {
 			return req.Pinned && req.ActorID == testutil.TestUserID
 		})).
 		Return(&shipment.ShipmentComment{
@@ -607,7 +610,7 @@ func TestPin_PublishesPinnedAction(t *testing.T) {
 		Return(nil).
 		Once()
 
-	pinned, err := svc.Pin(t.Context(), &shipmentports.ToggleShipmentCommentRequest{
+	pinned, err := svc.Pin(t.Context(), &shipmentcommentports.ToggleShipmentCommentRequest{
 		TenantInfo: tenantScope(),
 		ShipmentID: shipmentID,
 		CommentID:  commentID,
@@ -630,7 +633,7 @@ func TestAcknowledge_RequiresAcknowledgmentFlag(t *testing.T) {
 		BusinessUnitID: testutil.TestBuID,
 	}, nil).Once()
 
-	acked, err := svc.Acknowledge(t.Context(), &shipmentports.ToggleShipmentCommentRequest{
+	acked, err := svc.Acknowledge(t.Context(), &shipmentcommentports.ToggleShipmentCommentRequest{
 		TenantInfo: tenantScope(),
 		ShipmentID: pulid.MustNew("shp_"),
 		CommentID:  pulid.MustNew("shc_"),
@@ -659,13 +662,13 @@ func TestAcknowledge_IdempotentSkipsSideEffects(t *testing.T) {
 
 	m.repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(target, nil).Twice()
 	m.repo.EXPECT().
-		Acknowledge(mock.Anything, mock.MatchedBy(func(req *shipmentports.AcknowledgeShipmentCommentRequest) bool {
+		Acknowledge(mock.Anything, mock.MatchedBy(func(req *shipmentcommentports.AcknowledgeShipmentCommentRequest) bool {
 			return req.UserID == testutil.TestUserID
 		})).
 		Return(false, nil).
 		Once()
 
-	acked, err := svc.Acknowledge(t.Context(), &shipmentports.ToggleShipmentCommentRequest{
+	acked, err := svc.Acknowledge(t.Context(), &shipmentcommentports.ToggleShipmentCommentRequest{
 		TenantInfo: tenantScope(),
 		ShipmentID: shipmentID,
 		CommentID:  commentID,
@@ -692,7 +695,7 @@ func TestResolve_PublishesResolvedAction(t *testing.T) {
 		BusinessUnitID: testutil.TestBuID,
 	}, nil).Once()
 	m.repo.EXPECT().
-		SetResolved(mock.Anything, mock.MatchedBy(func(req *shipmentports.SetShipmentCommentResolvedRequest) bool {
+		SetResolved(mock.Anything, mock.MatchedBy(func(req *shipmentcommentports.SetShipmentCommentResolvedRequest) bool {
 			return req.Resolved && req.ActorID == testutil.TestUserID
 		})).
 		Return(&shipment.ShipmentComment{
@@ -715,7 +718,7 @@ func TestResolve_PublishesResolvedAction(t *testing.T) {
 		Return(nil).
 		Once()
 
-	resolved, err := svc.Resolve(t.Context(), &shipmentports.ToggleShipmentCommentRequest{
+	resolved, err := svc.Resolve(t.Context(), &shipmentcommentports.ToggleShipmentCommentRequest{
 		TenantInfo: tenantScope(),
 		ShipmentID: shipmentID,
 		CommentID:  commentID,
@@ -740,7 +743,7 @@ func TestDelete_RejectsAlreadyDeletedComment(t *testing.T) {
 		DeletedAt:      &now,
 	}, nil).Once()
 
-	err := svc.Delete(t.Context(), &shipmentports.DeleteShipmentCommentRequest{
+	err := svc.Delete(t.Context(), &shipmentcommentports.DeleteShipmentCommentRequest{
 		ShipmentID: pulid.MustNew("shp_"),
 		CommentID:  pulid.MustNew("shc_"),
 		TenantInfo: tenantScope(),

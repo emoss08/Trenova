@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/money"
@@ -139,7 +139,9 @@ func warnRateCoverage(preview *agent.ToolPreview, advisories []*errortypes.Advis
 	}
 }
 
-func EnteredShipmentChanges(plan *shipmentports.ShipmentCreatePlan) ([]*agent.RecordChange, error) {
+func EnteredShipmentChanges(
+	plan *shipmentserviceports.ShipmentCreatePlan,
+) ([]*agent.RecordChange, error) {
 	entity := plan.Shipment
 	label := "New shipment"
 	if entity.BOL != "" {
@@ -184,7 +186,7 @@ func EnteredShipmentChanges(plan *shipmentports.ShipmentCreatePlan) ([]*agent.Re
 
 func enteredShipmentMoney(
 	entity *shipment.Shipment,
-	rating *shipmentports.ShipmentRatingOutcome,
+	rating *shipmentserviceports.ShipmentRatingOutcome,
 ) *agent.MoneyPreview {
 	currency := money.DefaultCurrencyCode
 	if rating != nil && rating.Currency != "" {
@@ -200,7 +202,7 @@ func enteredShipmentMoney(
 
 func enteredShipmentSummary(
 	entity *shipment.Shipment,
-	rating *shipmentports.ShipmentRatingOutcome,
+	rating *shipmentserviceports.ShipmentRatingOutcome,
 ) string {
 	stops := 0
 	for _, move := range entity.Moves {

@@ -15,8 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
@@ -28,8 +29,8 @@ import (
 // facts reads the records a wait names, to refuse a wait on something already
 // true and to look again when a timed wait comes due.
 type facts struct {
-	moves       shipmentports.ShipmentMoveRepository
-	assignments shipmentports.AssignmentRepository
+	moves       shipmentmoveports.ShipmentMoveRepository
+	assignments assignmentports.AssignmentRepository
 	occurrences detentionports.DetentionOccurrenceRepository
 	telematics  telematicsports.TelematicsRepository
 	carriers    carrierports.CarrierRepository
@@ -353,7 +354,7 @@ func (f *facts) move(
 	tenant pagination.TenantInfo,
 	moveID pulid.ID,
 ) (*shipment.ShipmentMove, error) {
-	move, err := f.moves.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	move, err := f.moves.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            moveID,
 		TenantInfo:        tenant,
 		ExpandMoveDetails: true,

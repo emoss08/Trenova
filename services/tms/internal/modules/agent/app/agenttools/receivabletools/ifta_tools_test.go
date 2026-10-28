@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -235,16 +235,16 @@ func (f *fakeIFTA) DeleteMileageEntry(
 
 type fakeMileRouter struct {
 	guard        *agenttoolstest.WriteGuard
-	recalculated *shipmentports.RecalculateMoveJurisdictionMilesRequest
-	backfills    []shipmentports.BackfillJurisdictionMilesRequest
+	recalculated *shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest
+	backfills    []shipmentdistanceports.BackfillJurisdictionMilesRequest
 	unattributed int
 }
 
 func (f *fakeMileRouter) PlanMoveJurisdictionMiles(
 	_ context.Context,
-	req *shipmentports.RecalculateMoveJurisdictionMilesRequest,
-) (*shipmentports.MoveJurisdictionMilesPlan, error) {
-	return &shipmentports.MoveJurisdictionMilesPlan{Move: &shipment.ShipmentMove{
+	req *shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest,
+) (*shipmentdistanceports.MoveJurisdictionMilesPlan, error) {
+	return &shipmentdistanceports.MoveJurisdictionMilesPlan{Move: &shipment.ShipmentMove{
 		ID:                req.ShipmentMoveID,
 		Stops:             []*shipment.Stop{{}, {}},
 		JurisdictionMiles: []*shipment.ShipmentMoveJurisdictionMile{{}, {}, {}},
@@ -253,7 +253,7 @@ func (f *fakeMileRouter) PlanMoveJurisdictionMiles(
 
 func (f *fakeMileRouter) RecalculateMoveJurisdictionMiles(
 	_ context.Context,
-	req shipmentports.RecalculateMoveJurisdictionMilesRequest,
+	req shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest,
 ) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -265,8 +265,8 @@ func (f *fakeMileRouter) RecalculateMoveJurisdictionMiles(
 
 func (f *fakeMileRouter) BackfillJurisdictionMiles(
 	_ context.Context,
-	req shipmentports.BackfillJurisdictionMilesRequest,
-) (*shipmentports.BackfillJurisdictionMilesResult, error) {
+	req shipmentdistanceports.BackfillJurisdictionMilesRequest,
+) (*shipmentdistanceports.BackfillJurisdictionMilesResult, error) {
 	if !req.DryRun {
 		if err := f.guard.Write(); err != nil {
 			return nil, err
@@ -274,7 +274,7 @@ func (f *fakeMileRouter) BackfillJurisdictionMiles(
 	}
 	f.backfills = append(f.backfills, req)
 
-	return &shipmentports.BackfillJurisdictionMilesResult{
+	return &shipmentdistanceports.BackfillJurisdictionMilesResult{
 		DryRun:            req.DryRun,
 		Started:           !req.DryRun,
 		UnattributedMoves: f.unattributed,

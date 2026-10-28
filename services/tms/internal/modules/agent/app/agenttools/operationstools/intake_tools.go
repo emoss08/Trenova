@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,7 +34,7 @@ type shipmentCreator interface {
 		ctx context.Context,
 		entity *shipment.Shipment,
 		actor *permissionports.RequestActor,
-	) (*shipmentports.ShipmentCreatePlan, error)
+	) (*shipmentserviceports.ShipmentCreatePlan, error)
 }
 
 type contractRatePreviewer interface {
@@ -41,7 +42,7 @@ type contractRatePreviewer interface {
 		ctx context.Context,
 		entity *shipment.Shipment,
 		actor *permissionports.RequestActor,
-	) (*shipmentports.ContractRateApplication, error)
+	) (*shipmentserviceports.ContractRateApplication, error)
 }
 
 // importCompleter closes the import assistant's conversation for a document

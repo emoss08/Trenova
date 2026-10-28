@@ -9,16 +9,16 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-
 	"github.com/emoss08/trenova/internal/modules/operations/app/trackingeventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/driverportalports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentmoveportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -103,15 +103,15 @@ func (r *memoryRepo) byKey(key string) *trackingevent.TrackingEvent {
 }
 
 type memoryMoves struct {
-	shipmentports.ShipmentMoveService
+	shipmentmoveports.ShipmentMoveService
 	move     *shipment.ShipmentMove
-	recorded []*shipmentports.RecordStopActualRequest
+	recorded []*shipmentmoveports.RecordStopActualRequest
 }
 
 func (m *memoryMoves) ReconcileStopActuals(
 	ctx context.Context,
-	req *shipmentports.ReconcileStopActualsRequest,
-) (*shipmentports.ReconcileStopActualsResult, error) {
+	req *shipmentmoveports.ReconcileStopActualsRequest,
+) (*shipmentmoveports.ReconcileStopActualsResult, error) {
 	var applied []shipment.StopActualChange
 	for range 8 {
 		changes, err := req.Plan(ctx, m.move)
@@ -119,23 +119,26 @@ func (m *memoryMoves) ReconcileStopActuals(
 			return nil, err
 		}
 		if len(changes) == 0 {
-			return &shipmentports.ReconcileStopActualsResult{Move: m.move, Changes: applied}, nil
+			return &shipmentmoveports.ReconcileStopActualsResult{
+				Move:    m.move,
+				Changes: applied,
+			}, nil
 		}
 		if _, err = m.move.ApplyStopActualChanges(changes); err != nil {
 			return nil, err
 		}
 		applied = append(applied, changes...)
 	}
-	return &shipmentports.ReconcileStopActualsResult{Move: m.move, Changes: applied}, nil
+	return &shipmentmoveports.ReconcileStopActualsResult{Move: m.move, Changes: applied}, nil
 }
 
 func (m *memoryMoves) RecordStopActual(
 	_ context.Context,
-	req *shipmentports.RecordStopActualRequest,
+	req *shipmentmoveports.RecordStopActualRequest,
 ) (*shipment.ShipmentMove, error) {
 	m.recorded = append(m.recorded, req)
 	change := shipment.StopActualChange{StopID: req.StopID}
-	if req.Action == shipmentports.StopActualActionArrive {
+	if req.Action == shipmentmoveports.StopActualActionArrive {
 		change.Arrival = req.OccurredAt
 		change.Departure = req.DepartedAt
 	} else {
@@ -183,7 +186,7 @@ func newHarness(t *testing.T, stopCount int) *harness {
 		move.Stops = append(move.Stops, stop)
 	}
 
-	moveRepo := shipmentportsmock.NewMockShipmentMoveRepository(t)
+	moveRepo := shipmentmoveportsmock.NewMockShipmentMoveRepository(t)
 	moveRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(move, nil).Maybe()
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(ship, nil).Maybe()
@@ -429,7 +432,7 @@ func TestRecordReported_RecordsArrivalAndDepartureOnce(t *testing.T) {
 		TenantInfo:   h.tenant,
 		MoveID:       h.move.ID,
 		StopID:       h.stops[0].ID,
-		Action:       shipmentports.StopActualActionArrive,
+		Action:       shipmentmoveports.StopActualActionArrive,
 		OccurredAt:   &arrived,
 		DepartedAt:   &departed,
 		Source:       trackingevent.SourceAgent,
@@ -461,7 +464,7 @@ func TestRecordReported_AKeyReusedForAnotherStopIsRefused(t *testing.T) {
 		TenantInfo: h.tenant,
 		MoveID:     h.move.ID,
 		StopID:     h.stops[0].ID,
-		Action:     shipmentports.StopActualActionArrive,
+		Action:     shipmentmoveports.StopActualActionArrive,
 		OccurredAt: &at,
 		Source:     trackingevent.SourceDriver,
 		SourceKey:  "device:42",
@@ -483,17 +486,17 @@ func TestRecordReported_ValidatesTheDepartureTime(t *testing.T) {
 	for name, params := range map[string]*trackingeventports.RecordReportedStopEventParams{
 		"departure with a depart action": {
 			TenantInfo: h.tenant, MoveID: h.move.ID, StopID: h.stops[0].ID,
-			Action: shipmentports.StopActualActionDepart, OccurredAt: &at, DepartedAt: &at,
+			Action: shipmentmoveports.StopActualActionDepart, OccurredAt: &at, DepartedAt: &at,
 			Source: trackingevent.SourceDispatcher,
 		},
 		"departure without an arrival time": {
 			TenantInfo: h.tenant, MoveID: h.move.ID, StopID: h.stops[0].ID,
-			Action: shipmentports.StopActualActionArrive, DepartedAt: &at,
+			Action: shipmentmoveports.StopActualActionArrive, DepartedAt: &at,
 			Source: trackingevent.SourceDispatcher,
 		},
 		"machine source": {
 			TenantInfo: h.tenant, MoveID: h.move.ID, StopID: h.stops[0].ID,
-			Action: shipmentports.StopActualActionArrive, Source: trackingevent.SourceEDI,
+			Action: shipmentmoveports.StopActualActionArrive, Source: trackingevent.SourceEDI,
 		},
 	} {
 		_, err := h.service.RecordReported(t.Context(), params)

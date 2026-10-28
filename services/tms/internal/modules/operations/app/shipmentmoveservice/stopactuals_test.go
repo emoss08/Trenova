@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,10 +39,10 @@ func TestApplyStopActual_NilOccurredAtStampsNow(t *testing.T) {
 
 	move, origin, _ := stopActualMoveForTest()
 	before := timeutils.NowUnix()
-	stop, err := applyStopActual(move, &shipmentports.RecordStopActualRequest{
+	stop, err := applyStopActual(move, &shipmentmoveports.RecordStopActualRequest{
 		MoveID: move.ID,
 		StopID: origin.ID,
-		Action: shipmentports.StopActualActionArrive,
+		Action: shipmentmoveports.StopActualActionArrive,
 	})
 	after := timeutils.NowUnix()
 
@@ -58,10 +58,10 @@ func TestApplyStopActual_BackdatedArriveStampsOccurredAt(t *testing.T) {
 
 	move, origin, _ := stopActualMoveForTest()
 	occurredAt := timeutils.NowUnix() - 3600
-	stop, err := applyStopActual(move, &shipmentports.RecordStopActualRequest{
+	stop, err := applyStopActual(move, &shipmentmoveports.RecordStopActualRequest{
 		MoveID:     move.ID,
 		StopID:     origin.ID,
-		Action:     shipmentports.StopActualActionArrive,
+		Action:     shipmentmoveports.StopActualActionArrive,
 		OccurredAt: &occurredAt,
 	})
 
@@ -78,10 +78,10 @@ func TestApplyStopActual_BackdatedDepartStampsOccurredAt(t *testing.T) {
 	origin.ActualArrival = &arrivedAt
 	origin.Status = shipment.StopStatusInTransit
 	occurredAt := arrivedAt + 1800
-	stop, err := applyStopActual(move, &shipmentports.RecordStopActualRequest{
+	stop, err := applyStopActual(move, &shipmentmoveports.RecordStopActualRequest{
 		MoveID:     move.ID,
 		StopID:     origin.ID,
-		Action:     shipmentports.StopActualActionDepart,
+		Action:     shipmentmoveports.StopActualActionDepart,
 		OccurredAt: &occurredAt,
 	})
 
@@ -102,10 +102,10 @@ func TestApplyStopActual_ArriveBeforePriorDepartureRejected(t *testing.T) {
 	origin.Status = shipment.StopStatusCompleted
 	occurredAt := departedAt - 600
 
-	stop, err := applyStopActual(move, &shipmentports.RecordStopActualRequest{
+	stop, err := applyStopActual(move, &shipmentmoveports.RecordStopActualRequest{
 		MoveID:     move.ID,
 		StopID:     destination.ID,
-		Action:     shipmentports.StopActualActionArrive,
+		Action:     shipmentmoveports.StopActualActionArrive,
 		OccurredAt: &occurredAt,
 	})
 
@@ -124,10 +124,10 @@ func TestApplyStopActual_DepartBeforeArrivalRejected(t *testing.T) {
 	origin.Status = shipment.StopStatusInTransit
 	occurredAt := arrivedAt - 600
 
-	stop, err := applyStopActual(move, &shipmentports.RecordStopActualRequest{
+	stop, err := applyStopActual(move, &shipmentmoveports.RecordStopActualRequest{
 		MoveID:     move.ID,
 		StopID:     origin.ID,
-		Action:     shipmentports.StopActualActionDepart,
+		Action:     shipmentmoveports.StopActualActionDepart,
 		OccurredAt: &occurredAt,
 	})
 
@@ -144,12 +144,12 @@ func TestRecordStopActualRequest_ValidateOccurredAt(t *testing.T) {
 		OrgID: pulid.MustNew("org_"),
 		BuID:  pulid.MustNew("bu_"),
 	}
-	base := func() *shipmentports.RecordStopActualRequest {
-		return &shipmentports.RecordStopActualRequest{
+	base := func() *shipmentmoveports.RecordStopActualRequest {
+		return &shipmentmoveports.RecordStopActualRequest{
 			TenantInfo: tenantInfo,
 			MoveID:     pulid.MustNew("sm_"),
 			StopID:     pulid.MustNew("stp_"),
-			Action:     shipmentports.StopActualActionArrive,
+			Action:     shipmentmoveports.StopActualActionArrive,
 		}
 	}
 
@@ -159,7 +159,7 @@ func TestRecordStopActualRequest_ValidateOccurredAt(t *testing.T) {
 	require.Nil(t, valid.Validate())
 
 	future := base()
-	tooLate := timeutils.NowUnix() + shipmentports.StopActualClockSkewSeconds + 3600
+	tooLate := timeutils.NowUnix() + shipmentmoveports.StopActualClockSkewSeconds + 3600
 	future.OccurredAt = &tooLate
 	multiErr := future.Validate()
 	require.NotNil(t, multiErr)
@@ -173,7 +173,7 @@ func TestRecordStopActualRequest_ValidateOccurredAt(t *testing.T) {
 	assert.Contains(t, multiErr.Error(), "Occurred at must be a valid timestamp")
 
 	withinSkew := base()
-	nearNow := timeutils.NowUnix() + shipmentports.StopActualClockSkewSeconds - 60
+	nearNow := timeutils.NowUnix() + shipmentmoveports.StopActualClockSkewSeconds - 60
 	withinSkew.OccurredAt = &nearNow
 	require.Nil(t, withinSkew.Validate())
 }
@@ -182,15 +182,15 @@ func TestRecordStopActualRequest_ValidateDepartedAt(t *testing.T) {
 	t.Parallel()
 
 	arrived := timeutils.NowUnix() - 7200
-	base := func() *shipmentports.RecordStopActualRequest {
-		return &shipmentports.RecordStopActualRequest{
+	base := func() *shipmentmoveports.RecordStopActualRequest {
+		return &shipmentmoveports.RecordStopActualRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
 				BuID:  pulid.MustNew("bu_"),
 			},
 			MoveID:     pulid.MustNew("sm_"),
 			StopID:     pulid.MustNew("stp_"),
-			Action:     shipmentports.StopActualActionArrive,
+			Action:     shipmentmoveports.StopActualActionArrive,
 			OccurredAt: &arrived,
 		}
 	}
@@ -201,18 +201,18 @@ func TestRecordStopActualRequest_ValidateDepartedAt(t *testing.T) {
 	require.Nil(t, valid.Validate())
 	departure := valid.Departure()
 	require.NotNil(t, departure)
-	assert.Equal(t, shipmentports.StopActualActionDepart, departure.Action)
+	assert.Equal(t, shipmentmoveports.StopActualActionDepart, departure.Action)
 	assert.Equal(t, left, *departure.OccurredAt)
 	assert.Nil(t, base().Departure())
 
 	tests := []struct {
 		name   string
-		mutate func(*shipmentports.RecordStopActualRequest)
+		mutate func(*shipmentmoveports.RecordStopActualRequest)
 		want   string
 	}{
 		{
 			name: "before the arrival",
-			mutate: func(r *shipmentports.RecordStopActualRequest) {
+			mutate: func(r *shipmentmoveports.RecordStopActualRequest) {
 				early := arrived - 60
 				r.DepartedAt = &early
 			},
@@ -220,15 +220,15 @@ func TestRecordStopActualRequest_ValidateDepartedAt(t *testing.T) {
 		},
 		{
 			name: "with a departure",
-			mutate: func(r *shipmentports.RecordStopActualRequest) {
-				r.Action = shipmentports.StopActualActionDepart
+			mutate: func(r *shipmentmoveports.RecordStopActualRequest) {
+				r.Action = shipmentmoveports.StopActualActionDepart
 				r.DepartedAt = &left
 			},
 			want: "A departure time goes with an arrival",
 		},
 		{
 			name: "without the arrival time",
-			mutate: func(r *shipmentports.RecordStopActualRequest) {
+			mutate: func(r *shipmentmoveports.RecordStopActualRequest) {
 				r.OccurredAt = nil
 				r.DepartedAt = &left
 			},
@@ -236,8 +236,8 @@ func TestRecordStopActualRequest_ValidateDepartedAt(t *testing.T) {
 		},
 		{
 			name: "in the future",
-			mutate: func(r *shipmentports.RecordStopActualRequest) {
-				later := timeutils.NowUnix() + shipmentports.StopActualClockSkewSeconds + 3600
+			mutate: func(r *shipmentmoveports.RecordStopActualRequest) {
+				later := timeutils.NowUnix() + shipmentmoveports.StopActualClockSkewSeconds + 3600
 				r.DepartedAt = &later
 			},
 			want: "Departed at cannot be in the future",

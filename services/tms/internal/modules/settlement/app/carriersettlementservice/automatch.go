@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -77,7 +77,7 @@ func (s *Service) AutoMatchInboundInvoice(
 
 	assignment, err := s.assignmentRepo.FindForMatching(
 		ctx,
-		&shipmentports.FindCarrierAssignmentForMatchingRequest{
+		&carrierassignmentports.FindCarrierAssignmentForMatchingRequest{
 			TenantInfo: req.TenantInfo,
 			CarrierID:  invoice.CarrierID,
 			ProNumber:  invoice.ProNumber,

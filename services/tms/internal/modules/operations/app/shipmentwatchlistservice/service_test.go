@@ -5,13 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,7 +32,7 @@ func TestBuildDeliveryWatch(t *testing.T) {
 	day := time.Date(2026, 10, 6, 0, 0, 0, 0, loc).Unix()
 	now := day + 14*3600
 
-	rows := []*shipmentports.ShipmentDeliveryRow{
+	rows := []*shipmentboardports.ShipmentDeliveryRow{
 		{
 			ShipmentID:    pulid.MustNew("shp_"),
 			DeliveryAt:    day + 8*3600,
@@ -93,7 +95,7 @@ func TestAccruedAmountAndSummary(t *testing.T) {
 	assert.True(t, AccruedAmount(rate, 1000, 900).IsZero())
 	assert.True(t, AccruedAmount(decimal.Zero, 0, 3600).IsZero())
 
-	accruals := []shipmentports.DetentionAccrual{
+	accruals := []shipmentboardports.DetentionAccrual{
 		{FacilityName: "a", Amount: decimal.NewFromInt(10), RatePerHour: decimal.NewFromInt(50)},
 		{FacilityName: "b", Amount: decimal.NewFromInt(40), RatePerHour: decimal.NewFromInt(50)},
 		{FacilityName: "c", Amount: decimal.NewFromInt(30), RatePerHour: decimal.NewFromInt(75)},
@@ -127,18 +129,18 @@ func (stubBasis) Prepare(
 }
 
 type stubBoard struct {
-	shipmentports.ShipmentBoardRepository
+	shipmentboardports.ShipmentBoardRepository
 	filters []shipment.QuickFilterSpec
 }
 
 func (s *stubBoard) QuickFilterTotals(
 	_ context.Context,
-	req *shipmentports.CountShipmentQuickFiltersRequest,
-) ([]shipmentports.ShipmentQuickFilterTotal, error) {
+	req *shipmentboardports.CountShipmentQuickFiltersRequest,
+) ([]shipmentboardports.ShipmentQuickFilterTotal, error) {
 	s.filters = req.Filters
-	totals := make([]shipmentports.ShipmentQuickFilterTotal, len(req.Filters))
+	totals := make([]shipmentboardports.ShipmentQuickFilterTotal, len(req.Filters))
 	for i := range totals {
-		totals[i] = shipmentports.ShipmentQuickFilterTotal{
+		totals[i] = shipmentboardports.ShipmentQuickFilterTotal{
 			Count:   i + 1,
 			Revenue: decimal.NewFromInt(int64(100 * (i + 1))),
 		}
@@ -147,35 +149,35 @@ func (s *stubBoard) QuickFilterTotals(
 }
 
 type stubWatchlist struct {
-	dwelling []*shipmentports.ShipmentDwellRow
+	dwelling []*shipmentboardports.ShipmentDwellRow
 }
 
 func (s *stubWatchlist) ListDeliveriesToday(
 	context.Context,
-	*shipmentports.ShipmentWatchlistRequest,
-) ([]*shipmentports.ShipmentDeliveryRow, error) {
+	*shipmentboardports.ShipmentWatchlistRequest,
+) ([]*shipmentboardports.ShipmentDeliveryRow, error) {
 	return nil, nil
 }
 
 func (s *stubWatchlist) NextUncoveredPickup(
 	context.Context,
-	*shipmentports.ShipmentWatchlistRequest,
-) (*shipmentports.ShipmentPickupRow, error) {
-	return &shipmentports.ShipmentPickupRow{PickupAt: 77, OriginCity: "Joliet"}, nil
+	*shipmentboardports.ShipmentWatchlistRequest,
+) (*shipmentboardports.ShipmentPickupRow, error) {
+	return &shipmentboardports.ShipmentPickupRow{PickupAt: 77, OriginCity: "Joliet"}, nil
 }
 
 func (s *stubWatchlist) ListDwellingStops(
 	context.Context,
-	*shipmentports.ShipmentWatchlistRequest,
-) ([]*shipmentports.ShipmentDwellRow, error) {
+	*shipmentboardports.ShipmentWatchlistRequest,
+) ([]*shipmentboardports.ShipmentDwellRow, error) {
 	return s.dwelling, nil
 }
 
 func (s *stubWatchlist) ListReadyToBillCustomers(
 	context.Context,
-	*shipmentports.ListReadyToBillCustomersRequest,
-) ([]*shipmentports.ShipmentBillingCustomerRow, error) {
-	return []*shipmentports.ShipmentBillingCustomerRow{
+	*shipmentboardports.ListReadyToBillCustomersRequest,
+) ([]*shipmentboardports.ShipmentBillingCustomerRow, error) {
+	return []*shipmentboardports.ShipmentBillingCustomerRow{
 		{Name: "Acme", Count: 2, Total: decimal.NewFromInt(500), TotalCustomers: 6},
 	}, nil
 }
@@ -210,11 +212,11 @@ type stubMoves struct{}
 
 func (stubMoves) ListBoardMoves(
 	_ context.Context,
-	filter *shipmentports.DispatchBoardFilter,
-) ([]*shipmentports.BoardMove, error) {
-	out := make([]*shipmentports.BoardMove, 0, len(filter.MoveIDs))
+	filter *dispatchboardports.DispatchBoardFilter,
+) ([]*dispatchboardports.BoardMove, error) {
+	out := make([]*dispatchboardports.BoardMove, 0, len(filter.MoveIDs))
 	for _, id := range filter.MoveIDs {
-		out = append(out, &shipmentports.BoardMove{MoveID: id, AssignedCarrierName: "Swift"})
+		out = append(out, &dispatchboardports.BoardMove{MoveID: id, AssignedCarrierName: "Swift"})
 	}
 	return out, nil
 }
@@ -236,7 +238,7 @@ func TestWatchlistComputesEverySection(t *testing.T) {
 	board := &stubBoard{}
 	svc := NewWithDependencies(&Dependencies{
 		Board: board,
-		Watchlist: &stubWatchlist{dwelling: []*shipmentports.ShipmentDwellRow{{
+		Watchlist: &stubWatchlist{dwelling: []*shipmentboardports.ShipmentDwellRow{{
 			MoveID:        pulid.MustNew("smv_"),
 			FacilityName:  "DC 4",
 			ActualArrival: now.Unix() - 2*3600,

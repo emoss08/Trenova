@@ -24,8 +24,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
@@ -51,13 +53,13 @@ type Params struct {
 	Repo                 billingqueueports.BillingQueueRepository
 	ShipmentRepo         shipmentports.ShipmentRepository
 	ControlRepo          tenantports.ShipmentControlRepository
-	CommentRepo          shipmentports.ShipmentCommentRepository
+	CommentRepo          shipmentcommentports.ShipmentCommentRepository
 	CustomerRepo         customerports.CustomerRepository
 	UserRepo             tenantports.UserRepository
 	AdjustmentRepo       invoiceadjustmentports.InvoiceAdjustmentRepository
 	InvoiceRepo          invoiceports.InvoiceRepository
 	InvoiceSvc           invoiceports.InvoiceService
-	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
+	ChargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	Commercial           *shipmentcommercial.Calculator
 	Generator            seqgen.Generator
 	SequenceFormats      seqgen.FormatProvider `optional:"true"`
@@ -86,13 +88,13 @@ type service struct {
 	repo                 billingqueueports.BillingQueueRepository
 	shipmentRepo         shipmentports.ShipmentRepository
 	controlRepo          tenantports.ShipmentControlRepository
-	commentRepo          shipmentports.ShipmentCommentRepository
+	commentRepo          shipmentcommentports.ShipmentCommentRepository
 	customerRepo         customerports.CustomerRepository
 	userRepo             tenantports.UserRepository
 	adjustmentRepo       invoiceadjustmentports.InvoiceAdjustmentRepository
 	invoiceRepo          invoiceports.InvoiceRepository
 	invoiceSvc           invoiceports.InvoiceService
-	chargeAllocationRepo shipmentports.ChargeAllocationRepository
+	chargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	commercial           *shipmentcommercial.Calculator
 	generator            seqgen.Generator
 	sequenceFormats      seqgen.FormatProvider

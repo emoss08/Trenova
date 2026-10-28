@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 )
@@ -18,13 +18,13 @@ type stopActualPlan struct {
 
 func (s *service) PreviewStopActual(
 	ctx context.Context,
-	req *shipmentports.RecordStopActualRequest,
-) (*shipmentports.StopActualPlan, error) {
+	req *shipmentmoveports.RecordStopActualRequest,
+) (*shipmentmoveports.StopActualPlan, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
 
-	move, err := s.repo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	move, err := s.repo.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            req.MoveID,
 		TenantInfo:        req.TenantInfo,
 		ExpandMoveDetails: true,
@@ -44,12 +44,12 @@ func (s *service) PreviewStopActual(
 	}
 	move.Status = plan.targetStatus
 
-	return &shipmentports.StopActualPlan{Before: before, After: move}, nil
+	return &shipmentmoveports.StopActualPlan{Before: before, After: move}, nil
 }
 
 func (s *service) planStopActual(
 	ctx context.Context,
-	req *shipmentports.RecordStopActualRequest,
+	req *shipmentmoveports.RecordStopActualRequest,
 	move *shipment.ShipmentMove,
 ) (*stopActualPlan, error) {
 	plan := &stopActualPlan{previousStatus: move.Status}

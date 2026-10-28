@@ -6,9 +6,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
-
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/formulavisibility"
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -16,7 +13,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -31,10 +35,10 @@ import (
 type Params struct {
 	fx.In
 
-	Service              shipmentports.ShipmentService
-	CommentService       shipmentports.ShipmentCommentService
-	HoldService          shipmentports.ShipmentHoldService
-	ImportAssistant      shipmentports.ShipmentImportAssistantService
+	Service              shipmentserviceports.ShipmentService
+	CommentService       shipmentcommentports.ShipmentCommentService
+	HoldService          shipmentholdports.ShipmentHoldService
+	ImportAssistant      shipmentimportassistantports.ShipmentImportAssistantService
 	PermitService        permitports.PermitService
 	Etas                 shipmenttrackingports.ShipmentEtaReader
 	CustomerTracking     customertrackingports.CustomerTrackingService
@@ -44,10 +48,10 @@ type Params struct {
 }
 
 type Handler struct {
-	service         shipmentports.ShipmentService
-	commentService  shipmentports.ShipmentCommentService
-	holdService     shipmentports.ShipmentHoldService
-	importAssistant shipmentports.ShipmentImportAssistantService
+	service         shipmentserviceports.ShipmentService
+	commentService  shipmentcommentports.ShipmentCommentService
+	holdService     shipmentholdports.ShipmentHoldService
+	importAssistant shipmentimportassistantports.ShipmentImportAssistantService
 	permitService   permitports.PermitService
 	etas            shipmenttrackingports.ShipmentEtaReader
 	tracking        customertrackingports.CustomerTrackingService
@@ -879,7 +883,7 @@ func (h *Handler) checkHazmatSegregation(c *gin.Context) {
 func (h *Handler) calculateLoadingOptimization(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(shipmentports.LoadingOptimizationRequest)
+	req := new(shipmentserviceports.LoadingOptimizationRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -1106,7 +1110,7 @@ func (h *Handler) autoRate(c *gin.Context) {
 		return
 	}
 
-	req := &shipmentports.AutoRateShipmentRequest{
+	req := &shipmentserviceports.AutoRateShipmentRequest{
 		ShipmentID: shipmentID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	}
@@ -1215,7 +1219,7 @@ func (h *Handler) transferToBilling(c *gin.Context) {
 		return
 	}
 
-	req := &shipmentports.TransferShipmentToBillingRequest{
+	req := &shipmentbillingports.TransferShipmentToBillingRequest{
 		ShipmentID: shipmentID,
 	}
 	if err = c.ShouldBindJSON(req); err != nil && !errors.Is(err, io.EOF) {
@@ -1243,7 +1247,7 @@ func (h *Handler) transferToBilling(c *gin.Context) {
 func (h *Handler) bulkTransferToBilling(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(shipmentports.BulkTransferShipmentToBillingRequest)
+	req := new(shipmentbillingports.BulkTransferShipmentToBillingRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -1261,6 +1265,6 @@ func (h *Handler) bulkTransferToBilling(c *gin.Context) {
 		h.formulas,
 		http.StatusOK,
 		response,
-		(*shipmentports.BulkTransferToBillingResponse).WithoutFormulaContent,
+		(*shipmentbillingports.BulkTransferToBillingResponse).WithoutFormulaContent,
 	)
 }

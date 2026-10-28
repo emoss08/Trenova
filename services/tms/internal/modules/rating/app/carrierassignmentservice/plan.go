@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchguard"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -61,7 +61,7 @@ type cancelPlan struct {
 // refreshed, since refreshing it writes.
 func (s *Service) PreviewAssignToMove(
 	ctx context.Context,
-	req *shipmentports.AssignMoveToCarrierRequest,
+	req *carrierassignmentports.AssignMoveToCarrierRequest,
 ) (*CoveragePlan, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -118,7 +118,7 @@ func (s *Service) PreviewAssignToMove(
 // writing.
 func (s *Service) PreviewCancel(
 	ctx context.Context,
-	req *shipmentports.CancelCarrierAssignmentRequest,
+	req *carrierassignmentports.CancelCarrierAssignmentRequest,
 ) (*CoveragePlan, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -149,7 +149,7 @@ func (s *Service) PreviewCancel(
 
 func (s *Service) planAssignToMove(
 	ctx context.Context,
-	req *shipmentports.AssignMoveToCarrierRequest,
+	req *carrierassignmentports.AssignMoveToCarrierRequest,
 	intelGate *carrier.IntelGate,
 ) (*assignPlan, error) {
 	move, err := s.assignmentRepo.GetMoveByID(ctx, req.TenantInfo, req.ShipmentMoveID)
@@ -211,7 +211,7 @@ func (s *Service) planAssignToMove(
 
 func (s *Service) planCancel(
 	ctx context.Context,
-	req *shipmentports.CancelCarrierAssignmentRequest,
+	req *carrierassignmentports.CancelCarrierAssignmentRequest,
 ) (*cancelPlan, error) {
 	existing, err := s.repo.GetActiveByMoveID(ctx, req.TenantInfo, req.ShipmentMoveID)
 	if err != nil {

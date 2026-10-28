@@ -8,8 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -19,7 +21,7 @@ import (
 )
 
 type fakeShipments struct {
-	shipmentports.ShipmentService
+	shipmentserviceports.ShipmentService
 
 	entity *shipment.Shipment
 }
@@ -35,16 +37,16 @@ func (f *fakeShipments) Get(
 }
 
 type fakeConsole struct {
-	shipmentports.DispatchConsoleRepository
+	dispatchboardports.DispatchConsoleRepository
 
-	moves   []*shipmentports.BoardMove
-	filters []*shipmentports.DispatchBoardFilter
+	moves   []*dispatchboardports.BoardMove
+	filters []*dispatchboardports.DispatchBoardFilter
 }
 
 func (f *fakeConsole) ListBoardMoves(
 	_ context.Context,
-	filter *shipmentports.DispatchBoardFilter,
-) ([]*shipmentports.BoardMove, error) {
+	filter *dispatchboardports.DispatchBoardFilter,
+) ([]*dispatchboardports.BoardMove, error) {
 	f.filters = append(f.filters, filter)
 
 	return f.moves, nil
@@ -118,7 +120,7 @@ func TestService_SaysWhetherAMoveStartsInsideTheCoverageWindow(t *testing.T) {
 
 			moveID := pulid.MustNew("smv_")
 			svc := &Service{
-				console: &fakeConsole{moves: []*shipmentports.BoardMove{{
+				console: &fakeConsole{moves: []*dispatchboardports.BoardMove{{
 					MoveID:            moveID,
 					ProNumber:         "S-2002",
 					OriginWindowStart: now + tc.startsIn,
@@ -157,7 +159,7 @@ func TestService_AMoveWithoutDispatchControlsStillDescribesTheMove(t *testing.T)
 
 	moveID := pulid.MustNew("smv_")
 	svc := &Service{
-		console: &fakeConsole{moves: []*shipmentports.BoardMove{{
+		console: &fakeConsole{moves: []*dispatchboardports.BoardMove{{
 			MoveID:            moveID,
 			ProNumber:         "S-2003",
 			OriginWindowStart: timeutils.NowUnix(),
@@ -177,7 +179,7 @@ func TestService_ReadsACoveredOrFinishedMoveOffTheBoard(t *testing.T) {
 	t.Parallel()
 
 	moveID := pulid.MustNew("smv_")
-	console := &fakeConsole{moves: []*shipmentports.BoardMove{{
+	console := &fakeConsole{moves: []*dispatchboardports.BoardMove{{
 		MoveID:     moveID,
 		ProNumber:  "S-2004",
 		MoveStatus: shipment.MoveStatusCompleted,

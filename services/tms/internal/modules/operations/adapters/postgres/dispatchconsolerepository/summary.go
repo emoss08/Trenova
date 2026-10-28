@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics/telematicsdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
@@ -39,49 +39,53 @@ type driverSummary struct {
 
 func (r *repository) GetBoardSummary(
 	ctx context.Context,
-	filter *shipmentports.DispatchBoardFilter,
-) (*shipmentports.BoardSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmentports.BoardSummary, error) {
-		now := timeutils.NowUnix()
-		dayStart := filter.DayStartUnix
-		if dayStart <= 0 {
-			var err error
-			dayStart, err = timeutils.DayStartUnix(now, "")
-			if err != nil {
-				return nil, fmt.Errorf("resolve dispatch board day start: %w", err)
+	filter *dispatchboardports.DispatchBoardFilter,
+) (*dispatchboardports.BoardSummary, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*dispatchboardports.BoardSummary, error) {
+			now := timeutils.NowUnix()
+			dayStart := filter.DayStartUnix
+			if dayStart <= 0 {
+				var err error
+				dayStart, err = timeutils.DayStartUnix(now, "")
+				if err != nil {
+					return nil, fmt.Errorf("resolve dispatch board day start: %w", err)
+				}
 			}
-		}
 
-		var moves moveSummary
-		var drivers driverSummary
-		err := keel.Batch(ctx, r.db.Keel(ctx),
-			keel.IntoValue(moveSummaryQuery(filter, now, dayStart), &moves),
-			keel.IntoValue(driverSummaryQuery(filter), &drivers),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("scan dispatch board summary: %w", err)
-		}
+			var moves moveSummary
+			var drivers driverSummary
+			err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.IntoValue(moveSummaryQuery(filter, now, dayStart), &moves),
+				keel.IntoValue(driverSummaryQuery(filter), &drivers),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("scan dispatch board summary: %w", err)
+			}
 
-		summary := &shipmentports.BoardSummary{
-			UncoveredMoves:   moves.UncoveredMoves,
-			CoveredMoves:     moves.CoveredMoves,
-			LateMoves:        moves.LateMoves,
-			AtRiskMoves:      moves.AtRiskMoves,
-			OverdueMoves:     moves.OverdueMoves,
-			DueNowMoves:      moves.DueNowMoves,
-			DueTodayMoves:    moves.DueTodayMoves,
-			UnseatedDrivers:  drivers.UnseatedDrivers,
-			AvailableDrivers: drivers.AvailableDrivers,
-			AssignedToday:    moves.AssignedToday,
-			AverageDeadhead:  moves.AverageDeadhead,
-		}
-		if summary.AvailableDrivers > 0 {
-			seated := summary.AvailableDrivers - summary.UnseatedDrivers
-			summary.UtilizationPct = float64(seated) / float64(summary.AvailableDrivers) * 100
-		}
+			summary := &dispatchboardports.BoardSummary{
+				UncoveredMoves:   moves.UncoveredMoves,
+				CoveredMoves:     moves.CoveredMoves,
+				LateMoves:        moves.LateMoves,
+				AtRiskMoves:      moves.AtRiskMoves,
+				OverdueMoves:     moves.OverdueMoves,
+				DueNowMoves:      moves.DueNowMoves,
+				DueTodayMoves:    moves.DueTodayMoves,
+				UnseatedDrivers:  drivers.UnseatedDrivers,
+				AvailableDrivers: drivers.AvailableDrivers,
+				AssignedToday:    moves.AssignedToday,
+				AverageDeadhead:  moves.AverageDeadhead,
+			}
+			if summary.AvailableDrivers > 0 {
+				seated := summary.AvailableDrivers - summary.UnseatedDrivers
+				summary.UtilizationPct = float64(seated) / float64(summary.AvailableDrivers) * 100
+			}
 
-		return summary, nil
-	})
+			return summary, nil
+		},
+	)
 }
 
 func countIf(preds ...keel.Pred) keel.Expr {
@@ -89,7 +93,7 @@ func countIf(preds ...keel.Pred) keel.Expr {
 }
 
 func moveSummaryQuery(
-	filter *shipmentports.DispatchBoardFilter,
+	filter *dispatchboardports.DispatchBoardFilter,
 	now, dayStart int64,
 ) *moveQuery {
 	asn := assignments
@@ -169,8 +173,8 @@ func urgencyOf(now int64) moveUrgency {
 	pickupOpen := keel.Or(pickupStart.Gte(now), pickupEnd.Gte(now))
 	deliveryClosed := keel.And(deliveryStart.Lt(now), deliveryEnd.Lt(now))
 	deliveryOpen := keel.Or(deliveryStart.Gte(now), deliveryEnd.Gte(now))
-	soon := now + shipmentports.UrgencyNowSeconds
-	today := now + shipmentports.UrgencyTodaySeconds
+	soon := now + dispatchboardports.UrgencyNowSeconds
+	today := now + dispatchboardports.UrgencyTodaySeconds
 
 	return moveUrgency{
 		overdue: keel.Or(
@@ -188,7 +192,9 @@ func urgencyOf(now int64) moveUrgency {
 	}
 }
 
-func driverSummaryQuery(filter *shipmentports.DispatchBoardFilter) *keel.Query[*worker.Worker] {
+func driverSummaryQuery(
+	filter *dispatchboardports.DispatchBoardFilter,
+) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	return w.
 		Pick(

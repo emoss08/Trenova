@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -40,7 +41,7 @@ type ActivitiesParams struct {
 	BillingControls     tenantports.BillingControlRepository
 	Users               tenantports.UserRepository
 	Transfers           *billingtransferservice.Service
-	ShipmentService     shipmentports.ShipmentService
+	ShipmentService     shipmentserviceports.ShipmentService
 	NotificationService *notificationservice.Service
 	RealtimeService     realtimeports.RealtimeService `optional:"true"`
 	Logger              *zap.Logger
@@ -51,7 +52,7 @@ type Activities struct {
 	controls     tenantports.BillingControlRepository
 	users        tenantports.UserRepository
 	transfers    *billingtransferservice.Service
-	shipments    shipmentports.ShipmentService
+	shipments    shipmentserviceports.ShipmentService
 	notification *notificationservice.Service
 	realtime     realtimeports.RealtimeService
 	l            *zap.Logger
@@ -105,7 +106,7 @@ func (a *Activities) PrepareRunActivity(
 	if run.Scope == billingtransfer.RunScopeAllMatching {
 		candidates, listErr := a.shipments.ListBillingTransferCandidateIDs(
 			ctx,
-			&shipmentports.ListBillingTransferCandidateIDsRequest{
+			&shipmentbillingports.ListBillingTransferCandidateIDsRequest{
 				Filter: &pagination.QueryOptions{
 					TenantInfo: tenant,
 					Query:      run.SearchQuery,
@@ -161,7 +162,7 @@ func (a *Activities) PrepareRunActivity(
 		RequestedByID:  updated.RequestedByID,
 		TotalCount:     updated.TotalCount,
 		UnmatchedCount: updated.UnmatchedCount,
-		BatchSize:      min(BatchSize, shipmentports.MaxBulkTransferToBillingShipments),
+		BatchSize:      min(BatchSize, shipmentbillingports.MaxBulkTransferToBillingShipments),
 	}, nil
 }
 
@@ -245,12 +246,12 @@ func (a *Activities) ProcessBatchActivity(
 	var flushErr error
 	_, err = a.shipments.BulkTransferToBilling(
 		ctx,
-		&shipmentports.BulkTransferShipmentToBillingRequest{
+		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs:                    shipmentIDs,
 			BillType:                       run.BillType,
 			MarkCompletedReadyToInvoice:    run.MarkCompletedReadyToInvoice,
 			SuppressExceptionNotifications: true,
-			OnResult: func(outcome shipmentports.BulkTransferToBillingResult) {
+			OnResult: func(outcome shipmentbillingports.BulkTransferToBillingResult) {
 				if flushErr != nil {
 					return
 				}
@@ -387,7 +388,7 @@ const (
 )
 
 func itemOutcomeFrom(
-	result shipmentports.BulkTransferToBillingResult,
+	result shipmentbillingports.BulkTransferToBillingResult,
 ) billingtransferports.BillingTransferItemOutcome {
 	outcome := billingtransferports.BillingTransferItemOutcome{
 		ShipmentID:           result.ShipmentID,

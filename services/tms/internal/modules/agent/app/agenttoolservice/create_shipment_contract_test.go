@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
@@ -72,7 +72,7 @@ func TestCreateShipment_TheSchemaAsksForWhatTheDomainNeeds(t *testing.T) {
 }
 
 type fakeContractRates struct {
-	priced *shipmentports.ContractRateApplication
+	priced *shipmentserviceports.ContractRateApplication
 	err    error
 	calls  int
 }
@@ -81,7 +81,7 @@ func (f *fakeContractRates) PreviewContractRate(
 	context.Context,
 	*shipment.Shipment,
 	*permissionports.RequestActor,
-) (*shipmentports.ContractRateApplication, error) {
+) (*shipmentserviceports.ContractRateApplication, error) {
 	f.calls++
 
 	return f.priced, f.err
@@ -97,7 +97,7 @@ func TestCreateShipment_UsesTheContractsRatingWhenNoneIsGiven(t *testing.T) {
 	t.Parallel()
 
 	template := pulid.MustNew("ft_")
-	contracts := &fakeContractRates{priced: &shipmentports.ContractRateApplication{
+	contracts := &fakeContractRates{priced: &shipmentserviceports.ContractRateApplication{
 		Applied:           true,
 		Outcome:           ratequote.OutcomeRated,
 		FormulaTemplateID: &template,
@@ -143,7 +143,7 @@ func TestCreateShipment_AsksForARatingWhenNoAgreementPricesTheLane(t *testing.T)
 
 	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{
 		Shipments: &agenttoolstest.FakeShipmentWriter{},
-		Contracts: &fakeContractRates{priced: &shipmentports.ContractRateApplication{
+		Contracts: &fakeContractRates{priced: &shipmentserviceports.ContractRateApplication{
 			Outcome: ratequote.OutcomeNoRateFound,
 		}},
 	}).(*operationstools.CreateShipmentTool)
@@ -413,7 +413,7 @@ func (f *ratedShipments) PreviewCreate(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	actor *permissionports.RequestActor,
-) (*shipmentports.ShipmentCreatePlan, error) {
+) (*shipmentserviceports.ShipmentCreatePlan, error) {
 	plan, err := f.pricingShipments.PreviewCreate(ctx, entity, actor)
 	if err != nil {
 		return nil, err

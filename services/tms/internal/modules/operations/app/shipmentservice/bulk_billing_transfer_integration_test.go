@@ -12,8 +12,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueuerepository"
@@ -36,12 +34,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/customerrepository"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -127,7 +128,7 @@ func (g *countingGenerator) GenerateInvoiceNumber(
 const maxStatementsPerShipment = 26
 
 type bulkTransferHarness struct {
-	svc        shipmentports.ShipmentService
+	svc        shipmentserviceports.ShipmentService
 	counter    *queryCounter
 	db         *keel.DB
 	ctx        context.Context
@@ -185,16 +186,20 @@ func newBulkTransferHarness(t *testing.T) *bulkTransferHarness {
 		Realtime:     realtime,
 	})
 	events := shipmenteventservice.New(shipmenteventservice.Params{
-		Logger:    logger,
-		Repo:      shipmenteventrepository.New(shipmenteventrepository.Params{DB: conn, Logger: logger}),
+		Logger: logger,
+		Repo: shipmenteventrepository.New(
+			shipmenteventrepository.Params{DB: conn, Logger: logger},
+		),
 		Realtime:  realtime,
 		Observers: []shipmenteventports.ShipmentEventObserver{derivation},
 	})
 
 	billingQueue := billingqueueservice.New(billingqueueservice.Params{
-		Logger:               logger,
-		DB:                   conn,
-		Repo:                 billingqueuerepository.New(billingqueuerepository.Params{DB: conn, Logger: logger}),
+		Logger: logger,
+		DB:     conn,
+		Repo: billingqueuerepository.New(
+			billingqueuerepository.Params{DB: conn, Logger: logger},
+		),
 		ShipmentRepo:         shipmentRepo,
 		CustomerRepo:         customerRepo,
 		UserRepo:             userRepo,
@@ -202,8 +207,10 @@ func newBulkTransferHarness(t *testing.T) *bulkTransferHarness {
 		Generator:            &countingGenerator{},
 		AuditService:         &mocks.NoopAuditService{},
 		Realtime:             realtime,
-		Validator:            billingqueueservice.NewValidator(billingqueueservice.ValidatorParams{DB: conn}),
-		OrderDerivation:      derivation,
+		Validator: billingqueueservice.NewValidator(
+			billingqueueservice.ValidatorParams{DB: conn},
+		),
+		OrderDerivation: derivation,
 	})
 
 	svc := New(Params{
@@ -214,14 +221,18 @@ func newBulkTransferHarness(t *testing.T) *bulkTransferHarness {
 		UserRepo:             userRepo,
 		CustomerRepo:         customerRepo,
 		ChargeAllocationRepo: allocationRepo,
-		DocumentRepo:         documentrepository.New(documentrepository.Params{DB: conn, Logger: logger}),
-		BillingRepo:          billingcontrolrepository.New(billingcontrolrepository.Params{DB: conn, Logger: logger}),
-		BillingQueueService:  billingQueue,
-		Permissions:          permissionportsmock.NewMockPermissionEngine(t),
-		AuditService:         &mocks.NoopAuditService{},
-		EventService:         events,
-		Coordinator:          newStateCoordinator(),
-		OrderDerivation:      derivation,
+		DocumentRepo: documentrepository.New(
+			documentrepository.Params{DB: conn, Logger: logger},
+		),
+		BillingRepo: billingcontrolrepository.New(
+			billingcontrolrepository.Params{DB: conn, Logger: logger},
+		),
+		BillingQueueService: billingQueue,
+		Permissions:         permissionportsmock.NewMockPermissionEngine(t),
+		AuditService:        &mocks.NoopAuditService{},
+		EventService:        events,
+		Coordinator:         newStateCoordinator(),
+		OrderDerivation:     derivation,
 	})
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
@@ -274,7 +285,10 @@ func (h *bulkTransferHarness) completedShipment(t *testing.T, n int) *shipment.S
 	return graph.Shipment
 }
 
-func (h *bulkTransferHarness) addAccessorial(t *testing.T, shp *shipment.Shipment) *shipment.AdditionalCharge {
+func (h *bulkTransferHarness) addAccessorial(
+	t *testing.T,
+	shp *shipment.Shipment,
+) *shipment.AdditionalCharge {
 	t.Helper()
 
 	accessorial := testutil.MustCreateAccessorialCharge(
@@ -317,12 +331,16 @@ func TestBulkTransferToBillingIntegration_QueriesPerShipment(t *testing.T) {
 
 	actor := testutil.NewSessionActor(h.data.User.ID, h.tenantInfo.OrgID, h.tenantInfo.BuID)
 	h.counter.start()
-	resp, transferErr := h.svc.BulkTransferToBilling(h.ctx, &shipmentports.BulkTransferShipmentToBillingRequest{
-		ShipmentIDs:                    ids,
-		BillType:                       billingqueue.BillTypeInvoice,
-		MarkCompletedReadyToInvoice:    true,
-		SuppressExceptionNotifications: true,
-	}, actor)
+	resp, transferErr := h.svc.BulkTransferToBilling(
+		h.ctx,
+		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
+			ShipmentIDs:                    ids,
+			BillType:                       billingqueue.BillTypeInvoice,
+			MarkCompletedReadyToInvoice:    true,
+			SuppressExceptionNotifications: true,
+		},
+		actor,
+	)
 	total, breakdown := h.counter.stop()
 	require.NoError(t, transferErr)
 
@@ -341,7 +359,11 @@ func TestBulkTransferToBillingIntegration_QueriesPerShipment(t *testing.T) {
 
 	kept, err := shipmentdb.AdditionalCharges.Get(h.ctx, h.db, charge.ID)
 	require.NoError(t, err)
-	assert.True(t, kept.Amount.Equal(charge.Amount), "marking ready leaves the charges as they were")
+	assert.True(
+		t,
+		kept.Amount.Equal(charge.Amount),
+		"marking ready leaves the charges as they were",
+	)
 	assert.Equal(t, charge.Version, kept.Version)
 
 	for _, id := range ids {

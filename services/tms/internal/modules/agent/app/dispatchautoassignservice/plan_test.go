@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/shared/assignmentsolver"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -113,12 +113,12 @@ func planFor(
 ) *dispatchconsoleports.DispatchPlan {
 	t.Helper()
 
-	moves := make([]*shipmentports.BoardMove, len(scores))
+	moves := make([]*dispatchboardports.BoardMove, len(scores))
 	cost := make([][]float64, len(scores))
 	grid := make([][]*dispatchcandidateservice.CandidateScore, len(scores))
 
 	for i := range scores {
-		moves[i] = &shipmentports.BoardMove{
+		moves[i] = &dispatchboardports.BoardMove{
 			MoveID:    pulid.MustNew("sm_"),
 			ProNumber: "PRO-1",
 		}
@@ -146,12 +146,12 @@ func planFor(
 
 func autoExecuteControls() (*dispatchcontrol.DispatchControl, Policy) {
 	return &dispatchcontrol.DispatchControl{
-		AutoAssignConfidenceThreshold: decimal.NewFromFloat(0.85),
-	}, Policy{
-		Enabled:    true,
-		Tier:       agent.TierAutoExecute,
-		ShadowMode: false,
-	}
+			AutoAssignConfidenceThreshold: decimal.NewFromFloat(0.85),
+		}, Policy{
+			Enabled:    true,
+			Tier:       agent.TierAutoExecute,
+			ShadowMode: false,
+		}
 }
 
 func TestBuildPlan_AutoExecutesOnlyAboveTheConfidenceThreshold(t *testing.T) {
@@ -244,7 +244,7 @@ func TestBuildPlan_SurvivesAnEmptySolverResult(t *testing.T) {
 	t.Parallel()
 
 	control, policy := autoExecuteControls()
-	moves := []*shipmentports.BoardMove{{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-9"}}
+	moves := []*dispatchboardports.BoardMove{{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-9"}}
 
 	plan := buildPlan(&buildPlanParams{
 		Moves:    moves,
@@ -267,7 +267,7 @@ func TestSolve_NoDriversLeavesEveryMoveUncovered(t *testing.T) {
 	svc := &Service{}
 
 	plan := svc.solve(&solveParams{
-		Moves: []*shipmentports.BoardMove{
+		Moves: []*dispatchboardports.BoardMove{
 			{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-1"},
 			{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-2"},
 		},
@@ -288,7 +288,7 @@ func TestSolve_NoDriversLeavesEveryMoveUncovered(t *testing.T) {
 func TestUncoveredFor_DistinguishesBlockedFromMerelyUnchosen(t *testing.T) {
 	t.Parallel()
 
-	move := &shipmentports.BoardMove{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-3"}
+	move := &dispatchboardports.BoardMove{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-3"}
 
 	eligible := score(85)
 	eligible.WorkerName = "Riley Chen"
@@ -333,7 +333,7 @@ func TestRationaleFor_LeadsWithTheDrivingFactors(t *testing.T) {
 		{Key: dispatchcontrol.FactorOnTime, Detail: "3.0 hours of margin to the appointment"},
 	}
 
-	rationale := rationaleFor(candidate, &shipmentports.BoardMove{ProNumber: "PRO-42"})
+	rationale := rationaleFor(candidate, &dispatchboardports.BoardMove{ProNumber: "PRO-42"})
 
 	assert.Contains(t, rationale, "Ada Reed")
 	assert.Contains(t, rationale, "PRO-42")
@@ -347,7 +347,7 @@ func TestEvidenceFor_RecordsMoveAndHOSAlways(t *testing.T) {
 	candidate := score(80)
 	candidate.DriveRemainingMs = 6 * 3600 * 1000
 
-	evidence := evidenceFor(candidate, &shipmentports.BoardMove{
+	evidence := evidenceFor(candidate, &dispatchboardports.BoardMove{
 		MoveID:      pulid.MustNew("sm_"),
 		OriginCity:  "Joliet",
 		OriginState: "IL",
@@ -362,7 +362,7 @@ func TestEvidenceFor_RecordsMoveAndHOSAlways(t *testing.T) {
 	withPosition := score(80)
 	miles := 42.0
 	withPosition.DeadheadMiles = &miles
-	assert.Len(t, evidenceFor(withPosition, &shipmentports.BoardMove{}), 3)
+	assert.Len(t, evidenceFor(withPosition, &dispatchboardports.BoardMove{}), 3)
 }
 
 func TestToolParamsFor(t *testing.T) {

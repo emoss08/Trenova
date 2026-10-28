@@ -18,6 +18,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
@@ -40,11 +42,11 @@ type Params struct {
 	Logger                    *zap.Logger
 	DB                        kernelports.Transactor
 	Repo                      trailerports.TrailerRepository
-	AssignmentRepo            shipmentports.AssignmentRepository
+	AssignmentRepo            assignmentports.AssignmentRepository
 	ContinuityRepo            equipmentcontinuityports.EquipmentContinuityRepository
 	ShipmentRepo              shipmentports.ShipmentRepository
 	UserRepo                  tenantports.UserRepository
-	ShipmentCommentRepo       shipmentports.ShipmentCommentRepository
+	ShipmentCommentRepo       shipmentcommentports.ShipmentCommentRepository
 	ControlRepo               tenantports.ShipmentControlRepository
 	LocationRepo              locationports.LocationRepository
 	Validator                 *Validator
@@ -60,11 +62,11 @@ type Service struct {
 	l                         *zap.Logger
 	db                        kernelports.Transactor
 	repo                      trailerports.TrailerRepository
-	assignmentRepo            shipmentports.AssignmentRepository
+	assignmentRepo            assignmentports.AssignmentRepository
 	continuityRepo            equipmentcontinuityports.EquipmentContinuityRepository
 	shipmentRepo              shipmentports.ShipmentRepository
 	userRepo                  tenantports.UserRepository
-	shipmentCommentRepo       shipmentports.ShipmentCommentRepository
+	shipmentCommentRepo       shipmentcommentports.ShipmentCommentRepository
 	controlRepo               tenantports.ShipmentControlRepository
 	locationRepo              locationports.LocationRepository
 	validator                 *Validator

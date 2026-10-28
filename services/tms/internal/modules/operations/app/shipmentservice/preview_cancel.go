@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -16,7 +17,7 @@ func (s *service) PreviewCancel(
 	ctx context.Context,
 	req *shipmentports.CancelShipmentRequest,
 	actor *permissionports.RequestActor,
-) (*shipmentports.ShipmentCancelPreview, error) {
+) (*shipmentserviceports.ShipmentCancelPreview, error) {
 	if req == nil {
 		return nil, cancelRequestRequired()
 	}
@@ -30,7 +31,7 @@ func (s *service) PreviewCancel(
 	after := *original
 	after.ApplyCancel(request.CanceledByID, request.CanceledAt, request.CancelReason)
 
-	return &shipmentports.ShipmentCancelPreview{Before: original, After: &after}, nil
+	return &shipmentserviceports.ShipmentCancelPreview{Before: original, After: &after}, nil
 }
 
 func (s *service) planCancel(

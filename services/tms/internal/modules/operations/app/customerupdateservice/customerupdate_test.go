@@ -5,20 +5,20 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 )
 
 type stubComments struct {
-	shipmentports.ShipmentCommentService
+	shipmentcommentports.ShipmentCommentService
 	items []*shipment.ShipmentComment
 }
 
 func (s *stubComments) ListByShipmentID(
 	context.Context,
-	*shipmentports.ListShipmentCommentsRequest,
+	*shipmentcommentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	return &pagination.CursorListResult[*shipment.ShipmentComment]{Items: s.items}, nil
 }

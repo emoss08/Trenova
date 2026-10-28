@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
@@ -28,7 +29,7 @@ type ValidatorParams struct {
 	fx.In
 
 	DB                        *postgres.Connection
-	AssignmentRepo            shipmentports.AssignmentRepository
+	AssignmentRepo            assignmentports.AssignmentRepository
 	ControlRepo               tenantports.ShipmentControlRepository
 	CustomerRepo              customerports.CustomerRepository
 	CommodityRepo             commodityports.CommodityRepository
@@ -42,7 +43,7 @@ type ValidatorParams struct {
 
 type Validator struct {
 	validator      validationframework.TenantedEntityValidator[*shipment.Shipment]
-	assignmentRepo shipmentports.AssignmentRepository
+	assignmentRepo assignmentports.AssignmentRepository
 	coverage       rateCoverage
 }
 

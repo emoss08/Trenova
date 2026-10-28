@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -193,7 +194,7 @@ func (s *Service) Bounce(ctx context.Context, req *BounceTenderRequest) (*tender
 	reason := strings.TrimSpace(req.Reason)
 
 	if plan.assignment != nil {
-		if err = s.assigner.Cancel(ctx, &shipmentports.CancelCarrierAssignmentRequest{
+		if err = s.assigner.Cancel(ctx, &carrierassignmentports.CancelCarrierAssignmentRequest{
 			TenantInfo:     req.TenantInfo,
 			ShipmentMoveID: plan.entity.ShipmentMoveID,
 			Reason:         "Carrier backed out of the accepted tender: " + reason,
@@ -292,10 +293,10 @@ func (s *Service) announceBounce(
 		Previous: plan.entity,
 		Current:  entity,
 	})
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationByUser(
+		shipmentinvalidationports.ShipmentInvalidationByUser(
 			req.TenantInfo,
 			entity.ShipmentID,
 			"tender_bounced",

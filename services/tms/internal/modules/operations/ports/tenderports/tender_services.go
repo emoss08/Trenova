@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -209,7 +209,7 @@ type EDITenderChannel interface {
 type CarrierMoveAssigner interface {
 	AssignToMove(
 		ctx context.Context,
-		req *shipmentports.AssignMoveToCarrierRequest,
+		req *carrierassignmentports.AssignMoveToCarrierRequest,
 	) (*shipment.CarrierAssignment, error)
 	ConfirmAssignment(
 		ctx context.Context,
@@ -218,6 +218,6 @@ type CarrierMoveAssigner interface {
 	) error
 	Cancel(
 		ctx context.Context,
-		req *shipmentports.CancelCarrierAssignmentRequest,
+		req *carrierassignmentports.CancelCarrierAssignmentRequest,
 	) error
 }

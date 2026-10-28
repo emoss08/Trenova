@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
@@ -122,7 +122,7 @@ func boardMoves() *moveQuery {
 	return joinEdge(q, destination, sm.ID)
 }
 
-func moveFilters(filter *shipmentports.DispatchBoardFilter) []keel.Pred {
+func moveFilters(filter *dispatchboardports.DispatchBoardFilter) []keel.Pred {
 	sm := shipmentdb.ShipmentMoves
 	sp := shipmentdb.Shipments
 
@@ -165,7 +165,7 @@ func moveFilters(filter *shipmentports.DispatchBoardFilter) []keel.Pred {
 	return preds
 }
 
-func driverFilters(filter *shipmentports.DispatchBoardFilter) []keel.Pred {
+func driverFilters(filter *dispatchboardports.DispatchBoardFilter) []keel.Pred {
 	w := workerdb.Workers
 	return []keel.Pred{
 		w.Status.Eq(domaintypes.StatusActive),

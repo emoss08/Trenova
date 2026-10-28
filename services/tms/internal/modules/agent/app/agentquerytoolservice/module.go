@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
@@ -182,7 +183,7 @@ func providePreviewReportTool(reports *reporting.Service) agenttoolports.AgentQu
 
 func provideGetShipmentTrackingTool(
 	shipments shipmentports.ShipmentRepository,
-	console shipmentports.DispatchConsoleRepository,
+	console dispatchboardports.DispatchConsoleRepository,
 	telematics *telematicsservice.Service,
 	stopEtas stopetaports.Repository,
 ) agenttoolports.AgentQueryTool {

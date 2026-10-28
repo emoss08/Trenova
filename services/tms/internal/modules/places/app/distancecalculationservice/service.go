@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/app/pcmilerruntime"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecalculation"
@@ -76,8 +78,8 @@ type Params struct {
 	DistanceCalcRepo     distancecalculationports.DistanceCalculationRepository
 	StoredMileageRepo    storedmileageports.StoredMileageRepository
 	StoredMileageBuffer  storedmileageports.StoredMileageBufferRepository
-	JurisdictionMileRepo shipmentports.ShipmentMoveJurisdictionMileRepository
-	ShipmentMoveRepo     shipmentports.ShipmentMoveRepository
+	JurisdictionMileRepo shipmentdistanceports.ShipmentMoveJurisdictionMileRepository
+	ShipmentMoveRepo     shipmentmoveports.ShipmentMoveRepository
 	LocationRepo         locationports.LocationRepository
 	StateRepo            usstateports.UsStateRepository
 	WorkflowStarter      kernelports.WorkflowStarter
@@ -93,15 +95,15 @@ type Service struct {
 	distanceCalcRepo     distancecalculationports.DistanceCalculationRepository
 	storedMileageRepo    storedmileageports.StoredMileageRepository
 	storedMileageBuffer  storedmileageports.StoredMileageBufferRepository
-	jurisdictionMileRepo shipmentports.ShipmentMoveJurisdictionMileRepository
-	shipmentMoveRepo     shipmentports.ShipmentMoveRepository
+	jurisdictionMileRepo shipmentdistanceports.ShipmentMoveJurisdictionMileRepository
+	shipmentMoveRepo     shipmentmoveports.ShipmentMoveRepository
 	locationRepo         locationports.LocationRepository
 	stateRepo            usstateports.UsStateRepository
 	workflowStarter      kernelports.WorkflowStarter
 	integrationService   *integrationservice.Service
 }
 
-func New(p Params) shipmentports.DistanceCalculationService {
+func New(p Params) shipmentdistanceports.DistanceCalculationService {
 	return &Service{
 		l:                    p.Logger.Named("service.distance-calculation"),
 		shipmentRepo:         p.ShipmentRepo,
@@ -123,7 +125,7 @@ func New(p Params) shipmentports.DistanceCalculationService {
 func (s *Service) ResolveForShipment(
 	ctx context.Context,
 	entity *shipment.Shipment,
-) (*shipmentports.DistanceCalculationResponse, error) {
+) (*shipmentdistanceports.DistanceCalculationResponse, error) {
 	return s.resolveForShipment(ctx, entity, make(map[string]pcmilerRuntime, 2))
 }
 
@@ -131,7 +133,7 @@ func (s *Service) resolveForShipment(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	pcRuntimeByPurpose map[string]pcmilerRuntime,
-) (*shipmentports.DistanceCalculationResponse, error) {
+) (*shipmentdistanceports.DistanceCalculationResponse, error) {
 	if entity == nil {
 		return nil, errortypes.NewBusinessError("shipment is required")
 	}
@@ -140,9 +142,9 @@ func (s *Service) resolveForShipment(
 		return nil, err
 	}
 
-	resp := &shipmentports.DistanceCalculationResponse{
+	resp := &shipmentdistanceports.DistanceCalculationResponse{
 		ShipmentID: entity.ID,
-		Moves:      make([]shipmentports.DistanceMoveResult, 0, len(entity.Moves)),
+		Moves:      make([]shipmentdistanceports.DistanceMoveResult, 0, len(entity.Moves)),
 	}
 
 	control, controlErr := s.distanceControlRepo.EnsureDefault(ctx, pagination.TenantInfo{
@@ -365,7 +367,7 @@ func (s *Service) RecalculateShipment(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*shipmentports.DistanceCalculationResponse, error) {
+) (*shipmentdistanceports.DistanceCalculationResponse, error) {
 	plan, err := s.planRecalculateShipment(ctx, shipmentID, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -381,7 +383,7 @@ func (s *Service) PreviewRecalculateShipment(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*shipmentports.ShipmentDistancePreview, error) {
+) (*shipmentdistanceports.ShipmentDistancePreview, error) {
 	return s.planRecalculateShipment(ctx, shipmentID, tenantInfo)
 }
 
@@ -389,7 +391,7 @@ func (s *Service) planRecalculateShipment(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*shipmentports.ShipmentDistancePreview, error) {
+) (*shipmentdistanceports.ShipmentDistancePreview, error) {
 	entity, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,
@@ -407,7 +409,7 @@ func (s *Service) planRecalculateShipment(
 		return nil, err
 	}
 
-	return &shipmentports.ShipmentDistancePreview{
+	return &shipmentdistanceports.ShipmentDistancePreview{
 		Before:   before,
 		After:    entity,
 		Distance: resp,
@@ -431,12 +433,12 @@ func snapshotMoveDistances(entity *shipment.Shipment) *shipment.Shipment {
 
 func (s *Service) jurisdictionMove(
 	ctx context.Context,
-	req *shipmentports.RecalculateMoveJurisdictionMilesRequest,
+	req *shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest,
 ) (*shipment.ShipmentMove, error) {
 	if req.ShipmentMoveID.IsNil() {
 		return nil, errortypes.NewBusinessError("Shipment move is required")
 	}
-	move, err := s.shipmentMoveRepo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	move, err := s.shipmentMoveRepo.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            req.ShipmentMoveID,
 		TenantInfo:        req.TenantInfo,
 		ExpandMoveDetails: true,
@@ -455,14 +457,14 @@ func (s *Service) jurisdictionMove(
 
 func (s *Service) PlanMoveJurisdictionMiles(
 	ctx context.Context,
-	req *shipmentports.RecalculateMoveJurisdictionMilesRequest,
-) (*shipmentports.MoveJurisdictionMilesPlan, error) {
+	req *shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest,
+) (*shipmentdistanceports.MoveJurisdictionMilesPlan, error) {
 	move, err := s.jurisdictionMove(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return &shipmentports.MoveJurisdictionMilesPlan{Move: move}, nil
+	return &shipmentdistanceports.MoveJurisdictionMilesPlan{Move: move}, nil
 }
 
 func (s *Service) moveShipmentAndControl(
@@ -493,7 +495,7 @@ func (s *Service) moveShipmentAndControl(
 
 func (s *Service) RecalculateMoveJurisdictionMiles(
 	ctx context.Context,
-	req shipmentports.RecalculateMoveJurisdictionMilesRequest, //nolint:gocritic // the DistanceCalculationService port passes the request by value
+	req shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest, //nolint:gocritic // the DistanceCalculationService port passes the request by value
 ) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
 	move, err := s.jurisdictionMove(ctx, &req)
 	if err != nil {
@@ -593,14 +595,14 @@ func (s *Service) RecalculateMoveJurisdictionMiles(
 
 func (s *Service) BackfillJurisdictionMiles(
 	ctx context.Context,
-	req shipmentports.BackfillJurisdictionMilesRequest,
-) (*shipmentports.BackfillJurisdictionMilesResult, error) {
+	req shipmentdistanceports.BackfillJurisdictionMilesRequest,
+) (*shipmentdistanceports.BackfillJurisdictionMilesResult, error) {
 	if req.Start <= 0 || req.End <= req.Start {
 		return nil, errortypes.NewBusinessError("Period start must be before period end")
 	}
 	page, err := s.jurisdictionMileRepo.ListUnattributedMoves(
 		ctx,
-		shipmentports.UnattributedMovesRequest{
+		shipmentdistanceports.UnattributedMovesRequest{
 			TenantInfo: req.TenantInfo,
 			Start:      req.Start,
 			End:        req.End,
@@ -610,7 +612,7 @@ func (s *Service) BackfillJurisdictionMiles(
 	if err != nil {
 		return nil, err
 	}
-	result := &shipmentports.BackfillJurisdictionMilesResult{
+	result := &shipmentdistanceports.BackfillJurisdictionMilesResult{
 		DryRun:            req.DryRun,
 		UnattributedMoves: page.TotalMoves,
 		UnattributedMiles: page.TotalMiles,
@@ -760,7 +762,7 @@ func (s *Service) persistMoveDistances(ctx context.Context, moves []*shipment.Sh
 func (s *Service) logRuns(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	resp *shipmentports.DistanceCalculationResponse,
+	resp *shipmentdistanceports.DistanceCalculationResponse,
 ) {
 	if resp == nil {
 		return
@@ -1469,16 +1471,16 @@ func mergeWarnings(base, extra []string) []string {
 
 func jurisdictionMileResults(
 	rows []*shipment.ShipmentMoveJurisdictionMile,
-) []shipmentports.JurisdictionMileResult {
+) []shipmentdistanceports.JurisdictionMileResult {
 	if len(rows) == 0 {
 		return nil
 	}
-	results := make([]shipmentports.JurisdictionMileResult, 0, len(rows))
+	results := make([]shipmentdistanceports.JurisdictionMileResult, 0, len(rows))
 	for _, row := range rows {
 		if row == nil {
 			continue
 		}
-		results = append(results, shipmentports.JurisdictionMileResult{
+		results = append(results, shipmentdistanceports.JurisdictionMileResult{
 			CountryCode:      row.CountryCode,
 			JurisdictionCode: row.JurisdictionCode,
 			Distance:         row.Distance,
@@ -1510,7 +1512,7 @@ func moveResult(
 	move *shipment.ShipmentMove,
 	idx int,
 	warnings []string,
-) shipmentports.DistanceMoveResult {
+) shipmentdistanceports.DistanceMoveResult {
 	distance := roundDistance(manualDistance(move))
 	if move.Distance != nil {
 		distance = roundDistance(*move.Distance)
@@ -1519,7 +1521,7 @@ func moveResult(
 	if move.DistanceCalculatedAt != nil {
 		calculatedAt = *move.DistanceCalculatedAt
 	}
-	return shipmentports.DistanceMoveResult{
+	return shipmentdistanceports.DistanceMoveResult{
 		MoveID:              move.ID,
 		MoveIndex:           idx,
 		Distance:            distance,

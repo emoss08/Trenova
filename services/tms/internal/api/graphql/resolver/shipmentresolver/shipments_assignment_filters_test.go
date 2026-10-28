@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	carriersettlementdomain "github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	driversettlementdomain "github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
@@ -26,7 +27,7 @@ import (
 )
 
 type listCapturingShipmentService struct {
-	shipmentports.ShipmentService
+	shipmentserviceports.ShipmentService
 
 	requests []*shipmentports.ListShipmentsRequest
 }
@@ -55,7 +56,7 @@ func shipmentListContext(t *testing.T) context.Context {
 	})
 }
 
-func newShipmentListResolver(service shipmentports.ShipmentService) *QueryResolver {
+func newShipmentListResolver(service shipmentserviceports.ShipmentService) *QueryResolver {
 	engine := &resolvertest.GrantingPermissionEngine{Granted: map[string]bool{
 		permission.ResourceShipment.String() + "|" + string(permission.OpRead): true,
 	}}
@@ -217,7 +218,7 @@ func (s *invoicesByIDService) GetByIDs(
 }
 
 func newInvoiceShipmentsResolver(
-	service shipmentports.ShipmentService,
+	service shipmentserviceports.ShipmentService,
 	invoices invoiceports.InvoiceService,
 	mayReadInvoices bool,
 ) *QueryResolver {
@@ -328,7 +329,7 @@ func (s *carrierSettlementLinesRepo) GetByID(
 }
 
 func newSettlementShipmentsResolver(
-	service shipmentports.ShipmentService,
+	service shipmentserviceports.ShipmentService,
 	grants map[permission.Resource]bool,
 	deps Deps,
 ) *QueryResolver {

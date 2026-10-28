@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
@@ -57,7 +57,7 @@ type Params struct {
 	VerifyRepo     carrierintelports.CarrierEquipmentVerificationRepository
 	SubjectRepo    carrierintelports.CarrierIntelSubjectRepository
 	CarrierRepo    carrierports.CarrierRepository
-	AssignmentRepo shipmentports.CarrierAssignmentRepository
+	AssignmentRepo carrierassignmentports.CarrierAssignmentRepository
 	UsStateRepo    usstateports.UsStateRepository
 	CarrierService *carrierservice.Service
 	Notifications  *notificationservice.Service
@@ -89,7 +89,7 @@ type Service struct {
 	verifyRepo      carrierintelports.CarrierEquipmentVerificationRepository
 	subjectRepo     carrierintelports.CarrierIntelSubjectRepository
 	carrierRepo     carrierports.CarrierRepository
-	assignmentRepo  shipmentports.CarrierAssignmentRepository
+	assignmentRepo  carrierassignmentports.CarrierAssignmentRepository
 	usStateRepo     usstateports.UsStateRepository
 	carrierService  CarrierWriter
 	notifications   NotificationSender

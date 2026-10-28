@@ -5,7 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,7 +29,7 @@ type CustomerEmail struct {
 // its customer: who it went to and what it said, stamped as the agent's.
 func CustomerUpdateComment(
 	composed *CustomerEmail,
-) *shipmentports.CreateSystemShipmentCommentRequest {
+) *shipmentcommentports.CreateSystemShipmentCommentRequest {
 	return customerupdateservice.Comment(&customerupdateservice.CommentParams{
 		Tenant:     composed.Tenant,
 		ShipmentID: composed.Shipment.ID,

@@ -17,7 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -47,9 +49,9 @@ type Params struct {
 	DB                         *postgres.Connection
 	Logger                     *zap.Logger
 	Generator                  seqgen.Generator
-	MoveRepository             shipmentports.ShipmentMoveRepository
+	MoveRepository             shipmentmoveports.ShipmentMoveRepository
 	AdditionalChargeRepository shipmentports.ShipmentAdditionalChargeRepository
-	ChargeAllocationRepository shipmentports.ChargeAllocationRepository
+	ChargeAllocationRepository chargeallocationports.ChargeAllocationRepository
 	CommodityRepository        shipmentports.ShipmentCommodityRepository
 	OrderRepository            orderports.OrderRepository
 	Quota                      platformplanports.QuotaGuard `optional:"true"`
@@ -59,9 +61,9 @@ type repository struct {
 	db                         *postgres.Connection
 	l                          *zap.Logger
 	generator                  seqgen.Generator
-	moveRepository             shipmentports.ShipmentMoveRepository
+	moveRepository             shipmentmoveports.ShipmentMoveRepository
 	additionalChargeRepository shipmentports.ShipmentAdditionalChargeRepository
-	chargeAllocationRepository shipmentports.ChargeAllocationRepository
+	chargeAllocationRepository chargeallocationports.ChargeAllocationRepository
 	commodityRepository        shipmentports.ShipmentCommodityRepository
 	orderRepository            orderports.OrderRepository
 	quota                      platformplanports.QuotaGuard

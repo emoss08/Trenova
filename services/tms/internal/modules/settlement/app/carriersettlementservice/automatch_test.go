@@ -1,22 +1,22 @@
 package carriersettlementservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/carriersettlementportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carriersettlementportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -27,7 +27,7 @@ import (
 )
 
 type autoMatchDeps struct {
-	assignments *shipmentportsmock.MockCarrierAssignmentRepository
+	assignments *carrierassignmentportsmock.MockCarrierAssignmentRepository
 	matches     *carriersettlementportsmock.MockCarrierInvoiceMatchRepository
 	control     *tenantportsmock.MockCarrierSettlementControlRepository
 	invoices    *ediportsmock.MockEDICarrierInvoiceRepository
@@ -37,7 +37,7 @@ type autoMatchDeps struct {
 
 func setupAutoMatchTest(t *testing.T) *autoMatchDeps {
 	t.Helper()
-	assignments := shipmentportsmock.NewMockCarrierAssignmentRepository(t)
+	assignments := carrierassignmentportsmock.NewMockCarrierAssignmentRepository(t)
 	matches := carriersettlementportsmock.NewMockCarrierInvoiceMatchRepository(t)
 	control := tenantportsmock.NewMockCarrierSettlementControlRepository(t)
 	invoices := ediportsmock.NewMockEDICarrierInvoiceRepository(t)
@@ -181,7 +181,7 @@ func TestAutoMatchWithinToleranceCreatesMatched(t *testing.T) {
 	deps.assignments.On(
 		"FindForMatching",
 		mock.Anything,
-		&shipmentports.FindCarrierAssignmentForMatchingRequest{
+		&carrierassignmentports.FindCarrierAssignmentForMatchingRequest{
 			TenantInfo: tenantInfo,
 			CarrierID:  invoice.CarrierID,
 			ProNumber:  invoice.ProNumber,
