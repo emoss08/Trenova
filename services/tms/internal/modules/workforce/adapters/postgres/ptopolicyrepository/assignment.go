@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto/ptodb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -36,7 +36,7 @@ func policyLoads(include bool) []keel.Loader {
 
 func (r *repository) ListAssignments(
 	ctx context.Context,
-	req *workerports.ListPTOAssignmentsRequest,
+	req *ptopolicyports.ListPTOAssignmentsRequest,
 ) ([]*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(
 		ctx,
@@ -59,7 +59,7 @@ func (r *repository) ListAssignments(
 
 func (r *repository) GetAssignmentByID(
 	ctx context.Context,
-	req *workerports.GetPTOAssignmentByIDRequest,
+	req *ptopolicyports.GetPTOAssignmentByIDRequest,
 ) (*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(
 		ctx,
@@ -79,7 +79,7 @@ func (r *repository) GetAssignmentByID(
 }
 
 func activeAssignmentQuery(
-	req *workerports.GetPTOAssignmentRequest,
+	req *ptopolicyports.GetPTOAssignmentRequest,
 ) *keel.Query[*pto.WorkerPTOPolicyAssignment] {
 	a := ptodb.WorkerPTOPolicyAssignments
 	active := a.EffectiveTo.IsNull()
@@ -97,7 +97,7 @@ func activeAssignmentQuery(
 
 func (r *repository) GetActiveAssignment(
 	ctx context.Context,
-	req *workerports.GetPTOAssignmentRequest,
+	req *ptopolicyports.GetPTOAssignmentRequest,
 ) (*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(
 		ctx,
@@ -153,7 +153,7 @@ func (r *repository) UpdateAssignment(
 
 func (r *repository) ListOpenAssignments(
 	ctx context.Context,
-	req *workerports.ListOpenPTOAssignmentsRequest,
+	req *ptopolicyports.ListOpenPTOAssignmentsRequest,
 ) ([]*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(
 		ctx,

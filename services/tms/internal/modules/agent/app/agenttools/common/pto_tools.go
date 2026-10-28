@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 )
 
 // ptoDecider is the slice of the PTO service these tools need. The service
@@ -13,15 +13,15 @@ import (
 type PtoDecider interface {
 	Approve(
 		ctx context.Context,
-		req *workerports.UpdatePTOStatusRequest,
+		req *workerptoports.UpdatePTOStatusRequest,
 	) (*worker.WorkerPTO, error)
 	Reject(
 		ctx context.Context,
-		req *workerports.UpdatePTOStatusRequest,
+		req *workerptoports.UpdatePTOStatusRequest,
 	) (*worker.WorkerPTO, error)
 	Cancel(
 		ctx context.Context,
-		req *workerports.UpdatePTOStatusRequest,
+		req *workerptoports.UpdatePTOStatusRequest,
 	) (*worker.WorkerPTO, error)
 }
 

@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -35,9 +37,9 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
-	Repo           workerports.WorkerChecklistRepository
+	Repo           workerchecklistports.WorkerChecklistRepository
 	WorkerRepo     workerports.WorkerRepository
-	CredentialRepo workerports.WorkerCredentialRepository
+	CredentialRepo workercredentialports.WorkerCredentialRepository
 	DocumentRepo   documentports.DocumentRepository
 	AuditService   auditports.AuditService
 	Realtime       realtimeports.RealtimeService `optional:"true"`
@@ -45,9 +47,9 @@ type Params struct {
 
 type Service struct {
 	l              *zap.Logger
-	repo           workerports.WorkerChecklistRepository
+	repo           workerchecklistports.WorkerChecklistRepository
 	workerRepo     workerports.WorkerRepository
-	credentialRepo workerports.WorkerCredentialRepository
+	credentialRepo workercredentialports.WorkerCredentialRepository
 	documentRepo   documentports.DocumentRepository
 	auditService   auditports.AuditService
 	realtime       realtimeports.RealtimeService

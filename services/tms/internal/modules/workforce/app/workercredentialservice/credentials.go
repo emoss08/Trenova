@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -90,7 +91,7 @@ func (s *Service) List(
 		return s.listAcross(ctx, req, code)
 	}
 
-	held, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
+	held, err := s.repo.ListForWorker(ctx, &workercredentialports.ListWorkerCredentialsRequest{
 		TenantInfo:      req.TenantInfo,
 		WorkerIDs:       req.WorkerIDs,
 		IncludeArchived: req.IncludeArchived,
@@ -135,7 +136,7 @@ func (s *Service) listAcross(
 		codes = []string{code}
 	}
 
-	return s.repo.ListExpiring(ctx, &workerports.ListExpiringWorkerCredentialsRequest{
+	return s.repo.ListExpiring(ctx, &workercredentialports.ListExpiringWorkerCredentialsRequest{
 		TenantInfo:          req.TenantInfo,
 		HorizonDays:         horizon,
 		GraceDays:           grace,
@@ -163,7 +164,7 @@ func (s *Service) Get(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workercredential.WorkerCredential, error) {
-	return s.repo.GetByID(ctx, &workerports.GetWorkerCredentialByIDRequest{
+	return s.repo.GetByID(ctx, &workercredentialports.GetWorkerCredentialByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeType:     true,
@@ -194,7 +195,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	createReq := &workerports.CreateWorkerCredentialRequest{Entity: entity}
+	createReq := &workercredentialports.CreateWorkerCredentialRequest{Entity: entity}
 	if req.Renew {
 		createReq.SupersedeReason = supersededReason
 		createReq.SupersededByID = req.UserID
@@ -396,7 +397,7 @@ func (s *Service) loadForChange(
 	ctx context.Context,
 	req *StatusRequest,
 ) (*workercredential.WorkerCredential, error) {
-	original, err := s.repo.GetByID(ctx, &workerports.GetWorkerCredentialByIDRequest{
+	original, err := s.repo.GetByID(ctx, &workercredentialports.GetWorkerCredentialByIDRequest{
 		ID:          req.ID,
 		TenantInfo:  req.TenantInfo,
 		IncludeType: true,
@@ -432,7 +433,7 @@ func (s *Service) prepare(
 
 	var credentialType *workercredential.WorkerCredentialType
 	if !entity.CredentialTypeID.IsNil() {
-		typ, err := s.repo.GetTypeByID(ctx, &workerports.GetCredentialTypeByIDRequest{
+		typ, err := s.repo.GetTypeByID(ctx, &workercredentialports.GetCredentialTypeByIDRequest{
 			ID:         entity.CredentialTypeID,
 			TenantInfo: credentialTenant(entity),
 		})
@@ -543,7 +544,7 @@ func (s *Service) mirrorToProfile(ctx context.Context, entity *workercredential.
 		if field == workercredential.CredentialProfileFieldLicenseExpiry {
 			return
 		}
-		active, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
+		active, err := s.repo.ListForWorker(ctx, &workercredentialports.ListWorkerCredentialsRequest{
 			TenantInfo: tenantInfo,
 			WorkerIDs:  []pulid.ID{entity.WorkerID},
 		})
@@ -589,12 +590,15 @@ func (s *Service) summarize(
 	if err != nil {
 		return nil, err
 	}
-	credentials, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
-		TenantInfo:      tenantInfo,
-		WorkerIDs:       []pulid.ID{wrk.ID},
-		IncludeType:     true,
-		IncludeDocument: true,
-	})
+	credentials, err := s.repo.ListForWorker(
+		ctx,
+		&workercredentialports.ListWorkerCredentialsRequest{
+			TenantInfo:      tenantInfo,
+			WorkerIDs:       []pulid.ID{wrk.ID},
+			IncludeType:     true,
+			IncludeDocument: true,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -666,10 +670,13 @@ func (s *Service) SyncFromProfile(ctx context.Context, wrk *worker.Worker, userI
 	if err != nil {
 		return err
 	}
-	credentials, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
-		TenantInfo: tenantInfo,
-		WorkerIDs:  []pulid.ID{wrk.ID},
-	})
+	credentials, err := s.repo.ListForWorker(
+		ctx,
+		&workercredentialports.ListWorkerCredentialsRequest{
+			TenantInfo: tenantInfo,
+			WorkerIDs:  []pulid.ID{wrk.ID},
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -746,7 +753,10 @@ func (s *Service) createFromProfile(
 	if typ.ProfileField.CarriesNumber() && wrk.Profile.LicenseState != nil {
 		entity.IssuingAuthority = wrk.Profile.LicenseState.Abbreviation
 	}
-	_, err := s.repo.Create(ctx, &workerports.CreateWorkerCredentialRequest{Entity: entity})
+	_, err := s.repo.Create(
+		ctx,
+		&workercredentialports.CreateWorkerCredentialRequest{Entity: entity},
+	)
 	return err
 }
 
@@ -820,12 +830,15 @@ func (s *Service) ExpiryForecast(
 		limit = 250
 	}
 
-	page, err := s.repo.ListExpiring(ctx, &workerports.ListExpiringWorkerCredentialsRequest{
-		TenantInfo:  tenantInfo,
-		HorizonDays: horizonDays,
-		GraceDays:   graceDays,
-		Limit:       limit,
-	})
+	page, err := s.repo.ListExpiring(
+		ctx,
+		&workercredentialports.ListExpiringWorkerCredentialsRequest{
+			TenantInfo:  tenantInfo,
+			HorizonDays: horizonDays,
+			GraceDays:   graceDays,
+			Limit:       limit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

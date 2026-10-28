@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -186,7 +186,7 @@ func (r *QueryResolver) WorkerSafetyEvents(ctx context.Context, workerID *string
 	if err != nil {
 		return nil, err
 	}
-	return r.WorkerSafetyService.ListEvents(ctx, &workerports.ListWorkerSafetyEventsRequest{
+	return r.WorkerSafetyService.ListEvents(ctx, &workersafetyports.ListWorkerSafetyEventsRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		WorkerID:        id,
 		OpenOnly:        base.BoolValue(openOnly),
@@ -387,7 +387,7 @@ func (r *WorkerSafetyEventResolver) Violations(ctx context.Context, obj *workers
 		return loaders.WorkerSafetyViolationsByEventID(ctx, obj.ID.String())
 	}
 
-	return r.WorkerSafetyService.ListViolations(ctx, &workerports.ListWorkerSafetyViolationsRequest{
+	return r.WorkerSafetyService.ListViolations(ctx, &workersafetyports.ListWorkerSafetyViolationsRequest{
 		TenantInfo:     base.TenantInfo(authCtx),
 		SafetyEventIDs: []pulid.ID{obj.ID},
 	})

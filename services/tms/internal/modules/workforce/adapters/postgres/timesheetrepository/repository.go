@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet/timesheetdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/timesheetports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -44,7 +45,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.TimesheetRepository {
+func New(p Params) timesheetports.TimesheetRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.timesheet-repository"),
@@ -59,7 +60,7 @@ func limitOr(requested, fallback int) int {
 }
 
 func entriesQuery(
-	req *workerports.ListTimeClockEntriesRequest,
+	req *timesheetports.ListTimeClockEntriesRequest,
 ) *keel.Query[*timesheet.TimeClockEntry] {
 	e := timesheetdb.TimeClockEntries
 	q := e.Where(
@@ -81,7 +82,7 @@ func entriesQuery(
 
 func (r *repository) ListEntries(
 	ctx context.Context,
-	req *workerports.ListTimeClockEntriesRequest,
+	req *timesheetports.ListTimeClockEntriesRequest,
 ) ([]*timesheet.TimeClockEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*timesheet.TimeClockEntry, error) {
 		entities, err := entriesQuery(req).List(ctx, r.db.Keel(ctx))
@@ -96,7 +97,7 @@ func (r *repository) ListEntries(
 
 func (r *repository) GetEntryByID(
 	ctx context.Context,
-	req *workerports.GetTimeClockEntryByIDRequest,
+	req *timesheetports.GetTimeClockEntryByIDRequest,
 ) (*timesheet.TimeClockEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*timesheet.TimeClockEntry, error) {
 		entity, err := timesheetdb.TimeClockEntries.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -162,7 +163,7 @@ func (r *repository) UpdateEntry(
 
 func (r *repository) DeleteEntry(
 	ctx context.Context,
-	req *workerports.GetTimeClockEntryByIDRequest,
+	req *timesheetports.GetTimeClockEntryByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		err := timesheetdb.TimeClockEntries.DeleteRow(
@@ -179,7 +180,7 @@ func (r *repository) DeleteEntry(
 	})
 }
 
-func timesheetsQuery(req *workerports.ListTimesheetsRequest) *keel.Query[*timesheet.Timesheet] {
+func timesheetsQuery(req *timesheetports.ListTimesheetsRequest) *keel.Query[*timesheet.Timesheet] {
 	t := timesheetdb.Timesheets
 	q := t.Where(
 		keel.When(req.WorkerID.IsNotNil(), t.WorkerID.Eq(req.WorkerID)),
@@ -202,7 +203,7 @@ func timesheetsQuery(req *workerports.ListTimesheetsRequest) *keel.Query[*timesh
 
 func (r *repository) ListTimesheets(
 	ctx context.Context,
-	req *workerports.ListTimesheetsRequest,
+	req *timesheetports.ListTimesheetsRequest,
 ) ([]*timesheet.Timesheet, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*timesheet.Timesheet, error) {
 		entities, err := timesheetsQuery(req).List(ctx, r.db.Keel(ctx))
@@ -217,7 +218,7 @@ func (r *repository) ListTimesheets(
 
 func (r *repository) GetTimesheetByID(
 	ctx context.Context,
-	req *workerports.GetTimesheetByIDRequest,
+	req *timesheetports.GetTimesheetByIDRequest,
 ) (*timesheet.Timesheet, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*timesheet.Timesheet, error) {
 		t := timesheetdb.Timesheets
@@ -232,7 +233,7 @@ func (r *repository) GetTimesheetByID(
 		}
 
 		if req.IncludeEntries {
-			entries, err := r.ListEntries(ctx, &workerports.ListTimeClockEntriesRequest{
+			entries, err := r.ListEntries(ctx, &timesheetports.ListTimeClockEntriesRequest{
 				TenantInfo:  req.TenantInfo,
 				TimesheetID: entity.ID,
 			})
@@ -328,7 +329,7 @@ func (r *repository) AttachEntries(
 
 func (r *repository) ListExports(
 	ctx context.Context,
-	req *workerports.ListPayrollExportsRequest,
+	req *timesheetports.ListPayrollExportsRequest,
 ) ([]*timesheet.PayrollExport, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*timesheet.PayrollExport, error) {
 		p := timesheetdb.PayrollExports
@@ -347,7 +348,7 @@ func (r *repository) ListExports(
 
 func (r *repository) GetExportByID(
 	ctx context.Context,
-	req *workerports.GetPayrollExportByIDRequest,
+	req *timesheetports.GetPayrollExportByIDRequest,
 ) (*timesheet.PayrollExport, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*timesheet.PayrollExport, error) {
 		entity, err := timesheetdb.PayrollExports.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -394,7 +395,7 @@ func (r *repository) UpdateExport(
 // instead of being locked out from under them.
 func (r *repository) StampExport(
 	ctx context.Context,
-	req *workerports.StampExportRequest,
+	req *timesheetports.StampExportRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if len(req.TimesheetIDs) == 0 {
@@ -424,24 +425,28 @@ func (r *repository) ApprovedLeaveRanges(
 	_ pagination.TenantInfo,
 	workerID pulid.ID,
 	from, to int64,
-) ([]workerports.RotaRangeRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.RotaRangeRow, error) {
-		p := workerdb.WorkerPTOs
-		rows, err := keel.Into[workerports.RotaRangeRow](ctx, r.db.Keel(ctx), p.
-			Pick(p.WorkerID, p.StartDate, p.EndDate).
-			Where(
-				p.WorkerID.Eq(workerID),
-				p.Status.Eq(worker.PTOStatusApproved),
-				p.StartDate.Lt(to),
-				p.EndDate.Gte(from),
-			))
-		if err != nil {
-			r.l.Error("failed to read approved leave", zap.Error(err))
-			return nil, fmt.Errorf("read approved leave: %w", err)
-		}
+) ([]workerscheduleports.RotaRangeRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]workerscheduleports.RotaRangeRow, error) {
+			p := workerdb.WorkerPTOs
+			rows, err := keel.Into[workerscheduleports.RotaRangeRow](ctx, r.db.Keel(ctx), p.
+				Pick(p.WorkerID, p.StartDate, p.EndDate).
+				Where(
+					p.WorkerID.Eq(workerID),
+					p.Status.Eq(worker.PTOStatusApproved),
+					p.StartDate.Lt(to),
+					p.EndDate.Gte(from),
+				))
+			if err != nil {
+				r.l.Error("failed to read approved leave", zap.Error(err))
+				return nil, fmt.Errorf("read approved leave: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 // ClearExport detaches every sheet from a voided run and puts them back to

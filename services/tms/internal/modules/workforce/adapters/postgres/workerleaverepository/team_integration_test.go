@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave/workerleavedb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/internal/testutil/workerteamtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -50,8 +50,8 @@ func TestCasesNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	outstanding := func(managerIDs []pulid.ID) *workerports.ListLeaveCasesRequest {
-		return &workerports.ListLeaveCasesRequest{
+	outstanding := func(managerIDs []pulid.ID) *workerleaveports.ListLeaveCasesRequest {
+		return &workerleaveports.ListLeaveCasesRequest{
 			TenantInfo:                   tenant,
 			CertificationOutstandingOnly: true,
 			IncludeWorker:                true,

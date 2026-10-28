@@ -45,7 +45,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/jobs/samsarajobs/samsaracontract"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"go.uber.org/fx"
 )
 
@@ -69,7 +72,7 @@ func SharedOptions() fx.Option {
 			timesheetservice.New,
 			workersafetyservice.New,
 			performancereviewservice.New,
-			func(s *workertrainingservice.Service) workerports.TrainingAssigner { return s },
+			func(s *workertrainingservice.Service) workertrainingports.TrainingAssigner { return s },
 			workerchecklistservice.New,
 			func(s *workercredentialservice.Service) workeroverviewservice.CredentialSummarizer { return s },
 			func(s *workertrainingservice.Service) workeroverviewservice.TrainingSummarizer { return s },
@@ -81,9 +84,9 @@ func SharedOptions() fx.Option {
 			func(s *workerleaveservice.Service) workeroverviewservice.LeaveCounter { return s },
 			func(s *workerleaveservice.Service) driverportalservice.LeaveReader { return s },
 			orgholidayservice.New,
-			func(s *workerchecklistservice.Service) workerports.ChecklistSpawner { return s },
+			func(s *workerchecklistservice.Service) workerchecklistports.ChecklistSpawner { return s },
 			workeremploymentservice.New,
-			func(s *workeremploymentservice.Service) workerports.EmploymentEventRecorder { return s },
+			func(s *workeremploymentservice.Service) workeremploymentports.EmploymentEventRecorder { return s },
 			samsaracontract.NewManager,
 			telematicsservice.New,
 			workerrepository.New,
@@ -111,7 +114,7 @@ func SharedOptions() fx.Option {
 			permitservice.NewService,
 			func(ws *workerservice.Service) selfserviceservice.WorkerUpdater { return ws },
 			workeroverviewservice.New,
-			func(r workerports.PerformanceReviewRepository) workeroverviewservice.ReviewCounter {
+			func(r workerreviewports.PerformanceReviewRepository) workeroverviewservice.ReviewCounter {
 				return r
 			},
 			samsarasyncservice.New,

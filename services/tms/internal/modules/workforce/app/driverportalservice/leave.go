@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,11 +23,11 @@ type LeaveReader interface {
 	) (workerleave.LeaveEntitlement, error)
 	ListCases(
 		ctx context.Context,
-		req *workerports.ListLeaveCasesRequest,
+		req *workerleaveports.ListLeaveCasesRequest,
 	) ([]*workerleave.WorkerLeaveCase, error)
 	CountCases(
 		ctx context.Context,
-		req *workerports.ListLeaveCasesRequest,
+		req *workerleaveports.ListLeaveCasesRequest,
 	) (int, error)
 }
 
@@ -80,7 +80,7 @@ func (s *Service) MyLeave(
 		return nil, err
 	}
 
-	cases, err := s.leave.ListCases(ctx, &workerports.ListLeaveCasesRequest{
+	cases, err := s.leave.ListCases(ctx, &workerleaveports.ListLeaveCasesRequest{
 		TenantInfo:     tenantInfo,
 		WorkerID:       wrk.ID,
 		IncludeEntries: true,
@@ -144,7 +144,7 @@ func (s *Service) leaveVisible(
 	if s.leave == nil {
 		return false, nil
 	}
-	count, err := s.leave.CountCases(ctx, &workerports.ListLeaveCasesRequest{
+	count, err := s.leave.CountCases(ctx, &workerleaveports.ListLeaveCasesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})

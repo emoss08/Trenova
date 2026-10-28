@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,14 +20,14 @@ const eventProfileChangeReviewed = "dash.profile_change_reviewed"
 
 func (s *Service) ListChangeRequests(
 	ctx context.Context,
-	req *workerports.ListProfileChangeRequestsRequest,
+	req *selfserviceports.ListProfileChangeRequestsRequest,
 ) ([]*profilechange.WorkerProfileChangeRequest, error) {
 	return s.repo.ListChangeRequests(ctx, req)
 }
 
 func (s *Service) GetChangeRequest(
 	ctx context.Context,
-	req *workerports.GetProfileChangeRequestByIDRequest,
+	req *selfserviceports.GetProfileChangeRequestByIDRequest,
 ) (*profilechange.WorkerProfileChangeRequest, error) {
 	return s.repo.GetChangeRequestByID(ctx, req)
 }
@@ -57,12 +58,15 @@ func (s *Service) SubmitChange(
 		)
 	}
 
-	pending, err := s.repo.ListChangeRequests(ctx, &workerports.ListProfileChangeRequestsRequest{
-		TenantInfo: req.TenantInfo,
-		WorkerID:   req.Worker.ID,
-		Statuses:   []profilechange.ProfileChangeStatus{profilechange.ProfileChangePending},
-		Limit:      1,
-	})
+	pending, err := s.repo.ListChangeRequests(
+		ctx,
+		&selfserviceports.ListProfileChangeRequestsRequest{
+			TenantInfo: req.TenantInfo,
+			WorkerID:   req.Worker.ID,
+			Statuses:   []profilechange.ProfileChangeStatus{profilechange.ProfileChangePending},
+			Limit:      1,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +110,10 @@ func (s *Service) WithdrawChange(
 ) (*profilechange.WorkerProfileChangeRequest, error) {
 	entity, err := s.repo.GetChangeRequestByID(
 		ctx,
-		&workerports.GetProfileChangeRequestByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
+		&selfserviceports.GetProfileChangeRequestByIDRequest{
+			ID:         req.ID,
+			TenantInfo: req.TenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -155,7 +162,10 @@ func (s *Service) DecideChange(
 ) (*profilechange.WorkerProfileChangeRequest, error) {
 	entity, err := s.repo.GetChangeRequestByID(
 		ctx,
-		&workerports.GetProfileChangeRequestByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
+		&selfserviceports.GetProfileChangeRequestByIDRequest{
+			ID:         req.ID,
+			TenantInfo: req.TenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err

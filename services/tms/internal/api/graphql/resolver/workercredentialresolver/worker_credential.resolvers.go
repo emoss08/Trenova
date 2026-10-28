@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -201,7 +201,7 @@ func (r *QueryResolver) WorkerCredentialTypes(ctx context.Context, input gqlmode
 	if input.Status != nil {
 		status = string(*input.Status)
 	}
-	result, err := r.WorkerCredentialService.ListTypes(ctx, &workerports.ListCredentialTypesRequest{
+	result, err := r.WorkerCredentialService.ListTypes(ctx, &workercredentialports.ListCredentialTypesRequest{
 		Filter:   connection.Filter,
 		Cursor:   connection.Cursor,
 		Status:   status,
@@ -225,7 +225,7 @@ func (r *QueryResolver) WorkerCredentialType(ctx context.Context, id string) (*w
 		return nil, err
 	}
 
-	return r.WorkerCredentialService.GetType(ctx, &workerports.GetCredentialTypeByIDRequest{
+	return r.WorkerCredentialService.GetType(ctx, &workercredentialports.GetCredentialTypeByIDRequest{
 		ID:         typeID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

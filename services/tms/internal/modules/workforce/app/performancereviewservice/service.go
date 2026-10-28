@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -38,7 +39,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.PerformanceReviewRepository
+	Repo         workerreviewports.PerformanceReviewRepository
 	WorkerRepo   workerports.WorkerRepository
 	UserRepo     tenantports.UserRepository
 	AuditService auditports.AuditService
@@ -48,7 +49,7 @@ type Params struct {
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.PerformanceReviewRepository
+	repo         workerreviewports.PerformanceReviewRepository
 	workerRepo   workerports.WorkerRepository
 	userRepo     tenantports.UserRepository
 	auditService auditports.AuditService

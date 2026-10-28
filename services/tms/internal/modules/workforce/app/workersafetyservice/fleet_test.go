@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,68 +18,68 @@ import (
 // fleetRepo answers the seven aggregate queries with fixed rows, so the
 // composition can be tested without a database.
 type fleetRepo struct {
-	workerports.WorkerSafetyRepository
-	ratings   []workerports.FleetSafetyRatingRow
-	terminals []workerports.FleetSafetyTerminalRow
-	kinds     []workerports.FleetSafetyKindRow
-	basics    []workerports.FleetSafetyBasicRow
-	inferred  []workerports.FleetSafetyEventBasicRow
-	trend     []workerports.FleetSafetyTrendRow
-	ranking   []workerports.FleetSafetyRankRow
+	workersafetyports.WorkerSafetyRepository
+	ratings   []workersafetyports.FleetSafetyRatingRow
+	terminals []workersafetyports.FleetSafetyTerminalRow
+	kinds     []workersafetyports.FleetSafetyKindRow
+	basics    []workersafetyports.FleetSafetyBasicRow
+	inferred  []workersafetyports.FleetSafetyEventBasicRow
+	trend     []workersafetyports.FleetSafetyTrendRow
+	ranking   []workersafetyports.FleetSafetyRankRow
 	// seen records what each call was asked for, so the request the service
 	// built can be asserted on.
-	seen []workerports.FleetSafetyRequest
+	seen []workersafetyports.FleetSafetyRequest
 }
 
 func (f *fleetRepo) FleetRatings(
 	_ context.Context,
-	req *workerports.FleetSafetyRequest,
-) ([]workerports.FleetSafetyRatingRow, error) {
+	req *workersafetyports.FleetSafetyRequest,
+) ([]workersafetyports.FleetSafetyRatingRow, error) {
 	f.seen = append(f.seen, *req)
 	return f.ratings, nil
 }
 
 func (f *fleetRepo) FleetTerminals(
 	_ context.Context,
-	_ *workerports.FleetSafetyRequest,
-) ([]workerports.FleetSafetyTerminalRow, error) {
+	_ *workersafetyports.FleetSafetyRequest,
+) ([]workersafetyports.FleetSafetyTerminalRow, error) {
 	return f.terminals, nil
 }
 
 func (f *fleetRepo) FleetKinds(
 	_ context.Context,
-	_ *workerports.FleetSafetyRequest,
-) ([]workerports.FleetSafetyKindRow, error) {
+	_ *workersafetyports.FleetSafetyRequest,
+) ([]workersafetyports.FleetSafetyKindRow, error) {
 	return f.kinds, nil
 }
 
 func (f *fleetRepo) FleetBasics(
 	_ context.Context,
-	_ *workerports.FleetSafetyRequest,
-) ([]workerports.FleetSafetyBasicRow, error) {
+	_ *workersafetyports.FleetSafetyRequest,
+) ([]workersafetyports.FleetSafetyBasicRow, error) {
 	return f.basics, nil
 }
 
 func (f *fleetRepo) FleetEventBasics(
 	_ context.Context,
-	_ *workerports.FleetSafetyRequest,
-) ([]workerports.FleetSafetyEventBasicRow, error) {
+	_ *workersafetyports.FleetSafetyRequest,
+) ([]workersafetyports.FleetSafetyEventBasicRow, error) {
 	return f.inferred, nil
 }
 
 func (f *fleetRepo) FleetTrend(
 	_ context.Context,
-	_ *workerports.FleetSafetyRequest,
-) ([]workerports.FleetSafetyTrendRow, error) {
+	_ *workersafetyports.FleetSafetyRequest,
+) ([]workersafetyports.FleetSafetyTrendRow, error) {
 	return f.trend, nil
 }
 
 func (f *fleetRepo) FleetRanking(
 	_ context.Context,
-	req *workerports.FleetSafetyRequest,
-) ([]workerports.FleetSafetyRankRow, error) {
+	req *workersafetyports.FleetSafetyRequest,
+) ([]workersafetyports.FleetSafetyRankRow, error) {
 	if req.RankBest {
-		reversed := make([]workerports.FleetSafetyRankRow, len(f.ranking))
+		reversed := make([]workersafetyports.FleetSafetyRankRow, len(f.ranking))
 		for i, row := range f.ranking {
 			reversed[len(f.ranking)-1-i] = row
 		}
@@ -103,12 +103,12 @@ func TestFleet_SummarisesTheRoster(t *testing.T) {
 	t.Parallel()
 
 	repo := &fleetRepo{
-		ratings: []workerports.FleetSafetyRatingRow{
+		ratings: []workersafetyports.FleetSafetyRatingRow{
 			{Rating: worker.SafetyRatingExcellent, Workers: 6, TotalScore: 582},
 			{Rating: worker.SafetyRatingWatch, Workers: 3, TotalScore: 195},
 			{Rating: worker.SafetyRatingAtRisk, Workers: 1, TotalScore: 40},
 		},
-		kinds: []workerports.FleetSafetyKindRow{
+		kinds: []workersafetyports.FleetSafetyKindRow{
 			{
 				Kind:        workersafety.SafetyEventAccident,
 				Events:      2,
@@ -175,7 +175,7 @@ func TestFleet_FoldsRecordedAndInferredBasics(t *testing.T) {
 	t.Parallel()
 
 	repo := &fleetRepo{
-		basics: []workerports.FleetSafetyBasicRow{
+		basics: []workersafetyports.FleetSafetyBasicRow{
 			{
 				Basic:       workersafety.BasicHOSCompliance,
 				Bucket:      0,
@@ -183,7 +183,7 @@ func TestFleet_FoldsRecordedAndInferredBasics(t *testing.T) {
 				SeveritySum: 10,
 			},
 		},
-		inferred: []workerports.FleetSafetyEventBasicRow{
+		inferred: []workersafetyports.FleetSafetyEventBasicRow{
 			{Kind: workersafety.SafetyEventAccident, Bucket: 0, Events: 1, Points: 6},
 		},
 	}
@@ -219,7 +219,7 @@ func TestFleet_RanksFromBothEnds(t *testing.T) {
 	t.Parallel()
 
 	repo := &fleetRepo{
-		ranking: []workerports.FleetSafetyRankRow{
+		ranking: []workersafetyports.FleetSafetyRankRow{
 			{WorkerID: "wrk_1", FirstName: "Ada", LastName: "Byrne", Score: 40},
 			{WorkerID: "wrk_2", FirstName: "Ben", LastName: "Cole", Score: 70},
 			{WorkerID: "wrk_3", FirstName: "Cal", LastName: "Diaz", Score: 98},
@@ -244,7 +244,7 @@ func TestFleet_TerminalAverages(t *testing.T) {
 	t.Parallel()
 
 	repo := &fleetRepo{
-		terminals: []workerports.FleetSafetyTerminalRow{
+		terminals: []workersafetyports.FleetSafetyTerminalRow{
 			{
 				FleetCodeID:   "fc_1",
 				FleetCodeCode: "SOUTH",

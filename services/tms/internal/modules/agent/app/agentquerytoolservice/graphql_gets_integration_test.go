@@ -24,7 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -173,14 +173,17 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 					return pulid.Nil, err
 				}
 				expires := timeutils.NowUnix() + 86400*90
-				row, err := credentials.Create(ctx, &workerports.CreateWorkerCredentialRequest{
-					Entity: &workercredential.WorkerCredential{
-						BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
-						CredentialTypeID: kind.ID, Status: workercredential.CredentialStatusActive,
-						Number: "N-" + label, IssuingAuthority: "TX", ExpiresAt: &expires,
-						Notes: "Renewal booked " + label,
+				row, err := credentials.Create(
+					ctx,
+					&workercredentialports.CreateWorkerCredentialRequest{
+						Entity: &workercredential.WorkerCredential{
+							BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
+							CredentialTypeID: kind.ID, Status: workercredential.CredentialStatusActive,
+							Number: "N-" + label, IssuingAuthority: "TX", ExpiresAt: &expires,
+							Notes: "Renewal booked " + label,
+						},
 					},
-				})
+				)
 				return created(row, err)
 			},
 		},

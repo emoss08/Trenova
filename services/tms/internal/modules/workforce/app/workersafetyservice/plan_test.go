@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +15,7 @@ import (
 
 func (f *fakeRepo) GetRecognitionByID(
 	_ context.Context,
-	req *workerports.GetWorkerRecognitionByIDRequest,
+	req *workersafetyports.GetWorkerRecognitionByIDRequest,
 ) (*workersafety.WorkerRecognition, error) {
 	for _, r := range f.recognitions {
 		if r.ID == req.ID {
@@ -28,7 +28,7 @@ func (f *fakeRepo) GetRecognitionByID(
 
 func (f *fakeRepo) GetViolationByID(
 	_ context.Context,
-	req *workerports.GetWorkerSafetyViolationByIDRequest,
+	req *workersafetyports.GetWorkerSafetyViolationByIDRequest,
 ) (*workersafety.WorkerSafetyViolation, error) {
 	for _, v := range f.violations {
 		if v.ID == req.ID {

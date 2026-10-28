@@ -3,7 +3,7 @@ package workertrainingservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -123,7 +123,7 @@ func (s *Service) openCourseIDs(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (map[pulid.ID]pulid.ID, error) {
-	records, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerTrainingRequest{
+	records, err := s.repo.ListForWorker(ctx, &workertrainingports.ListWorkerTrainingRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})

@@ -40,7 +40,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -251,7 +255,7 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
 				rows, err := services.injuryService.ListInjuries(
 					ctx,
-					&workerports.ListWorkerInjuriesRequest{
+					&workersafetyports.ListWorkerInjuriesRequest{
 						TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
 					},
 				)
@@ -278,7 +282,7 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
 				rows, err := services.testService.ListTests(
 					ctx,
-					&workerports.ListWorkerDOTTestsRequest{
+					&workerdotports.ListWorkerDOTTestsRequest{
 						TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
 					},
 				)
@@ -305,7 +309,7 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
 				rows, err := services.leaveService.ListCases(
 					ctx,
-					&workerports.ListLeaveCasesRequest{
+					&workerleaveports.ListLeaveCasesRequest{
 						TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
 					},
 				)
@@ -336,7 +340,7 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
 				rows, err := services.dqfService.ListVerifications(ctx,
-					&workerports.ListEmploymentVerificationsRequest{
+					&workerdqfports.ListEmploymentVerificationsRequest{
 						TenantInfo: tenant, WorkerID: workerID, OutstandingOnly: !includeClosed,
 					})
 				return idsOf(rows, err)
@@ -372,7 +376,7 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
 				rows, err := services.safetyService.ListEvents(
 					ctx,
-					&workerports.ListWorkerSafetyEventsRequest{
+					&workersafetyports.ListWorkerSafetyEventsRequest{
 						TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
 					},
 				)
@@ -413,7 +417,7 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				}
 				row, err := services.credentials.Create(
 					ctx,
-					&workerports.CreateWorkerCredentialRequest{
+					&workercredentialports.CreateWorkerCredentialRequest{
 						Entity: &workercredential.WorkerCredential{
 							BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
 							CredentialTypeID: kind.ID, Status: status, Number: "D-" + label,
@@ -507,9 +511,9 @@ type agentreadServices struct {
 	dqf               dqfRepo
 	leaveService      *workerleaveservice.Service
 	dqfService        *workerdqfservice.Service
-	safety            workerports.WorkerSafetyRepository
+	safety            workersafetyports.WorkerSafetyRepository
 	safetyService     *workersafetyservice.Service
-	credentials       workerports.WorkerCredentialRepository
+	credentials       workercredentialports.WorkerCredentialRepository
 	credentialService *workercredentialservice.Service
 }
 

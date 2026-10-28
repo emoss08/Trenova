@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave/workerleavedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule/workerscheduledb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"go.uber.org/zap"
 )
@@ -27,7 +27,7 @@ const defaultRotaPageSize = 300
 // generate_series, and a week is seven days — the expansion is not the
 // expensive part.
 
-func rosterFilter(req *workerports.RotaQuery) []keel.Pred {
+func rosterFilter(req *workerscheduleports.RotaQuery) []keel.Pred {
 	w := workerdb.Workers
 
 	return []keel.Pred{
@@ -37,13 +37,13 @@ func rosterFilter(req *workerports.RotaQuery) []keel.Pred {
 	}
 }
 
-func rosterQuery(req *workerports.RotaQuery) *keel.Query[*worker.Worker] {
+func rosterQuery(req *workerscheduleports.RotaQuery) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 
 	return w.Pick(w.ID).Where(rosterFilter(req)...)
 }
 
-func rotaWorkersQuery(req *workerports.RotaQuery) *keel.Query[*worker.Worker] {
+func rotaWorkersQuery(req *workerscheduleports.RotaQuery) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	fc := w.FleetCode()
 	sa := workerscheduledb.WorkerShiftAssignments
@@ -72,46 +72,54 @@ func rotaWorkersQuery(req *workerports.RotaQuery) *keel.Query[*worker.Worker] {
 // separately so the week comes back in one row per worker.
 func (r *repository) RotaWorkers(
 	ctx context.Context,
-	req *workerports.RotaQuery,
-) ([]workerports.RotaWorkerRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.RotaWorkerRow, error) {
-		rows, err := keel.Into[workerports.RotaWorkerRow](
-			ctx,
-			r.db.Keel(ctx),
-			rotaWorkersQuery(req),
-		)
-		if err != nil {
-			r.l.Error("failed to read rota workers", zap.Error(err))
-			return nil, fmt.Errorf("read rota workers: %w", err)
-		}
+	req *workerscheduleports.RotaQuery,
+) ([]workerscheduleports.RotaWorkerRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]workerscheduleports.RotaWorkerRow, error) {
+			rows, err := keel.Into[workerscheduleports.RotaWorkerRow](
+				ctx,
+				r.db.Keel(ctx),
+				rotaWorkersQuery(req),
+			)
+			if err != nil {
+				r.l.Error("failed to read rota workers", zap.Error(err))
+				return nil, fmt.Errorf("read rota workers: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 // RotaTimeOffRanges is the approved time off overlapping the week. Ranges
 // rather than days: the composer expands them.
 func (r *repository) RotaTimeOffRanges(
 	ctx context.Context,
-	req *workerports.RotaQuery,
-) ([]workerports.RotaRangeRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.RotaRangeRow, error) {
-		p := workerdb.WorkerPTOs
-		rows, err := keel.Into[workerports.RotaRangeRow](ctx, r.db.Keel(ctx), p.
-			Pick(p.WorkerID, p.StartDate, p.EndDate).
-			Where(
-				p.WorkerID.InQuery(rosterQuery(req)),
-				p.Status.Eq(worker.PTOStatusApproved),
-				p.StartDate.Lt(req.WeekEnd),
-				p.EndDate.Gte(req.WeekStart),
-			))
-		if err != nil {
-			r.l.Error("failed to read rota time off", zap.Error(err))
-			return nil, fmt.Errorf("read rota time off: %w", err)
-		}
+	req *workerscheduleports.RotaQuery,
+) ([]workerscheduleports.RotaRangeRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]workerscheduleports.RotaRangeRow, error) {
+			p := workerdb.WorkerPTOs
+			rows, err := keel.Into[workerscheduleports.RotaRangeRow](ctx, r.db.Keel(ctx), p.
+				Pick(p.WorkerID, p.StartDate, p.EndDate).
+				Where(
+					p.WorkerID.InQuery(rosterQuery(req)),
+					p.Status.Eq(worker.PTOStatusApproved),
+					p.StartDate.Lt(req.WeekEnd),
+					p.EndDate.Gte(req.WeekStart),
+				))
+			if err != nil {
+				r.l.Error("failed to read rota time off", zap.Error(err))
+				return nil, fmt.Errorf("read rota time off: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 // RotaLeaveRanges is the same over open leave cases. A case with no end date
@@ -119,28 +127,32 @@ func (r *repository) RotaTimeOffRanges(
 // covering the rest of the week.
 func (r *repository) RotaLeaveRanges(
 	ctx context.Context,
-	req *workerports.RotaQuery,
-) ([]workerports.RotaRangeRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.RotaRangeRow, error) {
-		c := workerleavedb.WorkerLeaveCases
-		rows, err := keel.Into[workerports.RotaRangeRow](ctx, r.db.Keel(ctx), c.
-			Pick(c.WorkerID, c.StartsAt, c.EndsAt.Coalesce(int64(0))).
-			Where(
-				c.WorkerID.InQuery(rosterQuery(req)),
-				c.Status.Eq(workerleave.LeaveCaseApproved),
-				c.StartsAt.Lt(req.WeekEnd),
-				keel.Or(c.EndsAt.IsNull(), c.EndsAt.Gte(req.WeekStart)),
-			))
-		if err != nil {
-			r.l.Error("failed to read rota leave", zap.Error(err))
-			return nil, fmt.Errorf("read rota leave: %w", err)
-		}
+	req *workerscheduleports.RotaQuery,
+) ([]workerscheduleports.RotaRangeRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]workerscheduleports.RotaRangeRow, error) {
+			c := workerleavedb.WorkerLeaveCases
+			rows, err := keel.Into[workerscheduleports.RotaRangeRow](ctx, r.db.Keel(ctx), c.
+				Pick(c.WorkerID, c.StartsAt, c.EndsAt.Coalesce(int64(0))).
+				Where(
+					c.WorkerID.InQuery(rosterQuery(req)),
+					c.Status.Eq(workerleave.LeaveCaseApproved),
+					c.StartsAt.Lt(req.WeekEnd),
+					keel.Or(c.EndsAt.IsNull(), c.EndsAt.Gte(req.WeekStart)),
+				))
+			if err != nil {
+				r.l.Error("failed to read rota leave", zap.Error(err))
+				return nil, fmt.Errorf("read rota leave: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
-func (r *repository) assignedDaysQuery(req *workerports.RotaQuery) *keel.Query[*keel.Row] {
+func (r *repository) assignedDaysQuery(req *workerscheduleports.RotaQuery) *keel.Query[*keel.Row] {
 	a := r.assignments
 	secondsPerDay := keel.ConstInt64(86400)
 	day := a.CreatedAt.Div(secondsPerDay).Mul(secondsPerDay)
@@ -160,19 +172,23 @@ func (r *repository) assignedDaysQuery(req *workerports.RotaQuery) *keel.Query[*
 // day is truncated with integer arithmetic on the epoch column.
 func (r *repository) RotaAssignedDays(
 	ctx context.Context,
-	req *workerports.RotaQuery,
-) ([]workerports.RotaDayRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.RotaDayRow, error) {
-		rows, err := keel.Into[workerports.RotaDayRow](
-			ctx,
-			r.db.Keel(ctx),
-			r.assignedDaysQuery(req),
-		)
-		if err != nil {
-			r.l.Error("failed to read rota assignments", zap.Error(err))
-			return nil, fmt.Errorf("read rota assignments: %w", err)
-		}
+	req *workerscheduleports.RotaQuery,
+) ([]workerscheduleports.RotaDayRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]workerscheduleports.RotaDayRow, error) {
+			rows, err := keel.Into[workerscheduleports.RotaDayRow](
+				ctx,
+				r.db.Keel(ctx),
+				r.assignedDaysQuery(req),
+			)
+			if err != nil {
+				r.l.Error("failed to read rota assignments", zap.Error(err))
+				return nil, fmt.Errorf("read rota assignments: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }

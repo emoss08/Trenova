@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -78,7 +78,7 @@ func (r *MutationResolver) DecideProfileChange(ctx context.Context, input gqlmod
 
 	request, err := r.SelfServiceService.GetChangeRequest(
 		ctx,
-		&workerports.GetProfileChangeRequestByIDRequest{
+		&selfserviceports.GetProfileChangeRequestByIDRequest{
 			ID:         requestID,
 			TenantInfo: base.TenantInfo(authCtx),
 		},
@@ -120,7 +120,7 @@ func (r *QueryResolver) WorkerPolicies(ctx context.Context, activeOnly *bool, li
 		return nil, err
 	}
 
-	return r.SelfServiceService.ListPolicies(ctx, &workerports.ListWorkerPoliciesRequest{
+	return r.SelfServiceService.ListPolicies(ctx, &selfserviceports.ListWorkerPoliciesRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ActiveOnly: base.BoolValue(activeOnly),
 		Limit:      base.IntValue(limit),
@@ -176,7 +176,7 @@ func (r *QueryResolver) WorkerPolicyAcknowledgements(ctx context.Context, worker
 
 	return r.SelfServiceService.ListAcknowledgements(
 		ctx,
-		&workerports.ListPolicyAcknowledgementsRequest{
+		&selfserviceports.ListPolicyAcknowledgementsRequest{
 			TenantInfo: base.TenantInfo(authCtx),
 			WorkerID:   id,
 		},
@@ -195,7 +195,7 @@ func (r *QueryResolver) ProfileChangeRequests(ctx context.Context, filter *gqlmo
 		return nil, err
 	}
 
-	req := &workerports.ListProfileChangeRequestsRequest{
+	req := &selfserviceports.ListProfileChangeRequestsRequest{
 		TenantInfo:    base.TenantInfo(authCtx),
 		IncludeWorker: true,
 		ManagerIDs:    managerIDs,

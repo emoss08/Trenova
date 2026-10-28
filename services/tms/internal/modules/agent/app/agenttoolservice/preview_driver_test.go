@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -57,22 +57,22 @@ func (f *unreachableDriverNotifier) Preview(
 
 func (f *fakePTODecider) PreviewReject(
 	_ context.Context,
-	req *workerports.UpdatePTOStatusRequest,
-) (*workerports.WorkerPTOTransitionPreview, error) {
+	req *workerptoports.UpdatePTOStatusRequest,
+) (*workerptoports.WorkerPTOTransitionPreview, error) {
 	return decidedPTO(req, worker.PTOStatusRequested, worker.PTOStatusRejected), nil
 }
 
 func (f *fakePTODecider) PreviewCancel(
 	_ context.Context,
-	req *workerports.UpdatePTOStatusRequest,
-) (*workerports.WorkerPTOTransitionPreview, error) {
+	req *workerptoports.UpdatePTOStatusRequest,
+) (*workerptoports.WorkerPTOTransitionPreview, error) {
 	return decidedPTO(req, worker.PTOStatusApproved, worker.PTOStatusCancelled), nil
 }
 
 func decidedPTO(
-	req *workerports.UpdatePTOStatusRequest,
+	req *workerptoports.UpdatePTOStatusRequest,
 	from, to worker.PTOStatus,
-) *workerports.WorkerPTOTransitionPreview {
+) *workerptoports.WorkerPTOTransitionPreview {
 	before := &worker.WorkerPTO{
 		ID:        req.ID,
 		WorkerID:  pulid.MustNew("wrk_"),
@@ -93,7 +93,7 @@ func decidedPTO(
 		after.CancellationReason = req.Reason
 	}
 
-	return &workerports.WorkerPTOTransitionPreview{
+	return &workerptoports.WorkerPTOTransitionPreview{
 		Before:        before,
 		After:         &after,
 		ReturnsLedger: from == worker.PTOStatusApproved,

@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -288,7 +288,7 @@ func (r *QueryResolver) TrainingCourses(ctx context.Context, input gqlmodel.Trai
 	if input.Status != nil {
 		status = string(*input.Status)
 	}
-	result, err := r.WorkerTrainingService.ListCourses(ctx, &workerports.ListTrainingCoursesRequest{
+	result, err := r.WorkerTrainingService.ListCourses(ctx, &workertrainingports.ListTrainingCoursesRequest{
 		Filter:   connection.Filter,
 		Cursor:   connection.Cursor,
 		Status:   status,
@@ -310,7 +310,7 @@ func (r *QueryResolver) TrainingCourse(ctx context.Context, id string) (*workert
 	if err != nil {
 		return nil, err
 	}
-	return r.WorkerTrainingService.GetCourse(ctx, &workerports.GetTrainingCourseByIDRequest{
+	return r.WorkerTrainingService.GetCourse(ctx, &workertrainingports.GetTrainingCourseByIDRequest{
 		ID:         courseID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

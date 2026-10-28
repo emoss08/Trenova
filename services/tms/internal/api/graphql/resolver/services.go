@@ -167,7 +167,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/bulkeditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
@@ -252,7 +252,7 @@ type Params struct {
 	TrailerService               *trailerservice.Service
 	USStateService               *usstateservice.Service
 	WorkerService                *workerservice.Service
-	WorkerPTOService             workerports.WorkerPTOService
+	WorkerPTOService             workerptoports.WorkerPTOService
 	PTOPolicyService             *ptopolicyservice.Service
 	PTOLedgerService             *ptoledgerservice.Service
 	WorkerCredentialService      *workercredentialservice.Service

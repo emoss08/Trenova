@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,7 +23,7 @@ func (s *Service) PlanCreateReview(
 	if _, err := s.loadWorker(ctx, req.TenantInfo, req.WorkerID); err != nil {
 		return nil, err
 	}
-	template, err := s.repo.GetTemplateByID(ctx, &workerports.GetReviewTemplateByIDRequest{
+	template, err := s.repo.GetTemplateByID(ctx, &workerreviewports.GetReviewTemplateByIDRequest{
 		ID:         req.TemplateID,
 		TenantInfo: req.TenantInfo,
 	})

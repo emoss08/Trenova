@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -22,14 +22,14 @@ import (
 )
 
 type fakeRepo struct {
-	workerports.PerformanceReviewRepository
+	workerreviewports.PerformanceReviewRepository
 	templates []*workerreview.PerformanceReviewTemplate
 	reviews   []*workerreview.PerformanceReview
 }
 
 func (f *fakeRepo) GetTemplateByID(
 	_ context.Context,
-	req *workerports.GetReviewTemplateByIDRequest,
+	req *workerreviewports.GetReviewTemplateByIDRequest,
 ) (*workerreview.PerformanceReviewTemplate, error) {
 	for _, t := range f.templates {
 		if t.ID == req.ID {
@@ -41,7 +41,7 @@ func (f *fakeRepo) GetTemplateByID(
 
 func (f *fakeRepo) TemplateCodeExists(
 	context.Context,
-	*workerports.ReviewTemplateCodeExistsRequest,
+	*workerreviewports.ReviewTemplateCodeExistsRequest,
 ) (bool, error) {
 	return false, nil
 }
@@ -70,7 +70,7 @@ func (f *fakeRepo) CreateTemplate(
 
 func (f *fakeRepo) ListReviews(
 	_ context.Context,
-	req *workerports.ListPerformanceReviewsRequest,
+	req *workerreviewports.ListPerformanceReviewsRequest,
 ) ([]*workerreview.PerformanceReview, error) {
 	out := make([]*workerreview.PerformanceReview, 0, len(f.reviews))
 	for _, r := range f.reviews {
@@ -95,7 +95,7 @@ func (f *fakeRepo) ListReviews(
 
 func (f *fakeRepo) GetReviewByID(
 	_ context.Context,
-	req *workerports.GetPerformanceReviewByIDRequest,
+	req *workerreviewports.GetPerformanceReviewByIDRequest,
 ) (*workerreview.PerformanceReview, error) {
 	for _, r := range f.reviews {
 		if r.ID == req.ID {
@@ -144,7 +144,7 @@ func (f *fakeRepo) UpdateReview(
 
 func (f *fakeRepo) DeleteReview(
 	_ context.Context,
-	req *workerports.GetPerformanceReviewByIDRequest,
+	req *workerreviewports.GetPerformanceReviewByIDRequest,
 ) error {
 	for i, r := range f.reviews {
 		if r.ID == req.ID {

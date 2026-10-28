@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -28,7 +29,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.PTOPolicyRepository
+	Repo         ptopolicyports.PTOPolicyRepository
 	Ledger       *ptoledgerservice.Service
 	DB           kernelports.Transactor
 	WorkerRepo   workerports.WorkerRepository
@@ -38,7 +39,7 @@ type Params struct {
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.PTOPolicyRepository
+	repo         ptopolicyports.PTOPolicyRepository
 	ledger       *ptoledgerservice.Service
 	db           kernelports.Transactor
 	workerRepo   workerports.WorkerRepository
@@ -60,21 +61,21 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *workerports.ListPTOPoliciesRequest,
+	req *ptopolicyports.ListPTOPoliciesRequest,
 ) (*pagination.CursorListResult[*pto.PTOPolicy], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *workerports.PTOPolicySelectOptionsRequest,
+	req *ptopolicyports.PTOPolicySelectOptionsRequest,
 ) (*pagination.ListResult[*pto.PTOPolicy], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *workerports.GetPTOPolicyByIDRequest,
+	req *ptopolicyports.GetPTOPolicyByIDRequest,
 ) (*pto.PTOPolicy, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -84,7 +85,7 @@ func (s *Service) validate(ctx context.Context, entity *pto.PTOPolicy) error {
 	entity.Validate(multiErr)
 
 	if entity.Code != "" {
-		exists, err := s.repo.CodeExists(ctx, &workerports.PTOPolicyCodeExistsRequest{
+		exists, err := s.repo.CodeExists(ctx, &ptopolicyports.PTOPolicyCodeExistsRequest{
 			TenantInfo: tenantOf(entity),
 			Code:       entity.Code,
 			ExcludeID:  entity.ID,
@@ -141,7 +142,7 @@ func (s *Service) Update(
 ) (*pto.PTOPolicy, error) {
 	log := s.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
 
-	original, err := s.repo.GetByID(ctx, &workerports.GetPTOPolicyByIDRequest{
+	original, err := s.repo.GetByID(ctx, &ptopolicyports.GetPTOPolicyByIDRequest{
 		ID:           entity.ID,
 		TenantInfo:   tenantOf(entity),
 		IncludeRules: true,
@@ -202,7 +203,7 @@ func (s *Service) changeStatus(
 ) (*pto.PTOPolicy, error) {
 	log := s.l.With(zap.String("operation", string(operation)), zap.String("id", req.ID.String()))
 
-	original, err := s.repo.GetByID(ctx, &workerports.GetPTOPolicyByIDRequest{
+	original, err := s.repo.GetByID(ctx, &ptopolicyports.GetPTOPolicyByIDRequest{
 		ID:           req.ID,
 		TenantInfo:   req.TenantInfo,
 		IncludeRules: true,
@@ -244,7 +245,7 @@ func (s *Service) changeStatus(
 }
 
 func (s *Service) CountOpenAssignments(ctx context.Context, entity *pto.PTOPolicy) (int, error) {
-	return s.repo.CountOpenAssignments(ctx, &workerports.CountOpenPTOAssignmentsRequest{
+	return s.repo.CountOpenAssignments(ctx, &ptopolicyports.CountOpenPTOAssignmentsRequest{
 		TenantInfo: tenantOf(entity),
 		PolicyID:   entity.ID,
 	})
@@ -255,10 +256,13 @@ func (s *Service) CountOpenAssignmentsByIDs(
 	tenantInfo pagination.TenantInfo,
 	policyIDs []pulid.ID,
 ) (map[pulid.ID]int, error) {
-	return s.repo.CountOpenAssignmentsByIDs(ctx, &workerports.CountOpenPTOAssignmentsByIDsRequest{
-		TenantInfo: tenantInfo,
-		PolicyIDs:  policyIDs,
-	})
+	return s.repo.CountOpenAssignmentsByIDs(
+		ctx,
+		&ptopolicyports.CountOpenPTOAssignmentsByIDsRequest{
+			TenantInfo: tenantInfo,
+			PolicyIDs:  policyIDs,
+		},
+	)
 }
 
 func (s *Service) requireNoOpenAssignments(ctx context.Context, entity *pto.PTOPolicy) error {

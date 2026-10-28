@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,7 +36,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.WorkerTrainingRepository
+	Repo         workertrainingports.WorkerTrainingRepository
 	WorkerRepo   workerports.WorkerRepository
 	DocumentRepo documentports.DocumentRepository
 	AuditService auditports.AuditService
@@ -44,7 +45,7 @@ type Params struct {
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.WorkerTrainingRepository
+	repo         workertrainingports.WorkerTrainingRepository
 	workerRepo   workerports.WorkerRepository
 	documentRepo documentports.DocumentRepository
 	auditService auditports.AuditService
@@ -62,7 +63,7 @@ func New(p Params) *Service {
 	}
 }
 
-var _ workerports.TrainingAssigner = (*Service)(nil)
+var _ workertrainingports.TrainingAssigner = (*Service)(nil)
 
 type auditParams struct {
 	resource   permission.Resource

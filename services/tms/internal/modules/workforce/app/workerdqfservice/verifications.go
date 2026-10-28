@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,14 +15,14 @@ import (
 
 func (s *Service) ListVerifications(
 	ctx context.Context,
-	req *workerports.ListEmploymentVerificationsRequest,
+	req *workerdqfports.ListEmploymentVerificationsRequest,
 ) ([]*employment.WorkerEmploymentVerification, error) {
 	return s.repo.ListVerifications(ctx, req)
 }
 
 func (s *Service) ListVerificationsByWorkerIDs(
 	ctx context.Context,
-	req *workerports.ListEmploymentVerificationsByWorkerIDsRequest,
+	req *workerdqfports.ListEmploymentVerificationsByWorkerIDsRequest,
 ) (map[pulid.ID][]*employment.WorkerEmploymentVerification, error) {
 	return s.repo.ListVerificationsByWorkerIDs(ctx, req)
 }
@@ -32,7 +32,7 @@ func (s *Service) GetVerification(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*employment.WorkerEmploymentVerification, error) {
-	return s.repo.GetVerificationByID(ctx, &workerports.GetEmploymentVerificationByIDRequest{
+	return s.repo.GetVerificationByID(ctx, &workerdqfports.GetEmploymentVerificationByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeDocument: true,
@@ -300,7 +300,7 @@ func (s *Service) DeleteVerification(
 
 	if err = s.repo.DeleteVerification(
 		ctx,
-		&workerports.GetEmploymentVerificationByIDRequest{ID: id, TenantInfo: tenantInfo},
+		&workerdqfports.GetEmploymentVerificationByIDRequest{ID: id, TenantInfo: tenantInfo},
 	); err != nil {
 		return err
 	}

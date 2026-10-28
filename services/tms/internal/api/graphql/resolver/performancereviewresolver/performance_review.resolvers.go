@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -221,7 +221,7 @@ func (r *QueryResolver) PerformanceReviewTemplates(ctx context.Context, input gq
 	if input.Status != nil {
 		status = string(*input.Status)
 	}
-	result, err := r.PerformanceReviewService.ListTemplates(ctx, &workerports.ListReviewTemplatesRequest{
+	result, err := r.PerformanceReviewService.ListTemplates(ctx, &workerreviewports.ListReviewTemplatesRequest{
 		Filter: connection.Filter,
 		Cursor: connection.Cursor,
 		Status: status,
@@ -242,7 +242,7 @@ func (r *QueryResolver) PerformanceReviewTemplate(ctx context.Context, id string
 	if err != nil {
 		return nil, err
 	}
-	return r.PerformanceReviewService.GetTemplate(ctx, &workerports.GetReviewTemplateByIDRequest{
+	return r.PerformanceReviewService.GetTemplate(ctx, &workerreviewports.GetReviewTemplateByIDRequest{
 		ID: templateID, TenantInfo: base.TenantInfo(authCtx),
 	})
 }

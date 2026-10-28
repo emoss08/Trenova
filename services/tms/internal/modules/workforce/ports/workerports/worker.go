@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -137,4 +138,55 @@ type RosterAttention struct {
 	TrainingOverdue int
 	AtRisk          int
 	ExpiringSoon    int
+}
+
+type PatchProfileCredentialFieldRequest struct {
+	TenantInfo pagination.TenantInfo                   `json:"tenantInfo"`
+	WorkerID   pulid.ID                                `json:"workerId"`
+	Field      workercredential.CredentialProfileField `json:"field"`
+	ExpiresAt  *int64                                  `json:"expiresAt"`
+	Number     string                                  `json:"number"`
+}
+
+type UpdateProfileQualificationRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	WorkerID   pulid.ID              `json:"workerId"`
+	Qualified  bool                  `json:"qualified"`
+}
+
+type UpdateProfileComplianceStatusRequest struct {
+	TenantInfo pagination.TenantInfo   `json:"tenantInfo"`
+	WorkerID   pulid.ID                `json:"workerId"`
+	Status     worker.ComplianceStatus `json:"status"`
+	// NextExpiry is the earliest expiry among the worker's required
+	// credentials, denormalised so the roster can sort by what lapses next.
+	// Nil clears it, meaning nothing on file expires.
+	NextExpiry *int64 `json:"nextExpiry"`
+}
+
+// UpdateProfileTrainingRollupRequest carries the training half of the roster
+// cache. The training service owns these columns because it is the only place
+// that can compute them.
+type UpdateProfileTrainingRollupRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	WorkerID   pulid.ID              `json:"workerId"`
+	Health     worker.TrainingHealth `json:"health"`
+	NextDue    *int64                `json:"nextDue"`
+}
+
+// UpdateProfileSafetyRollupRequest carries the safety half, owned by the
+// safety service for the same reason.
+type UpdateProfileSafetyRollupRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	WorkerID   pulid.ID              `json:"workerId"`
+	Rating     worker.SafetyRating   `json:"rating"`
+	Score      int16                 `json:"score"`
+}
+
+// WorkerTenantRef names a worker and the tenant they belong to, for sweeps
+// that work across tenants.
+type WorkerTenantRef struct {
+	WorkerID       pulid.ID
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
 }

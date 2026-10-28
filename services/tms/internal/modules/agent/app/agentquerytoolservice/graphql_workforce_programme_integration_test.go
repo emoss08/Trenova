@@ -17,7 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -53,8 +55,8 @@ func writeProgramme(
 	t *testing.T,
 	tenant *agentreadtest.Tenant,
 	workers workerports.WorkerRepository,
-	schedules workerports.SchedulingRepository,
-	draws workerports.WorkerDrugAlcoholRepository,
+	schedules workerscheduleports.SchedulingRepository,
+	draws workerdotports.WorkerDrugAlcoholRepository,
 	label string,
 ) *programmeTenant {
 	t.Helper()

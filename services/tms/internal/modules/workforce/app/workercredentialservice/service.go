@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -41,7 +42,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.WorkerCredentialRepository
+	Repo         workercredentialports.WorkerCredentialRepository
 	WorkerRepo   workerports.WorkerRepository
 	DocumentRepo documentports.DocumentRepository
 	AuditService auditports.AuditService
@@ -54,7 +55,7 @@ type Params struct {
 
 type Service struct {
 	l             *zap.Logger
-	repo          workerports.WorkerCredentialRepository
+	repo          workercredentialports.WorkerCredentialRepository
 	workerRepo    workerports.WorkerRepository
 	documentRepo  documentports.DocumentRepository
 	auditService  auditports.AuditService

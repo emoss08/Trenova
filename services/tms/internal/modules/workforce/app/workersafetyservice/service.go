@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -55,7 +56,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.WorkerSafetyRepository
+	Repo         workersafetyports.WorkerSafetyRepository
 	WorkerRepo   workerports.WorkerRepository
 	DocumentRepo documentports.DocumentRepository
 	Employment   *workeremploymentservice.Service
@@ -66,7 +67,7 @@ type Params struct {
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.WorkerSafetyRepository
+	repo         workersafetyports.WorkerSafetyRepository
 	workerRepo   workerports.WorkerRepository
 	documentRepo documentports.DocumentRepository
 	employment   EmploymentRecorder
@@ -94,7 +95,7 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         workerports.WorkerSafetyRepository
+	Repo         workersafetyports.WorkerSafetyRepository
 	WorkerRepo   workerports.WorkerRepository
 	DocumentRepo documentports.DocumentRepository
 	Employment   EmploymentRecorder
@@ -248,24 +249,27 @@ func (s *Service) Scorecard(
 	if _, err := s.loadWorker(ctx, tenantInfo, workerID); err != nil {
 		return nil, err
 	}
-	events, err := s.repo.ListEvents(ctx, &workerports.ListWorkerSafetyEventsRequest{
+	events, err := s.repo.ListEvents(ctx, &workersafetyports.ListWorkerSafetyEventsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	actions, err := s.repo.ListActions(ctx, &workerports.ListWorkerDisciplinaryActionsRequest{
+	actions, err := s.repo.ListActions(ctx, &workersafetyports.ListWorkerDisciplinaryActionsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	recognitions, err := s.repo.ListRecognitions(ctx, &workerports.ListWorkerRecognitionsRequest{
-		TenantInfo: tenantInfo,
-		WorkerID:   workerID,
-	})
+	recognitions, err := s.repo.ListRecognitions(
+		ctx,
+		&workersafetyports.ListWorkerRecognitionsRequest{
+			TenantInfo: tenantInfo,
+			WorkerID:   workerID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

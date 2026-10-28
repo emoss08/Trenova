@@ -7,16 +7,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/testutil/mocks/portalaccessportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/httpsafe"
@@ -31,7 +30,7 @@ import (
 type testDeps struct {
 	userRepo    *tenantportsmock.MockUserRepository
 	sessionRepo *sessionportsmock.MockSessionRepository
-	portalRepo  *workerportsmock.MockPortalAccessRepository
+	portalRepo  *portalaccessportsmock.MockPortalAccessRepository
 	authEvents  *recordingAuthEvents
 	svc         *Service
 }
@@ -42,7 +41,7 @@ func setupTest(t *testing.T) *testDeps {
 	t.Helper()
 	ur := tenantportsmock.NewMockUserRepository(t)
 	sr := sessionportsmock.NewMockSessionRepository(t)
-	pr := workerportsmock.NewMockPortalAccessRepository(t)
+	pr := portalaccessportsmock.NewMockPortalAccessRepository(t)
 	events := &recordingAuthEvents{}
 	svc := &Service{
 		ur:         ur,
@@ -404,7 +403,8 @@ func TestLogout_Success(t *testing.T) {
 	ctx := t.Context()
 	sessionID := pulid.MustNew("ses_")
 
-	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(&session.Session{ID: sessionID}, nil)
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).
+		Return(&session.Session{ID: sessionID}, nil)
 	deps.sessionRepo.On("Delete", mock.Anything, sessionID).Return(nil)
 
 	err := deps.svc.Logout(ctx, sessionID)
@@ -419,7 +419,8 @@ func TestLogout_Error(t *testing.T) {
 	ctx := t.Context()
 	sessionID := pulid.MustNew("ses_")
 
-	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(&session.Session{ID: sessionID}, nil)
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).
+		Return(&session.Session{ID: sessionID}, nil)
 	deps.sessionRepo.On("Delete", mock.Anything, sessionID).Return(errors.New("delete failed"))
 
 	err := deps.svc.Logout(ctx, sessionID)

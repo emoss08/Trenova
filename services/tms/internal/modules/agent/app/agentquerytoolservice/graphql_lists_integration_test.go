@@ -97,6 +97,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldvaluerepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
@@ -784,7 +785,7 @@ func (p *fuelParts) write(
 // running, which the default window reads only because it overlaps.
 func writeLeaveUnderWay(
 	ctx context.Context,
-	repo workerports.WorkerPTORepository,
+	repo workerptoports.WorkerPTORepository,
 	driver *worker.Worker,
 	marked bool,
 ) (pulid.ID, error) {

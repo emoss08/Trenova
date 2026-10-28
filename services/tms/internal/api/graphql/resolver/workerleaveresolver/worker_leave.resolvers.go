@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -273,7 +273,7 @@ func (r *QueryResolver) WorkerLeaveCases(ctx context.Context, workerID *string, 
 	if err != nil {
 		return nil, err
 	}
-	return r.WorkerLeaveService.ListCases(ctx, &workerports.ListLeaveCasesRequest{
+	return r.WorkerLeaveService.ListCases(ctx, &workerleaveports.ListLeaveCasesRequest{
 		TenantInfo:                   base.TenantInfo(authCtx),
 		WorkerID:                     id,
 		ManagerIDs:                   managerIDs,
@@ -346,7 +346,7 @@ func (r *QueryResolver) LeaveCertificationsOutstanding(ctx context.Context) ([]*
 		return nil, err
 	}
 
-	return r.WorkerLeaveService.ListCases(ctx, &workerports.ListLeaveCasesRequest{
+	return r.WorkerLeaveService.ListCases(ctx, &workerleaveports.ListLeaveCasesRequest{
 		TenantInfo:                   base.TenantInfo(authCtx),
 		CertificationOutstandingOnly: true,
 		IncludeWorker:                true,
@@ -416,7 +416,7 @@ func (r *WorkerLeaveCaseResolver) Entries(ctx context.Context, obj *workerleave.
 		return loaders.WorkerLeaveEntriesByCaseID(ctx, obj.ID.String())
 	}
 
-	return r.WorkerLeaveService.ListEntries(ctx, &workerports.ListLeaveEntriesRequest{
+	return r.WorkerLeaveService.ListEntries(ctx, &workerleaveports.ListLeaveEntriesRequest{
 		TenantInfo:  base.TenantInfo(authCtx),
 		LeaveCaseID: obj.ID,
 	})

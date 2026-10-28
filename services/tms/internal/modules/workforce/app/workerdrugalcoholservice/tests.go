@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,7 +18,7 @@ import (
 
 func (s *Service) ListTests(
 	ctx context.Context,
-	req *workerports.ListWorkerDOTTestsRequest,
+	req *workerdotports.ListWorkerDOTTestsRequest,
 ) ([]*workerdot.WorkerDOTTest, error) {
 	return s.repo.ListTests(ctx, req)
 }
@@ -27,7 +28,7 @@ func (s *Service) GetTest(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workerdot.WorkerDOTTest, error) {
-	return s.repo.GetTestByID(ctx, &workerports.GetWorkerDOTTestByIDRequest{
+	return s.repo.GetTestByID(ctx, &workerdotports.GetWorkerDOTTestByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeWorker:   true,
@@ -169,7 +170,7 @@ func (s *Service) RecordResult(
 		zap.String("testId", req.TestID.String()),
 	)
 
-	entity, err := s.repo.GetTestByID(ctx, &workerports.GetWorkerDOTTestByIDRequest{
+	entity, err := s.repo.GetTestByID(ctx, &workerdotports.GetWorkerDOTTestByIDRequest{
 		ID:         req.TestID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -402,7 +403,7 @@ func (s *Service) closeDrawEntry(
 	}
 
 	tenantInfo := testTenant(entity)
-	dbEntry, err := s.repo.GetDrawEntryByID(ctx, &workerports.GetDOTRandomDrawEntryByIDRequest{
+	dbEntry, err := s.repo.GetDrawEntryByID(ctx, &workerdotports.GetDOTRandomDrawEntryByIDRequest{
 		ID:         entity.DrawEntryID,
 		TenantInfo: tenantInfo,
 	})

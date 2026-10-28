@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,7 +20,7 @@ func (s *Service) PlanAssign(
 	ctx context.Context,
 	req *AssignRequest,
 ) (*workertraining.WorkerTrainingRecord, error) {
-	course, err := s.repo.GetCourseByID(ctx, &workerports.GetTrainingCourseByIDRequest{
+	course, err := s.repo.GetCourseByID(ctx, &workertrainingports.GetTrainingCourseByIDRequest{
 		ID:         req.CourseID,
 		TenantInfo: req.TenantInfo,
 	})

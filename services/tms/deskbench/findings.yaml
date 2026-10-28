@@ -1924,7 +1924,7 @@ findings:
       filtered empty result lists up to five requests the filter left out.
     fixedIn: uncommitted; unit-tested
     files:
-      - services/tms/internal/modules/workforce/ports/workerports/workerpto.go
+      - services/tms/internal/modules/workforce/ports/workerptoports/workerpto.go
       - services/tms/internal/modules/workforce/adapters/postgres/workerptorepository/workerpto.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/pto_tools.go
 
@@ -2962,7 +2962,7 @@ findings:
       availability message formats its date in the organization's zone too.
     fixedIn: uncommitted; TestPTOLabel_NamesTheDaysInTheOrganizationsZone
     files:
-      - services/tms/internal/modules/workforce/ports/workerports/workerpto_services.go
+      - services/tms/internal/modules/workforce/ports/workerptoports/workerpto_services.go
       - services/tms/internal/modules/identity/app/workerptoservice/preview_transition.go
       - services/tms/internal/modules/agent/app/agenttools/operationstools/preview_driver.go
       - services/tms/internal/modules/agent/app/agenttools/operationstools/preview_pto_approval.go

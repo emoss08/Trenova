@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,7 +32,7 @@ func (s *Service) ListForWorker(
 	workerID pulid.ID,
 	includeClosed bool,
 ) ([]*workerchecklist.WorkerChecklist, error) {
-	checklists, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerChecklistsRequest{
+	checklists, err := s.repo.ListForWorker(ctx, &workerchecklistports.ListWorkerChecklistsRequest{
 		TenantInfo:    tenantInfo,
 		WorkerID:      workerID,
 		IncludeClosed: includeClosed,
@@ -63,7 +65,7 @@ func (s *Service) Get(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workerchecklist.WorkerChecklist, error) {
-	checklist, err := s.repo.GetByID(ctx, &workerports.GetWorkerChecklistByIDRequest{
+	checklist, err := s.repo.GetByID(ctx, &workerchecklistports.GetWorkerChecklistByIDRequest{
 		ID:           id,
 		TenantInfo:   tenantInfo,
 		IncludeItems: true,
@@ -165,7 +167,7 @@ func (s *Service) SpawnForEvent(
 	tenantInfo := pagination.TenantInfo{OrgID: wrk.OrganizationID, BuID: wrk.BusinessUnitID}
 	template, err := s.repo.GetDefaultTemplate(
 		ctx,
-		&workerports.GetDefaultChecklistTemplateRequest{
+		&workerchecklistports.GetDefaultChecklistTemplateRequest{
 			TenantInfo: tenantInfo,
 			Trigger:    trigger,
 		},
@@ -204,7 +206,7 @@ func (s *Service) CloseForEvent(
 		return 0, nil
 	}
 	tenantInfo := pagination.TenantInfo{OrgID: wrk.OrganizationID, BuID: wrk.BusinessUnitID}
-	open, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerChecklistsRequest{
+	open, err := s.repo.ListForWorker(ctx, &workerchecklistports.ListWorkerChecklistsRequest{
 		TenantInfo:   tenantInfo,
 		WorkerID:     wrk.ID,
 		IncludeItems: true,
@@ -533,7 +535,7 @@ func (s *Service) collectEvidence(
 
 	credentials, err := s.credentialRepo.ListForWorker(
 		ctx,
-		&workerports.ListWorkerCredentialsRequest{
+		&workercredentialports.ListWorkerCredentialsRequest{
 			TenantInfo:  tenantInfo,
 			WorkerIDs:   []pulid.ID{workerID},
 			IncludeType: true,

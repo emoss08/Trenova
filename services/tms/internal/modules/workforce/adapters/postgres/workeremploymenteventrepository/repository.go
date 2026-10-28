@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment/employmentdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"go.uber.org/fx"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.WorkerEmploymentEventRepository {
+func New(p Params) workeremploymentports.WorkerEmploymentEventRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-employment-event-repository"),
@@ -48,7 +48,7 @@ func eventLoads(includeDocument, includeActors bool) []keel.Loader {
 }
 
 func listQuery(
-	req *workerports.ListWorkerEmploymentEventsRequest,
+	req *workeremploymentports.ListWorkerEmploymentEventsRequest,
 ) *keel.Query[*employment.WorkerEmploymentEvent] {
 	e := employmentdb.WorkerEmploymentEvents
 	limit := req.Limit
@@ -72,7 +72,7 @@ func listQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *workerports.ListWorkerEmploymentEventsRequest,
+	req *workeremploymentports.ListWorkerEmploymentEventsRequest,
 ) ([]*employment.WorkerEmploymentEvent, error) {
 	return dbtx.Read(
 		ctx,
@@ -91,7 +91,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *workerports.GetWorkerEmploymentEventByIDRequest,
+	req *workeremploymentports.GetWorkerEmploymentEventByIDRequest,
 ) (*employment.WorkerEmploymentEvent, error) {
 	return dbtx.Read(
 		ctx,

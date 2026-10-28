@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment/employmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,7 +39,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.WorkerDQFRepository {
+func New(p Params) workerdqfports.WorkerDQFRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-dqf-repository"),
@@ -69,7 +69,7 @@ func verificationOrder() []keel.Order {
 
 func (r *repository) ListVerifications(
 	ctx context.Context,
-	req *workerports.ListEmploymentVerificationsRequest,
+	req *workerdqfports.ListEmploymentVerificationsRequest,
 ) ([]*employment.WorkerEmploymentVerification, error) {
 	return dbtx.Read(
 		ctx,
@@ -99,7 +99,7 @@ func (r *repository) ListVerifications(
 
 func (r *repository) ListVerificationsByWorkerIDs(
 	ctx context.Context,
-	req *workerports.ListEmploymentVerificationsByWorkerIDsRequest,
+	req *workerdqfports.ListEmploymentVerificationsByWorkerIDsRequest,
 ) (map[pulid.ID][]*employment.WorkerEmploymentVerification, error) {
 	return dbtx.Read(
 		ctx,
@@ -132,7 +132,7 @@ func (r *repository) ListVerificationsByWorkerIDs(
 
 func (r *repository) GetVerificationByID(
 	ctx context.Context,
-	req *workerports.GetEmploymentVerificationByIDRequest,
+	req *workerdqfports.GetEmploymentVerificationByIDRequest,
 ) (*employment.WorkerEmploymentVerification, error) {
 	return dbtx.Read(
 		ctx,
@@ -191,7 +191,7 @@ func (r *repository) UpdateVerification(
 
 func (r *repository) DeleteVerification(
 	ctx context.Context,
-	req *workerports.GetEmploymentVerificationByIDRequest,
+	req *workerdqfports.GetEmploymentVerificationByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		err := employmentdb.WorkerEmploymentVerifications.DeleteRow(
@@ -213,13 +213,13 @@ func (r *repository) DeleteVerification(
 // that qualify rather than every worker who ever left.
 func (r *repository) ListRetentionCandidates(
 	ctx context.Context,
-	req *workerports.ListDQFRetentionCandidatesRequest,
-) ([]workerports.DQFRetentionCandidate, error) {
+	req *workerdqfports.ListDQFRetentionCandidatesRequest,
+) ([]workerdqfports.DQFRetentionCandidate, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]workerports.DQFRetentionCandidate, error) {
-			candidates, err := keel.Into[workerports.DQFRetentionCandidate](
+		func(ctx context.Context) ([]workerdqfports.DQFRetentionCandidate, error) {
+			candidates, err := keel.Into[workerdqfports.DQFRetentionCandidate](
 				ctx,
 				r.db.Keel(ctx),
 				retentionQuery(req),
@@ -235,7 +235,7 @@ func (r *repository) ListRetentionCandidates(
 }
 
 func retentionQuery(
-	req *workerports.ListDQFRetentionCandidatesRequest,
+	req *workerdqfports.ListDQFRetentionCandidatesRequest,
 ) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles

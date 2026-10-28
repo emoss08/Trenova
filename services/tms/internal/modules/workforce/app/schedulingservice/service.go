@@ -18,7 +18,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -36,13 +36,13 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.SchedulingRepository
+	Repo         workerscheduleports.SchedulingRepository
 	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.SchedulingRepository
+	repo         workerscheduleports.SchedulingRepository
 	auditService auditports.AuditService
 }
 
@@ -57,7 +57,7 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         workerports.SchedulingRepository
+	Repo         workerscheduleports.SchedulingRepository
 	AuditService auditports.AuditService
 }
 
@@ -109,7 +109,7 @@ func (s *Service) audit(p auditParams) {
 
 func (s *Service) ListTemplates(
 	ctx context.Context,
-	req *workerports.ListShiftTemplatesRequest,
+	req *workerscheduleports.ListShiftTemplatesRequest,
 ) ([]*workerschedule.ShiftTemplate, error) {
 	return s.repo.ListTemplates(ctx, req)
 }
@@ -119,7 +119,7 @@ func (s *Service) GetTemplate(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workerschedule.ShiftTemplate, error) {
-	return s.repo.GetTemplateByID(ctx, &workerports.GetShiftTemplateByIDRequest{
+	return s.repo.GetTemplateByID(ctx, &workerscheduleports.GetShiftTemplateByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -187,7 +187,7 @@ func (s *Service) UpdateTemplate(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetTemplateByID(ctx, &workerports.GetShiftTemplateByIDRequest{
+	original, err := s.repo.GetTemplateByID(ctx, &workerscheduleports.GetShiftTemplateByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -233,7 +233,7 @@ func (s *Service) UpdateTemplate(
 
 func (s *Service) ListAssignments(
 	ctx context.Context,
-	req *workerports.ListShiftAssignmentsRequest,
+	req *workerscheduleports.ListShiftAssignmentsRequest,
 ) ([]*workerschedule.WorkerShiftAssignment, error) {
 	return s.repo.ListAssignments(ctx, req)
 }
@@ -243,7 +243,7 @@ func (s *Service) GetAssignment(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workerschedule.WorkerShiftAssignment, error) {
-	return s.repo.GetAssignmentByID(ctx, &workerports.GetShiftAssignmentByIDRequest{
+	return s.repo.GetAssignmentByID(ctx, &workerscheduleports.GetShiftAssignmentByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -264,7 +264,7 @@ func (s *Service) CountTemplateAssignmentsByIDs(
 ) (map[pulid.ID]int, error) {
 	return s.repo.CountTemplateAssignmentsByIDs(
 		ctx,
-		&workerports.CountShiftTemplateAssignmentsRequest{
+		&workerscheduleports.CountShiftTemplateAssignmentsRequest{
 			TenantInfo:  tenantInfo,
 			TemplateIDs: templateIDs,
 		},
@@ -391,7 +391,7 @@ func (s *Service) EndAssignment(
 
 func (s *Service) ListPreferences(
 	ctx context.Context,
-	req *workerports.ListAvailabilityPreferencesRequest,
+	req *workerscheduleports.ListAvailabilityPreferencesRequest,
 ) ([]*workerschedule.WorkerAvailabilityPreference, error) {
 	return s.repo.ListPreferences(ctx, req)
 }
@@ -432,7 +432,7 @@ func (s *Service) SetPreference(
 
 func (s *Service) ListSwaps(
 	ctx context.Context,
-	req *workerports.ListShiftSwapsRequest,
+	req *workerscheduleports.ListShiftSwapsRequest,
 ) ([]*workerschedule.ShiftSwapRequest, error) {
 	return s.repo.ListSwaps(ctx, req)
 }
@@ -442,7 +442,7 @@ func (s *Service) GetSwap(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workerschedule.ShiftSwapRequest, error) {
-	return s.repo.GetSwapByID(ctx, &workerports.GetShiftSwapByIDRequest{
+	return s.repo.GetSwapByID(ctx, &workerscheduleports.GetShiftSwapByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})

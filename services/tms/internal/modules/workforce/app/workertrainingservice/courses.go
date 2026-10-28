@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,14 +16,14 @@ import (
 
 func (s *Service) ListCourses(
 	ctx context.Context,
-	req *workerports.ListTrainingCoursesRequest,
+	req *workertrainingports.ListTrainingCoursesRequest,
 ) (*pagination.CursorListResult[*workertraining.TrainingCourse], error) {
 	return s.repo.ListCourses(ctx, req)
 }
 
 func (s *Service) GetCourse(
 	ctx context.Context,
-	req *workerports.GetTrainingCourseByIDRequest,
+	req *workertrainingports.GetTrainingCourseByIDRequest,
 ) (*workertraining.TrainingCourse, error) {
 	return s.repo.GetCourseByID(ctx, req)
 }
@@ -37,7 +37,7 @@ func (s *Service) ActiveCourses(
 
 func (s *Service) CourseSelectOptions(
 	ctx context.Context,
-	req *workerports.TrainingCourseSelectOptionsRequest,
+	req *workertrainingports.TrainingCourseSelectOptionsRequest,
 ) (*pagination.ListResult[*workertraining.TrainingCourse], error) {
 	return s.repo.CourseSelectOptions(ctx, req)
 }
@@ -48,11 +48,14 @@ func (s *Service) validateCourse(ctx context.Context, entity *workertraining.Tra
 	entity.Validate(multiErr)
 
 	if entity.Code != "" {
-		exists, err := s.repo.CourseCodeExists(ctx, &workerports.TrainingCourseCodeExistsRequest{
-			TenantInfo: courseTenant(entity),
-			Code:       entity.Code,
-			ExcludeID:  entity.ID,
-		})
+		exists, err := s.repo.CourseCodeExists(
+			ctx,
+			&workertrainingports.TrainingCourseCodeExistsRequest{
+				TenantInfo: courseTenant(entity),
+				Code:       entity.Code,
+				ExcludeID:  entity.ID,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -104,7 +107,7 @@ func (s *Service) UpdateCourse(
 ) (*workertraining.TrainingCourse, error) {
 	log := s.l.With(zap.String("operation", "UpdateCourse"), zap.String("id", entity.ID.String()))
 
-	original, err := s.repo.GetCourseByID(ctx, &workerports.GetTrainingCourseByIDRequest{
+	original, err := s.repo.GetCourseByID(ctx, &workertrainingports.GetTrainingCourseByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: courseTenant(entity),
 	})
@@ -168,7 +171,7 @@ func (s *Service) changeCourseStatus(
 ) (*workertraining.TrainingCourse, error) {
 	log := s.l.With(zap.String("operation", string(operation)), zap.String("id", req.ID.String()))
 
-	original, err := s.repo.GetCourseByID(ctx, &workerports.GetTrainingCourseByIDRequest{
+	original, err := s.repo.GetCourseByID(ctx, &workertrainingports.GetTrainingCourseByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -218,7 +221,7 @@ func (s *Service) requireCourseRetirable(
 	ctx context.Context,
 	entity *workertraining.TrainingCourse,
 ) error {
-	count, err := s.repo.CountRecordsByCourse(ctx, &workerports.CountTrainingRecordsRequest{
+	count, err := s.repo.CountRecordsByCourse(ctx, &workertrainingports.CountTrainingRecordsRequest{
 		TenantInfo: courseTenant(entity),
 		CourseID:   entity.ID,
 		OpenOnly:   true,
@@ -243,7 +246,7 @@ func (s *Service) CountOpenRecords(
 	ctx context.Context,
 	entity *workertraining.TrainingCourse,
 ) (int, error) {
-	return s.repo.CountRecordsByCourse(ctx, &workerports.CountTrainingRecordsRequest{
+	return s.repo.CountRecordsByCourse(ctx, &workertrainingports.CountTrainingRecordsRequest{
 		TenantInfo: courseTenant(entity),
 		CourseID:   entity.ID,
 		OpenOnly:   true,
@@ -255,11 +258,14 @@ func (s *Service) CountOpenRecordsByCourses(
 	tenantInfo pagination.TenantInfo,
 	courseIDs []pulid.ID,
 ) (map[pulid.ID]int, error) {
-	return s.repo.CountRecordsByCourseIDs(ctx, &workerports.CountTrainingRecordsByCourseIDsRequest{
-		TenantInfo: tenantInfo,
-		CourseIDs:  courseIDs,
-		OpenOnly:   true,
-	})
+	return s.repo.CountRecordsByCourseIDs(
+		ctx,
+		&workertrainingports.CountTrainingRecordsByCourseIDsRequest{
+			TenantInfo: tenantInfo,
+			CourseIDs:  courseIDs,
+			OpenOnly:   true,
+		},
+	)
 }
 
 func plural(count int, one, many string) string {

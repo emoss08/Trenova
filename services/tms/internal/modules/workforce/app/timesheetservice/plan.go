@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/timesheetports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -22,7 +22,7 @@ func (s *Service) PlanGenerateExport(
 	ctx context.Context,
 	req *GenerateExportRequest,
 ) (*ExportPlan, error) {
-	sheets, err := s.repo.ListTimesheets(ctx, &workerports.ListTimesheetsRequest{
+	sheets, err := s.repo.ListTimesheets(ctx, &timesheetports.ListTimesheetsRequest{
 		TenantInfo:     req.TenantInfo,
 		Statuses:       []timesheet.TimesheetStatus{timesheet.TimesheetApproved},
 		From:           req.PeriodStart,
@@ -73,7 +73,7 @@ func (s *Service) PlanVoidExport(
 	ctx context.Context,
 	req *VoidExportRequest,
 ) (*ExportChange, error) {
-	original, err := s.repo.GetExportByID(ctx, &workerports.GetPayrollExportByIDRequest{
+	original, err := s.repo.GetExportByID(ctx, &timesheetports.GetPayrollExportByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})

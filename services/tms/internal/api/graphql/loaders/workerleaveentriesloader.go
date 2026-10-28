@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,7 +15,7 @@ import (
 type leaveEntriesByCaseIDsLister interface {
 	ListEntriesByCaseIDs(
 		ctx context.Context,
-		req *workerports.ListLeaveEntriesByCaseIDsRequest,
+		req *workerleaveports.ListLeaveEntriesByCaseIDsRequest,
 	) (map[pulid.ID][]*workerleave.WorkerLeaveEntry, error)
 }
 
@@ -50,7 +50,7 @@ func (f *WorkerLeaveEntriesByCaseIDLoaderFactory) batchFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*workerleave.WorkerLeaveEntry, error) {
 			return f.entries.ListEntriesByCaseIDs(
 				ctx,
-				&workerports.ListLeaveEntriesByCaseIDsRequest{
+				&workerleaveports.ListLeaveEntriesByCaseIDsRequest{
 					TenantInfo:   tenantInfo,
 					LeaveCaseIDs: ids,
 				},

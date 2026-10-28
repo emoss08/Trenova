@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential/workercredentialdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -54,7 +54,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.WorkerCredentialRepository {
+func New(p Params) workercredentialports.WorkerCredentialRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-credential-repository"),
@@ -68,7 +68,7 @@ func typeOrder() []keel.Order {
 
 func (r *repository) ListTypes(
 	ctx context.Context,
-	req *workerports.ListCredentialTypesRequest,
+	req *workercredentialports.ListCredentialTypesRequest,
 ) (*pagination.CursorListResult[*workercredential.WorkerCredentialType], error) {
 	return dbtx.Read(
 		ctx,
@@ -122,7 +122,7 @@ func (r *repository) ListActiveTypes(
 
 func (r *repository) TypeSelectOptions(
 	ctx context.Context,
-	req *workerports.WorkerCredentialTypeSelectOptionsRequest,
+	req *workercredentialports.WorkerCredentialTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*workercredential.WorkerCredentialType], error) {
 	return dbtx.Read(
 		ctx,
@@ -165,7 +165,7 @@ func (r *repository) TypeSelectOptions(
 
 func (r *repository) GetTypeByID(
 	ctx context.Context,
-	req *workerports.GetCredentialTypeByIDRequest,
+	req *workercredentialports.GetCredentialTypeByIDRequest,
 ) (*workercredential.WorkerCredentialType, error) {
 	return dbtx.Read(
 		ctx,
@@ -183,7 +183,7 @@ func (r *repository) GetTypeByID(
 
 func (r *repository) TypeCodeExists(
 	ctx context.Context,
-	req *workerports.CredentialTypeCodeExistsRequest,
+	req *workercredentialports.CredentialTypeCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		t := workercredentialdb.WorkerCredentialTypes
@@ -277,7 +277,7 @@ func (r *repository) EnsureSystemTypes(
 
 func (r *repository) CountCredentialsByType(
 	ctx context.Context,
-	req *workerports.CountCredentialsByTypeRequest,
+	req *workercredentialports.CountCredentialsByTypeRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		c := workercredentialdb.WorkerCredentials
@@ -296,7 +296,7 @@ func (r *repository) CountCredentialsByType(
 
 func (r *repository) CountCredentialsByTypeIDs(
 	ctx context.Context,
-	req *workerports.CountCredentialsByTypeIDsRequest,
+	req *workercredentialports.CountCredentialsByTypeIDsRequest,
 ) (map[pulid.ID]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		if len(req.TypeIDs) == 0 {
@@ -327,7 +327,7 @@ func (r *repository) CountCredentialsByTypeIDs(
 
 func (r *repository) ListForWorker(
 	ctx context.Context,
-	req *workerports.ListWorkerCredentialsRequest,
+	req *workercredentialports.ListWorkerCredentialsRequest,
 ) ([]*workercredential.WorkerCredential, error) {
 	if len(req.WorkerIDs) == 0 {
 		return []*workercredential.WorkerCredential{}, nil
@@ -365,7 +365,7 @@ func (r *repository) ListForWorker(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *workerports.GetWorkerCredentialByIDRequest,
+	req *workercredentialports.GetWorkerCredentialByIDRequest,
 ) (*workercredential.WorkerCredential, error) {
 	return dbtx.Read(
 		ctx,
@@ -389,7 +389,7 @@ func (r *repository) GetByID(
 
 func (r *repository) Create(
 	ctx context.Context,
-	req *workerports.CreateWorkerCredentialRequest,
+	req *workercredentialports.CreateWorkerCredentialRequest,
 ) (*workercredential.WorkerCredential, error) {
 	return dbtx.Write(
 		ctx,
@@ -410,7 +410,7 @@ func (r *repository) Create(
 
 func (r *repository) create(
 	ctx context.Context,
-	req *workerports.CreateWorkerCredentialRequest,
+	req *workercredentialports.CreateWorkerCredentialRequest,
 ) error {
 	db := r.db.Keel(ctx)
 	entity := req.Entity
@@ -456,7 +456,7 @@ func (r *repository) Update(
 }
 
 func expiryWindow(
-	req *workerports.ListExpiringWorkerCredentialsRequest,
+	req *workercredentialports.ListExpiringWorkerCredentialsRequest,
 ) (grace, horizon int64) {
 	now := timeutils.NowUnix()
 	horizon = now + int64(req.HorizonDays)*secondsPerDay
@@ -471,7 +471,7 @@ func expiryWindow(
 
 func expiringQuery(
 	ctx context.Context,
-	req *workerports.ListExpiringWorkerCredentialsRequest,
+	req *workercredentialports.ListExpiringWorkerCredentialsRequest,
 ) *keel.Query[*workercredential.WorkerCredential] {
 	c := workercredentialdb.WorkerCredentials
 	ct := c.CredentialType()
@@ -513,7 +513,7 @@ func expiringQuery(
 
 func (r *repository) ListExpiring(
 	ctx context.Context,
-	req *workerports.ListExpiringWorkerCredentialsRequest,
+	req *workercredentialports.ListExpiringWorkerCredentialsRequest,
 ) ([]*workercredential.WorkerCredential, error) {
 	if req.TenantInfo.OrgID.IsNil() {
 		ctx = dbscope.WithSystem(

@@ -40,6 +40,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -70,7 +71,7 @@ type Params struct {
 	WorkItems         bankreceiptworkitemports.BankReceiptWorkItemRepository `optional:"true"`
 	Occurrences       detentionports.DetentionOccurrenceRepository           `optional:"true"`
 	Workers           workerports.WorkerRepository                           `optional:"true"`
-	Credentials       workerports.WorkerCredentialRepository                 `optional:"true"`
+	Credentials       workercredentialports.WorkerCredentialRepository       `optional:"true"`
 	CarrierIntel      carrierintelports.CarrierIntelEventRepository          `optional:"true"`
 	EDIFiles          ediports.EDIInboundFileRepository                      `optional:"true"`
 	Inbound           inboundmessageports.InboundMessageRepository           `optional:"true"`
@@ -104,7 +105,7 @@ type Service struct {
 	workItems         bankreceiptworkitemports.BankReceiptWorkItemRepository
 	occurrences       detentionports.DetentionOccurrenceRepository
 	workers           workerports.WorkerRepository
-	credentials       workerports.WorkerCredentialRepository
+	credentials       workercredentialports.WorkerCredentialRepository
 	carrierIntel      carrierintelports.CarrierIntelEventRepository
 	ediFiles          ediports.EDIInboundFileRepository
 	inbound           inboundmessageports.InboundMessageRepository
@@ -742,11 +743,14 @@ func (s *Service) workerCredentials(
 	tenant pagination.TenantInfo,
 	workerID pulid.ID,
 ) []map[string]any {
-	credentials, err := s.credentials.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
-		TenantInfo:  tenant,
-		WorkerIDs:   []pulid.ID{workerID},
-		IncludeType: true,
-	})
+	credentials, err := s.credentials.ListForWorker(
+		ctx,
+		&workercredentialports.ListWorkerCredentialsRequest{
+			TenantInfo:  tenant,
+			WorkerIDs:   []pulid.ID{workerID},
+			IncludeType: true,
+		},
+	)
 	if err != nil {
 		s.logger.Warn("worker subject: credentials unavailable", zap.Error(err))
 		return nil

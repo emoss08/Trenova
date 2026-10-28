@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview/workerreviewdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -46,7 +46,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.PerformanceReviewRepository {
+func New(p Params) workerreviewports.PerformanceReviewRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.performance-review-repository"),
@@ -55,7 +55,7 @@ func New(p Params) workerports.PerformanceReviewRepository {
 
 func (r *repository) ListTemplates(
 	ctx context.Context,
-	req *workerports.ListReviewTemplatesRequest,
+	req *workerreviewports.ListReviewTemplatesRequest,
 ) (*pagination.CursorListResult[*workerreview.PerformanceReviewTemplate], error) {
 	return dbtx.Read(
 		ctx,
@@ -102,7 +102,7 @@ func (r *repository) ListActiveTemplates(
 
 func (r *repository) TemplateSelectOptions(
 	ctx context.Context,
-	req *workerports.ReviewTemplateSelectOptionsRequest,
+	req *workerreviewports.ReviewTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*workerreview.PerformanceReviewTemplate], error) {
 	return dbtx.Read(
 		ctx,
@@ -141,7 +141,7 @@ func (r *repository) TemplateSelectOptions(
 
 func (r *repository) GetTemplateByID(
 	ctx context.Context,
-	req *workerports.GetReviewTemplateByIDRequest,
+	req *workerreviewports.GetReviewTemplateByIDRequest,
 ) (*workerreview.PerformanceReviewTemplate, error) {
 	return dbtx.Read(
 		ctx,
@@ -163,7 +163,7 @@ func (r *repository) GetTemplateByID(
 
 func (r *repository) TemplateCodeExists(
 	ctx context.Context,
-	req *workerports.ReviewTemplateCodeExistsRequest,
+	req *workerreviewports.ReviewTemplateCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		t := workerreviewdb.PerformanceReviewTemplates
@@ -240,7 +240,7 @@ func (r *repository) ClearDefaultTemplate(
 
 func (r *repository) CountReviewsByTemplate(
 	ctx context.Context,
-	req *workerports.CountReviewsByTemplateRequest,
+	req *workerreviewports.CountReviewsByTemplateRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		rv := workerreviewdb.PerformanceReviews
@@ -259,7 +259,7 @@ func (r *repository) CountReviewsByTemplate(
 
 func (r *repository) CountReviewsByTemplateIDs(
 	ctx context.Context,
-	req *workerports.CountReviewsByTemplateIDsRequest,
+	req *workerreviewports.CountReviewsByTemplateIDsRequest,
 ) (map[pulid.ID]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		if len(req.TemplateIDs) == 0 {
@@ -292,7 +292,7 @@ func (r *repository) CountReviewsByTemplateIDs(
 // cannot do because it is always scoped to one worker.
 func (r *repository) CountReviews(
 	ctx context.Context,
-	req *workerports.CountPerformanceReviewsRequest,
+	req *workerreviewports.CountPerformanceReviewsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		rv := workerreviewdb.PerformanceReviews
@@ -309,7 +309,7 @@ func (r *repository) CountReviews(
 
 func (r *repository) ListReviews(
 	ctx context.Context,
-	req *workerports.ListPerformanceReviewsRequest,
+	req *workerreviewports.ListPerformanceReviewsRequest,
 ) ([]*workerreview.PerformanceReview, error) {
 	return dbtx.Read(
 		ctx,
@@ -340,7 +340,7 @@ func (r *repository) ListReviews(
 
 func (r *repository) GetReviewByID(
 	ctx context.Context,
-	req *workerports.GetPerformanceReviewByIDRequest,
+	req *workerreviewports.GetPerformanceReviewByIDRequest,
 ) (*workerreview.PerformanceReview, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerreview.PerformanceReview, error) {
 		rv := workerreviewdb.PerformanceReviews
@@ -396,7 +396,7 @@ func (r *repository) UpdateReview(
 
 func (r *repository) DeleteReview(
 	ctx context.Context,
-	req *workerports.GetPerformanceReviewByIDRequest,
+	req *workerreviewports.GetPerformanceReviewByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		err := workerreviewdb.PerformanceReviews.DeleteRow(

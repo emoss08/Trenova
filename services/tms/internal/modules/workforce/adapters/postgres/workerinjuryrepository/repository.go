@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety/workersafetydb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"go.uber.org/fx"
@@ -44,7 +44,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.WorkerInjuryRepository {
+func New(p Params) workersafetyports.WorkerInjuryRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-injury-repository"),
@@ -68,7 +68,7 @@ func injuryLoads(includeWorker, includeDocument, includeEvent bool) []keel.Loade
 }
 
 func injuriesQuery(
-	req *workerports.ListWorkerInjuriesRequest,
+	req *workersafetyports.ListWorkerInjuriesRequest,
 ) *keel.Query[*workersafety.WorkerInjury] {
 	i := workersafetydb.WorkerInjuries
 
@@ -85,7 +85,7 @@ func injuriesQuery(
 
 func (r *repository) ListInjuries(
 	ctx context.Context,
-	req *workerports.ListWorkerInjuriesRequest,
+	req *workersafetyports.ListWorkerInjuriesRequest,
 ) ([]*workersafety.WorkerInjury, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*workersafety.WorkerInjury, error) {
 		entities, err := injuriesQuery(req).List(ctx, r.db.Keel(ctx))
@@ -100,7 +100,7 @@ func (r *repository) ListInjuries(
 
 func (r *repository) GetInjuryByID(
 	ctx context.Context,
-	req *workerports.GetWorkerInjuryByIDRequest,
+	req *workersafetyports.GetWorkerInjuryByIDRequest,
 ) (*workersafety.WorkerInjury, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workersafety.WorkerInjury, error) {
 		i := workersafetydb.WorkerInjuries
@@ -145,7 +145,7 @@ func (r *repository) UpdateInjury(
 
 func (r *repository) DeleteInjury(
 	ctx context.Context,
-	req *workerports.GetWorkerInjuryByIDRequest,
+	req *workersafetyports.GetWorkerInjuryByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		err := workersafetydb.WorkerInjuries.DeleteRow(
@@ -168,7 +168,7 @@ func (r *repository) DeleteInjury(
 // case 4s has no way to tell which is which.
 func (r *repository) NextCaseNumber(
 	ctx context.Context,
-	req *workerports.NextCaseNumberRequest,
+	req *workersafetyports.NextCaseNumberRequest,
 ) (int32, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int32, error) {
 		i := workersafetydb.WorkerInjuries
@@ -186,7 +186,7 @@ func (r *repository) NextCaseNumber(
 
 func (r *repository) GetSummary(
 	ctx context.Context,
-	req *workerports.GetOSHASummaryRequest,
+	req *workersafetyports.GetOSHASummaryRequest,
 ) (*workersafety.OSHAAnnualSummary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workersafety.OSHAAnnualSummary, error) {
 		s := workersafetydb.OSHAAnnualSummaries
@@ -207,7 +207,7 @@ func (r *repository) GetSummary(
 
 func (r *repository) ListSummaries(
 	ctx context.Context,
-	req *workerports.ListOSHASummariesRequest,
+	req *workersafetyports.ListOSHASummariesRequest,
 ) ([]*workersafety.OSHAAnnualSummary, error) {
 	return dbtx.Read(
 		ctx,

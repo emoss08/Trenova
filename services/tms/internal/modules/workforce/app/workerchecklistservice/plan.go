@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,11 +31,14 @@ type ItemPlan struct {
 }
 
 func (s *Service) PlanStart(ctx context.Context, req *StartRequest) (*StartPlan, error) {
-	template, err := s.repo.GetTemplateByID(ctx, &workerports.GetChecklistTemplateByIDRequest{
-		ID:           req.TemplateID,
-		TenantInfo:   req.TenantInfo,
-		IncludeItems: true,
-	})
+	template, err := s.repo.GetTemplateByID(
+		ctx,
+		&workerchecklistports.GetChecklistTemplateByIDRequest{
+			ID:           req.TemplateID,
+			TenantInfo:   req.TenantInfo,
+			IncludeItems: true,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +58,7 @@ func (s *Service) PlanStart(ctx context.Context, req *StartRequest) (*StartPlan,
 		)
 	}
 
-	existing, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerChecklistsRequest{
+	existing, err := s.repo.ListForWorker(ctx, &workerchecklistports.ListWorkerChecklistsRequest{
 		TenantInfo:    req.TenantInfo,
 		WorkerID:      req.WorkerID,
 		IncludeClosed: fromEvent,
@@ -135,7 +139,7 @@ func (s *Service) loadItem(
 	ctx context.Context,
 	req *ReopenItemRequest,
 ) (*workerchecklist.WorkerChecklistItem, *workerchecklist.WorkerChecklist, error) {
-	item, err := s.repo.GetItemByID(ctx, &workerports.GetWorkerChecklistItemByIDRequest{
+	item, err := s.repo.GetItemByID(ctx, &workerchecklistports.GetWorkerChecklistItemByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -149,7 +153,7 @@ func (s *Service) loadItem(
 			"Checklist item was changed by someone else. Reload and try again",
 		)
 	}
-	checklist, err := s.repo.GetByID(ctx, &workerports.GetWorkerChecklistByIDRequest{
+	checklist, err := s.repo.GetByID(ctx, &workerchecklistports.GetWorkerChecklistByIDRequest{
 		ID:         item.ChecklistID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -241,7 +245,7 @@ func (s *Service) PlanReopenItem(ctx context.Context, req *ReopenItemRequest) (*
 }
 
 func (s *Service) PlanCancel(ctx context.Context, req *CancelRequest) (*ChecklistChange, error) {
-	original, err := s.repo.GetByID(ctx, &workerports.GetWorkerChecklistByIDRequest{
+	original, err := s.repo.GetByID(ctx, &workerchecklistports.GetWorkerChecklistByIDRequest{
 		ID:           req.ID,
 		TenantInfo:   req.TenantInfo,
 		IncludeItems: true,

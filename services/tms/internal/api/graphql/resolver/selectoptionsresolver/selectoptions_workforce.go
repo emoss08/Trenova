@@ -10,7 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -23,7 +26,7 @@ func (r *Deps) resolveWorkerCredentialTypeSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.WorkerCredentialService.GetType(
 				ctx,
-				&workerports.GetCredentialTypeByIDRequest{
+				&workercredentialports.GetCredentialTypeByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -39,7 +42,9 @@ func (r *Deps) resolveWorkerCredentialTypeSelectOptions(
 
 	result, err := r.WorkerCredentialService.TypeSelectOptions(
 		ctx,
-		&workerports.WorkerCredentialTypeSelectOptionsRequest{SelectQueryRequest: req.SelectQuery},
+		&workercredentialports.WorkerCredentialTypeSelectOptionsRequest{
+			SelectQueryRequest: req.SelectQuery,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -84,7 +89,7 @@ func (r *Deps) resolveTrainingCourseSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.WorkerTrainingService.GetCourse(
 				ctx,
-				&workerports.GetTrainingCourseByIDRequest{
+				&workertrainingports.GetTrainingCourseByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -100,7 +105,9 @@ func (r *Deps) resolveTrainingCourseSelectOptions(
 
 	result, err := r.WorkerTrainingService.CourseSelectOptions(
 		ctx,
-		&workerports.TrainingCourseSelectOptionsRequest{SelectQueryRequest: req.SelectQuery},
+		&workertrainingports.TrainingCourseSelectOptionsRequest{
+			SelectQueryRequest: req.SelectQuery,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -150,7 +157,7 @@ func (r *Deps) resolvePerformanceReviewTemplateSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.PerformanceReviewService.GetTemplate(
 				ctx,
-				&workerports.GetReviewTemplateByIDRequest{
+				&workerreviewports.GetReviewTemplateByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -166,7 +173,7 @@ func (r *Deps) resolvePerformanceReviewTemplateSelectOptions(
 
 	result, err := r.PerformanceReviewService.TemplateSelectOptions(
 		ctx,
-		&workerports.ReviewTemplateSelectOptionsRequest{SelectQueryRequest: req.SelectQuery},
+		&workerreviewports.ReviewTemplateSelectOptionsRequest{SelectQueryRequest: req.SelectQuery},
 	)
 	if err != nil {
 		return nil, err
@@ -206,7 +213,7 @@ func (r *Deps) resolvePTOPolicySelectOptions(
 	if len(req.IDs) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.IDs))
 		for _, id := range req.IDs {
-			entity, err := r.PtoPolicyService.Get(ctx, &workerports.GetPTOPolicyByIDRequest{
+			entity, err := r.PtoPolicyService.Get(ctx, &ptopolicyports.GetPTOPolicyByIDRequest{
 				ID:           id,
 				TenantInfo:   req.TenantInfo,
 				IncludeRules: true,
@@ -222,7 +229,7 @@ func (r *Deps) resolvePTOPolicySelectOptions(
 
 	result, err := r.PtoPolicyService.SelectOptions(
 		ctx,
-		&workerports.PTOPolicySelectOptionsRequest{SelectQueryRequest: req.SelectQuery},
+		&ptopolicyports.PTOPolicySelectOptionsRequest{SelectQueryRequest: req.SelectQuery},
 	)
 	if err != nil {
 		return nil, err

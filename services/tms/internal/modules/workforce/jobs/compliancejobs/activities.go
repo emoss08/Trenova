@@ -17,7 +17,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
@@ -51,13 +54,13 @@ var reminderSteps = []int64{30, 14, 7}
 type ActivitiesParams struct {
 	fx.In
 
-	CredentialRepo  workerports.WorkerCredentialRepository
+	CredentialRepo  workercredentialports.WorkerCredentialRepository
 	Credentials     *workercredentialservice.Service
-	TrainingRepo    workerports.WorkerTrainingRepository
+	TrainingRepo    workertrainingports.WorkerTrainingRepository
 	Training        *workertrainingservice.Service
-	SafetyRepo      workerports.WorkerSafetyRepository
+	SafetyRepo      workersafetyports.WorkerSafetyRepository
 	Safety          *workersafetyservice.Service
-	DrugAlcoholRepo workerports.WorkerDrugAlcoholRepository
+	DrugAlcoholRepo workerdotports.WorkerDrugAlcoholRepository
 	DrugAlcohol     *workerdrugalcoholservice.Service
 	DashControlRepo tenantports.DashControlRepository
 	Notifications   *notificationservice.Service
@@ -71,11 +74,11 @@ type ActivitiesParams struct {
 }
 
 type Activities struct {
-	credentialRepo  workerports.WorkerCredentialRepository
+	credentialRepo  workercredentialports.WorkerCredentialRepository
 	credentials     *workercredentialservice.Service
-	trainingRepo    workerports.WorkerTrainingRepository
-	safetyRepo      workerports.WorkerSafetyRepository
-	drugAlcoholRepo workerports.WorkerDrugAlcoholRepository
+	trainingRepo    workertrainingports.WorkerTrainingRepository
+	safetyRepo      workersafetyports.WorkerSafetyRepository
+	drugAlcoholRepo workerdotports.WorkerDrugAlcoholRepository
 	training        *workertrainingservice.Service
 	safety          *workersafetyservice.Service
 	drugAlcohol     *workerdrugalcoholservice.Service
@@ -139,7 +142,7 @@ func (a *Activities) CredentialExpirySweepActivity(
 	for {
 		page, err := a.credentialRepo.ListExpiring(
 			ctx,
-			&workerports.ListExpiringWorkerCredentialsRequest{
+			&workercredentialports.ListExpiringWorkerCredentialsRequest{
 				HorizonDays: sweepHorizonDays,
 				GraceDays:   sweepGraceDays,
 				AfterID:     after,

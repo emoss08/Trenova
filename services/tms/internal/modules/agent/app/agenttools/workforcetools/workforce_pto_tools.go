@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -47,7 +47,7 @@ var ptoFields = []string{
 }
 
 type ptoRequester interface {
-	Get(ctx context.Context, req *workerports.GetPTOByIDRequest) (*worker.WorkerPTO, error)
+	Get(ctx context.Context, req *workerptoports.GetPTOByIDRequest) (*worker.WorkerPTO, error)
 	PlanCreate(
 		ctx context.Context,
 		entity *worker.WorkerPTO,
@@ -231,7 +231,7 @@ type ptoEdit struct {
 }
 
 func (e *ptoEdit) entity(ctx context.Context, pto ptoRequester) (*worker.WorkerPTO, error) {
-	current, err := pto.Get(ctx, &workerports.GetPTOByIDRequest{
+	current, err := pto.Get(ctx, &workerptoports.GetPTOByIDRequest{
 		ID:         e.id,
 		TenantInfo: common.TenantFrom(*e.params),
 	})
@@ -432,11 +432,11 @@ func newAdjustWorkerPTOBalanceTool(ledger PtoBalanceAdjuster) agenttoolports.Age
 	})
 }
 
-func provideRequestWorkerPTOTool(pto workerports.WorkerPTOService) agenttoolports.AgentTool {
+func provideRequestWorkerPTOTool(pto workerptoports.WorkerPTOService) agenttoolports.AgentTool {
 	return newRequestWorkerPTOTool(pto)
 }
 
-func provideUpdateWorkerPTOTool(pto workerports.WorkerPTOService) agenttoolports.AgentTool {
+func provideUpdateWorkerPTOTool(pto workerptoports.WorkerPTOService) agenttoolports.AgentTool {
 	return newUpdateWorkerPTOTool(pto)
 }
 

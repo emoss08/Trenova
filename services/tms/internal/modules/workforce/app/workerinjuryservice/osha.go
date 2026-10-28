@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,7 +46,7 @@ func (s *Service) Log(
 		year = int16(timeutils.YearOfUnix(timeutils.NowUnix()))
 	}
 
-	cases, err := s.repo.ListInjuries(ctx, &workerports.ListWorkerInjuriesRequest{
+	cases, err := s.repo.ListInjuries(ctx, &workersafetyports.ListWorkerInjuriesRequest{
 		TenantInfo:    tenantInfo,
 		CaseYear:      year,
 		IncludeWorker: true,
@@ -55,7 +55,7 @@ func (s *Service) Log(
 		return nil, err
 	}
 
-	summary, err := s.repo.GetSummary(ctx, &workerports.GetOSHASummaryRequest{
+	summary, err := s.repo.GetSummary(ctx, &workersafetyports.GetOSHASummaryRequest{
 		TenantInfo: tenantInfo,
 		Year:       year,
 	})
@@ -86,7 +86,7 @@ func (s *Service) ListSummaries(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*workersafety.OSHAAnnualSummary, error) {
-	return s.repo.ListSummaries(ctx, &workerports.ListOSHASummariesRequest{
+	return s.repo.ListSummaries(ctx, &workersafetyports.ListOSHASummariesRequest{
 		TenantInfo: tenantInfo,
 	})
 }
@@ -117,7 +117,7 @@ func (s *Service) SaveSummary(
 	ctx context.Context,
 	req *SaveSummaryRequest,
 ) (*workersafety.OSHAAnnualSummary, error) {
-	existing, err := s.repo.GetSummary(ctx, &workerports.GetOSHASummaryRequest{
+	existing, err := s.repo.GetSummary(ctx, &workersafetyports.GetOSHASummaryRequest{
 		TenantInfo: req.TenantInfo,
 		Year:       req.Year,
 	})
@@ -194,7 +194,7 @@ func (s *Service) CertifySummary(
 	year int16,
 	userID pulid.ID,
 ) (*workersafety.OSHAAnnualSummary, error) {
-	entity, err := s.repo.GetSummary(ctx, &workerports.GetOSHASummaryRequest{
+	entity, err := s.repo.GetSummary(ctx, &workersafetyports.GetOSHASummaryRequest{
 		TenantInfo: tenantInfo,
 		Year:       year,
 	})
@@ -212,7 +212,7 @@ func (s *Service) CertifySummary(
 		return entity, nil
 	}
 
-	cases, err := s.repo.ListInjuries(ctx, &workerports.ListWorkerInjuriesRequest{
+	cases, err := s.repo.ListInjuries(ctx, &workersafetyports.ListWorkerInjuriesRequest{
 		TenantInfo: tenantInfo,
 		CaseYear:   year,
 	})
@@ -267,7 +267,7 @@ func (s *Service) UncertifySummary(
 	year int16,
 	userID pulid.ID,
 ) (*workersafety.OSHAAnnualSummary, error) {
-	entity, err := s.repo.GetSummary(ctx, &workerports.GetOSHASummaryRequest{
+	entity, err := s.repo.GetSummary(ctx, &workersafetyports.GetOSHASummaryRequest{
 		TenantInfo: tenantInfo,
 		Year:       year,
 	})

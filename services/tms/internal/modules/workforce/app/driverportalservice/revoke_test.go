@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/portalaccessportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -22,7 +22,7 @@ func TestRevokeAccess_EndsTheDriversPortalSessions(t *testing.T) {
 	workerID := pulid.MustNew("wrk_")
 	portalUserID := pulid.MustNew("usr_")
 
-	portalRepo := workerportsmock.NewMockPortalAccessRepository(t)
+	portalRepo := portalaccessportsmock.NewMockPortalAccessRepository(t)
 	portalRepo.EXPECT().GetWorkerForPortalManagement(mock.Anything, tenantInfo, workerID).
 		Return(&worker.Worker{ID: workerID, UserID: portalUserID}, nil).Once()
 	portalRepo.EXPECT().RevokePortalAccess(mock.Anything, tenantInfo, workerID).Return(nil).Once()
@@ -50,7 +50,7 @@ func TestRevokeAccess_WithoutALinkedSignInEndsNoSessions(t *testing.T) {
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	workerID := pulid.MustNew("wrk_")
 
-	portalRepo := workerportsmock.NewMockPortalAccessRepository(t)
+	portalRepo := portalaccessportsmock.NewMockPortalAccessRepository(t)
 	portalRepo.EXPECT().GetWorkerForPortalManagement(mock.Anything, tenantInfo, workerID).
 		Return(&worker.Worker{ID: workerID}, nil).Once()
 	portalRepo.EXPECT().RevokePortalAccess(mock.Anything, tenantInfo, workerID).Return(nil).Once()

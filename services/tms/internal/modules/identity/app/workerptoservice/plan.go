@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,7 +19,7 @@ func (s *Service) requireNoOverlap(
 	entity *worker.WorkerPTO,
 	excludeID pulid.ID,
 ) error {
-	overlaps, err := s.repo.HasOverlap(ctx, &workerports.PTOOverlapRequest{
+	overlaps, err := s.repo.HasOverlap(ctx, &workerptoports.PTOOverlapRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -87,7 +87,7 @@ func (s *Service) prepareUpdate(
 	ctx context.Context,
 	entity *worker.WorkerPTO,
 ) (*worker.WorkerPTO, error) {
-	current, err := s.repo.GetByID(ctx, &workerports.GetPTOByIDRequest{
+	current, err := s.repo.GetByID(ctx, &workerptoports.GetPTOByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,

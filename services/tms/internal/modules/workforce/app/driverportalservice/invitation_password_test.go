@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/portalaccessportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/tokenutils"
@@ -36,7 +36,7 @@ func TestAcceptInvitationRefusesAWeakPasswordBeforeLookingUpTheToken(t *testing.
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			portalRepo := workerportsmock.NewMockPortalAccessRepository(t)
+			portalRepo := portalaccessportsmock.NewMockPortalAccessRepository(t)
 			svc := &Service{l: zap.NewNop(), portalRepo: portalRepo}
 
 			result, err := svc.AcceptInvitation(t.Context(), &AcceptInvitationRequest{
@@ -53,7 +53,7 @@ func TestAcceptInvitationRefusesAWeakPasswordBeforeLookingUpTheToken(t *testing.
 func TestAcceptInvitationRefusesAPasswordContainingTheInvitedEmail(t *testing.T) {
 	t.Parallel()
 
-	portalRepo := workerportsmock.NewMockPortalAccessRepository(t)
+	portalRepo := portalaccessportsmock.NewMockPortalAccessRepository(t)
 	invitation := &portalinvitation.PortalInvitation{
 		ID:        pulid.MustNew("wpi_"),
 		Email:     "marisol.ortega@carrier.example",

@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation/portalinvitationdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -77,14 +77,17 @@ func TestActivatePortalAccessRefusesASeatPastTheQuota(t *testing.T) {
 		Quantity: 1,
 	}).Return(errortypes.NewQuotaExceededError(string(platformcatalog.MeterUserSeats), 1, 1, "free_demo"))
 
-	user, err := repo.ActivatePortalAccess(tenantCtx, &workerports.ActivatePortalAccessRequest{
-		Invitation: invitation,
-		User: &tenant.User{
-			Name:         "Quota Driver",
-			Username:     "quotadriver",
-			EmailAddress: driver.Email,
+	user, err := repo.ActivatePortalAccess(
+		tenantCtx,
+		&portalaccessports.ActivatePortalAccessRequest{
+			Invitation: invitation,
+			User: &tenant.User{
+				Name:         "Quota Driver",
+				Username:     "quotadriver",
+				EmailAddress: driver.Email,
+			},
 		},
-	})
+	)
 
 	require.Nil(t, user)
 	require.True(t, errortypes.IsQuotaExceededError(err))

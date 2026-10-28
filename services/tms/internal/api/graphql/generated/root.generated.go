@@ -3,6 +3,9 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
@@ -301,7 +304,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -2504,7 +2506,7 @@ type MutationResolver interface {
 	ApproveWorkerPTO(ctx context.Context, id string) (*worker.WorkerPTO, error)
 	RejectWorkerPTO(ctx context.Context, id string, reason string) (*worker.WorkerPTO, error)
 	CancelWorkerPTO(ctx context.Context, id string, reason *string) (*worker.WorkerPTO, error)
-	BulkWorkerPTOAction(ctx context.Context, input gqlmodel.BulkWorkerPTOActionInput) (*workerports.PTOBulkActionPayload, error)
+	BulkWorkerPTOAction(ctx context.Context, input gqlmodel.BulkWorkerPTOActionInput) (*workerptoports.PTOBulkActionPayload, error)
 	CreateWorkerChecklistTemplate(ctx context.Context, input gqlmodel.WorkerChecklistTemplateInput) (*workerchecklist.WorkerChecklistTemplate, error)
 	UpdateWorkerChecklistTemplate(ctx context.Context, id string, input gqlmodel.WorkerChecklistTemplateInput) (*workerchecklist.WorkerChecklistTemplate, error)
 	ArchiveWorkerChecklistTemplate(ctx context.Context, id string, version *int) (*workerchecklist.WorkerChecklistTemplate, error)
@@ -2632,14 +2634,14 @@ type PTOAvailabilityResolver interface {
 }
 
 type PTOBalanceSummaryResolver interface {
-	TotalBalanceDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
-	TotalPendingDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
-	AccruedYtdDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
-	UsedYtdDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
+	TotalBalanceDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error)
+	TotalPendingDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error)
+	AccruedYtdDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error)
+	UsedYtdDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error)
 }
 
 type PTOChartDataPointResolver interface {
-	Workers(ctx context.Context, obj *workerports.PTOChartDataPoint) (map[string]any, error)
+	Workers(ctx context.Context, obj *workerptoports.PTOChartDataPoint) (map[string]any, error)
 }
 
 type PTOLiabilityReportResolver interface {
@@ -3216,7 +3218,7 @@ type QueryResolver interface {
 	WorkerPTOLedger(ctx context.Context, input gqlmodel.WorkerPTOLedgerInput) (*gqlmodel.WorkerPTOLedgerConnection, error)
 	WorkerPTOAvailability(ctx context.Context, input gqlmodel.PTOAvailabilityInput) (*ptoledgerservice.AvailabilityResult, error)
 	PreviewWorkerPTOAccrual(ctx context.Context, workerID string, asOf *int) ([]*ptoledgerservice.PlannedEntry, error)
-	PTOBalanceSummary(ctx context.Context) (*workerports.PTOBalanceSummary, error)
+	PTOBalanceSummary(ctx context.Context) (*ptoledgerports.PTOBalanceSummary, error)
 	PTOLiabilityReport(ctx context.Context, asOf *int) (*ptoledgerservice.LiabilityReport, error)
 	RateAgreements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateAgreementConnection, error)
 	RateAgreement(ctx context.Context, id string) (*gqlmodel.RateAgreement, error)
@@ -3358,7 +3360,7 @@ type QueryResolver interface {
 	Worker(ctx context.Context, id string) (*worker.Worker, error)
 	WorkerPTOEntries(ctx context.Context, input gqlmodel.WorkerPTOEntriesInput) (*gqlmodel.WorkerPTOConnection, error)
 	UpcomingWorkerPTO(ctx context.Context, input gqlmodel.UpcomingWorkerPTOInput) (*gqlmodel.WorkerPTOConnection, error)
-	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*workerports.PTOChartDataPoint, error)
+	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*workerptoports.PTOChartDataPoint, error)
 	WorkerChecklistTemplates(ctx context.Context, input gqlmodel.WorkerChecklistTemplatesInput) (*gqlmodel.WorkerChecklistTemplateConnection, error)
 	WorkerChecklistTemplate(ctx context.Context, id string) (*workerchecklist.WorkerChecklistTemplate, error)
 	ActiveWorkerChecklistTemplates(ctx context.Context) ([]*workerchecklist.WorkerChecklistTemplate, error)
@@ -3374,7 +3376,7 @@ type QueryResolver interface {
 	DriverQualificationFile(ctx context.Context, workerID string) (*workercompliance.DQFFile, error)
 	WorkerEmploymentVerifications(ctx context.Context, workerID *string, outstandingOnly *bool, limit *int) ([]*employment.WorkerEmploymentVerification, error)
 	OutstandingEmploymentVerifications(ctx context.Context) ([]*employment.WorkerEmploymentVerification, error)
-	DqfRetentionCandidates(ctx context.Context) ([]*workerports.DQFRetentionCandidate, error)
+	DqfRetentionCandidates(ctx context.Context) ([]*workerdqfports.DQFRetentionCandidate, error)
 	WorkerDOTTests(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*workerdot.WorkerDOTTest, error)
 	WorkerDOTTest(ctx context.Context, id string) (*workerdot.WorkerDOTTest, error)
 	OpenDOTTests(ctx context.Context) ([]*workerdot.WorkerDOTTest, error)

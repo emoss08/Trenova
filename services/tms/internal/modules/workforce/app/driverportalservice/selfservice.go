@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -168,7 +168,7 @@ func (s *Service) MyProfileChangeRequests(
 		return nil, err
 	}
 
-	return s.selfService.ListChangeRequests(ctx, &workerports.ListProfileChangeRequestsRequest{
+	return s.selfService.ListChangeRequests(ctx, &selfserviceports.ListProfileChangeRequestsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   wrk.ID,
 		Limit:      10,

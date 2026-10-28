@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy/workerpolicydb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -48,7 +48,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.SelfServiceRepository {
+func New(p Params) selfserviceports.SelfServiceRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.self-service-repository"),
@@ -64,7 +64,7 @@ func limitOr(requested, fallback int) int {
 
 func (r *repository) ListPolicies(
 	ctx context.Context,
-	req *workerports.ListWorkerPoliciesRequest,
+	req *selfserviceports.ListWorkerPoliciesRequest,
 ) ([]*workerpolicy.WorkerPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*workerpolicy.WorkerPolicy, error) {
 		p := workerpolicydb.WorkerPolicies
@@ -86,7 +86,7 @@ func (r *repository) ListPolicies(
 
 func (r *repository) GetPolicyByID(
 	ctx context.Context,
-	req *workerports.GetWorkerPolicyByIDRequest,
+	req *selfserviceports.GetWorkerPolicyByIDRequest,
 ) (*workerpolicy.WorkerPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerpolicy.WorkerPolicy, error) {
 		entity, err := workerpolicydb.WorkerPolicies.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -127,7 +127,7 @@ func (r *repository) UpdatePolicy(
 }
 
 func acknowledgementsQuery(
-	req *workerports.ListPolicyAcknowledgementsRequest,
+	req *selfserviceports.ListPolicyAcknowledgementsRequest,
 ) *keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
 	a := workerpolicydb.WorkerPolicyAcknowledgements
 	q := a.Where(
@@ -146,7 +146,7 @@ func acknowledgementsQuery(
 
 func (r *repository) ListAcknowledgements(
 	ctx context.Context,
-	req *workerports.ListPolicyAcknowledgementsRequest,
+	req *selfserviceports.ListPolicyAcknowledgementsRequest,
 ) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
 	return dbtx.Read(
 		ctx,
@@ -207,13 +207,13 @@ func (r *repository) CountAcknowledgements(
 // employees never lists a contractor as outstanding.
 func (r *repository) PolicyCompliance(
 	ctx context.Context,
-	req *workerports.PolicyComplianceRequest,
-) ([]workerports.PolicyComplianceRow, error) {
+	req *selfserviceports.PolicyComplianceRequest,
+) ([]selfserviceports.PolicyComplianceRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]workerports.PolicyComplianceRow, error) {
-			rows, err := keel.Into[workerports.PolicyComplianceRow](
+		func(ctx context.Context) ([]selfserviceports.PolicyComplianceRow, error) {
+			rows, err := keel.Into[selfserviceports.PolicyComplianceRow](
 				ctx,
 				r.db.Keel(ctx),
 				policyComplianceQuery(req),
@@ -242,7 +242,9 @@ func audienceFilter(audience workerpolicy.PolicyAudience) keel.Pred {
 	return nil
 }
 
-func policyComplianceQuery(req *workerports.PolicyComplianceRequest) *keel.Query[*worker.Worker] {
+func policyComplianceQuery(
+	req *selfserviceports.PolicyComplianceRequest,
+) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	a := workerpolicydb.WorkerPolicyAcknowledgements
 
@@ -265,7 +267,7 @@ func policyComplianceQuery(req *workerports.PolicyComplianceRequest) *keel.Query
 }
 
 func changeRequestsQuery(
-	req *workerports.ListProfileChangeRequestsRequest,
+	req *selfserviceports.ListProfileChangeRequestsRequest,
 ) *keel.Query[*profilechange.WorkerProfileChangeRequest] {
 	c := profilechangedb.WorkerProfileChangeRequests
 	q := c.Where(
@@ -284,7 +286,7 @@ func changeRequestsQuery(
 
 func (r *repository) ListChangeRequests(
 	ctx context.Context,
-	req *workerports.ListProfileChangeRequestsRequest,
+	req *selfserviceports.ListProfileChangeRequestsRequest,
 ) ([]*profilechange.WorkerProfileChangeRequest, error) {
 	return dbtx.Read(
 		ctx,
@@ -303,7 +305,7 @@ func (r *repository) ListChangeRequests(
 
 func (r *repository) GetChangeRequestByID(
 	ctx context.Context,
-	req *workerports.GetProfileChangeRequestByIDRequest,
+	req *selfserviceports.GetProfileChangeRequestByIDRequest,
 ) (*profilechange.WorkerProfileChangeRequest, error) {
 	return dbtx.Read(
 		ctx,

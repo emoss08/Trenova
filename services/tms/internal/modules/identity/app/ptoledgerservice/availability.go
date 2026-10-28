@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -100,7 +101,7 @@ func (s *Service) CheckAvailability(
 	result.Policy = resolved
 	result.Enforced = resolved.Policy.EnforceBalance
 
-	key := &workerports.PTOBalanceKey{
+	key := &ptoledgerports.PTOBalanceKey{
 		TenantInfo: req.TenantInfo,
 		WorkerID:   req.WorkerID,
 		PTOType:    req.PTOType,
@@ -113,7 +114,7 @@ func (s *Service) CheckAvailability(
 		result.BalanceDays = bal.BalanceDays
 	}
 
-	pending, err := s.ledgerRepo.PendingDays(ctx, &workerports.PendingPTODaysRequest{
+	pending, err := s.ledgerRepo.PendingDays(ctx, &ptoledgerports.PendingPTODaysRequest{
 		TenantInfo: req.TenantInfo,
 		WorkerID:   req.WorkerID,
 		PTOType:    req.PTOType,
@@ -199,7 +200,7 @@ func (s *Service) GetBalances(
 		return nil, err
 	}
 
-	balances, err := s.ledgerRepo.ListBalances(ctx, &workerports.ListPTOBalancesRequest{
+	balances, err := s.ledgerRepo.ListBalances(ctx, &ptoledgerports.ListPTOBalancesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
@@ -262,7 +263,7 @@ func (s *Service) GetBalances(
 			lastRollover = bal.LastRolloverKey
 		}
 
-		pending, pErr := s.ledgerRepo.PendingDays(ctx, &workerports.PendingPTODaysRequest{
+		pending, pErr := s.ledgerRepo.PendingDays(ctx, &ptoledgerports.PendingPTODaysRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 			PTOType:    ptoType,

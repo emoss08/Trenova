@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,7 +17,7 @@ import (
 
 func (s *Service) ListCases(
 	ctx context.Context,
-	req *workerports.ListLeaveCasesRequest,
+	req *workerleaveports.ListLeaveCasesRequest,
 ) ([]*workerleave.WorkerLeaveCase, error) {
 	return s.repo.ListCases(ctx, req)
 }
@@ -26,7 +26,7 @@ func (s *Service) ListCases(
 // number of outstanding certifications, not the cases themselves.
 func (s *Service) CountCases(
 	ctx context.Context,
-	req *workerports.ListLeaveCasesRequest,
+	req *workerleaveports.ListLeaveCasesRequest,
 ) (int, error) {
 	return s.repo.CountCases(ctx, req)
 }
@@ -36,7 +36,7 @@ func (s *Service) GetCase(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workerleave.WorkerLeaveCase, error) {
-	return s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
+	return s.repo.GetCaseByID(ctx, &workerleaveports.GetLeaveCaseByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeDocument: true,
@@ -205,7 +205,7 @@ func (s *Service) DecideCase(
 	ctx context.Context,
 	req *DecideCaseRequest,
 ) (*workerleave.WorkerLeaveCase, error) {
-	entity, err := s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
+	entity, err := s.repo.GetCaseByID(ctx, &workerleaveports.GetLeaveCaseByIDRequest{
 		ID:         req.CaseID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -351,7 +351,7 @@ func (s *Service) RecordCertification(
 	ctx context.Context,
 	req *RecordCertificationRequest,
 ) (*workerleave.WorkerLeaveCase, error) {
-	entity, err := s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
+	entity, err := s.repo.GetCaseByID(ctx, &workerleaveports.GetLeaveCaseByIDRequest{
 		ID:         req.CaseID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -401,14 +401,14 @@ func (s *Service) RecordCertification(
 
 func (s *Service) ListEntries(
 	ctx context.Context,
-	req *workerports.ListLeaveEntriesRequest,
+	req *workerleaveports.ListLeaveEntriesRequest,
 ) ([]*workerleave.WorkerLeaveEntry, error) {
 	return s.repo.ListEntries(ctx, req)
 }
 
 func (s *Service) ListEntriesByCaseIDs(
 	ctx context.Context,
-	req *workerports.ListLeaveEntriesByCaseIDsRequest,
+	req *workerleaveports.ListLeaveEntriesByCaseIDsRequest,
 ) (map[pulid.ID][]*workerleave.WorkerLeaveEntry, error) {
 	return s.repo.ListEntriesByCaseIDs(ctx, req)
 }
@@ -510,7 +510,7 @@ func (s *Service) DeleteDay(
 		return err
 	}
 
-	if err = s.repo.DeleteEntry(ctx, &workerports.GetLeaveEntryByIDRequest{
+	if err = s.repo.DeleteEntry(ctx, &workerleaveports.GetLeaveEntryByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -537,7 +537,7 @@ func (s *Service) CaseWorker(
 	tenantInfo pagination.TenantInfo,
 	caseID pulid.ID,
 ) (pulid.ID, error) {
-	found, err := s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
+	found, err := s.repo.GetCaseByID(ctx, &workerleaveports.GetLeaveCaseByIDRequest{
 		ID:         caseID,
 		TenantInfo: tenantInfo,
 	})
@@ -553,7 +553,7 @@ func (s *Service) EntryWorker(
 	tenantInfo pagination.TenantInfo,
 	entryID pulid.ID,
 ) (pulid.ID, error) {
-	found, err := s.repo.GetEntryByID(ctx, &workerports.GetLeaveEntryByIDRequest{
+	found, err := s.repo.GetEntryByID(ctx, &workerleaveports.GetLeaveEntryByIDRequest{
 		ID:         entryID,
 		TenantInfo: tenantInfo,
 	})

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -55,11 +55,14 @@ func (s *Service) ManagerIDs(
 	// through one can say whose authority it used.
 	via := make(map[pulid.ID]pulid.ID, 2)
 
-	delegations, err := s.repo.ListDelegations(ctx, &workerports.ListApprovalDelegationsRequest{
-		TenantInfo: tenantInfo,
-		DelegateID: userID,
-		ActiveAt:   asOf,
-	})
+	delegations, err := s.repo.ListDelegations(
+		ctx,
+		&orgstructureports.ListApprovalDelegationsRequest{
+			TenantInfo: tenantInfo,
+			DelegateID: userID,
+			ActiveAt:   asOf,
+		},
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -136,7 +139,7 @@ func (s *Service) MyTeam(
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
 	includeInactive bool,
-) ([]workerports.TeamMemberRow, error) {
+) ([]orgstructureports.TeamMemberRow, error) {
 	managerIDs, _, err := s.ManagerIDs(
 		ctx,
 		tenantInfo,
@@ -148,7 +151,7 @@ func (s *Service) MyTeam(
 		return nil, err
 	}
 
-	return s.repo.TeamMembers(ctx, &workerports.TeamScopeRequest{
+	return s.repo.TeamMembers(ctx, &orgstructureports.TeamScopeRequest{
 		TenantInfo:      tenantInfo,
 		ManagerIDs:      managerIDs,
 		IncludeInactive: includeInactive,
@@ -157,7 +160,7 @@ func (s *Service) MyTeam(
 
 func (s *Service) ListDelegations(
 	ctx context.Context,
-	req *workerports.ListApprovalDelegationsRequest,
+	req *orgstructureports.ListApprovalDelegationsRequest,
 ) ([]*approvaldelegation.ApprovalDelegation, error) {
 	return s.repo.ListDelegations(ctx, req)
 }
@@ -240,7 +243,7 @@ func (s *Service) checkNoOverlap(
 	ctx context.Context,
 	entity *approvaldelegation.ApprovalDelegation,
 ) error {
-	existing, err := s.repo.ListDelegations(ctx, &workerports.ListApprovalDelegationsRequest{
+	existing, err := s.repo.ListDelegations(ctx, &orgstructureports.ListApprovalDelegationsRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -275,10 +278,13 @@ func (s *Service) RevokeDelegation(
 	id pulid.ID,
 	userID pulid.ID,
 ) (*approvaldelegation.ApprovalDelegation, error) {
-	original, err := s.repo.GetDelegationByID(ctx, &workerports.GetApprovalDelegationByIDRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	original, err := s.repo.GetDelegationByID(
+		ctx,
+		&orgstructureports.GetApprovalDelegationByIDRequest{
+			ID:         id,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

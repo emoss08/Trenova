@@ -95,7 +95,6 @@ debt:
   services/tms/internal/modules/settlement/domain/driverpay: 2225
   services/tms/internal/modules/workforce/app/driverportalservice: 3569
   services/tms/internal/modules/workforce/domain/worker: 14287
-  services/tms/internal/modules/workforce/ports/workerports: 2992
   services/tms/internal/modules/workspace/app/reporting: 3391
   services/tms/internal/modules/workspace/jobs/reportjobs: 3282
   services/tms/internal/seeds/fixtures: 23241

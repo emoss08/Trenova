@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -31,7 +33,10 @@ func (r *Deps) resolveShiftTemplateSelectOptions(
 
 	templates, err := r.SchedulingService.ListTemplates(
 		ctx,
-		&workerports.ListShiftTemplatesRequest{TenantInfo: req.TenantInfo, ActiveOnly: true},
+		&workerscheduleports.ListShiftTemplatesRequest{
+			TenantInfo: req.TenantInfo,
+			ActiveOnly: true,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -91,7 +96,7 @@ func (r *Deps) resolveWorkerPolicySelectOptions(
 
 	policies, err := r.SelfServiceService.ListPolicies(
 		ctx,
-		&workerports.ListWorkerPoliciesRequest{TenantInfo: req.TenantInfo},
+		&selfserviceports.ListWorkerPoliciesRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -152,7 +157,7 @@ func (r *Deps) resolveJobPositionSelectOptions(
 
 	positions, err := r.OrgStructureService.ListPositions(
 		ctx,
-		&workerports.ListJobPositionsRequest{
+		&orgstructureports.ListJobPositionsRequest{
 			TenantInfo:  req.TenantInfo,
 			ActiveOnly:  true,
 			DrivingOnly: selectOptionBoolFilter(req.Filters, "drivingOnly"),

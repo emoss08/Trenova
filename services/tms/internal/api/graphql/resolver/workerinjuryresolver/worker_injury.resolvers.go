@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -148,7 +148,7 @@ func (r *QueryResolver) WorkerInjuries(ctx context.Context, workerID *string, ca
 			"Case year is invalid",
 		)
 	}
-	return r.WorkerInjuryService.ListInjuries(ctx, &workerports.ListWorkerInjuriesRequest{
+	return r.WorkerInjuryService.ListInjuries(ctx, &workersafetyports.ListWorkerInjuriesRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		WorkerID:        id,
 		CaseYear:        int16(year),

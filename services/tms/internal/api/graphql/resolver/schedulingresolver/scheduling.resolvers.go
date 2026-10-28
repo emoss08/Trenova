@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -196,7 +196,7 @@ func (r *QueryResolver) ShiftTemplates(ctx context.Context, activeOnly *bool, li
 		return nil, err
 	}
 
-	return r.SchedulingService.ListTemplates(ctx, &workerports.ListShiftTemplatesRequest{
+	return r.SchedulingService.ListTemplates(ctx, &workerscheduleports.ListShiftTemplatesRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ActiveOnly: base.BoolValue(activeOnly),
 		Limit:      base.IntValue(limit),
@@ -234,7 +234,7 @@ func (r *QueryResolver) WorkerShiftAssignments(ctx context.Context, workerID str
 		return nil, err
 	}
 
-	req := &workerports.ListShiftAssignmentsRequest{
+	req := &workerscheduleports.ListShiftAssignmentsRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		WorkerID:        id,
 		IncludeTemplate: true,
@@ -265,7 +265,7 @@ func (r *QueryResolver) WorkerAvailabilityPreferences(ctx context.Context, worke
 
 	return r.SchedulingService.ListPreferences(
 		ctx,
-		&workerports.ListAvailabilityPreferencesRequest{
+		&workerscheduleports.ListAvailabilityPreferencesRequest{
 			TenantInfo: base.TenantInfo(authCtx),
 			WorkerID:   id,
 		},
@@ -283,7 +283,7 @@ func (r *QueryResolver) ShiftSwapRequests(ctx context.Context, workerID *string,
 		return nil, base.InvalidIDError("workerId", "Worker is invalid")
 	}
 
-	return r.SchedulingService.ListSwaps(ctx, &workerports.ListShiftSwapsRequest{
+	return r.SchedulingService.ListSwaps(ctx, &workerscheduleports.ListShiftSwapsRequest{
 		TenantInfo:     base.TenantInfo(authCtx),
 		WorkerID:       id,
 		OpenOnly:       base.BoolValue(openOnly),

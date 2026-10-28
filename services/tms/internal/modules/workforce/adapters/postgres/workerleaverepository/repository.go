@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerteam"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave/workerleavedb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -44,7 +44,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.WorkerLeaveRepository {
+func New(p Params) workerleaveports.WorkerLeaveRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-leave-repository"),
@@ -116,7 +116,7 @@ func (r *repository) UpdateControl(
 
 // caseFilter is the one place the case predicates live, so a count and a list
 // can never disagree about what they are counting.
-func caseFilter(req *workerports.ListLeaveCasesRequest) []keel.Pred {
+func caseFilter(req *workerleaveports.ListLeaveCasesRequest) []keel.Pred {
 	c := workerleavedb.WorkerLeaveCases
 
 	return []keel.Pred{
@@ -134,7 +134,9 @@ func caseFilter(req *workerports.ListLeaveCasesRequest) []keel.Pred {
 	}
 }
 
-func casesQuery(req *workerports.ListLeaveCasesRequest) *keel.Query[*workerleave.WorkerLeaveCase] {
+func casesQuery(
+	req *workerleaveports.ListLeaveCasesRequest,
+) *keel.Query[*workerleave.WorkerLeaveCase] {
 	c := workerleavedb.WorkerLeaveCases
 	loads := make([]keel.Loader, 0, 3)
 	loads = append(loads, listquery.When(req.IncludeWorker, c.Worker())...)
@@ -149,7 +151,7 @@ func casesQuery(req *workerports.ListLeaveCasesRequest) *keel.Query[*workerleave
 
 func (r *repository) ListCases(
 	ctx context.Context,
-	req *workerports.ListLeaveCasesRequest,
+	req *workerleaveports.ListLeaveCasesRequest,
 ) ([]*workerleave.WorkerLeaveCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*workerleave.WorkerLeaveCase, error) {
 		entities, err := casesQuery(req).List(ctx, r.db.Keel(ctx))
@@ -164,7 +166,7 @@ func (r *repository) ListCases(
 
 func (r *repository) CountCases(
 	ctx context.Context,
-	req *workerports.ListLeaveCasesRequest,
+	req *workerleaveports.ListLeaveCasesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		total, err := workerleavedb.WorkerLeaveCases.Where(caseFilter(req)...).
@@ -180,7 +182,7 @@ func (r *repository) CountCases(
 
 func (r *repository) GetCaseByID(
 	ctx context.Context,
-	req *workerports.GetLeaveCaseByIDRequest,
+	req *workerleaveports.GetLeaveCaseByIDRequest,
 ) (*workerleave.WorkerLeaveCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerleave.WorkerLeaveCase, error) {
 		c := workerleavedb.WorkerLeaveCases
@@ -228,7 +230,7 @@ func (r *repository) UpdateCase(
 
 func (r *repository) ListEntries(
 	ctx context.Context,
-	req *workerports.ListLeaveEntriesRequest,
+	req *workerleaveports.ListLeaveEntriesRequest,
 ) ([]*workerleave.WorkerLeaveEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*workerleave.WorkerLeaveEntry, error) {
 		e := workerleavedb.WorkerLeaveEntries
@@ -251,7 +253,7 @@ func (r *repository) ListEntries(
 
 func (r *repository) ListEntriesByCaseIDs(
 	ctx context.Context,
-	req *workerports.ListLeaveEntriesByCaseIDsRequest,
+	req *workerleaveports.ListLeaveEntriesByCaseIDsRequest,
 ) (map[pulid.ID][]*workerleave.WorkerLeaveEntry, error) {
 	return dbtx.Read(
 		ctx,
@@ -280,7 +282,7 @@ func (r *repository) ListEntriesByCaseIDs(
 
 func (r *repository) GetEntryByID(
 	ctx context.Context,
-	req *workerports.GetLeaveEntryByIDRequest,
+	req *workerleaveports.GetLeaveEntryByIDRequest,
 ) (*workerleave.WorkerLeaveEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerleave.WorkerLeaveEntry, error) {
 		entity, err := workerleavedb.WorkerLeaveEntries.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -322,7 +324,7 @@ func (r *repository) UpdateEntry(
 
 func (r *repository) DeleteEntry(
 	ctx context.Context,
-	req *workerports.GetLeaveEntryByIDRequest,
+	req *workerleaveports.GetLeaveEntryByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		err := workerleavedb.WorkerLeaveEntries.DeleteRow(

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/record"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgholidayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,16 +18,16 @@ import (
 )
 
 type holidayLister struct {
-	workerports.OrgHolidayRepository
+	orgholidayports.OrgHolidayRepository
 
 	mu       sync.Mutex
-	requests []workerports.ListOrgHolidaysRequest
+	requests []orgholidayports.ListOrgHolidaysRequest
 	rows     []*pto.OrgHoliday
 }
 
 func (h *holidayLister) List(
 	_ context.Context,
-	req *workerports.ListOrgHolidaysRequest,
+	req *orgholidayports.ListOrgHolidaysRequest,
 ) ([]*pto.OrgHoliday, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()

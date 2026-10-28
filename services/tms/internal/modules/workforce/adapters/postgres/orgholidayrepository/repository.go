@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto/ptodb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgholidayports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -28,14 +28,14 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.OrgHolidayRepository {
+func New(p Params) orgholidayports.OrgHolidayRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.org-holiday-repository"),
 	}
 }
 
-func listQuery(req *workerports.ListOrgHolidaysRequest) *keel.Query[*pto.OrgHoliday] {
+func listQuery(req *orgholidayports.ListOrgHolidaysRequest) *keel.Query[*pto.OrgHoliday] {
 	h := ptodb.OrgHolidays
 	var window keel.Pred
 	if req.From > 0 || req.To > 0 {
@@ -53,7 +53,7 @@ func listQuery(req *workerports.ListOrgHolidaysRequest) *keel.Query[*pto.OrgHoli
 
 func (r *repository) List(
 	ctx context.Context,
-	req *workerports.ListOrgHolidaysRequest,
+	req *orgholidayports.ListOrgHolidaysRequest,
 ) ([]*pto.OrgHoliday, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*pto.OrgHoliday, error) {
 		entities, err := listQuery(req).All(ctx, r.db.Keel(ctx))
@@ -68,7 +68,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *workerports.GetOrgHolidayByIDRequest,
+	req *orgholidayports.GetOrgHolidayByIDRequest,
 ) (*pto.OrgHoliday, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pto.OrgHoliday, error) {
 		entity, err := ptodb.OrgHolidays.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -108,7 +108,10 @@ func (r *repository) Update(
 	})
 }
 
-func (r *repository) Delete(ctx context.Context, req *workerports.GetOrgHolidayByIDRequest) error {
+func (r *repository) Delete(
+	ctx context.Context,
+	req *orgholidayports.GetOrgHolidayByIDRequest,
+) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		err := ptodb.OrgHolidays.DeleteRow(ctx, r.db.Keel(ctx), &pto.OrgHoliday{ID: req.ID})
 		if err != nil {

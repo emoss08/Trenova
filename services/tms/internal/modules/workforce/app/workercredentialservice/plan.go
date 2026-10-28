@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -43,7 +43,7 @@ func (s *Service) PlanCreate(ctx context.Context, req *CreateRequest) (*CreatePl
 	}
 	entity.CredentialType = credentialType
 
-	held, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
+	held, err := s.repo.ListForWorker(ctx, &workercredentialports.ListWorkerCredentialsRequest{
 		TenantInfo: credentialTenant(&entity),
 		WorkerIDs:  []pulid.ID{entity.WorkerID},
 	})
@@ -73,7 +73,7 @@ func (s *Service) planUpdate(
 	entity *workercredential.WorkerCredential,
 	actor *permissionports.RequestActor,
 ) (*CredentialChange, *workercredential.WorkerCredentialType, error) {
-	original, err := s.repo.GetByID(ctx, &workerports.GetWorkerCredentialByIDRequest{
+	original, err := s.repo.GetByID(ctx, &workercredentialports.GetWorkerCredentialByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: credentialTenant(entity),
 	})

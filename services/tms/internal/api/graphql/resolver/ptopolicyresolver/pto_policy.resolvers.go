@@ -18,7 +18,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/jobs/ptojobs/ptocontract"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -224,7 +225,7 @@ func (r *MutationResolver) RunPTOAccrual(ctx context.Context, input gqlmodel.Run
 			return nil, listErr
 		}
 		for _, view := range balances {
-			if _, rebuildErr := r.PtoLedgerService.RebuildBalance(ctx, &workerports.PTOBalanceKey{
+			if _, rebuildErr := r.PtoLedgerService.RebuildBalance(ctx, &ptoledgerports.PTOBalanceKey{
 				TenantInfo: info,
 				WorkerID:   workerID,
 				PTOType:    view.PTOType,
@@ -290,19 +291,19 @@ func (r *PTOAvailabilityResolver) Message(ctx context.Context, obj *ptoledgerser
 	return stringutils.Ptr(obj.Message), nil
 }
 
-func (r *PTOBalanceSummaryResolver) TotalBalanceDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error) {
+func (r *PTOBalanceSummaryResolver) TotalBalanceDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error) {
 	return base.DecimalString(obj.TotalBalanceDays), nil
 }
 
-func (r *PTOBalanceSummaryResolver) TotalPendingDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error) {
+func (r *PTOBalanceSummaryResolver) TotalPendingDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error) {
 	return base.DecimalString(obj.TotalPendingDays), nil
 }
 
-func (r *PTOBalanceSummaryResolver) AccruedYtdDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error) {
+func (r *PTOBalanceSummaryResolver) AccruedYtdDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error) {
 	return base.DecimalString(obj.AccruedYTDDays), nil
 }
 
-func (r *PTOBalanceSummaryResolver) UsedYtdDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error) {
+func (r *PTOBalanceSummaryResolver) UsedYtdDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error) {
 	return base.DecimalString(obj.UsedYTDDays), nil
 }
 
@@ -379,7 +380,7 @@ func (r *QueryResolver) PTOPolicies(ctx context.Context, input gqlmodel.PTOPolic
 		return nil, err
 	}
 
-	result, err := r.PtoPolicyService.List(ctx, &workerports.ListPTOPoliciesRequest{
+	result, err := r.PtoPolicyService.List(ctx, &ptopolicyports.ListPTOPoliciesRequest{
 		Filter:       connection.Filter,
 		Cursor:       connection.Cursor,
 		Status:       ptoPolicyStatusString(input.Status),
@@ -403,7 +404,7 @@ func (r *QueryResolver) PTOPolicy(ctx context.Context, id string) (*pto.PTOPolic
 		return nil, err
 	}
 
-	return r.PtoPolicyService.Get(ctx, &workerports.GetPTOPolicyByIDRequest{
+	return r.PtoPolicyService.Get(ctx, &ptopolicyports.GetPTOPolicyByIDRequest{
 		ID:           policyID,
 		TenantInfo:   base.TenantInfo(authCtx),
 		IncludeRules: true,
@@ -421,7 +422,7 @@ func (r *QueryResolver) WorkerPTOPolicyAssignments(ctx context.Context, workerID
 		return nil, err
 	}
 
-	return r.PtoPolicyService.ListAssignments(ctx, &workerports.ListPTOAssignmentsRequest{
+	return r.PtoPolicyService.ListAssignments(ctx, &ptopolicyports.ListPTOAssignmentsRequest{
 		TenantInfo:    base.TenantInfo(authCtx),
 		WorkerID:      id,
 		IncludePolicy: true,
@@ -465,7 +466,7 @@ func (r *QueryResolver) WorkerPTOLedger(ctx context.Context, input gqlmodel.Work
 		return nil, err
 	}
 
-	result, err := r.PtoLedgerService.ListLedger(ctx, &workerports.ListPTOLedgerRequest{
+	result, err := r.PtoLedgerService.ListLedger(ctx, &ptoledgerports.ListPTOLedgerRequest{
 		Filter:        connection.Filter,
 		Cursor:        connection.Cursor,
 		WorkerID:      workerIDValue,
@@ -549,7 +550,7 @@ func (r *QueryResolver) PreviewWorkerPTOAccrual(ctx context.Context, workerID st
 	return plannedEntriesToPointers(plan), nil
 }
 
-func (r *QueryResolver) PTOBalanceSummary(ctx context.Context) (*workerports.PTOBalanceSummary, error) {
+func (r *QueryResolver) PTOBalanceSummary(ctx context.Context) (*ptoledgerports.PTOBalanceSummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerPTO, permission.OpRead)
 	if err != nil {
 		return nil, err

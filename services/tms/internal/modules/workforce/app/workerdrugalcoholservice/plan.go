@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,7 +37,7 @@ func (s *Service) PlanCancelTest(
 	id pulid.ID,
 	reason string,
 ) (*TestChange, error) {
-	original, err := s.repo.GetTestByID(ctx, &workerports.GetWorkerDOTTestByIDRequest{
+	original, err := s.repo.GetTestByID(ctx, &workerdotports.GetWorkerDOTTestByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -89,7 +89,7 @@ func (s *Service) PlanFinalizeDraw(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*DrawChange, error) {
-	original, err := s.repo.GetDrawByID(ctx, &workerports.GetDOTRandomDrawByIDRequest{
+	original, err := s.repo.GetDrawByID(ctx, &workerdotports.GetDOTRandomDrawByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -126,7 +126,7 @@ func (s *Service) PlanCancelDraw(
 		)
 	}
 
-	original, err := s.repo.GetDrawByID(ctx, &workerports.GetDOTRandomDrawByIDRequest{
+	original, err := s.repo.GetDrawByID(ctx, &workerdotports.GetDOTRandomDrawByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -148,7 +148,7 @@ func (s *Service) PlanUpdateDrawEntry(
 	ctx context.Context,
 	req *UpdateEntryRequest,
 ) (*EntryChange, error) {
-	original, err := s.repo.GetDrawEntryByID(ctx, &workerports.GetDOTRandomDrawEntryByIDRequest{
+	original, err := s.repo.GetDrawEntryByID(ctx, &workerdotports.GetDOTRandomDrawEntryByIDRequest{
 		ID:         req.EntryID,
 		TenantInfo: req.TenantInfo,
 	})

@@ -3,6 +3,7 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
@@ -118,7 +119,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -1947,7 +1947,7 @@ type BulkUpdateTrailerStatusInput struct {
 
 type BulkWorkerPTOActionInput struct {
 	PTOIds []string                      `json:"ptoIds"`
-	Action workerports.PTOBulkActionType `json:"action"`
+	Action workerptoports.PTOBulkActionType `json:"action"`
 	Reason *string                       `json:"reason,omitempty"`
 }
 

@@ -17,7 +17,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -75,7 +78,7 @@ type BalanceReader interface {
 	Summary(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (*workerports.PTOBalanceSummary, error)
+	) (*ptoledgerports.PTOBalanceSummary, error)
 }
 
 // ReviewCounter is the slice of the review repository the home tile needs: a
@@ -83,7 +86,7 @@ type BalanceReader interface {
 type ReviewCounter interface {
 	CountReviews(
 		ctx context.Context,
-		req *workerports.CountPerformanceReviewsRequest,
+		req *workerreviewports.CountPerformanceReviewsRequest,
 	) (int, error)
 }
 
@@ -93,7 +96,7 @@ type ReviewCounter interface {
 type LeaveCounter interface {
 	CountCases(
 		ctx context.Context,
-		req *workerports.ListLeaveCasesRequest,
+		req *workerleaveports.ListLeaveCasesRequest,
 	) (int, error)
 }
 
@@ -383,7 +386,7 @@ func (s *Service) RosterAttention(
 	var (
 		counts     *workerports.RosterAttention
 		reviews    int
-		ptoTotals  *workerports.PTOBalanceSummary
+		ptoTotals  *ptoledgerports.PTOBalanceSummary
 		leaveCerts int
 	)
 	group, groupCtx := errgroup.WithContext(ctx)
@@ -409,7 +412,7 @@ func (s *Service) RosterAttention(
 		// written and is nobody's queue but its author's.
 		reviews, err = s.reviewCounts.CountReviews(
 			groupCtx,
-			&workerports.CountPerformanceReviewsRequest{
+			&workerreviewports.CountPerformanceReviewsRequest{
 				TenantInfo: tenantInfo,
 				Statuses:   []workerreview.ReviewStatus{workerreview.ReviewStatusSubmitted},
 			},
@@ -426,7 +429,7 @@ func (s *Service) RosterAttention(
 			return nil
 		}
 		var err error
-		leaveCerts, err = s.leave.CountCases(groupCtx, &workerports.ListLeaveCasesRequest{
+		leaveCerts, err = s.leave.CountCases(groupCtx, &workerleaveports.ListLeaveCasesRequest{
 			TenantInfo:                   tenantInfo,
 			CertificationOutstandingOnly: true,
 			ManagerIDs:                   access.LeaveManagerIDs,

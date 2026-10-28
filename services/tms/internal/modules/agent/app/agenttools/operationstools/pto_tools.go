@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 )
 
 const paramPTOID = "ptoId"
@@ -166,7 +166,7 @@ func (t *RejectWorkerPTOTool) Execute(
 
 func (t *RejectWorkerPTOTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*workerports.UpdatePTOStatusRequest, error) {
+) (*workerptoports.UpdatePTOStatusRequest, error) {
 	return ptoDecisionRequest(t, params)
 }
 
@@ -241,7 +241,7 @@ func (t *CancelWorkerPTOTool) Execute(
 
 func (t *CancelWorkerPTOTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*workerports.UpdatePTOStatusRequest, error) {
+) (*workerptoports.UpdatePTOStatusRequest, error) {
 	return ptoDecisionRequest(t, params)
 }
 
@@ -251,7 +251,7 @@ func (t *CancelWorkerPTOTool) request(
 func ptoDecisionRequest(
 	tool agenttoolports.AgentTool,
 	params *agenttoolports.ToolExecuteParams,
-) (*workerports.UpdatePTOStatusRequest, error) {
+) (*workerptoports.UpdatePTOStatusRequest, error) {
 	if err := common.GuardExecute(tool, *params); err != nil {
 		return nil, err
 	}
@@ -276,13 +276,13 @@ func ptoDecisionRequest(
 // defeat the concurrency check it exists to run.
 func ptoStatusRequest(
 	params agenttoolports.ToolExecuteParams,
-) (*workerports.UpdatePTOStatusRequest, error) {
+) (*workerptoports.UpdatePTOStatusRequest, error) {
 	id, err := common.RequirePulid(params.Params, paramPTOID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &workerports.UpdatePTOStatusRequest{
+	return &workerptoports.UpdatePTOStatusRequest{
 		ID:         id,
 		TenantInfo: common.TenantFrom(params),
 		UserID:     params.Actor.UserID,

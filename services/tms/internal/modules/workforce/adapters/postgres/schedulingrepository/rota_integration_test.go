@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/schedulingrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -56,16 +56,23 @@ func TestRotaAssignedDays_CountsLiveAssignmentsPerRosterDay(t *testing.T) {
 	require.NoError(t, workerdb.Workers.Create(data.Ctx(ctx), admin, driver))
 
 	fixture := testutil.SeedShipmentIntegrationFixture(t, ctx, admin, data, tenant)
-	graph := testutil.CreateShipmentGraph(t, ctx, admin, fixture, tenant, testutil.ShipmentGraphParams{
-		BOL:        "BOL-ROTA",
-		ProNumber:  "PRO-ROTA",
-		ShipmentID: pulid.MustNew("shp_"),
-		MoveStatuses: []shipment.MoveStatus{
-			shipment.MoveStatusAssigned,
-			shipment.MoveStatusAssigned,
-			shipment.MoveStatusAssigned,
+	graph := testutil.CreateShipmentGraph(
+		t,
+		ctx,
+		admin,
+		fixture,
+		tenant,
+		testutil.ShipmentGraphParams{
+			BOL:        "BOL-ROTA",
+			ProNumber:  "PRO-ROTA",
+			ShipmentID: pulid.MustNew("shp_"),
+			MoveStatuses: []shipment.MoveStatus{
+				shipment.MoveStatusAssigned,
+				shipment.MoveStatusAssigned,
+				shipment.MoveStatusAssigned,
+			},
 		},
-	})
+	)
 
 	const day = int64(1_767_225_600)
 	archivedAt := day + 7_200
@@ -92,15 +99,23 @@ func TestRotaAssignedDays_CountsLiveAssignmentsPerRosterDay(t *testing.T) {
 	})
 	rows, err := repo.RotaAssignedDays(
 		dbscope.WithTenant(ctx, tenant.DBTenant()),
-		&workerports.RotaQuery{TenantInfo: tenant, WeekStart: day - 86_400, WeekEnd: day + 6*86_400},
+		&workerscheduleports.RotaQuery{
+			TenantInfo: tenant,
+			WeekStart:  day - 86_400,
+			WeekEnd:    day + 6*86_400,
+		},
 	)
 	require.NoError(t, err)
 
-	mine := make([]workerports.RotaDayRow, 0, 1)
+	mine := make([]workerscheduleports.RotaDayRow, 0, 1)
 	for _, row := range rows {
 		if row.WorkerID == driver.ID {
 			mine = append(mine, row)
 		}
 	}
-	assert.Equal(t, []workerports.RotaDayRow{{WorkerID: driver.ID, DayStart: day, Count: 2}}, mine)
+	assert.Equal(
+		t,
+		[]workerscheduleports.RotaDayRow{{WorkerID: driver.ID, DayStart: day, Count: 2}},
+		mine,
+	)
 }

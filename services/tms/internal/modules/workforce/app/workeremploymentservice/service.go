@@ -27,7 +27,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -61,7 +67,7 @@ type WorkerUpdater interface {
 type PTOPolicyManager interface {
 	ListAssignments(
 		ctx context.Context,
-		req *workerports.ListPTOAssignmentsRequest,
+		req *ptopolicyports.ListPTOAssignmentsRequest,
 	) ([]*pto.WorkerPTOPolicyAssignment, error)
 	EndAssignment(
 		ctx context.Context,
@@ -102,39 +108,39 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Repo          workerports.WorkerEmploymentEventRepository
+	Repo          workeremploymentports.WorkerEmploymentEventRepository
 	WorkerRepo    workerports.WorkerRepository
 	FleetCodeRepo fleetcodeports.FleetCodeRepository
 	DocumentRepo  documentports.DocumentRepository
 	PayAssignRepo driverpayports.WorkerPayAssignmentRepository
 	Workers       *workerservice.Service
 	PTOPolicies   *ptopolicyservice.Service
-	PTO           workerports.WorkerPTOService
+	PTO           workerptoports.WorkerPTOService
 	PTOLedger     *ptoledgerservice.Service
 	DriverPay     *driverpayservice.Service
 	AuditService  auditports.AuditService
-	Realtime      realtimeports.RealtimeService `optional:"true"`
-	Checklists    workerports.ChecklistSpawner  `optional:"true"`
-	Training      workerports.TrainingAssigner  `optional:"true"`
+	Realtime      realtimeports.RealtimeService         `optional:"true"`
+	Checklists    workerchecklistports.ChecklistSpawner `optional:"true"`
+	Training      workertrainingports.TrainingAssigner  `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
-	repo          workerports.WorkerEmploymentEventRepository
+	repo          workeremploymentports.WorkerEmploymentEventRepository
 	workerRepo    workerports.WorkerRepository
 	fleetCodeRepo fleetcodeports.FleetCodeRepository
 	documentRepo  documentports.DocumentRepository
 	payAssignRepo driverpayports.WorkerPayAssignmentRepository
 	workers       WorkerUpdater
 	ptoPolicies   PTOPolicyManager
-	pto           workerports.WorkerPTOService
+	pto           workerptoports.WorkerPTOService
 	ptoLedger     PTOSettler
 	driverPay     PayAssignmentManager
 	auditService  auditports.AuditService
 	realtime      realtimeports.RealtimeService
-	checklists    workerports.ChecklistSpawner
-	training      workerports.TrainingAssigner
-	portal        workerports.PortalAccessRevoker
+	checklists    workerchecklistports.ChecklistSpawner
+	training      workertrainingports.TrainingAssigner
+	portal        portalaccessports.PortalAccessRevoker
 }
 
 func New(p Params) *Service {
@@ -160,21 +166,21 @@ func New(p Params) *Service {
 // Deps lets tests assemble a service from narrow fakes without Uber FX.
 type Deps struct {
 	Logger        *zap.Logger
-	Repo          workerports.WorkerEmploymentEventRepository
+	Repo          workeremploymentports.WorkerEmploymentEventRepository
 	WorkerRepo    workerports.WorkerRepository
 	FleetCodeRepo fleetcodeports.FleetCodeRepository
 	DocumentRepo  documentports.DocumentRepository
 	PayAssignRepo driverpayports.WorkerPayAssignmentRepository
 	Workers       WorkerUpdater
 	PTOPolicies   PTOPolicyManager
-	PTO           workerports.WorkerPTOService
+	PTO           workerptoports.WorkerPTOService
 	PTOLedger     PTOSettler
 	DriverPay     PayAssignmentManager
 	AuditService  auditports.AuditService
 	Realtime      realtimeports.RealtimeService
-	Checklists    workerports.ChecklistSpawner
-	Training      workerports.TrainingAssigner
-	Portal        workerports.PortalAccessRevoker
+	Checklists    workerchecklistports.ChecklistSpawner
+	Training      workertrainingports.TrainingAssigner
+	Portal        portalaccessports.PortalAccessRevoker
 }
 
 func NewWithDeps(d Deps) *Service {
@@ -205,7 +211,7 @@ func NewWithDeps(d Deps) *Service {
 // SetPortalRevoker breaks the construction cycle between this service and the
 // driver portal service, which reaches back here through the safety service to
 // record a termination. The revoker arrives after both are built.
-func (s *Service) SetPortalRevoker(revoker workerports.PortalAccessRevoker) {
+func (s *Service) SetPortalRevoker(revoker portalaccessports.PortalAccessRevoker) {
 	s.portal = revoker
 }
 
@@ -215,7 +221,7 @@ func (s *Service) List(
 	workerID pulid.ID,
 	kinds []employment.EmploymentEventKind,
 ) ([]*employment.WorkerEmploymentEvent, error) {
-	return s.repo.List(ctx, &workerports.ListWorkerEmploymentEventsRequest{
+	return s.repo.List(ctx, &workeremploymentports.ListWorkerEmploymentEventsRequest{
 		TenantInfo:      tenantInfo,
 		WorkerID:        workerID,
 		Kinds:           kinds,
@@ -229,7 +235,7 @@ func (s *Service) Get(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*employment.WorkerEmploymentEvent, error) {
-	return s.repo.GetByID(ctx, &workerports.GetWorkerEmploymentEventByIDRequest{
+	return s.repo.GetByID(ctx, &workeremploymentports.GetWorkerEmploymentEventByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeDocument: true,
@@ -302,7 +308,7 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 		return nil, err
 	}
 
-	history, err := s.repo.List(ctx, &workerports.ListWorkerEmploymentEventsRequest{
+	history, err := s.repo.List(ctx, &workeremploymentports.ListWorkerEmploymentEventsRequest{
 		TenantInfo: req.TenantInfo,
 		WorkerID:   req.WorkerID,
 		Ascending:  true,
@@ -733,10 +739,13 @@ func (s *Service) assignTraining(ctx context.Context, req *RecordRequest, log *z
 }
 
 func (s *Service) endPTOAssignment(ctx context.Context, req *RecordRequest) (bool, error) {
-	assignments, err := s.ptoPolicies.ListAssignments(ctx, &workerports.ListPTOAssignmentsRequest{
-		TenantInfo: req.TenantInfo,
-		WorkerID:   req.WorkerID,
-	})
+	assignments, err := s.ptoPolicies.ListAssignments(
+		ctx,
+		&ptopolicyports.ListPTOAssignmentsRequest{
+			TenantInfo: req.TenantInfo,
+			WorkerID:   req.WorkerID,
+		},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -803,7 +812,7 @@ func (s *Service) cancelUpcomingPTO(
 ) (int, error) {
 	cancelled := 0
 	for _, status := range []worker.PTOStatus{worker.PTOStatusApproved, worker.PTOStatusRequested} {
-		result, err := s.pto.List(ctx, &workerports.ListPTORequest{
+		result, err := s.pto.List(ctx, &workerptoports.ListPTORequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: req.TenantInfo,
 				Pagination: pagination.Info{Limit: upcomingPTOPageSize},
@@ -816,7 +825,7 @@ func (s *Service) cancelUpcomingPTO(
 			return cancelled, err
 		}
 		for _, pto := range result.Items {
-			if _, err = s.pto.Cancel(ctx, &workerports.UpdatePTOStatusRequest{
+			if _, err = s.pto.Cancel(ctx, &workerptoports.UpdatePTOStatusRequest{
 				ID:              pto.ID,
 				TenantInfo:      req.TenantInfo,
 				Status:          worker.PTOStatusCancelled,
@@ -856,7 +865,7 @@ func (s *Service) Amend(
 ) (*employment.WorkerEmploymentEvent, error) {
 	log := s.l.With(zap.String("operation", "Amend"), zap.String("id", req.ID.String()))
 
-	original, err := s.repo.GetByID(ctx, &workerports.GetWorkerEmploymentEventByIDRequest{
+	original, err := s.repo.GetByID(ctx, &workeremploymentports.GetWorkerEmploymentEventByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})

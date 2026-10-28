@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation/approvaldelegationdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -43,7 +43,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.OrgStructureRepository {
+func New(p Params) orgstructureports.OrgStructureRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.org-structure-repository"),
@@ -59,7 +59,7 @@ func limitOr(requested, fallback int) int {
 
 func (r *repository) ListPositions(
 	ctx context.Context,
-	req *workerports.ListJobPositionsRequest,
+	req *orgstructureports.ListJobPositionsRequest,
 ) ([]*worker.JobPosition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.JobPosition, error) {
 		jp := workerdb.JobPositions
@@ -86,7 +86,7 @@ func (r *repository) ListPositions(
 
 func (r *repository) GetPositionByID(
 	ctx context.Context,
-	req *workerports.GetJobPositionByIDRequest,
+	req *orgstructureports.GetJobPositionByIDRequest,
 ) (*worker.JobPosition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.JobPosition, error) {
 		jp := workerdb.JobPositions
@@ -157,7 +157,7 @@ func (r *repository) CountPositionHolders(
 
 func (r *repository) ListDelegations(
 	ctx context.Context,
-	req *workerports.ListApprovalDelegationsRequest,
+	req *orgstructureports.ListApprovalDelegationsRequest,
 ) ([]*approvaldelegation.ApprovalDelegation, error) {
 	return dbtx.Read(
 		ctx,
@@ -197,7 +197,7 @@ func (r *repository) ListDelegations(
 
 func (r *repository) GetDelegationByID(
 	ctx context.Context,
-	req *workerports.GetApprovalDelegationByIDRequest,
+	req *orgstructureports.GetApprovalDelegationByIDRequest,
 ) (*approvaldelegation.ApprovalDelegation, error) {
 	return dbtx.Read(
 		ctx,

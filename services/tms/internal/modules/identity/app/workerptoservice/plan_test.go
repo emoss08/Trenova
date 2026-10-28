@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,7 +35,7 @@ func TestPlanCreate_CountsTheDaysWithoutFiling(t *testing.T) {
 	overlapping := &Service{
 		l: zap.NewNop(),
 		repo: &fakePTORepo{
-			hasOverlap: func(context.Context, *workerports.PTOOverlapRequest) (bool, error) {
+			hasOverlap: func(context.Context, *workerptoports.PTOOverlapRequest) (bool, error) {
 				return true, nil
 			},
 		},
@@ -52,7 +52,7 @@ func TestPlanUpdate_OnlyWhileAwaitingADecision(t *testing.T) {
 	svc := &Service{
 		l: zap.NewNop(),
 		repo: &fakePTORepo{
-			getByID: func(context.Context, *workerports.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
+			getByID: func(context.Context, *workerptoports.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
 				copied := *current
 				return &copied, nil
 			},

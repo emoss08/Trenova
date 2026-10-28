@@ -18,7 +18,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/readscope"
@@ -48,7 +49,7 @@ func (g *teamLeaveGrant) Check(
 
 // teamStructure is a reporting line: the manager answers for members.
 type teamStructure struct {
-	workerports.OrgStructureRepository
+	orgstructureports.OrgStructureRepository
 
 	manager pulid.ID
 	members map[pulid.ID]bool
@@ -56,7 +57,7 @@ type teamStructure struct {
 
 func (s *teamStructure) ListDelegations(
 	context.Context,
-	*workerports.ListApprovalDelegationsRequest,
+	*orgstructureports.ListApprovalDelegationsRequest,
 ) ([]*approvaldelegation.ApprovalDelegation, error) {
 	return nil, nil
 }
@@ -73,7 +74,7 @@ func (s *teamStructure) ManagesWorker(
 // teamLeaveCases holds one case per worker and narrows to the team the way
 // the repository's workerteam filter does.
 type teamLeaveCases struct {
-	workerports.WorkerLeaveRepository
+	workerleaveports.WorkerLeaveRepository
 
 	cases   []*workerleave.WorkerLeaveCase
 	team    *teamStructure
@@ -84,7 +85,7 @@ type teamLeaveCases struct {
 
 func (r *teamLeaveCases) ListCases(
 	_ context.Context,
-	req *workerports.ListLeaveCasesRequest,
+	req *workerleaveports.ListLeaveCasesRequest,
 ) ([]*workerleave.WorkerLeaveCase, error) {
 	r.mu.Lock()
 	r.scopes = append(r.scopes, req.ManagerIDs)

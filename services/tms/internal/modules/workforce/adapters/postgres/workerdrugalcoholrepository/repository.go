@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot/workerdotdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -53,7 +54,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.WorkerDrugAlcoholRepository {
+func New(p Params) workerdotports.WorkerDrugAlcoholRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-drug-alcohol-repository"),
@@ -84,7 +85,9 @@ func testLoads(includeWorker, includeDocument, includeActors bool) []keel.Loader
 	return append(loads, listquery.When(includeActors, t.OrderedBy(), t.RecordedBy())...)
 }
 
-func testsQuery(req *workerports.ListWorkerDOTTestsRequest) *keel.Query[*workerdot.WorkerDOTTest] {
+func testsQuery(
+	req *workerdotports.ListWorkerDOTTestsRequest,
+) *keel.Query[*workerdot.WorkerDOTTest] {
 	t := workerdotdb.WorkerDOTTests
 
 	return t.Where(
@@ -105,7 +108,7 @@ func testsQuery(req *workerports.ListWorkerDOTTestsRequest) *keel.Query[*workerd
 
 func (r *repository) ListTests(
 	ctx context.Context,
-	req *workerports.ListWorkerDOTTestsRequest,
+	req *workerdotports.ListWorkerDOTTestsRequest,
 ) ([]*workerdot.WorkerDOTTest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*workerdot.WorkerDOTTest, error) {
 		entities, err := testsQuery(req).List(ctx, r.db.Keel(ctx))
@@ -120,7 +123,7 @@ func (r *repository) ListTests(
 
 func (r *repository) GetTestByID(
 	ctx context.Context,
-	req *workerports.GetWorkerDOTTestByIDRequest,
+	req *workerdotports.GetWorkerDOTTestByIDRequest,
 ) (*workerdot.WorkerDOTTest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerdot.WorkerDOTTest, error) {
 		t := workerdotdb.WorkerDOTTests
@@ -165,7 +168,7 @@ func (r *repository) UpdateTest(
 
 func (r *repository) ListViolations(
 	ctx context.Context,
-	req *workerports.ListWorkerDOTViolationsRequest,
+	req *workerdotports.ListWorkerDOTViolationsRequest,
 ) ([]*workerdot.WorkerDOTViolation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*workerdot.WorkerDOTViolation, error) {
 		v := workerdotdb.WorkerDOTViolations
@@ -190,7 +193,7 @@ func (r *repository) ListViolations(
 
 func (r *repository) GetViolationByID(
 	ctx context.Context,
-	req *workerports.GetWorkerDOTViolationByIDRequest,
+	req *workerdotports.GetWorkerDOTViolationByIDRequest,
 ) (*workerdot.WorkerDOTViolation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerdot.WorkerDOTViolation, error) {
 		v := workerdotdb.WorkerDOTViolations
@@ -260,7 +263,7 @@ func (r *repository) UpdateViolation(
 
 func (r *repository) ListQueries(
 	ctx context.Context,
-	req *workerports.ListClearinghouseQueriesRequest,
+	req *workerdotports.ListClearinghouseQueriesRequest,
 ) ([]*workerdot.WorkerClearinghouseQuery, error) {
 	return dbtx.Read(
 		ctx,
@@ -286,7 +289,7 @@ func (r *repository) ListQueries(
 
 func (r *repository) GetQueryByID(
 	ctx context.Context,
-	req *workerports.GetClearinghouseQueryByIDRequest,
+	req *workerdotports.GetClearinghouseQueryByIDRequest,
 ) (*workerdot.WorkerClearinghouseQuery, error) {
 	return dbtx.Read(
 		ctx,
@@ -342,7 +345,7 @@ func (r *repository) UpdateQuery(
 
 func (r *repository) ListPools(
 	ctx context.Context,
-	req *workerports.ListDOTRandomPoolsRequest,
+	req *workerdotports.ListDOTRandomPoolsRequest,
 ) (*pagination.CursorListResult[*workerdot.DOTRandomPool], error) {
 	return dbtx.Read(
 		ctx,
@@ -373,7 +376,7 @@ func (r *repository) ListPools(
 
 func (r *repository) GetPoolByID(
 	ctx context.Context,
-	req *workerports.GetDOTRandomPoolByIDRequest,
+	req *workerdotports.GetDOTRandomPoolByIDRequest,
 ) (*workerdot.DOTRandomPool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerdot.DOTRandomPool, error) {
 		entity, err := workerdotdb.DOTRandomPools.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -406,7 +409,7 @@ func (r *repository) GetDefaultPool(
 
 func (r *repository) PoolCodeExists(
 	ctx context.Context,
-	req *workerports.DOTRandomPoolCodeExistsRequest,
+	req *workerdotports.DOTRandomPoolCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		p := workerdotdb.DOTRandomPools
@@ -473,7 +476,7 @@ func (r *repository) ClearDefaultPool(
 
 func (r *repository) ListDraws(
 	ctx context.Context,
-	req *workerports.ListDOTRandomDrawsRequest,
+	req *workerdotports.ListDOTRandomDrawsRequest,
 ) ([]*workerdot.DOTRandomDraw, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*workerdot.DOTRandomDraw, error) {
 		d := workerdotdb.DOTRandomDraws
@@ -494,7 +497,7 @@ func (r *repository) ListDraws(
 	})
 }
 
-func drawLoads(req *workerports.GetDOTRandomDrawByIDRequest) []keel.Loader {
+func drawLoads(req *workerdotports.GetDOTRandomDrawByIDRequest) []keel.Loader {
 	d := workerdotdb.DOTRandomDraws
 	loads := listquery.When(req.IncludePool, d.Pool())
 	if !req.IncludeEntries {
@@ -509,7 +512,7 @@ func drawLoads(req *workerports.GetDOTRandomDrawByIDRequest) []keel.Loader {
 
 func (r *repository) GetDrawByID(
 	ctx context.Context,
-	req *workerports.GetDOTRandomDrawByIDRequest,
+	req *workerdotports.GetDOTRandomDrawByIDRequest,
 ) (*workerdot.DOTRandomDraw, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerdot.DOTRandomDraw, error) {
 		d := workerdotdb.DOTRandomDraws
@@ -526,7 +529,7 @@ func (r *repository) GetDrawByID(
 
 func (r *repository) GetDrawByPeriod(
 	ctx context.Context,
-	req *workerports.GetDOTRandomDrawByPeriodRequest,
+	req *workerdotports.GetDOTRandomDrawByPeriodRequest,
 ) (*workerdot.DOTRandomDraw, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerdot.DOTRandomDraw, error) {
 		d := workerdotdb.DOTRandomDraws
@@ -591,7 +594,9 @@ func (r *repository) UpdateDraw(
 	})
 }
 
-func poolCandidatesQuery(req *workerports.ListPoolCandidatesRequest) *keel.Query[*worker.Worker] {
+func poolCandidatesQuery(
+	req *workerdotports.ListPoolCandidatesRequest,
+) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
 	driverTypes := make([]worker.DriverType, 0, len(req.DriverTypes))
@@ -611,7 +616,7 @@ func poolCandidatesQuery(req *workerports.ListPoolCandidatesRequest) *keel.Query
 
 func (r *repository) ListPoolCandidates(
 	ctx context.Context,
-	req *workerports.ListPoolCandidatesRequest,
+	req *workerdotports.ListPoolCandidatesRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
 		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), poolCandidatesQuery(req))
@@ -625,7 +630,7 @@ func (r *repository) ListPoolCandidates(
 }
 
 func drawEntriesQuery(
-	req *workerports.ListDOTRandomDrawEntriesRequest,
+	req *workerdotports.ListDOTRandomDrawEntriesRequest,
 ) *keel.Query[*workerdot.DOTRandomDrawEntry] {
 	e := workerdotdb.DOTRandomDrawEntries
 	loads := listquery.When(req.IncludeWorker, e.Worker())
@@ -645,7 +650,7 @@ func drawEntriesQuery(
 
 func (r *repository) ListDrawEntries(
 	ctx context.Context,
-	req *workerports.ListDOTRandomDrawEntriesRequest,
+	req *workerdotports.ListDOTRandomDrawEntriesRequest,
 ) ([]*workerdot.DOTRandomDrawEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*workerdot.DOTRandomDrawEntry, error) {
 		entities, err := drawEntriesQuery(req).All(ctx, r.db.Keel(ctx))
@@ -660,7 +665,7 @@ func (r *repository) ListDrawEntries(
 
 func (r *repository) GetDrawEntryByID(
 	ctx context.Context,
-	req *workerports.GetDOTRandomDrawEntryByIDRequest,
+	req *workerdotports.GetDOTRandomDrawEntryByIDRequest,
 ) (*workerdot.DOTRandomDrawEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerdot.DOTRandomDrawEntry, error) {
 		entity, err := workerdotdb.DOTRandomDrawEntries.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -688,7 +693,7 @@ func (r *repository) UpdateDrawEntry(
 
 func (r *repository) UpdateProfileRollup(
 	ctx context.Context,
-	req *workerports.UpdateDrugAlcoholRollupRequest,
+	req *workerdotports.UpdateDrugAlcoholRollupRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		wp := workerdb.WorkerProfiles
@@ -711,7 +716,7 @@ func (r *repository) UpdateProfileRollup(
 }
 
 func clearinghouseDueQuery(
-	req *workerports.ListWorkersWithClearinghouseDueRequest,
+	req *workerdotports.ListWorkersWithClearinghouseDueRequest,
 ) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
@@ -736,7 +741,7 @@ func clearinghouseDueQuery(
 
 func (r *repository) ListWorkersWithClearinghouseDue(
 	ctx context.Context,
-	req *workerports.ListWorkersWithClearinghouseDueRequest,
+	req *workerdotports.ListWorkersWithClearinghouseDueRequest,
 ) ([]workerports.WorkerTenantRef, error) {
 	ctx = dbscope.WithSystem(
 		ctx,

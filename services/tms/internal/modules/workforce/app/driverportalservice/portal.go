@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/driverportalports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -163,7 +163,7 @@ func (s *Service) MyLoads(
 		}
 	}
 
-	assignments, err := s.portalRepo.ListWorkerLoads(ctx, &workerports.ListWorkerLoadsRequest{
+	assignments, err := s.portalRepo.ListWorkerLoads(ctx, &portalaccessports.ListWorkerLoadsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   wrk.ID,
 		Statuses:   statuses,

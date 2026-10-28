@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -30,7 +31,7 @@ func (s *Service) prepareRecord(
 		entity.CaseYear = yearOf(entity.OccurredAt)
 	}
 	if entity.CaseNumber <= 0 {
-		next, err := s.repo.NextCaseNumber(ctx, &workerports.NextCaseNumberRequest{
+		next, err := s.repo.NextCaseNumber(ctx, &workersafetyports.NextCaseNumberRequest{
 			TenantInfo: tenantInfo,
 			CaseYear:   entity.CaseYear,
 		})
@@ -58,7 +59,7 @@ func (s *Service) PlanUpdateInjury(
 	ctx context.Context,
 	req *UpdateInjuryRequest,
 ) (*InjuryChange, error) {
-	original, err := s.repo.GetInjuryByID(ctx, &workerports.GetWorkerInjuryByIDRequest{
+	original, err := s.repo.GetInjuryByID(ctx, &workersafetyports.GetWorkerInjuryByIDRequest{
 		ID:         req.InjuryID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -78,7 +79,7 @@ func (s *Service) PlanDeleteInjury(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workersafety.WorkerInjury, error) {
-	return s.repo.GetInjuryByID(ctx, &workerports.GetWorkerInjuryByIDRequest{
+	return s.repo.GetInjuryByID(ctx, &workersafetyports.GetWorkerInjuryByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})

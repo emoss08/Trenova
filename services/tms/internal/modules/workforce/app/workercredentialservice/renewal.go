@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -75,7 +75,7 @@ func (s *Service) planRenewal(
 			fmt.Sprintf("Ask for at most %d credentials at a time", maxRenewalCredentials))
 	}
 
-	held, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
+	held, err := s.repo.ListForWorker(ctx, &workercredentialports.ListWorkerCredentialsRequest{
 		TenantInfo:  req.TenantInfo,
 		WorkerIDs:   []pulid.ID{req.WorkerID},
 		IncludeType: true,

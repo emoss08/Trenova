@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/timesheetports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +21,7 @@ import (
 const day = int64(86400)
 
 type fakeTimesheetRepo struct {
-	workerports.TimesheetRepository
+	timesheetports.TimesheetRepository
 
 	openEntry  *timesheet.TimeClockEntry
 	entries    []*timesheet.TimeClockEntry
@@ -31,7 +33,7 @@ type fakeTimesheetRepo struct {
 	stampCount int
 	cleared    int
 	deleted    []pulid.ID
-	leave      []workerports.RotaRangeRow
+	leave      []workerscheduleports.RotaRangeRow
 }
 
 func (r *fakeTimesheetRepo) GetOpenEntry(
@@ -60,7 +62,7 @@ func (r *fakeTimesheetRepo) UpdateEntry(
 
 func (r *fakeTimesheetRepo) GetEntryByID(
 	_ context.Context,
-	req *workerports.GetTimeClockEntryByIDRequest,
+	req *timesheetports.GetTimeClockEntryByIDRequest,
 ) (*timesheet.TimeClockEntry, error) {
 	for _, entry := range r.entries {
 		if entry.ID == req.ID {
@@ -72,7 +74,7 @@ func (r *fakeTimesheetRepo) GetEntryByID(
 
 func (r *fakeTimesheetRepo) DeleteEntry(
 	_ context.Context,
-	req *workerports.GetTimeClockEntryByIDRequest,
+	req *timesheetports.GetTimeClockEntryByIDRequest,
 ) error {
 	r.deleted = append(r.deleted, req.ID)
 	return nil
@@ -80,7 +82,7 @@ func (r *fakeTimesheetRepo) DeleteEntry(
 
 func (r *fakeTimesheetRepo) ListEntries(
 	_ context.Context,
-	_ *workerports.ListTimeClockEntriesRequest,
+	_ *timesheetports.ListTimeClockEntriesRequest,
 ) ([]*timesheet.TimeClockEntry, error) {
 	return r.entries, nil
 }
@@ -99,7 +101,7 @@ func (r *fakeTimesheetRepo) GetOrCreateTimesheet(
 
 func (r *fakeTimesheetRepo) GetTimesheetByID(
 	_ context.Context,
-	_ *workerports.GetTimesheetByIDRequest,
+	_ *timesheetports.GetTimesheetByIDRequest,
 ) (*timesheet.Timesheet, error) {
 	return r.sheet, nil
 }
@@ -128,13 +130,13 @@ func (r *fakeTimesheetRepo) ApprovedLeaveRanges(
 	_ pagination.TenantInfo,
 	_ pulid.ID,
 	_, _ int64,
-) ([]workerports.RotaRangeRow, error) {
+) ([]workerscheduleports.RotaRangeRow, error) {
 	return r.leave, nil
 }
 
 func (r *fakeTimesheetRepo) ListTimesheets(
 	_ context.Context,
-	_ *workerports.ListTimesheetsRequest,
+	_ *timesheetports.ListTimesheetsRequest,
 ) ([]*timesheet.Timesheet, error) {
 	return r.sheets, nil
 }
@@ -158,14 +160,14 @@ func (r *fakeTimesheetRepo) UpdateExport(
 
 func (r *fakeTimesheetRepo) GetExportByID(
 	_ context.Context,
-	_ *workerports.GetPayrollExportByIDRequest,
+	_ *timesheetports.GetPayrollExportByIDRequest,
 ) (*timesheet.PayrollExport, error) {
 	return r.export, nil
 }
 
 func (r *fakeTimesheetRepo) StampExport(
 	_ context.Context,
-	req *workerports.StampExportRequest,
+	req *timesheetports.StampExportRequest,
 ) (int, error) {
 	r.stamped = req.TimesheetIDs
 	if r.stampCount > 0 {
@@ -687,7 +689,7 @@ func TestClockOut_CountsApprovedLeaveInsideTheWeek(t *testing.T) {
 		},
 		entries: []*timesheet.TimeClockEntry{entry(8, 17)},
 		// Friday before the week through the Monday of it: one day inside.
-		leave: []workerports.RotaRangeRow{{
+		leave: []workerscheduleports.RotaRangeRow{{
 			WorkerID: "wrk_1",
 			StartsAt: weekStart() - 2*day,
 			EndsAt:   weekStart() + day,

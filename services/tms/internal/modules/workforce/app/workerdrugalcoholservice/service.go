@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -40,7 +41,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.WorkerDrugAlcoholRepository
+	Repo         workerdotports.WorkerDrugAlcoholRepository
 	WorkerRepo   workerports.WorkerRepository
 	AuditService auditports.AuditService
 	Realtime     realtimeports.RealtimeService `optional:"true"`
@@ -48,7 +49,7 @@ type Params struct {
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.WorkerDrugAlcoholRepository
+	repo         workerdotports.WorkerDrugAlcoholRepository
 	workerRepo   workerports.WorkerRepository
 	auditService auditports.AuditService
 	realtime     realtimeports.RealtimeService
@@ -67,7 +68,7 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         workerports.WorkerDrugAlcoholRepository
+	Repo         workerdotports.WorkerDrugAlcoholRepository
 	WorkerRepo   workerports.WorkerRepository
 	AuditService auditports.AuditService
 }
@@ -154,7 +155,7 @@ func (s *Service) Standing(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (workerdot.DrugAlcoholStanding, error) {
-	tests, err := s.repo.ListTests(ctx, &workerports.ListWorkerDOTTestsRequest{
+	tests, err := s.repo.ListTests(ctx, &workerdotports.ListWorkerDOTTestsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
@@ -167,7 +168,7 @@ func (s *Service) Standing(
 		return workerdot.DrugAlcoholStanding{}, err
 	}
 
-	queries, err := s.repo.ListQueries(ctx, &workerports.ListClearinghouseQueriesRequest{
+	queries, err := s.repo.ListQueries(ctx, &workerdotports.ListClearinghouseQueriesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
@@ -195,10 +196,10 @@ func (s *Service) RefreshRollup(
 		return workerdot.DrugAlcoholStanding{}, err
 	}
 
-	if err = s.repo.UpdateProfileRollup(ctx, &workerports.UpdateDrugAlcoholRollupRequest{
+	if err = s.repo.UpdateProfileRollup(ctx, &workerdotports.UpdateDrugAlcoholRollupRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
-		Rollup: workerports.DrugAlcoholRollup{
+		Rollup: workerdotports.DrugAlcoholRollup{
 			Status:                    standing.Status,
 			ReturnToDuty:              standing.ReturnToDuty,
 			LastClearinghouseQueryAt:  standing.LastClearinghouseQueryAt,

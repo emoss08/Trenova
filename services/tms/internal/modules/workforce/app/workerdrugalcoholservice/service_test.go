@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -32,7 +33,7 @@ type fakeRepo struct {
 	pools      map[pulid.ID]*workerdot.DOTRandomPool
 	defaults   *workerdot.DOTRandomPool
 	candidates []pulid.ID
-	rollups    []workerports.DrugAlcoholRollup
+	rollups    []workerdotports.DrugAlcoholRollup
 }
 
 func newFakeRepo() *fakeRepo {
@@ -48,7 +49,7 @@ func newFakeRepo() *fakeRepo {
 
 func (f *fakeRepo) ListTests(
 	_ context.Context,
-	req *workerports.ListWorkerDOTTestsRequest,
+	req *workerdotports.ListWorkerDOTTestsRequest,
 ) ([]*workerdot.WorkerDOTTest, error) {
 	out := make([]*workerdot.WorkerDOTTest, 0, len(f.tests))
 	for _, test := range f.tests {
@@ -65,7 +66,7 @@ func (f *fakeRepo) ListTests(
 
 func (f *fakeRepo) GetTestByID(
 	_ context.Context,
-	req *workerports.GetWorkerDOTTestByIDRequest,
+	req *workerdotports.GetWorkerDOTTestByIDRequest,
 ) (*workerdot.WorkerDOTTest, error) {
 	test, ok := f.tests[req.ID]
 	if !ok {
@@ -95,7 +96,7 @@ func (f *fakeRepo) UpdateTest(
 
 func (f *fakeRepo) ListViolations(
 	_ context.Context,
-	req *workerports.ListWorkerDOTViolationsRequest,
+	req *workerdotports.ListWorkerDOTViolationsRequest,
 ) ([]*workerdot.WorkerDOTViolation, error) {
 	out := make([]*workerdot.WorkerDOTViolation, 0, len(f.violations))
 	for _, violation := range f.violations {
@@ -109,7 +110,7 @@ func (f *fakeRepo) ListViolations(
 
 func (f *fakeRepo) GetViolationByID(
 	_ context.Context,
-	req *workerports.GetWorkerDOTViolationByIDRequest,
+	req *workerdotports.GetWorkerDOTViolationByIDRequest,
 ) (*workerdot.WorkerDOTViolation, error) {
 	violation, ok := f.violations[req.ID]
 	if !ok {
@@ -152,7 +153,7 @@ func (f *fakeRepo) UpdateViolation(
 
 func (f *fakeRepo) ListQueries(
 	_ context.Context,
-	req *workerports.ListClearinghouseQueriesRequest,
+	req *workerdotports.ListClearinghouseQueriesRequest,
 ) ([]*workerdot.WorkerClearinghouseQuery, error) {
 	out := make([]*workerdot.WorkerClearinghouseQuery, 0, len(f.queries))
 	for _, query := range f.queries {
@@ -166,7 +167,7 @@ func (f *fakeRepo) ListQueries(
 
 func (f *fakeRepo) GetQueryByID(
 	_ context.Context,
-	req *workerports.GetClearinghouseQueryByIDRequest,
+	req *workerdotports.GetClearinghouseQueryByIDRequest,
 ) (*workerdot.WorkerClearinghouseQuery, error) {
 	query, ok := f.queries[req.ID]
 	if !ok {
@@ -196,14 +197,14 @@ func (f *fakeRepo) UpdateQuery(
 
 func (f *fakeRepo) ListPools(
 	_ context.Context,
-	_ *workerports.ListDOTRandomPoolsRequest,
+	_ *workerdotports.ListDOTRandomPoolsRequest,
 ) (*pagination.CursorListResult[*workerdot.DOTRandomPool], error) {
 	return &pagination.CursorListResult[*workerdot.DOTRandomPool]{}, nil
 }
 
 func (f *fakeRepo) GetPoolByID(
 	_ context.Context,
-	req *workerports.GetDOTRandomPoolByIDRequest,
+	req *workerdotports.GetDOTRandomPoolByIDRequest,
 ) (*workerdot.DOTRandomPool, error) {
 	pool, ok := f.pools[req.ID]
 	if !ok {
@@ -221,7 +222,7 @@ func (f *fakeRepo) GetDefaultPool(
 
 func (f *fakeRepo) PoolCodeExists(
 	_ context.Context,
-	_ *workerports.DOTRandomPoolCodeExistsRequest,
+	_ *workerdotports.DOTRandomPoolCodeExistsRequest,
 ) (bool, error) {
 	return false, nil
 }
@@ -255,7 +256,7 @@ func (f *fakeRepo) ClearDefaultPool(
 
 func (f *fakeRepo) ListDraws(
 	_ context.Context,
-	_ *workerports.ListDOTRandomDrawsRequest,
+	_ *workerdotports.ListDOTRandomDrawsRequest,
 ) ([]*workerdot.DOTRandomDraw, error) {
 	out := make([]*workerdot.DOTRandomDraw, 0, len(f.draws))
 	for _, draw := range f.draws {
@@ -266,7 +267,7 @@ func (f *fakeRepo) ListDraws(
 
 func (f *fakeRepo) GetDrawByID(
 	_ context.Context,
-	req *workerports.GetDOTRandomDrawByIDRequest,
+	req *workerdotports.GetDOTRandomDrawByIDRequest,
 ) (*workerdot.DOTRandomDraw, error) {
 	draw, ok := f.draws[req.ID]
 	if !ok {
@@ -277,7 +278,7 @@ func (f *fakeRepo) GetDrawByID(
 
 func (f *fakeRepo) GetDrawByPeriod(
 	_ context.Context,
-	req *workerports.GetDOTRandomDrawByPeriodRequest,
+	req *workerdotports.GetDOTRandomDrawByPeriodRequest,
 ) (*workerdot.DOTRandomDraw, error) {
 	for _, draw := range f.draws {
 		if draw.PoolID == req.PoolID && draw.PeriodKey == req.PeriodKey &&
@@ -318,14 +319,14 @@ func (f *fakeRepo) UpdateDraw(
 
 func (f *fakeRepo) ListPoolCandidates(
 	_ context.Context,
-	_ *workerports.ListPoolCandidatesRequest,
+	_ *workerdotports.ListPoolCandidatesRequest,
 ) ([]pulid.ID, error) {
 	return f.candidates, nil
 }
 
 func (f *fakeRepo) ListDrawEntries(
 	_ context.Context,
-	req *workerports.ListDOTRandomDrawEntriesRequest,
+	req *workerdotports.ListDOTRandomDrawEntriesRequest,
 ) ([]*workerdot.DOTRandomDrawEntry, error) {
 	out := make([]*workerdot.DOTRandomDrawEntry, 0, len(f.entries))
 	for _, entry := range f.entries {
@@ -339,7 +340,7 @@ func (f *fakeRepo) ListDrawEntries(
 
 func (f *fakeRepo) GetDrawEntryByID(
 	_ context.Context,
-	req *workerports.GetDOTRandomDrawEntryByIDRequest,
+	req *workerdotports.GetDOTRandomDrawEntryByIDRequest,
 ) (*workerdot.DOTRandomDrawEntry, error) {
 	entry, ok := f.entries[req.ID]
 	if !ok {
@@ -358,7 +359,7 @@ func (f *fakeRepo) UpdateDrawEntry(
 
 func (f *fakeRepo) UpdateProfileRollup(
 	_ context.Context,
-	req *workerports.UpdateDrugAlcoholRollupRequest,
+	req *workerdotports.UpdateDrugAlcoholRollupRequest,
 ) error {
 	f.rollups = append(f.rollups, req.Rollup)
 	return nil
@@ -366,7 +367,7 @@ func (f *fakeRepo) UpdateProfileRollup(
 
 func (f *fakeRepo) ListWorkersWithClearinghouseDue(
 	_ context.Context,
-	_ *workerports.ListWorkersWithClearinghouseDueRequest,
+	_ *workerdotports.ListWorkersWithClearinghouseDueRequest,
 ) ([]workerports.WorkerTenantRef, error) {
 	return nil, nil
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -71,13 +72,13 @@ func workerPTOCursorConnectionToModel(
 	}, nil
 }
 
-func ptoBulkActionOperation(action workerports.PTOBulkActionType) (permission.Operation, error) {
+func ptoBulkActionOperation(action workerptoports.PTOBulkActionType) (permission.Operation, error) {
 	switch action {
-	case workerports.PTOBulkActionApprove:
+	case workerptoports.PTOBulkActionApprove:
 		return permission.OpApprove, nil
-	case workerports.PTOBulkActionReject:
+	case workerptoports.PTOBulkActionReject:
 		return permission.OpReject, nil
-	case workerports.PTOBulkActionCancel:
+	case workerptoports.PTOBulkActionCancel:
 		return permission.OpCancel, nil
 	default:
 		return "", errortypes.NewValidationError(

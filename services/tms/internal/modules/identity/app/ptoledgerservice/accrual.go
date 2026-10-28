@@ -8,7 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -61,7 +62,7 @@ func (s *Service) PreviewAccrual(
 		if rule == nil {
 			continue
 		}
-		bal, bErr := s.ledgerRepo.GetBalance(ctx, &workerports.PTOBalanceKey{
+		bal, bErr := s.ledgerRepo.GetBalance(ctx, &ptoledgerports.PTOBalanceKey{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 			PTOType:    rule.PTOType,
@@ -132,7 +133,7 @@ func (s *Service) RunAccrualForWorker(
 		if rule == nil {
 			continue
 		}
-		key := workerports.PTOBalanceKey{
+		key := ptoledgerports.PTOBalanceKey{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 			PTOType:    rule.PTOType,
@@ -197,7 +198,7 @@ func (s *Service) RunAccrualForWorker(
 
 func (s *Service) postPlanned(
 	ctx context.Context,
-	key workerports.PTOBalanceKey,
+	key ptoledgerports.PTOBalanceKey,
 	resolved *ResolvedPolicy,
 	rule *pto.PTOPolicyRule,
 	planned PlannedEntry,
@@ -241,7 +242,7 @@ func (s *Service) postPlanned(
 	case errors.Is(err, ErrCapped):
 		result.EntriesCapped++
 		return nil
-	case errors.Is(err, workerports.ErrDuplicatePTOLedgerEntry):
+	case errors.Is(err, ptoledgerports.ErrDuplicatePTOLedgerEntry):
 		result.EntriesSkipped++
 		return s.advanceCursorOnly(ctx, key, planned, rule)
 	default:
@@ -318,7 +319,7 @@ func AdvanceCursor(bal *pto.WorkerPTOBalance, planned PlannedEntry, rule *pto.PT
 
 func (s *Service) advanceCursorOnly(
 	ctx context.Context,
-	key workerports.PTOBalanceKey,
+	key ptoledgerports.PTOBalanceKey,
 	planned PlannedEntry,
 	rule *pto.PTOPolicyRule,
 ) error {
@@ -354,7 +355,7 @@ func (s *Service) RunAccrualForTenant(
 ) (*TenantAccrualPage, error) {
 	assignments, err := s.policyRepo.ListOpenAssignments(
 		ctx,
-		&workerports.ListOpenPTOAssignmentsRequest{
+		&ptopolicyports.ListOpenPTOAssignmentsRequest{
 			TenantInfo: tenantInfo,
 			AfterID:    afterID,
 			Limit:      limit,

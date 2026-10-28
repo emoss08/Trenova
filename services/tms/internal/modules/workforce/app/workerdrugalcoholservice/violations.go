@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,7 +20,7 @@ func (s *Service) ListViolations(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) ([]*workerdot.WorkerDOTViolation, error) {
-	return s.repo.ListViolations(ctx, &workerports.ListWorkerDOTViolationsRequest{
+	return s.repo.ListViolations(ctx, &workerdotports.ListWorkerDOTViolationsRequest{
 		TenantInfo:   tenantInfo,
 		WorkerID:     workerID,
 		IncludeTests: true,
@@ -119,7 +120,7 @@ func (s *Service) UpdateViolation(
 	ctx context.Context,
 	req *UpdateViolationRequest,
 ) (*workerdot.WorkerDOTViolation, error) {
-	entity, err := s.repo.GetViolationByID(ctx, &workerports.GetWorkerDOTViolationByIDRequest{
+	entity, err := s.repo.GetViolationByID(ctx, &workerdotports.GetWorkerDOTViolationByIDRequest{
 		ID:         req.ViolationID,
 		TenantInfo: req.TenantInfo,
 	})

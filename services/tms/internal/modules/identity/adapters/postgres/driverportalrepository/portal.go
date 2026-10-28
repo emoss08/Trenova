@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation/portalinvitationdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -64,7 +64,7 @@ type portalAccessRepository struct {
 	quota platformplanports.QuotaGuard
 }
 
-func New(p Params) workerports.PortalAccessRepository {
+func New(p Params) portalaccessports.PortalAccessRepository {
 	return &portalAccessRepository{
 		db:    p.DB,
 		l:     p.Logger.Named("postgres.driver-portal-repository"),
@@ -109,7 +109,7 @@ func (r *portalAccessRepository) UpdateInvitation(
 
 func (r *portalAccessRepository) GetInvitationByID(
 	ctx context.Context,
-	req workerports.GetPortalInvitationByIDRequest,
+	req portalaccessports.GetPortalInvitationByIDRequest,
 ) (*portalinvitation.PortalInvitation, error) {
 	return dbtx.Read(
 		ctx,
@@ -149,7 +149,7 @@ func (r *portalAccessRepository) GetInvitationByTokenHash(
 
 func (r *portalAccessRepository) GetPendingInvitationForWorker(
 	ctx context.Context,
-	req workerports.GetPendingPortalInvitationRequest,
+	req portalaccessports.GetPendingPortalInvitationRequest,
 ) (*portalinvitation.PortalInvitation, error) {
 	return dbtx.Read(
 		ctx,
@@ -172,7 +172,7 @@ func (r *portalAccessRepository) GetPendingInvitationForWorker(
 
 func (r *portalAccessRepository) ListInvitations(
 	ctx context.Context,
-	req *workerports.ListPortalInvitationsRequest,
+	req *portalaccessports.ListPortalInvitationsRequest,
 ) ([]*portalinvitation.PortalInvitation, error) {
 	return dbtx.Read(
 		ctx,
@@ -240,7 +240,7 @@ func (r *portalAccessRepository) GetWorkerForPortalManagement(
 
 func (r *portalAccessRepository) ActivatePortalAccess(
 	ctx context.Context,
-	req *workerports.ActivatePortalAccessRequest,
+	req *portalaccessports.ActivatePortalAccessRequest,
 ) (*tenant.User, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.User, error) {
 		invitation, err := r.lockInvitation(ctx, req.Invitation)
@@ -397,7 +397,7 @@ func (r *portalAccessRepository) ensureEmailAvailable(ctx context.Context, email
 func (r *portalAccessRepository) ensureDriverRole(
 	ctx context.Context,
 	invitation *portalinvitation.PortalInvitation,
-	req *workerports.ActivatePortalAccessRequest,
+	req *portalaccessports.ActivatePortalAccessRequest,
 ) (*permission.Role, error) {
 	ro := permissiondb.Roles
 	db := r.db.Keel(ctx)
@@ -623,7 +623,7 @@ func (r *portalAccessRepository) ListDriverShipmentComments(
 
 func (r *portalAccessRepository) ListWorkerLoads(
 	ctx context.Context,
-	req *workerports.ListWorkerLoadsRequest,
+	req *portalaccessports.ListWorkerLoadsRequest,
 ) ([]*shipment.Assignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.Assignment, error) {
 		limit := req.Limit

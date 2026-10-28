@@ -60,7 +60,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -250,15 +250,15 @@ func provideUpdateTrailerStatusTool(trailers *trailerservice.Service) agenttoolp
 	return masterdatatools.NewUpdateTrailerStatusTool(trailers)
 }
 
-func provideApproveWorkerPTOTool(pto workerports.WorkerPTOService) agenttoolports.AgentTool {
+func provideApproveWorkerPTOTool(pto workerptoports.WorkerPTOService) agenttoolports.AgentTool {
 	return operationstools.NewApproveWorkerPTOTool(pto)
 }
 
-func provideRejectWorkerPTOTool(pto workerports.WorkerPTOService) agenttoolports.AgentTool {
+func provideRejectWorkerPTOTool(pto workerptoports.WorkerPTOService) agenttoolports.AgentTool {
 	return operationstools.NewRejectWorkerPTOTool(pto)
 }
 
-func provideCancelWorkerPTOTool(pto workerports.WorkerPTOService) agenttoolports.AgentTool {
+func provideCancelWorkerPTOTool(pto workerptoports.WorkerPTOService) agenttoolports.AgentTool {
 	return operationstools.NewCancelWorkerPTOTool(pto)
 }
 

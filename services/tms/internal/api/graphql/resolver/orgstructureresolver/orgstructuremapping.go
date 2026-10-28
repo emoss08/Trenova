@@ -3,12 +3,12 @@ package orgstructureresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
 )
 
 // toTeamMembers renders a manager's team. The name is joined here rather than
 // in SQL so it reads the same way it does everywhere else a worker is named.
-func toTeamMembers(rows []workerports.TeamMemberRow) []*gqlmodel.TeamMember {
+func toTeamMembers(rows []orgstructureports.TeamMemberRow) []*gqlmodel.TeamMember {
 	members := make([]*gqlmodel.TeamMember, 0, len(rows))
 	for i := range rows {
 		row := &rows[i]
@@ -33,7 +33,7 @@ func toTeamMembers(rows []workerports.TeamMemberRow) []*gqlmodel.TeamMember {
 	return members
 }
 
-func toPositionHolders(rows []workerports.PositionHolderRow) []*gqlmodel.PositionHolder {
+func toPositionHolders(rows []orgstructureports.PositionHolderRow) []*gqlmodel.PositionHolder {
 	out := make([]*gqlmodel.PositionHolder, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, &gqlmodel.PositionHolder{

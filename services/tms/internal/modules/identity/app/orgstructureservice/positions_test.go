@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,18 +17,18 @@ import (
 // positionRepo holds a few positions and records what was assigned, so a test
 // can prove a refusal happened before anything was written.
 type positionRepo struct {
-	workerports.OrgStructureRepository
+	orgstructureports.OrgStructureRepository
 	positions map[pulid.ID]*worker.JobPosition
-	staff     []workerports.StaffCountRow
-	byPos     []workerports.HeadcountRow
-	byDept    []workerports.HeadcountRow
-	workerSet []workerports.SetWorkerPositionRequest
-	userSet   []workerports.SetUserPositionRequest
+	staff     []orgstructureports.StaffCountRow
+	byPos     []orgstructureports.HeadcountRow
+	byDept    []orgstructureports.HeadcountRow
+	workerSet []orgstructureports.SetWorkerPositionRequest
+	userSet   []orgstructureports.SetUserPositionRequest
 }
 
 func (r *positionRepo) GetPositionByID(
 	_ context.Context,
-	req *workerports.GetJobPositionByIDRequest,
+	req *orgstructureports.GetJobPositionByIDRequest,
 ) (*worker.JobPosition, error) {
 	position, ok := r.positions[req.ID]
 	if !ok {
@@ -39,7 +39,7 @@ func (r *positionRepo) GetPositionByID(
 
 func (r *positionRepo) SetWorkerPosition(
 	_ context.Context,
-	req *workerports.SetWorkerPositionRequest,
+	req *orgstructureports.SetWorkerPositionRequest,
 ) error {
 	r.workerSet = append(r.workerSet, *req)
 	return nil
@@ -47,7 +47,7 @@ func (r *positionRepo) SetWorkerPosition(
 
 func (r *positionRepo) SetUserPosition(
 	_ context.Context,
-	req *workerports.SetUserPositionRequest,
+	req *orgstructureports.SetUserPositionRequest,
 ) error {
 	r.userSet = append(r.userSet, *req)
 	return nil
@@ -56,28 +56,28 @@ func (r *positionRepo) SetUserPosition(
 func (r *positionRepo) HeadcountByFleet(
 	context.Context,
 	pagination.TenantInfo,
-) ([]workerports.HeadcountRow, error) {
+) ([]orgstructureports.HeadcountRow, error) {
 	return nil, nil
 }
 
 func (r *positionRepo) HeadcountByPosition(
 	context.Context,
 	pagination.TenantInfo,
-) ([]workerports.HeadcountRow, error) {
+) ([]orgstructureports.HeadcountRow, error) {
 	return r.byPos, nil
 }
 
 func (r *positionRepo) HeadcountByDepartment(
 	context.Context,
 	pagination.TenantInfo,
-) ([]workerports.HeadcountRow, error) {
+) ([]orgstructureports.HeadcountRow, error) {
 	return r.byDept, nil
 }
 
 func (r *positionRepo) StaffByPosition(
 	context.Context,
 	pagination.TenantInfo,
-) ([]workerports.StaffCountRow, error) {
+) ([]orgstructureports.StaffCountRow, error) {
 	return r.staff, nil
 }
 
@@ -189,13 +189,13 @@ func TestAssignPosition_NeedsSomebodyToAssign(t *testing.T) {
 // have to be read from two places and laid over each other.
 func TestHeadcount_LaysStaffOverTheWorkerGrouping(t *testing.T) {
 	repo := newPositionRepo()
-	repo.byPos = []workerports.HeadcountRow{
+	repo.byPos = []orgstructureports.HeadcountRow{
 		{Key: drivingPosition.String(), Label: "Driver", Workers: 30, Drivers: 30},
 	}
-	repo.byDept = []workerports.HeadcountRow{
+	repo.byDept = []orgstructureports.HeadcountRow{
 		{Key: "Operations", Label: "Operations", Workers: 30, Drivers: 30},
 	}
-	repo.staff = []workerports.StaffCountRow{
+	repo.staff = []orgstructureports.StaffCountRow{
 		{
 			PositionID: deskPosition,
 			Title:      "Load Planner",

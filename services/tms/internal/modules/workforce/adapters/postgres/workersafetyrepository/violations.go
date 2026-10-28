@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety/workersafetydb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"go.uber.org/zap"
@@ -17,7 +17,7 @@ import (
 var violationErrors = dberror.Mapping{Entity: "WorkerSafetyViolation"}
 
 func violationsQuery(
-	req *workerports.ListWorkerSafetyViolationsRequest,
+	req *workersafetyports.ListWorkerSafetyViolationsRequest,
 ) *keel.Query[*workersafety.WorkerSafetyViolation] {
 	v := workersafetydb.WorkerSafetyViolations
 
@@ -32,7 +32,7 @@ func violationsQuery(
 
 func (r *repository) ListViolations(
 	ctx context.Context,
-	req *workerports.ListWorkerSafetyViolationsRequest,
+	req *workersafetyports.ListWorkerSafetyViolationsRequest,
 ) ([]*workersafety.WorkerSafetyViolation, error) {
 	return dbtx.Read(
 		ctx,
@@ -51,7 +51,7 @@ func (r *repository) ListViolations(
 
 func (r *repository) GetViolationByID(
 	ctx context.Context,
-	req *workerports.GetWorkerSafetyViolationByIDRequest,
+	req *workersafetyports.GetWorkerSafetyViolationByIDRequest,
 ) (*workersafety.WorkerSafetyViolation, error) {
 	return dbtx.Read(
 		ctx,
@@ -105,7 +105,7 @@ func (r *repository) UpdateViolation(
 
 func (r *repository) DeleteViolation(
 	ctx context.Context,
-	req *workerports.GetWorkerSafetyViolationByIDRequest,
+	req *workersafetyports.GetWorkerSafetyViolationByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		v := workersafetydb.WorkerSafetyViolations

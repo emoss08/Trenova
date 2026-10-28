@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto/ptodb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,7 +39,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.PTOPolicyRepository {
+func New(p Params) ptopolicyports.PTOPolicyRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.pto-policy-repository"),
@@ -61,7 +61,7 @@ func statusFilter(status string) keel.Pred {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *workerports.ListPTOPoliciesRequest,
+	req *ptopolicyports.ListPTOPoliciesRequest,
 ) (*pagination.CursorListResult[*pto.PTOPolicy], error) {
 	return dbtx.Read(
 		ctx,
@@ -92,7 +92,7 @@ func (r *repository) List(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *workerports.PTOPolicySelectOptionsRequest,
+	req *ptopolicyports.PTOPolicySelectOptionsRequest,
 ) (*pagination.ListResult[*pto.PTOPolicy], error) {
 	return dbtx.Read(
 		ctx,
@@ -132,7 +132,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *workerports.GetPTOPolicyByIDRequest,
+	req *ptopolicyports.GetPTOPolicyByIDRequest,
 ) (*pto.PTOPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pto.PTOPolicy, error) {
 		p := ptodb.PTOPolicies
@@ -170,7 +170,7 @@ func (r *repository) GetDefault(
 
 func (r *repository) CodeExists(
 	ctx context.Context,
-	req *workerports.PTOPolicyCodeExistsRequest,
+	req *ptopolicyports.PTOPolicyCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		p := ptodb.PTOPolicies
@@ -234,7 +234,7 @@ func (r *repository) Create(
 
 func (r *repository) create(ctx context.Context, entity *pto.PTOPolicy) error {
 	if entity.IsDefault {
-		if err := r.ClearDefault(ctx, &workerports.ClearDefaultPTOPolicyRequest{}); err != nil {
+		if err := r.ClearDefault(ctx, &ptopolicyports.ClearDefaultPTOPolicyRequest{}); err != nil {
 			return err
 		}
 	}
@@ -269,7 +269,10 @@ func (r *repository) Update(
 
 func (r *repository) update(ctx context.Context, entity *pto.PTOPolicy) error {
 	if entity.IsDefault {
-		err := r.ClearDefault(ctx, &workerports.ClearDefaultPTOPolicyRequest{ExceptID: entity.ID})
+		err := r.ClearDefault(
+			ctx,
+			&ptopolicyports.ClearDefaultPTOPolicyRequest{ExceptID: entity.ID},
+		)
 		if err != nil {
 			return err
 		}
@@ -290,7 +293,7 @@ func (r *repository) update(ctx context.Context, entity *pto.PTOPolicy) error {
 
 func (r *repository) ClearDefault(
 	ctx context.Context,
-	req *workerports.ClearDefaultPTOPolicyRequest,
+	req *ptopolicyports.ClearDefaultPTOPolicyRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		p := ptodb.PTOPolicies
@@ -309,7 +312,7 @@ func (r *repository) ClearDefault(
 
 func (r *repository) CountOpenAssignments(
 	ctx context.Context,
-	req *workerports.CountOpenPTOAssignmentsRequest,
+	req *ptopolicyports.CountOpenPTOAssignmentsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		a := ptodb.WorkerPTOPolicyAssignments
@@ -326,7 +329,7 @@ func (r *repository) CountOpenAssignments(
 
 func (r *repository) CountOpenAssignmentsByIDs(
 	ctx context.Context,
-	req *workerports.CountOpenPTOAssignmentsByIDsRequest,
+	req *ptopolicyports.CountOpenPTOAssignmentsByIDsRequest,
 ) (map[pulid.ID]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		if len(req.PolicyIDs) == 0 {

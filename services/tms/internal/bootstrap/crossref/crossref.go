@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 )
 
 func VisibleRecordSources() kernelports.VisibleRecordSources {
@@ -36,9 +36,9 @@ func TemplateConsumers() formulatemplateports.TemplateConsumers {
 	return formulatemplateports.TemplateConsumers{Shipments: shipmentdb.Shipments.FormulaTemplateID}
 }
 
-func RotaAssignments() workerports.RotaAssignments {
+func RotaAssignments() workerscheduleports.RotaAssignments {
 	a := shipmentdb.Assignments
-	return workerports.RotaAssignments{
+	return workerscheduleports.RotaAssignments{
 		WorkerID:   a.PrimaryWorkerID,
 		CreatedAt:  a.CreatedAt,
 		ArchivedAt: a.ArchivedAt,

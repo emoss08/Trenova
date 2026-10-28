@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
@@ -61,7 +62,7 @@ type Service struct {
 	validator                 *Validator
 	ptoPolicyService          *ptopolicyservice.Service
 	credentialService         *workercredentialservice.Service
-	employmentRecorder        workerports.EmploymentEventRecorder
+	employmentRecorder        workeremploymentports.EmploymentEventRecorder
 	db                        kernelports.Transactor
 	sync                      accountingsyncports.AccountingSyncEnqueuer
 	fields                    permissionports.FieldAccess
@@ -127,7 +128,7 @@ func (s *Service) updateAndQueueSync(
 // service (which opens a timeline when a worker is hired) and the employment
 // service (which applies event effects through the worker service): the
 // recorder arrives after both are built.
-func (s *Service) SetEmploymentRecorder(recorder workerports.EmploymentEventRecorder) {
+func (s *Service) SetEmploymentRecorder(recorder workeremploymentports.EmploymentEventRecorder) {
 	s.employmentRecorder = recorder
 }
 

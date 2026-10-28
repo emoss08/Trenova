@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/timesheetports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -110,7 +110,7 @@ func (r *MutationResolver) TransitionTimesheet(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	sheet, err := r.TimesheetService.GetTimesheet(ctx, &workerports.GetTimesheetByIDRequest{
+	sheet, err := r.TimesheetService.GetTimesheet(ctx, &timesheetports.GetTimesheetByIDRequest{
 		ID:         sheetID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -186,7 +186,7 @@ func (r *QueryResolver) Timesheets(ctx context.Context, filter *gqlmodel.Timeshe
 		return nil, err
 	}
 
-	req := &workerports.ListTimesheetsRequest{
+	req := &timesheetports.ListTimesheetsRequest{
 		TenantInfo:    base.TenantInfo(authCtx),
 		IncludeWorker: true,
 		ManagerIDs:    managerIDs,
@@ -225,7 +225,7 @@ func (r *QueryResolver) Timesheet(ctx context.Context, id string) (*timesheet.Ti
 		return nil, base.InvalidIDError("id", "Timesheet is invalid")
 	}
 
-	sheet, err := r.TimesheetService.GetTimesheet(ctx, &workerports.GetTimesheetByIDRequest{
+	sheet, err := r.TimesheetService.GetTimesheet(ctx, &timesheetports.GetTimesheetByIDRequest{
 		ID:             sheetID,
 		TenantInfo:     base.TenantInfo(authCtx),
 		IncludeEntries: true,
@@ -253,7 +253,7 @@ func (r *QueryResolver) TimeClockEntries(ctx context.Context, workerID string, f
 		return nil, err
 	}
 
-	return r.TimesheetService.ListEntries(ctx, &workerports.ListTimeClockEntriesRequest{
+	return r.TimesheetService.ListEntries(ctx, &timesheetports.ListTimeClockEntriesRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		WorkerID:   id,
 		From:       base.Int64Value(from),
@@ -282,7 +282,7 @@ func (r *QueryResolver) OpenTimeClockEntries(ctx context.Context, teamOnly *bool
 		return nil, err
 	}
 
-	req := &workerports.ListTimeClockEntriesRequest{
+	req := &timesheetports.ListTimeClockEntriesRequest{
 		TenantInfo:    base.TenantInfo(authCtx),
 		OpenOnly:      true,
 		IncludeWorker: true,
@@ -304,7 +304,7 @@ func (r *QueryResolver) PayrollExports(ctx context.Context, limit *int) ([]*time
 		return nil, err
 	}
 
-	return r.TimesheetService.ListExports(ctx, &workerports.ListPayrollExportsRequest{
+	return r.TimesheetService.ListExports(ctx, &timesheetports.ListPayrollExportsRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Limit:      base.IntValue(limit),
 	})

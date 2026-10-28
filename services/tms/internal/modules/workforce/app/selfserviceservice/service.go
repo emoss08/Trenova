@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -66,7 +67,7 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Repo          workerports.SelfServiceRepository
+	Repo          selfserviceports.SelfServiceRepository
 	WorkerRepo    workerports.WorkerRepository
 	WorkerUpdater WorkerUpdater
 	Checksums     DocumentChecksums `optional:"true"`
@@ -76,7 +77,7 @@ type Params struct {
 
 type Service struct {
 	l             *zap.Logger
-	repo          workerports.SelfServiceRepository
+	repo          selfserviceports.SelfServiceRepository
 	workerRepo    WorkerReader
 	workerUpdater WorkerUpdater
 	checksums     DocumentChecksums
@@ -99,7 +100,7 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger        *zap.Logger
-	Repo          workerports.SelfServiceRepository
+	Repo          selfserviceports.SelfServiceRepository
 	WorkerRepo    WorkerReader
 	WorkerUpdater WorkerUpdater
 	Checksums     DocumentChecksums
@@ -157,7 +158,7 @@ func (s *Service) audit(p auditParams) {
 
 func (s *Service) ListPolicies(
 	ctx context.Context,
-	req *workerports.ListWorkerPoliciesRequest,
+	req *selfserviceports.ListWorkerPoliciesRequest,
 ) ([]*workerpolicy.WorkerPolicy, error) {
 	return s.repo.ListPolicies(ctx, req)
 }
@@ -167,7 +168,7 @@ func (s *Service) GetPolicy(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workerpolicy.WorkerPolicy, error) {
-	return s.repo.GetPolicyByID(ctx, &workerports.GetWorkerPolicyByIDRequest{
+	return s.repo.GetPolicyByID(ctx, &selfserviceports.GetWorkerPolicyByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -237,7 +238,7 @@ func (s *Service) UpdatePolicy(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetPolicyByID(ctx, &workerports.GetWorkerPolicyByIDRequest{
+	original, err := s.repo.GetPolicyByID(ctx, &selfserviceports.GetWorkerPolicyByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -292,7 +293,7 @@ func (s *Service) UpdatePolicy(
 // derived on read: the roster and the acknowledgements both move.
 type PolicyCompliance struct {
 	Policy      *workerpolicy.WorkerPolicy
-	Rows        []workerports.PolicyComplianceRow
+	Rows        []selfserviceports.PolicyComplianceRow
 	Signed      int
 	Outstanding int
 }
@@ -307,7 +308,7 @@ func (s *Service) PolicyCompliance(
 		return nil, err
 	}
 
-	rows, err := s.repo.PolicyCompliance(ctx, &workerports.PolicyComplianceRequest{
+	rows, err := s.repo.PolicyCompliance(ctx, &selfserviceports.PolicyComplianceRequest{
 		TenantInfo:   tenantInfo,
 		PolicyID:     policy.ID,
 		VersionLabel: policy.VersionLabel,
@@ -348,7 +349,7 @@ func (s *Service) PoliciesForWorker(
 	tenantInfo pagination.TenantInfo,
 	wrk *worker.Worker,
 ) ([]PolicyStanding, error) {
-	policies, err := s.repo.ListPolicies(ctx, &workerports.ListWorkerPoliciesRequest{
+	policies, err := s.repo.ListPolicies(ctx, &selfserviceports.ListWorkerPoliciesRequest{
 		TenantInfo: tenantInfo,
 		ActiveOnly: true,
 		AsOf:       timeutils.NowUnix(),
@@ -357,10 +358,13 @@ func (s *Service) PoliciesForWorker(
 		return nil, err
 	}
 
-	acks, err := s.repo.ListAcknowledgements(ctx, &workerports.ListPolicyAcknowledgementsRequest{
-		TenantInfo: tenantInfo,
-		WorkerID:   wrk.ID,
-	})
+	acks, err := s.repo.ListAcknowledgements(
+		ctx,
+		&selfserviceports.ListPolicyAcknowledgementsRequest{
+			TenantInfo: tenantInfo,
+			WorkerID:   wrk.ID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -441,7 +445,7 @@ func (s *Service) Acknowledge(
 
 	existing, err := s.repo.ListAcknowledgements(
 		ctx,
-		&workerports.ListPolicyAcknowledgementsRequest{
+		&selfserviceports.ListPolicyAcknowledgementsRequest{
 			TenantInfo:   req.TenantInfo,
 			PolicyID:     policy.ID,
 			WorkerID:     req.Worker.ID,
@@ -509,7 +513,7 @@ func truncate(value string, limit int) string {
 
 func (s *Service) ListAcknowledgements(
 	ctx context.Context,
-	req *workerports.ListPolicyAcknowledgementsRequest,
+	req *selfserviceports.ListPolicyAcknowledgementsRequest,
 ) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
 	return s.repo.ListAcknowledgements(ctx, req)
 }

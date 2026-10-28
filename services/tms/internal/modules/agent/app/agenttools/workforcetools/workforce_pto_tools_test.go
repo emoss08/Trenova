@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -49,7 +49,7 @@ func newFakePTORequests() *fakePTORequests {
 
 func (f *fakePTORequests) Get(
 	context.Context,
-	*workerports.GetPTOByIDRequest,
+	*workerptoports.GetPTOByIDRequest,
 ) (*worker.WorkerPTO, error) {
 	copied := *f.pto
 	return &copied, nil

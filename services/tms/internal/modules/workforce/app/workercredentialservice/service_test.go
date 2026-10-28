@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
@@ -33,8 +34,8 @@ const day = int64(86400)
 type fakeRepo struct {
 	types       map[pulid.ID]*workercredential.WorkerCredentialType
 	credentials map[pulid.ID]*workercredential.WorkerCredential
-	createReqs  []*workerports.CreateWorkerCredentialRequest
-	expiring    *workerports.ListExpiringWorkerCredentialsRequest
+	createReqs  []*workercredentialports.CreateWorkerCredentialRequest
+	expiring    *workercredentialports.ListExpiringWorkerCredentialsRequest
 	ensured     int
 }
 
@@ -47,7 +48,7 @@ func newFakeRepo() *fakeRepo {
 
 func (f *fakeRepo) ListTypes(
 	context.Context,
-	*workerports.ListCredentialTypesRequest,
+	*workercredentialports.ListCredentialTypesRequest,
 ) (*pagination.CursorListResult[*workercredential.WorkerCredentialType], error) {
 	return &pagination.CursorListResult[*workercredential.WorkerCredentialType]{}, nil
 }
@@ -67,7 +68,7 @@ func (f *fakeRepo) ListActiveTypes(
 
 func (f *fakeRepo) TypeSelectOptions(
 	_ context.Context,
-	_ *workerports.WorkerCredentialTypeSelectOptionsRequest,
+	_ *workercredentialports.WorkerCredentialTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*workercredential.WorkerCredentialType], error) {
 	out := make([]*workercredential.WorkerCredentialType, 0, len(f.types))
 	for _, typ := range f.types {
@@ -84,7 +85,7 @@ func (f *fakeRepo) TypeSelectOptions(
 
 func (f *fakeRepo) GetTypeByID(
 	_ context.Context,
-	req *workerports.GetCredentialTypeByIDRequest,
+	req *workercredentialports.GetCredentialTypeByIDRequest,
 ) (*workercredential.WorkerCredentialType, error) {
 	typ, ok := f.types[req.ID]
 	if !ok {
@@ -95,7 +96,7 @@ func (f *fakeRepo) GetTypeByID(
 
 func (f *fakeRepo) TypeCodeExists(
 	context.Context,
-	*workerports.CredentialTypeCodeExistsRequest,
+	*workercredentialports.CredentialTypeCodeExistsRequest,
 ) (bool, error) {
 	return false, nil
 }
@@ -129,7 +130,7 @@ func (f *fakeRepo) EnsureSystemTypes(
 
 func (f *fakeRepo) CountCredentialsByType(
 	_ context.Context,
-	req *workerports.CountCredentialsByTypeRequest,
+	req *workercredentialports.CountCredentialsByTypeRequest,
 ) (int, error) {
 	count := 0
 	for _, cred := range f.credentials {
@@ -142,7 +143,7 @@ func (f *fakeRepo) CountCredentialsByType(
 
 func (f *fakeRepo) CountCredentialsByTypeIDs(
 	_ context.Context,
-	req *workerports.CountCredentialsByTypeIDsRequest,
+	req *workercredentialports.CountCredentialsByTypeIDsRequest,
 ) (map[pulid.ID]int, error) {
 	counts := make(map[pulid.ID]int, len(req.TypeIDs))
 	for _, typeID := range req.TypeIDs {
@@ -157,7 +158,7 @@ func (f *fakeRepo) CountCredentialsByTypeIDs(
 
 func (f *fakeRepo) ListForWorker(
 	_ context.Context,
-	req *workerports.ListWorkerCredentialsRequest,
+	req *workercredentialports.ListWorkerCredentialsRequest,
 ) ([]*workercredential.WorkerCredential, error) {
 	out := make([]*workercredential.WorkerCredential, 0, len(f.credentials))
 	for _, cred := range f.credentials {
@@ -180,7 +181,7 @@ func (f *fakeRepo) ListForWorker(
 
 func (f *fakeRepo) GetByID(
 	_ context.Context,
-	req *workerports.GetWorkerCredentialByIDRequest,
+	req *workercredentialports.GetWorkerCredentialByIDRequest,
 ) (*workercredential.WorkerCredential, error) {
 	cred, ok := f.credentials[req.ID]
 	if !ok {
@@ -195,7 +196,7 @@ func (f *fakeRepo) GetByID(
 
 func (f *fakeRepo) Create(
 	_ context.Context,
-	req *workerports.CreateWorkerCredentialRequest,
+	req *workercredentialports.CreateWorkerCredentialRequest,
 ) (*workercredential.WorkerCredential, error) {
 	f.createReqs = append(f.createReqs, req)
 	if req.SupersedeReason != "" {
@@ -233,7 +234,7 @@ func (f *fakeRepo) Update(
 
 func (f *fakeRepo) ListExpiring(
 	_ context.Context,
-	req *workerports.ListExpiringWorkerCredentialsRequest,
+	req *workercredentialports.ListExpiringWorkerCredentialsRequest,
 ) ([]*workercredential.WorkerCredential, error) {
 	f.expiring = req
 	return nil, nil

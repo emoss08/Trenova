@@ -25,7 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/requestmeta"
@@ -48,7 +48,7 @@ type Params struct {
 	SSOStateRepo      tenantports.SSOLoginStateRepository
 	SSOIdentityLinks  tenantports.SSOIdentityLinkRepository
 	APIKeyRepository  apikeyports.APIKeyRepository
-	PortalRepo        workerports.PortalAccessRepository
+	PortalRepo        portalaccessports.PortalAccessRepository
 	UsageRecorder     apikeyports.UsageRecorder
 	TurnStopper       assistantports.AssistantTurnStopper
 	AuthEvents        iamports.AuthEventRecorder
@@ -71,7 +71,7 @@ type Service struct {
 	stateRepo  tenantports.SSOLoginStateRepository
 	links      tenantports.SSOIdentityLinkRepository
 	akr        apikeyports.APIKeyRepository
-	portalRepo workerports.PortalAccessRepository
+	portalRepo portalaccessports.PortalAccessRepository
 	usageBuf   apikeyports.UsageRecorder
 	turns      assistantports.AssistantTurnStopper
 	authEvents iamports.AuthEventRecorder

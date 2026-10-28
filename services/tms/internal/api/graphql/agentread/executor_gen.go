@@ -3,6 +3,7 @@
 package agentread
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
@@ -246,7 +247,6 @@ import (
 	workersafetyservice "github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	workerservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	workertrainingservice "github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
-	workerports "github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	emailservice "github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 	homelayoutservice "github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	notificationservice "github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
@@ -390,7 +390,7 @@ type ResolverParams struct {
 	WorkerDrugAlcoholService     *workerdrugalcoholservice.Service
 	WorkerInjuryService          *workerinjuryservice.Service
 	WorkerLeaveService           *workerleaveservice.Service
-	WorkerPTOService             workerports.WorkerPTOService
+	WorkerPTOService             workerptoports.WorkerPTOService
 	WorkerSafetyService          *workersafetyservice.Service
 	WorkerService                *workerservice.Service
 	WorkerTrainingService        *workertrainingservice.Service

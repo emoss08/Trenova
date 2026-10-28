@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety/workersafetydb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -40,7 +40,7 @@ func sumOrZero(e keel.Expr) keel.Int64Expr {
 // cached safety standing, and the terminal they belong to. The cache is what
 // the roster itself shows, so the fleet view and the list behind it cannot
 // disagree.
-func rosterScope(req *workerports.FleetSafetyRequest) *keel.Query[*worker.Worker] {
+func rosterScope(req *workersafetyports.FleetSafetyRequest) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
 
@@ -53,7 +53,7 @@ func rosterScope(req *workerports.FleetSafetyRequest) *keel.Query[*worker.Worker
 // eventScope is the event half: events inside the window, for active workers
 // in the requested terminal.
 func eventScope(
-	req *workerports.FleetSafetyRequest,
+	req *workersafetyports.FleetSafetyRequest,
 	since int64,
 ) *keel.Query[*workersafety.WorkerSafetyEvent] {
 	e := workersafetydb.WorkerSafetyEvents
@@ -65,7 +65,7 @@ func eventScope(
 	)
 }
 
-func fleetRatingsQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.Worker] {
+func fleetRatingsQuery(req *workersafetyports.FleetSafetyRequest) *keel.Query[*worker.Worker] {
 	wp := workerdb.WorkerProfiles
 
 	return rosterScope(req).
@@ -75,13 +75,13 @@ func fleetRatingsQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.
 
 func (r *repository) FleetRatings(
 	ctx context.Context,
-	req *workerports.FleetSafetyRequest,
-) ([]workerports.FleetSafetyRatingRow, error) {
+	req *workersafetyports.FleetSafetyRequest,
+) ([]workersafetyports.FleetSafetyRatingRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]workerports.FleetSafetyRatingRow, error) {
-			rows, err := keel.Into[workerports.FleetSafetyRatingRow](
+		func(ctx context.Context) ([]workersafetyports.FleetSafetyRatingRow, error) {
+			rows, err := keel.Into[workersafetyports.FleetSafetyRatingRow](
 				ctx,
 				r.db.Keel(ctx),
 				fleetRatingsQuery(req),
@@ -96,7 +96,7 @@ func (r *repository) FleetRatings(
 	)
 }
 
-func fleetTerminalsQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.Worker] {
+func fleetTerminalsQuery(req *workersafetyports.FleetSafetyRequest) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
 	fc := w.FleetCode()
@@ -119,13 +119,13 @@ func fleetTerminalsQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worke
 
 func (r *repository) FleetTerminals(
 	ctx context.Context,
-	req *workerports.FleetSafetyRequest,
-) ([]workerports.FleetSafetyTerminalRow, error) {
+	req *workersafetyports.FleetSafetyRequest,
+) ([]workersafetyports.FleetSafetyTerminalRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]workerports.FleetSafetyTerminalRow, error) {
-			rows, err := keel.Into[workerports.FleetSafetyTerminalRow](
+		func(ctx context.Context) ([]workersafetyports.FleetSafetyTerminalRow, error) {
+			rows, err := keel.Into[workersafetyports.FleetSafetyTerminalRow](
 				ctx,
 				r.db.Keel(ctx),
 				fleetTerminalsQuery(req),
@@ -142,15 +142,15 @@ func (r *repository) FleetTerminals(
 
 func (r *repository) FleetKinds(
 	ctx context.Context,
-	req *workerports.FleetSafetyRequest,
-) ([]workerports.FleetSafetyKindRow, error) {
+	req *workersafetyports.FleetSafetyRequest,
+) ([]workersafetyports.FleetSafetyKindRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]workerports.FleetSafetyKindRow, error) {
+		func(ctx context.Context) ([]workersafetyports.FleetSafetyKindRow, error) {
 			e := workersafetydb.WorkerSafetyEvents
 			since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
-			rows, err := keel.Into[workerports.FleetSafetyKindRow](ctx, r.db.Keel(ctx),
+			rows, err := keel.Into[workersafetyports.FleetSafetyKindRow](ctx, r.db.Keel(ctx),
 				eventScope(req, since).
 					Group(e.Kind).
 					Pick(
@@ -184,7 +184,7 @@ func csaBucketExpr(now int64) keel.Int64Expr {
 }
 
 func fleetBasicsQuery(
-	req *workerports.FleetSafetyRequest,
+	req *workersafetyports.FleetSafetyRequest,
 ) *keel.Query[*workersafety.WorkerSafetyEvent] {
 	e := workersafetydb.WorkerSafetyEvents
 	v := workersafetydb.WorkerSafetyViolations
@@ -205,13 +205,13 @@ func fleetBasicsQuery(
 
 func (r *repository) FleetBasics(
 	ctx context.Context,
-	req *workerports.FleetSafetyRequest,
-) ([]workerports.FleetSafetyBasicRow, error) {
+	req *workersafetyports.FleetSafetyRequest,
+) ([]workersafetyports.FleetSafetyBasicRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]workerports.FleetSafetyBasicRow, error) {
-			rows, err := keel.Into[workerports.FleetSafetyBasicRow](
+		func(ctx context.Context) ([]workersafetyports.FleetSafetyBasicRow, error) {
+			rows, err := keel.Into[workersafetyports.FleetSafetyBasicRow](
 				ctx,
 				r.db.Keel(ctx),
 				fleetBasicsQuery(req),
@@ -231,18 +231,18 @@ func (r *repository) FleetBasics(
 // blank scorecard, which is worse than an approximate one.
 func (r *repository) FleetEventBasics(
 	ctx context.Context,
-	req *workerports.FleetSafetyRequest,
-) ([]workerports.FleetSafetyEventBasicRow, error) {
+	req *workersafetyports.FleetSafetyRequest,
+) ([]workersafetyports.FleetSafetyEventBasicRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]workerports.FleetSafetyEventBasicRow, error) {
+		func(ctx context.Context) ([]workersafetyports.FleetSafetyEventBasicRow, error) {
 			e := workersafetydb.WorkerSafetyEvents
 			v := workersafetydb.WorkerSafetyViolations
 			since := timeutils.AddMonthsUTC(req.Now, -workersafety.SafetyPointsRetentionMonths)
 			bucket := csaBucketExpr(req.Now)
 
-			rows, err := keel.Into[workerports.FleetSafetyEventBasicRow](ctx, r.db.Keel(ctx),
+			rows, err := keel.Into[workersafetyports.FleetSafetyEventBasicRow](ctx, r.db.Keel(ctx),
 				eventScope(req, since).
 					Where(keel.NotExists(v.Where(v.SafetyEventID.EqCol(e.ID)))).
 					Group(e.Kind, e.InspectionResult, bucket).
@@ -265,7 +265,7 @@ func (r *repository) FleetEventBasics(
 }
 
 func fleetTrendQuery(
-	req *workerports.FleetSafetyRequest,
+	req *workersafetyports.FleetSafetyRequest,
 ) *keel.Query[*workersafety.WorkerSafetyEvent] {
 	e := workersafetydb.WorkerSafetyEvents
 	since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
@@ -291,16 +291,16 @@ func fleetTrendQuery(
 
 func (r *repository) FleetTrend(
 	ctx context.Context,
-	req *workerports.FleetSafetyRequest,
-) ([]workerports.FleetSafetyTrendRow, error) {
+	req *workersafetyports.FleetSafetyRequest,
+) ([]workersafetyports.FleetSafetyTrendRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]workerports.FleetSafetyTrendRow, error) {
+		func(ctx context.Context) ([]workersafetyports.FleetSafetyTrendRow, error) {
 			// Bucketing by UTC month in SQL keeps the trend a single scan. Months are
 			// what a safety meeting talks in, and the day boundary an org's timezone
 			// would move is not worth a second query.
-			rows, err := keel.Into[workerports.FleetSafetyTrendRow](
+			rows, err := keel.Into[workersafetyports.FleetSafetyTrendRow](
 				ctx,
 				r.db.Keel(ctx),
 				fleetTrendQuery(req),
@@ -315,7 +315,7 @@ func (r *repository) FleetTrend(
 	)
 }
 
-func fleetRankingQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.Worker] {
+func fleetRankingQuery(req *workersafetyports.FleetSafetyRequest) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
 	e := workersafetydb.WorkerSafetyEvents
@@ -371,16 +371,16 @@ func fleetRankingQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.
 
 func (r *repository) FleetRanking(
 	ctx context.Context,
-	req *workerports.FleetSafetyRequest,
-) ([]workerports.FleetSafetyRankRow, error) {
+	req *workersafetyports.FleetSafetyRequest,
+) ([]workersafetyports.FleetSafetyRankRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]workerports.FleetSafetyRankRow, error) {
+		func(ctx context.Context) ([]workersafetyports.FleetSafetyRankRow, error) {
 			// Active points are not cached on the profile — they roll off on a date
 			// rather than on a write — so they are summed here, once, over the same
 			// scan that produces the ranking.
-			rows, err := keel.Into[workerports.FleetSafetyRankRow](
+			rows, err := keel.Into[workersafetyports.FleetSafetyRankRow](
 				ctx,
 				r.db.Keel(ctx),
 				fleetRankingQuery(req),

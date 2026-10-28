@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -39,7 +40,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.WorkerLeaveRepository
+	Repo         workerleaveports.WorkerLeaveRepository
 	WorkerRepo   workerports.WorkerRepository
 	AuditService auditports.AuditService
 	Realtime     realtimeports.RealtimeService `optional:"true"`
@@ -47,7 +48,7 @@ type Params struct {
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.WorkerLeaveRepository
+	repo         workerleaveports.WorkerLeaveRepository
 	workerRepo   workerports.WorkerRepository
 	auditService auditports.AuditService
 	realtime     realtimeports.RealtimeService
@@ -66,7 +67,7 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         workerports.WorkerLeaveRepository
+	Repo         workerleaveports.WorkerLeaveRepository
 	WorkerRepo   workerports.WorkerRepository
 	AuditService auditports.AuditService
 }
@@ -253,7 +254,7 @@ func (s *Service) Entitlement(
 		return workerleave.LeaveEntitlement{}, err
 	}
 
-	cases, err := s.repo.ListCases(ctx, &workerports.ListLeaveCasesRequest{
+	cases, err := s.repo.ListCases(ctx, &workerleaveports.ListLeaveCasesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
@@ -264,7 +265,7 @@ func (s *Service) Entitlement(
 	// The forward method needs the first day ever taken to know where the
 	// period starts, so the entries cannot be trimmed to a window that has not
 	// been worked out yet.
-	entries, err := s.repo.ListEntries(ctx, &workerports.ListLeaveEntriesRequest{
+	entries, err := s.repo.ListEntries(ctx, &workerleaveports.ListLeaveEntriesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})

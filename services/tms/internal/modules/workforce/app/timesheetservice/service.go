@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/timesheetports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -48,14 +49,14 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.TimesheetRepository
+	Repo         timesheetports.TimesheetRepository
 	WorkerRepo   workerports.WorkerRepository
 	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.TimesheetRepository
+	repo         timesheetports.TimesheetRepository
 	workerRepo   WorkerReader
 	auditService auditports.AuditService
 }
@@ -72,7 +73,7 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         workerports.TimesheetRepository
+	Repo         timesheetports.TimesheetRepository
 	WorkerRepo   WorkerReader
 	AuditService auditports.AuditService
 }
@@ -156,21 +157,21 @@ func (s *Service) requireHourlyWorker(
 
 func (s *Service) ListEntries(
 	ctx context.Context,
-	req *workerports.ListTimeClockEntriesRequest,
+	req *timesheetports.ListTimeClockEntriesRequest,
 ) ([]*timesheet.TimeClockEntry, error) {
 	return s.repo.ListEntries(ctx, req)
 }
 
 func (s *Service) ListTimesheets(
 	ctx context.Context,
-	req *workerports.ListTimesheetsRequest,
+	req *timesheetports.ListTimesheetsRequest,
 ) ([]*timesheet.Timesheet, error) {
 	return s.repo.ListTimesheets(ctx, req)
 }
 
 func (s *Service) GetTimesheet(
 	ctx context.Context,
-	req *workerports.GetTimesheetByIDRequest,
+	req *timesheetports.GetTimesheetByIDRequest,
 ) (*timesheet.Timesheet, error) {
 	return s.repo.GetTimesheetByID(ctx, req)
 }
@@ -391,7 +392,7 @@ func (s *Service) RecordEntry(
 			Source:         timesheet.TimeEntrySourceManual,
 		}
 	} else {
-		existing, err := s.repo.GetEntryByID(ctx, &workerports.GetTimeClockEntryByIDRequest{
+		existing, err := s.repo.GetEntryByID(ctx, &timesheetports.GetTimeClockEntryByIDRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -494,7 +495,7 @@ func (s *Service) DeleteEntry(ctx context.Context, req *DeleteEntryRequest) erro
 		)
 	}
 
-	entry, err := s.repo.GetEntryByID(ctx, &workerports.GetTimeClockEntryByIDRequest{
+	entry, err := s.repo.GetEntryByID(ctx, &timesheetports.GetTimeClockEntryByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -508,7 +509,7 @@ func (s *Service) DeleteEntry(ctx context.Context, req *DeleteEntryRequest) erro
 		}
 	}
 
-	if err = s.repo.DeleteEntry(ctx, &workerports.GetTimeClockEntryByIDRequest{
+	if err = s.repo.DeleteEntry(ctx, &timesheetports.GetTimeClockEntryByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
@@ -539,7 +540,7 @@ func (s *Service) requireEditableSheet(
 	tenantInfo pagination.TenantInfo,
 	timesheetID pulid.ID,
 ) error {
-	sheet, err := s.repo.GetTimesheetByID(ctx, &workerports.GetTimesheetByIDRequest{
+	sheet, err := s.repo.GetTimesheetByID(ctx, &timesheetports.GetTimesheetByIDRequest{
 		ID:         timesheetID,
 		TenantInfo: tenantInfo,
 	})
@@ -589,7 +590,7 @@ func (s *Service) recalculate(
 		return nil
 	}
 
-	sheet, err := s.repo.GetTimesheetByID(ctx, &workerports.GetTimesheetByIDRequest{
+	sheet, err := s.repo.GetTimesheetByID(ctx, &timesheetports.GetTimesheetByIDRequest{
 		ID:         timesheetID,
 		TenantInfo: tenantInfo,
 	})
@@ -611,7 +612,7 @@ func (s *Service) recalculate(
 		return err
 	}
 
-	entries, err := s.repo.ListEntries(ctx, &workerports.ListTimeClockEntriesRequest{
+	entries, err := s.repo.ListEntries(ctx, &timesheetports.ListTimeClockEntriesRequest{
 		TenantInfo:  tenantInfo,
 		TimesheetID: sheet.ID,
 	})

@@ -28,7 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -79,7 +79,7 @@ type Sources struct {
 	Watchtower  watchtowerports.WatchtowerRepository
 	Decisions   agentports.AgentDecisionQueueService
 	Board       dispatchboardports.DispatchConsoleRepository
-	Credentials workerports.WorkerCredentialRepository
+	Credentials workercredentialports.WorkerCredentialRepository
 	Billing     billingqueueports.BillingQueueRepository
 	Payments    customerpaymentports.CustomerPaymentRepository
 	Detention   detentionports.DetentionOccurrenceRepository
@@ -347,7 +347,7 @@ func (b *Builder) compliance(ctx context.Context, req Request, facts *Facts) {
 
 	credentials, err := b.sources.Credentials.ListExpiring(
 		ctx,
-		&workerports.ListExpiringWorkerCredentialsRequest{
+		&workercredentialports.ListExpiringWorkerCredentialsRequest{
 			TenantInfo:  req.TenantInfo,
 			HorizonDays: credentialHorizonDays,
 			AsOf:        req.DayStart,

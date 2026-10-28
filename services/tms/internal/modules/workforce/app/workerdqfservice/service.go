@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -74,7 +75,7 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Repo          workerports.WorkerDQFRepository
+	Repo          workerdqfports.WorkerDQFRepository
 	WorkerRepo    workerports.WorkerRepository
 	RetentionRepo tenantports.DataRetentionRepository
 	Credentials   CredentialSummarizer
@@ -86,7 +87,7 @@ type Params struct {
 
 type Service struct {
 	l             *zap.Logger
-	repo          workerports.WorkerDQFRepository
+	repo          workerdqfports.WorkerDQFRepository
 	workerRepo    workerports.WorkerRepository
 	retentionRepo tenantports.DataRetentionRepository
 	credentials   CredentialSummarizer
@@ -113,7 +114,7 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger        *zap.Logger
-	Repo          workerports.WorkerDQFRepository
+	Repo          workerdqfports.WorkerDQFRepository
 	WorkerRepo    workerports.WorkerRepository
 	RetentionRepo tenantports.DataRetentionRepository
 	Credentials   CredentialSummarizer
@@ -192,7 +193,7 @@ func (s *Service) File(
 		var gErr error
 		verifications, gErr = s.repo.ListVerifications(
 			groupCtx,
-			&workerports.ListEmploymentVerificationsRequest{
+			&workerdqfports.ListEmploymentVerificationsRequest{
 				TenantInfo: tenantInfo,
 				WorkerID:   workerID,
 			},
@@ -260,9 +261,9 @@ func (s *Service) RetentionCandidates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	limit int,
-) ([]workerports.DQFRetentionCandidate, error) {
+) ([]workerdqfports.DQFRetentionCandidate, error) {
 	days := s.retentionDays(ctx, tenantInfo)
-	return s.repo.ListRetentionCandidates(ctx, &workerports.ListDQFRetentionCandidatesRequest{
+	return s.repo.ListRetentionCandidates(ctx, &workerdqfports.ListDQFRetentionCandidatesRequest{
 		TenantInfo:       tenantInfo,
 		RetentionSeconds: int64(days) * secondsPerDay,
 		AsOf:             timeutils.NowUnix(),

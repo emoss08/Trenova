@@ -26,7 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"go.uber.org/fx"
@@ -116,7 +116,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	// Injecting the recorder through FX would close the constructor cycle
 	// workerservice -> EmploymentEventRecorder -> workeremploymentservice ->
 	// workerservice, so it arrives after both services are built.
-	func(s *workerservice.Service, recorder workerports.EmploymentEventRecorder) {
+	func(s *workerservice.Service, recorder workeremploymentports.EmploymentEventRecorder) {
 		s.SetEmploymentRecorder(recorder)
 	},
 	// The portal service reaches back into the employment service through the

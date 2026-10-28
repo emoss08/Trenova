@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -125,7 +125,7 @@ func (s *Service) CancelMyPTO(
 		return nil, err
 	}
 
-	pto, err := s.ptoRepo.GetByID(ctx, &workerports.GetPTOByIDRequest{
+	pto, err := s.ptoRepo.GetByID(ctx, &workerptoports.GetPTOByIDRequest{
 		ID:         ptoID,
 		TenantInfo: tenantInfo,
 	})
@@ -143,7 +143,7 @@ func (s *Service) CancelMyPTO(
 		)
 	}
 
-	return s.ptoService.CancelRequested(ctx, &workerports.UpdatePTOStatusRequest{
+	return s.ptoService.CancelRequested(ctx, &workerptoports.UpdatePTOStatusRequest{
 		ID:         ptoID,
 		TenantInfo: tenantInfo,
 		Status:     worker.PTOStatusCancelled,

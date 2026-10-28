@@ -12,21 +12,21 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakePTODecider struct {
-	approved  *workerports.UpdatePTOStatusRequest
-	rejected  *workerports.UpdatePTOStatusRequest
-	cancelled *workerports.UpdatePTOStatusRequest
+	approved  *workerptoports.UpdatePTOStatusRequest
+	rejected  *workerptoports.UpdatePTOStatusRequest
+	cancelled *workerptoports.UpdatePTOStatusRequest
 }
 
 func (f *fakePTODecider) Approve(
 	_ context.Context,
-	req *workerports.UpdatePTOStatusRequest,
+	req *workerptoports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	f.approved = req
 
@@ -35,19 +35,19 @@ func (f *fakePTODecider) Approve(
 
 func (f *fakePTODecider) PreviewApprove(
 	_ context.Context,
-	req *workerports.UpdatePTOStatusRequest,
-) (*workerports.WorkerPTOTransitionPreview, error) {
+	req *workerptoports.UpdatePTOStatusRequest,
+) (*workerptoports.WorkerPTOTransitionPreview, error) {
 	current := &worker.WorkerPTO{ID: req.ID, Status: worker.PTOStatusRequested}
 	approved := *current
 	approved.Status = worker.PTOStatusApproved
 	approved.ApproverID = req.UserID
 
-	return &workerports.WorkerPTOTransitionPreview{Before: current, After: &approved}, nil
+	return &workerptoports.WorkerPTOTransitionPreview{Before: current, After: &approved}, nil
 }
 
 func (f *fakePTODecider) Reject(
 	_ context.Context,
-	req *workerports.UpdatePTOStatusRequest,
+	req *workerptoports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	f.rejected = req
 
@@ -56,7 +56,7 @@ func (f *fakePTODecider) Reject(
 
 func (f *fakePTODecider) Cancel(
 	_ context.Context,
-	req *workerports.UpdatePTOStatusRequest,
+	req *workerptoports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	f.cancelled = req
 

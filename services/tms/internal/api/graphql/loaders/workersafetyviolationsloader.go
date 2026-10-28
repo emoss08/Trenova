@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,7 +15,7 @@ import (
 type safetyViolationsLister interface {
 	ListViolations(
 		ctx context.Context,
-		req *workerports.ListWorkerSafetyViolationsRequest,
+		req *workersafetyports.ListWorkerSafetyViolationsRequest,
 	) ([]*workersafety.WorkerSafetyViolation, error)
 }
 
@@ -51,7 +51,7 @@ func (f *WorkerSafetyViolationsByEventIDLoaderFactory) batchFunc(
 		) (map[pulid.ID][]*workersafety.WorkerSafetyViolation, error) {
 			violations, err := f.violations.ListViolations(
 				ctx,
-				&workerports.ListWorkerSafetyViolationsRequest{
+				&workersafetyports.ListWorkerSafetyViolationsRequest{
 					TenantInfo:     tenantInfo,
 					SafetyEventIDs: ids,
 				},

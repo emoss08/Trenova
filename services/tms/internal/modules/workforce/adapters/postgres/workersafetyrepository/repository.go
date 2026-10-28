@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety/workersafetydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -35,7 +36,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.WorkerSafetyRepository {
+func New(p Params) workersafetyports.WorkerSafetyRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-safety-repository"),
@@ -52,7 +53,7 @@ func eventLoads(includeDocument, includeActors, includeWorker bool) []keel.Loade
 }
 
 func eventsQuery(
-	req *workerports.ListWorkerSafetyEventsRequest,
+	req *workersafetyports.ListWorkerSafetyEventsRequest,
 ) *keel.Query[*workersafety.WorkerSafetyEvent] {
 	e := workersafetydb.WorkerSafetyEvents
 	q := e.Where(
@@ -74,7 +75,7 @@ func eventsQuery(
 
 func (r *repository) ListEvents(
 	ctx context.Context,
-	req *workerports.ListWorkerSafetyEventsRequest,
+	req *workersafetyports.ListWorkerSafetyEventsRequest,
 ) ([]*workersafety.WorkerSafetyEvent, error) {
 	return dbtx.Read(
 		ctx,
@@ -93,7 +94,7 @@ func (r *repository) ListEvents(
 
 func (r *repository) GetEventByID(
 	ctx context.Context,
-	req *workerports.GetWorkerSafetyEventByIDRequest,
+	req *workersafetyports.GetWorkerSafetyEventByIDRequest,
 ) (*workersafety.WorkerSafetyEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workersafety.WorkerSafetyEvent, error) {
 		e := workersafetydb.WorkerSafetyEvents
@@ -146,7 +147,7 @@ func (r *repository) UpdateEvent(
 
 func (r *repository) DeleteEvent(
 	ctx context.Context,
-	req *workerports.GetWorkerSafetyEventByIDRequest,
+	req *workersafetyports.GetWorkerSafetyEventByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		e := workersafetydb.WorkerSafetyEvents
@@ -162,7 +163,7 @@ func (r *repository) DeleteEvent(
 
 func (r *repository) ListActions(
 	ctx context.Context,
-	req *workerports.ListWorkerDisciplinaryActionsRequest,
+	req *workersafetyports.ListWorkerDisciplinaryActionsRequest,
 ) ([]*workersafety.WorkerDisciplinaryAction, error) {
 	return dbtx.Read(
 		ctx,
@@ -188,7 +189,7 @@ func (r *repository) ListActions(
 
 func (r *repository) GetActionByID(
 	ctx context.Context,
-	req *workerports.GetWorkerDisciplinaryActionByIDRequest,
+	req *workersafetyports.GetWorkerDisciplinaryActionByIDRequest,
 ) (*workersafety.WorkerDisciplinaryAction, error) {
 	return dbtx.Read(
 		ctx,
@@ -247,7 +248,7 @@ func (r *repository) UpdateAction(
 
 func (r *repository) ListRecognitions(
 	ctx context.Context,
-	req *workerports.ListWorkerRecognitionsRequest,
+	req *workersafetyports.ListWorkerRecognitionsRequest,
 ) ([]*workersafety.WorkerRecognition, error) {
 	return dbtx.Read(
 		ctx,
@@ -273,7 +274,7 @@ func (r *repository) ListRecognitions(
 
 func (r *repository) GetRecognitionByID(
 	ctx context.Context,
-	req *workerports.GetWorkerRecognitionByIDRequest,
+	req *workersafetyports.GetWorkerRecognitionByIDRequest,
 ) (*workersafety.WorkerRecognition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workersafety.WorkerRecognition, error) {
 		entity, err := workersafetydb.WorkerRecognitions.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -305,7 +306,7 @@ func (r *repository) CreateRecognition(
 
 func (r *repository) DeleteRecognition(
 	ctx context.Context,
-	req *workerports.GetWorkerRecognitionByIDRequest,
+	req *workersafetyports.GetWorkerRecognitionByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		rc := workersafetydb.WorkerRecognitions
@@ -319,7 +320,7 @@ func (r *repository) DeleteRecognition(
 	})
 }
 
-func lapsedQuery(req *workerports.ListWorkersWithLapsedPointsRequest) *keel.Query[*keel.Row] {
+func lapsedQuery(req *workersafetyports.ListWorkersWithLapsedPointsRequest) *keel.Query[*keel.Row] {
 	e := workersafetydb.WorkerSafetyEvents
 	a := workersafetydb.WorkerDisciplinaryActions
 
@@ -352,7 +353,7 @@ func lapsedQuery(req *workerports.ListWorkersWithLapsedPointsRequest) *keel.Quer
 
 func (r *repository) ListWorkersWithLapsedPoints(
 	ctx context.Context,
-	req *workerports.ListWorkersWithLapsedPointsRequest,
+	req *workersafetyports.ListWorkersWithLapsedPointsRequest,
 ) ([]workerports.WorkerTenantRef, error) {
 	ctx = dbscope.WithSystem(
 		ctx,

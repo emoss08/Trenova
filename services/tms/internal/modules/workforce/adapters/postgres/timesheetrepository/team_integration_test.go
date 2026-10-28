@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet/timesheetdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/timesheetports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/internal/testutil/workerteamtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -54,7 +54,7 @@ func TestListsNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 	}
 
 	sheetWorkers := func(managerIDs []pulid.ID) []pulid.ID {
-		sheets, err := repo.ListTimesheets(ctx, &workerports.ListTimesheetsRequest{
+		sheets, err := repo.ListTimesheets(ctx, &timesheetports.ListTimesheetsRequest{
 			TenantInfo: tenant,
 			ManagerIDs: managerIDs,
 		})
@@ -66,7 +66,7 @@ func TestListsNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 		return out
 	}
 	entryWorkers := func(managerIDs []pulid.ID) []pulid.ID {
-		entries, err := repo.ListEntries(ctx, &workerports.ListTimeClockEntriesRequest{
+		entries, err := repo.ListEntries(ctx, &timesheetports.ListTimeClockEntriesRequest{
 			TenantInfo: tenant,
 			OpenOnly:   true,
 			ManagerIDs: managerIDs,

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto/ptodb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -34,7 +34,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.PTOLedgerRepository {
+func New(p Params) ptoledgerports.PTOLedgerRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.pto-ledger-repository"),
@@ -45,13 +45,13 @@ func sumOrZero(e keel.Expr) keel.NumericExpr {
 	return keel.NumericOf(e).Coalesce(0)
 }
 
-func balanceQuery(key *workerports.PTOBalanceKey) *keel.Query[*pto.WorkerPTOBalance] {
+func balanceQuery(key *ptoledgerports.PTOBalanceKey) *keel.Query[*pto.WorkerPTOBalance] {
 	b := ptodb.WorkerPTOBalances
 
 	return b.Where(b.WorkerID.Eq(key.WorkerID), b.PTOType.Eq(key.PTOType))
 }
 
-func (r *repository) EnsureBalance(ctx context.Context, key *workerports.PTOBalanceKey) error {
+func (r *repository) EnsureBalance(ctx context.Context, key *ptoledgerports.PTOBalanceKey) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		b := ptodb.WorkerPTOBalances
 		_, err := b.CreateOrSkip(ctx, r.db.Keel(ctx), []*pto.WorkerPTOBalance{{
@@ -71,7 +71,7 @@ func (r *repository) EnsureBalance(ctx context.Context, key *workerports.PTOBala
 
 func (r *repository) LockBalance(
 	ctx context.Context,
-	key *workerports.PTOBalanceKey,
+	key *ptoledgerports.PTOBalanceKey,
 ) (*pto.WorkerPTOBalance, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pto.WorkerPTOBalance, error) {
 		entity, err := balanceQuery(key).Lock(keel.ForUpdate).One(ctx, r.db.Keel(ctx))
@@ -85,7 +85,7 @@ func (r *repository) LockBalance(
 
 func (r *repository) GetBalance(
 	ctx context.Context,
-	key *workerports.PTOBalanceKey,
+	key *ptoledgerports.PTOBalanceKey,
 ) (*pto.WorkerPTOBalance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pto.WorkerPTOBalance, error) {
 		entity, err := balanceQuery(key).One(ctx, r.db.Keel(ctx))
@@ -99,7 +99,7 @@ func (r *repository) GetBalance(
 
 func (r *repository) ListBalances(
 	ctx context.Context,
-	req *workerports.ListPTOBalancesRequest,
+	req *ptoledgerports.ListPTOBalancesRequest,
 ) ([]*pto.WorkerPTOBalance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*pto.WorkerPTOBalance, error) {
 		b := ptodb.WorkerPTOBalances
@@ -155,7 +155,7 @@ func (r *repository) InsertEntry(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pto.WorkerPTOLedgerEntry, error) {
 		if err := ptodb.WorkerPTOLedgerEntries.Create(ctx, r.db.Keel(ctx), entry); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, workerports.ErrDuplicatePTOLedgerEntry
+				return nil, ptoledgerports.ErrDuplicatePTOLedgerEntry
 			}
 			r.l.Error("failed to insert PTO ledger entry", zap.Error(err))
 			return nil, err
@@ -165,7 +165,7 @@ func (r *repository) InsertEntry(
 	})
 }
 
-func entryFilter(req *workerports.ListPTOLedgerRequest) []keel.Pred {
+func entryFilter(req *ptoledgerports.ListPTOLedgerRequest) []keel.Pred {
 	e := ptodb.WorkerPTOLedgerEntries
 
 	return []keel.Pred{
@@ -182,7 +182,7 @@ func entryFilter(req *workerports.ListPTOLedgerRequest) []keel.Pred {
 
 func (r *repository) ListEntries(
 	ctx context.Context,
-	req *workerports.ListPTOLedgerRequest,
+	req *ptoledgerports.ListPTOLedgerRequest,
 ) (*pagination.CursorListResult[*pto.WorkerPTOLedgerEntry], error) {
 	return dbtx.Read(
 		ctx,
@@ -216,7 +216,7 @@ type sumRow struct {
 
 func (r *repository) SumEntries(
 	ctx context.Context,
-	key *workerports.PTOBalanceKey,
+	key *ptoledgerports.PTOBalanceKey,
 ) (decimal.Decimal, int64, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (decimal.Decimal, int64, error) {
 		e := ptodb.WorkerPTOLedgerEntries
@@ -234,7 +234,7 @@ func (r *repository) SumEntries(
 
 func (r *repository) PendingDays(
 	ctx context.Context,
-	req *workerports.PendingPTODaysRequest,
+	req *ptoledgerports.PendingPTODaysRequest,
 ) (decimal.Decimal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (decimal.Decimal, error) {
 		p := workerdb.WorkerPTOs
@@ -257,7 +257,7 @@ func (r *repository) PendingDays(
 
 func (r *repository) HasEntry(
 	ctx context.Context,
-	req *workerports.HasPTOLedgerEntryRequest,
+	req *ptoledgerports.HasPTOLedgerEntryRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		e := ptodb.WorkerPTOLedgerEntries
@@ -282,48 +282,52 @@ type summaryRow struct {
 func (r *repository) Summary(
 	ctx context.Context,
 	_ pagination.TenantInfo,
-) (*workerports.PTOBalanceSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerports.PTOBalanceSummary, error) {
-		db := r.db.Keel(ctx)
-		b := ptodb.WorkerPTOBalances
-		balances, err := keel.IntoOne[summaryRow](ctx, db, b.Pick(
-			b.WorkerID.CountDistinct(),
-			sumOrZero(b.BalanceDays.Sum()),
-			sumOrZero(b.AccruedYTDDays.Sum()),
-			sumOrZero(b.UsedYTDDays.Sum()),
-		))
-		if err != nil {
-			r.l.Error("failed to summarise PTO balances", zap.Error(err))
-			return nil, err
-		}
+) (*ptoledgerports.PTOBalanceSummary, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*ptoledgerports.PTOBalanceSummary, error) {
+			db := r.db.Keel(ctx)
+			b := ptodb.WorkerPTOBalances
+			balances, err := keel.IntoOne[summaryRow](ctx, db, b.Pick(
+				b.WorkerID.CountDistinct(),
+				sumOrZero(b.BalanceDays.Sum()),
+				sumOrZero(b.AccruedYTDDays.Sum()),
+				sumOrZero(b.UsedYTDDays.Sum()),
+			))
+			if err != nil {
+				r.l.Error("failed to summarise PTO balances", zap.Error(err))
+				return nil, err
+			}
 
-		p := workerdb.WorkerPTOs
-		pending, err := keel.IntoOne[decimal.Decimal](ctx, db, p.
-			Pick(sumOrZero(p.Days.Sum())).
-			Where(p.Status.Eq(worker.PTOStatusRequested)))
-		if err != nil {
-			r.l.Error("failed to summarise pending PTO", zap.Error(err))
-			return nil, err
-		}
+			p := workerdb.WorkerPTOs
+			pending, err := keel.IntoOne[decimal.Decimal](ctx, db, p.
+				Pick(sumOrZero(p.Days.Sum())).
+				Where(p.Status.Eq(worker.PTOStatusRequested)))
+			if err != nil {
+				r.l.Error("failed to summarise pending PTO", zap.Error(err))
+				return nil, err
+			}
 
-		w := workerdb.Workers
-		a := ptodb.WorkerPTOPolicyAssignments
-		unassigned, err := w.Where(
-			w.Status.Eq(domaintypes.StatusActive),
-			keel.NotExists(a.Where(a.WorkerID.EqCol(w.ID), a.EffectiveTo.IsNull())),
-		).Count(ctx, db)
-		if err != nil {
-			r.l.Error("failed to count unassigned workers", zap.Error(err))
-			return nil, err
-		}
+			w := workerdb.Workers
+			a := ptodb.WorkerPTOPolicyAssignments
+			unassigned, err := w.Where(
+				w.Status.Eq(domaintypes.StatusActive),
+				keel.NotExists(a.Where(a.WorkerID.EqCol(w.ID), a.EffectiveTo.IsNull())),
+			).Count(ctx, db)
+			if err != nil {
+				r.l.Error("failed to count unassigned workers", zap.Error(err))
+				return nil, err
+			}
 
-		return &workerports.PTOBalanceSummary{
-			WorkersTracked:    int(balances.WorkersTracked),
-			WorkersUnassigned: int(unassigned),
-			TotalBalanceDays:  balances.TotalBalance,
-			TotalPendingDays:  pending,
-			AccruedYTDDays:    balances.AccruedYTD,
-			UsedYTDDays:       balances.UsedYTD,
-		}, nil
-	})
+			return &ptoledgerports.PTOBalanceSummary{
+				WorkersTracked:    int(balances.WorkersTracked),
+				WorkersUnassigned: int(unassigned),
+				TotalBalanceDays:  balances.TotalBalance,
+				TotalPendingDays:  pending,
+				AccruedYTDDays:    balances.AccruedYTD,
+				UsedYTDDays:       balances.UsedYTD,
+			}, nil
+		},
+	)
 }

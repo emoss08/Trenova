@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
@@ -26,7 +26,7 @@ import (
 const day = int64(86400)
 
 type fakeRepo struct {
-	workerports.WorkerSafetyRepository
+	workersafetyports.WorkerSafetyRepository
 	events       []*workersafety.WorkerSafetyEvent
 	actions      []*workersafety.WorkerDisciplinaryAction
 	recognitions []*workersafety.WorkerRecognition
@@ -35,7 +35,7 @@ type fakeRepo struct {
 
 func (f *fakeRepo) ListEvents(
 	_ context.Context,
-	req *workerports.ListWorkerSafetyEventsRequest,
+	req *workersafetyports.ListWorkerSafetyEventsRequest,
 ) ([]*workersafety.WorkerSafetyEvent, error) {
 	out := make([]*workersafety.WorkerSafetyEvent, 0, len(f.events))
 	for _, e := range f.events {
@@ -48,7 +48,7 @@ func (f *fakeRepo) ListEvents(
 
 func (f *fakeRepo) GetEventByID(
 	_ context.Context,
-	req *workerports.GetWorkerSafetyEventByIDRequest,
+	req *workersafetyports.GetWorkerSafetyEventByIDRequest,
 ) (*workersafety.WorkerSafetyEvent, error) {
 	for _, e := range f.events {
 		if e.ID == req.ID {
@@ -84,7 +84,7 @@ func (f *fakeRepo) UpdateEvent(
 
 func (f *fakeRepo) DeleteEvent(
 	_ context.Context,
-	req *workerports.GetWorkerSafetyEventByIDRequest,
+	req *workersafetyports.GetWorkerSafetyEventByIDRequest,
 ) error {
 	for i, e := range f.events {
 		if e.ID == req.ID {
@@ -97,7 +97,7 @@ func (f *fakeRepo) DeleteEvent(
 
 func (f *fakeRepo) ListActions(
 	_ context.Context,
-	req *workerports.ListWorkerDisciplinaryActionsRequest,
+	req *workersafetyports.ListWorkerDisciplinaryActionsRequest,
 ) ([]*workersafety.WorkerDisciplinaryAction, error) {
 	out := make([]*workersafety.WorkerDisciplinaryAction, 0, len(f.actions))
 	for _, a := range f.actions {
@@ -110,7 +110,7 @@ func (f *fakeRepo) ListActions(
 
 func (f *fakeRepo) GetActionByID(
 	_ context.Context,
-	req *workerports.GetWorkerDisciplinaryActionByIDRequest,
+	req *workersafetyports.GetWorkerDisciplinaryActionByIDRequest,
 ) (*workersafety.WorkerDisciplinaryAction, error) {
 	for _, a := range f.actions {
 		if a.ID == req.ID {
@@ -146,7 +146,7 @@ func (f *fakeRepo) UpdateAction(
 
 func (f *fakeRepo) ListRecognitions(
 	_ context.Context,
-	req *workerports.ListWorkerRecognitionsRequest,
+	req *workersafetyports.ListWorkerRecognitionsRequest,
 ) ([]*workersafety.WorkerRecognition, error) {
 	out := make([]*workersafety.WorkerRecognition, 0, len(f.recognitions))
 	for _, r := range f.recognitions {

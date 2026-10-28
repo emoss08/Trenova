@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -51,7 +52,7 @@ func (s *Service) loadCase(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (original, leaveCase *workerleave.WorkerLeaveCase, err error) {
-	original, err = s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
+	original, err = s.repo.GetCaseByID(ctx, &workerleaveports.GetLeaveCaseByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -141,7 +142,7 @@ func (s *Service) PlanRecordDay(
 	ctx context.Context,
 	req *RecordDayRequest,
 ) (*workerleave.WorkerLeaveEntry, error) {
-	leaveCase, err := s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
+	leaveCase, err := s.repo.GetCaseByID(ctx, &workerleaveports.GetLeaveCaseByIDRequest{
 		ID:         req.CaseID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -180,7 +181,7 @@ func (s *Service) PlanRecordDay(
 }
 
 func (s *Service) PlanUpdateDay(ctx context.Context, req *UpdateDayRequest) (*EntryChange, error) {
-	original, err := s.repo.GetEntryByID(ctx, &workerports.GetLeaveEntryByIDRequest{
+	original, err := s.repo.GetEntryByID(ctx, &workerleaveports.GetLeaveEntryByIDRequest{
 		ID:         req.EntryID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -215,7 +216,7 @@ func (s *Service) PlanDeleteDay(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workerleave.WorkerLeaveEntry, error) {
-	return s.repo.GetEntryByID(ctx, &workerports.GetLeaveEntryByIDRequest{
+	return s.repo.GetEntryByID(ctx, &workerleaveports.GetLeaveEntryByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})

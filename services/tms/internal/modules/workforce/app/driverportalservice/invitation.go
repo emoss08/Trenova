@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -181,7 +181,7 @@ func (s *Service) ensureNoPendingInvitation(
 ) error {
 	existing, err := s.portalRepo.GetPendingInvitationForWorker(
 		ctx,
-		workerports.GetPendingPortalInvitationRequest{
+		portalaccessports.GetPendingPortalInvitationRequest{
 			TenantInfo: req.TenantInfo,
 			WorkerID:   req.WorkerID,
 		},
@@ -276,7 +276,7 @@ func (s *Service) GetPortalStatus(
 
 	invitations, err := s.portalRepo.ListInvitations(
 		ctx,
-		&workerports.ListPortalInvitationsRequest{
+		&portalaccessports.ListPortalInvitationsRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 		},
@@ -376,7 +376,7 @@ func (s *Service) AcceptInvitation(
 	})
 	created, err := s.portalRepo.ActivatePortalAccess(
 		ctx,
-		&workerports.ActivatePortalAccessRequest{
+		&portalaccessports.ActivatePortalAccessRequest{
 			Invitation:      invitation,
 			User:            user,
 			RoleName:        DriverRoleName,

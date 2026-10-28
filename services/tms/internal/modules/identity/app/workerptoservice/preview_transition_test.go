@@ -5,14 +5,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/smsjobs/smscontract"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -63,13 +62,13 @@ func TestPreviewReject_IsWhatRejectSavesAndTexts(t *testing.T) {
 	svc := &Service{
 		l: zap.NewNop(),
 		repo: &fakePTORepo{
-			getByID: func(context.Context, *workerports.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
+			getByID: func(context.Context, *workerptoports.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
 				copied := *current
 				return &copied, nil
 			},
 			updateStatus: func(
 				_ context.Context,
-				req *workerports.UpdatePTOStatusRequest,
+				req *workerptoports.UpdatePTOStatusRequest,
 			) (*worker.WorkerPTO, error) {
 				if !writable {
 					return nil, errors.New("a preview wrote")
@@ -83,8 +82,8 @@ func TestPreviewReject_IsWhatRejectSavesAndTexts(t *testing.T) {
 		workflowStarter: starter,
 		auditService:    &fakeAuditService{},
 	}
-	request := func() *workerports.UpdatePTOStatusRequest {
-		return &workerports.UpdatePTOStatusRequest{
+	request := func() *workerptoports.UpdatePTOStatusRequest {
+		return &workerptoports.UpdatePTOStatusRequest{
 			ID:         current.ID,
 			TenantInfo: tenantFor(current),
 			UserID:     pulid.MustNew("usr_"),
@@ -124,13 +123,13 @@ func TestPreviewCancel_SaysApprovedDaysGoBack(t *testing.T) {
 	svc := &Service{
 		l: zap.NewNop(),
 		repo: &fakePTORepo{
-			getByID: func(context.Context, *workerports.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
+			getByID: func(context.Context, *workerptoports.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
 				return current, nil
 			},
 		},
 	}
 
-	preview, err := svc.PreviewCancel(t.Context(), &workerports.UpdatePTOStatusRequest{
+	preview, err := svc.PreviewCancel(t.Context(), &workerptoports.UpdatePTOStatusRequest{
 		ID:         current.ID,
 		TenantInfo: tenantFor(current),
 		UserID:     pulid.MustNew("usr_"),

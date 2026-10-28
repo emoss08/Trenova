@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -58,10 +58,14 @@ func TestDriverPortal_UnderRowLevelSecurityReadsOnlyTheDriversOwnRecords(t *test
 			AddressLine1:   "1 Depot Road",
 			City:           "Springfield",
 			PostalCode:     "62701",
-			Email:          strings.ToLower(first) + "-" + pulid.MustNew("e").String() + "@example.com",
-			PhoneNumber:    "555-0100",
-			Gender:         worker.GenderMale,
-			CanBeAssigned:  true,
+			Email: strings.ToLower(
+				first,
+			) + "-" + pulid.MustNew("e").
+				String() +
+				"@example.com",
+			PhoneNumber:   "555-0100",
+			Gender:        worker.GenderMale,
+			CanBeAssigned: true,
 		}
 		require.NoError(t, workerdb.Workers.Create(data.Ctx(ctx), admin, entity))
 		return entity
@@ -71,12 +75,19 @@ func TestDriverPortal_UnderRowLevelSecurityReadsOnlyTheDriversOwnRecords(t *test
 
 	fixture := testutil.SeedShipmentIntegrationFixture(t, ctx, admin, data, tenant)
 	assign := func(code string, driver *worker.Worker) *testutil.ShipmentGraph {
-		graph := testutil.CreateShipmentGraph(t, ctx, admin, fixture, tenant, testutil.ShipmentGraphParams{
-			BOL:          "BOL-" + code,
-			ProNumber:    "PRO-" + code,
-			ShipmentID:   pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusAssigned},
-		})
+		graph := testutil.CreateShipmentGraph(
+			t,
+			ctx,
+			admin,
+			fixture,
+			tenant,
+			testutil.ShipmentGraphParams{
+				BOL:          "BOL-" + code,
+				ProNumber:    "PRO-" + code,
+				ShipmentID:   pulid.MustNew("shp_"),
+				MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusAssigned},
+			},
+		)
 		err := shipmentdb.Assignments.Create(data.Ctx(ctx), admin, &shipment.Assignment{
 			ID:              pulid.MustNew("a_"),
 			BusinessUnitID:  tenant.BuID,
@@ -113,7 +124,7 @@ func TestDriverPortal_UnderRowLevelSecurityReadsOnlyTheDriversOwnRecords(t *test
 	require.Error(t, err)
 	assert.True(t, errortypes.IsNotFoundError(err), "a user linked to no worker resolves none")
 
-	loads, err := repo.ListWorkerLoads(driverCtx, &workerports.ListWorkerLoadsRequest{
+	loads, err := repo.ListWorkerLoads(driverCtx, &portalaccessports.ListWorkerLoadsRequest{
 		TenantInfo: tenant,
 		WorkerID:   own.ID,
 	})

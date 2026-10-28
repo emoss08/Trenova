@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist/workerchecklistdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -47,7 +47,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.WorkerChecklistRepository {
+func New(p Params) workerchecklistports.WorkerChecklistRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-checklist-repository"),
@@ -71,7 +71,7 @@ func checklistItems() keel.Loader {
 	)
 }
 
-func templateFilter(req *workerports.ListChecklistTemplatesRequest) []keel.Pred {
+func templateFilter(req *workerchecklistports.ListChecklistTemplatesRequest) []keel.Pred {
 	t := workerchecklistdb.WorkerChecklistTemplates
 
 	return []keel.Pred{
@@ -83,7 +83,7 @@ func templateFilter(req *workerports.ListChecklistTemplatesRequest) []keel.Pred 
 
 func (r *repository) ListTemplates(
 	ctx context.Context,
-	req *workerports.ListChecklistTemplatesRequest,
+	req *workerchecklistports.ListChecklistTemplatesRequest,
 ) (*pagination.CursorListResult[*workerchecklist.WorkerChecklistTemplate], error) {
 	return dbtx.Read(
 		ctx,
@@ -139,7 +139,7 @@ func (r *repository) ListActiveTemplates(
 
 func (r *repository) GetTemplateByID(
 	ctx context.Context,
-	req *workerports.GetChecklistTemplateByIDRequest,
+	req *workerchecklistports.GetChecklistTemplateByIDRequest,
 ) (*workerchecklist.WorkerChecklistTemplate, error) {
 	return dbtx.Read(
 		ctx,
@@ -160,7 +160,7 @@ func (r *repository) GetTemplateByID(
 
 func (r *repository) GetDefaultTemplate(
 	ctx context.Context,
-	req *workerports.GetDefaultChecklistTemplateRequest,
+	req *workerchecklistports.GetDefaultChecklistTemplateRequest,
 ) (*workerchecklist.WorkerChecklistTemplate, error) {
 	return dbtx.Read(
 		ctx,
@@ -186,7 +186,7 @@ func (r *repository) GetDefaultTemplate(
 
 func (r *repository) TemplateCodeExists(
 	ctx context.Context,
-	req *workerports.ChecklistTemplateCodeExistsRequest,
+	req *workerchecklistports.ChecklistTemplateCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		t := workerchecklistdb.WorkerChecklistTemplates
@@ -263,9 +263,12 @@ func (r *repository) createTemplate(
 	entity *workerchecklist.WorkerChecklistTemplate,
 ) error {
 	if entity.IsDefault {
-		err := r.ClearDefaultTemplate(ctx, &workerports.ClearDefaultChecklistTemplateRequest{
-			Trigger: entity.Trigger,
-		})
+		err := r.ClearDefaultTemplate(
+			ctx,
+			&workerchecklistports.ClearDefaultChecklistTemplateRequest{
+				Trigger: entity.Trigger,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -304,10 +307,13 @@ func (r *repository) updateTemplate(
 	entity *workerchecklist.WorkerChecklistTemplate,
 ) error {
 	if entity.IsDefault {
-		err := r.ClearDefaultTemplate(ctx, &workerports.ClearDefaultChecklistTemplateRequest{
-			Trigger:  entity.Trigger,
-			ExceptID: entity.ID,
-		})
+		err := r.ClearDefaultTemplate(
+			ctx,
+			&workerchecklistports.ClearDefaultChecklistTemplateRequest{
+				Trigger:  entity.Trigger,
+				ExceptID: entity.ID,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -328,7 +334,7 @@ func (r *repository) updateTemplate(
 
 func (r *repository) ClearDefaultTemplate(
 	ctx context.Context,
-	req *workerports.ClearDefaultChecklistTemplateRequest,
+	req *workerchecklistports.ClearDefaultChecklistTemplateRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		t := workerchecklistdb.WorkerChecklistTemplates
@@ -348,7 +354,7 @@ func (r *repository) ClearDefaultTemplate(
 
 func (r *repository) CountOpenChecklists(
 	ctx context.Context,
-	req *workerports.CountOpenChecklistsRequest,
+	req *workerchecklistports.CountOpenChecklistsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		c := workerchecklistdb.WorkerChecklists
@@ -368,7 +374,7 @@ func (r *repository) CountOpenChecklists(
 
 func (r *repository) CountOpenChecklistsByTemplateIDs(
 	ctx context.Context,
-	req *workerports.CountOpenChecklistsByTemplateIDsRequest,
+	req *workerchecklistports.CountOpenChecklistsByTemplateIDsRequest,
 ) (map[pulid.ID]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		if len(req.TemplateIDs) == 0 {
@@ -397,7 +403,7 @@ func (r *repository) CountOpenChecklistsByTemplateIDs(
 
 func (r *repository) ListForWorker(
 	ctx context.Context,
-	req *workerports.ListWorkerChecklistsRequest,
+	req *workerchecklistports.ListWorkerChecklistsRequest,
 ) ([]*workerchecklist.WorkerChecklist, error) {
 	return dbtx.Read(
 		ctx,
@@ -424,7 +430,7 @@ func (r *repository) ListForWorker(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *workerports.GetWorkerChecklistByIDRequest,
+	req *workerchecklistports.GetWorkerChecklistByIDRequest,
 ) (*workerchecklist.WorkerChecklist, error) {
 	return dbtx.Read(
 		ctx,
@@ -446,7 +452,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetItemByID(
 	ctx context.Context,
-	req *workerports.GetWorkerChecklistItemByIDRequest,
+	req *workerchecklistports.GetWorkerChecklistItemByIDRequest,
 ) (*workerchecklist.WorkerChecklistItem, error) {
 	return dbtx.Read(
 		ctx,

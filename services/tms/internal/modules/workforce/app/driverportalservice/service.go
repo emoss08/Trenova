@@ -20,7 +20,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/driverportalports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -39,7 +40,7 @@ type Params struct {
 
 	Logger              *zap.Logger
 	Config              *config.Config
-	PortalRepo          workerports.PortalAccessRepository
+	PortalRepo          portalaccessports.PortalAccessRepository
 	OrgRepo             tenantports.OrganizationRepository
 	SettlementRepo      driversettlementports.DriverSettlementRepository
 	PayEventRepo        driversettlementports.PayEventRepository
@@ -48,14 +49,14 @@ type Params struct {
 	SettlementControl   tenantports.SettlementControlRepository
 	DashControlRepo     tenantports.DashControlRepository
 	DocumentTypeRepo    documenttypeports.DocumentTypeRepository
-	PTORepo             workerports.WorkerPTORepository
+	PTORepo             workerptoports.WorkerPTORepository
 	EmailService        emailports.EmailService
 	Templates           documenttemplateports.DocumentTemplateResolver
 	CommentService      shipmentcommentports.ShipmentCommentService
 	StopReporter        driverportalports.StopReporter
 	WorkerService       *workerservice.Service
 	DocumentService     *documentservice.Service
-	PTOService          workerports.WorkerPTOService
+	PTOService          workerptoports.WorkerPTOService
 	PTOLedger           *ptoledgerservice.Service
 	Credentials         *workercredentialservice.Service
 	Training            *workertrainingservice.Service
@@ -73,7 +74,7 @@ type Params struct {
 type Service struct {
 	l                   *zap.Logger
 	cfg                 *config.Config
-	portalRepo          workerports.PortalAccessRepository
+	portalRepo          portalaccessports.PortalAccessRepository
 	orgRepo             tenantports.OrganizationRepository
 	settlementRepo      driversettlementports.DriverSettlementRepository
 	payEventRepo        driversettlementports.PayEventRepository
@@ -82,14 +83,14 @@ type Service struct {
 	settlementControl   tenantports.SettlementControlRepository
 	dashControlRepo     tenantports.DashControlRepository
 	documentTypeRepo    documenttypeports.DocumentTypeRepository
-	ptoRepo             workerports.WorkerPTORepository
+	ptoRepo             workerptoports.WorkerPTORepository
 	emailService        emailports.EmailService
 	templates           documenttemplateports.DocumentTemplateResolver
 	commentService      shipmentcommentports.ShipmentCommentService
 	stopReporter        driverportalports.StopReporter
 	workerService       *workerservice.Service
 	documentService     *documentservice.Service
-	ptoService          workerports.WorkerPTOService
+	ptoService          workerptoports.WorkerPTOService
 	ptoLedger           *ptoledgerservice.Service
 	credentials         *workercredentialservice.Service
 	training            *workertrainingservice.Service

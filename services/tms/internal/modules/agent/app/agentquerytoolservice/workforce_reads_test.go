@@ -12,7 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -26,14 +28,14 @@ type fakeWorkforceReads struct {
 	permits      []*permit.Permit
 	requirements []*permit.Requirement
 
-	testsReq    *workerports.ListWorkerDOTTestsRequest
-	injuriesReq *workerports.ListWorkerInjuriesRequest
-	casesReq    *workerports.ListLeaveCasesRequest
+	testsReq    *workerdotports.ListWorkerDOTTestsRequest
+	injuriesReq *workersafetyports.ListWorkerInjuriesRequest
+	casesReq    *workerleaveports.ListLeaveCasesRequest
 }
 
 func (f *fakeWorkforceReads) ListCases(
 	_ context.Context,
-	req *workerports.ListLeaveCasesRequest,
+	req *workerleaveports.ListLeaveCasesRequest,
 ) ([]*workerleave.WorkerLeaveCase, error) {
 	f.casesReq = req
 	return f.cases, nil

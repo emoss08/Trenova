@@ -474,13 +474,67 @@ packages:
   github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/orgholidayports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/workforce/ports/permitports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/timesheetports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/workforce/ports/workerports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/workspace/ports/auditports:

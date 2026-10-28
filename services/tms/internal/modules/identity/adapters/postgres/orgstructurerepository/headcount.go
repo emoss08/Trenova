@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,13 +36,13 @@ func (r *repository) rosterCount(
 	ctx context.Context,
 	operation string,
 	g *headcountGroup,
-) ([]workerports.HeadcountRow, error) {
+) ([]orgstructureports.HeadcountRow, error) {
 	w := workerdb.Workers
 	jp := w.Position()
 	active := w.Status.Eq(domaintypes.StatusActive)
 	workers := keel.Count().Filter(active)
 
-	rows, err := keel.Into[workerports.HeadcountRow](ctx, r.db.Keel(ctx), w.
+	rows, err := keel.Into[orgstructureports.HeadcountRow](ctx, r.db.Keel(ctx), w.
 		Group(g.group...).
 		Pick(
 			g.key,
@@ -69,51 +69,63 @@ func (r *repository) rosterCount(
 func (r *repository) HeadcountByFleet(
 	ctx context.Context,
 	_ pagination.TenantInfo,
-) ([]workerports.HeadcountRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.HeadcountRow, error) {
-		w := workerdb.Workers
-		fc := w.FleetCode()
-		return r.rosterCount(ctx, "fleet", &headcountGroup{
-			key:   orEmpty(w.FleetCodeID),
-			label: fc.Description.Coalesce(fc.Code, "No terminal"),
-			code:  orEmpty(fc.Code),
-			color: orEmpty(fc.Color),
-			group: []keel.Expr{w.FleetCodeID, fc.Code, fc.Description, fc.Color},
-		})
-	})
+) ([]orgstructureports.HeadcountRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]orgstructureports.HeadcountRow, error) {
+			w := workerdb.Workers
+			fc := w.FleetCode()
+			return r.rosterCount(ctx, "fleet", &headcountGroup{
+				key:   orEmpty(w.FleetCodeID),
+				label: fc.Description.Coalesce(fc.Code, "No terminal"),
+				code:  orEmpty(fc.Code),
+				color: orEmpty(fc.Color),
+				group: []keel.Expr{w.FleetCodeID, fc.Code, fc.Description, fc.Color},
+			})
+		},
+	)
 }
 
 func (r *repository) HeadcountByPosition(
 	ctx context.Context,
 	_ pagination.TenantInfo,
-) ([]workerports.HeadcountRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.HeadcountRow, error) {
-		w := workerdb.Workers
-		jp := w.Position()
-		return r.rosterCount(ctx, "position", &headcountGroup{
-			key:   orEmpty(w.PositionID),
-			label: jp.Title.Coalesce("No position"),
-			code:  orEmpty(jp.Code),
-			color: keel.Text(""),
-			group: []keel.Expr{w.PositionID, jp.Title, jp.Code},
-		})
-	})
+) ([]orgstructureports.HeadcountRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]orgstructureports.HeadcountRow, error) {
+			w := workerdb.Workers
+			jp := w.Position()
+			return r.rosterCount(ctx, "position", &headcountGroup{
+				key:   orEmpty(w.PositionID),
+				label: jp.Title.Coalesce("No position"),
+				code:  orEmpty(jp.Code),
+				color: keel.Text(""),
+				group: []keel.Expr{w.PositionID, jp.Title, jp.Code},
+			})
+		},
+	)
 }
 
 func (r *repository) HeadcountByDepartment(
 	ctx context.Context,
 	_ pagination.TenantInfo,
-) ([]workerports.HeadcountRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.HeadcountRow, error) {
-		jp := workerdb.Workers.Position()
-		return r.rosterCount(ctx, "department", &headcountGroup{
-			key:   keel.CastText(jp.Department).Coalesce(""),
-			label: keel.CastText(jp.Department).Coalesce("Unassigned"),
-			code:  keel.Text(""),
-			color: keel.Text(""),
-			group: []keel.Expr{jp.Department},
-		})
-	})
+) ([]orgstructureports.HeadcountRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]orgstructureports.HeadcountRow, error) {
+			jp := workerdb.Workers.Position()
+			return r.rosterCount(ctx, "department", &headcountGroup{
+				key:   keel.CastText(jp.Department).Coalesce(""),
+				label: keel.CastText(jp.Department).Coalesce("Unassigned"),
+				code:  keel.Text(""),
+				color: keel.Text(""),
+				group: []keel.Expr{jp.Department},
+			})
+		},
+	)
 }
 
 // teamScope is the predicate behind "my team": workers who name one of these
@@ -127,52 +139,56 @@ func teamScope(managerIDs []pulid.ID) keel.Pred {
 
 func (r *repository) TeamMembers(
 	ctx context.Context,
-	req *workerports.TeamScopeRequest,
-) ([]workerports.TeamMemberRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.TeamMemberRow, error) {
-		if len(req.ManagerIDs) == 0 {
-			return []workerports.TeamMemberRow{}, nil
-		}
+	req *orgstructureports.TeamScopeRequest,
+) ([]orgstructureports.TeamMemberRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]orgstructureports.TeamMemberRow, error) {
+			if len(req.ManagerIDs) == 0 {
+				return []orgstructureports.TeamMemberRow{}, nil
+			}
 
-		w := workerdb.Workers
-		fc := w.FleetCode()
-		jp := w.Position()
-		p := w.Profile()
-		direct := keel.BoolOf(w.ManagerID.In(req.ManagerIDs...))
+			w := workerdb.Workers
+			fc := w.FleetCode()
+			jp := w.Position()
+			p := w.Profile()
+			direct := keel.BoolOf(w.ManagerID.In(req.ManagerIDs...))
 
-		rows, err := keel.Into[workerports.TeamMemberRow](ctx, r.db.Keel(ctx), w.
-			Where(
-				p.WorkerID.IsNotNull(),
-				teamScope(req.ManagerIDs),
-				keel.When(!req.IncludeInactive, w.Status.Eq(domaintypes.StatusActive)),
-			).
-			Pick(
-				w.ID,
-				w.FirstName,
-				w.LastName,
-				keel.CastText(w.Status),
-				orEmpty(w.FleetCodeID),
-				orEmpty(fc.Code),
-				orEmpty(fc.Color),
-				orEmpty(w.PositionID),
-				orEmpty(jp.Title),
-				orEmpty(w.ManagerID),
-				direct,
-				keel.CastText(p.ComplianceStatus),
-				keel.CastText(p.TrainingHealth),
-				keel.CastText(p.SafetyRating),
-				p.HireDate,
-				p.TerminationDate,
-			).
-			Order(direct.Desc(), w.LastName.Asc(), w.FirstName.Asc()).
-			Limit(limitOr(req.Limit, defaultTeamPageSize)))
-		if err != nil {
-			r.l.Error("failed to read team members", zap.Error(err))
-			return nil, fmt.Errorf("read team members: %w", err)
-		}
+			rows, err := keel.Into[orgstructureports.TeamMemberRow](ctx, r.db.Keel(ctx), w.
+				Where(
+					p.WorkerID.IsNotNull(),
+					teamScope(req.ManagerIDs),
+					keel.When(!req.IncludeInactive, w.Status.Eq(domaintypes.StatusActive)),
+				).
+				Pick(
+					w.ID,
+					w.FirstName,
+					w.LastName,
+					keel.CastText(w.Status),
+					orEmpty(w.FleetCodeID),
+					orEmpty(fc.Code),
+					orEmpty(fc.Color),
+					orEmpty(w.PositionID),
+					orEmpty(jp.Title),
+					orEmpty(w.ManagerID),
+					direct,
+					keel.CastText(p.ComplianceStatus),
+					keel.CastText(p.TrainingHealth),
+					keel.CastText(p.SafetyRating),
+					p.HireDate,
+					p.TerminationDate,
+				).
+				Order(direct.Desc(), w.LastName.Asc(), w.FirstName.Asc()).
+				Limit(limitOr(req.Limit, defaultTeamPageSize)))
+			if err != nil {
+				r.l.Error("failed to read team members", zap.Error(err))
+				return nil, fmt.Errorf("read team members: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 // ManagesWorker answers the authorization question directly. A manager of four

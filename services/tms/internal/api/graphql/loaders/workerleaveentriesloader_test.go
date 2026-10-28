@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +19,7 @@ func TestWorkerLeaveEntriesBatchFunc_GroupsByCaseAndDefaultsToEmpty(t *testing.T
 	firstID := pulid.MustNew("wlc_")
 	secondID := pulid.MustNew("wlc_")
 	lister := &stubLeaveEntriesByCaseIDsLister{
-		list: func(_ context.Context, req *workerports.ListLeaveEntriesByCaseIDsRequest) (map[pulid.ID][]*workerleave.WorkerLeaveEntry, error) {
+		list: func(_ context.Context, req *workerleaveports.ListLeaveEntriesByCaseIDsRequest) (map[pulid.ID][]*workerleave.WorkerLeaveEntry, error) {
 			assert.Equal(t, []pulid.ID{firstID, secondID}, req.LeaveCaseIDs)
 			return map[pulid.ID][]*workerleave.WorkerLeaveEntry{
 				firstID: {
@@ -57,7 +57,7 @@ func TestWorkerLeaveEntriesBatchFunc_RepositoryErrorFillsValidResults(t *testing
 	caseID := pulid.MustNew("wlc_")
 	repoErr := errors.New("repository failed")
 	lister := &stubLeaveEntriesByCaseIDsLister{
-		list: func(context.Context, *workerports.ListLeaveEntriesByCaseIDsRequest) (map[pulid.ID][]*workerleave.WorkerLeaveEntry, error) {
+		list: func(context.Context, *workerleaveports.ListLeaveEntriesByCaseIDsRequest) (map[pulid.ID][]*workerleave.WorkerLeaveEntry, error) {
 			return nil, repoErr
 		},
 	}
@@ -74,12 +74,12 @@ func TestWorkerLeaveEntriesBatchFunc_RepositoryErrorFillsValidResults(t *testing
 }
 
 type stubLeaveEntriesByCaseIDsLister struct {
-	list func(context.Context, *workerports.ListLeaveEntriesByCaseIDsRequest) (map[pulid.ID][]*workerleave.WorkerLeaveEntry, error)
+	list func(context.Context, *workerleaveports.ListLeaveEntriesByCaseIDsRequest) (map[pulid.ID][]*workerleave.WorkerLeaveEntry, error)
 }
 
 func (s *stubLeaveEntriesByCaseIDsLister) ListEntriesByCaseIDs(
 	ctx context.Context,
-	req *workerports.ListLeaveEntriesByCaseIDsRequest,
+	req *workerleaveports.ListLeaveEntriesByCaseIDsRequest,
 ) (map[pulid.ID][]*workerleave.WorkerLeaveEntry, error) {
 	return s.list(ctx, req)
 }

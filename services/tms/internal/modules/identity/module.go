@@ -72,7 +72,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"go.uber.org/fx"
 )
 
@@ -173,7 +173,7 @@ func SharedOptions() fx.Option {
 			func(s *ptoledgerservice.Service) workeroverviewservice.BalanceReader { return s },
 			fx.Annotate(
 				workerptoservice.New,
-				fx.As(new(workerports.WorkerPTOService)),
+				fx.As(new(workerptoports.WorkerPTOService)),
 			),
 			apikeyservice.New,
 			fx.Annotate(

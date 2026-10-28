@@ -16,7 +16,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fleetcodeportsmock"
@@ -42,7 +44,7 @@ func newFakeEventRepo() *fakeEventRepo {
 
 func (f *fakeEventRepo) List(
 	_ context.Context,
-	req *workerports.ListWorkerEmploymentEventsRequest,
+	req *workeremploymentports.ListWorkerEmploymentEventsRequest,
 ) ([]*employment.WorkerEmploymentEvent, error) {
 	out := make([]*employment.WorkerEmploymentEvent, 0, len(f.order))
 	for _, id := range f.order {
@@ -56,7 +58,7 @@ func (f *fakeEventRepo) List(
 
 func (f *fakeEventRepo) GetByID(
 	_ context.Context,
-	req *workerports.GetWorkerEmploymentEventByIDRequest,
+	req *workeremploymentports.GetWorkerEmploymentEventByIDRequest,
 ) (*employment.WorkerEmploymentEvent, error) {
 	event, ok := f.events[req.ID]
 	if !ok {
@@ -106,7 +108,7 @@ type fakePolicies struct {
 
 func (f *fakePolicies) ListAssignments(
 	context.Context,
-	*workerports.ListPTOAssignmentsRequest,
+	*ptopolicyports.ListPTOAssignmentsRequest,
 ) ([]*pto.WorkerPTOPolicyAssignment, error) {
 	if f.open == nil {
 		return nil, nil
@@ -134,14 +136,14 @@ func (f *fakePolicies) AssignDefaultPolicy(
 }
 
 type fakePTO struct {
-	workerports.WorkerPTOService
+	workerptoports.WorkerPTOService
 	upcoming  []*worker.WorkerPTO
-	cancelled []*workerports.UpdatePTOStatusRequest
+	cancelled []*workerptoports.UpdatePTOStatusRequest
 }
 
 func (f *fakePTO) List(
 	_ context.Context,
-	req *workerports.ListPTORequest,
+	req *workerptoports.ListPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	items := make([]*worker.WorkerPTO, 0, len(f.upcoming))
 	for _, pto := range f.upcoming {
@@ -154,7 +156,7 @@ func (f *fakePTO) List(
 
 func (f *fakePTO) Cancel(
 	_ context.Context,
-	req *workerports.UpdatePTOStatusRequest,
+	req *workerptoports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	f.cancelled = append(f.cancelled, req)
 	return &worker.WorkerPTO{ID: req.ID}, nil

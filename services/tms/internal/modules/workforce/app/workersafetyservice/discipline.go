@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,7 +24,7 @@ func (s *Service) ListActions(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) ([]*workersafety.WorkerDisciplinaryAction, error) {
-	return s.repo.ListActions(ctx, &workerports.ListWorkerDisciplinaryActionsRequest{
+	return s.repo.ListActions(ctx, &workersafetyports.ListWorkerDisciplinaryActionsRequest{
 		TenantInfo:    tenantInfo,
 		WorkerID:      workerID,
 		IncludeEvent:  true,
@@ -38,7 +38,7 @@ func (s *Service) Ladder(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (*workersafety.DisciplinaryLadder, error) {
-	actions, err := s.repo.ListActions(ctx, &workerports.ListWorkerDisciplinaryActionsRequest{
+	actions, err := s.repo.ListActions(ctx, &workersafetyports.ListWorkerDisciplinaryActionsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
@@ -89,10 +89,13 @@ func (s *Service) IssueAction(
 		return nil, err
 	}
 	if !req.SafetyEventID.IsNil() {
-		event, eventErr := s.repo.GetEventByID(ctx, &workerports.GetWorkerSafetyEventByIDRequest{
-			ID:         req.SafetyEventID,
-			TenantInfo: req.TenantInfo,
-		})
+		event, eventErr := s.repo.GetEventByID(
+			ctx,
+			&workersafetyports.GetWorkerSafetyEventByIDRequest{
+				ID:         req.SafetyEventID,
+				TenantInfo: req.TenantInfo,
+			},
+		)
 		if eventErr != nil {
 			return nil, eventErr
 		}
@@ -303,10 +306,13 @@ func (s *Service) loadAction(
 	id pulid.ID,
 	version int64,
 ) (*workersafety.WorkerDisciplinaryAction, error) {
-	original, err := s.repo.GetActionByID(ctx, &workerports.GetWorkerDisciplinaryActionByIDRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	original, err := s.repo.GetActionByID(
+		ctx,
+		&workersafetyports.GetWorkerDisciplinaryActionByIDRequest{
+			ID:         id,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

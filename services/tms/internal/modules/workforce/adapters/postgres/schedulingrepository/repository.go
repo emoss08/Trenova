@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule/workerscheduledb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -43,16 +43,16 @@ type Params struct {
 
 	DB          *postgres.Connection
 	Logger      *zap.Logger
-	Assignments workerports.RotaAssignments
+	Assignments workerscheduleports.RotaAssignments
 }
 
 type repository struct {
 	db          *postgres.Connection
 	l           *zap.Logger
-	assignments workerports.RotaAssignments
+	assignments workerscheduleports.RotaAssignments
 }
 
-func New(p Params) workerports.SchedulingRepository {
+func New(p Params) workerscheduleports.SchedulingRepository {
 	return &repository{
 		db:          p.DB,
 		l:           p.Logger.Named("postgres.scheduling-repository"),
@@ -70,7 +70,7 @@ func limitOr(requested, fallback int) int {
 
 func (r *repository) ListTemplates(
 	ctx context.Context,
-	req *workerports.ListShiftTemplatesRequest,
+	req *workerscheduleports.ListShiftTemplatesRequest,
 ) ([]*workerschedule.ShiftTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*workerschedule.ShiftTemplate, error) {
 		t := workerscheduledb.ShiftTemplates
@@ -89,7 +89,7 @@ func (r *repository) ListTemplates(
 
 func (r *repository) GetTemplateByID(
 	ctx context.Context,
-	req *workerports.GetShiftTemplateByIDRequest,
+	req *workerscheduleports.GetShiftTemplateByIDRequest,
 ) (*workerschedule.ShiftTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerschedule.ShiftTemplate, error) {
 		entity, err := workerscheduledb.ShiftTemplates.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -149,7 +149,7 @@ func (r *repository) CountTemplateAssignments(
 
 func (r *repository) CountTemplateAssignmentsByIDs(
 	ctx context.Context,
-	req *workerports.CountShiftTemplateAssignmentsRequest,
+	req *workerscheduleports.CountShiftTemplateAssignmentsRequest,
 ) (map[pulid.ID]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		if len(req.TemplateIDs) == 0 {
@@ -177,7 +177,7 @@ func (r *repository) CountTemplateAssignmentsByIDs(
 
 func (r *repository) ListAssignments(
 	ctx context.Context,
-	req *workerports.ListShiftAssignmentsRequest,
+	req *workerscheduleports.ListShiftAssignmentsRequest,
 ) ([]*workerschedule.WorkerShiftAssignment, error) {
 	return dbtx.Read(
 		ctx,
@@ -212,7 +212,7 @@ func (r *repository) ListAssignments(
 
 func (r *repository) GetAssignmentByID(
 	ctx context.Context,
-	req *workerports.GetShiftAssignmentByIDRequest,
+	req *workerscheduleports.GetShiftAssignmentByIDRequest,
 ) (*workerschedule.WorkerShiftAssignment, error) {
 	return dbtx.Read(
 		ctx,
@@ -266,7 +266,7 @@ func (r *repository) UpdateAssignment(
 
 func (r *repository) ListPreferences(
 	ctx context.Context,
-	req *workerports.ListAvailabilityPreferencesRequest,
+	req *workerscheduleports.ListAvailabilityPreferencesRequest,
 ) ([]*workerschedule.WorkerAvailabilityPreference, error) {
 	return dbtx.Read(
 		ctx,
@@ -322,7 +322,7 @@ func (r *repository) UpsertPreference(
 }
 
 func swapsQuery(
-	req *workerports.ListShiftSwapsRequest,
+	req *workerscheduleports.ListShiftSwapsRequest,
 ) *keel.Query[*workerschedule.ShiftSwapRequest] {
 	s := workerscheduledb.ShiftSwapRequests
 
@@ -344,7 +344,7 @@ func swapsQuery(
 
 func (r *repository) ListSwaps(
 	ctx context.Context,
-	req *workerports.ListShiftSwapsRequest,
+	req *workerscheduleports.ListShiftSwapsRequest,
 ) ([]*workerschedule.ShiftSwapRequest, error) {
 	return dbtx.Read(
 		ctx,
@@ -363,7 +363,7 @@ func (r *repository) ListSwaps(
 
 func (r *repository) GetSwapByID(
 	ctx context.Context,
-	req *workerports.GetShiftSwapByIDRequest,
+	req *workerscheduleports.GetShiftSwapByIDRequest,
 ) (*workerschedule.ShiftSwapRequest, error) {
 	return dbtx.Read(
 		ctx,

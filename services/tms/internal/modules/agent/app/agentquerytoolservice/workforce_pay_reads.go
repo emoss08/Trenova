@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/timesheetports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,7 +39,7 @@ type wfPermitReader interface {
 type wfPayrollReader interface {
 	ListExports(
 		ctx context.Context,
-		req *workerports.ListPayrollExportsRequest,
+		req *timesheetports.ListPayrollExportsRequest,
 	) ([]*timesheet.PayrollExport, error)
 }
 
@@ -196,7 +196,7 @@ func newListPayrollExportsTool(
 			params *agenttoolports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
-			runs, err := exports.ListExports(ctx, &workerports.ListPayrollExportsRequest{
+			runs, err := exports.ListExports(ctx, &timesheetports.ListPayrollExportsRequest{
 				TenantInfo: tenantOf(params),
 				Limit:      maxPayrollRunsShown,
 			})

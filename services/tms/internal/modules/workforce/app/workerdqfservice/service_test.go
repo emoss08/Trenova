@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,8 +30,8 @@ func ptrInt64(v int64) *int64 { return &v }
 // exercised for real rather than asserted against canned returns.
 type fakeDQFRepo struct {
 	verifications map[pulid.ID]*employment.WorkerEmploymentVerification
-	candidates    []workerports.DQFRetentionCandidate
-	lastRetention *workerports.ListDQFRetentionCandidatesRequest
+	candidates    []workerdqfports.DQFRetentionCandidate
+	lastRetention *workerdqfports.ListDQFRetentionCandidatesRequest
 }
 
 func newFakeRepo() *fakeDQFRepo {
@@ -40,7 +40,7 @@ func newFakeRepo() *fakeDQFRepo {
 
 func (f *fakeDQFRepo) ListVerifications(
 	_ context.Context,
-	req *workerports.ListEmploymentVerificationsRequest,
+	req *workerdqfports.ListEmploymentVerificationsRequest,
 ) ([]*employment.WorkerEmploymentVerification, error) {
 	out := make([]*employment.WorkerEmploymentVerification, 0, len(f.verifications))
 	for _, entity := range f.verifications {
@@ -57,7 +57,7 @@ func (f *fakeDQFRepo) ListVerifications(
 
 func (f *fakeDQFRepo) ListVerificationsByWorkerIDs(
 	_ context.Context,
-	req *workerports.ListEmploymentVerificationsByWorkerIDsRequest,
+	req *workerdqfports.ListEmploymentVerificationsByWorkerIDsRequest,
 ) (map[pulid.ID][]*employment.WorkerEmploymentVerification, error) {
 	wanted := make(map[pulid.ID]struct{}, len(req.WorkerIDs))
 	for _, id := range req.WorkerIDs {
@@ -76,7 +76,7 @@ func (f *fakeDQFRepo) ListVerificationsByWorkerIDs(
 
 func (f *fakeDQFRepo) GetVerificationByID(
 	_ context.Context,
-	req *workerports.GetEmploymentVerificationByIDRequest,
+	req *workerdqfports.GetEmploymentVerificationByIDRequest,
 ) (*employment.WorkerEmploymentVerification, error) {
 	entity, ok := f.verifications[req.ID]
 	if !ok {
@@ -106,7 +106,7 @@ func (f *fakeDQFRepo) UpdateVerification(
 
 func (f *fakeDQFRepo) DeleteVerification(
 	_ context.Context,
-	req *workerports.GetEmploymentVerificationByIDRequest,
+	req *workerdqfports.GetEmploymentVerificationByIDRequest,
 ) error {
 	delete(f.verifications, req.ID)
 	return nil
@@ -114,8 +114,8 @@ func (f *fakeDQFRepo) DeleteVerification(
 
 func (f *fakeDQFRepo) ListRetentionCandidates(
 	_ context.Context,
-	req *workerports.ListDQFRetentionCandidatesRequest,
-) ([]workerports.DQFRetentionCandidate, error) {
+	req *workerdqfports.ListDQFRetentionCandidatesRequest,
+) ([]workerdqfports.DQFRetentionCandidate, error) {
 	f.lastRetention = req
 	return f.candidates, nil
 }

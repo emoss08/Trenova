@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -275,7 +275,7 @@ func (r *QueryResolver) WorkerDOTTests(ctx context.Context, workerID *string, op
 	if err != nil {
 		return nil, err
 	}
-	return r.WorkerDrugAlcoholService.ListTests(ctx, &workerports.ListWorkerDOTTestsRequest{
+	return r.WorkerDrugAlcoholService.ListTests(ctx, &workerdotports.ListWorkerDOTTestsRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		WorkerID:        id,
 		OpenOnly:        base.BoolValue(openOnly),
@@ -305,7 +305,7 @@ func (r *QueryResolver) OpenDOTTests(ctx context.Context) ([]*workerdot.WorkerDO
 		return nil, err
 	}
 
-	return r.WorkerDrugAlcoholService.ListTests(ctx, &workerports.ListWorkerDOTTestsRequest{
+	return r.WorkerDrugAlcoholService.ListTests(ctx, &workerdotports.ListWorkerDOTTestsRequest{
 		TenantInfo:    base.TenantInfo(authCtx),
 		OpenOnly:      true,
 		IncludeWorker: true,
@@ -393,7 +393,7 @@ func (r *QueryResolver) DOTRandomPools(ctx context.Context, input gqlmodel.DOTRa
 
 	result, err := r.WorkerDrugAlcoholService.ListPools(
 		ctx,
-		&workerports.ListDOTRandomPoolsRequest{
+		&workerdotports.ListDOTRandomPoolsRequest{
 			Filter: connection.Filter,
 			Cursor: connection.Cursor,
 			Status: status,
@@ -430,7 +430,7 @@ func (r *QueryResolver) DOTRandomDraws(ctx context.Context, poolID *string) ([]*
 		return nil, errortypes.NewValidationError("poolId", errortypes.ErrInvalid, "Pool is invalid")
 	}
 
-	return r.WorkerDrugAlcoholService.ListDraws(ctx, &workerports.ListDOTRandomDrawsRequest{
+	return r.WorkerDrugAlcoholService.ListDraws(ctx, &workerdotports.ListDOTRandomDrawsRequest{
 		TenantInfo:    base.TenantInfo(authCtx),
 		PoolID:        id,
 		IncludePool:   true,
@@ -468,7 +468,7 @@ func (r *QueryResolver) WorkerRandomSelections(ctx context.Context, workerID str
 
 	return r.WorkerDrugAlcoholService.ListDrawEntries(
 		ctx,
-		&workerports.ListDOTRandomDrawEntriesRequest{
+		&workerdotports.ListDOTRandomDrawEntriesRequest{
 			TenantInfo:      base.TenantInfo(authCtx),
 			WorkerID:        id,
 			OutstandingOnly: true,

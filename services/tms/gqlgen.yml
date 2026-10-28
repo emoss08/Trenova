@@ -720,7 +720,7 @@ models:
         resolver: true
   DQFRetentionCandidate:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.DQFRetentionCandidate
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports.DQFRetentionCandidate
   WorkerEmploymentVerification:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/employment.WorkerEmploymentVerification
@@ -1363,7 +1363,7 @@ models:
         resolver: true
   HeadcountRow:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.HeadcountRow
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports.HeadcountRow
   Headcount:
     model:
       - github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice.Headcount
@@ -1612,7 +1612,7 @@ models:
         resolver: true
   PTOBalanceSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOBalanceSummary
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports.PTOBalanceSummary
     fields:
       totalBalanceDays:
         resolver: true
@@ -1630,13 +1630,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice.AssignWorkersResult
   WorkerPTOBulkAction:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOBulkActionType
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports.PTOBulkActionType
   BulkWorkerPTOActionResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOBulkActionResult
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports.PTOBulkActionResult
   BulkWorkerPTOActionPayload:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOBulkActionPayload
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports.PTOBulkActionPayload
   WorkerType:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerType
@@ -1663,7 +1663,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOType
   PTOChartDataPoint:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOChartDataPoint
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports.PTOChartDataPoint
   BillingQueueStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.Status

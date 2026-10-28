@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -20,12 +20,12 @@ import (
 type ptoTransitionPreviewer interface {
 	PreviewReject(
 		ctx context.Context,
-		req *workerports.UpdatePTOStatusRequest,
-	) (*workerports.WorkerPTOTransitionPreview, error)
+		req *workerptoports.UpdatePTOStatusRequest,
+	) (*workerptoports.WorkerPTOTransitionPreview, error)
 	PreviewCancel(
 		ctx context.Context,
-		req *workerports.UpdatePTOStatusRequest,
-	) (*workerports.WorkerPTOTransitionPreview, error)
+		req *workerptoports.UpdatePTOStatusRequest,
+	) (*workerptoports.WorkerPTOTransitionPreview, error)
 }
 
 type ptoRejecter interface {
@@ -117,7 +117,7 @@ func PtoDecisionOptions() []toolpreview.Option {
 
 func ptoDecisionPreview(
 	summary string,
-	decision *workerports.WorkerPTOTransitionPreview,
+	decision *workerptoports.WorkerPTOTransitionPreview,
 ) (*agent.ToolPreview, error) {
 	status, err := toolpreview.Changed(
 		toolpreview.Record{

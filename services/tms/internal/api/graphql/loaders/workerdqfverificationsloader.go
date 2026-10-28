@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,7 +15,7 @@ import (
 type employmentVerificationsByWorkerIDsLister interface {
 	ListVerificationsByWorkerIDs(
 		ctx context.Context,
-		req *workerports.ListEmploymentVerificationsByWorkerIDsRequest,
+		req *workerdqfports.ListEmploymentVerificationsByWorkerIDsRequest,
 	) (map[pulid.ID][]*employment.WorkerEmploymentVerification, error)
 }
 
@@ -50,7 +50,7 @@ func (f *WorkerDQFVerificationsByWorkerIDLoaderFactory) batchFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*employment.WorkerEmploymentVerification, error) {
 			return f.verifications.ListVerificationsByWorkerIDs(
 				ctx,
-				&workerports.ListEmploymentVerificationsByWorkerIDsRequest{
+				&workerdqfports.ListEmploymentVerificationsByWorkerIDsRequest{
 					TenantInfo:      tenantInfo,
 					WorkerIDs:       ids,
 					IncludeDocument: true,

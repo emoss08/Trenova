@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
@@ -42,7 +44,7 @@ func newFakeRepo() *fakeRepo {
 
 func (f *fakeRepo) ListTemplates(
 	context.Context,
-	*workerports.ListChecklistTemplatesRequest,
+	*workerchecklistports.ListChecklistTemplatesRequest,
 ) (*pagination.CursorListResult[*workerchecklist.WorkerChecklistTemplate], error) {
 	return &pagination.CursorListResult[*workerchecklist.WorkerChecklistTemplate]{}, nil
 }
@@ -60,7 +62,7 @@ func (f *fakeRepo) ListActiveTemplates(
 
 func (f *fakeRepo) GetTemplateByID(
 	_ context.Context,
-	req *workerports.GetChecklistTemplateByIDRequest,
+	req *workerchecklistports.GetChecklistTemplateByIDRequest,
 ) (*workerchecklist.WorkerChecklistTemplate, error) {
 	t, ok := f.templates[req.ID]
 	if !ok {
@@ -71,7 +73,7 @@ func (f *fakeRepo) GetTemplateByID(
 
 func (f *fakeRepo) GetDefaultTemplate(
 	_ context.Context,
-	req *workerports.GetDefaultChecklistTemplateRequest,
+	req *workerchecklistports.GetDefaultChecklistTemplateRequest,
 ) (*workerchecklist.WorkerChecklistTemplate, error) {
 	for _, t := range f.templates {
 		if t.IsDefault && t.Trigger == req.Trigger && t.Status == domaintypes.StatusActive {
@@ -83,7 +85,7 @@ func (f *fakeRepo) GetDefaultTemplate(
 
 func (f *fakeRepo) TemplateCodeExists(
 	context.Context,
-	*workerports.ChecklistTemplateCodeExistsRequest,
+	*workerchecklistports.ChecklistTemplateCodeExistsRequest,
 ) (bool, error) {
 	return false, nil
 }
@@ -111,28 +113,28 @@ func (f *fakeRepo) UpdateTemplate(
 
 func (f *fakeRepo) ClearDefaultTemplate(
 	context.Context,
-	*workerports.ClearDefaultChecklistTemplateRequest,
+	*workerchecklistports.ClearDefaultChecklistTemplateRequest,
 ) error {
 	return nil
 }
 
 func (f *fakeRepo) CountOpenChecklists(
 	context.Context,
-	*workerports.CountOpenChecklistsRequest,
+	*workerchecklistports.CountOpenChecklistsRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (f *fakeRepo) CountOpenChecklistsByTemplateIDs(
 	context.Context,
-	*workerports.CountOpenChecklistsByTemplateIDsRequest,
+	*workerchecklistports.CountOpenChecklistsByTemplateIDsRequest,
 ) (map[pulid.ID]int, error) {
 	return map[pulid.ID]int{}, nil
 }
 
 func (f *fakeRepo) ListForWorker(
 	_ context.Context,
-	req *workerports.ListWorkerChecklistsRequest,
+	req *workerchecklistports.ListWorkerChecklistsRequest,
 ) ([]*workerchecklist.WorkerChecklist, error) {
 	out := make([]*workerchecklist.WorkerChecklist, 0, len(f.checklists))
 	for _, c := range f.checklists {
@@ -149,7 +151,7 @@ func (f *fakeRepo) ListForWorker(
 
 func (f *fakeRepo) GetByID(
 	_ context.Context,
-	req *workerports.GetWorkerChecklistByIDRequest,
+	req *workerchecklistports.GetWorkerChecklistByIDRequest,
 ) (*workerchecklist.WorkerChecklist, error) {
 	c, ok := f.checklists[req.ID]
 	if !ok {
@@ -160,7 +162,7 @@ func (f *fakeRepo) GetByID(
 
 func (f *fakeRepo) GetItemByID(
 	_ context.Context,
-	req *workerports.GetWorkerChecklistItemByIDRequest,
+	req *workerchecklistports.GetWorkerChecklistItemByIDRequest,
 ) (*workerchecklist.WorkerChecklistItem, error) {
 	item, ok := f.items[req.ID]
 	if !ok {
@@ -204,13 +206,13 @@ func (f *fakeRepo) UpdateItems(
 }
 
 type fakeCredentialRepo struct {
-	workerports.WorkerCredentialRepository
+	workercredentialports.WorkerCredentialRepository
 	credentials []*workercredential.WorkerCredential
 }
 
 func (f *fakeCredentialRepo) ListForWorker(
 	context.Context,
-	*workerports.ListWorkerCredentialsRequest,
+	*workercredentialports.ListWorkerCredentialsRequest,
 ) ([]*workercredential.WorkerCredential, error) {
 	return f.credentials, nil
 }

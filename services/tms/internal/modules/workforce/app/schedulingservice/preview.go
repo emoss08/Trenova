@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -42,7 +42,7 @@ func (s *Service) planAssignShift(
 		return nil, multiErr
 	}
 
-	template, err := s.repo.GetTemplateByID(ctx, &workerports.GetShiftTemplateByIDRequest{
+	template, err := s.repo.GetTemplateByID(ctx, &workerscheduleports.GetShiftTemplateByIDRequest{
 		ID:         entity.ShiftTemplateID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -91,7 +91,7 @@ func (s *Service) openAssignmentsToClose(
 	ctx context.Context,
 	p *closeAssignmentParams,
 ) ([]*workerschedule.WorkerShiftAssignment, error) {
-	open, err := s.repo.ListAssignments(ctx, &workerports.ListShiftAssignmentsRequest{
+	open, err := s.repo.ListAssignments(ctx, &workerscheduleports.ListShiftAssignmentsRequest{
 		TenantInfo: p.tenantInfo,
 		WorkerID:   p.workerID,
 		ActiveAt:   p.endAt + secondsPerDay,
@@ -140,10 +140,13 @@ func (s *Service) planEndAssignment(
 	ctx context.Context,
 	req *EndAssignmentRequest,
 ) (before, after *workerschedule.WorkerShiftAssignment, err error) {
-	assignment, err := s.repo.GetAssignmentByID(ctx, &workerports.GetShiftAssignmentByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	assignment, err := s.repo.GetAssignmentByID(
+		ctx,
+		&workerscheduleports.GetShiftAssignmentByIDRequest{
+			ID:         req.ID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -184,10 +187,13 @@ func (s *Service) PreviewSetPreference(
 		return nil, err
 	}
 
-	existing, err := s.repo.ListPreferences(ctx, &workerports.ListAvailabilityPreferencesRequest{
-		TenantInfo: req.TenantInfo,
-		WorkerID:   entity.WorkerID,
-	})
+	existing, err := s.repo.ListPreferences(
+		ctx,
+		&workerscheduleports.ListAvailabilityPreferencesRequest{
+			TenantInfo: req.TenantInfo,
+			WorkerID:   entity.WorkerID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +289,7 @@ func (s *Service) planTransitionSwap(
 	ctx context.Context,
 	req *TransitionSwapRequest,
 ) (before, after *workerschedule.ShiftSwapRequest, err error) {
-	swap, err := s.repo.GetSwapByID(ctx, &workerports.GetShiftSwapByIDRequest{
+	swap, err := s.repo.GetSwapByID(ctx, &workerscheduleports.GetShiftSwapByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})

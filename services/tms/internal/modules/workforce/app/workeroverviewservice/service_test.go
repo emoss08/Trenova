@@ -14,7 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -77,7 +80,7 @@ func (f *fakeChecklists) ListForWorker(
 type fakeBalances struct {
 	calls    int
 	balances []*ptoledgerservice.BalanceView
-	summary  *workerports.PTOBalanceSummary
+	summary  *ptoledgerports.PTOBalanceSummary
 }
 
 func (f *fakeBalances) GetBalances(
@@ -89,9 +92,9 @@ func (f *fakeBalances) GetBalances(
 
 func (f *fakeBalances) Summary(
 	_ context.Context, _ pagination.TenantInfo,
-) (*workerports.PTOBalanceSummary, error) {
+) (*ptoledgerports.PTOBalanceSummary, error) {
 	if f.summary == nil {
-		return &workerports.PTOBalanceSummary{}, nil
+		return &ptoledgerports.PTOBalanceSummary{}, nil
 	}
 	return f.summary, nil
 }
@@ -116,7 +119,7 @@ type fakeReviewCounter struct {
 
 func (f *fakeReviewCounter) CountReviews(
 	_ context.Context,
-	req *workerports.CountPerformanceReviewsRequest,
+	req *workerreviewports.CountPerformanceReviewsRequest,
 ) (int, error) {
 	f.statuses = req.Statuses
 	return f.count, f.err
@@ -323,7 +326,7 @@ func TestRosterAttention_GathersEveryArea(t *testing.T) {
 		}, nil).
 		Once()
 	h.reviewCounts.count = 4
-	h.pto.summary = &workerports.PTOBalanceSummary{
+	h.pto.summary = &ptoledgerports.PTOBalanceSummary{
 		TotalBalanceDays: decimal.NewFromInt(312),
 	}
 
@@ -383,12 +386,12 @@ func TestRosterAttention_CountsNothingTheReaderMayNotRead(t *testing.T) {
 
 type fakeLeaveCounter struct {
 	count int
-	req   *workerports.ListLeaveCasesRequest
+	req   *workerleaveports.ListLeaveCasesRequest
 }
 
 func (f *fakeLeaveCounter) CountCases(
 	_ context.Context,
-	req *workerports.ListLeaveCasesRequest,
+	req *workerleaveports.ListLeaveCasesRequest,
 ) (int, error) {
 	f.req = req
 	return f.count, nil

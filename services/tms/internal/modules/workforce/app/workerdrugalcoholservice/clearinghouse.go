@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,7 +19,7 @@ func (s *Service) ListQueries(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) ([]*workerdot.WorkerClearinghouseQuery, error) {
-	return s.repo.ListQueries(ctx, &workerports.ListClearinghouseQueriesRequest{
+	return s.repo.ListQueries(ctx, &workerdotports.ListClearinghouseQueriesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
@@ -97,7 +98,7 @@ func (s *Service) CompleteQuery(
 	ctx context.Context,
 	req *CompleteQueryRequest,
 ) (*workerdot.WorkerClearinghouseQuery, error) {
-	entity, err := s.repo.GetQueryByID(ctx, &workerports.GetClearinghouseQueryByIDRequest{
+	entity, err := s.repo.GetQueryByID(ctx, &workerdotports.GetClearinghouseQueryByIDRequest{
 		ID:         req.QueryID,
 		TenantInfo: req.TenantInfo,
 	})

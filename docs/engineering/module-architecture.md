@@ -183,7 +183,7 @@ with any typed query, so no SQL is written by hand.
 | `kernelports.VisibleRecordSources` | `recordvisibilityrepository` | id of each database-scoped kind |
 | `orderports.OrderReferences` | `orderrepository.DeleteIfEmpty` | every `order_id` outside operations |
 | `formulatemplateports.TemplateConsumers` | `formulatemplaterepository` | `shipments.formula_template_id` |
-| `workerports.RotaAssignments` | `schedulingrepository` (rota) | assignment worker, created and archived |
+| `workerscheduleports.RotaAssignments` | `schedulingrepository` (rota) | assignment worker, created and archived |
 | `equipmentcontinuityports.LocationColumns` | tractor and trailer last-known location | location id, name, coordinates |
 | `equipmentcontinuityports.MoveColumns` | tractor and trailer move in progress (`inprogressmove`) | assignment unit and move, move status, shipment PRO, stop windows |
 

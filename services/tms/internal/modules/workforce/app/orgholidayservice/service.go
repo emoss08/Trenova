@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgholidayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,14 +29,14 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.OrgHolidayRepository
+	Repo         orgholidayports.OrgHolidayRepository
 	AuditService auditports.AuditService
 	Realtime     realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.OrgHolidayRepository
+	repo         orgholidayports.OrgHolidayRepository
 	auditService auditports.AuditService
 	realtime     realtimeports.RealtimeService
 }
@@ -62,7 +62,7 @@ func (s *Service) ListYear(
 	}
 	from := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC).Unix()
 	to := time.Date(year, time.December, 31, 0, 0, 0, 0, time.UTC).Unix()
-	return s.repo.List(ctx, &workerports.ListOrgHolidaysRequest{
+	return s.repo.List(ctx, &orgholidayports.ListOrgHolidaysRequest{
 		TenantInfo: tenantInfo,
 		From:       from,
 		To:         to,
@@ -75,7 +75,7 @@ func (s *Service) Calendar(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*pto.HolidayCalendar, error) {
-	rows, err := s.repo.List(ctx, &workerports.ListOrgHolidaysRequest{TenantInfo: tenantInfo})
+	rows, err := s.repo.List(ctx, &orgholidayports.ListOrgHolidaysRequest{TenantInfo: tenantInfo})
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, &workerports.GetOrgHolidayByIDRequest{
+	original, err := s.repo.GetByID(ctx, &orgholidayports.GetOrgHolidayByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: tenantOf(entity),
 	})
@@ -159,14 +159,14 @@ func (s *Service) Delete(
 	userID pulid.ID,
 ) error {
 	log := s.l.With(zap.String("operation", "Delete"), zap.String("id", id.String()))
-	original, err := s.repo.GetByID(ctx, &workerports.GetOrgHolidayByIDRequest{
+	original, err := s.repo.GetByID(ctx, &orgholidayports.GetOrgHolidayByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
 		return err
 	}
-	if err = s.repo.Delete(ctx, &workerports.GetOrgHolidayByIDRequest{
+	if err = s.repo.Delete(ctx, &orgholidayports.GetOrgHolidayByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {

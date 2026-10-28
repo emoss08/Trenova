@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -47,7 +48,7 @@ func (s *Service) loadVerification(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*employment.WorkerEmploymentVerification, error) {
-	return s.repo.GetVerificationByID(ctx, &workerports.GetEmploymentVerificationByIDRequest{
+	return s.repo.GetVerificationByID(ctx, &workerdqfports.GetEmploymentVerificationByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})

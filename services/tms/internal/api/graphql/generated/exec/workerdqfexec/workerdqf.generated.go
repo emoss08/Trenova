@@ -3,6 +3,7 @@
 package workerdqfexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
 	"context"
@@ -13,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -255,7 +255,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.DQFRetentionCandidate)
+					obj := o.(*workerdqfports.DQFRetentionCandidate)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -265,7 +265,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.DQFRetentionCandidate)
+					obj := o.(*workerdqfports.DQFRetentionCandidate)
 					return obj.FirstName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -275,7 +275,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.DQFRetentionCandidate)
+					obj := o.(*workerdqfports.DQFRetentionCandidate)
 					return obj.LastName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -285,7 +285,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.DQFRetentionCandidate)
+					obj := o.(*workerdqfports.DQFRetentionCandidate)
 					return obj.TerminationDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -760,7 +760,7 @@ type resolverQuery interface {
 	DriverQualificationFile(ctx context.Context, workerID string) (*workercompliance.DQFFile, error)
 	WorkerEmploymentVerifications(ctx context.Context, workerID *string, outstandingOnly *bool, limit *int) ([]*employment.WorkerEmploymentVerification, error)
 	OutstandingEmploymentVerifications(ctx context.Context) ([]*employment.WorkerEmploymentVerification, error)
-	DqfRetentionCandidates(ctx context.Context) ([]*workerports.DQFRetentionCandidate, error)
+	DqfRetentionCandidates(ctx context.Context) ([]*workerdqfports.DQFRetentionCandidate, error)
 }
 
 type resolverWorkerEmploymentVerification interface {
@@ -1297,15 +1297,15 @@ func marshalNDQFItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules
 	return res
 }
 
-func marshalNDQFRetentionCandidate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐDQFRetentionCandidateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerports.DQFRetentionCandidate) graphql.Marshaler {
-	return gqlexec.List[*workerports.DQFRetentionCandidate]{
+func marshalNDQFRetentionCandidate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐDQFRetentionCandidateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerdqfports.DQFRetentionCandidate) graphql.Marshaler {
+	return gqlexec.List[*workerdqfports.DQFRetentionCandidate]{
 		Elem:        marshalNDQFRetentionCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐDQFRetentionCandidate,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNDQFRetentionCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐDQFRetentionCandidate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerports.DQFRetentionCandidate) graphql.Marshaler {
+func marshalNDQFRetentionCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐDQFRetentionCandidate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerdqfports.DQFRetentionCandidate) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

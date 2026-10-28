@@ -4,12 +4,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/capabilitytest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/portalaccessportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,7 +44,7 @@ func TestInviteWorker_RefusedWhenAssetOperationsDisabled(t *testing.T) {
 	svc := &Service{
 		l:          zap.NewNop(),
 		orgRepo:    assetOperationsOrgRepo(t, tenantInfo, false),
-		portalRepo: workerportsmock.NewMockPortalAccessRepository(t),
+		portalRepo: portalaccessportsmock.NewMockPortalAccessRepository(t),
 	}
 
 	result, err := svc.InviteWorker(
@@ -79,7 +78,7 @@ func TestInviteWorker_ProceedsWhenAssetOperationsEnabled(t *testing.T) {
 	workerID := pulid.MustNew("wrk_")
 	lookupErr := errors.New("worker lookup failed")
 
-	portalRepo := workerportsmock.NewMockPortalAccessRepository(t)
+	portalRepo := portalaccessportsmock.NewMockPortalAccessRepository(t)
 	portalRepo.EXPECT().
 		GetWorkerForPortalManagement(mock.Anything, tenantInfo, workerID).
 		Return(nil, lookupErr).

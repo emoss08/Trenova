@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -63,7 +63,7 @@ func (s *Service) PlanDeleteEvent(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workersafety.WorkerSafetyEvent, error) {
-	original, err := s.repo.GetEventByID(ctx, &workerports.GetWorkerSafetyEventByIDRequest{
+	original, err := s.repo.GetEventByID(ctx, &workersafetyports.GetWorkerSafetyEventByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -97,7 +97,7 @@ func (s *Service) PlanDeleteRecognition(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workersafety.WorkerRecognition, error) {
-	return s.repo.GetRecognitionByID(ctx, &workerports.GetWorkerRecognitionByIDRequest{
+	return s.repo.GetRecognitionByID(ctx, &workersafetyports.GetWorkerRecognitionByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -107,7 +107,7 @@ func (s *Service) PlanRecordViolation(
 	ctx context.Context,
 	req *RecordViolationRequest,
 ) (*workersafety.WorkerSafetyViolation, error) {
-	event, err := s.repo.GetEventByID(ctx, &workerports.GetWorkerSafetyEventByIDRequest{
+	event, err := s.repo.GetEventByID(ctx, &workersafetyports.GetWorkerSafetyEventByIDRequest{
 		ID:         req.SafetyEventID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -145,10 +145,13 @@ func (s *Service) PlanUpdateViolation(
 	ctx context.Context,
 	req *UpdateViolationRequest,
 ) (*ViolationChange, error) {
-	original, err := s.repo.GetViolationByID(ctx, &workerports.GetWorkerSafetyViolationByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	original, err := s.repo.GetViolationByID(
+		ctx,
+		&workersafetyports.GetWorkerSafetyViolationByIDRequest{
+			ID:         req.ID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +187,7 @@ func (s *Service) GetViolation(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workersafety.WorkerSafetyViolation, error) {
-	return s.repo.GetViolationByID(ctx, &workerports.GetWorkerSafetyViolationByIDRequest{
+	return s.repo.GetViolationByID(ctx, &workersafetyports.GetWorkerSafetyViolationByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})

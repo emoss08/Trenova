@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -52,7 +53,7 @@ type EndAssignmentRequest struct {
 
 func (s *Service) ListAssignments(
 	ctx context.Context,
-	req *workerports.ListPTOAssignmentsRequest,
+	req *ptopolicyports.ListPTOAssignmentsRequest,
 ) ([]*pto.WorkerPTOPolicyAssignment, error) {
 	return s.repo.ListAssignments(ctx, req)
 }
@@ -62,7 +63,7 @@ func (s *Service) ActiveAssignment(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (*pto.WorkerPTOPolicyAssignment, error) {
-	assignment, err := s.repo.GetActiveAssignment(ctx, &workerports.GetPTOAssignmentRequest{
+	assignment, err := s.repo.GetActiveAssignment(ctx, &ptopolicyports.GetPTOAssignmentRequest{
 		TenantInfo:    tenantInfo,
 		WorkerID:      workerID,
 		IncludePolicy: true,
@@ -100,7 +101,7 @@ func (s *Service) AssignWorkers(
 		)
 	}
 
-	policy, err := s.repo.GetByID(ctx, &workerports.GetPTOPolicyByIDRequest{
+	policy, err := s.repo.GetByID(ctx, &ptopolicyports.GetPTOPolicyByIDRequest{
 		ID:           req.PolicyID,
 		TenantInfo:   req.TenantInfo,
 		IncludeRules: true,
@@ -201,7 +202,7 @@ func (s *Service) assignWorker(
 	var created *pto.WorkerPTOPolicyAssignment
 	err := s.db.
 		Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-			open, err := s.repo.GetActiveAssignment(txCtx, &workerports.GetPTOAssignmentRequest{
+			open, err := s.repo.GetActiveAssignment(txCtx, &ptopolicyports.GetPTOAssignmentRequest{
 				TenantInfo: req.TenantInfo,
 				WorkerID:   workerID,
 			})
@@ -270,7 +271,7 @@ func (s *Service) EndAssignment(
 		zap.String("id", req.AssignmentID.String()),
 	)
 
-	assignment, err := s.repo.GetAssignmentByID(ctx, &workerports.GetPTOAssignmentByIDRequest{
+	assignment, err := s.repo.GetAssignmentByID(ctx, &ptopolicyports.GetPTOAssignmentByIDRequest{
 		ID:         req.AssignmentID,
 		TenantInfo: req.TenantInfo,
 	})

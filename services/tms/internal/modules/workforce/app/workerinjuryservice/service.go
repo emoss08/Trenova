@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -38,7 +39,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.WorkerInjuryRepository
+	Repo         workersafetyports.WorkerInjuryRepository
 	WorkerRepo   workerports.WorkerRepository
 	AuditService auditports.AuditService
 	Realtime     realtimeports.RealtimeService `optional:"true"`
@@ -46,7 +47,7 @@ type Params struct {
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.WorkerInjuryRepository
+	repo         workersafetyports.WorkerInjuryRepository
 	workerRepo   workerports.WorkerRepository
 	auditService auditports.AuditService
 	realtime     realtimeports.RealtimeService
@@ -65,7 +66,7 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         workerports.WorkerInjuryRepository
+	Repo         workersafetyports.WorkerInjuryRepository
 	WorkerRepo   workerports.WorkerRepository
 	AuditService auditports.AuditService
 }
@@ -145,7 +146,7 @@ func (s *Service) publish(
 
 func (s *Service) ListInjuries(
 	ctx context.Context,
-	req *workerports.ListWorkerInjuriesRequest,
+	req *workersafetyports.ListWorkerInjuriesRequest,
 ) ([]*workersafety.WorkerInjury, error) {
 	return s.repo.ListInjuries(ctx, req)
 }
@@ -155,7 +156,7 @@ func (s *Service) GetInjury(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workersafety.WorkerInjury, error) {
-	return s.repo.GetInjuryByID(ctx, &workerports.GetWorkerInjuryByIDRequest{
+	return s.repo.GetInjuryByID(ctx, &workersafetyports.GetWorkerInjuryByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeWorker:   true,
@@ -314,7 +315,7 @@ func (s *Service) DeleteInjury(
 		return err
 	}
 
-	if err = s.repo.DeleteInjury(ctx, &workerports.GetWorkerInjuryByIDRequest{
+	if err = s.repo.DeleteInjury(ctx, &workersafetyports.GetWorkerInjuryByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,7 +26,7 @@ type savingPTO struct {
 	guard   agenttoolstest.WriteGuard
 }
 
-func (f *savingPTO) approve(req *workerports.UpdatePTOStatusRequest) (*worker.WorkerPTO, error) {
+func (f *savingPTO) approve(req *workerptoports.UpdatePTOStatusRequest) (*worker.WorkerPTO, error) {
 	if !f.pto.Status.CanTransitionTo(worker.PTOStatusApproved) {
 		return nil, errortypes.NewValidationError(
 			"status", errortypes.ErrInvalidOperation, "PTO cannot be approved",
@@ -42,15 +42,15 @@ func (f *savingPTO) approve(req *workerports.UpdatePTOStatusRequest) (*worker.Wo
 
 func (f *savingPTO) PreviewApprove(
 	_ context.Context,
-	req *workerports.UpdatePTOStatusRequest,
-) (*workerports.WorkerPTOTransitionPreview, error) {
+	req *workerptoports.UpdatePTOStatusRequest,
+) (*workerptoports.WorkerPTOTransitionPreview, error) {
 	approved, err := f.approve(req)
 	if err != nil {
 		return nil, err
 	}
 	current := *f.pto
 
-	return &workerports.WorkerPTOTransitionPreview{
+	return &workerptoports.WorkerPTOTransitionPreview{
 		Before: &current,
 		After:  approved,
 		Driver: &notificationports.DriverNotificationPreview{
@@ -65,7 +65,7 @@ func (f *savingPTO) PreviewApprove(
 
 func (f *savingPTO) Approve(
 	_ context.Context,
-	req *workerports.UpdatePTOStatusRequest,
+	req *workerptoports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -98,9 +98,13 @@ func TestApproveWorkerPTO_PreviewMatchesWhatIsSaved(t *testing.T) {
 	tool := operationstools.NewApproveWorkerPTOTool(fake).(*operationstools.ApproveWorkerPTOTool)
 	params := agenttoolstest.ExecuteParams(map[string]any{"ptoId": pto.ID.String()})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &fake.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&fake.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceWorkerPTO, change.Resource)
@@ -116,7 +120,12 @@ func TestApproveWorkerPTO_PreviewMatchesWhatIsSaved(t *testing.T) {
 	assert.Equal(t, agent.MessageChannelDash, told.Message.Channel)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	agenttoolstest.RequireUpdateParity(t, change, &before, pto, operationstools.PtoDecisionOptions()...)
+	agenttoolstest.RequireUpdateParity(
+		t,
+		change,
+		&before,
+		pto,
+		operationstools.PtoDecisionOptions()...)
 }
 
 func TestApproveWorkerPTO_PreviewWarnsForARequestAlreadyDecided(t *testing.T) {
@@ -127,9 +136,16 @@ func TestApproveWorkerPTO_PreviewWarnsForARequestAlreadyDecided(t *testing.T) {
 	fake := &savingPTO{pto: pto}
 	tool := operationstools.NewApproveWorkerPTOTool(fake).(*operationstools.ApproveWorkerPTOTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &fake.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{"ptoId": pto.ID.String()}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&fake.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(
+				t.Context(),
+				agenttoolstest.ExecuteParams(map[string]any{"ptoId": pto.ID.String()}),
+			)
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
@@ -143,9 +159,13 @@ func TestApproveWorkerPTO_PreviewWarnsWhenAnAgentWouldApprove(t *testing.T) {
 	params := agenttoolstest.ExecuteParams(map[string]any{"ptoId": fake.pto.ID.String()})
 	params.Actor = agenttoolstest.AgentActorFor(params.OrganizationID, params.BusinessUnitID)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &fake.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&fake.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)

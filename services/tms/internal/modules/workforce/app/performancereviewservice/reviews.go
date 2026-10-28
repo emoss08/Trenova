@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +21,7 @@ func (s *Service) ListReviews(
 	workerID pulid.ID,
 	statuses []workerreview.ReviewStatus,
 ) ([]*workerreview.PerformanceReview, error) {
-	return s.repo.ListReviews(ctx, &workerports.ListPerformanceReviewsRequest{
+	return s.repo.ListReviews(ctx, &workerreviewports.ListPerformanceReviewsRequest{
 		TenantInfo:      tenantInfo,
 		WorkerID:        workerID,
 		Statuses:        statuses,
@@ -35,7 +35,7 @@ func (s *Service) GetReview(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workerreview.PerformanceReview, error) {
-	return s.repo.GetReviewByID(ctx, &workerports.GetPerformanceReviewByIDRequest{
+	return s.repo.GetReviewByID(ctx, &workerreviewports.GetPerformanceReviewByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeTemplate: true,
@@ -382,7 +382,7 @@ func (s *Service) DeleteReview(
 	if err != nil {
 		return err
 	}
-	if err = s.repo.DeleteReview(ctx, &workerports.GetPerformanceReviewByIDRequest{
+	if err = s.repo.DeleteReview(ctx, &workerreviewports.GetPerformanceReviewByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -405,7 +405,7 @@ func (s *Service) loadReview(
 	id pulid.ID,
 	version int64,
 ) (*workerreview.PerformanceReview, error) {
-	original, err := s.repo.GetReviewByID(ctx, &workerports.GetPerformanceReviewByIDRequest{
+	original, err := s.repo.GetReviewByID(ctx, &workerreviewports.GetPerformanceReviewByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeTemplate: true,

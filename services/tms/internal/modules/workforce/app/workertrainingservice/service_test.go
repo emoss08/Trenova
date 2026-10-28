@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
@@ -29,7 +29,7 @@ import (
 const day = int64(86400)
 
 type fakeRepo struct {
-	workerports.WorkerTrainingRepository
+	workertrainingports.WorkerTrainingRepository
 	courses []*workertraining.TrainingCourse
 	records []*workertraining.WorkerTrainingRecord
 }
@@ -49,7 +49,7 @@ func (f *fakeRepo) ListActiveCourses(
 
 func (f *fakeRepo) GetCourseByID(
 	_ context.Context,
-	req *workerports.GetTrainingCourseByIDRequest,
+	req *workertrainingports.GetTrainingCourseByIDRequest,
 ) (*workertraining.TrainingCourse, error) {
 	for _, c := range f.courses {
 		if c.ID == req.ID {
@@ -61,7 +61,7 @@ func (f *fakeRepo) GetCourseByID(
 
 func (f *fakeRepo) ListForWorker(
 	_ context.Context,
-	req *workerports.ListWorkerTrainingRequest,
+	req *workertrainingports.ListWorkerTrainingRequest,
 ) ([]*workertraining.WorkerTrainingRecord, error) {
 	out := make([]*workertraining.WorkerTrainingRecord, 0, len(f.records))
 	for _, r := range f.records {
@@ -85,7 +85,7 @@ func (f *fakeRepo) ListForWorker(
 
 func (f *fakeRepo) GetByID(
 	_ context.Context,
-	req *workerports.GetWorkerTrainingByIDRequest,
+	req *workertrainingports.GetWorkerTrainingByIDRequest,
 ) (*workertraining.WorkerTrainingRecord, error) {
 	for _, r := range f.records {
 		if r.ID == req.ID {

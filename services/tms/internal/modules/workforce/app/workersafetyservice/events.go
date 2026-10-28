@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +21,7 @@ import (
 // organization names each event's worker.
 func (s *Service) ListEvents(
 	ctx context.Context,
-	req *workerports.ListWorkerSafetyEventsRequest,
+	req *workersafetyports.ListWorkerSafetyEventsRequest,
 ) ([]*workersafety.WorkerSafetyEvent, error) {
 	return s.repo.ListEvents(ctx, req)
 }
@@ -31,7 +31,7 @@ func (s *Service) GetEvent(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workersafety.WorkerSafetyEvent, error) {
-	return s.repo.GetEventByID(ctx, &workerports.GetWorkerSafetyEventByIDRequest{
+	return s.repo.GetEventByID(ctx, &workersafetyports.GetWorkerSafetyEventByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeWorker:   true,
@@ -199,7 +199,7 @@ func (s *Service) planUpdateEvent(
 	ctx context.Context,
 	entity *workersafety.WorkerSafetyEvent,
 ) (*kernelports.RecordChange[workersafety.WorkerSafetyEvent], error) {
-	original, err := s.repo.GetEventByID(ctx, &workerports.GetWorkerSafetyEventByIDRequest{
+	original, err := s.repo.GetEventByID(ctx, &workersafetyports.GetWorkerSafetyEventByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: eventTenant(entity),
 	})
@@ -320,7 +320,7 @@ func (s *Service) planMoveEvent(
 	req *EventStatusRequest,
 	target workersafety.SafetyEventStatus,
 ) (*kernelports.RecordChange[workersafety.WorkerSafetyEvent], error) {
-	original, err := s.repo.GetEventByID(ctx, &workerports.GetWorkerSafetyEventByIDRequest{
+	original, err := s.repo.GetEventByID(ctx, &workersafetyports.GetWorkerSafetyEventByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -381,7 +381,7 @@ func (s *Service) DeleteEvent(
 	if err != nil {
 		return err
 	}
-	if err = s.repo.DeleteEvent(ctx, &workerports.GetWorkerSafetyEventByIDRequest{
+	if err = s.repo.DeleteEvent(ctx, &workersafetyports.GetWorkerSafetyEventByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {

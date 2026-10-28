@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,7 +33,7 @@ func newFakeRepo() *fakeRepo {
 
 func (f *fakeRepo) ListInjuries(
 	_ context.Context,
-	req *workerports.ListWorkerInjuriesRequest,
+	req *workersafetyports.ListWorkerInjuriesRequest,
 ) ([]*workersafety.WorkerInjury, error) {
 	out := make([]*workersafety.WorkerInjury, 0, len(f.injuries))
 	for _, injury := range f.injuries {
@@ -56,7 +56,7 @@ func (f *fakeRepo) ListInjuries(
 
 func (f *fakeRepo) GetInjuryByID(
 	_ context.Context,
-	req *workerports.GetWorkerInjuryByIDRequest,
+	req *workersafetyports.GetWorkerInjuryByIDRequest,
 ) (*workersafety.WorkerInjury, error) {
 	injury, ok := f.injuries[req.ID]
 	if !ok {
@@ -86,7 +86,7 @@ func (f *fakeRepo) UpdateInjury(
 
 func (f *fakeRepo) DeleteInjury(
 	_ context.Context,
-	req *workerports.GetWorkerInjuryByIDRequest,
+	req *workersafetyports.GetWorkerInjuryByIDRequest,
 ) error {
 	delete(f.injuries, req.ID)
 	return nil
@@ -94,7 +94,7 @@ func (f *fakeRepo) DeleteInjury(
 
 func (f *fakeRepo) NextCaseNumber(
 	_ context.Context,
-	req *workerports.NextCaseNumberRequest,
+	req *workersafetyports.NextCaseNumberRequest,
 ) (int32, error) {
 	var highest int32
 	for _, injury := range f.injuries {
@@ -107,14 +107,14 @@ func (f *fakeRepo) NextCaseNumber(
 
 func (f *fakeRepo) GetSummary(
 	_ context.Context,
-	req *workerports.GetOSHASummaryRequest,
+	req *workersafetyports.GetOSHASummaryRequest,
 ) (*workersafety.OSHAAnnualSummary, error) {
 	return f.summaries[req.Year], nil
 }
 
 func (f *fakeRepo) ListSummaries(
 	_ context.Context,
-	_ *workerports.ListOSHASummariesRequest,
+	_ *workersafetyports.ListOSHASummariesRequest,
 ) ([]*workersafety.OSHAAnnualSummary, error) {
 	out := make([]*workersafety.OSHAAnnualSummary, 0, len(f.summaries))
 	for _, summary := range f.summaries {
