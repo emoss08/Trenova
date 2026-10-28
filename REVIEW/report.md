@@ -10,11 +10,11 @@ numbers are in [baseline.md](baseline.md).
 |---|---|---|
 | Go unit tests (`services/tms`, `-tags=nomsgpack`) | 12 packages failing | FINAL_GO_UNIT |
 | Go integration tests in the 11 packages this branch touches | not run (CI red) | all 11 pass on PostGIS 18 and Redis 8, including the two new ones |
-| golangci-lint v2.12.2 as CI runs it (`--new-from-rev`), and archlint | not established (CI Lint dies at "Set up Go") | 0 new issues; archlint clean. A full run without `--new-from-rev` reports 704 issues, all in code this branch does not touch (CI gates on new issues only) |
+| golangci-lint v2.12.2 as CI runs it (`--new-from-rev`), and archlint | not established (CI Lint dies at "Set up Go") | 0 new issues; archlint clean. A full run without `--new-from-rev` reports 704 issues, all pre-existing (CI gates on new issues only) |
 | Codegen checks (gqlexec + e2e, agentread, schema stamp, projections, keel tables, safety doc, write coverage) | not run | all pass with no diff |
 | Client lint, lint:design, lint:skeletons, single copies | 0 errors | 0 errors |
 | Client typecheck (6 packages) | 0 errors | 0 errors |
-| Client tests | `@trenova/web` 5 files / 6 tests failing | all 1,170 files / 9,816 tests pass; dash, shared and edition pass |
+| Client tests | `@trenova/web` 5 files / 6 tests failing | all pass: web 1,170 files / 9,816 tests, dash 14 / 69 (one test added), shared 152 / 1,784, edition 1 / 3 |
 | Client codegen:check, guide:check, access:check, i18n check | not run | pass |
 | `pnpm audit` | 1 high, 2 low | 2 low (no fix exists for one; see §6) |
 | Rust `cargo fmt --check` (services, desktop/capture) | not run | pass (no Rust changed; clippy and tests not run here, see below) |
@@ -28,8 +28,9 @@ What is still red and why:
   recorded with an earlier embedding model and need re-recording against Ollama
   `nomic-embed-text`, which this environment cannot reach. Re-record with `-update`, then
   run without it.
-- `internal/infrastructure/minio`: passes once its test image can be pulled; the baseline
-  failures were Docker Hub rate limits.
+- `internal/infrastructure/minio` fails in a clean run here only because Docker Hub rate
+  limits the image pull (429). With the same image pulled through a registry mirror, all
+  of its tests pass.
 
 Not run here: Rust clippy and tests (no Rust changed; the imaging crates need the native
 libraries in the imaging dev image, see `docs/engineering/rust.md`), the full 159-package
@@ -107,7 +108,7 @@ user and email-profile select options expose emails; `MyYtdPay` computes every w
 filters; forgot-password timing differs for unknown emails; a replaced carrier's tracking
 link stays readable after the move closes; `webhookToken` is tenant-settable and not unique;
 `Accept: text/event-stream` skips the request timeout on any route; all RFC1918 proxies
-trusted by default; `sslMode` default `prefer` fails the config's own validation; Caddy CSP
+trusted by default; Caddy CSP
 allows `unsafe-eval`; dev compose binds `0.0.0.0`; `native-capture.yml` uses unpinned
 actions with signing secrets; print-load-plan's inline script is blocked by CSP; three debug
 `console.log`s; presigned URLs return sealed ciphertext; empty content types skip the allow
@@ -127,6 +128,8 @@ agent's taint tracking treats outside text as internal.
 | SSO config ignored the `AllowFederatedMFA` the admin chose | `ssoconfigrepository/ssoconfig.go` | `113400f4` |
 | The version handler's protected routes were never mounted and `/system/version` was registered twice | `versionhandler/handler.go`, `router.go` | `5af8b829` |
 | After a forced password change, every request was refused until the next sign-in: the session kept `MustChangePassword` | `userservice/service.go` | `dbda1d93` |
+| A config without `database.sslMode` failed to start: the default `prefer` is not one of the modes the config validates; the default is now `require` | `config/loader.go` | `fffefc56` |
+| A failed session revocation after a password change skipped the audit entry | `userservice/service.go` | `d4970183` |
 | Two tool descriptions exceeded their length limits | `carriertools/wait_tools.go`, `board_tools.go` | `64d08f7c` |
 | The desk credential list read Worker fields outside the reference view | `worker-credential/desk.graphql`, `worker_record_reads.go` | `218e3c03` |
 
@@ -150,6 +153,8 @@ Every security fix in §2 marked **Fixed** is also a bug fix, with its own regre
 | web `decision-flow-refused` | the queue list became virtualized and jsdom lays nothing out; the test stubs layout with the shared helper |
 | `userservice`, `userhandler` ChangeMyPassword tests | the call takes the session scope now (and assert the new behaviour) |
 | permission engine and cache fakes | `Epoch` takes the user and returns both epochs |
+| `userresolver` harness | built the user service without the permission engine production always wires, which the sign-in check of `8243ca21` reads |
+| `config` "database defaults" | asserted the `prefer` default the config's own validation refused; the new `TestAConfigWithoutAnSSLModeLoadsWithTLSRequired` failed against it |
 
 ### The code was wrong, so it was fixed
 
@@ -205,7 +210,8 @@ No test was deleted, skipped or loosened, and no lint suppression was added.
    tooling (`shadcn`, rollup).
 8. `pdf-lib` is unmaintained; it only generates cover sheets.
 9. Add `govulncheck` to CI (Rust already runs `cargo deny`); the Go scan could not run
-   here.
+   here. GitHub reports open Dependabot alerts on the default branch
+   (https://github.com/emoss08/Trenova/security/dependabot); triage them alongside it.
 10. Burn down the 704 existing golangci-lint issues by linter, starting with `gosec`
     (50+) and `nilerr` (9), which are the ones that can hide bugs.
 
