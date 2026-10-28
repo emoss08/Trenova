@@ -2,7 +2,8 @@ package homelayoutresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
@@ -13,7 +14,7 @@ import (
 
 func homeLayoutRequest(authCtx *authctx.AuthContext) homelayoutservice.Request {
 	return homelayoutservice.Request{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Principal: kernelports.PrincipalInfo{
 			Type:     kernelports.PrincipalType(authCtx.PrincipalType),
 			ID:       authCtx.PrincipalID,
@@ -167,7 +168,7 @@ func homeWidgetsFromInput(inputs []*gqlmodel.HomeWidgetInput) *homelayout.Layout
 		widgets = append(widgets, homelayout.Widget{
 			ID:     input.ID,
 			Key:    input.Key,
-			Title:  base.DerefString(input.Title),
+			Title:  gqlscalar.DerefString(input.Title),
 			W:      input.W,
 			H:      input.H,
 			Config: homeWidgetConfigFromInput(input.Config),
@@ -183,16 +184,16 @@ func homeWidgetConfigFromInput(input *gqlmodel.HomeWidgetConfigInput) homelayout
 	}
 
 	return homelayout.WidgetConfig{
-		Metric:       base.DerefString(input.Metric),
+		Metric:       gqlscalar.DerefString(input.Metric),
 		Metrics:      input.Metrics,
 		DefinitionID: homeParseID(input.DefinitionID),
-		CannedKey:    base.DerefString(input.CannedKey),
-		ChartID:      base.DerefString(input.ChartID),
-		ColumnID:     base.DerefString(input.ColumnID),
+		CannedKey:    gqlscalar.DerefString(input.CannedKey),
+		ChartID:      gqlscalar.DerefString(input.ChartID),
+		ColumnID:     gqlscalar.DerefString(input.ColumnID),
 		DashboardID:  homeParseID(input.DashboardID),
-		Text:         base.DerefString(input.Text),
-		Limit:        base.DerefInt(input.Limit),
-		WindowDays:   base.DerefInt(input.WindowDays),
+		Text:         gqlscalar.DerefString(input.Text),
+		Limit:        gqlscalar.DerefInt(input.Limit),
+		WindowDays:   gqlscalar.DerefInt(input.WindowDays),
 	}
 }
 

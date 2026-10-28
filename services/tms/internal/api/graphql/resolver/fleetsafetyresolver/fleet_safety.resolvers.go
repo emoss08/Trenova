@@ -9,7 +9,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
@@ -19,11 +21,11 @@ import (
 )
 
 func (r *FleetSafetyRankResolver) FleetCodeID(ctx context.Context, obj *workersafety.FleetSafetyRank) (*string, error) {
-	return base.IDPtr(obj.FleetCodeID), nil
+	return gqlid.IDPtr(obj.FleetCodeID), nil
 }
 
 func (r *FleetSafetyTerminalResolver) FleetCodeID(ctx context.Context, obj *workersafety.FleetSafetyTerminal) (*string, error) {
-	return base.IDPtr(obj.FleetCodeID), nil
+	return gqlid.IDPtr(obj.FleetCodeID), nil
 }
 
 func (r *MutationResolver) RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*workersafety.WorkerSafetyViolation, error) {
@@ -45,13 +47,13 @@ func (r *MutationResolver) RecordSafetyViolation(ctx context.Context, input gqlm
 	}
 
 	return r.WorkerSafetyService.RecordViolation(ctx, &workersafetyservice.RecordViolationRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		SafetyEventID:  eventID,
 		Basic:          basicValue(input.Basic),
-		Code:           base.StringValue(input.Code),
+		Code:           gqlscalar.StringValue(input.Code),
 		Description:    input.Description,
 		SeverityWeight: weight,
-		OutOfService:   base.BoolValue(input.OutOfService),
+		OutOfService:   gqlscalar.BoolValue(input.OutOfService),
 		UserID:         authCtx.UserID,
 	})
 }
@@ -71,14 +73,14 @@ func (r *MutationResolver) UpdateSafetyViolation(ctx context.Context, input gqlm
 	}
 
 	return r.WorkerSafetyService.UpdateViolation(ctx, &workersafetyservice.UpdateViolationRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		ID:             id,
 		Basic:          basicValue(input.Basic),
-		Code:           base.StringValue(input.Code),
+		Code:           gqlscalar.StringValue(input.Code),
 		Description:    input.Description,
 		SeverityWeight: weight,
-		OutOfService:   base.BoolValue(input.OutOfService),
-		Version:        int64(base.IntValue(input.Version)),
+		OutOfService:   gqlscalar.BoolValue(input.OutOfService),
+		Version:        int64(gqlscalar.IntValue(input.Version)),
 		UserID:         authCtx.UserID,
 	})
 }
@@ -94,7 +96,7 @@ func (r *MutationResolver) DeleteSafetyViolation(ctx context.Context, id string)
 	}
 	if err = r.WorkerSafetyService.DeleteViolation(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		violationID,
 		authCtx.UserID,
 	); err != nil {
@@ -109,11 +111,11 @@ func (r *QueryResolver) FleetSafety(ctx context.Context, input *gqlmodel.FleetSa
 		return nil, err
 	}
 
-	req := &workersafetyservice.FleetRequest{TenantInfo: base.TenantInfo(authCtx)}
+	req := &workersafetyservice.FleetRequest{TenantInfo: resolvercore.TenantInfo(authCtx)}
 	if input != nil {
-		req.WindowMonths = base.IntValue(input.WindowMonths)
-		req.RankLimit = base.IntValue(input.RankLimit)
-		fleetCodeID, idErr := base.OptionalID(input.FleetCodeID)
+		req.WindowMonths = gqlscalar.IntValue(input.WindowMonths)
+		req.RankLimit = gqlscalar.IntValue(input.RankLimit)
+		fleetCodeID, idErr := gqlid.OptionalID(input.FleetCodeID)
 		if idErr != nil {
 			return nil, errortypes.NewValidationError(
 				"fleetCodeId",
@@ -132,7 +134,7 @@ func (r *QueryResolver) WorkerSafetyViolations(ctx context.Context, safetyEventI
 	if err != nil {
 		return nil, err
 	}
-	eventID, err := base.OptionalID(safetyEventID)
+	eventID, err := gqlid.OptionalID(safetyEventID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"safetyEventId",
@@ -140,7 +142,7 @@ func (r *QueryResolver) WorkerSafetyViolations(ctx context.Context, safetyEventI
 			"Safety event is invalid",
 		)
 	}
-	wrkID, err := base.OptionalID(workerID)
+	wrkID, err := gqlid.OptionalID(workerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Worker is invalid")
 	}
@@ -153,7 +155,7 @@ func (r *QueryResolver) WorkerSafetyViolations(ctx context.Context, safetyEventI
 	return r.WorkerSafetyService.ListViolations(
 		ctx,
 		&workersafetyports.ListWorkerSafetyViolationsRequest{
-			TenantInfo:     base.TenantInfo(authCtx),
+			TenantInfo:     resolvercore.TenantInfo(authCtx),
 			SafetyEventIDs: eventIDs,
 			WorkerID:       wrkID,
 		},

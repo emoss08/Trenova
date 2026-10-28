@@ -2,7 +2,8 @@ package shipmentboardresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 )
 
@@ -33,23 +34,23 @@ func suggestionToModel(
 		Key:        item.Key,
 		Kind:       gqlmodel.ShipmentSuggestionKind(item.Kind),
 		Tone:       gqlmodel.ShipmentSuggestionTone(item.Tone),
-		ShipmentID: base.IDPtr(item.ShipmentID),
-		ProNumber:  base.EmptyToNil(item.ProNumber),
+		ShipmentID: gqlid.IDPtr(item.ShipmentID),
+		ProNumber:  gqlscalar.EmptyToNil(item.ProNumber),
 		Title:      item.Title,
 		Reason:     item.Reason,
 		Impact:     impact,
 		Primary: &gqlmodel.ShipmentSuggestionAction{
 			Type:                  gqlmodel.ShipmentSuggestionActionType(item.Primary.Type),
 			Label:                 item.Primary.Label,
-			MoveID:                base.IDPtr(item.Primary.MoveID),
-			WorkerID:              base.IDPtr(item.Primary.WorkerID),
-			TractorID:             base.IDPtr(item.Primary.TractorID),
-			CarrierID:             base.IDPtr(item.Primary.CarrierID),
-			DetentionOccurrenceID: base.IDPtr(item.Primary.DetentionOccurrenceID),
-			Message:               base.EmptyToNil(item.Primary.Message),
+			MoveID:                gqlid.IDPtr(item.Primary.MoveID),
+			WorkerID:              gqlid.IDPtr(item.Primary.WorkerID),
+			TractorID:             gqlid.IDPtr(item.Primary.TractorID),
+			CarrierID:             gqlid.IDPtr(item.Primary.CarrierID),
+			DetentionOccurrenceID: gqlid.IDPtr(item.Primary.DetentionOccurrenceID),
+			Message:               gqlscalar.EmptyToNil(item.Primary.Message),
 		},
 		ManualLabel: item.ManualLabel,
-		DueAt:       base.IntPtr(item.DueAt),
+		DueAt:       gqlscalar.IntPtr(item.DueAt),
 		Deferred:    item.Deferred,
 	}
 }

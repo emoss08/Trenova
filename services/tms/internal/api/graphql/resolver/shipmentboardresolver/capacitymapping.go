@@ -2,7 +2,9 @@ package shipmentboardresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
 )
 
@@ -29,7 +31,7 @@ func capacityToModel(c *shipmentcapacityports.ShipmentCapacity) *gqlmodel.Shipme
 			Posting:            c.Carriers.Posting,
 			Untendered:         c.Carriers.Untendered,
 			AwaitingAcceptance: c.Carriers.AwaitingAcceptance,
-			AvgRatePerMile:     base.NullDecimalStringPtr(c.Carriers.AvgRatePerMile),
+			AvgRatePerMile:     gqldecimal.NullDecimalStringPtr(c.Carriers.AvgRatePerMile),
 		}
 	}
 
@@ -43,14 +45,14 @@ func capacityUnitToModel(u *shipmentcapacityports.CapacityUnit) *gqlmodel.Capaci
 		Name:              u.Name,
 		Initials:          u.Initials,
 		Group:             gqlmodel.CapacityGroup(u.Group),
-		FreeAt:            base.IntPtr(u.FreeAt),
-		City:              base.EmptyToNil(u.City),
-		UnitLabel:         base.EmptyToNil(u.UnitLabel),
+		FreeAt:            gqlscalar.IntPtr(u.FreeAt),
+		City:              gqlscalar.EmptyToNil(u.City),
+		UnitLabel:         gqlscalar.EmptyToNil(u.UnitLabel),
 		BadgeCount:        u.BadgeCount,
-		RatePerMile:       base.NullDecimalStringPtr(u.RatePerMile),
+		RatePerMile:       gqldecimal.NullDecimalStringPtr(u.RatePerMile),
 		AcceptancePercent: u.AcceptancePercent,
-		DriveRemainingMs:  base.IntPtr(u.DriveRemainingMs),
-		TractorID:         base.IDPtr(u.TractorID),
+		DriveRemainingMs:  gqlscalar.IntPtr(u.DriveRemainingMs),
+		TractorID:         gqlid.IDPtr(u.TractorID),
 	}
 	if u.Ring != nil {
 		out.Ring = &gqlmodel.CapacityRing{Value: u.Ring.Value, Max: u.Ring.Max, Low: u.Ring.Low}
@@ -68,13 +70,13 @@ func capacityMatchesToModel(
 		out = append(out, &gqlmodel.CapacityMatch{
 			ShipmentID:      match.ShipmentID.String(),
 			MoveID:          match.MoveID.String(),
-			ProNumber:       base.EmptyToNil(match.ProNumber),
+			ProNumber:       gqlscalar.EmptyToNil(match.ProNumber),
 			OriginCity:      match.OriginCity,
 			DestinationCity: match.DestinationCity,
-			PickupAt:        base.IntPtr(&pickup),
+			PickupAt:        gqlscalar.IntPtr(&pickup),
 			Revenue:         match.Revenue.String(),
 			DeadheadMiles:   match.DeadheadMiles,
-			Quote:           base.NullDecimalStringPtr(match.Quote),
+			Quote:           gqldecimal.NullDecimalStringPtr(match.Quote),
 			MarginPercent:   match.MarginPercent,
 			FitPercent:      match.FitPercent,
 		})
@@ -90,13 +92,13 @@ func coverageSuggestionsToModel(
 	for _, driver := range s.Drivers {
 		drivers = append(drivers, &gqlmodel.DriverCoverageSuggestion{
 			WorkerID:         driver.WorkerID.String(),
-			TractorID:        base.IDPtr(driver.TractorID),
+			TractorID:        gqlid.IDPtr(driver.TractorID),
 			MoveID:           driver.MoveID.String(),
 			Name:             driver.Name,
 			Initials:         driver.Initials,
-			UnitLabel:        base.EmptyToNil(driver.UnitLabel),
+			UnitLabel:        gqlscalar.EmptyToNil(driver.UnitLabel),
 			DistanceMiles:    driver.DistanceMiles,
-			DriveRemainingMs: base.IntPtr(driver.DriveRemainingMs),
+			DriveRemainingMs: gqlscalar.IntPtr(driver.DriveRemainingMs),
 			FitPercent:       driver.FitPercent,
 		})
 	}
@@ -108,7 +110,7 @@ func coverageSuggestionsToModel(
 			MoveID:            carrier.MoveID.String(),
 			Name:              carrier.Name,
 			Initials:          carrier.Initials,
-			McNumber:          base.EmptyToNil(carrier.MCNumber),
+			McNumber:          gqlscalar.EmptyToNil(carrier.MCNumber),
 			Quote:             carrier.Quote.String(),
 			RatePerMile:       carrier.RatePerMile.String(),
 			AcceptancePercent: carrier.AcceptancePercent,
@@ -127,8 +129,8 @@ func tenderResultToModel(
 		tendered = append(tendered, &gqlmodel.TenderShipmentSuccess{
 			ShipmentID:  success.ShipmentID.String(),
 			TenderID:    success.TenderID.String(),
-			CarrierID:   base.IDPtr(success.CarrierID),
-			CarrierName: base.EmptyToNil(success.CarrierName),
+			CarrierID:   gqlid.IDPtr(success.CarrierID),
+			CarrierName: gqlscalar.EmptyToNil(success.CarrierName),
 		})
 	}
 

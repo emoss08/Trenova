@@ -3,12 +3,12 @@
 package formulalibraryresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	formulalibraryservice "github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	FormulaLibraryService *formulalibraryservice.Service
 }
 

@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
@@ -26,7 +28,7 @@ func (r *MutationResolver) CreateDetentionPolicy(ctx context.Context, input gqlm
 		return nil, err
 	}
 
-	entity, err := detentionPolicyFromInput(&input, pulid.Nil, base.TenantInfo(authCtx))
+	entity, err := detentionPolicyFromInput(&input, pulid.Nil, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +52,7 @@ func (r *MutationResolver) UpdateDetentionPolicy(ctx context.Context, id string,
 		return nil, err
 	}
 
-	entity, err := detentionPolicyFromInput(&input, policyID, base.TenantInfo(authCtx))
+	entity, err := detentionPolicyFromInput(&input, policyID, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +78,7 @@ func (r *MutationResolver) DeleteDetentionPolicy(ctx context.Context, id string)
 
 	if err = r.DetentionPolicyService.Delete(ctx, &detentionports.GetDetentionPolicyByIDRequest{
 		DetentionPolicyID: policyID,
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 	}, authCtx.UserID); err != nil {
 		return false, err
 	}
@@ -90,7 +92,7 @@ func (r *MutationResolver) DetentionBacktest(ctx context.Context, input gqlmodel
 		return nil, err
 	}
 
-	policy, err := detentionPolicyFromInput(input.Policy, pulid.Nil, base.TenantInfo(authCtx))
+	policy, err := detentionPolicyFromInput(input.Policy, pulid.Nil, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +108,7 @@ func (r *MutationResolver) DetentionBacktest(ctx context.Context, input gqlmodel
 		req.Limit = *input.Limit
 	}
 
-	result, err := r.DetentionService.Backtest(ctx, req, base.TenantInfo(authCtx))
+	result, err := r.DetentionService.Backtest(ctx, req, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +129,7 @@ func (r *MutationResolver) WaiveDetentionOccurrence(ctx context.Context, input g
 
 	occurrence, err := r.DetentionService.Waive(ctx, detentionservice.WaiveParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		Reason:       input.Reason,
 		Note:         input.Note,
 		UserID:       authCtx.UserID,
@@ -152,7 +154,7 @@ func (r *MutationResolver) ApproveDetentionOccurrence(ctx context.Context, occur
 
 	occurrence, err := r.DetentionService.Approve(ctx, detentionservice.ApproveParams{
 		OccurrenceID: id,
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		UserID:       authCtx.UserID,
 	})
 	if err != nil {
@@ -175,7 +177,7 @@ func (r *MutationResolver) DisputeDetentionOccurrence(ctx context.Context, input
 
 	occurrence, err := r.DetentionService.Dispute(ctx, detentionservice.DisputeParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		Note:         input.Note,
 		UserID:       authCtx.UserID,
 	})
@@ -201,7 +203,7 @@ func (r *MutationResolver) SendDetentionNotice(ctx context.Context, occurrenceID
 		ctx,
 		detentionservice.SendOccurrenceNoticeParams{
 			OccurrenceID: id,
-			TenantInfo:   base.TenantInfo(authCtx),
+			TenantInfo:   resolvercore.TenantInfo(authCtx),
 			UserID:       authCtx.UserID,
 		},
 	)
@@ -218,7 +220,7 @@ func (r *QueryResolver) DetentionPolicies(ctx context.Context, input gqlmodel.Da
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +252,7 @@ func (r *QueryResolver) DetentionPolicy(ctx context.Context, id string) (*gqlmod
 
 	entity, err := r.DetentionPolicyService.GetByID(ctx, &detentionports.GetDetentionPolicyByIDRequest{
 		DetentionPolicyID: policyID,
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		IncludeTiers:      true,
 	})
 	if err != nil {
@@ -271,7 +273,7 @@ func (r *QueryResolver) DetentionDesk(ctx context.Context, includeAwaitingApprov
 		return nil, err
 	}
 
-	entries, err := r.DetentionService.ListDeskEntries(ctx, base.TenantInfo(authCtx), filter)
+	entries, err := r.DetentionService.ListDeskEntries(ctx, resolvercore.TenantInfo(authCtx), filter)
 	if err != nil {
 		return nil, err
 	}
@@ -302,7 +304,7 @@ func (r *QueryResolver) DetentionOccurrence(ctx context.Context, id string) (*gq
 		ctx,
 		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: occurrenceID,
-			TenantInfo:   base.TenantInfo(authCtx),
+			TenantInfo:   resolvercore.TenantInfo(authCtx),
 		},
 	)
 	if err != nil {
@@ -327,7 +329,7 @@ func (r *QueryResolver) ShipmentDetention(ctx context.Context, shipmentID string
 		ctx,
 		&detentionports.GetOccurrencesByShipmentRequest{
 			ShipmentID: id,
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 		},
 	)
 	if err != nil {
@@ -348,7 +350,7 @@ func (r *QueryResolver) DetentionDisputePacket(ctx context.Context, occurrenceID
 		return nil, err
 	}
 
-	packet, err := r.DetentionService.BuildDisputePacket(ctx, id, base.TenantInfo(authCtx))
+	packet, err := r.DetentionService.BuildDisputePacket(ctx, id, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +364,7 @@ func (r *QueryResolver) DetentionFacilityStats(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	req, err := detentionStatsRequest(&input, base.TenantInfo(authCtx))
+	req, err := detentionStatsRequest(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -389,7 +391,7 @@ func (r *QueryResolver) DetentionCustomerStats(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	req, err := detentionStatsRequest(&input, base.TenantInfo(authCtx))
+	req, err := detentionStatsRequest(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -416,7 +418,7 @@ func (r *QueryResolver) DetentionWaiverStats(ctx context.Context, input gqlmodel
 		return nil, err
 	}
 
-	req, err := detentionStatsRequest(&input, base.TenantInfo(authCtx))
+	req, err := detentionStatsRequest(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -443,7 +445,7 @@ func (r *QueryResolver) DetentionPolicyPreview(ctx context.Context, policy gqlmo
 		return nil, err
 	}
 
-	entity, err := detentionPolicyFromInput(&policy, pulid.Nil, base.TenantInfo(authCtx))
+	entity, err := detentionPolicyFromInput(&policy, pulid.Nil, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -452,7 +454,7 @@ func (r *QueryResolver) DetentionPolicyPreview(ctx context.Context, policy gqlmo
 		ctx,
 		entity,
 		detentionPreviewScenarioFromInput(&scenario),
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 	)
 	if err != nil {
 		return nil, err
@@ -475,7 +477,7 @@ func (r *DetentionOccurrenceResolver) Location(ctx context.Context, obj *gqlmode
 		!r.HasPermission(ctx, authCtx, permission.ResourceLocation, permission.OpRead) {
 		return nil, nil
 	}
-	return base.OptionalMatch(loaders.LocationByID(ctx, obj.LocationID))
+	return loaderfields.OptionalMatch(loaders.LocationByID(ctx, obj.LocationID))
 }
 
 func (r *DetentionOccurrenceResolver) CalculationTrace(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (map[string]any, error) {

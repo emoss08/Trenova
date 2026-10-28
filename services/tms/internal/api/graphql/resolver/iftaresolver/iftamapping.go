@@ -4,7 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
@@ -17,7 +21,7 @@ import (
 func iftaTaxRateCursorConnectionToModel(
 	result *pagination.CursorListResult[*ifta.TaxRate],
 ) (*gqlmodel.IFTATaxRateConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
 		func(node *ifta.TaxRate, cursor string) *gqlmodel.IFTATaxRateEdge {
@@ -30,9 +34,9 @@ func iftaTaxRateCursorConnectionToModel(
 
 	return &gqlmodel.IFTATaxRateConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
-			base.LastEdgeCursor(
+			gqlconnection.LastEdgeCursor(
 				edges,
 				func(edge *gqlmodel.IFTATaxRateEdge) string { return edge.Cursor },
 			),
@@ -45,7 +49,7 @@ func iftaTaxRateCursorConnectionToModel(
 func iftaMileageEntryCursorConnectionToModel(
 	result *pagination.CursorListResult[*ifta.JurisdictionMileageEntry],
 ) (*gqlmodel.IFTAJurisdictionMileageEntryConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
 		func(
@@ -61,9 +65,9 @@ func iftaMileageEntryCursorConnectionToModel(
 
 	return &gqlmodel.IFTAJurisdictionMileageEntryConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
-			base.LastEdgeCursor(
+			gqlconnection.LastEdgeCursor(
 				edges,
 				func(edge *gqlmodel.IFTAJurisdictionMileageEntryEdge) string { return edge.Cursor },
 			),
@@ -76,7 +80,7 @@ func iftaMileageEntryCursorConnectionToModel(
 func iftaReturnCursorConnectionToModel(
 	result *pagination.CursorListResult[*ifta.Return],
 ) (*gqlmodel.IFTAReturnConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
 		func(node *ifta.Return, cursor string) *gqlmodel.IFTAReturnEdge {
@@ -89,9 +93,9 @@ func iftaReturnCursorConnectionToModel(
 
 	return &gqlmodel.IFTAReturnConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
-			base.LastEdgeCursor(
+			gqlconnection.LastEdgeCursor(
 				edges,
 				func(edge *gqlmodel.IFTAReturnEdge) string { return edge.Cursor },
 			),
@@ -115,10 +119,10 @@ func iftaPeriodFromInput(input gqlmodel.IFTAPeriodInput) (ifta.Period, error) {
 }
 
 func iftaTaxRatesRequestFromGraphQL(
-	connection *base.GqlDataTableConnection,
+	connection *gqlconnection.GqlDataTableConnection,
 	input gqlmodel.IFTATaxRatesInput,
 ) (*iftaports.ListTaxRatesRequest, error) {
-	jurisdictionID, err := base.OptionalScopedID("jurisdictionId", input.JurisdictionID)
+	jurisdictionID, err := gqlid.OptionalScopedID("jurisdictionId", input.JurisdictionID)
 	if err != nil {
 		return nil, err
 	}
@@ -141,15 +145,15 @@ func iftaTaxRatesRequestFromGraphQL(
 }
 
 func iftaMileageEntriesRequestFromGraphQL(
-	connection *base.GqlDataTableConnection,
+	connection *gqlconnection.GqlDataTableConnection,
 	input gqlmodel.IFTAMileageEntriesInput,
 ) (*iftaports.ListMileageEntriesRequest, error) {
-	tractorID, err := base.OptionalScopedID("tractorId", input.TractorID)
+	tractorID, err := gqlid.OptionalScopedID("tractorId", input.TractorID)
 	if err != nil {
 		return nil, err
 	}
 
-	jurisdictionID, err := base.OptionalScopedID("jurisdictionId", input.JurisdictionID)
+	jurisdictionID, err := gqlid.OptionalScopedID("jurisdictionId", input.JurisdictionID)
 	if err != nil {
 		return nil, err
 	}
@@ -172,13 +176,13 @@ func iftaMileageEntriesRequestFromGraphQL(
 }
 
 func iftaReturnsRequestFromGraphQL(
-	connection *base.GqlDataTableConnection,
+	connection *gqlconnection.GqlDataTableConnection,
 	input gqlmodel.IFTAReturnsInput,
 ) *iftaports.ListReturnsRequest {
 	return &iftaports.ListReturnsRequest{
 		Filter:   connection.Filter,
 		Cursor:   connection.Cursor,
-		Year:     base.IntValue(input.Year),
+		Year:     gqlscalar.IntValue(input.Year),
 		Statuses: input.Statuses,
 	}
 }
@@ -192,17 +196,17 @@ func iftaTaxRateFromInput(input *gqlmodel.IFTATaxRateInput) (*ifta.TaxRate, erro
 		)
 	}
 
-	jurisdictionID, err := base.RequiredID("jurisdictionId", input.JurisdictionID)
+	jurisdictionID, err := gqlid.RequiredID("jurisdictionId", input.JurisdictionID)
 	if err != nil {
 		return nil, err
 	}
 
-	rate, err := base.DecimalFromString(input.RatePerGallon, "ratePerGallon")
+	rate, err := gqldecimal.DecimalFromString(input.RatePerGallon, "ratePerGallon")
 	if err != nil {
 		return nil, err
 	}
 
-	surcharge, err := base.NullDecimalFromStringPtr(
+	surcharge, err := gqldecimal.NullDecimalFromStringPtr(
 		input.SurchargeRatePerGallon,
 		"surchargeRatePerGallon",
 	)
@@ -217,8 +221,8 @@ func iftaTaxRateFromInput(input *gqlmodel.IFTATaxRateInput) (*ifta.TaxRate, erro
 		FuelType:               input.FuelType,
 		RatePerGallon:          rate,
 		SurchargeRatePerGallon: surcharge,
-		SourceNote:             base.StringValue(input.SourceNote),
-		SourceURL:              base.StringValue(input.SourceURL),
+		SourceNote:             gqlscalar.StringValue(input.SourceNote),
+		SourceURL:              gqlscalar.StringValue(input.SourceURL),
 	}, nil
 }
 
@@ -254,22 +258,22 @@ func applyIFTAMileageEntryInput(
 	entry *ifta.JurisdictionMileageEntry,
 	input gqlmodel.IFTAMileageEntryInput,
 ) error {
-	tractorID, err := base.RequiredID("tractorId", input.TractorID)
+	tractorID, err := gqlid.RequiredID("tractorId", input.TractorID)
 	if err != nil {
 		return err
 	}
 
-	jurisdictionID, err := base.RequiredID("jurisdictionId", input.JurisdictionID)
+	jurisdictionID, err := gqlid.RequiredID("jurisdictionId", input.JurisdictionID)
 	if err != nil {
 		return err
 	}
 
-	moveID, err := base.OptionalScopedID("shipmentMoveId", input.ShipmentMoveID)
+	moveID, err := gqlid.OptionalScopedID("shipmentMoveId", input.ShipmentMoveID)
 	if err != nil {
 		return err
 	}
 
-	miles, err := base.DecimalFromString(input.Miles, "miles")
+	miles, err := gqldecimal.DecimalFromString(input.Miles, "miles")
 	if err != nil {
 		return err
 	}
@@ -278,8 +282,8 @@ func applyIFTAMileageEntryInput(
 	entry.JurisdictionID = jurisdictionID
 	entry.TraveledAt = int64(input.TraveledAt)
 	entry.Miles = miles
-	entry.ShipmentMoveID = base.IDValuePtr(moveID)
-	entry.Notes = base.StringValue(input.Notes)
+	entry.ShipmentMoveID = gqlid.IDValuePtr(moveID)
+	entry.Notes = gqlscalar.StringValue(input.Notes)
 	entry.Loaded = true
 	if input.Loaded != nil {
 		entry.Loaded = *input.Loaded
@@ -303,7 +307,7 @@ func backfillResultToModel(
 		DryRun:            result.DryRun,
 		UnattributedMoves: result.UnattributedMoves,
 		UnattributedMiles: result.UnattributedMiles.StringFixed(2),
-		WorkflowID:        base.NonEmptyPtr(result.WorkflowID),
+		WorkflowID:        gqlscalar.NonEmptyPtr(result.WorkflowID),
 	}
 }
 
@@ -319,13 +323,13 @@ func returnActionRequest(
 	id string,
 	version int,
 ) (*iftaservice.ReturnActionRequest, error) {
-	returnID, err := base.RequiredID("id", id)
+	returnID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
 	return &iftaservice.ReturnActionRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         returnID,
 		Version:    int64(version),
 		UserID:     authCtx.UserID,
@@ -341,5 +345,5 @@ func (r *IFTAPeriodResolver) periodInfo(
 		return iftaservice.PeriodInfo{}, err
 	}
 
-	return r.IftaService.PeriodInfo(ctx, base.TenantInfo(authCtx), obj.Year, obj.Quarter)
+	return r.IftaService.PeriodInfo(ctx, resolvercore.TenantInfo(authCtx), obj.Year, obj.Quarter)
 }

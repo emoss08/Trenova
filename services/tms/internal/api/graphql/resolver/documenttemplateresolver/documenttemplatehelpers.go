@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -107,7 +107,7 @@ func (r *Deps) PreviewFor(
 	return r.DocumentTemplateService.PreviewVersion(
 		ctx,
 		&documenttemplateports.PreviewVersionRequest{
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			Kind:       documenttemplate.Kind(input.Kind),
 			VersionID:  versionID,
 			Content:    documentTemplateContentFromInput(input.Content),

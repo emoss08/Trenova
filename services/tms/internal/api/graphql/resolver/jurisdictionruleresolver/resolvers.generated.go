@@ -3,13 +3,13 @@
 package jurisdictionruleresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	jurisdictionruleports "github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
 	permitports "github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	JurisdictionRuleService jurisdictionruleports.JurisdictionRuleService
 	JurisdictionRuleRepo    permitports.JurisdictionRuleRepository
 }

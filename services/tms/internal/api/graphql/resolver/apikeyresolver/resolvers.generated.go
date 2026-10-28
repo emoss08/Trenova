@@ -3,12 +3,12 @@
 package apikeyresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	apikeyservice "github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	APIKeyService *apikeyservice.Service
 }
 

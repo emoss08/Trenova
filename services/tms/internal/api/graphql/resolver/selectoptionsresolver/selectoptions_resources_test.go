@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
@@ -29,7 +29,7 @@ func TestSelectOptionRegistry_CoversEverySchemaResource(t *testing.T) {
 	require.True(t, ok)
 	require.NotEmpty(t, definition.EnumValues)
 
-	registry := (&Deps{Core: &base.Core{}}).SelectOptionRegistry()
+	registry := (&Deps{Core: &resolvercore.Core{}}).SelectOptionRegistry()
 	for _, value := range definition.EnumValues {
 		t.Run(value.Name, func(t *testing.T) {
 			entry, registered := registry[gqlmodel.SelectOptionResource(value.Name)]

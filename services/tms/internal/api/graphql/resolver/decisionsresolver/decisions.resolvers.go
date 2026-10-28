@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/decisionbatch"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -91,7 +93,7 @@ func (r *MutationResolver) DecideAgentProposals(ctx context.Context, ids []strin
 		return nil, err
 	}
 
-	req, err := base.BatchDecisionRequest(ids, &input, base.TenantInfo(authCtx))
+	req, err := decisionbatch.BatchDecisionRequest(ids, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +103,7 @@ func (r *MutationResolver) DecideAgentProposals(ctx context.Context, ids []strin
 		return nil, err
 	}
 
-	return base.BatchDecisionResults(results), nil
+	return decisionbatch.BatchDecisionResults(results), nil
 }
 
 func (r *QueryResolver) PendingDecisions(ctx context.Context, input gqlmodel.PendingDecisionsInput) (*gqlmodel.PendingDecisionConnection, error) {
@@ -120,8 +122,8 @@ func (r *QueryResolver) PendingDecisions(ctx context.Context, input gqlmodel.Pen
 	}
 
 	req := agentports.ListPendingDecisionsRequest{
-		TenantInfo:        base.TenantInfo(authCtx),
-		IncludeTotalCount: base.ConnectionTotalRequested(ctx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
+		IncludeTotalCount: gqlconnection.ConnectionTotalRequested(ctx),
 		Usable:            usable,
 	}
 	if input.First != nil {
@@ -190,7 +192,7 @@ func (r *QueryResolver) PendingDecisionSummary(ctx context.Context) (*gqlmodel.P
 		return nil, err
 	}
 
-	tenant := base.TenantInfo(authCtx)
+	tenant := resolvercore.TenantInfo(authCtx)
 	summary, err := r.AgentDecisionQueueService.Summary(ctx, tenant, usable)
 	if err != nil {
 		return nil, err
@@ -219,7 +221,7 @@ func (r *QueryResolver) RecentDecisions(ctx context.Context, since int, first *i
 	}
 
 	req := agentports.ListRecentDecisionsRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Since:      int64(since),
 		Usable:     usable,
 	}

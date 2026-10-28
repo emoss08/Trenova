@@ -90,7 +90,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	accessorialchargeresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accessorialchargeresolver"
 	accountingsyncresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accountingsyncresolver"
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	briefingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/briefingresolver"
 	captureresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/captureresolver"
 	carriercapacityresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carriercapacityresolver"
@@ -137,6 +136,7 @@ import (
 	rateresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/rateresolver"
 	recurringshipmentresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/recurringshipmentresolver"
 	reportresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/reportresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	schedulingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/schedulingresolver"
 	servicefailurereasoncoderesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailurereasoncoderesolver"
 	servicefailureresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailureresolver"
@@ -1217,12 +1217,12 @@ var operations = []Operation{
 }
 
 func NewSchema(p ResolverParams) Schema {
-	core := &base.Core{
+	core := &resolvercore.Core{
 		L:                   p.Logger.Named("api.graphql.resolver"),
 		WorkerPTOService:    p.WorkerPTOService,
 		OrgStructureService: p.OrgStructureService,
 		PermissionEngine:    p.PermissionEngine,
-		TraceURL:            base.TraceURLBuilder(p.Config),
+		TraceURL:            resolvercore.TraceURLBuilder(p.Config),
 	}
 	accessorialchargeDeps := &accessorialchargeresolver.Deps{
 		Core:                     core,

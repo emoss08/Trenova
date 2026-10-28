@@ -3,9 +3,9 @@ package agentresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ func TestTraceURL_LinksARecordToItsTraceWhenABackendIsConfigured(t *testing.T) {
 
 	cfg := &config.Config{}
 	cfg.Monitoring.Tracing.TraceURLTemplate = "https://traces.example.com/trace/{traceId}"
-	r := &Deps{Core: &base.Core{TraceURL: base.TraceURLBuilder(cfg)}}
+	r := &Deps{Core: &resolvercore.Core{TraceURL: resolvercore.TraceURLBuilder(cfg)}}
 
 	run, err := (&AgentRunResolver{r}).TraceURL(
 		t.Context(),
@@ -46,9 +46,9 @@ func TestTraceURL_IsAbsentWithoutABackend(t *testing.T) {
 	t.Parallel()
 
 	for _, r := range []*Deps{
-		{Core: &base.Core{TraceURL: base.TraceURLBuilder(&config.Config{})}},
-		{Core: &base.Core{TraceURL: base.TraceURLBuilder(nil)}},
-		{Core: &base.Core{}},
+		{Core: &resolvercore.Core{TraceURL: resolvercore.TraceURLBuilder(&config.Config{})}},
+		{Core: &resolvercore.Core{TraceURL: resolvercore.TraceURLBuilder(nil)}},
+		{Core: &resolvercore.Core{}},
 	} {
 		link, err := (&AgentRunResolver{r}).TraceURL(
 			t.Context(),

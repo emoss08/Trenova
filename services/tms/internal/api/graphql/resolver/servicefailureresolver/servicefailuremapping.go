@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,7 +15,7 @@ import (
 func serviceFailureConnectionToModel(
 	result *pagination.CursorListResult[*servicefailure.ServiceFailure],
 ) (*gqlmodel.ServiceFailureConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *servicefailure.ServiceFailure, cursor string) *gqlmodel.ServiceFailureEdge {
 			return &gqlmodel.ServiceFailureEdge{
@@ -41,5 +42,5 @@ func failureUser(ctx context.Context, loaded *tenant.User, id *pulid.ID) (*tenan
 		return loaded, nil
 	}
 
-	return base.LoadUser(ctx, pulid.ConvertFromPtr(id))
+	return loaderfields.LoadUser(ctx, pulid.ConvertFromPtr(id))
 }

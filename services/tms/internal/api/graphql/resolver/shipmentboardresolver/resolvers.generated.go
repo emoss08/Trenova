@@ -3,16 +3,16 @@
 package shipmentboardresolver
 
 import (
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	shipmentbriefports "github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	customerupdateservice "github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
 	shipmentsuggestionports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	CustomerUpdateService  *customerupdateservice.Service
 	BoardCapacity          shipmentcapacityports.ShipmentCapacityReader
 	BoardCoverage          shipmentcapacityports.ShipmentCoverageSuggester

@@ -3,13 +3,13 @@
 package fuelsurchargeresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	fuelsurchargeservice "github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	fuelsurchargeports "github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	FuelSurchargeService     *fuelsurchargeservice.Service
 	FuelIndexRepo            fuelsurchargeports.FuelIndexRepository
 	FuelIndexPriceRepo       fuelsurchargeports.FuelIndexPriceRepository

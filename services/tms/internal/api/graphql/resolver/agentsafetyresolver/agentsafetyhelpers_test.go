@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -88,7 +88,7 @@ func TestMemtableRequestFromGraphQLCarriesEveryTableInput(t *testing.T) {
 	first := 50
 	after := "cursor"
 	query := "move"
-	req := base.MemtableRequestFromGraphQL(t.Context(), &gqlmodel.DataTableConnectionInput{
+	req := gqlconnection.MemtableRequestFromGraphQL(t.Context(), &gqlmodel.DataTableConnectionInput{
 		First: &first,
 		After: &after,
 		Query: &query,
@@ -116,6 +116,6 @@ func TestMemtableRequestFromGraphQLCarriesEveryTableInput(t *testing.T) {
 
 	assert.Equal(t,
 		memtable.Request{IncludeTotalCount: true},
-		base.MemtableRequestFromGraphQL(t.Context(), nil),
+		gqlconnection.MemtableRequestFromGraphQL(t.Context(), nil),
 	)
 }

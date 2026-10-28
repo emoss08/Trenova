@@ -3,13 +3,13 @@
 package detentionresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	detentionpolicyservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
 	detentionservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	DetentionService       *detentionservice.Service
 	DetentionPolicyService *detentionpolicyservice.Service
 }

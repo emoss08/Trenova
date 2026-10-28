@@ -3,12 +3,12 @@
 package workerchecklistresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	workerchecklistservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	WorkerChecklistService *workerchecklistservice.Service
 }
 

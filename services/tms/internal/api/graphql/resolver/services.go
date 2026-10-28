@@ -1,7 +1,7 @@
 package resolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
@@ -430,7 +430,7 @@ type Params struct {
 }
 
 type Services struct {
-	*base.Core
+	*resolvercore.Core
 	AnalyticsService             kernelports.AnalyticsService
 	OrganizationService          tenantports.OrganizationService
 	ShipmentService              shipmentserviceports.ShipmentService
@@ -667,12 +667,12 @@ type Services struct {
 //nolint:funlen // one assignment per service; splitting it would only scatter the wiring
 func newServices(p *Params) *Services {
 	return &Services{
-		Core: &base.Core{
+		Core: &resolvercore.Core{
 			L:                   p.Logger.Named("api.graphql.resolver"),
 			WorkerPTOService:    p.WorkerPTOService,
 			OrgStructureService: p.OrgStructureService,
 			PermissionEngine:    p.PermissionEngine,
-			TraceURL:            base.TraceURLBuilder(p.Config),
+			TraceURL:            resolvercore.TraceURLBuilder(p.Config),
 		},
 		AnalyticsService:             p.AnalyticsService,
 		OrganizationService:          p.OrganizationService,

@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -77,7 +79,7 @@ func (r *MutationResolver) OpenInvoiceDispute(ctx context.Context, input gqlmode
 	if err != nil {
 		return nil, errortypes.NewValidationError("invoiceId", errortypes.ErrInvalid, "Invalid invoice")
 	}
-	amount, err := base.DecimalFromString(input.DisputedAmount, "disputedAmount")
+	amount, err := gqldecimal.DecimalFromString(input.DisputedAmount, "disputedAmount")
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +88,7 @@ func (r *MutationResolver) OpenInvoiceDispute(ctx context.Context, input gqlmode
 		ctx,
 		&invoiceports.OpenInvoiceDisputeRequest{
 			InvoiceID:      invoiceID,
-			TenantInfo:     base.TenantInfo(authCtx),
+			TenantInfo:     resolvercore.TenantInfo(authCtx),
 			ReasonCode:     input.ReasonCode,
 			DisputedAmount: amount,
 			Notes:          stringutils.FromPtr(input.Notes),
@@ -121,7 +123,7 @@ func (r *MutationResolver) ResolveInvoiceDispute(ctx context.Context, input gqlm
 		ctx,
 		&invoiceports.ResolveInvoiceDisputeRequest{
 			DisputeID:              disputeID,
-			TenantInfo:             base.TenantInfo(authCtx),
+			TenantInfo:             resolvercore.TenantInfo(authCtx),
 			Resolution:             input.Resolution,
 			ResolutionAdjustmentID: adjustmentID,
 			ResolutionNotes:        stringutils.FromPtr(input.ResolutionNotes),
@@ -145,7 +147,7 @@ func (r *MutationResolver) WithdrawInvoiceDispute(ctx context.Context, input gql
 		ctx,
 		&invoiceports.WithdrawInvoiceDisputeRequest{
 			DisputeID:  disputeID,
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			Notes:      stringutils.FromPtr(input.Notes),
 		},
 		actorutil.FromAuthContext(authCtx),
@@ -164,7 +166,7 @@ func (r *QueryResolver) InvoiceDisputes(ctx context.Context, invoiceID *string, 
 	}
 
 	grouped, err := r.InvoiceDisputeRepo.ListByInvoiceIDs(ctx, &invoiceports.ListInvoiceDisputesByInvoiceIDsRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		InvoiceIDs: ids,
 	})
 	if err != nil {
@@ -179,9 +181,9 @@ func (r *QueryResolver) InvoiceDisputes(ctx context.Context, invoiceID *string, 
 }
 
 func (r *InvoiceDisputeResolver) OpenedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.OpenedByID)
+	return loaderfields.LoadUser(ctx, obj.OpenedByID)
 }
 
 func (r *InvoiceDisputeResolver) ResolvedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.ResolvedByID)
+	return loaderfields.LoadUser(ctx, obj.ResolvedByID)
 }

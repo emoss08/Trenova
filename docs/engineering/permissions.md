@@ -521,7 +521,7 @@ An agent is held to its person's group and to its own data access. A protected f
 record is Confidential and never reaches an agent; a computed figure (a capacity match's
 margin, a tool's margin) is shown only where the agent's ceiling on `protected_margins`
 reaches Restricted (`fieldsensitivity.AgentVisibleGroups`, used by the GraphQL guard through
-`base.VisibleFieldGroups` and by the agent tools through `fieldAccess.groups`).
+`resolvercore.VisibleFieldGroups` and by the agent tools through `fieldAccess.groups`).
 
 Two names match margin and are not margins: a document template's page margins, and the GL
 income statement's `grossProfitMinor`, a statement line gated by the general ledger's own

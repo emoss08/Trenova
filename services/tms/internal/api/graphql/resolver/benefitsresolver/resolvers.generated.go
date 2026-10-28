@@ -3,14 +3,14 @@
 package benefitsresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	driversettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	benefitsservice "github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	BenefitsService         *benefitsservice.Service
 	DriverSettlementService *driversettlementservice.Service
 	DriverPortalService     *driverportalservice.Service

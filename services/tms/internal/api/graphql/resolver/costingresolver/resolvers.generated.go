@@ -3,12 +3,12 @@
 package costingresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	costingservice "github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	CostingService *costingservice.Service
 }
 

@@ -3,12 +3,12 @@
 package sidebarpreferenceresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	sidebarpreferenceservice "github.com/emoss08/trenova/internal/modules/workspace/app/sidebarpreferenceservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	SidebarPreferenceService *sidebarpreferenceservice.Service
 }
 

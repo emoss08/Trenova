@@ -7,7 +7,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	invoicedomain "github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -61,7 +61,7 @@ func newShipmentListResolver(service shipmentserviceports.ShipmentService) *Quer
 		permission.ResourceShipment.String() + "|" + string(permission.OpRead): true,
 	}}
 	return &QueryResolver{&Deps{
-		Core:            &base.Core{PermissionEngine: engine},
+		Core:            &resolvercore.Core{PermissionEngine: engine},
 		ShipmentService: service,
 	}}
 }
@@ -227,7 +227,7 @@ func newInvoiceShipmentsResolver(
 		permission.ResourceInvoice.String() + "|" + string(permission.OpRead):  mayReadInvoices,
 	}}
 	return &QueryResolver{&Deps{
-		Core:            &base.Core{PermissionEngine: engine},
+		Core:            &resolvercore.Core{PermissionEngine: engine},
 		ShipmentService: service,
 		InvoiceService:  invoices,
 	}}
@@ -339,7 +339,7 @@ func newSettlementShipmentsResolver(
 	for resource, allowed := range grants {
 		granted[resource.String()+"|"+string(permission.OpRead)] = allowed
 	}
-	deps.Core = &base.Core{
+	deps.Core = &resolvercore.Core{
 		PermissionEngine: &resolvertest.GrantingPermissionEngine{Granted: granted},
 	}
 	deps.ShipmentService = service

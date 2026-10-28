@@ -3,12 +3,12 @@
 package accessorialchargeresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	accessorialchargeservice "github.com/emoss08/trenova/internal/modules/reference/app/accessorialchargeservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	AccessorialChargeService *accessorialchargeservice.Service
 }
 

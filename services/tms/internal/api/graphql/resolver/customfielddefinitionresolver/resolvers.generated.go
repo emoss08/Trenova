@@ -3,12 +3,12 @@
 package customfielddefinitionresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	customfieldservice "github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	CustomFieldService *customfieldservice.Service
 }
 

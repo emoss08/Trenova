@@ -3,7 +3,7 @@
 package driverportalresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	dashcontrolservice "github.com/emoss08/trenova/internal/modules/identity/app/dashcontrolservice"
 	driversettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
@@ -12,7 +12,7 @@ import (
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	TelematicsService       *telematicsservice.Service
 	NotificationService     *notificationservice.Service
 	DriverSettlementService *driversettlementservice.Service

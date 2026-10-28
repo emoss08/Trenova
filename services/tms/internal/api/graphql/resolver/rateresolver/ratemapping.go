@@ -2,7 +2,11 @@ package rateresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/tariffmapping"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
@@ -23,8 +27,8 @@ func rateAgreementToModel(
 		BusinessUnitID:       entity.BusinessUnitID.String(),
 		OrganizationID:       entity.OrganizationID.String(),
 		PartyType:            gqlmodel.RateAgreementPartyType(entity.PartyType),
-		CustomerID:           base.IDPtrFromPulidPtr(entity.CustomerID),
-		CarrierID:            base.IDPtrFromPulidPtr(entity.CarrierID),
+		CustomerID:           gqlid.IDPtrFromPulidPtr(entity.CustomerID),
+		CarrierID:            gqlid.IDPtrFromPulidPtr(entity.CarrierID),
 		Code:                 entity.Code,
 		Name:                 entity.Name,
 		Description:          entity.Description,
@@ -33,20 +37,20 @@ func rateAgreementToModel(
 		ContractRef:          entity.ContractRef,
 		Priority:             int(entity.Priority),
 		EffectiveFrom:        int(entity.EffectiveFrom),
-		EffectiveTo:          base.Int64PtrToIntPtr(entity.EffectiveTo),
+		EffectiveTo:          gqlscalar.Int64PtrToIntPtr(entity.EffectiveTo),
 		AutoRenew:            entity.AutoRenew,
 		RenewalNoticeDays:    int(entity.RenewalNoticeDays),
 		Currency:             entity.Currency,
 		Inputs:               inputs,
-		MarginFloorPercent:   base.NullDecimalToStringPtr(entity.MarginFloorPercent),
-		MaxPayPercentOfSell:  base.NullDecimalToStringPtr(entity.MaxPayPercentOfSell),
-		SubmittedByID:        base.IDPtrFromPulidPtr(entity.SubmittedByID),
-		SubmittedAt:          base.Int64PtrToIntPtr(entity.SubmittedAt),
-		ApprovedByID:         base.IDPtrFromPulidPtr(entity.ApprovedByID),
-		ApprovedAt:           base.Int64PtrToIntPtr(entity.ApprovedAt),
+		MarginFloorPercent:   gqldecimal.NullDecimalToStringPtr(entity.MarginFloorPercent),
+		MaxPayPercentOfSell:  gqldecimal.NullDecimalToStringPtr(entity.MaxPayPercentOfSell),
+		SubmittedByID:        gqlid.IDPtrFromPulidPtr(entity.SubmittedByID),
+		SubmittedAt:          gqlscalar.Int64PtrToIntPtr(entity.SubmittedAt),
+		ApprovedByID:         gqlid.IDPtrFromPulidPtr(entity.ApprovedByID),
+		ApprovedAt:           gqlscalar.Int64PtrToIntPtr(entity.ApprovedAt),
 		ReviewComment:        entity.ReviewComment,
 		CurrentVersionNumber: int(entity.CurrentVersionNumber),
-		BillToCustomerID:     base.IDPtrFromPulidPtr(entity.BillToCustomerID),
+		BillToCustomerID:     gqlid.IDPtrFromPulidPtr(entity.BillToCustomerID),
 		Version:              int(entity.Version),
 		CreatedAt:            int(entity.CreatedAt),
 		UpdatedAt:            int(entity.UpdatedAt),
@@ -61,13 +65,13 @@ func rateAgreementConnectionToModel(
 		if item == nil {
 			continue
 		}
-		values, err := base.TariffInputsToModel(item.Inputs)
+		values, err := tariffmapping.TariffInputsToModel(item.Inputs)
 		if err != nil {
 			return nil, err
 		}
 		inputs[item] = values
 	}
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *rateagreement.RateAgreement, cursor string) *gqlmodel.RateAgreementEdge {
 			return &gqlmodel.RateAgreementEdge{
@@ -111,7 +115,7 @@ func rateZoneToModel(entity *ratezone.RateZone) *gqlmodel.RateZone {
 func rateZoneConnectionToModel(
 	result *pagination.CursorListResult[*ratezone.RateZone],
 ) (*gqlmodel.RateZoneConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *ratezone.RateZone, cursor string) *gqlmodel.RateZoneEdge {
 			return &gqlmodel.RateZoneEdge{Node: rateZoneToModel(node), Cursor: cursor}
@@ -146,12 +150,12 @@ func rateMatrixToModel(entity *ratematrix.RateMatrix) *gqlmodel.RateMatrix {
 		ValueType:              entity.ValueType,
 		CellCount:              int(entity.DraftCellCount),
 		PublishedVersionNumber: int(entity.PublishedVersionNumber),
-		PublishedAt:            base.Int64PtrToIntPtr(entity.PublishedAt),
+		PublishedAt:            gqlscalar.Int64PtrToIntPtr(entity.PublishedAt),
 		HasDraftChanges:        entity.HasDraftChanges,
-		SubmittedByID:          base.IDPtrFromPtr(entity.SubmittedByID),
-		SubmittedAt:            base.Int64PtrToIntPtr(entity.SubmittedAt),
-		ApprovedByID:           base.IDPtrFromPtr(entity.ApprovedByID),
-		ApprovedAt:             base.Int64PtrToIntPtr(entity.ApprovedAt),
+		SubmittedByID:          gqlid.IDPtrFromPtr(entity.SubmittedByID),
+		SubmittedAt:            gqlscalar.Int64PtrToIntPtr(entity.SubmittedAt),
+		ApprovedByID:           gqlid.IDPtrFromPtr(entity.ApprovedByID),
+		ApprovedAt:             gqlscalar.Int64PtrToIntPtr(entity.ApprovedAt),
 		ReviewComment:          entity.ReviewComment,
 		Version:                int(entity.Version),
 		CreatedAt:              int(entity.CreatedAt),
@@ -185,7 +189,7 @@ func rateMatrixDimensionsToModel(
 func rateMatrixConnectionToModel(
 	result *pagination.CursorListResult[*ratematrix.RateMatrix],
 ) (*gqlmodel.RateMatrixConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *ratematrix.RateMatrix, cursor string) *gqlmodel.RateMatrixEdge {
 			return &gqlmodel.RateMatrixEdge{Node: rateMatrixToModel(node), Cursor: cursor}
@@ -213,25 +217,25 @@ func rateQuoteToModel(entity *ratequote.RateQuote) *gqlmodel.RateQuote {
 		ID:                  entity.ID.String(),
 		BusinessUnitID:      entity.BusinessUnitID.String(),
 		OrganizationID:      entity.OrganizationID.String(),
-		ShipmentID:          base.IDPtrFromPulidPtr(entity.ShipmentID),
+		ShipmentID:          gqlid.IDPtrFromPulidPtr(entity.ShipmentID),
 		PartyType:           gqlmodel.RateAgreementPartyType(entity.PartyType),
 		PartyID:             entity.PartyID.String(),
 		Purpose:             gqlmodel.RateQuotePurpose(entity.Purpose),
 		Outcome:             gqlmodel.RateQuoteOutcome(entity.Outcome),
-		RateAgreementID:     base.IDPtrFromPulidPtr(entity.RateAgreementID),
-		RateAgreementRuleID: base.IDPtrFromPulidPtr(entity.RateAgreementRuleID),
-		FormulaTemplateID:   base.IDPtrFromPulidPtr(entity.FormulaTemplateID),
+		RateAgreementID:     gqlid.IDPtrFromPulidPtr(entity.RateAgreementID),
+		RateAgreementRuleID: gqlid.IDPtrFromPulidPtr(entity.RateAgreementRuleID),
+		FormulaTemplateID:   gqlid.IDPtrFromPulidPtr(entity.FormulaTemplateID),
 		SpecificityScore:    int(entity.SpecificityScore),
 		Currency:            entity.Currency,
 		BillingCurrency:     entity.BillingCurrency,
 		LinehaulAmount:      entity.LinehaulAmount.String(),
 		TotalAmount:         entity.TotalAmount.String(),
 		BillingAmount:       entity.BillingAmount.String(),
-		ForegoneAmount:      base.NullDecimalToStringPtr(entity.ForegoneAmount),
+		ForegoneAmount:      gqldecimal.NullDecimalToStringPtr(entity.ForegoneAmount),
 		OverrideReason:      entity.OverrideReason,
 		AsOf:                int(entity.AsOf),
 		RatedAt:             int(entity.RatedAt),
-		RatedByID:           base.IDPtrFromPulidPtr(entity.RatedByID),
+		RatedByID:           gqlid.IDPtrFromPulidPtr(entity.RatedByID),
 		EngineVersion:       entity.EngineVersion,
 		CreatedAt:           int(entity.CreatedAt),
 	}
@@ -240,7 +244,7 @@ func rateQuoteToModel(entity *ratequote.RateQuote) *gqlmodel.RateQuote {
 func rateQuoteConnectionToModel(
 	result *pagination.CursorListResult[*ratequote.RateQuote],
 ) (*gqlmodel.RateQuoteConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *ratequote.RateQuote, cursor string) *gqlmodel.RateQuoteEdge {
 			return &gqlmodel.RateQuoteEdge{Node: rateQuoteToModel(node), Cursor: cursor}
@@ -266,7 +270,7 @@ func rateAgreementCardToModel(
 	entity *rateagreement.RateAgreement,
 	current *rateagreement.RateAgreementVersion,
 ) (*gqlmodel.RateAgreement, error) {
-	inputs, err := base.TariffInputsToModel(entity.Inputs)
+	inputs, err := tariffmapping.TariffInputsToModel(entity.Inputs)
 	if err != nil {
 		return nil, err
 	}
@@ -293,7 +297,7 @@ func rateAgreementCardToModel(
 			ID:            current.ID.String(),
 			VersionNumber: int(current.VersionNumber),
 			EffectiveFrom: int(current.EffectiveFrom),
-			EffectiveTo:   base.Int64PtrToIntPtr(current.EffectiveTo),
+			EffectiveTo:   gqlscalar.Int64PtrToIntPtr(current.EffectiveTo),
 			ChangeMessage: current.ChangeMessage,
 		}
 	}
@@ -311,10 +315,10 @@ func rateAgreementAccessorialToModel(
 		RateUnit:            string(entity.RateUnit),
 		Waived:              entity.Waived,
 		AutoApply:           entity.AutoApply,
-		EffectiveFrom:       base.Int64PtrToIntPtr(entity.EffectiveFrom),
-		EffectiveTo:         base.Int64PtrToIntPtr(entity.EffectiveTo),
+		EffectiveFrom:       gqlscalar.Int64PtrToIntPtr(entity.EffectiveFrom),
+		EffectiveTo:         gqlscalar.Int64PtrToIntPtr(entity.EffectiveTo),
 		Amount:              entity.Amount.String(),
-		MaxAmount:           base.NullDecimalToStringPtr(entity.MaxAmount),
+		MaxAmount:           gqldecimal.NullDecimalToStringPtr(entity.MaxAmount),
 		Condition:           entity.Condition,
 	}
 	if entity.FreeUnits != nil {
@@ -328,7 +332,7 @@ func rateAgreementAccessorialToModel(
 func rateAgreementLaneToModel(
 	entity *rateagreement.RateAgreementRule,
 ) (*gqlmodel.RateAgreementLane, error) {
-	inputs, err := base.TariffInputsToModel(entity.Inputs)
+	inputs, err := tariffmapping.TariffInputsToModel(entity.Inputs)
 	if err != nil {
 		return nil, err
 	}
@@ -345,7 +349,7 @@ func rateAgreementLaneToModel(
 		Direction:             string(entity.Direction),
 		Priority:              int(entity.Priority),
 		EffectiveFrom:         int(entity.EffectiveFrom),
-		EffectiveTo:           base.Int64PtrToIntPtr(entity.EffectiveTo),
+		EffectiveTo:           gqlscalar.Int64PtrToIntPtr(entity.EffectiveTo),
 		HazmatOnly:            entity.HazmatOnly,
 		TempControlOnly:       entity.TempControlOnly,
 		FormulaTemplateID:     entity.FormulaTemplateID.String(),
@@ -377,16 +381,16 @@ func rateMatrixCellToModel(entity *ratematrix.RateMatrixCell) *gqlmodel.RateMatr
 		D1KeyTo:         entity.D1KeyTo,
 		D2KeyTo:         entity.D2KeyTo,
 		D3KeyTo:         entity.D3KeyTo,
-		D0Min:           base.NullDecimalToStringPtr(entity.D0Min),
-		D0Max:           base.NullDecimalToStringPtr(entity.D0Max),
-		D1Min:           base.NullDecimalToStringPtr(entity.D1Min),
-		D1Max:           base.NullDecimalToStringPtr(entity.D1Max),
-		D2Min:           base.NullDecimalToStringPtr(entity.D2Min),
-		D2Max:           base.NullDecimalToStringPtr(entity.D2Max),
-		D3Min:           base.NullDecimalToStringPtr(entity.D3Min),
-		D3Max:           base.NullDecimalToStringPtr(entity.D3Max),
+		D0Min:           gqldecimal.NullDecimalToStringPtr(entity.D0Min),
+		D0Max:           gqldecimal.NullDecimalToStringPtr(entity.D0Max),
+		D1Min:           gqldecimal.NullDecimalToStringPtr(entity.D1Min),
+		D1Max:           gqldecimal.NullDecimalToStringPtr(entity.D1Max),
+		D2Min:           gqldecimal.NullDecimalToStringPtr(entity.D2Min),
+		D2Max:           gqldecimal.NullDecimalToStringPtr(entity.D2Max),
+		D3Min:           gqldecimal.NullDecimalToStringPtr(entity.D3Min),
+		D3Max:           gqldecimal.NullDecimalToStringPtr(entity.D3Max),
 		DeficitEligible: entity.DeficitEligible,
 		Value:           entity.Value.String(),
-		MinCharge:       base.NullDecimalToStringPtr(entity.MinCharge),
+		MinCharge:       gqldecimal.NullDecimalToStringPtr(entity.MinCharge),
 	}
 }

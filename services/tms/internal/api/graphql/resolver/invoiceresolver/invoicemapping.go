@@ -2,7 +2,7 @@ package invoiceresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -10,7 +10,7 @@ import (
 func invoiceConnectionToModel(
 	result *pagination.CursorListResult[*invoice.Invoice],
 ) (*gqlmodel.InvoiceConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *invoice.Invoice, cursor string) *gqlmodel.InvoiceEdge {
 			return &gqlmodel.InvoiceEdge{

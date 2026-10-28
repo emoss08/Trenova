@@ -3,7 +3,7 @@
 package rateresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	rateagreementservice "github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
 	ratematrixservice "github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
 	ratequoteservice "github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
@@ -11,7 +11,7 @@ import (
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	RateAgreementService *rateagreementservice.Service
 	RateZoneService      *ratezoneservice.Service
 	RateMatrixService    *ratematrixservice.Service

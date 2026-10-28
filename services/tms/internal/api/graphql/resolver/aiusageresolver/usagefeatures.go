@@ -2,14 +2,15 @@ package aiusageresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/memoryconnection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 )
 
 // featureTable is what the usage-by-feature table may search, filter and
 // sort on.
-var featureTable = &base.MemoryTable[aiusageports.AIUsageFeatureSlice]{
-	Fields: map[string]base.MemoryField[aiusageports.AIUsageFeatureSlice]{
+var featureTable = &memoryconnection.MemoryTable[aiusageports.AIUsageFeatureSlice]{
+	Fields: map[string]memoryconnection.MemoryField[aiusageports.AIUsageFeatureSlice]{
 		"feature":      func(s aiusageports.AIUsageFeatureSlice) any { return featureName(s) },
 		"calls":        func(s aiusageports.AIUsageFeatureSlice) any { return s.Calls },
 		"failed":       func(s aiusageports.AIUsageFeatureSlice) any { return s.Failed },
@@ -43,7 +44,7 @@ func featureConnection(
 	total := page.Total
 	return &gqlmodel.AIUsageFeatureConnection{
 		Edges:           edges,
-		PageInfo:        base.PageInfo(page.HasNext, page.EndCursor),
+		PageInfo:        gqlconnection.PageInfo(page.HasNext, page.EndCursor),
 		TotalCount:      &total,
 		TotalCountExact: true,
 	}, nil

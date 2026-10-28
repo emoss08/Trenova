@@ -9,7 +9,10 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
@@ -23,8 +26,8 @@ func controlPatchFromInput(
 	input *gqlmodel.CarrierIntelControlPatchInput,
 ) (*carrierintelservice.ControlPatch, error) {
 	patch := &carrierintelservice.ControlPatch{
-		ConfirmEstimatedCost: base.BoolValue(input.ConfirmEstimatedCost),
-		DailyFullProfileCap:  base.NullableOmittable(input.DailyFullProfileCap),
+		ConfirmEstimatedCost: gqlscalar.BoolValue(input.ConfirmEstimatedCost),
+		DailyFullProfileCap:  gqlscalar.NullableOmittable(input.DailyFullProfileCap),
 	}
 	if input.Version != nil {
 		version := int64(*input.Version)
@@ -45,107 +48,107 @@ func controlPatchFromInput(
 	}
 
 	var e error
-	patch.EnrollmentPolicy, e = base.RequiredOmittable(
+	patch.EnrollmentPolicy, e = gqlscalar.RequiredOmittable(
 		"enrollmentPolicy",
 		"Enrollment policy",
 		input.EnrollmentPolicy,
 	)
 	collect(e)
-	patch.RecentUsageDays, e = base.RequiredOmittable(
+	patch.RecentUsageDays, e = gqlscalar.RequiredOmittable(
 		"recentUsageDays",
 		"Recent usage window",
 		input.RecentUsageDays,
 	)
 	collect(e)
-	patch.IncludeOpenTenders, e = base.RequiredOmittable(
+	patch.IncludeOpenTenders, e = gqlscalar.RequiredOmittable(
 		"includeOpenTenders",
 		"Include open tenders",
 		input.IncludeOpenTenders,
 	)
 	collect(e)
-	patch.AutoEnrollOnCreate, e = base.RequiredOmittable(
+	patch.AutoEnrollOnCreate, e = gqlscalar.RequiredOmittable(
 		"autoEnrollOnCreate",
 		"Automatic enrollment",
 		input.AutoEnrollOnCreate,
 	)
 	collect(e)
-	patch.AutoUnenrollOnInactive, e = base.RequiredOmittable(
+	patch.AutoUnenrollOnInactive, e = gqlscalar.RequiredOmittable(
 		"autoUnenrollOnInactive", "Automatic unenrollment", input.AutoUnenrollOnInactive,
 	)
 	collect(e)
-	patch.ExclusiveWatchlist, e = base.RequiredOmittable(
+	patch.ExclusiveWatchlist, e = gqlscalar.RequiredOmittable(
 		"exclusiveWatchlist",
 		"Exclusive watchlist",
 		input.ExclusiveWatchlist,
 	)
 	collect(e)
-	patch.PollIntervalMinutes, e = base.RequiredOmittable(
+	patch.PollIntervalMinutes, e = gqlscalar.RequiredOmittable(
 		"pollIntervalMinutes",
 		"Poll interval",
 		input.PollIntervalMinutes,
 	)
 	collect(e)
-	patch.SnapshotTTLHours, e = base.RequiredOmittable(
+	patch.SnapshotTTLHours, e = gqlscalar.RequiredOmittable(
 		"snapshotTtlHours",
 		"Snapshot freshness",
 		input.SnapshotTTLHours,
 	)
 	collect(e)
-	patch.FullProfileTTLDays, e = base.RequiredOmittable(
+	patch.FullProfileTTLDays, e = gqlscalar.RequiredOmittable(
 		"fullProfileTtlDays",
 		"Full profile freshness",
 		input.FullProfileTTLDays,
 	)
 	collect(e)
-	patch.PreTenderRefreshEnabled, e = base.RequiredOmittable(
+	patch.PreTenderRefreshEnabled, e = gqlscalar.RequiredOmittable(
 		"preTenderRefreshEnabled", "Pre-tender refresh", input.PreTenderRefreshEnabled,
 	)
 	collect(e)
-	patch.PreTenderMaxAgeHours, e = base.RequiredOmittable(
+	patch.PreTenderMaxAgeHours, e = gqlscalar.RequiredOmittable(
 		"preTenderMaxAgeHours", "Pre-tender freshness", input.PreTenderMaxAgeHours,
 	)
 	collect(e)
-	patch.HardMaxAgeHours, e = base.RequiredOmittable(
+	patch.HardMaxAgeHours, e = gqlscalar.RequiredOmittable(
 		"hardMaxAgeHours",
 		"Maximum intelligence age",
 		input.HardMaxAgeHours,
 	)
 	collect(e)
-	patch.ConfirmBlockingChanges, e = base.RequiredOmittable(
+	patch.ConfirmBlockingChanges, e = gqlscalar.RequiredOmittable(
 		"confirmBlockingChanges", "Confirm blocking changes", input.ConfirmBlockingChanges,
 	)
 	collect(e)
-	patch.OutagePolicy, e = base.RequiredOmittable(
+	patch.OutagePolicy, e = gqlscalar.RequiredOmittable(
 		"outagePolicy",
 		"Outage policy",
 		input.OutagePolicy,
 	)
 	collect(e)
-	patch.AutoDisqualifyOnBlock, e = base.RequiredOmittable(
+	patch.AutoDisqualifyOnBlock, e = gqlscalar.RequiredOmittable(
 		"autoDisqualifyOnBlock", "Automatic disqualification", input.AutoDisqualifyOnBlock,
 	)
 	collect(e)
-	patch.AutoApplySafetyRating, e = base.RequiredOmittable(
+	patch.AutoApplySafetyRating, e = gqlscalar.RequiredOmittable(
 		"autoApplySafetyRating", "Automatic safety rating sync", input.AutoApplySafetyRating,
 	)
 	collect(e)
-	patch.SoftCapPercent, e = base.RequiredOmittable(
+	patch.SoftCapPercent, e = gqlscalar.RequiredOmittable(
 		"softCapPercent",
 		"Soft cap percent",
 		input.SoftCapPercent,
 	)
 	collect(e)
-	patch.RawRetentionDays, e = base.RequiredOmittable(
+	patch.RawRetentionDays, e = gqlscalar.RequiredOmittable(
 		"rawRetentionDays",
 		"Raw payload retention",
 		input.RawRetentionDays,
 	)
 	collect(e)
-	patch.SnapshotHistoryLimit, e = base.RequiredOmittable(
+	patch.SnapshotHistoryLimit, e = gqlscalar.RequiredOmittable(
 		"snapshotHistoryLimit", "Snapshot history", input.SnapshotHistoryLimit,
 	)
 	collect(e)
-	patch.SelfMonitoringEnabled, e = base.RequiredOmittable(
+	patch.SelfMonitoringEnabled, e = gqlscalar.RequiredOmittable(
 		"selfMonitoringEnabled", "Self-monitoring", input.SelfMonitoringEnabled,
 	)
 	collect(e)
@@ -159,7 +162,7 @@ func controlPatchFromInput(
 		if raw == nil || strings.TrimSpace(*raw) == "" {
 			patch.MonthlySpendCap = carrierintelservice.Some[*decimal.Decimal](nil)
 		} else {
-			amount, parseErr := base.DecimalFromString(*raw, "monthlySpendCap")
+			amount, parseErr := gqldecimal.DecimalFromString(*raw, "monthlySpendCap")
 			collect(parseErr)
 			if parseErr == nil {
 				patch.MonthlySpendCap = carrierintelservice.Some(&amount)
@@ -326,7 +329,7 @@ func monthFromTimestamp(value *int) time.Time {
 func carrierIntelEventConnectionToModel(
 	result *pagination.CursorListResult[*carrierintel.CarrierIntelEvent],
 ) (*gqlmodel.CarrierIntelEventConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *carrierintel.CarrierIntelEvent, cursor string) *gqlmodel.CarrierIntelEventEdge {
 			return &gqlmodel.CarrierIntelEventEdge{Node: node, Cursor: cursor}
@@ -347,7 +350,7 @@ func carrierIntelEventConnectionToModel(
 func carrierMonitoringEnrollmentConnectionToModel(
 	result *pagination.CursorListResult[*carrierintel.CarrierMonitoringEnrollment],
 ) (*gqlmodel.CarrierMonitoringEnrollmentConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *carrierintel.CarrierMonitoringEnrollment, cursor string) *gqlmodel.CarrierMonitoringEnrollmentEdge {
 			return &gqlmodel.CarrierMonitoringEnrollmentEdge{Node: node, Cursor: cursor}
@@ -375,12 +378,12 @@ func eventFilterFromInput(
 	req.Statuses = filter.Statuses
 	req.Severities = filter.Severities
 	req.Categories = filter.Categories
-	req.OpenOnly = base.BoolValue(filter.OpenOnly)
+	req.OpenOnly = gqlscalar.BoolValue(filter.OpenOnly)
 	if filter.SubjectType != nil {
 		req.SubjectType = *filter.SubjectType
 	}
-	req.SubjectID = base.StringValue(filter.SubjectID)
-	carrierID, err := base.OptionalID(filter.CarrierID)
+	req.SubjectID = gqlscalar.StringValue(filter.SubjectID)
+	carrierID, err := gqlid.OptionalID(filter.CarrierID)
 	if err != nil {
 		return errortypes.NewValidationError(
 			"carrierId",
@@ -445,20 +448,20 @@ func sourcingQueryFromInput(
 ) *carrierintelservice.SourcingQuery {
 	return &carrierintelservice.SourcingQuery{
 		TenantInfo:             tenant,
-		Text:                   base.StringValue(input.Text),
-		State:                  strings.ToUpper(base.StringValue(input.State)),
-		OriginState:            strings.ToUpper(base.StringValue(input.OriginState)),
-		DestinationState:       strings.ToUpper(base.StringValue(input.DestinationState)),
+		Text:                   gqlscalar.StringValue(input.Text),
+		State:                  strings.ToUpper(gqlscalar.StringValue(input.State)),
+		OriginState:            strings.ToUpper(gqlscalar.StringValue(input.OriginState)),
+		DestinationState:       strings.ToUpper(gqlscalar.StringValue(input.DestinationState)),
 		MinPowerUnits:          input.MinPowerUnits,
 		MaxPowerUnits:          input.MaxPowerUnits,
 		MinAuthorityAgeDays:    input.MinAuthorityAgeDays,
 		MaxAuthorityAgeDays:    input.MaxAuthorityAgeDays,
-		HazmatOnly:             base.BoolValue(input.HazmatOnly),
-		ExcludeBlocking:        base.BoolValue(input.ExcludeBlocking),
-		ExcludeExistingCarrier: base.BoolValue(input.ExcludeExistingCarriers),
+		HazmatOnly:             gqlscalar.BoolValue(input.HazmatOnly),
+		ExcludeBlocking:        gqlscalar.BoolValue(input.ExcludeBlocking),
+		ExcludeExistingCarrier: gqlscalar.BoolValue(input.ExcludeExistingCarriers),
 		Sort:                   sourcingSortValue(input.Sort),
-		Limit:                  base.IntValue(input.Limit),
-		Offset:                 base.IntValue(input.Offset),
+		Limit:                  gqlscalar.IntValue(input.Limit),
+		Offset:                 gqlscalar.IntValue(input.Offset),
 	}
 }
 

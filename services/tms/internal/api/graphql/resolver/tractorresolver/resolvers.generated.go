@@ -3,12 +3,12 @@
 package tractorresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	tractorservice "github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	TractorService *tractorservice.Service
 }
 

@@ -9,7 +9,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
@@ -19,11 +23,11 @@ import (
 )
 
 func (r *DOTRandomDrawResolver) DrawnByID(ctx context.Context, obj *workerdot.DOTRandomDraw) (*string, error) {
-	return base.IDPtr(obj.DrawnByID), nil
+	return gqlid.IDPtr(obj.DrawnByID), nil
 }
 
 func (r *DOTRandomDrawResolver) FinalizedAt(ctx context.Context, obj *workerdot.DOTRandomDraw) (*int, error) {
-	return base.IntPtr(obj.FinalizedAt), nil
+	return gqlscalar.IntPtr(obj.FinalizedAt), nil
 }
 
 func (r *DOTRandomDrawResolver) Entries(ctx context.Context, obj *workerdot.DOTRandomDraw) ([]*workerdot.DOTRandomDrawEntry, error) {
@@ -34,15 +38,15 @@ func (r *DOTRandomDrawResolver) Entries(ctx context.Context, obj *workerdot.DOTR
 }
 
 func (r *DOTRandomDrawEntryResolver) NotifiedAt(ctx context.Context, obj *workerdot.DOTRandomDrawEntry) (*int, error) {
-	return base.IntPtr(obj.NotifiedAt), nil
+	return gqlscalar.IntPtr(obj.NotifiedAt), nil
 }
 
 func (r *DOTRandomDrawEntryResolver) CompletedAt(ctx context.Context, obj *workerdot.DOTRandomDrawEntry) (*int, error) {
-	return base.IntPtr(obj.CompletedAt), nil
+	return gqlscalar.IntPtr(obj.CompletedAt), nil
 }
 
 func (r *DOTRandomDrawEntryResolver) TestID(ctx context.Context, obj *workerdot.DOTRandomDrawEntry) (*string, error) {
-	return base.IDPtr(obj.TestID), nil
+	return gqlid.IDPtr(obj.TestID), nil
 }
 
 func (r *DOTRandomPoolResolver) MeetsDOTMinimums(ctx context.Context, obj *workerdot.DOTRandomPool) (bool, error) {
@@ -50,11 +54,11 @@ func (r *DOTRandomPoolResolver) MeetsDOTMinimums(ctx context.Context, obj *worke
 }
 
 func (r *DrugAlcoholStandingResolver) LastClearinghouseQueryAt(ctx context.Context, obj *workerdot.DrugAlcoholStanding) (*int, error) {
-	return base.IntPtr(obj.LastClearinghouseQueryAt), nil
+	return gqlscalar.IntPtr(obj.LastClearinghouseQueryAt), nil
 }
 
 func (r *DrugAlcoholStandingResolver) NextClearinghouseQueryDue(ctx context.Context, obj *workerdot.DrugAlcoholStanding) (*int, error) {
-	return base.IntPtr(obj.NextClearinghouseQueryDue), nil
+	return gqlscalar.IntPtr(obj.NextClearinghouseQueryDue), nil
 }
 
 func (r *MutationResolver) RecordDOTTest(ctx context.Context, input gqlmodel.RecordDOTTestInput) (*workerdot.WorkerDOTTest, error) {
@@ -63,7 +67,7 @@ func (r *MutationResolver) RecordDOTTest(ctx context.Context, input gqlmodel.Rec
 		return nil, err
 	}
 
-	entity, err := dotTestFromInput(&input, base.TenantInfo(authCtx))
+	entity, err := dotTestFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +80,7 @@ func (r *MutationResolver) RecordDOTTestResult(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	req, err := dotTestResultRequest(&input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := dotTestResultRequest(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +99,7 @@ func (r *MutationResolver) CancelDOTTest(ctx context.Context, id string, reason 
 	}
 	return r.WorkerDrugAlcoholService.CancelTest(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		testID,
 		reason,
 		authCtx.UserID,
@@ -108,7 +112,7 @@ func (r *MutationResolver) RecordDOTViolation(ctx context.Context, input gqlmode
 		return nil, err
 	}
 
-	entity, err := dotViolationFromInput(&input, base.TenantInfo(authCtx))
+	entity, err := dotViolationFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +125,7 @@ func (r *MutationResolver) UpdateDOTViolation(ctx context.Context, input gqlmode
 		return nil, err
 	}
 
-	req, err := dotViolationUpdateRequest(&input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := dotViolationUpdateRequest(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +138,7 @@ func (r *MutationResolver) RecordClearinghouseQuery(ctx context.Context, input g
 		return nil, err
 	}
 
-	entity, err := clearinghouseQueryFromInput(&input, base.TenantInfo(authCtx))
+	entity, err := clearinghouseQueryFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +151,7 @@ func (r *MutationResolver) CompleteClearinghouseQuery(ctx context.Context, input
 		return nil, err
 	}
 
-	req, err := completeQueryRequest(&input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := completeQueryRequest(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +164,7 @@ func (r *MutationResolver) CreateDOTRandomPool(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	entity := randomPoolFromInput(&input, base.TenantInfo(authCtx))
+	entity := randomPoolFromInput(&input, resolvercore.TenantInfo(authCtx))
 	return r.WorkerDrugAlcoholService.CreatePool(ctx, entity, authCtx.UserID)
 }
 
@@ -175,7 +179,7 @@ func (r *MutationResolver) UpdateDOTRandomPool(ctx context.Context, id string, v
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Pool is invalid")
 	}
 
-	entity := randomPoolFromInput(&input, base.TenantInfo(authCtx))
+	entity := randomPoolFromInput(&input, resolvercore.TenantInfo(authCtx))
 	entity.ID = poolID
 	entity.Version = int64(version)
 	return r.WorkerDrugAlcoholService.UpdatePool(ctx, entity, authCtx.UserID)
@@ -187,16 +191,16 @@ func (r *MutationResolver) RunDOTRandomDraw(ctx context.Context, input gqlmodel.
 		return nil, err
 	}
 
-	poolID, err := base.OptionalID(input.PoolID)
+	poolID, err := gqlid.OptionalID(input.PoolID)
 	if err != nil {
 		return nil, errortypes.NewValidationError("poolId", errortypes.ErrInvalid, "Pool is invalid")
 	}
 
 	return r.WorkerDrugAlcoholService.RunDraw(ctx, &workerdrugalcoholservice.RunDrawRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		PoolID:     poolID,
-		At:         base.Int64Value(input.At),
-		Notes:      base.StringValue(input.Notes),
+		At:         gqlscalar.Int64Value(input.At),
+		Notes:      gqlscalar.StringValue(input.Notes),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -213,7 +217,7 @@ func (r *MutationResolver) FinalizeDOTRandomDraw(ctx context.Context, id string)
 	}
 	return r.WorkerDrugAlcoholService.FinalizeDraw(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		drawID,
 		authCtx.UserID,
 	)
@@ -231,7 +235,7 @@ func (r *MutationResolver) CancelDOTRandomDraw(ctx context.Context, id string, r
 	}
 	return r.WorkerDrugAlcoholService.CancelDraw(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		drawID,
 		reason,
 		authCtx.UserID,
@@ -256,10 +260,10 @@ func (r *MutationResolver) UpdateDOTRandomDrawEntry(ctx context.Context, input g
 	return r.WorkerDrugAlcoholService.UpdateDrawEntry(
 		ctx,
 		&workerdrugalcoholservice.UpdateEntryRequest{
-			TenantInfo:   base.TenantInfo(authCtx),
+			TenantInfo:   resolvercore.TenantInfo(authCtx),
 			EntryID:      entryID,
 			Status:       input.Status,
-			ExcuseReason: base.StringValue(input.ExcuseReason),
+			ExcuseReason: gqlscalar.StringValue(input.ExcuseReason),
 			UserID:       authCtx.UserID,
 		},
 	)
@@ -271,18 +275,18 @@ func (r *QueryResolver) WorkerDOTTests(ctx context.Context, workerID *string, op
 		return nil, err
 	}
 
-	id, err := base.ParseOptionalIDField("workerId", workerID)
+	id, err := gqlid.ParseOptionalIDField("workerId", workerID)
 	if err != nil {
 		return nil, err
 	}
 	return r.WorkerDrugAlcoholService.ListTests(ctx, &workerdotports.ListWorkerDOTTestsRequest{
-		TenantInfo:      base.TenantInfo(authCtx),
+		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		WorkerID:        id,
-		OpenOnly:        base.BoolValue(openOnly),
+		OpenOnly:        gqlscalar.BoolValue(openOnly),
 		IncludeWorker:   true,
 		IncludeDocument: true,
 		IncludeActors:   true,
-		Limit:           base.RecordListLimit(limit, id.IsNotNil()),
+		Limit:           gqlconnection.RecordListLimit(limit, id.IsNotNil()),
 	})
 }
 
@@ -296,7 +300,7 @@ func (r *QueryResolver) WorkerDOTTest(ctx context.Context, id string) (*workerdo
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Test is invalid")
 	}
-	return r.WorkerDrugAlcoholService.GetTest(ctx, base.TenantInfo(authCtx), testID)
+	return r.WorkerDrugAlcoholService.GetTest(ctx, resolvercore.TenantInfo(authCtx), testID)
 }
 
 func (r *QueryResolver) OpenDOTTests(ctx context.Context) ([]*workerdot.WorkerDOTTest, error) {
@@ -306,7 +310,7 @@ func (r *QueryResolver) OpenDOTTests(ctx context.Context) ([]*workerdot.WorkerDO
 	}
 
 	return r.WorkerDrugAlcoholService.ListTests(ctx, &workerdotports.ListWorkerDOTTestsRequest{
-		TenantInfo:    base.TenantInfo(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		OpenOnly:      true,
 		IncludeWorker: true,
 	})
@@ -326,7 +330,7 @@ func (r *QueryResolver) WorkerDOTViolations(ctx context.Context, workerID string
 			"Worker is invalid",
 		)
 	}
-	return r.WorkerDrugAlcoholService.ListViolations(ctx, base.TenantInfo(authCtx), id)
+	return r.WorkerDrugAlcoholService.ListViolations(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) WorkerClearinghouseQueries(ctx context.Context, workerID string) ([]*workerdot.WorkerClearinghouseQuery, error) {
@@ -343,7 +347,7 @@ func (r *QueryResolver) WorkerClearinghouseQueries(ctx context.Context, workerID
 			"Worker is invalid",
 		)
 	}
-	return r.WorkerDrugAlcoholService.ListQueries(ctx, base.TenantInfo(authCtx), id)
+	return r.WorkerDrugAlcoholService.ListQueries(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) WorkerDrugAlcoholStanding(ctx context.Context, workerID string) (*workerdot.DrugAlcoholStanding, error) {
@@ -361,7 +365,7 @@ func (r *QueryResolver) WorkerDrugAlcoholStanding(ctx context.Context, workerID 
 		)
 	}
 
-	standing, err := r.WorkerDrugAlcoholService.Standing(ctx, base.TenantInfo(authCtx), id)
+	standing, err := r.WorkerDrugAlcoholService.Standing(ctx, resolvercore.TenantInfo(authCtx), id)
 	if err != nil {
 		return nil, err
 	}
@@ -374,14 +378,14 @@ func (r *QueryResolver) DOTRandomPools(ctx context.Context, input gqlmodel.DOTRa
 		return nil, err
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
 		After:        input.After,
 		Query:        input.Query,
 		FieldFilters: input.FieldFilters,
 		FilterGroups: input.FilterGroups,
 		Sort:         input.Sort,
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -416,7 +420,7 @@ func (r *QueryResolver) DOTRandomPool(ctx context.Context, id string) (*workerdo
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Pool is invalid")
 	}
-	return r.WorkerDrugAlcoholService.GetPool(ctx, base.TenantInfo(authCtx), poolID)
+	return r.WorkerDrugAlcoholService.GetPool(ctx, resolvercore.TenantInfo(authCtx), poolID)
 }
 
 func (r *QueryResolver) DOTRandomDraws(ctx context.Context, poolID *string) ([]*workerdot.DOTRandomDraw, error) {
@@ -425,13 +429,13 @@ func (r *QueryResolver) DOTRandomDraws(ctx context.Context, poolID *string) ([]*
 		return nil, err
 	}
 
-	id, err := base.OptionalID(poolID)
+	id, err := gqlid.OptionalID(poolID)
 	if err != nil {
 		return nil, errortypes.NewValidationError("poolId", errortypes.ErrInvalid, "Pool is invalid")
 	}
 
 	return r.WorkerDrugAlcoholService.ListDraws(ctx, &workerdotports.ListDOTRandomDrawsRequest{
-		TenantInfo:    base.TenantInfo(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		PoolID:        id,
 		IncludePool:   true,
 		IncludeActors: true,
@@ -448,7 +452,7 @@ func (r *QueryResolver) DOTRandomDraw(ctx context.Context, id string) (*workerdo
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Round is invalid")
 	}
-	return r.WorkerDrugAlcoholService.GetDraw(ctx, base.TenantInfo(authCtx), drawID)
+	return r.WorkerDrugAlcoholService.GetDraw(ctx, resolvercore.TenantInfo(authCtx), drawID)
 }
 
 func (r *QueryResolver) WorkerRandomSelections(ctx context.Context, workerID string) ([]*workerdot.DOTRandomDrawEntry, error) {
@@ -469,7 +473,7 @@ func (r *QueryResolver) WorkerRandomSelections(ctx context.Context, workerID str
 	return r.WorkerDrugAlcoholService.ListDrawEntries(
 		ctx,
 		&workerdotports.ListDOTRandomDrawEntriesRequest{
-			TenantInfo:      base.TenantInfo(authCtx),
+			TenantInfo:      resolvercore.TenantInfo(authCtx),
 			WorkerID:        id,
 			OutstandingOnly: true,
 			IncludeDraw:     true,
@@ -478,101 +482,101 @@ func (r *QueryResolver) WorkerRandomSelections(ctx context.Context, workerID str
 }
 
 func (r *WorkerClearinghouseQueryResolver) ConsentObtainedAt(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*int, error) {
-	return base.IntPtr(obj.ConsentObtainedAt), nil
+	return gqlscalar.IntPtr(obj.ConsentObtainedAt), nil
 }
 
 func (r *WorkerClearinghouseQueryResolver) ConsentExpiresAt(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*int, error) {
-	return base.IntPtr(obj.ConsentExpiresAt), nil
+	return gqlscalar.IntPtr(obj.ConsentExpiresAt), nil
 }
 
 func (r *WorkerClearinghouseQueryResolver) CompletedAt(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*int, error) {
-	return base.IntPtr(obj.CompletedAt), nil
+	return gqlscalar.IntPtr(obj.CompletedAt), nil
 }
 
 func (r *WorkerClearinghouseQueryResolver) DocumentID(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*string, error) {
-	return base.IDPtr(obj.DocumentID), nil
+	return gqlid.IDPtr(obj.DocumentID), nil
 }
 
 func (r *WorkerClearinghouseQueryResolver) PerformedByID(ctx context.Context, obj *workerdot.WorkerClearinghouseQuery) (*string, error) {
-	return base.IDPtr(obj.PerformedByID), nil
+	return gqlid.IDPtr(obj.PerformedByID), nil
 }
 
 func (r *WorkerDOTTestResolver) ScheduledAt(ctx context.Context, obj *workerdot.WorkerDOTTest) (*int, error) {
-	return base.IntPtr(obj.ScheduledAt), nil
+	return gqlscalar.IntPtr(obj.ScheduledAt), nil
 }
 
 func (r *WorkerDOTTestResolver) CollectedAt(ctx context.Context, obj *workerdot.WorkerDOTTest) (*int, error) {
-	return base.IntPtr(obj.CollectedAt), nil
+	return gqlscalar.IntPtr(obj.CollectedAt), nil
 }
 
 func (r *WorkerDOTTestResolver) ResultAt(ctx context.Context, obj *workerdot.WorkerDOTTest) (*int, error) {
-	return base.IntPtr(obj.ResultAt), nil
+	return gqlscalar.IntPtr(obj.ResultAt), nil
 }
 
 func (r *WorkerDOTTestResolver) MroVerifiedAt(ctx context.Context, obj *workerdot.WorkerDOTTest) (*int, error) {
-	return base.IntPtr(obj.MROVerifiedAt), nil
+	return gqlscalar.IntPtr(obj.MROVerifiedAt), nil
 }
 
 func (r *WorkerDOTTestResolver) AlcoholConcentration(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error) {
-	return base.DecimalPtrString(obj.AlcoholConcentration), nil
+	return gqldecimal.DecimalPtrString(obj.AlcoholConcentration), nil
 }
 
 func (r *WorkerDOTTestResolver) SafetyEventID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error) {
-	return base.IDPtr(obj.SafetyEventID), nil
+	return gqlid.IDPtr(obj.SafetyEventID), nil
 }
 
 func (r *WorkerDOTTestResolver) DrawEntryID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error) {
-	return base.IDPtr(obj.DrawEntryID), nil
+	return gqlid.IDPtr(obj.DrawEntryID), nil
 }
 
 func (r *WorkerDOTTestResolver) DocumentID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error) {
-	return base.IDPtr(obj.DocumentID), nil
+	return gqlid.IDPtr(obj.DocumentID), nil
 }
 
 func (r *WorkerDOTTestResolver) OrderedByID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error) {
-	return base.IDPtr(obj.OrderedByID), nil
+	return gqlid.IDPtr(obj.OrderedByID), nil
 }
 
 func (r *WorkerDOTTestResolver) RecordedByID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error) {
-	return base.IDPtr(obj.RecordedByID), nil
+	return gqlid.IDPtr(obj.RecordedByID), nil
 }
 
 func (r *WorkerDOTViolationResolver) SourceTestID(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*string, error) {
-	return base.IDPtr(obj.SourceTestID), nil
+	return gqlid.IDPtr(obj.SourceTestID), nil
 }
 
 func (r *WorkerDOTViolationResolver) ReportedToClearinghouseAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error) {
-	return base.IntPtr(obj.ReportedToClearinghouseAt), nil
+	return gqlscalar.IntPtr(obj.ReportedToClearinghouseAt), nil
 }
 
 func (r *WorkerDOTViolationResolver) SapReferredAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error) {
-	return base.IntPtr(obj.SAPReferredAt), nil
+	return gqlscalar.IntPtr(obj.SAPReferredAt), nil
 }
 
 func (r *WorkerDOTViolationResolver) SapEvaluationCompletedAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error) {
-	return base.IntPtr(obj.SAPEvaluationCompletedAt), nil
+	return gqlscalar.IntPtr(obj.SAPEvaluationCompletedAt), nil
 }
 
 func (r *WorkerDOTViolationResolver) RtdTestID(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*string, error) {
-	return base.IDPtr(obj.RTDTestID), nil
+	return gqlid.IDPtr(obj.RTDTestID), nil
 }
 
 func (r *WorkerDOTViolationResolver) RtdCompletedAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error) {
-	return base.IntPtr(obj.RTDCompletedAt), nil
+	return gqlscalar.IntPtr(obj.RTDCompletedAt), nil
 }
 
 func (r *WorkerDOTViolationResolver) FollowUpEndsAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error) {
-	return base.IntPtr(obj.FollowUpEndsAt), nil
+	return gqlscalar.IntPtr(obj.FollowUpEndsAt), nil
 }
 
 func (r *WorkerDOTViolationResolver) ResolvedAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error) {
-	return base.IntPtr(obj.ResolvedAt), nil
+	return gqlscalar.IntPtr(obj.ResolvedAt), nil
 }
 
 func (r *WorkerDOTViolationResolver) DocumentID(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*string, error) {
-	return base.IDPtr(obj.DocumentID), nil
+	return gqlid.IDPtr(obj.DocumentID), nil
 }
 
 func (r *WorkerDOTViolationResolver) RecordedByID(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*string, error) {
-	return base.IDPtr(obj.RecordedByID), nil
+	return gqlid.IDPtr(obj.RecordedByID), nil
 }

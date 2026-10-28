@@ -4,7 +4,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,7 +26,7 @@ func reviewTemplateFromInput(
 		items = append(items, workerreview.ReviewItem{
 			Key:         strings.TrimSpace(item.Key),
 			Label:       strings.TrimSpace(item.Label),
-			Description: strings.TrimSpace(base.StringValue(item.Description)),
+			Description: strings.TrimSpace(gqlscalar.StringValue(item.Description)),
 			Weight:      int32(item.Weight), //nolint:gosec // bounded by validation
 		})
 	}
@@ -35,11 +36,11 @@ func reviewTemplateFromInput(
 		BusinessUnitID: tenantInfo.BuID,
 		Code:           strings.TrimSpace(input.Code),
 		Name:           strings.TrimSpace(input.Name),
-		Description:    strings.TrimSpace(base.StringValue(input.Description)),
+		Description:    strings.TrimSpace(gqlscalar.StringValue(input.Description)),
 		Status:         input.Status,
 		IsDefault:      input.IsDefault,
 		Items:          items,
-		Version:        int64(base.IntValue(input.Version)),
+		Version:        int64(gqlscalar.IntValue(input.Version)),
 	}
 	if input.CadenceMonths != nil {
 		months := int32(*input.CadenceMonths) //nolint:gosec // bounded by validation
@@ -64,7 +65,7 @@ func updateReviewRequestFromInput(
 		}
 		entry := workerreview.ReviewRating{
 			Key:     rating.Key,
-			Comment: base.StringValue(rating.Comment),
+			Comment: gqlscalar.StringValue(rating.Comment),
 		}
 		if rating.Score != nil {
 			score := int32(*rating.Score) //nolint:gosec // bounded by validation
@@ -78,9 +79,9 @@ func updateReviewRequestFromInput(
 			continue
 		}
 		entry := workerreview.ReviewGoal{
-			ID:    base.StringValue(goal.ID),
+			ID:    gqlscalar.StringValue(goal.ID),
 			Title: goal.Title,
-			DueAt: base.Int64Ptr(goal.DueAt),
+			DueAt: gqlscalar.Int64Ptr(goal.DueAt),
 		}
 		if goal.Status != nil {
 			entry.Status = *goal.Status
@@ -90,13 +91,13 @@ func updateReviewRequestFromInput(
 	return &performancereviewservice.UpdateReviewRequest{
 		TenantInfo:   tenantInfo,
 		ID:           id,
-		Title:        base.StringValue(input.Title),
-		PeriodStart:  int64(base.IntValue(input.PeriodStart)),
-		PeriodEnd:    int64(base.IntValue(input.PeriodEnd)),
+		Title:        gqlscalar.StringValue(input.Title),
+		PeriodStart:  int64(gqlscalar.IntValue(input.PeriodStart)),
+		PeriodEnd:    int64(gqlscalar.IntValue(input.PeriodEnd)),
 		Ratings:      ratings,
-		Summary:      base.StringValue(input.Summary),
-		Strengths:    base.StringValue(input.Strengths),
-		Improvements: base.StringValue(input.Improvements),
+		Summary:      gqlscalar.StringValue(input.Summary),
+		Strengths:    gqlscalar.StringValue(input.Strengths),
+		Improvements: gqlscalar.StringValue(input.Improvements),
 		Goals:        goals,
 		Version:      int64(input.Version),
 		UserID:       userID,
@@ -115,7 +116,7 @@ func reviewStatusRequestFromInput(
 	return &performancereviewservice.ReviewStatusRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
-		Version:    int64(base.IntValue(input.Version)),
+		Version:    int64(gqlscalar.IntValue(input.Version)),
 		UserID:     userID,
 	}, nil
 }
@@ -123,7 +124,7 @@ func reviewStatusRequestFromInput(
 func reviewTemplateCursorConnectionToModel(
 	result *pagination.CursorListResult[*workerreview.PerformanceReviewTemplate],
 ) (*gqlmodel.PerformanceReviewTemplateConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
 		func(node *workerreview.PerformanceReviewTemplate, cursor string) *gqlmodel.PerformanceReviewTemplateEdge {
@@ -136,9 +137,9 @@ func reviewTemplateCursorConnectionToModel(
 
 	return &gqlmodel.PerformanceReviewTemplateConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
-			base.LastEdgeCursor(
+			gqlconnection.LastEdgeCursor(
 				edges,
 				func(edge *gqlmodel.PerformanceReviewTemplateEdge) string { return edge.Cursor },
 			),

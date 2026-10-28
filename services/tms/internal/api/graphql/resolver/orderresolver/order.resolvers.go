@@ -7,14 +7,18 @@ package orderresolver
 
 import (
 	"context"
-
-	"github.com/99designs/gqlgen/graphql"
 	"strings"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentmapping"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
@@ -65,7 +69,7 @@ func (r *MutationResolver) UpdateOrder(ctx context.Context, id string, input gql
 
 	entity, err := r.OrderService.Get(ctx, orderports.GetOrderByIDRequest{
 		ID:         orderID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 	if err != nil {
 		return nil, err
@@ -100,7 +104,7 @@ func (r *MutationResolver) AttachOrderShipments(ctx context.Context, orderID str
 
 	return r.OrderService.AttachShipments(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		parsedOrderID,
 		ids,
 		actorutil.FromAuthContext(authCtx),
@@ -124,7 +128,7 @@ func (r *MutationResolver) DetachOrderShipment(ctx context.Context, orderID stri
 
 	return r.OrderService.DetachShipment(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		parsedOrderID,
 		parsedShipmentID,
 		actorutil.FromAuthContext(authCtx),
@@ -149,7 +153,7 @@ func (r *MutationResolver) AddOrderCharge(ctx context.Context, orderID string, d
 
 	var rows []*shipmentdomain.ChargeAllocation
 	if allocations != nil {
-		rows, err = base.ChargeAllocationsFromInput(
+		rows, err = shipmentmapping.ChargeAllocationsFromInput(
 			allocations,
 			shipmentdomain.ChargeAllocationKindOrderCharge,
 			"allocations",
@@ -164,7 +168,7 @@ func (r *MutationResolver) AddOrderCharge(ctx context.Context, orderID string, d
 	return r.OrderService.AddChargeWithAllocations(
 		ctx,
 		&orderservice.AddChargeRequest{
-			TenantInfo:  base.TenantInfo(authCtx),
+			TenantInfo:  resolvercore.TenantInfo(authCtx),
 			OrderID:     parsedOrderID,
 			Description: description,
 			Amount:      parsedAmount,
@@ -195,7 +199,7 @@ func (r *MutationResolver) UpdateOrderCharge(ctx context.Context, input gqlmodel
 
 	var rows []*shipmentdomain.ChargeAllocation
 	if input.Allocations != nil {
-		rows, err = base.ChargeAllocationsFromInput(
+		rows, err = shipmentmapping.ChargeAllocationsFromInput(
 			input.Allocations,
 			shipmentdomain.ChargeAllocationKindOrderCharge,
 			"allocations",
@@ -210,7 +214,7 @@ func (r *MutationResolver) UpdateOrderCharge(ctx context.Context, input gqlmodel
 	return r.OrderService.UpdateCharge(
 		ctx,
 		&orderservice.UpdateChargeRequest{
-			TenantInfo:  base.TenantInfo(authCtx),
+			TenantInfo:  resolvercore.TenantInfo(authCtx),
 			OrderID:     parsedOrderID,
 			ChargeID:    parsedChargeID,
 			Description: input.Description,
@@ -236,7 +240,7 @@ func (r *MutationResolver) SetOrderChargeAllocations(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	rows, err := base.ChargeAllocationsFromInput(
+	rows, err := shipmentmapping.ChargeAllocationsFromInput(
 		input.Allocations,
 		shipmentdomain.ChargeAllocationKindOrderCharge,
 		"allocations",
@@ -253,7 +257,7 @@ func (r *MutationResolver) SetOrderChargeAllocations(ctx context.Context, input 
 	return r.OrderService.SetChargeAllocations(
 		ctx,
 		&orderservice.SetChargeAllocationsRequest{
-			TenantInfo:  base.TenantInfo(authCtx),
+			TenantInfo:  resolvercore.TenantInfo(authCtx),
 			OrderID:     parsedOrderID,
 			ChargeID:    parsedChargeID,
 			Allocations: rows,
@@ -279,7 +283,7 @@ func (r *MutationResolver) RemoveOrderCharge(ctx context.Context, input gqlmodel
 
 	return r.OrderService.RemoveCharge(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		parsedOrderID,
 		parsedChargeID,
 		actorutil.FromAuthContext(authCtx),
@@ -299,7 +303,7 @@ func (r *MutationResolver) CloseOrder(ctx context.Context, id string) (*order.Or
 
 	return r.OrderService.Close(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		orderID,
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -325,7 +329,7 @@ func (r *MutationResolver) CancelOrder(ctx context.Context, id string, cancelRea
 
 	return r.OrderService.Cancel(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		orderID,
 		cancelReason,
 		actorutil.FromAuthContext(authCtx),
@@ -333,15 +337,15 @@ func (r *MutationResolver) CancelOrder(ctx context.Context, id string, cancelRea
 }
 
 func (r *OrderResolver) QuotedAmount(ctx context.Context, obj *order.Order) (*string, error) {
-	return base.NullDecimalToString(obj.QuotedAmount), nil
+	return gqldecimal.NullDecimalToString(obj.QuotedAmount), nil
 }
 
 func (r *OrderResolver) BaseAmount(ctx context.Context, obj *order.Order) (*string, error) {
-	return base.NullDecimalToString(obj.BaseAmount), nil
+	return gqldecimal.NullDecimalToString(obj.BaseAmount), nil
 }
 
 func (r *OrderResolver) TotalAmount(ctx context.Context, obj *order.Order) (*string, error) {
-	return base.NullDecimalToString(obj.TotalAmount), nil
+	return gqldecimal.NullDecimalToString(obj.TotalAmount), nil
 }
 
 func (r *OrderResolver) Legs(ctx context.Context, obj *order.Order) ([]*gqlmodel.OrderLeg, error) {
@@ -354,7 +358,7 @@ func (r *OrderResolver) Legs(ctx context.Context, obj *order.Order) ([]*gqlmodel
 			ID:                  shp.ID.String(),
 			ProNumber:           shp.ProNumber,
 			Status:              gqlmodel.ShipmentStatus(shp.Status),
-			BOL:                 base.StrPtr(shp.BOL),
+			BOL:                 gqlscalar.StrPtr(shp.BOL),
 			FreightChargeAmount: shp.FreightChargeAmount.Decimal.String(),
 			TotalChargeAmount:   shp.TotalChargeAmount.Decimal.String(),
 		})
@@ -389,7 +393,7 @@ func (r *OrderResolver) Charges(ctx context.Context, obj *order.Order) ([]*gqlmo
 			OrderID:     charge.OrderID.String(),
 			Description: charge.Description,
 			Amount:      charge.Amount.String(),
-			InvoiceID:   base.IDPtr(charge.InvoiceID),
+			InvoiceID:   gqlid.IDPtr(charge.InvoiceID),
 			InvoicedAt:  invoicedAt,
 			Version:     int(charge.Version),
 			CreatedAt:   int(charge.CreatedAt),
@@ -405,7 +409,7 @@ func (r *QueryResolver) Orders(ctx context.Context, input gqlmodel.DataTableConn
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -439,6 +443,6 @@ func (r *QueryResolver) Order(ctx context.Context, id string) (*order.Order, err
 	return r.OrderService.Get(ctx, orderByIDRequest(
 		func(path string) bool { return graphql.FieldRequested(ctx, path) },
 		orderID,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 	))
 }

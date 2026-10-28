@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
@@ -65,12 +65,14 @@ func signedIn(ctx context.Context) context.Context {
 	})
 }
 
-func coreGranting(resources ...permission.Resource) *base.Core {
+func coreGranting(resources ...permission.Resource) *resolvercore.Core {
 	granted := make(map[string]bool, len(resources))
 	for _, resource := range resources {
 		granted[resource.String()+"|"+string(permission.OpRead)] = true
 	}
-	return &base.Core{PermissionEngine: &resolvertest.GrantingPermissionEngine{Granted: granted}}
+	return &resolvercore.Core{
+		PermissionEngine: &resolvertest.GrantingPermissionEngine{Granted: granted},
+	}
 }
 
 func TestLineSummaryIsNullWhenTheLinesWereNotReadAndSumsThemWhenTheyWere(t *testing.T) {

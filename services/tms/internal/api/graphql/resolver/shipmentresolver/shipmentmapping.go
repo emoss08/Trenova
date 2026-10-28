@@ -9,7 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentmapping"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/tariffmapping"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
@@ -34,47 +39,47 @@ func shipmentFromInput(
 	id pulid.ID,
 	authCtx *authctx.AuthContext,
 ) (*shipmentdomain.Shipment, error) {
-	serviceTypeID, err := base.RequiredID("serviceTypeId", input.ServiceTypeID)
+	serviceTypeID, err := gqlid.RequiredID("serviceTypeId", input.ServiceTypeID)
 	if err != nil {
 		return nil, err
 	}
-	shipmentTypeID, err := base.RequiredID("shipmentTypeId", input.ShipmentTypeID)
+	shipmentTypeID, err := gqlid.RequiredID("shipmentTypeId", input.ShipmentTypeID)
 	if err != nil {
 		return nil, err
 	}
-	customerID, err := base.RequiredID("customerId", input.CustomerID)
+	customerID, err := gqlid.RequiredID("customerId", input.CustomerID)
 	if err != nil {
 		return nil, err
 	}
-	formulaTemplateID, err := base.OptionalScopedID("formulaTemplateId", input.FormulaTemplateID)
+	formulaTemplateID, err := gqlid.OptionalScopedID("formulaTemplateId", input.FormulaTemplateID)
 	if err != nil {
 		return nil, err
 	}
-	tractorTypeID, err := base.OptionalID(input.TractorTypeID)
+	tractorTypeID, err := gqlid.OptionalID(input.TractorTypeID)
 	if err != nil {
 		return nil, err
 	}
-	trailerTypeID, err := base.OptionalID(input.TrailerTypeID)
+	trailerTypeID, err := gqlid.OptionalID(input.TrailerTypeID)
 	if err != nil {
 		return nil, err
 	}
-	ownerID, err := base.OptionalID(input.OwnerID)
+	ownerID, err := gqlid.OptionalID(input.OwnerID)
 	if err != nil {
 		return nil, err
 	}
-	enteredByID, err := base.OptionalID(input.EnteredByID)
+	enteredByID, err := gqlid.OptionalID(input.EnteredByID)
 	if err != nil {
 		return nil, err
 	}
-	canceledByID, err := base.OptionalID(input.CanceledByID)
+	canceledByID, err := gqlid.OptionalID(input.CanceledByID)
 	if err != nil {
 		return nil, err
 	}
-	consolidationGroupID, err := base.OptionalID(input.ConsolidationGroupID)
+	consolidationGroupID, err := gqlid.OptionalID(input.ConsolidationGroupID)
 	if err != nil {
 		return nil, err
 	}
-	orderID, err := base.OptionalID(input.OrderID)
+	orderID, err := gqlid.OptionalID(input.OrderID)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +91,7 @@ func shipmentFromInput(
 	if err != nil {
 		return nil, err
 	}
-	tariffInputs, err := base.TariffInputsFromModel("tariffInputs", input.TariffInputs)
+	tariffInputs, err := tariffmapping.TariffInputsFromModel("tariffInputs", input.TariffInputs)
 	if err != nil {
 		return nil, err
 	}
@@ -129,36 +134,36 @@ func shipmentFromInput(
 		OrderID:              orderID,
 		Status:               status,
 		EntryMethod:          entryMethod,
-		ProNumber:            base.StringValue(input.ProNumber),
-		BOL:                  base.StringValue(input.BOL),
-		ExternalReference:    base.StringValue(input.ExternalReference),
-		CancelReason:         base.StringValue(input.CancelReason),
+		ProNumber:            gqlscalar.StringValue(input.ProNumber),
+		BOL:                  gqlscalar.StringValue(input.BOL),
+		ExternalReference:    gqlscalar.StringValue(input.ExternalReference),
+		CancelReason:         gqlscalar.StringValue(input.CancelReason),
 		OtherChargeAmount:    otherChargeAmount,
 		FreightChargeAmount:  freightChargeAmount,
 		TariffInputs:         tariffInputs.OrEmpty(),
 		TotalChargeAmount:    totalChargeAmount,
-		Pieces:               base.Int64Ptr(input.Pieces),
-		Weight:               base.Int64Ptr(input.Weight),
+		Pieces:               gqlscalar.Int64Ptr(input.Pieces),
+		Weight:               gqlscalar.Int64Ptr(input.Weight),
 		TemperatureMin:       temperatureMin,
 		TemperatureMax:       temperatureMax,
-		ActualDeliveryDate:   base.Int64Ptr(input.ActualDeliveryDate),
-		ActualShipDate:       base.Int64Ptr(input.ActualShipDate),
-		CanceledAt:           base.Int64Ptr(input.CanceledAt),
+		ActualDeliveryDate:   gqlscalar.Int64Ptr(input.ActualDeliveryDate),
+		ActualShipDate:       gqlscalar.Int64Ptr(input.ActualShipDate),
+		CanceledAt:           gqlscalar.Int64Ptr(input.CanceledAt),
 		BillingTransferStatus: shipmentdomain.BillingTransferStatus(
-			base.StringValue(input.BillingTransferStatus),
+			gqlscalar.StringValue(input.BillingTransferStatus),
 		),
-		TransferredToBillingAt: base.Int64Ptr(input.TransferredToBillingAt),
-		MarkedReadyToBillAt:    base.Int64Ptr(input.MarkedReadyToBillAt),
-		BilledAt:               base.Int64Ptr(input.BilledAt),
-		FuelSurchargeLocked:    base.BoolValue(input.FuelSurchargeLocked),
-		RateOverrideReason:     base.StringValue(input.RateOverrideReason),
-		SourceDocumentID:       base.StringValue(input.SourceDocumentID),
+		TransferredToBillingAt: gqlscalar.Int64Ptr(input.TransferredToBillingAt),
+		MarkedReadyToBillAt:    gqlscalar.Int64Ptr(input.MarkedReadyToBillAt),
+		BilledAt:               gqlscalar.Int64Ptr(input.BilledAt),
+		FuelSurchargeLocked:    gqlscalar.BoolValue(input.FuelSurchargeLocked),
+		RateOverrideReason:     gqlscalar.StringValue(input.RateOverrideReason),
+		SourceDocumentID:       gqlscalar.StringValue(input.SourceDocumentID),
 		FreightTerms:           shipmentdomain.FreightTermsPrepaid,
 	}
 	if input.FreightTerms != nil {
 		entity.FreightTerms = *input.FreightTerms
 	}
-	billToCustomerID, err := base.OptionalScopedID("billToCustomerId", input.BillToCustomerID)
+	billToCustomerID, err := gqlid.OptionalScopedID("billToCustomerId", input.BillToCustomerID)
 	if err != nil {
 		return nil, err
 	}
@@ -207,11 +212,11 @@ func shipmentMovesFromInput(
 			continue
 		}
 		path := fmt.Sprintf("moves[%d]", idx)
-		id, err := base.OptionalScopedID(path+".id", input.ID)
+		id, err := gqlid.OptionalScopedID(path+".id", input.ID)
 		if err != nil {
 			return nil, err
 		}
-		shipmentID, err := base.OptionalScopedID(path+".shipmentId", input.ShipmentID)
+		shipmentID, err := gqlid.OptionalScopedID(path+".shipmentId", input.ShipmentID)
 		if err != nil {
 			return nil, err
 		}
@@ -230,15 +235,15 @@ func shipmentMovesFromInput(
 			ShipmentID:             shipmentID,
 			Status:                 status,
 			Loaded:                 loaded,
-			Sequence:               base.Int64Value(input.Sequence),
+			Sequence:               gqlscalar.Int64Value(input.Sequence),
 			Distance:               input.Distance,
-			DistanceSource:         base.StringValue(input.DistanceSource),
-			DistanceProvider:       base.StringValue(input.DistanceProvider),
-			DistanceCalculatedAt:   base.Int64Ptr(input.DistanceCalculatedAt),
-			DistanceRouteSignature: base.StringValue(input.DistanceRouteSignature),
-			DistanceDataVersion:    base.StringValue(input.DistanceDataVersion),
-			DistanceRoutingType:    base.StringValue(input.DistanceRoutingType),
-			DistanceUnits:          base.StringValue(input.DistanceUnits),
+			DistanceSource:         gqlscalar.StringValue(input.DistanceSource),
+			DistanceProvider:       gqlscalar.StringValue(input.DistanceProvider),
+			DistanceCalculatedAt:   gqlscalar.Int64Ptr(input.DistanceCalculatedAt),
+			DistanceRouteSignature: gqlscalar.StringValue(input.DistanceRouteSignature),
+			DistanceDataVersion:    gqlscalar.StringValue(input.DistanceDataVersion),
+			DistanceRoutingType:    gqlscalar.StringValue(input.DistanceRoutingType),
+			DistanceUnits:          gqlscalar.StringValue(input.DistanceUnits),
 			DistanceMetadata:       input.DistanceMetadata,
 		}
 		if input.Version != nil {
@@ -265,15 +270,15 @@ func shipmentStopsFromInput(
 			continue
 		}
 		path := fmt.Sprintf("%s.stops[%d]", movePath, idx)
-		id, err := base.OptionalScopedID(path+".id", input.ID)
+		id, err := gqlid.OptionalScopedID(path+".id", input.ID)
 		if err != nil {
 			return nil, err
 		}
-		shipmentMoveID, err := base.OptionalScopedID(path+".shipmentMoveId", input.ShipmentMoveID)
+		shipmentMoveID, err := gqlid.OptionalScopedID(path+".shipmentMoveId", input.ShipmentMoveID)
 		if err != nil {
 			return nil, err
 		}
-		locationID, err := base.RequiredID(path+".locationId", input.LocationID)
+		locationID, err := gqlid.RequiredID(path+".locationId", input.LocationID)
 		if err != nil {
 			return nil, err
 		}
@@ -298,16 +303,16 @@ func shipmentStopsFromInput(
 			Status:                 status,
 			Type:                   stopType,
 			ScheduleType:           scheduleType,
-			Sequence:               base.Int64Value(input.Sequence),
-			Pieces:                 base.Int64Ptr(input.Pieces),
-			Weight:                 base.Int64Ptr(input.Weight),
-			ScheduledWindowStart:   base.Int64Value(input.ScheduledWindowStart),
-			ScheduledWindowEnd:     base.Int64Ptr(input.ScheduledWindowEnd),
-			ActualArrival:          base.Int64Ptr(input.ActualArrival),
-			ActualDeparture:        base.Int64Ptr(input.ActualDeparture),
+			Sequence:               gqlscalar.Int64Value(input.Sequence),
+			Pieces:                 gqlscalar.Int64Ptr(input.Pieces),
+			Weight:                 gqlscalar.Int64Ptr(input.Weight),
+			ScheduledWindowStart:   gqlscalar.Int64Value(input.ScheduledWindowStart),
+			ScheduledWindowEnd:     gqlscalar.Int64Ptr(input.ScheduledWindowEnd),
+			ActualArrival:          gqlscalar.Int64Ptr(input.ActualArrival),
+			ActualDeparture:        gqlscalar.Int64Ptr(input.ActualDeparture),
 			CountLateOverride:      input.CountLateOverride,
 			CountDetentionOverride: input.CountDetentionOverride,
-			AddressLine:            base.StringValue(input.AddressLine),
+			AddressLine:            gqlscalar.StringValue(input.AddressLine),
 		}
 		if input.Version != nil {
 			stop.Version = int64(*input.Version)
@@ -327,15 +332,15 @@ func shipmentAdditionalChargesFromInput(
 			continue
 		}
 		path := fmt.Sprintf("additionalCharges[%d]", idx)
-		id, err := base.OptionalScopedID(path+".id", input.ID)
+		id, err := gqlid.OptionalScopedID(path+".id", input.ID)
 		if err != nil {
 			return nil, err
 		}
-		shipmentID, err := base.OptionalScopedID(path+".shipmentId", input.ShipmentID)
+		shipmentID, err := gqlid.OptionalScopedID(path+".shipmentId", input.ShipmentID)
 		if err != nil {
 			return nil, err
 		}
-		accessorialChargeID, err := base.RequiredID(
+		accessorialChargeID, err := gqlid.RequiredID(
 			path+".accessorialChargeId",
 			input.AccessorialChargeID,
 		)
@@ -362,7 +367,7 @@ func shipmentAdditionalChargesFromInput(
 		if input.Method != nil {
 			method = accessorialcharge.Method(*input.Method)
 		}
-		fuelSurchargeProgramID, err := base.OptionalScopedID(
+		fuelSurchargeProgramID, err := gqlid.OptionalScopedID(
 			path+".fuelSurchargeProgramId",
 			input.FuelSurchargeProgramID,
 		)
@@ -401,15 +406,15 @@ func shipmentCommoditiesFromInput(
 			continue
 		}
 		path := fmt.Sprintf("commodities[%d]", idx)
-		id, err := base.OptionalScopedID(path+".id", input.ID)
+		id, err := gqlid.OptionalScopedID(path+".id", input.ID)
 		if err != nil {
 			return nil, err
 		}
-		shipmentID, err := base.OptionalScopedID(path+".shipmentId", input.ShipmentID)
+		shipmentID, err := gqlid.OptionalScopedID(path+".shipmentId", input.ShipmentID)
 		if err != nil {
 			return nil, err
 		}
-		commodityID, err := base.RequiredID(path+".commodityId", input.CommodityID)
+		commodityID, err := gqlid.RequiredID(path+".commodityId", input.CommodityID)
 		if err != nil {
 			return nil, err
 		}
@@ -419,8 +424,8 @@ func shipmentCommoditiesFromInput(
 			OrganizationID: authCtx.OrganizationID,
 			ShipmentID:     shipmentID,
 			CommodityID:    commodityID,
-			Pieces:         base.Int64Value(input.Pieces),
-			Weight:         base.Int64Value(input.Weight),
+			Pieces:         gqlscalar.Int64Value(input.Pieces),
+			Weight:         gqlscalar.Int64Value(input.Weight),
 			LengthFeet:     input.LengthFeet,
 			WidthFeet:      input.WidthFeet,
 			HeightFeet:     input.HeightFeet,
@@ -445,7 +450,7 @@ func contractRateToModel(
 		return nil, nil //nolint:nilnil // no application maps to a null field
 	}
 
-	inputs, err := base.TariffInputsToModel(application.Inputs)
+	inputs, err := tariffmapping.TariffInputsToModel(application.Inputs)
 	if err != nil {
 		return nil, err
 	}
@@ -460,8 +465,8 @@ func contractRateToModel(
 			Owner:               string(charge.Owner),
 			Label:               charge.Label,
 			Amount:              charge.Amount.String(),
-			Quantity:            base.NullDecimalStringPtr(charge.Quantity),
-			Rate:                base.NullDecimalStringPtr(charge.Rate),
+			Quantity:            gqldecimal.NullDecimalStringPtr(charge.Quantity),
+			Rate:                gqldecimal.NullDecimalStringPtr(charge.Rate),
 			RateUnit:            charge.RateUnit,
 		})
 	}
@@ -469,16 +474,16 @@ func contractRateToModel(
 	return &gqlmodel.ShipmentContractRate{
 		Applied:               application.Applied,
 		Outcome:               string(application.Outcome),
-		AgreementID:           base.IDPtrFromPtr(application.AgreementID),
+		AgreementID:           gqlid.IDPtrFromPtr(application.AgreementID),
 		AgreementName:         application.AgreementName,
-		RuleID:                base.IDPtrFromPtr(application.RuleID),
+		RuleID:                gqlid.IDPtrFromPtr(application.RuleID),
 		RuleLabel:             application.RuleLabel,
-		FormulaTemplateID:     base.IDPtrFromPtr(application.FormulaTemplateID),
+		FormulaTemplateID:     gqlid.IDPtrFromPtr(application.FormulaTemplateID),
 		FormulaTemplateName:   application.FormulaTemplateName,
 		TemplateVersion:       int(application.TemplateVersion),
 		Inputs:                inputs,
 		Refusal:               application.Refusal,
-		FreightLines:          base.FreightLinesToModel(application.FreightLines),
+		FreightLines:          tariffmapping.FreightLinesToModel(application.FreightLines),
 		FreightAmount:         application.FreightAmount.String(),
 		OtherChargeAmount:     application.OtherChargeAmount.String(),
 		TotalChargeAmount:     application.TotalChargeAmount.String(),
@@ -503,9 +508,9 @@ func shipmentCommentToModel(
 			ID:              mention.ID.String(),
 			CommentID:       mention.CommentID.String(),
 			MentionedUserID: mention.MentionedUserID.String(),
-			OrganizationID:  base.IDPtr(mention.OrganizationID),
-			BusinessUnitID:  base.IDPtr(mention.BusinessUnitID),
-			ShipmentID:      base.IDPtr(mention.ShipmentID),
+			OrganizationID:  gqlid.IDPtr(mention.OrganizationID),
+			BusinessUnitID:  gqlid.IDPtr(mention.BusinessUnitID),
+			ShipmentID:      gqlid.IDPtr(mention.ShipmentID),
 			CreatedAt:       int(mention.CreatedAt),
 			MentionedUser:   mention.MentionedUser,
 		})
@@ -539,21 +544,21 @@ func shipmentCommentToModel(
 		attachments = append(attachments, &gqlmodel.ShipmentCommentAttachment{
 			DocumentID:   attachment.DocumentID.String(),
 			FileName:     attachment.FileName,
-			OriginalName: base.StringPtrFromValue(attachment.OriginalName),
+			OriginalName: gqlscalar.StringPtrFromValue(attachment.OriginalName),
 			FileSize:     int(attachment.FileSize),
 			MimeType:     attachment.MimeType,
-			PreviewURL:   base.StringPtrFromValue(attachment.PreviewURL),
+			PreviewURL:   gqlscalar.StringPtrFromValue(attachment.PreviewURL),
 			DownloadURL:  attachment.DownloadURL,
 			CreatedAt:    int(attachment.CreatedAt),
 		})
 	}
 	return &gqlmodel.ShipmentComment{
 		ID:                     entity.ID.String(),
-		BusinessUnitID:         base.IDPtr(entity.BusinessUnitID),
-		OrganizationID:         base.IDPtr(entity.OrganizationID),
+		BusinessUnitID:         gqlid.IDPtr(entity.BusinessUnitID),
+		OrganizationID:         gqlid.IDPtr(entity.OrganizationID),
 		ShipmentID:             entity.ShipmentID.String(),
-		UserID:                 base.IDPtr(entity.UserID),
-		ParentCommentID:        base.IDPtrFromPulidPtr(entity.ParentCommentID),
+		UserID:                 gqlid.IDPtr(entity.UserID),
+		ParentCommentID:        gqlid.IDPtrFromPulidPtr(entity.ParentCommentID),
 		ReplyCount:             int(entity.ReplyCount),
 		Comment:                entity.Comment,
 		Body:                   entity.Body,
@@ -562,13 +567,13 @@ func shipmentCommentToModel(
 		Priority:               gqlmodel.ShipmentCommentPriority(entity.Priority),
 		Source:                 gqlmodel.ShipmentCommentSource(entity.Source),
 		Metadata:               entity.Metadata,
-		EditedAt:               base.IntPtr(entity.EditedAt),
-		PinnedAt:               base.IntPtr(entity.PinnedAt),
-		PinnedByID:             base.IDPtrFromPulidPtr(entity.PinnedByID),
-		ResolvedAt:             base.IntPtr(entity.ResolvedAt),
-		ResolvedByID:           base.IDPtrFromPulidPtr(entity.ResolvedByID),
+		EditedAt:               gqlscalar.IntPtr(entity.EditedAt),
+		PinnedAt:               gqlscalar.IntPtr(entity.PinnedAt),
+		PinnedByID:             gqlid.IDPtrFromPulidPtr(entity.PinnedByID),
+		ResolvedAt:             gqlscalar.IntPtr(entity.ResolvedAt),
+		ResolvedByID:           gqlid.IDPtrFromPulidPtr(entity.ResolvedByID),
 		RequiresAcknowledgment: entity.RequiresAcknowledgment,
-		DeletedAt:              base.IntPtr(entity.DeletedAt),
+		DeletedAt:              gqlscalar.IntPtr(entity.DeletedAt),
 		Version:                int(entity.Version),
 		CreatedAt:              int(entity.CreatedAt),
 		UpdatedAt:              int(entity.UpdatedAt),
@@ -608,7 +613,7 @@ func (r *MutationResolver) toggleShipmentComment(
 	}
 
 	entity, err := action(ctx, &shipmentcommentports.ToggleShipmentCommentRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ShipmentID: parsedShipmentID,
 		CommentID:  parsedCommentID,
 	}, actorutil.FromAuthContext(authCtx))
@@ -643,21 +648,21 @@ func shipmentCommentFiltersFromGraphQL(
 		}
 	}
 	if len(filter.AuthorIds) > 0 {
-		authorIDs, err := base.ParseIDs(filter.AuthorIds)
+		authorIDs, err := gqlid.ParseIDs(filter.AuthorIds)
 		if err != nil {
 			return filters, err
 		}
 		filters.AuthorIDs = authorIDs
 	}
 
-	mentionsUserID, err := base.PulidPtrFromOptionalString(filter.MentionsUserID)
+	mentionsUserID, err := gqlid.PulidPtrFromOptionalString(filter.MentionsUserID)
 	if err != nil {
 		return filters, err
 	}
 	filters.MentionsUserID = mentionsUserID
-	filters.PinnedOnly = base.BoolValue(filter.PinnedOnly)
-	filters.UnresolvedOnly = base.BoolValue(filter.UnresolvedOnly)
-	filters.Search = strings.TrimSpace(base.StringValue(filter.Search))
+	filters.PinnedOnly = gqlscalar.BoolValue(filter.PinnedOnly)
+	filters.UnresolvedOnly = gqlscalar.BoolValue(filter.UnresolvedOnly)
+	filters.Search = strings.TrimSpace(gqlscalar.StringValue(filter.Search))
 
 	return filters, nil
 }
@@ -668,22 +673,22 @@ func shipmentDistanceToModel(
 	moves := make([]*gqlmodel.ShipmentDistanceMoveResult, 0, len(response.Moves))
 	for _, move := range response.Moves {
 		moves = append(moves, &gqlmodel.ShipmentDistanceMoveResult{
-			MoveID:              base.IDPtr(move.MoveID),
+			MoveID:              gqlid.IDPtr(move.MoveID),
 			MoveIndex:           move.MoveIndex,
 			Distance:            move.Distance,
 			Source:              move.Source,
-			Provider:            base.StringPtrFromValue(move.Provider),
-			RoutingType:         base.StringPtrFromValue(move.RoutingType),
-			DataVersion:         base.StringPtrFromValue(move.DataVersion),
-			DistanceUnits:       base.StringPtrFromValue(move.DistanceUnits),
-			DistanceProfileID:   base.StringPtrFromValue(move.DistanceProfileID),
-			DistanceProfileName: base.StringPtrFromValue(move.DistanceProfileName),
+			Provider:            gqlscalar.StringPtrFromValue(move.Provider),
+			RoutingType:         gqlscalar.StringPtrFromValue(move.RoutingType),
+			DataVersion:         gqlscalar.StringPtrFromValue(move.DataVersion),
+			DistanceUnits:       gqlscalar.StringPtrFromValue(move.DistanceUnits),
+			DistanceProfileID:   gqlscalar.StringPtrFromValue(move.DistanceProfileID),
+			DistanceProfileName: gqlscalar.StringPtrFromValue(move.DistanceProfileName),
 			Warnings:            move.Warnings,
 			CalculatedAt:        int(move.CalculatedAt),
 		})
 	}
 	return &gqlmodel.ShipmentDistanceResponse{
-		ShipmentID:    base.IDPtr(response.ShipmentID),
+		ShipmentID:    gqlid.IDPtr(response.ShipmentID),
 		TotalDistance: response.TotalDistance,
 		Moves:         moves,
 	}
@@ -696,7 +701,9 @@ func shipmentTotalsToModel(
 		FreightChargeAmount: response.FreightChargeAmount.String(),
 		OtherChargeAmount:   response.OtherChargeAmount.String(),
 		TotalChargeAmount:   response.TotalChargeAmount.String(),
-		FuelSurcharge:       base.ShipmentAdditionalChargeToModel(response.FuelSurcharge),
+		FuelSurcharge: shipmentmapping.ShipmentAdditionalChargeToModel(
+			response.FuelSurcharge,
+		),
 	}
 }
 
@@ -711,12 +718,12 @@ func previousRatesToModel(
 			CustomerID:          item.CustomerID.String(),
 			ServiceTypeID:       item.ServiceTypeID.String(),
 			ShipmentTypeID:      item.ShipmentTypeID.String(),
-			FormulaTemplateID:   base.IDPtr(item.FormulaTemplateID),
+			FormulaTemplateID:   gqlid.IDPtr(item.FormulaTemplateID),
 			FreightChargeAmount: item.FreightChargeAmount.String(),
 			OtherChargeAmount:   item.OtherChargeAmount.String(),
 			TotalChargeAmount:   item.TotalChargeAmount.String(),
-			Pieces:              base.IntPtr(item.Pieces),
-			Weight:              base.IntPtr(item.Weight),
+			Pieces:              gqlscalar.IntPtr(item.Pieces),
+			Weight:              gqlscalar.IntPtr(item.Weight),
 			CreatedAt:           int(item.CreatedAt),
 		})
 	}
@@ -792,10 +799,10 @@ func loadingOptimizationToModel(
 			Stackable:           item.Stackable,
 			Fragile:             item.Fragile,
 			IsHazmat:            item.IsHazmat,
-			HazmatClass:         base.StringPtrFromValue(item.HazmatClass),
+			HazmatClass:         gqlscalar.StringPtrFromValue(item.HazmatClass),
 			MinTemp:             item.MinTemp,
 			MaxTemp:             item.MaxTemp,
-			LoadingInstructions: base.StringPtrFromValue(item.LoadingInstructions),
+			LoadingInstructions: gqlscalar.StringPtrFromValue(item.LoadingInstructions),
 			EstimatedLength:     item.EstimatedLength,
 			StopNumber:          intPtrFromValue(item.StopNumber),
 		})
@@ -844,7 +851,7 @@ func loadingOptimizationToModel(
 			Priority:     item.Priority,
 			Title:        item.Title,
 			Description:  item.Description,
-			Impact:       base.StringPtrFromValue(item.Impact),
+			Impact:       gqlscalar.StringPtrFromValue(item.Impact),
 			CommodityIds: item.CommodityIDs,
 		})
 	}
@@ -871,7 +878,7 @@ func loadingOptimizationToModel(
 		AxleWeights:       axleWeights,
 		Recommendations:   recommendations,
 		StopDividers:      stopDividers,
-		AiAnalysis:        base.StringPtrFromValue(result.AIAnalysis),
+		AiAnalysis:        gqlscalar.StringPtrFromValue(result.AIAnalysis),
 	}
 }
 

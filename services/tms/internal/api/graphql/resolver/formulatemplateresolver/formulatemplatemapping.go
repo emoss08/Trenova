@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -33,7 +33,7 @@ func formulaTemplateColumns(ctx context.Context, nodePathPrefix string) []string
 func formulaTemplateConnectionToModel(
 	result *pagination.CursorListResult[*formulatemplate.FormulaTemplate],
 ) (*gqlmodel.FormulaTemplateConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *formulatemplate.FormulaTemplate, cursor string) *gqlmodel.FormulaTemplateEdge {
 			return &gqlmodel.FormulaTemplateEdge{

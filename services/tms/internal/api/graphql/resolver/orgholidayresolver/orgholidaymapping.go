@@ -2,7 +2,7 @@ package orgholidayresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +21,7 @@ func orgHolidayFromInput(
 		HolidayDate:    int64(input.HolidayDate),
 		Kind:           input.Kind,
 		RecursAnnually: input.RecursAnnually,
-		Description:    base.StringValue(input.Description),
-		Version:        int64(base.IntValue(input.Version)),
+		Description:    gqlscalar.StringValue(input.Description),
+		Version:        int64(gqlscalar.IntValue(input.Version)),
 	}
 }

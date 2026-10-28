@@ -9,7 +9,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,27 +37,27 @@ func (r *AgentPreviewFieldChangeResolver) Type(ctx context.Context, obj *agent.P
 }
 
 func (r *AgentPreviewMessageResolver) TemplateVersionID(ctx context.Context, obj *agent.MessagePreview) (*string, error) {
-	return base.IDPtr(obj.TemplateVersionID), nil
+	return gqlid.IDPtr(obj.TemplateVersionID), nil
 }
 
 func (r *AgentPreviewMoneyResolver) TotalBefore(ctx context.Context, obj *agent.MoneyPreview) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.TotalBefore), nil
+	return gqldecimal.NullDecimalToStringPtr(obj.TotalBefore), nil
 }
 
 func (r *AgentPreviewMoneyResolver) TotalAfter(ctx context.Context, obj *agent.MoneyPreview) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.TotalAfter), nil
+	return gqldecimal.NullDecimalToStringPtr(obj.TotalAfter), nil
 }
 
 func (r *AgentPreviewMoneyResolver) Delta(ctx context.Context, obj *agent.MoneyPreview) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.Delta), nil
+	return gqldecimal.NullDecimalToStringPtr(obj.Delta), nil
 }
 
 func (r *AgentPreviewMoneyLineResolver) Before(ctx context.Context, obj *agent.MoneyLine) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.Before), nil
+	return gqldecimal.NullDecimalToStringPtr(obj.Before), nil
 }
 
 func (r *AgentPreviewMoneyLineResolver) After(ctx context.Context, obj *agent.MoneyLine) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.After), nil
+	return gqldecimal.NullDecimalToStringPtr(obj.After), nil
 }
 
 func (r *AgentPreviewRecordChangeResolver) Resource(ctx context.Context, obj *agent.RecordChange) (string, error) {
@@ -63,7 +65,7 @@ func (r *AgentPreviewRecordChangeResolver) Resource(ctx context.Context, obj *ag
 }
 
 func (r *AgentPreviewRecordChangeResolver) EntityID(ctx context.Context, obj *agent.RecordChange) (*string, error) {
-	return base.IDPtr(obj.EntityID), nil
+	return gqlid.IDPtr(obj.EntityID), nil
 }
 
 func (r *AgentPreviewRefResolver) Resource(ctx context.Context, obj *agent.PreviewRef) (string, error) {
@@ -116,7 +118,7 @@ func (r *QueryResolver) MyProposalPreview(ctx context.Context, id string, modifi
 	if err = r.AgentDecisionService.AssertOwnProposal(
 		ctx,
 		proposalID,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		actorutil.FromAuthContext(authCtx),
 	); err != nil {
 		return nil, err
@@ -139,7 +141,7 @@ func (r *QueryResolver) MyPlanPreview(ctx context.Context, id string) (*agent.Pl
 	if err = r.AgentPlanService.AssertOwnPlan(
 		ctx,
 		planID,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		actorutil.FromAuthContext(authCtx),
 	); err != nil {
 		return nil, err

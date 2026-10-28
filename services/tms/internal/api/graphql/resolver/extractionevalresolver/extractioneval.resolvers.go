@@ -10,7 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
@@ -67,7 +68,7 @@ func (r *MutationResolver) PromoteAICorrection(ctx context.Context, input gqlmod
 	}
 
 	request := &extractionevalports.PromoteCorrectionRequest{
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		CorrectionID: correctionID,
 	}
 	if input.Title != nil {
@@ -92,7 +93,7 @@ func (r *MutationResolver) UpdateExtractionEvalCase(ctx context.Context, id stri
 	}
 
 	return r.ExtractionEvalService.UpdateCase(ctx, &extractionevalports.UpdateExtractionCaseRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         caseID,
 		Version:    int64(input.Version),
 		Title:      input.Title,
@@ -113,7 +114,7 @@ func (r *MutationResolver) DeleteExtractionEvalCase(ctx context.Context, id stri
 	}
 
 	if err = r.ExtractionEvalService.DeleteCase(ctx, extractionevalports.GetExtractionEvalCaseRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         caseID,
 	}, actorutil.FromAuthContext(authCtx)); err != nil {
 		return false, err
@@ -134,7 +135,7 @@ func (r *MutationResolver) StartExtractionEvalRun(ctx context.Context, input gql
 	}
 
 	request := &extractionevalports.StartExtractionEvalRunRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ProviderID: providerID,
 	}
 	if input.CaseLimit != nil {
@@ -160,7 +161,7 @@ func (r *MutationResolver) RefreezeExtractionEvalCases(ctx context.Context, inpu
 	}
 
 	return r.ExtractionEvalService.RefreezeCases(ctx, &extractionevalports.RefreezeExtractionEvalCasesRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CaseIDs:    caseIDs,
 	}, actorutil.FromAuthContext(authCtx))
 }
@@ -177,7 +178,7 @@ func (r *MutationResolver) CancelExtractionEvalRun(ctx context.Context, id strin
 	}
 
 	return r.ExtractionEvalService.CancelRun(ctx, extractionevalports.GetExtractionEvalRunRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         runID,
 	}, actorutil.FromAuthContext(authCtx))
 }
@@ -188,7 +189,7 @@ func (r *QueryResolver) ExtractionAccuracy(ctx context.Context, windowDays *int)
 		return nil, err
 	}
 
-	request := &extractionevalports.ExtractionAccuracyRequest{TenantInfo: base.TenantInfo(authCtx)}
+	request := &extractionevalports.ExtractionAccuracyRequest{TenantInfo: resolvercore.TenantInfo(authCtx)}
 	if windowDays != nil {
 		request.WindowDays = *windowDays
 	}
@@ -202,7 +203,7 @@ func (r *QueryResolver) ExtractionProviderTrends(ctx context.Context) (*extracti
 		return nil, err
 	}
 
-	return r.ExtractionEvalService.ProviderTrends(ctx, base.TenantInfo(authCtx))
+	return r.ExtractionEvalService.ProviderTrends(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) AiCorrections(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AICorrectionConnection, error) {
@@ -211,7 +212,7 @@ func (r *QueryResolver) AiCorrections(ctx context.Context, input gqlmodel.DataTa
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +241,7 @@ func (r *QueryResolver) AiCorrection(ctx context.Context, id string) (*aicorrect
 	}
 
 	return r.ExtractionEvalService.GetCorrection(ctx, aicorrectionports.GetAICorrectionRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         correctionID,
 	})
 }
@@ -251,7 +252,7 @@ func (r *QueryResolver) ExtractionEvalCases(ctx context.Context, input gqlmodel.
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +281,7 @@ func (r *QueryResolver) ExtractionEvalCase(ctx context.Context, id string) (*ext
 	}
 
 	return r.ExtractionEvalService.GetCase(ctx, extractionevalports.GetExtractionEvalCaseRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         caseID,
 	})
 }
@@ -291,7 +292,7 @@ func (r *QueryResolver) ExtractionEvalRuns(ctx context.Context, input gqlmodel.D
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +321,7 @@ func (r *QueryResolver) ExtractionEvalRun(ctx context.Context, id string) (*extr
 	}
 
 	return r.ExtractionEvalService.GetRun(ctx, extractionevalports.GetExtractionEvalRunRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         runID,
 	})
 }
@@ -336,7 +337,7 @@ func (r *QueryResolver) ExtractionEvalResults(ctx context.Context, runID string,
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -366,7 +367,7 @@ func (r *QueryResolver) ExtractionEvalResult(ctx context.Context, id string) (*e
 	}
 
 	return r.ExtractionEvalService.GetResult(ctx, extractionevalports.GetExtractionEvalResultRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         resultID,
 	})
 }
@@ -377,5 +378,5 @@ func (r *QueryResolver) ExtractionEvalRefreeze(ctx context.Context) (*extraction
 		return nil, err
 	}
 
-	return r.ExtractionEvalService.RefreezeProgress(ctx, base.TenantInfo(authCtx))
+	return r.ExtractionEvalService.RefreezeProgress(ctx, resolvercore.TenantInfo(authCtx))
 }

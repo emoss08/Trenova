@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
@@ -23,7 +23,7 @@ func (r *QueryResolver) AgentAnalytics(
 		return nil, err
 	}
 
-	req, err := analyticsRequest(base.TenantInfo(authCtx), input)
+	req, err := analyticsRequest(resolvercore.TenantInfo(authCtx), input)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (r *QueryResolver) AgentAnalyticsToolFailures(
 		return nil, err
 	}
 
-	req, err := analyticsRequest(base.TenantInfo(authCtx), input)
+	req, err := analyticsRequest(resolvercore.TenantInfo(authCtx), input)
 	if err != nil {
 		return nil, err
 	}

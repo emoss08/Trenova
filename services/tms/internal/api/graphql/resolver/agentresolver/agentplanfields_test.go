@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -63,7 +63,7 @@ func planFieldsTenant() pagination.TenantInfo {
 }
 
 func planFieldsResolver() *AgentPlanResolver {
-	return &AgentPlanResolver{&Deps{Core: &base.Core{}}}
+	return &AgentPlanResolver{&Deps{Core: &resolvercore.Core{}}}
 }
 
 func TestAgentPlanDecidedBy_ReadsTheDeciderThroughTheRequestsUserLoader(t *testing.T) {
@@ -123,8 +123,18 @@ func TestAgentPlanRunMode_ReadsEachPlansStepsThroughTheRequestsLoader(t *testing
 	lister := &planStepLister{steps: []*agent.AgentProposal{
 		{PlanID: &inOrderID, PlanStep: 1, TargetResource: "shipment", TargetID: shipment},
 		{PlanID: &inOrderID, PlanStep: 2, TargetResource: "shipment", TargetID: shipment},
-		{PlanID: &eachStepID, PlanStep: 1, TargetResource: "invoice", TargetID: pulid.MustNew("inv_")},
-		{PlanID: &eachStepID, PlanStep: 2, TargetResource: "invoice", TargetID: pulid.MustNew("inv_")},
+		{
+			PlanID:         &eachStepID,
+			PlanStep:       1,
+			TargetResource: "invoice",
+			TargetID:       pulid.MustNew("inv_"),
+		},
+		{
+			PlanID:         &eachStepID,
+			PlanStep:       2,
+			TargetResource: "invoice",
+			TargetID:       pulid.MustNew("inv_"),
+		},
 	}}
 	ctx := loaders.NewAgentPlanStepsByPlanIDLoaderFactory(
 		loaders.AgentPlanStepsByPlanIDLoaderFactoryParams{Proposals: lister},
@@ -148,11 +158,20 @@ func TestAgentPlanRunMode_ReadsEachPlansStepsThroughTheRequestsLoader(t *testing
 		modes = append(modes, got.mode)
 	}
 
-	assert.ElementsMatch(t, []agent.PlanRunMode{agent.PlanRunModeInOrder, agent.PlanRunModeEachStep}, modes)
+	assert.ElementsMatch(
+		t,
+		[]agent.PlanRunMode{agent.PlanRunModeInOrder, agent.PlanRunModeEachStep},
+		modes,
+	)
 	require.NotEmpty(t, lister.requests)
 	asked := make([]pulid.ID, 0, 2)
 	for _, req := range lister.requests {
-		assert.Equal(t, tenantInfo, req.TenantInfo, "steps are read inside the reader's organization")
+		assert.Equal(
+			t,
+			tenantInfo,
+			req.TenantInfo,
+			"steps are read inside the reader's organization",
+		)
 		asked = append(asked, req.PlanIDs...)
 	}
 	assert.ElementsMatch(t, []pulid.ID{inOrderID, eachStepID}, asked)

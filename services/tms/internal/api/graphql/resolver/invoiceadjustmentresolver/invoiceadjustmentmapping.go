@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -19,7 +20,7 @@ func invoiceAdjustmentApprovalsRequestFromGraphQL(
 	input *gqlmodel.InvoiceAdjustmentApprovalsInput,
 	tenant pagination.TenantInfo,
 ) (*invoiceadjustmentports.ListApprovalQueueRequest, error) {
-	page, err := base.EntityCursorPageFromGraphQL(ctx, base.GqlCursorPageInput{
+	page, err := gqlconnection.EntityCursorPageFromGraphQL(ctx, gqlconnection.GqlCursorPageInput{
 		First: input.First,
 		After: input.After,
 	})
@@ -43,7 +44,7 @@ func invoiceAdjustmentApprovalsRequestFromGraphQL(
 		})
 	}
 
-	submittedByID, err := base.OptionalPulid(input.SubmittedByID)
+	submittedByID, err := gqlid.OptionalPulid(input.SubmittedByID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"submittedById",
@@ -78,7 +79,7 @@ func invoiceAdjustmentApprovalsRequestFromGraphQL(
 func invoiceAdjustmentApprovalConnectionToModel(
 	result *pagination.CursorListResult[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem],
 ) (*gqlmodel.InvoiceAdjustmentApprovalQueueConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(
 			node *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem,

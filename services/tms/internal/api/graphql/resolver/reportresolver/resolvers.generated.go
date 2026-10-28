@@ -3,13 +3,13 @@
 package reportresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	tableexportservice "github.com/emoss08/trenova/internal/modules/workspace/app/tableexportservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	TableExportService *tableexportservice.Service
 	ReportingService   *reportingservice.Service
 }

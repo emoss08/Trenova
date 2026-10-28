@@ -9,7 +9,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableexportservice"
@@ -461,7 +463,7 @@ func (r *QueryResolver) ReportDefinitions(ctx context.Context, input gqlmodel.Da
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -471,7 +473,7 @@ func (r *QueryResolver) ReportDefinitions(ctx context.Context, input gqlmodel.Da
 		&reportports.ListReportDefinitionConnectionRequest{
 			Filter:   tableInput.Filter,
 			Cursor:   tableInput.Cursor,
-			ViewerID: base.TenantInfo(authCtx).UserID,
+			ViewerID: resolvercore.TenantInfo(authCtx).UserID,
 		},
 	)
 	if err != nil {
@@ -567,7 +569,7 @@ func (r *QueryResolver) ReportRuns(ctx context.Context, input gqlmodel.DataTable
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -612,9 +614,9 @@ func (r *QueryResolver) PreviewReport(ctx context.Context, definition map[string
 		Request:    reportingRequest(authCtx),
 		Definition: decoded,
 		Params:     params,
-		Supersede:  base.BoolValue(supersede),
-		Cursor:     base.DerefString(cursor),
-		PageSize:   base.DerefInt(pageSize),
+		Supersede:  gqlscalar.BoolValue(supersede),
+		Cursor:     gqlscalar.DerefString(cursor),
+		PageSize:   gqlscalar.DerefInt(pageSize),
 	})
 	if err != nil {
 		return nil, err
@@ -639,9 +641,9 @@ func (r *QueryResolver) DrillThroughReport(ctx context.Context, input gqlmodel.R
 		Definition:  decoded,
 		Params:      input.Params,
 		Dimensions:  make([]reportingservice.DrillValue, 0, len(input.Dimensions)),
-		ColumnID:    base.DerefString(input.ColumnID),
+		ColumnID:    gqlscalar.DerefString(input.ColumnID),
 		PivotValues: input.PivotValues,
-		Limit:       base.DerefInt(input.Limit),
+		Limit:       gqlscalar.DerefInt(input.Limit),
 	}
 	for _, dimension := range input.Dimensions {
 		req.Dimensions = append(req.Dimensions, reportingservice.DrillValue{
@@ -666,8 +668,8 @@ func (r *QueryResolver) ReportSchedules(ctx context.Context, definitionID *strin
 
 	req := &reportingservice.ListSchedulesRequest{
 		Request:     reportingRequest(authCtx),
-		EnabledOnly: base.BoolValue(enabledOnly),
-		Limit:       base.RecordListLimit(limit, definitionID != nil),
+		EnabledOnly: gqlscalar.BoolValue(enabledOnly),
+		Limit:       gqlconnection.RecordListLimit(limit, definitionID != nil),
 	}
 	if definitionID != nil {
 		parsedID, parseErr := pulid.MustParse(*definitionID)
@@ -830,11 +832,11 @@ func (r *MutationResolver) ScheduleTableView(ctx context.Context, input gqlmodel
 		Name:            input.Name,
 		View:            view,
 		CronExpression:  input.CronExpression,
-		Timezone:        base.StringValue(input.Timezone),
+		Timezone:        gqlscalar.StringValue(input.Timezone),
 		Formats:         input.Formats,
 		EmailRecipients: input.EmailRecipients,
-		EmailAttach:     base.BoolValue(input.EmailAttach),
-		EmailInline:     base.BoolValue(input.EmailInline),
+		EmailAttach:     gqlscalar.BoolValue(input.EmailAttach),
+		EmailInline:     gqlscalar.BoolValue(input.EmailInline),
 	})
 	if err != nil {
 		return nil, err
@@ -850,5 +852,5 @@ func (r *ReportScheduleResolver) Mine(ctx context.Context, obj *gqlmodel.ReportS
 	if err != nil {
 		return false, err
 	}
-	return obj.RunAsID == base.TenantInfo(authCtx).UserID.String(), nil
+	return obj.RunAsID == resolvercore.TenantInfo(authCtx).UserID.String(), nil
 }

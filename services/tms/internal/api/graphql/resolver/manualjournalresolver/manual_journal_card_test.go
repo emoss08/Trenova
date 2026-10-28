@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
@@ -75,7 +75,7 @@ func TestManualJournalCardListsWhatItBecameOnlyToSomeoneWhoMayReadJournalEntries
 				Return([]*tenant.User{{ID: journal.CreatedByID, Name: "Dana Ruiz"}}, nil)
 
 			resolver := &QueryResolver{&Deps{
-				Core: &base.Core{L: zap.NewNop(), PermissionEngine: tc.engine},
+				Core: &resolvercore.Core{L: zap.NewNop(), PermissionEngine: tc.engine},
 				JournalCards: journalcardservice.New(journalcardservice.Params{
 					Logger:    zap.NewNop(),
 					Entries:   entries,

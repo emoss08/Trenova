@@ -3,7 +3,7 @@ package driverportalresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 )
 
@@ -20,12 +20,12 @@ func (r *MutationResolver) myNotificationAction(
 		return false, err
 	}
 
-	ti := base.TenantInfo(authCtx)
+	ti := resolvercore.TenantInfo(authCtx)
 	if _, err = r.DriverPortalService.ResolveWorker(ctx, ti); err != nil {
 		return false, err
 	}
 
-	return r.ApplyNotificationAction(ctx, &base.NotificationActionParams{
+	return r.ApplyNotificationAction(ctx, &resolvercore.NotificationActionParams{
 		IDs:          ids,
 		TenantInfo:   ti,
 		PersonalOnly: true,

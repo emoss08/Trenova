@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -44,7 +45,7 @@ func (r *MutationResolver) accountingMappingAction(
 	}
 
 	return action(ctx, &accountingmappingports.AccountingMappingActionRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		ID:         mappingID,
 		Source:     accountingsync.MappingSourceManual,
@@ -94,7 +95,7 @@ func (r *QueryResolver) accountingMappingDetail(
 func accountingMappingConnectionToModel(
 	result *pagination.CursorListResult[*accountingsync.AccountingMapping],
 ) (*gqlmodel.AccountingMappingConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *accountingsync.AccountingMapping, cursor string) *gqlmodel.AccountingMappingEdge {
 			return &gqlmodel.AccountingMappingEdge{Node: node, Cursor: cursor}

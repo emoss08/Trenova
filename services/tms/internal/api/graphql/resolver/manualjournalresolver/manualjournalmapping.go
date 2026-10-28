@@ -7,7 +7,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,7 +41,7 @@ const balanceSpecial = "balance"
 func manualJournalConnectionToModel(
 	result *pagination.CursorListResult[*manualjournal.Request],
 ) (*gqlmodel.ManualJournalConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *manualjournal.Request, cursor string) *gqlmodel.ManualJournalEdge {
 			return &gqlmodel.ManualJournalEdge{

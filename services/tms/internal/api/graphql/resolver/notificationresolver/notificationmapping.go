@@ -3,7 +3,7 @@ package notificationresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 )
 
@@ -17,9 +17,9 @@ func (r *MutationResolver) notificationAction(
 		return false, err
 	}
 
-	return r.ApplyNotificationAction(ctx, &base.NotificationActionParams{
+	return r.ApplyNotificationAction(ctx, &resolvercore.NotificationActionParams{
 		IDs:          ids,
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		PersonalOnly: authCtx.IsPortalUser,
 		Action:       action,
 	})

@@ -2,7 +2,7 @@ package workerresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -15,7 +15,7 @@ import (
 func workerCursorConnectionToModel(
 	result *pagination.CursorListResult[*worker.Worker],
 ) (*gqlmodel.WorkerConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
 		func(node *worker.Worker, cursor string) *gqlmodel.WorkerEdge {
@@ -31,9 +31,9 @@ func workerCursorConnectionToModel(
 
 	return &gqlmodel.WorkerConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
-			base.LastEdgeCursor(edges, func(edge *gqlmodel.WorkerEdge) string {
+			gqlconnection.LastEdgeCursor(edges, func(edge *gqlmodel.WorkerEdge) string {
 				return edge.Cursor
 			}),
 		),
@@ -45,7 +45,7 @@ func workerCursorConnectionToModel(
 func workerPTOCursorConnectionToModel(
 	result *pagination.CursorListResult[*worker.WorkerPTO],
 ) (*gqlmodel.WorkerPTOConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
 		func(node *worker.WorkerPTO, cursor string) *gqlmodel.WorkerPTOEdge {
@@ -61,9 +61,9 @@ func workerPTOCursorConnectionToModel(
 
 	return &gqlmodel.WorkerPTOConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
-			base.LastEdgeCursor(edges, func(edge *gqlmodel.WorkerPTOEdge) string {
+			gqlconnection.LastEdgeCursor(edges, func(edge *gqlmodel.WorkerPTOEdge) string {
 				return edge.Cursor
 			}),
 		),

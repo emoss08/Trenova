@@ -10,10 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -35,7 +35,7 @@ func (r *QueryResolver) AgentScorecard(ctx context.Context, input gqlmodel.Agent
 
 	actor := actorutil.FromAuthContext(authCtx)
 	result, err := r.AgentScorecardService.Get(ctx, agentports.AgentScorecardRequest{
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		AgentDefinitionID: definitionID,
 		Window:            window,
 	}, actor)

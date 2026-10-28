@@ -29,21 +29,22 @@ or runtime and [generated-artifacts.md](../generated-artifacts.md) before changi
 ## Resolvers
 
 One package per schema file, `resolver/<file>resolver/`, with a generated `Deps` holding
-`*base.Core` and only the services its code names. To add a dependency, add it to `Params`,
+`*resolvercore.Core` and only the services its code names. To add a dependency, add it to `Params`,
 `Services` and `newServices` in `resolver/services.go`, use it as `r.X` and run `task gqlgen`.
-Resolver packages never import each other; shared code goes in `base` only when it needs nothing
-but `Core`.
+Resolver packages never import each other; shared code goes in `resolvercore` only when it is a
+`Core` method or what one needs, and otherwise in a small package named for what it provides
+(`gqlid`, `gqlscalar`, `gqldecimal`, `gqlconnection`, `shipmentmapping`).
 
 - **Authorize first.** A root resolver starts with
   `authCtx, err := r.RequirePermission(ctx, permission.ResourceX, permission.OpY)` and scopes with
-  `base.TenantInfo(authCtx)`. `authzlint` (`TestEveryRootResolverIsAuthorized`) fails a root
+  `resolvercore.TenantInfo(authCtx)`. `authzlint` (`TestEveryRootResolverIsAuthorized`) fails a root
   resolver that does not reach a check; an authentication-only one is listed in
   `authOnlyAllowlist` with a reason. Self-scoped operations are named `My<Thing>` and listed in
   `selfscoped.Resolvers` under the reason they touch only the caller's records.
-- **Lists are connections.** `base.DataTableConnectionFromGraphQL` → the service's
-  `ListConnection` with `projection.Select(...)` columns → `base.EntityCursorConnection`
+- **Lists are connections.** `gqlconnection.DataTableConnectionFromGraphQL` → the service's
+  `ListConnection` with `projection.Select(...)` columns → `gqlconnection.EntityCursorConnection`
   (`commodityresolver/commodity.resolvers.go`). `IncludeTotalCount` is set only when `totalCount`
-  or `totalCountExact` is selected (`base.ConnectionTotalRequested`), and every connection type
+  or `totalCountExact` is selected (`gqlconnection.ConnectionTotalRequested`), and every connection type
   declares `totalCountExact: Boolean!` beside `totalCount`.
 - **Mutations** map input to the domain with the generated mappers, take the actor from
   `actorutil.FromAuthContext(authCtx)`, and call the same service method an agent tool calls
@@ -68,7 +69,7 @@ but `Core`.
   count loader.
 - **Another kind's record** on a type shows its reference view; more needs
   `@requiresRead(kind:)` ([reference-views.md](../reference-views.md)).
-- Tests build `&QueryResolver{&Deps{Core: &base.Core{...}, ...}}`.
+- Tests build `&QueryResolver{&Deps{Core: &resolvercore.Core{...}, ...}}`.
 
 ## Transport limits
 

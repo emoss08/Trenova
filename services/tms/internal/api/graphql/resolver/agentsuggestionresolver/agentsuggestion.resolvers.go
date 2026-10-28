@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsuggestionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -25,11 +26,11 @@ func (r *MutationResolver) RecordMyAgentSuggestion(
 		return nil, err
 	}
 
-	suggestedAgentID, err := base.ParseIDField("suggestedAgentId", input.SuggestedAgentID)
+	suggestedAgentID, err := gqlid.ParseIDField("suggestedAgentId", input.SuggestedAgentID)
 	if err != nil {
 		return nil, err
 	}
-	currentAgentID, err := base.ParseOptionalIDField("currentAgentId", input.CurrentAgentID)
+	currentAgentID, err := gqlid.ParseOptionalIDField("currentAgentId", input.CurrentAgentID)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +38,7 @@ func (r *MutationResolver) RecordMyAgentSuggestion(
 	return r.AgentSuggestionService.RecordMine(
 		ctx,
 		&agentsuggestionports.RecordAgentSuggestionRequest{
-			TenantInfo:       base.TenantInfo(authCtx),
+			TenantInfo:       resolvercore.TenantInfo(authCtx),
 			SuggestedAgentID: suggestedAgentID,
 			CurrentAgentID:   currentAgentID,
 			Surface:          input.Surface,
@@ -56,7 +57,7 @@ func (r *MutationResolver) SettleMyAgentSuggestion(
 		return nil, err
 	}
 
-	id, err := base.ParseIDField("id", input.ID)
+	id, err := gqlid.ParseIDField("id", input.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +65,7 @@ func (r *MutationResolver) SettleMyAgentSuggestion(
 	return r.AgentSuggestionService.SettleMine(
 		ctx,
 		&agentsuggestionports.SettleAgentSuggestionRequest{
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			ID:         id,
 			Outcome:    input.Outcome,
 		},

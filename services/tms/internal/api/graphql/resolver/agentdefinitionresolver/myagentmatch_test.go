@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -68,7 +68,7 @@ func recommendationResolver(
 	})
 
 	return &QueryResolver{&Deps{
-		Core:             &base.Core{PermissionEngine: permissions},
+		Core:             &resolvercore.Core{PermissionEngine: permissions},
 		AgentRecommender: recommender,
 	}}, ctx, userID
 }
@@ -142,9 +142,16 @@ func TestMyAgentMatch_RefusesSomeoneWhoMayNotStartAConversation(t *testing.T) {
 	t.Parallel()
 
 	recommender := &recordingRecommender{}
-	resolver, ctx, _ := recommendationResolver(t, recommender, &assistantPermissions{allowed: false})
+	resolver, ctx, _ := recommendationResolver(
+		t,
+		recommender,
+		&assistantPermissions{allowed: false},
+	)
 
-	result, err := resolver.MyAgentMatch(ctx, gqlmodel.MyAgentMatchInput{Text: "When will it arrive?"})
+	result, err := resolver.MyAgentMatch(
+		ctx,
+		gqlmodel.MyAgentMatchInput{Text: "When will it arrive?"},
+	)
 
 	require.Error(t, err)
 	assert.Nil(t, result)

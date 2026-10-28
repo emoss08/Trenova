@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentmapping"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -615,7 +615,7 @@ func TestShipmentCommodityMapping_CarriesDimensionsBothWays(t *testing.T) {
 	assert.InDelta(t, width, *entities[0].WidthFeet, 0.001)
 	assert.InDelta(t, height, *entities[0].HeightFeet, 0.001)
 
-	models, err := base.ShipmentCommoditiesToModel(entities)
+	models, err := shipmentmapping.ShipmentCommoditiesToModel(entities)
 
 	require.NoError(t, err)
 	require.Len(t, models, 1)

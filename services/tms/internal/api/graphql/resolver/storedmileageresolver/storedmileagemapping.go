@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -26,7 +26,7 @@ func storedMileageColumns(ctx context.Context, nodePathPrefix string) []string {
 func storedMileageConnectionToModel(
 	result *pagination.CursorListResult[*storedmileage.StoredMileage],
 ) (*gqlmodel.StoredMileageConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *storedmileage.StoredMileage, cursor string) *gqlmodel.StoredMileageEdge {
 			return &gqlmodel.StoredMileageEdge{

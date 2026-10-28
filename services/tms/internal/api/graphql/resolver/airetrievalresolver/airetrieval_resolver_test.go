@@ -8,7 +8,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -122,7 +122,7 @@ func newRetrievalResolverFixture(
 		engine:  grantOnly(grants...),
 	}
 	root := &Deps{
-		Core:                     &base.Core{PermissionEngine: f.engine},
+		Core:                     &resolvercore.Core{PermissionEngine: f.engine},
 		AiRetrievalStatusService: f.service,
 	}
 	f.query = &QueryResolver{root}

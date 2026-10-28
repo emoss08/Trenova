@@ -2,7 +2,7 @@ package tablelayoutresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablelayoutservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablelayout"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -12,7 +12,7 @@ import (
 
 func tableLayoutRequest(authCtx *authctx.AuthContext, resource string) tablelayoutservice.Request {
 	return tablelayoutservice.Request{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Resource:   resource,
 	}
 }

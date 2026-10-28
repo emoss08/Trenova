@@ -3,12 +3,12 @@
 package workeroverviewresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	workeroverviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	WorkerOverviewService *workeroverviewservice.Service
 }
 

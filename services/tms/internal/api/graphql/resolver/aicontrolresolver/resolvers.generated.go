@@ -3,14 +3,14 @@
 package aicontrolresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	agentrosterports "github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	aicontrolsummaryports "github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
 	aituneupports "github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	AiControlSummaryService aicontrolsummaryports.AIControlSummaryService
 	AiTuneUpService         aituneupports.AITuneUpService
 	AgentRosterService      agentrosterports.AgentRosterService

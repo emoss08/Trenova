@@ -5,7 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
@@ -18,7 +21,7 @@ import (
 func fuelCardCursorConnectionToModel(
 	result *pagination.CursorListResult[*fuelpurchase.FuelCard],
 ) (*gqlmodel.FuelCardConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
 		func(node *fuelpurchase.FuelCard, cursor string) *gqlmodel.FuelCardEdge {
@@ -31,9 +34,9 @@ func fuelCardCursorConnectionToModel(
 
 	return &gqlmodel.FuelCardConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
-			base.LastEdgeCursor(
+			gqlconnection.LastEdgeCursor(
 				edges,
 				func(edge *gqlmodel.FuelCardEdge) string { return edge.Cursor },
 			),
@@ -46,7 +49,7 @@ func fuelCardCursorConnectionToModel(
 func fuelPurchaseCursorConnectionToModel(
 	result *pagination.CursorListResult[*fuelpurchase.FuelPurchase],
 ) (*gqlmodel.FuelPurchaseConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
 		func(node *fuelpurchase.FuelPurchase, cursor string) *gqlmodel.FuelPurchaseEdge {
@@ -59,9 +62,9 @@ func fuelPurchaseCursorConnectionToModel(
 
 	return &gqlmodel.FuelPurchaseConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
-			base.LastEdgeCursor(
+			gqlconnection.LastEdgeCursor(
 				edges,
 				func(edge *gqlmodel.FuelPurchaseEdge) string { return edge.Cursor },
 			),
@@ -74,7 +77,7 @@ func fuelPurchaseCursorConnectionToModel(
 func fuelImportRowCursorConnectionToModel(
 	result *pagination.CursorListResult[*fuelpurchase.ImportRow],
 ) (*gqlmodel.FuelPurchaseImportRowConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
 		func(node *fuelpurchase.ImportRow, cursor string) *gqlmodel.FuelPurchaseImportRowEdge {
@@ -87,9 +90,9 @@ func fuelImportRowCursorConnectionToModel(
 
 	return &gqlmodel.FuelPurchaseImportRowConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
-			base.LastEdgeCursor(
+			gqlconnection.LastEdgeCursor(
 				edges,
 				func(edge *gqlmodel.FuelPurchaseImportRowEdge) string { return edge.Cursor },
 			),
@@ -100,15 +103,15 @@ func fuelImportRowCursorConnectionToModel(
 }
 
 func fuelCardsRequestFromGraphQL(
-	connection *base.GqlDataTableConnection,
+	connection *gqlconnection.GqlDataTableConnection,
 	input gqlmodel.FuelCardsInput,
 ) (*fuelpurchaseports.ListFuelCardsRequest, error) {
-	tractorID, err := base.OptionalScopedID("assignedTractorId", input.AssignedTractorID)
+	tractorID, err := gqlid.OptionalScopedID("assignedTractorId", input.AssignedTractorID)
 	if err != nil {
 		return nil, err
 	}
 
-	workerID, err := base.OptionalScopedID("assignedWorkerId", input.AssignedWorkerID)
+	workerID, err := gqlid.OptionalScopedID("assignedWorkerId", input.AssignedWorkerID)
 	if err != nil {
 		return nil, err
 	}
@@ -137,20 +140,20 @@ func fuelCardsRequestFromGraphQL(
 }
 
 func fuelPurchasesRequestFromGraphQL(
-	connection *base.GqlDataTableConnection,
+	connection *gqlconnection.GqlDataTableConnection,
 	input gqlmodel.FuelPurchasesInput,
 ) (*fuelpurchaseports.ListFuelPurchasesRequest, error) {
-	tractorID, err := base.OptionalScopedID("tractorId", input.TractorID)
+	tractorID, err := gqlid.OptionalScopedID("tractorId", input.TractorID)
 	if err != nil {
 		return nil, err
 	}
 
-	fuelCardID, err := base.OptionalScopedID("fuelCardId", input.FuelCardID)
+	fuelCardID, err := gqlid.OptionalScopedID("fuelCardId", input.FuelCardID)
 	if err != nil {
 		return nil, err
 	}
 
-	jurisdictionID, err := base.OptionalScopedID("jurisdictionId", input.JurisdictionID)
+	jurisdictionID, err := gqlid.OptionalScopedID("jurisdictionId", input.JurisdictionID)
 	if err != nil {
 		return nil, err
 	}
@@ -164,8 +167,8 @@ func fuelPurchasesRequestFromGraphQL(
 		FuelTypes:           input.FuelTypes,
 		Sources:             input.Sources,
 		TaxPaid:             input.TaxPaid,
-		From:                base.Int64Value(input.From),
-		To:                  base.Int64Value(input.To),
+		From:                gqlscalar.Int64Value(input.From),
+		To:                  gqlscalar.Int64Value(input.To),
 		IncludeTractor:      true,
 		IncludeWorker:       true,
 		IncludeJurisdiction: true,
@@ -189,12 +192,12 @@ func fuelCardFromInput(
 }
 
 func applyFuelCardInput(card *fuelpurchase.FuelCard, input gqlmodel.FuelCardInput) error {
-	workerID, err := base.OptionalScopedID("assignedWorkerId", input.AssignedWorkerID)
+	workerID, err := gqlid.OptionalScopedID("assignedWorkerId", input.AssignedWorkerID)
 	if err != nil {
 		return err
 	}
 
-	tractorID, err := base.OptionalScopedID("assignedTractorId", input.AssignedTractorID)
+	tractorID, err := gqlid.OptionalScopedID("assignedTractorId", input.AssignedTractorID)
 	if err != nil {
 		return err
 	}
@@ -202,11 +205,11 @@ func applyFuelCardInput(card *fuelpurchase.FuelCard, input gqlmodel.FuelCardInpu
 	card.Provider = input.Provider
 	card.LastFour = input.LastFour
 	card.Label = input.Label
-	card.ExternalCardID = base.StringValue(input.ExternalCardID)
-	card.AssignedWorkerID = base.IDValuePtr(workerID)
-	card.AssignedTractorID = base.IDValuePtr(tractorID)
-	card.ExpiresAt = base.Int64Ptr(input.ExpiresAt)
-	card.Notes = base.StringValue(input.Notes)
+	card.ExternalCardID = gqlscalar.StringValue(input.ExternalCardID)
+	card.AssignedWorkerID = gqlid.IDValuePtr(workerID)
+	card.AssignedTractorID = gqlid.IDValuePtr(tractorID)
+	card.ExpiresAt = gqlscalar.Int64Ptr(input.ExpiresAt)
+	card.Notes = gqlscalar.StringValue(input.Notes)
 	if input.Status != nil {
 		card.Status = *input.Status
 	}
@@ -233,56 +236,56 @@ func applyFuelPurchaseInput(
 	purchase *fuelpurchase.FuelPurchase,
 	input gqlmodel.FuelPurchaseInput,
 ) error {
-	tractorID, err := base.RequiredID("tractorId", input.TractorID)
+	tractorID, err := gqlid.RequiredID("tractorId", input.TractorID)
 	if err != nil {
 		return err
 	}
 
-	jurisdictionID, err := base.RequiredID("jurisdictionId", input.JurisdictionID)
+	jurisdictionID, err := gqlid.RequiredID("jurisdictionId", input.JurisdictionID)
 	if err != nil {
 		return err
 	}
 
-	workerID, err := base.OptionalScopedID("workerId", input.WorkerID)
+	workerID, err := gqlid.OptionalScopedID("workerId", input.WorkerID)
 	if err != nil {
 		return err
 	}
 
-	fuelCardID, err := base.OptionalScopedID("fuelCardId", input.FuelCardID)
+	fuelCardID, err := gqlid.OptionalScopedID("fuelCardId", input.FuelCardID)
 	if err != nil {
 		return err
 	}
 
-	quantity, err := base.DecimalFromString(input.Quantity, "quantity")
+	quantity, err := gqldecimal.DecimalFromString(input.Quantity, "quantity")
 	if err != nil {
 		return err
 	}
 
-	unitPrice, err := base.NullDecimalFromStringPtr(input.UnitPrice, "unitPrice")
+	unitPrice, err := gqldecimal.NullDecimalFromStringPtr(input.UnitPrice, "unitPrice")
 	if err != nil {
 		return err
 	}
 
-	totalAmount, err := base.DecimalFromString(input.TotalAmount, "totalAmount")
+	totalAmount, err := gqldecimal.DecimalFromString(input.TotalAmount, "totalAmount")
 	if err != nil {
 		return err
 	}
 
 	purchase.TractorID = tractorID
 	purchase.JurisdictionID = jurisdictionID
-	purchase.WorkerID = base.IDValuePtr(workerID)
-	purchase.FuelCardID = base.IDValuePtr(fuelCardID)
-	purchase.CardLastFour = base.StringValue(input.CardLastFour)
-	purchase.PurchasedAt = base.Int64Value(&input.PurchasedAt)
-	purchase.Vendor = base.StringValue(input.Vendor)
-	purchase.VendorCity = base.StringValue(input.VendorCity)
+	purchase.WorkerID = gqlid.IDValuePtr(workerID)
+	purchase.FuelCardID = gqlid.IDValuePtr(fuelCardID)
+	purchase.CardLastFour = gqlscalar.StringValue(input.CardLastFour)
+	purchase.PurchasedAt = gqlscalar.Int64Value(&input.PurchasedAt)
+	purchase.Vendor = gqlscalar.StringValue(input.Vendor)
+	purchase.VendorCity = gqlscalar.StringValue(input.VendorCity)
 	purchase.FuelType = input.FuelType
 	purchase.Quantity = quantity
 	purchase.UnitPrice = unitPrice
 	purchase.TotalAmountMinor = money.MinorUnits(totalAmount)
-	purchase.Odometer = base.Int64Ptr(input.Odometer)
-	purchase.TransactionReference = base.StringValue(input.TransactionReference)
-	purchase.Notes = base.StringValue(input.Notes)
+	purchase.Odometer = gqlscalar.Int64Ptr(input.Odometer)
+	purchase.TransactionReference = gqlscalar.StringValue(input.TransactionReference)
+	purchase.Notes = gqlscalar.StringValue(input.Notes)
 	purchase.TaxPaid = true
 	if input.TaxPaid != nil {
 		purchase.TaxPaid = *input.TaxPaid
@@ -342,15 +345,15 @@ func fuelImportParsedToModel(parsed *fuelpurchase.FuelPurchase) *gqlmodel.FuelPu
 	}
 
 	model := &gqlmodel.FuelPurchaseImportParsed{
-		Vendor:               base.NonEmptyPtr(parsed.Vendor),
-		VendorCity:           base.NonEmptyPtr(parsed.VendorCity),
-		Quantity:             base.NonEmptyPtr(parsed.Quantity.String()),
-		Gallons:              base.NonEmptyPtr(parsed.Gallons.String()),
-		UnitPrice:            base.NullDecimalToStringPtr(parsed.UnitPrice),
-		CurrencyCode:         base.NonEmptyPtr(parsed.CurrencyCode),
-		TransactionReference: base.NonEmptyPtr(parsed.TransactionReference),
-		CardLastFour:         base.NonEmptyPtr(parsed.CardLastFour),
-		Odometer:             base.IntPtr(parsed.Odometer),
+		Vendor:               gqlscalar.NonEmptyPtr(parsed.Vendor),
+		VendorCity:           gqlscalar.NonEmptyPtr(parsed.VendorCity),
+		Quantity:             gqlscalar.NonEmptyPtr(parsed.Quantity.String()),
+		Gallons:              gqlscalar.NonEmptyPtr(parsed.Gallons.String()),
+		UnitPrice:            gqldecimal.NullDecimalToStringPtr(parsed.UnitPrice),
+		CurrencyCode:         gqlscalar.NonEmptyPtr(parsed.CurrencyCode),
+		TransactionReference: gqlscalar.NonEmptyPtr(parsed.TransactionReference),
+		CardLastFour:         gqlscalar.NonEmptyPtr(parsed.CardLastFour),
+		Odometer:             gqlscalar.IntPtr(parsed.Odometer),
 	}
 	if parsed.PurchasedAt > 0 {
 		purchasedAt := int(parsed.PurchasedAt)
@@ -365,7 +368,7 @@ func fuelImportParsedToModel(parsed *fuelpurchase.FuelPurchase) *gqlmodel.FuelPu
 		model.QuantityUnit = &unit
 	}
 	if parsed.TotalAmountMinor != 0 {
-		model.TotalAmount = base.NonEmptyPtr(
+		model.TotalAmount = gqlscalar.NonEmptyPtr(
 			money.DecimalFromMinor(parsed.TotalAmountMinor).StringFixed(2),
 		)
 	}
@@ -379,7 +382,7 @@ func fuelImportRowsRequest(
 	input *gqlmodel.FuelPurchaseImportRowsInput,
 	tenant pagination.TenantInfo,
 ) (*fuelpurchaseports.ListImportRowsRequest, error) {
-	pageInput := base.GqlCursorPageInput{}
+	pageInput := gqlconnection.GqlCursorPageInput{}
 	var statuses []fuelpurchase.ImportRowStatus
 	if input != nil {
 		pageInput.First = input.First
@@ -387,7 +390,7 @@ func fuelImportRowsRequest(
 		statuses = input.Statuses
 	}
 
-	page, err := base.EntityCursorPageFromGraphQL(ctx, pageInput)
+	page, err := gqlconnection.EntityCursorPageFromGraphQL(ctx, pageInput)
 	if err != nil {
 		return nil, err
 	}
@@ -395,7 +398,7 @@ func fuelImportRowsRequest(
 	return &fuelpurchaseports.ListImportRowsRequest{
 		BatchID:    batch.ID,
 		TenantInfo: tenant,
-		Filter: base.QueryOptionsFromGraphQL(&base.GqlListOptions{
+		Filter: gqlconnection.QueryOptionsFromGraphQL(&gqlconnection.GqlListOptions{
 			TenantInfo: tenant,
 			Limit:      page.Cursor.Limit,
 		}),
@@ -435,7 +438,7 @@ func cancelCardRequestFromInput(
 	tenant pagination.TenantInfo,
 	userID pulid.ID,
 ) (*fuelpurchaseservice.CancelCardRequest, error) {
-	id, err := base.RequiredID("id", input.ID)
+	id, err := gqlid.RequiredID("id", input.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -454,17 +457,17 @@ func assignCardRequestFromInput(
 	tenant pagination.TenantInfo,
 	userID pulid.ID,
 ) (*fuelpurchaseservice.AssignCardRequest, error) {
-	id, err := base.RequiredID("id", input.ID)
+	id, err := gqlid.RequiredID("id", input.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	tractorID, err := base.OptionalScopedID("assignedTractorId", input.AssignedTractorID)
+	tractorID, err := gqlid.OptionalScopedID("assignedTractorId", input.AssignedTractorID)
 	if err != nil {
 		return nil, err
 	}
 
-	workerID, err := base.OptionalScopedID("assignedWorkerId", input.AssignedWorkerID)
+	workerID, err := gqlid.OptionalScopedID("assignedWorkerId", input.AssignedWorkerID)
 	if err != nil {
 		return nil, err
 	}
@@ -473,8 +476,8 @@ func assignCardRequestFromInput(
 		TenantInfo:        tenant,
 		ID:                id,
 		Version:           int64(input.Version),
-		AssignedTractorID: base.IDValuePtr(tractorID),
-		AssignedWorkerID:  base.IDValuePtr(workerID),
+		AssignedTractorID: gqlid.IDValuePtr(tractorID),
+		AssignedWorkerID:  gqlid.IDValuePtr(workerID),
 		UserID:            userID,
 	}, nil
 }
@@ -523,7 +526,7 @@ func epochPtr(value int64) *int {
 }
 
 func fuelImportsRequestFromGraphQL(
-	connection *base.GqlDataTableConnection,
+	connection *gqlconnection.GqlDataTableConnection,
 	input gqlmodel.FuelPurchaseImportsInput,
 ) *fuelpurchaseports.ListImportBatchesRequest {
 	req := &fuelpurchaseports.ListImportBatchesRequest{
@@ -548,7 +551,7 @@ func fuelImportsRequestFromGraphQL(
 func fuelImportCursorConnectionToModel(
 	result *pagination.CursorListResult[*fuelpurchase.ImportBatch],
 ) (*gqlmodel.FuelPurchaseImportBatchConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
 		func(
@@ -564,9 +567,9 @@ func fuelImportCursorConnectionToModel(
 
 	return &gqlmodel.FuelPurchaseImportBatchConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
-			base.LastEdgeCursor(
+			gqlconnection.LastEdgeCursor(
 				edges,
 				func(edge *gqlmodel.FuelPurchaseImportBatchEdge) string { return edge.Cursor },
 			),

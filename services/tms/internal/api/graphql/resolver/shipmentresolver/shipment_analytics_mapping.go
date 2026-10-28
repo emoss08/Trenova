@@ -2,7 +2,7 @@ package shipmentresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/floatutils"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -37,8 +37,8 @@ func analyticsDateRange(startDate, endDate *int) *kernelports.DateRange {
 		return nil
 	}
 	return &kernelports.DateRange{
-		StartDate: base.Int64Value(startDate),
-		EndDate:   base.Int64Value(endDate),
+		StartDate: gqlscalar.Int64Value(startDate),
+		EndDate:   gqlscalar.Int64Value(endDate),
 	}
 }
 

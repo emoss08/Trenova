@@ -13,11 +13,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/model"
-	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/resolver/resolvercore"
 )
 
 func (r *MutationResolver) RenameTruck(ctx context.Context, input gqlmodel.RenameTruckInput) (*model.Truck, error) {
-	t := base.TruckByID(r.Fleet, input.ID)
+	t := resolvercore.TruckByID(r.Fleet, input.ID)
 	if t == nil {
 		return nil, errors.New("truck not found")
 	}
@@ -35,7 +35,7 @@ func (r *MutationResolver) RenameTruck(ctx context.Context, input gqlmodel.Renam
 }
 
 func (r *QueryResolver) Node(ctx context.Context, id string) (model.Node, error) {
-	if t := base.TruckByID(r.Fleet, id); t != nil {
+	if t := resolvercore.TruckByID(r.Fleet, id); t != nil {
 		return t, nil
 	}
 	for _, d := range r.Roster {
@@ -70,7 +70,7 @@ func (r *QueryResolver) Truck(ctx context.Context, id string) (*model.Truck, err
 	if id == "boom" {
 		return nil, errors.New("truck not found")
 	}
-	return base.TruckByID(r.Fleet, id), nil
+	return resolvercore.TruckByID(r.Fleet, id), nil
 }
 
 func (r *QueryResolver) Search(ctx context.Context, text string) ([]model.SearchResult, error) {

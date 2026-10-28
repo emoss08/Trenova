@@ -9,7 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -36,9 +36,12 @@ func TestMyProposalPreview_ServesEachReasonOfARefusal(t *testing.T) {
 	proposalID := pulid.MustNew("ap_")
 	previews := &resolvertest.PreviewService{}
 	root := FromServices(&Services{
-		Core: &base.Core{L: zap.NewNop(), PermissionEngine: &resolvertest.PreviewPermissions{Granted: map[string]bool{
-			permission.ResourceAssistant.String() + "|" + string(permission.OpRead): true,
-		}}},
+		Core: &resolvercore.Core{
+			L: zap.NewNop(),
+			PermissionEngine: &resolvertest.PreviewPermissions{Granted: map[string]bool{
+				permission.ResourceAssistant.String() + "|" + string(permission.OpRead): true,
+			}},
+		},
 		AgentProposalService: &resolvertest.PreviewProposals{
 			Proposal: &agent.AgentProposal{ID: proposalID},
 		},

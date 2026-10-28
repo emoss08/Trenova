@@ -3,15 +3,9 @@ package selectoptionsresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentmanufacturerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/equipmenttypeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/locationportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ratezoneportsmock"
-
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -28,6 +22,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratezoneservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentmanufacturerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmenttypeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/locationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ratezoneportsmock"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -118,7 +117,7 @@ func TestSelectOptions_InitialResourcesDoNotRequireResourcePermission(t *testing
 
 	permissionEngine := &resolvertest.RecordingPermissionEngine{}
 	resolver := &QueryResolver{&Deps{
-		Core: &base.Core{PermissionEngine: permissionEngine},
+		Core: &resolvercore.Core{PermissionEngine: permissionEngine},
 		EquipmentTypeService: equipmenttypeservice.New(equipmenttypeservice.Params{
 			Logger: zap.NewNop(),
 			Repo:   repo,
@@ -168,7 +167,7 @@ func TestSelectOptions_EquipmentManufacturerUsesAuthContextOnly(t *testing.T) {
 
 	permissionEngine := &resolvertest.RecordingPermissionEngine{}
 	resolver := &QueryResolver{&Deps{
-		Core: &base.Core{PermissionEngine: permissionEngine},
+		Core: &resolvercore.Core{PermissionEngine: permissionEngine},
 		EquipmentManufacturerService: equipmentmanufacturerservice.New(
 			equipmentmanufacturerservice.Params{
 				Logger: zap.NewNop(),
@@ -215,7 +214,7 @@ func TestSelectOptions_LocationByIDsResolvesNames(t *testing.T) {
 		Once()
 
 	resolver := &QueryResolver{&Deps{
-		Core: &base.Core{},
+		Core: &resolvercore.Core{},
 		LocationService: locationservice.New(locationservice.Params{
 			Logger: zap.NewNop(),
 			Repo:   repo,
@@ -261,7 +260,7 @@ func TestSelectOptions_RateZoneByIDsResolvesNames(t *testing.T) {
 		Once()
 
 	resolver := &QueryResolver{&Deps{
-		Core: &base.Core{},
+		Core: &resolvercore.Core{},
 		RateZoneService: ratezoneservice.New(ratezoneservice.Params{
 			Logger: zap.NewNop(),
 			Repo:   repo,
@@ -323,7 +322,7 @@ func TestSelectOptions_EDIConnectionByIDsResolvesLabels(t *testing.T) {
 		Once()
 
 	resolver := &QueryResolver{&Deps{
-		Core: &base.Core{},
+		Core: &resolvercore.Core{},
 		EdiService: ediservice.New(ediservice.Params{
 			Logger:         zap.NewNop(),
 			ConnectionRepo: repo,
@@ -376,7 +375,7 @@ func TestSelectOptions_EDIConnectionSelectOptionsFiltersActive(t *testing.T) {
 		Once()
 
 	resolver := &QueryResolver{&Deps{
-		Core: &base.Core{},
+		Core: &resolvercore.Core{},
 		EdiService: ediservice.New(ediservice.Params{
 			Logger:         zap.NewNop(),
 			ConnectionRepo: repo,
@@ -436,7 +435,7 @@ func TestSelectOptions_EDIDocumentTypeCatalogIDs(t *testing.T) {
 		Twice()
 
 	resolver := &QueryResolver{&Deps{
-		Core: &base.Core{},
+		Core: &resolvercore.Core{},
 		EdiService: ediservice.New(ediservice.Params{
 			Logger:           zap.NewNop(),
 			DocumentTypeRepo: repo,
@@ -480,7 +479,7 @@ func TestSelectOptions_EDIDocumentTypeRejectsBlankID(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
 	resolver := &QueryResolver{&Deps{
-		Core: &base.Core{},
+		Core: &resolvercore.Core{},
 		EdiService: ediservice.New(ediservice.Params{
 			Logger:           zap.NewNop(),
 			DocumentTypeRepo: ediportsmock.NewMockEDIDocumentTypeRepository(t),
@@ -553,7 +552,7 @@ func TestSelectOptions_EDITransactionSetCatalogIDs(t *testing.T) {
 		Once()
 
 	resolver := &QueryResolver{&Deps{
-		Core: &base.Core{},
+		Core: &resolvercore.Core{},
 		EdiService: ediservice.New(ediservice.Params{
 			Logger:             zap.NewNop(),
 			TransactionSetRepo: repo,
@@ -599,7 +598,7 @@ func TestSelectOptions_EDITransactionSetCatalogIDs(t *testing.T) {
 }
 
 func iftaFuelTypeResolver() *QueryResolver {
-	return &QueryResolver{&Deps{Core: &base.Core{}}}
+	return &QueryResolver{&Deps{Core: &resolvercore.Core{}}}
 }
 
 func iftaFuelTypeSelectOptionIDs(connection *gqlmodel.SelectOptionConnection) []string {

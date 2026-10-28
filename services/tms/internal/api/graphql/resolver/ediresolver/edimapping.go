@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -16,7 +17,7 @@ import (
 func ediPartnerConnectionToModel(
 	result *pagination.CursorListResult[*edi.EDIPartner],
 ) (*gqlmodel.EDIPartnerConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *edi.EDIPartner, cursor string) *gqlmodel.EDIPartnerEdge {
 			return &gqlmodel.EDIPartnerEdge{Node: node, Cursor: cursor}
@@ -38,7 +39,7 @@ func ediPartnerConnectionToModel(
 func ediCommunicationProfileConnectionToModel(
 	result *pagination.CursorListResult[*edi.EDICommunicationProfile],
 ) (*gqlmodel.EDICommunicationProfileConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *edi.EDICommunicationProfile, cursor string) *gqlmodel.EDICommunicationProfileEdge {
 			return &gqlmodel.EDICommunicationProfileEdge{Node: node, Cursor: cursor}
@@ -60,7 +61,7 @@ func ediCommunicationProfileConnectionToModel(
 func ediTransferConnectionToModel(
 	result *pagination.CursorListResult[*edi.EDITransfer],
 ) (*gqlmodel.EDITransferConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *edi.EDITransfer, cursor string) *gqlmodel.EDITransferEdge {
 			return &gqlmodel.EDITransferEdge{Node: node, Cursor: cursor}
@@ -82,7 +83,7 @@ func ediTransferConnectionToModel(
 func ediMessageConnectionToModel(
 	result *pagination.CursorListResult[*edi.EDIMessage],
 ) (*gqlmodel.EDIMessageConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *edi.EDIMessage, cursor string) *gqlmodel.EDIMessageEdge {
 			return &gqlmodel.EDIMessageEdge{Node: node, Cursor: cursor}
@@ -160,10 +161,10 @@ func ediSummaryToModel(summary *ediservice.EDISummary) *gqlmodel.EDISummary {
 		item := &gqlmodel.EDISummaryAttentionItem{
 			Kind: gqlmodel.EDISummaryAttentionKindMessage,
 			ID:   message.ID.String(),
-			Reference: base.StrPtr(
+			Reference: gqlscalar.StrPtr(
 				string(message.TransactionSet) + " " + message.TransactionControlNumber,
 			),
-			Error:      base.StrPtr(message.DeliveryLastError),
+			Error:      gqlscalar.StrPtr(message.DeliveryLastError),
 			OccurredAt: int(message.UpdatedAt),
 		}
 		if message.EDIPartnerID.IsNotNil() {
@@ -171,8 +172,8 @@ func ediSummaryToModel(summary *ediservice.EDISummary) *gqlmodel.EDISummary {
 			item.PartnerID = &partnerID
 		}
 		if message.Partner != nil {
-			item.PartnerName = base.StrPtr(message.Partner.Name)
-			item.PartnerCode = base.StrPtr(message.Partner.Code)
+			item.PartnerName = gqlscalar.StrPtr(message.Partner.Name)
+			item.PartnerCode = gqlscalar.StrPtr(message.Partner.Code)
 		}
 		attention = append(attention, item)
 	}
@@ -180,8 +181,8 @@ func ediSummaryToModel(summary *ediservice.EDISummary) *gqlmodel.EDISummary {
 		item := &gqlmodel.EDISummaryAttentionItem{
 			Kind:       gqlmodel.EDISummaryAttentionKindInboundFile,
 			ID:         file.ID.String(),
-			Reference:  base.StrPtr(file.FileName),
-			Error:      base.StrPtr(file.FailureReason),
+			Reference:  gqlscalar.StrPtr(file.FileName),
+			Error:      gqlscalar.StrPtr(file.FailureReason),
 			OccurredAt: int(file.ReceivedAt),
 		}
 		if file.EDIPartnerID.IsNotNil() {
@@ -189,8 +190,8 @@ func ediSummaryToModel(summary *ediservice.EDISummary) *gqlmodel.EDISummary {
 			item.PartnerID = &partnerID
 		}
 		if file.Partner != nil {
-			item.PartnerName = base.StrPtr(file.Partner.Name)
-			item.PartnerCode = base.StrPtr(file.Partner.Code)
+			item.PartnerName = gqlscalar.StrPtr(file.Partner.Name)
+			item.PartnerCode = gqlscalar.StrPtr(file.Partner.Code)
 		}
 		attention = append(attention, item)
 	}
@@ -225,7 +226,7 @@ func summaryStatusCounts[T ~string](counts map[T]int) []*gqlmodel.EDISummaryStat
 func ediFlowInstanceConnectionToModel(
 	result *pagination.CursorListResult[*edi.FlowInstance],
 ) (*gqlmodel.EDIFlowInstanceConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *edi.FlowInstance, cursor string) *gqlmodel.EDIFlowInstanceEdge {
 			return &gqlmodel.EDIFlowInstanceEdge{Node: node, Cursor: cursor}
@@ -247,7 +248,7 @@ func ediFlowInstanceConnectionToModel(
 func ediMappingProfileConnectionToModel(
 	result *pagination.CursorListResult[*edi.EDIMappingProfile],
 ) (*gqlmodel.EDIMappingProfileConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *edi.EDIMappingProfile, cursor string) *gqlmodel.EDIMappingProfileEdge {
 			return &gqlmodel.EDIMappingProfileEdge{Node: node, Cursor: cursor}
@@ -269,7 +270,7 @@ func ediMappingProfileConnectionToModel(
 func ediInboundFileConnectionToModel(
 	result *pagination.CursorListResult[*edi.EDIInboundFile],
 ) (*gqlmodel.EDIInboundFileConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *edi.EDIInboundFile, cursor string) *gqlmodel.EDIInboundFileEdge {
 			return &gqlmodel.EDIInboundFileEdge{Node: node, Cursor: cursor}

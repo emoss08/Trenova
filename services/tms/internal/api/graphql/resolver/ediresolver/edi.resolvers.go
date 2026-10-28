@@ -8,15 +8,16 @@ package ediresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/shared/i18n"
-
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -39,7 +40,7 @@ func (r *QueryResolver) EDIPartners(ctx context.Context, input gqlmodel.DataTabl
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +62,7 @@ func (r *QueryResolver) EDICommunicationProfiles(ctx context.Context, input gqlm
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -86,12 +87,12 @@ func (r *QueryResolver) EDITransfers(ctx context.Context, input gqlmodel.DataTab
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	fileID, err := base.ParseOptionalIDField("inboundFileId", inboundFileID)
+	fileID, err := gqlid.ParseOptionalIDField("inboundFileId", inboundFileID)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +120,7 @@ func (r *QueryResolver) EDIMessages(ctx context.Context, input gqlmodel.DataTabl
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +157,7 @@ func (r *QueryResolver) EDIInboundFiles(ctx context.Context, input gqlmodel.Data
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +191,7 @@ func (r *QueryResolver) EDIMappingProfiles(ctx context.Context, input gqlmodel.D
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +222,7 @@ func (r *QueryResolver) EDIFlowInstances(ctx context.Context, input gqlmodel.Dat
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +265,7 @@ func (r *QueryResolver) EDISummary(ctx context.Context, sinceHours *int) (*gqlmo
 		return nil, err
 	}
 
-	req := &ediservice.GetEDISummaryRequest{TenantInfo: base.TenantInfo(authCtx)}
+	req := &ediservice.GetEDISummaryRequest{TenantInfo: resolvercore.TenantInfo(authCtx)}
 	if sinceHours != nil && *sinceHours > 0 {
 		req.Since = timeutils.NowUnix() - int64(*sinceHours)*3600
 	}
@@ -282,7 +283,7 @@ func (r *QueryResolver) EDIPartnerScorecards(ctx context.Context, sinceHours *in
 		return nil, err
 	}
 
-	req := &ediservice.GetEDIPartnerScorecardsRequest{TenantInfo: base.TenantInfo(authCtx)}
+	req := &ediservice.GetEDIPartnerScorecardsRequest{TenantInfo: resolvercore.TenantInfo(authCtx)}
 	if sinceHours != nil && *sinceHours > 0 {
 		req.Since = timeutils.NowUnix() - int64(*sinceHours)*3600
 	}
@@ -307,7 +308,7 @@ func (r *QueryResolver) EDIPartnerReadiness(ctx context.Context, partnerIds []st
 		ids = append(ids, id)
 	}
 	states, err := r.EdiService.GetPartnerReadiness(ctx, &ediservice.GetEDIPartnerReadinessRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		PartnerIDs: ids,
 	})
 	if err != nil {
@@ -331,7 +332,7 @@ func (r *QueryResolver) EDIVolumeSeries(ctx context.Context, sinceHours *int) ([
 		return nil, err
 	}
 
-	req := &ediservice.GetEDIVolumeSeriesRequest{TenantInfo: base.TenantInfo(authCtx)}
+	req := &ediservice.GetEDIVolumeSeriesRequest{TenantInfo: resolvercore.TenantInfo(authCtx)}
 	if sinceHours != nil && *sinceHours > 0 {
 		req.Since = timeutils.NowUnix() - int64(*sinceHours)*3600
 	}
@@ -353,7 +354,7 @@ func (r *QueryResolver) EDIPartnerCard(ctx context.Context, id string) (*gqlmode
 	}
 
 	card, err := r.EdiService.GetPartnerCard(ctx, &ediservice.GetEDIPartnerCardRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		PartnerID:  partnerID,
 		IncludeCarriers: r.HasPermission(
 			ctx,
@@ -437,12 +438,12 @@ func (r *QueryResolver) EDITransfer(ctx context.Context, id string) (*gqlmodel.E
 	if err != nil {
 		return nil, err
 	}
-	transferID, err := base.ParseIDField("id", id)
+	transferID, err := gqlid.ParseIDField("id", id)
 	if err != nil {
 		return nil, err
 	}
 
-	req := ediports.GetEDITransferByIDRequest{ID: transferID, TenantInfo: base.TenantInfo(authCtx)}
+	req := ediports.GetEDITransferByIDRequest{ID: transferID, TenantInfo: resolvercore.TenantInfo(authCtx)}
 	transfer, err := r.EdiService.GetTransfer(ctx, req)
 	if err != nil {
 		return nil, err
@@ -470,14 +471,14 @@ func (r *QueryResolver) EDIMessage(ctx context.Context, id string) (*gqlmodel.ED
 	if err != nil {
 		return nil, err
 	}
-	messageID, err := base.ParseIDField("id", id)
+	messageID, err := gqlid.ParseIDField("id", id)
 	if err != nil {
 		return nil, err
 	}
 
 	message, err := r.EdiService.GetMessage(ctx, ediports.GetEDIMessageByIDRequest{
 		ID:         messageID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 	if err != nil {
 		return nil, err
@@ -491,14 +492,14 @@ func (r *QueryResolver) EDIInboundFile(ctx context.Context, id string) (*gqlmode
 	if err != nil {
 		return nil, err
 	}
-	fileID, err := base.ParseIDField("id", id)
+	fileID, err := gqlid.ParseIDField("id", id)
 	if err != nil {
 		return nil, err
 	}
 
 	file, err := r.EdiInboundService.GetInboundFile(ctx, ediports.GetEDIInboundFileByIDRequest{
 		ID:              fileID,
-		TenantInfo:      base.TenantInfo(authCtx),
+		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		IncludeMessages: true,
 	})
 	if err != nil {
@@ -514,7 +515,7 @@ func (r *QueryResolver) EDIAckHealth(ctx context.Context, partnerID *string, tra
 		return nil, err
 	}
 	req, err := ackHealthRequest(&ackHealthArguments{
-		tenant:              base.TenantInfo(authCtx),
+		tenant:              resolvercore.TenantInfo(authCtx),
 		partnerID:           partnerID,
 		transactionSet:      transactionSet,
 		overdueAfterSeconds: overdueAfterSeconds,

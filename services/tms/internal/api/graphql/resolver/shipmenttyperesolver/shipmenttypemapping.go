@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -26,7 +26,7 @@ func shipmentTypeColumns(ctx context.Context, nodePathPrefix string) []string {
 func shipmentTypeConnectionToModel(
 	result *pagination.CursorListResult[*shipmenttype.ShipmentType],
 ) (*gqlmodel.ShipmentTypeConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *shipmenttype.ShipmentType, cursor string) *gqlmodel.ShipmentTypeEdge {
 			return &gqlmodel.ShipmentTypeEdge{

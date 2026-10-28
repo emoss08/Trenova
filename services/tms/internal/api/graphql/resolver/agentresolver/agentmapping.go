@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -100,7 +100,7 @@ func agentProposalColumns(ctx context.Context, nodePathPrefix string) []string {
 func agentEvaluationConnectionToModel(
 	result *pagination.CursorListResult[*agent.Evaluation],
 ) (*gqlmodel.AgentEvaluationConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *agent.Evaluation, cursor string) *gqlmodel.AgentEvaluationEdge {
 			return &gqlmodel.AgentEvaluationEdge{Node: node, Cursor: cursor}
@@ -120,7 +120,7 @@ func agentEvaluationConnectionToModel(
 }
 
 func agentMemoryColumns(ctx context.Context, nodePathPrefix string) []string {
-	selection := base.ProjectedSelection(ctx, projection.AgentMemorySpec, nodePathPrefix)
+	selection := gqlconnection.ProjectedSelection(ctx, projection.AgentMemorySpec, nodePathPrefix)
 	if !selection.HasSpecial(agentMemoryTaintsSpecial) || len(selection.Columns) == 0 {
 		return selection.Columns
 	}
@@ -137,7 +137,7 @@ func agentMemoryColumns(ctx context.Context, nodePathPrefix string) []string {
 func agentMemoryConnectionToModel(
 	result *pagination.CursorListResult[*agent.Memory],
 ) (*gqlmodel.AgentMemoryConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *agent.Memory, cursor string) *gqlmodel.AgentMemoryEdge {
 			return &gqlmodel.AgentMemoryEdge{Node: node, Cursor: cursor}
@@ -171,7 +171,7 @@ func agentReflectionColumns(ctx context.Context, nodePathPrefix string) []string
 func agentReflectionConnectionToModel(
 	result *pagination.CursorListResult[*agent.Reflection],
 ) (*gqlmodel.AgentReflectionConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *agent.Reflection, cursor string) *gqlmodel.AgentReflectionEdge {
 			return &gqlmodel.AgentReflectionEdge{Node: node, Cursor: cursor}
@@ -240,7 +240,7 @@ func agentPlanColumns(ctx context.Context, nodePathPrefix string) []string {
 func agentPlanConnectionToModel(
 	result *pagination.CursorListResult[*agent.AgentPlan],
 ) (*gqlmodel.AgentPlanConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *agent.AgentPlan, cursor string) *gqlmodel.AgentPlanEdge {
 			return &gqlmodel.AgentPlanEdge{Node: node, Cursor: cursor}
@@ -274,7 +274,7 @@ func agentExceptionColumns(ctx context.Context, nodePathPrefix string) []string 
 func agentRunConnectionToModel(
 	result *pagination.CursorListResult[*agent.AgentRun],
 ) (*gqlmodel.AgentRunConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *agent.AgentRun, cursor string) *gqlmodel.AgentRunEdge {
 			return &gqlmodel.AgentRunEdge{Node: node, Cursor: cursor}
@@ -296,7 +296,7 @@ func agentRunConnectionToModel(
 func agentProposalConnectionToModel(
 	result *pagination.CursorListResult[*agent.AgentProposal],
 ) (*gqlmodel.AgentProposalConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *agent.AgentProposal, cursor string) *gqlmodel.AgentProposalEdge {
 			return &gqlmodel.AgentProposalEdge{Node: node, Cursor: cursor}
@@ -318,7 +318,7 @@ func agentProposalConnectionToModel(
 func agentExceptionConnectionToModel(
 	result *pagination.CursorListResult[*agent.AgentException],
 ) (*gqlmodel.AgentExceptionConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *agent.AgentException, cursor string) *gqlmodel.AgentExceptionEdge {
 			return &gqlmodel.AgentExceptionEdge{Node: node, Cursor: cursor}

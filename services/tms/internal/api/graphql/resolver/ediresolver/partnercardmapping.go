@@ -2,7 +2,7 @@ package ediresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -47,9 +47,9 @@ func ediPartnerTransportsToModel(
 		profile := transport.Profile
 		models = append(models, &gqlmodel.EDIPartnerTransport{
 			Profile:           profile,
-			LastPollAttemptAt: base.IntPtr(profile.LastPollAttemptAt),
-			LastPollSuccessAt: base.IntPtr(profile.LastPollSuccessAt),
-			LastPollError:     base.NonEmptyPtr(transport.LastPollError),
+			LastPollAttemptAt: gqlscalar.IntPtr(profile.LastPollAttemptAt),
+			LastPollSuccessAt: gqlscalar.IntPtr(profile.LastPollSuccessAt),
+			LastPollError:     gqlscalar.NonEmptyPtr(transport.LastPollError),
 			Credentials:       ediTransportCredentialsToModel(transport.Credentials),
 			Certificates:      ediTransportCertificatesToModel(transport.Certificates),
 		})
@@ -91,8 +91,8 @@ func ediTransportCertificatesToModel(
 		if summary := certificate.Summary; model.Readable {
 			notBefore := int(summary.NotBefore)
 			notAfter := int(summary.NotAfter)
-			model.Subject = base.NonEmptyPtr(summary.Subject)
-			model.Issuer = base.NonEmptyPtr(summary.Issuer)
+			model.Subject = gqlscalar.NonEmptyPtr(summary.Subject)
+			model.Issuer = gqlscalar.NonEmptyPtr(summary.Issuer)
 			model.NotBefore = &notBefore
 			model.NotAfter = &notAfter
 			model.Expired = summary.Expired
@@ -209,8 +209,8 @@ func ediPartnerCarriersToModel(
 		models = append(models, &gqlmodel.EDIPartnerCarrier{
 			CarrierID:   channel.CarrierID.String(),
 			CarrierName: channel.Carrier.Name,
-			CarrierCode: base.NonEmptyPtr(channel.Carrier.Code),
-			SCAC:        base.NonEmptyPtr(scac),
+			CarrierCode: gqlscalar.NonEmptyPtr(channel.Carrier.Code),
+			SCAC:        gqlscalar.NonEmptyPtr(scac),
 			IsDefault:   channel.IsDefault,
 		})
 	}

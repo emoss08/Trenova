@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentmapping"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -17,7 +18,7 @@ func shipmentConnectionToModel(
 		result.Items,
 		result,
 		func(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error) {
-			return base.ShipmentToModel(ctx, entity)
+			return shipmentmapping.ShipmentToModel(ctx, entity)
 		},
 		func(node *gqlmodel.Shipment, cursor string) *gqlmodel.ShipmentEdge {
 			return &gqlmodel.ShipmentEdge{
@@ -33,7 +34,7 @@ func shipmentConnectionToModel(
 		Edges:           edges,
 		TotalCount:      result.TotalCount,
 		TotalCountExact: result.TotalCountExact,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
 			endCursor,
 		),
@@ -61,7 +62,7 @@ func shipmentCommentConnectionToModel(
 		Edges:           edges,
 		TotalCount:      result.TotalCount,
 		TotalCountExact: result.TotalCountExact,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
 			endCursor,
 		),

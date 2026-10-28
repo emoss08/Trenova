@@ -3,12 +3,12 @@
 package trailerresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	trailerservice "github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	TrailerService *trailerservice.Service
 }
 

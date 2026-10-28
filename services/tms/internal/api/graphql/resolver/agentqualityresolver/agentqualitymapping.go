@@ -6,7 +6,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -31,7 +32,7 @@ func agentEvalCaseColumns(ctx context.Context, nodePathPrefix string) []string {
 func agentEvalCaseConnectionToModel(
 	result *pagination.CursorListResult[*agentquality.EvalCase],
 ) (*gqlmodel.AgentEvalCaseConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *agentquality.EvalCase, cursor string) *gqlmodel.AgentEvalCaseEdge {
 			return &gqlmodel.AgentEvalCaseEdge{Node: node, Cursor: cursor}
@@ -90,7 +91,7 @@ func evalCaseFromMessage(
 	return &agentports.CreateEvalCaseFromMessageRequest{
 		ThreadID:  threadID,
 		MessageID: messageID,
-		Title:     base.DerefString(input.Title),
+		Title:     gqlscalar.DerefString(input.Title),
 	}, nil
 }
 
@@ -109,12 +110,12 @@ func evalCaseCurated(
 
 	request := &agentports.CreateCuratedEvalCaseRequest{
 		AgentDefinitionID: definitionID,
-		Title:             base.DerefString(input.Title),
+		Title:             gqlscalar.DerefString(input.Title),
 		Input:             input.Input,
 		HeldTools:         input.HeldTools,
 		Expected:          *expected,
-		Rubric:            base.DerefString(input.Rubric),
-		ExpiresAt:         base.OptionalInt64(input.ExpiresAt),
+		Rubric:            gqlscalar.DerefString(input.Rubric),
+		ExpiresAt:         gqlscalar.OptionalInt64(input.ExpiresAt),
 	}
 	if input.Trigger != nil {
 		request.Trigger = *input.Trigger
@@ -173,7 +174,7 @@ func evalCaseUpdate(
 		if value == nil {
 			request.ClearExpiry = true
 		} else {
-			request.ExpiresAt = base.OptionalInt64(value)
+			request.ExpiresAt = gqlscalar.OptionalInt64(value)
 		}
 	}
 

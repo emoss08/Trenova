@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
@@ -36,11 +37,11 @@ func (r *Deps) CaptureRecord(
 		return nil, nil //nolint:nilnil // a record out of reach is left absent
 	}
 
-	if err = base.RequireLoaders(ctx); err != nil {
+	if err = loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return base.OptionalMatch(
+	return loaderfields.OptionalMatch(
 		loaders.CaptureRecordLabel(ctx, loaders.CaptureRecordKey(resourceType, *id)),
 	)
 }
@@ -56,7 +57,7 @@ func (r *Deps) ListCaptureDevices(
 	status *capture.DeviceStatus,
 	query *string,
 ) ([]*capture.CaptureDevice, error) {
-	tenant := base.TenantInfo(authCtx)
+	tenant := resolvercore.TenantInfo(authCtx)
 	req := &captureservice.ListDevicesRequest{
 		TenantInfo: tenant,
 		Filter: &pagination.QueryOptions{

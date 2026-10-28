@@ -6,7 +6,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,7 +30,7 @@ func aiFeedbackColumns(ctx context.Context, nodePathPrefix string) []string {
 func aiFeedbackConnectionToModel(
 	result *pagination.CursorListResult[*aifeedback.Feedback],
 ) (*gqlmodel.AIFeedbackConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *aifeedback.Feedback, cursor string) *gqlmodel.AIFeedbackEdge {
 			return &gqlmodel.AIFeedbackEdge{Node: node, Cursor: cursor}
@@ -65,7 +66,7 @@ func aiFeedbackTarget(
 	return aifeedbackports.AIFeedbackTargetRef{
 		TargetType: targetType,
 		TargetID:   id,
-		TargetPart: base.DerefString(targetPart),
+		TargetPart: gqlscalar.DerefString(targetPart),
 	}, nil
 }
 

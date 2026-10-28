@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -49,7 +49,7 @@ func withUserLoader(ctx context.Context, users *usersByID) context.Context {
 }
 
 func peopleResolver(granted map[string]bool) *Deps {
-	return &Deps{Core: &base.Core{
+	return &Deps{Core: &resolvercore.Core{
 		PermissionEngine: &resolvertest.GrantingPermissionEngine{Granted: granted},
 	}}
 }

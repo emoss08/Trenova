@@ -2,7 +2,8 @@ package orgstructureresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
 )
 
@@ -16,18 +17,18 @@ func toTeamMembers(rows []orgstructureports.TeamMemberRow) []*gqlmodel.TeamMembe
 			WorkerID:         row.WorkerID.String(),
 			Name:             row.FirstName + " " + row.LastName,
 			Status:           row.Status,
-			FleetCodeID:      base.IDPtr(row.FleetCodeID),
+			FleetCodeID:      gqlid.IDPtr(row.FleetCodeID),
 			FleetCode:        row.FleetCode,
 			FleetColor:       row.FleetColor,
-			PositionID:       base.IDPtr(row.PositionID),
+			PositionID:       gqlid.IDPtr(row.PositionID),
 			PositionTitle:    row.PositionTitle,
 			Direct:           row.Direct,
-			ManagerID:        base.IDPtr(row.ManagerID),
+			ManagerID:        gqlid.IDPtr(row.ManagerID),
 			ComplianceStatus: row.ComplianceStatus,
 			TrainingHealth:   row.TrainingHealth,
 			SafetyRating:     row.SafetyRating,
 			HireDate:         int(row.HireDate),
-			TerminationDate:  base.IntPtr(row.TerminationDate),
+			TerminationDate:  gqlscalar.IntPtr(row.TerminationDate),
 		})
 	}
 	return members

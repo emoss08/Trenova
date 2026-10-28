@@ -10,7 +10,10 @@ import (
 	"github.com/emoss08/keel/analytics/formula"
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -158,7 +161,7 @@ func reportScheduleToModel(entity *report.ReportSchedule) *gqlmodel.ReportSchedu
 		model.EmailRecipients = emptyIfNil(entity.Delivery.EmailRecipients)
 		model.EmailAttach = entity.Delivery.EmailAttach
 		model.EmailInline = entity.Delivery.EmailInline
-		model.NotifyUserIds = base.PulidsToStrings(entity.Delivery.NotifyUserIDs)
+		model.NotifyUserIds = gqlid.PulidsToStrings(entity.Delivery.NotifyUserIDs)
 	}
 
 	return model
@@ -186,7 +189,7 @@ func reportScheduleAlertFromGraphQL(
 	alert := &report.ScheduleAlert{
 		Operator:  dbtype.Operator(input.Operator),
 		Threshold: int64(input.Threshold),
-		ColumnID:  base.DerefString(input.ColumnID),
+		ColumnID:  gqlscalar.DerefString(input.ColumnID),
 		Value:     input.Value,
 	}
 	if input.SuppressWhileFiring != nil {
@@ -204,7 +207,7 @@ func saveReportScheduleRequest(
 		return nil, err
 	}
 
-	notifyUserIDs, err := base.ParsePulids("notifyUserIds", input.NotifyUserIds)
+	notifyUserIDs, err := gqlid.ParsePulids("notifyUserIds", input.NotifyUserIds)
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +318,7 @@ func reportDashboardLayoutFromGraphQL(
 	for _, filter := range input.Filters {
 		layout.Filters = append(layout.Filters, ir.DashboardFilter{
 			ID:      filter.ID,
-			Label:   base.DerefString(filter.Label),
+			Label:   gqlscalar.DerefString(filter.Label),
 			Entity:  filter.Entity,
 			Field:   filter.Field,
 			Op:      ir.Op(filter.Op),
@@ -329,13 +332,13 @@ func reportDashboardLayoutFromGraphQL(
 func reportParameterFromGraphQL(input *gqlmodel.ReportParameterInput) ir.Parameter {
 	return ir.Parameter{
 		Name:     input.Name,
-		Label:    base.DerefString(input.Label),
+		Label:    gqlscalar.DerefString(input.Label),
 		Type:     formula.Type(input.Type),
-		Required: base.BoolValue(input.Required),
-		Multi:    base.BoolValue(input.Multi),
+		Required: gqlscalar.BoolValue(input.Required),
+		Multi:    gqlscalar.BoolValue(input.Multi),
 		Default:  input.Default,
 		Allowed:  input.Allowed,
-		Entity:   base.DerefString(input.Entity),
+		Entity:   gqlscalar.DerefString(input.Entity),
 	}
 }
 
@@ -345,11 +348,11 @@ func reportDashboardTileFromGraphQL(
 	tile := report.DashboardTile{
 		ID:        input.ID,
 		Kind:      report.TileKind(input.Kind),
-		Title:     base.DerefString(input.Title),
-		CannedKey: base.DerefString(input.CannedKey),
-		ChartID:   base.DerefString(input.ChartID),
-		ColumnID:  base.DerefString(input.ColumnID),
-		Text:      base.DerefString(input.Text),
+		Title:     gqlscalar.DerefString(input.Title),
+		CannedKey: gqlscalar.DerefString(input.CannedKey),
+		ChartID:   gqlscalar.DerefString(input.ChartID),
+		ColumnID:  gqlscalar.DerefString(input.ColumnID),
+		Text:      gqlscalar.DerefString(input.Text),
 		X:         input.X,
 		Y:         input.Y,
 		W:         input.W,
@@ -391,8 +394,8 @@ func saveReportDashboardRequest(
 	req := &reportingservice.SaveDashboardRequest{
 		Request:     reportingRequest(authCtx),
 		Name:        input.Name,
-		Description: base.DerefString(input.Description),
-		Category:    base.DerefString(input.Category),
+		Description: gqlscalar.DerefString(input.Description),
+		Category:    gqlscalar.DerefString(input.Category),
 		Tags:        input.Tags,
 		Layout:      layout,
 	}
@@ -424,7 +427,7 @@ func cannedReportToModel(entry *canned.Entry) (*gqlmodel.CannedReport, error) {
 func reportDefinitionConnectionToModel(
 	result *pagination.CursorListResult[*report.ReportDefinition],
 ) (*gqlmodel.ReportDefinitionConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *report.ReportDefinition, cursor string) *gqlmodel.ReportDefinitionEdge {
 			model, mapErr := reportDefinitionToModel(node)
@@ -442,7 +445,7 @@ func reportDefinitionConnectionToModel(
 	return &gqlmodel.ReportDefinitionConnection{
 		Edges:           page.Edges,
 		PageInfo:        page.PageInfo,
-		TotalCount:      base.DerefInt(page.TotalCount),
+		TotalCount:      gqlscalar.DerefInt(page.TotalCount),
 		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
@@ -450,7 +453,7 @@ func reportDefinitionConnectionToModel(
 func reportRunConnectionToModel(
 	result *pagination.CursorListResult[*report.ReportRun],
 ) (*gqlmodel.ReportRunConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *report.ReportRun, cursor string) *gqlmodel.ReportRunEdge {
 			return &gqlmodel.ReportRunEdge{Node: reportRunToModel(node), Cursor: cursor}
@@ -464,7 +467,7 @@ func reportRunConnectionToModel(
 	return &gqlmodel.ReportRunConnection{
 		Edges:           page.Edges,
 		PageInfo:        page.PageInfo,
-		TotalCount:      base.DerefInt(page.TotalCount),
+		TotalCount:      gqlscalar.DerefInt(page.TotalCount),
 		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
@@ -732,7 +735,7 @@ func emptyIfNil(values []string) []string {
 
 func reportingRequest(authCtx *authctx.AuthContext) reportingservice.Request {
 	return reportingservice.Request{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Principal: kernelports.PrincipalInfo{
 			Type:     kernelports.PrincipalType(authCtx.PrincipalType),
 			ID:       authCtx.PrincipalID,
@@ -782,11 +785,11 @@ func saveReportViewRequest(
 	req := &reportingservice.SaveViewRequest{
 		Request:     reportingRequest(authCtx),
 		Name:        input.Name,
-		Description: base.DerefString(input.Description),
+		Description: gqlscalar.DerefString(input.Description),
 		Params:      input.Params,
-		Shared:      base.BoolValue(input.Shared),
-		Pinned:      base.BoolValue(input.Pinned),
-		Format:      report.Format(base.DerefString(input.Format)),
+		Shared:      gqlscalar.BoolValue(input.Shared),
+		Pinned:      gqlscalar.BoolValue(input.Pinned),
+		Format:      report.Format(gqlscalar.DerefString(input.Format)),
 	}
 
 	// A create carries the report it answers; an update never does, because the

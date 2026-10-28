@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -57,7 +58,7 @@ func selectOptionsRequestFromInput(
 		offset = pagination.ClampOffset(*input.Offset)
 	}
 
-	tenant := base.TenantInfo(authCtx)
+	tenant := resolvercore.TenantInfo(authCtx)
 	return &SelectOptionsRequest{
 		TenantInfo: tenant,
 		IDs:        ids,
@@ -68,7 +69,7 @@ func selectOptionsRequestFromInput(
 				Limit:  first,
 				Offset: offset,
 			},
-			Query: base.StringValue(input.Query),
+			Query: gqlscalar.StringValue(input.Query),
 		},
 	}, nil
 }

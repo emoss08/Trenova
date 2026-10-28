@@ -162,7 +162,7 @@ func (s *services) usedBy(dir string) ([]depField, error) {
 }
 
 func writeDomainTypes(d *resolverDomain) error {
-	imps := map[string]string{"base": d.BaseImport}
+	imps := map[string]string{coreResolverPackage: d.CoreImport}
 	for _, f := range d.DepsFields {
 		for alias, p := range f.imports {
 			imps[alias] = p
@@ -180,7 +180,7 @@ func writeDomainTypes(d *resolverDomain) error {
 	for _, alias := range aliases {
 		fmt.Fprintf(&b, "\t%s %q\n", alias, imps[alias])
 	}
-	b.WriteString(")\n\ntype " + depsType + " struct {\n\t*base.Core\n")
+	b.WriteString(")\n\ntype " + depsType + " struct {\n\t*" + coreResolverPackage + ".Core\n")
 	for _, f := range d.DepsFields {
 		fmt.Fprintf(&b, "\t%s %s\n", f.Name, f.Type)
 	}

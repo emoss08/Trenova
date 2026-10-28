@@ -2,7 +2,10 @@ package carriercapacityresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -10,7 +13,7 @@ import (
 )
 
 func optionalIDPtr(field string, value *string) (*pulid.ID, error) {
-	id, err := base.OptionalScopedID(field, value)
+	id, err := gqlid.OptionalScopedID(field, value)
 	if err != nil || id.IsNil() {
 		return nil, err
 	}
@@ -23,7 +26,7 @@ func postingFromInput(
 ) (*carriercapacity.Posting, error) {
 	multiErr := errortypes.NewMultiError()
 
-	carrierID, err := base.RequiredID("carrierId", input.CarrierID)
+	carrierID, err := gqlid.RequiredID("carrierId", input.CarrierID)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +41,7 @@ func postingFromInput(
 		TruckCount:        1,
 		RateMethod:        carriercapacity.RateMethodPerMile,
 		Source:            carriercapacity.SourceManual,
-		Notes:             base.StringValue(input.Notes),
+		Notes:             gqlscalar.StringValue(input.Notes),
 	}
 	if input.TruckCount != nil {
 		posting.TruckCount = *input.TruckCount
@@ -69,7 +72,7 @@ func postingFromInput(
 		*ref.dest = id
 	}
 
-	rate, rateErr := base.ParseNullDecimalField("rate", input.Rate)
+	rate, rateErr := gqldecimal.ParseNullDecimalField("rate", input.Rate)
 	if rateErr != nil {
 		multiErr.Add("rate", errortypes.ErrInvalid, "Rate must be a number")
 	}
@@ -85,7 +88,7 @@ func postingFromInput(
 func postingConnectionToModel(
 	result *pagination.CursorListResult[*carriercapacity.Posting],
 ) (*gqlmodel.CarrierCapacityPostingConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *carriercapacity.Posting, cursor string) *gqlmodel.CarrierCapacityPostingEdge {
 			return &gqlmodel.CarrierCapacityPostingEdge{Node: node, Cursor: cursor}

@@ -2,7 +2,8 @@ package accountingsyncresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,7 +27,7 @@ func accountingSyncRecordIDs(raw []string) ([]pulid.ID, error) {
 			maxAccountingSyncActionIDs,
 		)
 	}
-	return base.ParseIDs(raw)
+	return gqlid.ParseIDs(raw)
 }
 
 func accountingSyncObjectIDs(raw []string) ([]pulid.ID, error) {
@@ -38,7 +39,7 @@ func accountingSyncObjectIDs(raw []string) ([]pulid.ID, error) {
 			maxAccountingSyncStateIDs,
 		)
 	}
-	return base.ParseIDs(raw)
+	return gqlid.ParseIDs(raw)
 }
 
 func orderedAccountingSyncStates(
@@ -64,7 +65,7 @@ func orderedAccountingSyncStates(
 func accountingSyncRecordConnectionToModel(
 	result *pagination.CursorListResult[*accountingsync.AccountingSyncRecord],
 ) (*gqlmodel.AccountingSyncRecordConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *accountingsync.AccountingSyncRecord, cursor string) *gqlmodel.AccountingSyncRecordEdge {
 			return &gqlmodel.AccountingSyncRecordEdge{Node: node, Cursor: cursor}
@@ -86,7 +87,7 @@ func accountingSyncRecordConnectionToModel(
 func accountingInboundConnectionToModel(
 	result *pagination.CursorListResult[*accountingsync.AccountingInboundChange],
 ) (*gqlmodel.AccountingInboundChangeConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(
 			node *accountingsync.AccountingInboundChange,
@@ -111,7 +112,7 @@ func accountingInboundConnectionToModel(
 func accountingDriftConnectionToModel(
 	result *pagination.CursorListResult[*accountingsync.AccountingDriftFinding],
 ) (*gqlmodel.AccountingDriftFindingConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(
 			node *accountingsync.AccountingDriftFinding,

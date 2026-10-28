@@ -3,12 +3,12 @@
 package workerdrugalcoholresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	workerdrugalcoholservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	WorkerDrugAlcoholService *workerdrugalcoholservice.Service
 }
 

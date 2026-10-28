@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -26,7 +26,7 @@ func distanceProfileColumns(ctx context.Context, nodePathPrefix string) []string
 func distanceProfileConnectionToModel(
 	result *pagination.CursorListResult[*distanceprofile.DistanceProfile],
 ) (*gqlmodel.DistanceProfileConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *distanceprofile.DistanceProfile, cursor string) *gqlmodel.DistanceProfileEdge {
 			return &gqlmodel.DistanceProfileEdge{

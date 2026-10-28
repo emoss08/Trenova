@@ -11,10 +11,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 )
 
@@ -31,7 +31,7 @@ func (r *QueryResolver) AttentionSummary(ctx context.Context) (*gqlmodel.Attenti
 	run(permission.ResourceBillingQueue, "billing queue stats", func(ctx context.Context) error {
 		stats, sErr := r.BillingQueueService.GetStats(
 			ctx,
-			&billingqueueports.GetBillingQueueStatsRequest{TenantInfo: base.TenantInfo(authCtx)},
+			&billingqueueports.GetBillingQueueStatsRequest{TenantInfo: resolvercore.TenantInfo(authCtx)},
 		)
 		if sErr != nil {
 			return sErr
@@ -41,7 +41,7 @@ func (r *QueryResolver) AttentionSummary(ctx context.Context) (*gqlmodel.Attenti
 		return nil
 	})
 	run(permission.ResourceInvoice, "invoice adjustment summary", func(ctx context.Context) error {
-		ops, sErr := r.InvoiceAdjustmentService.GetOperationsSummary(ctx, base.TenantInfo(authCtx))
+		ops, sErr := r.InvoiceAdjustmentService.GetOperationsSummary(ctx, resolvercore.TenantInfo(authCtx))
 		if sErr != nil {
 			return sErr
 		}
@@ -52,7 +52,7 @@ func (r *QueryResolver) AttentionSummary(ctx context.Context) (*gqlmodel.Attenti
 	run(permission.ResourceServiceFailure, "service failure count", func(ctx context.Context) error {
 		count, sErr := r.ServiceFailureSvc.CountUnresolved(
 			ctx,
-			&servicefailureports.CountUnresolvedServiceFailuresRequest{TenantInfo: base.TenantInfo(authCtx)},
+			&servicefailureports.CountUnresolvedServiceFailuresRequest{TenantInfo: resolvercore.TenantInfo(authCtx)},
 		)
 		if sErr != nil {
 			return sErr
@@ -63,7 +63,7 @@ func (r *QueryResolver) AttentionSummary(ctx context.Context) (*gqlmodel.Attenti
 	run(permission.ResourceEDI, "edi attention count", func(ctx context.Context) error {
 		count, sErr := r.EdiService.GetEDIAttentionCount(
 			ctx,
-			&ediservice.GetEDIAttentionCountRequest{TenantInfo: base.TenantInfo(authCtx)},
+			&ediservice.GetEDIAttentionCountRequest{TenantInfo: resolvercore.TenantInfo(authCtx)},
 		)
 		if sErr != nil {
 			return sErr
@@ -81,7 +81,7 @@ func (r *QueryResolver) AttentionSummary(ctx context.Context) (*gqlmodel.Attenti
 		if uErr != nil {
 			return uErr
 		}
-		count, sErr := r.AgentDecisionQueueService.Count(ctx, base.TenantInfo(authCtx), usable)
+		count, sErr := r.AgentDecisionQueueService.Count(ctx, resolvercore.TenantInfo(authCtx), usable)
 		if sErr != nil {
 			return sErr
 		}

@@ -2,7 +2,7 @@ package auditlogresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -10,7 +10,7 @@ import (
 func auditEntryConnectionToModel(
 	result *pagination.CursorListResult[*audit.Entry],
 ) (*gqlmodel.AuditEntryConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *audit.Entry, cursor string) *gqlmodel.AuditEntryEdge {
 			return &gqlmodel.AuditEntryEdge{

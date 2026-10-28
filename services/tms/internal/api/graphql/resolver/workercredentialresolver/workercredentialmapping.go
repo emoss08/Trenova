@@ -4,7 +4,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,7 +25,7 @@ func workerCredentialTypeFromInput(
 		BusinessUnitID:         tenantInfo.BuID,
 		Code:                   strings.TrimSpace(input.Code),
 		Name:                   strings.TrimSpace(input.Name),
-		Description:            strings.TrimSpace(base.StringValue(input.Description)),
+		Description:            strings.TrimSpace(gqlscalar.StringValue(input.Description)),
 		Category:               input.Category,
 		Status:                 input.Status,
 		IsRequired:             input.IsRequired,
@@ -33,8 +35,10 @@ func workerCredentialTypeFromInput(
 		), //nolint:gosec // bounded by validation
 		RequiresNumber:   input.RequiresNumber,
 		RequiresDocument: input.RequiresDocument,
-		SortOrder:        int32(base.IntValue(input.SortOrder)), //nolint:gosec // small ordinal
-		Version:          int64(base.IntValue(input.Version)),
+		SortOrder: int32(
+			gqlscalar.IntValue(input.SortOrder),
+		), //nolint:gosec // small ordinal
+		Version: int64(gqlscalar.IntValue(input.Version)),
 	}
 	if entity.RequiredForDriverTypes == nil {
 		entity.RequiredForDriverTypes = []worker.DriverType{}
@@ -66,7 +70,7 @@ func workerCredentialFromInput(
 			"Credential type is invalid",
 		)
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -81,12 +85,12 @@ func workerCredentialFromInput(
 		WorkerID:         workerID,
 		CredentialTypeID: typeID,
 		Status:           workercredential.CredentialStatusActive,
-		Number:           base.StringValue(input.Number),
-		IssuingAuthority: base.StringValue(input.IssuingAuthority),
-		IssuedAt:         base.Int64Ptr(input.IssuedAt),
-		ExpiresAt:        base.Int64Ptr(input.ExpiresAt),
+		Number:           gqlscalar.StringValue(input.Number),
+		IssuingAuthority: gqlscalar.StringValue(input.IssuingAuthority),
+		IssuedAt:         gqlscalar.Int64Ptr(input.IssuedAt),
+		ExpiresAt:        gqlscalar.Int64Ptr(input.ExpiresAt),
 		DocumentID:       documentID,
-		Notes:            base.StringValue(input.Notes),
+		Notes:            gqlscalar.StringValue(input.Notes),
 	}, nil
 }
 
@@ -98,7 +102,7 @@ func workerCredentialFromUpdateInput(
 	if err != nil {
 		return nil, err
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -111,12 +115,12 @@ func workerCredentialFromUpdateInput(
 		ID:               id,
 		OrganizationID:   tenantInfo.OrgID,
 		BusinessUnitID:   tenantInfo.BuID,
-		Number:           base.StringValue(input.Number),
-		IssuingAuthority: base.StringValue(input.IssuingAuthority),
-		IssuedAt:         base.Int64Ptr(input.IssuedAt),
-		ExpiresAt:        base.Int64Ptr(input.ExpiresAt),
+		Number:           gqlscalar.StringValue(input.Number),
+		IssuingAuthority: gqlscalar.StringValue(input.IssuingAuthority),
+		IssuedAt:         gqlscalar.Int64Ptr(input.IssuedAt),
+		ExpiresAt:        gqlscalar.Int64Ptr(input.ExpiresAt),
 		DocumentID:       documentID,
-		Notes:            base.StringValue(input.Notes),
+		Notes:            gqlscalar.StringValue(input.Notes),
 		Version:          int64(input.Version),
 	}, nil
 }
@@ -124,7 +128,7 @@ func workerCredentialFromUpdateInput(
 func workerCredentialTypeCursorConnectionToModel(
 	result *pagination.CursorListResult[*workercredential.WorkerCredentialType],
 ) (*gqlmodel.WorkerCredentialTypeConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
 		func(node *workercredential.WorkerCredentialType, cursor string) *gqlmodel.WorkerCredentialTypeEdge {
@@ -137,9 +141,9 @@ func workerCredentialTypeCursorConnectionToModel(
 
 	return &gqlmodel.WorkerCredentialTypeConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
-			base.LastEdgeCursor(
+			gqlconnection.LastEdgeCursor(
 				edges,
 				func(edge *gqlmodel.WorkerCredentialTypeEdge) string { return edge.Cursor },
 			),

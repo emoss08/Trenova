@@ -7,7 +7,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,7 +41,7 @@ func documentTemplateAssignmentColumns(ctx context.Context, nodePathPrefix strin
 func documentTemplateConnectionToModel(
 	result *pagination.CursorListResult[*documenttemplate.DocumentTemplate],
 ) (*gqlmodel.DocumentTemplateConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(
 			node *documenttemplate.DocumentTemplate,
@@ -66,7 +66,7 @@ func documentTemplateConnectionToModel(
 func documentTemplateAssignmentConnectionToModel(
 	result *pagination.CursorListResult[*documenttemplate.DocumentTemplateAssignment],
 ) (*gqlmodel.DocumentTemplateAssignmentConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(
 			node *documenttemplate.DocumentTemplateAssignment,

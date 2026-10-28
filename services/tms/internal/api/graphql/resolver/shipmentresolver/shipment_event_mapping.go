@@ -4,7 +4,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -115,7 +116,7 @@ func (e shipmentEventEnvelope) moveID() *string {
 	if id := e.str("moveId"); id != nil {
 		return id
 	}
-	return base.IDPtr(e.event.MoveID)
+	return gqlid.IDPtr(e.event.MoveID)
 }
 
 func (e shipmentEventEnvelope) lifecycle() *gqlmodel.ShipmentLifecycleEvent {
@@ -127,12 +128,12 @@ func (e shipmentEventEnvelope) lifecycle() *gqlmodel.ShipmentLifecycleEvent {
 		Type:           gqlmodel.ShipmentEventType(e.event.Type),
 		Severity:       gqlmodel.ShipmentEventSeverity(e.event.Severity),
 		ActorType:      gqlmodel.ShipmentEventActorType(e.event.ActorType),
-		ActorID:        base.IDPtr(e.event.ActorID),
+		ActorID:        gqlid.IDPtr(e.event.ActorID),
 		ActorLabel:     e.event.ActorLabel,
 		Summary:        e.event.Summary,
 		Metadata:       e.metadata,
 		OccurredAt:     int(e.event.OccurredAt),
-		CorrelationID:  base.StringPtrFromValue(e.event.CorrelationID),
+		CorrelationID:  gqlscalar.StringPtrFromValue(e.event.CorrelationID),
 		Actor:          e.event.Actor,
 		Shipment:       shipmentEventShipmentReferenceToModel(e.event),
 		ProNumber:      e.str("proNumber"),
@@ -151,12 +152,12 @@ func (e shipmentEventEnvelope) ownership() *gqlmodel.ShipmentOwnershipEvent {
 		Type:            gqlmodel.ShipmentEventType(e.event.Type),
 		Severity:        gqlmodel.ShipmentEventSeverity(e.event.Severity),
 		ActorType:       gqlmodel.ShipmentEventActorType(e.event.ActorType),
-		ActorID:         base.IDPtr(e.event.ActorID),
+		ActorID:         gqlid.IDPtr(e.event.ActorID),
 		ActorLabel:      e.event.ActorLabel,
 		Summary:         e.event.Summary,
 		Metadata:        e.metadata,
 		OccurredAt:      int(e.event.OccurredAt),
-		CorrelationID:   base.StringPtrFromValue(e.event.CorrelationID),
+		CorrelationID:   gqlscalar.StringPtrFromValue(e.event.CorrelationID),
 		Actor:           e.event.Actor,
 		Shipment:        shipmentEventShipmentReferenceToModel(e.event),
 		ProNumber:       e.str("proNumber"),
@@ -174,16 +175,16 @@ func (e shipmentEventEnvelope) move() *gqlmodel.ShipmentMoveEvent {
 		Type:           gqlmodel.ShipmentEventType(e.event.Type),
 		Severity:       gqlmodel.ShipmentEventSeverity(e.event.Severity),
 		ActorType:      gqlmodel.ShipmentEventActorType(e.event.ActorType),
-		ActorID:        base.IDPtr(e.event.ActorID),
+		ActorID:        gqlid.IDPtr(e.event.ActorID),
 		ActorLabel:     e.event.ActorLabel,
 		Summary:        e.event.Summary,
 		Metadata:       e.metadata,
 		OccurredAt:     int(e.event.OccurredAt),
-		CorrelationID:  base.StringPtrFromValue(e.event.CorrelationID),
+		CorrelationID:  gqlscalar.StringPtrFromValue(e.event.CorrelationID),
 		Actor:          e.event.Actor,
 		Shipment:       shipmentEventShipmentReferenceToModel(e.event),
-		MoveID:         base.IDPtr(e.event.MoveID),
-		StopID:         base.IDPtr(e.event.StopID),
+		MoveID:         gqlid.IDPtr(e.event.MoveID),
+		StopID:         gqlid.IDPtr(e.event.StopID),
 		PreviousStatus: e.str("previousStatus"),
 		NewStatus:      e.str("newStatus"),
 	}
@@ -198,16 +199,16 @@ func (e shipmentEventEnvelope) assignment() *gqlmodel.ShipmentAssignmentEvent {
 		Type:              gqlmodel.ShipmentEventType(e.event.Type),
 		Severity:          gqlmodel.ShipmentEventSeverity(e.event.Severity),
 		ActorType:         gqlmodel.ShipmentEventActorType(e.event.ActorType),
-		ActorID:           base.IDPtr(e.event.ActorID),
+		ActorID:           gqlid.IDPtr(e.event.ActorID),
 		ActorLabel:        e.event.ActorLabel,
 		Summary:           e.event.Summary,
 		Metadata:          e.metadata,
 		OccurredAt:        int(e.event.OccurredAt),
-		CorrelationID:     base.StringPtrFromValue(e.event.CorrelationID),
+		CorrelationID:     gqlscalar.StringPtrFromValue(e.event.CorrelationID),
 		Actor:             e.event.Actor,
 		Shipment:          shipmentEventShipmentReferenceToModel(e.event),
-		MoveID:            base.IDPtr(e.event.MoveID),
-		AssignmentID:      base.IDPtr(e.event.AssignmentID),
+		MoveID:            gqlid.IDPtr(e.event.MoveID),
+		AssignmentID:      gqlid.IDPtr(e.event.AssignmentID),
 		PrimaryWorkerID:   e.str("primaryWorkerId"),
 		SecondaryWorkerID: e.str("secondaryWorkerId"),
 		TractorID:         e.str("tractorId"),
@@ -225,15 +226,15 @@ func (e shipmentEventEnvelope) carrier() *gqlmodel.ShipmentCarrierEvent {
 		Type:           gqlmodel.ShipmentEventType(e.event.Type),
 		Severity:       gqlmodel.ShipmentEventSeverity(e.event.Severity),
 		ActorType:      gqlmodel.ShipmentEventActorType(e.event.ActorType),
-		ActorID:        base.IDPtr(e.event.ActorID),
+		ActorID:        gqlid.IDPtr(e.event.ActorID),
 		ActorLabel:     e.event.ActorLabel,
 		Summary:        e.event.Summary,
 		Metadata:       e.metadata,
 		OccurredAt:     int(e.event.OccurredAt),
-		CorrelationID:  base.StringPtrFromValue(e.event.CorrelationID),
+		CorrelationID:  gqlscalar.StringPtrFromValue(e.event.CorrelationID),
 		Actor:          e.event.Actor,
 		Shipment:       shipmentEventShipmentReferenceToModel(e.event),
-		MoveID:         base.IDPtr(e.event.MoveID),
+		MoveID:         gqlid.IDPtr(e.event.MoveID),
 		CarrierID:      e.str("carrierId"),
 		CarrierName:    e.str("carrierName"),
 		TotalCost:      e.str("totalCost"),
@@ -251,12 +252,12 @@ func (e shipmentEventEnvelope) tender() *gqlmodel.ShipmentTenderEvent {
 		Type:           gqlmodel.ShipmentEventType(e.event.Type),
 		Severity:       gqlmodel.ShipmentEventSeverity(e.event.Severity),
 		ActorType:      gqlmodel.ShipmentEventActorType(e.event.ActorType),
-		ActorID:        base.IDPtr(e.event.ActorID),
+		ActorID:        gqlid.IDPtr(e.event.ActorID),
 		ActorLabel:     e.event.ActorLabel,
 		Summary:        e.event.Summary,
 		Metadata:       e.metadata,
 		OccurredAt:     int(e.event.OccurredAt),
-		CorrelationID:  base.StringPtrFromValue(e.event.CorrelationID),
+		CorrelationID:  gqlscalar.StringPtrFromValue(e.event.CorrelationID),
 		Actor:          e.event.Actor,
 		Shipment:       shipmentEventShipmentReferenceToModel(e.event),
 		TenderID:       e.str("tenderId"),
@@ -284,15 +285,15 @@ func (e shipmentEventEnvelope) hold() *gqlmodel.ShipmentHoldEvent {
 		Type:           gqlmodel.ShipmentEventType(e.event.Type),
 		Severity:       gqlmodel.ShipmentEventSeverity(e.event.Severity),
 		ActorType:      gqlmodel.ShipmentEventActorType(e.event.ActorType),
-		ActorID:        base.IDPtr(e.event.ActorID),
+		ActorID:        gqlid.IDPtr(e.event.ActorID),
 		ActorLabel:     e.event.ActorLabel,
 		Summary:        e.event.Summary,
 		Metadata:       e.metadata,
 		OccurredAt:     int(e.event.OccurredAt),
-		CorrelationID:  base.StringPtrFromValue(e.event.CorrelationID),
+		CorrelationID:  gqlscalar.StringPtrFromValue(e.event.CorrelationID),
 		Actor:          e.event.Actor,
 		Shipment:       shipmentEventShipmentReferenceToModel(e.event),
-		HoldID:         base.IDPtr(e.event.HoldID),
+		HoldID:         gqlid.IDPtr(e.event.HoldID),
 		HoldType:       sliceutils.EnumPtrValue[holdreason.HoldType](e.metadata["holdType"]),
 		HoldSeverity: sliceutils.EnumPtrValue[holdreason.HoldSeverity](
 			e.metadata["holdSeverity"],
@@ -310,15 +311,15 @@ func (e shipmentEventEnvelope) comment() *gqlmodel.ShipmentCommentEvent {
 		Type:           gqlmodel.ShipmentEventType(e.event.Type),
 		Severity:       gqlmodel.ShipmentEventSeverity(e.event.Severity),
 		ActorType:      gqlmodel.ShipmentEventActorType(e.event.ActorType),
-		ActorID:        base.IDPtr(e.event.ActorID),
+		ActorID:        gqlid.IDPtr(e.event.ActorID),
 		ActorLabel:     e.event.ActorLabel,
 		Summary:        e.event.Summary,
 		Metadata:       e.metadata,
 		OccurredAt:     int(e.event.OccurredAt),
-		CorrelationID:  base.StringPtrFromValue(e.event.CorrelationID),
+		CorrelationID:  gqlscalar.StringPtrFromValue(e.event.CorrelationID),
 		Actor:          e.event.Actor,
 		Shipment:       shipmentEventShipmentReferenceToModel(e.event),
-		CommentID:      base.IDPtr(e.event.CommentID),
+		CommentID:      gqlid.IDPtr(e.event.CommentID),
 		CommentBody:    e.str("commentBody"),
 		CommentType: sliceutils.EnumPtrValue[gqlmodel.ShipmentCommentType](
 			e.metadata["commentType"],
@@ -340,7 +341,7 @@ func shipmentEventShipmentReferenceToModel(
 		return nil
 	}
 	return &gqlmodel.ShipmentEventShipmentReference{
-		ID:        base.IDPtr(event.Shipment.ID),
-		ProNumber: base.StringPtrFromValue(event.Shipment.ProNumber),
+		ID:        gqlid.IDPtr(event.Shipment.ID),
+		ProNumber: gqlscalar.StringPtrFromValue(event.Shipment.ProNumber),
 	}
 }

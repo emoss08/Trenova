@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -52,7 +52,7 @@ func (r *Deps) ProposalPreview(
 		return nil, err
 	}
 
-	tenant := base.TenantInfo(authCtx)
+	tenant := resolvercore.TenantInfo(authCtx)
 	proposal, err := r.AgentProposalService.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
 		ID:         proposalID,
 		TenantInfo: &tenant,
@@ -80,7 +80,7 @@ func (r *Deps) PlanPreview(
 
 	plan, err := r.AgentPlanService.GetByID(ctx, agentports.GetAgentPlanByIDRequest{
 		ID:         planID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 	if err != nil {
 		return nil, err

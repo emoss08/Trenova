@@ -6,7 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -33,7 +37,7 @@ func inboundOptionalID(id pulid.ID) *string {
 func inboundMessageConnection(
 	result *pagination.CursorListResult[*inboundmessage.InboundMessage],
 ) (*gqlmodel.InboundMessageConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *inboundmessage.InboundMessage, cursor string) *gqlmodel.InboundMessageEdge {
 			return &gqlmodel.InboundMessageEdge{Node: node, Cursor: cursor}
@@ -125,11 +129,11 @@ func (d *Deps) visibleShipment(
 	if !d.HasPermission(ctx, authCtx, permission.ResourceShipment, permission.OpRead) {
 		return nil, nil //nolint:nilnil // a missing or hidden record resolves to null
 	}
-	if err = base.RequireLoaders(ctx); err != nil {
+	if err = loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return base.OptionalMatch(loaders.ShipmentSummaryByID(ctx, shipmentID.String()))
+	return loaderfields.OptionalMatch(loaders.ShipmentSummaryByID(ctx, shipmentID.String()))
 }
 
 func (r *MutationResolver) messageAction(
@@ -149,7 +153,7 @@ func (r *MutationResolver) messageAction(
 	}
 
 	return &inboundmessageservice.MessageActionRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		MessageID:  messageID,
 	}, nil
@@ -180,7 +184,7 @@ func folderRequest(
 			Query:      stringutils.FromPtr(input.Query),
 		},
 		Statuses:        input.Statuses,
-		CollapseThreads: base.BoolValue(input.CollapseThreads),
+		CollapseThreads: gqlscalar.BoolValue(input.CollapseThreads),
 		ThreadKey:       stringutils.FromPtr(input.ThreadKey),
 		ViewerID:        viewerID,
 	}
@@ -198,13 +202,13 @@ func folderRequest(
 	}
 
 	var err error
-	if req.MailboxID, err = base.OptionalID(input.MailboxID); err != nil {
+	if req.MailboxID, err = gqlid.OptionalID(input.MailboxID); err != nil {
 		return nil, err
 	}
-	if req.ShipmentID, err = base.OptionalID(input.ShipmentID); err != nil {
+	if req.ShipmentID, err = gqlid.OptionalID(input.ShipmentID); err != nil {
 		return nil, err
 	}
-	if req.OwnerID, err = base.OptionalID(input.OwnerID); err != nil {
+	if req.OwnerID, err = gqlid.OptionalID(input.OwnerID); err != nil {
 		return nil, err
 	}
 	if err = inboundmessageservice.PrepareList(req); err != nil {
@@ -225,7 +229,7 @@ func selectionOf(
 		)
 	}
 	if len(input.Ids) > 0 {
-		ids, err := base.ParseIDs(input.Ids)
+		ids, err := gqlid.ParseIDs(input.Ids)
 		if err != nil {
 			return inboundmessageservice.Selection{}, err
 		}

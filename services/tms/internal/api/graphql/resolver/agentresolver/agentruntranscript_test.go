@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -65,7 +65,7 @@ func newTranscriptFixture(granted bool) *transcriptFixture {
 }
 
 func (f *transcriptFixture) resolver() *AgentRunResolver {
-	return &AgentRunResolver{Deps: &Deps{Core: &base.Core{PermissionEngine: f.engine}}}
+	return &AgentRunResolver{Deps: &Deps{Core: &resolvercore.Core{PermissionEngine: f.engine}}}
 }
 
 func (f *transcriptFixture) ctx(t *testing.T) context.Context {

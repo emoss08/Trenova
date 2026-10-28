@@ -3,12 +3,12 @@
 package workeremploymentresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	workeremploymentservice "github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	WorkerEmploymentService *workeremploymentservice.Service
 }
 

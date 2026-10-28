@@ -11,7 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
@@ -28,7 +31,7 @@ func (r *MutationResolver) CreateWorkerCredentialType(ctx context.Context, input
 		return nil, err
 	}
 
-	entity := workerCredentialTypeFromInput(&input, pulid.Nil, base.TenantInfo(authCtx))
+	entity := workerCredentialTypeFromInput(&input, pulid.Nil, resolvercore.TenantInfo(authCtx))
 	return r.WorkerCredentialService.CreateType(ctx, entity, authCtx.UserID)
 }
 
@@ -43,7 +46,7 @@ func (r *MutationResolver) UpdateWorkerCredentialType(ctx context.Context, id st
 		return nil, err
 	}
 
-	entity := workerCredentialTypeFromInput(&input, typeID, base.TenantInfo(authCtx))
+	entity := workerCredentialTypeFromInput(&input, typeID, resolvercore.TenantInfo(authCtx))
 	return r.WorkerCredentialService.UpdateType(ctx, entity, authCtx.UserID)
 }
 
@@ -60,8 +63,8 @@ func (r *MutationResolver) ArchiveWorkerCredentialType(ctx context.Context, id s
 
 	return r.WorkerCredentialService.ArchiveType(ctx, &workercredentialservice.TypeStatusChangeRequest{
 		ID:         typeID,
-		TenantInfo: base.TenantInfo(authCtx),
-		Version:    int64(base.IntValue(version)),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Version:    int64(gqlscalar.IntValue(version)),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -79,8 +82,8 @@ func (r *MutationResolver) RestoreWorkerCredentialType(ctx context.Context, id s
 
 	return r.WorkerCredentialService.RestoreType(ctx, &workercredentialservice.TypeStatusChangeRequest{
 		ID:         typeID,
-		TenantInfo: base.TenantInfo(authCtx),
-		Version:    int64(base.IntValue(version)),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Version:    int64(gqlscalar.IntValue(version)),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -91,14 +94,14 @@ func (r *MutationResolver) CreateWorkerCredential(ctx context.Context, input gql
 		return nil, err
 	}
 
-	entity, err := workerCredentialFromInput(&input, base.TenantInfo(authCtx))
+	entity, err := workerCredentialFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
 	return r.WorkerCredentialService.Create(ctx, &workercredentialservice.CreateRequest{
 		Entity: entity,
-		Renew:  base.BoolValue(input.Renew),
+		Renew:  gqlscalar.BoolValue(input.Renew),
 		UserID: authCtx.UserID,
 	})
 }
@@ -109,7 +112,7 @@ func (r *MutationResolver) UpdateWorkerCredential(ctx context.Context, input gql
 		return nil, err
 	}
 
-	entity, err := workerCredentialFromUpdateInput(&input, base.TenantInfo(authCtx))
+	entity, err := workerCredentialFromUpdateInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -130,8 +133,8 @@ func (r *MutationResolver) VerifyWorkerCredential(ctx context.Context, id string
 
 	return r.WorkerCredentialService.Verify(ctx, &workercredentialservice.StatusRequest{
 		ID:         credentialID,
-		TenantInfo: base.TenantInfo(authCtx),
-		Version:    int64(base.IntValue(version)),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Version:    int64(gqlscalar.IntValue(version)),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -149,9 +152,9 @@ func (r *MutationResolver) ArchiveWorkerCredential(ctx context.Context, input gq
 
 	return r.WorkerCredentialService.Archive(ctx, &workercredentialservice.StatusRequest{
 		ID:         credentialID,
-		TenantInfo: base.TenantInfo(authCtx),
-		Version:    int64(base.IntValue(input.Version)),
-		Reason:     base.StringValue(input.Reason),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Version:    int64(gqlscalar.IntValue(input.Version)),
+		Reason:     gqlscalar.StringValue(input.Reason),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -174,7 +177,7 @@ func (r *MutationResolver) AttachWorkerCredentialDocument(ctx context.Context, i
 	return r.WorkerCredentialService.AttachDocument(ctx, &workercredentialservice.AttachDocumentRequest{
 		ID:         credentialID,
 		DocumentID: documentID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -185,14 +188,14 @@ func (r *QueryResolver) WorkerCredentialTypes(ctx context.Context, input gqlmode
 		return nil, err
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
 		After:        input.After,
 		Query:        input.Query,
 		FieldFilters: input.FieldFilters,
 		FilterGroups: input.FilterGroups,
 		Sort:         input.Sort,
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +230,7 @@ func (r *QueryResolver) WorkerCredentialType(ctx context.Context, id string) (*w
 
 	return r.WorkerCredentialService.GetType(ctx, &workercredentialports.GetCredentialTypeByIDRequest{
 		ID:         typeID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -237,7 +240,7 @@ func (r *QueryResolver) ActiveWorkerCredentialTypes(ctx context.Context) ([]*wor
 		return nil, err
 	}
 
-	return r.WorkerCredentialService.ActiveTypes(ctx, base.TenantInfo(authCtx))
+	return r.WorkerCredentialService.ActiveTypes(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) WorkerCredentials(ctx context.Context, workerIds []string, includeArchived *bool, expiringWithinDays *int, includeExpired *bool, credentialTypeCode *string, requiredOnly *bool, limit *int, offset *int) ([]*workercredential.WorkerCredential, error) {
@@ -246,11 +249,11 @@ func (r *QueryResolver) WorkerCredentials(ctx context.Context, workerIds []strin
 		return nil, err
 	}
 
-	ids, err := base.ParseIDListField("workerIds", workerIds)
+	ids, err := gqlid.ParseIDListField("workerIds", workerIds)
 	if err != nil {
 		return nil, err
 	}
-	within := base.IntValue(expiringWithinDays)
+	within := gqlscalar.IntValue(expiringWithinDays)
 	if within < 0 || within > workercredentialservice.MaxExpiryHorizonDays {
 		return nil, errortypes.NewValidationError(
 			"expiringWithinDays",
@@ -258,7 +261,7 @@ func (r *QueryResolver) WorkerCredentials(ctx context.Context, workerIds []strin
 			"Expiring within must be from 1 to 365 days",
 		)
 	}
-	skip := base.IntValue(offset)
+	skip := gqlscalar.IntValue(offset)
 	if skip < 0 {
 		return nil, errortypes.NewValidationError(
 			"offset",
@@ -272,14 +275,14 @@ func (r *QueryResolver) WorkerCredentials(ctx context.Context, workerIds []strin
 	}
 
 	return r.WorkerCredentialService.List(ctx, &workercredentialservice.ListRequest{
-		TenantInfo:         base.TenantInfo(authCtx),
+		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		WorkerIDs:          ids,
 		IncludeArchived:    archived,
 		ExpiringWithinDays: within,
-		IncludeExpired:     base.BoolValue(includeExpired),
-		CredentialTypeCode: base.StringValue(credentialTypeCode),
-		RequiredOnly:       base.BoolValue(requiredOnly),
-		Limit:              base.RecordListLimit(limit, len(ids) > 0),
+		IncludeExpired:     gqlscalar.BoolValue(includeExpired),
+		CredentialTypeCode: gqlscalar.StringValue(credentialTypeCode),
+		RequiredOnly:       gqlscalar.BoolValue(requiredOnly),
+		Limit:              gqlconnection.RecordListLimit(limit, len(ids) > 0),
 		Offset:             skip,
 	})
 }
@@ -295,7 +298,7 @@ func (r *QueryResolver) WorkerCredential(ctx context.Context, id string) (*worke
 		return nil, err
 	}
 
-	return r.WorkerCredentialService.Get(ctx, base.TenantInfo(authCtx), credentialID)
+	return r.WorkerCredentialService.Get(ctx, resolvercore.TenantInfo(authCtx), credentialID)
 }
 
 func (r *QueryResolver) WorkerCredentialSummary(ctx context.Context, workerID string) (*workercredential.WorkerCredentialSummary, error) {
@@ -309,7 +312,7 @@ func (r *QueryResolver) WorkerCredentialSummary(ctx context.Context, workerID st
 		return nil, err
 	}
 
-	return r.WorkerCredentialService.Summary(ctx, base.TenantInfo(authCtx), wid)
+	return r.WorkerCredentialService.Summary(ctx, resolvercore.TenantInfo(authCtx), wid)
 }
 
 func (r *QueryResolver) CredentialExpiryForecast(ctx context.Context, days *int, limit *int) (*workercredentialservice.ExpiryForecast, error) {
@@ -320,23 +323,23 @@ func (r *QueryResolver) CredentialExpiryForecast(ctx context.Context, days *int,
 
 	return r.WorkerCredentialService.ExpiryForecast(
 		ctx,
-		base.TenantInfo(authCtx),
-		base.IntValue(days),
+		resolvercore.TenantInfo(authCtx),
+		gqlscalar.IntValue(days),
 		7,
-		base.IntValue(limit),
+		gqlscalar.IntValue(limit),
 	)
 }
 
 func (r *WorkerCredentialResolver) DocumentID(ctx context.Context, obj *workercredential.WorkerCredential) (*string, error) {
-	return base.IDPtr(obj.DocumentID), nil
+	return gqlid.IDPtr(obj.DocumentID), nil
 }
 
 func (r *WorkerCredentialResolver) VerifiedByID(ctx context.Context, obj *workercredential.WorkerCredential) (*string, error) {
-	return base.IDPtr(obj.VerifiedByID), nil
+	return gqlid.IDPtr(obj.VerifiedByID), nil
 }
 
 func (r *WorkerCredentialResolver) ArchivedByID(ctx context.Context, obj *workercredential.WorkerCredential) (*string, error) {
-	return base.IDPtr(obj.ArchivedByID), nil
+	return gqlid.IDPtr(obj.ArchivedByID), nil
 }
 
 func (r *WorkerCredentialResolver) Health(ctx context.Context, obj *workercredential.WorkerCredential) (workercredential.CredentialHealth, error) {
@@ -344,7 +347,7 @@ func (r *WorkerCredentialResolver) Health(ctx context.Context, obj *workercreden
 }
 
 func (r *WorkerCredentialResolver) DaysUntilExpiry(ctx context.Context, obj *workercredential.WorkerCredential) (*int, error) {
-	return base.IntPtr(obj.DaysUntilExpiry(timeutils.NowUnix())), nil
+	return gqlscalar.IntPtr(obj.DaysUntilExpiry(timeutils.NowUnix())), nil
 }
 
 func (r *WorkerCredentialTypeResolver) ProfileField(ctx context.Context, obj *workercredential.WorkerCredentialType) (*string, error) {

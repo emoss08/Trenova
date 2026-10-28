@@ -3,8 +3,7 @@
 package selectoptionsresolver
 
 import (
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	accounttypeservice "github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
 	journalentryservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	fiscalperiodports "github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
@@ -25,6 +24,7 @@ import (
 	detentionpolicyservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
 	orderservice "github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	carrierports "github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	customerports "github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	factoringcompanyports "github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
@@ -57,7 +57,7 @@ import (
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	OrganizationService          tenantports.OrganizationService
 	ShipmentService              shipmentserviceports.ShipmentService
 	EdiService                   *ediservice.Service

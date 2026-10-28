@@ -8,7 +8,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -25,7 +25,7 @@ func permissionDeps(granted ...string) (*Deps, *resolvertest.GrantingPermissionE
 		engine.Granted[grant] = true
 	}
 
-	return &Deps{Core: &base.Core{PermissionEngine: engine}}, engine
+	return &Deps{Core: &resolvercore.Core{PermissionEngine: engine}}, engine
 }
 
 func signedIn(t *testing.T) context.Context {
@@ -59,10 +59,14 @@ func TestReplyAttachmentResolvers_CheckTheInboxPermission(t *testing.T) {
 			_, err := (&QueryResolver{deps}).InboundReplyAttachables(ctx, messageID)
 			return err
 		}},
-		{"inboundReplyAttachmentLimit", permission.OpRead, func(ctx context.Context, deps *Deps) error {
-			_, err := (&QueryResolver{deps}).InboundReplyAttachmentLimit(ctx)
-			return err
-		}},
+		{
+			"inboundReplyAttachmentLimit",
+			permission.OpRead,
+			func(ctx context.Context, deps *Deps) error {
+				_, err := (&QueryResolver{deps}).InboundReplyAttachmentLimit(ctx)
+				return err
+			},
+		},
 		{"saveInboundReplyDraft", permission.OpUpdate, func(ctx context.Context, deps *Deps) error {
 			_, err := (&MutationResolver{deps}).SaveInboundReplyDraft(
 				ctx,
@@ -74,12 +78,15 @@ func TestReplyAttachmentResolvers_CheckTheInboxPermission(t *testing.T) {
 			return err
 		}},
 		{"sendInboundReply", permission.OpUpdate, func(ctx context.Context, deps *Deps) error {
-			_, err := (&MutationResolver{deps}).SendInboundReply(ctx, gqlmodel.SendInboundReplyInput{
-				MessageID:   messageID,
-				Subject:     "Re: detention",
-				Body:        "Attached.",
-				DocumentIds: []string{documentID},
-			})
+			_, err := (&MutationResolver{deps}).SendInboundReply(
+				ctx,
+				gqlmodel.SendInboundReplyInput{
+					MessageID:   messageID,
+					Subject:     "Re: detention",
+					Body:        "Attached.",
+					DocumentIds: []string{documentID},
+				},
+			)
 			return err
 		}},
 	}
@@ -103,14 +110,19 @@ func TestReplyAttachmentResolvers_CheckTheInboxPermission(t *testing.T) {
 func TestSendInboundReplyWithFilesAlsoNeedsCustomerCommunication(t *testing.T) {
 	t.Parallel()
 
-	deps, engine := permissionDeps(permission.ResourceInboundMessage.String() + "|" + string(permission.OpUpdate))
+	deps, engine := permissionDeps(
+		permission.ResourceInboundMessage.String() + "|" + string(permission.OpUpdate),
+	)
 
-	_, err := (&MutationResolver{deps}).SendInboundReply(signedIn(t), gqlmodel.SendInboundReplyInput{
-		MessageID:   pulid.MustNew("imsg_").String(),
-		Subject:     "Re: detention",
-		Body:        "Attached.",
-		DocumentIds: []string{pulid.MustNew("doc_").String()},
-	})
+	_, err := (&MutationResolver{deps}).SendInboundReply(
+		signedIn(t),
+		gqlmodel.SendInboundReplyInput{
+			MessageID:   pulid.MustNew("imsg_").String(),
+			Subject:     "Re: detention",
+			Body:        "Attached.",
+			DocumentIds: []string{pulid.MustNew("doc_").String()},
+		},
+	)
 
 	var authzErr *errortypes.AuthorizationError
 	require.True(t, errors.As(err, &authzErr), "%v", err)
@@ -121,7 +133,9 @@ func TestSendInboundReplyWithFilesAlsoNeedsCustomerCommunication(t *testing.T) {
 func TestInboundReplyAttachmentLimitIsTheEmailBudget(t *testing.T) {
 	t.Parallel()
 
-	deps, _ := permissionDeps(permission.ResourceInboundMessage.String() + "|" + string(permission.OpRead))
+	deps, _ := permissionDeps(
+		permission.ResourceInboundMessage.String() + "|" + string(permission.OpRead),
+	)
 
 	limit, err := (&QueryResolver{deps}).InboundReplyAttachmentLimit(signedIn(t))
 
@@ -132,7 +146,9 @@ func TestInboundReplyAttachmentLimitIsTheEmailBudget(t *testing.T) {
 func TestSaveInboundReplyDraftRefusesAMalformedDocumentID(t *testing.T) {
 	t.Parallel()
 
-	deps, _ := permissionDeps(permission.ResourceInboundMessage.String() + "|" + string(permission.OpUpdate))
+	deps, _ := permissionDeps(
+		permission.ResourceInboundMessage.String() + "|" + string(permission.OpUpdate),
+	)
 
 	_, err := (&MutationResolver{deps}).SaveInboundReplyDraft(
 		signedIn(t),

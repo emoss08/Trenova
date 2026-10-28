@@ -2,7 +2,9 @@ package shipmentboardresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 )
 
@@ -32,7 +34,7 @@ func deliveryWatchToModel(
 	for _, item := range w.WorstLate {
 		late = append(late, &gqlmodel.LateDelivery{
 			ShipmentID:   item.ShipmentID.String(),
-			ProNumber:    base.EmptyToNil(item.ProNumber),
+			ProNumber:    gqlscalar.EmptyToNil(item.ProNumber),
 			DeltaMinutes: item.DeltaMinutes,
 			City:         item.City,
 			CustomerName: item.CustomerName,
@@ -58,13 +60,13 @@ func uncoveredWatchToModel(
 			StartMinutes: window.StartMinutes,
 			EndMinutes:   window.EndMinutes,
 			Count:        window.Count,
-			Revenue:      base.DecimalString(window.Revenue),
+			Revenue:      gqldecimal.DecimalString(window.Revenue),
 		})
 	}
 
 	out := &gqlmodel.ShipmentUncoveredWatch{
 		Count:   w.Count,
-		Revenue: base.DecimalString(w.Revenue),
+		Revenue: gqldecimal.DecimalString(w.Revenue),
 		Windows: windows,
 	}
 	if w.Next != nil {
@@ -87,19 +89,19 @@ func detentionWatchToModel(
 		top = append(top, &gqlmodel.DetentionAccrual{
 			ShipmentID:    item.ShipmentID.String(),
 			StopID:        item.StopID.String(),
-			OccurrenceID:  base.IDPtrFromPtr(item.OccurrenceID),
+			OccurrenceID:  gqlid.IDPtrFromPtr(item.OccurrenceID),
 			FacilityName:  item.FacilityName,
-			CoverageName:  base.EmptyToNil(item.CoverageName),
+			CoverageName:  gqlscalar.EmptyToNil(item.CoverageName),
 			BillableSince: int(item.BillableSince),
-			RatePerHour:   base.DecimalString(item.RatePerHour),
-			Amount:        base.DecimalString(item.Amount),
+			RatePerHour:   gqldecimal.DecimalString(item.RatePerHour),
+			Amount:        gqldecimal.DecimalString(item.Amount),
 		})
 	}
 
 	return &gqlmodel.ShipmentDetentionWatch{
 		StopCount:   w.StopCount,
-		Amount:      base.DecimalString(w.Amount),
-		RatePerHour: base.DecimalString(w.RatePerHour),
+		Amount:      gqldecimal.DecimalString(w.Amount),
+		RatePerHour: gqldecimal.DecimalString(w.RatePerHour),
 		SnapshotAt:  int(w.SnapshotAt),
 		Top:         top,
 	}
@@ -114,13 +116,13 @@ func billingWatchToModel(
 			CustomerID: customer.CustomerID.String(),
 			Name:       customer.Name,
 			Count:      customer.Count,
-			Total:      base.DecimalString(customer.Total),
+			Total:      gqldecimal.DecimalString(customer.Total),
 		})
 	}
 
 	return &gqlmodel.ShipmentBillingWatch{
 		Count:         w.Count,
-		Total:         base.DecimalString(w.Total),
+		Total:         gqldecimal.DecimalString(w.Total),
 		Customers:     customers,
 		MoreCustomers: w.MoreCustomers,
 	}

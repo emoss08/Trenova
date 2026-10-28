@@ -7,13 +7,13 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
-	"github.com/emoss08/trenova/internal/modules/identity/identitytest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/identitytest"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
@@ -47,7 +47,10 @@ type recordingInvites struct {
 	requests []passwordresetservice.InviteRequest
 }
 
-func (r *recordingInvites) SendInvite(_ context.Context, req passwordresetservice.InviteRequest) error {
+func (r *recordingInvites) SendInvite(
+	_ context.Context,
+	req passwordresetservice.InviteRequest,
+) error {
 	r.requests = append(r.requests, req)
 	return nil
 }
@@ -97,7 +100,7 @@ func newHarness(t *testing.T, granted ...string) *harness {
 			BusinessUnitID: pulid.MustNew("bu_"),
 		},
 		deps: &Deps{
-			Core:        &base.Core{L: zap.NewNop(), PermissionEngine: permissions},
+			Core:        &resolvercore.Core{L: zap.NewNop(), PermissionEngine: permissions},
 			UserService: service,
 		},
 	}
@@ -146,22 +149,25 @@ func TestCreateUserMapsTheInputAndInvites(t *testing.T) {
 
 	h.repo.EXPECT().FindIdentityConflicts(mock.Anything, mock.Anything).
 		Return(tenantports.UserIdentityConflicts{}, nil).Once()
-	h.repo.EXPECT().Create(mock.Anything, mock.MatchedBy(func(req tenantports.CreateUserRequest) bool {
-		user := req.User
-		return user.Name == "Dana Whitfield" &&
-			user.Username == "dwhitfield" &&
-			user.EmailAddress == "dana@example.com" &&
-			user.Timezone == "America/Chicago" &&
-			user.TimeFormat == domaintypes.TimeFormat24Hour &&
-			user.Locale == "es" &&
-			user.MustChangePassword &&
-			user.CurrentOrganizationID == h.auth.OrganizationID &&
-			user.BusinessUnitID == h.auth.BusinessUnitID &&
-			user.Password != ""
-	})).RunAndReturn(func(_ context.Context, req tenantports.CreateUserRequest) (*tenant.User, error) {
-		req.User.ID = pulid.MustNew("usr_")
-		return req.User, nil
-	}).Once()
+	h.repo.EXPECT().
+		Create(mock.Anything, mock.MatchedBy(func(req tenantports.CreateUserRequest) bool {
+			user := req.User
+			return user.Name == "Dana Whitfield" &&
+				user.Username == "dwhitfield" &&
+				user.EmailAddress == "dana@example.com" &&
+				user.Timezone == "America/Chicago" &&
+				user.TimeFormat == domaintypes.TimeFormat24Hour &&
+				user.Locale == "es" &&
+				user.MustChangePassword &&
+				user.CurrentOrganizationID == h.auth.OrganizationID &&
+				user.BusinessUnitID == h.auth.BusinessUnitID &&
+				user.Password != ""
+		})).
+		RunAndReturn(func(_ context.Context, req tenantports.CreateUserRequest) (*tenant.User, error) {
+			req.User.ID = pulid.MustNew("usr_")
+			return req.User, nil
+		}).
+		Once()
 	h.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil).Once()
 
 	created, err := resolver.CreateUser(h.ctx(t), gqlmodel.CreateUserInput{
@@ -226,7 +232,11 @@ func TestPatchUserRequiresUpdatePermissionOnUsers(t *testing.T) {
 	h := newHarness(t, grant(permission.OpCreate))
 	resolver := &MutationResolver{h.deps}
 
-	_, err := resolver.PatchUser(h.ctx(t), pulid.MustNew("usr_").String(), gqlmodel.UserPatchInput{})
+	_, err := resolver.PatchUser(
+		h.ctx(t),
+		pulid.MustNew("usr_").String(),
+		gqlmodel.UserPatchInput{},
+	)
 
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthorizationError(err))
@@ -243,19 +253,25 @@ func TestPatchUserWritesOnlyWhatWasSent(t *testing.T) {
 	unlocked := false
 	twentyFour := gqlmodel.TimeFormatTwentyFourHour
 
-	h.repo.EXPECT().GetByID(mock.Anything, mock.MatchedBy(func(req tenantports.GetUserByIDRequest) bool {
-		return req.LookupUserID == target.ID && req.TenantInfo.UserID == h.auth.UserID
-	})).Return(target, nil).Twice()
+	h.repo.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req tenantports.GetUserByIDRequest) bool {
+			return req.LookupUserID == target.ID && req.TenantInfo.UserID == h.auth.UserID
+		})).
+		Return(target, nil).
+		Twice()
 	h.repo.EXPECT().FindIdentityConflicts(mock.Anything, mock.Anything).
 		Return(tenantports.UserIdentityConflicts{}, nil).Once()
-	h.repo.EXPECT().UpdateColumns(mock.Anything, mock.MatchedBy(func(req tenantports.UpdateUserColumnsRequest) bool {
-		return assert.ObjectsAreEqual([]string{"time_format", "is_locked"}, req.Columns) &&
-			!req.Entity.IsLocked &&
-			req.Entity.TimeFormat == domaintypes.TimeFormat24Hour &&
-			req.Entity.Name == "Target User"
-	})).RunAndReturn(func(_ context.Context, req tenantports.UpdateUserColumnsRequest) (*tenant.User, error) {
-		return req.Entity, nil
-	}).Once()
+	h.repo.EXPECT().
+		UpdateColumns(mock.Anything, mock.MatchedBy(func(req tenantports.UpdateUserColumnsRequest) bool {
+			return assert.ObjectsAreEqual([]string{"time_format", "is_locked"}, req.Columns) &&
+				!req.Entity.IsLocked &&
+				req.Entity.TimeFormat == domaintypes.TimeFormat24Hour &&
+				req.Entity.Name == "Target User"
+		})).
+		RunAndReturn(func(_ context.Context, req tenantports.UpdateUserColumnsRequest) (*tenant.User, error) {
+			return req.Entity, nil
+		}).
+		Once()
 	h.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil).Once()
 
 	updated, err := resolver.PatchUser(h.ctx(t), target.ID.String(), gqlmodel.UserPatchInput{

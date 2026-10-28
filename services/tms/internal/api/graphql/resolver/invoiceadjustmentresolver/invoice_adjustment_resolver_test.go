@@ -4,16 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
-
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -46,7 +45,7 @@ func newInvoiceAdjustmentResolverFixture(t *testing.T) *invoiceAdjustmentResolve
 		permissions: &resolvertest.RecordingPermissionEngine{},
 	}
 	f.resolver = &Deps{
-		Core:                     &base.Core{PermissionEngine: f.permissions},
+		Core:                     &resolvercore.Core{PermissionEngine: f.permissions},
 		InvoiceAdjustmentService: f.service,
 	}
 
@@ -336,7 +335,7 @@ func TestMutationResolver_InvoiceAdjustmentDecisions_RejectMalformedIDs(t *testi
 func TestInvoiceAdjustmentFieldResolvers_SerializeDecimalsAndBlankRebillStrategy(t *testing.T) {
 	t.Parallel()
 
-	r := &Deps{Core: &base.Core{}}
+	r := &Deps{Core: &resolvercore.Core{}}
 	item := &invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem{
 		NetDeltaAmount:        decimal.RequireFromString("-125.5000"),
 		RerateVariancePercent: decimal.RequireFromString("0.012500"),

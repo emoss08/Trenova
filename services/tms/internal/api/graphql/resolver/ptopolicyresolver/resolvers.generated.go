@@ -3,14 +3,14 @@
 package ptopolicyresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	ptoledgerservice "github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	kernelports "github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	ptopolicyservice "github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	PtoPolicyService *ptopolicyservice.Service
 	PtoLedgerService *ptoledgerservice.Service
 	WorkflowStarter  kernelports.WorkflowStarter

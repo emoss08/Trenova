@@ -2,7 +2,7 @@ package shipmentresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 )
 
@@ -20,14 +20,14 @@ func shipmentProfitabilityEstimateToModel(
 		TotalMiles:      estimate.TotalMiles,
 		EstimatedCost:   estimate.EstimatedCost.String(),
 		Profit:          estimate.Profit.String(),
-		MarginPercent:   base.NullDecimalToStringPtr(estimate.MarginPercent),
-		BreakEvenRpm:    base.NullDecimalToStringPtr(estimate.BreakEvenRPM),
+		MarginPercent:   gqldecimal.NullDecimalToStringPtr(estimate.MarginPercent),
+		BreakEvenRpm:    gqldecimal.NullDecimalToStringPtr(estimate.BreakEvenRPM),
 		MissingDistance: estimate.MissingDistance,
 	}
 
 	if estimate.Profile != nil {
 		model.CostPerMile = estimate.Profile.TotalCPM.String()
-		model.TargetMarginPercent = base.NullDecimalToStringPtr(
+		model.TargetMarginPercent = gqldecimal.NullDecimalToStringPtr(
 			estimate.Profile.TargetMarginPercent,
 		)
 	}

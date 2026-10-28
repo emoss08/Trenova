@@ -10,7 +10,9 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -18,11 +20,11 @@ import (
 )
 
 func (r *CustomerBillingProfileResolver) MinConsolidatedAmount(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.MinConsolidatedAmount), nil
+	return gqldecimal.NullDecimalToStringPtr(obj.MinConsolidatedAmount), nil
 }
 
 func (r *CustomerBillingProfileResolver) CreditLimit(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.CreditLimit), nil
+	return gqldecimal.NullDecimalToStringPtr(obj.CreditLimit), nil
 }
 
 func (r *CustomerBillingProfileResolver) CreditBalance(ctx context.Context, obj *customer.CustomerBillingProfile) (string, error) {
@@ -30,7 +32,7 @@ func (r *CustomerBillingProfileResolver) CreditBalance(ctx context.Context, obj 
 }
 
 func (r *CustomerBillingProfileResolver) LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.LateChargeRate), nil
+	return gqldecimal.NullDecimalToStringPtr(obj.LateChargeRate), nil
 }
 
 func (r *QueryResolver) Customers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerConnection, error) {
@@ -39,7 +41,7 @@ func (r *QueryResolver) Customers(ctx context.Context, input gqlmodel.DataTableC
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +79,7 @@ func (r *QueryResolver) Customer(ctx context.Context, id string) (*customer.Cust
 
 	return r.CustomerService.Get(ctx, customerports.GetCustomerByIDRequest{
 		ID:         customerID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeState:          true,
 			IncludeBillingProfile: true,

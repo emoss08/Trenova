@@ -2,7 +2,10 @@ package costingresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/fuelsurchargemapping"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -19,15 +22,15 @@ func costingControlToModel(entity *costingcontrol.CostingControl) *gqlmodel.Cost
 		ID:                   entity.ID.String(),
 		BusinessUnitID:       entity.BusinessUnitID.String(),
 		OrganizationID:       entity.OrganizationID.String(),
-		FuelIndexID:          base.IDPtrFromPulidPtr(entity.FuelIndexID),
-		FuelIndex:            base.FuelIndexToModel(entity.FuelIndex),
+		FuelIndexID:          gqlid.IDPtrFromPulidPtr(entity.FuelIndexID),
+		FuelIndex:            fuelsurchargemapping.FuelIndexToModel(entity.FuelIndex),
 		UseLiveFuelPrice:     entity.UseLiveFuelPrice,
 		MilesPerGallon:       entity.MilesPerGallon.String(),
 		IncludeDeadheadMiles: entity.IncludeDeadheadMiles,
 		GlActualsEnabled:     entity.GLActualsEnabled,
 		GlRollingMonths:      int(entity.GLRollingMonths),
-		PlannedMonthlyMiles:  base.Int64PtrToIntPtr(entity.PlannedMonthlyMiles),
-		TargetMarginPercent:  base.NullDecimalToStringPtr(entity.TargetMarginPercent),
+		PlannedMonthlyMiles:  gqlscalar.Int64PtrToIntPtr(entity.PlannedMonthlyMiles),
+		TargetMarginPercent:  gqldecimal.NullDecimalToStringPtr(entity.TargetMarginPercent),
 		Version:              int(entity.Version),
 		CreatedAt:            int(entity.CreatedAt),
 		UpdatedAt:            int(entity.UpdatedAt),
@@ -52,7 +55,7 @@ func costCategoryToModel(entity *costingcontrol.CostCategory) *gqlmodel.CostCate
 		CostBehavior:         gqlmodel.CostBehavior(entity.CostBehavior.String()),
 		RateSource:           gqlmodel.CostRateSource(entity.RateSource.String()),
 		BenchmarkRatePerMile: entity.BenchmarkRatePerMile.String(),
-		OverrideRatePerMile:  base.NullDecimalToStringPtr(entity.OverrideRatePerMile),
+		OverrideRatePerMile:  gqldecimal.NullDecimalToStringPtr(entity.OverrideRatePerMile),
 		IsActive:             entity.IsActive,
 		SortOrder:            int(entity.SortOrder),
 		Version:              int(entity.Version),
@@ -92,7 +95,7 @@ func resolvedCostProfileToModel(
 		TotalCpm:             profile.TotalCPM.String(),
 		VariableCpm:          profile.VariableCPM.String(),
 		FixedCpm:             profile.FixedCPM.String(),
-		TargetMarginPercent:  base.NullDecimalToStringPtr(profile.TargetMarginPercent),
+		TargetMarginPercent:  gqldecimal.NullDecimalToStringPtr(profile.TargetMarginPercent),
 		IncludeDeadheadMiles: profile.IncludeDeadheadMiles,
 		AsOfDate:             profile.AsOfDate,
 		Categories:           make([]*gqlmodel.ResolvedCategoryRate, 0, len(profile.Categories)),
@@ -100,9 +103,9 @@ func resolvedCostProfileToModel(
 
 	if profile.Fuel != nil {
 		model.Fuel = &gqlmodel.FuelCostResolution{
-			PricePerGallon: base.NullDecimalToStringPtr(profile.Fuel.PricePerGallon),
+			PricePerGallon: gqldecimal.NullDecimalToStringPtr(profile.Fuel.PricePerGallon),
 			PriceDate:      profile.Fuel.PriceDate,
-			FuelIndexID:    base.IDPtrFromPulidPtr(profile.Fuel.FuelIndexID),
+			FuelIndexID:    gqlid.IDPtrFromPulidPtr(profile.Fuel.FuelIndexID),
 			MilesPerGallon: profile.Fuel.MilesPerGallon.String(),
 			Source:         gqlmodel.EffectiveRateSource(profile.Fuel.Source.String()),
 		}
@@ -145,9 +148,9 @@ func shipmentProfitabilityToModel(
 		Revenue:              estimate.Revenue.String(),
 		EstimatedCost:        estimate.EstimatedCost.String(),
 		Profit:               estimate.Profit.String(),
-		MarginPercent:        base.NullDecimalToStringPtr(estimate.MarginPercent),
-		RevenuePerLoadedMile: base.NullDecimalToStringPtr(estimate.RevenuePerLoadedMile),
-		BreakEvenRpm:         base.NullDecimalToStringPtr(estimate.BreakEvenRPM),
+		MarginPercent:        gqldecimal.NullDecimalToStringPtr(estimate.MarginPercent),
+		RevenuePerLoadedMile: gqldecimal.NullDecimalToStringPtr(estimate.RevenuePerLoadedMile),
+		BreakEvenRpm:         gqldecimal.NullDecimalToStringPtr(estimate.BreakEvenRPM),
 		MissingDistance:      estimate.MissingDistance,
 		Breakdown:            make([]*gqlmodel.CategoryCostLine, 0, len(estimate.Breakdown)),
 		Profile:              resolvedCostProfileToModel(estimate.Profile),
@@ -173,11 +176,13 @@ func fleetCostSummaryToModel(summary *costingservice.FleetCostSummary) *gqlmodel
 	}
 
 	return &gqlmodel.FleetCostSummary{
-		AvgCpm:             summary.AvgCPM.String(),
-		AvgMarginPercent:   base.NullDecimalToStringPtr(summary.AvgMarginPercent),
-		ShipmentCount:      summary.ShipmentCount,
-		UnprofitableCount:  &summary.UnprofitableCount,
-		TotalRevenue:       base.NullDecimalStringPtr(decimal.NewNullDecimal(summary.TotalRevenue)),
+		AvgCpm:            summary.AvgCPM.String(),
+		AvgMarginPercent:  gqldecimal.NullDecimalToStringPtr(summary.AvgMarginPercent),
+		ShipmentCount:     summary.ShipmentCount,
+		UnprofitableCount: &summary.UnprofitableCount,
+		TotalRevenue: gqldecimal.NullDecimalStringPtr(
+			decimal.NewNullDecimal(summary.TotalRevenue),
+		),
 		TotalEstimatedCost: summary.TotalEstimatedCost.String(),
 		TotalMiles:         summary.TotalMiles,
 		EmptyMiles:         summary.EmptyMiles,
@@ -199,14 +204,14 @@ func costingControlFromInput(
 		Version:              int64(input.Version),
 	}
 
-	fuelIndexID, err := base.PulidPtrFromOptionalString(input.FuelIndexID)
+	fuelIndexID, err := gqlid.PulidPtrFromOptionalString(input.FuelIndexID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"fuelIndexId", errortypes.ErrInvalid, "Fuel index ID must be a valid ID")
 	}
 	entity.FuelIndexID = fuelIndexID
 
-	if entity.MilesPerGallon, err = base.DecimalFromString(
+	if entity.MilesPerGallon, err = gqldecimal.DecimalFromString(
 		input.MilesPerGallon,
 		"milesPerGallon",
 	); err != nil {
@@ -224,7 +229,7 @@ func costingControlFromInput(
 		entity.PlannedMonthlyMiles = &planned
 	}
 
-	if entity.TargetMarginPercent, err = base.NullDecimalFromStringPtr(
+	if entity.TargetMarginPercent, err = gqldecimal.NullDecimalFromStringPtr(
 		input.TargetMarginPercent, "targetMarginPercent"); err != nil {
 		return nil, err
 	}
@@ -258,7 +263,7 @@ func costCategoryFromUpdateInput(
 		Version:              int64(input.Version),
 	}
 
-	if entity.OverrideRatePerMile, err = base.NullDecimalFromStringPtr(
+	if entity.OverrideRatePerMile, err = gqldecimal.NullDecimalFromStringPtr(
 		input.OverrideRatePerMile, "overrideRatePerMile"); err != nil {
 		return nil, err
 	}

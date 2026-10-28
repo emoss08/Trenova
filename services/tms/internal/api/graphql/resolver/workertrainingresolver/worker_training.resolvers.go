@@ -10,7 +10,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
@@ -29,7 +33,7 @@ func (r *MutationResolver) CreateTrainingCourse(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	entity, err := trainingCourseFromInput(&input, pulid.Nil, base.TenantInfo(authCtx))
+	entity, err := trainingCourseFromInput(&input, pulid.Nil, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +50,7 @@ func (r *MutationResolver) UpdateTrainingCourse(ctx context.Context, id string, 
 	if err != nil {
 		return nil, err
 	}
-	entity, err := trainingCourseFromInput(&input, courseID, base.TenantInfo(authCtx))
+	entity, err := trainingCourseFromInput(&input, courseID, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +69,8 @@ func (r *MutationResolver) ArchiveTrainingCourse(ctx context.Context, id string,
 	}
 	return r.WorkerTrainingService.ArchiveCourse(ctx, &workertrainingservice.CourseStatusChangeRequest{
 		ID:         courseID,
-		TenantInfo: base.TenantInfo(authCtx),
-		Version:    int64(base.IntValue(version)),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Version:    int64(gqlscalar.IntValue(version)),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -83,8 +87,8 @@ func (r *MutationResolver) RestoreTrainingCourse(ctx context.Context, id string,
 	}
 	return r.WorkerTrainingService.RestoreCourse(ctx, &workertrainingservice.CourseStatusChangeRequest{
 		ID:         courseID,
-		TenantInfo: base.TenantInfo(authCtx),
-		Version:    int64(base.IntValue(version)),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Version:    int64(gqlscalar.IntValue(version)),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -104,11 +108,11 @@ func (r *MutationResolver) AssignWorkerTraining(ctx context.Context, input gqlmo
 		return nil, errortypes.NewValidationError("courseId", errortypes.ErrInvalid, "Course is invalid")
 	}
 	return r.WorkerTrainingService.Assign(ctx, &workertrainingservice.AssignRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		WorkerID:   workerID,
 		CourseID:   courseID,
-		DueAt:      base.Int64Ptr(input.DueAt),
-		Notes:      base.StringValue(input.Notes),
+		DueAt:      gqlscalar.Int64Ptr(input.DueAt),
+		Notes:      gqlscalar.StringValue(input.Notes),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -123,7 +127,7 @@ func (r *MutationResolver) AssignRequiredWorkerTraining(ctx context.Context, wor
 	if err != nil {
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Worker is invalid")
 	}
-	return r.WorkerTrainingService.AssignRequired(ctx, base.TenantInfo(authCtx), wid, authCtx.UserID)
+	return r.WorkerTrainingService.AssignRequired(ctx, resolvercore.TenantInfo(authCtx), wid, authCtx.UserID)
 }
 
 func (r *MutationResolver) CompleteWorkerTraining(ctx context.Context, input gqlmodel.CompleteWorkerTrainingInput) (*workertraining.WorkerTrainingRecord, error) {
@@ -132,7 +136,7 @@ func (r *MutationResolver) CompleteWorkerTraining(ctx context.Context, input gql
 		return nil, err
 	}
 
-	req, err := completeTrainingRequestFromInput(&input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := completeTrainingRequestFromInput(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -151,9 +155,9 @@ func (r *MutationResolver) WaiveWorkerTraining(ctx context.Context, input gqlmod
 	}
 	return r.WorkerTrainingService.Waive(ctx, &workertrainingservice.StatusRequest{
 		ID:         recordID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Reason:     input.Reason,
-		Version:    int64(base.IntValue(input.Version)),
+		Version:    int64(gqlscalar.IntValue(input.Version)),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -170,9 +174,9 @@ func (r *MutationResolver) CancelWorkerTraining(ctx context.Context, input gqlmo
 	}
 	return r.WorkerTrainingService.Cancel(ctx, &workertrainingservice.StatusRequest{
 		ID:         recordID,
-		TenantInfo: base.TenantInfo(authCtx),
-		Reason:     base.StringValue(input.Reason),
-		Version:    int64(base.IntValue(input.Version)),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Reason:     gqlscalar.StringValue(input.Reason),
+		Version:    int64(gqlscalar.IntValue(input.Version)),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -194,7 +198,7 @@ func (r *MutationResolver) AttachWorkerTrainingDocument(ctx context.Context, inp
 	return r.WorkerTrainingService.AttachDocument(ctx, &workertrainingservice.AttachDocumentRequest{
 		ID:         recordID,
 		DocumentID: documentID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -208,7 +212,7 @@ func (r *MutationResolver) StartMyTraining(ctx context.Context, id string) (*dri
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Training record is invalid")
 	}
-	return r.DriverPortalService.StartMyTraining(ctx, base.TenantInfo(authCtx), recordID)
+	return r.DriverPortalService.StartMyTraining(ctx, resolvercore.TenantInfo(authCtx), recordID)
 }
 
 func (r *MutationResolver) AcknowledgeMyTraining(ctx context.Context, id string) (*driverportalservice.PortalTraining, error) {
@@ -220,7 +224,7 @@ func (r *MutationResolver) AcknowledgeMyTraining(ctx context.Context, id string)
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Training record is invalid")
 	}
-	return r.DriverPortalService.AcknowledgeMyTraining(ctx, base.TenantInfo(authCtx), recordID)
+	return r.DriverPortalService.AcknowledgeMyTraining(ctx, resolvercore.TenantInfo(authCtx), recordID)
 }
 
 func (r *MutationResolver) BulkAssignTraining(ctx context.Context, input gqlmodel.BulkAssignTrainingInput) (*workertrainingservice.BulkAssignResult, error) {
@@ -229,29 +233,29 @@ func (r *MutationResolver) BulkAssignTraining(ctx context.Context, input gqlmode
 		return nil, err
 	}
 
-	workerIDs, err := base.ParseIDs(input.WorkerIds)
+	workerIDs, err := gqlid.ParseIDs(input.WorkerIds)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"workerIds", errortypes.ErrInvalid, "One of the selected workers is invalid")
 	}
-	courseIDs, err := base.ParseIDs(input.CourseIds)
+	courseIDs, err := gqlid.ParseIDs(input.CourseIds)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"courseIds", errortypes.ErrInvalid, "One of the selected courses is invalid")
 	}
 
 	return r.WorkerTrainingService.BulkAssign(ctx, &workertrainingservice.BulkAssignRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		WorkerIDs:  workerIDs,
 		CourseIDs:  courseIDs,
-		DueAt:      base.Int64Ptr(input.DueAt),
-		Notes:      base.StringValue(input.Notes),
+		DueAt:      gqlscalar.Int64Ptr(input.DueAt),
+		Notes:      gqlscalar.StringValue(input.Notes),
 		UserID:     authCtx.UserID,
 	})
 }
 
 func (r *PortalTrainingResolver) ID(ctx context.Context, obj *driverportalservice.PortalTraining) (*string, error) {
-	return base.IDPtr(obj.ID), nil
+	return gqlid.IDPtr(obj.ID), nil
 }
 
 func (r *PortalTrainingResolver) Status(ctx context.Context, obj *driverportalservice.PortalTraining) (*workertraining.TrainingStatus, error) {
@@ -272,14 +276,14 @@ func (r *QueryResolver) TrainingCourses(ctx context.Context, input gqlmodel.Trai
 		return nil, err
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
 		After:        input.After,
 		Query:        input.Query,
 		FieldFilters: input.FieldFilters,
 		FilterGroups: input.FilterGroups,
 		Sort:         input.Sort,
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +316,7 @@ func (r *QueryResolver) TrainingCourse(ctx context.Context, id string) (*workert
 	}
 	return r.WorkerTrainingService.GetCourse(ctx, &workertrainingports.GetTrainingCourseByIDRequest{
 		ID:         courseID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -321,7 +325,7 @@ func (r *QueryResolver) ActiveTrainingCourses(ctx context.Context) ([]*workertra
 	if err != nil {
 		return nil, err
 	}
-	return r.WorkerTrainingService.ActiveCourses(ctx, base.TenantInfo(authCtx))
+	return r.WorkerTrainingService.ActiveCourses(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) WorkerTrainingRecords(ctx context.Context, workerID string, includeClosed *bool) ([]*workertraining.WorkerTrainingRecord, error) {
@@ -338,7 +342,7 @@ func (r *QueryResolver) WorkerTrainingRecords(ctx context.Context, workerID stri
 	if includeClosed != nil {
 		closed = *includeClosed
 	}
-	return r.WorkerTrainingService.ListForWorker(ctx, base.TenantInfo(authCtx), wid, closed)
+	return r.WorkerTrainingService.ListForWorker(ctx, resolvercore.TenantInfo(authCtx), wid, closed)
 }
 
 func (r *QueryResolver) WorkerTrainingRecord(ctx context.Context, id string) (*workertraining.WorkerTrainingRecord, error) {
@@ -351,7 +355,7 @@ func (r *QueryResolver) WorkerTrainingRecord(ctx context.Context, id string) (*w
 	if err != nil {
 		return nil, err
 	}
-	return r.WorkerTrainingService.Get(ctx, base.TenantInfo(authCtx), recordID)
+	return r.WorkerTrainingService.Get(ctx, resolvercore.TenantInfo(authCtx), recordID)
 }
 
 func (r *QueryResolver) WorkerTrainingSummary(ctx context.Context, workerID string) (*workertraining.WorkerTrainingSummary, error) {
@@ -364,7 +368,7 @@ func (r *QueryResolver) WorkerTrainingSummary(ctx context.Context, workerID stri
 	if err != nil {
 		return nil, err
 	}
-	return r.WorkerTrainingService.Summary(ctx, base.TenantInfo(authCtx), wid)
+	return r.WorkerTrainingService.Summary(ctx, resolvercore.TenantInfo(authCtx), wid)
 }
 
 func (r *QueryResolver) MyTraining(ctx context.Context) ([]*driverportalservice.PortalTraining, error) {
@@ -372,11 +376,11 @@ func (r *QueryResolver) MyTraining(ctx context.Context) ([]*driverportalservice.
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverPortalService.MyTraining(ctx, base.TenantInfo(authCtx))
+	return r.DriverPortalService.MyTraining(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *TrainingCourseResolver) PassingScore(ctx context.Context, obj *workertraining.TrainingCourse) (*string, error) {
-	return base.NullDecimalPtr(obj.PassingScore), nil
+	return gqldecimal.NullDecimalPtr(obj.PassingScore), nil
 }
 
 func (r *TrainingCourseResolver) OpenRecordCount(ctx context.Context, obj *workertraining.TrainingCourse) (int, error) {
@@ -387,19 +391,19 @@ func (r *TrainingCourseResolver) OpenRecordCount(ctx context.Context, obj *worke
 }
 
 func (r *WorkerTrainingRecordResolver) Score(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error) {
-	return base.NullDecimalPtr(obj.Score), nil
+	return gqldecimal.NullDecimalPtr(obj.Score), nil
 }
 
 func (r *WorkerTrainingRecordResolver) DocumentID(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error) {
-	return base.IDPtr(obj.DocumentID), nil
+	return gqlid.IDPtr(obj.DocumentID), nil
 }
 
 func (r *WorkerTrainingRecordResolver) AssignedByID(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error) {
-	return base.IDPtr(obj.AssignedByID), nil
+	return gqlid.IDPtr(obj.AssignedByID), nil
 }
 
 func (r *WorkerTrainingRecordResolver) RecordedByID(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error) {
-	return base.IDPtr(obj.RecordedByID), nil
+	return gqlid.IDPtr(obj.RecordedByID), nil
 }
 
 func (r *WorkerTrainingRecordResolver) Health(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (worker.TrainingHealth, error) {
@@ -407,9 +411,9 @@ func (r *WorkerTrainingRecordResolver) Health(ctx context.Context, obj *workertr
 }
 
 func (r *WorkerTrainingRecordResolver) DaysUntilDue(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*int, error) {
-	return base.IntPtr(obj.DaysUntilDue(timeutils.NowUnix())), nil
+	return gqlscalar.IntPtr(obj.DaysUntilDue(timeutils.NowUnix())), nil
 }
 
 func (r *WorkerTrainingRecordResolver) DaysUntilExpiry(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*int, error) {
-	return base.IntPtr(obj.DaysUntilExpiry(timeutils.NowUnix())), nil
+	return gqlscalar.IntPtr(obj.DaysUntilExpiry(timeutils.NowUnix())), nil
 }

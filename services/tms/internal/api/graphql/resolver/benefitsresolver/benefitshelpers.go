@@ -3,8 +3,7 @@ package benefitsresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +20,7 @@ func (r *Deps) TotalCompensationFor(
 	workerID pulid.ID,
 	planYear *int,
 ) (*benefitsservice.TotalCompensation, error) {
-	year := base.IntValue(planYear)
+	year := gqlscalar.IntValue(planYear)
 	if year <= 0 {
 		year = timeutils.YearOfUnix(timeutils.NowUnix())
 	}

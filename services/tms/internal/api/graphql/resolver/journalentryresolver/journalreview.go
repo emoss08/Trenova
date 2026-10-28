@@ -2,7 +2,8 @@ package journalentryresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -29,7 +30,7 @@ func journalReviewRequest(
 	}
 
 	return &journalentryports.JournalReviewRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		EntryIDs:   entryIDs,
 	}, nil
 }
@@ -37,7 +38,7 @@ func journalReviewRequest(
 func journalEntryConnectionToModel(
 	result *pagination.CursorListResult[*journalentry.JournalEntry],
 ) (*gqlmodel.JournalEntryConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *journalentry.JournalEntry, cursor string) *gqlmodel.JournalEntryEdge {
 			return &gqlmodel.JournalEntryEdge{Node: node, Cursor: cursor}

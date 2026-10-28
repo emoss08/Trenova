@@ -10,7 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
@@ -20,11 +23,11 @@ import (
 )
 
 func (r *DQFFileResolver) TerminationDate(ctx context.Context, obj *workercompliance.DQFFile) (*int, error) {
-	return base.IntPtr(obj.TerminationDate), nil
+	return gqlscalar.IntPtr(obj.TerminationDate), nil
 }
 
 func (r *DQFFileResolver) RetentionExpiresAt(ctx context.Context, obj *workercompliance.DQFFile) (*int, error) {
-	return base.IntPtr(obj.RetentionExpiresAt), nil
+	return gqlscalar.IntPtr(obj.RetentionExpiresAt), nil
 }
 
 // Verifications is the resolver for the verifications field.
@@ -45,7 +48,7 @@ func (r *DQFFileResolver) Verifications(ctx context.Context, obj *workercomplian
 	return r.WorkerDQFService.ListVerifications(
 		ctx,
 		&workerdqfports.ListEmploymentVerificationsRequest{
-			TenantInfo:      base.TenantInfo(authCtx),
+			TenantInfo:      resolvercore.TenantInfo(authCtx),
 			WorkerID:        obj.WorkerID,
 			IncludeDocument: true,
 		},
@@ -53,11 +56,11 @@ func (r *DQFFileResolver) Verifications(ctx context.Context, obj *workercomplian
 }
 
 func (r *DQFItemResolver) Regulation(ctx context.Context, obj *workercompliance.DQFItem) (*string, error) {
-	return base.NonEmptyPtr(obj.Regulation), nil
+	return gqlscalar.NonEmptyPtr(obj.Regulation), nil
 }
 
 func (r *DQFItemResolver) ExpiresAt(ctx context.Context, obj *workercompliance.DQFItem) (*int, error) {
-	return base.IntPtr(obj.ExpiresAt), nil
+	return gqlscalar.IntPtr(obj.ExpiresAt), nil
 }
 
 func (r *MutationResolver) RecordEmploymentVerification(ctx context.Context, input gqlmodel.RecordEmploymentVerificationInput) (*employment.WorkerEmploymentVerification, error) {
@@ -66,7 +69,7 @@ func (r *MutationResolver) RecordEmploymentVerification(ctx context.Context, inp
 		return nil, err
 	}
 
-	entity, err := employmentVerificationFromInput(&input, base.TenantInfo(authCtx))
+	entity, err := employmentVerificationFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +82,7 @@ func (r *MutationResolver) UpdateEmploymentVerification(ctx context.Context, inp
 		return nil, err
 	}
 
-	req, err := employmentVerificationUpdateRequest(&input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := employmentVerificationUpdateRequest(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +105,7 @@ func (r *MutationResolver) MarkEmploymentVerificationRequested(ctx context.Conte
 	}
 	return r.WorkerDQFService.MarkRequested(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		verificationID,
 		authCtx.UserID,
 	)
@@ -124,7 +127,7 @@ func (r *MutationResolver) RecordEmploymentVerificationFollowUp(ctx context.Cont
 	}
 	return r.WorkerDQFService.RecordFollowUp(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		verificationID,
 		authCtx.UserID,
 	)
@@ -146,7 +149,7 @@ func (r *MutationResolver) DeleteEmploymentVerification(ctx context.Context, id 
 	}
 	if err = r.WorkerDQFService.DeleteVerification(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		verificationID,
 		authCtx.UserID,
 	); err != nil {
@@ -169,7 +172,7 @@ func (r *QueryResolver) DriverQualificationFile(ctx context.Context, workerID st
 			"Worker is invalid",
 		)
 	}
-	return r.WorkerDQFService.File(ctx, base.TenantInfo(authCtx), id)
+	return r.WorkerDQFService.File(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) WorkerEmploymentVerifications(ctx context.Context, workerID *string, outstandingOnly *bool, limit *int) ([]*employment.WorkerEmploymentVerification, error) {
@@ -178,19 +181,19 @@ func (r *QueryResolver) WorkerEmploymentVerifications(ctx context.Context, worke
 		return nil, err
 	}
 
-	id, err := base.ParseOptionalIDField("workerId", workerID)
+	id, err := gqlid.ParseOptionalIDField("workerId", workerID)
 	if err != nil {
 		return nil, err
 	}
 	return r.WorkerDQFService.ListVerifications(
 		ctx,
 		&workerdqfports.ListEmploymentVerificationsRequest{
-			TenantInfo:      base.TenantInfo(authCtx),
+			TenantInfo:      resolvercore.TenantInfo(authCtx),
 			WorkerID:        id,
-			OutstandingOnly: base.BoolValue(outstandingOnly),
+			OutstandingOnly: gqlscalar.BoolValue(outstandingOnly),
 			IncludeWorker:   true,
 			IncludeDocument: true,
-			Limit:           base.RecordListLimit(limit, id.IsNotNil()),
+			Limit:           gqlconnection.RecordListLimit(limit, id.IsNotNil()),
 		},
 	)
 }
@@ -204,7 +207,7 @@ func (r *QueryResolver) OutstandingEmploymentVerifications(ctx context.Context) 
 	return r.WorkerDQFService.ListVerifications(
 		ctx,
 		&workerdqfports.ListEmploymentVerificationsRequest{
-			TenantInfo:      base.TenantInfo(authCtx),
+			TenantInfo:      resolvercore.TenantInfo(authCtx),
 			OutstandingOnly: true,
 			IncludeWorker:   true,
 		},
@@ -217,7 +220,7 @@ func (r *QueryResolver) DqfRetentionCandidates(ctx context.Context) ([]*workerdq
 		return nil, err
 	}
 
-	candidates, err := r.WorkerDQFService.RetentionCandidates(ctx, base.TenantInfo(authCtx), 0)
+	candidates, err := r.WorkerDQFService.RetentionCandidates(ctx, resolvercore.TenantInfo(authCtx), 0)
 	if err != nil {
 		return nil, err
 	}
@@ -230,29 +233,29 @@ func (r *QueryResolver) DqfRetentionCandidates(ctx context.Context) ([]*workerdq
 }
 
 func (r *WorkerEmploymentVerificationResolver) EmployedFrom(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*int, error) {
-	return base.IntPtr(obj.EmployedFrom), nil
+	return gqlscalar.IntPtr(obj.EmployedFrom), nil
 }
 
 func (r *WorkerEmploymentVerificationResolver) EmployedTo(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*int, error) {
-	return base.IntPtr(obj.EmployedTo), nil
+	return gqlscalar.IntPtr(obj.EmployedTo), nil
 }
 
 func (r *WorkerEmploymentVerificationResolver) RequestedAt(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*int, error) {
-	return base.IntPtr(obj.RequestedAt), nil
+	return gqlscalar.IntPtr(obj.RequestedAt), nil
 }
 
 func (r *WorkerEmploymentVerificationResolver) ResponseReceivedAt(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*int, error) {
-	return base.IntPtr(obj.ResponseReceivedAt), nil
+	return gqlscalar.IntPtr(obj.ResponseReceivedAt), nil
 }
 
 func (r *WorkerEmploymentVerificationResolver) LastFollowUpAt(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*int, error) {
-	return base.IntPtr(obj.LastFollowUpAt), nil
+	return gqlscalar.IntPtr(obj.LastFollowUpAt), nil
 }
 
 func (r *WorkerEmploymentVerificationResolver) DrugAlcoholResponseReceivedAt(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*int, error) {
-	return base.IntPtr(obj.DrugAlcoholResponseReceivedAt), nil
+	return gqlscalar.IntPtr(obj.DrugAlcoholResponseReceivedAt), nil
 }
 
 func (r *WorkerEmploymentVerificationResolver) DocumentID(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*string, error) {
-	return base.IDPtr(obj.DocumentID), nil
+	return gqlid.IDPtr(obj.DocumentID), nil
 }

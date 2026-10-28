@@ -10,7 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -22,7 +23,7 @@ func (r *MutationResolver) UpdateAIRetrievalSettings(ctx context.Context, input 
 		return nil, err
 	}
 
-	req, err := aiRetrievalSettingsPatchFromInput(base.TenantInfo(authCtx), &input)
+	req, err := aiRetrievalSettingsPatchFromInput(resolvercore.TenantInfo(authCtx), &input)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +39,7 @@ func (r *MutationResolver) ReindexAIRetrievalSource(ctx context.Context, sourceT
 	}
 
 	return r.AiRetrievalStatusService.Reindex(ctx, &retrievalports.ReindexAIRetrievalSourceRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		SourceType: sourceType,
 		Actor:      actorutil.FromAuthContext(authCtx),
 	})
@@ -50,7 +51,7 @@ func (r *QueryResolver) AiRetrievalStatus(ctx context.Context) (*retrievalports.
 		return nil, err
 	}
 
-	return r.AiRetrievalStatusService.Status(ctx, base.TenantInfo(authCtx))
+	return r.AiRetrievalStatusService.Status(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*retrievalports.AIRetrievalReindexEstimate, error) {
@@ -59,7 +60,7 @@ func (r *QueryResolver) AiRetrievalReindexEstimate(ctx context.Context, sourceTy
 		return nil, err
 	}
 
-	return r.AiRetrievalStatusService.ReindexEstimate(ctx, base.TenantInfo(authCtx), sourceType)
+	return r.AiRetrievalStatusService.ReindexEstimate(ctx, resolvercore.TenantInfo(authCtx), sourceType)
 }
 
 func (r *QueryResolver) AiRetrievalFailedEntryConnection(ctx context.Context, sourceType *airetrieval.SourceType, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIRetrievalFailedEntryConnection, error) {
@@ -69,8 +70,8 @@ func (r *QueryResolver) AiRetrievalFailedEntryConnection(ctx context.Context, so
 	}
 
 	req := &retrievalports.ListAIRetrievalFailedEntriesRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		Table:      base.MemtableRequestFromGraphQL(ctx, &input),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Table:      gqlconnection.MemtableRequestFromGraphQL(ctx, &input),
 	}
 	if sourceType != nil {
 		req.SourceType = *sourceType

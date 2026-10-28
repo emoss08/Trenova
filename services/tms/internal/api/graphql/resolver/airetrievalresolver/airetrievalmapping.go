@@ -3,7 +3,7 @@ package airetrievalresolver
 import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -88,7 +88,7 @@ func aiRetrievalFailedEntriesToModel(
 		})
 		last = edge.Cursor
 	}
-	out.PageInfo = base.PageInfoFor(page.HasNextPage, last)
+	out.PageInfo = gqlconnection.PageInfoFor(page.HasNextPage, last)
 
 	return out
 }

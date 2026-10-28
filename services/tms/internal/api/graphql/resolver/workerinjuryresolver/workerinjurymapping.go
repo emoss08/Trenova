@@ -2,7 +2,8 @@ package workerinjuryresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,7 +24,7 @@ func injuryFromInput(
 			"Worker is invalid",
 		)
 	}
-	safetyEventID, err := base.OptionalID(input.SafetyEventID)
+	safetyEventID, err := gqlid.OptionalID(input.SafetyEventID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"safetyEventId",
@@ -31,7 +32,7 @@ func injuryFromInput(
 			"Safety event is invalid",
 		)
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -46,20 +47,20 @@ func injuryFromInput(
 		WorkerID:         workerID,
 		OccurredAt:       int64(input.OccurredAt),
 		Description:      input.Description,
-		ReportedAt:       base.Int64Ptr(input.ReportedAt),
-		ReturnedToWorkAt: base.Int64Ptr(input.ReturnedToWorkAt),
-		Location:         base.StringValue(input.Location),
-		BodyPart:         base.StringValue(input.BodyPart),
-		HarmfulAgent:     base.StringValue(input.HarmfulAgent),
-		DaysAway:         intutils.SafeToInt32(base.IntValue(input.DaysAway)),
-		DaysRestricted:   intutils.SafeToInt32(base.IntValue(input.DaysRestricted)),
-		PrivacyCase:      base.BoolValue(input.PrivacyCase),
-		ClaimNumber:      base.StringValue(input.ClaimNumber),
-		ClaimCarrier:     base.StringValue(input.ClaimCarrier),
-		ClaimFiledAt:     base.Int64Ptr(input.ClaimFiledAt),
+		ReportedAt:       gqlscalar.Int64Ptr(input.ReportedAt),
+		ReturnedToWorkAt: gqlscalar.Int64Ptr(input.ReturnedToWorkAt),
+		Location:         gqlscalar.StringValue(input.Location),
+		BodyPart:         gqlscalar.StringValue(input.BodyPart),
+		HarmfulAgent:     gqlscalar.StringValue(input.HarmfulAgent),
+		DaysAway:         intutils.SafeToInt32(gqlscalar.IntValue(input.DaysAway)),
+		DaysRestricted:   intutils.SafeToInt32(gqlscalar.IntValue(input.DaysRestricted)),
+		PrivacyCase:      gqlscalar.BoolValue(input.PrivacyCase),
+		ClaimNumber:      gqlscalar.StringValue(input.ClaimNumber),
+		ClaimCarrier:     gqlscalar.StringValue(input.ClaimCarrier),
+		ClaimFiledAt:     gqlscalar.Int64Ptr(input.ClaimFiledAt),
 		SafetyEventID:    safetyEventID,
 		DocumentID:       documentID,
-		Notes:            base.StringValue(input.Notes),
+		Notes:            gqlscalar.StringValue(input.Notes),
 	}
 	if input.Classification != nil {
 		entity.Classification = *input.Classification
@@ -90,7 +91,7 @@ func injuryUpdateRequest(
 			"Case is invalid",
 		)
 	}
-	safetyEventID, err := base.OptionalID(input.SafetyEventID)
+	safetyEventID, err := gqlid.OptionalID(input.SafetyEventID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"safetyEventId",
@@ -98,7 +99,7 @@ func injuryUpdateRequest(
 			"Safety event is invalid",
 		)
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -114,9 +115,9 @@ func injuryUpdateRequest(
 		IllnessType:      input.IllnessType,
 		Treatment:        input.Treatment,
 		Status:           input.Status,
-		OccurredAt:       base.Int64Ptr(input.OccurredAt),
-		ReportedAt:       base.Int64Ptr(input.ReportedAt),
-		ReturnedToWorkAt: base.Int64Ptr(input.ReturnedToWorkAt),
+		OccurredAt:       gqlscalar.Int64Ptr(input.OccurredAt),
+		ReportedAt:       gqlscalar.Int64Ptr(input.ReportedAt),
+		ReturnedToWorkAt: gqlscalar.Int64Ptr(input.ReturnedToWorkAt),
 		Location:         input.Location,
 		Description:      input.Description,
 		BodyPart:         input.BodyPart,
@@ -125,8 +126,8 @@ func injuryUpdateRequest(
 		ClaimStatus:      input.ClaimStatus,
 		ClaimNumber:      input.ClaimNumber,
 		ClaimCarrier:     input.ClaimCarrier,
-		ClaimFiledAt:     base.Int64Ptr(input.ClaimFiledAt),
-		ClaimClosedAt:    base.Int64Ptr(input.ClaimClosedAt),
+		ClaimFiledAt:     gqlscalar.Int64Ptr(input.ClaimFiledAt),
+		ClaimClosedAt:    gqlscalar.Int64Ptr(input.ClaimClosedAt),
 		SafetyEventID:    safetyEventID,
 		DocumentID:       documentID,
 		Notes:            input.Notes,
@@ -156,9 +157,9 @@ func oshaSummaryRequest(
 		ExecutiveName:       input.ExecutiveName,
 		ExecutiveTitle:      input.ExecutiveTitle,
 		ExecutivePhone:      input.ExecutivePhone,
-		PostedFrom:          base.Int64Ptr(input.PostedFrom),
-		PostedThrough:       base.Int64Ptr(input.PostedThrough),
-		SubmittedAt:         base.Int64Ptr(input.SubmittedAt),
+		PostedFrom:          gqlscalar.Int64Ptr(input.PostedFrom),
+		PostedThrough:       gqlscalar.Int64Ptr(input.PostedThrough),
+		SubmittedAt:         gqlscalar.Int64Ptr(input.SubmittedAt),
 		SubmissionReference: input.SubmissionReference,
 		Notes:               input.Notes,
 		UserID:              userID,

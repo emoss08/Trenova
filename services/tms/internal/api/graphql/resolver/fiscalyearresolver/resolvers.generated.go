@@ -3,12 +3,12 @@
 package fiscalyearresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	fiscalyearservice "github.com/emoss08/trenova/internal/modules/accounting/app/fiscalyearservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	FiscalYearService *fiscalyearservice.Service
 }
 

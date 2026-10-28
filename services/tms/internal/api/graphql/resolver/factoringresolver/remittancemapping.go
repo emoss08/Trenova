@@ -7,7 +7,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -78,7 +79,7 @@ func remittanceMappingFromModel(
 func remittanceConnectionToModel(
 	result *pagination.CursorListResult[*factoring.Remittance],
 ) (*gqlmodel.FactoringRemittanceConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *factoring.Remittance, cursor string) *gqlmodel.FactoringRemittanceEdge {
 			return &gqlmodel.FactoringRemittanceEdge{Node: node, Cursor: cursor}
@@ -99,7 +100,7 @@ func remittanceConnectionToModel(
 func remittanceLineConnectionToModel(
 	result *pagination.CursorListResult[*factoring.RemittanceLine],
 ) (*gqlmodel.FactoringRemittanceLineConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *factoring.RemittanceLine, cursor string) *gqlmodel.FactoringRemittanceLineEdge {
 			return &gqlmodel.FactoringRemittanceLineEdge{Node: node, Cursor: cursor}
@@ -140,7 +141,7 @@ func remittanceVersionFromModel(
 		return nil, err
 	}
 	return &factoringports.RemittanceVersionRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         id,
 		Version:    int64(in.Version),
 	}, nil

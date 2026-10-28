@@ -18,14 +18,14 @@ import (
 
 const (
 	resolverSuffix       = "resolver"
-	baseResolverPackage  = "base"
+	coreResolverPackage  = "resolvercore"
 	resolverTypesFile    = "resolvers.generated.go"
 	resolverRootFilename = "resolver.generated.go"
 )
 
 type resolverLayout struct {
 	Data        *codegen.Data
-	BaseImport  string
+	CoreImport  string
 	ExecImport  string
 	Domains     []*resolverDomain
 	Entries     []*rootEntry
@@ -38,7 +38,7 @@ type resolverDomain struct {
 	ImportPath string
 	Dir        string
 	StubFile   string
-	BaseImport string
+	CoreImport string
 	DepsFields []depField
 	Types      []*resolverType
 	typeIndex  map[string]*resolverType
@@ -71,7 +71,7 @@ func buildResolverLayout(data *codegen.Data) *resolverLayout {
 	cfg := data.Config
 	l := &resolverLayout{
 		Data:        data,
-		BaseImport:  path.Join(cfg.Resolver.ImportPath(), baseResolverPackage),
+		CoreImport:  path.Join(cfg.Resolver.ImportPath(), coreResolverPackage),
 		ExecImport:  cfg.Exec.ImportPath(),
 		domainIndex: make(map[string]*resolverDomain),
 	}
@@ -160,7 +160,7 @@ func (l *resolverLayout) domain(cfg *config.Config, pos *ast.Position) *resolver
 		ImportPath: path.Join(cfg.Resolver.ImportPath(), pkg),
 		Dir:        filepath.Join(cfg.Resolver.Dir(), pkg),
 		StubFile:   stub,
-		BaseImport: l.BaseImport,
+		CoreImport: l.CoreImport,
 		typeIndex:  make(map[string]*resolverType),
 	}
 	l.domainIndex[shard] = d

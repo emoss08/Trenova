@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -26,7 +26,7 @@ func emailProfileColumns(ctx context.Context, nodePathPrefix string) []string {
 func emailProfileConnectionToModel(
 	result *pagination.CursorListResult[*email.Profile],
 ) (*gqlmodel.EmailProfileConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *email.Profile, cursor string) *gqlmodel.EmailProfileEdge {
 			return &gqlmodel.EmailProfileEdge{

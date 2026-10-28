@@ -3,12 +3,12 @@
 package factoringresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	factoringports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	FactoringAgreementService  factoringports.AgreementService
 	FactoringNoaService        factoringports.NoaService
 	FactoringReadinessService  factoringports.ReadinessService

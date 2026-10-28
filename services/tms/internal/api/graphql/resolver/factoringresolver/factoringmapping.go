@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -108,7 +109,7 @@ func statusChangeFromModel(
 		return nil, err
 	}
 	return &factoringports.ChangeAgreementStatusRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         id,
 		Version:    int64(in.Version),
 		EndAt:      int64Ptr(in.EndAt),
@@ -118,7 +119,7 @@ func statusChangeFromModel(
 func noaConnectionToModel(
 	result *pagination.CursorListResult[*factoring.Noa],
 ) (*gqlmodel.FactoringNoaConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *factoring.Noa, cursor string) *gqlmodel.FactoringNoaEdge {
 			return &gqlmodel.FactoringNoaEdge{Node: node, Cursor: cursor}
@@ -139,7 +140,7 @@ func noaConnectionToModel(
 func invoiceStateConnectionToModel(
 	result *pagination.CursorListResult[*factoring.InvoiceState],
 ) (*gqlmodel.FactoringInvoiceStateConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *factoring.InvoiceState, cursor string) *gqlmodel.FactoringInvoiceStateEdge {
 			return &gqlmodel.FactoringInvoiceStateEdge{Node: node, Cursor: cursor}
@@ -160,7 +161,7 @@ func invoiceStateConnectionToModel(
 func submissionConnectionToModel(
 	result *pagination.CursorListResult[*factoring.Submission],
 ) (*gqlmodel.FactoringSubmissionConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *factoring.Submission, cursor string) *gqlmodel.FactoringSubmissionEdge {
 			return &gqlmodel.FactoringSubmissionEdge{Node: node, Cursor: cursor}
@@ -191,7 +192,7 @@ func planRequestFromModel(
 		return nil, err
 	}
 	return &factoringports.PlanSubmissionRequest{
-		TenantInfo:         base.TenantInfo(authCtx),
+		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		FactoringCompanyID: factorID,
 		InvoiceIDs:         invoiceIDs,
 	}, nil
@@ -206,7 +207,7 @@ func transportRequestFromModel(
 		return nil, err
 	}
 	req := &factoringports.SaveTransportRequest{
-		TenantInfo:         base.TenantInfo(authCtx),
+		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		FactoringCompanyID: factorID,
 		Version:            int64Ptr(in.Version),
 		Input: factoringports.TransportInput{

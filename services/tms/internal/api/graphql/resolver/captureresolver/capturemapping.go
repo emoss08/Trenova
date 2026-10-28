@@ -5,7 +5,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -30,7 +31,7 @@ func batchItemsRequested(ctx context.Context) bool {
 func captureBatchConnection(
 	result *pagination.CursorListResult[*capture.CaptureBatch],
 ) (*gqlmodel.CaptureBatchConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *capture.CaptureBatch, cursor string) *gqlmodel.CaptureBatchEdge {
 			return &gqlmodel.CaptureBatchEdge{Node: node, Cursor: cursor}
@@ -75,7 +76,7 @@ func captureBatchSort(sort *gqlmodel.CaptureBatchSort) []domaintypes.SortField {
 // optionalIDRef parses an optional id into the pointer form the capture
 // domain keeps. Absent and blank are both no id.
 func optionalIDRef(value *string) (*pulid.ID, error) {
-	id, err := base.OptionalID(value)
+	id, err := gqlid.OptionalID(value)
 	if err != nil || id.IsNil() {
 		return nil, err
 	}
@@ -110,7 +111,7 @@ func captureItemLayouts(
 			return nil, errortypes.NewValidationError("items", errortypes.ErrInvalid,
 				"Every document needs its pages")
 		}
-		pageIDs, err := base.ParseIDs(item.PageIds)
+		pageIDs, err := gqlid.ParseIDs(item.PageIds)
 		if err != nil {
 			return nil, err
 		}
@@ -169,8 +170,8 @@ func issuedCoverSheet(issued *captureservice.IssuedCoverSheet) *gqlmodel.Capture
 	return &gqlmodel.CaptureCoverSheet{
 		ID:             sheet.ID.String(),
 		TargetType:     sheet.TargetType,
-		TargetID:       base.IDPtrFromPtr(sheet.TargetID),
-		DocumentTypeID: base.IDPtrFromPtr(sheet.DocumentTypeID),
+		TargetID:       gqlid.IDPtrFromPtr(sheet.TargetID),
+		DocumentTypeID: gqlid.IDPtrFromPtr(sheet.DocumentTypeID),
 		Payload:        issued.Payload,
 		QRCode:         issued.QRCode,
 		ExpiresAt:      int(sheet.ExpiresAt),

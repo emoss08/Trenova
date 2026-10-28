@@ -12,7 +12,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/ptomapping"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
@@ -34,7 +39,7 @@ func (r *MutationResolver) CreatePTOPolicy(ctx context.Context, input gqlmodel.P
 		return nil, err
 	}
 
-	entity, err := ptoPolicyFromInput(&input, pulid.Nil, base.TenantInfo(authCtx))
+	entity, err := ptoPolicyFromInput(&input, pulid.Nil, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +58,7 @@ func (r *MutationResolver) UpdatePTOPolicy(ctx context.Context, id string, input
 		return nil, err
 	}
 
-	entity, err := ptoPolicyFromInput(&input, policyID, base.TenantInfo(authCtx))
+	entity, err := ptoPolicyFromInput(&input, policyID, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -74,8 +79,8 @@ func (r *MutationResolver) ArchivePTOPolicy(ctx context.Context, id string, vers
 
 	return r.PtoPolicyService.Archive(ctx, &ptopolicyservice.StatusChangeRequest{
 		ID:         policyID,
-		TenantInfo: base.TenantInfo(authCtx),
-		Version:    int64(base.IntValue(version)),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Version:    int64(gqlscalar.IntValue(version)),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -93,8 +98,8 @@ func (r *MutationResolver) RestorePTOPolicy(ctx context.Context, id string, vers
 
 	return r.PtoPolicyService.Restore(ctx, &ptopolicyservice.StatusChangeRequest{
 		ID:         policyID,
-		TenantInfo: base.TenantInfo(authCtx),
-		Version:    int64(base.IntValue(version)),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Version:    int64(gqlscalar.IntValue(version)),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -109,7 +114,7 @@ func (r *MutationResolver) AssignWorkerPTOPolicy(ctx context.Context, input gqlm
 	if err != nil {
 		return nil, err
 	}
-	workerIDs, err := base.ParseIDs(input.WorkerIds)
+	workerIDs, err := gqlid.ParseIDs(input.WorkerIds)
 	if err != nil {
 		return nil, errortypes.NewValidationError("workerIds", errortypes.ErrInvalid, "One or more worker IDs are invalid")
 	}
@@ -119,12 +124,12 @@ func (r *MutationResolver) AssignWorkerPTOPolicy(ctx context.Context, input gqlm
 	}
 
 	return r.PtoPolicyService.AssignWorkers(ctx, &ptopolicyservice.AssignWorkersRequest{
-		TenantInfo:      base.TenantInfo(authCtx),
+		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		PolicyID:        policyID,
 		WorkerIDs:       workerIDs,
 		EffectiveFrom:   int64(input.EffectiveFrom),
 		OpeningBalances: openingBalances,
-		Note:            base.StringValue(input.Note),
+		Note:            gqlscalar.StringValue(input.Note),
 		UserID:          authCtx.UserID,
 	})
 }
@@ -141,10 +146,10 @@ func (r *MutationResolver) EndWorkerPTOPolicyAssignment(ctx context.Context, inp
 	}
 
 	return r.PtoPolicyService.EndAssignment(ctx, &ptopolicyservice.EndAssignmentRequest{
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		AssignmentID: assignmentID,
-		EffectiveTo:  int64(base.IntValue(input.EffectiveTo)),
-		Version:      int64(base.IntValue(input.Version)),
+		EffectiveTo:  int64(gqlscalar.IntValue(input.EffectiveTo)),
+		Version:      int64(gqlscalar.IntValue(input.Version)),
 		UserID:       authCtx.UserID,
 	})
 }
@@ -159,17 +164,17 @@ func (r *MutationResolver) AdjustWorkerPTOBalance(ctx context.Context, input gql
 	if err != nil {
 		return nil, err
 	}
-	amount, err := base.ParseDecimalField("amountDays", input.AmountDays, true)
+	amount, err := gqldecimal.ParseDecimalField("amountDays", input.AmountDays, true)
 	if err != nil {
 		return nil, err
 	}
-	effectiveAt := int64(base.IntValue(input.EffectiveAt))
+	effectiveAt := int64(gqlscalar.IntValue(input.EffectiveAt))
 	if effectiveAt <= 0 {
 		effectiveAt = timeutils.NowUnix()
 	}
 
 	return r.PtoLedgerService.Adjust(ctx, &ptoledgerservice.AdjustRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		WorkerID:    workerID,
 		PTOType:     input.PTOType,
 		AmountDays:  amount,
@@ -185,8 +190,8 @@ func (r *MutationResolver) RunPTOAccrual(ctx context.Context, input gqlmodel.Run
 		return nil, err
 	}
 
-	info := base.TenantInfo(authCtx)
-	asOf := int64(base.IntValue(input.AsOf))
+	info := resolvercore.TenantInfo(authCtx)
+	asOf := int64(gqlscalar.IntValue(input.AsOf))
 	if asOf <= 0 {
 		asOf = timeutils.NowUnix()
 	}
@@ -219,7 +224,7 @@ func (r *MutationResolver) RunPTOAccrual(ctx context.Context, input gqlmodel.Run
 		return nil, err
 	}
 
-	if base.BoolValue(input.Rebuild) {
+	if gqlscalar.BoolValue(input.Rebuild) {
 		balances, listErr := r.PtoLedgerService.GetBalances(ctx, info, workerID)
 		if listErr != nil {
 			return nil, listErr
@@ -256,35 +261,35 @@ func (r *MutationResolver) RunPTOAccrual(ctx context.Context, input gqlmodel.Run
 }
 
 func (r *PTOAccrualTierResolver) AccrualAmountDays(ctx context.Context, obj *pto.PTOAccrualTier) (string, error) {
-	return base.DecimalString(obj.AccrualAmountDays), nil
+	return gqldecimal.DecimalString(obj.AccrualAmountDays), nil
 }
 
 func (r *PTOAccrualTierResolver) MaxBalanceDays(ctx context.Context, obj *pto.PTOAccrualTier) (*string, error) {
-	return base.NullDecimalStringPtr(obj.MaxBalanceDays), nil
+	return gqldecimal.NullDecimalStringPtr(obj.MaxBalanceDays), nil
 }
 
 func (r *PTOAvailabilityResolver) Days(ctx context.Context, obj *ptoledgerservice.AvailabilityResult) (string, error) {
-	return base.DecimalString(obj.Days), nil
+	return gqldecimal.DecimalString(obj.Days), nil
 }
 
 func (r *PTOAvailabilityResolver) BalanceDays(ctx context.Context, obj *ptoledgerservice.AvailabilityResult) (string, error) {
-	return base.DecimalString(obj.BalanceDays), nil
+	return gqldecimal.DecimalString(obj.BalanceDays), nil
 }
 
 func (r *PTOAvailabilityResolver) PendingDays(ctx context.Context, obj *ptoledgerservice.AvailabilityResult) (string, error) {
-	return base.DecimalString(obj.PendingDays), nil
+	return gqldecimal.DecimalString(obj.PendingDays), nil
 }
 
 func (r *PTOAvailabilityResolver) ProjectedAccrualDays(ctx context.Context, obj *ptoledgerservice.AvailabilityResult) (string, error) {
-	return base.DecimalString(obj.ProjectedAccrualDays), nil
+	return gqldecimal.DecimalString(obj.ProjectedAccrualDays), nil
 }
 
 func (r *PTOAvailabilityResolver) ProjectedAvailableDays(ctx context.Context, obj *ptoledgerservice.AvailabilityResult) (string, error) {
-	return base.DecimalString(obj.ProjectedAvailableDays), nil
+	return gqldecimal.DecimalString(obj.ProjectedAvailableDays), nil
 }
 
 func (r *PTOAvailabilityResolver) FloorDays(ctx context.Context, obj *ptoledgerservice.AvailabilityResult) (string, error) {
-	return base.DecimalString(obj.FloorDays), nil
+	return gqldecimal.DecimalString(obj.FloorDays), nil
 }
 
 func (r *PTOAvailabilityResolver) Message(ctx context.Context, obj *ptoledgerservice.AvailabilityResult) (*string, error) {
@@ -292,51 +297,51 @@ func (r *PTOAvailabilityResolver) Message(ctx context.Context, obj *ptoledgerser
 }
 
 func (r *PTOBalanceSummaryResolver) TotalBalanceDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error) {
-	return base.DecimalString(obj.TotalBalanceDays), nil
+	return gqldecimal.DecimalString(obj.TotalBalanceDays), nil
 }
 
 func (r *PTOBalanceSummaryResolver) TotalPendingDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error) {
-	return base.DecimalString(obj.TotalPendingDays), nil
+	return gqldecimal.DecimalString(obj.TotalPendingDays), nil
 }
 
 func (r *PTOBalanceSummaryResolver) AccruedYtdDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error) {
-	return base.DecimalString(obj.AccruedYTDDays), nil
+	return gqldecimal.DecimalString(obj.AccruedYTDDays), nil
 }
 
 func (r *PTOBalanceSummaryResolver) UsedYtdDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error) {
-	return base.DecimalString(obj.UsedYTDDays), nil
+	return gqldecimal.DecimalString(obj.UsedYTDDays), nil
 }
 
 func (r *PTOLiabilityReportResolver) TotalBalanceDays(ctx context.Context, obj *ptoledgerservice.LiabilityReport) (string, error) {
-	return base.DecimalString(obj.TotalBalanceDays), nil
+	return gqldecimal.DecimalString(obj.TotalBalanceDays), nil
 }
 
 func (r *PTOLiabilityReportResolver) LiabilityDays(ctx context.Context, obj *ptoledgerservice.LiabilityReport) (string, error) {
-	return base.DecimalString(obj.LiabilityDays), nil
+	return gqldecimal.DecimalString(obj.LiabilityDays), nil
 }
 
 func (r *PTOLiabilityReportResolver) ForfeitableDays(ctx context.Context, obj *ptoledgerservice.LiabilityReport) (string, error) {
-	return base.DecimalString(obj.ForfeitableDays), nil
+	return gqldecimal.DecimalString(obj.ForfeitableDays), nil
 }
 
 func (r *PTOLiabilityRowResolver) BalanceDays(ctx context.Context, obj *ptoledgerservice.LiabilityRow) (string, error) {
-	return base.DecimalString(obj.BalanceDays), nil
+	return gqldecimal.DecimalString(obj.BalanceDays), nil
 }
 
 func (r *PTOLiabilityRowResolver) AccruedYtdDays(ctx context.Context, obj *ptoledgerservice.LiabilityRow) (string, error) {
-	return base.DecimalString(obj.AccruedYTD), nil
+	return gqldecimal.DecimalString(obj.AccruedYTD), nil
 }
 
 func (r *PTOLiabilityRowResolver) UsedYtdDays(ctx context.Context, obj *ptoledgerservice.LiabilityRow) (string, error) {
-	return base.DecimalString(obj.UsedYTD), nil
+	return gqldecimal.DecimalString(obj.UsedYTD), nil
 }
 
 func (r *PTOLiabilityRowResolver) LiabilityDays(ctx context.Context, obj *ptoledgerservice.LiabilityRow) (string, error) {
-	return base.DecimalString(obj.LiabilityDays), nil
+	return gqldecimal.DecimalString(obj.LiabilityDays), nil
 }
 
 func (r *PTOPolicyResolver) NegativeFloorDays(ctx context.Context, obj *pto.PTOPolicy) (string, error) {
-	return base.DecimalString(obj.NegativeFloorDays), nil
+	return gqldecimal.DecimalString(obj.NegativeFloorDays), nil
 }
 
 func (r *PTOPolicyResolver) OpenAssignmentCount(ctx context.Context, obj *pto.PTOPolicy) (int, error) {
@@ -347,19 +352,19 @@ func (r *PTOPolicyResolver) OpenAssignmentCount(ctx context.Context, obj *pto.PT
 }
 
 func (r *PTOPolicyRuleResolver) AccrualAmountDays(ctx context.Context, obj *pto.PTOPolicyRule) (string, error) {
-	return base.DecimalString(obj.AccrualAmountDays), nil
+	return gqldecimal.DecimalString(obj.AccrualAmountDays), nil
 }
 
 func (r *PTOPolicyRuleResolver) MaxBalanceDays(ctx context.Context, obj *pto.PTOPolicyRule) (*string, error) {
-	return base.NullDecimalStringPtr(obj.MaxBalanceDays), nil
+	return gqldecimal.NullDecimalStringPtr(obj.MaxBalanceDays), nil
 }
 
 func (r *PTOPolicyRuleResolver) CarryoverCapDays(ctx context.Context, obj *pto.PTOPolicyRule) (*string, error) {
-	return base.NullDecimalStringPtr(obj.CarryoverCapDays), nil
+	return gqldecimal.NullDecimalStringPtr(obj.CarryoverCapDays), nil
 }
 
 func (r *PlannedPTOAccrualResolver) NominalDays(ctx context.Context, obj *ptoledgerservice.PlannedEntry) (string, error) {
-	return base.DecimalString(obj.NominalDays), nil
+	return gqldecimal.DecimalString(obj.NominalDays), nil
 }
 
 func (r *QueryResolver) PTOPolicies(ctx context.Context, input gqlmodel.PTOPoliciesInput) (*gqlmodel.PTOPolicyConnection, error) {
@@ -368,14 +373,14 @@ func (r *QueryResolver) PTOPolicies(ctx context.Context, input gqlmodel.PTOPolic
 		return nil, err
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
 		After:        input.After,
 		Query:        input.Query,
 		FieldFilters: input.FieldFilters,
 		FilterGroups: input.FilterGroups,
 		Sort:         input.Sort,
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -406,7 +411,7 @@ func (r *QueryResolver) PTOPolicy(ctx context.Context, id string) (*pto.PTOPolic
 
 	return r.PtoPolicyService.Get(ctx, &ptopolicyports.GetPTOPolicyByIDRequest{
 		ID:           policyID,
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		IncludeRules: true,
 	})
 }
@@ -423,7 +428,7 @@ func (r *QueryResolver) WorkerPTOPolicyAssignments(ctx context.Context, workerID
 	}
 
 	return r.PtoPolicyService.ListAssignments(ctx, &ptopolicyports.ListPTOAssignmentsRequest{
-		TenantInfo:    base.TenantInfo(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		WorkerID:      id,
 		IncludePolicy: true,
 	})
@@ -440,7 +445,7 @@ func (r *QueryResolver) WorkerPTOBalances(ctx context.Context, workerID string) 
 		return nil, err
 	}
 
-	return r.PtoLedgerService.GetBalances(ctx, base.TenantInfo(authCtx), id)
+	return r.PtoLedgerService.GetBalances(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) WorkerPTOLedger(ctx context.Context, input gqlmodel.WorkerPTOLedgerInput) (*gqlmodel.WorkerPTOLedgerConnection, error) {
@@ -449,19 +454,19 @@ func (r *QueryResolver) WorkerPTOLedger(ctx context.Context, input gqlmodel.Work
 		return nil, err
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
 		After:        input.After,
 		Query:        input.Query,
 		FieldFilters: input.FieldFilters,
 		FilterGroups: input.FilterGroups,
 		Sort:         input.Sort,
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	workerIDValue, err := base.OptionalID(input.WorkerID)
+	workerIDValue, err := gqlid.OptionalID(input.WorkerID)
 	if err != nil {
 		return nil, err
 	}
@@ -470,11 +475,11 @@ func (r *QueryResolver) WorkerPTOLedger(ctx context.Context, input gqlmodel.Work
 		Filter:        connection.Filter,
 		Cursor:        connection.Cursor,
 		WorkerID:      workerIDValue,
-		PTOType:       base.PtoTypeString(input.PTOType),
+		PTOType:       ptomapping.PtoTypeString(input.PTOType),
 		EntryType:     ptoLedgerEntryTypeString(input.EntryType),
-		EffectiveFrom: base.Int64Value(input.EffectiveFrom),
-		EffectiveTo:   base.Int64Value(input.EffectiveTo),
-		IncludeWorker: base.BoolValue(input.IncludeWorker),
+		EffectiveFrom: gqlscalar.Int64Value(input.EffectiveFrom),
+		EffectiveTo:   gqlscalar.Int64Value(input.EffectiveTo),
+		IncludeWorker: gqlscalar.BoolValue(input.IncludeWorker),
 	})
 	if err != nil {
 		return nil, err
@@ -493,12 +498,12 @@ func (r *QueryResolver) WorkerPTOAvailability(ctx context.Context, input gqlmode
 	if err != nil {
 		return nil, err
 	}
-	excludeID, err := base.OptionalID(input.ExcludePTOID)
+	excludeID, err := gqlid.OptionalID(input.ExcludePTOID)
 	if err != nil {
 		return nil, err
 	}
 
-	info := base.TenantInfo(authCtx)
+	info := resolvercore.TenantInfo(authCtx)
 	loc, err := r.PtoLedgerService.OrgLocation(ctx, info)
 	if err != nil {
 		return nil, err
@@ -537,12 +542,12 @@ func (r *QueryResolver) PreviewWorkerPTOAccrual(ctx context.Context, workerID st
 	if err != nil {
 		return nil, err
 	}
-	at := int64(base.IntValue(asOf))
+	at := int64(gqlscalar.IntValue(asOf))
 	if at <= 0 {
 		at = timeutils.NowUnix()
 	}
 
-	plan, err := r.PtoLedgerService.PreviewAccrual(ctx, base.TenantInfo(authCtx), id, at)
+	plan, err := r.PtoLedgerService.PreviewAccrual(ctx, resolvercore.TenantInfo(authCtx), id, at)
 	if err != nil {
 		return nil, err
 	}
@@ -556,7 +561,7 @@ func (r *QueryResolver) PTOBalanceSummary(ctx context.Context) (*ptoledgerports.
 		return nil, err
 	}
 
-	return r.PtoLedgerService.Summary(ctx, base.TenantInfo(authCtx))
+	return r.PtoLedgerService.Summary(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) PTOLiabilityReport(ctx context.Context, asOf *int) (*ptoledgerservice.LiabilityReport, error) {
@@ -570,43 +575,43 @@ func (r *QueryResolver) PTOLiabilityReport(ctx context.Context, asOf *int) (*pto
 		at = int64(*asOf)
 	}
 
-	return r.PtoLedgerService.LiabilityReport(ctx, base.TenantInfo(authCtx), at)
+	return r.PtoLedgerService.LiabilityReport(ctx, resolvercore.TenantInfo(authCtx), at)
 }
 
 func (r *WorkerPTOBalanceResolver) BalanceDays(ctx context.Context, obj *ptoledgerservice.BalanceView) (string, error) {
-	return base.DecimalString(obj.BalanceDays), nil
+	return gqldecimal.DecimalString(obj.BalanceDays), nil
 }
 
 func (r *WorkerPTOBalanceResolver) PendingDays(ctx context.Context, obj *ptoledgerservice.BalanceView) (string, error) {
-	return base.DecimalString(obj.PendingDays), nil
+	return gqldecimal.DecimalString(obj.PendingDays), nil
 }
 
 func (r *WorkerPTOBalanceResolver) AvailableDays(ctx context.Context, obj *ptoledgerservice.BalanceView) (string, error) {
-	return base.DecimalString(obj.AvailableDays), nil
+	return gqldecimal.DecimalString(obj.AvailableDays), nil
 }
 
 func (r *WorkerPTOBalanceResolver) AccruedYtdDays(ctx context.Context, obj *ptoledgerservice.BalanceView) (string, error) {
-	return base.DecimalString(obj.AccruedYTDDays), nil
+	return gqldecimal.DecimalString(obj.AccruedYTDDays), nil
 }
 
 func (r *WorkerPTOBalanceResolver) UsedYtdDays(ctx context.Context, obj *ptoledgerservice.BalanceView) (string, error) {
-	return base.DecimalString(obj.UsedYTDDays), nil
+	return gqldecimal.DecimalString(obj.UsedYTDDays), nil
 }
 
 func (r *WorkerPTOBalanceResolver) CarriedDays(ctx context.Context, obj *ptoledgerservice.BalanceView) (string, error) {
-	return base.DecimalString(obj.CarriedDays), nil
+	return gqldecimal.DecimalString(obj.CarriedDays), nil
 }
 
 func (r *WorkerPTOBalanceResolver) MaxBalanceDays(ctx context.Context, obj *ptoledgerservice.BalanceView) (*string, error) {
-	return base.NullDecimalStringPtr(obj.MaxBalanceDays), nil
+	return gqldecimal.NullDecimalStringPtr(obj.MaxBalanceDays), nil
 }
 
 func (r *WorkerPTOLedgerEntryResolver) AmountDays(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (string, error) {
-	return base.DecimalString(obj.AmountDays), nil
+	return gqldecimal.DecimalString(obj.AmountDays), nil
 }
 
 func (r *WorkerPTOLedgerEntryResolver) BalanceAfterDays(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (string, error) {
-	return base.DecimalString(obj.BalanceAfterDays), nil
+	return gqldecimal.DecimalString(obj.BalanceAfterDays), nil
 }
 
 func (r *WorkerPTOLedgerEntryResolver) PeriodKey(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error) {
@@ -614,19 +619,19 @@ func (r *WorkerPTOLedgerEntryResolver) PeriodKey(ctx context.Context, obj *pto.W
 }
 
 func (r *WorkerPTOLedgerEntryResolver) SourcePTOID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error) {
-	return base.IDPtr(obj.SourcePTOID), nil
+	return gqlid.IDPtr(obj.SourcePTOID), nil
 }
 
 func (r *WorkerPTOLedgerEntryResolver) AssignmentID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error) {
-	return base.IDPtr(obj.AssignmentID), nil
+	return gqlid.IDPtr(obj.AssignmentID), nil
 }
 
 func (r *WorkerPTOLedgerEntryResolver) PTOPolicyID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error) {
-	return base.IDPtr(obj.PTOPolicyID), nil
+	return gqlid.IDPtr(obj.PTOPolicyID), nil
 }
 
 func (r *WorkerPTOLedgerEntryResolver) CreatedByID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error) {
-	return base.IDPtr(obj.CreatedByID), nil
+	return gqlid.IDPtr(obj.CreatedByID), nil
 }
 
 func (r *WorkerPTOLedgerEntryResolver) Note(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error) {
@@ -638,5 +643,5 @@ func (r *WorkerPTOPolicyAssignmentResolver) PTOPolicy(ctx context.Context, obj *
 }
 
 func (r *WorkerPTOPolicyAssignmentResolver) AssignedByID(ctx context.Context, obj *pto.WorkerPTOPolicyAssignment) (*string, error) {
-	return base.IDPtr(obj.AssignedByID), nil
+	return gqlid.IDPtr(obj.AssignedByID), nil
 }

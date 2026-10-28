@@ -3,7 +3,8 @@ package tableconfigurationresolver
 import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -66,11 +67,11 @@ func tableConfigurationFromInput(
 		BusinessUnitID: authCtx.BusinessUnitID,
 		UserID:         authCtx.UserID,
 		Name:           input.Name,
-		Description:    base.StringValue(input.Description),
+		Description:    gqlscalar.StringValue(input.Description),
 		Resource:       input.Resource,
 		TableConfig:    cfg,
 		Visibility:     visibility,
-		IsDefault:      base.BoolValue(input.IsDefault),
+		IsDefault:      gqlscalar.BoolValue(input.IsDefault),
 	}, nil
 }
 
@@ -86,7 +87,7 @@ func applyTableConfigurationPatch(
 		existing.Name = value
 	}
 	if description, ok := input.Description.ValueOK(); ok {
-		existing.Description = base.StringValue(description)
+		existing.Description = gqlscalar.StringValue(description)
 	}
 	if resource, ok := input.Resource.ValueOK(); ok {
 		value, err := requiredPatchValue("resource", "Resource", resource)
@@ -117,7 +118,7 @@ func applyTableConfigurationPatch(
 		existing.Visibility = value
 	}
 	if isDefault, ok := input.IsDefault.ValueOK(); ok {
-		existing.IsDefault = base.BoolValue(isDefault)
+		existing.IsDefault = gqlscalar.BoolValue(isDefault)
 	}
 
 	return nil
@@ -126,7 +127,7 @@ func applyTableConfigurationPatch(
 func tableConfigurationConnectionToModel(
 	result *pagination.CursorListResult[*tableconfiguration.TableConfiguration],
 ) (*gqlmodel.TableConfigurationConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(
 			node *tableconfiguration.TableConfiguration,

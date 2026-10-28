@@ -10,7 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
@@ -35,7 +36,7 @@ func (r *QueryResolver) PageAccessPreview(ctx context.Context, input gqlmodel.Pa
 		return nil, err
 	}
 
-	roleID, err := base.ParseOptionalIDField("roleId", input.RoleID)
+	roleID, err := gqlid.ParseOptionalIDField("roleId", input.RoleID)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +46,7 @@ func (r *QueryResolver) PageAccessPreview(ctx context.Context, input gqlmodel.Pa
 	}
 
 	access, err := r.PageAccessService.Preview(ctx, &pageaccessservice.PreviewRequest{
-		Tenant:   base.TenantInfo(authCtx),
+		Tenant:   resolvercore.TenantInfo(authCtx),
 		Location: input.Location,
 		RoleID:   roleID,
 		Draft:    draft,

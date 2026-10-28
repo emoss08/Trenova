@@ -2,7 +2,8 @@ package dispatchconsoleresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,14 +32,14 @@ func assignMoveToCarrierRequestFromInput(
 		return nil, err
 	}
 
-	baseRate, err := base.DecimalFromString(input.BaseRate, "baseRate")
+	baseRate, err := gqldecimal.DecimalFromString(input.BaseRate, "baseRate")
 	if err != nil {
 		return nil, err
 	}
 
 	fuelSurcharge := decimal.Zero
 	if input.FuelSurcharge != nil && *input.FuelSurcharge != "" {
-		fuelSurcharge, err = base.DecimalFromString(*input.FuelSurcharge, "fuelSurcharge")
+		fuelSurcharge, err = gqldecimal.DecimalFromString(*input.FuelSurcharge, "fuelSurcharge")
 		if err != nil {
 			return nil, err
 		}
@@ -54,7 +55,7 @@ func assignMoveToCarrierRequestFromInput(
 			continue
 		}
 
-		amount, accErr := base.DecimalFromString(acc.Amount, "accessorials.amount")
+		amount, accErr := gqldecimal.DecimalFromString(acc.Amount, "accessorials.amount")
 		if accErr != nil {
 			return nil, accErr
 		}
@@ -85,13 +86,13 @@ func assignMoveToCarrierRequestFromInput(
 		BaseRate:                 baseRate,
 		FuelSurcharge:            fuelSurcharge,
 		Accessorials:             accessorials,
-		ProNumber:                base.StringValue(input.ProNumber),
-		ExternalDriverName:       base.StringValue(input.ExternalDriverName),
-		ExternalDriverPhone:      base.StringValue(input.ExternalDriverPhone),
-		ExternalTractorNumber:    base.StringValue(input.ExternalTractorNumber),
-		ExternalTrailerNumber:    base.StringValue(input.ExternalTrailerNumber),
-		Replace:                  base.BoolValue(input.Replace),
-		OverrideInsuranceWarning: base.BoolValue(input.OverrideInsuranceWarning),
+		ProNumber:                gqlscalar.StringValue(input.ProNumber),
+		ExternalDriverName:       gqlscalar.StringValue(input.ExternalDriverName),
+		ExternalDriverPhone:      gqlscalar.StringValue(input.ExternalDriverPhone),
+		ExternalTractorNumber:    gqlscalar.StringValue(input.ExternalTractorNumber),
+		ExternalTrailerNumber:    gqlscalar.StringValue(input.ExternalTrailerNumber),
+		Replace:                  gqlscalar.BoolValue(input.Replace),
+		OverrideInsuranceWarning: gqlscalar.BoolValue(input.OverrideInsuranceWarning),
 	}, nil
 }
 

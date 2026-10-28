@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -26,7 +26,7 @@ func documentPacketRuleColumns(ctx context.Context, nodePathPrefix string) []str
 func documentPacketRuleConnectionToModel(
 	result *pagination.CursorListResult[*documentpacketrule.DocumentPacketRule],
 ) (*gqlmodel.DocumentPacketRuleConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *documentpacketrule.DocumentPacketRule, cursor string) *gqlmodel.DocumentPacketRuleEdge {
 			return &gqlmodel.DocumentPacketRuleEdge{

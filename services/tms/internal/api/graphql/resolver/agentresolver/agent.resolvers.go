@@ -13,7 +13,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/decisionbatch"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -186,7 +191,7 @@ func (r *MutationResolver) DecideAgentProposal(ctx context.Context, id string, i
 		Modifications: input.Modifications,
 		ReasonCode:    input.ReasonCode,
 		Note:          stringutils.FromPtr(input.Note),
-		TenantInfo:    base.TenantInfo(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
@@ -195,7 +200,7 @@ func (r *MutationResolver) DecideAgentProposal(ctx context.Context, id string, i
 
 	result := outcome.Result(proposalID)
 
-	return base.DecisionResult(&result), nil
+	return decisionbatch.DecisionResult(&result), nil
 }
 
 func (r *MutationResolver) DecideAgentPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*gqlmodel.AgentPlanDecisionResult, error) {
@@ -214,14 +219,14 @@ func (r *MutationResolver) DecideAgentPlan(ctx context.Context, id string, input
 		Decision:      input.Decision,
 		ReasonCode:    input.ReasonCode,
 		Note:          stringutils.FromPtr(input.Note),
-		TenantInfo:    base.TenantInfo(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	return base.PlanDecisionResult(plan), nil
+	return decisionbatch.PlanDecisionResult(plan), nil
 }
 
 func (r *MutationResolver) DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*gqlmodel.AgentProposalDecisionResult, error) {
@@ -241,7 +246,7 @@ func (r *MutationResolver) DecideMyProposal(ctx context.Context, id string, inpu
 		Modifications: input.Modifications,
 		ReasonCode:    input.ReasonCode,
 		Note:          stringutils.FromPtr(input.Note),
-		TenantInfo:    base.TenantInfo(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
@@ -250,7 +255,7 @@ func (r *MutationResolver) DecideMyProposal(ctx context.Context, id string, inpu
 
 	result := outcome.Result(proposalID)
 
-	return base.DecisionResult(&result), nil
+	return decisionbatch.DecisionResult(&result), nil
 }
 
 func (r *MutationResolver) DecideMyProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error) {
@@ -259,7 +264,7 @@ func (r *MutationResolver) DecideMyProposals(ctx context.Context, ids []string, 
 		return nil, err
 	}
 
-	req, err := base.BatchDecisionRequest(ids, &input, base.TenantInfo(authCtx))
+	req, err := decisionbatch.BatchDecisionRequest(ids, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +274,7 @@ func (r *MutationResolver) DecideMyProposals(ctx context.Context, ids []string, 
 		return nil, err
 	}
 
-	return base.BatchDecisionResults(results), nil
+	return decisionbatch.BatchDecisionResults(results), nil
 }
 
 func (r *MutationResolver) DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*gqlmodel.AgentPlanDecisionResult, error) {
@@ -288,14 +293,14 @@ func (r *MutationResolver) DecideMyPlan(ctx context.Context, id string, input gq
 		Decision:      input.Decision,
 		ReasonCode:    input.ReasonCode,
 		Note:          stringutils.FromPtr(input.Note),
-		TenantInfo:    base.TenantInfo(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	return base.PlanDecisionResult(plan), nil
+	return decisionbatch.PlanDecisionResult(plan), nil
 }
 
 func (r *MutationResolver) UndoMyDecision(ctx context.Context, proposalID *string, planID *string) (bool, error) {
@@ -304,7 +309,7 @@ func (r *MutationResolver) UndoMyDecision(ctx context.Context, proposalID *strin
 		return false, err
 	}
 
-	req, err := settleApprovalRequest(proposalID, planID, base.TenantInfo(authCtx))
+	req, err := settleApprovalRequest(proposalID, planID, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return false, err
 	}
@@ -322,7 +327,7 @@ func (r *MutationResolver) CommitMyDecisionNow(ctx context.Context, proposalID *
 		return false, err
 	}
 
-	req, err := settleApprovalRequest(proposalID, planID, base.TenantInfo(authCtx))
+	req, err := settleApprovalRequest(proposalID, planID, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return false, err
 	}
@@ -347,7 +352,7 @@ func (r *MutationResolver) ReplayAgentRun(ctx context.Context, runID string) (*a
 
 	return r.AgentEvaluationService.Replay(ctx, &agentports.ReplayAgentRunRequest{
 		RunID:      id,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -363,13 +368,13 @@ func (r *MutationResolver) CreateAgentMemory(ctx context.Context, input gqlmodel
 	}
 
 	return r.AgentMemoryService.Remember(ctx, &agentmemoryports.RememberRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		Kind:        input.Kind,
 		Content:     input.Content,
 		SubjectType: subjectType,
 		SubjectID:   subjectID,
-		ToolName:    base.DerefString(input.ToolName),
-		ExpiresAt:   base.OptionalInt64(input.ExpiresAt),
+		ToolName:    gqlscalar.DerefString(input.ToolName),
+		ExpiresAt:   gqlscalar.OptionalInt64(input.ExpiresAt),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -399,13 +404,13 @@ func (r *MutationResolver) UpdateAgentMemory(ctx context.Context, id string, inp
 
 	return r.AgentMemoryService.Update(ctx, &agentmemoryports.UpdateAgentMemoryRequest{
 		ID:          memoryID,
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		Kind:        input.Kind,
 		Content:     input.Content,
 		SubjectType: subjectType,
 		SubjectID:   subjectID,
-		ToolName:    base.DerefString(input.ToolName),
-		ExpiresAt:   base.OptionalInt64(input.ExpiresAt),
+		ToolName:    gqlscalar.DerefString(input.ToolName),
+		ExpiresAt:   gqlscalar.OptionalInt64(input.ExpiresAt),
 		Version:     int64(*input.Version),
 	}, actorutil.FromAuthContext(authCtx))
 }
@@ -423,7 +428,7 @@ func (r *MutationResolver) SetAgentMemoryStatus(ctx context.Context, id string, 
 
 	return r.AgentMemoryService.SetStatus(ctx, agentmemoryports.SetAgentMemoryStatusRequest{
 		ID:         memoryID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Status:     status,
 	}, actorutil.FromAuthContext(authCtx))
 }
@@ -441,7 +446,7 @@ func (r *MutationResolver) ReviewAgentMemory(ctx context.Context, id string, ver
 
 	return r.AgentMemoryService.Review(ctx, agentmemoryports.ReviewAgentMemoryRequest{
 		ID:         memoryID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Version:    int64(version),
 	}, actorutil.FromAuthContext(authCtx))
 }
@@ -469,7 +474,7 @@ func (r *MutationResolver) ApproveAgentMemorySuggestion(ctx context.Context, id 
 
 	return r.AgentMemoryService.ApproveSuggestion(ctx, &agentmemoryports.ApproveAgentMemorySuggestionRequest{
 		ID:         memoryID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Kind:       kind,
 		Content:    input.Content,
 		Scope:      scope,
@@ -490,7 +495,7 @@ func (r *MutationResolver) DismissAgentMemorySuggestion(ctx context.Context, id 
 
 	return r.AgentMemoryService.DismissSuggestion(ctx, agentmemoryports.DismissAgentMemorySuggestionRequest{
 		ID:         memoryID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Version:    int64(version),
 	}, actorutil.FromAuthContext(authCtx))
 }
@@ -509,8 +514,8 @@ func (r *MutationResolver) ResolveAgentException(ctx context.Context, id string,
 	return r.AgentExceptionService.Resolve(ctx, &agentports.ResolveAgentExceptionRequest{
 		ID:              exceptionID,
 		ResolutionState: input.ResolutionState,
-		ResolutionNotes: base.StringValue(input.ResolutionNotes),
-		TenantInfo:      base.TenantInfo(authCtx),
+		ResolutionNotes: gqlscalar.StringValue(input.ResolutionNotes),
+		TenantInfo:      resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -520,15 +525,15 @@ func (r *MutationResolver) UpdateAgentControl(ctx context.Context, input gqlmode
 		return nil, err
 	}
 
-	callCeiling, err := base.ParseMinorPtr("agentMoneyCallCeiling", input.AgentMoneyCallCeiling)
+	callCeiling, err := gqldecimal.ParseMinorPtr("agentMoneyCallCeiling", input.AgentMoneyCallCeiling)
 	if err != nil {
 		return nil, err
 	}
-	runAmount, err := base.ParseMinorPtr("agentMoneyRunAmount", input.AgentMoneyRunAmount)
+	runAmount, err := gqldecimal.ParseMinorPtr("agentMoneyRunAmount", input.AgentMoneyRunAmount)
 	if err != nil {
 		return nil, err
 	}
-	dayAmount, err := base.ParseMinorPtr("agentMoneyDayAmount", input.AgentMoneyDayAmount)
+	dayAmount, err := gqldecimal.ParseMinorPtr("agentMoneyDayAmount", input.AgentMoneyDayAmount)
 	if err != nil {
 		return nil, err
 	}
@@ -548,8 +553,8 @@ func (r *MutationResolver) UpdateAgentControl(ctx context.Context, input gqlmode
 			DayCalls:         input.AgentMoneyDayCalls,
 			DayAmountMinor:   dayAmount,
 		},
-		Version:    base.Int64Ptr(input.Version),
-		TenantInfo: base.TenantInfo(authCtx),
+		Version:    gqlscalar.Int64Ptr(input.Version),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -559,7 +564,7 @@ func (r *QueryResolver) AgentRuns(ctx context.Context, input gqlmodel.DataTableC
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -591,7 +596,7 @@ func (r *QueryResolver) AgentRun(ctx context.Context, id string) (*agent.AgentRu
 		return nil, err
 	}
 
-	ti := base.TenantInfo(authCtx)
+	ti := resolvercore.TenantInfo(authCtx)
 	return r.AgentRunService.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         runID,
 		TenantInfo: &ti,
@@ -609,7 +614,7 @@ func (r *QueryResolver) AgentProposals(ctx context.Context, input gqlmodel.DataT
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -644,7 +649,7 @@ func (r *QueryResolver) AgentProposal(ctx context.Context, id string) (*agent.Ag
 		return nil, err
 	}
 
-	ti := base.TenantInfo(authCtx)
+	ti := resolvercore.TenantInfo(authCtx)
 	return r.AgentProposalService.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
 		ID:         proposalID,
 		TenantInfo: &ti,
@@ -661,7 +666,7 @@ func (r *QueryResolver) AgentPlans(ctx context.Context, input gqlmodel.DataTable
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -698,7 +703,7 @@ func (r *QueryResolver) AgentPlan(ctx context.Context, id string) (*agent.AgentP
 
 	return r.AgentPlanService.GetByID(ctx, agentports.GetAgentPlanByIDRequest{
 		ID:         planID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -708,7 +713,7 @@ func (r *QueryResolver) AgentMemories(ctx context.Context, input gqlmodel.DataTa
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -734,7 +739,7 @@ func (r *QueryResolver) AgentReflections(ctx context.Context, input gqlmodel.Dat
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -760,7 +765,7 @@ func (r *QueryResolver) AgentEvaluations(ctx context.Context, input gqlmodel.Dat
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -770,7 +775,7 @@ func (r *QueryResolver) AgentEvaluations(ctx context.Context, input gqlmodel.Dat
 		&agentports.ListAgentEvaluationConnectionRequest{
 			Filter:  tableInput.Filter,
 			Cursor:  tableInput.Cursor,
-			Columns: base.AgentEvaluationColumns(ctx, "edges.node"),
+			Columns: gqlconnection.AgentEvaluationColumns(ctx, "edges.node"),
 		},
 	)
 	if err != nil {
@@ -793,7 +798,7 @@ func (r *QueryResolver) AgentEvaluation(ctx context.Context, id string) (*agent.
 
 	return r.AgentEvaluationService.GetByID(ctx, agentports.GetAgentEvaluationByIDRequest{
 		ID:         evaluationID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -810,7 +815,7 @@ func (r *QueryResolver) AgentMemory(ctx context.Context, id string) (*agent.Memo
 
 	return r.AgentMemoryService.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID:         memoryID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -820,7 +825,7 @@ func (r *QueryResolver) AgentMemoryUsage(ctx context.Context) (*agentmemoryports
 		return nil, err
 	}
 
-	return r.AgentMemoryService.Usage(ctx, base.TenantInfo(authCtx))
+	return r.AgentMemoryService.Usage(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error) {
@@ -833,7 +838,7 @@ func (r *QueryResolver) AgentExceptions(ctx context.Context, input gqlmodel.Data
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -868,7 +873,7 @@ func (r *QueryResolver) AgentException(ctx context.Context, id string) (*agent.A
 		return nil, err
 	}
 
-	ti := base.TenantInfo(authCtx)
+	ti := resolvercore.TenantInfo(authCtx)
 	return r.AgentExceptionService.GetByID(ctx, agentports.GetAgentExceptionByIDRequest{
 		ID:         exceptionID,
 		TenantInfo: &ti,
@@ -881,7 +886,7 @@ func (r *QueryResolver) AgentControl(ctx context.Context) (*tenant.AgentControl,
 		return nil, err
 	}
 
-	return r.AgentControlService.Get(ctx, base.TenantInfo(authCtx))
+	return r.AgentControlService.Get(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *AgentRunResolver) Transcript(ctx context.Context, obj *agent.AgentRun) (*agent.RunTranscript, error) {
@@ -912,7 +917,7 @@ func (r *QueryResolver) AgentPromotionPreview(ctx context.Context, threshold int
 	}
 
 	candidates, err := r.AgentTrustService.PromotionCandidates(ctx, &agentports.PromoteReadyRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Threshold:  threshold,
 	})
 	if err != nil {
@@ -933,7 +938,7 @@ func (r *QueryResolver) AgentActivitySummary(ctx context.Context, since int) (*g
 	}
 
 	summary, err := r.AgentActivityService.Summary(ctx, &agentports.AgentActivitySummaryRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Since:      int64(since),
 	})
 	if err != nil {
@@ -947,15 +952,15 @@ func (r *QueryResolver) AgentActivitySummary(ctx context.Context, since int) (*g
 }
 
 func (r *AgentControlResolver) AgentMoneyCallCeiling(ctx context.Context, obj *tenant.AgentControl) (string, error) {
-	return base.MinorString(obj.AgentMoneyCallCeilingMinor), nil
+	return gqldecimal.MinorString(obj.AgentMoneyCallCeilingMinor), nil
 }
 
 func (r *AgentControlResolver) AgentMoneyRunAmount(ctx context.Context, obj *tenant.AgentControl) (string, error) {
-	return base.MinorString(obj.AgentMoneyRunAmountMinor), nil
+	return gqldecimal.MinorString(obj.AgentMoneyRunAmountMinor), nil
 }
 
 func (r *AgentControlResolver) AgentMoneyDayAmount(ctx context.Context, obj *tenant.AgentControl) (string, error) {
-	return base.MinorString(obj.AgentMoneyDayAmountMinor), nil
+	return gqldecimal.MinorString(obj.AgentMoneyDayAmountMinor), nil
 }
 
 func (r *AgentProposalResolver) ReviewRequired(ctx context.Context, obj *agent.AgentProposal) (bool, error) {
@@ -976,7 +981,7 @@ func (r *AgentPlanResolver) DecidedBy(ctx context.Context, obj *agent.AgentPlan)
 		return nil, nil
 	}
 
-	user, err := base.LoadUser(ctx, *obj.DecidedByUserID)
+	user, err := loaderfields.LoadUser(ctx, *obj.DecidedByUserID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil

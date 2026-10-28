@@ -10,12 +10,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -128,7 +131,7 @@ func (r *MutationResolver) CreateAgentEvalCase(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	tenant := base.TenantInfo(authCtx)
+	tenant := resolvercore.TenantInfo(authCtx)
 	actor := actorutil.FromAuthContext(authCtx)
 	var captured *agentports.EvalCaseCapture
 	switch {
@@ -152,7 +155,7 @@ func (r *MutationResolver) CreateAgentEvalCase(ctx context.Context, input gqlmod
 		}
 		captured, err = r.AgentEvalCaseService.CreateFromProposal(ctx, &agentports.CreateEvalCaseFromProposalRequest{
 			ProposalID: proposalID,
-			Title:      base.DerefString(input.FromProposal.Title),
+			Title:      gqlscalar.DerefString(input.FromProposal.Title),
 			TenantInfo: tenant,
 		}, actor)
 	case input.FromFeedback != nil:
@@ -162,7 +165,7 @@ func (r *MutationResolver) CreateAgentEvalCase(ctx context.Context, input gqlmod
 		}
 		captured, err = r.AgentEvalCaseService.CreateFromFeedback(ctx, &agentports.CreateEvalCaseFromFeedbackRequest{
 			FeedbackID: feedbackID,
-			Title:      base.DerefString(input.FromFeedback.Title),
+			Title:      gqlscalar.DerefString(input.FromFeedback.Title),
 			TenantInfo: tenant,
 		}, actor)
 	default:
@@ -195,7 +198,7 @@ func (r *MutationResolver) UpdateAgentEvalCase(ctx context.Context, id string, i
 	if err != nil {
 		return nil, err
 	}
-	request.TenantInfo = base.TenantInfo(authCtx)
+	request.TenantInfo = resolvercore.TenantInfo(authCtx)
 
 	return r.AgentEvalCaseService.Update(ctx, request, actorutil.FromAuthContext(authCtx))
 }
@@ -214,7 +217,7 @@ func (r *MutationResolver) SetAgentEvalCaseStatus(ctx context.Context, id string
 	return r.AgentEvalCaseService.SetStatus(ctx, &agentports.SetEvalCaseStatusRequest{
 		ID:         caseID,
 		Status:     status,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -231,7 +234,7 @@ func (r *MutationResolver) ReplayAgentEvalCase(ctx context.Context, id string) (
 
 	return r.AgentEvaluationService.ReplayCase(ctx, &agentports.ReplayAgentEvalCaseRequest{
 		CaseID:     caseID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -247,7 +250,7 @@ func (r *MutationResolver) RunAgentSuite(ctx context.Context, agentDefinitionID 
 	}
 
 	return r.AgentQualityService.RunSuite(ctx, &agentqualityports.RunAgentSuiteRequest{
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		AgentDefinitionID: definitionID,
 	}, actorutil.FromAuthContext(authCtx))
 }
@@ -261,7 +264,7 @@ func (r *MutationResolver) UpdateAgentQualityControl(ctx context.Context, input 
 		return nil, err
 	}
 
-	control, err := qualityControlFromInput(base.TenantInfo(authCtx), &input)
+	control, err := qualityControlFromInput(resolvercore.TenantInfo(authCtx), &input)
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +278,7 @@ func (r *QueryResolver) AgentEvalCases(ctx context.Context, input gqlmodel.DataT
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -308,7 +311,7 @@ func (r *QueryResolver) AgentEvalCase(ctx context.Context, id string) (*agentqua
 
 	return r.AgentEvalCaseService.GetByID(ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
 		ID:         caseID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -319,7 +322,7 @@ func (r *QueryResolver) AgentQualityOverview(ctx context.Context, window *int) (
 	}
 
 	return r.AgentQualityService.Overview(ctx, &agentqualityports.AgentQualityOverviewRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		WindowDays:     qualityWindow(window),
 		IncludeRatings: r.HasPermission(ctx, authCtx, permission.ResourceAgentFeedback, permission.OpRead),
 	})
@@ -337,7 +340,7 @@ func (r *QueryResolver) AgentQuality(ctx context.Context, agentDefinitionID stri
 	}
 
 	return r.AgentQualityService.AgentQuality(ctx, &agentqualityports.AgentQualityRequest{
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		AgentDefinitionID: definitionID,
 		WindowDays:        qualityWindow(window),
 		IncludeRatings:    r.HasPermission(ctx, authCtx, permission.ResourceAgentFeedback, permission.OpRead),
@@ -352,10 +355,10 @@ func (r *QueryResolver) AgentQualityAgentConnection(ctx context.Context, window 
 	}
 
 	page, err := r.AgentQualityService.ListAgentTable(ctx, &agentqualityports.ListAgentQualityAgentTableRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		WindowDays:     qualityWindow(window),
 		IncludeRatings: r.HasPermission(ctx, authCtx, permission.ResourceAgentFeedback, permission.OpRead),
-		Table:          base.MemtableRequestFromGraphQL(ctx, &input),
+		Table:          gqlconnection.MemtableRequestFromGraphQL(ctx, &input),
 	})
 	if err != nil {
 		return nil, err
@@ -370,17 +373,17 @@ func (r *QueryResolver) AgentWorstRatedAnswerConnection(ctx context.Context, age
 		return nil, err
 	}
 
-	agentID, err := base.OptionalID(agentDefinitionID)
+	agentID, err := gqlid.OptionalID(agentDefinitionID)
 	if err != nil {
 		return nil, err
 	}
 
 	page, err := r.AgentQualityService.ListWorstRatedTable(ctx, &agentqualityports.ListAgentWorstRatedTableRequest{
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		AgentDefinitionID: agentID,
 		WindowDays:        qualityWindow(window),
 		ViewerID:          authCtx.UserID,
-		Table:             base.MemtableRequestFromGraphQL(ctx, &input),
+		Table:             gqlconnection.MemtableRequestFromGraphQL(ctx, &input),
 	})
 	if err != nil {
 		return nil, err
@@ -395,12 +398,12 @@ func (r *QueryResolver) AgentSuiteRunConnection(ctx context.Context, agentDefini
 		return nil, err
 	}
 
-	agentID, err := base.OptionalID(agentDefinitionID)
+	agentID, err := gqlid.OptionalID(agentDefinitionID)
 	if err != nil {
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -431,7 +434,7 @@ func (r *QueryResolver) AgentSuiteRun(ctx context.Context, id string) (*agentqua
 		return nil, err
 	}
 
-	return r.AgentQualityService.GetSuiteRun(ctx, runID, base.TenantInfo(authCtx))
+	return r.AgentQualityService.GetSuiteRun(ctx, runID, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) AgentSuiteRunCaseConnection(ctx context.Context, suiteRunID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunCaseConnection, error) {
@@ -440,20 +443,20 @@ func (r *QueryResolver) AgentSuiteRunCaseConnection(ctx context.Context, suiteRu
 		return nil, err
 	}
 
-	runID, err := base.RequiredID("suiteRunId", suiteRunID)
+	runID, err := gqlid.RequiredID("suiteRunId", suiteRunID)
 	if err != nil {
 		return nil, err
 	}
 
-	run, err := r.AgentQualityService.GetSuiteRun(ctx, runID, base.TenantInfo(authCtx))
+	run, err := r.AgentQualityService.GetSuiteRun(ctx, runID, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(
 		ctx,
 		suiteCaseTableInput(&input),
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 	)
 	if err != nil {
 		return nil, err
@@ -464,7 +467,7 @@ func (r *QueryResolver) AgentSuiteRunCaseConnection(ctx context.Context, suiteRu
 		&agentports.ListAgentEvaluationConnectionRequest{
 			Filter:     tableInput.Filter,
 			Cursor:     tableInput.Cursor,
-			Columns:    base.AgentEvaluationColumns(ctx, "edges.node"),
+			Columns:    gqlconnection.AgentEvaluationColumns(ctx, "edges.node"),
 			SuiteRunID: run.ID,
 		},
 	)
@@ -481,5 +484,5 @@ func (r *QueryResolver) AgentQualityControl(ctx context.Context) (*agentquality.
 		return nil, err
 	}
 
-	return r.AgentQualityService.GetControl(ctx, base.TenantInfo(authCtx))
+	return r.AgentQualityService.GetControl(ctx, resolvercore.TenantInfo(authCtx))
 }

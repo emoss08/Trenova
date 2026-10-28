@@ -2,7 +2,7 @@ package distanceoverrideresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -10,7 +10,7 @@ import (
 func distanceOverrideConnectionToModel(
 	result *pagination.CursorListResult[*distanceoverride.DistanceOverride],
 ) (*gqlmodel.DistanceOverrideConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *distanceoverride.DistanceOverride, cursor string) *gqlmodel.DistanceOverrideEdge {
 			return &gqlmodel.DistanceOverrideEdge{

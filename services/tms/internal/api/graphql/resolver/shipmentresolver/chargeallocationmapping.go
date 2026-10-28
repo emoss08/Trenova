@@ -4,7 +4,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentmapping"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/authctx"
 )
@@ -28,7 +29,7 @@ func shipmentChargeAllocationsFromInput(
 	}
 
 	rows := make([]*shipmentdomain.ChargeAllocation, 0, len(input.FreightAllocations))
-	freight, err := base.ChargeAllocationsFromInput(
+	freight, err := shipmentmapping.ChargeAllocationsFromInput(
 		input.FreightAllocations,
 		shipmentdomain.ChargeAllocationKindFreight,
 		"freightAllocations",
@@ -45,7 +46,7 @@ func shipmentChargeAllocationsFromInput(
 			continue
 		}
 		index := idx
-		accessorial, chargeErr := base.ChargeAllocationsFromInput(
+		accessorial, chargeErr := shipmentmapping.ChargeAllocationsFromInput(
 			charge.Allocations,
 			shipmentdomain.ChargeAllocationKindAccessorial,
 			fmt.Sprintf("additionalCharges[%d].allocations", idx),
@@ -57,7 +58,7 @@ func shipmentChargeAllocationsFromInput(
 		}
 		for _, row := range accessorial {
 			if charge.ID != nil {
-				chargeID, idErr := base.OptionalScopedID(
+				chargeID, idErr := gqlid.OptionalScopedID(
 					fmt.Sprintf("additionalCharges[%d].id", idx),
 					charge.ID,
 				)

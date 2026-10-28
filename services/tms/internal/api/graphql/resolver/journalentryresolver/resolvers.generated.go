@@ -3,7 +3,7 @@
 package journalentryresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	journalcardservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	journalentryservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
@@ -11,7 +11,7 @@ import (
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	GlAccountRepo       glaccountports.GLAccountRepository
 	JournalEntryService *journalentryservice.Service
 	JournalCards        *journalcardservice.Service

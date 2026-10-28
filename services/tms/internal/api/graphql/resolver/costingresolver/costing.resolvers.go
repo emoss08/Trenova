@@ -11,7 +11,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
@@ -29,7 +30,7 @@ func (r *MutationResolver) UpdateCostingControl(ctx context.Context, input gqlmo
 	}
 
 	existing, err := r.CostingService.Get(ctx, &costingcontrolports.GetCostingControlRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 	if err != nil {
 		return nil, err
@@ -45,7 +46,7 @@ func (r *MutationResolver) UpdateCostingControl(ctx context.Context, input gqlmo
 	}
 
 	updated, err := r.CostingService.Get(ctx, &costingcontrolports.GetCostingControlRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 	if err != nil {
 		return nil, err
@@ -66,7 +67,7 @@ func (r *MutationResolver) UpdateCostCategory(ctx context.Context, input gqlmode
 	}
 
 	control, err := r.CostingService.Get(ctx, &costingcontrolports.GetCostingControlRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 	if err != nil {
 		return nil, err
@@ -82,7 +83,7 @@ func (r *MutationResolver) UpdateCostCategory(ctx context.Context, input gqlmode
 		return nil, err
 	}
 
-	glAccountIDs, err := base.PulidsFromStrings(input.GlAccountIds, "glAccountIds")
+	glAccountIDs, err := gqlid.PulidsFromStrings(input.GlAccountIds, "glAccountIds")
 	if err != nil {
 		return nil, err
 	}
@@ -90,14 +91,14 @@ func (r *MutationResolver) UpdateCostCategory(ctx context.Context, input gqlmode
 	if _, err = r.CostingService.UpdateCategory(ctx, &costingservice.UpdateCategoryParams{
 		Category:     entity,
 		GLAccountIDs: glAccountIDs,
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		UserID:       authCtx.UserID,
 	}); err != nil {
 		return nil, err
 	}
 
 	refreshed, err := r.CostingService.Get(ctx, &costingcontrolports.GetCostingControlRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 	if err != nil {
 		return nil, err
@@ -118,7 +119,7 @@ func (r *QueryResolver) CostingControl(ctx context.Context) (*gqlmodel.CostingCo
 	}
 
 	control, err := r.CostingService.Get(ctx, &costingcontrolports.GetCostingControlRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 	if err != nil {
 		return nil, err
@@ -143,7 +144,7 @@ func (r *QueryResolver) ResolvedCostProfile(ctx context.Context, asOfDate *strin
 		asOf = parsed
 	}
 
-	profile, err := r.CostingService.ResolveCostProfile(ctx, base.TenantInfo(authCtx), asOf)
+	profile, err := r.CostingService.ResolveCostProfile(ctx, resolvercore.TenantInfo(authCtx), asOf)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +164,7 @@ func (r *QueryResolver) ShipmentProfitability(ctx context.Context, shipmentID st
 			"shipmentId", errortypes.ErrInvalid, "Invalid shipment")
 	}
 
-	estimate, err := r.CostingService.EstimateShipment(ctx, parsedID, base.TenantInfo(authCtx))
+	estimate, err := r.CostingService.EstimateShipment(ctx, parsedID, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +188,7 @@ func (r *QueryResolver) FleetCostSummary(ctx context.Context, startDate *int, en
 		to = int64(*endDate)
 	}
 
-	summary, err := r.CostingService.FleetSummary(ctx, base.TenantInfo(authCtx), from, to)
+	summary, err := r.CostingService.FleetSummary(ctx, resolvercore.TenantInfo(authCtx), from, to)
 	if err != nil {
 		return nil, err
 	}

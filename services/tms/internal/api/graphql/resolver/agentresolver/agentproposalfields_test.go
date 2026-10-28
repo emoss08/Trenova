@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -64,7 +64,7 @@ func (subsetToolRegistry) Descriptors() []agenttoolports.AgentToolDescriptor { r
 func TestAgentProposalParameterFields_ExposeARecordSubset(t *testing.T) {
 	t.Parallel()
 
-	r := &Deps{Core: &base.Core{}, AgentTools: subsetToolRegistry{}}
+	r := &Deps{Core: &resolvercore.Core{}, AgentTools: subsetToolRegistry{}}
 	fields, err := (&AgentProposalResolver{r}).ParameterFields(t.Context(), &agent.AgentProposal{
 		Status:     agent.ProposalStatusPending,
 		ToolName:   "billing_transfer",
@@ -160,7 +160,7 @@ func newChoicesHarness(t *testing.T, granted bool) *choicesHarness {
 		grants[permission.ResourceShipment.String()+"|"+string(permission.OpRead)] = true
 	}
 	r := &Deps{
-		Core: &base.Core{
+		Core: &resolvercore.Core{
 			L:                zap.NewNop(),
 			PermissionEngine: &resolvertest.PreviewPermissions{Granted: grants},
 		},

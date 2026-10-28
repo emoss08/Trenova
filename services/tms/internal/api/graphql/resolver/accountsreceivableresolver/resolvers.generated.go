@@ -3,13 +3,13 @@
 package accountsreceivableresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	accountingbriefports "github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	accountsreceivableservice "github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	AccountsReceivableService *accountsreceivableservice.Service
 	AccountingBriefs          accountingbriefports.AccountingBriefingReader
 }

@@ -10,7 +10,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
@@ -25,7 +29,7 @@ func (r *MutationResolver) CreatePerformanceReviewTemplate(ctx context.Context, 
 		return nil, err
 	}
 
-	entity := reviewTemplateFromInput(&input, pulid.Nil, base.TenantInfo(authCtx))
+	entity := reviewTemplateFromInput(&input, pulid.Nil, resolvercore.TenantInfo(authCtx))
 	return r.PerformanceReviewService.CreateTemplate(ctx, entity, authCtx.UserID)
 }
 
@@ -39,7 +43,7 @@ func (r *MutationResolver) UpdatePerformanceReviewTemplate(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
-	entity := reviewTemplateFromInput(&input, templateID, base.TenantInfo(authCtx))
+	entity := reviewTemplateFromInput(&input, templateID, resolvercore.TenantInfo(authCtx))
 	return r.PerformanceReviewService.UpdateTemplate(ctx, entity, authCtx.UserID)
 }
 
@@ -54,7 +58,7 @@ func (r *MutationResolver) ArchivePerformanceReviewTemplate(ctx context.Context,
 		return nil, err
 	}
 	return r.PerformanceReviewService.ArchiveTemplate(ctx, &performancereviewservice.TemplateStatusChangeRequest{
-		ID: templateID, TenantInfo: base.TenantInfo(authCtx), Version: int64(base.IntValue(version)), UserID: authCtx.UserID,
+		ID: templateID, TenantInfo: resolvercore.TenantInfo(authCtx), Version: int64(gqlscalar.IntValue(version)), UserID: authCtx.UserID,
 	})
 }
 
@@ -69,7 +73,7 @@ func (r *MutationResolver) RestorePerformanceReviewTemplate(ctx context.Context,
 		return nil, err
 	}
 	return r.PerformanceReviewService.RestoreTemplate(ctx, &performancereviewservice.TemplateStatusChangeRequest{
-		ID: templateID, TenantInfo: base.TenantInfo(authCtx), Version: int64(base.IntValue(version)), UserID: authCtx.UserID,
+		ID: templateID, TenantInfo: resolvercore.TenantInfo(authCtx), Version: int64(gqlscalar.IntValue(version)), UserID: authCtx.UserID,
 	})
 }
 
@@ -88,10 +92,10 @@ func (r *MutationResolver) CreatePerformanceReview(ctx context.Context, input gq
 		return nil, errortypes.NewValidationError("templateId", errortypes.ErrInvalid, "Template is invalid")
 	}
 	return r.PerformanceReviewService.CreateReview(ctx, &performancereviewservice.CreateReviewRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		WorkerID:    workerID,
 		TemplateID:  templateID,
-		Title:       base.StringValue(input.Title),
+		Title:       gqlscalar.StringValue(input.Title),
 		PeriodStart: int64(input.PeriodStart),
 		PeriodEnd:   int64(input.PeriodEnd),
 		UserID:      authCtx.UserID,
@@ -104,7 +108,7 @@ func (r *MutationResolver) UpdatePerformanceReview(ctx context.Context, input gq
 		return nil, err
 	}
 
-	req, err := updateReviewRequestFromInput(&input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := updateReviewRequestFromInput(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +121,7 @@ func (r *MutationResolver) SubmitPerformanceReview(ctx context.Context, input gq
 		return nil, err
 	}
 
-	req, err := reviewStatusRequestFromInput(&input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := reviewStatusRequestFromInput(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +134,7 @@ func (r *MutationResolver) ReopenPerformanceReview(ctx context.Context, input gq
 		return nil, err
 	}
 
-	req, err := reviewStatusRequestFromInput(&input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := reviewStatusRequestFromInput(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +147,7 @@ func (r *MutationResolver) ClosePerformanceReview(ctx context.Context, input gql
 		return nil, err
 	}
 
-	req, err := reviewStatusRequestFromInput(&input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := reviewStatusRequestFromInput(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +163,7 @@ func (r *MutationResolver) DeletePerformanceReview(ctx context.Context, id strin
 	if err != nil {
 		return false, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Review is invalid")
 	}
-	if err = r.PerformanceReviewService.DeleteReview(ctx, base.TenantInfo(authCtx), reviewID, authCtx.UserID); err != nil {
+	if err = r.PerformanceReviewService.DeleteReview(ctx, resolvercore.TenantInfo(authCtx), reviewID, authCtx.UserID); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -174,23 +178,23 @@ func (r *MutationResolver) AcknowledgeMyReview(ctx context.Context, id string, c
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Review is invalid")
 	}
-	return r.DriverPortalService.AcknowledgeMyReview(ctx, base.TenantInfo(authCtx), reviewID, base.StringValue(comment))
+	return r.DriverPortalService.AcknowledgeMyReview(ctx, resolvercore.TenantInfo(authCtx), reviewID, gqlscalar.StringValue(comment))
 }
 
 func (r *PerformanceReviewResolver) ReviewerID(ctx context.Context, obj *workerreview.PerformanceReview) (*string, error) {
-	return base.IDPtr(obj.ReviewerID), nil
+	return gqlid.IDPtr(obj.ReviewerID), nil
 }
 
 func (r *PerformanceReviewResolver) OverallScore(ctx context.Context, obj *workerreview.PerformanceReview) (*string, error) {
-	return base.NullDecimalPtr(obj.OverallScore), nil
+	return gqldecimal.NullDecimalPtr(obj.OverallScore), nil
 }
 
 func (r *PerformanceReviewResolver) ClosedByID(ctx context.Context, obj *workerreview.PerformanceReview) (*string, error) {
-	return base.IDPtr(obj.ClosedByID), nil
+	return gqlid.IDPtr(obj.ClosedByID), nil
 }
 
 func (r *PerformanceReviewTemplateResolver) CadenceMonths(ctx context.Context, obj *workerreview.PerformanceReviewTemplate) (*int, error) {
-	return base.Int32Ptr(obj.CadenceMonths), nil
+	return gqlscalar.Int32Ptr(obj.CadenceMonths), nil
 }
 
 func (r *PerformanceReviewTemplateResolver) OpenReviewCount(ctx context.Context, obj *workerreview.PerformanceReviewTemplate) (int, error) {
@@ -206,14 +210,14 @@ func (r *QueryResolver) PerformanceReviewTemplates(ctx context.Context, input gq
 		return nil, err
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
 		After:        input.After,
 		Query:        input.Query,
 		FieldFilters: input.FieldFilters,
 		FilterGroups: input.FilterGroups,
 		Sort:         input.Sort,
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +247,7 @@ func (r *QueryResolver) PerformanceReviewTemplate(ctx context.Context, id string
 		return nil, err
 	}
 	return r.PerformanceReviewService.GetTemplate(ctx, &workerreviewports.GetReviewTemplateByIDRequest{
-		ID: templateID, TenantInfo: base.TenantInfo(authCtx),
+		ID: templateID, TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -253,7 +257,7 @@ func (r *QueryResolver) ActivePerformanceReviewTemplates(ctx context.Context) ([
 		return nil, err
 	}
 
-	return r.PerformanceReviewService.ActiveTemplates(ctx, base.TenantInfo(authCtx))
+	return r.PerformanceReviewService.ActiveTemplates(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) WorkerPerformanceReviews(ctx context.Context, workerID string) ([]*workerreview.PerformanceReview, error) {
@@ -266,7 +270,7 @@ func (r *QueryResolver) WorkerPerformanceReviews(ctx context.Context, workerID s
 	if err != nil {
 		return nil, err
 	}
-	return r.PerformanceReviewService.ListReviews(ctx, base.TenantInfo(authCtx), wid, nil)
+	return r.PerformanceReviewService.ListReviews(ctx, resolvercore.TenantInfo(authCtx), wid, nil)
 }
 
 func (r *QueryResolver) PerformanceReview(ctx context.Context, id string) (*workerreview.PerformanceReview, error) {
@@ -279,7 +283,7 @@ func (r *QueryResolver) PerformanceReview(ctx context.Context, id string) (*work
 	if err != nil {
 		return nil, err
 	}
-	return r.PerformanceReviewService.GetReview(ctx, base.TenantInfo(authCtx), reviewID)
+	return r.PerformanceReviewService.GetReview(ctx, resolvercore.TenantInfo(authCtx), reviewID)
 }
 
 func (r *QueryResolver) MyReviews(ctx context.Context) ([]*workerreview.PerformanceReview, error) {
@@ -287,9 +291,9 @@ func (r *QueryResolver) MyReviews(ctx context.Context) ([]*workerreview.Performa
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverPortalService.MyReviews(ctx, base.TenantInfo(authCtx))
+	return r.DriverPortalService.MyReviews(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *ReviewRatingResolver) Score(ctx context.Context, obj *workerreview.ReviewRating) (*int, error) {
-	return base.Int32Ptr(obj.Score), nil
+	return gqlscalar.Int32Ptr(obj.Score), nil
 }

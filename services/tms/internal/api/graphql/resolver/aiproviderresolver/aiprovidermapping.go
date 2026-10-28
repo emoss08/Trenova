@@ -6,7 +6,10 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
@@ -52,7 +55,7 @@ func aiProviderColumns(ctx context.Context, nodePathPrefix string) []string {
 func aiProviderConnectionToModel(
 	result *pagination.CursorListResult[*aiprovider.Provider],
 ) (*gqlmodel.AIProviderConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *aiprovider.Provider, cursor string) *gqlmodel.AIProviderEdge {
 			return &gqlmodel.AIProviderEdge{Node: node, Cursor: cursor}
@@ -80,7 +83,7 @@ func endpointFromInput(
 		)
 	}
 
-	providerID, err := base.OptionalID(input.ProviderID)
+	providerID, err := gqlid.OptionalID(input.ProviderID)
 	if err != nil {
 		return aiproviderports.AIProviderEndpoint{}, err
 	}
@@ -109,13 +112,13 @@ func platformSettingsFromInput(
 	}
 
 	settings := &aiprovider.PlatformSettings{
-		Region:      base.StringValue(input.Region),
-		ProjectID:   base.StringValue(input.ProjectID),
-		WorkspaceID: base.StringValue(input.WorkspaceID),
-		AccessKeyID: base.StringValue(input.AccessKeyID),
-		Resource:    base.StringValue(input.Resource),
-		TenantID:    base.StringValue(input.TenantID),
-		ClientID:    base.StringValue(input.ClientID),
+		Region:      gqlscalar.StringValue(input.Region),
+		ProjectID:   gqlscalar.StringValue(input.ProjectID),
+		WorkspaceID: gqlscalar.StringValue(input.WorkspaceID),
+		AccessKeyID: gqlscalar.StringValue(input.AccessKeyID),
+		Resource:    gqlscalar.StringValue(input.Resource),
+		TenantID:    gqlscalar.StringValue(input.TenantID),
+		ClientID:    gqlscalar.StringValue(input.ClientID),
 	}
 	if input.Auth != nil {
 		settings.Auth = *input.Auth
@@ -148,10 +151,10 @@ func patchFromInput(
 	}
 
 	req := &aiproviderports.PatchAIProviderRequest{
-		Enabled:                  base.NullableOmittable(input.Enabled),
-		Trusted:                  base.NullableOmittable(input.Trusted),
-		AllowPrivateNetwork:      base.NullableOmittable(input.AllowPrivateNetwork),
-		APIKey:                   base.NullableOmittable(input.APIKey),
+		Enabled:                  gqlscalar.NullableOmittable(input.Enabled),
+		Trusted:                  gqlscalar.NullableOmittable(input.Trusted),
+		AllowPrivateNetwork:      gqlscalar.NullableOmittable(input.AllowPrivateNetwork),
+		APIKey:                   gqlscalar.NullableOmittable(input.APIKey),
 		InputCostPerMillion:      inputCost,
 		OutputCostPerMillion:     outputCost,
 		CacheReadCostPerMillion:  cacheReadCost,
@@ -172,7 +175,7 @@ func omittableDecimal(
 		return optional.Value[*decimal.Decimal]{}, nil
 	}
 
-	parsed, err := base.NullDecimalFromStringPtr(value.Value(), field)
+	parsed, err := gqldecimal.NullDecimalFromStringPtr(value.Value(), field)
 	if err != nil {
 		return optional.Value[*decimal.Decimal]{}, err
 	}
@@ -194,10 +197,10 @@ func modelOptionsToModel(
 			DisplayName:          model.DisplayName,
 			ContextWindow:        model.ContextWindow,
 			Embedding:            model.Embedding,
-			InputCostPerMillion:  base.DecimalPtrToStringPtr(model.InputCostPerMillion),
-			OutputCostPerMillion: base.DecimalPtrToStringPtr(model.OutputCostPerMillion),
+			InputCostPerMillion:  gqldecimal.DecimalPtrToStringPtr(model.InputCostPerMillion),
+			OutputCostPerMillion: gqldecimal.DecimalPtrToStringPtr(model.OutputCostPerMillion),
 			PriceSource:          priceSourceToModel(model.PriceSource),
-			CreatedAt:            base.Int64PtrToIntPtr(model.CreatedAt),
+			CreatedAt:            gqlscalar.Int64PtrToIntPtr(model.CreatedAt),
 		}
 		out = append(out, option)
 	}

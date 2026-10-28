@@ -7,7 +7,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -50,7 +50,7 @@ func TestAgentRunEvents_ReadForThePersonAsking(t *testing.T) {
 		}}
 		events := &recordingEventRepo{}
 		resolver := &QueryResolver{Deps: &Deps{
-			Core:              &base.Core{PermissionEngine: engine},
+			Core:              &resolvercore.Core{PermissionEngine: engine},
 			AgentRunEventRepo: events,
 		}}
 

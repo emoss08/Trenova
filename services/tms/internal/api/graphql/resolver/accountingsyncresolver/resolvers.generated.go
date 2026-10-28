@@ -3,16 +3,16 @@
 package accountingsyncresolver
 
 import (
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	accountingsyncports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	AccountingConnections    accountingconnectionports.AccountingConnectionService
 	AccountingMappingService accountingmappingports.AccountingMappingService
 	AccountingSync           accountingsyncports.AccountingSyncService

@@ -2,7 +2,12 @@ package fuelsurchargeresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/fuelsurchargemapping"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentmapping"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,7 +30,7 @@ func fuelIndexPriceToModel(entity *fuelsurcharge.FuelIndexPrice) *gqlmodel.FuelI
 		Price:          entity.Price.String(),
 		Currency:       entity.Currency,
 		IsManual:       entity.IsManual,
-		EnteredByID:    base.IDPtrFromPulidPtr(entity.EnteredByID),
+		EnteredByID:    gqlid.IDPtrFromPulidPtr(entity.EnteredByID),
 		SourceRaw:      entity.SourceRaw,
 		FetchedAt:      entity.FetchedAt.UTC().Format("2006-01-02T15:04:05Z07:00"),
 	}
@@ -56,8 +61,8 @@ func fuelTableRowToModel(
 		BusinessUnitID:         entity.BusinessUnitID.String(),
 		OrganizationID:         entity.OrganizationID.String(),
 		FuelSurchargeProgramID: entity.FuelSurchargeProgramID.String(),
-		PriceMin:               base.NullDecimalToStringPtr(entity.PriceMin),
-		PriceMax:               base.NullDecimalToStringPtr(entity.PriceMax),
+		PriceMin:               gqldecimal.NullDecimalToStringPtr(entity.PriceMin),
+		PriceMax:               gqldecimal.NullDecimalToStringPtr(entity.PriceMax),
 		Value:                  entity.Value.String(),
 		SortOrder:              int(entity.SortOrder),
 		CreatedAt:              int(entity.CreatedAt),
@@ -83,30 +88,32 @@ func fuelSurchargeProgramToModel(
 		FuelIndexID:          entity.FuelIndexID.String(),
 		AccessorialChargeID:  entity.AccessorialChargeID.String(),
 		Method:               entity.Method,
-		PegPrice:             base.NullDecimalToStringPtr(entity.PegPrice),
-		Increment:            base.NullDecimalToStringPtr(entity.Increment),
-		IncrementRate:        base.NullDecimalToStringPtr(entity.IncrementRate),
-		MilesPerGallon:       base.NullDecimalToStringPtr(entity.MilesPerGallon),
+		PegPrice:             gqldecimal.NullDecimalToStringPtr(entity.PegPrice),
+		Increment:            gqldecimal.NullDecimalToStringPtr(entity.Increment),
+		IncrementRate:        gqldecimal.NullDecimalToStringPtr(entity.IncrementRate),
+		MilesPerGallon:       gqldecimal.NullDecimalToStringPtr(entity.MilesPerGallon),
 		PercentBasis:         entity.PercentBasis,
 		StepRounding:         entity.StepRounding,
 		RateRounding:         entity.RateRounding,
 		RatePrecision:        int(entity.RatePrecision),
-		MinAmount:            base.NullDecimalToStringPtr(entity.MinAmount),
-		MaxAmount:            base.NullDecimalToStringPtr(entity.MaxAmount),
+		MinAmount:            gqldecimal.NullDecimalToStringPtr(entity.MinAmount),
+		MaxAmount:            gqldecimal.NullDecimalToStringPtr(entity.MaxAmount),
 		DateBasis:            entity.DateBasis,
 		PriceEffectiveDay:    int(entity.PriceEffectiveDay),
 		MissingPriceFallback: entity.MissingPriceFallback,
-		EffectiveStartDate:   base.Int64PtrToIntPtr(entity.EffectiveStartDate),
-		EffectiveEndDate:     base.Int64PtrToIntPtr(entity.EffectiveEndDate),
-		ShipmentTypeIds:      base.PulidsToStrings(entity.ShipmentTypeIDs),
-		ServiceTypeIds:       base.PulidsToStrings(entity.ServiceTypeIDs),
-		TractorTypeIds:       base.PulidsToStrings(entity.TractorTypeIDs),
-		TrailerTypeIds:       base.PulidsToStrings(entity.TrailerTypeIDs),
+		EffectiveStartDate:   gqlscalar.Int64PtrToIntPtr(entity.EffectiveStartDate),
+		EffectiveEndDate:     gqlscalar.Int64PtrToIntPtr(entity.EffectiveEndDate),
+		ShipmentTypeIds:      gqlid.PulidsToStrings(entity.ShipmentTypeIDs),
+		ServiceTypeIds:       gqlid.PulidsToStrings(entity.ServiceTypeIDs),
+		TractorTypeIds:       gqlid.PulidsToStrings(entity.TractorTypeIDs),
+		TrailerTypeIds:       gqlid.PulidsToStrings(entity.TrailerTypeIDs),
 		Version:              int(entity.Version),
 		CreatedAt:            int(entity.CreatedAt),
 		UpdatedAt:            int(entity.UpdatedAt),
-		FuelIndex:            base.FuelIndexToModel(entity.FuelIndex),
-		AccessorialCharge:    base.ShipmentAccessorialChargeToModel(entity.AccessorialCharge),
+		FuelIndex:            fuelsurchargemapping.FuelIndexToModel(entity.FuelIndex),
+		AccessorialCharge: shipmentmapping.ShipmentAccessorialChargeToModel(
+			entity.AccessorialCharge,
+		),
 	}
 
 	if len(entity.TableRows) > 0 {
@@ -125,11 +132,11 @@ func fuelSurchargeProgramToModel(
 func fuelIndexConnectionToModel(
 	result *pagination.CursorListResult[*fuelsurcharge.FuelIndex],
 ) (*gqlmodel.FuelIndexConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *fuelsurcharge.FuelIndex, cursor string) *gqlmodel.FuelIndexEdge {
 			return &gqlmodel.FuelIndexEdge{
-				Node:   base.FuelIndexToModel(node),
+				Node:   fuelsurchargemapping.FuelIndexToModel(node),
 				Cursor: cursor,
 			}
 		},
@@ -150,7 +157,7 @@ func fuelIndexConnectionToModel(
 func fuelSurchargeProgramConnectionToModel(
 	result *pagination.CursorListResult[*fuelsurcharge.FuelSurchargeProgram],
 ) (*gqlmodel.FuelSurchargeProgramConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(
 			node *fuelsurcharge.FuelSurchargeProgram,
@@ -291,62 +298,62 @@ func fuelSurchargeProgramFromInput(
 		entity.EffectiveEndDate = &end
 	}
 
-	if entity.PegPrice, err = base.NullDecimalFromStringPtr(
+	if entity.PegPrice, err = gqldecimal.NullDecimalFromStringPtr(
 		input.PegPrice,
 		"pegPrice",
 	); err != nil {
 		return nil, err
 	}
-	if entity.Increment, err = base.NullDecimalFromStringPtr(
+	if entity.Increment, err = gqldecimal.NullDecimalFromStringPtr(
 		input.Increment,
 		"increment",
 	); err != nil {
 		return nil, err
 	}
-	if entity.IncrementRate, err = base.NullDecimalFromStringPtr(
+	if entity.IncrementRate, err = gqldecimal.NullDecimalFromStringPtr(
 		input.IncrementRate,
 		"incrementRate",
 	); err != nil {
 		return nil, err
 	}
-	if entity.MilesPerGallon, err = base.NullDecimalFromStringPtr(
+	if entity.MilesPerGallon, err = gqldecimal.NullDecimalFromStringPtr(
 		input.MilesPerGallon,
 		"milesPerGallon",
 	); err != nil {
 		return nil, err
 	}
-	if entity.MinAmount, err = base.NullDecimalFromStringPtr(
+	if entity.MinAmount, err = gqldecimal.NullDecimalFromStringPtr(
 		input.MinAmount,
 		"minAmount",
 	); err != nil {
 		return nil, err
 	}
-	if entity.MaxAmount, err = base.NullDecimalFromStringPtr(
+	if entity.MaxAmount, err = gqldecimal.NullDecimalFromStringPtr(
 		input.MaxAmount,
 		"maxAmount",
 	); err != nil {
 		return nil, err
 	}
 
-	if entity.ShipmentTypeIDs, err = base.PulidsFromStrings(
+	if entity.ShipmentTypeIDs, err = gqlid.PulidsFromStrings(
 		input.ShipmentTypeIds,
 		"shipmentTypeIds",
 	); err != nil {
 		return nil, err
 	}
-	if entity.ServiceTypeIDs, err = base.PulidsFromStrings(
+	if entity.ServiceTypeIDs, err = gqlid.PulidsFromStrings(
 		input.ServiceTypeIds,
 		"serviceTypeIds",
 	); err != nil {
 		return nil, err
 	}
-	if entity.TractorTypeIDs, err = base.PulidsFromStrings(
+	if entity.TractorTypeIDs, err = gqlid.PulidsFromStrings(
 		input.TractorTypeIds,
 		"tractorTypeIds",
 	); err != nil {
 		return nil, err
 	}
-	if entity.TrailerTypeIDs, err = base.PulidsFromStrings(
+	if entity.TrailerTypeIDs, err = gqlid.PulidsFromStrings(
 		input.TrailerTypeIds,
 		"trailerTypeIds",
 	); err != nil {
@@ -368,19 +375,19 @@ func fuelSurchargeProgramFromInput(
 			if rowInput.SortOrder != nil {
 				row.SortOrder = intutils.SafeToInt32(*rowInput.SortOrder)
 			}
-			if row.PriceMin, err = base.NullDecimalFromStringPtr(
+			if row.PriceMin, err = gqldecimal.NullDecimalFromStringPtr(
 				rowInput.PriceMin,
 				"tableRows.priceMin",
 			); err != nil {
 				return nil, err
 			}
-			if row.PriceMax, err = base.NullDecimalFromStringPtr(
+			if row.PriceMax, err = gqldecimal.NullDecimalFromStringPtr(
 				rowInput.PriceMax,
 				"tableRows.priceMax",
 			); err != nil {
 				return nil, err
 			}
-			if row.Value, err = base.DecimalFromString(
+			if row.Value, err = gqldecimal.DecimalFromString(
 				rowInput.Value,
 				"tableRows.value",
 			); err != nil {
@@ -404,7 +411,7 @@ func fuelDashboardToModel(
 		}
 
 		model := &gqlmodel.FuelIndexLatestPrice{
-			Index:    base.FuelIndexToModel(entry.Index),
+			Index:    fuelsurchargemapping.FuelIndexToModel(entry.Index),
 			Latest:   fuelIndexPriceToModel(entry.Latest),
 			Previous: fuelIndexPriceToModel(entry.Previous),
 		}
@@ -432,9 +439,9 @@ func fuelProgramCurrentRatesToModel(
 			ID:           entry.Program.ID.String(),
 			Program:      fuelSurchargeProgramToModel(entry.Program),
 			Price:        fuelIndexPriceToModel(entry.Price),
-			RatePerMile:  base.DecimalPtrToStringPtr(entry.RatePerMile),
-			Percent:      base.DecimalPtrToStringPtr(entry.Percent),
-			FlatAmount:   base.DecimalPtrToStringPtr(entry.FlatAmount),
+			RatePerMile:  gqldecimal.DecimalPtrToStringPtr(entry.RatePerMile),
+			Percent:      gqldecimal.DecimalPtrToStringPtr(entry.Percent),
+			FlatAmount:   gqldecimal.DecimalPtrToStringPtr(entry.FlatAmount),
 			UsedFallback: entry.UsedFallback,
 			MatchedRow:   fuelTableRowToModel(entry.MatchedRow),
 		})
@@ -448,8 +455,8 @@ func generatedFuelRowsToModel(
 	result := make([]*gqlmodel.GeneratedFuelTableRow, 0, len(rows))
 	for _, row := range rows {
 		result = append(result, &gqlmodel.GeneratedFuelTableRow{
-			PriceMin: base.NullDecimalToStringPtr(row.PriceMin),
-			PriceMax: base.NullDecimalToStringPtr(row.PriceMax),
+			PriceMin: gqldecimal.NullDecimalToStringPtr(row.PriceMin),
+			PriceMax: gqldecimal.NullDecimalToStringPtr(row.PriceMax),
 			Value:    row.Value.String(),
 		})
 	}

@@ -1,7 +1,7 @@
 package benefitsresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -43,15 +43,15 @@ func benefitPlanFromInput(
 		BusinessUnitID:    tenantInfo.BuID,
 		Code:              f.code,
 		Name:              f.name,
-		Description:       base.StringValue(f.description),
+		Description:       gqlscalar.StringValue(f.description),
 		PlanType:          f.planType,
-		Carrier:           base.StringValue(f.carrier),
-		PolicyNumber:      base.StringValue(f.policyNumber),
+		Carrier:           gqlscalar.StringValue(f.carrier),
+		PolicyNumber:      gqlscalar.StringValue(f.policyNumber),
 		PayCodeID:         payCodeID,
 		PlanYear:          int16(f.planYear), //nolint:gosec // a calendar year
 		EmployeeCostMinor: int64(f.employeeCostMinor),
 		EmployerCostMinor: int64(f.employerCostMinor),
-		WaitingPeriodDays: intutils.SafeToInt32(base.IntValue(f.waitingPeriodDays)),
+		WaitingPeriodDays: intutils.SafeToInt32(gqlscalar.IntValue(f.waitingPeriodDays)),
 	}
 	if f.status != nil {
 		entity.Status = *f.status

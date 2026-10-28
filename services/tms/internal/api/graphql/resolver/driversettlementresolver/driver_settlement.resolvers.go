@@ -12,7 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
@@ -48,11 +53,11 @@ func (r *DriverSettlementResolver) TotalMiles(ctx context.Context, obj *driverse
 }
 
 func (r *DriverSettlementResolver) ExchangeRate(ctx context.Context, obj *driversettlement.Settlement) (*string, error) {
-	return base.NullDecimalStringPtr(obj.ExchangeRate), nil
+	return gqldecimal.NullDecimalStringPtr(obj.ExchangeRate), nil
 }
 
 func (r *DriverSettlementResolver) PaidExchangeRate(ctx context.Context, obj *driversettlement.Settlement) (*string, error) {
-	return base.NullDecimalStringPtr(obj.PaidExchangeRate), nil
+	return gqldecimal.NullDecimalStringPtr(obj.PaidExchangeRate), nil
 }
 
 func (r *DriverSettlementLineResolver) Quantity(ctx context.Context, obj *driversettlement.SettlementLine) (string, error) {
@@ -72,7 +77,7 @@ func (r *MutationResolver) CreatePayProfile(ctx context.Context, input gqlmodel.
 	if err != nil {
 		return nil, err
 	}
-	entity, err := payProfileFromCreateInput(&input, base.TenantInfo(authCtx))
+	entity, err := payProfileFromCreateInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +89,7 @@ func (r *MutationResolver) UpdatePayProfile(ctx context.Context, input gqlmodel.
 	if err != nil {
 		return nil, err
 	}
-	entity, err := payProfileFromUpdateInput(&input, base.TenantInfo(authCtx))
+	entity, err := payProfileFromUpdateInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +101,7 @@ func (r *MutationResolver) AssignPayProfileToWorker(ctx context.Context, input g
 	if err != nil {
 		return nil, err
 	}
-	entity, err := workerPayAssignmentFromInput(&input, base.TenantInfo(authCtx))
+	entity, err := workerPayAssignmentFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +119,7 @@ func (r *MutationResolver) EndWorkerPayAssignment(ctx context.Context, input gql
 	}
 	return r.DriverPayService.EndAssignment(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		assignmentID,
 		int64(input.EndDate),
 		actorutil.FromAuthContext(authCtx),
@@ -126,7 +131,7 @@ func (r *MutationResolver) CreateRecurringDeduction(ctx context.Context, input g
 	if err != nil {
 		return nil, err
 	}
-	entity, err := recurringDeductionFromCreateInput(&input, base.TenantInfo(authCtx))
+	entity, err := recurringDeductionFromCreateInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +149,7 @@ func (r *MutationResolver) UpdateRecurringDeduction(ctx context.Context, input g
 	if err != nil {
 		return nil, err
 	}
-	entity, err := recurringDeductionFromUpdateInput(&input, base.TenantInfo(authCtx))
+	entity, err := recurringDeductionFromUpdateInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +161,7 @@ func (r *MutationResolver) CreateRecurringEarning(ctx context.Context, input gql
 	if err != nil {
 		return nil, err
 	}
-	entity, err := recurringEarningFromCreateInput(&input, base.TenantInfo(authCtx))
+	entity, err := recurringEarningFromCreateInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +173,7 @@ func (r *MutationResolver) UpdateRecurringEarning(ctx context.Context, input gql
 	if err != nil {
 		return nil, err
 	}
-	entity, err := recurringEarningFromUpdateInput(&input, base.TenantInfo(authCtx))
+	entity, err := recurringEarningFromUpdateInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +185,7 @@ func (r *MutationResolver) CreatePayCode(ctx context.Context, input gqlmodel.Cre
 	if err != nil {
 		return nil, err
 	}
-	entity, err := payCodeFromCreateInput(&input, base.TenantInfo(authCtx))
+	entity, err := payCodeFromCreateInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +197,7 @@ func (r *MutationResolver) UpdatePayCode(ctx context.Context, input gqlmodel.Upd
 	if err != nil {
 		return nil, err
 	}
-	entity, err := payCodeFromUpdateInput(&input, base.TenantInfo(authCtx))
+	entity, err := payCodeFromUpdateInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +209,7 @@ func (r *MutationResolver) IssuePayAdvance(ctx context.Context, input gqlmodel.I
 	if err != nil {
 		return nil, err
 	}
-	entity, err := payAdvanceFromIssueInput(&input, base.TenantInfo(authCtx))
+	entity, err := payAdvanceFromIssueInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +227,7 @@ func (r *MutationResolver) WriteOffPayAdvance(ctx context.Context, input gqlmode
 	}
 	return r.DriverPayService.WriteOffAdvance(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		advanceID,
 		input.Reason,
 		actorutil.FromAuthContext(authCtx),
@@ -234,7 +239,7 @@ func (r *MutationResolver) OpenEscrowAccount(ctx context.Context, input gqlmodel
 	if err != nil {
 		return nil, err
 	}
-	entity, err := escrowAccountFromOpenInput(&input, base.TenantInfo(authCtx))
+	entity, err := escrowAccountFromOpenInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +251,7 @@ func (r *MutationResolver) UpdateEscrowAccount(ctx context.Context, input gqlmod
 	if err != nil {
 		return nil, err
 	}
-	entity, err := escrowAccountFromUpdateInput(&input, base.TenantInfo(authCtx))
+	entity, err := escrowAccountFromUpdateInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -263,11 +268,11 @@ func (r *MutationResolver) AdjustEscrowAccount(ctx context.Context, input gqlmod
 		return nil, errortypes.NewValidationError("accountId", errortypes.ErrInvalid, "Invalid escrow account")
 	}
 	return r.DriverPayService.AdjustEscrowAccount(ctx, &driverpayservice.EscrowAdjustmentRequest{
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		AccountID:    accountID,
 		AmountMinor:  int64(input.AmountMinor),
 		Description:  input.Description,
-		OccurredDate: base.Int64Value(input.OccurredDate),
+		OccurredDate: gqlscalar.Int64Value(input.OccurredDate),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -282,7 +287,7 @@ func (r *MutationResolver) CloseEscrowAccount(ctx context.Context, accountID str
 	}
 	return r.DriverPayService.CloseEscrowAccount(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		id,
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -294,11 +299,11 @@ func (r *MutationResolver) GenerateSettlementBatch(ctx context.Context, input gq
 		return nil, err
 	}
 	return r.DriverSettlementService.GenerateBatch(ctx, &driversettlementservice.GenerateBatchRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
-		PeriodStart: base.Int64Value(input.PeriodStart),
-		PeriodEnd:   base.Int64Value(input.PeriodEnd),
-		Name:        base.StringValue(input.Name),
-		Notes:       base.StringValue(input.Notes),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
+		PeriodStart: gqlscalar.Int64Value(input.PeriodStart),
+		PeriodEnd:   gqlscalar.Int64Value(input.PeriodEnd),
+		Name:        gqlscalar.StringValue(input.Name),
+		Notes:       gqlscalar.StringValue(input.Notes),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -311,12 +316,12 @@ func (r *MutationResolver) GenerateDriverSettlement(ctx context.Context, input g
 	if err != nil {
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Invalid worker")
 	}
-	batchID, err := base.OptionalID(input.BatchID)
+	batchID, err := gqlid.OptionalID(input.BatchID)
 	if err != nil {
 		return nil, err
 	}
 	req := &driversettlementservice.GenerateForWorkerRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		WorkerID:    workerID,
 		PeriodStart: int64(input.PeriodStart),
 		PeriodEnd:   int64(input.PeriodEnd),
@@ -350,7 +355,7 @@ func (r *MutationResolver) PayWorkerNow(ctx context.Context, input gqlmodel.PayW
 		eventIDs = append(eventIDs, eventID)
 	}
 	req := &driversettlementservice.PayWorkerNowRequest{
-		TenantInfo:    base.TenantInfo(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		WorkerID:      workerID,
 		PayEventIDs:   eventIDs,
 		PaymentMethod: input.PaymentMethod,
@@ -371,7 +376,7 @@ func (r *MutationResolver) SubmitDriverSettlement(ctx context.Context, input gql
 	}
 	return r.DriverSettlementService.SubmitForApproval(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -384,7 +389,7 @@ func (r *MutationResolver) ApproveDriverSettlement(ctx context.Context, input gq
 	}
 	return r.DriverSettlementService.Approve(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -397,9 +402,9 @@ func (r *MutationResolver) RejectDriverSettlement(ctx context.Context, input gql
 	}
 	return r.DriverSettlementService.Reject(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
-		base.StringValue(input.Reason),
+		gqlscalar.StringValue(input.Reason),
 		actorutil.FromAuthContext(authCtx),
 	)
 }
@@ -411,7 +416,7 @@ func (r *MutationResolver) PostDriverSettlement(ctx context.Context, input gqlmo
 	}
 	return r.DriverSettlementService.Post(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -423,10 +428,10 @@ func (r *MutationResolver) MarkDriverSettlementPaid(ctx context.Context, input g
 		return nil, err
 	}
 	return r.DriverSettlementService.MarkPaid(ctx, &carriersettlementports.MarkSettlementPaidRequest{
-		TenantInfo:       base.TenantInfo(authCtx),
+		TenantInfo:       resolvercore.TenantInfo(authCtx),
 		SettlementID:     settlementID,
 		PaymentMethod:    input.PaymentMethod,
-		PaymentReference: base.StringValue(input.PaymentReference),
+		PaymentReference: gqlscalar.StringValue(input.PaymentReference),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -437,9 +442,9 @@ func (r *MutationResolver) VoidDriverSettlement(ctx context.Context, input gqlmo
 	}
 	return r.DriverSettlementService.Void(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
-		base.StringValue(input.Reason),
+		gqlscalar.StringValue(input.Reason),
 		actorutil.FromAuthContext(authCtx),
 	)
 }
@@ -451,7 +456,7 @@ func (r *MutationResolver) RecalculateDriverSettlement(ctx context.Context, inpu
 	}
 	return r.DriverSettlementService.Recalculate(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -470,7 +475,7 @@ func (r *MutationResolver) AddDriverSettlementAdjustment(ctx context.Context, in
 	if err != nil {
 		return nil, err
 	}
-	payCodeID, err := base.OptionalID(input.PayCodeID)
+	payCodeID, err := gqlid.OptionalID(input.PayCodeID)
 	if err != nil {
 		return nil, err
 	}
@@ -485,7 +490,7 @@ func (r *MutationResolver) AddDriverSettlementAdjustment(ctx context.Context, in
 	}
 	return r.DriverSettlementService.AddAdjustmentLine(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
 		adjustment,
 		actorutil.FromAuthContext(authCtx),
@@ -503,7 +508,7 @@ func (r *MutationResolver) RemoveDriverSettlementAdjustment(ctx context.Context,
 	}
 	return r.DriverSettlementService.RemoveAdjustmentLine(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
 		lineID,
 		actorutil.FromAuthContext(authCtx),
@@ -515,7 +520,7 @@ func (r *MutationResolver) UpdateSettlementControl(ctx context.Context, input gq
 	if err != nil {
 		return nil, err
 	}
-	entity, err := settlementControlFromUpdateInput(&input, base.TenantInfo(authCtx))
+	entity, err := settlementControlFromUpdateInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -533,7 +538,7 @@ func (r *MutationResolver) HoldDriverPayEvent(ctx context.Context, input gqlmode
 	}
 	return r.DriverSettlementService.HoldPayEvent(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		eventID,
 		input.Reason,
 		actorutil.FromAuthContext(authCtx),
@@ -551,7 +556,7 @@ func (r *MutationResolver) ReleaseDriverPayEvent(ctx context.Context, payEventID
 	}
 	return r.DriverSettlementService.ReleasePayEvent(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		eventID,
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -568,7 +573,7 @@ func (r *MutationResolver) AttachPayEventsToSettlement(ctx context.Context, inpu
 	}
 	return r.DriverSettlementService.AttachPayEvents(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
 		eventIDs,
 		actorutil.FromAuthContext(authCtx),
@@ -586,7 +591,7 @@ func (r *MutationResolver) DetachPayEventFromSettlement(ctx context.Context, inp
 	}
 	return r.DriverSettlementService.DetachPayEvent(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
 		eventID,
 		actorutil.FromAuthContext(authCtx),
@@ -617,11 +622,11 @@ func (r *MutationResolver) BulkDriverSettlementAction(ctx context.Context, input
 	return r.DriverSettlementService.BulkAction(
 		ctx,
 		&driversettlementservice.BulkActionRequest{
-			TenantInfo:       base.TenantInfo(authCtx),
+			TenantInfo:       resolvercore.TenantInfo(authCtx),
 			SettlementIDs:    settlementIDs,
 			Action:           input.Action,
-			PaymentMethod:    base.StringValue(input.PaymentMethod),
-			PaymentReference: base.StringValue(input.PaymentReference),
+			PaymentMethod:    gqlscalar.StringValue(input.PaymentMethod),
+			PaymentReference: gqlscalar.StringValue(input.PaymentReference),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -654,7 +659,7 @@ func (r *PayProfileResolver) ActiveAssignmentCount(ctx context.Context, obj *dri
 	if loaders.Available(ctx) {
 		return loaders.PayProfileActiveAssignmentCount(ctx, obj.ID.String())
 	}
-	return r.PayProfileRepo.CountActiveAssignments(ctx, base.TenantInfo(authCtx), obj.ID)
+	return r.PayProfileRepo.CountActiveAssignments(ctx, resolvercore.TenantInfo(authCtx), obj.ID)
 }
 
 func (r *PayProfileComponentResolver) Rate(ctx context.Context, obj *driverpay.PayProfileComponent) (string, error) {
@@ -670,7 +675,7 @@ func (r *QueryResolver) PayProfiles(ctx context.Context, input gqlmodel.DataTabl
 	if err != nil {
 		return nil, err
 	}
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -695,7 +700,7 @@ func (r *QueryResolver) PayProfile(ctx context.Context, id string) (*driverpay.P
 	}
 	return r.DriverPayService.GetProfile(ctx, driverpayports.GetPayProfileByIDRequest{
 		ID:                profileID,
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		IncludeComponents: true,
 	})
 }
@@ -710,7 +715,7 @@ func (r *QueryResolver) WorkerPayAssignments(ctx context.Context, workerID strin
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Invalid worker")
 	}
 	return r.DriverPayService.ListWorkerAssignments(ctx, driverpayports.ListWorkerPayAssignmentsRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		WorkerID:   id,
 	})
 }
@@ -725,7 +730,7 @@ func (r *QueryResolver) EffectiveWorkerPayAssignment(ctx context.Context, worker
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Invalid worker")
 	}
 	assignment, err := r.DriverPayService.GetEffectiveAssignment(ctx, driverpayports.GetWorkerPayAssignmentRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		WorkerID:   id,
 	})
 	if err != nil {
@@ -743,7 +748,7 @@ func (r *QueryResolver) PayProfileAssignments(ctx context.Context, payProfileID 
 	if err != nil {
 		return nil, errortypes.NewValidationError("payProfileId", errortypes.ErrInvalid, "Invalid pay profile")
 	}
-	return r.DriverPayService.ListProfileAssignments(ctx, base.TenantInfo(authCtx), id)
+	return r.DriverPayService.ListProfileAssignments(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) RecurringDeductions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringDeductionConnection, error) {
@@ -751,7 +756,7 @@ func (r *QueryResolver) RecurringDeductions(ctx context.Context, input gqlmodel.
 	if err != nil {
 		return nil, err
 	}
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -776,7 +781,7 @@ func (r *QueryResolver) RecurringDeduction(ctx context.Context, id string) (*dri
 	}
 	return r.DriverPayService.GetDeduction(ctx, driverpayports.GetRecurringDeductionByIDRequest{
 		ID:         deductionID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -785,7 +790,7 @@ func (r *QueryResolver) RecurringEarnings(ctx context.Context, input gqlmodel.Da
 	if err != nil {
 		return nil, err
 	}
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -810,7 +815,7 @@ func (r *QueryResolver) RecurringEarning(ctx context.Context, id string) (*drive
 	}
 	return r.DriverPayService.GetEarning(ctx, driverpayports.GetRecurringEarningByIDRequest{
 		ID:         earningID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -819,7 +824,7 @@ func (r *QueryResolver) PayCodes(ctx context.Context, input gqlmodel.DataTableCo
 	if err != nil {
 		return nil, err
 	}
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -844,7 +849,7 @@ func (r *QueryResolver) PayCode(ctx context.Context, id string) (*driverpay.PayC
 	}
 	return r.DriverPayService.GetPayCode(ctx, driverpayports.GetPayCodeByIDRequest{
 		ID:         payCodeID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -853,7 +858,7 @@ func (r *QueryResolver) PayCodeOptions(ctx context.Context, direction *driverpay
 	if err != nil {
 		return nil, err
 	}
-	req := driverpayports.ListActivePayCodesRequest{TenantInfo: base.TenantInfo(authCtx)}
+	req := driverpayports.ListActivePayCodesRequest{TenantInfo: resolvercore.TenantInfo(authCtx)}
 	if direction != nil {
 		req.Direction = *direction
 	}
@@ -865,7 +870,7 @@ func (r *QueryResolver) PayAdvances(ctx context.Context, input gqlmodel.DataTabl
 	if err != nil {
 		return nil, err
 	}
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -890,7 +895,7 @@ func (r *QueryResolver) PayAdvance(ctx context.Context, id string) (*driverpay.P
 	}
 	return r.DriverPayService.GetAdvance(ctx, driverpayports.GetPayAdvanceByIDRequest{
 		ID:         advanceID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -899,7 +904,7 @@ func (r *QueryResolver) EscrowAccounts(ctx context.Context, input gqlmodel.DataT
 	if err != nil {
 		return nil, err
 	}
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -924,7 +929,7 @@ func (r *QueryResolver) EscrowAccount(ctx context.Context, id string) (*driverpa
 	}
 	return r.DriverPayService.GetEscrowAccount(ctx, driverpayports.GetEscrowAccountByIDRequest{
 		ID:                  accountID,
-		TenantInfo:          base.TenantInfo(authCtx),
+		TenantInfo:          resolvercore.TenantInfo(authCtx),
 		IncludeTransactions: true,
 	})
 }
@@ -934,7 +939,7 @@ func (r *QueryResolver) DriverSettlements(ctx context.Context, input gqlmodel.Da
 	if err != nil {
 		return nil, err
 	}
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -959,7 +964,7 @@ func (r *QueryResolver) DriverSettlement(ctx context.Context, id string) (*drive
 	}
 	return r.DriverSettlementService.Get(ctx, driversettlementports.GetDriverSettlementByIDRequest{
 		ID:           settlementID,
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		IncludeLines: true,
 	})
 }
@@ -969,7 +974,7 @@ func (r *QueryResolver) SettlementBatches(ctx context.Context, input gqlmodel.Da
 	if err != nil {
 		return nil, err
 	}
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -994,7 +999,7 @@ func (r *QueryResolver) SettlementBatch(ctx context.Context, id string) (*driver
 	}
 	return r.DriverSettlementService.GetBatch(ctx, driversettlementports.GetSettlementBatchByIDRequest{
 		ID:                 batchID,
-		TenantInfo:         base.TenantInfo(authCtx),
+		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		IncludeSettlements: true,
 	})
 }
@@ -1004,7 +1009,7 @@ func (r *QueryResolver) DriverPayEvents(ctx context.Context, input gqlmodel.Data
 	if err != nil {
 		return nil, err
 	}
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -1027,7 +1032,7 @@ func (r *QueryResolver) UnsettledPayEvents(ctx context.Context, workerID string)
 	if err != nil {
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Invalid worker")
 	}
-	return r.DriverSettlementService.ListUnsettledEventsForWorker(ctx, base.TenantInfo(authCtx), id)
+	return r.DriverSettlementService.ListUnsettledEventsForWorker(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) WorkerEarningsSummary(ctx context.Context, workerID string) (*driversettlementservice.WorkerEarningsSummary, error) {
@@ -1039,7 +1044,7 @@ func (r *QueryResolver) WorkerEarningsSummary(ctx context.Context, workerID stri
 	if err != nil {
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Invalid worker")
 	}
-	return r.DriverSettlementService.GetWorkerEarningsSummary(ctx, base.TenantInfo(authCtx), id)
+	return r.DriverSettlementService.GetWorkerEarningsSummary(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) WorkerYtdPaySummaries(ctx context.Context, year int, classification *driverpay.PayeeClassification) ([]*driversettlementservice.WorkerYTDPaySummary, error) {
@@ -1053,7 +1058,7 @@ func (r *QueryResolver) WorkerYtdPaySummaries(ctx context.Context, year int, cla
 	}
 	return r.DriverSettlementService.GetYTDPaySummaries(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		year,
 		payeeClassification,
 	)
@@ -1064,7 +1069,7 @@ func (r *QueryResolver) SettlementControl(ctx context.Context) (*tenant.Settleme
 	if err != nil {
 		return nil, err
 	}
-	return r.SettlementControlService.Get(ctx, base.TenantInfo(authCtx))
+	return r.SettlementControlService.Get(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) CurrentSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error) {
@@ -1072,7 +1077,7 @@ func (r *QueryResolver) CurrentSettlementPeriod(ctx context.Context) (*settlemen
 	if err != nil {
 		return nil, err
 	}
-	control, err := r.SettlementControlService.Get(ctx, base.TenantInfo(authCtx))
+	control, err := r.SettlementControlService.Get(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -1087,9 +1092,9 @@ func (r *QueryResolver) SettlementWorkspaceSummary(ctx context.Context, periodSt
 	}
 	return r.DriverSettlementService.GetWorkspaceSummary(
 		ctx,
-		base.TenantInfo(authCtx),
-		base.Int64Value(periodStart),
-		base.Int64Value(periodEnd),
+		resolvercore.TenantInfo(authCtx),
+		gqlscalar.Int64Value(periodStart),
+		gqlscalar.Int64Value(periodEnd),
 	)
 }
 
@@ -1100,9 +1105,9 @@ func (r *QueryResolver) UnsettledWorkerSummaries(ctx context.Context, periodStar
 	}
 	return r.DriverSettlementService.ListUnsettledWorkers(
 		ctx,
-		base.TenantInfo(authCtx),
-		base.Int64Value(periodStart),
-		base.Int64Value(periodEnd),
+		resolvercore.TenantInfo(authCtx),
+		gqlscalar.Int64Value(periodStart),
+		gqlscalar.Int64Value(periodEnd),
 	)
 }
 
@@ -1116,10 +1121,10 @@ func (r *QueryResolver) PreviewDriverSettlement(ctx context.Context, workerID st
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Invalid worker")
 	}
 	return r.DriverSettlementService.PreviewForWorker(ctx, &driversettlementservice.GenerateForWorkerRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		WorkerID:    id,
-		PeriodStart: base.Int64Value(periodStart),
-		PeriodEnd:   base.Int64Value(periodEnd),
+		PeriodStart: gqlscalar.Int64Value(periodStart),
+		PeriodEnd:   gqlscalar.Int64Value(periodEnd),
 	})
 }
 
@@ -1132,7 +1137,7 @@ func (r *QueryResolver) ExportSettlementBatchCSV(ctx context.Context, batchID st
 	if err != nil {
 		return "", errortypes.NewValidationError("batchId", errortypes.ErrInvalid, "Invalid batch")
 	}
-	return r.DriverSettlementService.ExportBatchPayrollCSV(ctx, base.TenantInfo(authCtx), id)
+	return r.DriverSettlementService.ExportBatchPayrollCSV(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *SettlementControlResolver) VarianceThresholdPct(ctx context.Context, obj *tenant.SettlementControl) (string, error) {
@@ -1156,7 +1161,7 @@ func (r *WorkerPayAssignmentResolver) SplitPercent(ctx context.Context, obj *dri
 }
 
 func (r *DriverSettlementLineGroupResolver) Rate(ctx context.Context, obj *driversettlement.LineGroup) (*string, error) {
-	return base.NullDecimalStringPtr(obj.Rate), nil
+	return gqldecimal.NullDecimalStringPtr(obj.Rate), nil
 }
 
 func (r *DriverSettlementLineGroupResolver) Quantity(ctx context.Context, obj *driversettlement.LineGroup) (string, error) {
@@ -1207,21 +1212,21 @@ func (r *DriverSettlementResolver) Disputes(ctx context.Context, obj *driversett
 }
 
 func (r *DriverSettlementResolver) SubmittedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.SubmittedByID)
+	return loaderfields.LoadUser(ctx, obj.SubmittedByID)
 }
 
 func (r *DriverSettlementResolver) ApprovedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.ApprovedByID)
+	return loaderfields.LoadUser(ctx, obj.ApprovedByID)
 }
 
 func (r *DriverSettlementResolver) PostedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.PostedByID)
+	return loaderfields.LoadUser(ctx, obj.PostedByID)
 }
 
 func (r *DriverSettlementResolver) PaidBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.PaidByID)
+	return loaderfields.LoadUser(ctx, obj.PaidByID)
 }
 
 func (r *DriverSettlementResolver) VoidedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.VoidedByID)
+	return loaderfields.LoadUser(ctx, obj.VoidedByID)
 }

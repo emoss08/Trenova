@@ -3,12 +3,12 @@
 package shipmenttyperesolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	shipmenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/shipmenttypeservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	ShipmentTypeService *shipmenttypeservice.Service
 }
 

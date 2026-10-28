@@ -3,12 +3,12 @@
 package userresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	userservice "github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	UserService *userservice.Service
 }
 

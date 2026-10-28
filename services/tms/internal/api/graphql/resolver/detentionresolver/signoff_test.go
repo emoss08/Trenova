@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
@@ -97,7 +97,7 @@ func TestDetentionOccurrenceSignoffs_ReadWhoApprovedAndWaivedThroughTheLoader(t 
 	ctx := withUserLoader(t.Context(), users)
 	approver, waiver := approverID.String(), waiverID.String()
 	occurrence := &gqlmodel.DetentionOccurrence{ApprovedByID: &approver, WaivedByID: &waiver}
-	resolver := &DetentionOccurrenceResolver{&Deps{Core: &base.Core{}}}
+	resolver := &DetentionOccurrenceResolver{&Deps{Core: &resolvercore.Core{}}}
 
 	approved, err := resolver.ApprovedBy(ctx, occurrence)
 	require.NoError(t, err)
@@ -113,7 +113,7 @@ func TestDetentionOccurrenceSignoffs_ReadWhoApprovedAndWaivedThroughTheLoader(t 
 func TestDetentionOccurrenceSignoffs_AreNullWithoutAnyoneOrAnyLoader(t *testing.T) {
 	t.Parallel()
 
-	resolver := &DetentionOccurrenceResolver{&Deps{Core: &base.Core{}}}
+	resolver := &DetentionOccurrenceResolver{&Deps{Core: &resolvercore.Core{}}}
 	unsigned := &gqlmodel.DetentionOccurrence{}
 
 	approved, err := resolver.ApprovedBy(withUserLoader(t.Context(), &usersByID{}), unsigned)
@@ -121,7 +121,10 @@ func TestDetentionOccurrenceSignoffs_AreNullWithoutAnyoneOrAnyLoader(t *testing.
 	assert.Nil(t, approved)
 
 	approver := pulid.MustNew("usr_").String()
-	waived, err := resolver.WaivedBy(t.Context(), &gqlmodel.DetentionOccurrence{WaivedByID: &approver})
+	waived, err := resolver.WaivedBy(
+		t.Context(),
+		&gqlmodel.DetentionOccurrence{WaivedByID: &approver},
+	)
 	require.NoError(t, err)
 	assert.Nil(t, waived)
 }
@@ -129,7 +132,7 @@ func TestDetentionOccurrenceSignoffs_AreNullWithoutAnyoneOrAnyLoader(t *testing.
 func TestDetentionOccurrenceSignoffs_RefuseAnIDThatIsNotOne(t *testing.T) {
 	t.Parallel()
 
-	resolver := &DetentionOccurrenceResolver{&Deps{Core: &base.Core{}}}
+	resolver := &DetentionOccurrenceResolver{&Deps{Core: &resolvercore.Core{}}}
 	bad := "not-an-id"
 
 	_, err := resolver.ApprovedBy(t.Context(), &gqlmodel.DetentionOccurrence{ApprovedByID: &bad})

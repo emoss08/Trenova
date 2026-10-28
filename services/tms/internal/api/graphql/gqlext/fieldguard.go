@@ -10,7 +10,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/selfscoped"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
@@ -519,7 +519,7 @@ func (e *FieldGuardExtension) newPersonAccess(ctx context.Context) *refview.Pers
 			if e.engine == nil {
 				return false, nil
 			}
-			return base.CheckPermission(ctx, e.engine, authCtx, kind, permission.OpRead)
+			return resolvercore.CheckPermission(ctx, e.engine, authCtx, kind, permission.OpRead)
 		},
 	)
 }
@@ -540,5 +540,5 @@ func (e *FieldGuardExtension) resolveVisible(ctx context.Context) permission.Fie
 	if !ok {
 		return 0
 	}
-	return base.VisibleFieldGroups(ctx, e.engine, authCtx)
+	return resolvercore.VisibleFieldGroups(ctx, e.engine, authCtx)
 }

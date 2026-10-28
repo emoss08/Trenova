@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -70,7 +70,7 @@ func aiProviderResolver(
 	engine *decidingPermissionEngine,
 ) *QueryResolver {
 	return &QueryResolver{&Deps{
-		Core:              &base.Core{PermissionEngine: engine},
+		Core:              &resolvercore.Core{PermissionEngine: engine},
 		AiProviderService: svc,
 	}}
 }

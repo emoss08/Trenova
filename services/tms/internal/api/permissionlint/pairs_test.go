@@ -79,7 +79,7 @@ func TestAnalyzerFollowsBoundWrappers(t *testing.T) {
 var dynamicChecks = map[string]string{
 	"graphql/resolver/aicontrolresolver/tuneups.go:requireApplyPermission":                             "the resource the tune-up changes, from its kind",
 	"graphql/resolver/attentionresolver/attentionhelpers.go:attentionSectionRunner":                    "each attention section passes its own resource",
-	"graphql/resolver/base/agentproposalchoices.go:subsetLabels":                                       "the resource a proposal field reads",
+	"graphql/resolver/resolvercore/agentproposalchoices.go:subsetLabels":                               "the resource a proposal field reads",
 	"graphql/resolver/bulkeditresolver/bulk_edit.resolvers.go:StartBulkEdit":                           "the resource the bulk editor registry resolves",
 	"graphql/resolver/bulkeditresolver/bulk_edit.resolvers.go:UndoMyBulkEdit":                          "the resource the bulk editor registry resolves",
 	"graphql/resolver/bulkeditresolver/bulk_edit.resolvers.go:BulkEditFields":                          "the resource the bulk editor registry resolves",

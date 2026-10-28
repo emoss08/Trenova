@@ -3,13 +3,13 @@
 package carriersettlementresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	carriersettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	carriersettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	CarrierSettlementService   *carriersettlementservice.Service
 	CarrierSettlementRepo      carriersettlementports.CarrierSettlementRepository
 	CarrierSettlementBatchRepo carriersettlementports.CarrierSettlementBatchRepository

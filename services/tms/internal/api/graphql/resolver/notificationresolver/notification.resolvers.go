@@ -9,7 +9,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/notificationmapping"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 )
 
@@ -30,7 +32,7 @@ func (r *MutationResolver) MarkAllNotificationsRead(ctx context.Context) (bool, 
 	if err = r.NotificationService.MarkAllAsRead(
 		ctx,
 		authCtx.UserID,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		authCtx.IsPortalUser,
 	); err != nil {
 		return false, err
@@ -53,7 +55,7 @@ func (r *QueryResolver) Notifications(ctx context.Context, input gqlmodel.DataTa
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -63,14 +65,14 @@ func (r *QueryResolver) Notifications(ctx context.Context, input gqlmodel.DataTa
 		Cursor:       tableInput.Cursor,
 		PersonalOnly: authCtx.IsPortalUser,
 	}
-	base.ApplyNotificationFilter(req, filter)
+	notificationmapping.ApplyNotificationFilter(req, filter)
 
 	result, err := r.NotificationService.ListConnection(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return base.NotificationConnectionToModel(result)
+	return notificationmapping.NotificationConnectionToModel(result)
 }
 
 func (r *QueryResolver) NotificationUnreadCount(ctx context.Context) (int, error) {
@@ -82,7 +84,7 @@ func (r *QueryResolver) NotificationUnreadCount(ctx context.Context) (int, error
 	count, err := r.NotificationService.CountUnread(
 		ctx,
 		authCtx.UserID,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		authCtx.IsPortalUser,
 	)
 	if err != nil {

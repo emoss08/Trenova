@@ -10,7 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/billingqueuemapping"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,17 +33,17 @@ func (r *MutationResolver) UpdateBillingQueueStatus(ctx context.Context, id stri
 		ItemID:              itemID,
 		NewStatus:           input.Status,
 		ExceptionReasonCode: input.ExceptionReasonCode,
-		ExceptionNotes:      base.StringValue(input.ExceptionNotes),
-		ReviewNotes:         base.StringValue(input.ReviewNotes),
-		CancelReason:        base.StringValue(input.CancelReason),
+		ExceptionNotes:      gqlscalar.StringValue(input.ExceptionNotes),
+		ReviewNotes:         gqlscalar.StringValue(input.ReviewNotes),
+		CancelReason:        gqlscalar.StringValue(input.CancelReason),
 		HoldReasonCode:      input.HoldReasonCode,
-		TenantInfo:          base.TenantInfo(authCtx),
+		TenantInfo:          resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	return base.RequiredBillingQueueItemToModel(ctx, item)
+	return billingqueuemapping.RequiredBillingQueueItemToModel(ctx, item)
 }
 
 func (r *MutationResolver) AssignBillingQueueBiller(ctx context.Context, id string, input gqlmodel.BillingQueueAssignInput) (*gqlmodel.BillingQueueItem, error) {
@@ -63,13 +65,13 @@ func (r *MutationResolver) AssignBillingQueueBiller(ctx context.Context, id stri
 	item, err := r.BillingQueueService.AssignBiller(ctx, &billingqueueports.AssignBillerRequest{
 		ItemID:     itemID,
 		BillerID:   billerID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	return base.RequiredBillingQueueItemToModel(ctx, item)
+	return billingqueuemapping.RequiredBillingQueueItemToModel(ctx, item)
 }
 
 func (r *MutationResolver) PostBillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueuePostResult, error) {
@@ -85,13 +87,13 @@ func (r *MutationResolver) PostBillingQueueItem(ctx context.Context, id string) 
 
 	result, err := r.BillingQueueReviewService.Post(ctx, &billingqueueports.BillingQueueItemRequest{
 		ItemID:     itemID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	item, err := base.RequiredBillingQueueItemToModel(ctx, result.Item)
+	item, err := billingqueuemapping.RequiredBillingQueueItemToModel(ctx, result.Item)
 	if err != nil {
 		return nil, err
 	}
@@ -122,13 +124,13 @@ func (r *MutationResolver) ReleaseBillingQueueItem(ctx context.Context, id strin
 
 	item, err := r.BillingQueueReviewService.Release(ctx, &billingqueueports.BillingQueueItemRequest{
 		ItemID:     itemID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	return base.RequiredBillingQueueItemToModel(ctx, item)
+	return billingqueuemapping.RequiredBillingQueueItemToModel(ctx, item)
 }
 
 func (r *MutationResolver) ResolveBillingQueueIssue(ctx context.Context, id string, issueID string, optionKey string) (*gqlmodel.BillingQueueItem, error) {
@@ -150,13 +152,13 @@ func (r *MutationResolver) ResolveBillingQueueIssue(ctx context.Context, id stri
 		ItemID:     itemID,
 		IssueID:    parsedIssueID,
 		OptionKey:  optionKey,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	return base.RequiredBillingQueueItemToModel(ctx, item)
+	return billingqueuemapping.RequiredBillingQueueItemToModel(ctx, item)
 }
 
 func (r *MutationResolver) UndoBillingQueueIssue(ctx context.Context, id string, issueID string) (*gqlmodel.BillingQueueItem, error) {
@@ -177,11 +179,11 @@ func (r *MutationResolver) UndoBillingQueueIssue(ctx context.Context, id string,
 	item, err := r.BillingQueueReviewService.UndoIssue(ctx, &billingqueueports.UndoBillingQueueIssueRequest{
 		ItemID:     itemID,
 		IssueID:    parsedIssueID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	return base.RequiredBillingQueueItemToModel(ctx, item)
+	return billingqueuemapping.RequiredBillingQueueItemToModel(ctx, item)
 }

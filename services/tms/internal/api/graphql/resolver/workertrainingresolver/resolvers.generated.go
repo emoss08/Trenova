@@ -3,13 +3,13 @@
 package workertrainingresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	workertrainingservice "github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	WorkerTrainingService *workertrainingservice.Service
 	DriverPortalService   *driverportalservice.Service
 }

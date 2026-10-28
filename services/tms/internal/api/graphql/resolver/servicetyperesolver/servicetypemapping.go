@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -26,7 +26,7 @@ func serviceTypeColumns(ctx context.Context, nodePathPrefix string) []string {
 func serviceTypeConnectionToModel(
 	result *pagination.CursorListResult[*servicetype.ServiceType],
 ) (*gqlmodel.ServiceTypeConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *servicetype.ServiceType, cursor string) *gqlmodel.ServiceTypeEdge {
 			return &gqlmodel.ServiceTypeEdge{

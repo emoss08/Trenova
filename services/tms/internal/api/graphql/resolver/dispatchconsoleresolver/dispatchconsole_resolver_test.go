@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -152,7 +152,10 @@ func TestDispatchResolvers_RequireTheCorrectPermission(t *testing.T) {
 			t.Parallel()
 
 			engine := &denyingPermissionEngine{}
-			err := tc.invoke(dispatchAuthContext(t), &Deps{Core: &base.Core{PermissionEngine: engine}})
+			err := tc.invoke(
+				dispatchAuthContext(t),
+				&Deps{Core: &resolvercore.Core{PermissionEngine: engine}},
+			)
 
 			require.Error(t, err, "a denied permission must not fall through to the service")
 			require.NotNil(t, engine.request)
@@ -216,7 +219,10 @@ func TestDispatchResolvers_DriverDataAlsoRequiresWorkerRead(t *testing.T) {
 			engine := &denyResourcePermissionEngine{
 				deniedResource: permission.ResourceWorker.String(),
 			}
-			err := tc.invoke(dispatchAuthContext(t), &Deps{Core: &base.Core{PermissionEngine: engine}})
+			err := tc.invoke(
+				dispatchAuthContext(t),
+				&Deps{Core: &resolvercore.Core{PermissionEngine: engine}},
+			)
 
 			require.Error(t, err, "denying worker:read must block the query")
 			require.NotNil(t, engine.denied)
@@ -229,7 +235,9 @@ func TestDispatchResolvers_DriverDataAlsoRequiresWorkerRead(t *testing.T) {
 func TestDispatchResolvers_RejectUnauthenticatedCallers(t *testing.T) {
 	t.Parallel()
 
-	resolver := &Deps{Core: &base.Core{PermissionEngine: &resolvertest.RecordingPermissionEngine{}}}
+	resolver := &Deps{
+		Core: &resolvercore.Core{PermissionEngine: &resolvertest.RecordingPermissionEngine{}},
+	}
 
 	_, err := (&QueryResolver{resolver}).DispatchBoard(
 		t.Context(),

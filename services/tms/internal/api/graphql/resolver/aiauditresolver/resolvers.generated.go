@@ -3,12 +3,12 @@
 package aiauditresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	aiauditports "github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	AiAuditService aiauditports.AIAuditService
 }
 

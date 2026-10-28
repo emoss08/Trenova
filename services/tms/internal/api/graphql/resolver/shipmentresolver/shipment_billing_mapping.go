@@ -5,7 +5,8 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/billingqueuemapping"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -92,13 +93,13 @@ func transferToBillingResultToModel(
 		return nil, errortypes.NewDatabaseError("Billing queue transfer did not return a result").
 			WithInternal(errors.New("shipment service returned nil transfer result"))
 	}
-	primary, err := base.RequiredBillingQueueItemToModel(ctx, result.Primary)
+	primary, err := billingqueuemapping.RequiredBillingQueueItemToModel(ctx, result.Primary)
 	if err != nil {
 		return nil, err
 	}
 	items := make([]*gqlmodel.BillingQueueItem, 0, len(result.Items))
 	for _, item := range result.Items {
-		model, itemErr := base.BillingQueueItemToModel(ctx, item)
+		model, itemErr := billingqueuemapping.BillingQueueItemToModel(ctx, item)
 		if itemErr != nil {
 			return nil, itemErr
 		}
@@ -192,13 +193,13 @@ func bulkTransferToBillingToModel(
 	for i := range response.Results {
 		item := &response.Results[i]
 
-		queueItem, err := base.BillingQueueItemToModel(ctx, item.Item)
+		queueItem, err := billingqueuemapping.BillingQueueItemToModel(ctx, item.Item)
 		if err != nil {
 			return nil, err
 		}
 		queueItems := make([]*gqlmodel.BillingQueueItem, 0, len(item.Items))
 		for _, created := range item.Items {
-			model, itemErr := base.BillingQueueItemToModel(ctx, created)
+			model, itemErr := billingqueuemapping.BillingQueueItemToModel(ctx, created)
 			if itemErr != nil {
 				return nil, itemErr
 			}
@@ -209,7 +210,7 @@ func bulkTransferToBillingToModel(
 
 		result := &gqlmodel.ShipmentBulkTransferToBillingResult{
 			ShipmentID:           item.ShipmentID.String(),
-			ProNumber:            base.StringPtrFromValue(item.ProNumber),
+			ProNumber:            gqlscalar.StringPtrFromValue(item.ProNumber),
 			Success:              item.Success,
 			MarkedReadyToInvoice: item.MarkedReadyToInvoice,
 			BillingQueueItem:     queueItem,
@@ -220,7 +221,7 @@ func bulkTransferToBillingToModel(
 		if !item.Success {
 			code := item.FailureCode
 			result.FailureCode = &code
-			result.Error = base.StringPtrFromValue(item.Error)
+			result.Error = gqlscalar.StringPtrFromValue(item.Error)
 			if item.Err != nil {
 				message := sanitizer.
 					SanitizeMessage(item.Err, classifier.Classify(item.Err)).

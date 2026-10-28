@@ -3,12 +3,12 @@
 package documentpacketruleresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	documentpacketruleservice "github.com/emoss08/trenova/internal/modules/documents/app/documentpacketruleservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	DocumentPacketRuleService *documentpacketruleservice.Service
 }
 

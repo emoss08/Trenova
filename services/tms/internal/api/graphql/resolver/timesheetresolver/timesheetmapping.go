@@ -1,7 +1,7 @@
 package timesheetresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,7 +31,7 @@ func timesheetPermissionFor(status timesheet.TimesheetStatus) permission.Operati
 // mustOptionalID is optionalID for a value the caller has already accepted may
 // be absent and cannot be malformed in a way worth a separate message.
 func mustOptionalID(value *string) pulid.ID {
-	id, err := base.OptionalID(value)
+	id, err := gqlid.OptionalID(value)
 	if err != nil {
 		return pulid.Nil
 	}

@@ -3,12 +3,12 @@
 package inboundmessageresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	inboundmessageservice "github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	InboundMessageService *inboundmessageservice.Service
 }
 

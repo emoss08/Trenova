@@ -8,7 +8,7 @@ package aitrainingresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
@@ -19,5 +19,5 @@ func (r *QueryResolver) AiTrainingExportHistory(ctx context.Context) ([]*aitrain
 		return nil, err
 	}
 
-	return r.AiTrainingHistoryService.ListHistory(ctx, base.TenantInfo(authCtx))
+	return r.AiTrainingHistoryService.ListHistory(ctx, resolvercore.TenantInfo(authCtx))
 }

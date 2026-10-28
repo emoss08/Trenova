@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection/aicorrectiondb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
@@ -17,7 +17,7 @@ import (
 const correctionAccuracySpecial = "accuracy"
 
 func aiCorrectionColumns(ctx context.Context, nodePathPrefix string) []string {
-	selection := base.ProjectedSelection(ctx, projection.AICorrectionSpec, nodePathPrefix)
+	selection := gqlconnection.ProjectedSelection(ctx, projection.AICorrectionSpec, nodePathPrefix)
 	if !selection.HasSpecial(correctionAccuracySpecial) || len(selection.Columns) == 0 {
 		return selection.Columns
 	}
@@ -32,21 +32,33 @@ func aiCorrectionColumns(ctx context.Context, nodePathPrefix string) []string {
 }
 
 func extractionEvalCaseColumns(ctx context.Context, nodePathPrefix string) []string {
-	return base.ProjectedSelection(ctx, projection.ExtractionEvalCaseSpec, nodePathPrefix).Columns
+	return gqlconnection.ProjectedSelection(
+		ctx,
+		projection.ExtractionEvalCaseSpec,
+		nodePathPrefix,
+	).Columns
 }
 
 func extractionEvalRunColumns(ctx context.Context, nodePathPrefix string) []string {
-	return base.ProjectedSelection(ctx, projection.ExtractionEvalRunSpec, nodePathPrefix).Columns
+	return gqlconnection.ProjectedSelection(
+		ctx,
+		projection.ExtractionEvalRunSpec,
+		nodePathPrefix,
+	).Columns
 }
 
 func extractionEvalResultColumns(ctx context.Context, nodePathPrefix string) []string {
-	return base.ProjectedSelection(ctx, projection.ExtractionEvalResultSpec, nodePathPrefix).Columns
+	return gqlconnection.ProjectedSelection(
+		ctx,
+		projection.ExtractionEvalResultSpec,
+		nodePathPrefix,
+	).Columns
 }
 
 func aiCorrectionConnectionToModel(
 	result *pagination.CursorListResult[*aicorrection.Correction],
 ) (*gqlmodel.AICorrectionConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *aicorrection.Correction, cursor string) *gqlmodel.AICorrectionEdge {
 			return &gqlmodel.AICorrectionEdge{Node: node, Cursor: cursor}
@@ -68,7 +80,7 @@ func aiCorrectionConnectionToModel(
 func extractionEvalCaseConnectionToModel(
 	result *pagination.CursorListResult[*extractioneval.ExtractionCase],
 ) (*gqlmodel.ExtractionEvalCaseConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *extractioneval.ExtractionCase, cursor string) *gqlmodel.ExtractionEvalCaseEdge {
 			return &gqlmodel.ExtractionEvalCaseEdge{Node: node, Cursor: cursor}
@@ -90,7 +102,7 @@ func extractionEvalCaseConnectionToModel(
 func extractionEvalRunConnectionToModel(
 	result *pagination.CursorListResult[*extractioneval.ExtractionRun],
 ) (*gqlmodel.ExtractionEvalRunConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *extractioneval.ExtractionRun, cursor string) *gqlmodel.ExtractionEvalRunEdge {
 			return &gqlmodel.ExtractionEvalRunEdge{Node: node, Cursor: cursor}
@@ -112,7 +124,7 @@ func extractionEvalRunConnectionToModel(
 func extractionEvalResultConnectionToModel(
 	result *pagination.CursorListResult[*extractioneval.ExtractionResult],
 ) (*gqlmodel.ExtractionEvalResultConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *extractioneval.ExtractionResult, cursor string) *gqlmodel.ExtractionEvalResultEdge {
 			return &gqlmodel.ExtractionEvalResultEdge{Node: node, Cursor: cursor}

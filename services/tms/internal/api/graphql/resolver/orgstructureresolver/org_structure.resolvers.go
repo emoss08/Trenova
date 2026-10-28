@@ -9,7 +9,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
@@ -21,23 +23,23 @@ import (
 )
 
 func (r *ApprovalDelegationResolver) EndsAt(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*int, error) {
-	return base.IntPtr(obj.EndsAt), nil
+	return gqlscalar.IntPtr(obj.EndsAt), nil
 }
 
 func (r *ApprovalDelegationResolver) RevokedAt(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*int, error) {
-	return base.IntPtr(obj.RevokedAt), nil
+	return gqlscalar.IntPtr(obj.RevokedAt), nil
 }
 
 func (r *ApprovalDelegationResolver) RevokedByID(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*string, error) {
-	return base.IDPtr(obj.RevokedByID), nil
+	return gqlid.IDPtr(obj.RevokedByID), nil
 }
 
 func (r *ApprovalDelegationResolver) CreatedByID(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*string, error) {
-	return base.IDPtr(obj.CreatedByID), nil
+	return gqlid.IDPtr(obj.CreatedByID), nil
 }
 
 func (r *JobPositionResolver) ReportsToPositionID(ctx context.Context, obj *worker.JobPosition) (*string, error) {
-	return base.IDPtr(obj.ReportsToPositionID), nil
+	return gqlid.IDPtr(obj.ReportsToPositionID), nil
 }
 
 func (r *MutationResolver) CreateJobPosition(ctx context.Context, input gqlmodel.JobPositionInput) (*worker.JobPosition, error) {
@@ -46,7 +48,7 @@ func (r *MutationResolver) CreateJobPosition(ctx context.Context, input gqlmodel
 		return nil, err
 	}
 
-	reportsTo, err := base.OptionalID(input.ReportsToPositionID)
+	reportsTo, err := gqlid.OptionalID(input.ReportsToPositionID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"reportsToPositionId",
@@ -55,15 +57,15 @@ func (r *MutationResolver) CreateJobPosition(ctx context.Context, input gqlmodel
 		)
 	}
 
-	ti := base.TenantInfo(authCtx)
+	ti := resolvercore.TenantInfo(authCtx)
 	entity := &worker.JobPosition{
 		OrganizationID:      ti.OrgID,
 		BusinessUnitID:      ti.BuID,
 		Code:                input.Code,
 		Title:               input.Title,
-		Description:         base.StringValue(input.Description),
+		Description:         gqlscalar.StringValue(input.Description),
 		Department:          input.Department,
-		FLSAExempt:          base.BoolValue(input.FlsaExempt),
+		FLSAExempt:          gqlscalar.BoolValue(input.FlsaExempt),
 		IsDrivingPosition:   input.IsDrivingPosition == nil || *input.IsDrivingPosition,
 		ReportsToPositionID: reportsTo,
 	}
@@ -84,7 +86,7 @@ func (r *MutationResolver) UpdateJobPosition(ctx context.Context, input gqlmodel
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Position is invalid")
 	}
-	reportsTo, err := base.OptionalID(input.ReportsToPositionID)
+	reportsTo, err := gqlid.OptionalID(input.ReportsToPositionID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"reportsToPositionId",
@@ -93,19 +95,19 @@ func (r *MutationResolver) UpdateJobPosition(ctx context.Context, input gqlmodel
 		)
 	}
 
-	ti := base.TenantInfo(authCtx)
+	ti := resolvercore.TenantInfo(authCtx)
 	entity := &worker.JobPosition{
 		ID:                  id,
 		OrganizationID:      ti.OrgID,
 		BusinessUnitID:      ti.BuID,
 		Code:                input.Code,
 		Title:               input.Title,
-		Description:         base.StringValue(input.Description),
+		Description:         gqlscalar.StringValue(input.Description),
 		Department:          input.Department,
-		FLSAExempt:          base.BoolValue(input.FlsaExempt),
+		FLSAExempt:          gqlscalar.BoolValue(input.FlsaExempt),
 		IsDrivingPosition:   input.IsDrivingPosition == nil || *input.IsDrivingPosition,
 		ReportsToPositionID: reportsTo,
-		Version:             int64(base.IntValue(input.Version)),
+		Version:             int64(gqlscalar.IntValue(input.Version)),
 	}
 	if input.Status != nil {
 		entity.Status = *input.Status
@@ -180,12 +182,12 @@ func (r *MutationResolver) DelegateApproval(ctx context.Context, input gqlmodel.
 	}
 
 	req := &orgstructureservice.DelegateRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		DelegatorID: delegatorID,
 		DelegateID:  delegateID,
-		StartsAt:    int64(base.IntValue(input.StartsAt)),
-		EndsAt:      base.Int64Ptr(input.EndsAt),
-		Reason:      base.StringValue(input.Reason),
+		StartsAt:    int64(gqlscalar.IntValue(input.StartsAt)),
+		EndsAt:      gqlscalar.Int64Ptr(input.EndsAt),
+		Reason:      gqlscalar.StringValue(input.Reason),
 		UserID:      authCtx.UserID,
 	}
 	if input.Scope != nil {
@@ -214,7 +216,7 @@ func (r *MutationResolver) RevokeApprovalDelegation(ctx context.Context, id stri
 		)
 	}
 
-	ti := base.TenantInfo(authCtx)
+	ti := resolvercore.TenantInfo(authCtx)
 	existing, err := r.OrgStructureService.ListDelegations(
 		ctx,
 		&orgstructureports.ListApprovalDelegationsRequest{TenantInfo: ti, DelegatorID: authCtx.UserID},
@@ -251,9 +253,9 @@ func (r *QueryResolver) JobPositions(ctx context.Context, activeOnly *bool, driv
 	}
 
 	return r.OrgStructureService.ListPositions(ctx, &orgstructureports.ListJobPositionsRequest{
-		TenantInfo:       base.TenantInfo(authCtx),
-		ActiveOnly:       base.BoolValue(activeOnly),
-		DrivingOnly:      base.BoolValue(drivingOnly),
+		TenantInfo:       resolvercore.TenantInfo(authCtx),
+		ActiveOnly:       gqlscalar.BoolValue(activeOnly),
+		DrivingOnly:      gqlscalar.BoolValue(drivingOnly),
 		IncludeReportsTo: true,
 	})
 }
@@ -269,7 +271,7 @@ func (r *QueryResolver) JobPosition(ctx context.Context, id string) (*worker.Job
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Position is invalid")
 	}
 
-	return r.OrgStructureService.GetPosition(ctx, base.TenantInfo(authCtx), positionID)
+	return r.OrgStructureService.GetPosition(ctx, resolvercore.TenantInfo(authCtx), positionID)
 }
 
 func (r *QueryResolver) Headcount(ctx context.Context) (*orgstructureservice.Headcount, error) {
@@ -278,7 +280,7 @@ func (r *QueryResolver) Headcount(ctx context.Context) (*orgstructureservice.Hea
 		return nil, err
 	}
 
-	return r.OrgStructureService.Headcount(ctx, base.TenantInfo(authCtx))
+	return r.OrgStructureService.Headcount(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) JobPositionHolders(ctx context.Context, id string) ([]*gqlmodel.PositionHolder, error) {
@@ -292,7 +294,7 @@ func (r *QueryResolver) JobPositionHolders(ctx context.Context, id string) ([]*g
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Position is invalid")
 	}
 
-	rows, err := r.OrgStructureService.ListPositionHolders(ctx, base.TenantInfo(authCtx), positionID)
+	rows, err := r.OrgStructureService.ListPositionHolders(ctx, resolvercore.TenantInfo(authCtx), positionID)
 	if err != nil {
 		return nil, err
 	}
@@ -308,9 +310,9 @@ func (r *QueryResolver) MyTeam(ctx context.Context, includeInactive *bool) ([]*g
 
 	rows, err := r.OrgStructureService.MyTeam(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		authCtx.UserID,
-		base.BoolValue(includeInactive),
+		gqlscalar.BoolValue(includeInactive),
 	)
 	if err != nil {
 		return nil, err
@@ -329,7 +331,7 @@ func (r *QueryResolver) ApprovalDelegations(ctx context.Context, delegatorID *st
 		return nil, err
 	}
 
-	delegator, err := base.OptionalID(delegatorID)
+	delegator, err := gqlid.OptionalID(delegatorID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"delegatorId",
@@ -337,7 +339,7 @@ func (r *QueryResolver) ApprovalDelegations(ctx context.Context, delegatorID *st
 			"Delegator is invalid",
 		)
 	}
-	delegate, err := base.OptionalID(delegateID)
+	delegate, err := gqlid.OptionalID(delegateID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"delegateId",
@@ -361,12 +363,12 @@ func (r *QueryResolver) ApprovalDelegations(ctx context.Context, delegatorID *st
 	}
 
 	req := &orgstructureports.ListApprovalDelegationsRequest{
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		DelegatorID:  delegator,
 		DelegateID:   delegate,
 		IncludeUsers: true,
 	}
-	if base.BoolValue(activeOnly) {
+	if gqlscalar.BoolValue(activeOnly) {
 		req.ActiveAt = timeutils.NowUnix()
 	}
 

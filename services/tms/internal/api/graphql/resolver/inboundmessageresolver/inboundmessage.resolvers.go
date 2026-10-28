@@ -11,7 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -106,7 +110,7 @@ func (r *InboundMessageResolver) AttachmentCount(ctx context.Context, obj *inbou
 		return len(obj.Attachments), nil
 	}
 
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return 0, err
 	}
 
@@ -136,11 +140,11 @@ func (r *InboundMessageResolver) MatchedCustomer(ctx context.Context, obj *inbou
 		return nil, nil
 	}
 
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return base.OptionalMatch(loaders.CustomerByID(ctx, obj.MatchedCustomerID.String()))
+	return loaderfields.OptionalMatch(loaders.CustomerByID(ctx, obj.MatchedCustomerID.String()))
 }
 
 func (r *InboundMessageResolver) NeedsReview(ctx context.Context, obj *inboundmessage.InboundMessage) (bool, error) {
@@ -162,7 +166,7 @@ func (r *MutationResolver) ReviewInboundMessage(ctx context.Context, id string, 
 
 	req := inboundmessageservice.ReviewRequest{
 		MessageID:  messageID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ReviewerID: actorutil.FromAuthContext(authCtx).UserID,
 		Status:     input.Status,
 	}
@@ -188,17 +192,17 @@ func (r *MutationResolver) LinkInboundMessage(ctx context.Context, id string, in
 
 	req := inboundmessageservice.LinkRequest{
 		MessageID:  messageID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ReviewerID: actorutil.FromAuthContext(authCtx).UserID,
 		Reason:     input.Reason,
 	}
-	if req.ShipmentID, err = base.OptionalID(input.ShipmentID); err != nil {
+	if req.ShipmentID, err = gqlid.OptionalID(input.ShipmentID); err != nil {
 		return nil, err
 	}
-	if req.CustomerID, err = base.OptionalID(input.CustomerID); err != nil {
+	if req.CustomerID, err = gqlid.OptionalID(input.CustomerID); err != nil {
 		return nil, err
 	}
-	if req.CarrierID, err = base.OptionalID(input.CarrierID); err != nil {
+	if req.CarrierID, err = gqlid.OptionalID(input.CarrierID); err != nil {
 		return nil, err
 	}
 
@@ -299,10 +303,10 @@ func (r *QueryResolver) InboundMessages(ctx context.Context, input gqlmodel.Inbo
 	}
 	// The count is only run when somebody asked for it. A lane header wants
 	// the counts query, which is one aggregate; paging the lane does not.
-	cursor.IncludeTotalCount = base.ConnectionTotalRequested(ctx)
+	cursor.IncludeTotalCount = gqlconnection.ConnectionTotalRequested(ctx)
 
 	req, err := folderRequest(
-		&input, base.TenantInfo(authCtx), actorutil.FromAuthContext(authCtx).UserID,
+		&input, resolvercore.TenantInfo(authCtx), actorutil.FromAuthContext(authCtx).UserID,
 	)
 	if err != nil {
 		return nil, err
@@ -332,7 +336,7 @@ func (r *QueryResolver) InboundMessage(ctx context.Context, id string) (*inbound
 
 	return r.InboundMessageService.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:                 messageID,
-		TenantInfo:         base.TenantInfo(authCtx),
+		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		IncludeAttachments: true,
 	})
 }
@@ -346,7 +350,7 @@ func (r *QueryResolver) InboundMessageCounts(ctx context.Context) (*inboundmessa
 	}
 
 	return r.InboundMessageService.Counts(
-		ctx, base.TenantInfo(authCtx), actorutil.FromAuthContext(authCtx).UserID,
+		ctx, resolvercore.TenantInfo(authCtx), actorutil.FromAuthContext(authCtx).UserID,
 	)
 }
 
@@ -364,7 +368,7 @@ func (r *QueryResolver) InboundMailboxes(ctx context.Context) ([]*inboundmessage
 	result, err := r.InboundMessageService.ListMailboxes(
 		ctx,
 		&inboundmessageports.ListMailboxesRequest{
-			Filter: &pagination.QueryOptions{TenantInfo: base.TenantInfo(authCtx)},
+			Filter: &pagination.QueryOptions{TenantInfo: resolvercore.TenantInfo(authCtx)},
 		},
 	)
 	if err != nil {
@@ -403,7 +407,7 @@ func (r *InboundActivityResolver) Actor(ctx context.Context, obj *triage.Activit
 		return nil, nil
 	}
 
-	return base.OptionalMatch(base.LoadUser(ctx, obj.ActorID))
+	return loaderfields.OptionalMatch(loaderfields.LoadUser(ctx, obj.ActorID))
 }
 
 func (r *InboundActivityResolver) Until(ctx context.Context, obj *triage.Activity) (*int, error) {
@@ -431,7 +435,7 @@ func (r *InboundAttachmentResolver) FiledShipment(ctx context.Context, obj *inbo
 }
 
 func (r *InboundAttachmentResolver) FiledAs(ctx context.Context, obj *inboundmessage.InboundAttachment) (*string, error) {
-	return base.NonEmptyPtr(obj.FiledAs), nil
+	return gqlscalar.NonEmptyPtr(obj.FiledAs), nil
 }
 
 func (r *InboundAttachmentResolver) FiledAt(ctx context.Context, obj *inboundmessage.InboundAttachment) (*int, error) {
@@ -474,7 +478,7 @@ func (r *InboundMessageResolver) ThreadCount(ctx context.Context, obj *inboundme
 	if obj.ThreadKey == "" {
 		return 1, nil
 	}
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return 0, err
 	}
 
@@ -491,7 +495,7 @@ func (r *InboundMessageResolver) OwnerID(ctx context.Context, obj *inboundmessag
 }
 
 func (r *InboundMessageResolver) Owner(ctx context.Context, obj *inboundmessage.InboundMessage) (*tenant.User, error) {
-	return base.OptionalMatch(base.LoadUser(ctx, obj.OwnerID))
+	return loaderfields.OptionalMatch(loaderfields.LoadUser(ctx, obj.OwnerID))
 }
 
 func (r *InboundMessageResolver) DueAt(ctx context.Context, obj *inboundmessage.InboundMessage) (*int, error) {
@@ -531,11 +535,11 @@ func (r *InboundMessageResolver) HandledAction(ctx context.Context, obj *inbound
 }
 
 func (r *InboundMessageResolver) Reviewer(ctx context.Context, obj *inboundmessage.InboundMessage) (*tenant.User, error) {
-	return base.OptionalMatch(base.LoadUser(ctx, obj.ReviewedBy))
+	return loaderfields.OptionalMatch(loaderfields.LoadUser(ctx, obj.ReviewedBy))
 }
 
 func (r *InboundMessageResolver) Activity(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*triage.Activity, error) {
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
@@ -550,7 +554,7 @@ func (r *InboundSnoozeResolver) DocumentTypeName(ctx context.Context, obj *inbou
 	if obj.DocumentTypeID == nil || obj.DocumentTypeID.IsNil() {
 		return nil, nil
 	}
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
@@ -559,11 +563,11 @@ func (r *InboundSnoozeResolver) DocumentTypeName(ctx context.Context, obj *inbou
 		return nil, err
 	}
 
-	return base.NonEmptyPtr(name), nil
+	return gqlscalar.NonEmptyPtr(name), nil
 }
 
 func (r *InboundSnoozeResolver) SnoozedBy(ctx context.Context, obj *inboundmessageports.SnoozeView) (*tenant.User, error) {
-	return base.OptionalMatch(base.LoadUser(ctx, obj.SnoozedBy))
+	return loaderfields.OptionalMatch(loaderfields.LoadUser(ctx, obj.SnoozedBy))
 }
 
 func (r *InboundSplitDocumentResolver) DocumentID(ctx context.Context, obj *inboundmessage.SplitDocument) (string, error) {
@@ -584,7 +588,7 @@ func (r *MutationResolver) ReviewInboundMessages(ctx context.Context, selection 
 		)
 	}
 
-	tenantInfo := base.TenantInfo(authCtx)
+	tenantInfo := resolvercore.TenantInfo(authCtx)
 	actorID := actorutil.FromAuthContext(authCtx).UserID
 	chosen, err := selectionOf(selection, tenantInfo, actorID)
 	if err != nil {
@@ -613,7 +617,7 @@ func (r *MutationResolver) ReopenInboundMessages(ctx context.Context, selection 
 		return nil, err
 	}
 
-	tenantInfo := base.TenantInfo(authCtx)
+	tenantInfo := resolvercore.TenantInfo(authCtx)
 	actorID := actorutil.FromAuthContext(authCtx).UserID
 	chosen, err := selectionOf(selection, tenantInfo, actorID)
 	if err != nil {
@@ -635,11 +639,11 @@ func (r *MutationResolver) AssignInboundMessages(ctx context.Context, selection 
 		return nil, err
 	}
 
-	owner, err := base.OptionalID(ownerID)
+	owner, err := gqlid.OptionalID(ownerID)
 	if err != nil {
 		return nil, err
 	}
-	tenantInfo := base.TenantInfo(authCtx)
+	tenantInfo := resolvercore.TenantInfo(authCtx)
 	actorID := actorutil.FromAuthContext(authCtx).UserID
 	chosen, err := selectionOf(selection, tenantInfo, actorID)
 	if err != nil {
@@ -665,7 +669,7 @@ func (r *MutationResolver) SnoozeInboundMessages(ctx context.Context, selection 
 		return nil, err
 	}
 
-	tenantInfo := base.TenantInfo(authCtx)
+	tenantInfo := resolvercore.TenantInfo(authCtx)
 	actorID := actorutil.FromAuthContext(authCtx).UserID
 	chosen, err := selectionOf(selection, tenantInfo, actorID)
 	if err != nil {
@@ -676,12 +680,12 @@ func (r *MutationResolver) SnoozeInboundMessages(ctx context.Context, selection 
 		TenantInfo: tenantInfo,
 		ActorID:    actorID,
 		Selection:  chosen,
-		Until:      base.Int64Value(input.Until),
+		Until:      gqlscalar.Int64Value(input.Until),
 	}
 	if input.Event != nil {
 		req.Event = *input.Event
 	}
-	if req.DocumentTypeID, err = base.OptionalID(input.DocumentTypeID); err != nil {
+	if req.DocumentTypeID, err = gqlid.OptionalID(input.DocumentTypeID); err != nil {
 		return nil, err
 	}
 
@@ -767,7 +771,7 @@ func (r *MutationResolver) HandOffTriage(ctx context.Context, toUserID string) (
 	}
 
 	return r.InboundMessageService.HandOff(ctx, &inboundmessageservice.HandOffRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		ToUserID:   to,
 	})
@@ -781,7 +785,7 @@ func (r *MutationResolver) ReadUnreadInboundMessages(ctx context.Context) (int, 
 		return 0, err
 	}
 
-	return r.InboundMessageService.ReadUnread(ctx, base.TenantInfo(authCtx))
+	return r.InboundMessageService.ReadUnread(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *MutationResolver) CreateMyTriageView(ctx context.Context, name string, query string) (*triage.View, error) {
@@ -791,7 +795,7 @@ func (r *MutationResolver) CreateMyTriageView(ctx context.Context, name string, 
 	}
 
 	return r.InboundMessageService.CreateView(ctx, &inboundmessageservice.CreateViewRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		Name:       name,
 		Query:      query,
@@ -810,7 +814,7 @@ func (r *MutationResolver) RenameMyTriageView(ctx context.Context, id string, na
 	}
 
 	return r.InboundMessageService.RenameView(ctx, &inboundmessageservice.RenameViewRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		ID:         viewID,
 		Name:       name,
@@ -829,7 +833,7 @@ func (r *MutationResolver) DeleteMyTriageView(ctx context.Context, id string) (b
 	}
 
 	if err = r.InboundMessageService.DeleteView(ctx, &inboundmessageservice.ViewRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		ID:         viewID,
 	}); err != nil {
@@ -859,7 +863,7 @@ func (r *MutationResolver) UpdateTriageResponseTargets(ctx context.Context, inpu
 	}
 
 	return r.InboundMessageService.UpdateResponseTargets(ctx, &inboundmessageservice.UpdateTargetsRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		Changes:    changes,
 	})
@@ -873,13 +877,13 @@ func (r *MutationResolver) UpdateTriageSettings(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	onCall, err := base.OptionalID(input.OnCallUserID)
+	onCall, err := gqlid.OptionalID(input.OnCallUserID)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.InboundMessageService.UpdateSettings(ctx, &inboundmessageservice.UpdateSettingsRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		OnCallUserID:   onCall,
 		EndOfDayMinute: input.EndOfDayMinute,
 		Version:        int64(input.Version),
@@ -894,7 +898,7 @@ func (r *QueryResolver) InboundThread(ctx context.Context, threadKey string) ([]
 		return nil, err
 	}
 
-	return r.InboundMessageService.Thread(ctx, base.TenantInfo(authCtx), threadKey)
+	return r.InboundMessageService.Thread(ctx, resolvercore.TenantInfo(authCtx), threadKey)
 }
 
 func (r *QueryResolver) MyTriageViews(ctx context.Context) ([]*triage.View, error) {
@@ -903,7 +907,7 @@ func (r *QueryResolver) MyTriageViews(ctx context.Context) ([]*triage.View, erro
 		return nil, err
 	}
 
-	return r.InboundMessageService.MyViews(ctx, base.TenantInfo(authCtx), authCtx.UserID)
+	return r.InboundMessageService.MyViews(ctx, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 }
 
 func (r *QueryResolver) TriageResponseTargets(ctx context.Context) ([]*inboundmessageports.ResponseTargetView, error) {
@@ -914,7 +918,7 @@ func (r *QueryResolver) TriageResponseTargets(ctx context.Context) ([]*inboundme
 		return nil, err
 	}
 
-	return r.InboundMessageService.ResponseTargets(ctx, base.TenantInfo(authCtx))
+	return r.InboundMessageService.ResponseTargets(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) TriageSettings(ctx context.Context) (*triage.Settings, error) {
@@ -925,7 +929,7 @@ func (r *QueryResolver) TriageSettings(ctx context.Context) (*triage.Settings, e
 		return nil, err
 	}
 
-	return r.InboundMessageService.Settings(ctx, base.TenantInfo(authCtx))
+	return r.InboundMessageService.Settings(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) TriageAssignees(ctx context.Context) ([]*inboundmessageports.AssigneeView, error) {
@@ -936,11 +940,11 @@ func (r *QueryResolver) TriageAssignees(ctx context.Context) ([]*inboundmessagep
 		return nil, err
 	}
 
-	return r.InboundMessageService.Assignees(ctx, base.TenantInfo(authCtx))
+	return r.InboundMessageService.Assignees(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *TriageAssigneeResolver) User(ctx context.Context, obj *inboundmessageports.AssigneeView) (*tenant.User, error) {
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
@@ -948,7 +952,7 @@ func (r *TriageAssigneeResolver) User(ctx context.Context, obj *inboundmessagepo
 }
 
 func (r *TriageHandOffResolver) To(ctx context.Context, obj *inboundmessageports.HandOffResult) (*tenant.User, error) {
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
@@ -956,7 +960,7 @@ func (r *TriageHandOffResolver) To(ctx context.Context, obj *inboundmessageports
 }
 
 func (r *TriageSettingsResolver) OnCallUser(ctx context.Context, obj *triage.Settings) (*tenant.User, error) {
-	return base.OptionalMatch(base.LoadUser(ctx, obj.OnCallUserID))
+	return loaderfields.OptionalMatch(loaderfields.LoadUser(ctx, obj.OnCallUserID))
 }
 
 func (r *TriageSettingsResolver) OnCallUserID(ctx context.Context, obj *triage.Settings) (*string, error) {
@@ -971,7 +975,7 @@ func (r *TriageSettingsResolver) Timezone(ctx context.Context, obj *triage.Setti
 }
 
 func (r *TriageViewResolver) Waiting(ctx context.Context, obj *triage.View) (int, error) {
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return 0, err
 	}
 

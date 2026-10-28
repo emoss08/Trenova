@@ -9,9 +9,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -23,7 +25,7 @@ func (r *QueryResolver) AiUsageSummary(ctx context.Context, since *int) (*aiusag
 		return nil, err
 	}
 
-	return r.AiUsageService.Summary(ctx, base.TenantInfo(authCtx), int64(base.DerefInt(since)))
+	return r.AiUsageService.Summary(ctx, resolvercore.TenantInfo(authCtx), int64(gqlscalar.DerefInt(since)))
 }
 
 func (r *QueryResolver) AiUsageDaily(ctx context.Context, days *int, timezone *string, providerID *string) ([]*aiusageports.AIUsageDay, error) {
@@ -33,13 +35,13 @@ func (r *QueryResolver) AiUsageDaily(ctx context.Context, days *int, timezone *s
 	}
 
 	req := &aiusageports.AIUsageDailyRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		Days:       base.DerefInt(days),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Days:       gqlscalar.DerefInt(days),
 	}
 	if timezone != nil {
 		req.Timezone = *timezone
 	}
-	if req.ProviderID, err = base.OptionalID(providerID); err != nil {
+	if req.ProviderID, err = gqlid.OptionalID(providerID); err != nil {
 		return nil, err
 	}
 
@@ -61,13 +63,13 @@ func (r *QueryResolver) AiUsageFeatures(ctx context.Context, input gqlmodel.Data
 		return nil, err
 	}
 
-	window := base.DerefInt(days)
+	window := gqlscalar.DerefInt(days)
 	if window <= 0 {
 		window = 7
 	}
 	since := timeutils.NowUnix() - int64(window)*24*60*60
 
-	summary, err := r.AiUsageService.Summary(ctx, base.TenantInfo(authCtx), since)
+	summary, err := r.AiUsageService.Summary(ctx, resolvercore.TenantInfo(authCtx), since)
 	if err != nil {
 		return nil, err
 	}

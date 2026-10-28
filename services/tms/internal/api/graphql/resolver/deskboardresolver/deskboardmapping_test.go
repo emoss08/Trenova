@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -23,7 +23,7 @@ func TestDeskBoardCardRefusesSomeoneWhoMayNotUseTheDesk(t *testing.T) {
 	t.Parallel()
 
 	resolver := &QueryResolver{&Deps{
-		Core: &base.Core{
+		Core: &resolvercore.Core{
 			L: zap.NewNop(),
 			PermissionEngine: &mocks.DenyResourcesPermissionEngine{
 				Denied: []string{permission.ResourceAssistant.String()},

@@ -3,12 +3,12 @@
 package accounttyperesolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	accounttypeservice "github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	AccountTypeService *accounttypeservice.Service
 }
 

@@ -8,10 +8,11 @@ package accountsreceivableresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
 func (r *QueryResolver) AccountingBriefing(ctx context.Context) (*accountingbriefports.AccountingBriefing, error) {
@@ -24,7 +25,7 @@ func (r *QueryResolver) AccountingBriefing(ctx context.Context) (*accountingbrie
 		return nil, err
 	}
 
-	return r.AccountingBriefs.Briefing(ctx, base.TenantInfo(authCtx))
+	return r.AccountingBriefs.Briefing(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) ArAgingSummary(ctx context.Context, asOfDate *int) (*customerledgerports.ARAgingSummary, error) {
@@ -39,8 +40,8 @@ func (r *QueryResolver) ArAgingSummary(ctx context.Context, asOfDate *int) (*cus
 
 	return r.AccountsReceivableService.GetAgingSummary(
 		ctx,
-		base.TenantInfo(authCtx),
-		int64(base.DerefInt(asOfDate)),
+		resolvercore.TenantInfo(authCtx),
+		int64(gqlscalar.DerefInt(asOfDate)),
 	)
 }
 
@@ -61,9 +62,9 @@ func (r *QueryResolver) ArOpenItems(ctx context.Context, customerID *string, asO
 
 	return r.AccountsReceivableService.ListOpenItems(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		custID,
-		int64(base.DerefInt(asOfDate)),
+		int64(gqlscalar.DerefInt(asOfDate)),
 	)
 }
 
@@ -82,7 +83,7 @@ func (r *QueryResolver) ArCustomerLedger(ctx context.Context, customerID string)
 		return nil, err
 	}
 
-	return r.AccountsReceivableService.ListCustomerLedger(ctx, base.TenantInfo(authCtx), custID)
+	return r.AccountsReceivableService.ListCustomerLedger(ctx, resolvercore.TenantInfo(authCtx), custID)
 }
 
 func (r *QueryResolver) ArCustomerStatement(ctx context.Context, customerID string, startDate *int, asOfDate *int) (*customerledgerports.ARCustomerStatement, error) {
@@ -102,10 +103,10 @@ func (r *QueryResolver) ArCustomerStatement(ctx context.Context, customerID stri
 
 	return r.AccountsReceivableService.GetCustomerStatement(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		custID,
-		int64(base.DerefInt(startDate)),
-		int64(base.DerefInt(asOfDate)),
+		int64(gqlscalar.DerefInt(startDate)),
+		int64(gqlscalar.DerefInt(asOfDate)),
 	)
 }
 
@@ -121,7 +122,7 @@ func (r *QueryResolver) ArDashboardKpis(ctx context.Context) (*customerledgerpor
 
 	return r.AccountsReceivableService.GetDashboardKPIs(
 		ctx,
-		customerledgerports.GetARAnalyticsRequest{TenantInfo: base.TenantInfo(authCtx)},
+		customerledgerports.GetARAnalyticsRequest{TenantInfo: resolvercore.TenantInfo(authCtx)},
 	)
 }
 
@@ -136,8 +137,8 @@ func (r *QueryResolver) ArDsoTrend(ctx context.Context, weeks *int) ([]*customer
 	}
 
 	return r.AccountsReceivableService.GetDSOTrend(ctx, customerledgerports.ListARSeriesRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		Weeks:      base.DerefInt(weeks),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Weeks:      gqlscalar.DerefInt(weeks),
 	})
 }
 
@@ -152,8 +153,8 @@ func (r *QueryResolver) ArAgingTrend(ctx context.Context, weeks *int) ([]*custom
 	}
 
 	return r.AccountsReceivableService.GetAgingTrend(ctx, customerledgerports.ListARSeriesRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		Weeks:      base.DerefInt(weeks),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Weeks:      gqlscalar.DerefInt(weeks),
 	})
 }
 
@@ -170,9 +171,9 @@ func (r *QueryResolver) ArCashFlowForecast(ctx context.Context, pastWeeks *int, 
 	return r.AccountsReceivableService.GetCashFlowForecast(
 		ctx,
 		customerledgerports.ListARCashFlowRequest{
-			TenantInfo:  base.TenantInfo(authCtx),
-			PastWeeks:   base.DerefInt(pastWeeks),
-			FutureWeeks: base.DerefInt(futureWeeks),
+			TenantInfo:  resolvercore.TenantInfo(authCtx),
+			PastWeeks:   gqlscalar.DerefInt(pastWeeks),
+			FutureWeeks: gqlscalar.DerefInt(futureWeeks),
 		},
 	)
 }
@@ -190,8 +191,8 @@ func (r *QueryResolver) ArTopOverdueCustomers(ctx context.Context, limit *int) (
 	return r.AccountsReceivableService.ListTopOverdueCustomers(
 		ctx,
 		customerledgerports.ListARTopOverdueCustomersRequest{
-			TenantInfo: base.TenantInfo(authCtx),
-			Limit:      base.DerefInt(limit),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			Limit:      gqlscalar.DerefInt(limit),
 		},
 	)
 }
@@ -209,8 +210,8 @@ func (r *QueryResolver) ArCollectionsWorklist(ctx context.Context, limit *int) (
 	return r.AccountsReceivableService.GetCollectionsWorklist(
 		ctx,
 		customerledgerports.ListARCollectionsWorklistRequest{
-			TenantInfo: base.TenantInfo(authCtx),
-			Limit:      base.DerefInt(limit),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			Limit:      gqlscalar.DerefInt(limit),
 		},
 	)
 }
@@ -233,7 +234,7 @@ func (r *QueryResolver) ArCustomerProfile(ctx context.Context, customerID string
 	return r.AccountsReceivableService.GetCustomerProfile(
 		ctx,
 		customerledgerports.GetARCustomerSnapshotRequest{
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			CustomerID: custID,
 		},
 	)
@@ -251,6 +252,6 @@ func (r *QueryResolver) ArPaymentStats(ctx context.Context) (*customerledgerport
 
 	return r.AccountsReceivableService.GetPaymentStats(
 		ctx,
-		customerledgerports.GetARAnalyticsRequest{TenantInfo: base.TenantInfo(authCtx)},
+		customerledgerports.GetARAnalyticsRequest{TenantInfo: resolvercore.TenantInfo(authCtx)},
 	)
 }

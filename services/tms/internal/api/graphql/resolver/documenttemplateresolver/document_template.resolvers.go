@@ -9,11 +9,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,7 +34,7 @@ func (r *DocumentTemplateVersionResolver) StarterDrifted(ctx context.Context, ob
 		return false, err
 	}
 
-	kind := r.DocumentTemplateVersionKind(ctx, obj, base.TenantInfo(authCtx))
+	kind := r.DocumentTemplateVersionKind(ctx, obj, resolvercore.TenantInfo(authCtx))
 	if kind == "" {
 		return false, nil
 	}
@@ -102,7 +103,7 @@ func (r *MutationResolver) DeleteDocumentTemplate(ctx context.Context, id string
 		ctx,
 		&documenttemplateports.GetDocumentTemplateByIDRequest{
 			DocumentTemplateID: templateID,
-			TenantInfo:         base.TenantInfo(authCtx),
+			TenantInfo:         resolvercore.TenantInfo(authCtx),
 		},
 		authCtx.UserID,
 	); err != nil {
@@ -164,7 +165,7 @@ func (r *MutationResolver) UpdateDocumentTemplateVersion(ctx context.Context, id
 		ctx,
 		&documenttemplateports.GetDocumentTemplateVersionByIDRequest{
 			VersionID:  versionID,
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 		},
 	)
 	if err != nil {
@@ -192,7 +193,7 @@ func (r *MutationResolver) PublishDocumentTemplateVersion(ctx context.Context, i
 	}
 
 	return r.DocumentTemplateService.PublishVersion(ctx, &documenttemplateports.PublishVersionRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		VersionID:  versionID,
 		UserID:     authCtx.UserID,
 		Notes:      TemplateString(notes),
@@ -215,7 +216,7 @@ func (r *MutationResolver) ArchiveDocumentTemplateVersion(ctx context.Context, i
 	return r.DocumentTemplateService.ArchiveVersion(
 		ctx,
 		&documenttemplateports.ArchiveDocumentTemplateVersionRequest{
-			TenantInfo:   base.TenantInfo(authCtx),
+			TenantInfo:   resolvercore.TenantInfo(authCtx),
 			VersionID:    versionID,
 			ArchivedByID: authCtx.UserID,
 		},
@@ -239,7 +240,7 @@ func (r *MutationResolver) DeleteDocumentTemplateVersion(ctx context.Context, id
 		ctx,
 		&documenttemplateports.GetDocumentTemplateVersionByIDRequest{
 			VersionID:  versionID,
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 		},
 		authCtx.UserID,
 	); err != nil {
@@ -264,7 +265,7 @@ func (r *MutationResolver) RollbackDocumentTemplate(ctx context.Context, version
 	}
 
 	return r.DocumentTemplateService.Rollback(ctx, &documenttemplateports.PublishVersionRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		VersionID:  targetID,
 		UserID:     authCtx.UserID,
 		Notes:      TemplateString(notes),
@@ -317,7 +318,7 @@ func (r *MutationResolver) UnassignDocumentTemplate(ctx context.Context, input g
 	if err = r.DocumentTemplateService.Unassign(
 		ctx,
 		&documenttemplateports.UnassignDocumentTemplateRequest{
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			Kind:       documenttemplate.Kind(input.Kind),
 			CustomerID: customerID,
 		},
@@ -358,7 +359,7 @@ func (r *MutationResolver) SendTestMessageTemplate(ctx context.Context, input gq
 	}
 
 	if _, err = r.EmailService.Send(ctx, &emailports.SendEmailRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Purpose:    email.PurposeGeneral,
 		To:         []string{input.ToEmail},
 		// The subject is marked so a test can never be mistaken for the real
@@ -381,7 +382,7 @@ func (r *QueryResolver) DocumentTemplates(ctx context.Context, input gqlmodel.Da
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -416,7 +417,7 @@ func (r *QueryResolver) DocumentTemplate(ctx context.Context, id string) (*docum
 
 	return r.DocumentTemplateService.Get(ctx, &documenttemplateports.GetDocumentTemplateByIDRequest{
 		DocumentTemplateID: templateID,
-		TenantInfo:         base.TenantInfo(authCtx),
+		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		// The detail surface always shows the version rail and the assignment
 		// tab, so both are loaded rather than round-tripped per tab.
 		IncludeVersions:      true,
@@ -442,7 +443,7 @@ func (r *QueryResolver) DocumentTemplateVersion(ctx context.Context, id string) 
 		ctx,
 		&documenttemplateports.GetDocumentTemplateVersionByIDRequest{
 			VersionID:  versionID,
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 		},
 	)
 }
@@ -474,7 +475,7 @@ func (r *QueryResolver) DocumentTemplateKinds(ctx context.Context) ([]*gqlmodel.
 		resolved, rErr := r.DocumentTemplateService.Resolve(
 			ctx,
 			&documenttemplateports.ResolveTemplateRequest{
-				TenantInfo: base.TenantInfo(authCtx),
+				TenantInfo: resolvercore.TenantInfo(authCtx),
 				Kind:       def.Kind,
 			},
 		)
@@ -488,7 +489,7 @@ func (r *QueryResolver) DocumentTemplateKinds(ctx context.Context) ([]*gqlmodel.
 				ctx,
 				&documenttemplateports.GetDocumentTemplateByIDRequest{
 					DocumentTemplateID:   *resolved.TemplateID,
-					TenantInfo:           base.TenantInfo(authCtx),
+					TenantInfo:           resolvercore.TenantInfo(authCtx),
 					IncludeActiveVersion: true,
 				},
 			)
@@ -512,7 +513,7 @@ func (r *QueryResolver) DocumentTemplateAssignments(ctx context.Context, input g
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -550,7 +551,7 @@ func (r *QueryResolver) CustomerDocumentTemplateAssignments(ctx context.Context,
 	return r.DocumentTemplateService.GetCustomerAssignments(
 		ctx,
 		&documenttemplateports.GetCustomerAssignmentsRequest{
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			CustomerID: parsed,
 		},
 	)

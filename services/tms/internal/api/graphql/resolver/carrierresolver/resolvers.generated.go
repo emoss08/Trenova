@@ -3,12 +3,12 @@
 package carrierresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	carrierservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	CarrierService *carrierservice.Service
 }
 

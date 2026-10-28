@@ -10,7 +10,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -25,7 +30,7 @@ import (
 )
 
 func (r *IFTAFleetMPGResolver) Mpg(ctx context.Context, obj *ifta.FleetMPG) (*string, error) {
-	return base.NonEmptyPtr(obj.MPG), nil
+	return gqlscalar.NonEmptyPtr(obj.MPG), nil
 }
 
 func (r *IFTAFleetMPGResolver) TotalMiles(ctx context.Context, obj *ifta.FleetMPG) (string, error) {
@@ -37,7 +42,7 @@ func (r *IFTAFleetMPGResolver) TotalGallons(ctx context.Context, obj *ifta.Fleet
 }
 
 func (r *IFTAJurisdictionResolver) UsStateID(ctx context.Context, obj *ifta.Jurisdiction) (*string, error) {
-	return base.IDPtrFromPtr(obj.UsStateID), nil
+	return gqlid.IDPtrFromPtr(obj.UsStateID), nil
 }
 
 func (r *IFTAJurisdictionResolver) UsState(ctx context.Context, obj *ifta.Jurisdiction) (*usstate.UsState, error) {
@@ -49,25 +54,25 @@ func (r *IFTAJurisdictionMileageEntryResolver) Miles(ctx context.Context, obj *i
 }
 
 func (r *IFTAJurisdictionMileageEntryResolver) ShipmentMoveID(ctx context.Context, obj *ifta.JurisdictionMileageEntry) (*string, error) {
-	return base.IDPtrFromPtr(obj.ShipmentMoveID), nil
+	return gqlid.IDPtrFromPtr(obj.ShipmentMoveID), nil
 }
 
 func (r *IFTAJurisdictionMileageEntryResolver) CreatedByID(ctx context.Context, obj *ifta.JurisdictionMileageEntry) (*string, error) {
-	return base.IDPtr(obj.CreatedByID), nil
+	return gqlid.IDPtr(obj.CreatedByID), nil
 }
 
 func (r *IFTAJurisdictionMileageEntryResolver) Tractor(ctx context.Context, obj *ifta.JurisdictionMileageEntry) (*tractor.Tractor, error) {
 	if obj.Tractor != nil {
 		return obj.Tractor, nil
 	}
-	return base.LoadTractor(ctx, &obj.TractorID)
+	return loaderfields.LoadTractor(ctx, &obj.TractorID)
 }
 
 func (r *IFTAJurisdictionMileageEntryResolver) Jurisdiction(ctx context.Context, obj *ifta.JurisdictionMileageEntry) (*ifta.Jurisdiction, error) {
 	if obj.Jurisdiction != nil {
 		return obj.Jurisdiction, nil
 	}
-	return base.LoadJurisdiction(ctx, &obj.JurisdictionID)
+	return loaderfields.LoadJurisdiction(ctx, &obj.JurisdictionID)
 }
 
 func (r *IFTAPeriodResolver) Key(ctx context.Context, obj *ifta.Period) (string, error) {
@@ -108,7 +113,7 @@ func (r *IFTAReturnResolver) Period(ctx context.Context, obj *ifta.Return) (*ift
 }
 
 func (r *IFTAReturnResolver) AmendsReturnID(ctx context.Context, obj *ifta.Return) (*string, error) {
-	return base.IDPtrFromPtr(obj.AmendsReturnID), nil
+	return gqlid.IDPtrFromPtr(obj.AmendsReturnID), nil
 }
 
 func (r *IFTAReturnResolver) AmendsReturn(ctx context.Context, obj *ifta.Return) (*ifta.Return, error) {
@@ -185,45 +190,45 @@ func (r *IFTAReturnResolver) Problems(ctx context.Context, obj *ifta.Return) ([]
 }
 
 func (r *IFTAReturnResolver) ComputedAt(ctx context.Context, obj *ifta.Return) (*int, error) {
-	return base.IntPtr(obj.ComputedAt), nil
+	return gqlscalar.IntPtr(obj.ComputedAt), nil
 }
 
 func (r *IFTAReturnResolver) FinalizedAt(ctx context.Context, obj *ifta.Return) (*int, error) {
-	return base.IntPtr(obj.FinalizedAt), nil
+	return gqlscalar.IntPtr(obj.FinalizedAt), nil
 }
 
 func (r *IFTAReturnResolver) FinalizedByID(ctx context.Context, obj *ifta.Return) (*string, error) {
-	return base.IDPtr(obj.FinalizedByID), nil
+	return gqlid.IDPtr(obj.FinalizedByID), nil
 }
 
 func (r *IFTAReturnResolver) FinalizedBy(ctx context.Context, obj *ifta.Return) (*tenant.User, error) {
 	if obj.FinalizedBy != nil {
 		return obj.FinalizedBy, nil
 	}
-	return base.LoadUser(ctx, obj.FinalizedByID)
+	return loaderfields.LoadUser(ctx, obj.FinalizedByID)
 }
 
 func (r *IFTAReturnResolver) FiledAt(ctx context.Context, obj *ifta.Return) (*int, error) {
-	return base.IntPtr(obj.FiledAt), nil
+	return gqlscalar.IntPtr(obj.FiledAt), nil
 }
 
 func (r *IFTAReturnResolver) FiledByID(ctx context.Context, obj *ifta.Return) (*string, error) {
-	return base.IDPtr(obj.FiledByID), nil
+	return gqlid.IDPtr(obj.FiledByID), nil
 }
 
 func (r *IFTAReturnResolver) FiledBy(ctx context.Context, obj *ifta.Return) (*tenant.User, error) {
 	if obj.FiledBy != nil {
 		return obj.FiledBy, nil
 	}
-	return base.LoadUser(ctx, obj.FiledByID)
+	return loaderfields.LoadUser(ctx, obj.FiledByID)
 }
 
 func (r *IFTAReturnResolver) ReopenedAt(ctx context.Context, obj *ifta.Return) (*int, error) {
-	return base.IntPtr(obj.ReopenedAt), nil
+	return gqlscalar.IntPtr(obj.ReopenedAt), nil
 }
 
 func (r *IFTAReturnResolver) ReopenedByID(ctx context.Context, obj *ifta.Return) (*string, error) {
-	return base.IDPtr(obj.ReopenedByID), nil
+	return gqlid.IDPtr(obj.ReopenedByID), nil
 }
 
 func (r *IFTAReturnResolver) Lines(ctx context.Context, obj *ifta.Return) ([]*ifta.ReturnLine, error) {
@@ -274,11 +279,11 @@ func (r *IFTAReturnLineResolver) NetTaxableGallons(ctx context.Context, obj *ift
 }
 
 func (r *IFTAReturnLineResolver) RatePerGallon(ctx context.Context, obj *ifta.ReturnLine) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.RatePerGallon), nil
+	return gqldecimal.NullDecimalToStringPtr(obj.RatePerGallon), nil
 }
 
 func (r *IFTAReturnLineResolver) SurchargeRatePerGallon(ctx context.Context, obj *ifta.ReturnLine) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.SurchargeRatePerGallon), nil
+	return gqldecimal.NullDecimalToStringPtr(obj.SurchargeRatePerGallon), nil
 }
 
 func (r *IFTAReturnLineResolver) TaxDue(ctx context.Context, obj *ifta.ReturnLine) (string, error) {
@@ -297,7 +302,7 @@ func (r *IFTAReturnLineResolver) Jurisdiction(ctx context.Context, obj *ifta.Ret
 	if obj.Jurisdiction != nil {
 		return obj.Jurisdiction, nil
 	}
-	return base.LoadJurisdiction(ctx, &obj.JurisdictionID)
+	return loaderfields.LoadJurisdiction(ctx, &obj.JurisdictionID)
 }
 
 func (r *IFTAReturnProblemResolver) FuelType(ctx context.Context, obj *ifta.Problem) (*domaintypes.IFTAFuelType, error) {
@@ -309,7 +314,7 @@ func (r *IFTAReturnProblemResolver) FuelType(ctx context.Context, obj *ifta.Prob
 }
 
 func (r *IFTAReturnProblemResolver) Amount(ctx context.Context, obj *ifta.Problem) (*string, error) {
-	return base.NonEmptyPtr(obj.Amount), nil
+	return gqlscalar.NonEmptyPtr(obj.Amount), nil
 }
 
 func (r *IFTATaxRateResolver) RatePerGallon(ctx context.Context, obj *ifta.TaxRate) (string, error) {
@@ -317,14 +322,14 @@ func (r *IFTATaxRateResolver) RatePerGallon(ctx context.Context, obj *ifta.TaxRa
 }
 
 func (r *IFTATaxRateResolver) SurchargeRatePerGallon(ctx context.Context, obj *ifta.TaxRate) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.SurchargeRatePerGallon), nil
+	return gqldecimal.NullDecimalToStringPtr(obj.SurchargeRatePerGallon), nil
 }
 
 func (r *IFTATaxRateResolver) Jurisdiction(ctx context.Context, obj *ifta.TaxRate) (*ifta.Jurisdiction, error) {
 	if obj.Jurisdiction != nil {
 		return obj.Jurisdiction, nil
 	}
-	return base.LoadJurisdiction(ctx, &obj.JurisdictionID)
+	return loaderfields.LoadJurisdiction(ctx, &obj.JurisdictionID)
 }
 
 func (r *MutationResolver) UpsertIFTATaxRates(ctx context.Context, input []*gqlmodel.IFTATaxRateInput) ([]*ifta.TaxRate, error) {
@@ -339,7 +344,7 @@ func (r *MutationResolver) UpsertIFTATaxRates(ctx context.Context, input []*gqlm
 	}
 
 	return r.IftaService.UpsertTaxRates(ctx, &iftaservice.UpsertTaxRatesRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Rates:      rates,
 		UserID:     authCtx.UserID,
 	})
@@ -351,13 +356,13 @@ func (r *MutationResolver) DeleteIFTATaxRate(ctx context.Context, id string, ver
 		return false, err
 	}
 
-	rateID, err := base.RequiredID("id", id)
+	rateID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return false, err
 	}
 
 	if err = r.IftaService.DeleteTaxRate(ctx, &iftaservice.DeleteTaxRateRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         rateID,
 		Version:    int64(version),
 		UserID:     authCtx.UserID,
@@ -378,7 +383,7 @@ func (r *MutationResolver) CreateIFTAMileageEntry(ctx context.Context, input gql
 		return nil, err
 	}
 
-	entry, err := iftaMileageEntryFromInput(input, base.TenantInfo(authCtx))
+	entry, err := iftaMileageEntryFromInput(input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -396,12 +401,12 @@ func (r *MutationResolver) UpdateIFTAMileageEntry(ctx context.Context, id string
 		return nil, err
 	}
 
-	entryID, err := base.RequiredID("id", id)
+	entryID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
-	entry, err := iftaMileageEntryFromInput(input, base.TenantInfo(authCtx))
+	entry, err := iftaMileageEntryFromInput(input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -421,13 +426,13 @@ func (r *MutationResolver) DeleteIFTAMileageEntry(ctx context.Context, id string
 		return false, err
 	}
 
-	entryID, err := base.RequiredID("id", id)
+	entryID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return false, err
 	}
 
 	if err = r.IftaService.DeleteMileageEntry(ctx, &iftaservice.DeleteMileageEntryRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         entryID,
 		Version:    int64(version),
 		UserID:     authCtx.UserID,
@@ -450,7 +455,7 @@ func (r *MutationResolver) GenerateIFTAReturn(ctx context.Context, period gqlmod
 	}
 
 	return r.IftaService.Generate(ctx, &iftaservice.GenerateReturnRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Period:     parsed,
 		UserID:     authCtx.UserID,
 	})
@@ -490,13 +495,13 @@ func (r *MutationResolver) ReopenIFTAReturn(ctx context.Context, id string, vers
 		return nil, err
 	}
 
-	returnID, err := base.RequiredID("id", id)
+	returnID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.IftaService.Reopen(ctx, &iftaservice.ReopenReturnRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         returnID,
 		Version:    int64(version),
 		UserID:     authCtx.UserID,
@@ -510,18 +515,18 @@ func (r *MutationResolver) MarkIFTAReturnFiled(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	returnID, err := base.RequiredID("id", input.ID)
+	returnID, err := gqlid.RequiredID("id", input.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.IftaService.MarkFiled(ctx, &iftaservice.MarkFiledRequest{
-		TenantInfo:      base.TenantInfo(authCtx),
+		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		ID:              returnID,
 		Version:         int64(input.Version),
 		UserID:          authCtx.UserID,
 		FiledAt:         int64(input.FiledAt),
-		FilingReference: base.StringValue(input.FilingReference),
+		FilingReference: gqlscalar.StringValue(input.FilingReference),
 	})
 }
 
@@ -531,13 +536,13 @@ func (r *MutationResolver) AmendIFTAReturn(ctx context.Context, id string, reaso
 		return nil, err
 	}
 
-	returnID, err := base.RequiredID("id", id)
+	returnID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.IftaService.Amend(ctx, &iftaservice.AmendReturnRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         returnID,
 		Reason:     reason,
 		UserID:     authCtx.UserID,
@@ -568,7 +573,7 @@ func (r *MutationResolver) RecalculateMoveJurisdictionMiles(ctx context.Context,
 		return nil, err
 	}
 
-	moveID, err := base.RequiredID("shipmentMoveId", shipmentMoveID)
+	moveID, err := gqlid.RequiredID("shipmentMoveId", shipmentMoveID)
 	if err != nil {
 		return nil, err
 	}
@@ -576,7 +581,7 @@ func (r *MutationResolver) RecalculateMoveJurisdictionMiles(ctx context.Context,
 	return r.DistanceCalculationService.RecalculateMoveJurisdictionMiles(
 		ctx,
 		shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest{
-			TenantInfo:     base.TenantInfo(authCtx),
+			TenantInfo:     resolvercore.TenantInfo(authCtx),
 			ShipmentMoveID: moveID,
 			UserID:         authCtx.UserID,
 		},
@@ -592,11 +597,11 @@ func (r *MutationResolver) BackfillJurisdictionMiles(ctx context.Context, input 
 	result, err := r.DistanceCalculationService.BackfillJurisdictionMiles(
 		ctx,
 		shipmentdistanceports.BackfillJurisdictionMilesRequest{
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			Start:      int64(input.PeriodStart),
 			End:        int64(input.PeriodEnd),
-			MaxMoves:   base.IntValue(input.MaxMoves),
-			DryRun:     base.BoolValue(input.DryRun),
+			MaxMoves:   gqlscalar.IntValue(input.MaxMoves),
+			DryRun:     gqlscalar.BoolValue(input.DryRun),
 			UserID:     authCtx.UserID,
 		},
 	)
@@ -617,10 +622,10 @@ func (r *QueryResolver) IFTAJurisdictions(ctx context.Context, membersOnly *bool
 	}
 
 	req := &iftaports.ListJurisdictionsRequest{
-		MembersOnly: base.BoolValue(membersOnly),
-		CountryCode: base.StringValue(countryCode),
+		MembersOnly: gqlscalar.BoolValue(membersOnly),
+		CountryCode: gqlscalar.StringValue(countryCode),
 	}
-	if base.BoolValue(activeOnly) {
+	if gqlscalar.BoolValue(activeOnly) {
 		req.Statuses = []ifta.JurisdictionStatus{ifta.JurisdictionStatusActive}
 	}
 
@@ -633,14 +638,14 @@ func (r *QueryResolver) IFTATaxRates(ctx context.Context, input gqlmodel.IFTATax
 		return nil, err
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
 		After:        input.After,
 		Query:        input.Query,
 		FieldFilters: input.FieldFilters,
 		FilterGroups: input.FilterGroups,
 		Sort:         input.Sort,
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -668,14 +673,14 @@ func (r *QueryResolver) IFTAMileageEntries(ctx context.Context, input gqlmodel.I
 		return nil, err
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
 		After:        input.After,
 		Query:        input.Query,
 		FieldFilters: input.FieldFilters,
 		FilterGroups: input.FilterGroups,
 		Sort:         input.Sort,
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -703,12 +708,12 @@ func (r *QueryResolver) IFTAMileageEntry(ctx context.Context, id string) (*ifta.
 		return nil, err
 	}
 
-	entryID, err := base.RequiredID("id", id)
+	entryID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.IftaService.GetMileageEntry(ctx, base.TenantInfo(authCtx), entryID)
+	return r.IftaService.GetMileageEntry(ctx, resolvercore.TenantInfo(authCtx), entryID)
 }
 
 func (r *QueryResolver) IFTAReturns(ctx context.Context, input gqlmodel.IFTAReturnsInput) (*gqlmodel.IFTAReturnConnection, error) {
@@ -717,14 +722,14 @@ func (r *QueryResolver) IFTAReturns(ctx context.Context, input gqlmodel.IFTARetu
 		return nil, err
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
 		After:        input.After,
 		Query:        input.Query,
 		FieldFilters: input.FieldFilters,
 		FilterGroups: input.FilterGroups,
 		Sort:         input.Sort,
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -743,12 +748,12 @@ func (r *QueryResolver) IFTAReturn(ctx context.Context, id string) (*ifta.Return
 		return nil, err
 	}
 
-	returnID, err := base.RequiredID("id", id)
+	returnID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.IftaService.Get(ctx, base.TenantInfo(authCtx), returnID)
+	return r.IftaService.Get(ctx, resolvercore.TenantInfo(authCtx), returnID)
 }
 
 func (r *QueryResolver) IFTAReturnForPeriod(ctx context.Context, period gqlmodel.IFTAPeriodInput) (*ifta.Return, error) {
@@ -762,7 +767,7 @@ func (r *QueryResolver) IFTAReturnForPeriod(ctx context.Context, period gqlmodel
 		return nil, err
 	}
 
-	return r.IftaService.GetForPeriod(ctx, base.TenantInfo(authCtx), parsed)
+	return r.IftaService.GetForPeriod(ctx, resolvercore.TenantInfo(authCtx), parsed)
 }
 
 func (r *QueryResolver) IFTAPeriod(ctx context.Context, year int, quarter int) (*ifta.Period, error) {
@@ -788,7 +793,7 @@ func (r *QueryResolver) IFTACurrentPeriod(ctx context.Context) (*ifta.Period, er
 		return nil, err
 	}
 
-	period, err := r.IftaService.CurrentPeriod(ctx, base.TenantInfo(authCtx))
+	period, err := r.IftaService.CurrentPeriod(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}

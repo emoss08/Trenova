@@ -10,7 +10,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
@@ -23,39 +27,39 @@ import (
 )
 
 func (r *LeaveControlResolver) EntitlementWeeks(ctx context.Context, obj *workerleave.LeaveControl) (string, error) {
-	return base.DecimalString(obj.EntitlementWeeks), nil
+	return gqldecimal.DecimalString(obj.EntitlementWeeks), nil
 }
 
 func (r *LeaveControlResolver) MilitaryCaregiverWeeks(ctx context.Context, obj *workerleave.LeaveControl) (string, error) {
-	return base.DecimalString(obj.MilitaryCaregiverWeeks), nil
+	return gqldecimal.DecimalString(obj.MilitaryCaregiverWeeks), nil
 }
 
 func (r *LeaveControlResolver) WorkweekHours(ctx context.Context, obj *workerleave.LeaveControl) (string, error) {
-	return base.DecimalString(obj.WorkweekHours), nil
+	return gqldecimal.DecimalString(obj.WorkweekHours), nil
 }
 
 func (r *LeaveEntitlementResolver) TotalHours(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error) {
-	return base.DecimalString(obj.TotalHours), nil
+	return gqldecimal.DecimalString(obj.TotalHours), nil
 }
 
 func (r *LeaveEntitlementResolver) UsedHours(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error) {
-	return base.DecimalString(obj.UsedHours), nil
+	return gqldecimal.DecimalString(obj.UsedHours), nil
 }
 
 func (r *LeaveEntitlementResolver) RemainingHours(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error) {
-	return base.DecimalString(obj.RemainingHours), nil
+	return gqldecimal.DecimalString(obj.RemainingHours), nil
 }
 
 func (r *LeaveEntitlementResolver) TotalWeeks(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error) {
-	return base.DecimalString(obj.TotalWeeks), nil
+	return gqldecimal.DecimalString(obj.TotalWeeks), nil
 }
 
 func (r *LeaveEntitlementResolver) UsedWeeks(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error) {
-	return base.DecimalString(obj.UsedWeeks), nil
+	return gqldecimal.DecimalString(obj.UsedWeeks), nil
 }
 
 func (r *LeaveEntitlementResolver) RemainingWeeks(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error) {
-	return base.DecimalString(obj.RemainingWeeks), nil
+	return gqldecimal.DecimalString(obj.RemainingWeeks), nil
 }
 
 func (r *MutationResolver) OpenLeaveCase(ctx context.Context, input gqlmodel.OpenLeaveCaseInput) (*workerleave.WorkerLeaveCase, error) {
@@ -64,7 +68,7 @@ func (r *MutationResolver) OpenLeaveCase(ctx context.Context, input gqlmodel.Ope
 		return nil, err
 	}
 
-	entity, err := leaveCaseFromInput(&input, base.TenantInfo(authCtx))
+	entity, err := leaveCaseFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +84,7 @@ func (r *MutationResolver) UpdateLeaveCase(ctx context.Context, input gqlmodel.U
 		return nil, err
 	}
 
-	req, err := leaveCaseUpdateRequest(&input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := leaveCaseUpdateRequest(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +108,7 @@ func (r *MutationResolver) DecideLeaveCase(ctx context.Context, input gqlmodel.D
 		return nil, err
 	}
 	return r.WorkerLeaveService.DecideCase(ctx, &workerleaveservice.DecideCaseRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CaseID:     caseID,
 		Approve:    input.Approve,
 		Designate:  input.Designate,
@@ -126,7 +130,7 @@ func (r *MutationResolver) CloseLeaveCase(ctx context.Context, id string) (*work
 	if err = r.requireCaseTeam(ctx, authCtx, permission.OpApprove, caseID); err != nil {
 		return nil, err
 	}
-	return r.WorkerLeaveService.CloseCase(ctx, base.TenantInfo(authCtx), caseID, authCtx.UserID)
+	return r.WorkerLeaveService.CloseCase(ctx, resolvercore.TenantInfo(authCtx), caseID, authCtx.UserID)
 }
 
 func (r *MutationResolver) RequestLeaveCertification(ctx context.Context, caseID string, dueAt *int) (*workerleave.WorkerLeaveCase, error) {
@@ -145,9 +149,9 @@ func (r *MutationResolver) RequestLeaveCertification(ctx context.Context, caseID
 	return r.WorkerLeaveService.RequestCertification(
 		ctx,
 		&workerleaveservice.RequestCertificationRequest{
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			CaseID:     id,
-			DueAt:      base.Int64Ptr(dueAt),
+			DueAt:      gqlscalar.Int64Ptr(dueAt),
 			UserID:     authCtx.UserID,
 		},
 	)
@@ -159,7 +163,7 @@ func (r *MutationResolver) RecordLeaveCertification(ctx context.Context, input g
 		return nil, err
 	}
 
-	req, err := leaveCertificationRequest(&input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := leaveCertificationRequest(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +179,7 @@ func (r *MutationResolver) RecordLeaveDay(ctx context.Context, input gqlmodel.Re
 		return nil, err
 	}
 
-	req, err := leaveDayRequest(&input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := leaveDayRequest(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +195,7 @@ func (r *MutationResolver) UpdateLeaveDay(ctx context.Context, input gqlmodel.Up
 		return nil, err
 	}
 
-	req, err := leaveDayUpdateRequest(&input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := leaveDayUpdateRequest(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +220,7 @@ func (r *MutationResolver) DeleteLeaveDay(ctx context.Context, id string) (bool,
 	}
 	if err = r.WorkerLeaveService.DeleteDay(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		entryID,
 		authCtx.UserID,
 	); err != nil {
@@ -231,7 +235,7 @@ func (r *MutationResolver) UpdateLeaveControl(ctx context.Context, input gqlmode
 		return nil, err
 	}
 
-	req, err := leaveControlRequest(&input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := leaveControlRequest(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -244,11 +248,11 @@ func (r *QueryResolver) LeaveControl(ctx context.Context) (*workerleave.LeaveCon
 		return nil, err
 	}
 
-	return r.WorkerLeaveService.GetControl(ctx, base.TenantInfo(authCtx))
+	return r.WorkerLeaveService.GetControl(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) WorkerLeaveCases(ctx context.Context, workerID *string, openOnly *bool, certificationOutstandingOnly *bool, limit *int) ([]*workerleave.WorkerLeaveCase, error) {
-	id, err := base.ParseOptionalIDField("workerId", workerID)
+	id, err := gqlid.ParseOptionalIDField("workerId", workerID)
 	if err != nil {
 		return nil, err
 	}
@@ -274,14 +278,14 @@ func (r *QueryResolver) WorkerLeaveCases(ctx context.Context, workerID *string, 
 		return nil, err
 	}
 	return r.WorkerLeaveService.ListCases(ctx, &workerleaveports.ListLeaveCasesRequest{
-		TenantInfo:                   base.TenantInfo(authCtx),
+		TenantInfo:                   resolvercore.TenantInfo(authCtx),
 		WorkerID:                     id,
 		ManagerIDs:                   managerIDs,
-		OpenOnly:                     base.BoolValue(openOnly),
-		CertificationOutstandingOnly: base.BoolValue(certificationOutstandingOnly),
+		OpenOnly:                     gqlscalar.BoolValue(openOnly),
+		CertificationOutstandingOnly: gqlscalar.BoolValue(certificationOutstandingOnly),
 		IncludeWorker:                true,
 		IncludeDocument:              true,
-		Limit:                        base.RecordListLimit(limit, id.IsNotNil()),
+		Limit:                        gqlconnection.RecordListLimit(limit, id.IsNotNil()),
 	})
 }
 
@@ -295,7 +299,7 @@ func (r *QueryResolver) WorkerLeaveCase(ctx context.Context, id string) (*worker
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Case is invalid")
 	}
-	found, err := r.WorkerLeaveService.GetCase(ctx, base.TenantInfo(authCtx), caseID)
+	found, err := r.WorkerLeaveService.GetCase(ctx, resolvercore.TenantInfo(authCtx), caseID)
 	if err != nil {
 		return nil, err
 	}
@@ -325,9 +329,9 @@ func (r *QueryResolver) WorkerLeaveEntitlement(ctx context.Context, workerID str
 
 	entitlement, err := r.WorkerLeaveService.Entitlement(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		id,
-		base.Int64Value(asOf),
+		gqlscalar.Int64Value(asOf),
 	)
 	if err != nil {
 		return nil, err
@@ -347,7 +351,7 @@ func (r *QueryResolver) LeaveCertificationsOutstanding(ctx context.Context) ([]*
 	}
 
 	return r.WorkerLeaveService.ListCases(ctx, &workerleaveports.ListLeaveCasesRequest{
-		TenantInfo:                   base.TenantInfo(authCtx),
+		TenantInfo:                   resolvercore.TenantInfo(authCtx),
 		CertificationOutstandingOnly: true,
 		IncludeWorker:                true,
 		ManagerIDs:                   managerIDs,
@@ -355,31 +359,31 @@ func (r *QueryResolver) LeaveCertificationsOutstanding(ctx context.Context) ([]*
 }
 
 func (r *WorkerLeaveCaseResolver) EndsAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error) {
-	return base.IntPtr(obj.EndsAt), nil
+	return gqlscalar.IntPtr(obj.EndsAt), nil
 }
 
 func (r *WorkerLeaveCaseResolver) DecidedAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error) {
-	return base.IntPtr(obj.DecidedAt), nil
+	return gqlscalar.IntPtr(obj.DecidedAt), nil
 }
 
 func (r *WorkerLeaveCaseResolver) ClosedAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error) {
-	return base.IntPtr(obj.ClosedAt), nil
+	return gqlscalar.IntPtr(obj.ClosedAt), nil
 }
 
 func (r *WorkerLeaveCaseResolver) CertificationRequestedAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error) {
-	return base.IntPtr(obj.CertificationRequestedAt), nil
+	return gqlscalar.IntPtr(obj.CertificationRequestedAt), nil
 }
 
 func (r *WorkerLeaveCaseResolver) CertificationDueAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error) {
-	return base.IntPtr(obj.CertificationDueAt), nil
+	return gqlscalar.IntPtr(obj.CertificationDueAt), nil
 }
 
 func (r *WorkerLeaveCaseResolver) CertificationReceivedAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error) {
-	return base.IntPtr(obj.CertificationReceivedAt), nil
+	return gqlscalar.IntPtr(obj.CertificationReceivedAt), nil
 }
 
 func (r *WorkerLeaveCaseResolver) RecertificationDueAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error) {
-	return base.IntPtr(obj.RecertificationDueAt), nil
+	return gqlscalar.IntPtr(obj.RecertificationDueAt), nil
 }
 
 func (r *WorkerLeaveCaseResolver) CertificationLate(ctx context.Context, obj *workerleave.WorkerLeaveCase) (bool, error) {
@@ -395,11 +399,11 @@ func (r *WorkerLeaveCaseResolver) EligibilityHoursWorked(ctx context.Context, ob
 }
 
 func (r *WorkerLeaveCaseResolver) EmploymentEventID(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*string, error) {
-	return base.IDPtr(obj.EmploymentEventID), nil
+	return gqlid.IDPtr(obj.EmploymentEventID), nil
 }
 
 func (r *WorkerLeaveCaseResolver) DocumentID(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*string, error) {
-	return base.IDPtr(obj.DocumentID), nil
+	return gqlid.IDPtr(obj.DocumentID), nil
 }
 
 func (r *WorkerLeaveCaseResolver) Entries(ctx context.Context, obj *workerleave.WorkerLeaveCase) ([]*workerleave.WorkerLeaveEntry, error) {
@@ -417,15 +421,15 @@ func (r *WorkerLeaveCaseResolver) Entries(ctx context.Context, obj *workerleave.
 	}
 
 	return r.WorkerLeaveService.ListEntries(ctx, &workerleaveports.ListLeaveEntriesRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		LeaveCaseID: obj.ID,
 	})
 }
 
 func (r *WorkerLeaveEntryResolver) Hours(ctx context.Context, obj *workerleave.WorkerLeaveEntry) (string, error) {
-	return base.DecimalString(obj.Hours), nil
+	return gqldecimal.DecimalString(obj.Hours), nil
 }
 
 func (r *WorkerLeaveEntryResolver) PTOID(ctx context.Context, obj *workerleave.WorkerLeaveEntry) (*string, error) {
-	return base.IDPtr(obj.PTOID), nil
+	return gqlid.IDPtr(obj.PTOID), nil
 }

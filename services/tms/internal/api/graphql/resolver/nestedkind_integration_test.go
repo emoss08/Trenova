@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -244,7 +244,7 @@ func screenClient(
 			customfieldrepository.Params{DB: conn, Logger: logger}),
 	})
 	root := FromServices(&Services{
-		Core: &base.Core{L: logger, PermissionEngine: engine},
+		Core: &resolvercore.Core{L: logger, PermissionEngine: engine},
 		TractorService: tractorservice.New(tractorservice.Params{
 			Logger: logger,
 			Repo: tractorrepository.New(tractorrepository.Params{

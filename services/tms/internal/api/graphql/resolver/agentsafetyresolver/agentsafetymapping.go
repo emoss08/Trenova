@@ -2,7 +2,7 @@ package agentsafetyresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -62,5 +62,5 @@ func agentSafetyIDs(ids []string) ([]pulid.ID, error) {
 		return nil, nil
 	}
 
-	return base.ParseIDs(ids)
+	return gqlid.ParseIDs(ids)
 }

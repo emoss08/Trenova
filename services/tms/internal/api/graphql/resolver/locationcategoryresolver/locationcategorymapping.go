@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -26,7 +26,7 @@ func locationCategoryColumns(ctx context.Context, nodePathPrefix string) []strin
 func locationCategoryConnectionToModel(
 	result *pagination.CursorListResult[*locationcategory.LocationCategory],
 ) (*gqlmodel.LocationCategoryConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *locationcategory.LocationCategory, cursor string) *gqlmodel.LocationCategoryEdge {
 			return &gqlmodel.LocationCategoryEdge{

@@ -10,10 +10,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -39,13 +41,13 @@ func (r *MutationResolver) UpdateExtractionShadowSettings(ctx context.Context, i
 		return nil, err
 	}
 
-	providerID, err := base.OptionalID(input.ProviderID)
+	providerID, err := gqlid.OptionalID(input.ProviderID)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.ExtractionShadowService.UpdateSettings(ctx, &extractionshadowports.UpdateExtractionShadowSettingsRequest{
-		TenantInfo:    base.TenantInfo(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		Enabled:       input.Enabled,
 		ProviderID:    providerID,
 		SamplePercent: input.SamplePercent,
@@ -60,7 +62,7 @@ func (r *QueryResolver) ExtractionShadowSettings(ctx context.Context) (*extracti
 		return nil, err
 	}
 
-	return r.ExtractionShadowService.GetSettings(ctx, base.TenantInfo(authCtx))
+	return r.ExtractionShadowService.GetSettings(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) ExtractionShadowReport(ctx context.Context, windowDays *int, providerID *string) (*extractionshadowports.ExtractionShadowReport, error) {
@@ -69,13 +71,13 @@ func (r *QueryResolver) ExtractionShadowReport(ctx context.Context, windowDays *
 		return nil, err
 	}
 
-	candidate, err := base.OptionalID(providerID)
+	candidate, err := gqlid.OptionalID(providerID)
 	if err != nil {
 		return nil, err
 	}
 
 	request := &extractionshadowports.ExtractionShadowReportRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ProviderID: candidate,
 	}
 	if windowDays != nil {
@@ -91,7 +93,7 @@ func (r *QueryResolver) ExtractionShadowResults(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +122,7 @@ func (r *QueryResolver) ExtractionShadowResult(ctx context.Context, id string) (
 	}
 
 	return r.ExtractionShadowService.GetResult(ctx, extractionshadowports.GetExtractionShadowResultRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         resultID,
 	})
 }

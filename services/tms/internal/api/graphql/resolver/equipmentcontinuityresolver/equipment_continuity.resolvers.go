@@ -9,7 +9,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
@@ -19,15 +19,15 @@ func (r *EquipmentContinuityResolver) EquipmentType(ctx context.Context, obj *eq
 }
 
 func (r *EquipmentContinuityResolver) SourceShipmentID(ctx context.Context, obj *equipmentcontinuity.EquipmentContinuity) (*string, error) {
-	return base.IDPtr(obj.SourceShipmentID), nil
+	return gqlid.IDPtr(obj.SourceShipmentID), nil
 }
 
 func (r *EquipmentContinuityResolver) SourceShipmentMoveID(ctx context.Context, obj *equipmentcontinuity.EquipmentContinuity) (*string, error) {
-	return base.IDPtr(obj.SourceShipmentMoveID), nil
+	return gqlid.IDPtr(obj.SourceShipmentMoveID), nil
 }
 
 func (r *EquipmentContinuityResolver) CurrentLocationID(ctx context.Context, obj *equipmentcontinuity.EquipmentContinuity) (*string, error) {
-	return base.IDPtr(obj.CurrentLocationID), nil
+	return gqlid.IDPtr(obj.CurrentLocationID), nil
 }
 
 func (r *EquipmentContinuityResolver) CurrentLocationName(ctx context.Context, obj *equipmentcontinuity.EquipmentContinuity) (string, error) {

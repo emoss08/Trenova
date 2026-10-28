@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
@@ -74,7 +74,7 @@ func (d *Deps) matrixCellPage(
 	if req.limit != nil {
 		size = min(max(*req.limit, 1), maxMatrixCellPage)
 	}
-	tenant := base.TenantInfo(authCtx)
+	tenant := resolvercore.TenantInfo(authCtx)
 
 	page, err := d.RateMatrixService.ListCells(ctx, &ratematrixports.ListRateMatrixCellsRequest{
 		TenantInfo:    tenant,

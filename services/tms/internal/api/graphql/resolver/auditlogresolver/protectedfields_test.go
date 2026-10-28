@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
@@ -17,14 +17,17 @@ import (
 	"go.uber.org/zap"
 )
 
-func entryResolver(t *testing.T, denied ...permission.Resource) (*AuditEntryResolver, context.Context) {
+func entryResolver(
+	t *testing.T,
+	denied ...permission.Resource,
+) (*AuditEntryResolver, context.Context) {
 	t.Helper()
 
 	names := make([]string, 0, len(denied))
 	for _, resource := range denied {
 		names = append(names, resource.String())
 	}
-	deps := &Deps{Core: &base.Core{
+	deps := &Deps{Core: &resolvercore.Core{
 		L:                zap.NewNop(),
 		PermissionEngine: &mocks.DenyResourcesPermissionEngine{Denied: names},
 	}}

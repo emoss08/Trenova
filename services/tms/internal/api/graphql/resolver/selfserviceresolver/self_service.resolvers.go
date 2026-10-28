@@ -10,7 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
@@ -27,14 +29,14 @@ func (r *MutationResolver) CreateWorkerPolicy(ctx context.Context, input gqlmode
 		return nil, err
 	}
 
-	entity, err := workerPolicyFromInput(input, base.TenantInfo(authCtx))
+	entity, err := workerPolicyFromInput(input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
 	return r.SelfServiceService.CreatePolicy(ctx, &selfserviceservice.PolicyRequest{
 		Entity:     entity,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -48,10 +50,10 @@ func (r *MutationResolver) UpdateWorkerPolicy(ctx context.Context, id string, in
 
 	policyID, err := pulid.MustParse(id)
 	if err != nil {
-		return nil, base.InvalidIDError("id", "Policy is invalid")
+		return nil, gqlid.InvalidIDError("id", "Policy is invalid")
 	}
 
-	entity, err := workerPolicyFromInput(input, base.TenantInfo(authCtx))
+	entity, err := workerPolicyFromInput(input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +61,7 @@ func (r *MutationResolver) UpdateWorkerPolicy(ctx context.Context, id string, in
 
 	return r.SelfServiceService.UpdatePolicy(ctx, &selfserviceservice.PolicyRequest{
 		Entity:     entity,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -68,7 +70,7 @@ func (r *MutationResolver) UpdateWorkerPolicy(ctx context.Context, id string, in
 func (r *MutationResolver) DecideProfileChange(ctx context.Context, input gqlmodel.DecideProfileChangeInput) (*profilechange.WorkerProfileChangeRequest, error) {
 	requestID, err := pulid.MustParse(input.ID)
 	if err != nil {
-		return nil, base.InvalidIDError("id", "Request is invalid")
+		return nil, gqlid.InvalidIDError("id", "Request is invalid")
 	}
 
 	authCtx, err := r.RequireAuth(ctx)
@@ -80,7 +82,7 @@ func (r *MutationResolver) DecideProfileChange(ctx context.Context, input gqlmod
 		ctx,
 		&selfserviceports.GetProfileChangeRequestByIDRequest{
 			ID:         requestID,
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 		},
 	)
 	if err != nil {
@@ -106,8 +108,8 @@ func (r *MutationResolver) DecideProfileChange(ctx context.Context, input gqlmod
 	return r.SelfServiceService.DecideChange(ctx, &selfserviceservice.DecideChangeRequest{
 		ID:         requestID,
 		Approve:    input.Approve,
-		Note:       base.StringValue(input.Note),
-		TenantInfo: base.TenantInfo(authCtx),
+		Note:       gqlscalar.StringValue(input.Note),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		Actor:      actorutil.FromAuthContext(authCtx),
 	})
@@ -121,9 +123,9 @@ func (r *QueryResolver) WorkerPolicies(ctx context.Context, activeOnly *bool, li
 	}
 
 	return r.SelfServiceService.ListPolicies(ctx, &selfserviceports.ListWorkerPoliciesRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		ActiveOnly: base.BoolValue(activeOnly),
-		Limit:      base.IntValue(limit),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		ActiveOnly: gqlscalar.BoolValue(activeOnly),
+		Limit:      gqlscalar.IntValue(limit),
 	})
 }
 
@@ -136,10 +138,10 @@ func (r *QueryResolver) WorkerPolicy(ctx context.Context, id string) (*workerpol
 
 	policyID, err := pulid.MustParse(id)
 	if err != nil {
-		return nil, base.InvalidIDError("id", "Policy is invalid")
+		return nil, gqlid.InvalidIDError("id", "Policy is invalid")
 	}
 
-	return r.SelfServiceService.GetPolicy(ctx, base.TenantInfo(authCtx), policyID)
+	return r.SelfServiceService.GetPolicy(ctx, resolvercore.TenantInfo(authCtx), policyID)
 }
 
 // WorkerPolicyCompliance is the resolver for the workerPolicyCompliance field.
@@ -151,10 +153,10 @@ func (r *QueryResolver) WorkerPolicyCompliance(ctx context.Context, id string) (
 
 	policyID, err := pulid.MustParse(id)
 	if err != nil {
-		return nil, base.InvalidIDError("id", "Policy is invalid")
+		return nil, gqlid.InvalidIDError("id", "Policy is invalid")
 	}
 
-	compliance, err := r.SelfServiceService.PolicyCompliance(ctx, base.TenantInfo(authCtx), policyID)
+	compliance, err := r.SelfServiceService.PolicyCompliance(ctx, resolvercore.TenantInfo(authCtx), policyID)
 	if err != nil {
 		return nil, err
 	}
@@ -171,13 +173,13 @@ func (r *QueryResolver) WorkerPolicyAcknowledgements(ctx context.Context, worker
 
 	id, err := pulid.MustParse(workerID)
 	if err != nil {
-		return nil, base.InvalidIDError("workerId", "Worker is invalid")
+		return nil, gqlid.InvalidIDError("workerId", "Worker is invalid")
 	}
 
 	return r.SelfServiceService.ListAcknowledgements(
 		ctx,
 		&selfserviceports.ListPolicyAcknowledgementsRequest{
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			WorkerID:   id,
 		},
 	)
@@ -196,21 +198,21 @@ func (r *QueryResolver) ProfileChangeRequests(ctx context.Context, filter *gqlmo
 	}
 
 	req := &selfserviceports.ListProfileChangeRequestsRequest{
-		TenantInfo:    base.TenantInfo(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		IncludeWorker: true,
 		ManagerIDs:    managerIDs,
 	}
 	if filter != nil {
-		if req.WorkerID, err = base.OptionalID(filter.WorkerID); err != nil {
-			return nil, base.InvalidIDError("workerId", "Worker is invalid")
+		if req.WorkerID, err = gqlid.OptionalID(filter.WorkerID); err != nil {
+			return nil, gqlid.InvalidIDError("workerId", "Worker is invalid")
 		}
 		req.Statuses = filter.Statuses
-		req.Limit = base.IntValue(filter.Limit)
-		if base.BoolValue(filter.TeamOnly) && len(req.ManagerIDs) == 0 {
+		req.Limit = gqlscalar.IntValue(filter.Limit)
+		if gqlscalar.BoolValue(filter.TeamOnly) && len(req.ManagerIDs) == 0 {
 			if req.ManagerIDs, err = r.RotaManagerIDs(
 				ctx,
 				authCtx.UserID,
-				base.TenantInfo(authCtx),
+				resolvercore.TenantInfo(authCtx),
 			); err != nil {
 				return nil, err
 			}

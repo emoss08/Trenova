@@ -4,10 +4,10 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -26,7 +26,7 @@ func (e SelectOptionRegistryEntry) IDs(values []string) ([]pulid.ID, error) {
 	if e.parseIDs != nil {
 		return e.parseIDs(values)
 	}
-	return base.ParseIDs(values)
+	return gqlid.ParseIDs(values)
 }
 
 type SelectOptionsRequest struct {
@@ -115,7 +115,7 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		},
 		gqlmodel.SelectOptionResourceIFTAFuelType: {
 			Resolve:  r.resolveIFTAFuelTypeSelectOptions,
-			parseIDs: base.ParseCatalogIDs,
+			parseIDs: gqlid.ParseCatalogIDs,
 		},
 		gqlmodel.SelectOptionResourceLocation: {
 			Resolve: r.resolveLocationSelectOptions,
@@ -200,7 +200,7 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		},
 		gqlmodel.SelectOptionResourceEDIDocumentType: {
 			Resolve:  r.resolveEDIDocumentTypeSelectOptions,
-			parseIDs: base.ParseCatalogIDs,
+			parseIDs: gqlid.ParseCatalogIDs,
 		},
 		gqlmodel.SelectOptionResourceEDIMappingProfile: {
 			Resolve: r.resolveEDIMappingProfileSelectOptions,
@@ -210,7 +210,7 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		},
 		gqlmodel.SelectOptionResourceEDITransactionSet: {
 			Resolve:  r.resolveEDITransactionSetSelectOptions,
-			parseIDs: base.ParseCatalogIDs,
+			parseIDs: gqlid.ParseCatalogIDs,
 		},
 		gqlmodel.SelectOptionResourceEmailProfile: {
 			Resolve: r.resolveEmailProfileSelectOptions,
@@ -398,9 +398,9 @@ func selectOptionPage(
 
 	return &gqlmodel.SelectOptionConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			total.hasNextPage,
-			base.LastEdgeCursor(edges, func(edge *gqlmodel.SelectOptionEdge) string {
+			gqlconnection.LastEdgeCursor(edges, func(edge *gqlmodel.SelectOptionEdge) string {
 				return edge.Cursor
 			}),
 		),

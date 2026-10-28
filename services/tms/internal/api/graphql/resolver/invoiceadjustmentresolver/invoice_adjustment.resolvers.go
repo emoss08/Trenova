@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -100,7 +100,7 @@ func (r *MutationResolver) ApproveInvoiceAdjustment(ctx context.Context, adjustm
 		ctx,
 		&invoiceadjustmentports.ApproveInvoiceAdjustmentRequest{
 			AdjustmentID: id,
-			TenantInfo:   base.TenantInfo(authCtx),
+			TenantInfo:   resolvercore.TenantInfo(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -122,7 +122,7 @@ func (r *MutationResolver) RejectInvoiceAdjustment(ctx context.Context, input gq
 		&invoiceadjustmentports.RejectInvoiceAdjustmentRequest{
 			AdjustmentID: id,
 			Reason:       stringutils.FromPtr(input.Reason),
-			TenantInfo:   base.TenantInfo(authCtx),
+			TenantInfo:   resolvercore.TenantInfo(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -141,7 +141,7 @@ func (r *QueryResolver) InvoiceAdjustment(ctx context.Context, id string) (*invo
 
 	return r.InvoiceAdjustmentService.GetDetail(ctx, &invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 		AdjustmentID: adjustmentID,
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -151,7 +151,7 @@ func (r *QueryResolver) InvoiceAdjustmentApprovals(ctx context.Context, input gq
 		return nil, err
 	}
 
-	req, err := invoiceAdjustmentApprovalsRequestFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	req, err := invoiceAdjustmentApprovalsRequestFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +170,7 @@ func (r *QueryResolver) InvoiceAdjustmentOperationsSummary(ctx context.Context) 
 		return nil, err
 	}
 
-	return r.InvoiceAdjustmentService.GetOperationsSummary(ctx, base.TenantInfo(authCtx))
+	return r.InvoiceAdjustmentService.GetOperationsSummary(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *InvoiceAdjustmentResolver) SupportingDocumentIds(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) ([]string, error) {

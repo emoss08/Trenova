@@ -3,13 +3,13 @@
 package invoiceresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	invoiceports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	customerservice "github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	CustomerService *customerservice.Service
 	InvoiceService  invoiceports.InvoiceService
 }

@@ -1,7 +1,7 @@
 package invoicedisputeresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,7 +23,7 @@ func disputedInvoiceIDs(invoiceID *string, invoiceIDs []string) ([]pulid.ID, err
 		return nil, errortypes.NewValidationError(fieldInvoiceIDs, errortypes.ErrInvalid,
 			"Name the invoice by invoiceId or the invoices by invoiceIds, not both")
 	case named:
-		id, err := base.RequiredID(fieldInvoiceID, *invoiceID)
+		id, err := gqlid.RequiredID(fieldInvoiceID, *invoiceID)
 		if err != nil {
 			return nil, err
 		}
@@ -38,7 +38,7 @@ func disputedInvoiceIDs(invoiceID *string, invoiceIDs []string) ([]pulid.ID, err
 
 	ids := make([]pulid.ID, 0, len(invoiceIDs))
 	for _, raw := range invoiceIDs {
-		id, err := base.RequiredID(fieldInvoiceIDs, raw)
+		id, err := gqlid.RequiredID(fieldInvoiceIDs, raw)
 		if err != nil {
 			return nil, err
 		}

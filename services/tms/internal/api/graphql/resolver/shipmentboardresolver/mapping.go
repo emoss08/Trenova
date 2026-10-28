@@ -2,7 +2,10 @@ package shipmentboardresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentmapping"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,13 +17,13 @@ func scopeRequestFromGraphQL(
 	margins bool,
 ) *shipmentboardports.ShipmentBoardScopeRequest {
 	return &shipmentboardports.ShipmentBoardScopeRequest{
-		Filter: base.QueryOptionsFromGraphQL(&base.GqlListOptions{
+		Filter: gqlconnection.QueryOptionsFromGraphQL(&gqlconnection.GqlListOptions{
 			TenantInfo:   tenantInfo,
-			Query:        base.StringValue(input.Query),
+			Query:        gqlscalar.StringValue(input.Query),
 			FieldFilters: input.FieldFilters,
 			FilterGroups: input.FilterGroups,
 		}),
-		QuickFilters: base.QuickFilterSpecsFromGraphQL(input.QuickFilters),
+		QuickFilters: shipmentmapping.QuickFilterSpecsFromGraphQL(input.QuickFilters),
 		Timezone:     input.Timezone,
 		Margins:      margins,
 	}
@@ -46,7 +49,7 @@ func stageSummariesToModel(
 			Stage:   row.Stage,
 			Rank:    row.Rank,
 			Count:   row.Count,
-			Revenue: base.DecimalString(row.Revenue),
+			Revenue: gqldecimal.DecimalString(row.Revenue),
 		})
 	}
 	return out
@@ -61,7 +64,7 @@ func boardGroupsToModel(
 			Key:     row.Key,
 			Label:   row.Label,
 			Count:   row.Count,
-			Revenue: base.DecimalString(row.Revenue),
+			Revenue: gqldecimal.DecimalString(row.Revenue),
 		})
 	}
 	return out

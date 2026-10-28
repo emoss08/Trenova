@@ -9,7 +9,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
@@ -30,7 +31,7 @@ func (r *QueryResolver) APIKeys(ctx context.Context, input gqlmodel.DataTableCon
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -60,5 +61,5 @@ func (r *QueryResolver) APIKey(ctx context.Context, id string) (*apikey.Key, err
 		return nil, err
 	}
 
-	return r.APIKeyService.GetAPIKeyEntity(ctx, base.TenantInfo(authCtx), apiKeyID)
+	return r.APIKeyService.GetAPIKeyEntity(ctx, resolvercore.TenantInfo(authCtx), apiKeyID)
 }

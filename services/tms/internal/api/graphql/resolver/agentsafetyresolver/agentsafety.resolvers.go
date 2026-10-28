@@ -11,7 +11,11 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsafetyservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -59,8 +63,8 @@ func (r *QueryResolver) AgentToolRuleConnection(ctx context.Context, input gqlmo
 	}
 
 	page, err := r.AgentSafetyService.ListToolPolicies(ctx, &agenttoolports.ListAgentToolPoliciesRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		Table:      base.MemtableRequestFromGraphQL(ctx, &input),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Table:      gqlconnection.MemtableRequestFromGraphQL(ctx, &input),
 		WithAttendance: graphql.FieldRequested(
 			ctx,
 			"edges.node."+agentsafetyservice.FieldRunsWithoutPerson,
@@ -79,15 +83,15 @@ func (r *QueryResolver) AgentToolSafetyConnection(ctx context.Context, agentIds 
 		return nil, err
 	}
 
-	ids, err := base.ParseIDs(agentIds)
+	ids, err := gqlid.ParseIDs(agentIds)
 	if err != nil {
 		return nil, err
 	}
 
 	page, err := r.AgentSafetyService.ListAgentTools(ctx, &agenttoolports.ListAgentToolSafetyRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		AgentIDs:   ids,
-		Table:      base.MemtableRequestFromGraphQL(ctx, &input),
+		Table:      gqlconnection.MemtableRequestFromGraphQL(ctx, &input),
 	})
 	if err != nil {
 		return nil, err
@@ -102,7 +106,7 @@ func (r *QueryResolver) AgentSafetySummary(ctx context.Context) (*agenttoolports
 		return nil, err
 	}
 
-	return r.AgentSafetyService.Summary(ctx, base.TenantInfo(authCtx))
+	return r.AgentSafetyService.Summary(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) AgentSafety(ctx context.Context, agentIds []string) ([]*agenttoolports.AgentSafetySubject, error) {
@@ -117,17 +121,17 @@ func (r *QueryResolver) AgentSafety(ctx context.Context, agentIds []string) ([]*
 	}
 
 	return r.AgentSafetyService.ListSubjects(ctx, &agenttoolports.ListAgentSafetyRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		AgentIDs:   ids,
 	})
 }
 
 func (r *AgentSafetySummaryResolver) OpenSensitiveAgentIds(ctx context.Context, obj *agenttoolports.AgentSafetySummary) ([]string, error) {
-	return base.PulidsToStrings(obj.OpenSensitiveAgentIDs), nil
+	return gqlid.PulidsToStrings(obj.OpenSensitiveAgentIDs), nil
 }
 
 func (r *AgentToolHoldersResolver) AgentIds(ctx context.Context, obj *agenttoolports.AgentToolHolders) ([]string, error) {
-	return base.PulidsToStrings(obj.AgentIDs), nil
+	return gqlid.PulidsToStrings(obj.AgentIDs), nil
 }
 
 func (r *QueryResolver) AgentToolHolders(ctx context.Context) ([]*agenttoolports.AgentToolHolders, error) {
@@ -136,7 +140,7 @@ func (r *QueryResolver) AgentToolHolders(ctx context.Context) ([]*agenttoolports
 		return nil, err
 	}
 
-	holders, err := r.AgentSafetyService.ToolHolders(ctx, base.TenantInfo(authCtx))
+	holders, err := r.AgentSafetyService.ToolHolders(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +176,7 @@ func (r *AgentToolRuleResolver) UpdatedBy(ctx context.Context, obj *agent.ToolRu
 		return nil, nil
 	}
 
-	return base.LoadUser(ctx, obj.UpdatedByID)
+	return loaderfields.LoadUser(ctx, obj.UpdatedByID)
 }
 
 func (r *MutationResolver) SaveAgentToolRule(ctx context.Context, name string, version int, input gqlmodel.AgentToolRuleInput) (*gqlmodel.AgentToolRuleSaved, error) {
@@ -186,10 +190,10 @@ func (r *MutationResolver) SaveAgentToolRule(ctx context.Context, name string, v
 	}
 
 	result, err := r.AgentToolRuleService.Save(ctx, &agenttoolports.SaveToolRuleRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ToolName:   name,
 		Change:     toolRuleChange(&input),
-		Reason:     base.DerefString(input.Reason),
+		Reason:     gqlscalar.DerefString(input.Reason),
 		Version:    int64(version),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
@@ -211,7 +215,7 @@ func (r *QueryResolver) AgentToolRuleImpact(ctx context.Context, name string, in
 	}
 
 	impacts, err := r.AgentToolRuleService.Impact(ctx, &agenttoolports.ToolRuleImpactRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ToolName:   name,
 		Change:     toolRuleChange(&input),
 	})

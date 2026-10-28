@@ -3,10 +3,10 @@ package carriersettlementresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/shared/typeutils"
-
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	tenantdomain "github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 func (r *MutationResolver) carrierSettlementAction(
@@ -74,7 +75,7 @@ func listFilterOptions(
 func carrierSettlementConnectionToModel(
 	result *pagination.CursorListResult[*carriersettlement.CarrierSettlement],
 ) (*gqlmodel.CarrierSettlementConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *carriersettlement.CarrierSettlement, cursor string) *gqlmodel.CarrierSettlementEdge {
 			return &gqlmodel.CarrierSettlementEdge{Node: node, Cursor: cursor}
@@ -95,7 +96,7 @@ func carrierSettlementConnectionToModel(
 func carrierSettlementBatchConnectionToModel(
 	result *pagination.CursorListResult[*carriersettlement.CarrierSettlementBatch],
 ) (*gqlmodel.CarrierSettlementBatchConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *carriersettlement.CarrierSettlementBatch, cursor string) *gqlmodel.CarrierSettlementBatchEdge {
 			return &gqlmodel.CarrierSettlementBatchEdge{Node: node, Cursor: cursor}
@@ -116,7 +117,7 @@ func carrierSettlementBatchConnectionToModel(
 func carrierCostEventConnectionToModel(
 	result *pagination.CursorListResult[*carriersettlement.CostEvent],
 ) (*gqlmodel.CarrierCostEventConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *carriersettlement.CostEvent, cursor string) *gqlmodel.CarrierCostEventEdge {
 			return &gqlmodel.CarrierCostEventEdge{Node: node, Cursor: cursor}
@@ -138,7 +139,7 @@ func carrierSettlementControlFromInput(
 	input *gqlmodel.UpdateCarrierSettlementControlInput,
 	tenantInfo pagination.TenantInfo,
 ) (*tenantdomain.CarrierSettlementControl, error) {
-	apAccountID, err := base.OptionalPulid(input.DefaultApAccountID)
+	apAccountID, err := gqlid.OptionalPulid(input.DefaultApAccountID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"defaultApAccountId",
@@ -146,7 +147,7 @@ func carrierSettlementControlFromInput(
 			"Invalid AP account",
 		)
 	}
-	expenseAccountID, err := base.OptionalPulid(input.DefaultPurchasedTransportationAccountID)
+	expenseAccountID, err := gqlid.OptionalPulid(input.DefaultPurchasedTransportationAccountID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"defaultPurchasedTransportationAccountId",
@@ -179,7 +180,7 @@ func createCarrierInvoiceMatchRequest(
 	input *gqlmodel.CreateCarrierInvoiceMatchInput,
 	tenantInfo pagination.TenantInfo,
 ) (*carriersettlementservice.CreateMatchRequest, error) {
-	ediInvoiceID, err := base.OptionalPulid(input.EDICarrierInvoiceID)
+	ediInvoiceID, err := gqlid.OptionalPulid(input.EDICarrierInvoiceID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"ediCarrierInvoiceId",
@@ -187,7 +188,7 @@ func createCarrierInvoiceMatchRequest(
 			"Invalid EDI carrier invoice",
 		)
 	}
-	extractionID, err := base.OptionalPulid(input.DocumentAiExtractionID)
+	extractionID, err := gqlid.OptionalPulid(input.DocumentAiExtractionID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentAiExtractionId",
@@ -195,7 +196,7 @@ func createCarrierInvoiceMatchRequest(
 			"Invalid document AI extraction",
 		)
 	}
-	carrierID, err := base.OptionalPulid(input.CarrierID)
+	carrierID, err := gqlid.OptionalPulid(input.CarrierID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"carrierId",
@@ -203,7 +204,7 @@ func createCarrierInvoiceMatchRequest(
 			"Invalid carrier",
 		)
 	}
-	assignmentID, err := base.OptionalPulid(input.CarrierAssignmentID)
+	assignmentID, err := gqlid.OptionalPulid(input.CarrierAssignmentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"carrierAssignmentId",
@@ -211,7 +212,7 @@ func createCarrierInvoiceMatchRequest(
 			"Invalid carrier assignment",
 		)
 	}
-	shipmentID, err := base.OptionalPulid(input.ShipmentID)
+	shipmentID, err := gqlid.OptionalPulid(input.ShipmentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"shipmentId",
@@ -225,8 +226,8 @@ func createCarrierInvoiceMatchRequest(
 		EDICarrierInvoiceID:    ediInvoiceID,
 		DocumentAIExtractionID: extractionID,
 		CarrierAssignmentID:    assignmentID,
-		InvoiceNumber:          base.StringValue(input.InvoiceNumber),
-		ProNumber:              base.StringValue(input.ProNumber),
+		InvoiceNumber:          gqlscalar.StringValue(input.InvoiceNumber),
+		ProNumber:              gqlscalar.StringValue(input.ProNumber),
 	}
 	if carrierID != nil {
 		req.CarrierID = *carrierID

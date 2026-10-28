@@ -10,7 +10,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -25,19 +30,19 @@ import (
 )
 
 func (r *FuelCardResolver) AssignedWorkerID(ctx context.Context, obj *fuelpurchase.FuelCard) (*string, error) {
-	return base.IDPtrFromPtr(obj.AssignedWorkerID), nil
+	return gqlid.IDPtrFromPtr(obj.AssignedWorkerID), nil
 }
 
 func (r *FuelCardResolver) AssignedTractorID(ctx context.Context, obj *fuelpurchase.FuelCard) (*string, error) {
-	return base.IDPtrFromPtr(obj.AssignedTractorID), nil
+	return gqlid.IDPtrFromPtr(obj.AssignedTractorID), nil
 }
 
 func (r *FuelCardResolver) ExpiresAt(ctx context.Context, obj *fuelpurchase.FuelCard) (*int, error) {
-	return base.IntPtr(obj.ExpiresAt), nil
+	return gqlscalar.IntPtr(obj.ExpiresAt), nil
 }
 
 func (r *FuelCardResolver) CancelledAt(ctx context.Context, obj *fuelpurchase.FuelCard) (*int, error) {
-	return base.IntPtr(obj.CancelledAt), nil
+	return gqlscalar.IntPtr(obj.CancelledAt), nil
 }
 
 func (r *FuelCardResolver) AssignedWorker(ctx context.Context, obj *fuelpurchase.FuelCard) (*worker.Worker, error) {
@@ -48,15 +53,15 @@ func (r *FuelCardResolver) AssignedTractor(ctx context.Context, obj *fuelpurchas
 	if obj.AssignedTractor != nil {
 		return obj.AssignedTractor, nil
 	}
-	return base.LoadTractor(ctx, obj.AssignedTractorID)
+	return loaderfields.LoadTractor(ctx, obj.AssignedTractorID)
 }
 
 func (r *FuelPurchaseResolver) WorkerID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error) {
-	return base.IDPtrFromPtr(obj.WorkerID), nil
+	return gqlid.IDPtrFromPtr(obj.WorkerID), nil
 }
 
 func (r *FuelPurchaseResolver) FuelCardID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error) {
-	return base.IDPtrFromPtr(obj.FuelCardID), nil
+	return gqlid.IDPtrFromPtr(obj.FuelCardID), nil
 }
 
 func (r *FuelPurchaseResolver) Quantity(ctx context.Context, obj *fuelpurchase.FuelPurchase) (string, error) {
@@ -68,7 +73,7 @@ func (r *FuelPurchaseResolver) Gallons(ctx context.Context, obj *fuelpurchase.Fu
 }
 
 func (r *FuelPurchaseResolver) UnitPrice(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.UnitPrice), nil
+	return gqldecimal.NullDecimalToStringPtr(obj.UnitPrice), nil
 }
 
 func (r *FuelPurchaseResolver) TotalAmount(ctx context.Context, obj *fuelpurchase.FuelPurchase) (string, error) {
@@ -76,22 +81,22 @@ func (r *FuelPurchaseResolver) TotalAmount(ctx context.Context, obj *fuelpurchas
 }
 
 func (r *FuelPurchaseResolver) Odometer(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*int, error) {
-	return base.IntPtr(obj.Odometer), nil
+	return gqlscalar.IntPtr(obj.Odometer), nil
 }
 
 func (r *FuelPurchaseResolver) ImportBatchID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error) {
-	return base.IDPtrFromPtr(obj.ImportBatchID), nil
+	return gqlid.IDPtrFromPtr(obj.ImportBatchID), nil
 }
 
 func (r *FuelPurchaseResolver) CreatedByID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error) {
-	return base.IDPtr(obj.CreatedByID), nil
+	return gqlid.IDPtr(obj.CreatedByID), nil
 }
 
 func (r *FuelPurchaseResolver) Tractor(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*tractor.Tractor, error) {
 	if obj.Tractor != nil {
 		return obj.Tractor, nil
 	}
-	return base.LoadTractor(ctx, &obj.TractorID)
+	return loaderfields.LoadTractor(ctx, &obj.TractorID)
 }
 
 func (r *FuelPurchaseResolver) Worker(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*worker.Worker, error) {
@@ -102,7 +107,7 @@ func (r *FuelPurchaseResolver) Jurisdiction(ctx context.Context, obj *fuelpurcha
 	if obj.Jurisdiction != nil {
 		return obj.Jurisdiction, nil
 	}
-	return base.LoadJurisdiction(ctx, &obj.JurisdictionID)
+	return loaderfields.LoadJurisdiction(ctx, &obj.JurisdictionID)
 }
 
 func (r *FuelPurchaseResolver) FuelCard(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*fuelpurchase.FuelCard, error) {
@@ -113,7 +118,7 @@ func (r *FuelPurchaseResolver) FuelCard(ctx context.Context, obj *fuelpurchase.F
 }
 
 func (r *FuelPurchaseImportBatchResolver) DocumentID(ctx context.Context, obj *fuelpurchase.ImportBatch) (*string, error) {
-	return base.IDPtrFromPtr(obj.DocumentID), nil
+	return gqlid.IDPtrFromPtr(obj.DocumentID), nil
 }
 
 func (r *FuelPurchaseImportBatchResolver) SourceFormat(ctx context.Context, obj *fuelpurchase.ImportBatch) (*fuelpurchase.SourceFormat, error) {
@@ -133,7 +138,7 @@ func (r *FuelPurchaseImportBatchResolver) DefaultFuelType(ctx context.Context, o
 }
 
 func (r *FuelPurchaseImportBatchResolver) DefaultFuelCardID(ctx context.Context, obj *fuelpurchase.ImportBatch) (*string, error) {
-	return base.IDPtrFromPtr(obj.DefaultFuelCardID), nil
+	return gqlid.IDPtrFromPtr(obj.DefaultFuelCardID), nil
 }
 
 func (r *FuelPurchaseImportBatchResolver) Mapping(ctx context.Context, obj *fuelpurchase.ImportBatch) (map[string]any, error) {
@@ -145,19 +150,19 @@ func (r *FuelPurchaseImportBatchResolver) Summary(ctx context.Context, obj *fuel
 }
 
 func (r *FuelPurchaseImportBatchResolver) UploadedByID(ctx context.Context, obj *fuelpurchase.ImportBatch) (*string, error) {
-	return base.IDPtr(obj.UploadedByID), nil
+	return gqlid.IDPtr(obj.UploadedByID), nil
 }
 
 func (r *FuelPurchaseImportBatchResolver) StagedAt(ctx context.Context, obj *fuelpurchase.ImportBatch) (*int, error) {
-	return base.IntPtr(obj.StagedAt), nil
+	return gqlscalar.IntPtr(obj.StagedAt), nil
 }
 
 func (r *FuelPurchaseImportBatchResolver) CommittedAt(ctx context.Context, obj *fuelpurchase.ImportBatch) (*int, error) {
-	return base.IntPtr(obj.CommittedAt), nil
+	return gqlscalar.IntPtr(obj.CommittedAt), nil
 }
 
 func (r *FuelPurchaseImportBatchResolver) CommittedByID(ctx context.Context, obj *fuelpurchase.ImportBatch) (*string, error) {
-	return base.IDPtr(obj.CommittedByID), nil
+	return gqlid.IDPtr(obj.CommittedByID), nil
 }
 
 func (r *FuelPurchaseImportBatchResolver) Document(ctx context.Context, obj *fuelpurchase.ImportBatch) (*document.Document, error) {
@@ -188,7 +193,7 @@ func (r *FuelPurchaseImportBatchResolver) Rows(ctx context.Context, obj *fuelpur
 		return nil, err
 	}
 
-	req, err := fuelImportRowsRequest(ctx, obj, input, base.TenantInfo(authCtx))
+	req, err := fuelImportRowsRequest(ctx, obj, input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -206,23 +211,23 @@ func (r *FuelPurchaseImportRowResolver) Parsed(ctx context.Context, obj *fuelpur
 }
 
 func (r *FuelPurchaseImportRowResolver) ResolvedTractorID(ctx context.Context, obj *fuelpurchase.ImportRow) (*string, error) {
-	return base.IDPtrFromPtr(obj.ResolvedTractorID), nil
+	return gqlid.IDPtrFromPtr(obj.ResolvedTractorID), nil
 }
 
 func (r *FuelPurchaseImportRowResolver) ResolvedFuelCardID(ctx context.Context, obj *fuelpurchase.ImportRow) (*string, error) {
-	return base.IDPtrFromPtr(obj.ResolvedFuelCardID), nil
+	return gqlid.IDPtrFromPtr(obj.ResolvedFuelCardID), nil
 }
 
 func (r *FuelPurchaseImportRowResolver) ResolvedJurisdictionID(ctx context.Context, obj *fuelpurchase.ImportRow) (*string, error) {
-	return base.IDPtrFromPtr(obj.ResolvedJurisdictionID), nil
+	return gqlid.IDPtrFromPtr(obj.ResolvedJurisdictionID), nil
 }
 
 func (r *FuelPurchaseImportRowResolver) FuelPurchaseID(ctx context.Context, obj *fuelpurchase.ImportRow) (*string, error) {
-	return base.IDPtrFromPtr(obj.FuelPurchaseID), nil
+	return gqlid.IDPtrFromPtr(obj.FuelPurchaseID), nil
 }
 
 func (r *FuelPurchaseImportRowResolver) ResolvedTractor(ctx context.Context, obj *fuelpurchase.ImportRow) (*tractor.Tractor, error) {
-	return base.LoadTractor(ctx, obj.ResolvedTractorID)
+	return loaderfields.LoadTractor(ctx, obj.ResolvedTractorID)
 }
 
 func (r *FuelPurchaseImportSummaryResolver) TotalGallons(ctx context.Context, obj *fuelpurchase.ImportSummary) (string, error) {
@@ -258,7 +263,7 @@ func (r *MutationResolver) CreateFuelCard(ctx context.Context, input gqlmodel.Fu
 		return nil, err
 	}
 
-	card, err := fuelCardFromInput(input, base.TenantInfo(authCtx))
+	card, err := fuelCardFromInput(input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -272,12 +277,12 @@ func (r *MutationResolver) UpdateFuelCard(ctx context.Context, id string, versio
 		return nil, err
 	}
 
-	cardID, err := base.RequiredID("id", id)
+	cardID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
-	card, err := fuelCardFromInput(input, base.TenantInfo(authCtx))
+	card, err := fuelCardFromInput(input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -293,7 +298,7 @@ func (r *MutationResolver) CancelFuelCard(ctx context.Context, input gqlmodel.Ca
 		return nil, err
 	}
 
-	req, err := cancelCardRequestFromInput(input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := cancelCardRequestFromInput(input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +312,7 @@ func (r *MutationResolver) AssignFuelCard(ctx context.Context, input gqlmodel.As
 		return nil, err
 	}
 
-	req, err := assignCardRequestFromInput(input, base.TenantInfo(authCtx), authCtx.UserID)
+	req, err := assignCardRequestFromInput(input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +327,7 @@ func (r *MutationResolver) SyncFuelCardFeed(ctx context.Context, provider fuelpu
 	}
 
 	result, err := r.FuelPurchaseService.SyncFeed(ctx, &fuelpurchaseservice.SyncFeedRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Provider:   provider,
 		UserID:     authCtx.UserID,
 	})
@@ -339,13 +344,13 @@ func (r *MutationResolver) CreateFuelPurchase(ctx context.Context, input gqlmode
 		return nil, err
 	}
 
-	purchase, err := fuelPurchaseFromInput(input, base.TenantInfo(authCtx))
+	purchase, err := fuelPurchaseFromInput(input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
 	return r.FuelPurchaseService.CreatePurchase(ctx, &fuelpurchaseservice.CreatePurchaseRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Purchase:   purchase,
 		UserID:     authCtx.UserID,
 	})
@@ -357,12 +362,12 @@ func (r *MutationResolver) UpdateFuelPurchase(ctx context.Context, id string, ve
 		return nil, err
 	}
 
-	purchaseID, err := base.RequiredID("id", id)
+	purchaseID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
-	purchase, err := fuelPurchaseFromInput(input, base.TenantInfo(authCtx))
+	purchase, err := fuelPurchaseFromInput(input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -370,7 +375,7 @@ func (r *MutationResolver) UpdateFuelPurchase(ctx context.Context, id string, ve
 	purchase.Version = int64(version)
 
 	return r.FuelPurchaseService.UpdatePurchase(ctx, &fuelpurchaseservice.UpdatePurchaseRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Purchase:   purchase,
 		UserID:     authCtx.UserID,
 	})
@@ -382,13 +387,13 @@ func (r *MutationResolver) DeleteFuelPurchase(ctx context.Context, id string, ve
 		return false, err
 	}
 
-	purchaseID, err := base.RequiredID("id", id)
+	purchaseID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return false, err
 	}
 
 	if err = r.FuelPurchaseService.DeletePurchase(ctx, &fuelpurchaseservice.DeletePurchaseRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         purchaseID,
 		Version:    int64(version),
 		UserID:     authCtx.UserID,
@@ -405,7 +410,7 @@ func (r *MutationResolver) CreateFuelPurchaseImport(ctx context.Context, input g
 		return nil, err
 	}
 
-	cardID, err := base.OptionalScopedID("defaultFuelCardId", input.DefaultFuelCardID)
+	cardID, err := gqlid.OptionalScopedID("defaultFuelCardId", input.DefaultFuelCardID)
 	if err != nil {
 		return nil, err
 	}
@@ -416,10 +421,10 @@ func (r *MutationResolver) CreateFuelPurchaseImport(ctx context.Context, input g
 	}
 
 	req := &fuelpurchaseservice.CreateImportRequest{
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		Provider:          input.Provider,
 		DefaultFuelCardID: cardID,
-		DefaultCurrency:   base.StringValue(input.DefaultCurrency),
+		DefaultCurrency:   gqlscalar.StringValue(input.DefaultCurrency),
 		Mapping:           mapping,
 		UserID:            authCtx.UserID,
 	}
@@ -436,12 +441,12 @@ func (r *MutationResolver) StageFuelPurchaseImport(ctx context.Context, input gq
 		return nil, err
 	}
 
-	batchID, err := base.RequiredID("id", input.ID)
+	batchID, err := gqlid.RequiredID("id", input.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	documentID, err := base.RequiredID("documentId", input.DocumentID)
+	documentID, err := gqlid.RequiredID("documentId", input.DocumentID)
 	if err != nil {
 		return nil, err
 	}
@@ -452,7 +457,7 @@ func (r *MutationResolver) StageFuelPurchaseImport(ctx context.Context, input gq
 	}
 
 	return r.FuelPurchaseService.Stage(ctx, &fuelpurchaseservice.StageRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		BatchID:    batchID,
 		DocumentID: documentID,
 		Mapping:    mapping,
@@ -466,13 +471,13 @@ func (r *MutationResolver) CommitFuelPurchaseImport(ctx context.Context, id stri
 		return nil, err
 	}
 
-	batchID, err := base.RequiredID("id", id)
+	batchID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.FuelPurchaseService.Commit(ctx, &fuelpurchaseservice.CommitRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		BatchID:    batchID,
 		Version:    int64(version),
 		UserID:     authCtx.UserID,
@@ -485,13 +490,13 @@ func (r *MutationResolver) ResolveFuelPurchaseImportRows(ctx context.Context, id
 		return nil, err
 	}
 
-	batchID, err := base.RequiredID("id", id)
+	batchID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
 	result, err := r.FuelPurchaseService.ResolveRows(ctx, &fuelpurchaseservice.ResolveRowsRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		BatchID:    batchID,
 		Version:    int64(version),
 		UserID:     authCtx.UserID,
@@ -515,16 +520,16 @@ func (r *MutationResolver) DiscardFuelPurchaseImport(ctx context.Context, id str
 		return nil, err
 	}
 
-	batchID, err := base.RequiredID("id", id)
+	batchID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.FuelPurchaseService.Discard(ctx, &fuelpurchaseservice.DiscardRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		BatchID:    batchID,
 		Version:    int64(version),
-		Reason:     base.StringValue(reason),
+		Reason:     gqlscalar.StringValue(reason),
 		UserID:     authCtx.UserID,
 	})
 }
@@ -535,14 +540,14 @@ func (r *QueryResolver) FuelCards(ctx context.Context, input gqlmodel.FuelCardsI
 		return nil, err
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
 		After:        input.After,
 		Query:        input.Query,
 		FieldFilters: input.FieldFilters,
 		FilterGroups: input.FilterGroups,
 		Sort:         input.Sort,
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -566,12 +571,12 @@ func (r *QueryResolver) FuelCard(ctx context.Context, id string) (*fuelpurchase.
 		return nil, err
 	}
 
-	cardID, err := base.RequiredID("id", id)
+	cardID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.FuelPurchaseService.GetCard(ctx, base.TenantInfo(authCtx), cardID)
+	return r.FuelPurchaseService.GetCard(ctx, resolvercore.TenantInfo(authCtx), cardID)
 }
 
 func (r *QueryResolver) FuelPurchases(ctx context.Context, input gqlmodel.FuelPurchasesInput) (*gqlmodel.FuelPurchaseConnection, error) {
@@ -580,14 +585,14 @@ func (r *QueryResolver) FuelPurchases(ctx context.Context, input gqlmodel.FuelPu
 		return nil, err
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
 		After:        input.After,
 		Query:        input.Query,
 		FieldFilters: input.FieldFilters,
 		FilterGroups: input.FilterGroups,
 		Sort:         input.Sort,
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -611,12 +616,12 @@ func (r *QueryResolver) FuelPurchase(ctx context.Context, id string) (*fuelpurch
 		return nil, err
 	}
 
-	purchaseID, err := base.RequiredID("id", id)
+	purchaseID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.FuelPurchaseService.GetPurchase(ctx, base.TenantInfo(authCtx), purchaseID)
+	return r.FuelPurchaseService.GetPurchase(ctx, resolvercore.TenantInfo(authCtx), purchaseID)
 }
 
 func (r *QueryResolver) FuelPurchaseImports(ctx context.Context, input gqlmodel.FuelPurchaseImportsInput) (*gqlmodel.FuelPurchaseImportBatchConnection, error) {
@@ -625,14 +630,14 @@ func (r *QueryResolver) FuelPurchaseImports(ctx context.Context, input gqlmodel.
 		return nil, err
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
 		After:        input.After,
 		Query:        input.Query,
 		FieldFilters: input.FieldFilters,
 		FilterGroups: input.FilterGroups,
 		Sort:         input.Sort,
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -654,12 +659,12 @@ func (r *QueryResolver) FuelPurchaseImport(ctx context.Context, id string) (*fue
 		return nil, err
 	}
 
-	batchID, err := base.RequiredID("id", id)
+	batchID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.FuelPurchaseService.GetImport(ctx, base.TenantInfo(authCtx), batchID)
+	return r.FuelPurchaseService.GetImport(ctx, resolvercore.TenantInfo(authCtx), batchID)
 }
 
 func (r *QueryResolver) FuelPurchaseImportTemplate(ctx context.Context, provider fuelpurchase.CardProvider) (*gqlmodel.FuelImportTemplate, error) {
@@ -681,25 +686,25 @@ func (r *QueryResolver) FuelPurchaseImportTemplate(ctx context.Context, provider
 }
 
 func (r *FuelCardDeskCardResolver) LastPurchasedAt(ctx context.Context, obj *fueldeskcardservice.FuelCardCard) (*int, error) {
-	return base.IntPtr(obj.LastPurchasedAt), nil
+	return gqlscalar.IntPtr(obj.LastPurchasedAt), nil
 }
 
 func (r *FuelFeedStatusResolver) LastPolledAt(ctx context.Context, obj *fuelpurchase.CardFeedState) (*int, error) {
 	if obj.LastPolledAt == 0 {
 		return nil, nil
 	}
-	return base.IntPtr(&obj.LastPolledAt), nil
+	return gqlscalar.IntPtr(&obj.LastPolledAt), nil
 }
 
 func (r *FuelFeedStatusResolver) LastSuccessAt(ctx context.Context, obj *fuelpurchase.CardFeedState) (*int, error) {
 	if obj.LastSuccessAt == 0 {
 		return nil, nil
 	}
-	return base.IntPtr(&obj.LastSuccessAt), nil
+	return gqlscalar.IntPtr(&obj.LastSuccessAt), nil
 }
 
 func (r *FuelFeedStatusResolver) LastError(ctx context.Context, obj *fuelpurchase.CardFeedState) (*string, error) {
-	return base.StringPtrFromValue(obj.LastError), nil
+	return gqlscalar.StringPtrFromValue(obj.LastError), nil
 }
 
 func (r *FuelHeldSpendResolver) Gallons(ctx context.Context, obj *fueldeskcardservice.HeldSpend) (string, error) {
@@ -707,11 +712,11 @@ func (r *FuelHeldSpendResolver) Gallons(ctx context.Context, obj *fueldeskcardse
 }
 
 func (r *FuelHeldSpendResolver) TotalAmount(ctx context.Context, obj *fueldeskcardservice.HeldSpend) (string, error) {
-	return base.MinorString(obj.TotalAmountMinor), nil
+	return gqldecimal.MinorString(obj.TotalAmountMinor), nil
 }
 
 func (r *FuelJurisdictionGallonsResolver) Jurisdiction(ctx context.Context, obj *fueldeskcardservice.JurisdictionGallons) (*ifta.Jurisdiction, error) {
-	return base.LoadJurisdiction(ctx, &obj.JurisdictionID)
+	return loaderfields.LoadJurisdiction(ctx, &obj.JurisdictionID)
 }
 
 func (r *FuelJurisdictionGallonsResolver) Gallons(ctx context.Context, obj *fueldeskcardservice.JurisdictionGallons) (string, error) {
@@ -723,7 +728,7 @@ func (r *FuelPurchaseIFTAResolver) TaxPaidGallons(ctx context.Context, obj *fuel
 }
 
 func (r *FuelPurchaseIFTAResolver) RatePerGallon(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.RatePerGallon), nil
+	return gqldecimal.NullDecimalToStringPtr(obj.RatePerGallon), nil
 }
 
 func (r *FuelPurchaseIFTAResolver) TaxPaidCredit(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (*string, error) {
@@ -747,7 +752,7 @@ func (r *FuelSpendResolver) UntaxedGallons(ctx context.Context, obj *fueldeskcar
 }
 
 func (r *FuelSpendResolver) TotalAmount(ctx context.Context, obj *fueldeskcardservice.Spend) (string, error) {
-	return base.MinorString(obj.TotalAmountMinor), nil
+	return gqldecimal.MinorString(obj.TotalAmountMinor), nil
 }
 
 func (r *QueryResolver) FuelPurchaseDeskCard(ctx context.Context, id string) (*fueldeskcardservice.PurchaseCard, error) {
@@ -756,13 +761,13 @@ func (r *QueryResolver) FuelPurchaseDeskCard(ctx context.Context, id string) (*f
 		return nil, err
 	}
 
-	purchaseID, err := base.RequiredID("id", id)
+	purchaseID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.FuelDeskCards.GetPurchaseCard(ctx, &fueldeskcardservice.GetPurchaseCardRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		PurchaseID: purchaseID,
 		IncludeProvenance: r.HasPermission(
 			ctx,
@@ -780,13 +785,13 @@ func (r *QueryResolver) FuelCardDeskCard(ctx context.Context, id string) (*fueld
 		return nil, err
 	}
 
-	cardID, err := base.RequiredID("id", id)
+	cardID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.FuelDeskCards.GetFuelCardCard(ctx, &fueldeskcardservice.GetFuelCardCardRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CardID:     cardID,
 		IncludePurchases: r.HasPermission(
 			ctx,

@@ -3,7 +3,7 @@ package workerleaveresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -31,7 +31,7 @@ func (d *Deps) requireCaseTeam(
 	operation permission.Operation,
 	caseID pulid.ID,
 ) error {
-	workerID, err := d.WorkerLeaveService.CaseWorker(ctx, base.TenantInfo(authCtx), caseID)
+	workerID, err := d.WorkerLeaveService.CaseWorker(ctx, resolvercore.TenantInfo(authCtx), caseID)
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,11 @@ func (d *Deps) requireEntryTeam(
 	operation permission.Operation,
 	entryID pulid.ID,
 ) error {
-	workerID, err := d.WorkerLeaveService.EntryWorker(ctx, base.TenantInfo(authCtx), entryID)
+	workerID, err := d.WorkerLeaveService.EntryWorker(
+		ctx,
+		resolvercore.TenantInfo(authCtx),
+		entryID,
+	)
 	if err != nil {
 		return err
 	}

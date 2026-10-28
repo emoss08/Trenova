@@ -2,7 +2,8 @@ package factoringresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -36,7 +37,7 @@ func fundingRequestFromModel(
 		})
 	}
 	return &factoringports.RecordFundingRequest{
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		SubmissionID: submissionID,
 		Version:      int64(in.Version),
 		FundedOn:     int64(in.FundedOn),
@@ -58,7 +59,7 @@ func movementRequestFromModel(
 		return nil, err
 	}
 	return &factoringports.ReserveMovementRequest{
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		SubmissionID: submissionID,
 		ItemID:       itemID,
 		Version:      int64(in.Version),
@@ -71,7 +72,7 @@ func movementRequestFromModel(
 func reserveConnectionToModel(
 	result *pagination.CursorListResult[*factoring.ReserveEntry],
 ) (*gqlmodel.FactoringReserveEntryConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *factoring.ReserveEntry, cursor string) *gqlmodel.FactoringReserveEntryEdge {
 			return &gqlmodel.FactoringReserveEntryEdge{Node: node, Cursor: cursor}

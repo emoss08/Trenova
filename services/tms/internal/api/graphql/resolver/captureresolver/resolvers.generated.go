@@ -3,13 +3,13 @@
 package captureresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	capturereleaseservice "github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
 	captureservice "github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	CaptureService        *captureservice.Service
 	CaptureReleaseService *capturereleaseservice.Service
 }

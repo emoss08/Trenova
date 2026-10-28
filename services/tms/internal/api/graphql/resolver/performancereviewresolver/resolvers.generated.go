@@ -3,13 +3,13 @@
 package performancereviewresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	performancereviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	PerformanceReviewService *performancereviewservice.Service
 	DriverPortalService      *driverportalservice.Service
 }

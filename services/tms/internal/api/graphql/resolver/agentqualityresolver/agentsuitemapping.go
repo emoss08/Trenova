@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
@@ -40,7 +41,7 @@ func agentQualityAgentsToModel(
 		})
 		last = edge.Cursor
 	}
-	out.PageInfo = base.PageInfoFor(page.HasNextPage, last)
+	out.PageInfo = gqlconnection.PageInfoFor(page.HasNextPage, last)
 
 	return out
 }
@@ -61,7 +62,7 @@ func agentWorstRatedToModel(
 		})
 		last = edge.Cursor
 	}
-	out.PageInfo = base.PageInfoFor(page.HasNextPage, last)
+	out.PageInfo = gqlconnection.PageInfoFor(page.HasNextPage, last)
 
 	return out
 }
@@ -69,7 +70,7 @@ func agentWorstRatedToModel(
 func agentSuiteRunConnectionToModel(
 	result *pagination.CursorListResult[*agentquality.SuiteRun],
 ) (*gqlmodel.AgentSuiteRunConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *agentquality.SuiteRun, cursor string) *gqlmodel.AgentSuiteRunEdge {
 			return &gqlmodel.AgentSuiteRunEdge{Node: node, Cursor: cursor}
@@ -91,7 +92,7 @@ func agentSuiteRunConnectionToModel(
 func agentSuiteRunCaseConnectionToModel(
 	result *pagination.CursorListResult[*agent.Evaluation],
 ) (*gqlmodel.AgentSuiteRunCaseConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *agent.Evaluation, cursor string) *gqlmodel.AgentSuiteRunCaseEdge {
 			return &gqlmodel.AgentSuiteRunCaseEdge{Node: node, Cursor: cursor}
@@ -177,7 +178,7 @@ func qualityControlFromInput(
 		BusinessUnitID:      tenant.BuID,
 		Enabled:             input.Enabled,
 		RunHourLocal:        input.RunHourLocal,
-		Timezone:            base.DerefString(input.Timezone),
+		Timezone:            gqlscalar.DerefString(input.Timezone),
 		MaxCasesPerAgent:    input.MaxCasesPerAgent,
 		NightlyBudgetUSD:    nightly,
 		MonthlyBudgetUSD:    monthly,

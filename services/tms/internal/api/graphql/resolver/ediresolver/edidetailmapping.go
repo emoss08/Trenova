@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -241,7 +241,7 @@ type ackHealthArguments struct {
 // ackHealthRequest reads the acknowledgment health read's arguments,
 // refusing a transaction set, overdue age or window outside what it reads.
 func ackHealthRequest(args *ackHealthArguments) (*ediservice.GetEDIAckHealthRequest, error) {
-	partnerID, err := base.ParseOptionalIDField("partnerId", args.partnerID)
+	partnerID, err := gqlid.ParseOptionalIDField("partnerId", args.partnerID)
 	if err != nil {
 		return nil, err
 	}

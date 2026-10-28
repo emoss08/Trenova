@@ -10,10 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -34,7 +34,7 @@ func (r *MutationResolver) MarkBriefingRead(ctx context.Context, id string) (*br
 
 	return r.BriefingService.MarkRead(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		briefingID,
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -48,7 +48,7 @@ func (r *MutationResolver) RegenerateBriefing(ctx context.Context, input gqlmode
 
 	return r.BriefingService.Regenerate(
 		ctx,
-		briefingRequest(base.TenantInfo(authCtx), input),
+		briefingRequest(resolvercore.TenantInfo(authCtx), input),
 		actorutil.FromAuthContext(authCtx),
 	)
 }
@@ -61,7 +61,7 @@ func (r *QueryResolver) TodaysBriefing(ctx context.Context, input gqlmodel.Today
 
 	return r.BriefingService.Today(
 		ctx,
-		briefingRequest(base.TenantInfo(authCtx), input),
+		briefingRequest(resolvercore.TenantInfo(authCtx), input),
 		actorutil.FromAuthContext(authCtx),
 	)
 }
@@ -79,7 +79,7 @@ func (r *QueryResolver) Briefing(ctx context.Context, id string) (*briefing.Brie
 
 	return r.BriefingService.Get(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		briefingID,
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -91,7 +91,7 @@ func (r *QueryResolver) Briefings(ctx context.Context, input gqlmodel.ListBriefi
 		return nil, err
 	}
 
-	req := briefingports.ListBriefingsRequest{TenantInfo: base.TenantInfo(authCtx)}
+	req := briefingports.ListBriefingsRequest{TenantInfo: resolvercore.TenantInfo(authCtx)}
 	if input.RoleKey != nil {
 		req.RoleKey = *input.RoleKey
 	}

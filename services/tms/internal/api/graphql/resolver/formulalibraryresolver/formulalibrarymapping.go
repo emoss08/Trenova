@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -25,7 +25,7 @@ func formulaLibraryColumns(ctx context.Context, nodePathPrefix string) []string 
 func formulaLibraryConnectionToModel(
 	result *pagination.CursorListResult[*formulalibrary.FormulaLibrary],
 ) (*gqlmodel.FormulaLibraryConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *formulalibrary.FormulaLibrary, cursor string) *gqlmodel.FormulaLibraryEdge {
 			return &gqlmodel.FormulaLibraryEdge{Node: node, Cursor: cursor}

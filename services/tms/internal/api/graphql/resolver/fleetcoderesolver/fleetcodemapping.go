@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -26,7 +26,7 @@ func fleetCodeColumns(ctx context.Context, nodePathPrefix string) []string {
 func fleetCodeConnectionToModel(
 	result *pagination.CursorListResult[*fleetcode.FleetCode],
 ) (*gqlmodel.FleetCodeConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *fleetcode.FleetCode, cursor string) *gqlmodel.FleetCodeEdge {
 			return &gqlmodel.FleetCodeEdge{

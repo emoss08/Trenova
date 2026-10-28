@@ -3,12 +3,12 @@
 package orderresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	orderservice "github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	OrderService *orderservice.Service
 }
 

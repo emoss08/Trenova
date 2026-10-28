@@ -2,7 +2,8 @@ package schedulingresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -26,8 +27,8 @@ func shiftTemplateFromInput(
 		Status:          status,
 		Code:            input.Code,
 		Name:            input.Name,
-		Description:     base.StringValue(input.Description),
-		Color:           base.StringValue(input.Color),
+		Description:     gqlscalar.StringValue(input.Description),
+		Color:           gqlscalar.StringValue(input.Color),
 		DaysOfWeek:      input.DaysOfWeek,
 		StartMinute:     int16(input.StartMinute),     //nolint:gosec // validated 0..1439
 		DurationMinutes: int16(input.DurationMinutes), //nolint:gosec // validated 1..1440
@@ -41,11 +42,11 @@ func shiftAssignmentFromInput(
 ) (*workerschedule.WorkerShiftAssignment, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
-		return nil, base.InvalidIDError("workerId", "Worker is invalid")
+		return nil, gqlid.InvalidIDError("workerId", "Worker is invalid")
 	}
 	templateID, err := pulid.MustParse(input.ShiftTemplateID)
 	if err != nil {
-		return nil, base.InvalidIDError("shiftTemplateId", "Shift is invalid")
+		return nil, gqlid.InvalidIDError("shiftTemplateId", "Shift is invalid")
 	}
 
 	return &workerschedule.WorkerShiftAssignment{
@@ -54,8 +55,8 @@ func shiftAssignmentFromInput(
 		WorkerID:         workerID,
 		ShiftTemplateID:  templateID,
 		EffectiveFrom:    int64(input.EffectiveFrom),
-		CycleOffsetWeeks: intutils.SafeToInt16(base.IntValue(input.CycleOffsetWeeks)),
-		Notes:            base.StringValue(input.Notes),
+		CycleOffsetWeeks: intutils.SafeToInt16(gqlscalar.IntValue(input.CycleOffsetWeeks)),
+		Notes:            gqlscalar.StringValue(input.Notes),
 	}, nil
 }
 
@@ -65,7 +66,7 @@ func availabilityPreferenceFromInput(
 ) (*workerschedule.WorkerAvailabilityPreference, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
-		return nil, base.InvalidIDError("workerId", "Worker is invalid")
+		return nil, gqlid.InvalidIDError("workerId", "Worker is invalid")
 	}
 
 	return &workerschedule.WorkerAvailabilityPreference{
@@ -74,7 +75,7 @@ func availabilityPreferenceFromInput(
 		WorkerID:       workerID,
 		DayOfWeek:      int16(input.DayOfWeek), //nolint:gosec // validated 0..6
 		Preference:     input.Preference,
-		Note:           base.StringValue(input.Note),
+		Note:           gqlscalar.StringValue(input.Note),
 	}, nil
 }
 
@@ -84,11 +85,11 @@ func shiftSwapFromInput(
 ) (*workerschedule.ShiftSwapRequest, error) {
 	requestingID, err := pulid.MustParse(input.RequestingWorkerID)
 	if err != nil {
-		return nil, base.InvalidIDError("requestingWorkerId", "Worker is invalid")
+		return nil, gqlid.InvalidIDError("requestingWorkerId", "Worker is invalid")
 	}
-	counterpartyID, err := base.OptionalID(input.CounterpartyWorkerID)
+	counterpartyID, err := gqlid.OptionalID(input.CounterpartyWorkerID)
 	if err != nil {
-		return nil, base.InvalidIDError("counterpartyWorkerId", "Worker is invalid")
+		return nil, gqlid.InvalidIDError("counterpartyWorkerId", "Worker is invalid")
 	}
 
 	entity := &workerschedule.ShiftSwapRequest{
@@ -97,7 +98,7 @@ func shiftSwapFromInput(
 		RequestingWorkerID:   requestingID,
 		CounterpartyWorkerID: counterpartyID,
 		ShiftDate:            int64(input.ShiftDate),
-		Reason:               base.StringValue(input.Reason),
+		Reason:               gqlscalar.StringValue(input.Reason),
 	}
 	if input.CounterpartyShiftDate != nil {
 		counterDate := int64(*input.CounterpartyShiftDate)
@@ -128,11 +129,11 @@ func rotaToGQL(rota *workerschedule.Rota) *gqlmodel.Rota {
 		gqlRow := &gqlmodel.RotaRow{
 			WorkerID:      row.WorkerID.String(),
 			Name:          row.Name,
-			FleetCode:     base.EmptyToNil(row.FleetCode),
-			FleetColor:    base.EmptyToNil(row.FleetColor),
-			ShiftCode:     base.EmptyToNil(row.ShiftCode),
-			ShiftName:     base.EmptyToNil(row.ShiftName),
-			ShiftColor:    base.EmptyToNil(row.ShiftColor),
+			FleetCode:     gqlscalar.EmptyToNil(row.FleetCode),
+			FleetColor:    gqlscalar.EmptyToNil(row.FleetColor),
+			ShiftCode:     gqlscalar.EmptyToNil(row.ShiftCode),
+			ShiftName:     gqlscalar.EmptyToNil(row.ShiftName),
+			ShiftColor:    gqlscalar.EmptyToNil(row.ShiftColor),
 			Days:          make([]*gqlmodel.RotaDay, 0, len(row.Days)),
 			ScheduledDays: row.ScheduledDays,
 			Conflicts:     row.Conflicts,
