@@ -82,6 +82,41 @@ describe("SessionQueryProvider", () => {
     expect(client.getQueryData(SIDEBAR_KEY)).toEqual({ sections: ["billing"] });
   });
 
+  it("restores the cache of a page load that learns who is signed in from the server", async () => {
+    const { store, client, view } = setup();
+    store.entries.set(
+      "usr_1:org_1",
+      JSON.stringify({
+        timestamp: Date.now(),
+        buster: "build-a",
+        clientState: {
+          mutations: [],
+          queries: [
+            {
+              queryKey: SIDEBAR_KEY,
+              queryHash: JSON.stringify(SIDEBAR_KEY),
+              state: {
+                data: { sections: ["dispatch"] },
+                dataUpdatedAt: Date.now(),
+                status: "success",
+              },
+            },
+          ],
+        },
+      }),
+    );
+
+    const { rerender } = render(view(null));
+    await screen.findByText("ready");
+    rerender(view("usr_1:org_1"));
+    await screen.findByText("ready");
+
+    await waitFor(() =>
+      expect(client.getQueryData(SIDEBAR_KEY)).toEqual({ sections: ["dispatch"] }),
+    );
+    expect(store.entries.has("usr_1:org_1")).toBe(true);
+  });
+
   it("saves into the new person's cache after a sign-out and another sign-in in the same tab", async () => {
     const { store, client, view } = setup();
     const { rerender } = render(view("usr_1:org_1"));

@@ -48,9 +48,15 @@ export function SessionQueryProvider({
         setRestoredScope(scope);
       });
 
-    persistence.forgetOtherScopes(scope).catch((error: unknown) => {
-      console.error("Could not delete another session's persisted query cache:", error);
-    });
+    // No scope is not a session ending: a page load knows nobody until the server answers
+    // the session check, and a session that ends clears every cache itself
+    // (clearSessionCache). Forgetting here would delete the cache the load is about to
+    // restore.
+    if (scope !== null) {
+      persistence.forgetOtherScopes(scope).catch((error: unknown) => {
+        console.error("Could not delete another session's persisted query cache:", error);
+      });
+    }
 
     return () => {
       stopped = true;

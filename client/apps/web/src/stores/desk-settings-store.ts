@@ -3,7 +3,11 @@ import { clampInteger } from "@trenova/shared/lib/utils";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-/** How a person has set up their Desk. Kept in their browser; nothing here is shared. */
+/**
+ * How a person has set up their Desk. Kept in their browser: each is a choice about how the
+ * Desk looks or behaves, or the id of a computer, profile or agent, and none names a record
+ * or a person.
+ */
 export type DeskSettings = {
   width: "narrow" | "default" | "wide";
   text: "small" | "medium" | "large";
@@ -71,7 +75,10 @@ const RECENT_SEARCH_LIMIT = 3;
 
 interface DeskSettingsState {
   settings: DeskSettings;
-  /** What this person last searched the Desk for, newest first. */
+  /**
+   * What this person last searched the Desk for, newest first. Kept in memory only, since a
+   * search names what was searched for, and forgotten when the session ends.
+   */
   recentSearches: string[];
   /** The rail's shelves this person has folded away. */
   collapsedShelves: DeskShelfKey[];
@@ -80,6 +87,7 @@ interface DeskSettingsState {
   /** The rail is folded away beside the page. */
   railFolded: boolean;
   rememberSearch: (query: string) => void;
+  forgetSearches: () => void;
   toggleShelf: (key: DeskShelfKey) => void;
   setRailWidth: (width: number) => void;
   setRailFolded: (folded: boolean) => void;
@@ -101,6 +109,7 @@ export const useDeskSettingsStore = create<DeskSettingsState>()(
             ...state.recentSearches.filter((past) => past.toLowerCase() !== query.toLowerCase()),
           ].slice(0, RECENT_SEARCH_LIMIT),
         })),
+      forgetSearches: () => set({ recentSearches: [] }),
       collapsedShelves: [],
       toggleShelf: (key) =>
         set((state) => ({
@@ -118,7 +127,6 @@ export const useDeskSettingsStore = create<DeskSettingsState>()(
       version: 1,
       partialize: (state) => ({
         settings: state.settings,
-        recentSearches: state.recentSearches,
         collapsedShelves: state.collapsedShelves,
         railWidth: state.railWidth,
         railFolded: state.railFolded,
@@ -128,7 +136,6 @@ export const useDeskSettingsStore = create<DeskSettingsState>()(
         return {
           ...current,
           settings: { ...DESK_SETTINGS_DEFAULTS, ...saved?.settings },
-          recentSearches: Array.isArray(saved?.recentSearches) ? saved.recentSearches : [],
           collapsedShelves: Array.isArray(saved?.collapsedShelves)
             ? DESK_SHELF_KEYS.filter((key) => saved.collapsedShelves?.includes(key))
             : [],

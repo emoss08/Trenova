@@ -191,7 +191,7 @@ describe("createIdleMonitor", () => {
 
     vi.advanceTimersByTime(29 * MINUTE);
     storage.setItem("trenova:session-activity", String(Date.now()));
-    windowTarget.dispatchEvent(Object.assign(new Event("storage"), { key: "auth-storage" }));
+    windowTarget.dispatchEvent(Object.assign(new Event("storage"), { key: "trenova.locale" }));
 
     expect(monitor.getSnapshot().phase).toBe("warning");
   });

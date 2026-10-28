@@ -21,11 +21,8 @@ import { RootLayout } from "@/routes/root-layout";
 import type { RouteHandle } from "@/types/router";
 import { NotFoundRoute, RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
 import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
-import {
-  pathScopedLoader,
-  requireSession,
-  withPathScopedRevalidation,
-} from "@trenova/shared/lib/session-loader";
+import { requireWebSession } from "@/lib/session-gate";
+import { pathScopedLoader, withPathScopedRevalidation } from "@trenova/shared/lib/session-loader";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -38,7 +35,7 @@ const editionProtectedLoader = combineLoaders(...edition.protectedLoaders);
 
 const protectedLoader: LoaderFunction = pathScopedLoader(async (args) => {
   const { request } = args;
-  const sessionRedirect = await requireSession("/login");
+  const sessionRedirect = await requireWebSession("/login");
   if (sessionRedirect) {
     return sessionRedirect;
   }

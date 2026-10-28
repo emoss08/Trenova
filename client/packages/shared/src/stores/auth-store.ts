@@ -12,7 +12,6 @@ import {
 } from "@trenova/shared/types/mfa";
 import type { LoginRequest, User } from "@trenova/shared/types/user";
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
 export type LoginOutcome =
   | { status: "signed_in" }
@@ -42,105 +41,104 @@ interface AuthState {
   clearAuth: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      isLoading: false,
-      isAuthenticated: false,
+/**
+ * Who is signed in. Held in memory only: the person's name, email and profile are never
+ * written to the browser's storage, where a shared PC would keep them for whoever sits down
+ * next. Every page load learns the session from the server (`checkSession`) before a
+ * signed-in route renders, and the language a sign-in page shows in is remembered
+ * separately (`trenova.locale`).
+ */
+export const useAuthStore = create<AuthState>()((set, get) => ({
+  user: null,
+  isLoading: false,
+  isAuthenticated: false,
 
-      login: async (credentials: LoginRequest) => {
-        set({ isLoading: true });
-        try {
-          const response = await authService.login(credentials);
-          if (isMFAChallenge(response)) {
-            set({ isLoading: false });
-            return { status: "mfa_required", challenge: response };
-          }
-          set({
-            user: response.user,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-          usePermissionStore.getState().fetchManifest().catch(console.error);
-          return { status: "signed_in" };
-        } catch (error) {
-          set({ isLoading: false });
-          throw error;
-        }
-      },
+  login: async (credentials: LoginRequest) => {
+    set({ isLoading: true });
+    try {
+      const response = await authService.login(credentials);
+      if (isMFAChallenge(response)) {
+        set({ isLoading: false });
+        return { status: "mfa_required", challenge: response };
+      }
+      set({
+        user: response.user,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+      usePermissionStore.getState().fetchManifest().catch(console.error);
+      return { status: "signed_in" };
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
 
-      verifyMFA: async (request: VerifyMFAChallengeRequest) => {
-        set({ isLoading: true });
-        try {
-          const response = await authService.verifyMFA(request);
-          set({
-            user: response.user,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-          usePermissionStore.getState().fetchManifest().catch(console.error);
-        } catch (error) {
-          set({ isLoading: false });
-          throw error;
-        }
-      },
+  verifyMFA: async (request: VerifyMFAChallengeRequest) => {
+    set({ isLoading: true });
+    try {
+      const response = await authService.verifyMFA(request);
+      set({
+        user: response.user,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+      usePermissionStore.getState().fetchManifest().catch(console.error);
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
 
-      logout: async () => {
-        try {
-          await authService.logout();
-        } finally {
-          realtimeClient.disconnect();
-          clearCsrfToken();
-          set({ user: null, isAuthenticated: false });
-          usePermissionStore.getState().clearPermissions();
-        }
-      },
+  logout: async () => {
+    try {
+      await authService.logout();
+    } finally {
+      realtimeClient.disconnect();
+      clearCsrfToken();
+      set({ user: null, isAuthenticated: false });
+      usePermissionStore.getState().clearPermissions();
+    }
+  },
 
-      checkSession: async () => {
-        try {
-          const freshUser = await userService.currentUser();
-          set({ user: freshUser, isAuthenticated: true });
-          usePermissionStore
-            .getState()
-            .checkForUpdates(freshUser.currentOrganizationId)
-            .catch(console.error);
-          return { status: "signed_in" };
-        } catch (error) {
-          if (!isSessionExpiry(error)) {
-            return { status: "unreachable", error };
-          }
-          set({ user: null, isAuthenticated: false });
-          clearCsrfToken();
-          usePermissionStore.getState().clearPermissions();
-          return { status: "signed_out" };
-        }
-      },
+  checkSession: async () => {
+    try {
+      const freshUser = await userService.currentUser();
+      set({ user: freshUser, isAuthenticated: true });
+      usePermissionStore
+        .getState()
+        .checkForUpdates(freshUser.currentOrganizationId)
+        .catch(console.error);
+      return { status: "signed_in" };
+    } catch (error) {
+      if (!isSessionExpiry(error)) {
+        return { status: "unreachable", error };
+      }
+      set({ user: null, isAuthenticated: false });
+      clearCsrfToken();
+      usePermissionStore.getState().clearPermissions();
+      return { status: "signed_out" };
+    }
+  },
 
-      checkAuth: async () => (await get().checkSession()).status === "signed_in",
+  checkAuth: async () => (await get().checkSession()).status === "signed_in",
 
-      setUser: (user: User | null) => {
-        set({ user, isAuthenticated: !!user });
-      },
+  setUser: (user: User | null) => {
+    set({ user, isAuthenticated: !!user });
+  },
 
-      clearAuth: () => {
-        clearCsrfToken();
-        set({ user: null, isAuthenticated: false, isLoading: false });
-        usePermissionStore.getState().clearPermissions();
-      },
-    }),
-    {
-      name: "auth-storage",
-      partialize: (state) => ({ user: state.user }),
-    },
-  ),
-);
+  clearAuth: () => {
+    clearCsrfToken();
+    set({ user: null, isAuthenticated: false, isLoading: false });
+    usePermissionStore.getState().clearPermissions();
+  },
+}));
 
 /**
  * Timestamps arrive as UTC epoch seconds and are rendered by
  * `@trenova/shared/lib/date`, which reads the signed-in user's timezone and
- * clock preferences from module state. Mirroring them here — on hydration and
- * on every change — is what keeps a Denver user from reading Eastern times.
+ * clock preferences from module state. Mirroring them here on every change is
+ * what keeps a Denver user from reading Eastern times.
  */
 const syncUserDatePreferences = (user: User | null) => {
   setUserDatePreferences({ timezone: user?.timezone, timeFormat: user?.timeFormat });

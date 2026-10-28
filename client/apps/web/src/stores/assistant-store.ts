@@ -56,7 +56,11 @@ interface AssistantState {
   activeThreadId: string | null;
   /** Suggestion prompts the person closed; they stay closed across sessions. */
   dismissedSuggestions: string[];
-  /** What was typed but not sent, per conversation, so switching loses nothing. */
+  /**
+   * What was typed but not sent, per conversation, so switching loses nothing. Kept in
+   * memory only: what someone types about a shipment or a person is never written to the
+   * browser's storage.
+   */
   drafts: Record<string, string>;
   /** The agent this person last started a conversation with, on either surface. */
   lastAgentId: string | null;
@@ -96,6 +100,11 @@ interface AssistantState {
   resumeDecisions: (keys: readonly string[]) => void;
   focusDecision: (threadId: string, focus: DecisionFocus, keys: readonly string[]) => void;
   clearDecisionFocus: (threadId: string) => void;
+  /**
+   * Forgets everything about the person's conversations: the one open, drafts, deferred
+   * decisions, the agent last used. Where and how the panel sits stays.
+   */
+  endSession: () => void;
 }
 
 const MAX_DISMISSED = 50;
@@ -183,27 +192,32 @@ export function mergePersisted(persisted: unknown, current: AssistantState): Ass
           .filter((key): key is string => typeof key === "string")
           .slice(-MAX_DEFERRED_DECISIONS)
       : [],
+    drafts: current.drafts,
     decisionFocus: {},
   };
 }
 
+const SESSION_DEFAULTS = {
+  open: false,
+  repliedThreadId: null,
+  activeThreadId: null,
+  lastAgentId: null,
+  openingQuestion: null,
+  drafts: {},
+  deferredDecisions: [],
+  decisionFocus: {},
+} satisfies Partial<AssistantState>;
+
 export const useAssistantStore = create<AssistantState>()(
   persist(
     (set) => ({
-      open: false,
       layout: DEFAULT_ASSISTANT_LAYOUT,
       sidebarCollapsed: false,
-      repliedThreadId: null,
-      activeThreadId: null,
       dismissedSuggestions: [],
-      lastAgentId: null,
-      openingQuestion: null,
-      drafts: {},
       dock: DEFAULT_ASSISTANT_DOCK,
       launcherHidden: false,
       panelSize: null,
-      deferredDecisions: [],
-      decisionFocus: {},
+      ...SESSION_DEFAULTS,
 
       openWidget: () => set({ open: true, repliedThreadId: null }),
       closeWidget: () => set({ open: false }),
@@ -247,6 +261,7 @@ export const useAssistantStore = create<AssistantState>()(
           const { [threadId]: _cleared, ...rest } = state.decisionFocus;
           return { decisionFocus: rest };
         }),
+      endSession: () => set(SESSION_DEFAULTS),
     }),
     {
       name: "trenova-assistant",
@@ -255,7 +270,6 @@ export const useAssistantStore = create<AssistantState>()(
         sidebarCollapsed: state.sidebarCollapsed,
         activeThreadId: state.activeThreadId,
         dismissedSuggestions: state.dismissedSuggestions,
-        drafts: state.drafts,
         lastAgentId: state.lastAgentId,
         dock: state.dock,
         launcherHidden: state.launcherHidden,

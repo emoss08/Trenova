@@ -4,12 +4,8 @@ import { edition } from "@/lib/edition";
 import { installPlanLimitHandler } from "@/lib/plan-limit-handler";
 import { queryClient } from "@/lib/query-client";
 import { SessionQueryProvider } from "@/components/session-query-provider";
-import {
-  clearSessionCache,
-  retainShellQueries,
-  sessionPersistence,
-  sessionScope,
-} from "@/lib/session-cache";
+import { clearSessionCache, retainShellQueries, sessionPersistence } from "@/lib/session-cache";
+import { sessionScope } from "@/lib/session-scope";
 import { RootErrorBoundary } from "@trenova/shared/components/error-boundary";
 import { ThemeProvider } from "@trenova/shared/components/theme-provider";
 import { Toaster } from "@trenova/shared/components/ui/toaster";

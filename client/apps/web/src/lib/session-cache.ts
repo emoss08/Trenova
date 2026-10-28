@@ -14,9 +14,14 @@ import {
   type QueryKey,
 } from "@tanstack/react-query";
 import type { PersistQueryClientOptions, Persister } from "@tanstack/react-query-persist-client";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import type { User } from "@trenova/shared/types/user";
+import { clearDocumentUploadSessions } from "@/lib/document-upload-store";
+import { activeSessionScope } from "@/lib/session-scope";
+import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskAttachedPageStore } from "@/stores/desk-attached-page-store";
+import { useDeskSettingsStore } from "@/stores/desk-settings-store";
+import { useDeskStore } from "@/stores/desk-store";
+import { useRecentPagesStore } from "@/stores/recent-pages-store";
+import { useRecentRecordsStore } from "@/stores/recent-records-store";
 
 // What draws the app's frame and its first screen, written to the browser's disk so a
 // returning session paints them before the network answers. Nothing else is ever written:
@@ -54,19 +59,6 @@ export function retainShellQueries(client: QueryClient): void {
   }
 }
 
-/**
- * Whose cache this is: the signed-in person in their current organization, or null when
- * there is no one to keep it for. A cache is only read or written for the scope that is
- * signed in at that moment, so one person's frame never paints for another, nor one
- * organization's for the next.
- */
-export function sessionScope(
-  user: Pick<User, "id" | "currentOrganizationId"> | null,
-): string | null {
-  if (!user?.id || !user.currentOrganizationId) return null;
-  return `${user.id}:${user.currentOrganizationId}`;
-}
-
 const NOTHING_KEPT: Persister = {
   persistClient: () => undefined,
   restoreClient: () => undefined,
@@ -76,8 +68,8 @@ const NOTHING_KEPT: Persister = {
 export type SessionPersistence = {
   /** Restore and save options for one scope. */
   persistOptions: (scope: string | null) => Omit<PersistQueryClientOptions, "queryClient">;
-  /** Deletes every persisted cache except the scope's own (all of them for null). */
-  forgetOtherScopes: (scope: string | null) => Promise<void>;
+  /** Deletes every persisted cache except the scope's own. */
+  forgetOtherScopes: (scope: string) => Promise<void>;
   /** Deletes every persisted cache. */
   forgetAll: () => Promise<void>;
 };
@@ -145,23 +137,35 @@ export const sessionPersistence = createSessionPersistence(
   {
     enabled: import.meta.env.PROD,
     buster: () => buildId(),
-    activeScope: () => sessionScope(useAuthStore.getState().user),
+    activeScope: activeSessionScope,
   },
 );
 
 /**
- * Ends what the cache holds for a session, in memory and on disk. Every way a session ends
- * or changes hands — signing out, switching organization, a new sign-in, an expired session
- * — goes through here. A failure to reach the disk is reported and not thrown: the caller
- * is ending the session regardless, and a cache left behind is only ever read for the scope
- * that wrote it.
+ * Ends what the browser holds for a session, in memory and on disk: the query cache, the
+ * records and pages the person opened, what they searched and typed at the Desk, which
+ * conversation and artifact they had open, and the files of uploads still in progress.
+ * Every way a session ends or changes hands — signing out, switching organization, a new
+ * sign-in, an expired session — goes through here. A failure to reach the disk is reported
+ * and not thrown: the caller is ending the session regardless, a cache left behind is only
+ * ever read for the scope that wrote it, and an upload record only ever resumes for it.
  */
 export async function clearSessionCache(): Promise<void> {
   queryClient.clear();
   useDeskAttachedPageStore.getState().clear();
-  try {
-    await sessionPersistence.forgetAll();
-  } catch (error) {
-    console.error("Could not delete the persisted query cache:", error);
+  useRecentRecordsStore.getState().clear();
+  useRecentPagesStore.getState().clear();
+  useDeskSettingsStore.getState().forgetSearches();
+  useDeskStore.getState().endSession();
+  useAssistantStore.getState().endSession();
+  const [cache, uploads] = await Promise.allSettled([
+    sessionPersistence.forgetAll(),
+    clearDocumentUploadSessions(),
+  ]);
+  if (cache.status === "rejected") {
+    console.error("Could not delete the persisted query cache:", cache.reason);
+  }
+  if (uploads.status === "rejected") {
+    console.error("Could not delete the uploads kept for resuming:", uploads.reason);
   }
 }

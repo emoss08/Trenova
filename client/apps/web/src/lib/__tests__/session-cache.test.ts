@@ -15,8 +15,8 @@ import {
   isShellQuery,
   retainShellQueries,
   SHELL_CACHE_MAX_AGE_MS,
-  sessionScope,
 } from "../session-cache";
+import { sessionScope } from "../session-scope";
 
 function memoryStore(): KeyValueStore & { entries: Map<string, string> } {
   const entries = new Map<string, string>();
@@ -185,7 +185,7 @@ describe("session persistence", () => {
     expect(client.getQueryData(SIDEBAR_KEY)).toBeUndefined();
   });
 
-  it("forgets every other scope's cache, or all of them when no one is signed in", async () => {
+  it("forgets every other scope's cache", async () => {
     const store = memoryStore();
     store.entries.set("usr_1:org_1", "{}");
     store.entries.set("usr_1:org_2", "{}");
@@ -194,9 +194,6 @@ describe("session persistence", () => {
 
     await persistence.forgetOtherScopes("usr_1:org_2");
     expect([...store.entries.keys()]).toEqual(["usr_1:org_2"]);
-
-    await persistence.forgetOtherScopes(null);
-    expect(store.entries.size).toBe(0);
   });
 
   it("forgets everything at once", async () => {

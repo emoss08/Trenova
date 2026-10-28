@@ -4,6 +4,7 @@ import {
   persistDocumentUploadSession,
   removeDocumentUploadSession,
 } from "@/lib/document-upload-store";
+import { sessionScope } from "@/lib/session-scope";
 import { apiService } from "@/services/api";
 import type {
   Document,
@@ -14,6 +15,7 @@ import type {
 import { quarantinedUploadMessage } from "@/lib/upload-refusal";
 import type { UploadErrorType, UploadState } from "@/types/upload";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -145,6 +147,7 @@ export function useDocumentUpload({
   onError,
 }: UseDocumentUploadOptions): UseDocumentUploadReturn {
   const queryClient = useQueryClient();
+  const scope = useAuthStore((state) => sessionScope(state.user));
   const [uploads, setUploads] = useState<UploadState[]>([]);
   const pendingQueueRef = useRef<UploadState[]>([]);
   const activeUploadsRef = useRef(0);
@@ -160,19 +163,20 @@ export function useDocumentUpload({
   const syncSessionToStore = useCallback(
     async (uploadId: string, file: File) => {
       const session = sessionByUploadIdRef.current.get(uploadId);
-      if (!session) {
+      if (!session || !scope) {
         return;
       }
 
       await persistDocumentUploadSession({
         sessionId: session.id,
+        scope,
         resourceId,
         resourceType,
         session,
         file,
       });
     },
-    [resourceId, resourceType],
+    [resourceId, resourceType, scope],
   );
 
   const uploadPartWithRetry = useCallback(
@@ -686,6 +690,11 @@ export function useDocumentUpload({
   }, []);
 
   const clearAll = useCallback(() => {
+    // An aborted upload discards its own record, but only while its session is still known
+    // here, and a paused one has nothing running to discard it; both are deleted now.
+    sessionByUploadIdRef.current.forEach((session) => {
+      void removeDocumentUploadSession(session.id);
+    });
     abortControllersRef.current.forEach((controller) => controller.abort());
     abortControllersRef.current.clear();
     restoredSessionIdsRef.current.clear();
@@ -696,12 +705,15 @@ export function useDocumentUpload({
   }, []);
 
   useEffect(() => {
+    if (!scope) {
+      return undefined;
+    }
     let cancelled = false;
 
     const restore = async () => {
       try {
         const [persisted, activeSessions] = await Promise.all([
-          listPersistedDocumentUploadSessions(resourceType, resourceId),
+          listPersistedDocumentUploadSessions(scope, resourceType, resourceId),
           apiService.documentService.listActiveUploadSessions(resourceType, resourceId),
         ]);
 
@@ -773,7 +785,7 @@ export function useDocumentUpload({
     return () => {
       cancelled = true;
     };
-  }, [resourceId, resourceType]);
+  }, [resourceId, resourceType, scope]);
 
   const isUploading = uploads.some((upload) =>
     [

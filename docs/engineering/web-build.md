@@ -137,6 +137,21 @@ and shell queries stay in memory as long (`retainShellQueries`). Every way a ses
 changes hands — signing out, switching organization, signing in, an expired session — goes
 through `clearSessionCache()`.
 
+**What else the browser keeps.** The same rule holds for every store, not only the query
+cache. Zustand stores persist only per-viewer conveniences that name no record or person: a
+layout, a width, a toggle, a dismissed tip, or an opaque id (the open conversation or
+artifact). Anything that names a record or a person — the signed-in user (`auth-store`, which
+learns the session from the server on every load), recent records and pages (titled with the
+record's name), Desk searches, unsent assistant drafts — is kept in memory only.
+`clearSessionCache()` resets each of those stores and the per-session ids, so a store that
+gains such state adds its reset there. The one file kept on disk is an upload in progress
+(`lib/document-upload-store.ts`): a multipart upload resumes after a reload from the parts the
+server already has, so its file is kept in IndexedDB under the session's scope
+(`lib/session-scope.ts`), deleted when the upload finishes, fails, is cancelled or cleared,
+skipped when the session has changed by the time it would be written, and deleted with every
+other upload when a session ends. A session the server refuses on a page load
+(`lib/session-gate.ts`) is a session end too.
+
 **Operating it.** `/sw.js` must be revalidated on every check: Caddy sends `no-cache` for
 everything outside `assets/`, and Cloudflare's static assets send
 `public, max-age=0, must-revalidate`. The CSP must allow `worker-src 'self'`. To withdraw the

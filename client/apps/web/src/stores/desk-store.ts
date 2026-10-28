@@ -63,7 +63,21 @@ interface DeskState {
   takeAsk: (threadId: string) => string | null;
   noteDocumentAsk: (documentId: string, ask: Omit<DocumentAsk, "at">) => void;
   setLiveHandoff: (threadId: string, live: TurnHandoff | null) => void;
+  /**
+   * Forgets everything about the person's conversations: which artifact each had open, its
+   * chapters, and the questions and hand-offs under way. How the Desk is laid out stays.
+   */
+  endSession: () => void;
 }
+
+const SESSION_DEFAULTS = {
+  activeArtifactByThread: {},
+  chaptersByThread: {},
+  browsing: false,
+  asks: {},
+  documentAsks: {},
+  liveHandoff: {},
+} satisfies Partial<DeskState>;
 
 /**
  * The live hand-offs with one conversation's changed, or the same record when
@@ -114,14 +128,9 @@ export const useDeskStore = create<DeskState>()(
     (set, get) => ({
       rail: "open",
       pane: "open",
-      activeArtifactByThread: {},
       termsSeen: false,
-      chaptersByThread: {},
       sharePage: true,
-      browsing: false,
-      asks: {},
-      documentAsks: {},
-      liveHandoff: {},
+      ...SESSION_DEFAULTS,
 
       setRail: (rail) => set({ rail }),
       toggleRail: () => set((state) => ({ rail: state.rail === "open" ? "closed" : "open" })),
@@ -138,6 +147,7 @@ export const useDeskStore = create<DeskState>()(
       markTermsSeen: () => set({ termsSeen: true }),
       setSharePage: (sharePage) => set({ sharePage }),
       setBrowsing: (browsing) => set({ browsing }),
+      endSession: () => set(SESSION_DEFAULTS),
       askAgent: (threadId, question) =>
         set((state) => ({ asks: { ...state.asks, [threadId]: question } })),
       noteDocumentAsk: (documentId, ask) =>
