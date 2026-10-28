@@ -1074,13 +1074,21 @@ func TestUserHandler_ChangeMyPassword_Success(t *testing.T) {
 	repo := tenantportsmock.NewMockUserRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(user, nil).Twice()
 	repo.On("UpdatePassword", mock.Anything, mock.Anything).Return(nil).Once()
+	current := &session.Session{ID: pulid.MustNew("ses_"), UserID: user.ID}
+	elsewhere := &session.Session{ID: pulid.MustNew("ses_"), UserID: user.ID}
+	sessions := sessionportsmock.NewMockSessionRepository(t)
+	sessions.EXPECT().
+		ListForUser(mock.Anything, mock.Anything).
+		Return([]*session.Session{current, elsewhere}, nil).
+		Once()
+	sessions.EXPECT().Delete(mock.Anything, elsewhere.ID).Return(nil).Once()
 
-	handler := setupUserHandler(t, setupOptions{userRepo: repo})
+	handler := setupUserHandler(t, setupOptions{userRepo: repo, sessionRepo: sessions})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/users/me/change-password/").
-		WithDefaultAuthContext().
+		WithDefaultSessionAuthContext(current.ID).
 		WithJSONBody(map[string]any{
 			"currentPassword": "current-password",
 			"newPassword":     "new-password",

@@ -641,12 +641,13 @@ func (s *Service) refreshSessionLocale(
 
 func (s *Service) ChangeMyPassword(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	scope SessionScope,
 	req ChangeMyPasswordRequest,
 ) (*tenant.User, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
+	tenantInfo := scope.TenantInfo
 
 	user, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo: tenantInfo,
@@ -685,6 +686,10 @@ func (s *Service) ChangeMyPassword(
 
 	user.Password = hashedPassword
 	user.MustChangePassword = false
+
+	if _, err = s.RevokeMyOtherSessions(ctx, scope); err != nil {
+		return nil, err
+	}
 
 	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceUser,

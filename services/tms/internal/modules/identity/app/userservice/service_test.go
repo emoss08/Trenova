@@ -519,11 +519,13 @@ func TestUpdateMySettings_Success(t *testing.T) {
 			updated.EmailAddress == user.EmailAddress &&
 			updated.Timezone == "America/Chicago" &&
 			updated.TimeFormat == domaintypes.TimeFormat24Hour
-	})).Return(func(_ context.Context, req tenantports.UpdateUserColumnsRequest) *tenant.User {
-		return req.Entity
-	}, func(context.Context, tenantports.UpdateUserColumnsRequest) error {
-		return nil
-	}).Once()
+	})).
+		Return(func(_ context.Context, req tenantports.UpdateUserColumnsRequest) *tenant.User {
+			return req.Entity
+		}, func(context.Context, tenantports.UpdateUserColumnsRequest) error {
+			return nil
+		}).
+		Once()
 
 	result, err := deps.svc.UpdateMySettings(ctx, tenantInfo, UpdateMySettingsRequest{
 		Timezone:   "America/Chicago",
@@ -571,18 +573,30 @@ func TestChangeMyPassword_Success(t *testing.T) {
 		TenantInfo:         tenantInfo,
 		IncludeMemberships: true,
 	}).Return(user, nil).Once()
+	current := &session.Session{ID: pulid.MustNew("ses_"), UserID: user.ID}
+	elsewhere := &session.Session{ID: pulid.MustNew("ses_"), UserID: user.ID}
+	deps.sessionRepo.EXPECT().
+		ListForUser(mock.Anything, user.ID).
+		Return([]*session.Session{current, elsewhere}, nil).
+		Once()
+	deps.sessionRepo.EXPECT().Delete(mock.Anything, elsewhere.ID).Return(nil).Once()
 
-	result, err := deps.svc.ChangeMyPassword(ctx, tenantInfo, ChangeMyPasswordRequest{
-		CurrentPassword: "current-password",
-		NewPassword:     "new-password",
-		ConfirmPassword: "new-password",
-	})
+	result, err := deps.svc.ChangeMyPassword(
+		ctx,
+		SessionScope{TenantInfo: tenantInfo, CurrentSessionID: current.ID},
+		ChangeMyPasswordRequest{
+			CurrentPassword: "current-password",
+			NewPassword:     "new-password",
+			ConfirmPassword: "new-password",
+		},
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Equal(t, user.ID, result.ID)
 	deps.repo.AssertExpectations(t)
 	deps.audit.AssertCalled(t, "LogAction", mock.Anything, mock.Anything)
+	deps.sessionRepo.AssertNotCalled(t, "Delete", mock.Anything, current.ID)
 }
 
 func TestChangeMyPassword_WrongCurrentPassword(t *testing.T) {
@@ -601,11 +615,15 @@ func TestChangeMyPassword_WrongCurrentPassword(t *testing.T) {
 		TenantInfo: tenantInfo,
 	}).Return(user, nil).Once()
 
-	result, err := deps.svc.ChangeMyPassword(ctx, tenantInfo, ChangeMyPasswordRequest{
-		CurrentPassword: "wrong-password",
-		NewPassword:     "new-password",
-		ConfirmPassword: "new-password",
-	})
+	result, err := deps.svc.ChangeMyPassword(
+		ctx,
+		SessionScope{TenantInfo: tenantInfo},
+		ChangeMyPasswordRequest{
+			CurrentPassword: "wrong-password",
+			NewPassword:     "new-password",
+			ConfirmPassword: "new-password",
+		},
+	)
 
 	require.Error(t, err)
 	assert.Nil(t, result)
@@ -620,7 +638,7 @@ func TestChangeMyPassword_ValidationFailure(t *testing.T) {
 
 	result, err := deps.svc.ChangeMyPassword(
 		t.Context(),
-		pagination.TenantInfo{},
+		SessionScope{},
 		ChangeMyPasswordRequest{
 			CurrentPassword: "same-password",
 			NewPassword:     "same-password",
@@ -696,11 +714,15 @@ func TestChangeMyPassword_RefusesAPasswordThePolicyRejects(t *testing.T) {
 				TenantInfo: tenantInfo,
 			}).Return(user, nil).Once()
 
-			result, err := deps.svc.ChangeMyPassword(t.Context(), tenantInfo, ChangeMyPasswordRequest{
-				CurrentPassword: "current-password",
-				NewPassword:     newPassword,
-				ConfirmPassword: newPassword,
-			})
+			result, err := deps.svc.ChangeMyPassword(
+				t.Context(),
+				SessionScope{TenantInfo: tenantInfo},
+				ChangeMyPasswordRequest{
+					CurrentPassword: "current-password",
+					NewPassword:     newPassword,
+					ConfirmPassword: newPassword,
+				},
+			)
 
 			require.Nil(t, result)
 			var multiErr *errortypes.MultiError

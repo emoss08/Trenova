@@ -634,8 +634,6 @@ func (h *Handler) getProfilePictureURL(c *gin.Context) {
 // @Security BearerAuth
 // @Router /users/me/change-password/ [post]
 func (h *Handler) changeMyPassword(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
 	var req ChangeMyPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.eh.HandleError(c, err)
@@ -644,11 +642,7 @@ func (h *Handler) changeMyPassword(c *gin.Context) {
 
 	updated, err := h.service.ChangeMyPassword(
 		c.Request.Context(),
-		pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		sessionScope(c),
 		userservice.ChangeMyPasswordRequest{
 			CurrentPassword: req.CurrentPassword,
 			NewPassword:     req.NewPassword,
