@@ -172,23 +172,25 @@ func applicationJournal(
 
 	lines := make([]journalentryports.JournalPostingLine, 0, len(applications)*3+1)
 	lineNumber := int16(1)
-	lines = append(lines, journalentryports.JournalPostingLine{
-		ID:          pulid.MustNew("jel_"),
-		GLAccountID: control.DefaultUnappliedCashAccountID,
-		LineNumber:  lineNumber,
-		Description: description,
-		DebitAmount: appliedDelta,
-		NetAmount:   appliedDelta,
-		CustomerID:  payment.CustomerID,
-	})
-	lineNumber++
+	if appliedDelta > 0 {
+		lines = append(lines, journalentryports.JournalPostingLine{
+			ID:          pulid.MustNew("jel_"),
+			GLAccountID: control.DefaultUnappliedCashAccountID,
+			LineNumber:  lineNumber,
+			Description: description,
+			DebitAmount: appliedDelta,
+			NetAmount:   appliedDelta,
+			CustomerID:  payment.CustomerID,
+		})
+		lineNumber++
+	}
 
 	var total int64
 	for _, app := range applications {
 		if app == nil {
 			continue
 		}
-		total += app.AppliedAmountMinor
+		total += app.SettledAmountMinor()
 		if app.AppliedAmountMinor > 0 {
 			lines = append(lines, journalentryports.JournalPostingLine{
 				ID:           pulid.MustNew("jel_"),

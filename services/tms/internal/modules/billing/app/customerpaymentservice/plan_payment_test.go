@@ -223,6 +223,70 @@ func TestPreviewApplyUnapplied_IsWhatApplyUnappliedWrites(t *testing.T) {
 	assert.Equal(t, w.postings[0].Lines[0].DebitAmount, preview.Journal.Lines[0].DebitMinor)
 }
 
+func postingTotals(posting journalentryports.CreateJournalPostingParams) (debit, credit int64) {
+	for _, line := range posting.Lines {
+		debit += line.DebitAmount
+		credit += line.CreditAmount
+	}
+	return debit, credit
+}
+
+func TestApplyUnapplied_HeaderTotalsIncludeTheShortPay(t *testing.T) {
+	t.Parallel()
+
+	payment := postedPayment(10000, 15000, &customerpayment.Application{
+		ID: pulid.MustNew("cpapp_"), InvoiceID: pulid.MustNew("inv_"), AppliedAmountMinor: 10000,
+	})
+	target := openInvoiceFor(payment, 6000, 0)
+	w := newPaymentWorld(t, payment, target)
+
+	_, err := w.svc.ApplyUnapplied(t.Context(), &customerpaymentports.ApplyCustomerPaymentRequest{
+		PaymentID:      payment.ID,
+		AccountingDate: 200,
+		Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
+			{InvoiceID: target.ID, AppliedAmountMinor: 4500, ShortPayAmountMinor: 500},
+		},
+		TenantInfo: w.tenantInfo,
+	}, w.actor)
+
+	require.NoError(t, err)
+	require.Len(t, w.postings, 1)
+	debit, credit := postingTotals(w.postings[0])
+	assert.Equal(t, debit, credit)
+	assert.Equal(t, debit, w.postings[0].TotalDebit, "a header that disagrees with its lines can never be posted")
+	assert.Equal(t, credit, w.postings[0].TotalCredit)
+	assert.Equal(t, int64(5000), w.postings[0].TotalDebit)
+}
+
+func TestApplyUnapplied_AShortPayAloneWritesNoZeroLine(t *testing.T) {
+	t.Parallel()
+
+	payment := postedPayment(10000, 15000, &customerpayment.Application{
+		ID: pulid.MustNew("cpapp_"), InvoiceID: pulid.MustNew("inv_"), AppliedAmountMinor: 10000,
+	})
+	target := openInvoiceFor(payment, 6000, 5800)
+	w := newPaymentWorld(t, payment, target)
+
+	_, err := w.svc.ApplyUnapplied(t.Context(), &customerpaymentports.ApplyCustomerPaymentRequest{
+		PaymentID:      payment.ID,
+		AccountingDate: 200,
+		Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
+			{InvoiceID: target.ID, ShortPayAmountMinor: 200},
+		},
+		TenantInfo: w.tenantInfo,
+	}, w.actor)
+
+	require.NoError(t, err)
+	require.Len(t, w.postings, 1)
+	for _, line := range w.postings[0].Lines {
+		assert.NotZero(t, line.DebitAmount+line.CreditAmount, "every journal line carries an amount")
+	}
+	debit, credit := postingTotals(w.postings[0])
+	assert.Equal(t, int64(200), debit)
+	assert.Equal(t, debit, credit)
+	assert.Equal(t, debit, w.postings[0].TotalDebit)
+}
+
 func TestPreviewApplyUnapplied_RefusesWhatApplyRefuses(t *testing.T) {
 	t.Parallel()
 

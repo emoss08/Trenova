@@ -656,6 +656,14 @@ func TestPostAndApplyRecognizesShortPay(t *testing.T) {
 	assert.Equal(t, int64(9000), lastPosting.Lines[1].CreditAmount)
 	assert.Equal(t, int64(1000), lastPosting.Lines[2].CreditAmount)
 	assert.Equal(t, int64(1000), lastPosting.Lines[3].DebitAmount)
+	var debit, credit int64
+	for _, line := range lastPosting.Lines {
+		debit += line.DebitAmount
+		credit += line.CreditAmount
+	}
+	assert.Equal(t, debit, lastPosting.TotalDebit, "the header totals what the lines debit")
+	assert.Equal(t, credit, lastPosting.TotalCredit, "the header totals what the lines credit")
+	assert.Equal(t, int64(10000), lastPosting.TotalDebit, "cash and the short pay written off")
 	assert.Equal(t, invoice.SettlementStatusPaid, storedInvoice.SettlementStatus)
 }
 
