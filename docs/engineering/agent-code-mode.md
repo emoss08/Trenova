@@ -257,6 +257,15 @@ letters, digits and underscores, starting with a letter, and not one of the SDK'
   dates, and anything else as text. A text file is its text. An attached file taints the call
   (`scriptAnswer.TaintedRecords`), as `agent_read_attachment` would; a report run is the
   organization's own data and taints nothing.
+- **A report definition** (`definition`, the shape `report_preview` takes). The report
+  engine runs it now with the person's report access (`report:read`, and every field checked as
+  a preview checks it), grouping and totalling every record on the server, and the grouped rows
+  are typed as a run's are (`definitionDataset`, source `ReportDefinition`, no source id). It is
+  how a script answers a question about more records than it may read: 32,870 fuel purchases
+  are a few dozen rows by month and fuel type. The engine returns at most its preview bound
+  (`reporting.previewRowLimit`), and a definition it cut short is refused with a request to
+  group it, never read as though it were every record. A script stopped at its rows, reads or
+  bytes is told the same in its note (`scriptTooManyRowsNote`).
 
 Another person's run, and a file from another conversation, are refused as though they did not
 exist; a run with no person behind it reads no datasets. A dataset is at most 20 MB, 200,000

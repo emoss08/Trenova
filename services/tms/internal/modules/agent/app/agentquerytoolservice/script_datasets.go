@@ -16,6 +16,7 @@ import (
 
 	"github.com/emoss08/keel/analytics/export"
 	"github.com/emoss08/keel/analytics/format"
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/keel/analytics/table"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
@@ -30,10 +31,11 @@ import (
 )
 
 const (
-	paramScriptDatasets  = "datasets"
-	paramDatasetName     = "name"
-	paramDatasetRun      = "reportRunId"
-	paramDatasetDocument = "documentId"
+	paramScriptDatasets    = "datasets"
+	paramDatasetName       = "name"
+	paramDatasetRun        = "reportRunId"
+	paramDatasetDocument   = "documentId"
+	paramDatasetDefinition = "definition"
 
 	extensionCSV  = "csv"
 	extensionXLSX = "xlsx"
@@ -53,6 +55,9 @@ type datasetRequest struct {
 	name       string
 	reportRun  pulid.ID
 	documentID pulid.ID
+	// definition is a report the engine runs now, grouped and totalled over
+	// every record, rather than a run already made.
+	definition *ir.Definition
 }
 
 func datasetsFrom(raw any) ([]datasetRequest, error) {
@@ -90,14 +95,19 @@ func datasetsFrom(raw any) ([]datasetRequest, error) {
 		if err != nil {
 			return nil, err
 		}
-		if hasRun == hasDocument {
-			return nil, fmt.Errorf(
-				"dataset %s needs exactly one of reportRunId or documentId", name)
+		var definition *ir.Definition
+		if raw, given := fields[paramDatasetDefinition]; given && raw != nil {
+			if definition, err = reporting.DecodeDefinition(raw); err != nil {
+				return nil, fmt.Errorf("dataset %s: %w", name, err)
+			}
 		}
-		requests = append(
-			requests,
-			datasetRequest{name: name, reportRun: run, documentID: document},
-		)
+		if sources := countTrue(hasRun, hasDocument, definition != nil); sources != 1 {
+			return nil, fmt.Errorf(
+				"dataset %s needs exactly one of reportRunId, documentId or definition", name)
+		}
+		requests = append(requests, datasetRequest{
+			name: name, reportRun: run, documentID: document, definition: definition,
+		})
 	}
 
 	return requests, nil
@@ -149,9 +159,12 @@ func (d *scriptDatasets) resolve(
 			size    int
 			err     error
 		)
-		if readsReport(*request) {
+		switch {
+		case request.definition != nil:
+			dataset, size, err = d.definitionDataset(ctx, params, request)
+		case readsReport(*request):
 			dataset, size, err = d.reportDataset(ctx, params, person, request)
-		} else {
+		default:
 			dataset, size, err = d.fileDataset(ctx, params, person, request)
 			if err == nil {
 				resolved.attachments = append(resolved.attachments, agent.RecordRef{
@@ -174,7 +187,111 @@ func (d *scriptDatasets) resolve(
 	return resolved, nil
 }
 
-func readsReport(request datasetRequest) bool { return request.reportRun.IsNotNil() }
+func readsReport(request datasetRequest) bool {
+	return request.reportRun.IsNotNil() || request.definition != nil
+}
+
+func countTrue(flags ...bool) int {
+	count := 0
+	for _, flag := range flags {
+		if flag {
+			count++
+		}
+	}
+
+	return count
+}
+
+// definitionDataset is a report the engine runs now from its definition, with
+// the person's report access, every row of the grouped result typed by its
+// columns. The engine groups and totals over every record and returns at most
+// its preview bound of rows, so a definition that groups (by month, by fuel
+// type) reads tens of thousands of records as a few dozen rows; one that lists
+// records is refused when it has more rows than that, as a script should then
+// group it.
+func (d *scriptDatasets) definitionDataset(
+	ctx context.Context,
+	params *agenttoolports.QueryToolParams,
+	request *datasetRequest,
+) (*scriptports.Dataset, int, error) {
+	label := "a report on " + request.definition.Entity
+	values := normalizeReportParameters(request.definition, nil)
+	if err := requireReportParameters(label, request.definition, values); err != nil {
+		return nil, 0, err
+	}
+	result, err := d.reports.Preview(ctx, &reporting.PreviewRequest{
+		Request:    reportingRequestFor(params),
+		Definition: request.definition,
+		Params:     values,
+	})
+	if err != nil {
+		return nil, 0, fmt.Errorf("dataset %s: the report could not be run: %w",
+			request.name, err)
+	}
+	if result.Truncated {
+		return nil, 0, fmt.Errorf("dataset %s has more rows than a report from a definition "+
+			"returns (%d); group it (a bucket on a date, a measure such as sum) so the engine "+
+			"totals the records, or narrow its filters", request.name, len(result.Rows))
+	}
+
+	location := timezoneOf(params.Timezone)
+	columns := make([]scriptports.DatasetColumn, 0, len(result.Columns))
+	for idx := range result.Columns {
+		column := &result.Columns[idx]
+		kind := analysis.KindOf(
+			column.Type.String(), reportFormat(column), string(column.Display.DateStyle),
+		)
+		columns = append(columns, scriptports.DatasetColumn{
+			Name:     column.Label,
+			Kind:     kind,
+			Currency: analysis.Currency(kind, column.Display.Currency),
+		})
+	}
+	size := 0
+	rows := make([][]any, 0, len(result.Rows))
+	for _, cells := range result.Rows {
+		row := make([]any, len(result.Columns))
+		for idx := range result.Columns {
+			if idx < len(cells) {
+				text := previewCellText(cells[idx])
+				size += len(text)
+				row[idx] = rawValue(text, &result.Columns[idx], location)
+			}
+		}
+		rows = append(rows, row)
+	}
+	if size > analysis.MaxDatasetBytes {
+		return nil, 0, fmt.Errorf("dataset %s is larger than 20 MB; group it or narrow its "+
+			"filters", request.name)
+	}
+
+	return &scriptports.Dataset{
+		Name:    request.name,
+		Source:  analysis.DatasetReportDefinition,
+		Label:   label,
+		Columns: columns,
+		Rows:    rows,
+	}, size, nil
+}
+
+// previewCellText is a preview cell as the raw export writes it, so it is
+// typed by its column as a run's rows are.
+func previewCellText(cell any) string {
+	switch value := cell.(type) {
+	case nil:
+		return ""
+	case string:
+		return value
+	case int64:
+		return strconv.FormatInt(value, 10)
+	case float64:
+		return strconv.FormatFloat(value, 'f', -1, 64)
+	case bool:
+		return strconv.FormatBool(value)
+	default:
+		return fmt.Sprint(value)
+	}
+}
 
 func (d *scriptDatasets) authorizeReports(
 	ctx context.Context,

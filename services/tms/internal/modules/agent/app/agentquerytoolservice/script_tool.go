@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -51,6 +52,9 @@ const (
 		"same script unchanged. calls lists what each read returned or why it was refused."
 	scriptStoppedNote = "The script was stopped at a limit. Read less, or split the work, " +
 		"and run it again; or answer with what it returned."
+	scriptTooManyRowsNote = " A question about more records than a script reads is " +
+		"answered on the server: give the script a dataset with a definition that groups " +
+		"and totals them (a bucket on a date, a sum or a count), and read the grouped rows."
 	scriptBatchFiledNote = " The changes it prepared are proposed as one batch: nothing has " +
 		"run, and a person approves or rejects them as a whole. Say that they wait for approval; " +
 		"never say they were made."
@@ -223,7 +227,10 @@ func datasetsSchema() map[string]any {
 		toolschema.KeyDescription: "Tables the script reads in full, at most five, each " +
 			"bound to its name as a list of row dicts keyed by its column labels, numbers as " +
 			"numbers and times as dates; a text file is its text. Give each a name and " +
-			"exactly one of reportRunId or documentId.",
+			"exactly one of reportRunId, documentId or definition. A definition is the " +
+			"answer for more records than a script reads (5,000): the report engine groups " +
+			"and totals every record on the server, such as fuel spend by month and fuel " +
+			"type with a month bucket and a sum, and the script reads the grouped rows.",
 		toolschema.KeyMaxItems: analysis.MaxDatasets,
 		toolschema.KeyItems: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,
@@ -244,6 +251,7 @@ func datasetsSchema() map[string]any {
 					"A CSV, XLSX or text file the person attached to this conversation, "+
 						"from agent_read_attachment.",
 				),
+				paramDatasetDefinition: report.DefinitionToolSchema(),
 			},
 			toolschema.KeyRequired:             []string{paramDatasetName},
 			toolschema.KeyAdditionalProperties: false,
@@ -707,6 +715,10 @@ func scriptAnswerOf(
 	case scriptports.TimedOut, scriptports.Stopped,
 		scriptports.Failed:
 		answer.Note = scriptStoppedNote
+	}
+	if hit := hitOf(outcome, summary); hit == codemode.LimitRows || hit == codemode.LimitCalls ||
+		hit == codemode.LimitBytes {
+		answer.Note += scriptTooManyRowsNote
 	}
 	answer.Note += batchNote(answer, &summary.Batch)
 
