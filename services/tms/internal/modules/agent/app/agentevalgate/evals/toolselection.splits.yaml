@@ -183,6 +183,7 @@ strata:
     heldOut:
       - add a new reefer trailer to the fleet
       - alert me whenever a customer is put on credit hold
+      - discard the blank scanned page
       - dismiss the weather item on the watchtower feed
       - show the scanned paperwork waiting in capture intake
       - the trailer was dropped at another yard, locate it there
