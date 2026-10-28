@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -35,15 +36,15 @@ func (r *holdPlans) ListByIDs(
 type holdPlanService struct {
 	agentports.AgentPlanService
 
-	holds map[pulid.ID]*agentports.ProposalHold
+	holds map[pulid.ID]*assistantports.ProposalHold
 }
 
 func (s *holdPlanService) PlanHolds(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	plans []*agent.AgentPlan,
-) (map[pulid.ID]*agentports.ProposalHold, error) {
-	out := make(map[pulid.ID]*agentports.ProposalHold, len(plans))
+) (map[pulid.ID]*assistantports.ProposalHold, error) {
+	out := make(map[pulid.ID]*assistantports.ProposalHold, len(plans))
 	for _, plan := range plans {
 		if hold, ok := s.holds[plan.ID]; ok {
 			out[plan.ID] = hold
@@ -59,8 +60,8 @@ func TestAgentPlanHold_ReadsThePlanServiceRuleForEachPlan(t *testing.T) {
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	held := &agent.AgentPlan{ID: pulid.MustNew("apl_"), Status: agent.PlanStatusPending}
 	live := &agent.AgentPlan{ID: pulid.MustNew("apl_"), Status: agent.PlanStatusPending}
-	hold := &agentports.ProposalHold{Reason: "AgentShadow", AgentName: "Billing exceptions"}
-	service := &holdPlanService{holds: map[pulid.ID]*agentports.ProposalHold{held.ID: hold}}
+	hold := &assistantports.ProposalHold{Reason: "AgentShadow", AgentName: "Billing exceptions"}
+	service := &holdPlanService{holds: map[pulid.ID]*assistantports.ProposalHold{held.ID: hold}}
 	ctx := NewAgentPlanHoldLoaderFactory(AgentPlanHoldLoaderFactoryParams{
 		Plans:       &holdPlans{byID: map[pulid.ID]*agent.AgentPlan{held.ID: held, live.ID: live}},
 		PlanService: service,

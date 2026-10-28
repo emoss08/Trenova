@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -26,10 +26,13 @@ func (r *Deps) resolveAIProviderSelectOptions(
 	if len(req.IDs) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.IDs))
 		for _, id := range req.IDs {
-			entity, err := r.AiProviderService.GetByID(ctx, agentports.GetAIProviderByIDRequest{
-				ID:         id,
-				TenantInfo: req.TenantInfo,
-			})
+			entity, err := r.AiProviderService.GetByID(
+				ctx,
+				aiproviderports.GetAIProviderByIDRequest{
+					ID:         id,
+					TenantInfo: req.TenantInfo,
+				},
+			)
 			if err != nil {
 				if errortypes.IsNotFoundError(err) {
 					continue
@@ -44,7 +47,7 @@ func (r *Deps) resolveAIProviderSelectOptions(
 
 	result, err := r.AiProviderService.SelectOptions(
 		ctx,
-		&agentports.AIProviderSelectOptionsRequest{
+		&aiproviderports.AIProviderSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 			Task:               aiprovider.TaskAssistantChat,
 		},

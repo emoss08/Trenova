@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -28,7 +29,7 @@ type Params struct {
 	DispatchRepo    dispatchcontrolports.DispatchControlRepository
 	CommentService  shipmentports.ShipmentCommentService
 	AuditService    auditports.AuditService
-	Realtime        agentports.RealtimeService
+	Realtime        realtimeports.RealtimeService
 	OrderDerivation orderports.OrderDerivationService `optional:"true"`
 	Publisher       agentports.AgentEventPublisher    `optional:"true"`
 	// Watchtower puts an open failure on the feed a person reads.
@@ -47,7 +48,7 @@ type service struct {
 	dispatchRepo   dispatchcontrolports.DispatchControlRepository
 	commentService shipmentports.ShipmentCommentService
 	auditService   auditports.AuditService
-	realtime       agentports.RealtimeService
+	realtime       realtimeports.RealtimeService
 	ediService     ediports.EDIService
 	delayedMarker  delayedShipmentMarker
 	publisher      agentports.AgentEventPublisher

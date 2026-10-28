@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
@@ -26,14 +26,14 @@ type Params struct {
 
 	Logger    *zap.Logger
 	Repo      shipmenteventports.ShipmentEventRepository
-	Realtime  agentports.RealtimeService
+	Realtime  realtimeports.RealtimeService
 	Observers []shipmenteventports.ShipmentEventObserver `group:"shipment_event_observers"`
 }
 
 type service struct {
 	l         *zap.Logger
 	repo      shipmenteventports.ShipmentEventRepository
-	realtime  agentports.RealtimeService
+	realtime  realtimeports.RealtimeService
 	observers []shipmenteventports.ShipmentEventObserver
 }
 

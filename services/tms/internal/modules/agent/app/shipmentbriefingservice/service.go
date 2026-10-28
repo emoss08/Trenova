@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -52,7 +52,7 @@ type Params struct {
 	QuickFilters  shipmentports.ShipmentQuickFilterBasisResolver
 	Organizations tenantports.OrganizationRepository
 	Suggestions   shipmentbriefports.ShipmentSuggestionCandidates
-	Completion    agentports.CompletionService
+	Completion    llmports.CompletionService
 	Cache         shipmentports.ShipmentBoardCache
 	Logger        *zap.Logger
 }
@@ -64,7 +64,7 @@ type Dependencies struct {
 	QuickFilters  shipmentports.ShipmentQuickFilterBasisResolver
 	Organizations tenantports.OrganizationRepository
 	Suggestions   shipmentbriefports.ShipmentSuggestionCandidates
-	Completion    agentports.CompletionService
+	Completion    llmports.CompletionService
 	Cache         shipmentports.ShipmentBoardCache
 	Logger        *zap.Logger
 	Now           func() time.Time
@@ -77,7 +77,7 @@ type Service struct {
 	quickFilters  shipmentports.ShipmentQuickFilterBasisResolver
 	organizations tenantports.OrganizationRepository
 	suggestions   shipmentbriefports.ShipmentSuggestionCandidates
-	completion    agentports.CompletionService
+	completion    llmports.CompletionService
 	cache         shipmentports.ShipmentBoardCache
 	l             *zap.Logger
 	now           func() time.Time
@@ -414,7 +414,7 @@ func (s *Service) narrate(
 		ctx,
 		s.completion,
 		s.l,
-		&agentports.StructuredCompletionRequest{
+		&llmports.StructuredCompletionRequest{
 			TenantInfo:   tenantInfo,
 			Task:         aiprovider.TaskDailyBriefing,
 			System:       systemPrompt,

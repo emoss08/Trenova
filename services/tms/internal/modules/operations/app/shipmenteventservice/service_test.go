@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -150,7 +150,7 @@ type noopRealtimeService struct{}
 
 func (noopRealtimeService) PublishResourceInvalidation(
 	context.Context,
-	*agentports.PublishResourceInvalidationRequest,
+	*realtimeports.PublishResourceInvalidationRequest,
 ) error {
 	return nil
 }

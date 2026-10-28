@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -54,7 +55,9 @@ func (d *PreviewDecisions) AssertOwnProposal(
 ) error {
 	d.Asked = append(d.Asked, proposalID)
 	if !d.Yours {
-		return errortypes.NewNotFoundError("That proposal was not raised in one of your conversations")
+		return errortypes.NewNotFoundError(
+			"That proposal was not raised in one of your conversations",
+		)
 	}
 
 	return nil
@@ -87,18 +90,18 @@ func (p *PreviewPlans) GetByID(
 }
 
 type PreviewService struct {
-	agentports.ProposalPreviewService
+	agentruntimeports.ProposalPreviewService
 
 	Proposals int
 	Plans     int
-	Viewer    *agentports.PreviewViewer
+	Viewer    *agentruntimeports.PreviewViewer
 	Mods      map[string]any
 	Warnings  []agent.PreviewWarning
 }
 
 func (s *PreviewService) ForProposal(
 	_ context.Context,
-	req *agentports.ProposalPreviewRequest,
+	req *agentruntimeports.ProposalPreviewRequest,
 ) (*agent.ProposalPreview, error) {
 	s.Proposals++
 	s.Viewer = req.Viewer
@@ -109,7 +112,7 @@ func (s *PreviewService) ForProposal(
 
 func (s *PreviewService) ForPlan(
 	_ context.Context,
-	req *agentports.PlanPreviewRequest,
+	req *agentruntimeports.PlanPreviewRequest,
 ) (*agent.PlanPreview, error) {
 	s.Plans++
 

@@ -5,14 +5,16 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
-	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,7 +25,7 @@ import (
 )
 
 type stubRunRepo struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 
 	created []*agent.AgentRun
 	err     error
@@ -32,12 +34,12 @@ type stubRunRepo struct {
 	reads int
 
 	transcripts     map[pulid.ID]*agent.RunTranscript
-	transcriptReads []agentports.ListAgentRunsByIDsRequest
+	transcriptReads []agentruntimeports.ListAgentRunsByIDsRequest
 }
 
 func (r *stubRunRepo) ListTranscriptsByIDs(
 	_ context.Context,
-	req agentports.ListAgentRunsByIDsRequest,
+	req agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	r.transcriptReads = append(r.transcriptReads, req)
 	runs := make([]*agent.AgentRun, 0, len(req.IDs))
@@ -52,7 +54,7 @@ func (r *stubRunRepo) ListTranscriptsByIDs(
 
 func (r *stubRunRepo) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	r.reads++
 	if run, ok := r.byID[req.ID]; ok {
@@ -172,7 +174,7 @@ func (r *stubProposalRepo) ListByThread(
 // only reads a thread, and an unexpected call panics on the nil interface, which
 // is exactly the failure a test wants.
 type stubConversationRepo struct {
-	agentports.ConversationRepository
+	assistantports.ConversationRepository
 
 	thread *conversation.Thread
 	getErr error
@@ -180,7 +182,7 @@ type stubConversationRepo struct {
 
 func (r *stubConversationRepo) GetThread(
 	_ context.Context,
-	_ agentports.GetThreadRequest,
+	_ assistantports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if r.getErr != nil {
 		return nil, r.getErr
@@ -217,7 +219,7 @@ func newProposalServiceBehind(
 }
 
 func proposalTestParams(
-	actions []agentports.PendingAction,
+	actions []agentruntimeports.PendingAction,
 	saved []conversation.Message,
 ) persistProposalsParams {
 	return persistProposalsParams{
@@ -262,8 +264,13 @@ func TestPersistProposals_RecordsTheWritesOfATurnThatFailed(t *testing.T) {
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(runs, proposals, &stubConversationRepo{})
 
-	params := proposalTestParams([]agentports.PendingAction{
-		{ToolName: "hold_shipment", Rationale: "Consignee closed", Tier: agent.TierAutoExecute, Executed: true},
+	params := proposalTestParams([]agentruntimeports.PendingAction{
+		{
+			ToolName:  "hold_shipment",
+			Rationale: "Consignee closed",
+			Tier:      agent.TierAutoExecute,
+			Executed:  true,
+		},
 	}, nil)
 	params.Failed = true
 
@@ -282,7 +289,7 @@ func TestPersistProposals_OpensOneChatRunForTheTurn(t *testing.T) {
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(runs, proposals, &stubConversationRepo{})
 
-	params := proposalTestParams([]agentports.PendingAction{
+	params := proposalTestParams([]agentruntimeports.PendingAction{
 		{ToolName: "reassign_move", Rationale: "Driver is out of hours", Tier: agent.TierPropose},
 		{ToolName: "hold_shipment", Rationale: "Consignee closed", Tier: agent.TierPropose},
 	}, nil)
@@ -315,14 +322,17 @@ func TestPersistProposals_RecordsThePendingStatusAndTier(t *testing.T) {
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
-		{
-			ToolName:  "reassign_move",
-			Arguments: map[string]any{"moveId": "mv_1"},
-			Rationale: "Driver is out of hours",
-			Tier:      agent.TierActWithApproval,
-		},
-	}, nil))
+	_, err := svc.persistProposals(
+		t.Context(),
+		proposalTestParams([]agentruntimeports.PendingAction{
+			{
+				ToolName:  "reassign_move",
+				Arguments: map[string]any{"moveId": "mv_1"},
+				Rationale: "Driver is out of hours",
+				Tier:      agent.TierActWithApproval,
+			},
+		}, nil),
+	)
 	require.NoError(t, err)
 
 	require.Len(t, proposals.created, 1)
@@ -351,7 +361,7 @@ func TestPersistProposals_TiesEachProposalToTheMessageThatAskedForIt(t *testing.
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
 	_, err := svc.persistProposals(t.Context(), proposalTestParams(
-		[]agentports.PendingAction{
+		[]agentruntimeports.PendingAction{
 			{ToolName: "hold_shipment", Rationale: "Consignee closed", ToolCallID: "call_2"},
 			{ToolName: "reassign_move", Rationale: "Out of hours", ToolCallID: "call_1"},
 		},
@@ -376,9 +386,12 @@ func TestPersistProposals_StoresEmptyArgumentsAsAnObject(t *testing.T) {
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
-		{ToolName: "close_period", Rationale: "Month end"},
-	}, nil))
+	_, err := svc.persistProposals(
+		t.Context(),
+		proposalTestParams([]agentruntimeports.PendingAction{
+			{ToolName: "close_period", Rationale: "Month end"},
+		}, nil),
+	)
 	require.NoError(t, err)
 
 	require.Len(t, proposals.created, 1)
@@ -394,9 +407,12 @@ func TestPersistProposals_FallsBackToTheMostRestrictiveTier(t *testing.T) {
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
-		{ToolName: "reassign_move", Rationale: "Out of hours"},
-	}, nil))
+	_, err := svc.persistProposals(
+		t.Context(),
+		proposalTestParams([]agentruntimeports.PendingAction{
+			{ToolName: "reassign_move", Rationale: "Out of hours"},
+		}, nil),
+	)
 	require.NoError(t, err)
 
 	require.Len(t, proposals.created, 1)
@@ -418,7 +434,7 @@ func TestPersistProposals_CitesTheConversationAsEvidence(t *testing.T) {
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
 	params := proposalTestParams(
-		[]agentports.PendingAction{{
+		[]agentruntimeports.PendingAction{{
 			ToolName:   "reassign_move",
 			Rationale:  "Out of hours",
 			Tier:       agent.TierPropose,
@@ -447,9 +463,12 @@ func TestPersistProposals_CitesOnlyTheThreadWhenTheMessageIsUnknown(t *testing.T
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
-		{ToolName: "reassign_move", Rationale: "Out of hours", ToolCallID: "call_missing"},
-	}, nil))
+	_, err := svc.persistProposals(
+		t.Context(),
+		proposalTestParams([]agentruntimeports.PendingAction{
+			{ToolName: "reassign_move", Rationale: "Out of hours", ToolCallID: "call_missing"},
+		}, nil),
+	)
 	require.NoError(t, err)
 
 	require.Len(t, proposals.created, 1)
@@ -468,9 +487,12 @@ func TestPersistProposals_FailsWhenTheRunCannotBeOpened(t *testing.T) {
 		&stubConversationRepo{},
 	)
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
-		{ToolName: "reassign_move", Rationale: "Out of hours"},
-	}, nil))
+	_, err := svc.persistProposals(
+		t.Context(),
+		proposalTestParams([]agentruntimeports.PendingAction{
+			{ToolName: "reassign_move", Rationale: "Out of hours"},
+		}, nil),
+	)
 
 	require.Error(t, err)
 	assert.Empty(t, proposals.created, "no proposal may exist without the run it belongs to")
@@ -500,7 +522,10 @@ func TestListThreadProposals_ScopesToTheThreadAndReportsExecution(t *testing.T) 
 	conversations := &stubConversationRepo{thread: &conversation.Thread{ID: threadID}}
 	svc := newProposalService(&stubRunRepo{}, proposals, conversations)
 
-	result, err := svc.ListThreadProposals(t.Context(), agentports.GetThreadRequest{ID: threadID})
+	result, err := svc.ListThreadProposals(
+		t.Context(),
+		assistantports.GetThreadRequest{ID: threadID},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, threadID, proposals.lastList.ThreadID)
@@ -522,7 +547,7 @@ func TestListThreadProposals_RefusesAThreadTheReaderCannotSee(t *testing.T) {
 
 	_, err := svc.ListThreadProposals(
 		t.Context(),
-		agentports.GetThreadRequest{ID: pulid.MustNew("thr_")},
+		assistantports.GetThreadRequest{ID: pulid.MustNew("thr_")},
 	)
 
 	require.Error(t, err)
@@ -537,13 +562,16 @@ func TestPersistProposals_HoldsAProposalBehindTheOrganizationPause(t *testing.T)
 	svc := newProposalServiceBehind(&stubRunRepo{}, &stubProposalRepo{}, &stubConversationRepo{},
 		shadowSwitches{organizationPaused: true})
 
-	saved, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
-		{
-			ToolName:  "reassign_move",
-			Arguments: map[string]any{"moveId": "mv_1"},
-			Rationale: "Driver is out of hours",
-		},
-	}, nil))
+	saved, err := svc.persistProposals(
+		t.Context(),
+		proposalTestParams([]agentruntimeports.PendingAction{
+			{
+				ToolName:  "reassign_move",
+				Arguments: map[string]any{"moveId": "mv_1"},
+				Rationale: "Driver is out of hours",
+			},
+		}, nil),
+	)
 	require.NoError(t, err)
 
 	require.Len(t, saved, 1)
@@ -557,7 +585,7 @@ func TestPersistProposals_HoldsAProposalBehindTheOrganizationPause(t *testing.T)
 func TestPersistProposals_HoldsAProposalBehindTheAgentSwitch(t *testing.T) {
 	t.Parallel()
 
-	params := proposalTestParams([]agentports.PendingAction{
+	params := proposalTestParams([]agentruntimeports.PendingAction{
 		{
 			ToolName:  "reassign_move",
 			Arguments: map[string]any{"moveId": "mv_1"},
@@ -582,13 +610,16 @@ func TestPersistProposals_LeavesALiveProposalUnheld(t *testing.T) {
 
 	svc := newProposalService(&stubRunRepo{}, &stubProposalRepo{}, &stubConversationRepo{})
 
-	saved, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
-		{
-			ToolName:  "reassign_move",
-			Arguments: map[string]any{"moveId": "mv_1"},
-			Rationale: "Driver is out of hours",
-		},
-	}, nil))
+	saved, err := svc.persistProposals(
+		t.Context(),
+		proposalTestParams([]agentruntimeports.PendingAction{
+			{
+				ToolName:  "reassign_move",
+				Arguments: map[string]any{"moveId": "mv_1"},
+				Rationale: "Driver is out of hours",
+			},
+		}, nil),
+	)
 	require.NoError(t, err)
 
 	require.Len(t, saved, 1)
@@ -634,7 +665,10 @@ func TestListThreadProposals_HoldsOnlyWhatIsStillPending(t *testing.T) {
 		shadowSwitches{definition: def},
 	)
 
-	result, err := svc.ListThreadProposals(t.Context(), agentports.GetThreadRequest{ID: threadID})
+	result, err := svc.ListThreadProposals(
+		t.Context(),
+		assistantports.GetThreadRequest{ID: threadID},
+	)
 	require.NoError(t, err)
 
 	require.Len(t, result, 2)

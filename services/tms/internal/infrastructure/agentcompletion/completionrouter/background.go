@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
@@ -27,8 +28,8 @@ import (
 // empty.
 func (s *Service) SubmitBackground(
 	ctx context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.BackgroundSubmission, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.BackgroundSubmission, error) {
 	if !s.ai.AIEnabled() {
 		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
@@ -68,7 +69,7 @@ func (s *Service) SubmitBackground(
 			continue
 		}
 
-		return &agentports.BackgroundSubmission{
+		return &llmports.BackgroundSubmission{
 			Handle:          handle.ID,
 			ProviderID:      provider.ID,
 			ProviderKind:    provider.Kind,
@@ -94,11 +95,11 @@ func (s *Service) SubmitBackground(
 		return nil, err
 	}
 
-	return &agentports.BackgroundSubmission{
+	return &llmports.BackgroundSubmission{
 		ProviderID:      outcome.ProviderID,
 		ProviderKind:    outcome.ProviderKind,
 		ModelIdentifier: outcome.Model,
-		Result: &agentports.StructuredCompletionResult{
+		Result: &llmports.StructuredCompletionResult{
 			Text:            outcome.Text,
 			ModelIdentifier: outcome.Model,
 			InputTokens:     outcome.InputTokens,
@@ -115,8 +116,8 @@ func (s *Service) SubmitBackground(
 // PollBackground asks the provider that issued a handle how the call is going.
 func (s *Service) PollBackground(
 	ctx context.Context,
-	req *agentports.BackgroundPollRequest,
-) (*agentports.BackgroundOutcome, error) {
+	req *llmports.BackgroundPollRequest,
+) (*llmports.BackgroundOutcome, error) {
 	if !s.ai.AIEnabled() {
 		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
@@ -126,7 +127,7 @@ func (s *Service) PollBackground(
 		return nil, errortypes.NewBusinessError("A background handle is required")
 	}
 
-	provider, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	provider, err := s.repo.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         req.ProviderID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -168,7 +169,7 @@ func (s *Service) PollBackground(
 		return nil, err
 	}
 
-	outcome := &agentports.BackgroundOutcome{
+	outcome := &llmports.BackgroundOutcome{
 		RawStatus:       result.RawStatus,
 		ModelIdentifier: stringutils.FirstNonEmpty(result.ModelIdentifier, provider.Model),
 		FailureCode:     result.FailureCode,
@@ -177,13 +178,13 @@ func (s *Service) PollBackground(
 
 	switch result.State {
 	case modeladapter.BackgroundPending:
-		outcome.State = agentports.BackgroundPending
+		outcome.State = llmports.BackgroundPending
 	case modeladapter.BackgroundFailed:
-		outcome.State = agentports.BackgroundFailed
+		outcome.State = llmports.BackgroundFailed
 		s.recordBackground(ctx, provider, req, result)
 	case modeladapter.BackgroundCompleted:
-		outcome.State = agentports.BackgroundCompleted
-		outcome.Result = &agentports.StructuredCompletionResult{
+		outcome.State = llmports.BackgroundCompleted
+		outcome.Result = &llmports.StructuredCompletionResult{
 			Text:            result.Response.Text,
 			ModelIdentifier: outcome.ModelIdentifier,
 			InputTokens:     result.Response.InputTokens,
@@ -203,7 +204,7 @@ func (s *Service) PollBackground(
 func (s *Service) recordBackground(
 	ctx context.Context,
 	provider *aiprovider.Provider,
-	req *agentports.BackgroundPollRequest,
+	req *llmports.BackgroundPollRequest,
 	result *modeladapter.BackgroundOutcome,
 ) {
 	task := req.Task

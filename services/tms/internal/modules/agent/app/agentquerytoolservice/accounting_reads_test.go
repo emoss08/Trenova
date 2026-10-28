@@ -3,7 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func accountingList(t *testing.T, name string, reader agentports.GraphQLReader,
+func accountingList(t *testing.T, name string, reader graphqlreadports.GraphQLReader,
 	engine *mocks.DenyResourcesPermissionEngine,
 ) *graphQLListTool {
 	t.Helper()
@@ -30,7 +30,7 @@ func accountingList(t *testing.T, name string, reader agentports.GraphQLReader,
 	return nil
 }
 
-func accountingGet(t *testing.T, name string, reader agentports.GraphQLReader,
+func accountingGet(t *testing.T, name string, reader graphqlreadports.GraphQLReader,
 	engine *mocks.DenyResourcesPermissionEngine,
 ) *graphQLGetTool {
 	t.Helper()
@@ -69,15 +69,17 @@ func connectionPage(root string, nodes ...map[string]any) map[string]any {
 func TestAccountingDrift_SendsTheSystemBesideTheTableInput(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskAccountingDriftFindings": {Data: connectionPage("accountingDriftFindingTable",
 			map[string]any{"id": "acctdf_1", "kind": "AmountMismatch", "differenceMinor": -400},
 			map[string]any{"id": "acctdf_2", "kind": "AmountMismatch", "differenceMinor": 9100},
 			map[string]any{"id": "acctdf_3", "kind": "StatusMismatch"},
 		)},
-		"DeskAccountingDriftOverview": {Data: map[string]any{"accountingDriftOverview": map[string]any{
-			"toleranceMinor": 500, "currencyCode": "USD", "checkError": "",
-		}}},
+		"DeskAccountingDriftOverview": {
+			Data: map[string]any{"accountingDriftOverview": map[string]any{
+				"toleranceMinor": 500, "currencyCode": "USD", "checkError": "",
+			}},
+		},
 	}}
 	tool := accountingList(t, "accounting_list_drift_findings", reader,
 		&mocks.DenyResourcesPermissionEngine{})
@@ -118,7 +120,7 @@ func TestAccountingDrift_SendsTheSystemBesideTheTableInput(t *testing.T) {
 func TestAccountingDrift_WithoutTheOverviewSaysSo(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskAccountingDriftFindings": {Data: connectionPage("accountingDriftFindingTable",
 			map[string]any{"id": "acctdf_1", "kind": "AmountMismatch", "differenceMinor": 1})},
 	}}
@@ -141,7 +143,7 @@ func TestAccountingDrift_WithoutTheOverviewSaysSo(t *testing.T) {
 func TestAccountingSyncRecords_PagesByTheRootAndFiltersInsideItsInput(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskAccountingSyncRecords": {Data: connectionPage("accountingSyncRecords",
 			map[string]any{"id": "acctsr_1", "status": "Blocked", "nextAttemptAt": 100},
 			map[string]any{"id": "acctsr_2", "status": "Queued", "nextAttemptAt": 200},
@@ -189,7 +191,7 @@ func TestAccountingSyncRecords_DocumentIDsReadTheirStatesInstead(t *testing.T) {
 	t.Parallel()
 
 	invoice := pulid.MustNew("inv_").String()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskAccountingSyncObjectStates": {Data: map[string]any{
 			"accountingSyncObjectStates": []any{map[string]any{
 				"objectId": invoice, "providerName": "QuickBooks Online",
@@ -244,7 +246,7 @@ func TestAccountingSyncRecords_DocumentIDsReadTheirStatesInstead(t *testing.T) {
 func TestAccountingMappingGaps_ReadsTheOpenStatesBesideTheSummary(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskAccountingMappings": {Data: connectionPage("accountingMappings",
 			map[string]any{"id": "acctm_1", "providerKind": "Customer", "state": "Proposed"})},
 		"DeskAccountingMappingSummary": {Data: map[string]any{
@@ -280,7 +282,7 @@ func TestAccountingMappingGaps_ReadsTheOpenStatesBesideTheSummary(t *testing.T) 
 func TestAccountingConnection_ReadsBySystemAndSaysWhatItMeans(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskAccountingConnection": {Data: map[string]any{"accountingSyncStatus": map[string]any{
 			"integrationType": "QuickBooksOnline", "providerName": "QuickBooks Online",
 			"available": true,
@@ -346,7 +348,7 @@ func TestAccountingSyncRecord_ReadsItsTriesByItsID(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("acctsr_").String()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskAccountingSyncRecord": {Data: map[string]any{"accountingSyncRecord": map[string]any{
 			"id": id, "status": "DeadLettered",
 		}}},
@@ -376,7 +378,7 @@ func TestAccountingMapping_NamesItByWhatItMaps(t *testing.T) {
 	t.Parallel()
 
 	customer := pulid.MustNew("cus_").String()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskAccountingMappingDetail": {Data: map[string]any{
 			"accountingMappingDetail": map[string]any{
 				"mapping": map[string]any{"id": "acctm_1", "providerKind": "Account"},

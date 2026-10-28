@@ -4,7 +4,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
@@ -15,7 +15,7 @@ import (
 // the rest. Names and statuses alone fit ten times as many. The list returns
 // every column whatever the call names, so the person's table keeps them all;
 // the runtime narrows the model's copy (agentruntime.narrowRows).
-const paramFields = agentports.ListFieldsParam
+const paramFields = agenttoolports.ListFieldsParam
 
 // fieldsSchema is the fields parameter of a list whose columns are source.
 func fieldsSchema(source agenttoolschema.EnumSource[string]) map[string]any {

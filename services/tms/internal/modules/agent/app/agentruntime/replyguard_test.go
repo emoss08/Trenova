@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,15 +15,15 @@ import (
 
 func runReplies(
 	t *testing.T,
-	turns ...*agentports.ChatCompletionResult,
-) (*agentports.RunResult, *scriptedCompletion, []kernelports.StreamEvent) {
+	turns ...*llmports.ChatCompletionResult,
+) (*agentruntimeports.RunResult, *scriptedCompletion, []kernelports.StreamEvent) {
 	t.Helper()
 
 	completion := &scriptedCompletion{Turns: turns}
 	service := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	var events []kernelports.StreamEvent
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "what is on my dashboard",
@@ -32,16 +34,16 @@ func runReplies(
 	return result, completion, events
 }
 
-func loopingTurn() *agentports.ChatCompletionResult {
+func loopingTurn() *llmports.ChatCompletionResult {
 	return textTurn("Your dashboard has three tiles: on-" + strings.Repeat("time-", 200))
 }
 
 func restarts(events []kernelports.StreamEvent) int {
 	count := 0
 	for _, event := range events {
-		retry, ok := event.Data.(agentports.AssistantRetryingEvent)
-		if ok && event.Event == agentports.AssistantEventRetrying &&
-			retry.Kind == agentports.RetryKindRestart {
+		retry, ok := event.Data.(assistantports.AssistantRetryingEvent)
+		if ok && event.Event == assistantports.AssistantEventRetrying &&
+			retry.Kind == llmports.RetryKindRestart {
 			count++
 		}
 	}
@@ -134,13 +136,13 @@ told to use the answer it has.
 func TestRun_RefusesAQuestionThePersonJustAnswered(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn(askUserName, map[string]any{"question": "Which dashboard do you mean?"}),
 		textTurn("Using your home page."),
 	}}
 	service := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "my home page",
@@ -179,7 +181,9 @@ func TestRun_AsksAgainWhenTheThinkingLoops(t *testing.T) {
 	t.Parallel()
 
 	looping := textTurn("You have three tiles.")
-	looping.Reasoning = &conversation.ReasoningTrace{Text: "The user wants time-" + strings.Repeat("time-", 400)}
+	looping.Reasoning = &conversation.ReasoningTrace{
+		Text: "The user wants time-" + strings.Repeat("time-", 400),
+	}
 
 	result, completion, events := runReplies(t, looping, textTurn("You have three tiles."))
 
@@ -187,9 +191,14 @@ func TestRun_AsksAgainWhenTheThinkingLoops(t *testing.T) {
 	assert.Equal(t, 2, completion.CallCount)
 	assert.Equal(t, 1, restarts(events))
 	for _, event := range events {
-		thought, ok := event.Data.(agentports.AssistantReasoningEvent)
+		thought, ok := event.Data.(assistantports.AssistantReasoningEvent)
 		if ok {
-			assert.NotContains(t, thought.Text, "time-time-time", "the loop never reaches the reader")
+			assert.NotContains(
+				t,
+				thought.Text,
+				"time-time-time",
+				"the loop never reaches the reader",
+			)
 		}
 	}
 }

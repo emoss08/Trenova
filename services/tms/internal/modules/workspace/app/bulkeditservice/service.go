@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/tableinsightservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -40,7 +40,7 @@ type Params struct {
 	Repo      bulkeditports.BulkEditRepository
 	Editors   []bulkeditports.BulkEditor `group:"bulk_editors"`
 	Insight   *tableinsightservice.Service
-	Realtime  agentports.RealtimeService
+	Realtime  realtimeports.RealtimeService
 	Workflows kernelports.WorkflowStarter
 }
 
@@ -49,7 +49,7 @@ type Service struct {
 	repo      bulkeditports.BulkEditRepository
 	editors   map[permission.Resource]bulkeditports.BulkEditor
 	insight   *tableinsightservice.Service
-	realtime  agentports.RealtimeService
+	realtime  realtimeports.RealtimeService
 	workflows kernelports.WorkflowStarter
 }
 
@@ -583,7 +583,7 @@ func (s *Service) announce(ctx context.Context, entity *bulkedit.BulkEdit) {
 	}
 	if err := s.realtime.PublishResourceInvalidation(
 		ctx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: entity.OrganizationID,
 			BusinessUnitID: entity.BusinessUnitID,
 			AudienceUserID: entity.UserID,

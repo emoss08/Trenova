@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -39,16 +41,16 @@ func proposedContent(t *testing.T, shadow shadowVerdicts) string {
 		ToolName: "home_add_widget",
 		Tier:     agent.TierActWithApproval,
 	}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("home_add_widget", map[string]any{"key": "fleet-status", "version": 0}),
 		textTurn("I drafted it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
-		Tools: []agentports.AgentTool{tool},
+		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
 	rt.shadow = shadow
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("home_add_widget"),
 		Actor:      testActor(),
 		Input:      "add the fleet status widget to my home page",
@@ -130,5 +132,9 @@ func TestLiftedHold_ReadsTheHoldTheFilingResultNamed(t *testing.T) {
 	assert.Contains(t, LiftedHold(paused, proposalID), "agents have been resumed since")
 	assert.Contains(t, LiftedHold(shadowed, proposalID), "its shadow switch has been turned off")
 	assert.Empty(t, LiftedHold(plain, proposalID), "a proposal nothing held says nothing")
-	assert.Empty(t, LiftedHold(paused, pulid.MustNew("ap_")), "another proposal's hold is not this one's")
+	assert.Empty(
+		t,
+		LiftedHold(paused, pulid.MustNew("ap_")),
+		"another proposal's hold is not this one's",
+	)
 }

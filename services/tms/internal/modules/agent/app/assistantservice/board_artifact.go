@@ -5,13 +5,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"go.uber.org/zap"
 )
 
 var (
-	errUnknownBoard error = &agentports.PublishMistake{
+	errUnknownBoard error = &agentruntimeports.PublishMistake{
 		Reason: "there is no board with that boardId in this conversation; leave boardId out " +
 			"to show a new one",
 	}
@@ -21,13 +22,13 @@ var (
 
 func (r *artifactRecorder) showBoard(
 	callID string,
-	request agentports.BoardRequest,
-) (*agentports.ShownArtifact, error) {
+	request agentruntimeports.BoardRequest,
+) (*agentruntimeports.ShownArtifact, error) {
 	boards := r.boards()
 	if boards == nil || r.reader == nil {
 		return nil, errNoBoards
 	}
-	fill := &agentports.BoardFillRequest{
+	fill := &assistantports.BoardFillRequest{
 		Actor:    r.reader,
 		ThreadID: r.thread.ID,
 		Board:    &request.Board,
@@ -88,7 +89,7 @@ func (r *artifactRecorder) showBoard(
 	return shown, nil
 }
 
-func (r *artifactRecorder) boards() agentports.BoardFiller {
+func (r *artifactRecorder) boards() assistantports.BoardFiller {
 	if r.svc == nil {
 		return nil
 	}

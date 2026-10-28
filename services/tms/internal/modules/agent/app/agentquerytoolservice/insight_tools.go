@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -112,7 +112,7 @@ type listInsightsTool struct {
 	insights insightReader
 }
 
-func newListInsightsTool(insights insightReader) agentports.AgentQueryTool {
+func newListInsightsTool(insights insightReader) agenttoolports.AgentQueryTool {
 	return &listInsightsTool{insights: insights}
 }
 
@@ -145,7 +145,7 @@ func (t *listInsightsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listInsightsTool) Policy() agentports.ToolPolicy {
+func (t *listInsightsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceInsight,
 	})
@@ -153,7 +153,7 @@ func (t *listInsightsTool) Policy() agentports.ToolPolicy {
 
 func (t *listInsightsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -256,7 +256,7 @@ type getInsightTool struct {
 	insights insightReader
 }
 
-func newGetInsightTool(insights insightReader) agentports.AgentQueryTool {
+func newGetInsightTool(insights insightReader) agenttoolports.AgentQueryTool {
 	return &getInsightTool{insights: insights}
 }
 
@@ -281,7 +281,7 @@ func (t *getInsightTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getInsightTool) Policy() agentports.ToolPolicy {
+func (t *getInsightTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceInsight,
 	})
@@ -289,7 +289,7 @@ func (t *getInsightTool) Policy() agentports.ToolPolicy {
 
 func (t *getInsightTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

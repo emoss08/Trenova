@@ -9,7 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,7 +52,7 @@ func wideRuntime(t *testing.T, extra ...*agenttest.StubQueryTool) (*Service, []s
 	}
 	tools = append(tools, extra...)
 
-	registryTools := make([]agentports.AgentQueryTool, 0, len(tools))
+	registryTools := make([]agenttoolports.AgentQueryTool, 0, len(tools))
 	names := make([]string, 0, len(tools))
 	for _, tool := range tools {
 		registryTools = append(registryTools, tool)
@@ -510,7 +513,7 @@ func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
 		definition.ID: definition,
 	}}
 
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "when does the driver's medical card expire?",
@@ -524,9 +527,9 @@ func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
 	assert.Equal(t, findToolsName, result.Messages[2].ToolName)
 	assert.Equal(t, []pulid.ID{compliance.ID}, result.Messages[2].HandOffAgents)
 
-	var finished []agentports.AssistantToolFinishedEvent
+	var finished []assistantports.AssistantToolFinishedEvent
 	for _, event := range *events {
-		if data, ok := event.Data.(agentports.AssistantToolFinishedEvent); ok {
+		if data, ok := event.Data.(assistantports.AssistantToolFinishedEvent); ok {
 			finished = append(finished, data)
 		}
 	}
@@ -623,9 +626,9 @@ func TestRun_APromptsToolSectionIsTheSameForEveryQuestion(t *testing.T) {
 		"which drivers have a medical card expiring soon",
 		"which trailers are due inspection",
 	} {
-		completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
+		completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{textTurn("ok")}}
 		service.completion = completion
-		_, err := service.Run(t.Context(), &agentports.RunRequest{
+		_, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 			Definition: definition,
 			Actor:      testActor(),
 			Input:      input,
@@ -797,8 +800,12 @@ func TestNewToolSet_AnUnattendedRunHoldsItsEscalationFromTheStart(t *testing.T) 
 
 	service, names := coreRuntime(t)
 	query := service.queryTools.(*stubQueryRegistry)
-	query.Tools = append(query.Tools,
-		describedTool("agent_raise_exception", "Hand a case to a person when you cannot resolve it."),
+	query.Tools = append(
+		query.Tools,
+		describedTool(
+			"agent_raise_exception",
+			"Hand a case to a person when you cannot resolve it.",
+		),
 		describedTool("agent_create_wait", "Park this work until something happens."),
 	)
 	service.catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
@@ -844,10 +851,10 @@ func TestResolveFind_ListsTheCallableMatchesFirst(t *testing.T) {
 	assert.True(t, set.offers("worker_list_credentials"))
 }
 
-func weakMatchRuntime(t *testing.T, extra ...agentports.AgentQueryTool) *Service {
+func weakMatchRuntime(t *testing.T, extra ...agenttoolports.AgentQueryTool) *Service {
 	t.Helper()
 
-	tools := []agentports.AgentQueryTool{
+	tools := []agenttoolports.AgentQueryTool{
 		&agenttest.StubQueryTool{
 			ToolName: "shipment_list",
 			Desc:     "List shipments by status or dates.",
@@ -983,7 +990,9 @@ func TestResolveFind_ReachesPastAnOwnToolThatSharesOneWordWithTheNeed(t *testing
 			definition: testDefinition(held...),
 			actor:      testActor(),
 			input:      "hello",
-			beyond:     map[string]agent.AutonomyTier{"receivable_get_aging": agent.TierAutoExecute},
+			beyond: map[string]agent.AutonomyTier{
+				"receivable_get_aging": agent.TierAutoExecute,
+			},
 		},
 	)
 

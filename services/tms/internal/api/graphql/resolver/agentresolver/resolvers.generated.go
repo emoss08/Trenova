@@ -4,7 +4,9 @@ package agentresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	tenantports "github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 )
 
@@ -14,7 +16,7 @@ type Deps struct {
 	AgentTrustService         agentports.AgentTrustService
 	AgentProposalService      agentports.AgentProposalService
 	AgentPlanService          agentports.AgentPlanService
-	AgentMemoryService        agentports.AgentMemoryService
+	AgentMemoryService        agentmemoryports.AgentMemoryService
 	AgentReflectionService    agentports.AgentReflectionService
 	AgentEvaluationService    agentports.AgentEvaluationService
 	AgentActivityService      agentports.AgentActivityService
@@ -22,7 +24,7 @@ type Deps struct {
 	AgentDecisionService      agentports.AgentDecisionService
 	AgentDecisionQueueService agentports.AgentDecisionQueueService
 	ApprovalCommitter         agentports.ApprovalCommitter
-	AgentTools                agentports.AgentToolRegistry
+	AgentTools                agenttoolports.AgentToolRegistry
 	AgentControlService       agentports.AgentControlService
 	AccountingControlRepo     tenantports.AccountingControlRepository
 }

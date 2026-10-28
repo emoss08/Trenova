@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -283,7 +283,7 @@ func TestEveryRecipeNamesRegisteredTools(t *testing.T) {
 	queries := make(map[string]struct{})
 	for _, tool := range buildTools(t) {
 		known[tool.Name()] = struct{}{}
-		if _, ok := tool.(agentports.AgentQueryTool); ok {
+		if _, ok := tool.(agenttoolports.AgentQueryTool); ok {
 			queries[tool.Name()] = struct{}{}
 		}
 	}
@@ -294,12 +294,12 @@ func TestEveryRecipeNamesRegisteredTools(t *testing.T) {
 	var problems []string
 	for _, tool := range buildTools(t) {
 		steps := make([]string, 0, 8)
-		if recipe, ok := tool.(agentports.RecipeTool); ok {
+		if recipe, ok := tool.(agenttoolports.RecipeTool); ok {
 			steps = append(steps, recipe.Recipe()...)
 			problems = append(problems, recipeOrderProblems(
 				tool.Name(), recipe.Recipe(), queries)...)
 		}
-		if needs, ok := tool.(agentports.PrerequisiteTool); ok {
+		if needs, ok := tool.(agenttoolports.PrerequisiteTool); ok {
 			steps = append(steps, needs.Prerequisites()...)
 			for _, need := range needs.Prerequisites() {
 				if _, ok := queries[need]; !ok {
@@ -374,7 +374,7 @@ func TestEveryWriteWhoseOmissionWidensKeepsAnEmptyList(t *testing.T) {
 
 	var problems []string
 	for _, tool := range buildTools(t) {
-		if _, read := tool.(agentports.AgentQueryTool); read {
+		if _, read := tool.(agenttoolports.AgentQueryTool); read {
 			continue
 		}
 		properties, _ := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)

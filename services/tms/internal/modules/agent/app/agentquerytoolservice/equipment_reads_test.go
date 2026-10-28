@@ -3,7 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -58,7 +58,7 @@ func TestEquipmentLists_NameEachUnitByItsUnitNumber(t *testing.T) {
 			t.Parallel()
 
 			read := graphQLReads[name]
-			reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+			reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 				read.Operation: {Data: map[string]any{read.RootField: map[string]any{
 					connectionEdges: []any{map[string]any{connectionNode: map[string]any{
 						"id": "tr_1", "code": "1285", "licensePlateNumber": "CRN4714",

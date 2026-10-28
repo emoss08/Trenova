@@ -13,7 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -75,7 +77,7 @@ func (s *Service) CreateFromProposal(
 		)
 	}
 
-	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         proposal.RunID,
 		TenantInfo: &tenantInfo,
 	})
@@ -242,7 +244,7 @@ func (s *Service) captureMessage(
 	actor *permissionports.RequestActor,
 ) (*agentports.EvalCaseCapture, error) {
 	tenantInfo := req.tenant
-	thread, err := s.conversations.GetThreadOwned(ctx, agentports.GetThreadOwnedRequest{
+	thread, err := s.conversations.GetThreadOwned(ctx, assistantports.GetThreadOwnedRequest{
 		ID:         req.threadID,
 		TenantInfo: tenantInfo,
 	})
@@ -403,7 +405,7 @@ func (s *Service) freezeChat(
 	tenantInfo pagination.TenantInfo,
 	anchor turnAnchor,
 ) (*frozenTurn, *redaction, error) {
-	messages, err := s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
+	messages, err := s.conversations.ListMessages(ctx, assistantports.ListMessagesRequest{
 		ThreadID:     anchor.threadID,
 		TenantInfo:   tenantInfo,
 		ExcludeKinds: conversation.ModelHiddenKinds(),

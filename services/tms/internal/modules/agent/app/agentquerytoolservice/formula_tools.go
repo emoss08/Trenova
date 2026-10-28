@@ -5,18 +5,17 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
-	"github.com/emoss08/trenova/pkg/listquery"
-
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -112,7 +111,7 @@ func formulaToolProviders() []any {
 	}
 }
 
-func formulaTenant(params *agentports.QueryToolParams) pagination.TenantInfo {
+func formulaTenant(params *agenttoolports.QueryToolParams) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  params.OrganizationID,
 		BuID:   params.BusinessUnitID,
@@ -141,7 +140,7 @@ type formulaTemplateRow struct {
 // still describes; the registered tool reads through GraphQL.
 func newListFormulaTemplatesTool(
 	repo formulatemplateports.FormulaTemplateRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListFormulaTemplates,
 		entityPlural: pluralFormulaTemplates,
@@ -227,7 +226,7 @@ type describeFormulaLanguageTool struct {
 
 func provideDescribeFormulaLanguageTool(
 	workbench *formulaassistantservice.Service,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &describeFormulaLanguageTool{workbench: workbench}
 }
 
@@ -253,7 +252,7 @@ func (t *describeFormulaLanguageTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *describeFormulaLanguageTool) Policy() agentports.ToolPolicy {
+func (t *describeFormulaLanguageTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceFormulaTemplate})
 }
 
@@ -266,7 +265,7 @@ func (t *describeFormulaLanguageTool) SearchTerms() []string {
 
 func (t *describeFormulaLanguageTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -314,7 +313,9 @@ type checkFormulaTool struct {
 	workbench formulaWorkbench
 }
 
-func provideCheckFormulaTool(workbench *formulaassistantservice.Service) agentports.AgentQueryTool {
+func provideCheckFormulaTool(
+	workbench *formulaassistantservice.Service,
+) agenttoolports.AgentQueryTool {
 	return &checkFormulaTool{workbench: workbench}
 }
 
@@ -337,7 +338,7 @@ func (t *checkFormulaTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *checkFormulaTool) Policy() agentports.ToolPolicy {
+func (t *checkFormulaTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:  permission.ResourceFormulaTemplate,
 		rationale: "Checks source the model holds; nothing is saved and nothing is sent.",
@@ -362,7 +363,7 @@ type checkedFormula struct {
 
 func (t *checkFormulaTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	checked, err := checkParams(ctx, t.workbench, params)
 	if err != nil {
@@ -383,7 +384,7 @@ func (t *checkFormulaTool) Query(
 func checkParams(
 	ctx context.Context,
 	workbench formulaWorkbench,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (*formulaassistantservice.Checked, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -410,7 +411,7 @@ type runFormulaTestsTool struct {
 
 func provideRunFormulaTestsTool(
 	workbench *formulaassistantservice.Service,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &runFormulaTestsTool{workbench: workbench}
 }
 
@@ -435,7 +436,7 @@ func (t *runFormulaTestsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *runFormulaTestsTool) Policy() agentports.ToolPolicy {
+func (t *runFormulaTestsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:  permission.ResourceFormulaTemplate,
 		rationale: "Runs the tests in source the model holds; nothing is saved and nothing is sent.",
@@ -455,7 +456,7 @@ type testedFormula struct {
 
 func (t *runFormulaTestsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	checked, err := checkParams(ctx, t.workbench, params)
 	if err != nil {
@@ -485,7 +486,7 @@ type previewFormulaTool struct {
 func providePreviewFormulaTool(
 	workbench *formulaassistantservice.Service,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &previewFormulaTool{workbench: workbench, access: newFieldAccess(permissions)}
 }
 
@@ -525,7 +526,7 @@ func (t *previewFormulaTool) ParamSchema() map[string]any {
 
 const formulaassistantPreviewInputs = 100
 
-func (t *previewFormulaTool) Policy() agentports.ToolPolicy {
+func (t *previewFormulaTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceFormulaTemplate,
 		rationale: "Rates source with the engine, for the sample record or a shipment the " +
@@ -545,7 +546,7 @@ type previewedFormula struct {
 
 func (t *previewFormulaTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -616,14 +617,14 @@ type proposeSourceTool struct {
 func provideProposeFormulaTool(
 	workbench *formulaassistantservice.Service,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newProposeSourceTool(&proposeFormulaSpec, workbench, permissions)
 }
 
 func provideProposeLibraryTool(
 	workbench *formulaassistantservice.Service,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newProposeSourceTool(&proposeLibrarySpec, workbench, permissions)
 }
 
@@ -723,7 +724,7 @@ func (t *proposeSourceTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *proposeSourceTool) Policy() agentports.ToolPolicy {
+func (t *proposeSourceTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: t.spec.resource,
 		scope:    agent.ToolScopeSelf,
@@ -737,7 +738,7 @@ func (t *proposeSourceTool) SearchTerms() []string { return t.spec.searchTerms }
 
 func (t *proposeSourceTool) mayAuthor(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) bool {
 	actor := params.Actor
 	if actor == nil || t.access.permissions == nil {
@@ -765,7 +766,7 @@ type refusedProposal struct {
 
 func (t *proposeSourceTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

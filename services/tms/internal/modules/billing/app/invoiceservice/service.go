@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -95,7 +95,7 @@ type Params struct {
 	EmailService         emailports.EmailService
 	Templates            documenttemplateports.DocumentTemplateResolver
 	ContextBuilder       *ContextBuilder
-	Realtime             agentports.RealtimeService
+	Realtime             realtimeports.RealtimeService
 	WorkflowStarter      kernelports.WorkflowStarter
 	SequenceGenerator    seqgen.Generator
 	SequenceProvider     seqgen.FormatProvider
@@ -146,7 +146,7 @@ type Service struct {
 	emailService         emailports.EmailService
 	templates            documenttemplateports.DocumentTemplateResolver
 	contextBuilder       *ContextBuilder
-	realtime             agentports.RealtimeService
+	realtime             realtimeports.RealtimeService
 	workflowStarter      kernelports.WorkflowStarter
 	sequenceGenerator    seqgen.Generator
 	sequenceProvider     seqgen.FormatProvider

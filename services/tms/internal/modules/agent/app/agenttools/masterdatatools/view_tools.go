@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableconfigurationservice"
@@ -42,7 +42,7 @@ func NewSaveTableViewTool(
 	configs *tableconfigurationservice.Service,
 	composer *tablequeryservice.Service,
 	catalog *filtercatalog.Catalog,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &SaveTableViewTool{configs: configs, composer: composer, catalog: catalog}
 }
 
@@ -92,8 +92,8 @@ func (t *SaveTableViewTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *SaveTableViewTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *SaveTableViewTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:                t.Name(),
 		Kind:                agent.ToolKindAction,
 		Resource:            permission.ResourceTableConfiguration,
@@ -114,7 +114,7 @@ func (t *SaveTableViewTool) Policy() agentports.ToolPolicy {
 
 func (t *SaveTableViewTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	return t.validateArgs(params.Params)
 }
@@ -143,7 +143,7 @@ func (t *SaveTableViewTool) validateArgs(params map[string]any) error {
 
 func (t *SaveTableViewTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -186,7 +186,9 @@ type tableViewDraft struct {
 	visibility tableconfiguration.Visibility
 }
 
-func (t *SaveTableViewTool) Draft(params *agentports.ToolExecuteParams) (*tableViewDraft, error) {
+func (t *SaveTableViewTool) Draft(
+	params *agenttoolports.ToolExecuteParams,
+) (*tableViewDraft, error) {
 	entity := common.OptionalString(params.Params, "entity")
 	resource, ok := t.catalog.ByEntity(entity)
 	if !ok {
@@ -207,7 +209,7 @@ func (t *SaveTableViewTool) Draft(params *agentports.ToolExecuteParams) (*tableV
 }
 
 func (d *tableViewDraft) configuration(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	composed *tablequeryservice.ComposeResult,
 ) *tableconfiguration.TableConfiguration {
 	configuration := &tableconfiguration.TableConfiguration{

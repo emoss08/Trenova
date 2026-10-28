@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -115,7 +116,7 @@ func (s *Session) Agent(ctx context.Context, ref string) (*agentdefinition.Defin
 func (s *Session) Providers(ctx context.Context) ([]*aiprovider.Provider, error) {
 	providers, err := s.bench.Providers.ListForTask(
 		s.Context(ctx),
-		agentports.ListAIProvidersForTaskRequest{
+		aiproviderports.ListAIProvidersForTaskRequest{
 			Task:       aiprovider.TaskAssistantChat,
 			TenantInfo: s.Tenant,
 		},
@@ -176,7 +177,7 @@ func (s *Session) CleanBenchThreads(ctx context.Context) (int, error) {
 
 	doomed := make([]pulid.ID, 0, cleanPageSize)
 	for cursor := ""; ; {
-		page, err := s.bench.Assistant.ListThreads(ctx, agentports.ListThreadsRequest{
+		page, err := s.bench.Assistant.ListThreads(ctx, assistantports.ListThreadsRequest{
 			UserID:          s.User.ID,
 			TenantInfo:      s.Tenant,
 			Limit:           cleanPageSize,

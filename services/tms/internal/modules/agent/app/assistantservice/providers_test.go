@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -13,16 +13,16 @@ import (
 )
 
 type fakeProviderRepo struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 
-	captured agentports.ListAIProvidersForTaskRequest
+	captured aiproviderports.ListAIProvidersForTaskRequest
 	items    []*aiprovider.Provider
 	err      error
 }
 
 func (f *fakeProviderRepo) ListForTask(
 	_ context.Context,
-	req agentports.ListAIProvidersForTaskRequest,
+	req aiproviderports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
 	f.captured = req
 

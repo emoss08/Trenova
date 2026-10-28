@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
@@ -43,7 +43,9 @@ type listPortalSitesTool struct {
 	portals agentextensionports.PortalAutomator
 }
 
-func newListPortalSitesTool(portals agentextensionports.PortalAutomator) agentports.AgentQueryTool {
+func newListPortalSitesTool(
+	portals agentextensionports.PortalAutomator,
+) agenttoolports.AgentQueryTool {
 	return &listPortalSitesTool{portals: portals}
 }
 
@@ -65,7 +67,7 @@ func (t *listPortalSitesTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listPortalSitesTool) Policy() agentports.ToolPolicy {
+func (t *listPortalSitesTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourcePortalAutomation,
 		rationale: "Lists the portal sites an administrator set up; it changes nothing, " +
@@ -96,7 +98,7 @@ type portalSitesAnswer struct {
 
 func (t *listPortalSitesTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -136,7 +138,7 @@ type readPortalTool struct {
 func newReadPortalTool(
 	portals agentextensionports.PortalAutomator,
 	waits agentextensionports.PortalRunWaits,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &readPortalTool{portals: portals, waits: waits}
 }
 
@@ -178,7 +180,7 @@ func (t *readPortalTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *readPortalTool) Policy() agentports.ToolPolicy {
+func (t *readPortalTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:        permission.ResourcePortalAutomation,
 		reads:           agent.ExternalReadAlways,
@@ -222,7 +224,7 @@ type portalReadAnswer struct {
 
 func (t *readPortalTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

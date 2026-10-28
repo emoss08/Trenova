@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -327,15 +329,15 @@ var inboundSearchParams = []string{
 type listInboundMessagesTool struct {
 	*graphQLListTool
 
-	searcher agentports.RetrievalSearcher
+	searcher retrievalports.RetrievalSearcher
 	access   fieldAccess
 }
 
 func provideListInboundMessagesTool(
-	reader agentports.GraphQLReader,
+	reader graphqlreadports.GraphQLReader,
 	permissions permissionports.PermissionEngine,
-	searcher agentports.RetrievalSearcher,
-) (agentports.AgentQueryTool, error) {
+	searcher retrievalports.RetrievalSearcher,
+) (agenttoolports.AgentQueryTool, error) {
 	spec := inboundMessagesListSpec()
 	list, err := newGraphQLListTool(&spec, reader, permissions)
 	if err != nil {
@@ -376,7 +378,7 @@ type inboundSearchRow struct {
 
 func (t *listInboundMessagesTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if strings.TrimSpace(optionalString(params.Params, paramQuery)) == "" {
 		return t.graphQLListTool.Query(ctx, params)
@@ -394,8 +396,8 @@ func (t *listInboundMessagesTool) Query(
 
 // inboundSearchFilter is what a search by words narrows by, refusing any
 // filter the retrieval index does not keep.
-func inboundSearchFilter(args map[string]any) (agentports.InboundMessageFilter, error) {
-	var filter agentports.InboundMessageFilter
+func inboundSearchFilter(args map[string]any) (retrievalports.InboundMessageFilter, error) {
+	var filter retrievalports.InboundMessageFilter
 	for name, raw := range args {
 		if raw == nil || raw == "" || slices.Contains(inboundSearchParams, name) {
 			continue
@@ -430,11 +432,11 @@ func inboundSearchFilter(args map[string]any) (agentports.InboundMessageFilter, 
 
 func (t *listInboundMessagesTool) search(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
-	filter agentports.InboundMessageFilter,
+	params *agenttoolports.QueryToolParams,
+	filter retrievalports.InboundMessageFilter,
 ) (any, error) {
 	query := strings.TrimSpace(optionalString(params.Params, paramQuery))
-	result, err := t.searcher.SearchInboundMessages(ctx, &agentports.RetrievalSearchRequest{
+	result, err := t.searcher.SearchInboundMessages(ctx, &retrievalports.RetrievalSearchRequest{
 		TenantInfo:  tenantOf(params),
 		Query:       query,
 		Limit:       readLimit(params.Params, inboundSearchDefaultLimit, inboundSearchMost),

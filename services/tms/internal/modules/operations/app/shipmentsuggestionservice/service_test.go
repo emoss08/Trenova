@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -32,7 +32,7 @@ import (
 var fixedNow = time.Date(2026, 10, 6, 16, 30, 0, 0, time.UTC)
 
 type console struct {
-	agentports.DispatchConsoleService
+	dispatchconsoleports.DispatchConsoleService
 	board      *dispatchconsoleservice.Board
 	candidates map[pulid.ID][]*dispatchcandidateservice.CandidateScore
 }
@@ -135,7 +135,10 @@ func (f *decisionStore) Delete(
 	return record, nil
 }
 
-func (f *decisionStore) Prune(context.Context, *shipmentsuggestionports.PruneSuggestionDecisionsRequest) error {
+func (f *decisionStore) Prune(
+	context.Context,
+	*shipmentsuggestionports.PruneSuggestionDecisionsRequest,
+) error {
 	f.pruned++
 
 	return nil
@@ -217,8 +220,13 @@ type harness struct {
 
 func newHarness(operation tenant.OperationType) *harness {
 	h := &harness{
-		console:   &console{board: &dispatchconsoleservice.Board{}, candidates: map[pulid.ID][]*dispatchcandidateservice.CandidateScore{}},
-		caps:      &capabilities{caps: shipmentports.ShipmentBoardCapabilities{OperationType: operation, HOS: true}},
+		console: &console{
+			board:      &dispatchconsoleservice.Board{},
+			candidates: map[pulid.ID][]*dispatchcandidateservice.CandidateScore{},
+		},
+		caps: &capabilities{
+			caps: shipmentports.ShipmentBoardCapabilities{OperationType: operation, HOS: true},
+		},
 		watchlist: &watchlist{},
 		comments:  &comments{byShipment: map[pulid.ID][]*shipment.ShipmentComment{}},
 		desk:      &desk{},
@@ -249,7 +257,11 @@ func newHarness(operation tenant.OperationType) *harness {
 }
 
 func testTenant() pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_"), UserID: pulid.MustNew("usr_")}
+	return pagination.TenantInfo{
+		OrgID:  pulid.MustNew("org_"),
+		BuID:   pulid.MustNew("bu_"),
+		UserID: pulid.MustNew("usr_"),
+	}
 }
 
 func uncovered(pro string, pickupIn time.Duration) *dispatchconsoleservice.BoardMove {
@@ -277,7 +289,9 @@ func (h *harness) queue(t *testing.T) *shipmentsuggestionports.ShipmentSuggestio
 	return out
 }
 
-func kinds(items []*shipmentsuggestionports.ShipmentSuggestion) []shipmentsuggestionports.SuggestionKind {
+func kinds(
+	items []*shipmentsuggestionports.ShipmentSuggestion,
+) []shipmentsuggestionports.SuggestionKind {
 	out := make([]shipmentsuggestionports.SuggestionKind, 0, len(items))
 	for _, item := range items {
 		out = append(out, item.Kind)
@@ -298,7 +312,9 @@ func TestCoverage_OffersTheBestUnblockedDriverToAnAssetCarrier(t *testing.T) {
 	deadhead := 5.0
 	blocked := &dispatchcandidateservice.CandidateScore{
 		WorkerID: pulid.MustNew("wrk_"), WorkerName: "Blocked Driver",
-		Findings: []dispatcheligibility.Finding{{Code: "HOS", Severity: dispatcheligibility.SeverityBlock}},
+		Findings: []dispatcheligibility.Finding{
+			{Code: "HOS", Severity: dispatcheligibility.SeverityBlock},
+		},
 	}
 	best := &dispatchcandidateservice.CandidateScore{
 		WorkerID: pulid.MustNew("wrk_"), TractorID: pulid.MustNew("trc_"),
@@ -362,8 +378,20 @@ func TestDelayNotice_SkipsCustomersAlreadyToldThisHour(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(tenant.OperationTypeAsset)
-	told := shipmentports.LateDelivery{ShipmentID: pulid.MustNew("shp_"), ProNumber: "S1", DeltaMinutes: 202, City: "New Orleans", CustomerName: "Cargill Protein"}
-	untold := shipmentports.LateDelivery{ShipmentID: pulid.MustNew("shp_"), ProNumber: "S2", DeltaMinutes: 188, City: "Houston", CustomerName: "PepsiCo"}
+	told := shipmentports.LateDelivery{
+		ShipmentID:   pulid.MustNew("shp_"),
+		ProNumber:    "S1",
+		DeltaMinutes: 202,
+		City:         "New Orleans",
+		CustomerName: "Cargill Protein",
+	}
+	untold := shipmentports.LateDelivery{
+		ShipmentID:   pulid.MustNew("shp_"),
+		ProNumber:    "S2",
+		DeltaMinutes: 188,
+		City:         "Houston",
+		CustomerName: "PepsiCo",
+	}
 	h.watchlist.late = []shipmentports.LateDelivery{told, untold}
 	h.comments.byShipment[told.ShipmentID] = []*shipment.ShipmentComment{{
 		CreatedAt: fixedNow.Add(-10 * time.Minute).Unix(),
@@ -392,14 +420,22 @@ func TestHoursOfService_WarnsAboutWorkingDriversRunningOut(t *testing.T) {
 	move.DestinationCity = "Nashville"
 	h.console.board.Moves = []*dispatchconsoleservice.BoardMove{move}
 	h.console.board.Drivers = []*dispatchconsoleservice.BoardDriver{{
-		BoardDriver:      &shipmentports.BoardDriver{WorkerID: worker, FirstName: "Tom", LastName: "Avery"},
+		BoardDriver: &shipmentports.BoardDriver{
+			WorkerID:  worker,
+			FirstName: "Tom",
+			LastName:  "Avery",
+		},
 		Availability:     dispatchconsoleservice.AvailabilityWorking,
 		DriveRemainingMs: int64(95 * time.Minute / time.Millisecond),
 		HOSRecordedAt:    fixedNow.Unix(),
 	}}
 
 	items := h.queue(t).Items
-	require.Equal(t, []shipmentsuggestionports.SuggestionKind{shipmentsuggestionports.SuggestionHoursOfService}, kinds(items))
+	require.Equal(
+		t,
+		[]shipmentsuggestionports.SuggestionKind{shipmentsuggestionports.SuggestionHoursOfService},
+		kinds(items),
+	)
 	assert.Equal(t, "Tom Avery runs out of hours before Nashville", items[0].Title)
 	assert.Equal(t, "1:35 of drive time left on S2610-0601.", items[0].Reason)
 
@@ -412,17 +448,26 @@ func TestDetention_OffersToApprovePendingOccurrencesOnly(t *testing.T) {
 
 	h := newHarness(tenant.OperationTypeAsset)
 	pending := &detention.DetentionOccurrence{
-		ID: pulid.MustNew("dto_"), ShipmentID: pulid.MustNew("shp_"), Status: detention.OccurrenceStatusPending,
+		ID: pulid.MustNew(
+			"dto_",
+		), ShipmentID: pulid.MustNew("shp_"), Status: detention.OccurrenceStatusPending,
 		BillableMinutes: 95, BillableAmount: decimal.RequireFromString("142.50"),
 		LocationName: "Cargill Protein Plant", ShipmentProNumber: "S2610-0398",
 	}
-	accruing := &detention.DetentionOccurrence{ID: pulid.MustNew("dto_"), Status: detention.OccurrenceStatusAccruing}
+	accruing := &detention.DetentionOccurrence{
+		ID:     pulid.MustNew("dto_"),
+		Status: detention.OccurrenceStatusAccruing,
+	}
 	h.desk.entries = []*detentionservice.DeskEntry{{Occurrence: accruing}, {Occurrence: pending}}
 
 	items := h.queue(t).Items
 	require.Len(t, items, 1)
 	assert.Equal(t, "Approve detention at Cargill Protein Plant", items[0].Title)
-	assert.Equal(t, "1h 35m of billable time on S2610-0398 is waiting for approval.", items[0].Reason)
+	assert.Equal(
+		t,
+		"1h 35m of billable time on S2610-0398 is waiting for approval.",
+		items[0].Reason,
+	)
 	assert.Equal(t, "Approve $143", items[0].Primary.Label)
 	assert.Equal(t, pending.ID, items[0].Primary.DetentionOccurrenceID)
 }
@@ -436,8 +481,12 @@ func TestRetender_FlagsTendersThatNeedAPerson(t *testing.T) {
 	h.console.board.Moves = []*dispatchconsoleservice.BoardMove{move}
 
 	items := h.queue(t).Items
-	require.Equal(t, []shipmentsuggestionports.SuggestionKind{shipmentsuggestionports.SuggestionRetender}, kinds(items),
-		"a load already out to tender is not offered for tendering again")
+	require.Equal(
+		t,
+		[]shipmentsuggestionports.SuggestionKind{shipmentsuggestionports.SuggestionRetender},
+		kinds(items),
+		"a load already out to tender is not offered for tendering again",
+	)
 }
 
 func TestDecisions_HideDoneMoveLaterBackAndCountTheShift(t *testing.T) {
@@ -450,17 +499,21 @@ func TestDecisions_HideDoneMoveLaterBackAndCountTheShift(t *testing.T) {
 	h.console.board.Moves = []*dispatchconsoleservice.BoardMove{first, second, third}
 
 	decide := func(move *dispatchconsoleservice.BoardMove, decision shipmentsuggestion.Decision) {
-		require.NoError(t, h.service.Decide(t.Context(), &shipmentsuggestionports.DecideSuggestionRequest{
-			TenantInfo: testTenant(),
-			Key:        "tender:" + move.MoveID.String(),
-			Decision:   decision,
-		}))
+		require.NoError(
+			t,
+			h.service.Decide(t.Context(), &shipmentsuggestionports.DecideSuggestionRequest{
+				TenantInfo: testTenant(),
+				Key:        "tender:" + move.MoveID.String(),
+				Decision:   decision,
+			}),
+		)
 	}
 	decide(first, shipmentsuggestion.DecisionDone)
 	decide(second, shipmentsuggestion.DecisionLater)
 	h.decisions.records["coverage:"+pulid.MustNew("smv_").String()] = &shipmentsuggestion.DecisionRecord{
-		SuggestionKey: "stale", Decision: shipmentsuggestion.DecisionDone,
-		DecidedAt: fixedNow.Add(-13 * time.Hour).Unix(),
+		SuggestionKey: "stale",
+		Decision:      shipmentsuggestion.DecisionDone,
+		DecidedAt:     fixedNow.Add(-13 * time.Hour).Unix(),
 	}
 
 	got := h.queue(t)
@@ -501,7 +554,13 @@ func TestUndo_CancelsTheTenderTheSuggestionStarted(t *testing.T) {
 	doneDecision(h, key, fixedNow.Add(-time.Minute))
 	h.tenders.live = &tender.Tender{CreatedAt: fixedNow.Add(-70 * time.Second).Unix()}
 
-	require.NoError(t, h.service.Undo(t.Context(), &shipmentsuggestionports.UndoSuggestionRequest{TenantInfo: testTenant(), Key: key}))
+	require.NoError(
+		t,
+		h.service.Undo(
+			t.Context(),
+			&shipmentsuggestionports.UndoSuggestionRequest{TenantInfo: testTenant(), Key: key},
+		),
+	)
 
 	assert.Equal(t, []pulid.ID{moveID}, h.guard.canceled)
 	assert.Empty(t, h.assigner.unassigned)
@@ -517,7 +576,13 @@ func TestUndo_TakesOffTheDriverTheSuggestionAssigned(t *testing.T) {
 	doneDecision(h, key, fixedNow.Add(-time.Minute))
 	h.reads.assignment = &shipment.Assignment{CreatedAt: fixedNow.Add(-65 * time.Second).Unix()}
 
-	require.NoError(t, h.service.Undo(t.Context(), &shipmentsuggestionports.UndoSuggestionRequest{TenantInfo: testTenant(), Key: key}))
+	require.NoError(
+		t,
+		h.service.Undo(
+			t.Context(),
+			&shipmentsuggestionports.UndoSuggestionRequest{TenantInfo: testTenant(), Key: key},
+		),
+	)
 
 	assert.Equal(t, []pulid.ID{moveID}, h.assigner.unassigned)
 	assert.Empty(t, h.guard.canceled)
@@ -531,14 +596,32 @@ func TestUndo_LeavesAloneWorkItDidNotDo(t *testing.T) {
 
 	olderAssignment := newHarness(tenant.OperationTypeAsset)
 	doneDecision(olderAssignment, key, fixedNow.Add(-time.Minute))
-	olderAssignment.reads.assignment = &shipment.Assignment{CreatedAt: fixedNow.Add(-2 * time.Hour).Unix()}
-	require.NoError(t, olderAssignment.service.Undo(t.Context(), &shipmentsuggestionports.UndoSuggestionRequest{TenantInfo: testTenant(), Key: key}))
-	assert.Empty(t, olderAssignment.assigner.unassigned, "an assignment someone made earlier is not ours to undo")
+	olderAssignment.reads.assignment = &shipment.Assignment{
+		CreatedAt: fixedNow.Add(-2 * time.Hour).Unix(),
+	}
+	require.NoError(
+		t,
+		olderAssignment.service.Undo(
+			t.Context(),
+			&shipmentsuggestionports.UndoSuggestionRequest{TenantInfo: testTenant(), Key: key},
+		),
+	)
+	assert.Empty(
+		t,
+		olderAssignment.assigner.unassigned,
+		"an assignment someone made earlier is not ours to undo",
+	)
 
 	tooLate := newHarness(tenant.OperationTypeAsset)
 	doneDecision(tooLate, key, fixedNow.Add(-time.Hour))
 	tooLate.reads.assignment = &shipment.Assignment{CreatedAt: fixedNow.Add(-time.Hour).Unix()}
-	require.NoError(t, tooLate.service.Undo(t.Context(), &shipmentsuggestionports.UndoSuggestionRequest{TenantInfo: testTenant(), Key: key}))
+	require.NoError(
+		t,
+		tooLate.service.Undo(
+			t.Context(),
+			&shipmentsuggestionports.UndoSuggestionRequest{TenantInfo: testTenant(), Key: key},
+		),
+	)
 	assert.Empty(t, tooLate.assigner.unassigned, "past the undo window only the mark is taken back")
 
 	later := newHarness(tenant.OperationTypeAsset)
@@ -546,7 +629,13 @@ func TestUndo_LeavesAloneWorkItDidNotDo(t *testing.T) {
 		SuggestionKey: key, Decision: shipmentsuggestion.DecisionLater, DecidedAt: fixedNow.Unix(),
 	}
 	later.reads.assignment = &shipment.Assignment{CreatedAt: fixedNow.Unix()}
-	require.NoError(t, later.service.Undo(t.Context(), &shipmentsuggestionports.UndoSuggestionRequest{TenantInfo: testTenant(), Key: key}))
+	require.NoError(
+		t,
+		later.service.Undo(
+			t.Context(),
+			&shipmentsuggestionports.UndoSuggestionRequest{TenantInfo: testTenant(), Key: key},
+		),
+	)
 	assert.Empty(t, later.assigner.unassigned, "putting something off did nothing to undo")
 	assert.NotContains(t, later.decisions.records, key)
 }

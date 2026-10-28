@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -19,7 +19,7 @@ const fieldReplaces = "replacesMemoryId"
 
 func (s *Service) planReplacement(
 	ctx context.Context,
-	req *agentports.RememberRequest,
+	req *agentmemoryports.RememberRequest,
 	entity *agent.Memory,
 ) (*agent.Memory, bool, error) {
 	notVisible := errortypes.NewValidationError(
@@ -28,7 +28,7 @@ func (s *Service) planReplacement(
 		"No memory with that id is visible here",
 	)
 
-	replaced, err := s.repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+	replaced, err := s.repo.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID:         req.Replaces,
 		TenantInfo: req.TenantInfo,
 	})
@@ -98,7 +98,7 @@ func ReplacedFreely(replaced *agent.Memory, personID pulid.ID, agentID *pulid.ID
 
 func (s *Service) replacementReads(
 	ctx context.Context,
-	req *agentports.RememberRequest,
+	req *agentmemoryports.RememberRequest,
 	entity *agent.Memory,
 	replaced *agent.Memory,
 ) bool {
@@ -146,7 +146,7 @@ func (s *Service) retireReplaced(
 	}
 
 	tenant := pagination.TenantInfo{OrgID: replaced.OrganizationID, BuID: replaced.BusinessUnitID}
-	retired, err := s.repo.SetStatus(ctx, agentports.SetAgentMemoryStatusQuery{
+	retired, err := s.repo.SetStatus(ctx, agentmemoryports.SetAgentMemoryStatusQuery{
 		ID:         replaced.ID,
 		TenantInfo: tenant,
 		Status:     agent.MemoryStatusRetired,
@@ -176,7 +176,7 @@ func (s *Service) recordReplaced(
 		return
 	}
 
-	retired, err := s.repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+	retired, err := s.repo.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID: *replacement.SupersedesID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: replacement.OrganizationID,

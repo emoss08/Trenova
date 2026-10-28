@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -71,7 +71,7 @@ func TestRunEventReads_KeepAConversationRunsEventsToItsOwner(t *testing.T) {
 	conversationRun := newRun(agent.SubjectAssistantThread, thread.ID)
 	shipmentRun := newRun(agent.SubjectShipment, pulid.MustNew("shp_"))
 
-	runOwner := string(agentports.RunStepOwnerAgentRun)
+	runOwner := string(agentruntimeports.RunStepOwnerAgentRun)
 	events := make([]*agent.AgentRunEvent, 0, 2)
 	for _, run := range []*agent.AgentRun{conversationRun, shipmentRun} {
 		events = append(events, &agent.AgentRunEvent{
@@ -86,43 +86,46 @@ func TestRunEventReads_KeepAConversationRunsEventsToItsOwner(t *testing.T) {
 			OccurredAt:     now,
 		})
 	}
-	require.NoError(t, repo.Append(ctx, agentports.AppendAgentRunEventsRequest{
+	require.NoError(t, repo.Append(ctx, agentruntimeports.AppendAgentRunEventsRequest{
 		TenantInfo: tenant,
 		Events:     events,
 	}))
 
 	readers := map[string]struct {
-		reader agentports.RunReader
+		reader agentruntimeports.RunReader
 		sees   []pulid.ID
 	}{
 		"the owner": {
-			reader: agentports.PersonRunRead(owner),
+			reader: agentruntimeports.PersonRunRead(owner),
 			sees:   []pulid.ID{conversationRun.ID, shipmentRun.ID},
 		},
 		"a colleague": {
-			reader: agentports.PersonRunRead(pulid.MustNew("usr_")),
+			reader: agentruntimeports.PersonRunRead(pulid.MustNew("usr_")),
 			sees:   []pulid.ID{shipmentRun.ID},
 		},
 		"an agent or an API key": {
-			reader: agentports.PersonRunRead(pulid.Nil),
+			reader: agentruntimeports.PersonRunRead(pulid.Nil),
 			sees:   []pulid.ID{shipmentRun.ID},
 		},
 		"the runtime": {
-			reader: agentports.UnattendedRunRead(),
+			reader: agentruntimeports.UnattendedRunRead(),
 			sees:   []pulid.ID{conversationRun.ID, shipmentRun.ID},
 		},
 	}
 
 	for name, tc := range readers {
-		page, listErr := repo.ListConnection(ctx, &agentports.ListAgentRunEventConnectionRequest{
-			Filter: &pagination.QueryOptions{
-				TenantInfo: tenant,
-				Pagination: pagination.Info{Limit: 10},
+		page, listErr := repo.ListConnection(
+			ctx,
+			&agentruntimeports.ListAgentRunEventConnectionRequest{
+				Filter: &pagination.QueryOptions{
+					TenantInfo: tenant,
+					Pagination: pagination.Info{Limit: 10},
+				},
+				Cursor:    pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
+				OwnerKind: runOwner,
+				Reader:    tc.reader,
 			},
-			Cursor:    pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
-			OwnerKind: runOwner,
-			Reader:    tc.reader,
-		})
+		)
 		require.NoError(t, listErr, name)
 		assert.ElementsMatch(t, tc.sees, eventOwners(page.Items), name)
 		require.NotNil(t, page.TotalCount, name)
@@ -130,7 +133,7 @@ func TestRunEventReads_KeepAConversationRunsEventsToItsOwner(t *testing.T) {
 			"%s: the count leaves out what the page leaves out", name)
 
 		for _, run := range []*agent.AgentRun{conversationRun, shipmentRun} {
-			byRun, runErr := repo.List(ctx, agentports.ListAgentRunEventsRequest{
+			byRun, runErr := repo.List(ctx, agentruntimeports.ListAgentRunEventsRequest{
 				TenantInfo: tenant,
 				OwnerKind:  runOwner,
 				OwnerID:    run.ID,

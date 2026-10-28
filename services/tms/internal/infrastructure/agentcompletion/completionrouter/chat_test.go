@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,14 +18,14 @@ func chatProvider(name, baseURL string, priority int) *aiprovider.Provider {
 	return provider
 }
 
-func chatRequest(preferred pulid.ID) *agentports.ChatCompletionRequest {
-	return &agentports.ChatCompletionRequest{
+func chatRequest(preferred pulid.ID) *llmports.ChatCompletionRequest {
+	return &llmports.ChatCompletionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
 		System:              "You are a test.",
-		Messages:            agentports.UserMessage("hello"),
+		Messages:            llmports.UserMessage("hello"),
 		PreferredProviderID: preferred,
 	}
 }

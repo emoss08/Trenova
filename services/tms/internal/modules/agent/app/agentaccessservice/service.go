@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -25,7 +26,7 @@ import (
 const maxGrantsPerWrite = 100
 
 type toolPolicies interface {
-	Get(name string) (agentports.ToolPolicy, bool)
+	Get(name string) (agenttoolports.ToolPolicy, bool)
 }
 
 func policyLookup(catalog *agenttoolpolicy.Catalog) toolPolicies {
@@ -47,7 +48,7 @@ type Params struct {
 	Notifier     permissionports.PermissionChangeNotifier `optional:"true"`
 	Permissions  permissionports.PermissionEngine
 	AuditService auditports.AuditService
-	Runtime      agentports.AgentRuntime
+	Runtime      agentruntimeports.AgentRuntime
 	Policies     *agenttoolpolicy.Catalog `optional:"true"`
 	Registry     *permission.Registry
 }
@@ -61,7 +62,7 @@ type Service struct {
 	notifier    permissionports.PermissionChangeNotifier
 	permissions permissionports.PermissionEngine
 	audit       auditports.AuditService
-	runtime     agentports.AgentRuntime
+	runtime     agentruntimeports.AgentRuntime
 	policies    toolPolicies
 	sensitive   SensitiveToolRule
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,16 +27,16 @@ type deskCount struct {
 	Count  int
 }
 
-func deskRow(memory *agent.Memory) *agentports.DeskMemoryRow {
-	return &agentports.DeskMemoryRow{
+func deskRow(memory *agent.Memory) *agentmemoryports.DeskMemoryRow {
+	return &agentmemoryports.DeskMemoryRow{
 		Memory:      memory,
 		SourceTitle: memory.SourceTitle,
 		RoleName:    memory.RoleName,
 	}
 }
 
-func deskRows(memories []*agent.Memory) []*agentports.DeskMemoryRow {
-	out := make([]*agentports.DeskMemoryRow, 0, len(memories))
+func deskRows(memories []*agent.Memory) []*agentmemoryports.DeskMemoryRow {
+	out := make([]*agentmemoryports.DeskMemoryRow, 0, len(memories))
 	for _, memory := range memories {
 		out = append(out, deskRow(memory))
 	}
@@ -63,7 +63,7 @@ func deskSelect() *keel.Query[*agent.Memory] {
 // their team or the organization while an administrator has yet to decide.
 // What is kept for one agent is administered in AI Control, and an agent's
 // suggestion waits in its conversation.
-func deskVisible(filter *agentports.DeskMemoryFilter) keel.Pred {
+func deskVisible(filter *agentmemoryports.DeskMemoryFilter) keel.Pred {
 	m := agentdb.Memories
 	kept := keel.And(
 		m.Status.In(agent.MemoryStatusActive, agent.MemoryStatusPaused),
@@ -91,7 +91,7 @@ func deskVisible(filter *agentports.DeskMemoryFilter) keel.Pred {
 	}
 }
 
-func listDeskQuery(req *agentports.ListDeskMemoriesQuery) *keel.Query[*agent.Memory] {
+func listDeskQuery(req *agentmemoryports.ListDeskMemoriesQuery) *keel.Query[*agent.Memory] {
 	m := agentdb.Memories
 	limit := req.Limit
 	if limit <= 0 {
@@ -121,76 +121,88 @@ func listDeskQuery(req *agentports.ListDeskMemoriesQuery) *keel.Query[*agent.Mem
 
 func (r *repository) ListDesk(
 	ctx context.Context,
-	req agentports.ListDeskMemoriesQuery,
-) ([]*agentports.DeskMemoryRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentports.DeskMemoryRow, error) {
-		memories, err := listDeskQuery(&req).List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("list desk memories: %w", err)
-		}
+	req agentmemoryports.ListDeskMemoriesQuery,
+) ([]*agentmemoryports.DeskMemoryRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*agentmemoryports.DeskMemoryRow, error) {
+			memories, err := listDeskQuery(&req).List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("list desk memories: %w", err)
+			}
 
-		return deskRows(memories), nil
-	})
+			return deskRows(memories), nil
+		},
+	)
 }
 
 func (r *repository) CountDesk(
 	ctx context.Context,
-	filter agentports.DeskMemoryFilter,
-) ([]agentports.DeskMemoryCountRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.DeskMemoryCountRow, error) {
-		m := agentdb.Memories
-		rows, err := keel.Into[deskCount](ctx, r.db.Keel(ctx), m.
-			Group(m.Scope, m.RoleID).
-			Pick(m.Scope, m.RoleID, keel.Count()).
-			Where(deskVisible(&filter)))
-		if err != nil {
-			return nil, fmt.Errorf("count desk memories: %w", err)
-		}
+	filter agentmemoryports.DeskMemoryFilter,
+) ([]agentmemoryports.DeskMemoryCountRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]agentmemoryports.DeskMemoryCountRow, error) {
+			m := agentdb.Memories
+			rows, err := keel.Into[deskCount](ctx, r.db.Keel(ctx), m.
+				Group(m.Scope, m.RoleID).
+				Pick(m.Scope, m.RoleID, keel.Count()).
+				Where(deskVisible(&filter)))
+			if err != nil {
+				return nil, fmt.Errorf("count desk memories: %w", err)
+			}
 
-		counts := make([]agentports.DeskMemoryCountRow, 0, len(rows))
-		for _, row := range rows {
-			counts = append(counts, agentports.DeskMemoryCountRow{
-				Scope:  row.Scope,
-				RoleID: row.RoleID,
-				Count:  row.Count,
-			})
-		}
+			counts := make([]agentmemoryports.DeskMemoryCountRow, 0, len(rows))
+			for _, row := range rows {
+				counts = append(counts, agentmemoryports.DeskMemoryCountRow{
+					Scope:  row.Scope,
+					RoleID: row.RoleID,
+					Count:  row.Count,
+				})
+			}
 
-		return counts, nil
-	})
+			return counts, nil
+		},
+	)
 }
 
 func (r *repository) GetDesk(
 	ctx context.Context,
-	req agentports.GetDeskMemoriesRequest,
-) ([]*agentports.DeskMemoryRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentports.DeskMemoryRow, error) {
-		if len(req.IDs) == 0 {
-			return []*agentports.DeskMemoryRow{}, nil
-		}
-		ids := req.IDs
-		if len(ids) > maxDeskIDs {
-			ids = ids[:maxDeskIDs]
-		}
+	req agentmemoryports.GetDeskMemoriesRequest,
+) ([]*agentmemoryports.DeskMemoryRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*agentmemoryports.DeskMemoryRow, error) {
+			if len(req.IDs) == 0 {
+				return []*agentmemoryports.DeskMemoryRow{}, nil
+			}
+			ids := req.IDs
+			if len(ids) > maxDeskIDs {
+				ids = ids[:maxDeskIDs]
+			}
 
-		m := agentdb.Memories
-		memories, err := deskSelect().
-			Where(m.ID.In(ids...)).
-			Limit(len(ids)).
-			List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("get desk memories: %w", err)
-		}
+			m := agentdb.Memories
+			memories, err := deskSelect().
+				Where(m.ID.In(ids...)).
+				Limit(len(ids)).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("get desk memories: %w", err)
+			}
 
-		return deskRows(memories), nil
-	})
+			return deskRows(memories), nil
+		},
+	)
 }
 
 // Revise rewrites what a memory says and who reads it, under its version.
 // Like Update it leaves where the memory came from alone.
 func (r *repository) Revise(
 	ctx context.Context,
-	req agentports.ReviseAgentMemoryRequest,
+	req agentmemoryports.ReviseAgentMemoryRequest,
 ) (*agent.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
 		owner, role := pulid.Nil, pulid.Nil
@@ -217,7 +229,7 @@ func (r *repository) Revise(
 			return nil, dberror.CreateVersionMismatchError(memoryEntity, req.ID.String())
 		}
 
-		return r.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+		return r.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -226,7 +238,7 @@ func (r *repository) Revise(
 
 func (r *repository) GetPreference(
 	ctx context.Context,
-	req agentports.GetAgentMemoryPreferenceRequest,
+	req agentmemoryports.GetAgentMemoryPreferenceRequest,
 ) (*agent.MemoryPreference, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.MemoryPreference, error) {
 		p := agentdb.MemoryPreferences

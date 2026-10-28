@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -49,10 +50,10 @@ type Params struct {
 	Projector   *Projector
 	Permissions permissionports.PermissionEngine
 	Definitions agentdefinitionports.AgentDefinitionRepository
-	Runs        agentports.AgentRunService         `optional:"true"`
-	RunRepo     agentports.AgentRunRepository      `optional:"true"`
-	Events      agentports.AgentEventPublisher     `optional:"true"`
-	Sources     []watchtowerports.WatchtowerSource `                group:"watchtower_sources"`
+	Runs        agentports.AgentRunService           `optional:"true"`
+	RunRepo     agentruntimeports.AgentRunRepository `optional:"true"`
+	Events      agentports.AgentEventPublisher       `optional:"true"`
+	Sources     []watchtowerports.WatchtowerSource   `                group:"watchtower_sources"`
 	Dismisser   *Dismisser
 	Exceptions  *Exceptions
 }
@@ -72,7 +73,7 @@ type Service struct {
 	dismisser   *Dismisser
 	definitions agentdefinitionports.AgentDefinitionRepository
 	runs        agentports.AgentRunService
-	runRepo     agentports.AgentRunRepository
+	runRepo     agentruntimeports.AgentRunRepository
 	exceptions  *Exceptions
 	events      agentports.AgentEventPublisher
 	sources     map[watchtower.SourceKind]watchtowerports.WatchtowerSource

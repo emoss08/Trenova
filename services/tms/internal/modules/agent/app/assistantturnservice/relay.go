@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/zap"
 )
@@ -35,7 +35,7 @@ type RelayRequest struct {
 func (s *Service) Relay(
 	ctx context.Context,
 	req RelayRequest,
-	onFrame agentports.TurnFrameFunc,
+	onFrame assistantports.TurnFrameFunc,
 ) error {
 	turn := req.Turn
 
@@ -61,10 +61,10 @@ func (s *Service) Relay(
 	attached := time.Now()
 	spoke := false
 	sawTerminal := false
-	err := s.reader.Read(ctx, agentports.ReadTurnStreamRequest{
+	err := s.reader.Read(ctx, assistantports.ReadTurnStreamRequest{
 		Ref:    streamRef(turn),
 		Cursor: req.Cursor,
-		OnFrame: func(frame agentports.TurnStreamFrame) error {
+		OnFrame: func(frame assistantports.TurnStreamFrame) error {
 			if fresh && !spoke {
 				spoke = true
 				s.metrics.RecordFirstEvent(time.Since(attached).Seconds())
@@ -110,7 +110,7 @@ func (s *Service) current(
 	ctx context.Context,
 	turn *conversation.AssistantTurn,
 ) *conversation.AssistantTurn {
-	current, err := s.turns.GetByID(ctx, agentports.GetAssistantTurnRequest{
+	current, err := s.turns.GetByID(ctx, assistantports.GetAssistantTurnRequest{
 		ID:         turn.ID,
 		TenantInfo: tenantOf(turn),
 	})
@@ -132,7 +132,7 @@ func (s *Service) current(
 func ClosingEvent(turn *conversation.AssistantTurn) kernelports.StreamEvent {
 	if turn.Status == conversation.AssistantTurnStatusFailed && turn.ErrorMessage != "" {
 		return kernelports.StreamEvent{
-			Event: agentports.AssistantEventError,
+			Event: assistantports.AssistantEventError,
 			Data: map[string]any{
 				"message": "This reply did not finish. What ran has been kept in the conversation.",
 			},
@@ -140,7 +140,7 @@ func ClosingEvent(turn *conversation.AssistantTurn) kernelports.StreamEvent {
 	}
 
 	return kernelports.StreamEvent{
-		Event: agentports.AssistantEventDone,
+		Event: assistantports.AssistantEventDone,
 		Data: map[string]any{
 			"turnId":   turn.ID.String(),
 			"threadId": turn.ThreadID.String(),
@@ -153,7 +153,7 @@ func ClosingEvent(turn *conversation.AssistantTurn) kernelports.StreamEvent {
 	}
 }
 
-func closingFrame(turn *conversation.AssistantTurn) agentports.TurnStreamFrame {
+func closingFrame(turn *conversation.AssistantTurn) assistantports.TurnStreamFrame {
 	event := ClosingEvent(turn)
 
 	return frameOf(event.Event, event.Data)

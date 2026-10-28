@@ -17,7 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/reflectutils"
@@ -30,8 +32,8 @@ const otherTenantSecret = "Acme's lockbox code is 4417"
 
 func memoryTools(
 	t *testing.T,
-	memories agentports.AgentMemoryService,
-) ([]agentports.AgentQueryTool, []agentports.AgentTool) {
+	memories agentmemoryports.AgentMemoryService,
+) ([]agenttoolports.AgentQueryTool, []agenttoolports.AgentTool) {
 	t.Helper()
 
 	fakes := []reflect.Value{reflect.ValueOf(memories)}
@@ -40,18 +42,18 @@ func memoryTools(
 		agenttoolservice.ToolProviders()...,
 	)
 
-	queries := make([]agentports.AgentQueryTool, 0, 1)
-	actions := make([]agentports.AgentTool, 0, 1)
+	queries := make([]agenttoolports.AgentQueryTool, 0, 1)
+	actions := make([]agenttoolports.AgentTool, 0, 1)
 	for _, provider := range providers {
 		built, err := reflectutils.Construct(provider, suppliedFor(provider, fakes))
 		require.NoError(t, err)
 
 		switch tool := built.(type) {
-		case agentports.AgentQueryTool:
+		case agenttoolports.AgentQueryTool:
 			if tool.Name() == "agent_list_memories" {
 				queries = append(queries, tool)
 			}
-		case agentports.AgentTool:
+		case agenttoolports.AgentTool:
 			if tool.Name() == "agent_retire_memory" {
 				actions = append(actions, tool)
 			}
@@ -122,7 +124,7 @@ func TestCrossTenantIDsAreRefusedByTheRepositories(t *testing.T) {
 		BusinessUnitID: intruder.BusinessUnit.ID,
 		UserID:         intruder.User.ID,
 	}
-	result, err := rt.Run(intruder.Ctx(ctx), &agentports.RunRequest{
+	result, err := rt.Run(intruder.Ctx(ctx), &agentruntimeports.RunRequest{
 		Definition: definitionFor(&c.Agent, MainAgentID, tenant),
 		Actor:      actorFor(false, tenant),
 		Input:      c.Input,
@@ -155,7 +157,7 @@ func TestCrossTenantIDsAreRefusedByTheRepositories(t *testing.T) {
 	assert.True(t, strings.Contains(strings.ToLower(refusal), "not found"),
 		"the other tenant's id reads as a record that does not exist: %s", refusal)
 
-	kept, err := repo.GetByID(owner.Ctx(ctx), agentports.GetAgentMemoryByIDRequest{
+	kept, err := repo.GetByID(owner.Ctx(ctx), agentmemoryports.GetAgentMemoryByIDRequest{
 		ID:         secret.ID,
 		TenantInfo: ownerTenant,
 	})

@@ -11,14 +11,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/bootstrap/crossref"
-
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmentmanufacturerrepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmenttyperepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/fleetcoderepository"
@@ -131,7 +131,7 @@ type referenceCase struct {
 	write                func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error)
 	marked               map[string]any
 	oldMarked            map[string]any
-	old                  agentports.AgentQueryTool
+	old                  agenttoolports.AgentQueryTool
 	// readsWith attaches what a read of the case needs beside the tenant,
 	// such as the loader a card's counts resolve through.
 	readsWith func(ctx context.Context, tenant *agentreadtest.Tenant) context.Context
@@ -534,7 +534,10 @@ func convertedListCases(
 		},
 		{
 			tool: "worker_list", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListWorkersTool(workers, &mocks.DenyResourcesPermissionEngine{}),
+			old: agentquerytoolservice.NewListWorkersTool(
+				workers,
+				&mocks.DenyResourcesPermissionEngine{},
+			),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				row, err := workers.Create(ctx, testWorker(tenant, "W"+label, marked, pulid.Nil))
 				return created(row, err)
@@ -542,7 +545,10 @@ func convertedListCases(
 		},
 		{
 			tool: "equipment_list_tractors", marked: outOfService, oldMarked: oldOutOfService,
-			old: agentquerytoolservice.NewListTractorsTool(tractors, &mocks.DenyResourcesPermissionEngine{}),
+			old: agentquerytoolservice.NewListTractorsTool(
+				tractors,
+				&mocks.DenyResourcesPermissionEngine{},
+			),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				typeID, makeID, driverID, err := parts.write(ctx, tenant, "P"+label)
 				if err != nil {
@@ -653,7 +659,9 @@ func convertedListCases(
 					BusinessUnitID: bu, OrganizationID: org, TractorID: tractorID,
 					JurisdictionID: jurisdictionID, PurchasedAt: timeutils.NowUnix() - 86400,
 					Vendor: "Pilot", FuelType: domaintypes.IFTAFuelTypeDiesel,
-					Quantity: decimal.NewFromInt(100), QuantityUnit: fuelpurchase.QuantityUnitGallon,
+					Quantity: decimal.NewFromInt(
+						100,
+					), QuantityUnit: fuelpurchase.QuantityUnitGallon,
 					Gallons: decimal.NewFromInt(100), TotalAmountMinor: 38990, CurrencyCode: "USD",
 					TransactionReference: "ref-" + label, Source: fuelpurchase.PurchaseSourceManual,
 					TaxPaid: marked, CreatedByID: tenant.Actor.UserID,
@@ -696,7 +704,9 @@ func convertedListCases(
 					Status: status, FinalizedAt: finalizedAt, Timezone: "America/Chicago",
 					PeriodStart: 1, PeriodEnd: 2,
 					CurrencyCode: "USD",
-					Problems:     []ifta.Problem{{Code: ifta.ProblemMissingRate, Message: "No rate"}},
+					Problems: []ifta.Problem{
+						{Code: ifta.ProblemMissingRate, Message: "No rate"},
+					},
 				})
 				return created(row, err)
 			},
@@ -891,13 +901,13 @@ func writeReferenceRows(
 func callTool(
 	t *testing.T,
 	ctx context.Context,
-	tool agentports.AgentQueryTool,
+	tool agenttoolports.AgentQueryTool,
 	actor *permissionports.RequestActor,
 	args map[string]any,
 ) map[string]any {
 	t.Helper()
 
-	data, err := tool.Query(ctx, &agentports.QueryToolParams{
+	data, err := tool.Query(ctx, &agenttoolports.QueryToolParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		Actor:          actor,
@@ -915,7 +925,7 @@ func callTool(
 func walk(
 	t *testing.T,
 	ctx context.Context,
-	tool agentports.AgentQueryTool,
+	tool agenttoolports.AgentQueryTool,
 	actor *permissionports.RequestActor,
 	args map[string]any,
 ) (ids []string, pages int) {
@@ -951,7 +961,10 @@ func TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *t
 	cases, services := convertedListCases(conn, admin)
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
-	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: services})
+	public := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: &publicRole{}, Resolvers: services},
+	)
 
 	env := &convertedListEnv{
 		engine: engine,
@@ -970,8 +983,8 @@ func TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *t
 // and readers at the default data access and at Public, and two tenants.
 type convertedListEnv struct {
 	engine permissionports.PermissionEngine
-	reader agentports.GraphQLReader
-	public agentports.GraphQLReader
+	reader graphqlreadports.GraphQLReader
+	public graphqlreadports.GraphQLReader
 	mine   *agentreadtest.Tenant
 	theirs *agentreadtest.Tenant
 	// attach adds to a tenant's context the loaders an operation's resolvers
@@ -980,7 +993,10 @@ type convertedListEnv struct {
 }
 
 // within is the context a tenant's rows are read in.
-func (e *convertedListEnv) within(ctx context.Context, tenant *agentreadtest.Tenant) context.Context {
+func (e *convertedListEnv) within(
+	ctx context.Context,
+	tenant *agentreadtest.Tenant,
+) context.Context {
 	if e.attach == nil {
 		return ctx
 	}
@@ -1075,7 +1091,11 @@ func TestConvertedLists_ATractorsDriversShowTheirReferenceView(t *testing.T) {
 		Denied: []string{permission.ResourceWorker.String()},
 	}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
-	converted, err := agentquerytoolservice.ConvertedListTool("equipment_list_tractors", reader, engine)
+	converted, err := agentquerytoolservice.ConvertedListTool(
+		"equipment_list_tractors",
+		reader,
+		engine,
+	)
 	require.NoError(t, err)
 
 	page := callTool(t, ours.ctx, converted, tenant.Actor, map[string]any{"limit": 50})

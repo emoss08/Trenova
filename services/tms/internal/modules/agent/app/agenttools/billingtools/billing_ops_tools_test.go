@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
@@ -88,13 +88,28 @@ func TestReassignBillingCharge_ShowsTheItemsItOpensAndCancels(t *testing.T) {
 		}},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, billing.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		billing.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	require.Len(t, preview.Changes, 2)
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 0).Operation)
-	assert.Equal(t, string(billingqueue.StatusCanceled),
-		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 1), common.FieldStatus).After)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
+	assert.Equal(
+		t,
+		string(billingqueue.StatusCanceled),
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 1),
+			common.FieldStatus,
+		).After,
+	)
 	assert.Contains(t, preview.Summary, "PRO-4040")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -123,7 +138,7 @@ func TestReassignBillingCharge_ShowsTheItemsItOpensAndCancels(t *testing.T) {
 			common.ParamAllocations: []any{},
 		},
 	} {
-		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+		require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 			agenttoolstest.ExecuteParams(raw)), name)
 	}
 }
@@ -207,9 +222,13 @@ func TestManageBillingTransferRun_StopsOrRetries(t *testing.T) {
 		paramRunAction: "Stop",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, runs.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), stop)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		runs.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), stop)
+		},
+	)
 	assert.Contains(t, preview.Summary, "120 of 400")
 	require.NoError(t, tool.Execute(t.Context(), stop))
 	assert.True(t, runs.canceled)
@@ -218,11 +237,19 @@ func TestManageBillingTransferRun_StopsOrRetries(t *testing.T) {
 		resultRunID:    runs.run.ID.String(),
 		paramRunAction: "Retry",
 	})
-	retryPreview := agenttoolstest.PreviewWithoutWrites(t, runs.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), retry)
-	})
+	retryPreview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		runs.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), retry)
+		},
+	)
 	assert.Contains(t, retryPreview.Summary, "4 shipments")
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, retryPreview, 0).Operation)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, retryPreview, 0).Operation,
+	)
 	require.NoError(t, tool.Execute(t.Context(), retry))
 	assert.True(t, runs.retried)
 
@@ -230,10 +257,16 @@ func TestManageBillingTransferRun_StopsOrRetries(t *testing.T) {
 	assert.Equal(t, permission.ResourceShipment, policy.Resource)
 	assert.Equal(t, permission.OpUpdate, policy.Operation)
 
-	runs.refusal = errortypes.NewAuthorizationError("Only the person who started a transfer can stop it")
-	refused, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), stop)
+	runs.refusal = errortypes.NewAuthorizationError(
+		"Only the person who started a transfer can stop it",
+	)
+	refused, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), stop)
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, refused, agent.PreviewWarningWouldFail)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{resultRunID: runs.run.ID.String(), paramRunAction: "Pause"})))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{resultRunID: runs.run.ID.String(), paramRunAction: "Pause"},
+		),
+	))
 }

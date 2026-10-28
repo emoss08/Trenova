@@ -12,9 +12,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,31 +34,31 @@ type Params struct {
 
 	Logger        *zap.Logger
 	Repo          agentports.AgentReflectionRepository
-	Conversations agentports.ConversationRepository
+	Conversations assistantports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Controls      tenantports.AgentControlRepository
-	Runs          agentports.AgentRunRepository
+	Runs          agentruntimeports.AgentRunRepository
 	Proposals     agentports.AgentProposalRepository
 	Decisions     agentports.AgentDecisionRepository
-	Memories      agentports.AgentMemoryService
+	Memories      agentmemoryports.AgentMemoryService
 	Feedback      aifeedbackports.AIFeedbackRepository `optional:"true"`
 	Budgets       agentports.AgentBudgetService        `optional:"true"`
-	Realtime      agentports.RealtimeService           `optional:"true"`
+	Realtime      realtimeports.RealtimeService        `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
 	repo          agentports.AgentReflectionRepository
-	conversations agentports.ConversationRepository
+	conversations assistantports.ConversationRepository
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	controls      tenantports.AgentControlRepository
-	runs          agentports.AgentRunRepository
+	runs          agentruntimeports.AgentRunRepository
 	proposals     agentports.AgentProposalRepository
 	decisions     agentports.AgentDecisionRepository
-	memories      agentports.AgentMemoryService
+	memories      agentmemoryports.AgentMemoryService
 	feedback      aifeedbackports.AIFeedbackRepository
 	budgets       agentports.AgentBudgetService
-	realtime      agentports.RealtimeService
+	realtime      realtimeports.RealtimeService
 	now           func() int64
 }
 
@@ -80,7 +85,7 @@ func (s *Service) PrepareThread(
 	req *agentports.ReflectOnThreadRequest,
 ) (*agentports.ReflectionPlan, error) {
 	tenant := req.TenantInfo
-	thread, err := s.conversations.GetThreadOwned(ctx, agentports.GetThreadOwnedRequest{
+	thread, err := s.conversations.GetThreadOwned(ctx, assistantports.GetThreadOwnedRequest{
 		ID:         req.ThreadID,
 		TenantInfo: tenant,
 	})
@@ -107,7 +112,7 @@ func (s *Service) PrepareThread(
 		after = through
 	}
 
-	messages, err := s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
+	messages, err := s.conversations.ListMessages(ctx, assistantports.ListMessagesRequest{
 		ThreadID:      thread.ID,
 		TenantInfo:    tenant,
 		AfterSequence: &after,
@@ -179,7 +184,7 @@ func (s *Service) PrepareRun(
 	tenant := req.TenantInfo
 	run, err := s.runs.GetByID(
 		ctx,
-		agentports.GetAgentRunByIDRequest{ID: req.RunID, TenantInfo: &tenant},
+		agentruntimeports.GetAgentRunByIDRequest{ID: req.RunID, TenantInfo: &tenant},
 	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
@@ -263,7 +268,7 @@ func (s *Service) ready(ctx context.Context, p *readyParams) (*agentports.Reflec
 	}
 
 	toolNames := windowToolNames(p.window.Messages)
-	known, err := s.memories.ForContext(ctx, agentports.MemoryContextRequest{
+	known, err := s.memories.ForContext(ctx, agentmemoryports.MemoryContextRequest{
 		TenantInfo:        plan.TenantInfo,
 		AgentDefinitionID: plan.AgentDefinitionID,
 		ReaderUserID:      plan.PersonUserID,
@@ -308,7 +313,7 @@ func (s *Service) ready(ctx context.Context, p *readyParams) (*agentports.Reflec
 		Messages:    p.window.Messages,
 	}
 	version := p.definition.Version
-	plan.Request = &agentports.StructuredCompletionRequest{
+	plan.Request = &llmports.StructuredCompletionRequest{
 		TenantInfo:          plan.TenantInfo,
 		Task:                aiprovider.TaskAssistantChat,
 		System:              systemPrompt(in),

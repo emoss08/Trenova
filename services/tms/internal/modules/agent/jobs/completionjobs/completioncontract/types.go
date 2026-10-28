@@ -3,8 +3,9 @@ package completioncontract
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 )
 
 const (
@@ -43,19 +44,19 @@ const (
 )
 
 type StructuredCompletionPayload struct {
-	Request *agentports.StructuredCompletionRequest `json:"request"`
+	Request *llmports.StructuredCompletionRequest `json:"request"`
 }
 
 type TestAIProviderPayload struct {
-	Request agentports.GetAIProviderByIDRequest `json:"request"`
+	Request aiproviderports.GetAIProviderByIDRequest `json:"request"`
 }
 
 type ListAIProviderModelsPayload struct {
-	Request *agentports.ProbeAIProviderModelsRequest `json:"request"`
+	Request *aiproviderports.ProbeAIProviderModelsRequest `json:"request"`
 }
 
 type TestAIProviderDraftPayload struct {
-	Request *agentports.ProbeAIProviderDraftRequest `json:"request"`
+	Request *aiproviderports.ProbeAIProviderDraftRequest `json:"request"`
 }
 
 type WriteBriefingPayload struct {

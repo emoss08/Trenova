@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -82,7 +82,7 @@ type locationFixture struct {
 	places     *fakePlaces
 	state      *usstate.UsState
 	category   *locationcategory.LocationCategory
-	tool       agentports.AgentTool
+	tool       agenttoolports.AgentTool
 }
 
 func newLocationFixture() *locationFixture {
@@ -93,7 +93,13 @@ func newLocationFixture() *locationFixture {
 		categories: &fakeLocationCategories{category: category},
 		places: &fakePlaces{found: &kernelports.AutocompleteLocationResult{
 			Details: []*kernelports.LocationDetails{
-				{City: "Sparks", State: "NV", PostalCode: "89431", Latitude: 39.53, Longitude: -119.75},
+				{
+					City:       "Sparks",
+					State:      "NV",
+					PostalCode: "89431",
+					Latitude:   39.53,
+					Longitude:  -119.75,
+				},
 				{
 					City: "Reno", State: "NV", PostalCode: "89502-1234",
 					Latitude: 39.50, Longitude: -119.78, PlaceID: "place-reno",
@@ -114,7 +120,7 @@ func newLocationFixture() *locationFixture {
 	return fixture
 }
 
-func (f *locationFixture) params(overrides map[string]any) agentports.ToolExecuteParams {
+func (f *locationFixture) params(overrides map[string]any) agenttoolports.ToolExecuteParams {
 	values := map[string]any{
 		"name":               "Reno Cold Storage",
 		"addressLine1":       "1200 Commerce Way",
@@ -159,7 +165,7 @@ func TestCreateLocation_CreatesTheLocationInTheCallersTenant(t *testing.T) {
 	fixture := newLocationFixture()
 	params := fixture.params(nil)
 
-	reporter := fixture.tool.(agentports.ToolResultReporter)
+	reporter := fixture.tool.(agenttoolports.ToolResultReporter)
 	result, err := reporter.ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 
@@ -193,7 +199,7 @@ func TestCreateLocation_ValidatesBeforeTheProposalIsShown(t *testing.T) {
 	t.Parallel()
 
 	fixture := newLocationFixture()
-	validator := fixture.tool.(agentports.ToolValidator)
+	validator := fixture.tool.(agenttoolports.ToolValidator)
 
 	require.NoError(t, validator.Validate(t.Context(), fixture.params(nil)))
 
@@ -220,8 +226,10 @@ func TestCreateLocation_SavesAnAddressItCannotPlaceAndSaysWhy(t *testing.T) {
 		says   string
 	}{
 		"no lookup connected": {
-			places: &fakePlaces{err: fmt.Errorf("%w: no key", kernelports.ErrPlaceLookupUnavailable)},
-			says:   placeLookupMissing,
+			places: &fakePlaces{
+				err: fmt.Errorf("%w: no key", kernelports.ErrPlaceLookupUnavailable),
+			},
+			says: placeLookupMissing,
 		},
 		"the lookup failing": {
 			places: &fakePlaces{err: errors.New("timeout")},
@@ -229,7 +237,9 @@ func TestCreateLocation_SavesAnAddressItCannotPlaceAndSaysWhy(t *testing.T) {
 		},
 		"no place in that state and ZIP": {
 			places: &fakePlaces{found: &kernelports.AutocompleteLocationResult{
-				Details: []*kernelports.LocationDetails{{City: "Reno", State: "TX", PostalCode: "75462"}},
+				Details: []*kernelports.LocationDetails{
+					{City: "Reno", State: "TX", PostalCode: "75462"},
+				},
 			}},
 			says: placeNotFound,
 		},
@@ -238,13 +248,13 @@ func TestCreateLocation_SavesAnAddressItCannotPlaceAndSaysWhy(t *testing.T) {
 		fixture := newLocationFixture()
 		fixture.tool.(*CreateLocationTool).places = tc.places
 
-		preview, err := fixture.tool.(agentports.ToolPreviewer).Preview(
+		preview, err := fixture.tool.(agenttoolports.ToolPreviewer).Preview(
 			t.Context(), fixture.params(nil),
 		)
 		require.NoError(t, err, name)
 		assert.Contains(t, preview.Summary, "saved without map coordinates, because "+tc.says, name)
 
-		_, err = fixture.tool.(agentports.ToolResultReporter).ExecuteWithResult(
+		_, err = fixture.tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(
 			t.Context(), fixture.params(nil),
 		)
 		require.NoError(t, err, name)

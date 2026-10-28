@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
@@ -110,7 +110,7 @@ func planFor(
 	scores []*dispatchcandidateservice.CandidateScore,
 	control *dispatchcontrol.DispatchControl,
 	policy Policy,
-) *agentports.DispatchPlan {
+) *dispatchconsoleports.DispatchPlan {
 	t.Helper()
 
 	moves := make([]*shipmentports.BoardMove, len(scores))
@@ -368,7 +368,7 @@ func TestEvidenceFor_RecordsMoveAndHOSAlways(t *testing.T) {
 func TestToolParamsFor(t *testing.T) {
 	t.Parallel()
 
-	planned := &agentports.DispatchPlannedAssignment{
+	planned := &dispatchconsoleports.DispatchPlannedAssignment{
 		MoveID:    pulid.MustNew("sm_"),
 		WorkerID:  pulid.MustNew("wrk_"),
 		TractorID: pulid.MustNew("trac_"),

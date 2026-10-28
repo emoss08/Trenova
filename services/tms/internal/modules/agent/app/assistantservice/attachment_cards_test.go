@@ -12,7 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -39,14 +43,17 @@ func (r *draftReader) ParamSchema() map[string]any {
 	}
 }
 
-func (r *draftReader) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (r *draftReader) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name: toolGetShipmentDraft, Kind: agent.ToolKindQuery,
 		Resource: permission.ResourceDocument, Operation: permission.OpRead,
 	}
 }
 
-func (r *draftReader) Query(_ context.Context, params *agentports.QueryToolParams) (any, error) {
+func (r *draftReader) Query(
+	_ context.Context,
+	params *agenttoolports.QueryToolParams,
+) (any, error) {
 	r.asked = append(r.asked, params.Params)
 	if r.draft == nil {
 		return nil, errortypes.NewNotFoundError("Draft not found")
@@ -77,7 +84,7 @@ func cardService(reader *draftReader) (*Service, *stubArtifactRepo) {
 		artifacts: repo,
 		runtime: agentruntime.New(agentruntime.Params{
 			Logger:      zap.NewNop(),
-			QueryTools:  &stubQueryRegistry{Tools: []agentports.AgentQueryTool{reader}},
+			QueryTools:  &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{reader}},
 			ActionTools: &stubActionRegistry{},
 			Permissions: &agenttest.StubPermissions{},
 		}),
@@ -196,8 +203,8 @@ func TestObserve_ReadingTheDraftAgainPointsAtTheAttachmentsCard(t *testing.T) {
 	shown := recorder.attachedExtraction(documentID)
 	require.NotNil(t, shown)
 
-	again, err := recorder.observe(agentports.ToolObservation{
-		Call: agentports.ToolCall{
+	again, err := recorder.observe(agentruntimeports.ToolObservation{
+		Call: llmports.ToolCall{
 			ID: "call_draft", Name: toolGetShipmentDraft,
 			Arguments: map[string]any{draftDocumentIDParam: documentID.String()},
 		},
@@ -262,7 +269,7 @@ func (r *recordingReadWaits) StopWaitingForDocumentRead(
 	return nil
 }
 
-func readAttachmentResult(documentID pulid.ID, reading string) *agentports.ToolObservation {
+func readAttachmentResult(documentID pulid.ID, reading string) *agentruntimeports.ToolObservation {
 	data := map[string]any{
 		draftDocumentIDParam: documentID.String(),
 		"fileName":           "rate-con.pdf",
@@ -272,8 +279,8 @@ func readAttachmentResult(documentID pulid.ID, reading string) *agentports.ToolO
 		data["stillBeingRead"] = true
 	}
 
-	return &agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: "call_read", Name: agentdefinition.CoreToolReadAttachment},
+	return &agentruntimeports.ToolObservation{
+		Call: llmports.ToolCall{ID: "call_read", Name: agentdefinition.CoreToolReadAttachment},
 		Data: data,
 	}
 }
@@ -346,7 +353,7 @@ func TestWaitOnUnreadFile_LeavesOtherWorkAlone(t *testing.T) {
 
 	tests := map[string]struct {
 		run         *UnreadFileRun
-		observation *agentports.ToolObservation
+		observation *agentruntimeports.ToolObservation
 	}{
 		"a delegated task": {
 			run:         &UnreadFileRun{ThreadID: thread, Actor: testActor(), Delegated: true},
@@ -394,16 +401,16 @@ func (d *extractedDocuments) GetByID(
 }
 
 type attachmentConversations struct {
-	agentports.ConversationRepository
+	assistantports.ConversationRepository
 
 	thread  *conversation.Thread
 	carries bool
-	asked   []agentports.CarriesAttachmentRequest
+	asked   []assistantports.CarriesAttachmentRequest
 }
 
 func (c *attachmentConversations) CarriesAttachment(
 	_ context.Context,
-	req *agentports.CarriesAttachmentRequest,
+	req *assistantports.CarriesAttachmentRequest,
 ) (bool, error) {
 	c.asked = append(c.asked, *req)
 
@@ -412,7 +419,7 @@ func (c *attachmentConversations) CarriesAttachment(
 
 func (c *attachmentConversations) GetThread(
 	_ context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if c.thread == nil || c.thread.ID != req.ID || c.thread.UserID != req.UserID {
 		return nil, errortypes.NewNotFoundError("Thread not found")

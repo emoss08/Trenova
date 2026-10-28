@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
@@ -72,13 +72,13 @@ func (r *pagedEquipmentTypeRepo) List(
 }
 
 type cursorListCase struct {
-	tool     agentports.AgentQueryTool
+	tool     agenttoolports.AgentQueryTool
 	received func() pagination.CursorInfo
 	ids      []pulid.ID
 }
 
 func cursorCase[T pagination.CursorEntity](
-	tool agentports.AgentQueryTool,
+	tool agenttoolports.AgentQueryTool,
 	repo *cursorRepo[T],
 ) cursorListCase {
 	return cursorListCase{

@@ -13,9 +13,8 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -59,7 +58,7 @@ type Params struct {
 	WorkflowStarter    kernelports.WorkflowStarter
 	Storage            kernelports.Client
 	Plans              platformplanports.PlanService `optional:"true"`
-	Realtime           agentports.RealtimeService    `optional:"true"`
+	Realtime           realtimeports.RealtimeService `optional:"true"`
 }
 
 // ObserverParams are the observers told when a message changes. They are
@@ -86,7 +85,7 @@ type Service struct {
 	workflowStarter    kernelports.WorkflowStarter
 	storage            kernelports.Client
 	plans              platformplanports.PlanService
-	realtime           agentports.RealtimeService
+	realtime           realtimeports.RealtimeService
 	observers          atomic.Pointer[[]emailports.EmailMessageObserver]
 	observersMu        sync.Mutex
 }

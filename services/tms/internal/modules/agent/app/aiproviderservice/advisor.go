@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -15,7 +15,7 @@ import (
 type advisorCheck struct {
 	before *aiprovider.Provider
 	after  *aiprovider.Provider
-	req    *agentports.SaveAIProviderRequest
+	req    *aiproviderports.SaveAIProviderRequest
 }
 
 func (c *advisorCheck) needed() bool {
@@ -40,9 +40,9 @@ func (s *Service) confirmAdvisor(
 	}
 
 	advisor := check.after.AdvisorModelName()
-	options, err := s.ListModels(ctx, &agentports.ListAIProviderModelsRequest{
+	options, err := s.ListModels(ctx, &aiproviderports.ListAIProviderModelsRequest{
 		TenantInfo: check.req.TenantInfo,
-		Endpoint: agentports.AIProviderEndpoint{
+		Endpoint: aiproviderports.AIProviderEndpoint{
 			ProviderID:          check.req.ID,
 			Kind:                check.after.Kind,
 			Platform:            check.after.Platform,

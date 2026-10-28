@@ -6,13 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/pkg/wasmmodule"
-
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -21,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
+	"github.com/emoss08/trenova/pkg/wasmmodule"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -46,13 +46,13 @@ test "a short haul bills its miles" {
 type stubCompleter struct {
 	reply    any
 	err      error
-	requests []*agentports.StructuredCompletionRequest
+	requests []*llmports.StructuredCompletionRequest
 }
 
 func (s *stubCompleter) CompleteStructured(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	s.requests = append(s.requests, req)
 	if s.err != nil {
 		return nil, s.err
@@ -63,7 +63,7 @@ func (s *stubCompleter) CompleteStructured(
 		return nil, err
 	}
 
-	return &agentports.StructuredCompletionResult{Text: text}, nil
+	return &llmports.StructuredCompletionResult{Text: text}, nil
 }
 
 type stubProvisioner struct {
@@ -231,8 +231,8 @@ func newFixture(t *testing.T, reply any) *fixture {
 	}
 }
 
-func draft() agentports.FormulaStudioDraft {
-	return agentports.FormulaStudioDraft{Name: "Per Mile", Source: perMileSource}
+func draft() formulastudioports.FormulaStudioDraft {
+	return formulastudioports.FormulaStudioDraft{Name: "Per Mile", Source: perMileSource}
 }
 
 func TestExplainFormula_BoundsTheModelAndFillsEveryStep(t *testing.T) {
@@ -246,7 +246,7 @@ func TestExplainFormula_BoundsTheModelAndFillsEveryStep(t *testing.T) {
 	}})
 	shipmentID := pulid.MustNew("shp_")
 
-	resp, err := f.svc.ExplainFormula(t.Context(), &agentports.ExplainFormulaRequest{
+	resp, err := f.svc.ExplainFormula(t.Context(), &formulastudioports.ExplainFormulaRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
 		Inputs:     tarifftypes.Inputs{"rate": rules.QuantityValue(decimal.NewFromInt(2), "$/mi")},
@@ -293,7 +293,7 @@ func TestExplainFormula_RefusesSourceThatDoesNotCheck(t *testing.T) {
 		}},
 	}
 
-	_, err := f.svc.ExplainFormula(t.Context(), &agentports.ExplainFormulaRequest{
+	_, err := f.svc.ExplainFormula(t.Context(), &formulastudioports.ExplainFormulaRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
 	}, f.actor)
@@ -308,7 +308,7 @@ func TestExplainFormula_WithoutATraceAsksNothing(t *testing.T) {
 	f := newFixture(t, nil)
 	f.engine.preview.Trace = nil
 
-	resp, err := f.svc.ExplainFormula(t.Context(), &agentports.ExplainFormulaRequest{
+	resp, err := f.svc.ExplainFormula(t.Context(), &formulastudioports.ExplainFormulaRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
 	}, f.actor)
@@ -321,9 +321,9 @@ func TestExplainFormula_WithoutAProviderIsABusinessError(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t, nil)
-	f.completer.err = agentports.ErrNoProviderConfigured
+	f.completer.err = llmports.ErrNoProviderConfigured
 
-	_, err := f.svc.ExplainFormula(t.Context(), &agentports.ExplainFormulaRequest{
+	_, err := f.svc.ExplainFormula(t.Context(), &formulastudioports.ExplainFormulaRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
 	}, f.actor)
@@ -338,7 +338,7 @@ func TestAssistant_RefusesWhenTheAgentIsWithheldOrOff(t *testing.T) {
 
 	f := newFixture(t, nil)
 	f.svc.access = stubAccess{allowed: false}
-	_, err := f.svc.DescribeInputs(t.Context(), &agentports.DescribeFormulaInputsRequest{
+	_, err := f.svc.DescribeInputs(t.Context(), &formulastudioports.DescribeFormulaInputsRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
 	}, f.actor)
@@ -346,7 +346,7 @@ func TestAssistant_RefusesWhenTheAgentIsWithheldOrOff(t *testing.T) {
 
 	f = newFixture(t, nil)
 	f.definition.Enabled = false
-	_, err = f.svc.DescribeInputs(t.Context(), &agentports.DescribeFormulaInputsRequest{
+	_, err = f.svc.DescribeInputs(t.Context(), &formulastudioports.DescribeFormulaInputsRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
 	}, f.actor)
@@ -367,7 +367,7 @@ func TestDescribeInputs_OnlyBlankOnesAndBounded(t *testing.T) {
 		{"name": "fuelPeg", "description": strings.Repeat("x", 300)},
 	}})
 
-	resp, err := f.svc.DescribeInputs(t.Context(), &agentports.DescribeFormulaInputsRequest{
+	resp, err := f.svc.DescribeInputs(t.Context(), &formulastudioports.DescribeFormulaInputsRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
 	}, f.actor)
@@ -392,7 +392,7 @@ func TestDescribeInputs_NothingBlankAsksNothing(t *testing.T) {
 		}
 	}
 
-	resp, err := f.svc.DescribeInputs(t.Context(), &agentports.DescribeFormulaInputsRequest{
+	resp, err := f.svc.DescribeInputs(t.Context(), &formulastudioports.DescribeFormulaInputsRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
 	}, f.actor)
@@ -442,7 +442,7 @@ func TestSuggestTests_WritesRunnableBlocksAndRunsThem(t *testing.T) {
 		}
 	}
 
-	resp, err := f.svc.SuggestTests(t.Context(), &agentports.SuggestFormulaTestsRequest{
+	resp, err := f.svc.SuggestTests(t.Context(), &formulastudioports.SuggestFormulaTestsRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
 	}, f.actor)
@@ -481,7 +481,7 @@ func TestSuggestTests_RefusesSourceThatDoesNotCheck(t *testing.T) {
 		}
 	}
 
-	_, err := f.svc.SuggestTests(t.Context(), &agentports.SuggestFormulaTestsRequest{
+	_, err := f.svc.SuggestTests(t.Context(), &formulastudioports.SuggestFormulaTestsRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
 	}, f.actor)
@@ -495,17 +495,17 @@ func TestExplainTest_APassingTestNeedsNoModel(t *testing.T) {
 
 	f := newFixture(t, nil)
 
-	resp, err := f.svc.ExplainTest(t.Context(), &agentports.ExplainFormulaTestRequest{
+	resp, err := f.svc.ExplainTest(t.Context(), &formulastudioports.ExplainFormulaTestRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
 		TestName:   "a short haul bills its miles",
 	}, f.actor)
 	require.NoError(t, err)
-	assert.Equal(t, agentports.FormulaTestVerdictIntended, resp.Verdict)
+	assert.Equal(t, formulastudioports.FormulaTestVerdictIntended, resp.Verdict)
 	assert.False(t, resp.Generated)
 	assert.Empty(t, f.completer.requests)
 
-	_, err = f.svc.ExplainTest(t.Context(), &agentports.ExplainFormulaTestRequest{
+	_, err = f.svc.ExplainTest(t.Context(), &formulastudioports.ExplainFormulaTestRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
 		TestName:   "no such test",
@@ -532,14 +532,14 @@ func TestExplainTest_UsesTheModelOnlyWhenItAnswersInShape(t *testing.T) {
 
 	f := newFixture(t, map[string]any{"verdict": "maybe", "why": "Something."})
 	f.engine.tests = failingTests
-	resp, err := f.svc.ExplainTest(t.Context(), &agentports.ExplainFormulaTestRequest{
+	resp, err := f.svc.ExplainTest(t.Context(), &formulastudioports.ExplainFormulaTestRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
 		TestName:   "a short haul bills its miles",
 	}, f.actor)
 	require.NoError(t, err)
 	assert.False(t, resp.Generated)
-	assert.Equal(t, agentports.FormulaTestVerdictUnclear, resp.Verdict)
+	assert.Equal(t, formulastudioports.FormulaTestVerdictUnclear, resp.Verdict)
 	assert.Contains(t, resp.Why, "total was $250, not $200")
 
 	f = newFixture(t, map[string]any{
@@ -547,14 +547,14 @@ func TestExplainTest_UsesTheModelOnlyWhenItAnswersInShape(t *testing.T) {
 		"why":     "  The `rate` rose,   so the expectation is out of date. ",
 	})
 	f.engine.tests = failingTests
-	resp, err = f.svc.ExplainTest(t.Context(), &agentports.ExplainFormulaTestRequest{
+	resp, err = f.svc.ExplainTest(t.Context(), &formulastudioports.ExplainFormulaTestRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
 		TestName:   "a short haul bills its miles",
 	}, f.actor)
 	require.NoError(t, err)
 	assert.True(t, resp.Generated)
-	assert.Equal(t, agentports.FormulaTestVerdictIntended, resp.Verdict)
+	assert.Equal(t, formulastudioports.FormulaTestVerdictIntended, resp.Verdict)
 	assert.Equal(t, "The `rate` rose, so the expectation is out of date.", resp.Why)
 }
 
@@ -565,14 +565,14 @@ func TestExplainTest_FallsBackWithoutAProvider(t *testing.T) {
 	f.svc.completion = nil
 	f.engine.tests = failingTests
 
-	resp, err := f.svc.ExplainTest(t.Context(), &agentports.ExplainFormulaTestRequest{
+	resp, err := f.svc.ExplainTest(t.Context(), &formulastudioports.ExplainFormulaTestRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
 		TestName:   "a short haul bills its miles",
 	}, f.actor)
 	require.NoError(t, err)
 	assert.False(t, resp.Generated)
-	assert.Equal(t, agentports.FormulaTestVerdictUnclear, resp.Verdict)
+	assert.Equal(t, formulastudioports.FormulaTestVerdictUnclear, resp.Verdict)
 	assert.Equal(t, rules.TariffTestFailed, resp.Test.Status)
 }
 
@@ -580,10 +580,14 @@ func TestDraftReviewNote_IsBoundedAndNeedsAProvider(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t, map[string]any{"note": strings.Repeat("word ", 1200)})
-	resp, err := f.svc.DraftReviewNote(t.Context(), &agentports.DraftFormulaReviewNoteRequest{
-		TenantInfo:      f.tenant,
-		IncludeBacktest: true,
-	}, f.actor)
+	resp, err := f.svc.DraftReviewNote(
+		t.Context(),
+		&formulastudioports.DraftFormulaReviewNoteRequest{
+			TenantInfo:      f.tenant,
+			IncludeBacktest: true,
+		},
+		f.actor,
+	)
 	require.NoError(t, err)
 	assert.True(t, resp.Generated)
 	assert.LessOrEqual(t, len([]rune(resp.Note)), formulatemplate.MaxReviewerNoteLength)
@@ -596,7 +600,7 @@ func TestDraftReviewNote_IsBoundedAndNeedsAProvider(t *testing.T) {
 
 	f = newFixture(t, nil)
 	f.svc.completion = nil
-	_, err = f.svc.DraftReviewNote(t.Context(), &agentports.DraftFormulaReviewNoteRequest{
+	_, err = f.svc.DraftReviewNote(t.Context(), &formulastudioports.DraftFormulaReviewNoteRequest{
 		TenantInfo: f.tenant,
 	}, f.actor)
 	var business *errortypes.BusinessError
@@ -617,10 +621,14 @@ func TestDraftReviewNote_BacktestsAgainstTheApprovedVersion(t *testing.T) {
 		CurrentSource:   perMileSource,
 	}
 
-	resp, err := f.svc.DraftReviewNote(t.Context(), &agentports.DraftFormulaReviewNoteRequest{
-		TenantInfo:      f.tenant,
-		IncludeBacktest: true,
-	}, f.actor)
+	resp, err := f.svc.DraftReviewNote(
+		t.Context(),
+		&formulastudioports.DraftFormulaReviewNoteRequest{
+			TenantInfo:      f.tenant,
+			IncludeBacktest: true,
+		},
+		f.actor,
+	)
 	require.NoError(t, err)
 	require.NotNil(t, resp.Backtest)
 	assert.Equal(t, "The rate rose.", resp.Note)

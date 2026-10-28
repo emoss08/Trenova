@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -105,14 +105,14 @@ func actionStateChange(before, after *inboundmessage.InboundMessage) (*agent.Rec
 	)
 }
 
-func NewLogInboundExceptionTool(p triageToolParams) agentports.AgentTool {
+func NewLogInboundExceptionTool(p triageToolParams) agenttoolports.AgentTool {
 	return newLogInboundExceptionTool(p.Inbox, p.Work)
 }
 
 func newLogInboundExceptionTool(
 	inbox inboundMessageReader,
 	disputes triageDisputes,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_record_discrepancy",
@@ -172,7 +172,7 @@ func newLogInboundExceptionTool(
 			Plan: func(
 				ctx context.Context,
 				req *triageworkservice.LogExceptionRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*triageworkservice.ExceptionPlan, error) {
 				return disputes.PlanLogException(ctx, req)
 			},
@@ -183,7 +183,7 @@ func newLogInboundExceptionTool(
 			Run: func(
 				ctx context.Context,
 				req *triageworkservice.LogExceptionRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				message, err := disputes.LogException(ctx, req)
 				if err != nil {
@@ -229,7 +229,7 @@ func renderLoggedException(
 }
 
 func logExceptionRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*triageworkservice.LogExceptionRequest, error) {
 	messageID, err := common.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
@@ -269,14 +269,14 @@ type stopsDecisionPlan struct {
 	times *inboundmessageports.StopTimes
 }
 
-func NewSettleDetentionDisputeTool(p triageToolParams) agentports.AgentTool {
+func NewSettleDetentionDisputeTool(p triageToolParams) agenttoolports.AgentTool {
 	return newSettleDetentionDisputeTool(p.Work, p.Peeks)
 }
 
 func newSettleDetentionDisputeTool(
 	disputes triageDisputes,
 	stops triageStopTimes,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "detention_resolve_dispute",
@@ -315,7 +315,7 @@ func newSettleDetentionDisputeTool(
 		},
 		common.ReceivablePlan[*triageworkservice.DecideStopsRequest, *stopsDecisionPlan]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*triageworkservice.DecideStopsRequest, error) {
 				messageID, err := common.RequirePulid(params.Params, paramMessageID)
 				if err != nil {
@@ -338,7 +338,7 @@ func newSettleDetentionDisputeTool(
 			Plan: func(
 				ctx context.Context,
 				req *triageworkservice.DecideStopsRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*stopsDecisionPlan, error) {
 				plan, err := disputes.PlanDecideStops(ctx, req)
 				if err != nil {
@@ -358,7 +358,7 @@ func newSettleDetentionDisputeTool(
 			Run: func(
 				ctx context.Context,
 				req *triageworkservice.DecideStopsRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				message, err := disputes.DecideStops(ctx, req)
 				if err != nil {

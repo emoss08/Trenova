@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -29,8 +30,8 @@ func (approveOnlyTool) Description() string { return "" }
 
 func (approveOnlyTool) ParamSchema() map[string]any { return map[string]any{} }
 
-func (approveOnlyTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (approveOnlyTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          "approve_only",
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceBillingQueue,
@@ -45,7 +46,7 @@ func (approveOnlyTool) Policy() agentports.ToolPolicy {
 	}
 }
 
-func (approveOnlyTool) Execute(_ context.Context, _ agentports.ToolExecuteParams) error {
+func (approveOnlyTool) Execute(_ context.Context, _ agenttoolports.ToolExecuteParams) error {
 	return nil
 }
 
@@ -53,7 +54,7 @@ func TestGuardExecute_AgentCannotApprove(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	err := common.GuardExecute(approveOnlyTool{}, agentports.ToolExecuteParams{
+	err := common.GuardExecute(approveOnlyTool{}, agenttoolports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor: &permissionports.RequestActor{
@@ -76,7 +77,7 @@ func TestExecute_TenantMismatch_DoesNotCallPort(t *testing.T) {
 	actorOrg := pulid.MustNew("org_")
 	actorBu := pulid.MustNew("bu_")
 
-	err := tool.Execute(t.Context(), agentports.ToolExecuteParams{
+	err := tool.Execute(t.Context(), agenttoolports.ToolExecuteParams{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Actor: &permissionports.RequestActor{
@@ -131,7 +132,7 @@ func TestAssignMove_UsesTheActorTenantAndPassesEveryId(t *testing.T) {
 		})).
 		Return(&shipment.Assignment{}, nil)
 
-	err := tool.Execute(t.Context(), agentports.ToolExecuteParams{
+	err := tool.Execute(t.Context(), agenttoolports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor:          agenttoolstest.AgentActorFor(orgID, buID),
@@ -153,7 +154,7 @@ func TestAssignMove_TenantMismatch_DoesNotCallPort(t *testing.T) {
 	assignments := shipmentportsmock.NewMockAssignmentService(t)
 	tool := masterdatatools.NewAssignMoveTool(assignments, nil)
 
-	err := tool.Execute(t.Context(), agentports.ToolExecuteParams{
+	err := tool.Execute(t.Context(), agenttoolports.ToolExecuteParams{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Actor:          agenttoolstest.AgentActorFor(pulid.MustNew("org_"), pulid.MustNew("bu_")),
@@ -178,7 +179,7 @@ func TestRaiseException_TiesTheCaseToTheExecutingRun(t *testing.T) {
 	runID := pulid.MustNew("arun_")
 	subjectID := pulid.MustNew("bqi_")
 
-	err := tool.Execute(t.Context(), agentports.ToolExecuteParams{
+	err := tool.Execute(t.Context(), agenttoolports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor:          agenttoolstest.AgentActorFor(orgID, buID),
@@ -213,7 +214,7 @@ func TestRaiseException_RefusesWithoutARun(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	err := tool.Execute(t.Context(), agentports.ToolExecuteParams{
+	err := tool.Execute(t.Context(), agenttoolports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor:          agenttoolstest.AgentActorFor(orgID, buID),

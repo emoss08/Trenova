@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -29,7 +29,7 @@ type Params struct {
 	CarrierRepo  carrierports.CarrierRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService
+	Realtime     realtimeports.RealtimeService
 }
 
 type Service struct {
@@ -38,7 +38,7 @@ type Service struct {
 	carrierRepo  carrierports.CarrierRepository
 	validator    *Validator
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 }
 
 func New(p Params) *Service {

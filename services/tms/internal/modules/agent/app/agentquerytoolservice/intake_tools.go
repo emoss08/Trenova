@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
@@ -44,7 +44,7 @@ type getShipmentDraftTool struct {
 	drafts draftReader
 }
 
-func newGetShipmentDraftTool(drafts draftReader) agentports.AgentQueryTool {
+func newGetShipmentDraftTool(drafts draftReader) agenttoolports.AgentQueryTool {
 	return &getShipmentDraftTool{drafts: drafts}
 }
 
@@ -76,7 +76,7 @@ func (t *getShipmentDraftTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getShipmentDraftTool) Policy() agentports.ToolPolicy {
+func (t *getShipmentDraftTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceDocument,
 		reads:    agent.ExternalReadAlways,
@@ -148,7 +148,7 @@ type draftView struct {
 
 func (t *getShipmentDraftTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -261,7 +261,7 @@ type quoteShipmentTool struct {
 func newQuoteShipmentTool(
 	quotes shipmentQuoter,
 	locations locationReader,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &quoteShipmentTool{quotes: quotes, locations: locations}
 }
 
@@ -341,7 +341,7 @@ func (t *quoteShipmentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *quoteShipmentTool) Policy() agentports.ToolPolicy {
+func (t *quoteShipmentTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceRateQuote,
 	})
@@ -372,7 +372,7 @@ type quoteView struct {
 
 func (t *quoteShipmentTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -634,7 +634,7 @@ func newShopCarriersTool(
 	shopper carrierShopper,
 	carriers shopCarrierReader,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &shopCarriersTool{
 		shopper:  shopper,
 		carriers: carriers,
@@ -676,7 +676,7 @@ func (t *shopCarriersTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *shopCarriersTool) Policy() agentports.ToolPolicy {
+func (t *shopCarriersTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceRateQuote,
 	})
@@ -711,7 +711,7 @@ type shopView struct {
 
 func (t *shopCarriersTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

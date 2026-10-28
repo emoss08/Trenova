@@ -9,7 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,9 +29,9 @@ func shipmentDesk() agentdefinition.RuntimeDelegate {
 	}
 }
 
-func callTurn(id, name string, args map[string]any) *agentports.ChatCompletionResult {
-	return &agentports.ChatCompletionResult{
-		ToolCalls:       []agentports.ToolCall{{ID: id, Name: name, Arguments: args}},
+func callTurn(id, name string, args map[string]any) *llmports.ChatCompletionResult {
+	return &llmports.ChatCompletionResult{
+		ToolCalls:       []llmports.ToolCall{{ID: id, Name: name, Arguments: args}},
 		ModelIdentifier: "test-model",
 	}
 }
@@ -41,7 +44,7 @@ type handOffParams struct {
 
 // handOff drives a turn that reads a shipment with shipment_get (call_read)
 // and then hands a task over with the given arguments (call_hand).
-func handOff(t *testing.T, p handOffParams) (*agentports.RunResult, *delegateRecorder) {
+func handOff(t *testing.T, p handOffParams) (*agentruntimeports.RunResult, *delegateRecorder) {
 	t.Helper()
 
 	lookup := p.lookup
@@ -55,13 +58,13 @@ func handOff(t *testing.T, p handOffParams) (*agentports.RunResult, *delegateRec
 	for key, value := range p.args {
 		args[key] = value
 	}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		callTurn("call_read", lookup.ToolName, map[string]any{"shipmentId": "shp_1"}),
 		callTurn("call_hand", delegateTaskName, args),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion,
-		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{lookup}},
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{lookup}},
 		&stubActionRegistry{}, nil)
 	req := delegatingRequest(p.delegate)
 	req.Definition = testDefinition(lookup.ToolName)
@@ -70,7 +73,7 @@ func handOff(t *testing.T, p handOffParams) (*agentports.RunResult, *delegateRec
 	return driveWith(t, rt, req, fx), fx
 }
 
-func handOffResult(result *agentports.RunResult) *conversation.Message {
+func handOffResult(result *agentruntimeports.RunResult) *conversation.Message {
 	for idx := range result.Messages {
 		message := &result.Messages[idx]
 		if message.Role == conversation.RoleTool && message.ToolCallID == "call_hand" {
@@ -319,9 +322,9 @@ func TestDelegateReport_NamesEachWritesProposal(t *testing.T) {
 func TestDelegateNote_PassesOnTheArtifactsTheReplyShowed(t *testing.T) {
 	t.Parallel()
 
-	report := agentports.AssistantDelegateFinishedEvent{
+	report := assistantports.AssistantDelegateFinishedEvent{
 		AgentName: "Billing exceptions",
-		Status:    agentports.DelegateStatusCompleted,
+		Status:    assistantports.DelegateStatusCompleted,
 		Reply: "There are 8 items; the [Billing queue items](artifact:art_01M42AYFPF05FCCQ4R5R1Y7EQJ) " +
 			"table lists them, and [Billing queue items](artifact:art_01M42AYFPF05FCCQ4R5R1Y7EQJ) again.",
 	}

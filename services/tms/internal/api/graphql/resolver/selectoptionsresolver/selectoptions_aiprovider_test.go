@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,16 +20,16 @@ import (
 )
 
 type fakeAIProviderSelectService struct {
-	agentports.AIProviderService
+	aiproviderports.AIProviderService
 	byID       map[pulid.ID]*aiprovider.Provider
-	selectReq  *agentports.AIProviderSelectOptionsRequest
+	selectReq  *aiproviderports.AIProviderSelectOptionsRequest
 	selectList []*aiprovider.Provider
-	lookups    []agentports.GetAIProviderByIDRequest
+	lookups    []aiproviderports.GetAIProviderByIDRequest
 }
 
 func (f *fakeAIProviderSelectService) SelectOptions(
 	_ context.Context,
-	req *agentports.AIProviderSelectOptionsRequest,
+	req *aiproviderports.AIProviderSelectOptionsRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	f.selectReq = req
 	return &pagination.ListResult[*aiprovider.Provider]{
@@ -41,7 +41,7 @@ func (f *fakeAIProviderSelectService) SelectOptions(
 
 func (f *fakeAIProviderSelectService) GetByID(
 	_ context.Context,
-	req agentports.GetAIProviderByIDRequest,
+	req aiproviderports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	f.lookups = append(f.lookups, req)
 	provider, ok := f.byID[req.ID]

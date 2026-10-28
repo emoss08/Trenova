@@ -5,14 +5,14 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -138,10 +138,13 @@ func TestRecordProposals_AnAutomaticWriteIsExecutedByTheSystemUser(t *testing.T)
 	scope := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
 	_, err := activities.recordProposals(t.Context(), recordProposalsParams{
-		Definition: &agentdefinition.Definition{ID: pulid.MustNew("agdef_"), Name: "Dispatch Agent"},
+		Definition: &agentdefinition.Definition{
+			ID:   pulid.MustNew("agdef_"),
+			Name: "Dispatch Agent",
+		},
 		Run:        &agent.AgentRun{ID: pulid.MustNew("ar_")},
 		TenantInfo: scope,
-		Actions: []agentports.PendingAction{{
+		Actions: []agentruntimeports.PendingAction{{
 			ToolName:  "dispatch_assign_move",
 			Arguments: map[string]any{},
 			Rationale: "cover the move",

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -178,13 +178,29 @@ func TestBuildInvoiceRun_PreviewsTheProposedInvoicesAndBuildsIt(t *testing.T) {
 		common.ParamInvoiceDate: "2026-10-01",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, runs.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Contains(t, preview.Summary, "Would build an invoice run proposing 1 invoice for 3 shipments")
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		runs.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Contains(
+		t,
+		preview.Summary,
+		"Would build an invoice run proposing 1 invoice for 3 shipments",
+	)
 	require.Len(t, preview.Changes, 2)
-	assert.Equal(t, permission.ResourceInvoiceRun, agenttoolstest.PreviewChange(t, preview, 0).Resource)
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 1).Operation)
+	assert.Equal(
+		t,
+		permission.ResourceInvoiceRun,
+		agenttoolstest.PreviewChange(t, preview, 0).Resource,
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 1).Operation,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, runs.previewed)
@@ -207,7 +223,7 @@ func TestBuildInvoiceRun_RefusesAPeriodThatEndsBeforeItStarts(t *testing.T) {
 		common.ParamPeriodStart: "2026-09-30",
 		common.ParamPeriodEnd:   "2026-09-01",
 	})
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestAdjustInvoiceRunMembership_ShowsTheNewTotals(t *testing.T) {
@@ -235,9 +251,13 @@ func TestAdjustInvoiceRunMembership_ShowsTheNewTotals(t *testing.T) {
 		}},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, runs.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		runs.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "1850.00 to 1450.00")
 	require.NotEmpty(t, preview.Changes)
 
@@ -245,7 +265,7 @@ func TestAdjustInvoiceRunMembership_ShowsTheNewTotals(t *testing.T) {
 	require.NotNil(t, runs.adjusted)
 	require.Len(t, runs.adjusted.Exclude, 1)
 	assert.Equal(t, itemID, runs.adjusted.Exclude[0].ItemID)
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceInvoiceRun, target.Resource)
 }
@@ -254,8 +274,10 @@ func TestAdjustInvoiceRunMembership_NeedsAnEdit(t *testing.T) {
 	t.Parallel()
 
 	tool := NewAdjustInvoiceRunMembershipTool(&fakeRunKeeper{})
-	params := agenttoolstest.ExecuteParams(map[string]any{ParamInvoiceRunID: pulid.MustNew("invrun_").String()})
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{ParamInvoiceRunID: pulid.MustNew("invrun_").String()},
+	)
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestCommitInvoiceRun_OnlyAPersonCommitsWhatWouldBill(t *testing.T) {
@@ -284,10 +306,18 @@ func TestCommitInvoiceRun_OnlyAPersonCommitsWhatWouldBill(t *testing.T) {
 	tool := NewCommitInvoiceRunTool(runs)
 	params := agenttoolstest.ExecuteParams(map[string]any{ParamInvoiceRunID: run.ID.String()})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, runs.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Contains(t, preview.Summary, "Would commit Invoice run RUN-12, making 1 invoice for 1850.00")
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		runs.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Contains(
+		t,
+		preview.Summary,
+		"Would commit Invoice run RUN-12, making 1 invoice for 1850.00",
+	)
 	assert.Contains(t, preview.Summary, "Beta Farms is skipped")
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
@@ -318,10 +348,18 @@ func TestCancelInvoiceRun_CancelsWithAReason(t *testing.T) {
 		common.ParamReason: "Built for the wrong period",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, runs.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, "Canceled", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		runs.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		"Canceled",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, runs.canceled)
@@ -355,9 +393,13 @@ func TestBillStatementNow_OnlyAPersonBillsEarly(t *testing.T) {
 		common.ParamReason:     "Customer asked for an early invoice to close their quarter",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, runs.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		runs.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would bill Acme Foods's open statement now")
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)

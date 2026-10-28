@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -68,7 +68,7 @@ func draftEditOf(t *testing.T, result any) pagedraft.Edit {
 func TestImportDraftTools_HandTheChangeToThePersonsOwnPage(t *testing.T) {
 	t.Parallel()
 
-	tools := []agentports.AgentQueryTool{
+	tools := []agenttoolports.AgentQueryTool{
 		newAcceptFieldTool(),
 		newAcceptAllConfidentTool(),
 		newSetFieldValueTool(),

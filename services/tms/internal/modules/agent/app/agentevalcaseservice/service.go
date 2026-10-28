@@ -13,7 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -80,7 +83,10 @@ type decisionReader interface {
 }
 
 type runReader interface {
-	GetByID(ctx context.Context, req agentports.GetAgentRunByIDRequest) (*agent.AgentRun, error)
+	GetByID(
+		ctx context.Context,
+		req agentruntimeports.GetAgentRunByIDRequest,
+	) (*agent.AgentRun, error)
 }
 
 type definitionReader interface {
@@ -93,11 +99,11 @@ type definitionReader interface {
 type conversationReader interface {
 	GetThreadOwned(
 		ctx context.Context,
-		req agentports.GetThreadOwnedRequest,
+		req assistantports.GetThreadOwnedRequest,
 	) (*conversation.Thread, error)
 	ListMessages(
 		ctx context.Context,
-		req agentports.ListMessagesRequest,
+		req assistantports.ListMessagesRequest,
 	) ([]conversation.Message, error)
 }
 
@@ -120,15 +126,15 @@ type Params struct {
 	Cases         agentqualityports.AgentEvalCaseRepository
 	Proposals     agentports.AgentProposalRepository
 	Decisions     agentports.AgentDecisionRepository
-	Runs          agentports.AgentRunRepository
+	Runs          agentruntimeports.AgentRunRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
-	Conversations agentports.ConversationRepository
+	Conversations assistantports.ConversationRepository
 	Feedback      aifeedbackports.AIFeedbackRepository
 	Retention     tenantports.DataRetentionRepository
 	Registry      *permission.Registry
-	QueryTools    agentports.AgentQueryToolRegistry
-	ActionTools   agentports.AgentToolRegistry
-	Subjects      agentports.AgentSubjectDescriber `optional:"true"`
+	QueryTools    agenttoolports.AgentQueryToolRegistry
+	ActionTools   agenttoolports.AgentToolRegistry
+	Subjects      agentruntimeports.AgentSubjectDescriber `optional:"true"`
 	AuditService  auditports.AuditService
 }
 
@@ -143,7 +149,7 @@ type Service struct {
 	feedback      feedbackStore
 	retention     retentionReader
 	redactor      *Redactor
-	subjects      agentports.AgentSubjectDescriber
+	subjects      agentruntimeports.AgentSubjectDescriber
 	audit         auditports.AuditService
 	now           func() int64
 }

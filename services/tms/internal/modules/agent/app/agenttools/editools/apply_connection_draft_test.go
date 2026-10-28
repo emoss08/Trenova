@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -86,7 +86,11 @@ func readyPlan() *ediports.ConnectionDraftPlan {
 			}},
 			Transport: &ediports.DraftTransport{Credentials: []ediports.CredentialRequirement{
 				{Label: "Partner signing certificate", Missing: true},
-				{Label: "AS2 private key for your signing certificate", Required: true, Missing: true},
+				{
+					Label:    "AS2 private key for your signing certificate",
+					Required: true,
+					Missing:  true,
+				},
 			}},
 			Sets: []ediports.DraftSet{{
 				TransactionSet: edi.TransactionSet204,
@@ -96,7 +100,12 @@ func readyPlan() *ediports.ConnectionDraftPlan {
 			Gaps: []ediports.DraftGap{{Summary: "Appendix B is missing"}},
 		},
 		Partner: ediports.PlannedPartner{
-			Before: &edi.EDIPartner{ID: existingID, Name: "Acme Retail Group", ContactName: "Lee Park", Version: 4},
+			Before: &edi.EDIPartner{
+				ID:          existingID,
+				Name:        "Acme Retail Group",
+				ContactName: "Lee Park",
+				Version:     4,
+			},
 			After: &edi.EDIPartner{
 				ID: existingID, Name: "Acme Retail Group", ContactName: "Dana Whitfield", Version: 4,
 			},
@@ -105,17 +114,26 @@ func readyPlan() *ediports.ConnectionDraftPlan {
 		Project: &ediports.PlannedProject{
 			Files: []lading.File{
 				{Path: "partner.lading", Source: "partner acme \"Acme Retail Group\"\n"},
-				{Path: "guides/204.lading", Source: "guide acme204 from x12.004010.204 \"Acme 204\"\n"},
+				{
+					Path:   "guides/204.lading",
+					Source: "guide acme204 from x12.004010.204 \"Acme 204\"\n",
+				},
 			},
 			Samples: []lading.Sample{{Path: "samples/spec-page-7.x12", Content: "ISA*00~"}},
 			Change:  ediports.ChangeKindAdd,
 		},
 		Transport: &ediports.PlannedTransport{
-			After:  &edi.EDICommunicationProfile{Name: "Acme AS2", Status: domaintypes.StatusInactive},
+			After: &edi.EDICommunicationProfile{
+				Name:   "Acme AS2",
+				Status: domaintypes.StatusInactive,
+			},
 			Change: ediports.ChangeKindSame,
 		},
 		ControlNumbers: []ediports.PlannedControlNumber{{
-			After:  &edi.EDIControlNumberSequence{Kind: edi.ControlNumberKindInterchange, NextValue: 1000},
+			After: &edi.EDIControlNumberSequence{
+				Kind:      edi.ControlNumberKindInterchange,
+				NextValue: 1000,
+			},
 			Change: ediports.ChangeKindAdd,
 		}},
 	}
@@ -134,7 +152,10 @@ func draftArgs(documentID pulid.ID) map[string]any {
 	}
 }
 
-func onThread(params agentports.ToolExecuteParams, thread pulid.ID) agentports.ToolExecuteParams {
+func onThread(
+	params agenttoolports.ToolExecuteParams,
+	thread pulid.ID,
+) agenttoolports.ToolExecuteParams {
 	params.ThreadID = thread
 	return params
 }
@@ -148,9 +169,16 @@ func TestApplyConnectionDraft_PreviewsEveryRecordItWouldWrite(t *testing.T) {
 	thread := pulid.MustNew("ath_")
 	documentID := pulid.MustNew("doc_")
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, drafts.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), onThread(agenttoolstest.AgentParamsFor(draftArgs(documentID)), thread))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		drafts.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(
+				t.Context(),
+				onThread(agenttoolstest.AgentParamsFor(draftArgs(documentID)), thread),
+			)
+		},
+	)
 
 	require.NotNil(t, reader.read)
 	assert.Equal(t, thread, reader.read.ThreadID)
@@ -168,8 +196,16 @@ func TestApplyConnectionDraft_PreviewsEveryRecordItWouldWrite(t *testing.T) {
 	contact := agenttoolstest.FieldByPath(t, partner, "contactName")
 	assert.Equal(t, "Lee Park", contact.Before)
 	assert.Equal(t, "Dana Whitfield", contact.After)
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 1).Operation)
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 2).Operation)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 1).Operation,
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 2).Operation,
+	)
 
 	assert.Contains(t, preview.Summary, "Would update the EDI connection with Acme Retail Group")
 	assert.Contains(t, preview.Summary, draftDigest)
@@ -206,7 +242,10 @@ func TestApplyConnectionDraft_WarnsWhenTheDraftCannotBeApplied(t *testing.T) {
 			tc.change(plan)
 			drafts := &fakeConnectionDrafts{plan: plan, guard: &agenttoolstest.WriteGuard{}}
 			tool := NewApplyConnectionDraftTool(drafts, &fakeSpecReader{}).(*ApplyConnectionDraftTool)
-			params := onThread(agenttoolstest.AgentParamsFor(draftArgs(pulid.MustNew("doc_"))), pulid.MustNew("ath_"))
+			params := onThread(
+				agenttoolstest.AgentParamsFor(draftArgs(pulid.MustNew("doc_"))),
+				pulid.MustNew("ath_"),
+			)
 
 			preview, err := tool.Preview(t.Context(), params)
 			require.NoError(t, err)
@@ -246,11 +285,14 @@ func TestApplyConnectionDraft_NeedsTheDigestAndAConversation(t *testing.T) {
 	t.Parallel()
 
 	tool := NewApplyConnectionDraftTool(&fakeConnectionDrafts{plan: readyPlan()}, &fakeSpecReader{})
-	validator := tool.(agentports.ToolValidator)
+	validator := tool.(agenttoolports.ToolValidator)
 	args := draftArgs(pulid.MustNew("doc_"))
 	delete(args, edispec.ParamDocumentDigest)
 
-	err := validator.Validate(t.Context(), onThread(agenttoolstest.AgentParamsFor(args), pulid.MustNew("ath_")))
+	err := validator.Validate(
+		t.Context(),
+		onThread(agenttoolstest.AgentParamsFor(args), pulid.MustNew("ath_")),
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), edispec.ParamDocumentDigest)
 }

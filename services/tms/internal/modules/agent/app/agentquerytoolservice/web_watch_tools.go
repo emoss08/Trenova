@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
@@ -24,7 +24,7 @@ type listWebWatchesTool struct {
 	watches agentextensionports.WebWatcher
 }
 
-func newListWebWatchesTool(watches agentextensionports.WebWatcher) agentports.AgentQueryTool {
+func newListWebWatchesTool(watches agentextensionports.WebWatcher) agenttoolports.AgentQueryTool {
 	return &listWebWatchesTool{watches: watches}
 }
 
@@ -50,7 +50,7 @@ func (t *listWebWatchesTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listWebWatchesTool) Policy() agentports.ToolPolicy {
+func (t *listWebWatchesTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceWebResearch,
 		rationale: "Lists the web watches set for the person; it changes nothing, reaches " +
@@ -86,7 +86,7 @@ type webWatchesAnswer struct {
 
 func (t *listWebWatchesTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

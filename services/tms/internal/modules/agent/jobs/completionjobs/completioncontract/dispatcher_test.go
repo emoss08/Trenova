@@ -9,8 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -66,8 +67,8 @@ func dispatcher(starter *fakeStarter) *Dispatcher {
 	return &Dispatcher{workflows: starter, l: zap.NewNop()}
 }
 
-func request() *agentports.StructuredCompletionRequest {
-	return &agentports.StructuredCompletionRequest{
+func request() *llmports.StructuredCompletionRequest {
+	return &llmports.StructuredCompletionRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		System:     "Answer in JSON.",
 	}
@@ -77,7 +78,7 @@ func TestDispatcher_RunsTheCallOnTheChatQueueWithinTheRequestsDeadline(t *testin
 	t.Parallel()
 
 	starter := &fakeStarter{get: func(_ context.Context, result any) error {
-		*result.(*agentports.StructuredCompletionResult) = agentports.StructuredCompletionResult{
+		*result.(*llmports.StructuredCompletionResult) = llmports.StructuredCompletionResult{
 			Text: "{}",
 		}
 
@@ -132,7 +133,7 @@ func TestDispatcher_SharesACallThatIsTheSameQuestion(t *testing.T) {
 
 	_, err := d.Test(
 		t.Context(),
-		agentports.GetAIProviderByIDRequest{ID: providerID, TenantInfo: tenant},
+		aiproviderports.GetAIProviderByIDRequest{ID: providerID, TenantInfo: tenant},
 	)
 	require.NoError(t, err)
 	_, err = d.WriteForDay(t.Context(), briefingports.WriteBriefingRequest{
@@ -189,7 +190,7 @@ func TestDispatcher_CancelsACallNobodyWaitsFor(t *testing.T) {
 	defer cancelShared()
 	shared := stopWaiting(sharedCtx, cancelShared)
 
-	_, err = dispatcher(shared).Test(sharedCtx, agentports.GetAIProviderByIDRequest{
+	_, err = dispatcher(shared).Test(sharedCtx, aiproviderports.GetAIProviderByIDRequest{
 		ID: pulid.MustNew("aiprv_"),
 	})
 	require.Error(t, err)
@@ -202,11 +203,11 @@ func TestDispatcher_ReturnsTheCallsOwnError(t *testing.T) {
 	t.Parallel()
 
 	starter := &fakeStarter{get: func(context.Context, any) error {
-		return modelcall.Classify(errors.Join(agentports.ErrNoProviderConfigured))
+		return modelcall.Classify(errors.Join(llmports.ErrNoProviderConfigured))
 	}}
 
 	_, err := dispatcher(starter).CompleteStructured(t.Context(), request())
-	assert.ErrorIs(t, err, agentports.ErrNoProviderConfigured)
+	assert.ErrorIs(t, err, llmports.ErrNoProviderConfigured)
 
 	starter.get = func(context.Context, any) error {
 		return modelcall.Classify(errortypes.NewBusinessError("AI is turned off"))

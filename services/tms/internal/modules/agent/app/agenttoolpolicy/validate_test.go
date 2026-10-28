@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,7 +14,7 @@ import (
 func validAction() Spec {
 	return Spec{
 		ToolName: "dispatch_assign_move",
-		Policy: agentports.ToolPolicy{
+		Policy: agenttoolports.ToolPolicy{
 			Name:          "dispatch_assign_move",
 			Kind:          agent.ToolKindAction,
 			Resource:      permission.ResourceShipmentMove,
@@ -33,7 +33,7 @@ func validAction() Spec {
 func validQuery() Spec {
 	return Spec{
 		ToolName: "shipment_get",
-		Policy: agentports.ToolPolicy{
+		Policy: agenttoolports.ToolPolicy{
 			Name:          "shipment_get",
 			Kind:          agent.ToolKindQuery,
 			Resource:      permission.ResourceShipment,
@@ -51,18 +51,18 @@ func validQuery() Spec {
 
 func boundedAt(
 	amountMinor int64,
-) func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-	return func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-		return agentports.WithinMoneyBound(amountMinor, "USD")
+) func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+	return func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+		return agenttoolports.WithinMoneyBound(amountMinor, "USD")
 	}
 }
 
-func holdToPropose(context.Context, agentports.ToolExecuteParams) agent.AutonomyTier {
+func holdToPropose(context.Context, agenttoolports.ToolExecuteParams) agent.AutonomyTier {
 	return agent.TierPropose
 }
 
-func classifyAsInternal(agentports.ToolExecuteParams) agentports.CallPolicy {
-	return agentports.CallPolicy{Egress: agent.EgressInternal}
+func classifyAsInternal(agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+	return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
 }
 
 func TestValidate_AcceptsWellFormedSpecs(t *testing.T) {
@@ -76,7 +76,7 @@ func TestValidate_AcceptsABoundedMoneyWrite(t *testing.T) {
 
 	spec := validAction()
 	spec.Policy.Egress = []agent.EgressClass{agent.EgressMoney}
-	spec.Policy.Condition = &agentports.TierCondition{
+	spec.Policy.Condition = &agenttoolports.TierCondition{
 		Description: "Runs on its own only within the organization's bounds.",
 		Bounds:      boundedAt(100),
 	}
@@ -373,7 +373,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "a condition says what it does and how",
 			specs: func() []Spec {
 				spec := validAction()
-				spec.Policy.Condition = &agentports.TierCondition{Limit: holdToPropose}
+				spec.Policy.Condition = &agenttoolports.TierCondition{Limit: holdToPropose}
 				return []Spec{spec}
 			},
 			reason: "condition needs a description and a limit or bounds",
@@ -382,7 +382,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "a condition holds a limit or bounds",
 			specs: func() []Spec {
 				spec := validAction()
-				spec.Policy.Condition = &agentports.TierCondition{Description: "Holds a call."}
+				spec.Policy.Condition = &agenttoolports.TierCondition{Description: "Holds a call."}
 				return []Spec{spec}
 			},
 			reason: "condition needs a description and a limit or bounds",
@@ -401,7 +401,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			specs: func() []Spec {
 				spec := validAction()
 				spec.Policy.Egress = []agent.EgressClass{agent.EgressMoney}
-				spec.Policy.Condition = &agentports.TierCondition{
+				spec.Policy.Condition = &agenttoolports.TierCondition{
 					Description: "Holds a call.",
 					Limit:       holdToPropose,
 				}
@@ -413,7 +413,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "only a money write is bounded",
 			specs: func() []Spec {
 				spec := validAction()
-				spec.Policy.Condition = &agentports.TierCondition{
+				spec.Policy.Condition = &agenttoolports.TierCondition{
 					Description: "Within bounds.",
 					Bounds:      boundedAt(100),
 				}
@@ -425,7 +425,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "only bounds may vouch for outside content",
 			specs: func() []Spec {
 				spec := validAction()
-				spec.Policy.Condition = &agentports.TierCondition{
+				spec.Policy.Condition = &agenttoolports.TierCondition{
 					Description: "Holds a call.",
 					Limit:       holdToPropose,
 					Vouches:     []agent.TaintSource{agent.TaintSourceBankReceipt},
@@ -439,7 +439,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			specs: func() []Spec {
 				spec := validAction()
 				spec.Policy.Egress = []agent.EgressClass{agent.EgressMoney}
-				spec.Policy.Condition = &agentports.TierCondition{
+				spec.Policy.Condition = &agenttoolports.TierCondition{
 					Description: "Within bounds.",
 					Bounds:      boundedAt(100),
 					Vouches:     []agent.TaintSource{agent.TaintSourceWeb},

@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
@@ -40,10 +41,10 @@ func (s *Service) runObserved(
 
 func (s *Service) sendMessage(
 	ctx context.Context,
-	req *agentports.SendMessageRequest,
+	req *assistantports.SendMessageRequest,
 	actor *permissionports.RequestActor,
 	emit kernelports.AssistantStreamEmitter,
-) (*agentports.SendMessageResult, error) {
+) (*assistantports.SendMessageResult, error) {
 	if emit == nil {
 		emit = func(kernelports.StreamEvent) {}
 	}
@@ -54,14 +55,14 @@ func (s *Service) sendMessage(
 	}
 	emit(plan.Opening())
 
-	var run *agentports.RunResult
+	var run *agentruntimeports.RunResult
 	var runErr error
 	var artifacts []*assistantartifact.Artifact
 	if runReq != nil {
 		runReq.Emit = emit
 		runReq.ToolObserver = func(
-			observation agentports.ToolObservation,
-		) (*agentports.ShownArtifact, error) {
+			observation agentruntimeports.ToolObservation,
+		) (*agentruntimeports.ShownArtifact, error) {
 			shown, kept, err := s.ObserveTool(ctx, plan.ThreadID, actor, observation, emit)
 			artifacts = append(artifacts, kept...)
 
@@ -87,10 +88,10 @@ func (s *Service) sendMessage(
 
 func (s *Service) ask(
 	ctx context.Context,
-	req *agentports.AskRequest,
+	req *assistantports.AskRequest,
 	actor *permissionports.RequestActor,
 	emit kernelports.AssistantStreamEmitter,
-) (*agentports.SendMessageResult, error) {
+) (*assistantports.SendMessageResult, error) {
 	if emit == nil {
 		emit = func(kernelports.StreamEvent) {}
 	}
@@ -99,9 +100,9 @@ func (s *Service) ask(
 	if err != nil {
 		return nil, err
 	}
-	emit(kernelports.StreamEvent{Event: agentports.AssistantEventThread, Data: thread})
+	emit(kernelports.StreamEvent{Event: assistantports.AssistantEventThread, Data: thread})
 
-	return s.sendMessage(ctx, &agentports.SendMessageRequest{
+	return s.sendMessage(ctx, &assistantports.SendMessageRequest{
 		ThreadID:   thread.ID,
 		Content:    req.Content,
 		Page:       req.Page,

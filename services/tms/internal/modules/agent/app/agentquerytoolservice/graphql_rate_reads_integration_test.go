@@ -9,19 +9,13 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge/fuelsurchargedb"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
-
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/fuelsurchargerepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/rateagreementrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratematrixrepository"
@@ -29,12 +23,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge/fuelsurchargedb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -73,8 +72,14 @@ type rateTenant struct {
 	program    string
 }
 
+//
 //nolint:funlen // one tenant's rate records, written straight through the admin connection
-func seedRateTenant(t *testing.T, admin *keel.DB, tenant *agentreadtest.Tenant, label string) *rateTenant {
+func seedRateTenant(
+	t *testing.T,
+	admin *keel.DB,
+	tenant *agentreadtest.Tenant,
+	label string,
+) *rateTenant {
 	t.Helper()
 
 	ctx := t.Context()
@@ -96,7 +101,9 @@ func seedRateTenant(t *testing.T, admin *keel.DB, tenant *agentreadtest.Tenant, 
 	}
 	must(customerdb.Customers.Create(writeCtx, admin, party))
 	template := &formulatemplate.FormulaTemplate{
-		ID: pulid.MustNew("ft_"), OrganizationID: org, BusinessUnitID: bu, Name: "Per Mile " + label,
+		ID: pulid.MustNew(
+			"ft_",
+		), OrganizationID: org, BusinessUnitID: bu, Name: "Per Mile " + label,
 		Source: perMileTariff, Status: formulatemplate.StatusActive,
 	}
 	must(formulatemplatedb.FormulaTemplates.Create(writeCtx, admin, template))
@@ -108,7 +115,11 @@ func seedRateTenant(t *testing.T, admin *keel.DB, tenant *agentreadtest.Tenant, 
 		agreement := &rateagreement.RateAgreement{
 			ID: pulid.MustNew("rag_"), OrganizationID: org, BusinessUnitID: bu,
 			PartyType: rateagreement.PartyTypeCustomer, CustomerID: &party.ID,
-			Code: fmt.Sprintf("RA%s%d", label, idx), Name: fmt.Sprintf("Agreement %s%d", label, idx),
+			Code: fmt.Sprintf(
+				"RA%s%d",
+				label,
+				idx,
+			), Name: fmt.Sprintf("Agreement %s%d", label, idx),
 			AgreementType: rateagreement.AgreementTypeContract, Status: status, Currency: "USD",
 			EffectiveFrom: 100,
 			Inputs: tarifftypes.Inputs{
@@ -136,14 +147,19 @@ func seedRateTenant(t *testing.T, admin *keel.DB, tenant *agentreadtest.Tenant, 
 				},
 				EffectiveFrom: 100,
 			}
-			require.NoError(t, rateagreement.ApplyLanes(ctx, []*rateagreement.RateAgreementRule{rule}))
+			require.NoError(
+				t,
+				rateagreement.ApplyLanes(ctx, []*rateagreement.RateAgreementRule{rule}),
+			)
 			must(rateagreementdb.RateAgreementRules.Create(writeCtx, admin, rule))
 			out.lanes = append(out.lanes, rule.ID.String())
 		}
 	}
 
 	index := &fuelsurcharge.FuelIndex{
-		ID: pulid.MustNew("fidx_"), OrganizationID: org, BusinessUnitID: bu, Name: "Diesel " + label,
+		ID: pulid.MustNew(
+			"fidx_",
+		), OrganizationID: org, BusinessUnitID: bu, Name: "Diesel " + label,
 		Code: "DSL" + label, Source: fuelsurcharge.IndexSourceCustom, FuelType: fuelsurcharge.FuelTypeDiesel,
 		Currency: "USD", IsActive: true,
 	}
@@ -152,7 +168,9 @@ func seedRateTenant(t *testing.T, admin *keel.DB, tenant *agentreadtest.Tenant, 
 	today := time.Now().UTC()
 	for idx := range fuelPricesPerTenant {
 		price := &fuelsurcharge.FuelIndexPrice{
-			ID: pulid.MustNew("fip_"), OrganizationID: org, BusinessUnitID: bu, FuelIndexID: index.ID,
+			ID: pulid.MustNew(
+				"fip_",
+			), OrganizationID: org, BusinessUnitID: bu, FuelIndexID: index.ID,
 			PriceDate: today.AddDate(0, 0, -7*idx).Format(fuelsurcharge.PriceDateLayout),
 			Price:     decimal.RequireFromString("3.50"), Currency: "USD", IsManual: true,
 		}
@@ -166,7 +184,9 @@ func seedRateTenant(t *testing.T, admin *keel.DB, tenant *agentreadtest.Tenant, 
 	}
 	must(accessorialchargedb.AccessorialCharges.Create(writeCtx, admin, charge))
 	program := &fuelsurcharge.FuelSurchargeProgram{
-		ID: pulid.MustNew("fsp_"), OrganizationID: org, BusinessUnitID: bu, Name: "Program " + label,
+		ID: pulid.MustNew(
+			"fsp_",
+		), OrganizationID: org, BusinessUnitID: bu, Name: "Program " + label,
 		Code: "PRG" + label, Status: fuelsurcharge.ProgramStatusActive, FuelIndexID: index.ID,
 		AccessorialChargeID: charge.ID, Method: fuelsurcharge.ProgramMethodPerMileStep,
 		PegPrice:      decimal.NewNullDecimal(decimal.RequireFromString("1.20")),
@@ -195,7 +215,12 @@ const seededMatrixCells = 150
 
 // seedRateMatrix writes a matrix of two axes and more cells than one read
 // returns, straight through the admin connection.
-func seedRateMatrix(t *testing.T, admin *keel.DB, tenant *agentreadtest.Tenant, label string) string {
+func seedRateMatrix(
+	t *testing.T,
+	admin *keel.DB,
+	tenant *agentreadtest.Tenant,
+	label string,
+) string {
 	t.Helper()
 
 	ctx := tenant.Ctx(t.Context())
@@ -209,11 +234,14 @@ func seedRateMatrix(t *testing.T, admin *keel.DB, tenant *agentreadtest.Tenant, 
 	for position, kind := range []ratematrix.DimensionKind{
 		ratematrix.DimensionKindZone, ratematrix.DimensionKindWeightBreak,
 	} {
-		require.NoError(t, ratematrixdb.RateMatrixDimensions.Create(ctx, admin, &ratematrix.RateMatrixDimension{
-			ID: pulid.MustNew("rmd_"), OrganizationID: org, BusinessUnitID: bu,
-			RateMatrixID: matrix.ID, Position: int16(position), Kind: kind,
-			MatchMode: ratematrix.MatchModeExact,
-		}))
+		require.NoError(
+			t,
+			ratematrixdb.RateMatrixDimensions.Create(ctx, admin, &ratematrix.RateMatrixDimension{
+				ID: pulid.MustNew("rmd_"), OrganizationID: org, BusinessUnitID: bu,
+				RateMatrixID: matrix.ID, Position: int16(position), Kind: kind,
+				MatchMode: ratematrix.MatchModeExact,
+			}),
+		)
 	}
 	cells := make([]*ratematrix.RateMatrixCell, 0, seededMatrixCells)
 	for idx := range seededMatrixCells {
@@ -271,17 +299,23 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 	})
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
-	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
-	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: resolvers})
+	reader := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: engine, Resolvers: resolvers},
+	)
+	public := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: &publicRole{}, Resolvers: resolvers},
+	)
 	mineTenant := agentreadtest.SeedTenant(t, admin, "A")
 	theirsTenant := agentreadtest.SeedTenant(t, admin, "B")
 	mine := withLaneLoaders(seedRateTenant(t, admin, mineTenant, "A"))
 	theirs := withLaneLoaders(seedRateTenant(t, admin, theirsTenant, "B"))
 	actor := mineTenant.Actor
 
-	list := func(t *testing.T, name string, engineReader bool) agentports.AgentQueryTool {
+	list := func(t *testing.T, name string, engineReader bool) agenttoolports.AgentQueryTool {
 		t.Helper()
-		var tool agentports.AgentQueryTool
+		var tool agenttoolports.AgentQueryTool
 		var err error
 		if engineReader {
 			tool, err = agentquerytoolservice.ConvertedListTool(name, reader, engine)
@@ -296,7 +330,12 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 		tool := list(t, "rate_list_agreements", true)
 
 		ids, _ := walk(t, mine.ctx, tool, actor, map[string]any{})
-		assert.ElementsMatch(t, mine.agreements, ids, "every page once, and none of the other tenant's")
+		assert.ElementsMatch(
+			t,
+			mine.agreements,
+			ids,
+			"every page once, and none of the other tenant's",
+		)
 
 		drafts := callTool(t, mine.ctx, tool, actor, map[string]any{"status": []any{"Draft"}})
 		before, err := agreements.List(mine.ctx, &rateagreementports.ListRateAgreementRequest{
@@ -313,7 +352,13 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 		assert.ElementsMatch(t, want, itemIDs(drafts))
 		assert.ElementsMatch(t, mine.drafts, itemIDs(drafts))
 
-		hidden := callTool(t, mine.ctx, list(t, "rate_list_agreements", false), actor, map[string]any{})
+		hidden := callTool(
+			t,
+			mine.ctx,
+			list(t, "rate_list_agreements", false),
+			actor,
+			map[string]any{},
+		)
 		withheld, _ := hidden["withheldByAccess"].([]any)
 		require.NotEmpty(t, withheld)
 		items, _ := hidden["items"].([]any)
@@ -332,10 +377,19 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 			record := callTool(t, mine.ctx, get, actor, map[string]any{"rateAgreementId": id})
 			assert.Equal(t, id, record["id"])
 		}
-		card := callTool(t, mine.ctx, get, actor, map[string]any{"rateAgreementId": mine.agreements[0]})
-		page, err := agreements.ListLanes(mine.ctx, &rateagreementports.ListRateAgreementLanesRequest{
-			TenantInfo: mine.info, RateAgreementID: pulid.ID(mine.agreements[0]), Limit: 50,
-		})
+		card := callTool(
+			t,
+			mine.ctx,
+			get,
+			actor,
+			map[string]any{"rateAgreementId": mine.agreements[0]},
+		)
+		page, err := agreements.ListLanes(
+			mine.ctx,
+			&rateagreementports.ListRateAgreementLanesRequest{
+				TenantInfo: mine.info, RateAgreementID: pulid.ID(mine.agreements[0]), Limit: 50,
+			},
+		)
 		require.NoError(t, err)
 		assert.EqualValues(t, page.Count, card["laneCount"])
 		lanes, _ := card["lanes"].([]any)
@@ -345,7 +399,7 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 		}
 		assert.ElementsMatch(t, mine.lanes, laneIDs)
 
-		_, err = get.Query(mine.ctx, &agentports.QueryToolParams{
+		_, err = get.Query(mine.ctx, &agenttoolports.QueryToolParams{
 			OrganizationID: actor.OrganizationID,
 			BusinessUnitID: actor.BusinessUnitID,
 			Actor:          actor,
@@ -355,9 +409,19 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 		})
 		require.Error(t, err, "another tenant's agreement is not found")
 
-		hiddenGet, err := agentquerytoolservice.ConvertedGetTool("rate_get_agreement", public, &publicRole{})
+		hiddenGet, err := agentquerytoolservice.ConvertedGetTool(
+			"rate_get_agreement",
+			public,
+			&publicRole{},
+		)
 		require.NoError(t, err)
-		hidden := callTool(t, mine.ctx, hiddenGet, actor, map[string]any{"rateAgreementId": mine.agreements[0]})
+		hidden := callTool(
+			t,
+			mine.ctx,
+			hiddenGet,
+			actor,
+			map[string]any{"rateAgreementId": mine.agreements[0]},
+		)
 		withheld, _ := hidden["withheldByAccess"].([]any)
 		require.NotEmpty(t, withheld)
 		for _, field := range withheld {
@@ -390,7 +454,7 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 				Engine: restrictedEngine, Resolvers: resolvers,
 			}), restrictedEngine)
 		require.NoError(t, err)
-		shown, err := reached.Query(mine.ctx, &agentports.QueryToolParams{
+		shown, err := reached.Query(mine.ctx, &agenttoolports.QueryToolParams{
 			OrganizationID: actor.OrganizationID, BusinessUnitID: actor.BusinessUnitID,
 			Actor: actor, Timezone: "America/Chicago",
 			Params:            map[string]any{"rateMatrixId": ours},
@@ -410,7 +474,7 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 		assert.Equal(t, false, rest["cellsHasMore"])
 		assert.NotContains(t, rest, "nextCellOffset")
 
-		_, err = get.Query(mine.ctx, &agentports.QueryToolParams{
+		_, err = get.Query(mine.ctx, &agenttoolports.QueryToolParams{
 			OrganizationID: actor.OrganizationID,
 			BusinessUnitID: actor.BusinessUnitID,
 			Actor:          actor,
@@ -420,7 +484,7 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 		})
 		require.Error(t, err, "another tenant's matrix is not found")
 
-		internal, err := get.Query(mine.ctx, &agentports.QueryToolParams{
+		internal, err := get.Query(mine.ctx, &agenttoolports.QueryToolParams{
 			OrganizationID: actor.OrganizationID, BusinessUnitID: actor.BusinessUnitID,
 			Actor: actor, Timezone: "America/Chicago", DataAccessCeiling: permission.SensitivityInternal,
 			Params: map[string]any{"rateMatrixId": ours}, RunID: pulid.MustNew("ar_"),
@@ -430,7 +494,11 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 			asMap(t, internal)["withheldByAccess"],
 			"a cell's value and minimum stay Restricted, as the repository tool gated them")
 
-		hiddenGet, err := agentquerytoolservice.ConvertedGetTool("rate_get_matrix", public, &publicRole{})
+		hiddenGet, err := agentquerytoolservice.ConvertedGetTool(
+			"rate_get_matrix",
+			public,
+			&publicRole{},
+		)
 		require.NoError(t, err)
 		hidden := callTool(t, mine.ctx, hiddenGet, actor, map[string]any{"rateMatrixId": ours})
 		withheld, _ := hidden["withheldByAccess"].([]any)
@@ -443,7 +511,13 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 	t.Run("rate_list_fuel_index_prices", func(t *testing.T) {
 		tool := list(t, "rate_list_fuel_index_prices", true)
 
-		page := callTool(t, mine.ctx, tool, actor, map[string]any{"fuelIndexId": mine.index.String()})
+		page := callTool(
+			t,
+			mine.ctx,
+			tool,
+			actor,
+			map[string]any{"fuelIndexId": mine.index.String()},
+		)
 		before, err := prices.ListByIndex(mine.ctx, &fuelsurchargeports.ListFuelIndexPricesRequest{
 			FuelIndexID: mine.index, TenantInfo: mine.info, Limit: 25,
 		})
@@ -461,7 +535,13 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 		})
 		assert.ElementsMatch(t, mine.prices[:2], itemIDs(recent))
 
-		other := callTool(t, mine.ctx, tool, actor, map[string]any{"fuelIndexId": theirs.index.String()})
+		other := callTool(
+			t,
+			mine.ctx,
+			tool,
+			actor,
+			map[string]any{"fuelIndexId": theirs.index.String()},
+		)
 		assert.Empty(t, itemIDs(other), "another tenant's index reads nothing")
 
 		hidden := callTool(t, mine.ctx, list(t, "rate_list_fuel_index_prices", false), actor,

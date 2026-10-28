@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -33,15 +35,15 @@ func (f *fakeFeed) List(
 }
 
 type fakeRunsByID struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 
 	runs     map[pulid.ID]*agent.AgentRun
-	requests []agentports.ListAgentRunsByIDsRequest
+	requests []agentruntimeports.ListAgentRunsByIDsRequest
 }
 
 func (f *fakeRunsByID) ListByIDs(
 	_ context.Context,
-	req agentports.ListAgentRunsByIDsRequest,
+	req agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	f.requests = append(f.requests, req)
 	out := make([]*agent.AgentRun, 0, len(req.IDs))
@@ -141,7 +143,7 @@ func newTowerFixture(items ...*watchtower.Item) *towerFixture {
 	}
 }
 
-func (f *towerFixture) tool() agentports.AgentQueryTool {
+func (f *towerFixture) tool() agenttoolports.AgentQueryTool {
 	return provideListWatchtowerItemsTool(f.feed, watchtowerRunRepositories{
 		Runs:       f.runs,
 		Proposals:  f.proposals,
@@ -170,8 +172,8 @@ func towerItem(kind watchtower.SourceKind, sourceID string, occurredAt int64) *w
 
 func queryFeed(
 	t *testing.T,
-	tool agentports.AgentQueryTool,
-	params *agentports.QueryToolParams,
+	tool agenttoolports.AgentQueryTool,
+	params *agenttoolports.QueryToolParams,
 ) *watchtowerFeed {
 	t.Helper()
 
@@ -256,7 +258,10 @@ func TestListWatchtowerItems_MarksEachRowFromOutsideWithItsOwnSource(t *testing.
 	assert.NotContains(t, marks, planRun.String())
 	assert.Equal(t, agent.SourcedRef{
 		Source: agent.TaintSourceRunRecord,
-		Ref:    agent.RecordRef{EntityType: agent.TaintEntityWatchtowerItem, ID: orphan.ID.String()},
+		Ref: agent.RecordRef{
+			EntityType: agent.TaintEntityWatchtowerItem,
+			ID:         orphan.ID.String(),
+		},
 	}, marks[orphan.ID.String()], "a row whose run cannot be found is marked, not trusted")
 	assert.Len(t, feed.marks, 7)
 
@@ -458,7 +463,9 @@ func TestListWatchtowerItems_AssignedToMeIsIgnoredForAnAgent(t *testing.T) {
 	assert.Contains(t, feed.Notes, watchtowerAgentMineNote)
 }
 
-func readable(resources ...permission.Resource) map[string]*permissionports.ResourcePermissionDetail {
+func readable(
+	resources ...permission.Resource,
+) map[string]*permissionports.ResourcePermissionDetail {
 	out := make(map[string]*permissionports.ResourcePermissionDetail, len(resources))
 	for _, resource := range resources {
 		out[resource.String()] = &permissionports.ResourcePermissionDetail{

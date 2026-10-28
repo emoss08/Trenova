@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,7 +38,7 @@ func TestSendMessageStream_NamesWhatAnApprovedChangeMade(t *testing.T) {
 	svc, conversations, _ := followUpService(t, proposal)
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:           conversations.thread.ID,
 		FollowUpProposalID: proposal.ID,
 		TenantInfo:         actor.TenantInfo(),
@@ -47,7 +47,8 @@ func TestSendMessageStream_NamesWhatAnApprovedChangeMade(t *testing.T) {
 
 	note := conversations.appended[0].Content
 	first, rest, _ := strings.Cut(note, "\n")
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		`Approved report_create, and it ran. It created the report "Shipments for Peak Distributing".`,
 		first,
 	)
@@ -96,7 +97,11 @@ func TestDecisionHeadline_IsTheFirstLineOnly(t *testing.T) {
 
 	assert.Equal(t, "Approved report_create, and it ran.",
 		decisionHeadline("  Approved report_create, and it ran.\nDecision on proposal ap_1."))
-	assert.Equal(t, "Rejected dispatch_assign_move.", decisionHeadline("Rejected dispatch_assign_move."))
+	assert.Equal(
+		t,
+		"Rejected dispatch_assign_move.",
+		decisionHeadline("Rejected dispatch_assign_move."),
+	)
 	assert.Empty(t, decisionHeadline(" \n "))
 }
 
@@ -146,7 +151,7 @@ func TestSendMessageStream_NamesWhatEachStepOfAPlanMade(t *testing.T) {
 	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{plan}}
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:       conversations.thread.ID,
 		FollowUpPlanID: plan.ID,
 		TenantInfo:     actor.TenantInfo(),

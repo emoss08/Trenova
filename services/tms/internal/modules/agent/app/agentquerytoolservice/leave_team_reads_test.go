@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -137,14 +138,18 @@ func TestLeaveCases_ATeamGrantReadsOnlyTheTeamThroughGraphQL(t *testing.T) {
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{
 		Engine: engine,
 		Resolvers: agentread.ResolverParams{
-			WorkerLeaveService:  workerleaveservice.NewWithDeps(workerleaveservice.Deps{Repo: repo}),
-			OrgStructureService: orgstructureservice.NewWithDeps(orgstructureservice.Deps{Repo: team}),
+			WorkerLeaveService: workerleaveservice.NewWithDeps(
+				workerleaveservice.Deps{Repo: repo},
+			),
+			OrgStructureService: orgstructureservice.NewWithDeps(
+				orgstructureservice.Deps{Repo: team},
+			),
 		},
 	})
 	tool, err := agentquerytoolservice.ConvertedListTool("worker_list_leave_cases", reader, engine)
 	require.NoError(t, err)
 	call := func(actor *permissionports.RequestActor, args map[string]any) (any, error) {
-		return tool.Query(readscope.With(t.Context(), nil), &agentports.QueryToolParams{
+		return tool.Query(readscope.With(t.Context(), nil), &agenttoolports.QueryToolParams{
 			OrganizationID: actor.OrganizationID,
 			BusinessUnitID: actor.BusinessUnitID,
 			Actor:          actor,
@@ -166,7 +171,7 @@ func TestLeaveCases_ATeamGrantReadsOnlyTheTeamThroughGraphQL(t *testing.T) {
 
 	before := repo.reads()
 	_, err = call(person, map[string]any{"workerId": stranger.String()})
-	var refused *agentports.ReadRefusedError
+	var refused *graphqlreadports.ReadRefusedError
 	require.ErrorAs(t, err, &refused, "a worker off the team is refused")
 	assert.Equal(t, before, repo.reads(), "nothing is read for a worker off the team")
 

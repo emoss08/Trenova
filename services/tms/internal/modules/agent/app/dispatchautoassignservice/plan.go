@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -23,10 +23,10 @@ type plannedAssignmentParams struct {
 
 func plannedAssignmentFor(
 	p *plannedAssignmentParams,
-) *agentports.DispatchPlannedAssignment {
+) *dispatchconsoleports.DispatchPlannedAssignment {
 	confidence := confidenceFor(p.Score)
 
-	planned := &agentports.DispatchPlannedAssignment{
+	planned := &dispatchconsoleports.DispatchPlannedAssignment{
 		MoveID:     p.Move.MoveID,
 		ProNumber:  p.Move.ProNumber,
 		WorkerID:   p.Score.WorkerID,
@@ -179,7 +179,7 @@ func destinationLabel(move *shipmentports.BoardMove) string {
 	return fmt.Sprintf("%s, %s", move.DestinationCity, move.DestinationState)
 }
 
-func moveStubFor(planned *agentports.DispatchPlannedAssignment) *shipmentports.BoardMove {
+func moveStubFor(planned *dispatchconsoleports.DispatchPlannedAssignment) *shipmentports.BoardMove {
 	return &shipmentports.BoardMove{
 		MoveID:    planned.MoveID,
 		ProNumber: planned.ProNumber,

@@ -12,7 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -58,12 +60,12 @@ type Params struct {
 	Evaluations   agentports.AgentEvaluationRepository
 	Usage         aiusageports.AIUsageRepository
 	Feedback      aifeedbackports.AIFeedbackRepository
-	Providers     agentports.AIProviderRepository
+	Providers     aiproviderports.AIProviderRepository
 	Organizations tenantports.OrganizationRepository
 	Runtime       *agentruntime.Service
 	Audit         auditports.AuditService
-	Completion    agentports.CompletionService            `optional:"true"`
-	Batches       agentports.BatchCompletionService       `optional:"true"`
+	Completion    llmports.CompletionService              `optional:"true"`
+	Batches       llmports.BatchCompletionService         `optional:"true"`
 	Watchtower    watchtowerports.WatchtowerProjector     `optional:"true"`
 	Notifications *notificationservice.Service            `optional:"true"`
 	Scheduler     agentqualityports.AgentQualityScheduler `optional:"true"`
@@ -80,12 +82,12 @@ type Service struct {
 	evaluations   agentports.AgentEvaluationRepository
 	usage         aiusageports.AIUsageRepository
 	feedback      aifeedbackports.AIFeedbackRepository
-	providers     agentports.AIProviderRepository
+	providers     aiproviderports.AIProviderRepository
 	organizations tenantports.OrganizationRepository
 	runtime       fingerprinter
 	audit         auditports.AuditService
-	completion    agentports.CompletionService
-	batches       agentports.BatchCompletionService
+	completion    llmports.CompletionService
+	batches       llmports.BatchCompletionService
 	watchtower    watchtowerports.WatchtowerProjector
 	notifier      regressionNotifier
 	scheduler     agentqualityports.AgentQualityScheduler

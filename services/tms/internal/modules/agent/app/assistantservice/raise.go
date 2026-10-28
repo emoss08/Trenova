@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -36,8 +36,8 @@ const (
 // person about the same agent goes out once a day.
 func (s *Service) RequestMore(
 	ctx context.Context,
-	req agentports.RequestMoreRequest,
-) (*agentports.RequestMoreResult, error) {
+	req assistantports.RequestMoreRequest,
+) (*assistantports.RequestMoreResult, error) {
 	if s.notifier == nil {
 		return nil, errortypes.NewBusinessError("Requests cannot be sent from here yet")
 	}
@@ -94,21 +94,21 @@ func (s *Service) RequestMore(
 		return nil, err
 	}
 
-	return &agentports.RequestMoreResult{Sent: sent}, nil
+	return &assistantports.RequestMoreResult{Sent: sent}, nil
 }
 
 func raiseWording(kind, who, agent string) (title, message string, err error) {
 	switch kind {
-	case agentports.RequestMoreAccess:
+	case assistantports.RequestMoreAccess:
 		return who + " asks for access to " + agent,
 			who + " can no longer use " + agent + " and asked for access in AI Control.", nil
-	case agentports.RequestMoreAllowance:
+	case assistantports.RequestMoreAllowance:
 		return who + " asks for more AI allowance",
 			who + " has used this month's AI allowance and asked for more.", nil
-	case agentports.RequestMoreBudget:
+	case assistantports.RequestMoreBudget:
 		return agent + " has spent its monthly budget",
 			who + " asked for " + agent + "'s monthly budget to be raised.", nil
-	case agentports.RequestMoreDailyRuns:
+	case assistantports.RequestMoreDailyRuns:
 		return agent + " reached its daily request limit",
 			who + " asked for " + agent + "'s daily request limit to be raised.", nil
 	default:

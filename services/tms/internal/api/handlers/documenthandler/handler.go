@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentuploadservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -42,7 +42,7 @@ type Params struct {
 	DocumentContentService documentports.DocumentContentService
 	ExtractionStatus       documentports.ExtractionStatusReader
 	ImportAssistant        shipmentports.ShipmentImportAssistantService
-	PageAssistant          agentports.PageAssistant `optional:"true"`
+	PageAssistant          assistantports.PageAssistant `optional:"true"`
 	ErrorHandler           *helpers.ErrorHandler
 	PermissionMiddleware   *middleware.PermissionMiddleware
 	Config                 *config.Config `optional:"true"`
@@ -55,7 +55,7 @@ type Handler struct {
 	contentService  documentports.DocumentContentService
 	extraction      documentports.ExtractionStatusReader
 	importAssistant shipmentports.ShipmentImportAssistantService
-	pageAssistant   agentports.PageAssistant
+	pageAssistant   assistantports.PageAssistant
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
 	storageConfig   config.StorageConfig
@@ -1555,7 +1555,7 @@ func (h *Handler) openImportAssistantThread(c *gin.Context) {
 	actor := requestActorFromAuthContext(authCtx)
 	opened, err := h.pageAssistant.OpenPageThread(
 		c.Request.Context(),
-		&agentports.OpenPageThreadRequest{
+		&assistantports.OpenPageThreadRequest{
 			TenantInfo:  pagination.FromAuthAsUser(authCtx),
 			Origin:      conversation.ThreadOriginImport,
 			SubjectType: agent.SubjectDocument,

@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -20,7 +20,7 @@ func (s *Service) VisibleFailures(
 		return []aicontrolsummary.ProviderFailure{}, nil
 	}
 
-	dismissals, err := s.dismissals.List(ctx, &agentports.ListFailureDismissalsRequest{
+	dismissals, err := s.dismissals.List(ctx, &aiproviderports.ListFailureDismissalsRequest{
 		TenantInfo: req.TenantInfo,
 		UserID:     req.UserID,
 	})
@@ -52,7 +52,7 @@ func (s *Service) DismissFailure(
 	if req.UserID.IsNil() {
 		return errortypes.NewBusinessError("Only a person can put a notice away")
 	}
-	if _, err := s.providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	if _, err := s.providers.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         req.ProviderID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
@@ -73,7 +73,7 @@ func (s *Service) RestoreFailure(
 	ctx context.Context,
 	req *aicontrolsummaryports.ProviderFailureDismissal,
 ) error {
-	return s.dismissals.Delete(ctx, &agentports.DeleteFailureDismissalRequest{
+	return s.dismissals.Delete(ctx, &aiproviderports.DeleteFailureDismissalRequest{
 		TenantInfo: req.TenantInfo,
 		UserID:     req.UserID,
 		ProviderID: req.ProviderID,

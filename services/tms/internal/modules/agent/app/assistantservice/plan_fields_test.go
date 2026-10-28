@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,7 +46,13 @@ func newDecidedPlanFixture(users *namedUsers) decidedPlanFixture {
 	run := &agent.AgentRun{ID: pulid.MustNew("arun_")}
 	runs := &stubRunRepo{byID: map[pulid.ID]*agent.AgentRun{run.ID: run}}
 	deciderID := pulid.MustNew("usr_")
-	decidedAt, commitsAt, undoneAt := int64(1_760_000_060), int64(1_760_000_070), int64(1_760_000_065)
+	decidedAt, commitsAt, undoneAt := int64(
+		1_760_000_060,
+	), int64(
+		1_760_000_070,
+	), int64(
+		1_760_000_065,
+	)
 	failed := 3
 	decided := &agent.AgentPlan{
 		ID:                    pulid.MustNew("apl_"),
@@ -108,7 +114,10 @@ func TestListThreadPlans_SaysHowEachPlanRunsAndWhoDecidedItWithWhat(t *testing.T
 	fx := newDecidedPlanFixture(users)
 	users.users = []*tenant.User{{ID: fx.deciderID, Name: "Elena Ruiz"}}
 
-	listed, err := fx.svc.ListThreadPlans(t.Context(), agentports.GetThreadRequest{ID: fx.thread.ID})
+	listed, err := fx.svc.ListThreadPlans(
+		t.Context(),
+		assistantports.GetThreadRequest{ID: fx.thread.ID},
+	)
 	require.NoError(t, err)
 	require.Len(t, listed, 2)
 
@@ -143,7 +152,10 @@ func TestListThreadPlans_ADeciderWhoCannotBeReadLeavesTheNameEmpty(t *testing.T)
 
 	fx := newDecidedPlanFixture(&namedUsers{err: errors.New("users unavailable")})
 
-	listed, err := fx.svc.ListThreadPlans(t.Context(), agentports.GetThreadRequest{ID: fx.thread.ID})
+	listed, err := fx.svc.ListThreadPlans(
+		t.Context(),
+		assistantports.GetThreadRequest{ID: fx.thread.ID},
+	)
 	require.NoError(t, err)
 	require.Len(t, listed, 2)
 	assert.Equal(t, fx.deciderID, listed[0].DecidedByUserID)
@@ -155,7 +167,10 @@ func TestListThreadPlans_ADeciderOutsideTheOrganizationIsNotNamed(t *testing.T) 
 
 	fx := newDecidedPlanFixture(&namedUsers{})
 
-	listed, err := fx.svc.ListThreadPlans(t.Context(), agentports.GetThreadRequest{ID: fx.thread.ID})
+	listed, err := fx.svc.ListThreadPlans(
+		t.Context(),
+		assistantports.GetThreadRequest{ID: fx.thread.ID},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, listed[0].DecidedByName)
 }

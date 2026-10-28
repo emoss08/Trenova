@@ -7,7 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
@@ -32,8 +32,8 @@ var deskSearchKinds = []string{"chat", "chap", "msg", "art", "dec"}
 func (s *Service) SearchDesk(
 	ctx context.Context,
 	actor permissionports.RequestActor,
-	req agentports.DeskSearchRequest,
-) ([]agentports.DeskSearchResult, error) {
+	req assistantports.DeskSearchRequest,
+) ([]assistantports.DeskSearchResult, error) {
 	kind := strings.TrimSpace(req.Kind)
 	if kind == "all" {
 		kind = ""
@@ -43,11 +43,11 @@ func (s *Service) SearchDesk(
 		query = string([]rune(query)[:maxDeskSearchQueryLen])
 	}
 	if kind != "" && !slices.Contains(deskSearchKinds, kind) {
-		return []agentports.DeskSearchResult{}, nil
+		return []assistantports.DeskSearchResult{}, nil
 	}
 
-	search := func(kinds []string, limit int) ([]agentports.DeskSearchRow, error) {
-		return s.conversations.SearchDesk(ctx, agentports.SearchDeskRequest{
+	search := func(kinds []string, limit int) ([]assistantports.DeskSearchRow, error) {
+		return s.conversations.SearchDesk(ctx, assistantports.SearchDeskRequest{
 			TenantInfo:   actor.TenantInfo(),
 			UserID:       actor.UserID,
 			Query:        query,
@@ -56,7 +56,7 @@ func (s *Service) SearchDesk(
 		})
 	}
 
-	var rows []agentports.DeskSearchRow
+	var rows []assistantports.DeskSearchRow
 	var err error
 	switch {
 	case kind != "":
@@ -64,7 +64,7 @@ func (s *Service) SearchDesk(
 	case query != "":
 		rows, err = search(deskSearchKinds, deskSearchLimitAllKinds)
 	default:
-		var chats, arts []agentports.DeskSearchRow
+		var chats, arts []assistantports.DeskSearchRow
 		if chats, err = search([]string{"chat"}, deskSearchRecentChats); err == nil {
 			arts, err = search([]string{"art"}, deskSearchRecentArts)
 		}
@@ -74,13 +74,13 @@ func (s *Service) SearchDesk(
 		return nil, err
 	}
 
-	out := make([]agentports.DeskSearchResult, 0, len(rows))
+	out := make([]assistantports.DeskSearchResult, 0, len(rows))
 	for _, row := range rows {
 		title := row.Title
 		if row.Kind == "msg" {
 			title = deskSnippet(row.Title, query)
 		}
-		out = append(out, agentports.DeskSearchResult{
+		out = append(out, assistantports.DeskSearchResult{
 			Kind:         row.Kind,
 			ID:           row.ID,
 			ThreadID:     row.ThreadID,

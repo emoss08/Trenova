@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/fx"
 )
@@ -25,13 +25,13 @@ const (
 type Params struct {
 	fx.In
 
-	Interactive agentports.StructuredCompleter `optional:"true"`
-	Background  agentports.CompletionService   `optional:"true"`
+	Interactive llmports.StructuredCompleter `optional:"true"`
+	Background  llmports.CompletionService   `optional:"true"`
 }
 
 type Caller struct {
-	interactive agentports.StructuredCompleter
-	background  agentports.CompletionService
+	interactive llmports.StructuredCompleter
+	background  llmports.CompletionService
 }
 
 func New(p Params) *Caller {
@@ -45,8 +45,8 @@ func (c *Caller) Available(mode Mode) bool {
 func (c *Caller) Complete(
 	ctx context.Context,
 	mode Mode,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	completer := c.completer(mode)
 	if completer == nil {
 		return nil, ErrUnavailable
@@ -57,7 +57,7 @@ func (c *Caller) Complete(
 
 	result, err := completer.CompleteStructured(ctx, req)
 	if err != nil {
-		var failed *agentports.ChatProvidersFailedError
+		var failed *llmports.ChatProvidersFailedError
 		if errors.As(err, &failed) {
 			return nil, errortypes.NewBusinessError(
 				"Nova could not reach an AI provider just now. Try again in a moment.",
@@ -73,8 +73,8 @@ func (c *Caller) Complete(
 type structuredCompleter interface {
 	CompleteStructured(
 		ctx context.Context,
-		req *agentports.StructuredCompletionRequest,
-	) (*agentports.StructuredCompletionResult, error)
+		req *llmports.StructuredCompletionRequest,
+	) (*llmports.StructuredCompletionResult, error)
 }
 
 func (c *Caller) completer(mode Mode) structuredCompleter {
@@ -96,8 +96,8 @@ type Completer interface {
 	Complete(
 		ctx context.Context,
 		mode Mode,
-		req *agentports.StructuredCompletionRequest,
-	) (*agentports.StructuredCompletionResult, error)
+		req *llmports.StructuredCompletionRequest,
+	) (*llmports.StructuredCompletionResult, error)
 }
 
 var _ Completer = (*Caller)(nil)

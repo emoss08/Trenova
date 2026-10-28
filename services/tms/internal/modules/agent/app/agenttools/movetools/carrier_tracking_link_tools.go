@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
@@ -80,7 +80,7 @@ func liveLinkOf(link *checkcall.TrackingLink) *liveLinkView {
 	}
 }
 
-func moveTarget(params map[string]any) (agentports.ToolTarget, bool) {
+func moveTarget(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, ParamMoveID, permission.ResourceShipmentMove)
 }
 
@@ -112,11 +112,11 @@ func revokedLinkChange(
 
 func ProvideIssueCarrierTrackingLinkTool(
 	checkCalls checkcallports.CheckCallService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newIssueCarrierTrackingLinkTool(checkCalls)
 }
 
-func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.AgentTool {
+func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name: toolIssueCarrierTrackingLink,
@@ -164,7 +164,7 @@ func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Age
 			*checkcallports.TrackingLinkPreview,
 		]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*checkcallports.IssueTrackingLinkRequest, error) {
 				moveID, err := common.RequirePulid(params.Params, ParamMoveID)
 				if err != nil {
@@ -189,7 +189,7 @@ func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Age
 			Plan: func(
 				ctx context.Context,
 				req *checkcallports.IssueTrackingLinkRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*checkcallports.TrackingLinkPreview, error) {
 				return links.PreviewIssueLink(ctx, req)
 			},
@@ -200,7 +200,7 @@ func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Age
 			Run: func(
 				ctx context.Context,
 				req *checkcallports.IssueTrackingLinkRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				issued, err := links.IssueLink(ctx, req)
 				if err != nil {
@@ -295,11 +295,11 @@ func carrierLoad(carrier, proNumber string) string {
 
 func ProvideRevokeCarrierTrackingLinkTool(
 	checkCalls checkcallports.CheckCallService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newRevokeCarrierTrackingLinkTool(checkCalls)
 }
 
-func newRevokeCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.AgentTool {
+func newRevokeCarrierTrackingLinkTool(links carrierTrackingLinker) agenttoolports.AgentTool {
 	return common.NewReceivableTool(
 		&common.ReceivableSpec{
 			Name: toolRevokeCarrierTrackingLink,
@@ -329,7 +329,7 @@ func newRevokeCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Ag
 		},
 		common.ReceivablePlan[*checkcallports.RevokeTrackingLinkRequest, *checkcall.TrackingLink]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*checkcallports.RevokeTrackingLinkRequest, error) {
 				moveID, err := common.RequirePulid(params.Params, ParamMoveID)
 				if err != nil {
@@ -343,7 +343,7 @@ func newRevokeCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Ag
 			Plan: func(
 				ctx context.Context,
 				req *checkcallports.RevokeTrackingLinkRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*checkcall.TrackingLink, error) {
 				live, err := links.PreviewRevokeLink(ctx, req)
 				if errortypes.IsNotFoundError(err) {
@@ -374,7 +374,7 @@ func newRevokeCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Ag
 			Run: func(
 				ctx context.Context,
 				req *checkcallports.RevokeTrackingLinkRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				if err := links.RevokeLink(ctx, req); err != nil {
 					return nil, err

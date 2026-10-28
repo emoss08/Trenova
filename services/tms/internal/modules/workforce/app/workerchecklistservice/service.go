@@ -9,7 +9,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -40,7 +40,7 @@ type Params struct {
 	CredentialRepo workerports.WorkerCredentialRepository
 	DocumentRepo   documentports.DocumentRepository
 	AuditService   auditports.AuditService
-	Realtime       agentports.RealtimeService `optional:"true"`
+	Realtime       realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
@@ -50,7 +50,7 @@ type Service struct {
 	credentialRepo workerports.WorkerCredentialRepository
 	documentRepo   documentports.DocumentRepository
 	auditService   auditports.AuditService
-	realtime       agentports.RealtimeService
+	realtime       realtimeports.RealtimeService
 	refreshLocks   sync.Map
 }
 

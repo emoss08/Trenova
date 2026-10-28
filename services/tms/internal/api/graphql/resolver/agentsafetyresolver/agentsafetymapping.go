@@ -3,12 +3,12 @@ package agentsafetyresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func agentToolSafetyPageToModel(
-	page *agentports.AgentToolSafetyPage,
+	page *agenttoolports.AgentToolSafetyPage,
 ) *gqlmodel.AgentToolSafetyConnection {
 	out := &gqlmodel.AgentToolSafetyConnection{
 		Edges:           make([]*gqlmodel.AgentToolSafetyEdge, 0, len(page.Edges)),
@@ -32,7 +32,7 @@ func agentToolSafetyPageToModel(
 }
 
 func toolPolicyPageToModel(
-	page *agentports.AgentToolPolicyPage,
+	page *agenttoolports.AgentToolPolicyPage,
 ) *gqlmodel.AgentToolPolicyConnection {
 	out := &gqlmodel.AgentToolPolicyConnection{
 		Edges:           make([]*gqlmodel.AgentToolPolicyEdge, 0, len(page.Edges)),

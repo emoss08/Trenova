@@ -9,7 +9,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -33,9 +34,9 @@ const reviewNoteSystem = "You are the formula assistant in Trenova's Formula Stu
 
 func (s *Service) DraftReviewNote(
 	ctx context.Context,
-	req *agentports.DraftFormulaReviewNoteRequest,
+	req *formulastudioports.DraftFormulaReviewNoteRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.DraftFormulaReviewNoteResponse, error) {
+) (*formulastudioports.DraftFormulaReviewNoteResponse, error) {
 	definition, err := s.assistant(ctx, req.TenantInfo, actor)
 	if err != nil {
 		return nil, err
@@ -57,7 +58,7 @@ func (s *Service) DraftReviewNote(
 		return nil, err
 	}
 
-	resp := &agentports.DraftFormulaReviewNoteResponse{}
+	resp := &formulastudioports.DraftFormulaReviewNoteResponse{}
 	if diff.HasApprovedBase && req.IncludeBacktest {
 		resp.Backtest = s.backtestSaved(ctx, req, template)
 	}
@@ -68,7 +69,7 @@ func (s *Service) DraftReviewNote(
 		definition: definition,
 		feature:    aiusage.FeatureFormulaExplain,
 		system:     reviewNoteSystem,
-		sections: []agentports.ContextSection{
+		sections: []llmports.ContextSection{
 			{Title: "Template", Content: reviewTemplateText(template)},
 			{Title: "Changes since the last approved version", Content: diffText(diff)},
 			{Title: "Backtest of recent shipments", Content: backtestText(resp.Backtest)},
@@ -83,7 +84,7 @@ func (s *Service) DraftReviewNote(
 
 	note := strings.TrimSpace(reply.Note)
 	if note == "" {
-		return nil, modelFailure(definition, agentports.ErrModelSchemaValidation)
+		return nil, modelFailure(definition, llmports.ErrModelSchemaValidation)
 	}
 
 	resp.Note = stringutils.Ellipsize(note, formulatemplate.MaxReviewerNoteLength-1)
@@ -93,7 +94,7 @@ func (s *Service) DraftReviewNote(
 
 func (s *Service) backtestSaved(
 	ctx context.Context,
-	req *agentports.DraftFormulaReviewNoteRequest,
+	req *formulastudioports.DraftFormulaReviewNoteRequest,
 	template *formulatemplate.FormulaTemplate,
 ) *formulatemplateports.BacktestSummary {
 	result, err := s.engine.Backtest(ctx, &formulatemplateservice.BacktestRequest{

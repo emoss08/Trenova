@@ -5,12 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/stretchr/testify/assert"
 )
 
 func testPolicies() PolicyLookup {
-	policies := map[string]agentports.ToolPolicy{
+	policies := map[string]agenttoolports.ToolPolicy{
 		"shipment_get": {
 			Kind:          agent.ToolKindQuery,
 			ReadsExternal: agent.ExternalReadNever,
@@ -32,7 +32,7 @@ func testPolicies() PolicyLookup {
 		},
 	}
 
-	return func(tool string) (agentports.ToolPolicy, bool) {
+	return func(tool string) (agenttoolports.ToolPolicy, bool) {
 		policy, ok := policies[tool]
 		return policy, ok
 	}

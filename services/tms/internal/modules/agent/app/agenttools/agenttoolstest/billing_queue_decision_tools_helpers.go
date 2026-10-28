@@ -3,7 +3,7 @@ package agenttoolstest
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -36,7 +36,7 @@ func ReviewedItem(status billingqueue.Status) *billingqueue.BillingQueueItem {
 	}
 }
 
-func AgentParamsFor(params map[string]any) agentports.ToolExecuteParams {
+func AgentParamsFor(params map[string]any) agenttoolports.ToolExecuteParams {
 	out := ExecuteParams(params)
 	out.Actor = AgentActorFor(out.OrganizationID, out.BusinessUnitID)
 

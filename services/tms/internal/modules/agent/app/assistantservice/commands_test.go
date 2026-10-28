@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -55,7 +56,7 @@ func newCommandService(
 	definition *agentdefinition.Definition,
 ) (*Service, *stubConversations) {
 	completion := &scriptedCompletion{}
-	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+	query := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 		&agenttest.StubQueryTool{
 			ToolName: agentextension.ToolListPortalSites,
 			Resource: permission.ResourcePortalAutomation,
@@ -77,7 +78,7 @@ func newCommandService(
 			Resource: permission.ResourceWebResearch,
 		},
 	}}
-	action := &stubActionRegistry{Tools: []agentports.AgentTool{
+	action := &stubActionRegistry{Tools: []agenttoolports.AgentTool{
 		&agenttest.StubActionTool{
 			ToolName:  agentextension.ToolWatchWeb,
 			Resource:  permission.ResourceWebResearch,
@@ -149,7 +150,7 @@ func TestPrepareTurn_HoldsAnExtensionCommandToItsExtension(t *testing.T) {
 			)
 			actor := testActor()
 
-			plan, runReq, err := svc.prepareTurn(t.Context(), &agentports.SendMessageRequest{
+			plan, runReq, err := svc.prepareTurn(t.Context(), &assistantports.SendMessageRequest{
 				ThreadID:   conversations.thread.ID,
 				Content:    tc.ask,
 				TenantInfo: actor.TenantInfo(),
@@ -176,7 +177,7 @@ func TestPrepareTurn_AnOrdinaryQuestionIsNotHeldToAnExtension(t *testing.T) {
 	)
 	actor := testActor()
 
-	plan, runReq, err := svc.prepareTurn(t.Context(), &agentports.SendMessageRequest{
+	plan, runReq, err := svc.prepareTurn(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Is the 9am slot at Acme DC still open?",
 		TenantInfo: actor.TenantInfo(),
@@ -244,7 +245,7 @@ func TestPrepareTurn_RefusesAnExtensionCommandItCannotHonour(t *testing.T) {
 				svc, conversations := newCommandService(tc.gate, tc.definition)
 				actor := testActor()
 
-				plan, err := svc.PrepareTurn(t.Context(), &agentports.SendMessageRequest{
+				plan, err := svc.PrepareTurn(t.Context(), &assistantports.SendMessageRequest{
 					ThreadID:        conversations.thread.ID,
 					Content:         tc.content,
 					DirectedAgentID: tc.directed,
@@ -347,7 +348,7 @@ func TestCommandAvailability_ListsTheCommandsTheAgentCanHonour(t *testing.T) {
 
 			availability, err := svc.CommandAvailability(
 				t.Context(),
-				&agentports.CommandAvailabilityRequest{
+				&assistantports.CommandAvailabilityRequest{
 					AgentID:    conversations.thread.AgentDefinitionID,
 					TenantInfo: actor.TenantInfo(),
 				},
@@ -374,7 +375,7 @@ func TestCommandAvailability_RefusesAnAgentThatIsSwitchedOff(t *testing.T) {
 
 	availability, err := svc.CommandAvailability(
 		t.Context(),
-		&agentports.CommandAvailabilityRequest{
+		&assistantports.CommandAvailabilityRequest{
 			AgentID:    conversations.thread.AgentDefinitionID,
 			TenantInfo: actor.TenantInfo(),
 		},

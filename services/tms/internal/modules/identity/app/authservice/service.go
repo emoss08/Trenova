@@ -14,7 +14,7 @@ import (
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -50,7 +50,7 @@ type Params struct {
 	APIKeyRepository  apikeyports.APIKeyRepository
 	PortalRepo        workerports.PortalAccessRepository
 	UsageRecorder     apikeyports.UsageRecorder
-	TurnStopper       agentports.AssistantTurnStopper
+	TurnStopper       assistantports.AssistantTurnStopper
 	AuthEvents        iamports.AuthEventRecorder
 	LoginThrottle     sessionports.LoginThrottleStore `optional:"true"`
 	Plans             platformplanports.PlanService   `optional:"true"`
@@ -73,7 +73,7 @@ type Service struct {
 	akr        apikeyports.APIKeyRepository
 	portalRepo workerports.PortalAccessRepository
 	usageBuf   apikeyports.UsageRecorder
-	turns      agentports.AssistantTurnStopper
+	turns      assistantports.AssistantTurnStopper
 	authEvents iamports.AuthEventRecorder
 	throttle   sessionports.LoginThrottleStore
 	plans      platformplanports.PlanService
@@ -869,7 +869,7 @@ func (s *Service) stopTurns(ctx context.Context, sess *session.Session) {
 	)
 	defer cancel()
 
-	err := s.turns.StopAllForUser(stopCtx, agentports.StopUserTurnsRequest{
+	err := s.turns.StopAllForUser(stopCtx, assistantports.StopUserTurnsRequest{
 		UserID: sess.UserID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  sess.OrganizationID,

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"go.uber.org/fx"
 )
 
@@ -21,7 +21,7 @@ type advisorRecorder struct {
 	db *postgres.Connection
 }
 
-func NewAdvisorRecorder(p AdvisorParams) agentports.AIProviderAdvisorRecorder {
+func NewAdvisorRecorder(p AdvisorParams) aiproviderports.AIProviderAdvisorRecorder {
 	return &advisorRecorder{db: p.DB}
 }
 
@@ -31,7 +31,7 @@ func NewAdvisorRecorder(p AdvisorParams) agentports.AIProviderAdvisorRecorder {
 // and an administrator's open editor must still save.
 func (r *advisorRecorder) RecordAdvisorRefusal(
 	ctx context.Context,
-	req *agentports.RecordAdvisorRefusalRequest,
+	req *aiproviderports.RecordAdvisorRefusalRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		p := aiproviderdb.Providers

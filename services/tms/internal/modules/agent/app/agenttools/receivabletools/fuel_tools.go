@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
@@ -398,7 +398,7 @@ func (in fuelPurchaseInput) apply(purchase *fuelpurchase.FuelPurchase) error {
 }
 
 func newFuelPurchaseDraft(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*fuelpurchaseservice.CreatePurchaseRequest, error) {
 	purchase := &fuelpurchase.FuelPurchase{
 		OrganizationID: params.OrganizationID,
@@ -528,7 +528,7 @@ func fuelPurchaseResult(
 	}
 }
 
-func targetFuelPurchase(params map[string]any) (agentports.ToolTarget, bool) {
+func targetFuelPurchase(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramFuelPurchaseID, permission.ResourceFuelPurchase)
 }
 
@@ -540,7 +540,7 @@ type labelledPurchase struct {
 func NewRecordFuelPurchaseTool(
 	purchases FuelPurchaseKeeper,
 	jurisdictions jurisdictionLabeler,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
 		Name:   "fuel_record_purchase",
 		Recipe: []string{"fuel_list_purchases", "fuel_record_purchase"},
@@ -569,7 +569,7 @@ func NewRecordFuelPurchaseTool(
 		Plan: func(
 			ctx context.Context,
 			req *fuelpurchaseservice.CreatePurchaseRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*labelledPurchase, error) {
 			planned, err := purchases.PlanCreatePurchase(ctx, req)
 			if err != nil {
@@ -614,7 +614,7 @@ func NewRecordFuelPurchaseTool(
 		Run: func(
 			ctx context.Context,
 			req *fuelpurchaseservice.CreatePurchaseRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := purchases.CreatePurchase(ctx, req)
 			if err != nil {
@@ -632,7 +632,7 @@ type fuelPurchaseCorrection struct {
 }
 
 func fuelPurchaseCorrectionFrom(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*fuelPurchaseCorrection, error) {
 	id, err := common.RequirePulid(params.Params, paramFuelPurchaseID)
 	if err != nil {
@@ -654,7 +654,7 @@ func fuelPurchaseCorrectionFrom(
 func (c *fuelPurchaseCorrection) request(
 	ctx context.Context,
 	purchases FuelPurchaseKeeper,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*fuelpurchaseservice.UpdatePurchaseRequest, error) {
 	stored, err := purchases.GetPurchase(ctx, common.TenantFrom(*params), c.id)
 	if err != nil {
@@ -690,7 +690,7 @@ type labelledPurchaseChange struct {
 func NewCorrectFuelPurchaseTool(
 	purchases FuelPurchaseKeeper,
 	jurisdictions jurisdictionLabeler,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
 		Name:        "fuel_correct_purchase",
 		SearchTerms: []string{"fix fuel purchase", "keyed wrong", "wrong gallons"},
@@ -713,7 +713,7 @@ func NewCorrectFuelPurchaseTool(
 		Plan: func(
 			ctx context.Context,
 			correction *fuelPurchaseCorrection,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*labelledPurchaseChange, error) {
 			req, err := correction.request(ctx, purchases, params)
 			if err != nil {
@@ -759,7 +759,7 @@ func NewCorrectFuelPurchaseTool(
 		Run: func(
 			ctx context.Context,
 			correction *fuelPurchaseCorrection,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := correction.request(ctx, purchases, params)
 			if err != nil {
@@ -778,7 +778,7 @@ func NewCorrectFuelPurchaseTool(
 func deleteFuelPurchaseRequest(
 	ctx context.Context,
 	purchases FuelPurchaseKeeper,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	id pulid.ID,
 ) (*fuelpurchaseservice.DeletePurchaseRequest, error) {
 	stored, err := purchases.GetPurchase(ctx, common.TenantFrom(*params), id)
@@ -797,7 +797,7 @@ func deleteFuelPurchaseRequest(
 func NewDeleteFuelPurchaseTool(
 	purchases FuelPurchaseKeeper,
 	jurisdictions jurisdictionLabeler,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
 		Name: "fuel_delete_purchase",
 		Description: "Propose deleting a fuel purchase recorded in error, such as a " +
@@ -816,13 +816,13 @@ func NewDeleteFuelPurchaseTool(
 		Required: []string{paramFuelPurchaseID},
 		Target:   targetFuelPurchase,
 	}), common.ReceivablePlan[pulid.ID, *labelledPurchase]{
-		Request: func(params *agentports.ToolExecuteParams) (pulid.ID, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
 			return common.RequirePulid(params.Params, paramFuelPurchaseID)
 		},
 		Plan: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*labelledPurchase, error) {
 			req, err := deleteFuelPurchaseRequest(ctx, purchases, params, id)
 			if err != nil {
@@ -862,7 +862,7 @@ func NewDeleteFuelPurchaseTool(
 		Run: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := deleteFuelPurchaseRequest(ctx, purchases, params, id)
 			if err != nil {
@@ -880,7 +880,7 @@ type fuelCardAssignment struct {
 	worker  *pulid.ID
 }
 
-func fuelCardAssignmentFrom(params *agentports.ToolExecuteParams) (*fuelCardAssignment, error) {
+func fuelCardAssignmentFrom(params *agenttoolports.ToolExecuteParams) (*fuelCardAssignment, error) {
 	id, err := common.RequirePulid(params.Params, paramFuelCardID)
 	if err != nil {
 		return nil, err
@@ -903,7 +903,7 @@ func fuelCardAssignmentFrom(params *agentports.ToolExecuteParams) (*fuelCardAssi
 func (a *fuelCardAssignment) request(
 	ctx context.Context,
 	cards FuelCardKeeper,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*fuelpurchaseservice.AssignCardRequest, error) {
 	stored, err := cards.GetCard(ctx, common.TenantFrom(*params), a.id)
 	if err != nil {
@@ -939,7 +939,7 @@ func fuelCardViewOf(card *fuelpurchase.FuelCard) *fuelCardView {
 	return view
 }
 
-func NewAssignFuelCardTool(cards FuelCardKeeper) agentports.AgentTool {
+func NewAssignFuelCardTool(cards FuelCardKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
 		Name:        "fuel_assign_card",
 		SearchTerms: []string{"issue new fuel card", "fuel card to tractor", "hand out fuel card"},
@@ -961,7 +961,7 @@ func NewAssignFuelCardTool(cards FuelCardKeeper) agentports.AgentTool {
 				"The driver who carries the card, from worker_list."),
 		},
 		Required: []string{paramFuelCardID},
-		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
+		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return common.TargetOf(params, paramFuelCardID, permission.ResourceFuelCard)
 		},
 	}), common.ReceivablePlan[*fuelCardAssignment, *fuelpurchaseservice.CardChange]{
@@ -969,7 +969,7 @@ func NewAssignFuelCardTool(cards FuelCardKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			assignment *fuelCardAssignment,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*fuelpurchaseservice.CardChange, error) {
 			req, err := assignment.request(ctx, cards, params)
 			if err != nil {
@@ -1016,7 +1016,7 @@ func NewAssignFuelCardTool(cards FuelCardKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			assignment *fuelCardAssignment,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := assignment.request(ctx, cards, params)
 			if err != nil {
@@ -1031,8 +1031,8 @@ func NewAssignFuelCardTool(cards FuelCardKeeper) agentports.AgentTool {
 
 func targetFuelImport(
 	resource permission.Resource,
-) func(map[string]any) (agentports.ToolTarget, bool) {
-	return func(params map[string]any) (agentports.ToolTarget, bool) {
+) func(map[string]any) (agenttoolports.ToolTarget, bool) {
+	return func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 		return common.TargetOf(params, paramFuelImportID, resource)
 	}
 }
@@ -1076,7 +1076,7 @@ func fuelImportViewOf(batch *fuelpurchase.ImportBatch) *fuelImportView {
 func loadFuelImport(
 	ctx context.Context,
 	imports FuelImportKeeper,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*fuelpurchase.ImportBatch, error) {
 	id, err := common.RequirePulid(params.Params, paramFuelImportID)
 	if err != nil {
@@ -1086,11 +1086,11 @@ func loadFuelImport(
 	return imports.GetImport(ctx, common.TenantFrom(*params), id)
 }
 
-func fuelImportIDFrom(params *agentports.ToolExecuteParams) (pulid.ID, error) {
+func fuelImportIDFrom(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
 	return common.RequirePulid(params.Params, paramFuelImportID)
 }
 
-func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agentports.AgentTool {
+func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
 		Name:   "fuel_commit_purchase_import",
 		Recipe: []string{"fuel_list_purchase_imports", "fuel_commit_purchase_import"},
@@ -1113,7 +1113,7 @@ func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agentports.AgentT
 		Plan: func(
 			ctx context.Context,
 			_ pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*fuelpurchaseservice.CommitPlan, error) {
 			batch, err := loadFuelImport(ctx, imports, params)
 			if err != nil {
@@ -1161,7 +1161,7 @@ func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agentports.AgentT
 		Run: func(
 			ctx context.Context,
 			_ pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			batch, err := loadFuelImport(ctx, imports, params)
 			if err != nil {
@@ -1179,7 +1179,7 @@ func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agentports.AgentT
 	})
 }
 
-func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agentports.AgentTool {
+func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
 		Name: "fuel_resolve_purchase_import_rows",
 		Description: "Work out again the rows a fuel import is still holding, against the " +
@@ -1202,7 +1202,7 @@ func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agentports.A
 		Plan: func(
 			ctx context.Context,
 			_ pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*fuelpurchaseservice.ResolveRowsPlan, error) {
 			batch, err := loadFuelImport(ctx, imports, params)
 			if err != nil {
@@ -1240,7 +1240,7 @@ func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agentports.A
 		Run: func(
 			ctx context.Context,
 			_ pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			batch, err := loadFuelImport(ctx, imports, params)
 			if err != nil {
@@ -1263,11 +1263,11 @@ type fuelImportDiscard struct {
 	reason string
 }
 
-func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agentports.AgentTool {
+func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.AgentTool {
 	discardRequest := func(
 		ctx context.Context,
 		discard *fuelImportDiscard,
-		params *agentports.ToolExecuteParams,
+		params *agenttoolports.ToolExecuteParams,
 	) (*fuelpurchaseservice.DiscardRequest, error) {
 		batch, err := imports.GetImport(ctx, common.TenantFrom(*params), discard.id)
 		if err != nil {
@@ -1305,7 +1305,7 @@ func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agentports.Agent
 		Required: []string{paramFuelImportID},
 		Target:   targetFuelImport(permission.ResourceFuelPurchase),
 	}), common.ReceivablePlan[*fuelImportDiscard, *fuelpurchaseservice.ImportBatchChange]{
-		Request: func(params *agentports.ToolExecuteParams) (*fuelImportDiscard, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*fuelImportDiscard, error) {
 			id, err := common.RequirePulid(params.Params, paramFuelImportID)
 			if err != nil {
 				return nil, err
@@ -1320,7 +1320,7 @@ func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agentports.Agent
 		Plan: func(
 			ctx context.Context,
 			discard *fuelImportDiscard,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*fuelpurchaseservice.ImportBatchChange, error) {
 			req, err := discardRequest(ctx, discard, params)
 			if err != nil {
@@ -1336,7 +1336,7 @@ func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agentports.Agent
 		Run: func(
 			ctx context.Context,
 			discard *fuelImportDiscard,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := discardRequest(ctx, discard, params)
 			if err != nil {

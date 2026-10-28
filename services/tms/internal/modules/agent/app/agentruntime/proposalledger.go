@@ -8,7 +8,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -29,7 +30,7 @@ const maxExecutionErrorChars = 600
 // is paired with the k-th proposal that tool raised from it. Both were
 // recorded in call order.
 type proposalLedger struct {
-	bySource map[pulid.ID]map[string][]agentports.ProposalOutcome
+	bySource map[pulid.ID]map[string][]agentruntimeports.ProposalOutcome
 	calls    map[string]sourcedCall
 }
 
@@ -39,9 +40,9 @@ type sourcedCall struct {
 	ordinal   int
 }
 
-func newProposalLedger(outcomes []agentports.ProposalOutcome) *proposalLedger {
+func newProposalLedger(outcomes []agentruntimeports.ProposalOutcome) *proposalLedger {
 	ledger := &proposalLedger{
-		bySource: make(map[pulid.ID]map[string][]agentports.ProposalOutcome),
+		bySource: make(map[pulid.ID]map[string][]agentruntimeports.ProposalOutcome),
 		calls:    make(map[string]sourcedCall),
 	}
 	for _, outcome := range outcomes {
@@ -50,7 +51,7 @@ func newProposalLedger(outcomes []agentports.ProposalOutcome) *proposalLedger {
 		}
 		byTool, ok := ledger.bySource[outcome.SourceMessageID]
 		if !ok {
-			byTool = make(map[string][]agentports.ProposalOutcome)
+			byTool = make(map[string][]agentruntimeports.ProposalOutcome)
 			ledger.bySource[outcome.SourceMessageID] = byTool
 		}
 		byTool[outcome.ToolName] = append(byTool[outcome.ToolName], outcome)
@@ -96,7 +97,7 @@ func (l *proposalLedger) currentContent(msg conversation.Message) (string, bool)
 // modifiedHow says what the person changed before approving, so the model
 // speaks of what ran rather than of what it asked for. Keys are listed in
 // order so the text is the same for the same change.
-func modifiedHow(outcome agentports.ProposalOutcome) string {
+func modifiedHow(outcome agentruntimeports.ProposalOutcome) string {
 	if len(outcome.Modifications) == 0 {
 		return ""
 	}
@@ -119,7 +120,7 @@ func modifiedHow(outcome agentports.ProposalOutcome) string {
 	return " after changing " + strings.Join(parts, ", ")
 }
 
-func proposalOutcomeText(toolName string, outcome agentports.ProposalOutcome) string {
+func proposalOutcomeText(toolName string, outcome agentruntimeports.ProposalOutcome) string {
 	switch outcome.Status {
 	case agent.ProposalStatusPending:
 		return fmt.Sprintf(
@@ -209,7 +210,7 @@ func proposalOutcomeText(toolName string, outcome agentports.ProposalOutcome) st
 // executedResult says what the write made and which ids it produced, each
 // sentence led by a space, so a later turn refers to the record rather than
 // to the proposal that made it.
-func executedResult(outcome agentports.ProposalOutcome) string {
+func executedResult(outcome agentruntimeports.ProposalOutcome) string {
 	var b strings.Builder
 	for _, sentence := range []string{
 		outcome.ExecutionResult.Describe(),
@@ -224,7 +225,7 @@ func executedResult(outcome agentports.ProposalOutcome) string {
 	return b.String()
 }
 
-func executedWhen(outcome agentports.ProposalOutcome) string {
+func executedWhen(outcome agentruntimeports.ProposalOutcome) string {
 	if outcome.ExecutedAt == nil || *outcome.ExecutedAt == 0 {
 		return ""
 	}
@@ -239,9 +240,9 @@ func executedWhen(outcome agentports.ProposalOutcome) string {
 // such sets both encode to nothing, and comparing those nothings dropped a
 // second, different proposal as a copy of the first.
 func pendingDuplicate(
-	call agentports.ToolCall,
-	earlier []agentports.ProposalOutcome,
-	thisTurn []agentports.PendingAction,
+	call llmports.ToolCall,
+	earlier []agentruntimeports.ProposalOutcome,
+	thisTurn []agentruntimeports.PendingAction,
 ) bool {
 	key := argumentsKey(call.Arguments)
 	if key == "" {

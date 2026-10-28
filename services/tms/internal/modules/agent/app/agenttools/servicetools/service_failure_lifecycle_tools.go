@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -108,7 +108,7 @@ func serviceFailureResult(
 	return result
 }
 
-func targetServiceFailure(params map[string]any) (agentports.ToolTarget, bool) {
+func targetServiceFailure(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(
 		params,
 		editools.ParamServiceFailureID,
@@ -140,7 +140,7 @@ type serviceFailureEdit struct {
 	x12Exception  *string
 }
 
-func readServiceFailureEdit(params *agentports.ToolExecuteParams) (*serviceFailureEdit, error) {
+func readServiceFailureEdit(params *agenttoolports.ToolExecuteParams) (*serviceFailureEdit, error) {
 	id, err := common.RequirePulid(params.Params, editools.ParamServiceFailureID)
 	if err != nil {
 		return nil, err
@@ -236,7 +236,7 @@ func (e *serviceFailureEdit) request(
 	return req
 }
 
-func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agentports.AgentTool {
+func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
 		Name:        "exception_update_service_failure",
 		SearchTerms: []string{"change reason code", "edit service failure"},
@@ -286,7 +286,7 @@ func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agentports.Ag
 		Plan: func(
 			ctx context.Context,
 			edit *serviceFailureEdit,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
 			current, err := getServiceFailure(ctx, failures, edit.id, edit.tenant)
 			if err != nil {
@@ -320,7 +320,7 @@ func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agentports.Ag
 		Run: func(
 			ctx context.Context,
 			edit *serviceFailureEdit,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			current, err := getServiceFailure(ctx, failures, edit.id, edit.tenant)
 			if err != nil {
@@ -344,7 +344,7 @@ type serviceFailureTransition struct {
 }
 
 func readServiceFailureTransition(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	notesRequired bool,
 ) (*serviceFailureTransition, error) {
 	id, err := common.RequirePulid(params.Params, editools.ParamServiceFailureID)
@@ -419,7 +419,7 @@ type serviceFailureTransitionSpec struct {
 func newServiceFailureTransitionTool(
 	failures serviceFailureLifecycle,
 	spec *serviceFailureTransitionSpec,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	properties := map[string]any{
 		editools.ParamServiceFailureID: serviceFailureIDProperty(),
 		common.ParamNote: common.StringProperty(
@@ -455,13 +455,13 @@ func newServiceFailureTransitionTool(
 		Required:    required,
 		Target:      targetServiceFailure,
 	}, common.ReceivablePlan[*serviceFailureTransition, *servicefailureports.ServiceFailureLifecyclePreview]{
-		Request: func(params *agentports.ToolExecuteParams) (*serviceFailureTransition, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*serviceFailureTransition, error) {
 			return readServiceFailureTransition(params, spec.notesRequired)
 		},
 		Plan: func(
 			ctx context.Context,
 			transition *serviceFailureTransition,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
 			current, err := getServiceFailure(ctx, failures, transition.id, transition.tenant)
 			if err != nil {
@@ -500,7 +500,7 @@ func newServiceFailureTransitionTool(
 		Run: func(
 			ctx context.Context,
 			transition *serviceFailureTransition,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			current, err := getServiceFailure(ctx, failures, transition.id, transition.tenant)
 			if err != nil {
@@ -516,7 +516,7 @@ func newServiceFailureTransitionTool(
 	})
 }
 
-func NewReviewServiceFailureTool(failures serviceFailureLifecycle) agentports.AgentTool {
+func NewReviewServiceFailureTool(failures serviceFailureLifecycle) agenttoolports.AgentTool {
 	return newServiceFailureTransitionTool(failures, &serviceFailureTransitionSpec{
 		name:        "exception_review_service_failure",
 		searchTerms: []string{"mark reviewed"},
@@ -542,7 +542,7 @@ func NewReviewServiceFailureTool(failures serviceFailureLifecycle) agentports.Ag
 	})
 }
 
-func NewVoidServiceFailureTool(failures serviceFailureLifecycle) agentports.AgentTool {
+func NewVoidServiceFailureTool(failures serviceFailureLifecycle) agenttoolports.AgentTool {
 	return newServiceFailureTransitionTool(failures, &serviceFailureTransitionSpec{
 		name: "exception_void_service_failure",
 		description: "Void a service failure that should never have been opened, with " +

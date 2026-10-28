@@ -6,7 +6,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -25,7 +25,7 @@ type change struct {
 
 func (s *Service) Reorder(
 	ctx context.Context,
-	req *agentports.ReorderAIProvidersRequest,
+	req *aiproviderports.ReorderAIProvidersRequest,
 	actor *permissionports.RequestActor,
 ) ([]*aiprovider.Provider, error) {
 	current, err := s.repo.ListOrdered(ctx, req.TenantInfo)
@@ -86,7 +86,7 @@ func (s *Service) Reorder(
 
 func (s *Service) AssignTask(
 	ctx context.Context,
-	req *agentports.AssignAIProviderTaskRequest,
+	req *aiproviderports.AssignAIProviderTaskRequest,
 	actor *permissionports.RequestActor,
 ) (*aiprovider.Provider, error) {
 	if !req.Task.IsValid() {
@@ -132,7 +132,7 @@ func (s *Service) modify(
 	ctx context.Context,
 	req *modifyRequest,
 ) (*aiprovider.Provider, *aiprovider.Provider, error) {
-	existing, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	existing, err := s.repo.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         req.providerID,
 		TenantInfo: req.tenantInfo,
 	})
@@ -206,7 +206,7 @@ func sameProviders(current []*aiprovider.Provider, ids []pulid.ID) bool {
 
 func (s *Service) RouteTask(
 	ctx context.Context,
-	req *agentports.RouteAIProviderTaskRequest,
+	req *aiproviderports.RouteAIProviderTaskRequest,
 	actor *permissionports.RequestActor,
 ) ([]*aiprovider.Provider, error) {
 	if !req.Task.IsValid() {

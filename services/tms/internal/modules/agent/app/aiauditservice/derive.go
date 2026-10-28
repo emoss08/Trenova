@@ -11,8 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -313,8 +314,8 @@ func joinReason(class, message string) string {
 	}
 }
 
-func decodeOutcome(raw map[string]any) agentports.RunStepOutcome {
-	var outcome agentports.RunStepOutcome
+func decodeOutcome(raw map[string]any) agentruntimeports.RunStepOutcome {
+	var outcome agentruntimeports.RunStepOutcome
 	if len(raw) == 0 {
 		return outcome
 	}
@@ -408,7 +409,10 @@ func (d *deriver) stepBase(l *lookups, step *agent.AgentRunStep) (*aiaudit.AIAud
 	return event, nil
 }
 
-func stepOutcome(step *agent.AgentRunStep, outcome *agentports.RunStepOutcome) aiaudit.Outcome {
+func stepOutcome(
+	step *agent.AgentRunStep,
+	outcome *agentruntimeports.RunStepOutcome,
+) aiaudit.Outcome {
 	if action := outcome.Action; action != nil {
 		switch {
 		case action.Simulated:
@@ -426,7 +430,7 @@ func stepOutcome(step *agent.AgentRunStep, outcome *agentports.RunStepOutcome) a
 		return refused
 	}
 
-	failed := outcome.Failed || step.Status == string(agentports.RunStepFailed)
+	failed := outcome.Failed || step.Status == string(agentruntimeports.RunStepFailed)
 	switch {
 	case failed && outcome.Reason != "":
 		return aiaudit.OutcomeDenied
@@ -450,7 +454,10 @@ func verdictOutcome(verdict string) (aiaudit.Outcome, bool) {
 	}
 }
 
-func (d *deriver) applyAction(event *aiaudit.AIAuditEvent, action *agentports.PendingAction) {
+func (d *deriver) applyAction(
+	event *aiaudit.AIAuditEvent,
+	action *agentruntimeports.PendingAction,
+) {
 	event.Tier = string(action.Tier)
 	event.TierSource = string(action.TierSource)
 	event.HeldBy = slices.Clone(action.HeldBy)
@@ -568,7 +575,7 @@ func (d *deriver) runEventEvent(l *lookups, row *agent.AgentRunEvent) *aiaudit.A
 	}
 
 	switch row.Kind {
-	case agentports.AssistantEventToolFinished:
+	case assistantports.AssistantEventToolFinished:
 		if failed, _ := payload[payloadKeyFailed].(bool); !failed {
 			return nil
 		}
@@ -591,11 +598,11 @@ func (d *deriver) runEventEvent(l *lookups, row *agent.AgentRunEvent) *aiaudit.A
 		if policy, ok := d.redactor.Policy(event.ToolName); ok {
 			event.ToolEffect = string(policy.EffectiveEffect())
 		}
-	case agentports.AssistantEventDelegateStarted:
+	case assistantports.AssistantEventDelegateStarted:
 		event.Kind = aiaudit.KindDelegationStarted
 		event.Outcome = aiaudit.OutcomeStarted
 		event.ToolName = delegateToolName
-	case agentports.AssistantEventDelegateFinished:
+	case assistantports.AssistantEventDelegateFinished:
 		event.Kind = aiaudit.KindDelegationEnded
 		event.Outcome = delegateOutcome(
 			conversation.DelegateStatus(typeutils.StringOf(payload[payloadKeyStatus])),
@@ -621,7 +628,7 @@ func (d *deriver) runEventEvent(l *lookups, row *agent.AgentRunEvent) *aiaudit.A
 const delegateToolName = "delegate_task"
 
 func delegateOrCallKey(kind string) string {
-	if kind == agentports.AssistantEventToolFinished {
+	if kind == assistantports.AssistantEventToolFinished {
 		return "callId"
 	}
 

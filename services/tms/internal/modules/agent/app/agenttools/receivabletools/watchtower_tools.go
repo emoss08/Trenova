@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -51,7 +51,7 @@ func watchtowerItemViewOf(item *watchtower.Item) *watchtowerItemView {
 	}
 }
 
-func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agentports.AgentTool {
+func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agenttoolports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
 		Name:   "exception_dismiss_watchtower_item",
 		Recipe: []string{toolListWatchtowerItems, "exception_dismiss_watchtower_item"},
@@ -72,14 +72,14 @@ func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agentports.AgentToo
 		},
 		Required:    []string{paramWatchtowerItemID},
 		SearchTerms: []string{"dismiss watchtower", "clear feed item", "mark handled"},
-		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
+		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return common.TargetOf(params, paramWatchtowerItemID, permission.ResourceWatchtower)
 		},
 	}, common.ReceivablePlan[pulid.ID, *kernelports.RecordChange[watchtower.Item]]{
-		Request: func(params *agentports.ToolExecuteParams) (pulid.ID, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
 			return common.RequirePulid(params.Params, paramWatchtowerItemID)
 		},
-		Settle: func(ctx context.Context, id pulid.ID, params *agentports.ToolExecuteParams) error {
+		Settle: func(ctx context.Context, id pulid.ID, params *agenttoolports.ToolExecuteParams) error {
 			_, err := plannedDismissal(ctx, items, id, params)
 
 			return err
@@ -87,7 +87,7 @@ func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agentports.AgentToo
 		Plan: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*kernelports.RecordChange[watchtower.Item], error) {
 			return plannedDismissal(ctx, items, id, params)
 		},
@@ -116,7 +116,7 @@ func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agentports.AgentToo
 		Run: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			dismissed, err := items.Dismiss(ctx, common.TenantFrom(*params), id, params.Actor)
 			if err != nil {
@@ -137,7 +137,7 @@ func plannedDismissal(
 	ctx context.Context,
 	items WatchtowerDismisser,
 	id pulid.ID,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*kernelports.RecordChange[watchtower.Item], error) {
 	change, err := items.PlanDismiss(ctx, common.TenantFrom(*params), id, params.Actor)
 	if err != nil {

@@ -4,13 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/servicefailureportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -20,6 +13,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/servicefailureportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -314,7 +313,7 @@ func TestCreateOrUpdateDetectedCreatesWithGeneratedNumber(t *testing.T) {
 	repo := servicefailureportsmock.NewMockServiceFailureRepository(t)
 	reasonRepo := servicefailureportsmock.NewMockServiceFailureReasonCodeRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	svc := &service{
 		l:              zap.NewNop(),
 		repo:           repo,
@@ -373,7 +372,7 @@ func TestEvaluateShipmentIncludesCreatedStopSummaries(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	dispatchRepo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	svc := &service{
 		l:              zap.NewNop(),
 		repo:           repo,
@@ -629,7 +628,7 @@ func TestLifecycleReviewRequiresUserAndRecordsAudit(t *testing.T) {
 	}
 	repo := servicefailureportsmock.NewMockServiceFailureRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	svc := &service{
 		l:            zap.NewNop(),
 		repo:         repo,

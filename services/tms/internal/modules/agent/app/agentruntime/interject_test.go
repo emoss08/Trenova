@@ -6,7 +6,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,8 +25,8 @@ const (
 
 type fakeChangeFeed struct {
 	head    string
-	changes []agentports.WatchedRecordChange
-	asked   []*agentports.RecordChangesRequest
+	changes []realtimeports.WatchedRecordChange
+	asked   []*realtimeports.RecordChangesRequest
 }
 
 func (f *fakeChangeFeed) Head(context.Context, pulid.ID, pulid.ID) (string, error) {
@@ -31,11 +35,11 @@ func (f *fakeChangeFeed) Head(context.Context, pulid.ID, pulid.ID) (string, erro
 
 func (f *fakeChangeFeed) Since(
 	_ context.Context,
-	req *agentports.RecordChangesRequest,
-) (*agentports.RecordChanges, error) {
+	req *realtimeports.RecordChangesRequest,
+) (*realtimeports.RecordChanges, error) {
 	f.asked = append(f.asked, req)
 
-	return &agentports.RecordChanges{Cursor: "0.2-0", Changes: f.changes}, nil
+	return &realtimeports.RecordChanges{Cursor: "0.2-0", Changes: f.changes}, nil
 }
 
 type clockedEffects struct {
@@ -53,7 +57,7 @@ func (fx *clockedEffects) Emit(event kernelports.StreamEvent) {
 
 func (fx *clockedEffects) Complete(
 	t *Turn,
-	req *agentports.ChatCompletionRequest,
+	req *llmports.ChatCompletionRequest,
 ) (ModelReply, error) {
 	reply, err := fx.localEffects.Complete(t, req)
 	fx.now += worldCheckEvery + 1
@@ -66,7 +70,7 @@ func TestDrive_TellsTheModelWhenAWatchedRecordChangesElsewhere(t *testing.T) {
 
 	actor := testActor()
 	other := pulid.MustNew("usr_")
-	feed := &fakeChangeFeed{head: "0.1-0", changes: []agentports.WatchedRecordChange{{
+	feed := &fakeChangeFeed{head: "0.1-0", changes: []realtimeports.WatchedRecordChange{{
 		RecordID:    watchedShipment,
 		Resource:    "audited:shipment",
 		Action:      "updated",
@@ -74,18 +78,18 @@ func TestDrive_TellsTheModelWhenAWatchedRecordChangesElsewhere(t *testing.T) {
 		ActorType:   string(permissionports.PrincipalTypeUser),
 		ActorUserID: other.String(),
 	}}}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("customer_get", map[string]any{"customerId": "cus_1"}),
 		textTurn("The shipment moved; I read it again."),
 	}}
 	rt := newRuntime(completion,
-		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			queryTool("customer_get", map[string]any{"name": "Acme"}, nil),
 		}},
 		&stubActionRegistry{}, nil)
 	rt.changes = feed
 
-	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("customer_get"),
 		Actor:      actor,
 		Input:      "Is S-1001 ready to bill?",
@@ -93,8 +97,12 @@ func TestDrive_TellsTheModelWhenAWatchedRecordChangesElsewhere(t *testing.T) {
 	})
 	require.NotNil(t, turn.world, "a turn with records and a feed watches them")
 	fx := &clockedEffects{
-		localEffects: &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}},
-		now:          turn.world.CheckedAt,
+		localEffects: &localEffects{
+			s:    rt,
+			ctx:  t.Context(),
+			emit: func(kernelports.StreamEvent) {},
+		},
+		now: turn.world.CheckedAt,
 	}
 
 	result, err := rt.Drive(turn, fx)
@@ -123,7 +131,7 @@ func TestDrive_TellsTheModelWhenAWatchedRecordChangesElsewhere(t *testing.T) {
 
 	var announced bool
 	for _, event := range fx.events {
-		announced = announced || event.Event == agentports.AssistantEventWorldChanged
+		announced = announced || event.Event == assistantports.AssistantEventWorldChanged
 	}
 	assert.True(t, announced)
 }
@@ -132,20 +140,24 @@ func TestDrive_DoesNotCheckBeforeACheckIsDue(t *testing.T) {
 	t.Parallel()
 
 	feed := &fakeChangeFeed{head: "0.1-0"}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		textTurn("S-1001 is delivered."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	rt.changes = feed
-	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Where is S-1001?",
 		Records:    []agent.EntityRef{{Type: "shipment", ID: watchedShipment}},
 	})
 	fx := &clockedEffects{
-		localEffects: &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}},
-		now:          turn.world.CheckedAt,
+		localEffects: &localEffects{
+			s:    rt,
+			ctx:  t.Context(),
+			emit: func(kernelports.StreamEvent) {},
+		},
+		now: turn.world.CheckedAt,
 	}
 
 	_, err := rt.Drive(turn, fx)
@@ -159,12 +171,12 @@ func TestOpenTurn_DelegatedTurnWatchesNothing(t *testing.T) {
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	rt.changes = &fakeChangeFeed{head: "0.1-0"}
 
-	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Check the carrier.",
 		Records:    []agent.EntityRef{{Type: "shipment", ID: watchedShipment}},
-		Delegation: &agentports.Delegation{},
+		Delegation: &agentruntimeports.Delegation{},
 	})
 
 	assert.Nil(t, turn.world)
@@ -174,7 +186,7 @@ func TestWorldState_ReadsWatchTheRecordsAGetCallNamed(t *testing.T) {
 	t.Parallel()
 
 	world := openWorld("0.1-0", nil, 100)
-	world.read(&agentports.ToolCall{
+	world.read(&llmports.ToolCall{
 		Name: "shipment_get",
 		Arguments: map[string]any{
 			"shipmentId":   watchedShipment,
@@ -184,7 +196,7 @@ func TestWorldState_ReadsWatchTheRecordsAGetCallNamed(t *testing.T) {
 			"tractorId":    "short",
 		},
 	}, "S-1001")
-	world.read(&agentports.ToolCall{
+	world.read(&llmports.ToolCall{
 		Name:      "shipment_list",
 		Arguments: map[string]any{"customerId": "cus_01J9LISTLISTLISTLISTLIST0"},
 	}, "3 shipments")
@@ -203,22 +215,31 @@ func TestWorldState_ItsOwnWriteIsNotNews(t *testing.T) {
 	t.Parallel()
 
 	world := openWorld("0.1-0", []agent.EntityRef{{Type: "shipment", ID: watchedShipment}}, 100)
-	world.wrote(&agentports.PendingAction{
+	world.wrote(&agentruntimeports.PendingAction{
 		Executed: true,
-		Target:   &agentports.ProposalTarget{Resource: "shipment", ID: pulid.ID(watchedShipment)},
+		Target: &agentruntimeports.ProposalTarget{
+			Resource: "shipment",
+			ID:       pulid.ID(watchedShipment),
+		},
 	}, 200)
-	world.wrote(&agentports.PendingAction{
+	world.wrote(&agentruntimeports.PendingAction{
 		Executed: false,
-		Target:   &agentports.ProposalTarget{Resource: "shipment", ID: pulid.ID(otherShipment)},
+		Target: &agentruntimeports.ProposalTarget{
+			Resource: "shipment",
+			ID:       pulid.ID(otherShipment),
+		},
 	}, 200)
 
-	news := world.news(&agentports.RecordChanges{Cursor: "0.3-0", Changes: []agentports.WatchedRecordChange{
-		{RecordID: watchedShipment, Action: "updated", At: 205},
-	}}, 210)
+	news := world.news(
+		&realtimeports.RecordChanges{Cursor: "0.3-0", Changes: []realtimeports.WatchedRecordChange{
+			{RecordID: watchedShipment, Action: "updated", At: 205},
+		}},
+		210,
+	)
 	assert.Empty(t, news, "the turn's own write is not a change made elsewhere")
 	assert.Len(t, world.Records, 1, "a write only proposed is not watched")
 
-	news = world.news(&agentports.RecordChanges{Changes: []agentports.WatchedRecordChange{
+	news = world.news(&realtimeports.RecordChanges{Changes: []realtimeports.WatchedRecordChange{
 		{RecordID: watchedShipment, Action: "updated", At: 200 + ownWriteGrace + 1},
 	}}, 300)
 	assert.Len(t, news, 1, "a later change to the same record is news again")
@@ -241,7 +262,7 @@ func TestWorldChangeNotice_SaysWhoChangedIt(t *testing.T) {
 	t.Parallel()
 
 	actor := testActor()
-	notice := WorldChangeNotice([]agentports.WatchedRecordChange{
+	notice := WorldChangeNotice([]realtimeports.WatchedRecordChange{
 		{RecordID: watchedShipment, Label: "shipment S-1001", Action: "updated",
 			ActorType: "session_user", ActorUserID: actor.UserID.String(), Fields: []string{"status"}},
 		{RecordID: otherShipment, Label: otherShipment, Action: "deleted", ActorType: "agent"},
@@ -260,7 +281,9 @@ func TestReplayHistory_FramesASteerAndKeepsItInsideItsTurn(t *testing.T) {
 		{Role: conversation.RoleUser, Content: "Find a carrier for S-1001."},
 		{Role: conversation.RoleAssistant, Content: "Looking."},
 		{Role: conversation.RoleUser, Kind: conversation.MessageKindSteer, Content: "Only Werner.",
-			Mentions: []agent.EntityRef{{Type: "carrier", ID: "car_01J9WERNERWERNERWERNER000", Label: "Werner"}}},
+			Mentions: []agent.EntityRef{
+				{Type: "carrier", ID: "car_01J9WERNERWERNERWERNER000", Label: "Werner"},
+			}},
 		{Role: conversation.RoleUser, Kind: conversation.MessageKindWorldChange, Content: "notice"},
 		{Role: conversation.RoleAssistant, Content: "Tendered to Werner."},
 	}
@@ -268,10 +291,10 @@ func TestReplayHistory_FramesASteerAndKeepsItInsideItsTurn(t *testing.T) {
 	messages, _ := replayHistory(history, nil)
 	require.Len(t, messages, 6)
 	assert.Equal(t, SteerPrompt("Only Werner.", history[2].Mentions), messages[2].Content)
-	assert.Equal(t, agentports.RoleUser, messages[2].Role, "the person's words stay theirs")
-	assert.Equal(t, agentports.NoticeMessage(steerNotice), messages[3],
+	assert.Equal(t, llmports.RoleUser, messages[2].Role, "the person's words stay theirs")
+	assert.Equal(t, llmports.NoticeMessage(steerNotice), messages[3],
 		"what to make of them is the system's")
-	assert.Equal(t, agentports.NoticeMessage("notice"), messages[4])
+	assert.Equal(t, llmports.NoticeMessage("notice"), messages[4])
 	assert.Equal(t, 0, recentTurnStart(history, 1),
 		"a steer and a notice arrive inside a turn and open none of their own")
 }

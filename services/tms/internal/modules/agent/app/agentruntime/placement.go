@@ -6,7 +6,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
@@ -43,7 +45,7 @@ type strayLink struct {
 
 type placementProblems struct {
 	stray    []strayLink
-	missing  []agentports.ShownArtifact
+	missing  []agentruntimeports.ShownArtifact
 	invented []strayLink
 	// named is the artifacts the reply already names inside a sentence, which
 	// a stray link of the same artifact is cut from without naming it twice.
@@ -71,7 +73,7 @@ func (p *placementProblems) mendable() bool {
 func (s *Service) placeArtifacts(
 	t *Turn,
 	fx TurnEffects,
-	completion *agentports.ChatCompletionResult,
+	completion *llmports.ChatCompletionResult,
 	state *placementState,
 ) bool {
 	if completion == nil || t.req.Delegation != nil || strings.TrimSpace(completion.Text) == "" {
@@ -98,7 +100,7 @@ func (s *Service) placeArtifacts(
 			if len(problems.stray) > 0 {
 				reason = placementMovedReason
 			}
-			fx.Emit(passEvent(agentports.RegroundPlaceArtifacts, reason, nil))
+			fx.Emit(passEvent(assistantports.RegroundPlaceArtifacts, reason, nil))
 			fx.Emit(replyReplacedEvent(placed, reason))
 			completion.Text = placed
 
@@ -109,30 +111,30 @@ func (s *Service) placeArtifacts(
 	if !state.retried {
 		state.retried = true
 		fx.Emit(kernelports.StreamEvent{
-			Event: agentports.AssistantEventRetrying,
-			Data: agentports.AssistantRetryingEvent{
+			Event: assistantports.AssistantEventRetrying,
+			Data: assistantports.AssistantRetryingEvent{
 				Attempt: 1,
 				Reason:  placementRetryReason,
-				Kind:    agentports.RetryKindRestart,
+				Kind:    llmports.RetryKindRestart,
 			},
 		})
-		fx.Emit(passEvent(agentports.RegroundRelinkArtifacts, placementRetryReason, nil))
+		fx.Emit(passEvent(assistantports.RegroundRelinkArtifacts, placementRetryReason, nil))
 		t.messages = append(
 			t.messages,
-			agentports.Message{
-				Role:          agentports.RoleAssistant,
+			llmports.Message{
+				Role:          llmports.RoleAssistant,
 				Content:       completion.Text,
 				ReplyID:       completion.ProviderMessageID,
 				ReplyProvider: completion.ProviderID,
 			},
-			agentports.NoticeMessage(t.placementCorrection(&problems)),
+			llmports.NoticeMessage(t.placementCorrection(&problems)),
 		)
 
 		return true
 	}
 
 	placed, _ := t.placed(completion.Text, &problems)
-	fx.Emit(passEvent(agentports.RegroundPlaceArtifacts, placementPlacedReason, nil))
+	fx.Emit(passEvent(assistantports.RegroundPlaceArtifacts, placementPlacedReason, nil))
 	fx.Emit(replyReplacedEvent(placed, placementPlacedReason))
 	completion.Text = placed
 
@@ -186,17 +188,17 @@ func (t *Turn) discardedDraft(idx int) bool {
 		return true
 	}
 
-	return t.messages[idx].Role == agentports.RoleAssistant && idx+1 < len(t.messages) &&
+	return t.messages[idx].Role == llmports.RoleAssistant && idx+1 < len(t.messages) &&
 		isCorrection(&t.messages[idx+1])
 }
 
-func isCorrection(message *agentports.Message) bool {
-	return message.Role == agentports.RoleSystem &&
+func isCorrection(message *llmports.Message) bool {
+	return message.Role == llmports.RoleSystem &&
 		(strings.HasPrefix(message.Content, placementCorrectionLead) ||
 			isGroundingCorrection(message.Content))
 }
 
-func (t *Turn) shownArtifact(id string) (*agentports.ShownArtifact, bool) {
+func (t *Turn) shownArtifact(id string) (*agentruntimeports.ShownArtifact, bool) {
 	for idx := range t.artifacts {
 		if t.artifacts[idx].ID.String() == id {
 			return &t.artifacts[idx], true

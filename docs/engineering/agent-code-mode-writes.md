@@ -85,7 +85,7 @@ Nothing new decides or commits. 5b adds:
 ## What a script may write
 
 The SDK's write surface is the agent's own **action tools**, called with one record at a time.
-One function decides it, `agentports.PreparableFromScript(tool)`, which admits a tool only when
+One function decides it, `agenttoolports.PreparableFromScript(tool)`, which admits a tool only when
 all of these hold:
 
 - it is an action tool whose effect is not a lookup;

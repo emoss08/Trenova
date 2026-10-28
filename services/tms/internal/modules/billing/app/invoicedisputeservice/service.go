@@ -3,7 +3,7 @@ package invoicedisputeservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -36,7 +36,7 @@ type Params struct {
 	InvoiceRepo    invoiceports.InvoiceRepository
 	AdjustmentRepo invoiceadjustmentports.InvoiceAdjustmentRepository
 	AuditService   auditports.AuditService
-	Realtime       agentports.RealtimeService
+	Realtime       realtimeports.RealtimeService
 }
 
 // Service runs the dispute case lifecycle. The invoice's DisputeStatus flag
@@ -49,7 +49,7 @@ type Service struct {
 	invoiceRepo    invoiceports.InvoiceRepository
 	adjustmentRepo invoiceadjustmentports.InvoiceAdjustmentRepository
 	auditService   auditports.AuditService
-	realtime       agentports.RealtimeService
+	realtime       realtimeports.RealtimeService
 }
 
 func New(p Params) invoiceports.InvoiceDisputeService {

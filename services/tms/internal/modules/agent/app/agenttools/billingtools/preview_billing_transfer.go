@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -34,7 +34,7 @@ var transferLabels = map[string]string{
 
 func (t *TransferToBillingTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
@@ -69,7 +69,7 @@ func (t *TransferToBillingTool) Preview(
 
 func (t *TransferToBillingTool) previewPlan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	request *transferRequest,
 ) (*shipmentports.BillingTransferPlan, error) {
 	if request.all {

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -41,10 +41,10 @@ func TestCellLabel_NamesTheAdvisor(t *testing.T) {
 	provider := &aiprovider.Provider{Name: "Haiku 5.5", Model: "claude-haiku-5-5"}
 	assert.Equal(t, "Haiku 5.5 (claude-haiku-5-5) @low +advisor", Cell{
 		Provider: provider, Effort: aiprovider.ReasoningLow,
-		Advisor: agentports.DefaultAdvisor(""),
+		Advisor: llmports.DefaultAdvisor(""),
 	}.Label())
 	assert.Equal(t, "Haiku 5.5 (claude-haiku-5-5) +advisor=claude-sonnet-5-5", Cell{
-		Provider: provider, Advisor: agentports.DefaultAdvisor("claude-sonnet-5-5"),
+		Provider: provider, Advisor: llmports.DefaultAdvisor("claude-sonnet-5-5"),
 	}.Label())
 }
 
@@ -55,24 +55,24 @@ func TestParseCellRef_ReadsTheAdvisorSuffix(t *testing.T) {
 		ref     string
 		name    string
 		effort  aiprovider.ReasoningEffort
-		advisor *agentports.AdvisorSpec
+		advisor *llmports.AdvisorSpec
 	}{
 		{
 			ref:     "claude-haiku-5-5@low+advisor",
 			name:    "claude-haiku-5-5",
 			effort:  aiprovider.ReasoningLow,
-			advisor: &agentports.AdvisorSpec{Model: "claude-opus-5-5", MaxUses: 2},
+			advisor: &llmports.AdvisorSpec{Model: "claude-opus-5-5", MaxUses: 2},
 		},
 		{
 			ref:     "claude-haiku-5-5+advisor",
 			name:    "claude-haiku-5-5",
-			advisor: &agentports.AdvisorSpec{Model: "claude-opus-5-5", MaxUses: 2},
+			advisor: &llmports.AdvisorSpec{Model: "claude-opus-5-5", MaxUses: 2},
 		},
 		{
 			ref:     " Haiku 5.5 @ medium + Advisor = claude-fable-5-1 ",
 			name:    "Haiku 5.5",
 			effort:  aiprovider.ReasoningMedium,
-			advisor: &agentports.AdvisorSpec{Model: "claude-fable-5-1", MaxUses: 2},
+			advisor: &llmports.AdvisorSpec{Model: "claude-fable-5-1", MaxUses: 2},
 		},
 		{
 			ref:    "claude-haiku-5-5@low",
@@ -111,7 +111,7 @@ func TestParseCellRef_RefusesWhatItDoesNotKnow(t *testing.T) {
 func TestCheckAdvisor_NeedsAnAnthropicProvider(t *testing.T) {
 	t.Parallel()
 
-	advisor := agentports.DefaultAdvisor("")
+	advisor := llmports.DefaultAdvisor("")
 	anthropic := &aiprovider.Provider{Kind: aiprovider.KindAnthropicMessages}
 	openai := &aiprovider.Provider{Kind: aiprovider.KindOpenAIResponses}
 
@@ -125,7 +125,7 @@ func TestCheckAdvisor_NeedsAnAnthropicProvider(t *testing.T) {
 func TestCheckAdvisor_NeedsAPlatformThatServesIt(t *testing.T) {
 	t.Parallel()
 
-	advisor := agentports.DefaultAdvisor("")
+	advisor := llmports.DefaultAdvisor("")
 	for _, platform := range aiprovider.AllPlatforms() {
 		provider := &aiprovider.Provider{
 			Kind:     aiprovider.KindAnthropicMessages,

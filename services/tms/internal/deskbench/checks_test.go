@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -88,13 +88,13 @@ func TestGroundingCheck_FailsAReplyTheGuardCorrected(t *testing.T) {
 	t.Parallel()
 
 	clean := groundingCheck([]*TurnRecord{{Events: []Event{{
-		Name: agentports.AssistantEventReplyRegrounded,
+		Name: assistantports.AssistantEventReplyRegrounded,
 		Data: map[string]any{"action": "relink_artifacts"},
 	}}}})
 	assert.True(t, clean.Passed, "an artifact link correction has a check of its own")
 
 	corrected := groundingCheck([]*TurnRecord{{Events: []Event{{
-		Name: agentports.AssistantEventReplyRegrounded,
+		Name: assistantports.AssistantEventReplyRegrounded,
 		Data: map[string]any{"action": "rewrite", "figures": []any{"52.3"}},
 	}}}})
 	assert.False(t, corrected.Passed)
@@ -105,12 +105,12 @@ func TestArtifactCorrections_CountOnlyWhatRestartedTheReply(t *testing.T) {
 	t.Parallel()
 
 	placed := Event{
-		Name: agentports.AssistantEventReplyRegrounded,
-		Data: map[string]any{"action": string(agentports.RegroundPlaceArtifacts)},
+		Name: assistantports.AssistantEventReplyRegrounded,
+		Data: map[string]any{"action": string(assistantports.RegroundPlaceArtifacts)},
 	}
 	relinked := Event{
-		Name: agentports.AssistantEventReplyRegrounded,
-		Data: map[string]any{"action": string(agentports.RegroundRelinkArtifacts)},
+		Name: assistantports.AssistantEventReplyRegrounded,
+		Data: map[string]any{"action": string(assistantports.RegroundRelinkArtifacts)},
 	}
 
 	assert.Empty(t, artifactCorrections([]Event{placed}),
@@ -153,7 +153,11 @@ func TestStepEvidence_CountsOnlyWhatWaitedForAPersonAsAProposal(t *testing.T) {
 	t.Parallel()
 
 	evidence := &stepEvidence{turns: []*TurnRecord{{Proposals: []*ProposalRecord{
-		{Tool: "agent_raise_exception", Tier: agent.TierAutoExecute, Status: agent.ProposalStatusExecuted},
+		{
+			Tool:   "agent_raise_exception",
+			Tier:   agent.TierAutoExecute,
+			Status: agent.ProposalStatusExecuted,
+		},
 		{Tool: "shipment_place_hold", Tier: agent.TierPropose, Status: agent.ProposalStatusPending},
 		{Tool: "billing_hold_queue_item", Tier: agent.TierActWithApproval},
 	}}}}

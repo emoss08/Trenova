@@ -3,7 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func scheduleAnswers(workerID string) map[string]*agentports.GraphQLReadResult {
-	return map[string]*agentports.GraphQLReadResult{
+func scheduleAnswers(workerID string) map[string]*graphqlreadports.GraphQLReadResult {
+	return map[string]*graphqlreadports.GraphQLReadResult{
 		"WorkerShiftAssignments": {Data: map[string]any{"workerShiftAssignments": []any{
 			map[string]any{
 				"id": pulid.MustNew("wsa_").String(), "workerId": workerID,
@@ -64,8 +64,13 @@ func TestWorkerGetSchedule_ReadsNoSwapsForAReaderWhoMayNotReadThem(t *testing.T)
 
 	workerID := pulid.MustNew("wrk_").String()
 	reader := &keyedReader{answers: scheduleAnswers(workerID)}
-	tool, err := newGraphQLUnpagedListTool(keyedSpec(t, toolWorkerGetSchedule), reader,
-		&mocks.DenyResourcesPermissionEngine{Denied: []string{permission.ResourceShiftSwap.String()}})
+	tool, err := newGraphQLUnpagedListTool(
+		keyedSpec(t, toolWorkerGetSchedule),
+		reader,
+		&mocks.DenyResourcesPermissionEngine{
+			Denied: []string{permission.ResourceShiftSwap.String()},
+		},
+	)
 	require.NoError(t, err)
 
 	data, err := tool.Query(t.Context(), keyedCall(map[string]any{paramWorkerID: workerID}))
@@ -83,9 +88,9 @@ func TestWorkerGetSchedule_AReadTheServerRefusesIsARefusal(t *testing.T) {
 	t.Parallel()
 
 	answers := scheduleAnswers(pulid.MustNew("wrk_").String())
-	answers["WorkerShiftAssignments"] = &agentports.GraphQLReadResult{
-		Errors: []agentports.GraphQLReadError{{
-			Code: agentports.GraphQLCodeForbidden, Message: "outside your team",
+	answers["WorkerShiftAssignments"] = &graphqlreadports.GraphQLReadResult{
+		Errors: []graphqlreadports.GraphQLReadError{{
+			Code: graphqlreadports.GraphQLCodeForbidden, Message: "outside your team",
 		}},
 	}
 	reader := &keyedReader{answers: answers}
@@ -95,7 +100,7 @@ func TestWorkerGetSchedule_AReadTheServerRefusesIsARefusal(t *testing.T) {
 
 	_, err = tool.Query(t.Context(),
 		keyedCall(map[string]any{paramWorkerID: pulid.MustNew("wrk_").String()}))
-	var refused *agentports.ReadRefusedError
+	var refused *graphqlreadports.ReadRefusedError
 	require.ErrorAs(t, err, &refused)
 	assert.Nil(t, reader.sent(opWorkerAvailability))
 	assert.Nil(t, reader.sent(opShiftSwapRequests))
@@ -104,7 +109,7 @@ func TestWorkerGetSchedule_AReadTheServerRefusesIsARefusal(t *testing.T) {
 func TestListShiftTemplates_ReadsTheActivePatternsAndSpellsEachOut(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"ShiftTemplates": {Data: map[string]any{"shiftTemplates": []any{map[string]any{
 			"id": pulid.MustNew("shft_").String(), "code": "EARLY", "name": "Early days",
 			"daysOfWeek": "0111110", "startMinute": float64(360),
@@ -137,7 +142,7 @@ func TestListDOTRandomDraws_ReadsTheRoundsWithTheActivePoolsBeside(t *testing.T)
 	t.Parallel()
 
 	poolID := pulid.MustNew("drpool_").String()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DotRandomDraws": {Data: map[string]any{"dotRandomDraws": []any{map[string]any{
 			"id": pulid.MustNew("drdraw_").String(), "poolId": poolID, "status": "Final",
 		}}}},

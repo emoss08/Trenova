@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateimportservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratesimulationservice"
@@ -77,19 +77,28 @@ func (f *fakeRateImports) Discard(
 func TestRateImportTools_ApplyingASheetIsAPersonsCallAndDiscardingIsNot(t *testing.T) {
 	t.Parallel()
 
-	imports := &fakeRateImports{guard: &agenttoolstest.WriteGuard{}, batch: &rateimport.RateImportBatch{
-		ID:            pulid.MustNew("rib_"),
-		FileName:      "acme-2027.csv",
-		Status:        rateimport.StatusParsed,
-		EffectiveFrom: 1_798_761_600,
-		Version:       2,
-	}}
-	params := agenttoolstest.ExecuteParams(map[string]any{paramRateImportID: imports.batch.ID.String()})
+	imports := &fakeRateImports{
+		guard: &agenttoolstest.WriteGuard{},
+		batch: &rateimport.RateImportBatch{
+			ID:            pulid.MustNew("rib_"),
+			FileName:      "acme-2027.csv",
+			Status:        rateimport.StatusParsed,
+			EffectiveFrom: 1_798_761_600,
+			Version:       2,
+		},
+	}
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramRateImportID: imports.batch.ID.String()},
+	)
 
 	commit := NewCommitRateImportTool(imports)
-	preview := agenttoolstest.PreviewWithoutWrites(t, imports.guard, func() (*agent.ToolPreview, error) {
-		return commit.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		imports.guard,
+		func() (*agent.ToolPreview, error) {
+			return commit.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would apply the rate sheet acme-2027.csv from ")
 	assert.Contains(t, preview.Summary, "close out 1 lane and add 2 lanes")
 	assert.NotContains(t, preview.Summary, "2.49", "negotiated rates are confidential")
@@ -104,10 +113,18 @@ func TestRateImportTools_ApplyingASheetIsAPersonsCallAndDiscardingIsNot(t *testi
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, commit.Policy().Egress)
 
 	discard := NewDiscardRateImportTool(imports)
-	preview = agenttoolstest.PreviewWithoutWrites(t, imports.guard, func() (*agent.ToolPreview, error) {
-		return discard.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, "Discarded", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After)
+	preview = agenttoolstest.PreviewWithoutWrites(
+		t,
+		imports.guard,
+		func() (*agent.ToolPreview, error) {
+			return discard.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		"Discarded",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
+	)
 	require.NoError(t, discard.Execute(t.Context(), params))
 	assert.Equal(t, imports.batch.ID, imports.discarded.RateImportBatchID)
 	assert.Equal(t, []agent.EgressClass{agent.EgressInternal}, discard.Policy().Egress)
@@ -156,17 +173,25 @@ func TestRunRateSimulation_ReplaysTheWholeLastDayAndChangesNothing(t *testing.T)
 		paramSampleTo:        "2026-09-30",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, simulations.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		simulations.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would replay Customer shipments shipped ")
 	assert.Contains(t, preview.Summary, "against the Draft rate agreement ACME-2026")
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, "started", result.Action)
 	assert.Equal(t, agreementID.String(), result.IDs[paramRateAgreementID])
-	assert.Equal(t, simulations.created.SampleFrom+92*common.SecondsPerDay, simulations.created.SampleTo)
+	assert.Equal(
+		t,
+		simulations.created.SampleFrom+92*common.SecondsPerDay,
+		simulations.created.SampleTo,
+	)
 	assert.Equal(t, rateagreement.PartyTypeCustomer, simulations.created.PartyType)
 
 	policy := tool.Policy()
@@ -174,5 +199,5 @@ func TestRunRateSimulation_ReplaysTheWholeLastDayAndChangesNothing(t *testing.T)
 	assert.Equal(t, agent.TierAutoExecute, policy.MaxTier)
 
 	params.Params[paramSampleLimit] = maxSampleShipments + 1
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }

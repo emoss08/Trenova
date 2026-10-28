@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -38,7 +38,7 @@ func errorFields(t *testing.T, err error) []string {
 	return fields
 }
 
-func schemaCheck(tool agentports.AgentTool, args map[string]any) error {
+func schemaCheck(tool agenttoolports.AgentTool, args map[string]any) error {
 	return toolschema.NewValidator().ValidateFor(tool.Name(), tool.ParamSchema(), args)
 }
 
@@ -227,7 +227,10 @@ func TestCreateShipment_ReplaysTheCallThatWasCreatedUnrated(t *testing.T) {
 	stops[1].(map[string]any)["scheduledWindowStart"] = "2026-10-02T08:00"
 	require.NoError(t, schemaCheck(tool, sent), "what is left fits the schema")
 
-	err = tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(sent))
+	err = tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(sent),
+	)
 	require.Error(t, err, "stops numbered from 1 are refused before anything is filed")
 	assert.Contains(
 		t,
@@ -387,7 +390,7 @@ func TestCreateShipment_SaysWhatItCreated(t *testing.T) {
 	)})
 	params.IdempotencyKey = "idem-result"
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 
 	id := writer.Created.ID.String()

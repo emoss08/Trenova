@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -27,8 +27,8 @@ type pricedProvider struct {
 }
 
 type pricer struct {
-	providers agentports.AIProviderRepository
-	reference agentports.ModelPriceReference
+	providers aiproviderports.AIProviderRepository
+	reference aiproviderports.ModelPriceReference
 
 	mu    sync.Mutex
 	known map[priceKey]pricedProvider
@@ -40,8 +40,8 @@ type priceKey struct {
 }
 
 func newPricer(
-	providers agentports.AIProviderRepository,
-	reference agentports.ModelPriceReference,
+	providers aiproviderports.AIProviderRepository,
+	reference aiproviderports.ModelPriceReference,
 ) *pricer {
 	return &pricer{
 		providers: providers,
@@ -105,7 +105,7 @@ func (p *pricer) resolve(
 	providerID pulid.ID,
 	model string,
 ) pricedProvider {
-	stored, err := p.providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	stored, err := p.providers.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenant,
 	})

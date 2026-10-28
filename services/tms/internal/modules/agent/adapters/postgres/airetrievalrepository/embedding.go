@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/pgvector/pgvector-go"
@@ -41,7 +41,7 @@ type storedChunk struct {
 }
 
 func embeddingsOf(
-	source *agentports.AIRetrievalSourceRef,
+	source *retrievalports.AIRetrievalSourceRef,
 	modelKey string,
 ) *keel.Query[*airetrieval.Embedding] {
 	e := airetrievaldb.Embeddings
@@ -55,12 +55,12 @@ func embeddingsOf(
 
 func (r *repository) ListChunkHashes(
 	ctx context.Context,
-	req *agentports.ListEmbeddingChunkHashesRequest,
-) ([]agentports.EmbeddingChunkHash, error) {
+	req *retrievalports.ListEmbeddingChunkHashesRequest,
+) ([]retrievalports.EmbeddingChunkHash, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]agentports.EmbeddingChunkHash, error) {
+		func(ctx context.Context) ([]retrievalports.EmbeddingChunkHash, error) {
 			if req == nil {
 				return nil, invalid("listing chunk hashes needs a request")
 			}
@@ -75,7 +75,7 @@ func (r *repository) ListChunkHashes(
 			}
 
 			e := airetrievaldb.Embeddings
-			hashes, err := keel.Into[agentports.EmbeddingChunkHash](ctx, r.db.Keel(ctx),
+			hashes, err := keel.Into[retrievalports.EmbeddingChunkHash](ctx, r.db.Keel(ctx),
 				embeddingsOf(&req.Source, req.ModelKey).
 					Pick(e.ChunkIndex, e.ContentHash).
 					Order(e.ChunkIndex.Asc()))
@@ -83,7 +83,7 @@ func (r *repository) ListChunkHashes(
 				return nil, fmt.Errorf("list embedding chunk hashes: %w", err)
 			}
 			if hashes == nil {
-				hashes = []agentports.EmbeddingChunkHash{}
+				hashes = []retrievalports.EmbeddingChunkHash{}
 			}
 
 			return hashes, nil
@@ -91,7 +91,7 @@ func (r *repository) ListChunkHashes(
 	)
 }
 
-func validateReplace(req *agentports.ReplaceEmbeddingChunksRequest) error {
+func validateReplace(req *retrievalports.ReplaceEmbeddingChunksRequest) error {
 	if req == nil {
 		return invalid("replacing chunks needs a request")
 	}
@@ -133,13 +133,13 @@ func validateReplace(req *agentports.ReplaceEmbeddingChunksRequest) error {
 
 func (r *repository) ReplaceChunks(
 	ctx context.Context,
-	req *agentports.ReplaceEmbeddingChunksRequest,
-) (agentports.ReplaceEmbeddingChunksResult, error) {
+	req *retrievalports.ReplaceEmbeddingChunksRequest,
+) (retrievalports.ReplaceEmbeddingChunksResult, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (agentports.ReplaceEmbeddingChunksResult, error) {
-			var result agentports.ReplaceEmbeddingChunksResult
+		func(ctx context.Context) (retrievalports.ReplaceEmbeddingChunksResult, error) {
+			var result retrievalports.ReplaceEmbeddingChunksResult
 
 			if err := validateReplace(req); err != nil {
 				return result, err
@@ -173,7 +173,7 @@ func (r *repository) ReplaceChunks(
 				return err
 			})
 			if err != nil {
-				return agentports.ReplaceEmbeddingChunksResult{}, err
+				return retrievalports.ReplaceEmbeddingChunksResult{}, err
 			}
 
 			return result, nil
@@ -184,7 +184,7 @@ func (r *repository) ReplaceChunks(
 func storedChunks(
 	ctx context.Context,
 	db *keel.DB,
-	req *agentports.ReplaceEmbeddingChunksRequest,
+	req *retrievalports.ReplaceEmbeddingChunksRequest,
 ) (map[int]storedChunk, error) {
 	e := airetrievaldb.Embeddings
 	rows, err := keel.Into[storedChunk](ctx, db, embeddingsOf(&req.Source, req.ModelKey).
@@ -203,7 +203,7 @@ func storedChunks(
 }
 
 func planChunkWrites(
-	req *agentports.ReplaceEmbeddingChunksRequest,
+	req *retrievalports.ReplaceEmbeddingChunksRequest,
 	stored map[int]storedChunk,
 	now int64,
 ) ([]*airetrieval.Embedding, int, error) {
@@ -250,7 +250,7 @@ func planChunkWrites(
 func removeChunksNotIn(
 	ctx context.Context,
 	db *keel.DB,
-	req *agentports.ReplaceEmbeddingChunksRequest,
+	req *retrievalports.ReplaceEmbeddingChunksRequest,
 ) (int, error) {
 	e := airetrievaldb.Embeddings
 	indexes := make([]int64, 0, len(req.Chunks))
@@ -295,13 +295,13 @@ func upsertChunks(
 
 func (r *repository) DeleteSource(
 	ctx context.Context,
-	source *agentports.AIRetrievalSourceRef,
-) (agentports.DeleteAIRetrievalSourceResult, error) {
+	source *retrievalports.AIRetrievalSourceRef,
+) (retrievalports.DeleteAIRetrievalSourceResult, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (agentports.DeleteAIRetrievalSourceResult, error) {
-			var result agentports.DeleteAIRetrievalSourceResult
+		func(ctx context.Context) (retrievalports.DeleteAIRetrievalSourceResult, error) {
+			var result retrievalports.DeleteAIRetrievalSourceResult
 
 			if err := validateSource(source); err != nil {
 				return result, err
@@ -341,7 +341,7 @@ func (r *repository) DeleteSource(
 				return nil
 			})
 			if err != nil {
-				return agentports.DeleteAIRetrievalSourceResult{}, err
+				return retrievalports.DeleteAIRetrievalSourceResult{}, err
 			}
 
 			return result, nil
@@ -357,7 +357,7 @@ type searchPlan struct {
 	dimensions  int
 }
 
-func planSearch(req *agentports.VectorSearchRequest) (searchPlan, error) {
+func planSearch(req *retrievalports.VectorSearchRequest) (searchPlan, error) {
 	if req == nil {
 		return searchPlan{}, invalid("a vector search needs a request")
 	}
@@ -405,53 +405,57 @@ func planSearch(req *agentports.VectorSearchRequest) (searchPlan, error) {
 
 func (r *repository) Search(
 	ctx context.Context,
-	req *agentports.VectorSearchRequest,
-) ([]agentports.VectorSearchHit, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]agentports.VectorSearchHit, error) {
-		plan, err := planSearch(req)
-		if err != nil {
-			return nil, err
-		}
-		if err = r.requireVector(ctx); err != nil {
-			return nil, err
-		}
+	req *retrievalports.VectorSearchRequest,
+) ([]retrievalports.VectorSearchHit, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]retrievalports.VectorSearchHit, error) {
+			plan, err := planSearch(req)
+			if err != nil {
+				return nil, err
+			}
+			if err = r.requireVector(ctx); err != nil {
+				return nil, err
+			}
 
-		var hits []agentports.VectorSearchHit
-		err = r.db.Transact(
-			ctx,
-			kernelports.TxOptions{
-				ReadOnly: true,
-				Settings: []kernelports.TxSetting{
-					{Name: "hnsw.iterative_scan", Value: "relaxed_order"},
-					{Name: "hnsw.ef_search", Value: strconv.Itoa(plan.efSearch)},
+			var hits []retrievalports.VectorSearchHit
+			err = r.db.Transact(
+				ctx,
+				kernelports.TxOptions{
+					ReadOnly: true,
+					Settings: []kernelports.TxSetting{
+						{Name: "hnsw.iterative_scan", Value: "relaxed_order"},
+						{Name: "hnsw.ef_search", Value: strconv.Itoa(plan.efSearch)},
+					},
 				},
-			},
-			func(ctx context.Context) error {
-				db := r.db.Keel(ctx)
-				var txErr error
-				if hits, txErr = keel.Into[agentports.VectorSearchHit](
-					ctx,
-					db,
-					searchQuery(req, plan),
-				); txErr != nil {
-					return fmt.Errorf("search embeddings: %w", txErr)
-				}
+				func(ctx context.Context) error {
+					db := r.db.Keel(ctx)
+					var txErr error
+					if hits, txErr = keel.Into[retrievalports.VectorSearchHit](
+						ctx,
+						db,
+						searchQuery(req, plan),
+					); txErr != nil {
+						return fmt.Errorf("search embeddings: %w", txErr)
+					}
 
-				return nil
-			},
-		)
-		if err != nil {
-			return nil, err
-		}
-		if hits == nil {
-			hits = []agentports.VectorSearchHit{}
-		}
+					return nil
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			if hits == nil {
+				hits = []retrievalports.VectorSearchHit{}
+			}
 
-		return hits, nil
-	})
+			return hits, nil
+		},
+	)
 }
 
-func searchQuery(req *agentports.VectorSearchRequest, plan searchPlan) *keel.Query[*keel.Row] {
+func searchQuery(req *retrievalports.VectorSearchRequest, plan searchPlan) *keel.Query[*keel.Row] {
 	e := airetrievaldb.Embeddings
 	query := pgvector.NewHalfVector(req.Query)
 	distance := func() keel.Expr {

@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
@@ -393,7 +394,7 @@ func (s *Service) JudgeCase(ctx context.Context, req *JudgeCaseRequest) (*Judged
 		ctx,
 		judgeRequest(req.TenantInfo, evaluation, evalCase),
 	)
-	if errors.Is(err, agentports.ErrNoProviderConfigured) {
+	if errors.Is(err, llmports.ErrNoProviderConfigured) {
 		return &JudgedCase{Note: "No provider is assigned to the evaluation judge."}, nil
 	}
 	if err != nil {
@@ -433,8 +434,8 @@ func judgeRequest(
 	tenant pagination.TenantInfo,
 	evaluation *agent.Evaluation,
 	evalCase *agentquality.EvalCase,
-) *agentports.StructuredCompletionRequest {
-	return &agentports.StructuredCompletionRequest{
+) *llmports.StructuredCompletionRequest {
+	return &llmports.StructuredCompletionRequest{
 		TenantInfo:   tenant,
 		Task:         aiprovider.TaskEvaluationJudge,
 		System:       judgeSystemPrompt,

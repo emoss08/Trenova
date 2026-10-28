@@ -5,7 +5,8 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 )
 
 // maxConcurrentReads bounds how many reads one batch runs at once, so a model
@@ -40,7 +41,7 @@ func (s *Service) concurrentReads(held []string) map[string]struct{} {
 	reads := make(map[string]struct{}, len(held))
 	for _, name := range held {
 		tool, ok := s.queryTools.Get(name)
-		if !ok || agentports.EffectOf(tool) != agent.ToolEffectLookup {
+		if !ok || agenttoolports.EffectOf(tool) != agent.ToolEffectLookup {
 			continue
 		}
 		reads[name] = struct{}{}
@@ -71,7 +72,7 @@ func restoreReads(names []string) map[string]struct{} {
 
 // joinCheck is what the loop knows when it weighs a call against the batch.
 type joinCheck struct {
-	call   agentports.ToolCall
+	call   llmports.ToolCall
 	used   int
 	budget int
 	stuck  bool

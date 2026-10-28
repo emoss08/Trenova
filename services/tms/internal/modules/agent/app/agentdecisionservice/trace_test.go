@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -39,12 +41,12 @@ func (traceControls) GetOrCreate(
 }
 
 type traceRuns struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 }
 
 func (traceRuns) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return &agent.AgentRun{ID: req.ID}, nil
 }
@@ -99,14 +101,19 @@ type traceAudit struct {
 	auditports.AuditService
 }
 
-func (traceAudit) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error { return nil }
+func (traceAudit) LogAction(
+	*auditports.LogActionParams,
+	...auditports.LogOption,
+) error {
+	return nil
+}
 
 type traceVersions struct{ versions []int64 }
 
 func (v *traceVersions) Version(
 	context.Context,
 	pagination.TenantInfo,
-	agentports.ToolTarget,
+	agenttoolports.ToolTarget,
 ) (int64, error) {
 	version := v.versions[0]
 	if len(v.versions) > 1 {
@@ -162,7 +169,7 @@ func newDecideHarness(t *testing.T) *decideHarness {
 	runs := traceRuns{}
 	executor := proposalexecutor.New(proposalexecutor.Params{
 		Logger: zap.NewNop(),
-		Tools: &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
+		Tools: &agenttest.StubActionRegistry{Tools: []agenttoolports.AgentTool{
 			&agenttest.StubActionTool{ToolName: "shipment_place_hold"},
 		}},
 		ProposalRepo: proposals,

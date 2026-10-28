@@ -4,13 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -19,6 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -423,7 +422,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 	freight := decimal.Zero
 	auditService := auditportsmock.NewMockAuditService(t)
 	auditService.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
 	svc := &service{
@@ -555,7 +554,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 
 	auditService := auditportsmock.NewMockAuditService(t)
 	auditService.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
 	svc := &service{
@@ -670,7 +669,7 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 			freight,
 			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		),
-		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
+		invalidator:  newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
@@ -801,7 +800,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 			freight,
 			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		),
-		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
+		invalidator:  newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
@@ -919,7 +918,7 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 			freight,
 			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		),
-		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
+		invalidator:  newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
@@ -1002,7 +1001,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 	freight := decimal.Zero
 	auditService := auditportsmock.NewMockAuditService(t)
 	auditService.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
 	svc := &service{

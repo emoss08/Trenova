@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +21,7 @@ import (
 type harness struct {
 	ctx    context.Context
 	other  context.Context
-	repo   agentports.ConversationRepository
+	repo   assistantports.ConversationRepository
 	tenant pagination.TenantInfo
 	userID pulid.ID
 }
@@ -67,7 +67,7 @@ func TestAppendTurnNumbersAfterTheLastMessageAndKeepsItsStamps(t *testing.T) {
 	h := newHarness(t)
 	thread := h.thread(t, conversation.ThreadOriginPanel)
 
-	first, err := h.repo.AppendTurn(h.ctx, agentports.AppendTurnRequest{
+	first, err := h.repo.AppendTurn(h.ctx, assistantports.AppendTurnRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: h.tenant,
 		Messages: []conversation.Message{
@@ -80,7 +80,7 @@ func TestAppendTurnNumbersAfterTheLastMessageAndKeepsItsStamps(t *testing.T) {
 	assert.Equal(t, 0, first[0].Sequence)
 	assert.Equal(t, 1, first[1].Sequence)
 
-	second, err := h.repo.AppendTurn(h.ctx, agentports.AppendTurnRequest{
+	second, err := h.repo.AppendTurn(h.ctx, assistantports.AppendTurnRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: h.tenant,
 		Messages:   []conversation.Message{{Role: conversation.RoleUser, Content: "Thanks"}},
@@ -88,7 +88,7 @@ func TestAppendTurnNumbersAfterTheLastMessageAndKeepsItsStamps(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, second[0].Sequence)
 
-	messages, err := h.repo.ListMessages(h.ctx, agentports.ListMessagesRequest{
+	messages, err := h.repo.ListMessages(h.ctx, assistantports.ListMessagesRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: h.tenant,
 	})
@@ -96,7 +96,7 @@ func TestAppendTurnNumbersAfterTheLastMessageAndKeepsItsStamps(t *testing.T) {
 	require.Len(t, messages, 3)
 	assert.Equal(t, int64(100), messages[0].CreatedAt, "a stamp the caller gave is kept")
 
-	latest, err := h.repo.ListMessages(h.ctx, agentports.ListMessagesRequest{
+	latest, err := h.repo.ListMessages(h.ctx, assistantports.ListMessagesRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: h.tenant,
 		Limit:      2,
@@ -105,7 +105,10 @@ func TestAppendTurnNumbersAfterTheLastMessageAndKeepsItsStamps(t *testing.T) {
 	require.Len(t, latest, 2)
 	assert.Equal(t, 1, latest[0].Sequence, "the newest messages, oldest first")
 
-	elsewhere, err := h.repo.CountMessages(h.other, agentports.CountMessagesRequest{ThreadID: thread.ID})
+	elsewhere, err := h.repo.CountMessages(
+		h.other,
+		assistantports.CountMessagesRequest{ThreadID: thread.ID},
+	)
 	require.NoError(t, err)
 	assert.Zero(t, elsewhere, "another tenant counts none of the thread's messages")
 }
@@ -120,7 +123,7 @@ func TestListThreadsPagesThroughEveryConversationOnce(t *testing.T) {
 	seen := make(map[pulid.ID]struct{})
 	cursor := ""
 	for {
-		page, err := h.repo.ListThreads(h.ctx, agentports.ListThreadsRequest{
+		page, err := h.repo.ListThreads(h.ctx, assistantports.ListThreadsRequest{
 			UserID:     h.userID,
 			TenantInfo: h.tenant,
 			Limit:      2,
@@ -139,7 +142,7 @@ func TestListThreadsPagesThroughEveryConversationOnce(t *testing.T) {
 	}
 	assert.Len(t, seen, 5, "unlisted conversations stay off the rail")
 
-	other, err := h.repo.ListThreads(h.other, agentports.ListThreadsRequest{UserID: h.userID})
+	other, err := h.repo.ListThreads(h.other, assistantports.ListThreadsRequest{UserID: h.userID})
 	require.NoError(t, err)
 	assert.Empty(t, other.Items)
 }
@@ -148,14 +151,14 @@ func TestDeleteStaleThreadsRemovesTheThreadsAndTheirMessages(t *testing.T) {
 	h := newHarness(t)
 	stale := h.thread(t, conversation.ThreadOriginAsk)
 	kept := h.thread(t, conversation.ThreadOriginPanel)
-	_, err := h.repo.AppendTurn(h.ctx, agentports.AppendTurnRequest{
+	_, err := h.repo.AppendTurn(h.ctx, assistantports.AppendTurnRequest{
 		ThreadID:   stale.ID,
 		TenantInfo: h.tenant,
 		Messages:   []conversation.Message{{Role: conversation.RoleUser, Content: "Old question"}},
 	})
 	require.NoError(t, err)
 
-	deleted, err := h.repo.DeleteStaleThreads(h.ctx, agentports.DeleteStaleThreadsRequest{
+	deleted, err := h.repo.DeleteStaleThreads(h.ctx, assistantports.DeleteStaleThreadsRequest{
 		Origin: conversation.ThreadOriginAsk,
 		Before: stale.CreatedAt + 3_600,
 		Limit:  10,
@@ -163,11 +166,14 @@ func TestDeleteStaleThreadsRemovesTheThreadsAndTheirMessages(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, deleted)
 
-	count, err := h.repo.CountMessages(h.ctx, agentports.CountMessagesRequest{ThreadID: stale.ID})
+	count, err := h.repo.CountMessages(
+		h.ctx,
+		assistantports.CountMessagesRequest{ThreadID: stale.ID},
+	)
 	require.NoError(t, err)
 	assert.Zero(t, count)
 
-	_, err = h.repo.GetThreadOwned(h.ctx, agentports.GetThreadOwnedRequest{ID: kept.ID})
+	_, err = h.repo.GetThreadOwned(h.ctx, assistantports.GetThreadOwnedRequest{ID: kept.ID})
 	require.NoError(t, err)
 }
 
@@ -186,7 +192,10 @@ func TestUpdateThreadRefusesAStaleVersion(t *testing.T) {
 	_, err = h.repo.UpdateThread(h.ctx, &stale)
 	require.Error(t, err)
 
-	read, err := h.repo.GetThread(h.ctx, agentports.GetThreadRequest{ID: thread.ID, UserID: h.userID})
+	read, err := h.repo.GetThread(
+		h.ctx,
+		assistantports.GetThreadRequest{ID: thread.ID, UserID: h.userID},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "Lane review", read.Title)
 }

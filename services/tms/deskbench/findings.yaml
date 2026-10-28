@@ -3333,7 +3333,7 @@ findings:
       one call.
     fix: >
       create_shipment names create_customer, create_location and create_commodity as companions
-      (agentports.CompanionTool), held with it unless switched off for the agent, and
+      (agenttoolports.CompanionTool), held with it unless switched off for the agent, and
       find_shipment_records matches the customer, stops and commodities in one call, says what is
       missing and lists the reference values create_shipment takes.
     fixedIn: uncommitted; verified by the shipment-creation scenarios on both models

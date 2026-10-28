@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -35,7 +36,7 @@ type Params struct {
 
 	Logger       *zap.Logger
 	Repo         agentports.AgentEvaluationRepository
-	Runs         agentports.AgentRunRepository
+	Runs         agentruntimeports.AgentRunRepository
 	Definitions  agentdefinitionports.AgentDefinitionRepository
 	Cases        agentqualityports.AgentEvalCaseRepository
 	Workflows    kernelports.WorkflowStarter
@@ -45,7 +46,7 @@ type Params struct {
 type Service struct {
 	l           *zap.Logger
 	repo        agentports.AgentEvaluationRepository
-	runs        agentports.AgentRunRepository
+	runs        agentruntimeports.AgentRunRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
 	cases       agentqualityports.AgentEvalCaseRepository
 	workflows   kernelports.WorkflowStarter
@@ -75,7 +76,7 @@ func (s *Service) Replay(
 		return nil, errortypes.NewBusinessError("The workflow engine is not available")
 	}
 
-	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         req.RunID,
 		TenantInfo: &req.TenantInfo,
 	})

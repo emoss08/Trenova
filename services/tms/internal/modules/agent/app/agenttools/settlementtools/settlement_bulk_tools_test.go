@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
@@ -166,7 +166,7 @@ func TestSettlementBulkTools_CopyTheirSingleToolsPolicy(t *testing.T) {
 		assert.Equal(t, []string{paramSettlementIDs},
 			tool.ParamSchema()[toolschema.KeyRequired], name)
 
-		targeted, ok := tool.(agentports.TargetedTool)
+		targeted, ok := tool.(agenttoolports.TargetedTool)
 		require.Truef(t, ok, "%s pins a call naming one settlement", name)
 		id := pulid.MustNew("dstl_").String()
 		_, one := targeted.Target(map[string]any{paramSettlementIDs: []any{id}})
@@ -181,7 +181,11 @@ func TestSettlementBulkTools_CopyTheirSingleToolsPolicy(t *testing.T) {
 	driverPost := agenttoolstest.BuildTool(t, providePostDriverSettlementsTool).Policy()
 	assert.True(t, driverPost.HasEgress(agent.EgressDriverVisible))
 	require.NotNil(t, driverPost.Classify)
-	assert.Equal(t, agent.EgressMoney, driverPost.Classify(agentports.ToolExecuteParams{}).Egress)
+	assert.Equal(
+		t,
+		agent.EgressMoney,
+		driverPost.Classify(agenttoolports.ToolExecuteParams{}).Egress,
+	)
 }
 
 func TestApproveDriverSettlements_PreviewsEachWithRefusalsFirst(t *testing.T) {
@@ -191,7 +195,9 @@ func TestApproveDriverSettlements_PreviewsEachWithRefusalsFirst(t *testing.T) {
 	book.settlements[ids[2]].Status = driversettlement.StatusDraft
 	book.locked = true
 	tool := driverBulk(book, &approveSettlements)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramSettlementIDs: agenttoolstest.IdList(ids)})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramSettlementIDs: agenttoolstest.IdList(ids)},
+	)
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -204,7 +210,11 @@ func TestApproveDriverSettlements_PreviewsEachWithRefusalsFirst(t *testing.T) {
 	require.Len(t, preview.Changes, 4)
 	first := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, ids[2], first.EntityID, "the refused settlement leads")
-	assert.Contains(t, agenttoolstest.FieldByPath(t, first, common.BulkOutcomeField).After, "Refused:")
+	assert.Contains(
+		t,
+		agenttoolstest.FieldByPath(t, first, common.BulkOutcomeField).After,
+		"Refused:",
+	)
 	for idx := 1; idx < 4; idx++ {
 		change := agenttoolstest.PreviewChange(t, preview, idx)
 		assert.Equal(t, permission.ResourceDriverSettlement, change.Resource)
@@ -222,7 +232,9 @@ func TestApproveDriverSettlements_ABatchNothingOfWhichWouldGoIsRefused(t *testin
 	book, ids := driverSettlementBatch(2, driversettlement.StatusDraft)
 	book.locked = true
 	tool := driverBulk(book, &approveSettlements)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramSettlementIDs: agenttoolstest.IdList(ids)})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramSettlementIDs: agenttoolstest.IdList(ids)},
+	)
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -240,7 +252,9 @@ func TestPostDriverSettlements_AForeignSettlementIsRefusedOnItsOwn(t *testing.T)
 	book.locked = true
 	foreign := pulid.MustNew("dstl_")
 	tool := driverBulk(book, &postSettlements)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramSettlementIDs: agenttoolstest.IdList(append(ids, foreign))})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramSettlementIDs: agenttoolstest.IdList(append(ids, foreign))},
+	)
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -249,7 +263,11 @@ func TestPostDriverSettlements_AForeignSettlementIsRefusedOnItsOwn(t *testing.T)
 		"Would post 3 driver settlements: 2 would be posted, 1 would be refused.",
 		preview.Summary)
 	assert.Equal(t, foreign, preview.Changes[0].EntityID)
-	assert.Contains(t, agenttoolstest.FieldByPath(t, &preview.Changes[0], common.BulkOutcomeField).After, "not found")
+	assert.Contains(
+		t,
+		agenttoolstest.FieldByPath(t, &preview.Changes[0], common.BulkOutcomeField).After,
+		"not found",
+	)
 	assert.Equal(t, "Posted", agenttoolstest.FieldByPath(t, &preview.Changes[1], "status").After)
 }
 
@@ -281,13 +299,21 @@ func TestSettlementBulk_RefusesMoreThanFiftyAndDropsRepeats(t *testing.T) {
 	for range common.MaxBulkRecords + 1 {
 		many = append(many, pulid.MustNew("dstl_").String())
 	}
-	err := tool.Validate(t.Context(), agenttoolstest.ExecuteParams(map[string]any{paramSettlementIDs: many}))
+	err := tool.Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{paramSettlementIDs: many}),
+	)
 	require.ErrorContains(t, err, "more than the 50")
 
-	err = tool.Validate(t.Context(), agenttoolstest.ExecuteParams(map[string]any{paramSettlementIDs: []any{}}))
+	err = tool.Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{paramSettlementIDs: []any{}}),
+	)
 	require.Error(t, err)
 
-	params := agenttoolstest.ApprovedParams(map[string]any{paramSettlementIDs: agenttoolstest.IdList(append(ids, ids[0]))})
+	params := agenttoolstest.ApprovedParams(
+		map[string]any{paramSettlementIDs: agenttoolstest.IdList(append(ids, ids[0]))},
+	)
 	result, err := tool.ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, "1 of 1 posted", result.Name)
@@ -306,7 +332,9 @@ func TestSettlementBulk_RunsOnlyFromAPersonsApproval(t *testing.T) {
 	require.ErrorIs(t, err, common.ErrSettlementNeedsAPerson)
 	assert.Empty(t, book.performed)
 
-	agentParams := agenttoolstest.ApprovedParams(map[string]any{paramSettlementIDs: agenttoolstest.IdList(ids)})
+	agentParams := agenttoolstest.ApprovedParams(
+		map[string]any{paramSettlementIDs: agenttoolstest.IdList(ids)},
+	)
 	agentParams.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 	_, err = tool.ExecuteWithResult(t.Context(), agentParams)
 	require.ErrorIs(t, err, common.ErrAgentCannotApprove)
@@ -314,7 +342,9 @@ func TestSettlementBulk_RunsOnlyFromAPersonsApproval(t *testing.T) {
 	require.ErrorIs(t, err, common.ErrAgentCannotApprove)
 	assert.Empty(t, book.performed)
 
-	foreign := agenttoolstest.ApprovedParams(map[string]any{paramSettlementIDs: agenttoolstest.IdList(ids)})
+	foreign := agenttoolstest.ApprovedParams(
+		map[string]any{paramSettlementIDs: agenttoolstest.IdList(ids)},
+	)
 	foreign.OrganizationID = pulid.MustNew("org_")
 	_, err = tool.ExecuteWithResult(t.Context(), foreign)
 	require.ErrorIs(t, err, common.ErrTenantMismatch)
@@ -330,7 +360,9 @@ func TestApproveDriverSettlements_ApprovesEveryApprovedSettlementAndReportsTheRe
 	book.failPerform[ids[3]] = errors.New("the settlement changed since it was read")
 	tool := driverBulk(book, &approveSettlements)
 
-	approved := agenttoolstest.ApprovedParams(map[string]any{paramSettlementIDs: agenttoolstest.IdList(ids[:4])})
+	approved := agenttoolstest.ApprovedParams(
+		map[string]any{paramSettlementIDs: agenttoolstest.IdList(ids[:4])},
+	)
 	result, err := tool.ExecuteWithResult(t.Context(), approved)
 	require.NoError(t, err)
 
@@ -436,7 +468,9 @@ func TestPostCarrierSettlements_PostsEachAsPostCarrierSettlementWould(t *testing
 	require.True(t, ok)
 	assert.Equal(t, "settlement_post_carrier", tool.Name())
 
-	params := agenttoolstest.ExecuteParams(map[string]any{paramSettlementIDs: agenttoolstest.IdList(ids)})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramSettlementIDs: agenttoolstest.IdList(ids)},
+	)
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t,

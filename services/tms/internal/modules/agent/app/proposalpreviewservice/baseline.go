@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,9 +28,9 @@ import (
 // that is not filed has no proposal for its baseline to belong to.
 func (s *Service) Baseline(
 	ctx context.Context,
-	req *agentports.ProposalBaselineRequest,
-) *agentports.ProposalBaselineResult {
-	result := &agentports.ProposalBaselineResult{}
+	req *agentruntimeports.ProposalBaselineRequest,
+) *agentruntimeports.ProposalBaselineResult {
+	result := &agentruntimeports.ProposalBaselineResult{}
 	if req == nil || req.Tool == nil {
 		return result
 	}
@@ -59,7 +61,7 @@ func (s *Service) Baseline(
 	}
 
 	if found.version != nil {
-		result.Target = &agentports.ProposalTarget{
+		result.Target = &agentruntimeports.ProposalTarget{
 			Resource: target.Resource,
 			ID:       target.ID,
 			Version:  *found.version,
@@ -103,8 +105,8 @@ func previewRecords(preview *agent.ToolPreview) int {
 
 func (s *Service) keepBaseline(
 	ctx context.Context,
-	req *agentports.ProposalBaselineRequest,
-	result *agentports.ProposalBaselineResult,
+	req *agentruntimeports.ProposalBaselineRequest,
+	result *agentruntimeports.ProposalBaselineResult,
 ) {
 	if s.baselines == nil || result.Preview == nil || req.ProposalID.IsNil() {
 		return
@@ -294,7 +296,7 @@ func (s *Service) unrecorded(
 			"the parameters it was proposed with are shown.",
 	}
 
-	if tool, ok := s.tools.Get(proposal.ToolName); ok && !agentports.IsSelfScoped(tool) {
+	if tool, ok := s.tools.Get(proposal.ToolName); ok && !agenttoolports.IsSelfScoped(tool) {
 		params := toolpreview.Parameters(
 			proposal.ToolName,
 			tool.Policy().Resource,

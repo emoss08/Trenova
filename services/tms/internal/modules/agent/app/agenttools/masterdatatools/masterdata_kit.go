@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -160,7 +160,7 @@ func (r *masterRecord[T]) result(action string, entity *T) *agent.ToolExecutionR
 	}
 }
 
-func (r *masterRecord[T]) target(params map[string]any) (agentports.ToolTarget, bool) {
+func (r *masterRecord[T]) target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, r.idParam, r.resource)
 }
 
@@ -646,18 +646,18 @@ type masterPolicy struct {
 }
 
 func (p *masterPolicy) classify(
-	params agentports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
-) agentports.CallPolicy {
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+) agenttoolports.CallPolicy {
 	switch {
 	case common.SendsAny(params.Params, p.moneyKeys...):
-		return agentports.CallPolicy{Egress: agent.EgressMoney, MaxTier: agent.TierPropose}
+		return agenttoolports.CallPolicy{Egress: agent.EgressMoney, MaxTier: agent.TierPropose}
 	case common.SendsAny(params.Params, p.outsideKeys...):
-		return agentports.CallPolicy{
+		return agenttoolports.CallPolicy{
 			Egress:  agent.EgressExternalRecipient,
 			MaxTier: agent.TierPropose,
 		}
 	default:
-		return agentports.CallPolicy{Egress: agent.EgressInternal}
+		return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
 	}
 }
 
@@ -679,7 +679,7 @@ func (p *masterPolicy) apply(spec *common.ReceivableSpec) *common.ReceivableSpec
 	return spec
 }
 
-func (p *masterPolicy) guard(name string, params *agentports.ToolExecuteParams) error {
+func (p *masterPolicy) guard(name string, params *agenttoolports.ToolExecuteParams) error {
 	if common.SendsAny(params.Params, p.moneyKeys...) && !params.ApprovedFromProposal() {
 		return fmt.Errorf("%s: %w", name, common.ErrNeedsAPersonsApproval)
 	}
@@ -704,7 +704,7 @@ type masterCreateSpec[T any] struct {
 
 func (s *masterCreateSpec[T]) Build(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*T, error) {
 	entity := s.fresh(common.TenantFrom(*params))
 	for _, key := range s.required {
@@ -721,7 +721,7 @@ func (s *masterCreateSpec[T]) Build(
 	return entity, nil
 }
 
-func newMasterCreateTool[T any](spec *masterCreateSpec[T]) agentports.AgentTool {
+func newMasterCreateTool[T any](spec *masterCreateSpec[T]) agenttoolports.AgentTool {
 	record := spec.record
 
 	return common.NewReportingReceivableTool(spec.policy.apply(&common.ReceivableSpec{
@@ -736,14 +736,14 @@ func newMasterCreateTool[T any](spec *masterCreateSpec[T]) agentports.AgentTool 
 		Properties:  masterProperties(spec.fields, false),
 		Required:    spec.required,
 		SearchTerms: spec.searchTerms,
-	}), common.ReceivablePlan[*agentports.ToolExecuteParams, *masterPlanned[T]]{
-		Request: func(params *agentports.ToolExecuteParams) (*agentports.ToolExecuteParams, error) {
+	}), common.ReceivablePlan[*agenttoolports.ToolExecuteParams, *masterPlanned[T]]{
+		Request: func(params *agenttoolports.ToolExecuteParams) (*agenttoolports.ToolExecuteParams, error) {
 			return params, nil
 		},
 		Plan: func(
 			ctx context.Context,
-			params *agentports.ToolExecuteParams,
-			_ *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*masterPlanned[T], error) {
 			entity, err := spec.Build(ctx, params)
 			if err != nil {
@@ -759,11 +759,11 @@ func newMasterCreateTool[T any](spec *masterCreateSpec[T]) agentports.AgentTool 
 				states: record.stateNames(ctx, spec.states, planned),
 			}, nil
 		},
-		Refused: func(*agentports.ToolExecuteParams) string {
+		Refused: func(*agenttoolports.ToolExecuteParams) string {
 			return fmt.Sprintf("Would create a %s.", record.kind)
 		},
 		Render: func(
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 			planned *masterPlanned[T],
 		) (*agent.ToolPreview, error) {
 			change, err := toolpreview.Create(record.record(planned.entity),
@@ -777,8 +777,8 @@ func newMasterCreateTool[T any](spec *masterCreateSpec[T]) agentports.AgentTool 
 		},
 		Run: func(
 			ctx context.Context,
-			_ *agentports.ToolExecuteParams,
-			params *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if err := spec.policy.guard(spec.name, params); err != nil {
 				return nil, err
@@ -816,7 +816,7 @@ type masterEdit struct {
 	values map[string]any
 }
 
-func (s *masterUpdateSpec[T]) edit(params *agentports.ToolExecuteParams) (*masterEdit, error) {
+func (s *masterUpdateSpec[T]) edit(params *agenttoolports.ToolExecuteParams) (*masterEdit, error) {
 	id, err := common.RequirePulid(params.Params, s.record.idParam)
 	if err != nil {
 		return nil, err
@@ -837,7 +837,7 @@ func (s *masterUpdateSpec[T]) edit(params *agentports.ToolExecuteParams) (*maste
 func (s *masterUpdateSpec[T]) Build(
 	ctx context.Context,
 	edit *masterEdit,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*T, error) {
 	stored, err := s.get(ctx, common.TenantFrom(*params), edit.id)
 	if err != nil {
@@ -855,7 +855,7 @@ func (s *masterUpdateSpec[T]) Build(
 	return &changed, nil
 }
 
-func newMasterUpdateTool[T any](spec *masterUpdateSpec[T]) agentports.AgentTool {
+func newMasterUpdateTool[T any](spec *masterUpdateSpec[T]) agenttoolports.AgentTool {
 	record := spec.record
 	properties := masterProperties(spec.fields, true)
 	properties[record.idParam] = agenttoolschema.RecordIDText(record.resource,
@@ -879,7 +879,7 @@ func newMasterUpdateTool[T any](spec *masterUpdateSpec[T]) agentports.AgentTool 
 		Plan: func(
 			ctx context.Context,
 			edit *masterEdit,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*masterChanged[T], error) {
 			entity, err := spec.Build(ctx, edit, params)
 			if err != nil {
@@ -912,7 +912,7 @@ func newMasterUpdateTool[T any](spec *masterUpdateSpec[T]) agentports.AgentTool 
 		Run: func(
 			ctx context.Context,
 			edit *masterEdit,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if err := spec.policy.guard(spec.name, params); err != nil {
 				return nil, err
@@ -961,7 +961,7 @@ type masterStatusChange[S ~string] struct {
 }
 
 func (s *masterStatusSpec[T, S]) change(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*masterStatusChange[S], error) {
 	ids, err := common.RequirePulidSlice(params.Params, s.record.idsParam,
 		maxMasterRecordsPerStatusChange)
@@ -976,7 +976,7 @@ func (s *masterStatusSpec[T, S]) change(
 	return &masterStatusChange[S]{ids: ids, status: status}, nil
 }
 
-func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) agentports.AgentTool {
+func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) agenttoolports.AgentTool {
 	record := spec.record
 
 	return common.NewReportingReceivableTool(spec.policy.apply(&common.ReceivableSpec{
@@ -1002,7 +1002,7 @@ func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) agentpo
 		Plan: func(
 			ctx context.Context,
 			change *masterStatusChange[S],
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*masterStatusPlanned[T], error) {
 			changes, err := spec.plan(ctx, common.TenantFrom(*params), change.ids, change.status)
 			if err != nil {
@@ -1040,7 +1040,7 @@ func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) agentpo
 		Run: func(
 			ctx context.Context,
 			change *masterStatusChange[S],
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := spec.run(ctx, common.TenantFrom(*params), change.ids, change.status)
 			if err != nil {

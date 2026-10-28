@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentscoring"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -62,14 +62,14 @@ func judgeSchema() map[string]any {
 	}
 }
 
-func judgeContext(evalCase *agentquality.EvalCase, reply string) agentports.DelimitedContext {
+func judgeContext(evalCase *agentquality.EvalCase, reply string) llmports.DelimitedContext {
 	rubric := strings.TrimSpace(evalCase.Rubric)
 	if rubric == "" {
 		rubric = defaultJudgeRubric
 	}
 
-	return agentports.DelimitedContext{
-		Sections: []agentports.ContextSection{
+	return llmports.DelimitedContext{
+		Sections: []llmports.ContextSection{
 			{Title: "Rubric", Trusted: true, Content: rubric},
 			{Title: "What a good answer does", Trusted: true, Content: describeExpected(evalCase)},
 			{

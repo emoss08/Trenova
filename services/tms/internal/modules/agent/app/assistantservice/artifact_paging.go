@@ -5,8 +5,9 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/typeutils"
 	"go.uber.org/zap"
 )
@@ -108,8 +109,8 @@ func (at pagePosition) continues(artifact *assistantartifact.Artifact, toolName 
 }
 
 func (r *artifactRecorder) continueTable(
-	observation *agentports.ToolObservation,
-) (*agentports.ShownArtifact, bool) {
+	observation *agentruntimeports.ToolObservation,
+) (*agentruntimeports.ShownArtifact, bool) {
 	if observation.Failed || observation.Data == nil || observation.Call.ID == "" {
 		return nil, false
 	}
@@ -142,7 +143,7 @@ func (r *artifactRecorder) continueTable(
 }
 
 func (r *artifactRecorder) tableContinuedBy(
-	call *agentports.ToolCall,
+	call *llmports.ToolCall,
 	at pagePosition,
 ) *assistantartifact.Artifact {
 	key := assistantartifact.LineageKeyFor(

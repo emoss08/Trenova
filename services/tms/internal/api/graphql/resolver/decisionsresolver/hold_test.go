@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,14 +36,14 @@ func (c *pauseControls) GetOrCreate(
 }
 
 type holdRuns struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 
 	byID map[pulid.ID]*agent.AgentRun
 }
 
 func (r *holdRuns) ListByIDs(
 	_ context.Context,
-	req agentports.ListAgentRunsByIDsRequest,
+	req agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	out := make([]*agent.AgentRun, 0, len(req.IDs))
 	for _, id := range req.IDs {
@@ -136,14 +137,20 @@ func TestAgentProposalHold_NamesTheAgentInShadow(t *testing.T) {
 	world := newHoldWorld(t, false)
 	resolver := &AgentProposalResolver{}
 
-	held, err := resolver.Hold(world.ctx, world.proposal(world.shadeRun, agent.ProposalStatusPending))
+	held, err := resolver.Hold(
+		world.ctx,
+		world.proposal(world.shadeRun, agent.ProposalStatusPending),
+	)
 	require.NoError(t, err)
 	assert.Equal(t, &gqlmodel.PendingDecisionHold{
 		Reason:    gqlmodel.PendingDecisionHoldReasonAgentShadow,
 		AgentName: "Billing exceptions",
 	}, held)
 
-	live, err := resolver.Hold(world.ctx, world.proposal(world.liveRun, agent.ProposalStatusPending))
+	live, err := resolver.Hold(
+		world.ctx,
+		world.proposal(world.liveRun, agent.ProposalStatusPending),
+	)
 	require.NoError(t, err)
 	assert.Nil(t, live)
 }

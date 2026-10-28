@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -34,7 +34,7 @@ type Params struct {
 	ShipmentEventRepo  shipmenteventports.ShipmentEventRepository
 	ShipmentLinkRepo   ediports.EDIShipmentLinkRepository
 	TransferChangeRepo ediports.EDITransferChangeRepository
-	Realtime           agentports.RealtimeService
+	Realtime           realtimeports.RealtimeService
 	Invalidator        shipmentports.ShipmentInvalidator
 	Coordinator        *shipmentstate.Coordinator
 	OrderDerivation    orderports.OrderDerivationService
@@ -47,7 +47,7 @@ type Observer struct {
 	shipmentEventRepo  shipmentEventRepository
 	shipmentLinkRepo   shipmentLinkRepository
 	transferChangeRepo transferChangeRepository
-	realtime           agentports.RealtimeService
+	realtime           realtimeports.RealtimeService
 	invalidator        shipmentports.ShipmentInvalidator
 	orderDerivation    orderports.OrderDerivationService
 	lifecycleApplier   *internaledilifecycle.Applier

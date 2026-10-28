@@ -5,14 +5,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/stretchr/testify/assert"
 )
 
-func writePolicy(egress agent.EgressClass) agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func writePolicy(egress agent.EgressClass) agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          "dispatch_assign_move",
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,

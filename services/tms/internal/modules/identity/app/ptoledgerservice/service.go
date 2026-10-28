@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -44,7 +44,7 @@ type Params struct {
 	Settlement   tenantports.SettlementControlRepository `optional:"true"`
 	Holidays     workerports.OrgHolidayRepository        `optional:"true"`
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
@@ -57,7 +57,7 @@ type Service struct {
 	settlement   tenantports.SettlementControlRepository
 	holidays     workerports.OrgHolidayRepository
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 }
 
 func New(p Params) *Service {

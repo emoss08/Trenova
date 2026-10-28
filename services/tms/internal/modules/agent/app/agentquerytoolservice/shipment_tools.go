@@ -8,7 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -58,7 +59,7 @@ func provideGetShipmentTool(
 	batchHolds shipmentports.ActiveHoldReader,
 	batchComments shipmentports.NewestCommentReader,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newGetShipmentTool(repo, comments, holds, permissions).
 		withBatchReads(batchHolds, batchComments)
 }
@@ -112,7 +113,7 @@ func (t *getShipmentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getShipmentTool) Policy() agentports.ToolPolicy {
+func (t *getShipmentTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipment,
 		reads:    agent.ExternalReadMarked,
@@ -125,7 +126,7 @@ func (t *getShipmentTool) Policy() agentports.ToolPolicy {
 
 func (t *getShipmentTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -202,7 +203,7 @@ type shipmentActivityAccess struct {
 
 func (t *getShipmentTool) readableActivity(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) shipmentActivityAccess {
 	var access shipmentActivityAccess
 	if t.comments != nil {
@@ -217,7 +218,7 @@ func (t *getShipmentTool) readableActivity(
 	return access
 }
 
-func (a shipmentActivityAccess) leftOutNote(params *agentports.QueryToolParams) string {
+func (a shipmentActivityAccess) leftOutNote(params *agenttoolports.QueryToolParams) string {
 	switch {
 	case a.commentsWithheld && a.holdsWithheld:
 		return fmt.Sprintf("Comments and holds are left out: %s does not include reading "+
@@ -237,7 +238,7 @@ func (a shipmentActivityAccess) leftOutNote(params *agentports.QueryToolParams) 
 	}
 }
 
-func accessHolder(params *agentports.QueryToolParams) string {
+func accessHolder(params *agenttoolports.QueryToolParams) string {
 	if params.Actor != nil && params.Actor.IsAgent() {
 		return "this agent's unattended access"
 	}
@@ -335,7 +336,7 @@ func provideShipmentListTool(
 	orders shipmentports.OrderReferenceMatcher,
 	holds shipmentports.ActiveHoldReader,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newShipmentListTool(repo, shipmentPartySources{
 		customers:   customers,
 		locations:   locations,
@@ -471,7 +472,7 @@ func (t *shipmentListTool) filtersSchema() map[string]any {
 	return schema
 }
 
-func (t *shipmentListTool) Policy() agentports.ToolPolicy {
+func (t *shipmentListTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipment,
 	})
@@ -479,7 +480,7 @@ func (t *shipmentListTool) Policy() agentports.ToolPolicy {
 
 func (t *shipmentListTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -497,7 +498,7 @@ func (t *shipmentListTool) Query(
 
 	readsHolds := t.readsHolds(ctx, params)
 	if held.set() && !readsHolds {
-		return nil, &agentports.ReadRefusedError{
+		return nil, &graphqlreadports.ReadRefusedError{
 			Resource: permission.ResourceShipmentHold,
 			Message:  "listing shipments by their holds needs read access to shipment holds",
 		}
@@ -524,7 +525,7 @@ func (t *shipmentListTool) Query(
 
 func (t *shipmentListTool) readsHolds(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) bool {
 	return t.holds != nil && t.access.mayRead(ctx, params, permission.ResourceShipmentHold)
 }
@@ -615,7 +616,7 @@ func rowHoldOf(hold *shipment.ShipmentHold) shipmentRowHold {
 
 func (t *shipmentListTool) withActiveHolds(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	result any,
 	readsHolds bool,
 ) (any, error) {
@@ -699,9 +700,9 @@ func withRowHolds(items any, holds map[string][]shipmentRowHold) any {
 }
 
 func withStatusFilter(
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	statuses []shipment.Status,
-) *agentports.QueryToolParams {
+) *agenttoolports.QueryToolParams {
 	listed := make(map[string]any, len(params.Params)+1)
 	for key, value := range params.Params {
 		if key != paramStatus {
@@ -728,7 +729,7 @@ func withStatusFilter(
 }
 
 type wordSearch struct {
-	params   *agentports.QueryToolParams
+	params   *agenttoolports.QueryToolParams
 	query    string
 	statuses []shipment.Status
 	held     shipmentHoldFilter

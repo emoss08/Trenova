@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +17,7 @@ import (
 )
 
 type threadAgentsRepo struct {
-	agentports.ConversationRepository
+	assistantports.ConversationRepository
 
 	byID  map[pulid.ID]*conversation.Thread
 	reads int
@@ -25,7 +25,7 @@ type threadAgentsRepo struct {
 
 func (r *threadAgentsRepo) ListThreadAgentsByIDs(
 	_ context.Context,
-	req agentports.ListThreadAgentsByIDsRequest,
+	req assistantports.ListThreadAgentsByIDsRequest,
 ) ([]*conversation.Thread, error) {
 	r.reads++
 	out := make([]*conversation.Thread, 0, len(req.IDs))
@@ -68,10 +68,12 @@ func TestAgentRunHandedBy_NamesTheAgentOfTheConversationThatAsked(t *testing.T) 
 	desk := &agentdefinition.Definition{ID: pulid.MustNew("agdef_"), Name: "Shipment Desk"}
 	thread := &conversation.Thread{ID: pulid.MustNew("athr_"), AgentDefinitionID: dispatch.ID}
 	threads := &threadAgentsRepo{byID: map[pulid.ID]*conversation.Thread{thread.ID: thread}}
-	definitions := &resolvertest.DelegateDefinitionsRepo{ByID: map[pulid.ID]*agentdefinition.Definition{
-		dispatch.ID: dispatch,
-		desk.ID:     desk,
-	}}
+	definitions := &resolvertest.DelegateDefinitionsRepo{
+		ByID: map[pulid.ID]*agentdefinition.Definition{
+			dispatch.ID: dispatch,
+			desk.ID:     desk,
+		},
+	}
 	ctx := handOffLoaders(t, threads, definitions)
 
 	handed := &agent.AgentRun{

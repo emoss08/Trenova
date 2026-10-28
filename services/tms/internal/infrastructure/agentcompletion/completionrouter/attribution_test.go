@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -216,7 +216,7 @@ func TestPollBackground_RecordsNothingWhileTheCallRuns(t *testing.T) {
 
 	outcome, err := svc.PollBackground(t.Context(), pollRequest(provider))
 	require.NoError(t, err)
-	require.Equal(t, agentports.BackgroundPending, outcome.State)
+	require.Equal(t, llmports.BackgroundPending, outcome.State)
 
 	usage.mu.Lock()
 	defer usage.mu.Unlock()

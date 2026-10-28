@@ -4,15 +4,18 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func formulaCard() agentports.ShownArtifact {
-	return agentports.ShownArtifact{
+func formulaCard() agentruntimeports.ShownArtifact {
+	return agentruntimeports.ShownArtifact{
 		ID:    pulid.MustNew("art_"),
 		Kind:  "entity_card",
 		Title: "Formula template Per CWT (Hundredweight)",
@@ -21,26 +24,26 @@ func formulaCard() agentports.ShownArtifact {
 
 func placementRun(
 	t *testing.T,
-	shown *agentports.ShownArtifact,
-	delegation *agentports.Delegation,
+	shown *agentruntimeports.ShownArtifact,
+	delegation *agentruntimeports.Delegation,
 	replies ...string,
-) (*agentports.RunResult, *[]kernelports.StreamEvent, *scriptedCompletion) {
+) (*agentruntimeports.RunResult, *[]kernelports.StreamEvent, *scriptedCompletion) {
 	t.Helper()
 
-	turns := []*agentports.ChatCompletionResult{toolTurn("formula_get_template", map[string]any{})}
+	turns := []*llmports.ChatCompletionResult{toolTurn("formula_get_template", map[string]any{})}
 	for _, reply := range replies {
 		turns = append(turns, textTurn(reply))
 	}
 	completion := &scriptedCompletion{Turns: turns}
-	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 		queryTool("formula_get_template", map[string]any{"id": "ft_1"}, nil),
 	}}, &stubActionRegistry{}, nil)
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: testDefinition("formula_get_template"),
 		Actor:      testActor(),
 		Input:      "Show me formula template Per CWT (Hundredweight)",
 		Delegation: delegation,
-		ToolObserver: func(agentports.ToolObservation) (*agentports.ShownArtifact, error) {
+		ToolObserver: func(agentruntimeports.ToolObservation) (*agentruntimeports.ShownArtifact, error) {
 			return shown, nil
 		},
 	}
@@ -54,7 +57,7 @@ func placementRun(
 
 func retried(events *[]kernelports.StreamEvent) bool {
 	for _, event := range *events {
-		if event.Event == agentports.AssistantEventRetrying {
+		if event.Event == assistantports.AssistantEventRetrying {
 			return true
 		}
 	}
@@ -65,7 +68,7 @@ func retried(events *[]kernelports.StreamEvent) bool {
 func TestStrayArtifactLinks(t *testing.T) {
 	t.Parallel()
 
-	ref := ArtifactRef(&agentports.ShownArtifact{
+	ref := ArtifactRef(&agentruntimeports.ShownArtifact{
 		ID:    pulid.MustNew("art_"),
 		Title: "Formula template Per CWT (Hundredweight)",
 	})
@@ -130,7 +133,7 @@ func TestDrive_MovesALinkStandingApartIntoTheRepliesSentence(t *testing.T) {
 	assert.Empty(t, StrayArtifactLinks(result.Reply))
 	assert.False(t, retried(events))
 	assert.Len(t, completion.Requests, 2, "the model is not asked again")
-	assert.Equal(t, []agentports.RegroundAction{agentports.RegroundPlaceArtifacts},
+	assert.Equal(t, []assistantports.RegroundAction{assistantports.RegroundPlaceArtifacts},
 		regroundedActions(events))
 }
 
@@ -148,12 +151,12 @@ func TestDrive_AsksAgainForALinkInATable(t *testing.T) {
 
 	assert.Equal(t, fixed, result.Reply)
 	assert.True(t, retried(events))
-	assert.Equal(t, []agentports.RegroundAction{agentports.RegroundRelinkArtifacts},
+	assert.Equal(t, []assistantports.RegroundAction{assistantports.RegroundRelinkArtifacts},
 		regroundedActions(events))
 
 	last := completion.Requests[len(completion.Requests)-1].Messages
 	correction := last[len(last)-1]
-	assert.Equal(t, agentports.RoleSystem, correction.Role)
+	assert.Equal(t, llmports.RoleSystem, correction.Role)
 	assert.Contains(t, correction.Content, placementCorrectionLead)
 	assert.Contains(t, correction.Content, ArtifactRef(&card)+" stands outside a sentence.")
 }
@@ -173,9 +176,9 @@ func TestDrive_PlacesALinkTheRewriteStillLeftOutsideASentence(t *testing.T) {
 		ArtifactRef(&card)+").", result.Reply)
 	assert.Empty(t, StrayArtifactLinks(result.Reply))
 	assert.Len(t, completion.Requests, 3, "the model is asked once more, not twice")
-	assert.Equal(t, []agentports.RegroundAction{
-		agentports.RegroundRelinkArtifacts,
-		agentports.RegroundPlaceArtifacts,
+	assert.Equal(t, []assistantports.RegroundAction{
+		assistantports.RegroundRelinkArtifacts,
+		assistantports.RegroundPlaceArtifacts,
 	}, regroundedActions(events))
 }
 
@@ -247,7 +250,7 @@ func TestPlaced_JoinsAStrayLinkToTheSentenceNearestIt(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		turn := &Turn{artifacts: []agentports.ShownArtifact{card}}
+		turn := &Turn{artifacts: []agentruntimeports.ShownArtifact{card}}
 		if tc.withTable {
 			turn.artifacts = append(turn.artifacts, table)
 		}
@@ -268,7 +271,7 @@ func TestPlacementProblems_OnlyALinkStandingApartIsMendable(t *testing.T) {
 
 	card := formulaCard()
 	ref := ArtifactRef(&card)
-	turn := &Turn{artifacts: []agentports.ShownArtifact{card}}
+	turn := &Turn{artifacts: []agentruntimeports.ShownArtifact{card}}
 
 	for name, reply := range map[string]string{
 		"in a table cell":   "It is active.\n\n| Template |\n| --- |\n| " + ref + " |",
@@ -297,7 +300,7 @@ func TestDrive_NamesATableTheReplyLeftOutWithoutAskingAgain(t *testing.T) {
 	assert.Equal(t, "Fifteen loads are late ("+ArtifactRef(&table)+").", result.Reply)
 	assert.False(t, retried(events))
 	assert.Len(t, completion.Requests, 2)
-	assert.Equal(t, []agentports.RegroundAction{agentports.RegroundPlaceArtifacts},
+	assert.Equal(t, []assistantports.RegroundAction{assistantports.RegroundPlaceArtifacts},
 		regroundedActions(events))
 }
 
@@ -323,7 +326,7 @@ func TestDrive_LeavesADelegatesLinksToTheAgentThatAsked(t *testing.T) {
 	card := formulaCard()
 	stray := "It is active. " + ArtifactRef(&card)
 
-	result, events, completion := placementRun(t, &card, &agentports.Delegation{
+	result, events, completion := placementRun(t, &card, &agentruntimeports.Delegation{
 		ParentAgentID:   pulid.MustNew("agdef_"),
 		ParentAgentName: "Formula Desk",
 		CallID:          "call_parent",
@@ -388,7 +391,7 @@ func TestDrive_NamesALeftOutTableInTheRepliesOwnLanguage(t *testing.T) {
 	assert.Empty(t, StrayArtifactLinks(result.Reply))
 	assert.False(t, retried(events))
 	assert.Len(t, completion.Requests, 2)
-	assert.Equal(t, []agentports.RegroundAction{agentports.RegroundPlaceArtifacts},
+	assert.Equal(t, []assistantports.RegroundAction{assistantports.RegroundPlaceArtifacts},
 		regroundedActions(events))
 }
 
@@ -469,13 +472,13 @@ func TestLinkRefs_JoinsRefsToTheFirstSentence(t *testing.T) {
 	}
 }
 
-func draftVersions(lineage bool) (first, second agentports.ShownArtifact) {
-	first = agentports.ShownArtifact{
+func draftVersions(lineage bool) (first, second agentruntimeports.ShownArtifact) {
+	first = agentruntimeports.ShownArtifact{
 		ID:    pulid.MustNew("art_"),
 		Kind:  "edi_connection_draft",
 		Title: "EDI connection for Acme Retail Group",
 	}
-	second = agentports.ShownArtifact{
+	second = agentruntimeports.ShownArtifact{
 		ID:    pulid.MustNew("art_"),
 		Kind:  first.Kind,
 		Title: first.Title,
@@ -490,12 +493,12 @@ func draftVersions(lineage bool) (first, second agentports.ShownArtifact) {
 
 func redraftRun(
 	t *testing.T,
-	first, second *agentports.ShownArtifact,
+	first, second *agentruntimeports.ShownArtifact,
 	replies ...string,
-) (*agentports.RunResult, *[]kernelports.StreamEvent) {
+) (*agentruntimeports.RunResult, *[]kernelports.StreamEvent) {
 	t.Helper()
 
-	turns := []*agentports.ChatCompletionResult{
+	turns := []*llmports.ChatCompletionResult{
 		toolTurn("edi_draft_connection", map[string]any{}),
 		toolTurn("edi_draft_connection", map[string]any{"values": []any{"again"}}),
 	}
@@ -503,16 +506,16 @@ func redraftRun(
 		turns = append(turns, textTurn(reply))
 	}
 	rt := newRuntime(&scriptedCompletion{Turns: turns}, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{
+		Tools: []agenttoolports.AgentQueryTool{
 			queryTool("edi_draft_connection", map[string]any{"ready": true}, nil),
 		},
 	}, &stubActionRegistry{}, nil)
-	shown := []*agentports.ShownArtifact{first, second}
-	req := &agentports.RunRequest{
+	shown := []*agentruntimeports.ShownArtifact{first, second}
+	req := &agentruntimeports.RunRequest{
 		Definition: testDefinition("edi_draft_connection"),
 		Actor:      testActor(),
 		Input:      "acme retail sent over their edi guide, can you get them set up?",
-		ToolObserver: func(agentports.ToolObservation) (*agentports.ShownArtifact, error) {
+		ToolObserver: func(agentruntimeports.ToolObservation) (*agentruntimeports.ShownArtifact, error) {
 			next := shown[0]
 			shown = shown[1:]
 

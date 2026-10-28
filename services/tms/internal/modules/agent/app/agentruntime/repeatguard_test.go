@@ -5,7 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,16 +21,16 @@ func TestRun_WillNotRepeatACallThatAlreadyFailedUnchanged(t *testing.T) {
 
 	args := map[string]any{"statuses": map[string]any{"item": []any{"Completed"}}}
 	tool := queryTool("report_run", nil, errors.New("expected a list, got map"))
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("report_run", args),
 		toolTurn("report_run", args),
 		textTurn("I could not start it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{tool},
+		Tools: []agenttoolports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("report_run"),
 		Actor:      testActor(),
 		Input:      "run the unbilled report",
@@ -60,7 +62,7 @@ func TestRun_StopsCallingToolsAfterRepeatedFailedCalls(t *testing.T) {
 
 	args := map[string]any{"statuses": map[string]any{"item": []any{"Completed"}}}
 	tool := queryTool("report_run", nil, errors.New("expected a list, got map"))
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("report_run", args),
 		toolTurn("report_run", args),
 		toolTurn("report_run", args),
@@ -68,10 +70,10 @@ func TestRun_StopsCallingToolsAfterRepeatedFailedCalls(t *testing.T) {
 		toolTurn("report_run", args),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{tool},
+		Tools: []agenttoolports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("report_run"),
 		Actor:      testActor(),
 		Input:      "run the unbilled report",
@@ -98,16 +100,16 @@ func TestRun_AllowsARetryWithDifferentArguments(t *testing.T) {
 	t.Parallel()
 
 	tool := queryTool("report_run", nil, errors.New("expected a list, got map"))
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("report_run", map[string]any{"statuses": map[string]any{"item": []any{"A"}}}),
 		toolTurn("report_run", map[string]any{"statuses": []any{"A"}}),
 		textTurn("done"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{tool},
+		Tools: []agenttoolports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
 
-	_, err := rt.Run(t.Context(), &agentports.RunRequest{
+	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("report_run"),
 		Actor:      testActor(),
 		Input:      "run the unbilled report",
@@ -125,16 +127,16 @@ func TestRun_AnswersARepeatedReadFromTheFirst(t *testing.T) {
 
 	args := map[string]any{"status": "Completed"}
 	tool := queryTool("shipment_list", map[string]any{"results": []any{}}, nil)
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("shipment_list", args),
 		toolTurn("shipment_list", args),
 		textTurn("nothing found"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{tool},
+		Tools: []agenttoolports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("shipment_list"),
 		Actor:      testActor(),
 		Input:      "anything",
@@ -152,12 +154,12 @@ func TestRun_AnswersARepeatedReadFromTheFirst(t *testing.T) {
 func TestCallKey_IgnoresArgumentOrder(t *testing.T) {
 	t.Parallel()
 
-	first, ok := callKey(agentports.ToolCall{
+	first, ok := callKey(llmports.ToolCall{
 		Name:      "report_run",
 		Arguments: map[string]any{"a": 1, "b": 2},
 	})
 	require.True(t, ok)
-	second, ok := callKey(agentports.ToolCall{
+	second, ok := callKey(llmports.ToolCall{
 		Name:      "report_run",
 		Arguments: map[string]any{"b": 2, "a": 1},
 	})
@@ -170,8 +172,8 @@ func TestCallKey_SeparatesToolsThatShareArguments(t *testing.T) {
 	t.Parallel()
 
 	args := map[string]any{"id": "shp_1"}
-	first, _ := callKey(agentports.ToolCall{Name: "shipment_get", Arguments: args})
-	second, _ := callKey(agentports.ToolCall{Name: "shipment_cancel", Arguments: args})
+	first, _ := callKey(llmports.ToolCall{Name: "shipment_get", Arguments: args})
+	second, _ := callKey(llmports.ToolCall{Name: "shipment_cancel", Arguments: args})
 
 	assert.NotEqual(t, first, second)
 }
@@ -189,9 +191,18 @@ func TestRepeatGuard_AnswersARepeatedReadUntilSomethingWrites(t *testing.T) {
 	t.Parallel()
 
 	guard := newRepeatGuard()
-	read := agentports.ToolCall{Name: "billing_get_queue_item", Arguments: map[string]any{"billingQueueItemId": "bqi_1"}}
-	other := agentports.ToolCall{Name: "billing_get_queue_item", Arguments: map[string]any{"billingQueueItemId": "bqi_2"}}
-	write := agentports.ToolCall{Name: "billing_approve_queue_item", Arguments: map[string]any{"billingQueueItemId": "bqi_1"}}
+	read := llmports.ToolCall{
+		Name:      "billing_get_queue_item",
+		Arguments: map[string]any{"billingQueueItemId": "bqi_1"},
+	}
+	other := llmports.ToolCall{
+		Name:      "billing_get_queue_item",
+		Arguments: map[string]any{"billingQueueItemId": "bqi_2"},
+	}
+	write := llmports.ToolCall{
+		Name:      "billing_approve_queue_item",
+		Arguments: map[string]any{"billingQueueItemId": "bqi_1"},
+	}
 
 	assert.False(t, guard.readBefore(read), "a first read runs")
 	guard.ran(read)
@@ -199,6 +210,10 @@ func TestRepeatGuard_AnswersARepeatedReadUntilSomethingWrites(t *testing.T) {
 	assert.False(t, guard.readBefore(other), "a read with other arguments runs")
 
 	guard.ran(write)
-	assert.False(t, guard.readBefore(read), "after a write the record may have changed, so it is read again")
+	assert.False(
+		t,
+		guard.readBefore(read),
+		"after a write the record may have changed, so it is read again",
+	)
 	assert.False(t, guard.readBefore(write), "a write is never answered from an earlier one")
 }

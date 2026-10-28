@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -149,7 +149,7 @@ type trainingAssignment struct {
 	bulk   *workertrainingservice.BulkAssignRequest
 }
 
-func trainingAssignmentFrom(params *agentports.ToolExecuteParams) (*trainingAssignment, error) {
+func trainingAssignmentFrom(params *agenttoolports.ToolExecuteParams) (*trainingAssignment, error) {
 	workers, err := common.RequirePulidSlice(
 		params.Params,
 		paramTrainingWorkers,
@@ -226,7 +226,7 @@ func renderTrainingAssignment(
 		len(plan.Records), len(plan.Skipped), len(plan.Failed)), changes...), nil
 }
 
-func newAssignWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
+func newAssignWorkerTrainingTool(training TrainingKeeper) agenttoolports.AgentTool {
 	spec := withSchema(wfSpec(
 		"worker_assign_training",
 		"Assign one or more training courses to one or more workers, due on the day given "+
@@ -259,7 +259,7 @@ func newAssignWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			assignment *trainingAssignment,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*workertrainingservice.BulkAssignPlan, error) {
 			plan, err := assignment.plan(ctx, training)
 			if err != nil {
@@ -276,7 +276,7 @@ func newAssignWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			assignment *trainingAssignment,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if assignment.single != nil {
 				_, err := training.Assign(ctx, assignment.single)
@@ -294,7 +294,7 @@ type requiredTraining struct {
 	userID   pulid.ID
 }
 
-func newAssignRequiredWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
+func newAssignRequiredWorkerTrainingTool(training TrainingKeeper) agenttoolports.AgentTool {
 	spec := withSchema(wfSpec(
 		"worker_assign_required_training",
 		"Assign a worker every course the organization requires of them that they are "+
@@ -310,7 +310,7 @@ func newAssignRequiredWorkerTrainingTool(training TrainingKeeper) agentports.Age
 	return common.NewReportingReceivableTool(
 		spec,
 		common.ReceivablePlan[*requiredTraining, []*worker.TrainingCourse]{
-			Request: func(params *agentports.ToolExecuteParams) (*requiredTraining, error) {
+			Request: func(params *agenttoolports.ToolExecuteParams) (*requiredTraining, error) {
 				workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
 				if err != nil {
 					return nil, err
@@ -321,7 +321,7 @@ func newAssignRequiredWorkerTrainingTool(training TrainingKeeper) agentports.Age
 			Plan: func(
 				ctx context.Context,
 				req *requiredTraining,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) ([]*worker.TrainingCourse, error) {
 				return training.PlanAssignRequired(ctx, req.tenant, req.workerID)
 			},
@@ -354,7 +354,7 @@ func newAssignRequiredWorkerTrainingTool(training TrainingKeeper) agentports.Age
 			Run: func(
 				ctx context.Context,
 				req *requiredTraining,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				if _, err := training.AssignRequired(ctx, req.tenant, req.workerID,
 					req.userID); err != nil {
@@ -372,7 +372,7 @@ func newAssignRequiredWorkerTrainingTool(training TrainingKeeper) agentports.Age
 }
 
 func completionFrom(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*workertrainingservice.CompleteRequest, error) {
 	req := &workertrainingservice.CompleteRequest{
 		TenantInfo: common.TenantFrom(*params),
@@ -453,7 +453,7 @@ func completionMatchesRecord(
 	)
 }
 
-func newRecordTrainingCompletionTool(training TrainingKeeper) agentports.AgentTool {
+func newRecordTrainingCompletionTool(training TrainingKeeper) agenttoolports.AgentTool {
 	spec := withSchema(wfSpec(
 		"worker_record_training_completion",
 		"Record that a worker finished a training course. Give the open assignment's id, "+
@@ -478,7 +478,7 @@ func newRecordTrainingCompletionTool(training TrainingKeeper) agentports.AgentTo
 		wfParamDocument:  wfDocumentProperty(),
 		common.ParamNote: wfNoteProperty("Anything the record should say."),
 	})
-	spec.Target = func(params map[string]any) (agentports.ToolTarget, bool) {
+	spec.Target = func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 		return common.TargetOf(params, paramTrainingID, permission.ResourceWorkerTraining)
 	}
 	spec.Reversible = false
@@ -494,14 +494,14 @@ func newRecordTrainingCompletionTool(training TrainingKeeper) agentports.AgentTo
 		Settle: func(
 			ctx context.Context,
 			req *workertrainingservice.CompleteRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) error {
 			return completionMatchesRecord(ctx, training, req)
 		},
 		Plan: func(
 			ctx context.Context,
 			req *workertrainingservice.CompleteRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*workertrainingservice.RecordChange, error) {
 			return training.PlanComplete(ctx, req)
 		},
@@ -536,7 +536,7 @@ func newRecordTrainingCompletionTool(training TrainingKeeper) agentports.AgentTo
 		Run: func(
 			ctx context.Context,
 			req *workertrainingservice.CompleteRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			saved, err := training.Complete(ctx, req)
 			if err != nil {
@@ -548,7 +548,7 @@ func newRecordTrainingCompletionTool(training TrainingKeeper) agentports.AgentTo
 	})
 }
 
-func newAttachWorkerTrainingDocumentTool(training TrainingKeeper) agentports.AgentTool {
+func newAttachWorkerTrainingDocumentTool(training TrainingKeeper) agenttoolports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"worker_attach_training_document",
 		"Attach a certificate or sign-in sheet already filed on the worker to one of their "+
@@ -566,7 +566,7 @@ func newAttachWorkerTrainingDocumentTool(training TrainingKeeper) agentports.Age
 		*workertrainingservice.AttachDocumentRequest, *workertrainingservice.RecordChange,
 	]{
 		Request: func(
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*workertrainingservice.AttachDocumentRequest, error) {
 			id, err := common.RequirePulid(params.Params, paramTrainingID)
 			if err != nil {
@@ -586,7 +586,7 @@ func newAttachWorkerTrainingDocumentTool(training TrainingKeeper) agentports.Age
 		Plan: func(
 			ctx context.Context,
 			req *workertrainingservice.AttachDocumentRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*workertrainingservice.RecordChange, error) {
 			return training.PlanAttachDocument(ctx, req)
 		},
@@ -608,7 +608,7 @@ func newAttachWorkerTrainingDocumentTool(training TrainingKeeper) agentports.Age
 		Run: func(
 			ctx context.Context,
 			req *workertrainingservice.AttachDocumentRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			saved, err := training.AttachDocument(ctx, req)
 			if err != nil {
@@ -625,7 +625,7 @@ type trainingClosing struct {
 	req   *workertrainingservice.StatusRequest
 }
 
-func newCloseWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
+func newCloseWorkerTrainingTool(training TrainingKeeper) agenttoolports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"worker_close_training",
 		"Close an open training assignment without a completion. Waive satisfies the "+
@@ -647,7 +647,7 @@ func newCloseWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
 		*trainingClosing, *workertrainingservice.RecordChange,
 	]{
-		Request: func(params *agentports.ToolExecuteParams) (*trainingClosing, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*trainingClosing, error) {
 			id, err := common.RequirePulid(params.Params, paramTrainingID)
 			if err != nil {
 				return nil, err
@@ -674,7 +674,7 @@ func newCloseWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			closing *trainingClosing,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*workertrainingservice.RecordChange, error) {
 			if closing.close == trainingWaive {
 				return training.PlanWaive(ctx, closing.req)
@@ -701,7 +701,7 @@ func newCloseWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			closing *trainingClosing,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			var saved *worker.WorkerTrainingRecord
 			var err error
@@ -720,28 +720,28 @@ func newCloseWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
 	})
 }
 
-func provideAssignWorkerTrainingTool(s *workertrainingservice.Service) agentports.AgentTool {
+func provideAssignWorkerTrainingTool(s *workertrainingservice.Service) agenttoolports.AgentTool {
 	return newAssignWorkerTrainingTool(s)
 }
 
 func provideAssignRequiredWorkerTrainingTool(
 	s *workertrainingservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newAssignRequiredWorkerTrainingTool(s)
 }
 
 func provideRecordTrainingCompletionTool(
 	s *workertrainingservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newRecordTrainingCompletionTool(s)
 }
 
 func provideAttachWorkerTrainingDocumentTool(
 	s *workertrainingservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newAttachWorkerTrainingDocumentTool(s)
 }
 
-func provideCloseWorkerTrainingTool(s *workertrainingservice.Service) agentports.AgentTool {
+func provideCloseWorkerTrainingTool(s *workertrainingservice.Service) agenttoolports.AgentTool {
 	return newCloseWorkerTrainingTool(s)
 }

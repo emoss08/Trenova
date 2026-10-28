@@ -9,7 +9,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -59,12 +60,12 @@ func (c *advisorCapture) declared() []string {
 
 type recordedRefusals struct {
 	mu   sync.Mutex
-	reqs []agentports.RecordAdvisorRefusalRequest
+	reqs []aiproviderports.RecordAdvisorRefusalRequest
 }
 
 func (r *recordedRefusals) RecordAdvisorRefusal(
 	_ context.Context,
-	req *agentports.RecordAdvisorRefusalRequest,
+	req *aiproviderports.RecordAdvisorRefusalRequest,
 ) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -122,7 +123,7 @@ func TestCompleteChat_TheBenchCellOverridesTheProviderSetting(t *testing.T) {
 	provider.AdvisorEnabled = false
 
 	req := chatRequest(pulid.Nil)
-	req.Advisor = agentports.DefaultAdvisor("claude-fable-5-1")
+	req.Advisor = llmports.DefaultAdvisor("claude-fable-5-1")
 	_, err := svc.CompleteChat(t.Context(), req)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"claude-fable-5-1"}, capture.declared())
@@ -167,7 +168,7 @@ func TestCompleteChat_ARefusedBenchAdvisorFailsLoudly(t *testing.T) {
 	svc.advisors = refusals
 
 	req := chatRequest(pulid.Nil)
-	req.Advisor = agentports.DefaultAdvisor("claude-haiku-5-5")
+	req.Advisor = llmports.DefaultAdvisor("claude-haiku-5-5")
 	_, err := svc.CompleteChat(t.Context(), req)
 	require.Error(t, err, "a cell that asked for an advisor is not quietly run without one")
 	assert.Empty(t, refusals.reqs)

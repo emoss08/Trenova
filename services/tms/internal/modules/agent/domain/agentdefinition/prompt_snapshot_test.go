@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -38,7 +38,7 @@ var (
 
 type promptContext struct {
 	name    string
-	request func(definition *agentdefinition.Definition) *agentports.RunRequest
+	request func(definition *agentdefinition.Definition) *agentruntimeports.RunRequest
 }
 
 func snapshotDefinition(template agentdefinition.Template) *agentdefinition.Definition {
@@ -95,7 +95,7 @@ func promptContexts() []promptContext {
 	return []promptContext{
 		{
 			name: "chat",
-			request: func(definition *agentdefinition.Definition) *agentports.RunRequest {
+			request: func(definition *agentdefinition.Definition) *agentruntimeports.RunRequest {
 				rc := canonicalContext(agent.RunTriggerChat)
 				rc.User = &agentdefinition.RuntimeUser{
 					Name:  "Maria Ortiz",
@@ -115,7 +115,7 @@ func promptContexts() []promptContext {
 					"list late and at-risk loads; list moves with no driver",
 				)
 
-				return &agentports.RunRequest{
+				return &agentruntimeports.RunRequest{
 					Definition: definition,
 					Actor:      snapshotUser(),
 					Context:    rc,
@@ -127,7 +127,7 @@ func promptContexts() []promptContext {
 		},
 		{
 			name: "background",
-			request: func(definition *agentdefinition.Definition) *agentports.RunRequest {
+			request: func(definition *agentdefinition.Definition) *agentruntimeports.RunRequest {
 				rc := canonicalContext(agent.RunTriggerEvent)
 				rc.Subject = &agentdefinition.RuntimeSubject{
 					Type:  agent.SubjectShipmentMove,
@@ -144,7 +144,7 @@ func promptContexts() []promptContext {
 				actor.PrincipalType = permissionports.PrincipalTypeAgent
 				actor.PrincipalID = snapshotAgentID
 
-				return &agentports.RunRequest{
+				return &agentruntimeports.RunRequest{
 					Definition: definition,
 					Actor:      actor,
 					Context:    rc,
@@ -156,18 +156,18 @@ func promptContexts() []promptContext {
 		},
 		{
 			name: "delegated",
-			request: func(definition *agentdefinition.Definition) *agentports.RunRequest {
+			request: func(definition *agentdefinition.Definition) *agentruntimeports.RunRequest {
 				rc := canonicalContext(agent.RunTriggerChat)
 				rc.DelegatedBy = parentAgentName
 
-				return &agentports.RunRequest{
+				return &agentruntimeports.RunRequest{
 					Definition: definition,
 					Actor:      snapshotUser(),
 					Context:    rc,
 					ThreadID:   snapshotThreadID,
 					Input: "Find the shipments for Acme Freight that picked up this week " +
 						"and hand back their ids.",
-					Delegation: &agentports.Delegation{
+					Delegation: &agentruntimeports.Delegation{
 						ParentAgentID:   snapshotParentID,
 						ParentAgentName: parentAgentName,
 						CallID:          "call_delegate_snapshot",
@@ -263,21 +263,21 @@ func snapshotMemories() ([]*agent.Memory, []agent.MemorySubject) {
 	outside.Tainted = true
 
 	return []*agent.Memory{
-			memory("amem_01JSNAPSHOTMEMORY00000008", agent.MemoryKindFact,
-				"The yard closes at 18:00."),
-			holdFix,
-			long,
-			assignFix,
-			memory("amem_01JSNAPSHOTMEMORY00000009", agent.MemoryKindInstruction,
-				"Quote every lane in US dollars."),
-			outside,
-			dockRule,
-			aboutCustomer,
-			customerRule,
-		}, []agent.MemorySubject{
-			{Type: agent.MemorySubjectCustomer, ID: customer, Relation: agent.MemoryRelationDirect},
-			{Type: agent.MemorySubjectLocation, ID: location, Relation: agent.MemoryRelationRelated},
-		}
+		memory("amem_01JSNAPSHOTMEMORY00000008", agent.MemoryKindFact,
+			"The yard closes at 18:00."),
+		holdFix,
+		long,
+		assignFix,
+		memory("amem_01JSNAPSHOTMEMORY00000009", agent.MemoryKindInstruction,
+			"Quote every lane in US dollars."),
+		outside,
+		dockRule,
+		aboutCustomer,
+		customerRule,
+	}, []agent.MemorySubject{
+		{Type: agent.MemorySubjectCustomer, ID: customer, Relation: agent.MemoryRelationDirect},
+		{Type: agent.MemorySubjectLocation, ID: location, Relation: agent.MemoryRelationRelated},
+	}
 }
 
 func TestPromptSnapshots_MemoryGrouping(t *testing.T) {
@@ -334,8 +334,10 @@ func TestPromptSnapshots_ProposalsAwaitingADecision(t *testing.T) {
 
 	rt := snapshotRuntime(t)
 	proposalID := pulid.ID("aprop_01JSNAPSHOTWAITING000000000")
-	req := promptContexts()[0].request(snapshotDefinition(agentdefinition.TemplateDispatchAssistant))
-	req.Proposals = []agentports.ProposalOutcome{{
+	req := promptContexts()[0].request(
+		snapshotDefinition(agentdefinition.TemplateDispatchAssistant),
+	)
+	req.Proposals = []agentruntimeports.ProposalOutcome{{
 		ProposalID: proposalID,
 		ToolName:   "dispatch_assign_move",
 		Rationale:  "Cover move 1 of S-1001 with Maria Ortiz and tractor 42.",

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -439,7 +439,7 @@ func TestUpdateReport_RefusesAnEmptyNameOrUnknownStatus(t *testing.T) {
 func TestUpdateReport_NamesItsTargetFromTheDefinitionID(t *testing.T) {
 	t.Parallel()
 
-	tool, ok := NewUpdateReportTool(&fakeReportWriter{}).(agentports.TargetedTool)
+	tool, ok := NewUpdateReportTool(&fakeReportWriter{}).(agenttoolports.TargetedTool)
 	require.True(t, ok)
 
 	id := pulid.MustNew("rdef_")
@@ -499,7 +499,7 @@ func TestReportDefinitionTools_DeclareTheirGates(t *testing.T) {
 		"report_update": agent.TierActWithApproval,
 		"report_fork":   agent.TierActWithApproval,
 	}
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		NewCreateReportTool(writer),
 		NewUpdateReportTool(writer),
 		NewForkReportTool(writer),
@@ -537,7 +537,7 @@ func TestCreateAndUpdateReport_ValidateTheDefinitionBeforeProposing(t *testing.T
 
 	writer := &fakeReportWriter{invalid: errors.New("unknown field \"foo\" on entity \"shipment\"")}
 	create := NewCreateReportTool(writer)
-	validator, ok := create.(agentports.ToolValidator)
+	validator, ok := create.(agenttoolports.ToolValidator)
 	require.True(t, ok)
 
 	err := validator.Validate(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
@@ -572,7 +572,7 @@ func TestCreateAndUpdateReport_RefuseADefinitionPartSentBesideTheDefinition(t *t
 	}
 
 	writer := &fakeReportWriter{}
-	create, ok := NewCreateReportTool(writer).(agentports.ToolValidator)
+	create, ok := NewCreateReportTool(writer).(agenttoolports.ToolValidator)
 	require.True(t, ok)
 	err := create.Validate(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"name":       "Peak Distributing shipments",

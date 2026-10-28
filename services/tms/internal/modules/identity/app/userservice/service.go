@@ -8,7 +8,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -41,7 +41,7 @@ type Params struct {
 	SessionRepository sessionports.SessionRepository
 	AuditService      auditports.AuditService
 	Auditor           permissionports.SecurityAuditor
-	Realtime          agentports.RealtimeService
+	Realtime          realtimeports.RealtimeService
 	Storage           kernelports.Client
 	Config            *config.Config
 	Validator         *Validator
@@ -61,7 +61,7 @@ type Service struct {
 	sr           sessionports.SessionRepository
 	auditService auditports.AuditService
 	auditor      permissionports.SecurityAuditor
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 	storage      kernelports.Client
 	storageCfg   *config.StorageConfig
 	validator    *Validator

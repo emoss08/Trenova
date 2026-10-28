@@ -7,8 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,17 +36,19 @@ func (subsetTool) ParamSchema() map[string]any {
 		toolschema.KeyRequired: []string{"shipmentIds"},
 	}
 }
-func (subsetTool) Policy() agentports.ToolPolicy { return agentports.ToolPolicy{} }
-func (subsetTool) Execute(context.Context, agentports.ToolExecuteParams) error {
+func (subsetTool) Policy() agenttoolports.ToolPolicy { return agenttoolports.ToolPolicy{} }
+func (subsetTool) Execute(context.Context, agenttoolports.ToolExecuteParams) error {
 	return nil
 }
 
-type subsetTools struct{ agentports.AgentToolRegistry }
+type subsetTools struct {
+	agenttoolports.AgentToolRegistry
+}
 
-func (subsetTools) Get(string) (agentports.AgentTool, bool) { return subsetTool{}, true }
+func (subsetTools) Get(string) (agenttoolports.AgentTool, bool) { return subsetTool{}, true }
 
 type recordingLabeler struct {
-	labels agentports.RecordLabels
+	labels agentruntimeports.RecordLabels
 	asked  []map[permission.Resource][]pulid.ID
 	tenant pagination.TenantInfo
 }
@@ -53,7 +57,7 @@ func (l *recordingLabeler) Labels(
 	_ context.Context,
 	tenant pagination.TenantInfo,
 	refs map[permission.Resource][]pulid.ID,
-) (agentports.RecordLabels, error) {
+) (agentruntimeports.RecordLabels, error) {
 	l.asked = append(l.asked, refs)
 	l.tenant = tenant
 
@@ -63,7 +67,7 @@ func (l *recordingLabeler) Labels(
 type choicesFixture struct {
 	svc      *Service
 	labeler  *recordingLabeler
-	request  agentports.GetThreadRequest
+	request  assistantports.GetThreadRequest
 	first    pulid.ID
 	second   pulid.ID
 	gone     pulid.ID
@@ -82,7 +86,7 @@ func newChoicesFixture(t *testing.T, mayReadShipments bool) *choicesFixture {
 		other:   pulid.MustNew("shp_"),
 		notAnID: "not-an-id",
 	}
-	f.labeler = &recordingLabeler{labels: agentports.RecordLabels{
+	f.labeler = &recordingLabeler{labels: agentruntimeports.RecordLabels{
 		permission.ResourceShipment: {
 			f.first:  "PRO-1001",
 			f.second: "PRO-1002",
@@ -98,7 +102,12 @@ func newChoicesFixture(t *testing.T, mayReadShipments bool) *choicesFixture {
 			ToolName: "billing_transfer",
 			Status:   agent.ProposalStatusPending,
 			ToolParams: map[string]any{
-				"shipmentIds": []any{f.first.String(), f.gone.String(), f.notAnID, f.second.String()},
+				"shipmentIds": []any{
+					f.first.String(),
+					f.gone.String(),
+					f.notAnID,
+					f.second.String(),
+				},
 			},
 		},
 		{
@@ -116,7 +125,7 @@ func newChoicesFixture(t *testing.T, mayReadShipments bool) *choicesFixture {
 		},
 	}
 	threadID := pulid.MustNew("thr_")
-	f.request = agentports.GetThreadRequest{
+	f.request = assistantports.GetThreadRequest{
 		ID:     threadID,
 		UserID: pulid.MustNew("usr_"),
 		TenantInfo: pagination.TenantInfo{
@@ -141,7 +150,7 @@ func newChoicesFixture(t *testing.T, mayReadShipments bool) *choicesFixture {
 	return f
 }
 
-func subsetFieldOf(t *testing.T, proposal agentports.AssistantProposal) toolschema.Field {
+func subsetFieldOf(t *testing.T, proposal assistantports.AssistantProposal) toolschema.Field {
 	t.Helper()
 
 	for _, field := range proposal.Fields {

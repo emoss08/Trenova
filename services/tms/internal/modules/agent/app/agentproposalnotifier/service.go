@@ -24,6 +24,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -90,7 +92,10 @@ type proposalStore interface {
 }
 
 type runReader interface {
-	GetByID(ctx context.Context, req agentports.GetAgentRunByIDRequest) (*agent.AgentRun, error)
+	GetByID(
+		ctx context.Context,
+		req agentruntimeports.GetAgentRunByIDRequest,
+	) (*agent.AgentRun, error)
 }
 
 type definitionReader interface {
@@ -107,7 +112,7 @@ type Params struct {
 	Config      *config.Config
 	Roles       permissionports.RoleRepository
 	Proposals   agentports.AgentProposalRepository
-	Runs        agentports.AgentRunRepository
+	Runs        agentruntimeports.AgentRunRepository
 	Definitions agentdefinitionports.AgentDefinitionRepository
 	Orgs        tenantports.OrganizationRepository
 	Shadow      *agentshadow.Resolver
@@ -274,7 +279,7 @@ type proposalGroup struct {
 }
 
 func (s *Service) remindGroup(ctx context.Context, group proposalGroup, now int64) error {
-	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         group.runID,
 		TenantInfo: &group.tenant,
 	})
@@ -591,7 +596,9 @@ func reminderLines(proposals []*agent.AgentProposal) []documenttemplate.Proposal
 	lines := make([]documenttemplate.ProposalReminderLine, 0, len(proposals))
 	for _, proposal := range proposals {
 		lines = append(lines, documenttemplate.ProposalReminderLine{
-			Tool:      stringutils.HumanizeSnakeCase(agentports.ReadingOrder(proposal.ToolName)),
+			Tool: stringutils.HumanizeSnakeCase(
+				agenttoolports.ReadingOrder(proposal.ToolName),
+			),
 			Rationale: proposal.Rationale,
 		})
 	}
@@ -612,7 +619,7 @@ func describeTools(proposals []*agent.AgentProposal) string {
 		if len(names) < maxListedTools {
 			names = append(
 				names,
-				stringutils.HumanizeSnakeCase(agentports.ReadingOrder(proposal.ToolName)),
+				stringutils.HumanizeSnakeCase(agenttoolports.ReadingOrder(proposal.ToolName)),
 			)
 		}
 	}

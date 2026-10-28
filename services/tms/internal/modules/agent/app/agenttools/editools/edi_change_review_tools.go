@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -133,8 +133,8 @@ func (t *EdiChangeReviewTool) ParamSchema() map[string]any {
 	}, paramEDIChangeID, paramEDIReviewDecision)
 }
 
-func (t *EdiChangeReviewTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *EdiChangeReviewTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceEDI,
@@ -149,12 +149,12 @@ func (t *EdiChangeReviewTool) Policy() agentports.ToolPolicy {
 	}
 }
 
-func (t *EdiChangeReviewTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *EdiChangeReviewTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramEDIChangeID, permission.ResourceEDI)
 }
 
 func (t *EdiChangeReviewTool) call(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*changeReviewCall, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -191,7 +191,7 @@ func (t *EdiChangeReviewTool) call(
 
 func (t *EdiChangeReviewTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*changeReviewPlan, error) {
 	call, err := t.call(params)
 	if err != nil {
@@ -203,7 +203,7 @@ func (t *EdiChangeReviewTool) plan(
 
 func (t *EdiChangeReviewTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -215,7 +215,7 @@ func (t *EdiChangeReviewTool) Validate(
 
 func (t *EdiChangeReviewTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -249,7 +249,7 @@ func (c *changeReviewCall) verb() string {
 	return common.VerbReject
 }
 
-func NewReviewEDITenderChangeTool(reviewer tenderChangeReviewer) agentports.AgentTool {
+func NewReviewEDITenderChangeTool(reviewer tenderChangeReviewer) agenttoolports.AgentTool {
 	return &EdiChangeReviewTool{kind: changeReviewKind{
 		name:   "edi_review_tender_change",
 		recipe: []string{"edi_list_tender_changes", "edi_review_tender_change"},
@@ -292,7 +292,7 @@ func NewReviewEDITenderChangeTool(reviewer tenderChangeReviewer) agentports.Agen
 	}}
 }
 
-func NewReviewEDITransferChangeTool(reviewer transferChangeReviewer) agentports.AgentTool {
+func NewReviewEDITransferChangeTool(reviewer transferChangeReviewer) agenttoolports.AgentTool {
 	return &EdiChangeReviewTool{kind: changeReviewKind{
 		name: "edi_review_transfer_change",
 		recipe: []string{

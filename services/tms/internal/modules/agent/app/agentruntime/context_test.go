@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/productguideports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -56,7 +57,7 @@ func TestContextBuilder_ResolvesTheTimezoneWhateverThePromptWants(t *testing.T) 
 	definition := testDefinition()
 	definition.ContextProviders = []agentdefinition.ContextProvider{agentdefinition.ContextPage}
 
-	rc, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
+	rc, err := builder.Build(t.Context(), &agentruntimeports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      testActor(),
 	})
@@ -68,7 +69,7 @@ func TestContextBuilder_ResolvesTheTimezoneWhateverThePromptWants(t *testing.T) 
 }
 
 type stubPageGuide struct {
-	agentports.ProductGuide
+	productguideports.ProductGuide
 
 	pages map[string]*productguide.Page
 }
@@ -92,13 +93,18 @@ func (s *stubUsers) GetByID(
 	return s.user, nil
 }
 
-func guideBuilder(guide agentports.ProductGuide) *ContextBuilder {
+func guideBuilder(guide productguideports.ProductGuide) *ContextBuilder {
 	return &ContextBuilder{
 		logger:        zap.NewNop(),
 		organizations: &stubOrganizations{org: &tenant.Organization{Name: "Acme"}},
 		users:         &stubUsers{user: &tenant.User{Name: "Dana Dispatcher"}},
-		runtime:       newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil),
-		guide:         guide,
+		runtime: newRuntime(
+			&scriptedCompletion{},
+			&stubQueryRegistry{},
+			&stubActionRegistry{},
+			nil,
+		),
+		guide: guide,
 	}
 }
 
@@ -116,7 +122,7 @@ func TestContextBuilder_DescribesThePageFromTheGuide(t *testing.T) {
 		},
 	}})
 
-	rc, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
+	rc, err := builder.Build(t.Context(), &agentruntimeports.RuntimeContextRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Trigger:    agent.RunTriggerChat,
@@ -127,7 +133,12 @@ func TestContextBuilder_DescribesThePageFromTheGuide(t *testing.T) {
 	require.NotNil(t, rc.PageGuide)
 	assert.Equal(t, "Invoices", rc.PageGuide.Name)
 	assert.Equal(t, "Billing › Invoices", rc.PageGuide.Location)
-	assert.Equal(t, "Every invoice.", rc.PageGuide.Summary, "the header line stands in for a summary")
+	assert.Equal(
+		t,
+		"Every invoice.",
+		rc.PageGuide.Summary,
+		"the header line stands in for a summary",
+	)
 	assert.True(t, rc.Guide)
 }
 
@@ -138,7 +149,7 @@ func TestContextBuilder_OffersTheGuideOnlyToAPersonInAConversation(t *testing.T)
 
 	builder := guideBuilder(&stubPageGuide{})
 
-	scheduled, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
+	scheduled, err := builder.Build(t.Context(), &agentruntimeports.RuntimeContextRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Trigger:    agent.RunTriggerScheduled,
@@ -149,7 +160,7 @@ func TestContextBuilder_OffersTheGuideOnlyToAPersonInAConversation(t *testing.T)
 
 	actor := testActor()
 	actor.PrincipalType = permissionports.PrincipalTypeAgent
-	byAgent, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
+	byAgent, err := builder.Build(t.Context(), &agentruntimeports.RuntimeContextRequest{
 		Definition: testDefinition(),
 		Actor:      actor,
 		Trigger:    agent.RunTriggerChat,

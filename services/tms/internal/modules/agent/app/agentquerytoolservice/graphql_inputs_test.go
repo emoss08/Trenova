@@ -3,7 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -43,7 +43,7 @@ func TestInputFieldParamsTypeTheScreensOwnFilters(t *testing.T) {
 func TestCompileInputsSendsOnInputParametersAsInputFields(t *testing.T) {
 	t.Parallel()
 
-	clk := clockFor(&agentports.QueryToolParams{Timezone: "UTC"})
+	clk := clockFor(&agenttoolports.QueryToolParams{Timezone: "UTC"})
 	params := []graphQLParam{
 		{Name: "status", Field: "status", Kind: paramEquals, OnInput: true},
 		{Name: "startDateFrom", Field: "startDateFrom", Kind: paramDayFrom, OnInput: true},

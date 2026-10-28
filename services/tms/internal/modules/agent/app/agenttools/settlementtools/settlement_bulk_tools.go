@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
@@ -107,7 +107,7 @@ type SettlementBulkTool[E any] struct {
 func newSettlementBulkTool[E any](
 	spec settlementBulkSpec[E],
 	bulk *settlementBulk,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	single := &SettlementDecisionTool[E]{
 		decision: *bulk.decision(spec.text),
 		ledger:   spec.ledger,
@@ -162,7 +162,7 @@ func (t *SettlementBulkTool[E]) Name() string { return t.name }
 
 func (t *SettlementBulkTool[E]) Recipe() []string { return settlementBulkRecipes[t.name] }
 
-func (t *SettlementBulkTool[E]) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *SettlementBulkTool[E]) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return t.batch.Target(params)
 }
 
@@ -177,7 +177,7 @@ func (t *SettlementBulkTool[E]) ParamSchema() map[string]any {
 		nil)
 }
 
-func (t *SettlementBulkTool[E]) Policy() agentports.ToolPolicy {
+func (t *SettlementBulkTool[E]) Policy() agenttoolports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
 	policy.Artifact = t.single.ledger.Artifact
@@ -188,7 +188,7 @@ func (t *SettlementBulkTool[E]) Policy() agentports.ToolPolicy {
 
 func (t *SettlementBulkTool[E]) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	return t.batch.Preview(ctx, t, &params)
 }
@@ -199,14 +199,14 @@ func (t *SettlementBulkTool[E]) SplitRecords(params map[string]any) ([]map[strin
 
 func (t *SettlementBulkTool[E]) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return t.batch.Validate(ctx, t, &params)
 }
 
 func (t *SettlementBulkTool[E]) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -215,7 +215,7 @@ func (t *SettlementBulkTool[E]) Execute(
 
 func (t *SettlementBulkTool[E]) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	return t.batch.Execute(ctx, t, &params)
 }
@@ -270,23 +270,23 @@ func carrierBulkSpec(
 
 func provideApproveDriverSettlementsTool(
 	s *driversettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newSettlementBulkTool(driverBulkSpec(s), &approveSettlements)
 }
 
-func providePostDriverSettlementsTool(s *driversettlementservice.Service) agentports.AgentTool {
+func providePostDriverSettlementsTool(s *driversettlementservice.Service) agenttoolports.AgentTool {
 	return newSettlementBulkTool(driverBulkSpec(s), &postSettlements)
 }
 
 func provideApproveCarrierSettlementsTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newSettlementBulkTool(carrierBulkSpec(s), &approveSettlements)
 }
 
 func providePostCarrierSettlementsTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newSettlementBulkTool(carrierBulkSpec(s), &postSettlements)
 }
 

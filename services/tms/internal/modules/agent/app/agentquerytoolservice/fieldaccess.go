@@ -7,7 +7,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -30,14 +32,14 @@ import (
 type fieldAccess struct {
 	permissions permissionports.PermissionEngine
 	registry    *permission.Registry
-	threads     agentports.ThreadOwnerRepository
+	threads     assistantports.ThreadOwnerRepository
 }
 
 func newFieldAccess(permissions permissionports.PermissionEngine) fieldAccess {
 	return fieldAccess{permissions: permissions, registry: permission.NewRegistry()}
 }
 
-func (a fieldAccess) withThreads(threads agentports.ThreadOwnerRepository) fieldAccess {
+func (a fieldAccess) withThreads(threads assistantports.ThreadOwnerRepository) fieldAccess {
 	a.threads = threads
 
 	return a
@@ -48,7 +50,7 @@ func (a fieldAccess) withThreads(threads agentports.ThreadOwnerRepository) field
 // applies too, so a tool and an operation never disagree on it.
 func (a fieldAccess) ceiling(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	resource permission.Resource,
 ) permission.FieldSensitivity {
 	return fieldsensitivity.AgentCeiling(
@@ -61,7 +63,7 @@ func (a fieldAccess) ceiling(
 // same rule the GraphQL read path applies.
 func (a fieldAccess) groups(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) permission.FieldGroupSet {
 	held := fieldsensitivity.VisibleGroups(
 		ctx,
@@ -96,7 +98,7 @@ func (a fieldAccess) visible(
 // principal, a person and an API key are each answered by their own rules.
 func (a fieldAccess) mayRead(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	resource permission.Resource,
 ) bool {
 	actor := params.Actor
@@ -120,7 +122,7 @@ func (a fieldAccess) mayRead(
 
 func (a fieldAccess) mayReadRecord(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	resource permission.Resource,
 	recordID string,
 ) bool {
@@ -158,7 +160,7 @@ func personOf(actor *permissionports.RequestActor) pulid.ID {
 
 func (a fieldAccess) readableDocuments(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	docs []*document.Document,
 	mayReadRecord func(permission.Resource, string) bool,
 ) (map[pulid.ID]bool, error) {
@@ -187,7 +189,7 @@ func (a fieldAccess) readableDocuments(
 
 func (a fieldAccess) conversationOwners(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	person pulid.ID,
 	docs []*document.Document,
 ) (map[pulid.ID]pulid.ID, error) {
@@ -199,7 +201,7 @@ func (a fieldAccess) conversationOwners(
 		return map[pulid.ID]pulid.ID{}, nil
 	}
 
-	owners, err := a.threads.ThreadOwners(ctx, agentports.ThreadOwnersRequest{
+	owners, err := a.threads.ThreadOwners(ctx, assistantports.ThreadOwnersRequest{
 		TenantInfo: tenantOf(params),
 		ThreadIDs:  ids,
 	})
@@ -222,7 +224,7 @@ func (a fieldAccess) recordTextVisible(
 	return ceiling.CanAccess(definition.DefaultSensitivity)
 }
 
-func (a fieldAccess) forRetrieval(params *agentports.QueryToolParams) *retrievalAccess {
+func (a fieldAccess) forRetrieval(params *agenttoolports.QueryToolParams) *retrievalAccess {
 	return &retrievalAccess{
 		access:    a,
 		params:    params,
@@ -234,13 +236,13 @@ func (a fieldAccess) forRetrieval(params *agentports.QueryToolParams) *retrieval
 
 type retrievalAccess struct {
 	access    fieldAccess
-	params    *agentports.QueryToolParams
+	params    *agenttoolports.QueryToolParams
 	resources map[permission.Resource]bool
 	records   map[string]bool
 	ceilings  map[permission.Resource]permission.FieldSensitivity
 }
 
-var _ agentports.RetrievalAccess = (*retrievalAccess)(nil)
+var _ retrievalports.RetrievalAccess = (*retrievalAccess)(nil)
 
 func (r *retrievalAccess) MayReadResource(
 	ctx context.Context,
@@ -323,7 +325,7 @@ type fieldGate struct {
 
 func (a fieldAccess) gate(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	resource permission.Resource,
 ) *fieldGate {
 	gate := a.gateAt(resource, a.ceiling(ctx, params, resource))
@@ -332,7 +334,7 @@ func (a fieldAccess) gate(
 	return gate
 }
 
-func agentLimit(params *agentports.QueryToolParams) permission.FieldSensitivity {
+func agentLimit(params *agenttoolports.QueryToolParams) permission.FieldSensitivity {
 	granted := fieldsensitivity.AgentDataAccess(params.DataAccessCeiling)
 	if granted == "" && (params.Actor == nil || !params.Actor.IsUser()) {
 		return permission.SensitivityInternal
@@ -354,7 +356,7 @@ func (a fieldAccess) gateAt(
 
 func (a fieldAccess) deferredGate(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	resource permission.Resource,
 ) *fieldGate {
 	gate := a.gateAt(resource, "")
@@ -514,7 +516,7 @@ type nestedRedactor struct {
 
 func (a fieldAccess) redactor(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) *nestedRedactor {
 	gates := make(map[permission.Resource]*fieldGate, len(nestedRules))
 	for _, rule := range nestedRules {

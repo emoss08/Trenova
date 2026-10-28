@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/uploadpipe"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -57,7 +57,7 @@ type Exports struct {
 	storage     kernelports.Client
 	workflows   kernelports.WorkflowStarter
 	notifier    Notifier
-	realtime    agentports.RealtimeService
+	realtime    realtimeports.RealtimeService
 	audit       auditports.AuditService
 	permissions permissionports.PermissionEngine
 	cfg         *config.AIAuditExportConfig
@@ -74,7 +74,7 @@ type ExportsParams struct {
 	Storage     kernelports.Client
 	Workflows   kernelports.WorkflowStarter
 	Notifier    Notifier
-	Realtime    agentports.RealtimeService
+	Realtime    realtimeports.RealtimeService
 	Audit       auditports.AuditService
 	Permissions permissionports.PermissionEngine
 	Config      *config.AIAuditExportConfig
@@ -545,7 +545,7 @@ func (x *Exports) invalidate(ctx context.Context, export *aiaudit.AIAuditExport)
 	}
 
 	if err := x.realtime.PublishResourceInvalidation(ctx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: export.OrganizationID,
 			BusinessUnitID: export.BusinessUnitID,
 			AudienceUserID: export.RequestedByUserID,

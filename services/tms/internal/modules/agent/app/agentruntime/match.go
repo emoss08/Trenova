@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -161,12 +162,12 @@ func (s *Service) matchVector(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
 	text string,
-) agentports.QueryVector {
+) retrievalports.QueryVector {
 	if s.vectorizer == nil || !s.mayEmbedMatch(ctx, actor) {
-		return agentports.QueryVector{}
+		return retrievalports.QueryVector{}
 	}
 
-	return s.vectorize(ctx, &agentports.QueryVectorRequest{
+	return s.vectorize(ctx, &retrievalports.QueryVectorRequest{
 		TenantInfo: actor.TenantInfo(),
 		Text:       text,
 		Focus:      text,

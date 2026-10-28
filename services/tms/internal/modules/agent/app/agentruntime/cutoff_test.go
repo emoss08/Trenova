@@ -4,9 +4,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,19 +25,19 @@ func (fx *cutOffEffects) Emit(event kernelports.StreamEvent) {
 	fx.events = append(fx.events, event)
 }
 
-func cutMidCall(limit int) *agentports.ChatCompletionResult {
-	return &agentports.ChatCompletionResult{
+func cutMidCall(limit int) *llmports.ChatCompletionResult {
+	return &llmports.ChatCompletionResult{
 		Text:            "I'll transfer all 21 now.",
 		Truncated:       true,
 		OutputLimit:     limit,
 		OutputTokens:    limit,
-		CutOffCall:      &agentports.CutOffToolCall{Name: "billing_transfer"},
+		CutOffCall:      &llmports.CutOffToolCall{Name: "billing_transfer"},
 		ModelIdentifier: "z-ai/glm-5.3",
 	}
 }
 
-func cutBeforeAnswering(limit int) *agentports.ChatCompletionResult {
-	return &agentports.ChatCompletionResult{
+func cutBeforeAnswering(limit int) *llmports.ChatCompletionResult {
+	return &llmports.ChatCompletionResult{
 		Truncated:       true,
 		OutputLimit:     limit,
 		OutputTokens:    limit,
@@ -43,7 +46,7 @@ func cutBeforeAnswering(limit int) *agentports.ChatCompletionResult {
 }
 
 type cutOffRun struct {
-	result     *agentports.RunResult
+	result     *agentruntimeports.RunResult
 	completion *scriptedCompletion
 	fx         *cutOffEffects
 	tool       *agenttest.StubActionTool
@@ -51,7 +54,7 @@ type cutOffRun struct {
 
 func runCutOff(
 	t *testing.T,
-	turns ...*agentports.ChatCompletionResult,
+	turns ...*llmports.ChatCompletionResult,
 ) cutOffRun {
 	t.Helper()
 
@@ -61,7 +64,7 @@ func runCutOff(
 		Tier:     agent.TierPropose,
 	}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
-		Tools: []agentports.AgentTool{tool},
+		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
 	fx := &cutOffEffects{}
 	fx.localEffects = &localEffects{
@@ -70,7 +73,7 @@ func runCutOff(
 		emit: func(kernelports.StreamEvent) {},
 	}
 
-	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
+	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("billing_transfer"),
 		Actor:      testActor(),
 		Input:      "Transfer all of them to billing.",
@@ -83,7 +86,7 @@ func runCutOff(
 func retryingReasons(events []kernelports.StreamEvent) []string {
 	reasons := make([]string, 0, 1)
 	for _, event := range events {
-		if data, ok := event.Data.(agentports.AssistantRetryingEvent); ok {
+		if data, ok := event.Data.(assistantports.AssistantRetryingEvent); ok {
 			reasons = append(reasons, data.Reason)
 		}
 	}
@@ -151,10 +154,10 @@ func TestCutOffCall_AReplyThatSpentItsBudgetThinkingIsAskedAgain(t *testing.T) {
 func TestCutOffCall_ABrokenNativeCallIsAskedAgain(t *testing.T) {
 	t.Parallel()
 
-	broken := &agentports.ChatCompletionResult{
+	broken := &llmports.ChatCompletionResult{
 		Truncated:   true,
 		OutputLimit: 4096,
-		ToolCalls: []agentports.ToolCall{{
+		ToolCalls: []llmports.ToolCall{{
 			ID:             "call_1",
 			Name:           "billing_transfer",
 			Arguments:      map[string]any{},
@@ -186,7 +189,7 @@ func TestCutOffCall_TheRetryIsCappedByTheRuntimeCeiling(t *testing.T) {
 func TestCutOffCall_ALongTextAnswerKeepsTheOldNotice(t *testing.T) {
 	t.Parallel()
 
-	long := &agentports.ChatCompletionResult{
+	long := &llmports.ChatCompletionResult{
 		Text:        "| Shipment | Amount |\n| shp_1 | 100 |",
 		Truncated:   true,
 		OutputLimit: 1024,

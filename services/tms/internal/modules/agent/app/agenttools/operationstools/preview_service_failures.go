@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -48,7 +48,7 @@ func DetectedFailureOptions() []toolpreview.Option {
 
 func (t *EvaluateServiceFailuresTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plans, err := t.plans(ctx, &params)
 	if err != nil {
@@ -78,7 +78,7 @@ func (t *EvaluateServiceFailuresTool) Preview(
 
 func (t *EvaluateServiceFailuresTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	_, err := t.plans(ctx, &params)
 
@@ -87,7 +87,7 @@ func (t *EvaluateServiceFailuresTool) Validate(
 
 func (t *EvaluateServiceFailuresTool) plans(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) ([]*servicefailureports.ServiceFailureDetectionPlan, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err

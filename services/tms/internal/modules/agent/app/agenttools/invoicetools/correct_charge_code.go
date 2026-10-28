@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -31,7 +31,7 @@ type billingProfileReader interface {
 func NewCorrectChargeCodeTool(
 	billing billingqueueports.BillingQueueService,
 	profiles billingProfileReader,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &CorrectChargeCodeTool{billing: billing, profiles: profiles}
 }
 
@@ -111,8 +111,8 @@ func chargeLineSchema() map[string]any {
 	}
 }
 
-func (t *CorrectChargeCodeTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *CorrectChargeCodeTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:        t.Name(),
 		Kind:        agent.ToolKindAction,
 		Resource:    permission.ResourceBillingQueue,
@@ -121,7 +121,7 @@ func (t *CorrectChargeCodeTool) Policy() agentports.ToolPolicy {
 		DefaultTier: agent.TierPropose,
 		MaxTier:     agent.TierAutoExecute,
 		Egress:      []agent.EgressClass{agent.EgressMoney},
-		Condition: &agentports.TierCondition{
+		Condition: &agenttoolports.TierCondition{
 			Description: correctChargeBoundText,
 			Bounds:      t.withinBounds,
 		},
@@ -135,7 +135,7 @@ func (t *CorrectChargeCodeTool) Policy() agentports.ToolPolicy {
 
 func (t *CorrectChargeCodeTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -152,7 +152,7 @@ func (t *CorrectChargeCodeTool) Execute(
 // model before it is proposed.
 func (t *CorrectChargeCodeTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return common.PreviewValidates(ctx, t, &params)
 }
@@ -160,7 +160,7 @@ func (t *CorrectChargeCodeTool) Validate(
 // request is the charge edit the preview and the write both make: the
 // item's additional charges replaced by the set the call sends.
 func (t *CorrectChargeCodeTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*billingqueueports.UpdateChargesRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -188,6 +188,6 @@ func (t *CorrectChargeCodeTool) request(
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *CorrectChargeCodeTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *CorrectChargeCodeTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, "billingQueueItemId", permission.ResourceBillingQueue)
 }

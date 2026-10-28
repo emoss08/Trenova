@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -31,10 +32,12 @@ type memoryRow struct {
 }
 
 type recallMemoryTool struct {
-	memories agentports.AgentMemoryService
+	memories agentmemoryports.AgentMemoryService
 }
 
-func newRecallMemoryTool(memories agentports.AgentMemoryService) agentports.AgentQueryTool {
+func newRecallMemoryTool(
+	memories agentmemoryports.AgentMemoryService,
+) agenttoolports.AgentQueryTool {
 	return &recallMemoryTool{memories: memories}
 }
 
@@ -96,7 +99,7 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *recallMemoryTool) Policy() agentports.ToolPolicy {
+func (t *recallMemoryTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceAssistant,
 		reads:    agent.ExternalReadMarked,
@@ -109,7 +112,7 @@ func (t *recallMemoryTool) Policy() agentports.ToolPolicy {
 
 func (t *recallMemoryTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -117,7 +120,7 @@ func (t *recallMemoryTool) Query(
 
 	limit := readLimit(params.Params, agent.DefaultMemoryRecallLimit, agent.MaxMemoryRecallLimit)
 
-	req := agentports.RecallAgentMemoriesRequest{
+	req := agentmemoryports.RecallAgentMemoriesRequest{
 		TenantInfo:        tenantOf(params),
 		AgentDefinitionID: params.AgentDefinitionID,
 		ReaderUserID:      params.Actor.PersonUserID(),
@@ -204,7 +207,7 @@ func (t *recallMemoryTool) Query(
 	// counting only the prompt's left the ones agents look up reading as
 	// never used. A count that fails costs the count, not the answer.
 	if len(ids) > 0 {
-		_ = t.memories.RecordUse(ctx, agentports.RecordMemoryUseRequest{
+		_ = t.memories.RecordUse(ctx, agentmemoryports.RecordMemoryUseRequest{
 			TenantInfo: req.TenantInfo,
 			IDs:        ids,
 		})

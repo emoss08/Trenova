@@ -3,7 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,7 +15,7 @@ import (
 func workerGetTool(
 	t *testing.T,
 	spec getSpec,
-	reader agentports.GraphQLReader,
+	reader graphqlreadports.GraphQLReader,
 ) *graphQLGetTool {
 	t.Helper()
 
@@ -29,7 +29,7 @@ func TestWorkerGet_ReadsTheCardAndFoldsComplianceIntoAssignability(t *testing.T)
 	t.Parallel()
 
 	workerID := pulid.MustNew("wrk_").String()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskWorkerCard": {
 			Data: map[string]any{"worker": map[string]any{
 				"id": workerID, "firstName": "Sarah", "lastName": "Williams",
@@ -105,7 +105,7 @@ func TestWorkerGetHOS_ReadsTheClocksByTheWorkerInMinutes(t *testing.T) {
 
 	workerID := pulid.MustNew("wrk_").String()
 	recordedAt := timeutils.NowUnix() - 600
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"WorkerHosState": {Data: map[string]any{"workerHosState": map[string]any{
 			"workerId": workerID, "workerName": "Maria Ortiz", "dutyStatus": "Driving",
 			"driveRemainingMs": float64(90 * 60_000), "shiftRemainingMs": float64(5 * 3_600_000),
@@ -136,7 +136,7 @@ func TestWorkerGetHOS_ReadsTheClocksByTheWorkerInMinutes(t *testing.T) {
 func TestWorkerGetHOS_MarksAStaleReading(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"WorkerHosState": {Data: map[string]any{"workerHosState": map[string]any{
 			"dutyStatus": "OffDuty", "driveRemainingMs": float64(60_000),
 			"recordedAt": float64(1),
@@ -165,7 +165,7 @@ func TestWorkerGetHOS_ADriverNoELDReportedIsUnknownNotMissing(t *testing.T) {
 	t.Parallel()
 
 	workerID := pulid.MustNew("wrk_").String()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"WorkerHosState": {Data: map[string]any{"workerHosState": nil}},
 	}}
 	tool := workerGetTool(t, workerHOSGetSpec(), reader)
@@ -187,7 +187,7 @@ func TestWorkerGetDOTRandomDraw_ReadsTheRoundWithItsSelections(t *testing.T) {
 	t.Parallel()
 
 	drawID := pulid.MustNew("drdraw_").String()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DotRandomDraw": {Data: map[string]any{"dotRandomDraw": map[string]any{
 			"id": drawID, "periodKey": "2026-Q3", "status": "Final",
 			"entries": []any{map[string]any{

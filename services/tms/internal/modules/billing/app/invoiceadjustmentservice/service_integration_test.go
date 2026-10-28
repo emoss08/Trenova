@@ -8,10 +8,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
@@ -20,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear/fiscalyeardb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
@@ -60,6 +56,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -258,7 +256,7 @@ type noopRealtimeService struct{}
 
 func (noopRealtimeService) PublishResourceInvalidation(
 	context.Context,
-	*agentports.PublishResourceInvalidationRequest,
+	*realtimeports.PublishResourceInvalidationRequest,
 ) error {
 	return nil
 }

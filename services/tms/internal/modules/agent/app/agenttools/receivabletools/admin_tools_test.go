@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
@@ -103,7 +103,11 @@ func (f *fakeDocumentKeeper) PlanRestoreVersion(
 		}
 	}
 
-	return &documentservice.RestorePlan{Target: target, Current: current, Unchanged: f.unchanged}, nil
+	return &documentservice.RestorePlan{
+		Target:    target,
+		Current:   current,
+		Unchanged: f.unchanged,
+	}, nil
 }
 
 func (f *fakeDocumentKeeper) RestoreVersion(
@@ -130,11 +134,21 @@ func TestDeleteDocuments_OneGoesThroughDeleteAndMoreThroughBulk(t *testing.T) {
 	documents := &fakeDocumentKeeper{guard: &agenttoolstest.WriteGuard{}, docs: docs}
 	tool := NewDeleteDocumentsTool(documents)
 
-	one := agenttoolstest.ExecuteParams(map[string]any{paramDocumentIDs: []any{docs[0].ID.String()}})
-	preview := agenttoolstest.PreviewWithoutWrites(t, documents.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), one)
-	})
-	assert.Equal(t, agent.PreviewOperationDelete, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	one := agenttoolstest.ExecuteParams(
+		map[string]any{paramDocumentIDs: []any{docs[0].ID.String()}},
+	)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		documents.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), one)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationDelete,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 	require.NoError(t, tool.Execute(t.Context(), one))
 	assert.Equal(t, docs[0].ID, documents.deleted)
 	assert.Nil(t, documents.bulk)
@@ -166,9 +180,13 @@ func TestRestoreDocumentVersion_FindsTheVersionByItsNumber(t *testing.T) {
 		paramVersionNumber: 1,
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, documents.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		documents.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would make version 1 of pod.pdf the current one")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, versions[1].ID, documents.restored)
@@ -177,10 +195,10 @@ func TestRestoreDocumentVersion_FindsTheVersionByItsNumber(t *testing.T) {
 		paramDocumentID:    versions[0].ID.String(),
 		paramVersionNumber: 5,
 	})
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), missing))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), missing))
 
 	documents.unchanged = true
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
 type fakeInsightRestorer struct {
@@ -238,18 +256,31 @@ func TestRestoreInsight_OnlyADismissedFindingTheReaderMaySee(t *testing.T) {
 		Version:       2,
 	}}
 	tool := insighttools.NewRestoreInsightTool(insights)
-	params := agenttoolstest.ExecuteParams(map[string]any{insighttools.ParamInsightID: insights.found.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{insighttools.ParamInsightID: insights.found.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, insights.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, string(insight.StatusActive),
-		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), common.FieldStatus).After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		insights.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		string(insight.StatusActive),
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			common.FieldStatus,
+		).After,
+	)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.True(t, insights.restored)
 
 	insights.found.Status = insight.StatusActive
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 
 	insights.hidden = true
 	insights.restored = false
@@ -359,15 +390,18 @@ func (f *fakeAlerts) DeleteSubscription(context.Context, pulid.ID, pagination.Te
 func TestTableChangeAlertTools_ActOnlyOnTheCallersOwnAlert(t *testing.T) {
 	t.Parallel()
 
-	alerts := &fakeAlerts{guard: &agenttoolstest.WriteGuard{}, stored: &tablechangealert.TCASubscription{
-		ID:             pulid.MustNew("tcas_"),
-		Name:           "Delayed loads",
-		TableName:      "shipments",
-		EventTypes:     []string{"UPDATE"},
-		ConditionMatch: "all",
-		Status:         tablechangealert.SubscriptionStatusActive,
-		Version:        3,
-	}}
+	alerts := &fakeAlerts{
+		guard: &agenttoolstest.WriteGuard{},
+		stored: &tablechangealert.TCASubscription{
+			ID:             pulid.MustNew("tcas_"),
+			Name:           "Delayed loads",
+			TableName:      "shipments",
+			EventTypes:     []string{"UPDATE"},
+			ConditionMatch: "all",
+			Status:         tablechangealert.SubscriptionStatusActive,
+			Version:        3,
+		},
+	}
 	update := alerttools.NewUpdateTableChangeAlertTool(alerts)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		alerttools.ParamAlertID: alerts.stored.ID.String(),
@@ -375,9 +409,13 @@ func TestTableChangeAlertTools_ActOnlyOnTheCallersOwnAlert(t *testing.T) {
 		"eventTypes":            []any{"update", "insert"},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, alerts.guard, func() (*agent.ToolPreview, error) {
-		return update.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		alerts.guard,
+		func() (*agent.ToolPreview, error) {
+			return update.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would change the alert")
 	require.NoError(t, update.Execute(t.Context(), params))
 	assert.Equal(t, params.Actor.UserID, alerts.getRequest.TenantInfo.UserID)
@@ -385,9 +423,15 @@ func TestTableChangeAlertTools_ActOnlyOnTheCallersOwnAlert(t *testing.T) {
 	assert.Equal(t, []string{"UPDATE", "INSERT"}, alerts.updated.EventTypes)
 	assert.Equal(t, "Delayed loads", alerts.updated.Name)
 
-	require.Error(t, update.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{alerttools.ParamAlertID: alerts.stored.ID.String(), "tableName": "secrets"},
-	)))
+	require.Error(
+		t,
+		update.(agenttoolports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
+			map[string]any{
+				alerttools.ParamAlertID: alerts.stored.ID.String(),
+				"tableName":             "secrets",
+			},
+		)),
+	)
 
 	status := alerttools.NewSetTableChangeAlertStatusTool(alerts)
 	require.NoError(t, status.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
@@ -402,11 +446,22 @@ func TestTableChangeAlertTools_ActOnlyOnTheCallersOwnAlert(t *testing.T) {
 	assert.True(t, alerts.resumed)
 
 	remove := alerttools.NewDeleteTableChangeAlertTool(alerts)
-	deletePreview := agenttoolstest.PreviewWithoutWrites(t, alerts.guard, func() (*agent.ToolPreview, error) {
-		return remove.(agentports.ToolPreviewer).Preview(t.Context(), agenttoolstest.ExecuteParams(
-			map[string]any{alerttools.ParamAlertID: alerts.stored.ID.String()}))
-	})
-	assert.Equal(t, agent.PreviewOperationDelete, agenttoolstest.PreviewChange(t, deletePreview, 0).Operation)
+	deletePreview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		alerts.guard,
+		func() (*agent.ToolPreview, error) {
+			return remove.(agenttoolports.ToolPreviewer).Preview(
+				t.Context(),
+				agenttoolstest.ExecuteParams(
+					map[string]any{alerttools.ParamAlertID: alerts.stored.ID.String()}),
+			)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationDelete,
+		agenttoolstest.PreviewChange(t, deletePreview, 0).Operation,
+	)
 	require.NoError(t, remove.Execute(t.Context(), agenttoolstest.ExecuteParams(
 		map[string]any{alerttools.ParamAlertID: alerts.stored.ID.String()})))
 	assert.True(t, alerts.deleted)
@@ -456,12 +511,22 @@ func TestDismissWatchtowerItem_LeavesAgentOversightForAPerson(t *testing.T) {
 		Version:    1,
 	}}
 	tool := NewDismissWatchtowerItemTool(items)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramWatchtowerItemID: items.item.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramWatchtowerItemID: items.item.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, items.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, agent.PreviewOperationArchive, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		items.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationArchive,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.True(t, items.dismissed)
 
@@ -469,7 +534,7 @@ func TestDismissWatchtowerItem_LeavesAgentOversightForAPerson(t *testing.T) {
 	items.item.SourceKind = watchtower.SourceAgentRunFailed
 	require.Error(t, tool.Execute(t.Context(), params))
 	assert.False(t, items.dismissed)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
 type fakeCaptures struct {
@@ -620,14 +685,24 @@ func TestFileCaptureItems_FilesWithTheVersionItReadAndReportsWhatDidNotFile(t *t
 			paramCaptureTargetID: shipmentID.String(),
 		}
 	}
-	one := agenttoolstest.ExecuteParams(map[string]any{paramCaptureItems: []any{entry(captures.item.ID)}})
+	one := agenttoolstest.ExecuteParams(
+		map[string]any{paramCaptureItems: []any{entry(captures.item.ID)}},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, captures.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), one)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		captures.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), one)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceCaptureBatch, change.Resource)
-	assert.Equal(t, string(capture.ItemFiled), agenttoolstest.FieldByPath(t, change, "status").After)
+	assert.Equal(
+		t,
+		string(capture.ItemFiled),
+		agenttoolstest.FieldByPath(t, change, "status").After,
+	)
 	require.NoError(t, tool.Execute(t.Context(), one))
 	require.Len(t, captures.filed, 1)
 	assert.Equal(t, int64(6), captures.filed[0].Version)
@@ -650,7 +725,7 @@ func TestFileCaptureItems_FilesWithTheVersionItReadAndReportsWhatDidNotFile(t *t
 		}},
 		"the same document twice": {entry(captures.item.ID), entry(captures.item.ID)},
 	} {
-		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+		require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 			agenttoolstest.ExecuteParams(map[string]any{paramCaptureItems: bad})), name)
 	}
 }
@@ -660,24 +735,40 @@ func TestDiscardCaptureTools_SendTheVersionTheyRead(t *testing.T) {
 
 	captures := captureFixture()
 	item := NewDiscardCaptureItemTool(captures)
-	itemParams := agenttoolstest.ExecuteParams(map[string]any{paramCaptureItemIDOne: captures.item.ID.String()})
-	preview := agenttoolstest.PreviewWithoutWrites(t, captures.guard, func() (*agent.ToolPreview, error) {
-		return item.(agentports.ToolPreviewer).Preview(t.Context(), itemParams)
-	})
-	assert.Equal(t, agent.PreviewOperationArchive, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	itemParams := agenttoolstest.ExecuteParams(
+		map[string]any{paramCaptureItemIDOne: captures.item.ID.String()},
+	)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		captures.guard,
+		func() (*agent.ToolPreview, error) {
+			return item.(agenttoolports.ToolPreviewer).Preview(t.Context(), itemParams)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationArchive,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 	require.NoError(t, item.Execute(t.Context(), itemParams))
 	assert.Equal(t, int64(6), captures.discarded.Version)
 
 	batch := NewDiscardCaptureBatchTool(captures)
-	batchParams := agenttoolstest.ExecuteParams(map[string]any{paramCaptureBatchID: captures.batch.ID.String()})
-	batchPreview := agenttoolstest.PreviewWithoutWrites(t, captures.guard, func() (*agent.ToolPreview, error) {
-		return batch.(agentports.ToolPreviewer).Preview(t.Context(), batchParams)
-	})
+	batchParams := agenttoolstest.ExecuteParams(
+		map[string]any{paramCaptureBatchID: captures.batch.ID.String()},
+	)
+	batchPreview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		captures.guard,
+		func() (*agent.ToolPreview, error) {
+			return batch.(agenttoolports.ToolPreviewer).Preview(t.Context(), batchParams)
+		},
+	)
 	assert.Contains(t, batchPreview.Summary, "Would discard 1 unfiled document of Morning PODs")
 	require.NoError(t, batch.Execute(t.Context(), batchParams))
 	assert.Equal(t, int64(9), captures.discardAll.Version)
 	assert.Equal(t, agent.TierPropose, batch.Policy().MaxTier)
 
 	captures.batch.Status = capture.BatchDiscarded
-	require.Error(t, batch.(agentports.ToolValidator).Validate(t.Context(), batchParams))
+	require.Error(t, batch.(agenttoolports.ToolValidator).Validate(t.Context(), batchParams))
 }

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/stretchr/testify/assert"
@@ -25,8 +25,8 @@ func TestGetCarrierIntelEvent_NamesTheListThatHandsOutItsID(t *testing.T) {
 	assert.Contains(t, eventID[toolschema.KeyDescription], "carrier_list_intelligence_events")
 }
 
-func invoiceMatchesAnswer(withheld ...string) *agentports.GraphQLReadResult {
-	return &agentports.GraphQLReadResult{
+func invoiceMatchesAnswer(withheld ...string) *graphqlreadports.GraphQLReadResult {
+	return &graphqlreadports.GraphQLReadResult{
 		Data: map[string]any{"carrierInvoiceMatches": map[string]any{"items": []any{
 			map[string]any{
 				"id": "cim_1", "ediCarrierInvoiceId": "ecinv_1", "invoiceNumber": "INV-1",
@@ -48,11 +48,11 @@ func invoiceMatchesAnswer(withheld ...string) *agentports.GraphQLReadResult {
 
 func queryInvoiceMatches(
 	t *testing.T,
-	answer *agentports.GraphQLReadResult,
+	answer *graphqlreadports.GraphQLReadResult,
 ) (any, []map[string]any) {
 	t.Helper()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskCarrierInvoiceMatches": answer,
 	}}
 	tool, err := newGraphQLUnpagedListTool(keyedSpec(t, "carrier_list_invoice_matches"), reader,
@@ -86,8 +86,12 @@ func TestListCarrierInvoiceMatches_MarksOnlyInvoicesACarrierSentOverEDI(t *testi
 		ID:         "ecinv_1",
 	}}, data.(agent.TaintCarrier).TaintedRecords())
 
-	assert.Equal(t, []string{"invoiceTotal", "expectedTotal", "variance"},
-		data.(*offsetPage).record[outcomeWithheld], "withheld amounts are named as a person reads them")
+	assert.Equal(
+		t,
+		[]string{"invoiceTotal", "expectedTotal", "variance"},
+		data.(*offsetPage).record[outcomeWithheld],
+		"withheld amounts are named as a person reads them",
+	)
 }
 
 func TestListCarrierInvoiceMatches_ShowsAmountsAsDecimals(t *testing.T) {

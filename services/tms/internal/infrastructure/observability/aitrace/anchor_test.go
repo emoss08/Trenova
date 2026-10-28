@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -95,56 +95,59 @@ func TestForRun_NamesTheUnitOfWork(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		owner      agentports.RunStepOwner
-		delegation *agentports.Delegation
+		owner      agentruntimeports.RunStepOwner
+		delegation *agentruntimeports.Delegation
 		want       Anchor
 	}{
 		{
-			name:  "an agent run",
-			owner: agentports.RunStepOwner{Kind: agentports.RunStepOwnerAgentRun, ID: runID},
-			want:  AnchorFor(AnchorAgentRun, runID.String()),
+			name: "an agent run",
+			owner: agentruntimeports.RunStepOwner{
+				Kind: agentruntimeports.RunStepOwnerAgentRun,
+				ID:   runID,
+			},
+			want: AnchorFor(AnchorAgentRun, runID.String()),
 		},
 		{
 			name: "an assistant turn",
-			owner: agentports.RunStepOwner{
-				Kind: agentports.RunStepOwnerAssistantTurn,
+			owner: agentruntimeports.RunStepOwner{
+				Kind: agentruntimeports.RunStepOwnerAssistantTurn,
 				ID:   turnID,
 			},
 			want: AnchorFor(AnchorAssistantTurn, turnID.String()),
 		},
 		{
 			name: "an evaluation replay",
-			owner: agentports.RunStepOwner{
-				Kind: agentports.RunStepOwnerAgentRun,
+			owner: agentruntimeports.RunStepOwner{
+				Kind: agentruntimeports.RunStepOwnerAgentRun,
 				ID:   evaluationID,
 			},
 			want: AnchorFor(AnchorEvaluation, evaluationID.String()),
 		},
 		{
 			name: "a delegate working for a turn",
-			owner: agentports.RunStepOwner{
-				Kind: agentports.RunStepOwnerAssistantTurn,
+			owner: agentruntimeports.RunStepOwner{
+				Kind: agentruntimeports.RunStepOwnerAssistantTurn,
 				ID:   turnID,
 			},
-			delegation: &agentports.Delegation{CallID: "call_7", StepScope: "scope"},
+			delegation: &agentruntimeports.Delegation{CallID: "call_7", StepScope: "scope"},
 			want:       AnchorFor(AnchorDelegate, turnID.String()+":call_7"),
 		},
 		{
 			name: "a delegation without a call is the owner's own work",
-			owner: agentports.RunStepOwner{
-				Kind: agentports.RunStepOwnerAssistantTurn,
+			owner: agentruntimeports.RunStepOwner{
+				Kind: agentruntimeports.RunStepOwnerAssistantTurn,
 				ID:   turnID,
 			},
-			delegation: &agentports.Delegation{},
+			delegation: &agentruntimeports.Delegation{},
 			want:       AnchorFor(AnchorAssistantTurn, turnID.String()),
 		},
 		{
 			name:  "no owner",
-			owner: agentports.RunStepOwner{Kind: agentports.RunStepOwnerAgentRun},
+			owner: agentruntimeports.RunStepOwner{Kind: agentruntimeports.RunStepOwnerAgentRun},
 		},
 		{
 			name:  "an unknown owner kind",
-			owner: agentports.RunStepOwner{Kind: "Plan", ID: runID},
+			owner: agentruntimeports.RunStepOwner{Kind: "Plan", ID: runID},
 		},
 	}
 
@@ -177,21 +180,27 @@ func TestForAttribution_AgreesWithForRun(t *testing.T) {
 	assert.Equal(
 		t,
 		ForRun(
-			agentports.RunStepOwner{Kind: agentports.RunStepOwnerAssistantTurn, ID: turnID},
+			agentruntimeports.RunStepOwner{
+				Kind: agentruntimeports.RunStepOwnerAssistantTurn,
+				ID:   turnID,
+			},
 			nil,
 		),
 		ForAttribution(&aiusageports.AIUsageAttribution{
-			OwnerKind: agentports.RunStepOwnerAssistantTurn,
+			OwnerKind: agentruntimeports.RunStepOwnerAssistantTurn,
 			OwnerID:   turnID,
 		}),
 	)
 	assert.Equal(t,
 		ForRun(
-			agentports.RunStepOwner{Kind: agentports.RunStepOwnerAssistantTurn, ID: turnID},
-			&agentports.Delegation{CallID: "call_2"},
+			agentruntimeports.RunStepOwner{
+				Kind: agentruntimeports.RunStepOwnerAssistantTurn,
+				ID:   turnID,
+			},
+			&agentruntimeports.Delegation{CallID: "call_2"},
 		),
 		ForAttribution(&aiusageports.AIUsageAttribution{
-			OwnerKind:      agentports.RunStepOwnerAssistantTurn,
+			OwnerKind:      agentruntimeports.RunStepOwnerAssistantTurn,
 			OwnerID:        turnID,
 			DelegateCallID: "call_2",
 		}))

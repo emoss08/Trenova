@@ -1,23 +1,23 @@
 package shipmentcommentservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,7 +35,7 @@ func TestCreate_NormalizesMentionsAuditsAndPublishes(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
 	docRepo.EXPECT().
 		GetByResourceIDs(mock.Anything, mock.Anything).
@@ -104,7 +104,7 @@ func TestCreate_NormalizesMentionsAuditsAndPublishes(t *testing.T) {
 	realtime.EXPECT().
 		PublishResourceInvalidation(
 			mock.Anything,
-			mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+			mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 				return req.Resource == permission.ResourceShipmentComment.String() &&
 					req.Action == "created" &&
 					req.RecordID == shipmentID &&
@@ -130,7 +130,7 @@ func TestCreate_RejectsUnknownMentionedUsers(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
 	docRepo.EXPECT().
 		GetByResourceIDs(mock.Anything, mock.Anything).
@@ -181,7 +181,7 @@ func TestCreate_RequiresUserActor(t *testing.T) {
 		DocumentRepo: documentportsmock.NewMockDocumentRepository(t),
 		AuditService: auditportsmock.NewMockAuditService(t),
 		EventService: noopShipmentEventService{},
-		Realtime:     agentportsmock.NewMockRealtimeService(t),
+		Realtime:     realtimeportsmock.NewMockRealtimeService(t),
 	})
 
 	created, err := svc.Create(t.Context(), &shipment.ShipmentComment{
@@ -203,7 +203,7 @@ func TestCreateSystem_CreatesTenantScopedCommentWithoutUser(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
 	docRepo.EXPECT().
 		GetByResourceIDs(mock.Anything, mock.Anything).
@@ -266,7 +266,7 @@ func TestCreateSystem_CreatesTenantScopedCommentWithoutUser(t *testing.T) {
 	realtime.EXPECT().
 		PublishResourceInvalidation(
 			mock.Anything,
-			mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+			mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 				return req.Resource == permission.ResourceShipmentComment.String() &&
 					req.Action == "created" &&
 					req.RecordID == shipmentID &&
@@ -302,7 +302,7 @@ func TestUpdate_RequiresOwnerSetsEditedAtAndPublishes(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
 	docRepo.EXPECT().
 		GetByResourceIDs(mock.Anything, mock.Anything).
@@ -370,7 +370,7 @@ func TestUpdate_RequiresOwnerSetsEditedAtAndPublishes(t *testing.T) {
 	realtime.EXPECT().
 		PublishResourceInvalidation(
 			mock.Anything,
-			mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+			mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 				return req.Resource == permission.ResourceShipmentComment.String() &&
 					req.Action == "updated" &&
 					req.RecordID == shipmentID
@@ -403,7 +403,7 @@ func TestDelete_RejectsNonOwner(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
 	docRepo.EXPECT().
 		GetByResourceIDs(mock.Anything, mock.Anything).

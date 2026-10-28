@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -277,7 +277,7 @@ func carrierGetter(carriers CarrierKeeper) func(
 	}
 }
 
-func NewCreateCarrierTool(carriers CarrierKeeper, states StateLookup) agentports.AgentTool {
+func NewCreateCarrierTool(carriers CarrierKeeper, states StateLookup) agenttoolports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[carrier.Carrier]{
 		record: carrierRecord,
 		name:   "carrier_create",
@@ -310,7 +310,7 @@ func NewCreateCarrierTool(carriers CarrierKeeper, states StateLookup) agentports
 	})
 }
 
-func NewUpdateCarrierTool(carriers CarrierKeeper, states StateLookup) agentports.AgentTool {
+func NewUpdateCarrierTool(carriers CarrierKeeper, states StateLookup) agenttoolports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[carrier.Carrier]{
 		record: carrierRecord,
 		name:   "carrier_update",
@@ -334,7 +334,7 @@ func NewUpdateCarrierTool(carriers CarrierKeeper, states StateLookup) agentports
 func NewUpdateCarrierStatusTool(
 	carriers CarrierKeeper,
 	states StateLookup,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newMasterStatusTool(&masterStatusSpec[carrier.Carrier, carrier.Status]{
 		record: carrierRecord,
 		name:   "carrier_set_status",

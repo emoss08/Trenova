@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -99,7 +100,7 @@ type getTool struct {
 func newGetTool(
 	spec *getSpec,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &getTool{spec: *spec, access: newFieldAccess(permissions)}
 }
 
@@ -109,7 +110,7 @@ func (t *getTool) Description() string { return t.spec.summary }
 
 func (t *getTool) SearchTerms() []string { return t.spec.searchTerms }
 
-func (t *getTool) Policy() agentports.ToolPolicy {
+func (t *getTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:  t.spec.resource,
 		scope:     t.spec.scope,
@@ -147,7 +148,7 @@ func (s getSpec) idDescription() string {
 
 func (t *getTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -288,9 +289,9 @@ func graphQLGetProviders() []any {
 	for idx := range specs {
 		spec := &specs[idx]
 		providers = append(providers, func(
-			reader agentports.GraphQLReader,
+			reader graphqlreadports.GraphQLReader,
 			permissions permissionports.PermissionEngine,
-		) (agentports.AgentQueryTool, error) {
+		) (agenttoolports.AgentQueryTool, error) {
 			return newGraphQLGetTool(spec, reader, permissions)
 		})
 	}
@@ -313,7 +314,7 @@ func getCatalogSpecs() []getSpec {
 	}
 }
 
-func specOfGet(tool agentports.AgentQueryTool) getSpec {
+func specOfGet(tool agenttoolports.AgentQueryTool) getSpec {
 	return tool.(*getTool).spec //nolint:errcheck,forcetypeassert // constructed above
 }
 

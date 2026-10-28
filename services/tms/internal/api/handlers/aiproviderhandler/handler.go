@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -22,14 +22,14 @@ import (
 type Params struct {
 	fx.In
 
-	Service              agentports.AIProviderService
+	Service              aiproviderports.AIProviderService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Config               *config.Config `optional:"true"`
 }
 
 type Handler struct {
-	service agentports.AIProviderService
+	service aiproviderports.AIProviderService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 	ai      *config.AIConfig
@@ -91,7 +91,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*aiprovider.Provider], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&agentports.ListAIProviderRequest{Filter: req},
+				&aiproviderports.ListAIProviderRequest{Filter: req},
 			)
 		},
 	)
@@ -106,10 +106,13 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	provider, err := h.service.GetByID(c.Request.Context(), agentports.GetAIProviderByIDRequest{
-		ID:         providerID,
-		TenantInfo: tenantFromAuthContext(authCtx),
-	})
+	provider, err := h.service.GetByID(
+		c.Request.Context(),
+		aiproviderports.GetAIProviderByIDRequest{
+			ID:         providerID,
+			TenantInfo: tenantFromAuthContext(authCtx),
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -162,8 +165,8 @@ type saveProviderRequest struct {
 func (r *saveProviderRequest) toServiceRequest(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) *agentports.SaveAIProviderRequest {
-	return &agentports.SaveAIProviderRequest{
+) *aiproviderports.SaveAIProviderRequest {
+	return &aiproviderports.SaveAIProviderRequest{
 		ID:                       id,
 		Name:                     r.Name,
 		Description:              r.Description,
@@ -266,7 +269,7 @@ func (h *Handler) remove(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	if err = h.service.Delete(c.Request.Context(), agentports.DeleteAIProviderRequest{
+	if err = h.service.Delete(c.Request.Context(), aiproviderports.DeleteAIProviderRequest{
 		ID:         providerID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 	}, &actor); err != nil {
@@ -286,7 +289,7 @@ func (h *Handler) test(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.Test(c.Request.Context(), agentports.GetAIProviderByIDRequest{
+	result, err := h.service.Test(c.Request.Context(), aiproviderports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 	})

@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -73,7 +73,7 @@ func advisorRequest() Request {
 		System:   "Rules.",
 		Messages: UserMessage("Where is S1?"),
 		Tools:    wireTools(),
-		Advisor:  agentports.DefaultAdvisor(""),
+		Advisor:  llmports.DefaultAdvisor(""),
 	}
 }
 
@@ -219,7 +219,11 @@ func TestAnthropicAdapter_StreamsEachAdvisorResultKind(t *testing.T) {
 
 			server, _ := wireServer(t, "text/event-stream", advisorStreamReply(tc.content))
 			request := advisorRequest()
-			resp, deltas := streamWith(t, NewAnthropicAdapter(), advisorCall(t, server.URL, &request))
+			resp, deltas := streamWith(
+				t,
+				NewAnthropicAdapter(),
+				advisorCall(t, server.URL, &request),
+			)
 
 			assert.Equal(t, "Done.", resp.Text)
 			assert.Equal(t, []string{"Done."}, deltas, "the advice never reaches the reply")
@@ -372,7 +376,12 @@ func messageBlocks(t *testing.T, body map[string]any, index int) []map[string]an
 func replayedAdvice() []map[string]any {
 	return []map[string]any{
 		{"type": "thinking", "thinking": "plan", "signature": "sig_a"},
-		{"type": "server_tool_use", "id": "srvtoolu_1", "name": "advisor", "input": map[string]any{}},
+		{
+			"type":  "server_tool_use",
+			"id":    "srvtoolu_1",
+			"name":  "advisor",
+			"input": map[string]any{},
+		},
 		{
 			"type":        "advisor_tool_result",
 			"tool_use_id": "srvtoolu_1",
@@ -410,7 +419,7 @@ func TestAnthropicAdapter_ReplaysTheAdviceUnchangedWhileTheAdvisorIsAsked(t *tes
 	next := Request{
 		Messages: advisedHistory(resp.Reasoning),
 		Tools:    wireTools(),
-		Advisor:  agentports.DefaultAdvisor(""),
+		Advisor:  llmports.DefaultAdvisor(""),
 	}
 	_, err := NewAnthropicAdapter().Complete(t.Context(), advisorCall(t, server.URL, &next))
 	require.NoError(t, err)
@@ -506,7 +515,7 @@ func TestAdvisorFor_ComesOnlyFromTheRequestAndTheHistoryOnlyAsksForTheBeta(t *te
 
 	direct := &aiprovider.Provider{Kind: aiprovider.KindAnthropicMessages}
 	asked := &Call{Provider: direct, Request: &Request{
-		Advisor: agentports.DefaultAdvisor("claude-fable-5-1"),
+		Advisor: llmports.DefaultAdvisor("claude-fable-5-1"),
 	}}
 	assert.Equal(t, "claude-fable-5-1", advisorFor(asked).Model)
 	assert.True(t, sendsAdvisorBeta(asked, advisorFor(asked)))
@@ -545,7 +554,7 @@ func TestAdvisorFor_OnlyOnPlatformsThatServeIt(t *testing.T) {
 			Platform: platform,
 		}
 		asked := advisorFor(&Call{Provider: provider, Request: &Request{
-			Advisor: agentports.DefaultAdvisor(""),
+			Advisor: llmports.DefaultAdvisor(""),
 		}})
 		heldCall := &Call{Provider: provider, Request: &Request{
 			Messages: advisedHistory(advice),
@@ -616,7 +625,10 @@ func TestAnthropicConversation_ReplacesStoredTextTheMessageNoLongerHolds(t *test
 		{Type: "server_tool_use", ID: "srvtoolu_1", Name: "advisor"},
 		{
 			Type: "advisor_tool_result", ToolUseID: "srvtoolu_1",
-			Result: &conversation.ServerToolResult{Type: "advisor_result", Text: "Ask for the BOL."},
+			Result: &conversation.ServerToolResult{
+				Type: "advisor_result",
+				Text: "Ask for the BOL.",
+			},
 		},
 		{Type: "text", Text: "It needs a BOL."},
 	}, "The shipment needs a BOL.", true)

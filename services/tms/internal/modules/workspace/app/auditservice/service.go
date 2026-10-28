@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -34,7 +34,7 @@ type Params struct {
 	LC                    fx.Lifecycle
 	AuditRepository       auditports.AuditRepository
 	AuditBufferRepository auditports.AuditBufferRepository
-	Realtime              agentports.RealtimeService
+	Realtime              realtimeports.RealtimeService
 	Logger                *zap.Logger
 	Config                *config.Config
 	Metrics               *metrics.Registry
@@ -44,7 +44,7 @@ type Params struct {
 type service struct {
 	repo       auditports.AuditRepository
 	bufferRepo auditports.AuditBufferRepository
-	realtime   agentports.RealtimeService
+	realtime   realtimeports.RealtimeService
 	logger     *zap.Logger
 	config     *config.Config
 	sdm        *SensitiveDataManager

@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -15,7 +15,7 @@ import (
 const nearMissProbes = 4
 
 type nearMissRequest struct {
-	params   *agentports.QueryToolParams
+	params   *agenttoolports.QueryToolParams
 	opts     *pagination.QueryOptions
 	gate     *fieldGate
 	criteria *filtercatalog.Criteria

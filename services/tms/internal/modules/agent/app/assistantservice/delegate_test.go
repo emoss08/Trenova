@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -180,12 +182,12 @@ func newDelegateFixture() *delegateFixture {
 			Parent:   parent,
 			Actor:    actor,
 			ThreadID: pulid.MustNew("athr_"),
-			StepOwner: agentports.RunStepOwner{
-				Kind: agentports.RunStepOwnerAssistantTurn,
+			StepOwner: agentruntimeports.RunStepOwner{
+				Kind: agentruntimeports.RunStepOwnerAssistantTurn,
 				ID:   pulid.MustNew("atrn_"),
 			},
 			Call: agentruntime.DelegateCall{
-				Call:      agentports.ToolCall{ID: "call_1", Name: "delegate_task"},
+				Call:      llmports.ToolCall{ID: "call_1", Name: "delegate_task"},
 				Delegate:  agentdefinition.RuntimeDelegate{ID: delegate.ID, Name: delegate.Name},
 				Task:      "Create the on-time report and return its id.",
 				StepScope: "scope-1",
@@ -367,13 +369,13 @@ func TestOpenDelegate_ADirectedTaskNeedsNoPlaceOnTheAllowlist(t *testing.T) {
 func TestDirectedTask_ChecksTheChosenAgentAsThePersonsOwn(t *testing.T) {
 	t.Parallel()
 
-	send := func(f *delegateFixture, agentID pulid.ID) (*agentports.DirectedTask, error) {
+	send := func(f *delegateFixture, agentID pulid.ID) (*agentruntimeports.DirectedTask, error) {
 		thread := &conversation.Thread{
 			ID:                f.request.ThreadID,
 			AgentDefinitionID: f.parent.ID,
 		}
 		return f.svc.directedTask(t.Context(), thread, f.request.Actor,
-			&agentports.SendMessageRequest{
+			&assistantports.SendMessageRequest{
 				ThreadID:        thread.ID,
 				Content:         "  Mark shipment SEED-PAY-001 ready to invoice.  ",
 				TenantInfo:      f.request.Actor.TenantInfo(),
@@ -531,12 +533,12 @@ func TestNameDelegatedSteps_ServesTheDelegatesMarkInOneQuery(t *testing.T) {
 }
 
 type capturingContexts struct {
-	asked *agentports.RuntimeContextRequest
+	asked *agentruntimeports.RuntimeContextRequest
 }
 
 func (c *capturingContexts) Build(
 	_ context.Context,
-	req *agentports.RuntimeContextRequest,
+	req *agentruntimeports.RuntimeContextRequest,
 ) (agentdefinition.RuntimeContext, error) {
 	c.asked = req
 

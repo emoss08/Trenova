@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
@@ -157,7 +158,7 @@ func (t *Turn) honoured(spec agentextension.CommandSpec) bool {
 func (s *Service) holdToCommand(
 	t *Turn,
 	fx TurnEffects,
-	completion *agentports.ChatCompletionResult,
+	completion *llmports.ChatCompletionResult,
 	held *bool,
 ) bool {
 	if t.command == "" || *held || completion == nil {
@@ -171,21 +172,21 @@ func (s *Service) holdToCommand(
 
 	*held = true
 	fx.Emit(kernelports.StreamEvent{
-		Event: agentports.AssistantEventRetrying,
-		Data: agentports.AssistantRetryingEvent{
+		Event: assistantports.AssistantEventRetrying,
+		Data: assistantports.AssistantRetryingEvent{
 			Attempt: 1,
 			Reason:  hold.retryReason,
-			Kind:    agentports.RetryKindRestart,
+			Kind:    llmports.RetryKindRestart,
 		},
 	})
 	t.messages = append(t.messages,
-		agentports.Message{
-			Role:          agentports.RoleAssistant,
+		llmports.Message{
+			Role:          llmports.RoleAssistant,
 			Content:       completion.Text,
 			ReplyID:       completion.ProviderMessageID,
 			ReplyProvider: completion.ProviderID,
 		},
-		agentports.NoticeMessage(hold.correction),
+		llmports.NoticeMessage(hold.correction),
 	)
 
 	return true

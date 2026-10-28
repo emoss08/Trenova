@@ -5,7 +5,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/mdtable"
 	"github.com/emoss08/trenova/shared/recordids"
@@ -44,7 +46,7 @@ const (
 func (s *Service) passReply(
 	t *Turn,
 	fx TurnEffects,
-	completion *agentports.ChatCompletionResult,
+	completion *llmports.ChatCompletionResult,
 ) {
 	if completion == nil || strings.TrimSpace(completion.Text) == "" {
 		return
@@ -57,10 +59,10 @@ func (s *Service) passReply(
 	}
 
 	if stripped != completion.Text {
-		fx.Emit(passEvent(agentports.RegroundStripIDs, stripIDsReason, nil))
+		fx.Emit(passEvent(assistantports.RegroundStripIDs, stripIDsReason, nil))
 	}
 	if table != nil {
-		fx.Emit(passEvent(agentports.RegroundPointToTable, pointToTableReason, table))
+		fx.Emit(passEvent(assistantports.RegroundPointToTable, pointToTableReason, table))
 	}
 	fx.Emit(replyReplacedEvent(pointed, replyPassReplacedReason))
 	completion.Text = pointed
@@ -70,22 +72,22 @@ func (s *Service) passReply(
 // that streamed, for a correction the model was not asked to make.
 func replyReplacedEvent(text, reason string) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
-		Event: agentports.AssistantEventReplyReplaced,
-		Data:  agentports.AssistantReplyReplacedEvent{Text: text, Reason: reason},
+		Event: assistantports.AssistantEventReplyReplaced,
+		Data:  assistantports.AssistantReplyReplacedEvent{Text: text, Reason: reason},
 	}
 }
 
 func passEvent(
-	action agentports.RegroundAction,
+	action assistantports.RegroundAction,
 	reason string,
-	table *agentports.ShownArtifact,
+	table *agentruntimeports.ShownArtifact,
 ) kernelports.StreamEvent {
-	data := agentports.AssistantReplyRegroundedEvent{Action: action, Reason: reason}
+	data := assistantports.AssistantReplyRegroundedEvent{Action: action, Reason: reason}
 	if table != nil {
 		data.ArtifactID = table.ID
 	}
 
-	return kernelports.StreamEvent{Event: agentports.AssistantEventReplyRegrounded, Data: data}
+	return kernelports.StreamEvent{Event: assistantports.AssistantEventReplyRegrounded, Data: data}
 }
 
 // keepShown remembers what the call put beside the conversation, so the
@@ -104,20 +106,20 @@ func (t *Turn) keepShown(outcome *toolOutcome) {
 	t.artifacts = append(t.artifacts, *outcome.shown)
 }
 
-func (t *Turn) foldReplaced(table *agentports.ShownArtifact) {
+func (t *Turn) foldReplaced(table *agentruntimeports.ShownArtifact) {
 	if table == nil || len(table.Replaces) == 0 {
 		return
 	}
 	unread := 0
 	for idx := len(t.messages) - 1; idx >= 0; idx-- {
-		if t.messages[idx].Role == agentports.RoleAssistant {
+		if t.messages[idx].Role == llmports.RoleAssistant {
 			unread = idx + 1
 			break
 		}
 	}
 	folded := foldedNote(table)
 	for _, cardID := range table.Replaces {
-		idx := slices.IndexFunc(t.artifacts, func(shown agentports.ShownArtifact) bool {
+		idx := slices.IndexFunc(t.artifacts, func(shown agentruntimeports.ShownArtifact) bool {
 			return shown.ID == cardID
 		})
 		if idx < 0 {
@@ -127,7 +129,7 @@ func (t *Turn) foldReplaced(table *agentports.ShownArtifact) {
 		t.artifacts = slices.Delete(t.artifacts, idx, idx+1)
 		for msgIdx := unread; msgIdx < len(t.messages); msgIdx++ {
 			msg := &t.messages[msgIdx]
-			if msg.Role != agentports.RoleTool || !strings.HasSuffix(msg.Content, stale) {
+			if msg.Role != llmports.RoleTool || !strings.HasSuffix(msg.Content, stale) {
 				continue
 			}
 			msg.Content = strings.TrimSuffix(msg.Content, stale) + folded
@@ -148,8 +150,8 @@ func (t *Turn) refold(callID, stale, folded string) {
 	}
 }
 
-func (t *Turn) keptTables() []agentports.ShownArtifact {
-	tables := make([]agentports.ShownArtifact, 0, len(t.artifacts))
+func (t *Turn) keptTables() []agentruntimeports.ShownArtifact {
+	tables := make([]agentruntimeports.ShownArtifact, 0, len(t.artifacts))
 	for idx := range t.artifacts {
 		if t.artifacts[idx].Tabular() {
 			tables = append(tables, t.artifacts[idx])
@@ -169,8 +171,8 @@ func (t *Turn) keptTables() []agentports.ShownArtifact {
 // kept table is now pointed to once, wherever its reprint stands.
 func pointToTables(
 	reply string,
-	kept []agentports.ShownArtifact,
-) (string, *agentports.ShownArtifact) {
+	kept []agentruntimeports.ShownArtifact,
+) (string, *agentruntimeports.ShownArtifact) {
 	if len(kept) == 0 {
 		return reply, nil
 	}
@@ -185,7 +187,7 @@ func pointToTables(
 
 	type replacement struct {
 		table *mdtable.Table
-		match *agentports.ShownArtifact
+		match *agentruntimeports.ShownArtifact
 	}
 	replacements := make([]replacement, 0, len(tables))
 	for idx := range tables {
@@ -249,9 +251,9 @@ func pointToTables(
 // reply most likely describes.
 func reprinted(
 	table *mdtable.Table,
-	kept []agentports.ShownArtifact,
+	kept []agentruntimeports.ShownArtifact,
 	pointed map[string]bool,
-) *agentports.ShownArtifact {
+) *agentruntimeports.ShownArtifact {
 	firstColumn := make([]string, 0, len(table.Rows))
 	for _, row := range table.Rows {
 		if len(row) > 0 {
@@ -264,7 +266,7 @@ func reprinted(
 	}
 	around := wordsOf(named)
 
-	var best *agentports.ShownArtifact
+	var best *agentruntimeports.ShownArtifact
 	bestScore := 0.0
 	for idx := len(kept) - 1; idx >= 0; idx-- {
 		candidate := &kept[idx]

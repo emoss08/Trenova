@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -106,14 +107,14 @@ func (s *InsightSource) Snapshot(
 // on their own and plans as one unit, the same queue the Desk decides.
 type DecisionSource struct {
 	queue       agentports.AgentDecisionQueueService
-	runs        agentports.AgentRunRepository
+	runs        agentruntimeports.AgentRunRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
 	kind        watchtower.SourceKind
 }
 
 func NewProposalSource(
 	queue agentports.AgentDecisionQueueService,
-	runs agentports.AgentRunRepository,
+	runs agentruntimeports.AgentRunRepository,
 	definitions agentdefinitionports.AgentDefinitionRepository,
 ) watchtowerports.WatchtowerSource {
 	return &DecisionSource{
@@ -126,7 +127,7 @@ func NewProposalSource(
 
 func NewPlanSource(
 	queue agentports.AgentDecisionQueueService,
-	runs agentports.AgentRunRepository,
+	runs agentruntimeports.AgentRunRepository,
 	definitions agentdefinitionports.AgentDefinitionRepository,
 ) watchtowerports.WatchtowerSource {
 	return &DecisionSource{
@@ -201,7 +202,7 @@ func (s *DecisionSource) agentNames(
 		return names
 	}
 
-	runs, err := s.runs.ListByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
+	runs, err := s.runs.ListByIDs(ctx, agentruntimeports.ListAgentRunsByIDsRequest{
 		IDs:        unique(runIDs),
 		TenantInfo: tenant,
 	})
@@ -265,13 +266,13 @@ func unique(ids []pulid.ID) []pulid.ID {
 // FailedRunSource puts recent agent failures on the tower, so a desk that
 // relies on an agent learns when it stopped working.
 type FailedRunSource struct {
-	runs        agentports.AgentRunRepository
+	runs        agentruntimeports.AgentRunRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
 	now         func() int64
 }
 
 func NewFailedRunSource(
-	runs agentports.AgentRunRepository,
+	runs agentruntimeports.AgentRunRepository,
 	definitions agentdefinitionports.AgentDefinitionRepository,
 ) watchtowerports.WatchtowerSource {
 	return &FailedRunSource{runs: runs, definitions: definitions, now: timeutils.NowUnix}
@@ -289,9 +290,9 @@ func (s *FailedRunSource) Snapshot(
 		{Field: "createdAt", Operator: dbtype.OpGreaterThan, Value: s.now() - failedRunWindow},
 	}
 
-	result, err := s.runs.List(ctx, &agentports.ListAgentRunRequest{
+	result, err := s.runs.List(ctx, &agentruntimeports.ListAgentRunRequest{
 		Filter: filter,
-		Reader: agentports.PersonRunRead(pulid.Nil),
+		Reader: agentruntimeports.PersonRunRead(pulid.Nil),
 	})
 	if err != nil {
 		return nil, err

@@ -1,23 +1,21 @@
 package loaders
 
 import (
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -36,8 +34,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -282,7 +282,7 @@ type set struct {
 	agentMemoryReplacement                    *dataloadgen.Loader[string, *agent.Memory]
 	agentDefinitionByID                       *dataloadgen.Loader[string, *agentdefinition.Definition]
 	agentsPaused                              *dataloadgen.Loader[string, bool]
-	agentPlanHold                             *dataloadgen.Loader[string, *agentports.ProposalHold]
+	agentPlanHold                             *dataloadgen.Loader[string, *assistantports.ProposalHold]
 	suggestedAgentByEventKind                 *dataloadgen.Loader[string, *agentdefinition.Definition]
 	threadAgentByID                           *dataloadgen.Loader[string, *conversation.Thread]
 	usableAgentByID                           *dataloadgen.Loader[string, *agentdefinition.Definition]
@@ -343,7 +343,7 @@ type set struct {
 	carrierMonitoringEnrollmentByCarrierID    *dataloadgen.Loader[string, []*carrierintel.CarrierMonitoringEnrollment]
 	auditEntriesByAIAuditEventID              *dataloadgen.Loader[string, []*audit.Entry]
 	// SubsetLabels names the records each record-subset field offers.
-	subsetLabels *dataloadgen.Loader[string, agentports.RecordLabels]
+	subsetLabels *dataloadgen.Loader[string, agentruntimeports.RecordLabels]
 	// FieldCeilings is the reader's sensitivity ceiling per resource, asked
 	// of the permission engine once per resource per request.
 	fieldCeilings aiauditports.FieldCeilings

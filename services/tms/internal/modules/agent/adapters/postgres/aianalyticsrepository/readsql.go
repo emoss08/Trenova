@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback/aifeedbackdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion/settingversiondb"
@@ -389,8 +389,8 @@ func toolExamplesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*ke
 			s.SettledAtMs.Div(keel.Int64(1000)).Coalesce(s.UpdatedAt),
 		).
 		Where(
-			s.Kind.Eq(string(agentports.RunStepTool)),
-			s.Status.Eq(string(agentports.RunStepFailed)),
+			s.Kind.Eq(string(agentruntimeports.RunStepTool)),
+			s.Status.Eq(string(agentruntimeports.RunStepFailed)),
 			s.ToolName.Eq(req.ToolName),
 		).
 		Order(s.UpdatedAt.Desc(), s.ID.Desc()).

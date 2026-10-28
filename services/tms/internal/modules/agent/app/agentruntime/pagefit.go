@@ -3,7 +3,7 @@ package agentruntime
 import (
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
 // fittedPage is a list page cut to what the model has room to read: the page
@@ -35,7 +35,7 @@ func fitPage(
 	if len(encoded) <= maxToolResultBytes {
 		return fittedPage{}, false
 	}
-	page, ok := data.(agentports.PageCutter)
+	page, ok := data.(agenttoolports.PageCutter)
 	if !ok {
 		return fittedPage{}, false
 	}

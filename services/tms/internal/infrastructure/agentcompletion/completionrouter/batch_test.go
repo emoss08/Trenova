@@ -12,8 +12,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -105,7 +105,10 @@ func newBatchService(
 		require.NoError(t, keyErr)
 		provider.APIKey = key
 	}
-	svc.clients[false] = &http.Client{Timeout: 5 * time.Second, Transport: claudeRoute{target: target}}
+	svc.clients[false] = &http.Client{
+		Timeout:   5 * time.Second,
+		Transport: claudeRoute{target: target},
+	}
 	usage := &fakeUsage{}
 	svc.usage = usage
 	if len(providers) > 0 {
@@ -133,14 +136,14 @@ func judgeTenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 }
 
-func judgeItem(tenant pagination.TenantInfo, id, question string) agentports.BatchCompletionItem {
-	return agentports.BatchCompletionItem{
+func judgeItem(tenant pagination.TenantInfo, id, question string) llmports.BatchCompletionItem {
+	return llmports.BatchCompletionItem{
 		CustomID: id,
-		Request: agentports.StructuredCompletionRequest{
+		Request: llmports.StructuredCompletionRequest{
 			TenantInfo: tenant,
 			Task:       aiprovider.TaskEvaluationJudge,
 			System:     "You grade one answer.",
-			Context: agentports.DelimitedContext{Sections: []agentports.ContextSection{
+			Context: llmports.DelimitedContext{Sections: []llmports.ContextSection{
 				{Title: "Answer to grade", Content: question},
 			}},
 			OutputSchema: map[string]any{
@@ -160,10 +163,10 @@ func TestSubmitBatch_SendsEveryRequestToTheClaudeAPIInOneBatch(t *testing.T) {
 	svc, api, _ := newBatchService(t, provider)
 	tenant := judgeTenant()
 
-	handle, err := svc.SubmitBatch(t.Context(), &agentports.BatchCompletionRequest{
+	handle, err := svc.SubmitBatch(t.Context(), &llmports.BatchCompletionRequest{
 		TenantInfo: tenant,
 		Task:       aiprovider.TaskEvaluationJudge,
-		Items: []agentports.BatchCompletionItem{
+		Items: []llmports.BatchCompletionItem{
 			judgeItem(tenant, "aeval_1", "It was sent on Tuesday."),
 			judgeItem(tenant, "aeval_2", "Load 42 is late."),
 		},
@@ -172,7 +175,11 @@ func TestSubmitBatch_SendsEveryRequestToTheClaudeAPIInOneBatch(t *testing.T) {
 	assert.Equal(t, provider.ID, handle.ProviderID)
 	assert.Equal(t, "msgbatch_7", handle.BatchID)
 	assert.Equal(t, []string{"aeval_1", "aeval_2"}, handle.CustomIDs)
-	assert.True(t, handle.EstimatedCostUSD.IsPositive(), "a priced provider's batch has an estimate")
+	assert.True(
+		t,
+		handle.EstimatedCostUSD.IsPositive(),
+		"a priced provider's batch has an estimate",
+	)
 	assert.Positive(t, handle.SubmittedAt)
 
 	posted := api.requests()
@@ -200,10 +207,10 @@ func TestSubmitBatch_TakesOnlyWhatTheSpendLimitAffords(t *testing.T) {
 	require.NotNil(t, full)
 	assert.True(t, one.LessThan(*full), "the estimate is at the batch rate")
 
-	handle, err := svc.SubmitBatch(t.Context(), &agentports.BatchCompletionRequest{
+	handle, err := svc.SubmitBatch(t.Context(), &llmports.BatchCompletionRequest{
 		TenantInfo:    tenant,
 		Task:          aiprovider.TaskEvaluationJudge,
-		Items:         []agentports.BatchCompletionItem{first, second},
+		Items:         []llmports.BatchCompletionItem{first, second},
 		SpendLimitUSD: one,
 	})
 	require.NoError(t, err)
@@ -211,13 +218,13 @@ func TestSubmitBatch_TakesOnlyWhatTheSpendLimitAffords(t *testing.T) {
 	assert.True(t, handle.EstimatedCostUSD.Equal(*one))
 
 	nothing := decimal.Zero
-	_, err = svc.SubmitBatch(t.Context(), &agentports.BatchCompletionRequest{
+	_, err = svc.SubmitBatch(t.Context(), &llmports.BatchCompletionRequest{
 		TenantInfo:    tenant,
 		Task:          aiprovider.TaskEvaluationJudge,
-		Items:         []agentports.BatchCompletionItem{first},
+		Items:         []llmports.BatchCompletionItem{first},
 		SpendLimitUSD: &nothing,
 	})
-	require.ErrorIs(t, err, agentports.ErrBatchOverBudget)
+	require.ErrorIs(t, err, llmports.ErrBatchOverBudget)
 	assert.Len(t, api.requests(), 1, "a batch nothing fits is never sent")
 }
 
@@ -229,12 +236,12 @@ func TestSubmitBatch_RefusesAProviderWithoutABatchAPI(t *testing.T) {
 	svc, api, _ := newBatchService(t, chat)
 	tenant := judgeTenant()
 
-	_, err := svc.SubmitBatch(t.Context(), &agentports.BatchCompletionRequest{
+	_, err := svc.SubmitBatch(t.Context(), &llmports.BatchCompletionRequest{
 		TenantInfo: tenant,
 		Task:       aiprovider.TaskEvaluationJudge,
-		Items:      []agentports.BatchCompletionItem{judgeItem(tenant, "aeval_1", "Yes.")},
+		Items:      []llmports.BatchCompletionItem{judgeItem(tenant, "aeval_1", "Yes.")},
 	})
-	require.ErrorIs(t, err, agentports.ErrBatchUnsupported)
+	require.ErrorIs(t, err, llmports.ErrBatchUnsupported)
 	assert.Empty(t, api.requests())
 }
 
@@ -244,10 +251,10 @@ func TestSubmitBatch_RefusesARepeatedID(t *testing.T) {
 	svc, api, _ := newBatchService(t, claudeJudge())
 	tenant := judgeTenant()
 
-	_, err := svc.SubmitBatch(t.Context(), &agentports.BatchCompletionRequest{
+	_, err := svc.SubmitBatch(t.Context(), &llmports.BatchCompletionRequest{
 		TenantInfo: tenant,
 		Task:       aiprovider.TaskEvaluationJudge,
-		Items: []agentports.BatchCompletionItem{
+		Items: []llmports.BatchCompletionItem{
 			judgeItem(tenant, "aeval_1", "Yes."),
 			judgeItem(tenant, "aeval_1", "No."),
 		},
@@ -262,7 +269,7 @@ func TestBatchStatus_SaysWhenTheBatchHasEnded(t *testing.T) {
 	provider := claudeJudge()
 	svc, _, _ := newBatchService(t, provider)
 
-	status, err := svc.BatchStatus(t.Context(), &agentports.BatchStatusRequest{
+	status, err := svc.BatchStatus(t.Context(), &llmports.BatchStatusRequest{
 		TenantInfo: judgeTenant(),
 		ProviderID: provider.ID,
 		BatchID:    "msgbatch_7",
@@ -289,7 +296,7 @@ func TestBatchResults_RecordsEachRunItemOnceAtTheBatchRate(t *testing.T) {
 			Feature:           aiusage.FeatureAgentEvaluation,
 		}
 	}
-	req := &agentports.BatchResultsRequest{
+	req := &llmports.BatchResultsRequest{
 		TenantInfo:  tenant,
 		Task:        aiprovider.TaskEvaluationJudge,
 		ProviderID:  provider.ID,
@@ -322,7 +329,11 @@ func TestBatchResults_RecordsEachRunItemOnceAtTheBatchRate(t *testing.T) {
 	assert.False(t, results["aeval_2"].Succeeded())
 	assert.Equal(t, "api_error", results["aeval_2"].FailureCode)
 	assert.Equal(t, "expired", results["aeval_3"].FailureCode)
-	assert.False(t, results["aeval_4"].Succeeded(), "prose where an object was asked for is unusable")
+	assert.False(
+		t,
+		results["aeval_4"].Succeeded(),
+		"prose where an object was asked for is unusable",
+	)
 	assert.Equal(t, "unusable", results["aeval_4"].FailureCode)
 
 	rows := usage.recorded(t, 3)

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -72,9 +72,9 @@ func TestWindowsCutAWordLongerThanAWindow(t *testing.T) {
 	assert.Len(t, []rune(windows[0]), windowRunes()*maxWindowMultiplier)
 }
 
-func documentSource(pages ...string) *agentports.RetrievalDocumentSource {
+func documentSource(pages ...string) *retrievalports.RetrievalDocumentSource {
 	docID := pulid.MustNew("doc_")
-	source := &agentports.RetrievalDocumentSource{
+	source := &retrievalports.RetrievalDocumentSource{
 		Document: &document.Document{
 			ID:               docID,
 			OriginalName:     "acme-ratecon.pdf",
@@ -246,7 +246,7 @@ func TestChangedChunksDiffsByIndexAndHash(t *testing.T) {
 	chunks := sealChunks(DocumentChunkerVersion, []Chunk{
 		{Text: "unchanged"}, {Text: "edited"}, {Text: "new"},
 	})
-	stored := []agentports.EmbeddingChunkHash{
+	stored := []retrievalports.EmbeddingChunkHash{
 		{ChunkIndex: 0, ContentHash: chunks[0].Hash},
 		{ChunkIndex: 1, ContentHash: ChunkHash(DocumentChunkerVersion, "before the edit")},
 		{ChunkIndex: 7, ContentHash: "dropped"},

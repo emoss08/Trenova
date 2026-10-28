@@ -42,6 +42,9 @@ packages:
   github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/agentports:
     config:
       all: true
@@ -51,7 +54,13 @@ packages:
   github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports:
@@ -69,6 +78,9 @@ packages:
   github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports:
     config:
       all: true
@@ -81,6 +93,9 @@ packages:
   github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/assistantports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/briefingports:
     config:
       all: true
@@ -90,7 +105,28 @@ packages:
   github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/insightports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/llmports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/productguideports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports:

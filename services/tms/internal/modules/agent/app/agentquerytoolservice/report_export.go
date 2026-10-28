@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/keel/analytics/ir"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -34,7 +34,7 @@ func ReportOfPreview(
 	arguments map[string]any,
 ) (*PreviewedReport, error) {
 	tool := &previewReportTool{reports: reports}
-	params := &agentports.QueryToolParams{
+	params := &agenttoolports.QueryToolParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		Actor:          actor,
@@ -66,7 +66,7 @@ func ReportOfPreview(
 
 // ReportingRequestFor is the reporting request a person's actor makes.
 func ReportingRequestFor(actor *permissionports.RequestActor) reporting.Request {
-	return reportingRequestFor(&agentports.QueryToolParams{
+	return reportingRequestFor(&agenttoolports.QueryToolParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		Actor:          actor,

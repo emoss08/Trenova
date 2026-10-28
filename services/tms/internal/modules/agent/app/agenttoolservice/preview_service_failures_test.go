@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -38,9 +38,11 @@ func (f *detectingFailures) plan() (*servicefailureports.ServiceFailureDetection
 	}
 
 	plan := &servicefailureports.ServiceFailureDetectionPlan{
-		Shipment:     f.shipment,
-		Detected:     make([]servicefailureports.DetectedServiceFailure, 0, len(f.late)),
-		SkippedStops: []servicefailureports.ServiceFailureSkippedStop{{Reason: "not late after grace"}},
+		Shipment: f.shipment,
+		Detected: make([]servicefailureports.DetectedServiceFailure, 0, len(f.late)),
+		SkippedStops: []servicefailureports.ServiceFailureSkippedStop{
+			{Reason: "not late after grace"},
+		},
 	}
 	for _, stop := range f.late {
 		failure := &servicefailure.ServiceFailure{
@@ -144,7 +146,7 @@ func lateShipment() (*shipment.Shipment, *shipment.Stop, *shipment.Stop) {
 	}, pickup, delivery
 }
 
-func evaluateParams(entity *shipment.Shipment) agentports.ToolExecuteParams {
+func evaluateParams(entity *shipment.Shipment) agenttoolports.ToolExecuteParams {
 	return agenttoolstest.ExecuteParams(map[string]any{"shipmentId": entity.ID.String()})
 }
 
@@ -173,9 +175,13 @@ func TestEvaluateServiceFailures_PreviewMatchesWhatIsSaved(t *testing.T) {
 	tool := operationstools.NewEvaluateServiceFailuresTool(failures).(*operationstools.EvaluateServiceFailuresTool)
 	params := evaluateParams(entity)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &failures.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&failures.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	assert.Empty(t, preview.Warnings)
 	assert.Contains(t, preview.Summary, "S-40211")
@@ -200,12 +206,25 @@ func TestEvaluateServiceFailures_PreviewMatchesWhatIsSaved(t *testing.T) {
 	delayed := agenttoolstest.PreviewChange(t, preview, 2)
 	assert.Equal(t, permission.ResourceShipment, delayed.Resource)
 	assert.Equal(t, entity.ID, delayed.EntityID)
-	assert.Equal(t, string(shipment.StatusDelayed), agenttoolstest.FieldByPath(t, delayed, "status").After)
+	assert.Equal(
+		t,
+		string(shipment.StatusDelayed),
+		agenttoolstest.FieldByPath(t, delayed, "status").After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.Len(t, failures.saved, 2)
-	agenttoolstest.RequireUpdateParity(t, refreshed, &before, failures.saved[0], operationstools.DetectedFailureOptions()...)
-	agenttoolstest.RequireCreateParity(t, opened, failures.saved[1], operationstools.DetectedFailureOptions()...)
+	agenttoolstest.RequireUpdateParity(
+		t,
+		refreshed,
+		&before,
+		failures.saved[0],
+		operationstools.DetectedFailureOptions()...)
+	agenttoolstest.RequireCreateParity(
+		t,
+		opened,
+		failures.saved[1],
+		operationstools.DetectedFailureOptions()...)
 	assert.True(t, failures.delayed)
 }
 
@@ -216,9 +235,13 @@ func TestEvaluateServiceFailures_PreviewSaysWhenNothingIsLate(t *testing.T) {
 	failures := &detectingFailures{shipment: entity}
 	tool := operationstools.NewEvaluateServiceFailuresTool(failures).(*operationstools.EvaluateServiceFailuresTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &failures.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), evaluateParams(entity))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&failures.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), evaluateParams(entity))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
 	assert.Empty(t, preview.Warnings)
@@ -235,9 +258,13 @@ func TestEvaluateServiceFailures_PreviewWarnsWhenTheShipmentIsRefused(t *testing
 	}
 	tool := operationstools.NewEvaluateServiceFailuresTool(failures).(*operationstools.EvaluateServiceFailuresTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &failures.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), evaluateParams(entity))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&failures.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), evaluateParams(entity))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,17 +15,21 @@ import (
 func TestProvenanceFields_AreOmittedUntilTheyAreKnown(t *testing.T) {
 	t.Parallel()
 
-	action, err := sonic.MarshalString(PendingAction{ToolName: "dispatch_assign_move"})
+	action, err := sonic.MarshalString(
+		agentruntimeports.PendingAction{ToolName: "dispatch_assign_move"},
+	)
 	require.NoError(t, err)
 	for _, key := range []string{"proposalId", "traceId", "spanId", "tierSource", "executedVersion"} {
 		assert.NotContains(t, action, `"`+key+`"`)
 	}
 
-	outcome, err := sonic.MarshalString(RunStepOutcome{Content: "done"})
+	outcome, err := sonic.MarshalString(agentruntimeports.RunStepOutcome{Content: "done"})
 	require.NoError(t, err)
 	assert.NotContains(t, outcome, `"reason"`)
 
-	attribution, err := sonic.MarshalString(aiusageports.AIUsageAttribution{RunID: pulid.ID("ar_1")})
+	attribution, err := sonic.MarshalString(
+		aiusageports.AIUsageAttribution{RunID: pulid.ID("ar_1")},
+	)
 	require.NoError(t, err)
 	for _, key := range []string{"OwnerKind", "OwnerID", "DelegateCallID", "DefinitionVersion"} {
 		assert.NotContains(t, attribution, `"`+key+`"`)
@@ -36,7 +41,7 @@ func TestProvenanceFields_RoundTrip(t *testing.T) {
 
 	version := int64(0)
 	executed := int64(7)
-	action := PendingAction{
+	action := agentruntimeports.PendingAction{
 		ToolName:        "dispatch_assign_move",
 		ProposalID:      pulid.ID("ap_1"),
 		TraceID:         "4bf92f3577b34da6a3ce929d0e0e4736",
@@ -45,13 +50,13 @@ func TestProvenanceFields_RoundTrip(t *testing.T) {
 		ExecutedVersion: &executed,
 	}
 	attribution := aiusageports.AIUsageAttribution{
-		OwnerKind:         RunStepOwnerAssistantTurn,
+		OwnerKind:         agentruntimeports.RunStepOwnerAssistantTurn,
 		OwnerID:           pulid.ID("atrn_1"),
 		DelegateCallID:    "call_1",
 		DefinitionVersion: &version,
 	}
 
-	var decodedAction PendingAction
+	var decodedAction agentruntimeports.PendingAction
 	encoded, err := sonic.Marshal(action)
 	require.NoError(t, err)
 	require.NoError(t, sonic.Unmarshal(encoded, &decodedAction))
@@ -70,7 +75,7 @@ func TestProvenanceFields_RoundTrip(t *testing.T) {
 func TestProvenanceFields_DecodeFromARecordedPayload(t *testing.T) {
 	t.Parallel()
 
-	var action PendingAction
+	var action agentruntimeports.PendingAction
 	require.NoError(t, sonic.UnmarshalString(
 		`{"toolName":"dispatch_assign_move","arguments":{},"tier":"Propose","executed":false}`,
 		&action,
@@ -80,7 +85,7 @@ func TestProvenanceFields_DecodeFromARecordedPayload(t *testing.T) {
 	assert.Empty(t, action.TierSource)
 	assert.Nil(t, action.ExecutedVersion)
 
-	var outcome RunStepOutcome
+	var outcome agentruntimeports.RunStepOutcome
 	require.NoError(t, sonic.UnmarshalString(`{"content":"done","failed":true}`, &outcome))
 	assert.Empty(t, outcome.Reason)
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -128,10 +128,13 @@ func commodityFields() []masterField[commodity.Commodity] {
 			mdMaxShortName, true, func(c *commodity.Commodity) *string { return &c.Name }),
 		masterText(mdDescription, "What the goods are.", mdMaxNotes, true,
 			func(c *commodity.Commodity) *string { return &c.Description }),
-		masterOptionalID(paramHazmatID, permission.ResourceHazardousMaterial,
+		masterOptionalID(
+			paramHazmatID,
+			permission.ResourceHazardousMaterial,
 			"The hazardous material it is, from masterdata_list_hazardous_materials, when the goods "+
 				"are hazmat.",
-			func(c *commodity.Commodity) *pulid.ID { return &c.HazardousMaterialID }),
+			func(c *commodity.Commodity) *pulid.ID { return &c.HazardousMaterialID },
+		),
 		masterEnum("freightClass", "The NMFC freight class.", freightClasses,
 			func(c *commodity.Commodity) *commodity.FreightClass { return &c.FreightClass }),
 		masterOptionalInt("minTemperature", "The lowest temperature it may be carried at, "+
@@ -162,7 +165,7 @@ func commodityFields() []masterField[commodity.Commodity] {
 	}
 }
 
-func NewCreateCommodityTool(commodities CommodityKeeper) agentports.AgentTool {
+func NewCreateCommodityTool(commodities CommodityKeeper) agenttoolports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[commodity.Commodity]{
 		record: commodityRecord,
 		name:   agentdefinition.ToolCreateCommodity,
@@ -187,7 +190,7 @@ func NewCreateCommodityTool(commodities CommodityKeeper) agentports.AgentTool {
 	})
 }
 
-func NewUpdateCommodityTool(commodities CommodityKeeper) agentports.AgentTool {
+func NewUpdateCommodityTool(commodities CommodityKeeper) agenttoolports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[commodity.Commodity]{
 		record: commodityRecord,
 		name:   "masterdata_update_commodity",
@@ -214,7 +217,7 @@ func NewUpdateCommodityTool(commodities CommodityKeeper) agentports.AgentTool {
 	})
 }
 
-func NewUpdateCommodityStatusTool(commodities CommodityKeeper) agentports.AgentTool {
+func NewUpdateCommodityStatusTool(commodities CommodityKeeper) agenttoolports.AgentTool {
 	return newMasterStatusTool(&masterStatusSpec[commodity.Commodity, domaintypes.Status]{
 		record: commodityRecord,
 		name:   "masterdata_set_commodity_status",
@@ -451,7 +454,7 @@ var mdHazmatPolicy = masterPolicy{
 	taintHold:   mdTaintHold,
 }
 
-func NewCreateHazardousMaterialTool(materials HazmatKeeper) agentports.AgentTool {
+func NewCreateHazardousMaterialTool(materials HazmatKeeper) agenttoolports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[hazardousmaterial.HazardousMaterial]{
 		record: hazmatRecord,
 		name:   "masterdata_create_hazardous_material",
@@ -478,7 +481,7 @@ func NewCreateHazardousMaterialTool(materials HazmatKeeper) agentports.AgentTool
 	})
 }
 
-func NewUpdateHazardousMaterialTool(materials HazmatKeeper) agentports.AgentTool {
+func NewUpdateHazardousMaterialTool(materials HazmatKeeper) agenttoolports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[hazardousmaterial.HazardousMaterial]{
 		record: hazmatRecord,
 		name:   "masterdata_update_hazardous_material",
@@ -505,7 +508,7 @@ func NewUpdateHazardousMaterialTool(materials HazmatKeeper) agentports.AgentTool
 	})
 }
 
-func NewUpdateHazardousMaterialStatusTool(materials HazmatKeeper) agentports.AgentTool {
+func NewUpdateHazardousMaterialStatusTool(materials HazmatKeeper) agenttoolports.AgentTool {
 	return newMasterStatusTool(
 		&masterStatusSpec[hazardousmaterial.HazardousMaterial, domaintypes.Status]{
 			record: hazmatRecord,

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,9 +18,9 @@ type failingVectorizer struct{ err error }
 
 func (v failingVectorizer) Vectorize(
 	context.Context,
-	*agentports.QueryVectorRequest,
-) (agentports.QueryVector, error) {
-	return agentports.QueryVector{}, v.err
+	*retrievalports.QueryVectorRequest,
+) (retrievalports.QueryVector, error) {
+	return retrievalports.QueryVector{}, v.err
 }
 
 func (v failingVectorizer) Availability(
@@ -34,9 +34,9 @@ type failingSimilarities struct{ err error }
 
 func (f failingSimilarities) Similarities(
 	context.Context,
-	*agentports.CatalogSimilarityRequest,
-) (agentports.CatalogSimilarities, error) {
-	return agentports.CatalogSimilarities{}, f.err
+	*retrievalports.CatalogSimilarityRequest,
+) (retrievalports.CatalogSimilarities, error) {
+	return retrievalports.CatalogSimilarities{}, f.err
 }
 
 func observedRuntime(t *testing.T, err error) (*Service, *observer.ObservedLogs) {
@@ -55,7 +55,7 @@ func embedAndCompare(t *testing.T, service *Service) {
 	t.Helper()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	query := service.vectorize(t.Context(), &agentports.QueryVectorRequest{
+	query := service.vectorize(t.Context(), &retrievalports.QueryVectorRequest{
 		TenantInfo: tenant,
 		Text:       "which invoices are past due",
 	})

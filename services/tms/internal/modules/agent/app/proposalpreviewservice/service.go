@@ -20,6 +20,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -80,32 +82,32 @@ type Params struct {
 
 	Logger      *zap.Logger
 	DB          kernelports.Transactor
-	Tools       agentports.AgentToolRegistry
-	Versions    agentports.RecordVersionReader `optional:"true"`
-	Labeler     agentports.RecordLabeler       `optional:"true"`
+	Tools       agenttoolports.AgentToolRegistry
+	Versions    agenttoolports.RecordVersionReader `optional:"true"`
+	Labeler     agentruntimeports.RecordLabeler    `optional:"true"`
 	Baselines   agentports.AgentProposalBaselineRepository
 	Decisions   agentports.AgentDecisionRepository
 	Proposals   agentports.AgentProposalRepository
 	Executor    *proposalexecutor.Service
 	Permissions permissionports.PermissionEngine
-	Metrics     *metrics.Registry               `optional:"true"`
-	Zones       agentports.TenantTimezoneReader `optional:"true"`
-	Runs        agentports.AgentRunRepository
+	Metrics     *metrics.Registry                   `optional:"true"`
+	Zones       agenttoolports.TenantTimezoneReader `optional:"true"`
+	Runs        agentruntimeports.AgentRunRepository
 }
 
 type Service struct {
 	l           *zap.Logger
 	db          kernelports.Transactor
-	tools       agentports.AgentToolRegistry
-	versions    agentports.RecordVersionReader
-	labeler     agentports.RecordLabeler
+	tools       agenttoolports.AgentToolRegistry
+	versions    agenttoolports.RecordVersionReader
+	labeler     agentruntimeports.RecordLabeler
 	baselines   baselineStore
 	decisions   decisionReader
 	steps       stepReader
 	checker     modificationChecker
 	permissions permissionports.PermissionEngine
 	metrics     *metrics.ProposalPreview
-	zones       agentports.TenantTimezoneReader
+	zones       agenttoolports.TenantTimezoneReader
 	runs        proposalexecutor.RunReader
 	now         func() int64
 	readTimeout time.Duration
@@ -113,7 +115,7 @@ type Service struct {
 }
 
 //nolint:gocritic // fx.In parameter structs are passed by value
-func New(p Params) agentports.ProposalPreviewService {
+func New(p Params) agentruntimeports.ProposalPreviewService {
 	svc := &Service{
 		l:           p.Logger.Named("service.proposal-preview"),
 		db:          p.DB,
@@ -150,7 +152,7 @@ func New(p Params) agentports.ProposalPreviewService {
 
 func (s *Service) ForProposal(
 	ctx context.Context,
-	req *agentports.ProposalPreviewRequest,
+	req *agentruntimeports.ProposalPreviewRequest,
 ) (*agent.ProposalPreview, error) {
 	if req == nil || req.Proposal == nil {
 		return nil, errortypes.NewNotFoundError("Proposal not found")
@@ -198,7 +200,7 @@ func (s *Service) reviewRequired(proposal *agent.AgentProposal, modifications ma
 
 func (s *Service) forProposal(
 	ctx context.Context,
-	req *agentports.ProposalPreviewRequest,
+	req *agentruntimeports.ProposalPreviewRequest,
 	actor *permissionports.RequestActor,
 ) (*agent.ProposalPreview, error) {
 	proposal := req.Proposal
@@ -225,7 +227,7 @@ func (s *Service) forProposal(
 
 func (s *Service) ForPlan(
 	ctx context.Context,
-	req *agentports.PlanPreviewRequest,
+	req *agentruntimeports.PlanPreviewRequest,
 ) (*agent.PlanPreview, error) {
 	if req == nil || req.Plan == nil {
 		return nil, errortypes.NewNotFoundError("Agent plan not found")
@@ -368,7 +370,7 @@ func (s *Service) planSteps(
 func (s *Service) ForDecision(
 	ctx context.Context,
 	decision *agent.AgentDecision,
-	viewer *agentports.PreviewViewer,
+	viewer *agentruntimeports.PreviewViewer,
 ) *agent.ProposalPreview {
 	if decision == nil || decision.Preview == nil {
 		return nil
@@ -400,7 +402,7 @@ func (s *Service) observe(
 	s.metrics.RecordPreview(tool, string(preview.Coverage), time.Since(started).Seconds())
 }
 
-func viewerActor(viewer *agentports.PreviewViewer) *permissionports.RequestActor {
+func viewerActor(viewer *agentruntimeports.PreviewViewer) *permissionports.RequestActor {
 	if viewer == nil {
 		return nil
 	}

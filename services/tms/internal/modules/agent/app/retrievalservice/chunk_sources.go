@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -44,7 +44,7 @@ type documentPage struct {
 	text   string
 }
 
-func documentPages(source *agentports.RetrievalDocumentSource) []documentPage {
+func documentPages(source *retrievalports.RetrievalDocumentSource) []documentPage {
 	pages := make([]documentPage, 0, len(source.Pages))
 	for _, page := range source.Pages {
 		if text := strings.TrimSpace(page.ExtractedText); text != "" {
@@ -62,7 +62,7 @@ func documentPages(source *agentports.RetrievalDocumentSource) []documentPage {
 	return pages
 }
 
-func documentHeader(source *agentports.RetrievalDocumentSource) string {
+func documentHeader(source *retrievalports.RetrievalDocumentSource) string {
 	doc := source.Document
 
 	var b strings.Builder
@@ -82,7 +82,7 @@ func documentHeader(source *agentports.RetrievalDocumentSource) string {
 	return b.String()
 }
 
-func documentKind(source *agentports.RetrievalDocumentSource) string {
+func documentKind(source *retrievalports.RetrievalDocumentSource) string {
 	if source.Content != nil && source.Content.DetectedDocumentKind != "" {
 		return source.Content.DetectedDocumentKind
 	}
@@ -90,7 +90,7 @@ func documentKind(source *agentports.RetrievalDocumentSource) string {
 	return source.Document.DetectedKind
 }
 
-func documentPageCount(source *agentports.RetrievalDocumentSource, pages []documentPage) int {
+func documentPageCount(source *retrievalports.RetrievalDocumentSource, pages []documentPage) int {
 	count := 0
 	if source.Content != nil {
 		count = source.Content.PageCount
@@ -102,7 +102,7 @@ func documentPageCount(source *agentports.RetrievalDocumentSource, pages []docum
 	return count
 }
 
-func ChunkDocument(source *agentports.RetrievalDocumentSource) []Chunk {
+func ChunkDocument(source *retrievalports.RetrievalDocumentSource) []Chunk {
 	if source == nil || source.Document == nil {
 		return nil
 	}

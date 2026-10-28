@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,7 +30,7 @@ const (
 type Params struct {
 	fx.In
 
-	Gateway              agentports.RealtimeGateway
+	Gateway              realtimeports.RealtimeGateway
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Config               *config.Config
@@ -38,7 +38,7 @@ type Params struct {
 }
 
 type Handler struct {
-	gateway     agentports.RealtimeGateway
+	gateway     realtimeports.RealtimeGateway
 	eh          *helpers.ErrorHandler
 	pm          *middleware.PermissionMiddleware
 	maxLifetime time.Duration
@@ -116,12 +116,12 @@ func (h *Handler) stream(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	rt, err := h.gateway.Open(ctx, &agentports.OpenRealtimeStreamRequest{
+	rt, err := h.gateway.Open(ctx, &realtimeports.OpenRealtimeStreamRequest{
 		OrganizationID: authCtx.OrganizationID,
 		BusinessUnitID: authCtx.BusinessUnitID,
 		UserID:         authCtx.UserID,
 		Portal:         authCtx.IsPortalUser,
-		JoinUsers:      c.Query("presence") == agentports.RealtimeScopeUsers,
+		JoinUsers:      c.Query("presence") == realtimeports.RealtimeScopeUsers,
 		LastEventID:    cursorFrom(c),
 	})
 	if err != nil {
@@ -156,7 +156,7 @@ func (h *Handler) stream(c *gin.Context) {
 		case <-ctx.Done():
 			return
 		case <-rotate.C:
-			h.emitClose(stream, agentports.RealtimeCloseRotate)
+			h.emitClose(stream, realtimeports.RealtimeCloseRotate)
 			return
 		case frame, ok := <-frames:
 			if !ok {
@@ -169,7 +169,7 @@ func (h *Handler) stream(c *gin.Context) {
 }
 
 func (h *Handler) emitClose(stream *helpers.EventStream, reason string) {
-	if err := stream.Emit(agentports.RealtimeEventClose, agentports.RealtimeCloseEvent{
+	if err := stream.Emit(realtimeports.RealtimeEventClose, realtimeports.RealtimeCloseEvent{
 		Reason: reason,
 	}); err != nil {
 		h.l.Debug("could not send realtime close notice", zap.Error(err))
@@ -243,7 +243,7 @@ func (h *Handler) typingShipmentComments(c *gin.Context) {
 		return
 	}
 
-	if err := h.gateway.SignalTyping(c.Request.Context(), &agentports.RealtimeTypingRequest{
+	if err := h.gateway.SignalTyping(c.Request.Context(), &realtimeports.RealtimeTypingRequest{
 		RealtimeScopeRequest: *scopeRequest(c, body.ConnectionID, scope),
 		Stop:                 body.Stop,
 	}); err != nil {
@@ -383,10 +383,10 @@ func (h *Handler) shipmentCommentsScope(c *gin.Context) (string, bool) {
 	return shipmentCommentsNS + shipmentID, true
 }
 
-func scopeRequest(c *gin.Context, connectionID, scope string) *agentports.RealtimeScopeRequest {
+func scopeRequest(c *gin.Context, connectionID, scope string) *realtimeports.RealtimeScopeRequest {
 	authCtx := authctx.GetAuthContext(c)
 
-	return &agentports.RealtimeScopeRequest{
+	return &realtimeports.RealtimeScopeRequest{
 		OrganizationID: authCtx.OrganizationID,
 		BusinessUnitID: authCtx.BusinessUnitID,
 		UserID:         authCtx.UserID,

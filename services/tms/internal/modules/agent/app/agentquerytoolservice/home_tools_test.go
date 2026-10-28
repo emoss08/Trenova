@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -48,7 +48,7 @@ func TestGetMyHomeLayout_ReadsThePersonsOwnHomePage(t *testing.T) {
 
 	kpi, ok := homelayout.WidgetDefinitionFor(homelayout.WidgetKPI)
 	require.True(t, ok)
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"HomeLayout": {Data: map[string]any{"homeLayout": map[string]any{
 			"source": "rolePreset", "presetName": "Dispatch", "canCustomize": true,
 			"version": 4,

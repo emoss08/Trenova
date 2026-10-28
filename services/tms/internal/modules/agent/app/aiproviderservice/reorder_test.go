@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -18,7 +18,7 @@ import (
 )
 
 type chainRepo struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 	providers map[pulid.ID]*aiprovider.Provider
 	order     []pulid.ID
 	updated   []*aiprovider.Provider
@@ -48,7 +48,7 @@ func (r *chainRepo) ListOrdered(
 
 func (r *chainRepo) GetByID(
 	_ context.Context,
-	req agentports.GetAIProviderByIDRequest,
+	req aiproviderports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	provider, ok := r.providers[req.ID]
 	if !ok {
@@ -124,7 +124,7 @@ func TestReorderWritesOnlyTheProvidersWhosePlaceChanged(t *testing.T) {
 	)
 	svc, audit, versions := chainService(repo)
 
-	ordered, err := svc.Reorder(t.Context(), &agentports.ReorderAIProvidersRequest{
+	ordered, err := svc.Reorder(t.Context(), &aiproviderports.ReorderAIProvidersRequest{
 		TenantInfo:  chainTenant,
 		ProviderIDs: []pulid.ID{"aip_a", "aip_c", "aip_b"},
 	}, &permissionports.RequestActor{UserID: pulid.ID("usr_1")})
@@ -161,7 +161,7 @@ func TestReorderRefusesAnOrderThatDoesNotNameEveryProviderOnce(t *testing.T) {
 		"duplicate": {"aip_a", "aip_a"},
 		"unknown":   {"aip_a", "aip_x"},
 	} {
-		_, err := svc.Reorder(t.Context(), &agentports.ReorderAIProvidersRequest{
+		_, err := svc.Reorder(t.Context(), &aiproviderports.ReorderAIProvidersRequest{
 			TenantInfo: chainTenant, ProviderIDs: ids,
 		}, nil)
 		require.Error(t, err, name)
@@ -175,7 +175,7 @@ func TestAssignTaskAddsTheTaskOnce(t *testing.T) {
 	repo := newChainRepo(chainProvider("aip_a", 10, aiprovider.TaskAssistantChat))
 	svc, audit, _ := chainService(repo)
 
-	saved, err := svc.AssignTask(t.Context(), &agentports.AssignAIProviderTaskRequest{
+	saved, err := svc.AssignTask(t.Context(), &aiproviderports.AssignAIProviderTaskRequest{
 		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aiprovider.TaskOperationalInsights,
 	}, nil)
 	require.NoError(t, err)
@@ -185,7 +185,7 @@ func TestAssignTaskAddsTheTaskOnce(t *testing.T) {
 	assert.Empty(t, saved.APIKey)
 	assert.Equal(t, 1, audit.comments)
 
-	again, err := svc.AssignTask(t.Context(), &agentports.AssignAIProviderTaskRequest{
+	again, err := svc.AssignTask(t.Context(), &aiproviderports.AssignAIProviderTaskRequest{
 		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aiprovider.TaskOperationalInsights,
 	}, nil)
 	require.NoError(t, err)
@@ -198,7 +198,7 @@ func TestAssignTaskRefusesAnUnknownTask(t *testing.T) {
 	repo := newChainRepo(chainProvider("aip_a", 10, aiprovider.TaskGeneral))
 	svc, _, _ := chainService(repo)
 
-	_, err := svc.AssignTask(t.Context(), &agentports.AssignAIProviderTaskRequest{
+	_, err := svc.AssignTask(t.Context(), &aiproviderports.AssignAIProviderTaskRequest{
 		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aiprovider.Task("Juggling"),
 	}, nil)
 	require.Error(t, err)
@@ -227,13 +227,13 @@ func TestRoutingChangesForgetCachedAnalytics(t *testing.T) {
 	svc.analytics = epochs
 	actor := &permissionports.RequestActor{UserID: pulid.ID("usr_1")}
 
-	_, err := svc.RouteTask(t.Context(), &agentports.RouteAIProviderTaskRequest{
+	_, err := svc.RouteTask(t.Context(), &aiproviderports.RouteAIProviderTaskRequest{
 		TenantInfo: chainTenant,
 		Task:       aiprovider.TaskAssistantChat,
 		ProviderID: pulid.ID("aip_b"),
 	}, actor)
 	require.NoError(t, err)
-	_, err = svc.Reorder(t.Context(), &agentports.ReorderAIProvidersRequest{
+	_, err = svc.Reorder(t.Context(), &aiproviderports.ReorderAIProvidersRequest{
 		TenantInfo:  chainTenant,
 		ProviderIDs: []pulid.ID{"aip_b", "aip_a"},
 	}, actor)
@@ -253,7 +253,7 @@ func TestAReorderThatMovesNothingKeepsCachedAnalytics(t *testing.T) {
 	epochs := &analyticsEpochs{}
 	svc.analytics = epochs
 
-	_, err := svc.Reorder(t.Context(), &agentports.ReorderAIProvidersRequest{
+	_, err := svc.Reorder(t.Context(), &aiproviderports.ReorderAIProvidersRequest{
 		TenantInfo:  chainTenant,
 		ProviderIDs: []pulid.ID{"aip_a", "aip_b"},
 	}, &permissionports.RequestActor{UserID: pulid.ID("usr_1")})

@@ -5,8 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -14,8 +16,8 @@ import (
 
 func (s *Service) startToolSpan(
 	ctx context.Context,
-	req *agentports.RunRequest,
-	call *agentports.ToolCall,
+	req *agentruntimeports.RunRequest,
+	call *llmports.ToolCall,
 	key string,
 ) (context.Context, trace.Span) {
 	spec := &aitrace.ToolSpec{
@@ -24,7 +26,7 @@ func (s *Service) startToolSpan(
 		CallID:   call.ID,
 		StepKey:  key,
 	}
-	if policy, ok := agentports.PolicyOf(s.toolNamed(call.Name)); ok {
+	if policy, ok := agenttoolports.PolicyOf(s.toolNamed(call.Name)); ok {
 		spec.Effect = string(policy.EffectiveEffect())
 		spec.Kind = string(policy.Kind)
 	}
@@ -51,7 +53,7 @@ func markCaller(span trace.Span, caller string, index int) {
 	}
 }
 
-func runAnchor(req *agentports.RunRequest) aitrace.Anchor {
+func runAnchor(req *agentruntimeports.RunRequest) aitrace.Anchor {
 	if anchor := aitrace.ForRun(req.StepOwner, req.Delegation); anchor.IsValid() {
 		return anchor
 	}
@@ -59,13 +61,13 @@ func runAnchor(req *agentports.RunRequest) aitrace.Anchor {
 	return aitrace.ForAttribution(&aiusageports.AIUsageAttribution{RunID: req.RunID})
 }
 
-func stepState(state agentports.StepState) string {
+func stepState(state agentruntimeports.StepState) string {
 	switch state {
-	case agentports.StepFresh:
+	case agentruntimeports.StepFresh:
 		return aitrace.StepStateFresh
-	case agentports.StepCompleted, agentports.StepFailed:
+	case agentruntimeports.StepCompleted, agentruntimeports.StepFailed:
 		return aitrace.StepStateReplayed
-	case agentports.StepUnknown:
+	case agentruntimeports.StepUnknown:
 		return aitrace.StepStateUnknown
 	default:
 		return ""
@@ -122,7 +124,7 @@ func (o *toolOutcome) verdictOrDerived() string {
 	return derivedVerdict(o.failed, o.action)
 }
 
-func derivedVerdict(failed bool, action *agentports.PendingAction) string {
+func derivedVerdict(failed bool, action *agentruntimeports.PendingAction) string {
 	switch {
 	case action != nil && action.Simulated:
 		return aitrace.OutcomeSimulated
@@ -141,7 +143,7 @@ func derivedVerdict(failed bool, action *agentports.PendingAction) string {
 
 func stampAction(
 	ctx context.Context,
-	action *agentports.PendingAction,
+	action *agentruntimeports.PendingAction,
 	source agent.TierSource,
 	stepKey string,
 ) {

@@ -30,7 +30,7 @@ domain write ── PublishResourceInvalidation ──▶ in-memory queue ──
 
 ## Publishing
 
-Call `agentports.RealtimeService.PublishResourceInvalidation` after a write
+Call `realtimeports.RealtimeService.PublishResourceInvalidation` after a write
 commits. It validates the request, encodes the event once (plus a redacted copy
 for portal readers) and puts it on a bounded queue. It does not wait on Redis
 or anything else, so it is safe on a hot path: a bulk operation that publishes
@@ -98,7 +98,7 @@ once and hands it to the streams open on that replica for the entry's tenant.
 
 ## Reading changes from a worker
 
-`realtimebroker.ChangeFeed` (`agentports.RecordChangeFeed`, provided with the
+`realtimebroker.ChangeFeed` (`realtimeports.RecordChangeFeed`, provided with the
 publisher in every process) lets code that is not a browser ask what changed to
 a set of records since a cursor: `Head` names the tenant's shard and newest entry,
 and `Since` scans forward from it, bounded, keeping tenant-wide invalidations

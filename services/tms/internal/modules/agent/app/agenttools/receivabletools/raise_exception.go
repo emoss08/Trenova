@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -58,7 +59,7 @@ type RaiseExceptionTool struct {
 func NewRaiseExceptionTool(
 	exceptions agentports.AgentExceptionService,
 	subjects agentports.AgentSubjectRepository,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &RaiseExceptionTool{exceptions: exceptions, subjects: subjects}
 }
 
@@ -149,8 +150,8 @@ func (t *RaiseExceptionTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *RaiseExceptionTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *RaiseExceptionTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceAgentException,
@@ -169,7 +170,7 @@ func (t *RaiseExceptionTool) Policy() agentports.ToolPolicy {
 
 func (t *RaiseExceptionTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -187,7 +188,7 @@ func (t *RaiseExceptionTool) Execute(
 
 func (t *RaiseExceptionTool) request(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentports.FlagAgentExceptionRequest, error) {
 	if params.RunID.IsNil() {
 		return nil, ErrMissingRun
@@ -250,7 +251,7 @@ func (t *RaiseExceptionTool) request(
 
 func (t *RaiseExceptionTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -296,7 +297,7 @@ func givenEvidence(params map[string]any) ([]agent.EvidenceRef, error) {
 // approval runs it long after the proposal was validated.
 func (t *RaiseExceptionTool) subject(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (agent.SubjectType, pulid.ID, error) {
 	subjectTypeRaw, err := common.RequireString(params.Params, "subjectType")
 	if err != nil {

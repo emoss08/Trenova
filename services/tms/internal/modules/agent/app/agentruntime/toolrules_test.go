@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -28,8 +29,8 @@ func (f *fakeToolRules) For(
 	return f.rules, f.err
 }
 
-func ruledPolicy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func ruledPolicy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          "shipment_update",
 		Kind:          agent.ToolKindAction,
 		DefaultTier:   agent.TierAutoExecute,
@@ -38,8 +39,8 @@ func ruledPolicy() agentports.ToolPolicy {
 	}
 }
 
-func ruledRequest() *agentports.RunRequest {
-	return &agentports.RunRequest{
+func ruledRequest() *agentruntimeports.RunRequest {
+	return &agentruntimeports.RunRequest{
 		Actor: &permissionports.RequestActor{OrganizationID: "org_1", BusinessUnitID: "bu_1"},
 	}
 }
@@ -48,7 +49,10 @@ func TestRuled_AppliesTheOrganizationsRule(t *testing.T) {
 	t.Parallel()
 
 	rules := &fakeToolRules{rules: map[string]*agent.ToolRuleOverride{
-		"shipment_update": {MaxTier: agent.TierActWithApproval, ReadsExternal: agent.ExternalReadAlways},
+		"shipment_update": {
+			MaxTier:       agent.TierActWithApproval,
+			ReadsExternal: agent.ExternalReadAlways,
+		},
 	}}
 	s := &Service{rules: rules, logger: zap.NewNop()}
 

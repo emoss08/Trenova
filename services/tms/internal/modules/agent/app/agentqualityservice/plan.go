@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -198,7 +198,7 @@ func (s *Service) chatProvider(
 		return resolvedProvider{}, nil
 	}
 
-	candidates, err := s.providers.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
+	candidates, err := s.providers.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
 		Task:       aiprovider.TaskAssistantChat,
 		TenantInfo: tenant,
 	})

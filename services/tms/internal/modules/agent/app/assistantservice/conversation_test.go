@@ -10,8 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,7 @@ import (
 )
 
 type stubConversations struct {
-	agentports.ConversationRepository
+	assistantports.ConversationRepository
 
 	thread   *conversation.Thread
 	appended []conversation.Message
@@ -30,18 +31,18 @@ type stubConversations struct {
 	appendCalls  int
 	// messages is what ListMessages serves; lastList is what it was asked.
 	messages []conversation.Message
-	lastList agentports.ListMessagesRequest
+	lastList assistantports.ListMessagesRequest
 	// count is the thread's length as CountMessages reports it.
 	count int
 	// tainted is every time the thread's taint was written.
-	tainted []agentports.MarkThreadTaintedRequest
+	tainted []assistantports.MarkThreadTaintedRequest
 	// contexts is every time the thread's context use was written.
-	contexts []agentports.UpdateThreadContextRequest
+	contexts []assistantports.UpdateThreadContextRequest
 }
 
 func (s *stubConversations) UpdateThreadContext(
 	_ context.Context,
-	req agentports.UpdateThreadContextRequest,
+	req assistantports.UpdateThreadContextRequest,
 ) error {
 	s.contexts = append(s.contexts, req)
 
@@ -50,7 +51,7 @@ func (s *stubConversations) UpdateThreadContext(
 
 func (s *stubConversations) MarkThreadTainted(
 	_ context.Context,
-	req agentports.MarkThreadTaintedRequest,
+	req assistantports.MarkThreadTaintedRequest,
 ) error {
 	s.tainted = append(s.tainted, req)
 
@@ -59,21 +60,21 @@ func (s *stubConversations) MarkThreadTainted(
 
 func (s *stubConversations) CountMessages(
 	context.Context,
-	agentports.CountMessagesRequest,
+	assistantports.CountMessagesRequest,
 ) (int, error) {
 	return s.count, nil
 }
 
 func (s *stubConversations) GetThread(
 	context.Context,
-	agentports.GetThreadRequest,
+	assistantports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return s.thread, nil
 }
 
 func (s *stubConversations) ListMessages(
 	_ context.Context,
-	req agentports.ListMessagesRequest,
+	req assistantports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	s.lastList = req
 
@@ -82,7 +83,7 @@ func (s *stubConversations) ListMessages(
 
 func (s *stubConversations) AppendTurn(
 	ctx context.Context,
-	req agentports.AppendTurnRequest,
+	req assistantports.AppendTurnRequest,
 ) ([]conversation.Message, error) {
 	s.appended = req.Messages
 	s.appendCtxErr = ctx.Err()
@@ -129,13 +130,13 @@ func newConversationService(
 func TestSendMessageStream_StoresThePageContextOnTheUserTurn(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		textTurn("It is at the Los Angeles terminal."),
 	}}
 	svc, conversations := newConversationService(completion, testDefinition())
 	actor := testActor()
 
-	result, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	result, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID: conversations.thread.ID,
 		Content:  "Where is this shipment?",
 		Page: &agent.PageContext{
@@ -173,13 +174,13 @@ func TestSendMessageStream_StoresThePageContextOnTheUserTurn(t *testing.T) {
 func TestSendMessageStream_RejectsAPageContextItCouldNotTrust(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		textTurn("never reached"),
 	}}
 	svc, conversations := newConversationService(completion, testDefinition())
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID: conversations.thread.ID,
 		Content:  "Where is this?",
 		Page: &agent.PageContext{
@@ -228,8 +229,8 @@ func TestListMessages_PagesFromTheEndAndSaysWhetherMoreExist(t *testing.T) {
 	conversations.count = 13
 	before := 13
 
-	page, err := svc.ListMessages(t.Context(), agentports.ListThreadMessagesRequest{
-		Thread:         agentports.GetThreadRequest{ID: conversations.thread.ID},
+	page, err := svc.ListMessages(t.Context(), assistantports.ListThreadMessagesRequest{
+		Thread:         assistantports.GetThreadRequest{ID: conversations.thread.ID},
 		Limit:          2,
 		BeforeSequence: &before,
 	})
@@ -253,8 +254,8 @@ func TestListMessages_ReportsTheLastPageAsSuch(t *testing.T) {
 	conversations.messages = numberedMessages(0, 2)
 	conversations.count = 2
 
-	page, err := svc.ListMessages(t.Context(), agentports.ListThreadMessagesRequest{
-		Thread: agentports.GetThreadRequest{ID: conversations.thread.ID},
+	page, err := svc.ListMessages(t.Context(), assistantports.ListThreadMessagesRequest{
+		Thread: assistantports.GetThreadRequest{ID: conversations.thread.ID},
 		Limit:  2,
 	})
 	require.NoError(t, err)
@@ -269,14 +270,14 @@ func TestListMessages_ClampsThePageSize(t *testing.T) {
 
 	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
 
-	_, err := svc.ListMessages(t.Context(), agentports.ListThreadMessagesRequest{
-		Thread: agentports.GetThreadRequest{ID: conversations.thread.ID},
+	_, err := svc.ListMessages(t.Context(), assistantports.ListThreadMessagesRequest{
+		Thread: assistantports.GetThreadRequest{ID: conversations.thread.ID},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, defaultPageLimit+1, conversations.lastList.Limit)
 
-	_, err = svc.ListMessages(t.Context(), agentports.ListThreadMessagesRequest{
-		Thread: agentports.GetThreadRequest{ID: conversations.thread.ID},
+	_, err = svc.ListMessages(t.Context(), assistantports.ListThreadMessagesRequest{
+		Thread: assistantports.GetThreadRequest{ID: conversations.thread.ID},
 		Limit:  100000,
 	})
 	require.NoError(t, err)
@@ -288,14 +289,14 @@ func TestListMessages_ClampsThePageSize(t *testing.T) {
 func TestSendMessageStream_RefusesATurnOnAFullThread(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		textTurn("It is in Los Angeles."),
 	}}
 	svc, conversations := newConversationService(completion, testDefinition())
 	conversations.count = maxThreadMessages
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Where is it?",
 		TenantInfo: actor.TenantInfo(),
@@ -315,12 +316,12 @@ func TestSendMessageStream_KeepsTheSavedModelUnlessTheSendChoosesOne(t *testing.
 	t.Parallel()
 
 	chosen := pulid.MustNew("aiprv_")
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{textTurn("ok")}}
 	svc, conversations := newConversationService(completion, testDefinition())
 	conversations.thread.PreferredProviderID = chosen
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "hello",
 		TenantInfo: actor.TenantInfo(),
@@ -337,7 +338,7 @@ func TestSendMessageStream_KeepsTheSavedModelUnlessTheSendChoosesOne(t *testing.
 	assert.Equal(t, chosen, completion.LastReq.PreferredProviderID)
 	assert.True(t, completion.LastReq.PinPreferred, "the person's own choice is the model they get")
 
-	_, err = svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err = svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:       conversations.thread.ID,
 		Content:        "hello again",
 		TenantInfo:     actor.TenantInfo(),
@@ -353,12 +354,15 @@ func TestSendMessageStream_KeepsTheSavedModelUnlessTheSendChoosesOne(t *testing.
 }
 
 type deletingConversations struct {
-	agentports.ConversationRepository
+	assistantports.ConversationRepository
 
 	err error
 }
 
-func (d *deletingConversations) DeleteThread(context.Context, agentports.GetThreadRequest) error {
+func (d *deletingConversations) DeleteThread(
+	context.Context,
+	assistantports.GetThreadRequest,
+) error {
 	return d.err
 }
 
@@ -376,7 +380,7 @@ func TestDeleteThread_WithdrawsWhatItLeftWaiting(t *testing.T) {
 		proposals:     proposals,
 	}
 
-	require.NoError(t, svc.DeleteThread(t.Context(), agentports.GetThreadRequest{ID: threadID}))
+	require.NoError(t, svc.DeleteThread(t.Context(), assistantports.GetThreadRequest{ID: threadID}))
 	assert.Equal(t, []pulid.ID{threadID}, proposals.expiredThreads)
 
 	refused := &stubProposalRepo{}
@@ -385,7 +389,7 @@ func TestDeleteThread_WithdrawsWhatItLeftWaiting(t *testing.T) {
 		conversations: &deletingConversations{err: errors.New("not yours")},
 		proposals:     refused,
 	}
-	require.Error(t, svc.DeleteThread(t.Context(), agentports.GetThreadRequest{ID: threadID}))
+	require.Error(t, svc.DeleteThread(t.Context(), assistantports.GetThreadRequest{ID: threadID}))
 	assert.Empty(t, refused.expiredThreads, "a delete that did not happen withdraws nothing")
 }
 
@@ -416,13 +420,13 @@ func (h *heldSchedules) Forget(_ context.Context, schedules []*conversationsched
 }
 
 type recordingDelete struct {
-	agentports.ConversationRepository
+	assistantports.ConversationRepository
 
 	err     error
 	deleted bool
 }
 
-func (d *recordingDelete) DeleteThread(context.Context, agentports.GetThreadRequest) error {
+func (d *recordingDelete) DeleteThread(context.Context, assistantports.GetThreadRequest) error {
 	if d.err != nil {
 		return d.err
 	}
@@ -442,7 +446,10 @@ is left.
 func TestDeleteThread_ForgetsTheSchedulesItKept(t *testing.T) {
 	t.Parallel()
 
-	req := agentports.GetThreadRequest{ID: pulid.MustNew("athr_"), UserID: pulid.MustNew("usr_")}
+	req := assistantports.GetThreadRequest{
+		ID:     pulid.MustNew("athr_"),
+		UserID: pulid.MustNew("usr_"),
+	}
 	held := []*conversationschedule.Schedule{
 		{ID: pulid.MustNew("csch_")},
 		{ID: pulid.MustNew("csch_")},
@@ -473,6 +480,10 @@ func TestDeleteThread_ForgetsTheSchedulesItKept(t *testing.T) {
 
 	plain := &recordingDelete{}
 	svc = &Service{logger: zap.NewNop(), conversations: plain}
-	require.NoError(t, svc.DeleteThread(t.Context(), req), "without the schedule service it deletes")
+	require.NoError(
+		t,
+		svc.DeleteThread(t.Context(), req),
+		"without the schedule service it deletes",
+	)
 	assert.True(t, plain.deleted)
 }

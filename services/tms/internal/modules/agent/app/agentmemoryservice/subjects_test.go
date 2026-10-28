@@ -6,22 +6,22 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeLinks struct {
-	links map[agent.MemoryRecordKind][]agentports.MemoryRecordLink
-	asked []agentports.ListMemoryRecordLinksRequest
+	links map[agent.MemoryRecordKind][]agentmemoryports.MemoryRecordLink
+	asked []agentmemoryports.ListMemoryRecordLinksRequest
 	fail  agent.MemoryRecordKind
 }
 
 func (f *fakeLinks) ListRecordLinks(
 	_ context.Context,
-	req *agentports.ListMemoryRecordLinksRequest,
-) ([]agentports.MemoryRecordLink, error) {
+	req *agentmemoryports.ListMemoryRecordLinksRequest,
+) ([]agentmemoryports.MemoryRecordLink, error) {
 	f.asked = append(f.asked, *req)
 	if req.Kind == f.fail {
 		return nil, errors.New("links unavailable")
@@ -31,7 +31,7 @@ func (f *fakeLinks) ListRecordLinks(
 	for _, id := range req.IDs {
 		wanted[id] = struct{}{}
 	}
-	out := make([]agentports.MemoryRecordLink, 0)
+	out := make([]agentmemoryports.MemoryRecordLink, 0)
 	for _, link := range f.links[req.Kind] {
 		if _, ok := wanted[link.From]; ok {
 			out = append(out, link)
@@ -75,7 +75,7 @@ func TestResolve_AShipmentNamesItsCustomerStopsWorkersAndCarrier(t *testing.T) {
 	customer := pulid.MustNew("cus_")
 	origin, destination := pulid.MustNew("loc_"), pulid.MustNew("loc_")
 	driver, carrier := pulid.MustNew("wrk_"), pulid.MustNew("car_")
-	links := &fakeLinks{links: map[agent.MemoryRecordKind][]agentports.MemoryRecordLink{
+	links := &fakeLinks{links: map[agent.MemoryRecordKind][]agentmemoryports.MemoryRecordLink{
 		agent.MemoryRecordShipment: {
 			{From: shipment, Kind: agent.MemoryRecordCustomer, ID: customer},
 			{From: shipment, Kind: agent.MemoryRecordLocation, ID: origin},
@@ -110,7 +110,7 @@ func TestResolve_FollowsADocumentOrMessageThroughTheRecordItNames(t *testing.T) 
 	invoice, queued := pulid.MustNew("inv_"), pulid.MustNew("bqi_")
 	customer, billTo := pulid.MustNew("cus_"), pulid.MustNew("cus_")
 	matchedCarrier, stop := pulid.MustNew("car_"), pulid.MustNew("loc_")
-	links := &fakeLinks{links: map[agent.MemoryRecordKind][]agentports.MemoryRecordLink{
+	links := &fakeLinks{links: map[agent.MemoryRecordKind][]agentmemoryports.MemoryRecordLink{
 		agent.MemoryRecordDocument: {
 			{From: document, Kind: agent.MemoryRecordShipmentMove, ID: move},
 		},
@@ -164,13 +164,13 @@ func TestResolve_StopsAtTwelveDirectRecordsFirst(t *testing.T) {
 	t.Parallel()
 
 	shipment := pulid.MustNew("shp_")
-	stops := make([]agentports.MemoryRecordLink, 0, 20)
+	stops := make([]agentmemoryports.MemoryRecordLink, 0, 20)
 	for range 20 {
-		stops = append(stops, agentports.MemoryRecordLink{
+		stops = append(stops, agentmemoryports.MemoryRecordLink{
 			From: shipment, Kind: agent.MemoryRecordLocation, ID: pulid.MustNew("loc_"),
 		})
 	}
-	links := &fakeLinks{links: map[agent.MemoryRecordKind][]agentports.MemoryRecordLink{
+	links := &fakeLinks{links: map[agent.MemoryRecordKind][]agentmemoryports.MemoryRecordLink{
 		agent.MemoryRecordShipment: stops,
 	}}
 

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,7 +46,7 @@ func (h *Handler) handoff(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authctx.GetAuthContext(c))
-	result, err := h.handoffs.Handoff(c.Request.Context(), &agentports.HandoffThreadRequest{
+	result, err := h.handoffs.Handoff(c.Request.Context(), &assistantports.HandoffThreadRequest{
 		TenantInfo:        req.TenantInfo,
 		ThreadID:          req.ID,
 		AgentDefinitionID: agentID,

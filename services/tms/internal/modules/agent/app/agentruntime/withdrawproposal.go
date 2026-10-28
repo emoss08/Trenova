@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -84,7 +84,7 @@ func (s *Service) filesProposals(name string) bool {
 }
 
 func (t *Turn) hasFiledProposal() bool {
-	return slices.ContainsFunc(t.result.Actions, func(action agentports.PendingAction) bool {
+	return slices.ContainsFunc(t.result.Actions, func(action agentruntimeports.PendingAction) bool {
 		return !action.Executed && !action.Simulated
 	})
 }
@@ -138,7 +138,7 @@ func (t *Turn) withdrawProposal(arguments map[string]any) toolOutcome {
 	return toolOutcome{content: content, summary: summaryLine(summary)}
 }
 
-func (t *Turn) filedAction(id pulid.ID) *agentports.PendingAction {
+func (t *Turn) filedAction(id pulid.ID) *agentruntimeports.PendingAction {
 	for idx := range t.result.Actions {
 		if t.result.Actions[idx].ProposalID == id {
 			return &t.result.Actions[idx]
@@ -161,8 +161,8 @@ func (t *Turn) waitingCount() int {
 
 // unwithdrawn is a turn's actions without the ones the agent withdrew: what
 // is still headed for a person's decision, and what already ran.
-func unwithdrawn(actions []agentports.PendingAction) []agentports.PendingAction {
-	kept := make([]agentports.PendingAction, 0, len(actions))
+func unwithdrawn(actions []agentruntimeports.PendingAction) []agentruntimeports.PendingAction {
+	kept := make([]agentruntimeports.PendingAction, 0, len(actions))
 	for idx := range actions {
 		if !actions[idx].Withdrawn {
 			kept = append(kept, actions[idx])

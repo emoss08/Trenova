@@ -9,7 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -24,15 +25,15 @@ const (
 // otherwise the provider's own setting decides.
 func advisorFor(
 	provider *aiprovider.Provider,
-	requested *agentports.AdvisorSpec,
-) (spec *agentports.AdvisorSpec, fromSetting bool) {
+	requested *llmports.AdvisorSpec,
+) (spec *llmports.AdvisorSpec, fromSetting bool) {
 	if requested != nil {
 		clone := *requested
 
 		return &clone, false
 	}
 	if model := provider.ResolvedAdvisorModel(); model != "" {
-		return agentports.DefaultAdvisor(model), true
+		return llmports.DefaultAdvisor(model), true
 	}
 
 	return nil, false
@@ -81,7 +82,7 @@ func (s *Service) recordAdvisorRefusal(
 
 	recordCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), slotStoreTimeout)
 	defer cancel()
-	if err := s.advisors.RecordAdvisorRefusal(recordCtx, &agentports.RecordAdvisorRefusalRequest{
+	if err := s.advisors.RecordAdvisorRefusal(recordCtx, &aiproviderports.RecordAdvisorRefusalRequest{
 		ID:         provider.ID,
 		TenantInfo: tenant,
 		Refusal: aiprovider.AdvisorRefusal{

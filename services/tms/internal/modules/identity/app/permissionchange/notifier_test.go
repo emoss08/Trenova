@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,12 +15,12 @@ import (
 )
 
 type recordingRealtime struct {
-	published []*agentports.PublishResourceInvalidationRequest
+	published []*realtimeports.PublishResourceInvalidationRequest
 }
 
 func (r *recordingRealtime) PublishResourceInvalidation(
 	_ context.Context,
-	req *agentports.PublishResourceInvalidationRequest,
+	req *realtimeports.PublishResourceInvalidationRequest,
 ) error {
 	r.published = append(r.published, req)
 	return nil

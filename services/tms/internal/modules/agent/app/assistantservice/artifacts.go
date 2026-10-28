@@ -18,7 +18,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
@@ -155,7 +158,7 @@ func (s *Service) newArtifactRecorder(
 
 // observer is the hook the runtime calls per tool result; nil when there is
 // no recorder, so the runtime skips the call altogether.
-func (r *artifactRecorder) observer() agentports.ToolObserver {
+func (r *artifactRecorder) observer() agentruntimeports.ToolObserver {
 	if r == nil {
 		return nil
 	}
@@ -164,15 +167,15 @@ func (r *artifactRecorder) observer() agentports.ToolObserver {
 }
 
 func (r *artifactRecorder) observe(
-	observation agentports.ToolObservation,
-) (*agentports.ShownArtifact, error) {
-	if document, ok := observation.Data.(agentports.PublishedDocument); ok {
+	observation agentruntimeports.ToolObservation,
+) (*agentruntimeports.ShownArtifact, error) {
+	if document, ok := observation.Data.(agentruntimeports.PublishedDocument); ok {
 		return r.publish(observation.Call.ID, document)
 	}
-	if request, ok := observation.Data.(agentports.DecisionRequest); ok {
+	if request, ok := observation.Data.(agentruntimeports.DecisionRequest); ok {
 		return r.requestDecision(observation.Call.ID, request)
 	}
-	if request, ok := observation.Data.(agentports.BoardRequest); ok {
+	if request, ok := observation.Data.(agentruntimeports.BoardRequest); ok {
 		return r.showBoard(observation.Call.ID, request)
 	}
 	if observation.Call.Name == toolGetShipmentDraft && !observation.Failed {
@@ -230,8 +233,8 @@ func (r *artifactRecorder) observe(
 // nothing is added beside the conversation.
 func (r *artifactRecorder) announceNavigation(artifact *assistantartifact.Artifact) {
 	r.emit(kernelports.StreamEvent{
-		Event: agentports.AssistantEventArtifact,
-		Data: agentports.AssistantArtifactEvent{
+		Event: assistantports.AssistantEventArtifact,
+		Data: assistantports.AssistantArtifactEvent{
 			ID:               pulid.MustNew("art_"),
 			Kind:             artifact.Kind,
 			Status:           artifact.Status,
@@ -247,8 +250,8 @@ func (r *artifactRecorder) announceNavigation(artifact *assistantartifact.Artifa
 // with its versions, and the text it replaced can be read and restored.
 func (r *artifactRecorder) publish(
 	callID string,
-	document agentports.PublishedDocument,
-) (*agentports.ShownArtifact, error) {
+	document agentruntimeports.PublishedDocument,
+) (*agentruntimeports.ShownArtifact, error) {
 	body, err := r.withAnalyses(document.Body, document.Analyses)
 	if err != nil {
 		return nil, err
@@ -310,7 +313,7 @@ func (r *artifactRecorder) author() string {
 		return ""
 	}
 
-	return r.svc.agentName(r.ctx, agentports.GetThreadRequest{
+	return r.svc.agentName(r.ctx, assistantports.GetThreadRequest{
 		ID:         r.thread.ID,
 		TenantInfo: r.tenant,
 	}, r.agentThread())
@@ -322,7 +325,7 @@ func (r *artifactRecorder) agentThread() *conversation.Thread {
 		return r.thread
 	}
 	r.agentRead = true
-	thread, err := r.svc.conversations.GetThread(r.ctx, agentports.GetThreadRequest{
+	thread, err := r.svc.conversations.GetThread(r.ctx, assistantports.GetThreadRequest{
 		ID:         r.thread.ID,
 		UserID:     r.reader.UserID,
 		TenantInfo: r.tenant,
@@ -524,12 +527,12 @@ func linkedArtifacts(messages []conversation.Message) map[string]bool {
 }
 
 // artifacts is what the turn produced, for the turn's result.
-func (r *artifactRecorder) artifacts() []agentports.AssistantArtifact {
+func (r *artifactRecorder) artifacts() []assistantports.AssistantArtifact {
 	if r == nil || len(r.recorded) == 0 {
 		return nil
 	}
 
-	out := make([]agentports.AssistantArtifact, 0, len(r.recorded))
+	out := make([]assistantports.AssistantArtifact, 0, len(r.recorded))
 	for _, artifact := range r.recorded {
 		out = append(out, toAssistantArtifact(artifact))
 	}
@@ -629,8 +632,8 @@ func (r *artifactRecorder) store(
 		r.activity.ArtifactChanged(r.ctx, saved, r.actor, agentports.ActivityUpdated)
 	}
 	r.emit(kernelports.StreamEvent{
-		Event: agentports.AssistantEventArtifact,
-		Data: agentports.AssistantArtifactEvent{
+		Event: assistantports.AssistantEventArtifact,
+		Data: assistantports.AssistantArtifactEvent{
 			ID:               saved.ID,
 			Kind:             saved.Kind,
 			Status:           saved.Status,
@@ -667,8 +670,8 @@ func (r *artifactRecorder) forget(id pulid.ID) {
 }
 
 // shownArtifact is how the model is told what the person now sees.
-func shownArtifact(artifact *assistantartifact.Artifact) *agentports.ShownArtifact {
-	return &agentports.ShownArtifact{
+func shownArtifact(artifact *assistantartifact.Artifact) *agentruntimeports.ShownArtifact {
+	return &agentruntimeports.ShownArtifact{
 		ID:           artifact.ID,
 		Kind:         string(artifact.Kind),
 		Title:        artifact.Title,
@@ -759,8 +762,8 @@ func opensRecords(artifact *assistantartifact.Artifact) bool {
 
 func (r *artifactRecorder) requestDecision(
 	callID string,
-	request agentports.DecisionRequest,
-) (*agentports.ShownArtifact, error) {
+	request agentruntimeports.DecisionRequest,
+) (*agentruntimeports.ShownArtifact, error) {
 	if r.proposals == nil {
 		return nil, errDecisionUnavailable
 	}
@@ -794,7 +797,7 @@ func (r *artifactRecorder) requestDecision(
 
 func requestedArtifact(
 	callID string,
-	request agentports.DecisionRequest,
+	request agentruntimeports.DecisionRequest,
 	stored []*agent.AgentProposal,
 ) (*assistantartifact.Artifact, error) {
 	byID := make(map[pulid.ID]*agent.AgentProposal, len(stored))
@@ -890,7 +893,7 @@ func bunchDecisionArtifact(
 	artifact.Title = assistantartifact.NormalizeTitle(fmt.Sprintf(
 		"%s (%d)",
 		assistantartifact.PhraseTitle(
-			agentports.ReadingOrder(proposals[0].ToolName),
+			agenttoolports.ReadingOrder(proposals[0].ToolName),
 		),
 		len(proposals),
 	))
@@ -923,7 +926,7 @@ func decisionRequestArtifact(
 	artifact := &assistantartifact.Artifact{
 		Kind:   assistantartifact.KindDecisionRequest,
 		Status: decisionStatus(proposal.Status),
-		Title:  assistantartifact.PhraseTitle(agentports.ReadingOrder(proposal.ToolName)),
+		Title:  assistantartifact.PhraseTitle(agenttoolports.ReadingOrder(proposal.ToolName)),
 		Payload: map[string]any{
 			payloadProposalID: proposal.ID.String(),
 			payloadToolName:   proposal.ToolName,
@@ -953,12 +956,12 @@ var (
 )
 
 var (
-	errUnknownDocument error = &agentports.PublishMistake{
+	errUnknownDocument error = &agentruntimeports.PublishMistake{
 		Reason: "there is no document with that artifactId in this conversation; leave " +
 			"artifactId out to publish a new one",
 	}
 	errDocumentNotKept       = errors.New("it could not be saved")
-	errUnknownAnalysis error = &agentports.PublishMistake{
+	errUnknownAnalysis error = &agentruntimeports.PublishMistake{
 		Reason: "an analysis it names is not one an analysis_run result kept in this " +
 			"conversation; name each by the artifactId of its analysis",
 	}
@@ -969,7 +972,7 @@ var (
 // sources its citation marks point to.
 func documentArtifact(
 	callID string,
-	document agentports.PublishedDocument,
+	document agentruntimeports.PublishedDocument,
 	author string,
 ) *assistantartifact.Artifact {
 	sources := make([]assistantartifact.DocumentSource, 0, len(document.Sources))
@@ -1015,7 +1018,9 @@ func documentArtifact(
 
 // artifactFromObservation turns a finished query tool into what the pane
 // shows for it, or nil when the result is one to read rather than see.
-func artifactFromObservation(observation agentports.ToolObservation) *assistantartifact.Artifact {
+func artifactFromObservation(
+	observation agentruntimeports.ToolObservation,
+) *assistantartifact.Artifact {
 	if observation.Failed || observation.Data == nil || observation.Call.ID == "" {
 		return nil
 	}
@@ -1034,9 +1039,9 @@ func artifactFromObservation(observation agentports.ToolObservation) *assistanta
 		return candidateRankingArtifact(observation.Call.ID, result)
 	case name == toolRunReport || name == toolGetReportRun:
 		return runArtifact(observation.Call.ID, result)
-	case strings.HasPrefix(agentports.ReadingOrder(name), getToolPrefix) && isRowSet(result):
+	case strings.HasPrefix(agenttoolports.ReadingOrder(name), getToolPrefix) && isRowSet(result):
 		return tableArtifact(observation.Call.ID, name, result)
-	case strings.HasPrefix(agentports.ReadingOrder(name), getToolPrefix):
+	case strings.HasPrefix(agenttoolports.ReadingOrder(name), getToolPrefix):
 		return entityCardArtifact(observation.Call.ID, name, document)
 	case name == toolExplainRate:
 		return rateArtifact(observation.Call.ID, result)
@@ -1054,8 +1059,8 @@ func artifactFromObservation(observation agentports.ToolObservation) *assistanta
 		return analysisArtifact(observation.Call.ID, result, observation.Call.Arguments)
 	case name == agentextension.ToolReadPortal:
 		return portalTaskArtifact(observation.Call.ID, result)
-	case strings.HasPrefix(agentports.ReadingOrder(name), listToolPrefix),
-		strings.HasPrefix(agentports.ReadingOrder(name), searchToolPrefix):
+	case strings.HasPrefix(agenttoolports.ReadingOrder(name), listToolPrefix),
+		strings.HasPrefix(agenttoolports.ReadingOrder(name), searchToolPrefix):
 		if card := soleRecordCard(observation.Call.ID, name, result); card != nil {
 			return card
 		}
@@ -1131,7 +1136,7 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 // "formula_templates" for formula_list_templates, and "invoices" for
 // invoice_get, whose name is singular because it reads one invoice or many.
 func listedEntity(toolName string) string {
-	reading := agentports.ReadingOrder(toolName)
+	reading := agenttoolports.ReadingOrder(toolName)
 	if entity, read := strings.CutPrefix(reading, getToolPrefix); read {
 		return stringutils.PluralNoun(stringutils.SingularNoun(entity))
 	}
@@ -1649,7 +1654,7 @@ func entityCardArtifact(
 	return recordCardArtifact(&recordCard{
 		callID:   callID,
 		toolName: toolName,
-		entity:   strings.TrimPrefix(agentports.ReadingOrder(toolName), getToolPrefix),
+		entity:   strings.TrimPrefix(agenttoolports.ReadingOrder(toolName), getToolPrefix),
 		record:   document.fields,
 		order:    document.keyOrder(),
 	})
@@ -1920,8 +1925,8 @@ func (d jsonDocument) keyOrder() []string {
 	return slices.Sorted(maps.Keys(d.fields))
 }
 
-func toAssistantArtifact(artifact *assistantartifact.Artifact) agentports.AssistantArtifact {
-	return agentports.AssistantArtifact{
+func toAssistantArtifact(artifact *assistantartifact.Artifact) assistantports.AssistantArtifact {
+	return assistantports.AssistantArtifact{
 		ID:               artifact.ID,
 		ThreadID:         artifact.ThreadID,
 		MessageID:        artifact.MessageID,
@@ -1947,7 +1952,7 @@ func toAssistantArtifact(artifact *assistantartifact.Artifact) agentports.Assist
 // which is what the pane showed last time.
 func (s *Service) followDecisions(
 	ctx context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 	artifacts []*assistantartifact.Artifact,
 ) {
 	var wantProposals, wantPlans bool
@@ -2009,10 +2014,10 @@ func (s *Service) followDecisions(
 
 func (s *Service) PinArtifact(
 	ctx context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 	artifactID pulid.ID,
 	pinned bool,
-) (*agentports.AssistantArtifact, error) {
+) (*assistantports.AssistantArtifact, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}

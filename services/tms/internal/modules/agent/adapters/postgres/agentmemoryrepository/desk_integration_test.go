@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -55,13 +55,18 @@ func TestDeskMemories_ReachOnlyTheirReadersAndPauseReachesNobody(t *testing.T) {
 		return created
 	}
 
-	organization := keep("Use the DOE weekly average.", agent.MemoryScopeOrganization, pulid.Nil, pulid.Nil)
+	organization := keep(
+		"Use the DOE weekly average.",
+		agent.MemoryScopeOrganization,
+		pulid.Nil,
+		pulid.Nil,
+	)
 	averys := keep("Group AR by facility.", agent.MemoryScopeUser, avery, pulid.Nil)
 	jordans := keep("Jordan's own note.", agent.MemoryScopeUser, jordan, pulid.Nil)
 	billings := keep("Acme is billed net-45.", agent.MemoryScopeRole, pulid.Nil, billing)
 	dispatchs := keep("Dispatch note.", agent.MemoryScopeRole, pulid.Nil, dispatch)
 	paused := keep("Harbor wants PODs on every invoice.", agent.MemoryScopeUser, avery, pulid.Nil)
-	_, err := repo.SetStatus(ctx, agentports.SetAgentMemoryStatusQuery{
+	_, err := repo.SetStatus(ctx, agentmemoryports.SetAgentMemoryStatusQuery{
 		ID: paused.ID, TenantInfo: tenant, Status: agent.MemoryStatusPaused, At: now,
 	})
 	require.NoError(t, err)
@@ -90,17 +95,21 @@ func TestDeskMemories_ReachOnlyTheirReadersAndPauseReachesNobody(t *testing.T) {
 	agentsOffer := offer("An agent's offer.", avery, agent.MemorySourceAgent)
 
 	reader := agent.MemoryReader{UserID: avery, RoleIDs: []pulid.ID{billing}}
-	listed, err := repo.ListActive(ctx, agentports.ListActiveAgentMemoriesRequest{
+	listed, err := repo.ListActive(ctx, agentmemoryports.ListActiveAgentMemoriesRequest{
 		TenantInfo:       tenant,
 		Reader:           reader,
 		Now:              now,
 		OrganizationWide: true,
 	})
 	require.NoError(t, err)
-	assert.ElementsMatch(t, []pulid.ID{organization.ID, averys.ID, billings.ID}, memoryIDs(listed),
-		"Avery's prompt reads the organization's, her own and Billing's; not Jordan's, not Dispatch's, not the paused one")
+	assert.ElementsMatch(
+		t,
+		[]pulid.ID{organization.ID, averys.ID, billings.ID},
+		memoryIDs(listed),
+		"Avery's prompt reads the organization's, her own and Billing's; not Jordan's, not Dispatch's, not the paused one",
+	)
 
-	nobody, err := repo.ListActive(ctx, agentports.ListActiveAgentMemoriesRequest{
+	nobody, err := repo.ListActive(ctx, agentmemoryports.ListActiveAgentMemoriesRequest{
 		TenantInfo:       tenant,
 		Now:              now,
 		OrganizationWide: true,
@@ -109,14 +118,14 @@ func TestDeskMemories_ReachOnlyTheirReadersAndPauseReachesNobody(t *testing.T) {
 	assert.Equal(t, []pulid.ID{organization.ID}, memoryIDs(nobody),
 		"a run nobody is in reads only the organization's")
 
-	recalled, err := repo.Search(ctx, agentports.SearchAgentMemoriesRequest{
+	recalled, err := repo.Search(ctx, agentmemoryports.SearchAgentMemoriesRequest{
 		TenantInfo: tenant, Reader: reader, Now: now, Query: "note",
 	})
 	require.NoError(t, err)
 	assert.Empty(t, recalled, "recall finds neither Jordan's note nor Dispatch's")
 
-	rows, err := repo.ListDesk(ctx, agentports.ListDeskMemoriesQuery{
-		Filter: agentports.DeskMemoryFilter{TenantInfo: tenant, Reader: reader},
+	rows, err := repo.ListDesk(ctx, agentmemoryports.ListDeskMemoriesQuery{
+		Filter: agentmemoryports.DeskMemoryFilter{TenantInfo: tenant, Reader: reader},
 		Limit:  10,
 	})
 	require.NoError(t, err)
@@ -131,9 +140,17 @@ func TestDeskMemories_ReachOnlyTheirReadersAndPauseReachesNobody(t *testing.T) {
 	assert.NotContains(t, listedIDs, jordans.ID)
 	assert.NotContains(t, listedIDs, dispatchs.ID)
 	assert.NotContains(t, listedIDs, jordansOffer.ID, "another person's offer is theirs")
-	assert.NotContains(t, listedIDs, agentsOffer.ID, "an agent's suggestion waits in its conversation")
+	assert.NotContains(
+		t,
+		listedIDs,
+		agentsOffer.ID,
+		"an agent's suggestion waits in its conversation",
+	)
 
-	counts, err := repo.CountDesk(ctx, agentports.DeskMemoryFilter{TenantInfo: tenant, Reader: reader})
+	counts, err := repo.CountDesk(
+		ctx,
+		agentmemoryports.DeskMemoryFilter{TenantInfo: tenant, Reader: reader},
+	)
 	require.NoError(t, err)
 	byScope := map[agent.MemoryScope]int{}
 	for _, count := range counts {
@@ -148,8 +165,12 @@ func TestDeskMemories_ReachOnlyTheirReadersAndPauseReachesNobody(t *testing.T) {
 		agent.MemoryScopeRole:         1,
 	}, byScope, "her offer counts with the organization's")
 
-	searched, err := repo.ListDesk(ctx, agentports.ListDeskMemoriesQuery{
-		Filter: agentports.DeskMemoryFilter{TenantInfo: tenant, Reader: reader, Query: "facil"},
+	searched, err := repo.ListDesk(ctx, agentmemoryports.ListDeskMemoriesQuery{
+		Filter: agentmemoryports.DeskMemoryFilter{
+			TenantInfo: tenant,
+			Reader:     reader,
+			Query:      "facil",
+		},
 	})
 	require.NoError(t, err)
 	require.Len(t, searched, 1, "a word's start finds it")
@@ -180,21 +201,24 @@ func TestDeskMemories_PageNewestFirstAndRevise(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	filter := agentports.DeskMemoryFilter{TenantInfo: tenant, Reader: reader}
-	first, err := repo.ListDesk(ctx, agentports.ListDeskMemoriesQuery{Filter: filter, Limit: 2})
+	filter := agentmemoryports.DeskMemoryFilter{TenantInfo: tenant, Reader: reader}
+	first, err := repo.ListDesk(
+		ctx,
+		agentmemoryports.ListDeskMemoriesQuery{Filter: filter, Limit: 2},
+	)
 	require.NoError(t, err)
 	require.Len(t, first, 2)
 	last := first[1].Memory
-	rest, err := repo.ListDesk(ctx, agentports.ListDeskMemoriesQuery{
+	rest, err := repo.ListDesk(ctx, agentmemoryports.ListDeskMemoriesQuery{
 		Filter: filter,
-		After:  &agentports.DeskMemoryCursor{CreatedAt: last.CreatedAt, ID: last.ID},
+		After:  &agentmemoryports.DeskMemoryCursor{CreatedAt: last.CreatedAt, ID: last.ID},
 		Limit:  2,
 	})
 	require.NoError(t, err)
 	require.Len(t, rest, 1, "the cursor picks up after the page")
 	assert.NotEqual(t, first[0].Memory.ID, rest[0].Memory.ID)
 
-	revised, err := repo.Revise(ctx, agentports.ReviseAgentMemoryRequest{
+	revised, err := repo.Revise(ctx, agentmemoryports.ReviseAgentMemoryRequest{
 		ID:         rest[0].Memory.ID,
 		TenantInfo: tenant,
 		Content:    "Now for everyone.",
@@ -205,7 +229,7 @@ func TestDeskMemories_PageNewestFirstAndRevise(t *testing.T) {
 	assert.Equal(t, agent.MemoryScopeOrganization, revised.Scope)
 	assert.Nil(t, revised.OwnerUserID, "moving it clears whose it was")
 
-	_, err = repo.Revise(ctx, agentports.ReviseAgentMemoryRequest{
+	_, err = repo.Revise(ctx, agentmemoryports.ReviseAgentMemoryRequest{
 		ID: revised.ID, TenantInfo: tenant, Content: "Stale.",
 		Scope: agent.MemoryScopeOrganization, Version: rest[0].Memory.Version,
 	})
@@ -220,7 +244,10 @@ func TestMemoryPreference_SavesOneRowPerPerson(t *testing.T) {
 	ctx = data.Ctx(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
-	req := agentports.GetAgentMemoryPreferenceRequest{TenantInfo: tenant, UserID: data.User.ID}
+	req := agentmemoryports.GetAgentMemoryPreferenceRequest{
+		TenantInfo: tenant,
+		UserID:     data.User.ID,
+	}
 
 	none, err := repo.GetPreference(ctx, req)
 	require.NoError(t, err)

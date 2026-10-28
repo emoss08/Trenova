@@ -5,21 +5,20 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun/invoicerundb"
-	"github.com/emoss08/trenova/pkg/listquery"
-
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun/invoicerundb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -100,7 +99,7 @@ type amounts struct {
 func amountsFor(
 	ctx context.Context,
 	access fieldAccess,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (amounts, *fieldGate) {
 	gate := access.gate(ctx, params, permission.ResourceInvoice)
 
@@ -170,7 +169,7 @@ func newListInvoiceAdjustmentsTool(
 	adjustments adjustmentReader,
 	invoices invoiceReader,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &listInvoiceAdjustmentsTool{
 		adjustments: adjustments,
 		invoices:    invoices,
@@ -196,13 +195,13 @@ func (t *listInvoiceAdjustmentsTool) ParamSchema() map[string]any {
 	})
 }
 
-func (t *listInvoiceAdjustmentsTool) Policy() agentports.ToolPolicy {
+func (t *listInvoiceAdjustmentsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoice})
 }
 
 func (t *listInvoiceAdjustmentsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -258,7 +257,7 @@ func (t *listInvoiceAdjustmentsTool) Query(
 
 func (t *listInvoiceAdjustmentsTool) lineage(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	invoiceID pulid.ID,
 	show amounts,
 	gate *fieldGate,
@@ -345,7 +344,7 @@ type listCreditMemoApplicationsTool struct {
 func newListCreditMemoApplicationsTool(
 	applications creditApplicationLister,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &listCreditMemoApplicationsTool{
 		applications: applications,
 		access:       newFieldAccess(permissions),
@@ -373,13 +372,13 @@ func (t *listCreditMemoApplicationsTool) ParamSchema() map[string]any {
 	}, paramReceivableInvoices)
 }
 
-func (t *listCreditMemoApplicationsTool) Policy() agentports.ToolPolicy {
+func (t *listCreditMemoApplicationsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoice})
 }
 
 func (t *listCreditMemoApplicationsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -467,7 +466,7 @@ func invoiceRunRowFrom(run *invoicerun.InvoiceRun, show amounts) invoiceRunRow {
 func newListInvoiceRunsTool(
 	runs invoiceRunReader,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	access := newFieldAccess(permissions)
 
 	return newListTool(listSpec{
@@ -559,7 +558,7 @@ type getInvoiceRunTool struct {
 func newGetInvoiceRunTool(
 	runs invoiceRunReader,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &getInvoiceRunTool{runs: runs, access: newFieldAccess(permissions)}
 }
 
@@ -580,13 +579,13 @@ func (t *getInvoiceRunTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getInvoiceRunTool) Policy() agentports.ToolPolicy {
+func (t *getInvoiceRunTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoiceRun})
 }
 
 func (t *getInvoiceRunTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -696,7 +695,7 @@ type listOpenStatementsTool struct {
 func newListOpenStatementsTool(
 	runs invoiceRunReader,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &listOpenStatementsTool{runs: runs, access: newFieldAccess(permissions)}
 }
 
@@ -717,13 +716,13 @@ func (t *listOpenStatementsTool) ParamSchema() map[string]any {
 	})
 }
 
-func (t *listOpenStatementsTool) Policy() agentports.ToolPolicy {
+func (t *listOpenStatementsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoiceRun})
 }
 
 func (t *listOpenStatementsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -809,7 +808,7 @@ type listInvoiceShareCandidatesTool struct {
 	shares shareCandidateLister
 }
 
-func newListInvoiceShareCandidatesTool(shares shareCandidateLister) agentports.AgentQueryTool {
+func newListInvoiceShareCandidatesTool(shares shareCandidateLister) agenttoolports.AgentQueryTool {
 	return &listInvoiceShareCandidatesTool{shares: shares}
 }
 
@@ -831,13 +830,13 @@ func (t *listInvoiceShareCandidatesTool) ParamSchema() map[string]any {
 	}, paramReceivableInvoice)
 }
 
-func (t *listInvoiceShareCandidatesTool) Policy() agentports.ToolPolicy {
+func (t *listInvoiceShareCandidatesTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoice})
 }
 
 func (t *listInvoiceShareCandidatesTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -887,40 +886,40 @@ func provideListInvoiceAdjustmentsTool(
 	adjustments invoiceadjustmentports.InvoiceAdjustmentService,
 	invoices invoiceports.InvoiceRepository,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListInvoiceAdjustmentsTool(adjustments, invoices, permissions)
 }
 
 func provideListCreditMemoApplicationsTool(
 	payments customerpaymentports.CustomerPaymentRepository,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListCreditMemoApplicationsTool(payments, permissions)
 }
 
 func provideListInvoiceRunsTool(
 	runs *invoicerunservice.Service,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListInvoiceRunsTool(runs, permissions)
 }
 
 func provideGetInvoiceRunTool(
 	runs *invoicerunservice.Service,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newGetInvoiceRunTool(runs, permissions)
 }
 
 func provideListOpenStatementsTool(
 	runs *invoicerunservice.Service,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListOpenStatementsTool(runs, permissions)
 }
 
 func provideListInvoiceShareCandidatesTool(
 	shares invoiceports.InvoiceShareService,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListInvoiceShareCandidatesTool(shares)
 }

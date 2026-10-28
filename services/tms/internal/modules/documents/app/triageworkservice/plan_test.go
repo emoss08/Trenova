@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -31,8 +31,8 @@ func (s stubNova) Available(triagenova.Mode) bool { return s.available }
 func (s stubNova) Complete(
 	context.Context,
 	triagenova.Mode,
-	*agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	*llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	return nil, errors.New("a plan never asks Nova")
 }
 

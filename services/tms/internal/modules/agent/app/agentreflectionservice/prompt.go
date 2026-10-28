@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -132,8 +133,8 @@ func systemPrompt(in *promptInput) string {
 	return b.String()
 }
 
-func contextSections(in *promptInput) agentports.DelimitedContext {
-	sections := make([]agentports.ContextSection, 0, 7)
+func contextSections(in *promptInput) llmports.DelimitedContext {
+	sections := make([]llmports.ContextSection, 0, 7)
 
 	about := "Agent: " + in.AgentName
 	if description := strings.TrimSpace(in.Description); description != "" {
@@ -142,7 +143,7 @@ func contextSections(in *promptInput) agentports.DelimitedContext {
 	if in.Trigger != "" {
 		about += "\nHow the work started: " + in.Trigger
 	}
-	sections = append(sections, agentports.ContextSection{
+	sections = append(sections, llmports.ContextSection{
 		Title:   "The agent",
 		Trusted: true,
 		Content: about,
@@ -156,13 +157,13 @@ func contextSections(in *promptInput) agentports.DelimitedContext {
 		}
 		signalLines = append(signalLines, line)
 	}
-	sections = append(sections, agentports.ContextSection{
+	sections = append(sections, llmports.ContextSection{
 		Title:   "Why this work was worth a look",
 		Trusted: true,
 		Content: strings.Join(signalLines, "\n"),
 	})
 
-	sections = append(sections, agentports.ContextSection{
+	sections = append(sections, llmports.ContextSection{
 		Title:   "Memories already kept",
 		Content: memoryLines(in.Memories),
 	})
@@ -172,7 +173,7 @@ func contextSections(in *promptInput) agentports.DelimitedContext {
 		for _, subject := range in.Subjects {
 			lines = append(lines, "- "+string(subject.Type)+" "+subject.ID.String())
 		}
-		sections = append(sections, agentports.ContextSection{
+		sections = append(sections, llmports.ContextSection{
 			Title:   "Records the work touched",
 			Trusted: true,
 			Content: strings.Join(lines, "\n"),
@@ -180,7 +181,7 @@ func contextSections(in *promptInput) agentports.DelimitedContext {
 	}
 
 	if len(in.ToolNames) > 0 {
-		sections = append(sections, agentports.ContextSection{
+		sections = append(sections, llmports.ContextSection{
 			Title:   "Tools the work used",
 			Trusted: true,
 			Content: strings.Join(in.ToolNames, ", "),
@@ -196,18 +197,18 @@ func contextSections(in *promptInput) agentports.DelimitedContext {
 			}
 			lines = append(lines, line)
 		}
-		sections = append(sections, agentports.ContextSection{
+		sections = append(sections, llmports.ContextSection{
 			Title:   "What people decided on the agent's proposals",
 			Content: strings.Join(lines, "\n"),
 		})
 	}
 
-	sections = append(sections, agentports.ContextSection{
+	sections = append(sections, llmports.ContextSection{
 		Title:   "The work",
 		Content: transcript(in.Messages, in.HasPerson),
 	})
 
-	return agentports.DelimitedContext{Sections: sections}
+	return llmports.DelimitedContext{Sections: sections}
 }
 
 func memoryLines(memories []*agent.Memory) string {

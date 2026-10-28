@@ -7,8 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -24,32 +26,32 @@ import (
 
 const maxSettingsWriteAttempts = 3
 
-var _ agentports.AIRetrievalStatusService = (*Service)(nil)
+var _ retrievalports.AIRetrievalStatusService = (*Service)(nil)
 
 type Params struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Repo       agentports.AIRetrievalRepository
-	Sources    agentports.RetrievalSourceRepository
+	Repo       retrievalports.AIRetrievalRepository
+	Sources    retrievalports.RetrievalSourceRepository
 	Usage      aiusageports.AIUsageRepository
-	Providers  agentports.AIProviderRepository
-	Vectorizer agentports.QueryVectorizer
-	Indexer    agentports.RetrievalIndexer
-	Pipeline   agentports.RetrievalIndexPipeline
+	Providers  aiproviderports.AIProviderRepository
+	Vectorizer retrievalports.QueryVectorizer
+	Indexer    retrievalports.RetrievalIndexer
+	Pipeline   retrievalports.RetrievalIndexPipeline
 	Audit      auditports.AuditService
 	Embeddings aiusageports.EmbeddingService `optional:"true"`
 }
 
 type Service struct {
 	l          *zap.Logger
-	repo       agentports.AIRetrievalRepository
-	sources    agentports.RetrievalSourceRepository
+	repo       retrievalports.AIRetrievalRepository
+	sources    retrievalports.RetrievalSourceRepository
 	usage      aiusageports.AIUsageRepository
-	providers  agentports.AIProviderRepository
-	vectorizer agentports.QueryVectorizer
-	indexer    agentports.RetrievalIndexer
-	pipeline   agentports.RetrievalIndexPipeline
+	providers  aiproviderports.AIProviderRepository
+	vectorizer retrievalports.QueryVectorizer
+	indexer    retrievalports.RetrievalIndexer
+	pipeline   retrievalports.RetrievalIndexPipeline
 	audit      auditports.AuditService
 	embeddings aiusageports.EmbeddingService
 	now        func() int64
@@ -71,7 +73,7 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 	}
 }
 
-func AsService(s *Service) agentports.AIRetrievalStatusService { return s }
+func AsService(s *Service) retrievalports.AIRetrievalStatusService { return s }
 
 func validateTenant(tenant pagination.TenantInfo) error {
 	if tenant.OrgID.IsNil() || tenant.BuID.IsNil() {
@@ -99,15 +101,15 @@ type statusInputs struct {
 	indexing     *aiusageports.AIUsageCost
 	retrieval    *aiusageports.AIUsageCost
 	totals       map[airetrieval.SourceType]int
-	active       []agentports.IndexEntryCount
-	pending      []agentports.IndexEntryCount
+	active       []retrievalports.IndexEntryCount
+	pending      []retrievalports.IndexEntryCount
 	configured   string
 }
 
 func (s *Service) Status(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (*agentports.AIRetrievalStatus, error) {
+) (*retrievalports.AIRetrievalStatus, error) {
 	if err := validateTenant(tenant); err != nil {
 		return nil, err
 	}
@@ -158,7 +160,7 @@ func (s *Service) gather(
 	})
 	for idx, sourceType := range airetrieval.AllSourceTypes() {
 		group.Go(func() error {
-			count, err := s.sources.CountSources(gctx, agentports.CountRetrievalSourcesRequest{
+			count, err := s.sources.CountSources(gctx, retrievalports.CountRetrievalSourcesRequest{
 				TenantInfo: tenant,
 				SourceType: sourceType,
 			})
@@ -225,8 +227,8 @@ func (s *Service) countEntries(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	modelKey string,
-) ([]agentports.IndexEntryCount, error) {
-	counts, err := s.repo.CountIndexEntries(ctx, agentports.CountIndexEntriesRequest{
+) ([]retrievalports.IndexEntryCount, error) {
+	counts, err := s.repo.CountIndexEntries(ctx, retrievalports.CountIndexEntriesRequest{
 		TenantInfo: tenant,
 		ModelKey:   modelKey,
 	})
@@ -249,7 +251,7 @@ func (s *Service) configuredModelKey(
 	switch {
 	case err == nil:
 		return key, nil
-	case errors.Is(err, agentports.ErrNoProviderConfigured) || errortypes.IsBusinessError(err):
+	case errors.Is(err, llmports.ErrNoProviderConfigured) || errortypes.IsBusinessError(err):
 		return "", nil
 	default:
 		return "", fmt.Errorf("resolve the configured embedding model: %w", err)
@@ -258,8 +260,8 @@ func (s *Service) configuredModelKey(
 
 func (s *Service) UpdateSettings(
 	ctx context.Context,
-	req *agentports.UpdateAIRetrievalSettingsRequest,
-) (*agentports.AIRetrievalStatus, error) {
+	req *retrievalports.UpdateAIRetrievalSettingsRequest,
+) (*retrievalports.AIRetrievalStatus, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"input",
@@ -300,7 +302,7 @@ func (s *Service) UpdateSettings(
 
 func (s *Service) writeSettings(
 	ctx context.Context,
-	req *agentports.UpdateAIRetrievalSettingsRequest,
+	req *retrievalports.UpdateAIRetrievalSettingsRequest,
 ) (saved, previous *airetrieval.Settings, changed bool, err error) {
 	current, err := s.repo.GetSettings(ctx, req.TenantInfo)
 	if err != nil {
@@ -329,7 +331,7 @@ func (s *Service) writeSettings(
 
 func ApplySettingsPatch(
 	settings *airetrieval.Settings,
-	req *agentports.UpdateAIRetrievalSettingsRequest,
+	req *retrievalports.UpdateAIRetrievalSettingsRequest,
 	now int64,
 ) bool {
 	changed := false
@@ -373,8 +375,8 @@ func ApplySettingsPatch(
 
 func (s *Service) Reindex(
 	ctx context.Context,
-	req *agentports.ReindexAIRetrievalSourceRequest,
-) (*agentports.AIRetrievalStatus, error) {
+	req *retrievalports.ReindexAIRetrievalSourceRequest,
+) (*retrievalports.AIRetrievalStatus, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"sourceType",
@@ -505,7 +507,7 @@ func (s *Service) logSettings(
 
 func (s *Service) logReindex(
 	settings *airetrieval.Settings,
-	req *agentports.ReindexAIRetrievalSourceRequest,
+	req *retrievalports.ReindexAIRetrievalSourceRequest,
 ) {
 	auditActor := req.Actor.AuditActorOrSystem()
 	if err := s.audit.LogAction(&auditports.LogActionParams{

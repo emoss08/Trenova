@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/llmtokens"
@@ -229,7 +229,7 @@ func (s *Service) embeddingCandidates(
 		return nil, "", errortypes.NewBusinessError(
 			"No enabled embedding provider serves {0}. Re-enable it, or re-index with the model now configured",
 			modelKey,
-		).WithInternal(agentports.ErrNoProviderConfigured)
+		).WithInternal(llmports.ErrNoProviderConfigured)
 	}
 
 	ready, err := s.awake(ctx, sameModel)

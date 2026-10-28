@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -65,20 +65,20 @@ type ShipmentRecordsToolParams struct {
 }
 
 type findShipmentRecordsTool struct {
-	customers   agentports.AgentQueryTool
-	locations   agentports.AgentQueryTool
-	commodities agentports.AgentQueryTool
+	customers   agenttoolports.AgentQueryTool
+	locations   agenttoolports.AgentQueryTool
+	commodities agenttoolports.AgentQueryTool
 	choices     []recordChoice
 	access      fieldAccess
 }
 
 type recordChoice struct {
 	key    string
-	tool   agentports.AgentQueryTool
+	tool   agenttoolports.AgentQueryTool
 	params map[string]any
 }
 
-func newFindShipmentRecordsTool(p *ShipmentRecordsToolParams) agentports.AgentQueryTool {
+func newFindShipmentRecordsTool(p *ShipmentRecordsToolParams) agenttoolports.AgentQueryTool {
 	return &findShipmentRecordsTool{
 		customers:   newListCustomersTool(p.Customers),
 		locations:   newListLocationsTool(p.Locations),
@@ -161,7 +161,7 @@ func (t *findShipmentRecordsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *findShipmentRecordsTool) Policy() agentports.ToolPolicy {
+func (t *findShipmentRecordsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipment,
 		effect:   agent.ToolEffectLookup,
@@ -187,7 +187,7 @@ type recordMatch struct {
 }
 
 type recordLookup struct {
-	tool    agentports.AgentQueryTool
+	tool    agenttoolports.AgentQueryTool
 	kind    string
 	asked   string
 	queries []string
@@ -196,7 +196,7 @@ type recordLookup struct {
 
 func (t *findShipmentRecordsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -282,7 +282,7 @@ func (t *findShipmentRecordsTool) lookups(
 
 func (t *findShipmentRecordsTool) match(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	lookup *recordLookup,
 ) {
 	if !t.access.mayRead(ctx, params, lookup.tool.Policy().Resource) {
@@ -303,8 +303,8 @@ func (t *findShipmentRecordsTool) match(
 
 func (t *findShipmentRecordsTool) rows(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
-	tool agentports.AgentQueryTool,
+	params *agenttoolports.QueryToolParams,
+	tool agenttoolports.AgentQueryTool,
 	args map[string]any,
 ) []map[string]any {
 	if !t.access.mayRead(ctx, params, tool.Policy().Resource) {

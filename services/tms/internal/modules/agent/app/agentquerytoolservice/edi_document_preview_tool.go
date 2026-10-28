@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -58,7 +58,7 @@ type ediDocumentPreviewer interface {
 func providePreviewEDIDocumentTool(
 	ediSvc *ediservice.Service,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newPreviewEDIDocumentTool(ediSvc, permissions)
 }
 
@@ -70,7 +70,7 @@ type previewEDIDocumentTool struct {
 func newPreviewEDIDocumentTool(
 	documents ediDocumentPreviewer,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &previewEDIDocumentTool{documents: documents, access: newFieldAccess(permissions)}
 }
 
@@ -109,7 +109,7 @@ func (t *previewEDIDocumentTool) ParamSchema() map[string]any {
 	}, paramTransactionSet, paramPartnerID)
 }
 
-func (t *previewEDIDocumentTool) Policy() agentports.ToolPolicy {
+func (t *previewEDIDocumentTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceEDI,
 		reads:    agent.ExternalReadMarked,
@@ -151,7 +151,7 @@ type documentPreviewCall struct {
 
 func (t *previewEDIDocumentTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -213,7 +213,7 @@ func (t *previewEDIDocumentTool) Query(
 
 func (t *previewEDIDocumentTool) gated(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	view *ediDocumentPreviewView,
 ) *ediDocumentPreviewView {
 	gate := t.access.gate(ctx, params, permission.ResourceEDI)
@@ -304,7 +304,7 @@ func (c *documentPreviewCall) checkShipmentDocument() error {
 
 func (t *previewEDIDocumentTool) mayReadSource(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	call *documentPreviewCall,
 ) error {
 	if call.set == edi.TransactionSet990 {

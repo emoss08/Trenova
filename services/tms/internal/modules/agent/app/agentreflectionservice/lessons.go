@@ -10,7 +10,11 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -63,7 +67,7 @@ func ParseReply(text string) (*reflectionReply, error) {
 func (s *Service) Finish(
 	ctx context.Context,
 	plan *agentports.ReflectionPlan,
-	result *agentports.StructuredCompletionResult,
+	result *llmports.StructuredCompletionResult,
 ) (*agentports.ReflectionOutcome, error) {
 	reflection, err := s.repo.GetByID(ctx, agentports.GetAgentReflectionRequest{
 		ID:         plan.ReflectionID,
@@ -173,7 +177,7 @@ func (s *Service) lessonRequest(
 	ctx context.Context,
 	plan *agentports.ReflectionPlan,
 	in *lesson,
-) (*agentports.RememberRequest, string, error) {
+) (*agentmemoryports.RememberRequest, string, error) {
 	person := plan.PersonUserID
 	kind := agent.MemoryKind(strings.TrimSpace(in.Kind))
 	switch kind {
@@ -194,7 +198,7 @@ func (s *Service) lessonRequest(
 		content = stringutils.Ellipsize(content, agent.MaxReflectionLessonChars)
 	}
 
-	req := &agentports.RememberRequest{
+	req := &agentmemoryports.RememberRequest{
 		TenantInfo:        plan.TenantInfo,
 		Kind:              kind,
 		Content:           content,
@@ -240,7 +244,7 @@ func (s *Service) lessonRequest(
 func subjectOf(
 	plan *agentports.ReflectionPlan,
 	in *lesson,
-	req *agentports.RememberRequest,
+	req *agentmemoryports.RememberRequest,
 ) string {
 	raw := strings.TrimSpace(in.SubjectID)
 	if raw == "" {
@@ -266,7 +270,7 @@ func (s *Service) audience(
 	ctx context.Context,
 	plan *agentports.ReflectionPlan,
 	audience string,
-	req *agentports.RememberRequest,
+	req *agentmemoryports.RememberRequest,
 ) (string, error) {
 	person := plan.PersonUserID
 	suggest := plan.Tainted()
@@ -340,7 +344,7 @@ func (s *Service) attach(
 		return
 	}
 
-	if err := s.conversations.AddSavedMemories(ctx, agentports.AddSavedMemoriesRequest{
+	if err := s.conversations.AddSavedMemories(ctx, assistantports.AddSavedMemoriesRequest{
 		MessageID:  plan.ReplyMessageID,
 		ThreadID:   plan.ThreadID,
 		TenantInfo: plan.TenantInfo,
@@ -365,7 +369,7 @@ func (s *Service) announce(
 
 	if err := s.realtime.PublishResourceInvalidation(
 		ctx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: plan.TenantInfo.OrgID,
 			BusinessUnitID: plan.TenantInfo.BuID,
 			AudienceUserID: plan.PersonUserID,

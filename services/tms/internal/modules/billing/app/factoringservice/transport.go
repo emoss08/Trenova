@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -30,7 +30,7 @@ type TransportParams struct {
 	Cipher     kernelports.SecretCipher
 	Transports []factoringports.FactoringTransport `group:"factoring_transports"`
 	Audit      auditports.AuditService
-	Realtime   agentports.RealtimeService `                             optional:"true"`
+	Realtime   realtimeports.RealtimeService `                             optional:"true"`
 	Logger     *zap.Logger
 }
 

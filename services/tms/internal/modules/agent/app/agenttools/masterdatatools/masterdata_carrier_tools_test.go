@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -28,7 +28,7 @@ func texasState() *agenttoolstest.FakeStates {
 	}}
 }
 
-func idempotentParams(params map[string]any) agentports.ToolExecuteParams {
+func idempotentParams(params map[string]any) agenttoolports.ToolExecuteParams {
 	execute := agenttoolstest.ExecuteParams(params)
 	execute.IdempotencyKey = pulid.MustNew("idem_").String()
 
@@ -55,7 +55,10 @@ func (f *fakeCarriers) Get(
 	return &copied, nil
 }
 
-func (f *fakeCarriers) PlanCreate(_ context.Context, entity *carrier.Carrier) (*carrier.Carrier, error) {
+func (f *fakeCarriers) PlanCreate(
+	_ context.Context,
+	entity *carrier.Carrier,
+) (*carrier.Carrier, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -161,16 +164,20 @@ func TestCreateCarrier_PreviewsTheCarrierAndCreatesIt(t *testing.T) {
 		mdState:     "tx",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, carriers.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		carriers.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would create the carrier Roadrunner Logistics")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
 	assert.Equal(t, "TX", agenttoolstest.FieldByPath(t, change, "state").After)
 	assert.Equal(t, "RRLG", agenttoolstest.FieldByPath(t, change, "scac").After)
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, carriers.created)
 	assert.Equal(t, carrier.StatusActive, carriers.created.Status)
@@ -202,14 +209,14 @@ func TestCreateCarrier_PaymentDetailsAreMoneyAndWaitForAPerson(t *testing.T) {
 	assert.Equal(t, agent.EgressMoney, call.Egress)
 	assert.Equal(t, agent.TierPropose, call.MaxTier)
 
-	_, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(),
+	_, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(),
 		idempotentParams(args))
 	require.ErrorIs(t, err, common.ErrNeedsAPersonsApproval)
 	assert.Nil(t, carriers.created)
 
 	approved := agenttoolstest.ApprovedParams(args)
 	approved.IdempotencyKey = pulid.MustNew("idem_").String()
-	_, err = tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), approved)
+	_, err = tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), approved)
 	require.NoError(t, err)
 	assert.Equal(t, "PO Box 9", carriers.created.RemitAddressLine1)
 }
@@ -226,7 +233,7 @@ func TestCreateCarrier_RefusesWhatTheServiceRefuses(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			tool := NewCreateCarrierTool(&fakeCarriers{}, texasState())
-			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+			require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 				idempotentParams(args)))
 		})
 	}
@@ -234,7 +241,7 @@ func TestCreateCarrier_RefusesWhatTheServiceRefuses(t *testing.T) {
 	refused := NewCreateCarrierTool(&fakeCarriers{refusal: errortypes.NewValidationError(
 		mdCode, errortypes.ErrDuplicate, "Carrier with this code already exists",
 	)}, texasState())
-	preview, err := refused.(agentports.ToolPreviewer).Preview(t.Context(),
+	preview, err := refused.(agenttoolports.ToolPreviewer).Preview(t.Context(),
 		idempotentParams(map[string]any{mdCode: "ROAD", MdName: "Road"}))
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
@@ -251,9 +258,13 @@ func TestUpdateCarrier_KeepsWhatItIsNotGivenAndTheCarriersChildren(t *testing.T)
 		mdPhone:               "555-0100",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, carriers.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		carriers.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "555-0100", agenttoolstest.FieldByPath(t, change, mdPhone).After)
 	require.NotNil(t, change.Version)
@@ -269,13 +280,16 @@ func TestUpdateCarrier_KeepsWhatItIsNotGivenAndTheCarriersChildren(t *testing.T)
 	assert.True(t, carriers.getRequest.IncludeEDIChannels)
 	assert.True(t, carriers.getRequest.IncludeInsurancePolicies)
 
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceCarrier, target.Resource)
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{common.ParamCarrierID: carriers.stored.ID.String()},
-	)))
+	require.Error(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
+			map[string]any{common.ParamCarrierID: carriers.stored.ID.String()},
+		)),
+	)
 }
 
 func TestUpdateCarrierStatus_PreviewsEachCarrierAndMovesThem(t *testing.T) {
@@ -289,16 +303,34 @@ func TestUpdateCarrierStatus_PreviewsEachCarrierAndMovesThem(t *testing.T) {
 		common.FieldStatus: "DoNotUse",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, carriers.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, "DoNotUse", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), common.FieldStatus).After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		carriers.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		"DoNotUse",
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			common.FieldStatus,
+		).After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, carriers.bulk)
 	assert.Equal(t, carrier.StatusDoNotUse, carriers.bulk.Status)
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{"carrierIds": []any{carriers.stored.ID.String()}, common.FieldStatus: "Gone"},
-	)))
+	require.Error(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
+			map[string]any{
+				"carrierIds":       []any{carriers.stored.ID.String()},
+				common.FieldStatus: "Gone",
+			},
+		)),
+	)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -178,7 +179,7 @@ type snapshotPreviewTool struct {
 
 func (t *snapshotPreviewTool) Preview(
 	ctx context.Context,
-	_ agentports.ToolExecuteParams,
+	_ agenttoolports.ToolExecuteParams,
 ) (*agent.ToolPreview, error) {
 	t.readOnly = kernelports.IsReadOnly(ctx)
 

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -178,9 +178,13 @@ func TestRecordEmploymentVerification_StartsPending(t *testing.T) {
 		paramWasDOTRegulated: true,
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, dqf.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		dqf.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Lakeshore Carriers")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, dqf.recorded)
@@ -189,15 +193,19 @@ func TestRecordEmploymentVerification_StartsPending(t *testing.T) {
 	assert.True(t, dqf.recorded.WasDOTRegulated)
 	assert.Equal(t, permission.ResourceQualification, tool.Policy().Resource)
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			common.ParamWorkerID: dqf.verification.WorkerID.String(),
 			paramEmployerName:    "Lakeshore Carriers",
 			paramEmployedFrom:    "2025-06-30",
 			paramEmployedTo:      "2021-03-01",
 		})), "validation runs the service's plan")
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{common.ParamWorkerID: dqf.verification.WorkerID.String()})))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{common.ParamWorkerID: dqf.verification.WorkerID.String()},
+		),
+	))
 }
 
 func TestUpdateEmploymentVerification_RecordsTheAnswer(t *testing.T) {
@@ -212,9 +220,13 @@ func TestUpdateEmploymentVerification_RecordsTheAnswer(t *testing.T) {
 		paramAccidentCount:   float64(1),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, dqf.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		dqf.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Prairie Freight Lines")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, dqf.updated)
@@ -234,9 +246,13 @@ func TestLogEmploymentVerificationRequest_CountsFollowUps(t *testing.T) {
 		paramRequestMove:    "FollowUp",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, dqf.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), followUp)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		dqf.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), followUp)
+		},
+	)
 	assert.Equal(t, "Would count follow-up 1 with Prairie Freight Lines.", preview.Summary)
 	require.NoError(t, tool.Execute(t.Context(), followUp))
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
@@ -252,12 +268,22 @@ func TestDeleteEmploymentVerification_IsOnlyProposed(t *testing.T) {
 
 	dqf := newFakeDQF()
 	tool := newDeleteEmploymentVerificationTool(dqf)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramVerificationID: dqf.verification.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramVerificationID: dqf.verification.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, dqf.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, agent.PreviewOperationDelete, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		dqf.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationDelete,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, []pulid.ID{dqf.verification.ID}, dqf.deleted)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -67,7 +67,9 @@ func (f *fakeInboundOperator) Ignore(
 	return f.changes[req.ID], nil
 }
 
-func proposedPayment(status accountingsync.InboundChangeStatus) *accountingsync.AccountingInboundChange {
+func proposedPayment(
+	status accountingsync.InboundChangeStatus,
+) *accountingsync.AccountingInboundChange {
 	return &accountingsync.AccountingInboundChange{
 		ID:             pulid.MustNew("acctic_"),
 		Kind:           accountingsync.InboundCustomerPayment,
@@ -86,8 +88,10 @@ func newInboundOperator(
 ) *fakeInboundOperator {
 	preview.Change = change
 	return &fakeInboundOperator{
-		changes:  map[pulid.ID]*accountingsync.AccountingInboundChange{change.ID: change},
-		previews: map[pulid.ID]*accountingsyncports.AccountingInboundApplyPreview{change.ID: preview},
+		changes: map[pulid.ID]*accountingsync.AccountingInboundChange{change.ID: change},
+		previews: map[pulid.ID]*accountingsyncports.AccountingInboundApplyPreview{
+			change.ID: preview,
+		},
 	}
 }
 
@@ -111,7 +115,7 @@ func TestApplyAccountingInboundChange_AppliesAsTheApprover(t *testing.T) {
 	tool := newApplyAccountingInboundChangeTool(operator)
 	params := syncParams(map[string]any{"inboundChangeId": change.ID.String()})
 
-	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.NoError(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 	assert.Nil(t, operator.applied, "validating posts nothing")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -119,9 +123,13 @@ func TestApplyAccountingInboundChange_AppliesAsTheApprover(t *testing.T) {
 	assert.Equal(t, change.ID, operator.applied.ID)
 	assert.Equal(t, params.Actor.UserID, operator.appliedActor.UserID)
 
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
-	assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceAccountingSync, ID: change.ID}, target)
+	assert.Equal(
+		t,
+		agenttoolports.ToolTarget{Resource: permission.ResourceAccountingSync, ID: change.ID},
+		target,
+	)
 }
 
 func TestApplyAccountingInboundChange_RefusesWhatNoLongerMatches(t *testing.T) {
@@ -134,7 +142,7 @@ func TestApplyAccountingInboundChange_RefusesWhatNoLongerMatches(t *testing.T) {
 	tool := newApplyAccountingInboundChangeTool(operator)
 	params := syncParams(map[string]any{"inboundChangeId": change.ID.String()})
 
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
+	err := tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "cannot be applied")
 	require.Error(t, tool.Execute(t.Context(), params))
@@ -180,10 +188,10 @@ func TestIgnoreAccountingInboundChange_NeedsANoteAndAnOpenPayment(t *testing.T) 
 func TestAccountingInboundTools_AskAPersonFirst(t *testing.T) {
 	t.Parallel()
 
-	apply := newApplyAccountingInboundChangeTool(&fakeInboundOperator{}).(agentports.ToolPolicyDeclarer).Policy()
+	apply := newApplyAccountingInboundChangeTool(&fakeInboundOperator{}).(agenttoolports.ToolPolicyDeclarer).Policy()
 	assert.Equal(t, agent.TierActWithApproval, apply.MaxTier, "applying posts money")
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, apply.Egress)
 
-	ignore := newIgnoreAccountingInboundChangeTool(&fakeInboundOperator{}).(agentports.ToolPolicyDeclarer).Policy()
+	ignore := newIgnoreAccountingInboundChangeTool(&fakeInboundOperator{}).(agenttoolports.ToolPolicyDeclarer).Policy()
 	assert.Equal(t, agent.TierActWithApproval, ignore.MaxTier)
 }

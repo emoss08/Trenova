@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -58,7 +58,7 @@ func TestCompleteChat_CarriesTheAdvisorAndChargesItsTokens(t *testing.T) {
 	provider.APIKey = key
 
 	req := chatRequest(provider.ID)
-	req.Advisor = agentports.DefaultAdvisor("")
+	req.Advisor = llmports.DefaultAdvisor("")
 
 	result, err := svc.CompleteChat(t.Context(), req)
 	require.NoError(t, err)
@@ -77,8 +77,12 @@ func TestCompleteChat_CarriesTheAdvisorAndChargesItsTokens(t *testing.T) {
 	require.NotNil(t, result.Reasoning)
 	assert.Equal(t, "claude-opus-5-5", result.Reasoning.AdvisorModel())
 	require.NotNil(t, result.CostUSD)
-	assert.True(t, result.CostUSD.Equal(decimal.RequireFromString("6.006")), result.CostUSD.String(),
-		"Haiku's own tokens at its price plus the advisor's at Opus 5.5's list price")
+	assert.True(
+		t,
+		result.CostUSD.Equal(decimal.RequireFromString("6.006")),
+		result.CostUSD.String(),
+		"Haiku's own tokens at its price plus the advisor's at Opus 5.5's list price",
+	)
 }
 
 func TestCompleteChat_PricesEachExecutorIterationAndRecordsTheAdvisor(t *testing.T) {
@@ -118,7 +122,7 @@ func TestCompleteChat_PricesEachExecutorIterationAndRecordsTheAdvisor(t *testing
 	attribution := turnAttribution()
 	req := chatRequest(pulid.Nil)
 	req.Attribution = attribution
-	req.Advisor = agentports.DefaultAdvisor("")
+	req.Advisor = llmports.DefaultAdvisor("")
 
 	result, err := svc.CompleteChat(t.Context(), req)
 	require.NoError(t, err)

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -113,7 +113,7 @@ func locationFields() []masterField[location.Location] {
 	}
 }
 
-func NewUpdateLocationTool(locations LocationKeeper, states StateLookup) agentports.AgentTool {
+func NewUpdateLocationTool(locations LocationKeeper, states StateLookup) agenttoolports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[location.Location]{
 		record: locationRecord,
 		name:   "location_update",
@@ -144,7 +144,7 @@ func NewUpdateLocationTool(locations LocationKeeper, states StateLookup) agentpo
 func NewUpdateLocationStatusTool(
 	locations LocationKeeper,
 	states StateLookup,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newMasterStatusTool(&masterStatusSpec[location.Location, domaintypes.Status]{
 		record: locationRecord,
 		name:   "location_set_status",

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -121,14 +121,14 @@ type fileCall struct {
 	file      *triageworkservice.FileRequest
 }
 
-func NewFileInboundAttachmentTool(p triageToolParams) agentports.AgentTool {
+func NewFileInboundAttachmentTool(p triageToolParams) agenttoolports.AgentTool {
 	return newFileInboundAttachmentTool(p.Inbox, p.Work)
 }
 
 func newFileInboundAttachmentTool(
 	inbox inboundMessageReader,
 	filing triageFiling,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_file_attachment",
@@ -176,7 +176,7 @@ func newFileInboundAttachmentTool(
 			Plan: func(
 				ctx context.Context,
 				call *fileCall,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*triageworkservice.FilePlan, error) {
 				return filing.PlanFile(ctx, call.file)
 			},
@@ -187,7 +187,7 @@ func newFileInboundAttachmentTool(
 			Run: func(
 				ctx context.Context,
 				call *fileCall,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				if err := requireAttachmentOn(ctx, inbox, call.file.TenantInfo,
 					call.messageID, call.file.AttachmentID); err != nil {
@@ -246,7 +246,7 @@ func filingPagesProperty() map[string]any {
 	}
 }
 
-func fileRequest(params *agentports.ToolExecuteParams) (*fileCall, error) {
+func fileRequest(params *agenttoolports.ToolExecuteParams) (*fileCall, error) {
 	messageID, err := common.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
 		return nil, err
@@ -402,14 +402,14 @@ type unfileCall struct {
 	unfile    *triageworkservice.UnfileRequest
 }
 
-func NewUnfileInboundAttachmentTool(p triageToolParams) agentports.AgentTool {
+func NewUnfileInboundAttachmentTool(p triageToolParams) agenttoolports.AgentTool {
 	return newUnfileInboundAttachmentTool(p.Inbox, p.Work)
 }
 
 func newUnfileInboundAttachmentTool(
 	inbox inboundMessageReader,
 	filing triageFiling,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_unfile_attachment",
@@ -442,7 +442,7 @@ func newUnfileInboundAttachmentTool(
 			Target:      targetMessage,
 		},
 		common.ReceivablePlan[*unfileCall, *triageworkservice.UnfilePlan]{
-			Request: func(params *agentports.ToolExecuteParams) (*unfileCall, error) {
+			Request: func(params *agenttoolports.ToolExecuteParams) (*unfileCall, error) {
 				messageID, err := common.RequirePulid(params.Params, paramMessageID)
 				if err != nil {
 					return nil, err
@@ -464,7 +464,7 @@ func newUnfileInboundAttachmentTool(
 			Plan: func(
 				ctx context.Context,
 				call *unfileCall,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*triageworkservice.UnfilePlan, error) {
 				return filing.PlanUnfile(ctx, call.unfile)
 			},
@@ -475,7 +475,7 @@ func newUnfileInboundAttachmentTool(
 			Run: func(
 				ctx context.Context,
 				call *unfileCall,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				if err := requireAttachmentOn(ctx, inbox, call.unfile.TenantInfo,
 					call.messageID, call.unfile.AttachmentID); err != nil {

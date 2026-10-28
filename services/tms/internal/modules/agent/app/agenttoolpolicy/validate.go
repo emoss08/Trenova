@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/productguide"
 )
@@ -18,7 +18,7 @@ var permissionRegistry = sync.OnceValue(permission.NewRegistry)
 
 type Spec struct {
 	ToolName string
-	Policy   agentports.ToolPolicy
+	Policy   agenttoolports.ToolPolicy
 	Reports  bool
 }
 
@@ -104,7 +104,7 @@ func specProblems(spec *Spec) []string {
 	return problems
 }
 
-func conditionProblems(policy *agentports.ToolPolicy) []string {
+func conditionProblems(policy *agenttoolports.ToolPolicy) []string {
 	condition := policy.Condition
 	if condition == nil {
 		return nil
@@ -136,7 +136,7 @@ func conditionProblems(policy *agentports.ToolPolicy) []string {
 	return problems
 }
 
-func egressProblems(policy agentports.ToolPolicy) []string {
+func egressProblems(policy agenttoolports.ToolPolicy) []string {
 	problems := make([]string, 0)
 	add := func(format string, args ...any) {
 		problems = append(problems, fmt.Sprintf(format, args...))
@@ -190,7 +190,7 @@ func egressProblems(policy agentports.ToolPolicy) []string {
 	return problems
 }
 
-func tierProblems(policy agentports.ToolPolicy) []string {
+func tierProblems(policy agenttoolports.ToolPolicy) []string {
 	if !policy.DefaultTier.IsValid() || !policy.MaxTier.IsValid() || len(policy.Egress) == 0 {
 		return nil
 	}
@@ -209,7 +209,7 @@ func tierProblems(policy agentports.ToolPolicy) []string {
 	return problems
 }
 
-func furtherSourceProblems(policy *agentports.ToolPolicy) []string {
+func furtherSourceProblems(policy *agenttoolports.ToolPolicy) []string {
 	if len(policy.Sources) == 0 {
 		return nil
 	}
@@ -234,7 +234,7 @@ func furtherSourceProblems(policy *agentports.ToolPolicy) []string {
 	return problems
 }
 
-func externalReadProblems(policy agentports.ToolPolicy) []string {
+func externalReadProblems(policy agenttoolports.ToolPolicy) []string {
 	problems := make([]string, 0)
 	if !policy.ReadsExternal.IsValid() {
 		problems = append(problems,

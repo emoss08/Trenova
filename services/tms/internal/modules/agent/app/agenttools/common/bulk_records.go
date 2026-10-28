@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,8 +35,8 @@ type RecordLabels func(
 ) map[pulid.ID]string
 
 type singleRecordTool interface {
-	agentports.AgentTool
-	agentports.ToolPreviewer
+	agenttoolports.AgentTool
+	agenttoolports.ToolPreviewer
 }
 
 type RecordBatch struct {
@@ -87,8 +87,8 @@ func (b *RecordBatch) property(description string) map[string]any {
 }
 
 func (b *RecordBatch) ids(
-	tool agentports.AgentTool,
-	params *agentports.ToolExecuteParams,
+	tool agenttoolports.AgentTool,
+	params *agenttoolports.ToolExecuteParams,
 ) ([]pulid.ID, error) {
 	if err := GuardPreview(tool, params); err != nil {
 		return nil, err
@@ -115,9 +115,9 @@ func (b *RecordBatch) singleArguments(params map[string]any, id pulid.ID) map[st
 }
 
 func (b *RecordBatch) singleParams(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	id pulid.ID,
-) agentports.ToolExecuteParams {
+) agenttoolports.ToolExecuteParams {
 	single := *params
 	single.Params = b.singleArguments(params.Params, id)
 	if params.IdempotencyKey != "" {
@@ -153,8 +153,8 @@ func (b *RecordBatch) Split(params map[string]any) ([]map[string]any, error) {
 
 func (b *RecordBatch) Preview(
 	ctx context.Context,
-	tool agentports.AgentTool,
-	params *agentports.ToolExecuteParams,
+	tool agenttoolports.AgentTool,
+	params *agenttoolports.ToolExecuteParams,
 ) (*agent.ToolPreview, error) {
 	ids, err := b.ids(tool, params)
 	if err != nil {
@@ -206,7 +206,7 @@ func (b *RecordBatch) Preview(
 
 func (b *RecordBatch) previewOne(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	id pulid.ID,
 ) (batchItem, error) {
 	single, err := b.Single.Preview(ctx, b.singleParams(params, id))
@@ -313,10 +313,10 @@ func (b *RecordBatch) refusalOf(refused []batchItem) error {
 
 func (b *RecordBatch) Validate(
 	ctx context.Context,
-	tool agentports.AgentTool,
-	params *agentports.ToolExecuteParams,
+	tool agenttoolports.AgentTool,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if validator, validates := b.Single.(agentports.ToolValidator); validates {
+	if validator, validates := b.Single.(agenttoolports.ToolValidator); validates {
 		ids, err := b.ids(tool, params)
 		if err != nil {
 			return err
@@ -337,18 +337,18 @@ func (b *RecordBatch) Validate(
 // Target is the record a call naming one record acts on, as the single tool
 // names it, so a proposal for one record is pinned to its version like the
 // single tool's was. A call naming several has no one target.
-func (b *RecordBatch) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	targeted, ok := b.Single.(agentports.TargetedTool)
+func (b *RecordBatch) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	targeted, ok := b.Single.(agenttoolports.TargetedTool)
 	if !ok {
-		return agentports.ToolTarget{}, false
+		return agenttoolports.ToolTarget{}, false
 	}
 	ids, err := RequirePulidSlice(params, b.Param, MaxBulkRecords)
 	if err != nil {
-		return agentports.ToolTarget{}, false
+		return agenttoolports.ToolTarget{}, false
 	}
 	ids = sliceutils.Dedupe(ids)
 	if len(ids) != 1 {
-		return agentports.ToolTarget{}, false
+		return agenttoolports.ToolTarget{}, false
 	}
 
 	return targeted.Target(b.singleArguments(params, ids[0]))
@@ -361,8 +361,8 @@ type batchFailure struct {
 
 func (b *RecordBatch) Execute(
 	ctx context.Context,
-	tool agentports.AgentTool,
-	params *agentports.ToolExecuteParams,
+	tool agenttoolports.AgentTool,
+	params *agenttoolports.ToolExecuteParams,
 ) (*agent.ToolExecutionResult, error) {
 	if err := GuardExecute(tool, *params); err != nil {
 		return nil, err
@@ -408,10 +408,10 @@ func (b *RecordBatch) Execute(
 // than a count of one.
 func (b *RecordBatch) executeOne(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	id pulid.ID,
 ) (*agent.ToolExecutionResult, error) {
-	result, err := agentports.ExecuteTool(ctx, b.Single, b.singleParams(params, id))
+	result, err := agenttoolports.ExecuteTool(ctx, b.Single, b.singleParams(params, id))
 	if err != nil || result != nil {
 		return result, err
 	}
@@ -428,7 +428,7 @@ func (b *RecordBatch) executeOne(
 // reason, for the card that lists them.
 func (b *RecordBatch) failedItems(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	failures []batchFailure,
 ) []agent.ExecutionItemFail {
 	if len(failures) == 0 {
@@ -449,7 +449,7 @@ func (b *RecordBatch) failedItems(
 
 func (b *RecordBatch) outcome(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	total int,
 	failures []batchFailure,
 ) string {
@@ -478,7 +478,7 @@ func (b *RecordBatch) outcome(
 
 func (b *RecordBatch) failedLabels(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	failures []batchFailure,
 ) map[pulid.ID]string {
 	if b.Labels == nil {

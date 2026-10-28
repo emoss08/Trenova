@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,11 +35,11 @@ type fakeRetrievalStatusService struct {
 	mu        sync.Mutex
 	calls     []string
 	tenants   []pagination.TenantInfo
-	update    *agentports.UpdateAIRetrievalSettingsRequest
-	reindex   *agentports.ReindexAIRetrievalSourceRequest
+	update    *retrievalports.UpdateAIRetrievalSettingsRequest
+	reindex   *retrievalports.ReindexAIRetrievalSourceRequest
 	estimate  airetrieval.SourceType
-	failedReq *agentports.ListAIRetrievalFailedEntriesRequest
-	page      *agentports.AIRetrievalFailedEntryPage
+	failedReq *retrievalports.ListAIRetrievalFailedEntriesRequest
+	page      *retrievalports.AIRetrievalFailedEntryPage
 }
 
 func (f *fakeRetrievalStatusService) record(call string, tenant pagination.TenantInfo) {
@@ -53,49 +53,49 @@ func (f *fakeRetrievalStatusService) record(call string, tenant pagination.Tenan
 func (f *fakeRetrievalStatusService) Status(
 	_ context.Context,
 	tenant pagination.TenantInfo,
-) (*agentports.AIRetrievalStatus, error) {
+) (*retrievalports.AIRetrievalStatus, error) {
 	f.record("Status", tenant)
-	return &agentports.AIRetrievalStatus{}, nil
+	return &retrievalports.AIRetrievalStatus{}, nil
 }
 
 func (f *fakeRetrievalStatusService) UpdateSettings(
 	_ context.Context,
-	req *agentports.UpdateAIRetrievalSettingsRequest,
-) (*agentports.AIRetrievalStatus, error) {
+	req *retrievalports.UpdateAIRetrievalSettingsRequest,
+) (*retrievalports.AIRetrievalStatus, error) {
 	f.record("UpdateSettings", req.TenantInfo)
 	f.update = req
-	return &agentports.AIRetrievalStatus{}, nil
+	return &retrievalports.AIRetrievalStatus{}, nil
 }
 
 func (f *fakeRetrievalStatusService) Reindex(
 	_ context.Context,
-	req *agentports.ReindexAIRetrievalSourceRequest,
-) (*agentports.AIRetrievalStatus, error) {
+	req *retrievalports.ReindexAIRetrievalSourceRequest,
+) (*retrievalports.AIRetrievalStatus, error) {
 	f.record("Reindex", req.TenantInfo)
 	f.reindex = req
-	return &agentports.AIRetrievalStatus{}, nil
+	return &retrievalports.AIRetrievalStatus{}, nil
 }
 
 func (f *fakeRetrievalStatusService) ReindexEstimate(
 	_ context.Context,
 	tenant pagination.TenantInfo,
 	sourceType airetrieval.SourceType,
-) (*agentports.AIRetrievalReindexEstimate, error) {
+) (*retrievalports.AIRetrievalReindexEstimate, error) {
 	f.record("ReindexEstimate", tenant)
 	f.estimate = sourceType
-	return &agentports.AIRetrievalReindexEstimate{SourceType: sourceType}, nil
+	return &retrievalports.AIRetrievalReindexEstimate{SourceType: sourceType}, nil
 }
 
 func (f *fakeRetrievalStatusService) ListFailedEntries(
 	_ context.Context,
-	req *agentports.ListAIRetrievalFailedEntriesRequest,
-) (*agentports.AIRetrievalFailedEntryPage, error) {
+	req *retrievalports.ListAIRetrievalFailedEntriesRequest,
+) (*retrievalports.AIRetrievalFailedEntryPage, error) {
 	f.record("ListFailedEntries", req.TenantInfo)
 	f.failedReq = req
 	if f.page != nil {
 		return f.page, nil
 	}
-	return &agentports.AIRetrievalFailedEntryPage{}, nil
+	return &retrievalports.AIRetrievalFailedEntryPage{}, nil
 }
 
 type retrievalResolverFixture struct {
@@ -307,10 +307,16 @@ func TestAIRetrievalFailedEntryConnection_NarrowsToTheSourceAndMapsThePage(t *te
 	f := newRetrievalResolverFixture(t, permission.OpRead)
 	total := 3
 	sourceID := pulid.MustNew("doc_")
-	f.service.page = &agentports.AIRetrievalFailedEntryPage{
-		Edges: []*agentports.AIRetrievalFailedEntryEdge{
-			{Node: &agentports.AIRetrievalFailedEntry{ID: "a", SourceID: sourceID}, Cursor: "c1"},
-			{Node: &agentports.AIRetrievalFailedEntry{ID: "b", SourceID: sourceID}, Cursor: "c2"},
+	f.service.page = &retrievalports.AIRetrievalFailedEntryPage{
+		Edges: []*retrievalports.AIRetrievalFailedEntryEdge{
+			{
+				Node:   &retrievalports.AIRetrievalFailedEntry{ID: "a", SourceID: sourceID},
+				Cursor: "c1",
+			},
+			{
+				Node:   &retrievalports.AIRetrievalFailedEntry{ID: "b", SourceID: sourceID},
+				Cursor: "c2",
+			},
 		},
 		HasNextPage: true,
 		TotalCount:  &total,
@@ -360,11 +366,14 @@ func TestAIRetrievalSettingsPatchFromInput(t *testing.T) {
 
 		off, on := false, true
 		budget := "25.50"
-		req, err := aiRetrievalSettingsPatchFromInput(tenant, &gqlmodel.AIRetrievalSettingsPatchInput{
-			DocumentsEnabled:         graphql.OmittableOf(&off),
-			Paused:                   graphql.OmittableOf(&on),
-			MonthlyIndexingBudgetUsd: graphql.OmittableOf(&budget),
-		})
+		req, err := aiRetrievalSettingsPatchFromInput(
+			tenant,
+			&gqlmodel.AIRetrievalSettingsPatchInput{
+				DocumentsEnabled:         graphql.OmittableOf(&off),
+				Paused:                   graphql.OmittableOf(&on),
+				MonthlyIndexingBudgetUsd: graphql.OmittableOf(&budget),
+			},
+		)
 		require.NoError(t, err)
 
 		require.NotNil(t, req.DocumentsEnabled)

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -13,14 +13,14 @@ import (
 
 func (s *Service) ListModels(
 	ctx context.Context,
-	req *agentports.ListAIProviderModelsRequest,
-) ([]agentports.AIProviderModelOption, error) {
+	req *aiproviderports.ListAIProviderModelsRequest,
+) ([]aiproviderports.AIProviderModelOption, error) {
 	sealed, err := s.seal(ctx, req.TenantInfo, &req.Endpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.tester.ListModels(ctx, &agentports.ProbeAIProviderModelsRequest{
+	return s.tester.ListModels(ctx, &aiproviderports.ProbeAIProviderModelsRequest{
 		TenantInfo: req.TenantInfo,
 		Endpoint:   sealed,
 	})
@@ -28,8 +28,8 @@ func (s *Service) ListModels(
 
 func (s *Service) TestDraft(
 	ctx context.Context,
-	req *agentports.TestAIProviderDraftRequest,
-) (*agentports.AIProviderDraftTestResult, error) {
+	req *aiproviderports.TestAIProviderDraftRequest,
+) (*aiproviderports.AIProviderDraftTestResult, error) {
 	multiErr := errortypes.NewMultiError()
 	validateDraft(req, multiErr)
 	if multiErr.HasErrors() {
@@ -46,7 +46,7 @@ func (s *Service) TestDraft(
 		timeout = *req.TimeoutSeconds
 	}
 
-	return s.tester.TestDraft(ctx, &agentports.ProbeAIProviderDraftRequest{
+	return s.tester.TestDraft(ctx, &aiproviderports.ProbeAIProviderDraftRequest{
 		TenantInfo:           req.TenantInfo,
 		Endpoint:             sealed,
 		Model:                strings.TrimSpace(req.Model),
@@ -60,8 +60,8 @@ func (s *Service) TestDraft(
 
 func (s *Service) RunListModels(
 	ctx context.Context,
-	req *agentports.ProbeAIProviderModelsRequest,
-) ([]agentports.AIProviderModelOption, error) {
+	req *aiproviderports.ProbeAIProviderModelsRequest,
+) ([]aiproviderports.AIProviderModelOption, error) {
 	provider := endpointProvider(&req.Endpoint)
 	apiKey, err := s.unseal(req.TenantInfo, &req.Endpoint)
 	if err != nil {
@@ -73,8 +73,8 @@ func (s *Service) RunListModels(
 
 func (s *Service) RunTestDraft(
 	ctx context.Context,
-	req *agentports.ProbeAIProviderDraftRequest,
-) (*agentports.AIProviderDraftTestResult, error) {
+	req *aiproviderports.ProbeAIProviderDraftRequest,
+) (*aiproviderports.AIProviderDraftTestResult, error) {
 	provider := endpointProvider(&req.Endpoint)
 	provider.Name = "Draft"
 	provider.Model = req.Model
@@ -103,7 +103,10 @@ func (s *Service) RunTestDraft(
 	return s.prober.Probe(ctx, provider, apiKey), nil
 }
 
-func validateDraft(req *agentports.TestAIProviderDraftRequest, multiErr *errortypes.MultiError) {
+func validateDraft(
+	req *aiproviderports.TestAIProviderDraftRequest,
+	multiErr *errortypes.MultiError,
+) {
 	if strings.TrimSpace(req.Model) == "" {
 		multiErr.Add("model", errortypes.ErrRequired, "Model is required")
 	}
@@ -137,13 +140,13 @@ func validateDraft(req *agentports.TestAIProviderDraftRequest, multiErr *errorty
 func (s *Service) seal(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	endpoint *agentports.AIProviderEndpoint,
-) (agentports.SealedAIProviderEndpoint, error) {
+	endpoint *aiproviderports.AIProviderEndpoint,
+) (aiproviderports.SealedAIProviderEndpoint, error) {
 	if err := s.checkPrivateNetwork(endpoint.AllowPrivateNetwork); err != nil {
-		return agentports.SealedAIProviderEndpoint{}, err
+		return aiproviderports.SealedAIProviderEndpoint{}, err
 	}
 
-	sealed := agentports.SealedAIProviderEndpoint{
+	sealed := aiproviderports.SealedAIProviderEndpoint{
 		Kind:                endpoint.Kind,
 		Platform:            endpoint.Platform,
 		PlatformSettings:    clonePlatformSettings(endpoint.PlatformSettings),
@@ -155,12 +158,12 @@ func (s *Service) seal(
 	sealed.Platform = draft.Platform
 	sealed.PlatformSettings = draft.PlatformSettings
 	if err := s.checkServerCredentials(draft); err != nil {
-		return agentports.SealedAIProviderEndpoint{}, err
+		return aiproviderports.SealedAIProviderEndpoint{}, err
 	}
 
 	key, err := s.sealedKey(ctx, tenantInfo, endpoint, draft)
 	if err != nil {
-		return agentports.SealedAIProviderEndpoint{}, err
+		return aiproviderports.SealedAIProviderEndpoint{}, err
 	}
 	sealed.SealedAPIKey = key
 
@@ -168,7 +171,7 @@ func (s *Service) seal(
 	multiErr := errortypes.NewMultiError()
 	draft.ValidateEndpoint(multiErr)
 	if multiErr.HasErrors() {
-		return agentports.SealedAIProviderEndpoint{}, multiErr
+		return aiproviderports.SealedAIProviderEndpoint{}, multiErr
 	}
 
 	return sealed, nil
@@ -177,7 +180,7 @@ func (s *Service) seal(
 func (s *Service) sealedKey(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	endpoint *agentports.AIProviderEndpoint,
+	endpoint *aiproviderports.AIProviderEndpoint,
 	draft *aiprovider.Provider,
 ) (string, error) {
 	if endpoint.APIKey != nil {
@@ -194,7 +197,7 @@ func (s *Service) sealedKey(
 		return "", nil
 	}
 
-	stored, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	stored, err := s.repo.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         endpoint.ProviderID,
 		TenantInfo: tenantInfo,
 	})
@@ -234,7 +237,7 @@ func draftAAD(tenantInfo pagination.TenantInfo) encryptionservice.AAD {
 
 func (s *Service) unseal(
 	tenantInfo pagination.TenantInfo,
-	endpoint *agentports.SealedAIProviderEndpoint,
+	endpoint *aiproviderports.SealedAIProviderEndpoint,
 ) (string, error) {
 	if strings.TrimSpace(endpoint.SealedAPIKey) == "" {
 		return "", nil
@@ -253,7 +256,7 @@ func (s *Service) unseal(
 	return apiKey, nil
 }
 
-func endpointProvider(endpoint *agentports.SealedAIProviderEndpoint) *aiprovider.Provider {
+func endpointProvider(endpoint *aiproviderports.SealedAIProviderEndpoint) *aiprovider.Provider {
 	return &aiprovider.Provider{
 		Kind:                endpoint.Kind,
 		Platform:            endpoint.Platform,

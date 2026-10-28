@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -29,7 +29,7 @@ const definitionTemplateField = "template"
 // produced is saved there so "Open in Desk" has somewhere to go.
 func (s *Service) StartAsk(
 	ctx context.Context,
-	req *agentports.AskRequest,
+	req *assistantports.AskRequest,
 	actor *permissionports.RequestActor,
 ) (*conversation.Thread, error) {
 	content := strings.TrimSpace(req.Content)
@@ -50,7 +50,7 @@ func (s *Service) StartAsk(
 		return nil, err
 	}
 
-	return s.StartThread(ctx, &agentports.StartThreadRequest{
+	return s.StartThread(ctx, &assistantports.StartThreadRequest{
 		AgentDefinitionID: definition.ID,
 		Title:             conversation.TitleFrom(content),
 		TenantInfo:        req.TenantInfo,

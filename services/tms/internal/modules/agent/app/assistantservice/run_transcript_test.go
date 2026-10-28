@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -63,10 +63,10 @@ func newRunTranscriptFixture(transcript *agent.RunTranscript) runTranscriptFixtu
 	}
 }
 
-func (f runTranscriptFixture) request() agentports.GetAgentRunByIDRequest {
+func (f runTranscriptFixture) request() agentruntimeports.GetAgentRunByIDRequest {
 	tenant := f.tenant
 
-	return agentports.GetAgentRunByIDRequest{ID: f.run.ID, TenantInfo: &tenant}
+	return agentruntimeports.GetAgentRunByIDRequest{ID: f.run.ID, TenantInfo: &tenant}
 }
 
 func roundTripped(messages []conversation.Message) []conversation.Message {
@@ -239,7 +239,7 @@ func TestRunTranscript_RefusesARequestWithoutATenant(t *testing.T) {
 
 	_, err := fixture.svc.RunTranscript(
 		t.Context(),
-		agentports.GetAgentRunByIDRequest{ID: fixture.run.ID},
+		agentruntimeports.GetAgentRunByIDRequest{ID: fixture.run.ID},
 	)
 
 	require.Error(t, err)

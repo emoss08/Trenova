@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,7 +24,7 @@ type fakeRuns struct {
 
 func (f *fakeRuns) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	if other, ok := f.others[req.ID]; ok {
 		return other, nil
@@ -38,12 +39,12 @@ func (f *fakeRuns) GetByID(
 type fakeThreads struct {
 	owner  pulid.ID
 	thread pulid.ID
-	asked  []agentports.GetThreadRequest
+	asked  []assistantports.GetThreadRequest
 }
 
 func (f *fakeThreads) GetThread(
 	_ context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	f.asked = append(f.asked, req)
 	if req.ID != f.thread || req.UserID != f.owner {

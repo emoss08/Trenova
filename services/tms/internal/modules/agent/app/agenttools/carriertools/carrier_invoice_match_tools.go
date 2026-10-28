@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -94,8 +94,8 @@ func (t *CarrierInvoiceMatchTool) ParamSchema() map[string]any {
 	}, required...)
 }
 
-func (t *CarrierInvoiceMatchTool) Policy() agentports.ToolPolicy {
-	policy := agentports.ToolPolicy{
+func (t *CarrierInvoiceMatchTool) Policy() agenttoolports.ToolPolicy {
+	policy := agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceCarrierInvoiceMatch,
@@ -107,10 +107,10 @@ func (t *CarrierInvoiceMatchTool) Policy() agentports.ToolPolicy {
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
 		Rationale:     t.decision.rationale,
-		TaintHold: &agentports.TaintHold{
+		TaintHold: &agenttoolports.TaintHold{
 			Description: "Its note is what accounts payable reads about the carrier's " +
 				"invoice, so a run that has read outside text proposes it.",
-			Applies: func(agentports.ToolExecuteParams) bool { return true },
+			Applies: func(agenttoolports.ToolExecuteParams) bool { return true },
 		},
 	}
 	if t.decision.personOnly {
@@ -122,12 +122,12 @@ func (t *CarrierInvoiceMatchTool) Policy() agentports.ToolPolicy {
 	return policy
 }
 
-func (t *CarrierInvoiceMatchTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *CarrierInvoiceMatchTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramMatchID, permission.ResourceCarrierInvoiceMatch)
 }
 
 func (t *CarrierInvoiceMatchTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*carriersettlementservice.MatchDecisionRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -156,7 +156,7 @@ func (t *CarrierInvoiceMatchTool) request(
 
 func (t *CarrierInvoiceMatchTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*carriersettlementservice.MatchDecisionPlan, error) {
 	req, err := t.request(params)
 	if err != nil {
@@ -168,7 +168,7 @@ func (t *CarrierInvoiceMatchTool) plan(
 
 func (t *CarrierInvoiceMatchTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -180,7 +180,7 @@ func (t *CarrierInvoiceMatchTool) Validate(
 
 func (t *CarrierInvoiceMatchTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -220,7 +220,7 @@ func matchMoney(match *carriersettlement.InvoiceMatch) *agent.MoneyPreview {
 
 func (t *CarrierInvoiceMatchTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -292,7 +292,7 @@ func matchVerb(decision carriersettlementservice.MatchDecision) string {
 
 func ProvideAcceptCarrierInvoiceMatchTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &CarrierInvoiceMatchTool{matches: s, decision: matchDecision{
 		name:   "carrier_accept_invoice_match",
 		recipe: []string{"carrier_list_invoice_matches", "carrier_accept_invoice_match"},
@@ -312,7 +312,7 @@ func ProvideAcceptCarrierInvoiceMatchTool(
 
 func ProvideAcceptCarrierInvoiceMatchWithVarianceTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &CarrierInvoiceMatchTool{matches: s, decision: matchDecision{
 		name: "carrier_accept_invoice_match_with_variance",
 		description: "Propose accepting a carrier's invoice that differs from the expected " +
@@ -331,7 +331,7 @@ func ProvideAcceptCarrierInvoiceMatchWithVarianceTool(
 
 func ProvideRejectCarrierInvoiceMatchTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &CarrierInvoiceMatchTool{matches: s, decision: matchDecision{
 		name: "carrier_reject_invoice_match",
 		description: "Reject a carrier's invoice match that is wrong, such as an invoice for " +
@@ -364,7 +364,7 @@ type CreateCarrierInvoiceMatchTool struct {
 
 func ProvideCreateCarrierInvoiceMatchTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &CreateCarrierInvoiceMatchTool{matches: s}
 }
 
@@ -395,8 +395,8 @@ func (t *CreateCarrierInvoiceMatchTool) ParamSchema() map[string]any {
 	}, paramEDIInvoiceID)
 }
 
-func (t *CreateCarrierInvoiceMatchTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *CreateCarrierInvoiceMatchTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceCarrierInvoiceMatch,
@@ -413,7 +413,7 @@ func (t *CreateCarrierInvoiceMatchTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *CreateCarrierInvoiceMatchTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*carriersettlementservice.CreateMatchRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -449,7 +449,7 @@ func (t *CreateCarrierInvoiceMatchTool) request(
 
 func (t *CreateCarrierInvoiceMatchTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*carriersettlementservice.CreateMatchPlan, error) {
 	req, err := t.request(params)
 	if err != nil {
@@ -461,7 +461,7 @@ func (t *CreateCarrierInvoiceMatchTool) plan(
 
 func (t *CreateCarrierInvoiceMatchTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -473,7 +473,7 @@ func (t *CreateCarrierInvoiceMatchTool) Validate(
 
 func (t *CreateCarrierInvoiceMatchTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -489,7 +489,7 @@ func (t *CreateCarrierInvoiceMatchTool) Execute(
 
 func (t *CreateCarrierInvoiceMatchTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -549,7 +549,7 @@ type LinkEDICarrierInvoiceTool struct {
 
 func ProvideLinkEDICarrierInvoiceTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &LinkEDICarrierInvoiceTool{invoices: s}
 }
 
@@ -576,8 +576,8 @@ func (t *LinkEDICarrierInvoiceTool) ParamSchema() map[string]any {
 	}, paramEDIInvoiceID, common.ParamCarrierID)
 }
 
-func (t *LinkEDICarrierInvoiceTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *LinkEDICarrierInvoiceTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceCarrierInvoiceMatch,
@@ -601,7 +601,7 @@ type linkRequest struct {
 }
 
 func (t *LinkEDICarrierInvoiceTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*linkRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -625,7 +625,7 @@ func (t *LinkEDICarrierInvoiceTool) request(
 
 func (t *LinkEDICarrierInvoiceTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -638,7 +638,7 @@ func (t *LinkEDICarrierInvoiceTool) Validate(
 
 func (t *LinkEDICarrierInvoiceTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -660,7 +660,7 @@ func (t *LinkEDICarrierInvoiceTool) Execute(
 
 func (t *LinkEDICarrierInvoiceTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {

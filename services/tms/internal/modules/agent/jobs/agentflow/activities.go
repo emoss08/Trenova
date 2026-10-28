@@ -10,7 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -34,9 +37,9 @@ type ToolObserver interface {
 	ObserveTool(
 		ctx context.Context,
 		run RunContext,
-		observation agentports.ToolObservation,
+		observation agentruntimeports.ToolObservation,
 		emit kernelports.AssistantStreamEmitter,
-	) (*agentports.ShownArtifact, []*assistantartifact.Artifact, error)
+	) (*agentruntimeports.ShownArtifact, []*assistantartifact.Artifact, error)
 }
 
 // DelegateOpener opens another agent's turn on a task the run's agent handed
@@ -63,23 +66,23 @@ type ActivitiesParams struct {
 
 	Logger    *zap.Logger
 	Runtime   *agentruntime.Service
-	Steps     agentports.RunStepLedger
-	Observer  ToolObserver                `optional:"true"`
-	Delegates DelegateOpener              `optional:"true"`
-	Metrics   *metrics.Registry           `optional:"true"`
-	Changes   agentports.RecordChangeFeed `optional:"true"`
-	Scopes    permissionports.ReadScopes  `optional:"true"`
+	Steps     agentruntimeports.RunStepLedger
+	Observer  ToolObserver                   `optional:"true"`
+	Delegates DelegateOpener                 `optional:"true"`
+	Metrics   *metrics.Registry              `optional:"true"`
+	Changes   realtimeports.RecordChangeFeed `optional:"true"`
+	Scopes    permissionports.ReadScopes     `optional:"true"`
 }
 
 // Activities are a turn's effects, one activity each.
 type Activities struct {
 	l         *zap.Logger
 	runtime   *agentruntime.Service
-	steps     agentports.RunStepLedger
+	steps     agentruntimeports.RunStepLedger
 	observer  ToolObserver
 	delegates DelegateOpener
 	metrics   *metrics.Assistant
-	changes   agentports.RecordChangeFeed
+	changes   realtimeports.RecordChangeFeed
 	scopes    permissionports.ReadScopes
 }
 
@@ -102,12 +105,12 @@ func NewActivities(p ActivitiesParams) *Activities {
 func (a *Activities) CheckWorldActivity(
 	ctx context.Context,
 	in *WorldCheckInput,
-) (*agentports.RecordChanges, error) {
+) (*realtimeports.RecordChanges, error) {
 	if a.changes == nil {
-		return &agentports.RecordChanges{Cursor: in.Check.Cursor}, nil
+		return &realtimeports.RecordChanges{Cursor: in.Check.Cursor}, nil
 	}
 
-	return a.changes.Since(ctx, &agentports.RecordChangesRequest{
+	return a.changes.Since(ctx, &realtimeports.RecordChangesRequest{
 		OrganizationID: in.OrganizationID,
 		BusinessUnitID: in.BusinessUnitID,
 		Cursor:         in.Check.Cursor,
@@ -153,11 +156,11 @@ func (a *Activities) ModelCallActivity(
 		// run together.
 		if attempt := activity.GetInfo(ctx).Attempt; attempt > 1 {
 			publish(kernelports.StreamEvent{
-				Event: agentports.AssistantEventRetrying,
-				Data: agentports.AssistantRetryingEvent{
+				Event: assistantports.AssistantEventRetrying,
+				Data: assistantports.AssistantRetryingEvent{
 					Attempt: int(attempt) - 1,
 					Reason:  "The reply is being written again after an interruption.",
-					Kind:    agentports.RetryKindRestart,
+					Kind:    llmports.RetryKindRestart,
 				},
 			}, true)
 		}
@@ -193,8 +196,8 @@ func (f *firstWords) flush(event kernelports.StreamEvent) bool {
 	if f.sent {
 		return false
 	}
-	if event.Event != agentports.AssistantEventDelta &&
-		event.Event != agentports.AssistantEventReasoning {
+	if event.Event != assistantports.AssistantEventDelta &&
+		event.Event != assistantports.AssistantEventReasoning {
 		return false
 	}
 	f.sent = true
@@ -339,7 +342,7 @@ func (a *Activities) PublishArtifactActivity(
 func (a *Activities) observing(
 	ctx context.Context,
 	run *RunContext,
-) (agentports.ToolObserver, *[]*assistantartifact.Artifact, func()) {
+) (agentruntimeports.ToolObserver, *[]*assistantartifact.Artifact, func()) {
 	kept := new([]*assistantartifact.Artifact)
 	if a.observer == nil || run.ThreadID.IsNil() || run.Inline {
 		return nil, kept, func() {}
@@ -362,7 +365,7 @@ func (a *Activities) observing(
 		}
 	}
 
-	observe := func(observation agentports.ToolObservation) (*agentports.ShownArtifact, error) {
+	observe := func(observation agentruntimeports.ToolObservation) (*agentruntimeports.ShownArtifact, error) {
 		shown, artifacts, err := a.observer.ObserveTool(ctx, *run, observation, emit)
 		*kept = append(*kept, artifacts...)
 

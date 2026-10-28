@@ -8,7 +8,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,7 +45,7 @@ type WorldCheck struct {
 
 type Interjections struct {
 	Steers []Steer
-	World  *agentports.RecordChanges
+	World  *realtimeports.RecordChanges
 }
 
 type OwnWrite struct {
@@ -58,7 +62,7 @@ type WorldState struct {
 
 func (s *Service) watchWorld(
 	ctx context.Context,
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 	now int64,
 ) *WorldState {
 	if s.changes == nil || req.Delegation != nil || req.Actor == nil {
@@ -73,7 +77,7 @@ func (s *Service) watchWorld(
 	return openWorld(cursor, watchedRecords(req), now)
 }
 
-func watchedRecords(req *agentports.RunRequest) []agent.EntityRef {
+func watchedRecords(req *agentruntimeports.RunRequest) []agent.EntityRef {
 	if len(req.Context.Anchors) == 0 {
 		return req.Records
 	}
@@ -139,7 +143,7 @@ func (w *WorldState) watch(record agent.EntityRef) {
 	}
 }
 
-func (w *WorldState) read(call *agentports.ToolCall, summary string) {
+func (w *WorldState) read(call *llmports.ToolCall, summary string) {
 	if w == nil {
 		return
 	}
@@ -149,7 +153,7 @@ func (w *WorldState) read(call *agentports.ToolCall, summary string) {
 }
 
 func RecordsRead(name string, arguments map[string]any, summary string) []agent.EntityRef {
-	name = agentports.ReadingOrder(name)
+	name = agenttoolports.ReadingOrder(name)
 	if !strings.HasPrefix(name, "get_") || len(arguments) == 0 {
 		return nil
 	}
@@ -169,7 +173,7 @@ func RecordsRead(name string, arguments map[string]any, summary string) []agent.
 	return records
 }
 
-func (w *WorldState) wrote(action *agentports.PendingAction, at int64) {
+func (w *WorldState) wrote(action *agentruntimeports.PendingAction, at int64) {
 	if w == nil || action == nil || !action.Executed || action.Target == nil ||
 		action.Target.ID.IsNil() {
 		return
@@ -184,7 +188,7 @@ func (w *WorldState) wrote(action *agentports.PendingAction, at int64) {
 	w.Own[idx].At = at
 }
 
-func (t *Turn) noteWorld(fx TurnEffects, call *agentports.ToolCall, outcome *toolOutcome) {
+func (t *Turn) noteWorld(fx TurnEffects, call *llmports.ToolCall, outcome *toolOutcome) {
 	if t.world == nil {
 		return
 	}
@@ -207,9 +211,9 @@ func (w *WorldState) due(now int64) *WorldCheck {
 }
 
 func (w *WorldState) news(
-	found *agentports.RecordChanges,
+	found *realtimeports.RecordChanges,
 	now int64,
-) []agentports.WatchedRecordChange {
+) []realtimeports.WatchedRecordChange {
 	w.CheckedAt = now
 	if found == nil {
 		return nil
@@ -221,7 +225,7 @@ func (w *WorldState) news(
 		return nil
 	}
 
-	news := make([]agentports.WatchedRecordChange, 0, len(found.Changes))
+	news := make([]realtimeports.WatchedRecordChange, 0, len(found.Changes))
 	for i := range found.Changes {
 		change := &found.Changes[i]
 		if w.ownChange(change) {
@@ -240,7 +244,7 @@ func (w *WorldState) news(
 	return news
 }
 
-func (w *WorldState) ownChange(change *agentports.WatchedRecordChange) bool {
+func (w *WorldState) ownChange(change *realtimeports.WatchedRecordChange) bool {
 	idx := slices.IndexFunc(w.Own, func(own OwnWrite) bool { return own.ID == change.RecordID })
 
 	return idx >= 0 && change.At <= w.Own[idx].At+ownWriteGrace
@@ -309,8 +313,8 @@ func (t *Turn) steer(fx TurnEffects, steer Steer) {
 	}
 
 	t.messages = append(t.messages,
-		agentports.Message{Role: agentports.RoleUser, Content: SteerPrompt(content, mentions)},
-		agentports.NoticeMessage(steerNotice),
+		llmports.Message{Role: llmports.RoleUser, Content: SteerPrompt(content, mentions)},
+		llmports.NoticeMessage(steerNotice),
 	)
 	t.result.Messages = append(t.result.Messages, conversation.Message{
 		Role:      conversation.RoleUser,
@@ -320,8 +324,8 @@ func (t *Turn) steer(fx TurnEffects, steer Steer) {
 		CreatedAt: fx.Now(),
 	})
 	fx.Emit(kernelports.StreamEvent{
-		Event: agentports.AssistantEventSteered,
-		Data: agentports.AssistantSteeredEvent{
+		Event: assistantports.AssistantEventSteered,
+		Data: assistantports.AssistantSteeredEvent{
 			ID:       steer.ID,
 			Content:  content,
 			Mentions: mentions,
@@ -329,11 +333,11 @@ func (t *Turn) steer(fx TurnEffects, steer Steer) {
 	})
 }
 
-func (t *Turn) worldChanged(fx TurnEffects, changes []agentports.WatchedRecordChange) {
+func (t *Turn) worldChanged(fx TurnEffects, changes []realtimeports.WatchedRecordChange) {
 	notice := WorldChangeNotice(changes, t.req.Actor)
 	clear(t.repeats.reads)
 
-	t.messages = append(t.messages, agentports.NoticeMessage(notice))
+	t.messages = append(t.messages, llmports.NoticeMessage(notice))
 	t.result.Messages = append(t.result.Messages, conversation.Message{
 		Role:         conversation.RoleUser,
 		Kind:         conversation.MessageKindWorldChange,
@@ -342,8 +346,8 @@ func (t *Turn) worldChanged(fx TurnEffects, changes []agentports.WatchedRecordCh
 		CreatedAt:    fx.Now(),
 	})
 	fx.Emit(kernelports.StreamEvent{
-		Event: agentports.AssistantEventWorldChanged,
-		Data:  agentports.AssistantWorldChangedEvent{Changes: changes},
+		Event: assistantports.AssistantEventWorldChanged,
+		Data:  assistantports.AssistantWorldChangedEvent{Changes: changes},
 	})
 }
 
@@ -378,7 +382,7 @@ const worldChangeClosing = "What you read about them earlier may be out of date.
 	"one again before you rely on it or change it, and tell the person if it changes your answer."
 
 func WorldChangeNotice(
-	changes []agentports.WatchedRecordChange,
+	changes []realtimeports.WatchedRecordChange,
 	actor *permissionports.RequestActor,
 ) string {
 	var b strings.Builder
@@ -418,7 +422,7 @@ func changeVerb(action string) string {
 }
 
 func changedBy(
-	change *agentports.WatchedRecordChange,
+	change *realtimeports.WatchedRecordChange,
 	actor *permissionports.RequestActor,
 ) string {
 	if actor != nil && actor.UserID.IsNotNil() && change.ActorUserID == actor.UserID.String() &&

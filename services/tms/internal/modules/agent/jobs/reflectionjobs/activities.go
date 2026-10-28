@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"go.uber.org/fx"
 )
 
@@ -13,12 +14,12 @@ type ActivitiesParams struct {
 	fx.In
 
 	Reflections agentports.AgentReflectionService
-	Completion  agentports.CompletionService
+	Completion  llmports.CompletionService
 }
 
 type Activities struct {
 	reflections agentports.AgentReflectionService
-	completion  agentports.CompletionService
+	completion  llmports.CompletionService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -55,7 +56,7 @@ func (a *Activities) PrepareRunReflectionActivity(
 func (a *Activities) ReflectionModelActivity(
 	ctx context.Context,
 	plan *agentports.ReflectionPlan,
-) (*agentports.StructuredCompletionResult, error) {
+) (*llmports.StructuredCompletionResult, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -36,13 +36,13 @@ type CheckAccountingConnectionTool struct {
 
 func newCheckAccountingConnectionTool(
 	accounting accountingConnectionChecker,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &CheckAccountingConnectionTool{accounting: accounting}
 }
 
 func ProvideCheckAccountingConnectionTool(
 	accounting accountingsyncports.AccountingConnectionService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newCheckAccountingConnectionTool(accounting)
 }
 
@@ -70,8 +70,8 @@ func (t *CheckAccountingConnectionTool) ParamSchema() map[string]any {
 	}, "system")
 }
 
-func (t *CheckAccountingConnectionTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *CheckAccountingConnectionTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceAccountingIntegration,
@@ -90,7 +90,7 @@ func (t *CheckAccountingConnectionTool) Policy() agentports.ToolPolicy {
 
 func (t *CheckAccountingConnectionTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.connection(ctx, &params)
 	return err
@@ -98,7 +98,7 @@ func (t *CheckAccountingConnectionTool) Validate(
 
 func (t *CheckAccountingConnectionTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	conn, err := t.connection(ctx, &params)
 	if err != nil {
@@ -111,7 +111,7 @@ func (t *CheckAccountingConnectionTool) Execute(
 
 func (t *CheckAccountingConnectionTool) connection(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsync.AccountingConnection, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err

@@ -7,7 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,22 +19,22 @@ import (
 // stubLedger stands in for the step ledger. Verdict is what every claim
 // returns; Claimed and Settled record what the runtime asked for.
 type stubLedger struct {
-	Verdict agentports.StepVerdict
+	Verdict agentruntimeports.StepVerdict
 	Err     error
-	Loads   []agentports.RunStep
+	Loads   []agentruntimeports.RunStep
 
-	Claimed []agentports.RunStep
-	Settled []agentports.RunStep
+	Claimed []agentruntimeports.RunStep
+	Settled []agentruntimeports.RunStep
 }
 
 func (l *stubLedger) Claim(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step agentports.RunStep,
-) (agentports.StepVerdict, error) {
+	step agentruntimeports.RunStep,
+) (agentruntimeports.StepVerdict, error) {
 	l.Claimed = append(l.Claimed, step)
 	if l.Err != nil {
-		return agentports.StepVerdict{}, l.Err
+		return agentruntimeports.StepVerdict{}, l.Err
 	}
 
 	return l.Verdict, nil
@@ -41,7 +43,7 @@ func (l *stubLedger) Claim(
 func (l *stubLedger) Settle(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step agentports.RunStep,
+	step agentruntimeports.RunStep,
 ) error {
 	l.Settled = append(l.Settled, step)
 
@@ -51,7 +53,7 @@ func (l *stubLedger) Settle(
 func (l *stubLedger) Record(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	_ agentports.RunStep,
+	_ agentruntimeports.RunStep,
 ) error {
 	return nil
 }
@@ -59,8 +61,8 @@ func (l *stubLedger) Record(
 func (l *stubLedger) Loaded(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	_ agentports.RunStepOwner,
-) ([]agentports.RunStep, error) {
+	_ agentruntimeports.RunStepOwner,
+) ([]agentruntimeports.RunStep, error) {
 	return l.Loads, nil
 }
 
@@ -70,30 +72,32 @@ func guardedRun(
 	t *testing.T,
 	ledger *stubLedger,
 	toolErr error,
-) (*agentports.RunResult, *agenttest.StubActionTool) {
+) (*agentruntimeports.RunResult, *agenttest.StubActionTool) {
 	t.Helper()
 
 	action := actionTool("dispatch_assign_move", agent.TierAutoExecute, toolErr)
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{action}}, nil)
 
 	definition := testDefinition("dispatch_assign_move")
 	definition.AutonomyCeiling = agent.TierAutoExecute
-	definition.ToolTiers = map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute}
+	definition.ToolTiers = map[string]agent.AutonomyTier{
+		"dispatch_assign_move": agent.TierAutoExecute,
+	}
 
 	runID := pulid.MustNew("ar_")
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "Assign mv_1",
 		RunID:      runID,
 		Steps:      ledger,
-		StepOwner: agentports.RunStepOwner{
-			Kind: agentports.RunStepOwnerAgentRun,
+		StepOwner: agentruntimeports.RunStepOwner{
+			Kind: agentruntimeports.RunStepOwnerAgentRun,
 			ID:   runID,
 		},
 		Attempt: 2,
@@ -106,12 +110,14 @@ func guardedRun(
 func TestGuardedDispatch_RunsAFreshCallAndSettlesIt(t *testing.T) {
 	t.Parallel()
 
-	ledger := &stubLedger{Verdict: agentports.StepVerdict{State: agentports.StepFresh}}
+	ledger := &stubLedger{
+		Verdict: agentruntimeports.StepVerdict{State: agentruntimeports.StepFresh},
+	}
 	result, action := guardedRun(t, ledger, nil)
 
 	require.Equal(t, 1, action.Calls)
 	require.Len(t, ledger.Claimed, 1)
-	assert.Equal(t, agentports.RunStepTool, ledger.Claimed[0].Kind)
+	assert.Equal(t, agentruntimeports.RunStepTool, ledger.Claimed[0].Kind)
 	assert.Equal(t, 2, ledger.Claimed[0].Attempt)
 
 	// The tool is handed the step key, not the provider's call id: that is
@@ -120,7 +126,7 @@ func TestGuardedDispatch_RunsAFreshCallAndSettlesIt(t *testing.T) {
 	assert.Equal(t, ledger.Claimed[0].Key, action.LastParams.IdempotencyKey)
 
 	require.Len(t, ledger.Settled, 1)
-	assert.Equal(t, agentports.RunStepCompleted, ledger.Settled[0].Status)
+	assert.Equal(t, agentruntimeports.RunStepCompleted, ledger.Settled[0].Status)
 	require.Len(t, result.Actions, 1)
 	assert.True(t, result.Actions[0].Executed)
 }
@@ -131,18 +137,18 @@ func TestGuardedDispatch_DoesNotRunAWriteAnEarlierAttemptAlreadyMade(t *testing.
 	// This is the bug the ledger exists for. Before it, a retried activity
 	// re-ran every write the first attempt had made, and the declared
 	// idempotency key did not help because nothing looks it up.
-	pinned := &agentports.PendingAction{
+	pinned := &agentruntimeports.PendingAction{
 		ToolName:  "dispatch_assign_move",
 		Arguments: map[string]any{"moveId": "mv_1"},
 		Executed:  true,
-		Target: &agentports.ProposalTarget{
+		Target: &agentruntimeports.ProposalTarget{
 			ID:      pulid.MustNew("shp_"),
 			Version: 7,
 		},
 	}
-	ledger := &stubLedger{Verdict: agentports.StepVerdict{
-		State: agentports.StepCompleted,
-		Outcome: agentports.RunStepOutcome{
+	ledger := &stubLedger{Verdict: agentruntimeports.StepVerdict{
+		State: agentruntimeports.StepCompleted,
+		Outcome: agentruntimeports.RunStepOutcome{
 			Content: `Tool "dispatch_assign_move" ran successfully.`,
 			Action:  pinned,
 		},
@@ -166,7 +172,9 @@ func TestGuardedDispatch_DoesNotRunAWriteAnEarlierAttemptAlreadyMade(t *testing.
 func TestGuardedDispatch_TellsTheModelWhenAnEarlierAttemptLeftAWriteUnconfirmed(t *testing.T) {
 	t.Parallel()
 
-	ledger := &stubLedger{Verdict: agentports.StepVerdict{State: agentports.StepUnknown}}
+	ledger := &stubLedger{
+		Verdict: agentruntimeports.StepVerdict{State: agentruntimeports.StepUnknown},
+	}
 	result, action := guardedRun(t, ledger, nil)
 
 	assert.Zero(t, action.Calls, "nobody knows whether this ran; it is not run again")
@@ -191,12 +199,14 @@ func TestGuardedDispatch_RefusesTheCallWhenTheLedgerCannotBeWritten(t *testing.T
 func TestGuardedDispatch_SettlesAFailedCallAsFailed(t *testing.T) {
 	t.Parallel()
 
-	ledger := &stubLedger{Verdict: agentports.StepVerdict{State: agentports.StepFresh}}
+	ledger := &stubLedger{
+		Verdict: agentruntimeports.StepVerdict{State: agentruntimeports.StepFresh},
+	}
 	_, action := guardedRun(t, ledger, errors.New("driver is out of hours"))
 
 	require.Equal(t, 1, action.Calls)
 	require.Len(t, ledger.Settled, 1)
-	assert.Equal(t, agentports.RunStepFailed, ledger.Settled[0].Status)
+	assert.Equal(t, agentruntimeports.RunStepFailed, ledger.Settled[0].Status)
 	assert.True(t, ledger.Settled[0].Outcome.Failed)
 }
 
@@ -208,13 +218,13 @@ func TestSeedFromLedger_RefusesACallAnEarlierAttemptAlreadyFailedOn(t *testing.T
 	// had.
 	args := map[string]any{"moveId": "mv_1"}
 	ledger := &stubLedger{
-		Verdict: agentports.StepVerdict{State: agentports.StepFresh},
-		Loads: []agentports.RunStep{{
-			Kind:     agentports.RunStepTool,
-			Status:   agentports.RunStepFailed,
+		Verdict: agentruntimeports.StepVerdict{State: agentruntimeports.StepFresh},
+		Loads: []agentruntimeports.RunStep{{
+			Kind:     agentruntimeports.RunStepTool,
+			Status:   agentruntimeports.RunStepFailed,
 			ToolName: "dispatch_assign_move",
 			Args:     args,
-			Outcome: agentports.RunStepOutcome{
+			Outcome: agentruntimeports.RunStepOutcome{
 				Content: "driver is out of hours",
 				Failed:  true,
 			},
@@ -222,25 +232,30 @@ func TestSeedFromLedger_RefusesACallAnEarlierAttemptAlreadyFailedOn(t *testing.T
 	}
 
 	action := actionTool("dispatch_assign_move", agent.TierAutoExecute, nil)
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("dispatch_assign_move", args),
 		textTurn("I could not assign it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{action}}, nil)
 	definition := testDefinition("dispatch_assign_move")
 	definition.AutonomyCeiling = agent.TierAutoExecute
-	definition.ToolTiers = map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute}
+	definition.ToolTiers = map[string]agent.AutonomyTier{
+		"dispatch_assign_move": agent.TierAutoExecute,
+	}
 
 	runID := pulid.MustNew("ar_")
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "Assign mv_1",
 		RunID:      runID,
 		Steps:      ledger,
-		StepOwner:  agentports.RunStepOwner{Kind: agentports.RunStepOwnerAgentRun, ID: runID},
-		Attempt:    2,
+		StepOwner: agentruntimeports.RunStepOwner{
+			Kind: agentruntimeports.RunStepOwnerAgentRun,
+			ID:   runID,
+		},
+		Attempt: 2,
 	})
 	require.NoError(t, err)
 
@@ -254,17 +269,19 @@ func TestRun_LeavesAnUnguardedRunOnTheProvidersCallID(t *testing.T) {
 
 	// A run with no ledger behaves exactly as it did before this existed.
 	action := actionTool("dispatch_assign_move", agent.TierAutoExecute, nil)
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{action}}, nil)
 	definition := testDefinition("dispatch_assign_move")
 	definition.AutonomyCeiling = agent.TierAutoExecute
-	definition.ToolTiers = map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute}
+	definition.ToolTiers = map[string]agent.AutonomyTier{
+		"dispatch_assign_move": agent.TierAutoExecute,
+	}
 
-	_, err := rt.Run(t.Context(), &agentports.RunRequest{
+	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "Assign mv_1",
@@ -280,52 +297,62 @@ func TestRun_LeavesAnUnguardedRunOnTheProvidersCallID(t *testing.T) {
 // above answers the same for every key, which is how a retry that minted a
 // new key for an old write passed.
 type keyedLedger struct {
-	steps map[string]agentports.RunStep
+	steps map[string]agentruntimeports.RunStep
 }
 
 func newKeyedLedger() *keyedLedger {
-	return &keyedLedger{steps: map[string]agentports.RunStep{}}
+	return &keyedLedger{steps: map[string]agentruntimeports.RunStep{}}
 }
 
 func (l *keyedLedger) Claim(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step agentports.RunStep,
-) (agentports.StepVerdict, error) {
+	step agentruntimeports.RunStep,
+) (agentruntimeports.StepVerdict, error) {
 	recorded, seen := l.steps[step.Key]
 	switch {
 	case !seen:
 		l.steps[step.Key] = step
-		return agentports.StepVerdict{State: agentports.StepFresh}, nil
-	case recorded.Status == agentports.RunStepCompleted:
-		return agentports.StepVerdict{State: agentports.StepCompleted, Outcome: recorded.Outcome}, nil
-	case recorded.Status == agentports.RunStepFailed:
-		return agentports.StepVerdict{State: agentports.StepFailed, Outcome: recorded.Outcome}, nil
+		return agentruntimeports.StepVerdict{State: agentruntimeports.StepFresh}, nil
+	case recorded.Status == agentruntimeports.RunStepCompleted:
+		return agentruntimeports.StepVerdict{
+			State:   agentruntimeports.StepCompleted,
+			Outcome: recorded.Outcome,
+		}, nil
+	case recorded.Status == agentruntimeports.RunStepFailed:
+		return agentruntimeports.StepVerdict{
+			State:   agentruntimeports.StepFailed,
+			Outcome: recorded.Outcome,
+		}, nil
 	default:
-		return agentports.StepVerdict{State: agentports.StepUnknown}, nil
+		return agentruntimeports.StepVerdict{State: agentruntimeports.StepUnknown}, nil
 	}
 }
 
 func (l *keyedLedger) Settle(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step agentports.RunStep,
+	step agentruntimeports.RunStep,
 ) error {
 	l.steps[step.Key] = step
 
 	return nil
 }
 
-func (l *keyedLedger) Record(context.Context, pagination.TenantInfo, agentports.RunStep) error {
+func (l *keyedLedger) Record(
+	context.Context,
+	pagination.TenantInfo,
+	agentruntimeports.RunStep,
+) error {
 	return nil
 }
 
 func (l *keyedLedger) Loaded(
 	context.Context,
 	pagination.TenantInfo,
-	agentports.RunStepOwner,
-) ([]agentports.RunStep, error) {
-	steps := make([]agentports.RunStep, 0, len(l.steps))
+	agentruntimeports.RunStepOwner,
+) ([]agentruntimeports.RunStep, error) {
+	steps := make([]agentruntimeports.RunStep, 0, len(l.steps))
 	for _, step := range l.steps {
 		steps = append(steps, step)
 	}
@@ -349,24 +376,29 @@ func TestRun_ARetriedAttemptDoesNotMakeTheSameWriteTwice(t *testing.T) {
 	runID := pulid.MustNew("ar_")
 	definition := testDefinition("dispatch_assign_move")
 	definition.AutonomyCeiling = agent.TierAutoExecute
-	definition.ToolTiers = map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute}
+	definition.ToolTiers = map[string]agent.AutonomyTier{
+		"dispatch_assign_move": agent.TierAutoExecute,
+	}
 
 	for attempt := 1; attempt <= 2; attempt++ {
-		completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 			toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
 			textTurn("Assigned."),
 		}}
 		rt := newRuntime(completion, &stubQueryRegistry{},
-			&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
+			&stubActionRegistry{Tools: []agenttoolports.AgentTool{action}}, nil)
 
-		_, err := rt.Run(t.Context(), &agentports.RunRequest{
+		_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 			Definition: definition,
 			Actor:      testActor(),
 			Input:      "Assign mv_1",
 			RunID:      runID,
 			Steps:      ledger,
-			StepOwner:  agentports.RunStepOwner{Kind: agentports.RunStepOwnerAgentRun, ID: runID},
-			Attempt:    attempt,
+			StepOwner: agentruntimeports.RunStepOwner{
+				Kind: agentruntimeports.RunStepOwnerAgentRun,
+				ID:   runID,
+			},
+			Attempt: attempt,
 		})
 		require.NoError(t, err)
 	}
@@ -393,26 +425,29 @@ func TestRun_AReplayedStepShowsWhatTheOriginalCallShowed(t *testing.T) {
 
 	shown := make([]any, 0, 2)
 	for attempt := 1; attempt <= 2; attempt++ {
-		completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 			toolTurn("worker_list", map[string]any{"query": "Maria"}),
 			textTurn("Maria Ortiz."),
 		}}
 		rt := newRuntime(completion,
-			&stubQueryRegistry{Tools: []agentports.AgentQueryTool{search}},
+			&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{search}},
 			&stubActionRegistry{}, nil)
 
-		_, err := rt.Run(t.Context(), &agentports.RunRequest{
+		_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 			Definition: testDefinition("worker_list"),
 			Actor:      testActor(),
 			Input:      "Who is Maria?",
 			RunID:      runID,
 			ThreadID:   threadID,
 			Steps:      ledger,
-			StepOwner:  agentports.RunStepOwner{Kind: agentports.RunStepOwnerAgentRun, ID: runID},
-			Attempt:    attempt,
+			StepOwner: agentruntimeports.RunStepOwner{
+				Kind: agentruntimeports.RunStepOwnerAgentRun,
+				ID:   runID,
+			},
+			Attempt: attempt,
 			ToolObserver: func(
-				observation agentports.ToolObservation,
-			) (*agentports.ShownArtifact, error) {
+				observation agentruntimeports.ToolObservation,
+			) (*agentruntimeports.ShownArtifact, error) {
 				shown = append(shown, observation.Data)
 				return nil, nil
 			},
@@ -442,7 +477,7 @@ func TestStepData_KeepsOnlyAnObjectSmallEnoughToShowAgain(t *testing.T) {
 	assert.Equal(t, map[string]any{"count": float64(2)}, stepData(map[string]any{"count": 2}))
 }
 
-var _ agentports.RunStepLedger = (*keyedLedger)(nil)
+var _ agentruntimeports.RunStepLedger = (*keyedLedger)(nil)
 
 func TestRun_TheObserverIsToldTheArgumentsTheToolRanWith(t *testing.T) {
 	t.Parallel()
@@ -462,26 +497,29 @@ func TestRun_TheObserverIsToldTheArgumentsTheToolRanWith(t *testing.T) {
 
 	ranWith := make([]map[string]any, 0, 2)
 	for attempt := 1; attempt <= 2; attempt++ {
-		completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 			toolTurn("shipment_list", map[string]any{"ids": "shp_1"}),
 			textTurn("One shipment."),
 		}}
 		rt := newRuntime(completion,
-			&stubQueryRegistry{Tools: []agentports.AgentQueryTool{list}},
+			&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{list}},
 			&stubActionRegistry{}, nil)
 
-		_, err := rt.Run(t.Context(), &agentports.RunRequest{
+		_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 			Definition: testDefinition("shipment_list"),
 			Actor:      testActor(),
 			Input:      "Show shipment shp_1",
 			RunID:      runID,
 			ThreadID:   threadID,
 			Steps:      ledger,
-			StepOwner:  agentports.RunStepOwner{Kind: agentports.RunStepOwnerAgentRun, ID: runID},
-			Attempt:    attempt,
+			StepOwner: agentruntimeports.RunStepOwner{
+				Kind: agentruntimeports.RunStepOwnerAgentRun,
+				ID:   runID,
+			},
+			Attempt: attempt,
 			ToolObserver: func(
-				observation agentports.ToolObservation,
-			) (*agentports.ShownArtifact, error) {
+				observation agentruntimeports.ToolObservation,
+			) (*agentruntimeports.ShownArtifact, error) {
 				assert.Equal(t, "shp_1", observation.Call.Arguments["ids"])
 				ranWith = append(ranWith, observation.RanWith)
 				return nil, nil

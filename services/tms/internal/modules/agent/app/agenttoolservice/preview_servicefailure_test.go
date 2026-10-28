@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +25,7 @@ func TestResolveServiceFailurePreview_ShowsTheResolutionAndTheCustomer214(t *tes
 		"note":             "Shipper closed early; driver waited until opening.",
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, failures.Resolved, "a preview must not resolve")
 	assert.Contains(t, preview.Summary, "SF-7")
@@ -44,5 +44,9 @@ func TestResolveServiceFailurePreview_ShowsTheResolutionAndTheCustomer214(t *tes
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, failures.Resolved)
-	assert.Equal(t, failures.Resolved.Notes, agenttoolstest.FindField(t, change, "internalNotes").After)
+	assert.Equal(
+		t,
+		failures.Resolved.Notes,
+		agenttoolstest.FindField(t, change, "internalNotes").After,
+	)
 }

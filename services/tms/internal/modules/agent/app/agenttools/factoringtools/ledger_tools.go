@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -44,7 +44,7 @@ type ledgerTool struct {
 	accounts common.LedgerAccounts
 }
 
-func ledgerPolicy(name, rationale string) agentports.ToolPolicy {
+func ledgerPolicy(name, rationale string) agenttoolports.ToolPolicy {
 	return policy(name, &policySpec{
 		resource:    permission.ResourceFactoringReserve,
 		operation:   permission.OpCreate,
@@ -64,7 +64,7 @@ func amountParam(description string) map[string]any {
 	return common.StringProperty(description+" A decimal such as 1250.00.", 0)
 }
 
-func requireApproval(name string, params *agentports.ToolExecuteParams) error {
+func requireApproval(name string, params *agenttoolports.ToolExecuteParams) error {
 	if !params.ApprovedFromProposal() {
 		return fmt.Errorf("%s: %w", name, common.ErrNeedsAPersonsApproval)
 	}
@@ -185,7 +185,7 @@ type RecordFactoringFundingTool struct {
 func NewRecordFactoringFundingTool(
 	ledger factoringports.LedgerService,
 	accounts glaccountports.GLAccountRepository,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &RecordFactoringFundingTool{ledgerTool{ledger: ledger, accounts: accounts}}
 }
 
@@ -247,17 +247,19 @@ func (t *RecordFactoringFundingTool) ParamSchema() map[string]any {
 	}, paramSubmissionID, paramVersion, paramFundedOn, paramItems)
 }
 
-func (t *RecordFactoringFundingTool) Policy() agentports.ToolPolicy {
+func (t *RecordFactoringFundingTool) Policy() agenttoolports.ToolPolicy {
 	return ledgerPolicy(t.Name(), "Books the factor's advances and fees to the general ledger "+
 		"and settles invoices; only a person's approval runs it.")
 }
 
-func (t *RecordFactoringFundingTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *RecordFactoringFundingTool) Target(
+	params map[string]any,
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramSubmissionID, permission.ResourceFactoringSubmission)
 }
 
 func (t *RecordFactoringFundingTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.RecordFundingRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -352,7 +354,7 @@ func fundingItems(params map[string]any) ([]factoringports.FundingItemInput, err
 
 func (t *RecordFactoringFundingTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -364,7 +366,7 @@ func (t *RecordFactoringFundingTool) Validate(
 
 func (t *RecordFactoringFundingTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := requireApproval(t.Name(), &params); err != nil {
 		return err
@@ -379,7 +381,7 @@ func (t *RecordFactoringFundingTool) Execute(
 
 func (t *RecordFactoringFundingTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const summary = "Would record the factor's funding of a schedule and book it to the ledger."
 	req, err := t.request(&params)
@@ -479,16 +481,16 @@ func (t *ReserveMovementTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(properties, required...)
 }
 
-func (t *ReserveMovementTool) Policy() agentports.ToolPolicy {
+func (t *ReserveMovementTool) Policy() agenttoolports.ToolPolicy {
 	return ledgerPolicy(t.spec.name, t.spec.rationale)
 }
 
-func (t *ReserveMovementTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *ReserveMovementTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramSubmissionID, permission.ResourceFactoringSubmission)
 }
 
 func (t *ReserveMovementTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.ReserveMovementRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -541,7 +543,7 @@ func (t *ReserveMovementTool) request(
 
 func (t *ReserveMovementTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -553,7 +555,7 @@ func (t *ReserveMovementTool) Validate(
 
 func (t *ReserveMovementTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := requireApproval(t.Name(), &params); err != nil {
 		return err
@@ -587,7 +589,7 @@ func itemViewOf(item *factoring.SubmissionItem) *itemView {
 
 func (t *ReserveMovementTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
@@ -645,7 +647,7 @@ func movementCash(plan *factoringports.ReserveMovementPlan) int64 {
 func NewReleaseFactoringReserveTool(
 	ledger factoringports.LedgerService,
 	accounts glaccountports.GLAccountRepository,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &ReserveMovementTool{
 		ledgerTool: ledgerTool{ledger: ledger, accounts: accounts},
 		spec: movementSpec{
@@ -682,7 +684,7 @@ func NewReleaseFactoringReserveTool(
 func NewRecordFactoringChargebackTool(
 	ledger factoringports.LedgerService,
 	accounts glaccountports.GLAccountRepository,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &ReserveMovementTool{
 		ledgerTool: ledgerTool{ledger: ledger, accounts: accounts},
 		spec: movementSpec{
@@ -718,7 +720,7 @@ func NewRecordFactoringChargebackTool(
 func NewReverseFactoringChargebackTool(
 	ledger factoringports.LedgerService,
 	accounts glaccountports.GLAccountRepository,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &ReserveMovementTool{
 		ledgerTool: ledgerTool{ledger: ledger, accounts: accounts},
 		spec: movementSpec{

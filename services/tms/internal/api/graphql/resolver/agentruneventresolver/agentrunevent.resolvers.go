@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 // OwnerKind is a field resolver because the column is a varchar with a check
@@ -48,12 +48,12 @@ func (r *QueryResolver) AgentRunEvents(ctx context.Context, input gqlmodel.DataT
 
 	result, err := r.AgentRunEventRepo.ListConnection(
 		ctx,
-		&agentports.ListAgentRunEventConnectionRequest{
+		&agentruntimeports.ListAgentRunEventConnectionRequest{
 			Filter:    tableInput.Filter,
 			Cursor:    tableInput.Cursor,
 			Columns:   agentRunEventColumns(ctx, "edges.node"),
-			OwnerKind: string(agentports.RunStepOwnerAgentRun),
-			Reader:    agentports.PersonRunRead(authCtx.UserID),
+			OwnerKind: string(agentruntimeports.RunStepOwnerAgentRun),
+			Reader:    agentruntimeports.PersonRunRead(authCtx.UserID),
 		},
 	)
 	if err != nil {

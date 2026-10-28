@@ -1,7 +1,6 @@
 package agentjobs
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
@@ -9,14 +8,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -66,13 +68,13 @@ func (s *definitionStore) GetByID(
 }
 
 type runStore struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 	run *agent.AgentRun
 }
 
 func (s *runStore) GetByID(
 	context.Context,
-	agentports.GetAgentRunByIDRequest,
+	agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return s.run, nil
 }
@@ -102,14 +104,14 @@ func (s *decisionStore) ListByProposals(
 }
 
 type conversationStore struct {
-	agentports.ConversationRepository
+	assistantports.ConversationRepository
 	thread   *conversation.Thread
 	messages []conversation.Message
 }
 
 func (s *conversationStore) GetThreadOwned(
 	context.Context,
-	agentports.GetThreadOwnedRequest,
+	assistantports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	if s.thread == nil {
 		return nil, errortypes.NewNotFoundError("Thread not found")
@@ -120,7 +122,7 @@ func (s *conversationStore) GetThreadOwned(
 
 func (s *conversationStore) ListMessages(
 	context.Context,
-	agentports.ListMessagesRequest,
+	assistantports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	return s.messages, nil
 }
@@ -142,12 +144,12 @@ func (s *caseStore) GetByID(
 }
 
 type recordingContexts struct {
-	requests []*agentports.RuntimeContextRequest
+	requests []*agentruntimeports.RuntimeContextRequest
 }
 
 func (c *recordingContexts) Build(
 	_ context.Context,
-	req *agentports.RuntimeContextRequest,
+	req *agentruntimeports.RuntimeContextRequest,
 ) (agentdefinition.RuntimeContext, error) {
 	c.requests = append(c.requests, req)
 
@@ -314,7 +316,7 @@ func TestOpenReplay_JudgesAgainstWhatThePersonApproved(t *testing.T) {
 	assert.Equal(t, float64(1350), original.CorrectedParams["rate"])
 
 	_, err = w.activities.storeReplay(t.Context(), w.evaluations.stored, opened.originals,
-		&agentports.RunResult{Actions: []agentports.PendingAction{{
+		&agentruntimeports.RunResult{Actions: []agentruntimeports.PendingAction{{
 			ToolName:  "update_rate",
 			Arguments: map[string]any{"shipmentId": "shp_1", "rate": 1350},
 		}}})
@@ -438,7 +440,7 @@ func TestStoreReplay_ScoresACaseReplay(t *testing.T) {
 
 	originals := expectedOriginals(evalCase)
 	_, err := w.activities.storeReplay(t.Context(), w.evaluations.stored, originals,
-		&agentports.RunResult{
+		&agentruntimeports.RunResult{
 			Reply: "I proposed the new rate.",
 			Messages: []conversation.Message{
 				{
@@ -455,7 +457,7 @@ func TestStoreReplay_ScoresACaseReplay(t *testing.T) {
 					ToolCalls: []conversation.ToolCallRecord{{ID: "call_9", Name: "outside_tool"}},
 				},
 			},
-			Actions: []agentports.PendingAction{{
+			Actions: []agentruntimeports.PendingAction{{
 				ToolName:  "update_rate",
 				Arguments: map[string]any{"shipmentId": "shp_1", "rate": 1350},
 			}},
@@ -477,15 +479,15 @@ func TestStoreReplay_ScoresACaseReplay(t *testing.T) {
 func TestObserveReplay_ReadsRefusals(t *testing.T) {
 	t.Parallel()
 
-	altered := observeReplay(&agentports.RunResult{OutputAltered: true})
+	altered := observeReplay(&agentruntimeports.RunResult{OutputAltered: true})
 	assert.False(t, altered.refused, "a reply the guard took code out of was still given")
 
-	flagged := observeReplay(&agentports.RunResult{Messages: []conversation.Message{
+	flagged := observeReplay(&agentruntimeports.RunResult{Messages: []conversation.Message{
 		{Role: conversation.RoleAssistant, Refused: true},
 	}})
 	assert.True(t, flagged.refused)
 
-	answered := observeReplay(&agentports.RunResult{Messages: []conversation.Message{
+	answered := observeReplay(&agentruntimeports.RunResult{Messages: []conversation.Message{
 		{Role: conversation.RoleTool, Content: `{"rate": 1350}`},
 	}})
 	assert.False(t, answered.refused)
@@ -495,7 +497,7 @@ func TestObserveReplay_ReadsRefusals(t *testing.T) {
 func TestObserveReplay_TracesWhichCallsWouldHaveRunUnasked(t *testing.T) {
 	t.Parallel()
 
-	observed := observeReplay(&agentports.RunResult{
+	observed := observeReplay(&agentruntimeports.RunResult{
 		Messages: []conversation.Message{{
 			Role: conversation.RoleAssistant,
 			ToolCalls: []conversation.ToolCallRecord{
@@ -504,7 +506,7 @@ func TestObserveReplay_TracesWhichCallsWouldHaveRunUnasked(t *testing.T) {
 				{ID: "call_3", Name: "update_rate"},
 			},
 		}},
-		Actions: []agentports.PendingAction{
+		Actions: []agentruntimeports.PendingAction{
 			{ToolName: "send_customer_email", ToolCallID: "call_2", Tier: agent.TierAutoExecute},
 			{ToolName: "update_rate", ToolCallID: "call_3", Tier: agent.TierActWithApproval},
 		},

@@ -7,8 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,15 +61,22 @@ func (r *bunchingRepo) ListByToolCalls(
 	return out, nil
 }
 
-func (r *bunchingRepo) Delete(_ context.Context, req *assistantartifactports.DeleteArtifactsRequest) error {
+func (r *bunchingRepo) Delete(
+	_ context.Context,
+	req *assistantartifactports.DeleteArtifactsRequest,
+) error {
 	r.deleted = append(r.deleted, req.IDs...)
 
 	return nil
 }
 
-func invoiceRead(callID string, number string, earlier ...string) agentports.ToolObservation {
-	return agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: callID, Name: "invoice_get"},
+func invoiceRead(
+	callID string,
+	number string,
+	earlier ...string,
+) agentruntimeports.ToolObservation {
+	return agentruntimeports.ToolObservation{
+		Call: llmports.ToolCall{ID: callID, Name: "invoice_get"},
 		Data: map[string]any{
 			"id":          pulid.MustNew("inv_").String(),
 			"number":      number,
@@ -184,8 +193,16 @@ func TestArtifactFromObservation_ABatchGetIsATable(t *testing.T) {
 		"count":   2,
 		"columns": []any{"id", "number", "status"},
 		"items": []any{
-			map[string]any{"id": pulid.MustNew("inv_").String(), "number": "INV-1", "status": "Draft"},
-			map[string]any{"id": pulid.MustNew("inv_").String(), "number": "INV-2", "status": "Draft"},
+			map[string]any{
+				"id":     pulid.MustNew("inv_").String(),
+				"number": "INV-1",
+				"status": "Draft",
+			},
+			map[string]any{
+				"id":     pulid.MustNew("inv_").String(),
+				"number": "INV-2",
+				"status": "Draft",
+			},
 		},
 	}))
 
@@ -215,8 +232,8 @@ func TestBunch_TheCardsATableReplacedAreWithdrawnFromTheReader(t *testing.T) {
 
 	removed := make([]pulid.ID, 0, 1)
 	for _, event := range events {
-		if event.Event == agentports.AssistantEventArtifactRemoved {
-			data, ok := event.Data.(agentports.AssistantArtifactRemovedEvent)
+		if event.Event == assistantports.AssistantEventArtifactRemoved {
+			data, ok := event.Data.(assistantports.AssistantArtifactRemovedEvent)
 			require.True(t, ok)
 			removed = append(removed, data.ID)
 		}

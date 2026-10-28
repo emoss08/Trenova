@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -110,12 +110,23 @@ func TestGeneratePayrollExport_TakesTheLastDayInclusive(t *testing.T) {
 		common.FieldNote: "Biweekly run",
 	}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, payroll.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		payroll.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(
+				t.Context(),
+				agenttoolstest.ExecuteParams(raw),
+			)
+		},
+	)
 	assert.Equal(t, "Would lock 3 approved timesheet weeks into a payroll run.", preview.Summary)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)),
+		common.ErrNeedsAPersonsApproval,
+	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
 	require.NotNil(t, payroll.generated)
 	assert.Equal(t, int64(1_789_344_000), payroll.generated.PeriodStart)
@@ -127,10 +138,14 @@ func TestGeneratePayrollExport_TakesTheLastDayInclusive(t *testing.T) {
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{paramFirstDay: "2026-09-27", paramLastDay: "2026-09-14"})))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{paramFirstDay: "2026-09-27", paramLastDay: "2026-09-14"},
+		),
+	))
 	payroll.ready = 0
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(raw)), "validation runs the service's plan")
 }
 
@@ -144,16 +159,33 @@ func TestVoidPayrollExport_KeepsTheReason(t *testing.T) {
 		common.FieldReason:   "Two weeks were approved in error",
 	}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, payroll.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		payroll.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(
+				t.Context(),
+				agenttoolstest.ExecuteParams(raw),
+			)
+		},
+	)
 	assert.Contains(t, preview.Summary, "return its 12 timesheet weeks to approved")
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
 	require.NotNil(t, payroll.voided)
 	assert.Equal(t, "Two weeks were approved in error", payroll.voided.Reason)
 
 	payroll.export.Status = worker.PayrollExportVoided
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(raw)))
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{paramPayrollExportID: payroll.export.ID.String()})))
+	require.Error(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(
+			t.Context(),
+			agenttoolstest.ExecuteParams(raw),
+		),
+	)
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{paramPayrollExportID: payroll.export.ID.String()},
+		),
+	))
 }

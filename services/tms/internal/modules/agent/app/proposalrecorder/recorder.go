@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -41,7 +42,7 @@ type Params struct {
 
 	Logger    *zap.Logger
 	DB        kernelports.Transactor
-	Runs      agentports.AgentRunRepository
+	Runs      agentruntimeports.AgentRunRepository
 	Proposals agentports.AgentProposalRepository
 	// Trust learns from a tool that ran on its own and failed. Optional, so
 	// the recorder still stores proposals where no ledger is wired.
@@ -65,7 +66,10 @@ type Params struct {
 
 // ScriptStepReader is the one read the recorder makes on the step ledger.
 type ScriptStepReader interface {
-	Get(ctx context.Context, req *agentports.GetAgentRunStepRequest) (*agent.AgentRunStep, error)
+	Get(
+		ctx context.Context,
+		req *agentruntimeports.GetAgentRunStepRequest,
+	) (*agent.AgentRunStep, error)
 }
 
 // PlanStore is the one write the recorder makes on plans.
@@ -152,7 +156,7 @@ type OpenRunRequest struct {
 	DelegateCallID   string
 }
 
-type EvidenceFunc func(action agentports.PendingAction, sourceMessageID pulid.ID) []agent.EvidenceRef
+type EvidenceFunc func(action agentruntimeports.PendingAction, sourceMessageID pulid.ID) []agent.EvidenceRef
 
 type RecordRequest struct {
 	Actor      *permissionports.RequestActor
@@ -160,7 +164,7 @@ type RecordRequest struct {
 	// Run is the run the proposals belong to. When nil, one is opened from Open.
 	Run              *agent.AgentRun
 	Open             *OpenRunRequest
-	Actions          []agentports.PendingAction
+	Actions          []agentruntimeports.PendingAction
 	PlanTitle        string
 	SourceMessageIDs map[string]pulid.ID
 	Evidence         EvidenceFunc
@@ -175,7 +179,7 @@ type RecordRequest struct {
 type DelegatedActions struct {
 	Definition *agentdefinition.Definition
 	Open       *OpenRunRequest
-	Actions    []agentports.PendingAction
+	Actions    []agentruntimeports.PendingAction
 	Taint      *agent.RunTaint
 }
 
@@ -200,7 +204,7 @@ type runGroup struct {
 	definition *agentdefinition.Definition
 	run        *agent.AgentRun
 	open       *OpenRunRequest
-	actions    []agentports.PendingAction
+	actions    []agentruntimeports.PendingAction
 	taint      *agent.RunTaint
 	delegated  bool
 	proposals  []*agent.AgentProposal
@@ -482,7 +486,7 @@ func (s *Service) planSteps(ctx context.Context, opening *planOpening) (*agent.A
 func (s *Service) proposalFor(
 	req *RecordRequest,
 	group *runGroup,
-	action *agentports.PendingAction,
+	action *agentruntimeports.PendingAction,
 	now int64,
 ) *agent.AgentProposal {
 	sourceMessageID := req.SourceMessageIDs[action.ToolCallID]
@@ -703,7 +707,7 @@ func (s *Service) openRun(
 // the run read any is clean, though the run it belongs to is not.
 func applyTaint(
 	proposal *agent.AgentProposal,
-	action agentports.PendingAction,
+	action agentruntimeports.PendingAction,
 	taint *agent.RunTaint,
 ) {
 	proposal.EgressClass = action.Egress
@@ -722,7 +726,11 @@ func applyTaint(
 	proposal.Taint = taint.Clone()
 }
 
-func applyExecution(proposal *agent.AgentProposal, action agentports.PendingAction, now int64) {
+func applyExecution(
+	proposal *agent.AgentProposal,
+	action agentruntimeports.PendingAction,
+	now int64,
+) {
 	if action.Withdrawn {
 		proposal.Status = agent.ProposalStatusSuperseded
 
@@ -759,7 +767,7 @@ func applyExecution(proposal *agent.AgentProposal, action agentports.PendingActi
 
 func applyExecutor(
 	proposal *agent.AgentProposal,
-	action *agentports.PendingAction,
+	action *agentruntimeports.PendingAction,
 	actor *permissionports.RequestActor,
 ) {
 	if !action.Executed && !action.Simulated {
@@ -890,7 +898,7 @@ func (s *Service) scriptOrigin(
 		return nil
 	}
 
-	step, err := s.scripts.Get(ctx, &agentports.GetAgentRunStepRequest{
+	step, err := s.scripts.Get(ctx, &agentruntimeports.GetAgentRunStepRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.Actor.OrganizationID,
 			BuID:  req.Actor.BusinessUnitID,

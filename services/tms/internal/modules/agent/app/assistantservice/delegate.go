@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,7 +36,7 @@ type OpenDelegateRequest struct {
 	// Actor is the person the turn runs as. The delegate runs as them too.
 	Actor     *permissionports.RequestActor
 	ThreadID  pulid.ID
-	StepOwner agentports.RunStepOwner
+	StepOwner agentruntimeports.RunStepOwner
 	Call      agentruntime.DelegateCall
 	// Records are the records the parent's turn is about. The delegate reads
 	// their memories, since the task is about them too.
@@ -47,7 +48,7 @@ type OpenDelegateRequest struct {
 
 // DelegateOpening is the delegate's turn, ready to drive.
 type DelegateOpening struct {
-	Request *agentports.RunRequest
+	Request *agentruntimeports.RunRequest
 	Turn    agentruntime.TurnState
 }
 
@@ -122,7 +123,7 @@ func (s *Service) OpenDelegate(
 	}
 
 	readOnly := !req.Call.Directed
-	runReq := &agentports.RunRequest{
+	runReq := &agentruntimeports.RunRequest{
 		Definition: delegate,
 		Actor:      req.Actor,
 		Context:    s.delegateContext(ctx, parent, delegate, req),
@@ -131,7 +132,7 @@ func (s *Service) OpenDelegate(
 		Publishes:  s.artifacts != nil && !req.Inline && !readOnly,
 		Inline:     req.Inline,
 		StepOwner:  req.StepOwner,
-		Delegation: &agentports.Delegation{
+		Delegation: &agentruntimeports.Delegation{
 			ParentAgentID:   parent.ID,
 			ParentAgentName: parent.Name,
 			CallID:          req.Call.Call.ID,
@@ -170,13 +171,13 @@ func (s *Service) delegateContext(
 		return bare
 	}
 
-	built, err := s.contexts.Build(ctx, &agentports.RuntimeContextRequest{
+	built, err := s.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{
 		Definition:       delegate,
 		Actor:            req.Actor,
 		Trigger:          agent.RunTriggerChat,
 		DelegatedBy:      parent.Name,
 		DelegatorRecords: req.Records,
-		Query: (&agentports.ContextQuery{
+		Query: (&retrievalports.ContextQuery{
 			Actor:        req.Actor,
 			DefinitionID: definitionID(delegate),
 			ThreadID:     req.ThreadID,

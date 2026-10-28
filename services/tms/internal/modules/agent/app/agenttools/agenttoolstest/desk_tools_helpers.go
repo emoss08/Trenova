@@ -3,16 +3,16 @@ package agenttoolstest
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func DeskParams(params map[string]any) agentports.ToolExecuteParams {
+func DeskParams(params map[string]any) agenttoolports.ToolExecuteParams {
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
 
-	return agentports.ToolExecuteParams{
+	return agenttoolports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor: &permissionports.RequestActor{

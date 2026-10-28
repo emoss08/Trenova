@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -64,7 +65,7 @@ func TestSendMessageStream_SaysAnApprovalWasRefusedBecauseItsRecordMoved(t *test
 	svc.anchors = anchors
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:           conversations.thread.ID,
 		FollowUpProposalID: proposal.ID,
 		TenantInfo:         actor.TenantInfo(),
@@ -123,7 +124,7 @@ func TestSendMessageStream_SaysNothingInAPlanRanWhenARecordMoved(t *testing.T) {
 	svc.anchors = anchors
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:       conversations.thread.ID,
 		FollowUpPlanID: plan.ID,
 		TenantInfo:     actor.TenantInfo(),

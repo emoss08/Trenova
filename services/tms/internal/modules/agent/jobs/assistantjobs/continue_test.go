@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -13,14 +13,14 @@ import (
 )
 
 type recordedQueue struct {
-	asked []*agentports.SettleQueueRequest
-	next  *agentports.QueuedTurn
+	asked []*assistantports.SettleQueueRequest
+	next  *assistantports.QueuedTurn
 }
 
 func (q *recordedQueue) SettleQueue(
 	_ context.Context,
-	req *agentports.SettleQueueRequest,
-) *agentports.QueuedTurn {
+	req *assistantports.SettleQueueRequest,
+) *assistantports.QueuedTurn {
 	q.asked = append(q.asked, req)
 	if !req.Dispatch {
 		return nil
@@ -33,7 +33,10 @@ type recordedFollowUps struct {
 	resumed int
 }
 
-func (f *recordedFollowUps) ResumeFollowUps(context.Context, agentports.ResumeFollowUpsRequest) {
+func (f *recordedFollowUps) ResumeFollowUps(
+	context.Context,
+	assistantports.ResumeFollowUpsRequest,
+) {
 	f.resumed++
 }
 
@@ -51,7 +54,7 @@ func continuation(status conversation.AssistantTurnStatus) *conversationContinua
 func TestContinueConversation_WhatThePersonQueuedGoesFirst(t *testing.T) {
 	t.Parallel()
 
-	queue := &recordedQueue{next: &agentports.QueuedTurn{TurnID: pulid.MustNew("atrn_")}}
+	queue := &recordedQueue{next: &assistantports.QueuedTurn{TurnID: pulid.MustNew("atrn_")}}
 	followUps := &recordedFollowUps{}
 	a := &Activities{queue: queue, followUps: followUps}
 	c := continuation(conversation.AssistantTurnStatusCompleted)
@@ -72,7 +75,10 @@ func TestContinueConversation_WithNothingQueuedADecisionIsReported(t *testing.T)
 	followUps := &recordedFollowUps{}
 	a := &Activities{queue: queue, followUps: followUps}
 
-	assert.Nil(t, a.continueConversation(t.Context(), continuation(conversation.AssistantTurnStatusRefused)))
+	assert.Nil(
+		t,
+		a.continueConversation(t.Context(), continuation(conversation.AssistantTurnStatusRefused)),
+	)
 	assert.Equal(t, 1, followUps.resumed)
 }
 
@@ -83,7 +89,7 @@ func TestContinueConversation_AStoppedOrFailedTurnHoldsTheQueue(t *testing.T) {
 		conversation.AssistantTurnStatusStopped,
 		conversation.AssistantTurnStatusFailed,
 	} {
-		queue := &recordedQueue{next: &agentports.QueuedTurn{TurnID: pulid.MustNew("atrn_")}}
+		queue := &recordedQueue{next: &assistantports.QueuedTurn{TurnID: pulid.MustNew("atrn_")}}
 		followUps := &recordedFollowUps{}
 		a := &Activities{queue: queue, followUps: followUps}
 

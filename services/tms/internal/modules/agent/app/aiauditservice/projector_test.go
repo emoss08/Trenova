@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -110,8 +111,8 @@ func newScenario() *scenario {
 				ID: pulid.MustNew("ars_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn,
 				Kind: string(
-					agentports.RunStepTool,
-				), Status: string(agentports.RunStepCompleted),
+					agentruntimeports.RunStepTool,
+				), Status: string(agentruntimeports.RunStepCompleted),
 				StepKey: "k-read", ToolName: "shipment_get", CallID: "c1",
 				Arguments: map[string]any{"shipmentId": shipment.String()},
 				Outcome:   map[string]any{"content": "found", "failed": false},
@@ -121,8 +122,8 @@ func newScenario() *scenario {
 				ID: pulid.MustNew("ars_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn,
 				Kind: string(
-					agentports.RunStepTool,
-				), Status: string(agentports.RunStepCompleted),
+					agentruntimeports.RunStepTool,
+				), Status: string(agentruntimeports.RunStepCompleted),
 				StepKey: "k-write", ToolName: "update_worker", CallID: "c2",
 				Arguments: map[string]any{"dob": "1990-01-01", "firstName": "Ada"},
 				Outcome: map[string]any{"action": map[string]any{
@@ -140,14 +141,18 @@ func newScenario() *scenario {
 			{
 				ID: pulid.MustNew("ars_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn,
-				Kind: string(agentports.RunStepTool), Status: string(agentports.RunStepStarted),
+				Kind: string(
+					agentruntimeports.RunStepTool,
+				), Status: string(agentruntimeports.RunStepStarted),
 				StepKey: "k-lost", ToolName: "update_worker", CallID: "c3",
 				CreatedAt: testNow - 940, UpdatedAt: testNow - 940,
 			},
 			{
 				ID: pulid.MustNew("ars_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn,
-				Kind: string(agentports.RunStepTool), Status: string(agentports.RunStepFailed),
+				Kind: string(
+					agentruntimeports.RunStepTool,
+				), Status: string(agentruntimeports.RunStepFailed),
 				StepKey: "k-denied", ToolName: "update_worker", CallID: "c4",
 				Outcome:   map[string]any{"failed": true, "reason": "lacks worker:update"},
 				CreatedAt: testNow - 935, UpdatedAt: testNow - 934,
@@ -157,7 +162,7 @@ func newScenario() *scenario {
 			{
 				ID: pulid.MustNew("are_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn, Sequence: 1,
-				Kind: agentports.AssistantEventToolFinished, CallID: "c9",
+				Kind: assistantports.AssistantEventToolFinished, CallID: "c9",
 				Payload: map[string]any{"callId": "c9", "name": "delete_everything",
 					"failed": true, "content": "that tool is not held"},
 				OccurredAt: testNow - 930, CreatedAt: testNow - 900,
@@ -165,14 +170,14 @@ func newScenario() *scenario {
 			{
 				ID: pulid.MustNew("are_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn, Sequence: 2,
-				Kind: agentports.AssistantEventToolFinished, CallID: "c1",
+				Kind: assistantports.AssistantEventToolFinished, CallID: "c1",
 				Payload:    map[string]any{"callId": "c1", "name": "shipment_get", "failed": true},
 				OccurredAt: testNow - 930, CreatedAt: testNow - 900,
 			},
 			{
 				ID: pulid.MustNew("are_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn, Sequence: 3,
-				Kind: agentports.AssistantEventDelegateStarted,
+				Kind: assistantports.AssistantEventDelegateStarted,
 				Payload: map[string]any{"delegateCallId": "d1", "agentId": s.agentID.String(),
 					"task": "look it up"},
 				OccurredAt: testNow - 925, CreatedAt: testNow - 900,
@@ -180,7 +185,7 @@ func newScenario() *scenario {
 			{
 				ID: pulid.MustNew("are_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn, Sequence: 4,
-				Kind: agentports.AssistantEventDelegateFinished,
+				Kind: assistantports.AssistantEventDelegateFinished,
 				Payload: map[string]any{"delegateCallId": "d1", "agentId": s.agentID.String(),
 					"status": "exhausted", "reason": "ran out of tool calls"},
 				OccurredAt: testNow - 920, CreatedAt: testNow - 900,
@@ -372,7 +377,11 @@ func TestProjector_DerivesEveryKind(t *testing.T) {
 func TestPreviewSummary_SaysWhetherTheDeciderReviewedWhatTheyApproved(t *testing.T) {
 	t.Parallel()
 
-	assert.Empty(t, previewSummary(&agent.AgentDecision{}), "a decision before previews says nothing")
+	assert.Empty(
+		t,
+		previewSummary(&agent.AgentDecision{}),
+		"a decision before previews says nothing",
+	)
 	assert.Equal(t, "Preview not reviewed; sha256:"+previewDigest,
 		previewSummary(&agent.AgentDecision{PreviewDigest: previewDigest}))
 	assert.Equal(t, "Reviewed preview sha256:"+previewDigest,

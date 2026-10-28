@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +23,11 @@ func numbered(messages []conversation.Message) []conversation.Message {
 	return messages
 }
 
-func compactionAfter(history []conversation.Message, through int, summary string) conversation.Message {
+func compactionAfter(
+	history []conversation.Message,
+	through int,
+	summary string,
+) conversation.Message {
 	return conversation.Message{
 		Role:       conversation.RoleUser,
 		Kind:       conversation.MessageKindCompaction,
@@ -56,7 +60,7 @@ func TestReplayHistory_StartsFromTheLatestSummary(t *testing.T) {
 	messages, _ := replayHistory(history, nil)
 
 	require.Len(t, messages, 5)
-	assert.Equal(t, agentports.RoleUser, messages[0].Role)
+	assert.Equal(t, llmports.RoleUser, messages[0].Role)
 	assert.True(t, strings.HasPrefix(messages[0].Content, compactionPreamble),
 		"the model is told the message is a summary standing in for what was compacted")
 	assert.True(t, strings.HasSuffix(messages[0].Content, summary.Content))
@@ -65,7 +69,7 @@ func TestReplayHistory_StartsFromTheLatestSummary(t *testing.T) {
 	assert.Equal(t, "And the late ones?", messages[3].Content)
 	assert.Equal(t, "Two are late.", messages[4].Content)
 	for _, message := range messages {
-		assert.NotEqual(t, agentports.RoleTool, message.Role,
+		assert.NotEqual(t, llmports.RoleTool, message.Role,
 			"the compacted tool result is not replayed")
 	}
 }
@@ -80,7 +84,12 @@ func TestSplitForCompaction_KeepsTheLatestTurnsWhole(t *testing.T) {
 	// Four turns: the read and the first quiet one are summarized.
 	require.Len(t, older, 6)
 	assert.Equal(t, 5, through)
-	assert.Equal(t, "Turn 1", history[through+1].Content, "the stretch ends where the kept turns begin")
+	assert.Equal(
+		t,
+		"Turn 1",
+		history[through+1].Content,
+		"the stretch ends where the kept turns begin",
+	)
 }
 
 func TestSplitForCompaction_HasNothingToDoWithOnlyTheKeptTurns(t *testing.T) {
@@ -178,6 +187,8 @@ func TestMeasureContext_AConfiguredWindowWinsOverTheModelID(t *testing.T) {
 	})
 	assert.Equal(t, 131_072, usage.Window)
 
-	inferred := MeasureContext(ContextRequest{History: numbered(quietTurns(1)), Model: "qwen2.5-coder:32b"})
+	inferred := MeasureContext(
+		ContextRequest{History: numbered(quietTurns(1)), Model: "qwen2.5-coder:32b"},
+	)
 	assert.Equal(t, 32_768, inferred.Window)
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -22,7 +22,7 @@ import (
 
 type writeRegistry []string
 
-func (r writeRegistry) Get(name string) (agentports.AgentTool, bool) {
+func (r writeRegistry) Get(name string) (agenttoolports.AgentTool, bool) {
 	for _, candidate := range r {
 		if candidate == name {
 			return nil, true
@@ -31,9 +31,9 @@ func (r writeRegistry) Get(name string) (agentports.AgentTool, bool) {
 	return nil, false
 }
 
-func (r writeRegistry) All() []agentports.AgentTool { return nil }
+func (r writeRegistry) All() []agenttoolports.AgentTool { return nil }
 
-func (r writeRegistry) Descriptors() []agentports.AgentToolDescriptor { return nil }
+func (r writeRegistry) Descriptors() []agenttoolports.AgentToolDescriptor { return nil }
 
 type auditFixture struct {
 	ctx    context.Context
@@ -93,7 +93,10 @@ func (f *auditFixture) decision(
 	return decision
 }
 
-func (f *auditFixture) step(key, tool, callID, delegate string, verdict string) *agent.AgentRunStep {
+func (f *auditFixture) step(
+	key, tool, callID, delegate string,
+	verdict string,
+) *agent.AgentRunStep {
 	return &agent.AgentRunStep{
 		OrganizationID: f.tenant.OrgID,
 		BusinessUnitID: f.tenant.BuID,
@@ -156,15 +159,21 @@ func TestAuditEffects_ReadsTheCasesRowsFromTheDatabase(t *testing.T) {
 	}}
 	directed := f.proposal("dispatch_assign_move", agent.TierPropose)
 	directed.StepKey = "directed"
-	require.NoError(t, agentdb.AgentProposals.CreateMany(f.tenantCtx(), admin, []*agent.AgentProposal{
-		unapproved, undone, pinnedAtZero, fromTheWeb, heldButRun, internal, directed,
-	}))
+	require.NoError(
+		t,
+		agentdb.AgentProposals.CreateMany(f.tenantCtx(), admin, []*agent.AgentProposal{
+			unapproved, undone, pinnedAtZero, fromTheWeb, heldButRun, internal, directed,
+		}),
+	)
 
-	require.NoError(t, agentdb.AgentDecisions.CreateMany(f.tenantCtx(), admin, []*agent.AgentDecision{
-		f.decision(undone, nil, true),
-		f.decision(pinnedAtZero, version(1), false),
-		f.decision(directed, nil, false),
-	}))
+	require.NoError(
+		t,
+		agentdb.AgentDecisions.CreateMany(f.tenantCtx(), admin, []*agent.AgentDecision{
+			f.decision(undone, nil, true),
+			f.decision(pinnedAtZero, version(1), false),
+			f.decision(directed, nil, false),
+		}),
+	)
 	require.NoError(t, agentdb.AgentRunSteps.CreateMany(f.tenantCtx(), admin, []*agent.AgentRunStep{
 		f.step("fan", "delegate_task", "del_1", "", "ran"),
 		f.step("fanned", "shipment_hold", "w2", "del_1", "ran"),

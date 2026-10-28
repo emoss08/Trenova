@@ -14,6 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/decisioncommitjobs/decisioncommitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -160,14 +163,18 @@ func (d *windowDecisionRows) ListByCommitWorkflow(
 	return out, nil
 }
 
-func (d *windowDecisionRows) settle(req agentports.SettleAgentDecisionsRequest, undo bool) []pulid.ID {
+func (d *windowDecisionRows) settle(
+	req agentports.SettleAgentDecisionsRequest,
+	undo bool,
+) []pulid.ID {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
 	settled := make([]pulid.ID, 0)
 	for _, row := range d.rows {
 		for _, id := range req.IDs {
-			if row.ID != id || row.CommitsAt == nil || row.CommittedAt != nil || row.UndoneAt != nil {
+			if row.ID != id || row.CommitsAt == nil || row.CommittedAt != nil ||
+				row.UndoneAt != nil {
 				continue
 			}
 			at := req.At
@@ -244,14 +251,14 @@ func (w *windowWorkflows) SignalWorkflow(
 
 // windowRuns says every proposal came from the actor's own conversation.
 type windowRuns struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 
 	threadID pulid.ID
 }
 
 func (r windowRuns) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return &agent.AgentRun{
 		ID:          req.ID,
@@ -261,12 +268,12 @@ func (r windowRuns) GetByID(
 }
 
 type windowThreads struct {
-	agentports.ConversationRepository
+	assistantports.ConversationRepository
 }
 
 func (windowThreads) GetThread(
 	_ context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return &conversation.Thread{ID: req.ID, UserID: req.UserID}, nil
 }
@@ -367,7 +374,7 @@ func newWindowHarness(t *testing.T, count int) *windowHarness {
 	controls := &windowControls{}
 	executor := proposalexecutor.New(proposalexecutor.Params{
 		Logger: zap.NewNop(),
-		Tools: &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
+		Tools: &agenttest.StubActionRegistry{Tools: []agenttoolports.AgentTool{
 			&agenttest.StubActionTool{ToolName: "shipment_place_hold"},
 		}},
 		ProposalRepo: proposals,
@@ -502,7 +509,12 @@ func TestApproval_UndoAfterTheCommitIsAConflict(t *testing.T) {
 	err := h.service.UndoOwnApproval(t.Context(), h.settle(h.ids[0]), h.actor)
 
 	require.Error(t, err)
-	assert.True(t, errortypes.IsConflictError(err), "undo after the commit is a conflict, got %v", err)
+	assert.True(
+		t,
+		errortypes.IsConflictError(err),
+		"undo after the commit is a conflict, got %v",
+		err,
+	)
 	assert.Len(t, h.proposals.executed, 1)
 }
 
@@ -685,11 +697,15 @@ func TestDecision_OnAHeldProposalIsRefusedAndRecordsNothing(t *testing.T) {
 	h := newWindowHarness(t, 1)
 	h.controls.pause()
 
-	approved, err := h.service.ApproveDeferred(t.Context(), []*agentports.DecideAgentProposalRequest{{
-		ProposalID: h.ids[0],
-		Decision:   agent.DecisionAccepted,
-		TenantInfo: h.tenant,
-	}}, h.actor)
+	approved, err := h.service.ApproveDeferred(
+		t.Context(),
+		[]*agentports.DecideAgentProposalRequest{{
+			ProposalID: h.ids[0],
+			Decision:   agent.DecisionAccepted,
+			TenantInfo: h.tenant,
+		}},
+		h.actor,
+	)
 	if err == nil {
 		require.Len(t, approved, 1)
 		err = approved[0].Err
@@ -735,7 +751,11 @@ func TestApproval_AStaleApprovalIsRefusedAtOnceAndNeverHeldForAWindow(t *testing
 
 	require.NoError(t, approved[1].Err)
 	require.NoError(t, approved[1].ExecutionError)
-	require.NotNil(t, approved[1].Decision.CommitsAt, "the other approval still waits out its window")
+	require.NotNil(
+		t,
+		approved[1].Decision.CommitsAt,
+		"the other approval still waits out its window",
+	)
 	assert.Equal(t, agent.ProposalStatusApproving, h.proposals.status(h.ids[1]))
 	require.Len(t, h.workflows.payloads, 1)
 
@@ -802,14 +822,14 @@ func TestDecideOwn_AnApprovalInItsUndoWindowHasNotRunAndIsNotRefused(t *testing.
 }
 
 type stalePreviews struct {
-	agentports.ProposalPreviewService
+	agentruntimeports.ProposalPreviewService
 
 	stale pulid.ID
 }
 
 func (p *stalePreviews) ForProposal(
 	_ context.Context,
-	req *agentports.ProposalPreviewRequest,
+	req *agentruntimeports.ProposalPreviewRequest,
 ) (*agent.ProposalPreview, error) {
 	current := int64(3)
 	if req.Proposal.ID == p.stale {
@@ -822,6 +842,10 @@ func (p *stalePreviews) ForProposal(
 		Tool:          req.Proposal.ToolName,
 		Coverage:      agent.PreviewCoverageFull,
 		TargetVersion: &current,
-		Staleness:     &agent.PreviewStaleness{Pinned: true, ProposedVersion: 3, CurrentVersion: current},
+		Staleness: &agent.PreviewStaleness{
+			Pinned:          true,
+			ProposedVersion: 3,
+			CurrentVersion:  current,
+		},
 	}, nil
 }

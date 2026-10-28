@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -83,7 +83,12 @@ func TestRecordEmbeddingFixture_KeysEveryVectorByItsHash(t *testing.T) {
 	found, err := kit.HybridFinder(fixture)("glorp the frobnicator")
 	require.NoError(t, err)
 	require.NotEmpty(t, found)
-	assert.Equal(t, "worker_list_time_off", found[0], "the fixture's vectors drive the meaning side")
+	assert.Equal(
+		t,
+		"worker_list_time_off",
+		found[0],
+		"the fixture's vectors drive the meaning side",
+	)
 
 	nothing, err := kit.HybridFinder(fixture)("zzzz")
 	require.NoError(t, err)
@@ -102,8 +107,8 @@ func TestEmbeddingFixture_NamesTheCommandWhenStale(t *testing.T) {
 	require.NoError(t, err)
 
 	edited := inputs
-	edited.Documents = append([]agentports.EmbeddingCatalogItem(nil), inputs.Documents...)
-	edited.Documents[1] = agentports.NewEmbeddingCatalogItem(
+	edited.Documents = append([]retrievalports.EmbeddingCatalogItem(nil), inputs.Documents...)
+	edited.Documents[1] = retrievalports.NewEmbeddingCatalogItem(
 		edited.Documents[1].Key, edited.Documents[1].Text+" Edited.",
 	)
 	edited.Queries = append(edited.Queries, "a new eval request")

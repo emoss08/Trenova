@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -210,9 +210,13 @@ func TestSubmitInvoiceAdjustment_OneAdjustmentPreviewsItsFigures(t *testing.T) {
 		}},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, adjuster.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		adjuster.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would submit 1 invoice adjustment")
 	assert.Contains(t, preview.Summary, "waits for approval")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
@@ -220,7 +224,7 @@ func TestSubmitInvoiceAdjustment_OneAdjustmentPreviewsItsFigures(t *testing.T) {
 	assert.Equal(t, "PendingApproval", agenttoolstest.FieldByPath(t, change, "status").After)
 	require.NotNil(t, change.Money)
 
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, invoiceID, target.ID)
 
@@ -259,11 +263,11 @@ func TestSubmitInvoiceAdjustment_ManyGoAsOneBatch(t *testing.T) {
 	params.ProposalID = pulid.MustNew("ap_")
 	params.IdempotencyKey = params.ProposalID.String()
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "Would submit 3 invoice adjustments")
 	assert.Len(t, preview.Changes, 3)
-	_, targeted := tool.(agentports.TargetedTool).Target(params.Params)
+	_, targeted := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	assert.False(t, targeted)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -288,10 +292,10 @@ func TestSubmitInvoiceAdjustment_PreviewErrorsRefuseIt(t *testing.T) {
 		}},
 	})
 
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
+	err := tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Only posted invoices may be adjusted")
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 }
@@ -308,8 +312,14 @@ func TestSubmitInvoiceAdjustment_TakesADraftOrAdjustmentsNotBoth(t *testing.T) {
 			common.ParamReason:    "x",
 		}},
 	})
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), both))
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(map[string]any{})))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), both))
+	require.Error(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(
+			t.Context(),
+			agenttoolstest.ExecuteParams(map[string]any{}),
+		),
+	)
 }
 
 func TestSubmitInvoiceAdjustment_SubmitsASavedDraft(t *testing.T) {
@@ -324,9 +334,11 @@ func TestSubmitInvoiceAdjustment_SubmitsASavedDraft(t *testing.T) {
 	}
 	adjuster := &fakeAdjuster{figures: adjustmentFigures(false), detail: detail}
 	tool := NewSubmitInvoiceAdjustmentTool(adjuster)
-	params := agenttoolstest.ExecuteParams(map[string]any{ParamDraftAdjustmentID: detail.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{ParamDraftAdjustmentID: detail.ID.String()},
+	)
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "executes at once")
 
@@ -362,13 +374,25 @@ func TestSaveInvoiceAdjustmentDraft_AnAgentSavesADraftAndSaysWhere(t *testing.T)
 		common.ParamReason:    "Customer disputes the lumper fee",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, adjuster.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Contains(t, preview.Summary, "Would save a draft CreditOnly adjustment of Invoice INV-5100")
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		adjuster.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Contains(
+		t,
+		preview.Summary,
+		"Would save a draft CreditOnly adjustment of Invoice INV-5100",
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, adjuster.saved)
 	assert.Equal(t, invoiceadjustment.RebillStrategyCloneExact, adjuster.saved.RebillStrategy)
@@ -409,10 +433,18 @@ func TestApproveInvoiceAdjustment_OnlyAPersonApprovesWhatExecutionWouldDo(t *tes
 		ParamAdjustmentID: adjuster.decision.Adjustment.ID.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, adjuster.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Contains(t, preview.Summary, "Would approve the CreditOnly adjustment of Invoice INV-5100")
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		adjuster.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Contains(
+		t,
+		preview.Summary,
+		"Would approve the CreditOnly adjustment of Invoice INV-5100",
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "Executed", agenttoolstest.FieldByPath(t, change, "status").After)
 
@@ -422,7 +454,7 @@ func TestApproveInvoiceAdjustment_OnlyAPersonApprovesWhatExecutionWouldDo(t *tes
 	require.NotNil(t, adjuster.approved)
 
 	agentParams := agenttoolstest.AgentParamsFor(params.Params)
-	_, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), agentParams)
+	_, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), agentParams)
 	require.ErrorIs(t, err, common.ErrAgentCannotApprove)
 	assert.Equal(t, permission.OpApprove, tool.Policy().Operation)
 }
@@ -435,9 +467,11 @@ func TestApproveInvoiceAdjustment_ARevalidationFailureRefusesIt(t *testing.T) {
 		"lines[0].creditAmount": {"Credit exceeds what is left of the line"},
 	}
 	tool := NewApproveInvoiceAdjustmentTool(&fakeAdjuster{decision: decision})
-	params := agenttoolstest.ExecuteParams(map[string]any{ParamAdjustmentID: decision.Adjustment.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{ParamAdjustmentID: decision.Adjustment.ID.String()},
+	)
 
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
+	err := tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Credit exceeds what is left of the line")
 }
@@ -452,10 +486,18 @@ func TestRejectInvoiceAdjustment_RecordsTheReason(t *testing.T) {
 		common.ParamReason: "The customer agreed to pay the lumper fee",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, adjuster.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, "Rejected", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		adjuster.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		"Rejected",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
+	)
 
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))

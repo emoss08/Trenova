@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -89,7 +89,7 @@ type invoiceRunKeeper interface {
 	) (*invoicerunports.StatementBillPlan, error)
 }
 
-func targetInvoiceRun(params map[string]any) (agentports.ToolTarget, bool) {
+func targetInvoiceRun(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, ParamInvoiceRunID, permission.ResourceInvoiceRun)
 }
 
@@ -98,7 +98,7 @@ func invoiceRunIDProperty() map[string]any {
 		"invoice_list_runs or invoice_get_run")
 }
 
-func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
+func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
 		Name: "invoice_build_run",
 		Description: "Build an invoice run: a reviewable proposal of the consolidated invoices " +
@@ -144,7 +144,7 @@ func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *invoicerunports.PreviewInvoiceRunRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*invoicerun.InvoiceRun, error) {
 			return runs.PreviewBuild(ctx, req, params.Actor)
 		},
@@ -156,7 +156,7 @@ func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *invoicerunports.PreviewInvoiceRunRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := runs.Preview(ctx, req, params.Actor)
 			return nil, err
@@ -165,7 +165,7 @@ func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 }
 
 func buildRunRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*invoicerunports.PreviewInvoiceRunRequest, error) {
 	customerIDs, err := common.RequirePulidSlice(
 		params.Params,
@@ -211,7 +211,7 @@ func buildRunRequest(
 	return req, nil
 }
 
-func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agentports.AgentTool {
+func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 	itemProperty := agenttoolschema.KindID("A shipment on the run, by the item id "+
 		"invoice_get_run lists under each group.", permission.KindInvoiceRunItem)
 
@@ -287,7 +287,7 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agentports.AgentTo
 		Plan: func(
 			ctx context.Context,
 			req *invoicerunports.AdjustInvoiceRunMembershipRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*invoicerunports.InvoiceRunChangePreview, error) {
 			return runs.PreviewMembership(ctx, req)
 		},
@@ -298,7 +298,7 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agentports.AgentTo
 		Run: func(
 			ctx context.Context,
 			req *invoicerunports.AdjustInvoiceRunMembershipRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := runs.AdjustMembership(ctx, req, params.Actor)
 			return nil, err
@@ -307,7 +307,7 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agentports.AgentTo
 }
 
 func membershipRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*invoicerunports.AdjustInvoiceRunMembershipRequest, error) {
 	runID, err := common.RequirePulid(params.Params, ParamInvoiceRunID)
 	if err != nil {
@@ -417,7 +417,7 @@ func readRunMoves(params map[string]any) ([]invoicerunports.ItemMove, error) {
 }
 
 func commitRunRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*invoicerunports.CommitInvoiceRunRequest, error) {
 	runID, err := common.RequirePulid(params.Params, ParamInvoiceRunID)
 	if err != nil {
@@ -430,7 +430,7 @@ func commitRunRequest(
 	}, nil
 }
 
-func NewCommitInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
+func NewCommitInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
 		Name: "invoice_commit_run",
 		Description: "Propose committing an invoice run, which turns each of its proposed " +
@@ -453,7 +453,7 @@ func NewCommitInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *invoicerunports.CommitInvoiceRunRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*invoicerunports.InvoiceRunCommitPlan, error) {
 			return runs.PreviewCommit(ctx, req)
 		},
@@ -464,7 +464,7 @@ func NewCommitInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *invoicerunports.CommitInvoiceRunRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := runs.Commit(ctx, req, params.Actor)
 			return nil, err
@@ -472,7 +472,7 @@ func NewCommitInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 	})
 }
 
-func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
+func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
 		Name: "invoice_cancel_run",
 		Description: "Cancel an invoice run that will never be committed, such as one built " +
@@ -492,7 +492,7 @@ func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 		Required: []string{ParamInvoiceRunID, common.ParamReason},
 		Target:   targetInvoiceRun,
 	}, common.ReceivablePlan[*invoicerunports.CancelInvoiceRunRequest, *invoicerunports.InvoiceRunChangePreview]{
-		Request: func(params *agentports.ToolExecuteParams) (*invoicerunports.CancelInvoiceRunRequest, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*invoicerunports.CancelInvoiceRunRequest, error) {
 			runID, err := common.RequirePulid(params.Params, ParamInvoiceRunID)
 			if err != nil {
 				return nil, err
@@ -514,7 +514,7 @@ func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *invoicerunports.CancelInvoiceRunRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*invoicerunports.InvoiceRunChangePreview, error) {
 			return runs.PreviewCancel(ctx, req, params.Actor)
 		},
@@ -525,7 +525,7 @@ func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *invoicerunports.CancelInvoiceRunRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := runs.Cancel(ctx, req, params.Actor)
 			return nil, err
@@ -533,7 +533,7 @@ func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 	})
 }
 
-func NewBillStatementNowTool(runs invoiceRunKeeper) agentports.AgentTool {
+func NewBillStatementNowTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
 		Name: "invoice_bill_statement",
 		Description: "Propose billing a statement customer's open period now, before its cycle " +
@@ -584,7 +584,7 @@ func NewBillStatementNowTool(runs invoiceRunKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *invoicerunports.BillStatementNowRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*invoicerunports.StatementBillPlan, error) {
 			return runs.PreviewBillStatement(ctx, req, params.Actor)
 		},
@@ -595,7 +595,7 @@ func NewBillStatementNowTool(runs invoiceRunKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *invoicerunports.BillStatementNowRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := runs.BillStatementNow(ctx, req, params.Actor)
 			return nil, err
@@ -604,7 +604,7 @@ func NewBillStatementNowTool(runs invoiceRunKeeper) agentports.AgentTool {
 }
 
 func billStatementRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*invoicerunports.BillStatementNowRequest, error) {
 	customerID, err := common.RequirePulid(params.Params, common.ParamCustomerID)
 	if err != nil {

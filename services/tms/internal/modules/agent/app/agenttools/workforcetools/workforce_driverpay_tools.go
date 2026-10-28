@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
@@ -110,13 +110,13 @@ func DriverPayReviewToolProviders() []any {
 }
 
 func classifyDriverPayDecision(moneyMoves func(params map[string]any) bool) func(
-	agentports.ToolExecuteParams,
-) agentports.CallPolicy {
-	return func(params agentports.ToolExecuteParams) agentports.CallPolicy {
+	agenttoolports.ToolExecuteParams,
+) agenttoolports.CallPolicy {
+	return func(params agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
 		if moneyMoves(params.Params) {
-			return agentports.CallPolicy{Egress: agent.EgressMoney}
+			return agenttoolports.CallPolicy{Egress: agent.EgressMoney}
 		}
-		return agentports.CallPolicy{Egress: agent.EgressDriverVisible}
+		return agenttoolports.CallPolicy{Egress: agent.EgressDriverVisible}
 	}
 }
 
@@ -163,7 +163,7 @@ type disputeStart struct {
 	disputeID pulid.ID
 }
 
-func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agentports.AgentTool {
+func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agenttoolports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"settlement_start_dispute_review",
 		"Move an open pay dispute a driver raised to under review, so the driver and the "+
@@ -185,7 +185,7 @@ func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agentports.
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
 		*disputeStart, *driversettlementservice.DisputeChange,
 	]{
-		Request: func(params *agentports.ToolExecuteParams) (*disputeStart, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*disputeStart, error) {
 			id, err := common.RequirePulid(params.Params, common.ParamDisputeID)
 			if err != nil {
 				return nil, err
@@ -195,7 +195,7 @@ func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agentports.
 		Plan: func(
 			ctx context.Context,
 			req *disputeStart,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*driversettlementservice.DisputeChange, error) {
 			return reviewer.PlanStartDisputeReview(ctx, req.tenant, req.disputeID, params.Actor)
 		},
@@ -215,7 +215,7 @@ func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agentports.
 		Run: func(
 			ctx context.Context,
 			req *disputeStart,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := reviewer.StartDisputeReview(ctx, req.tenant, req.disputeID,
 				params.Actor)
@@ -229,7 +229,7 @@ func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agentports.
 }
 
 func resolvePayDisputeRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*driversettlementservice.ResolveDisputeRequest, error) {
 	id, err := common.RequirePulid(params.Params, common.ParamDisputeID)
 	if err != nil {
@@ -274,7 +274,7 @@ func resolvePayDisputeRequest(
 	return req, nil
 }
 
-func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agentports.AgentTool {
+func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agenttoolports.AgentTool {
 	spec := targeting(personOnly(withSchema(wfSpec(
 		"settlement_resolve_dispute",
 		"Draft the decision on a driver's pay dispute for a person to approve. Approve or "+
@@ -298,9 +298,11 @@ func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agentports.Agen
 		),
 		paramAdjustmentLabel: common.StringProperty("What the adjustment is for, as the driver "+
 			"and payroll read it. Required with an adjustment.", common.MaxAdjustmentDescription),
-		common.ParamPayCodeID: agenttoolschema.RecordIDText(permission.ResourcePayCode,
+		common.ParamPayCodeID: agenttoolschema.RecordIDText(
+			permission.ResourcePayCode,
 			"The pay code the adjustment posts under, from settlement_list_pay_codes. Leave it out for "+
-				"the default account."),
+				"the default account.",
+		),
 	}, common.ParamDisputeID, paramDecision, paramResolutionNote)), common.ParamDisputeID,
 		permission.ResourceSettlementDispute)
 	spec.Egress = agent.EgressDriverVisible
@@ -321,7 +323,7 @@ func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agentports.Agen
 		Plan: func(
 			ctx context.Context,
 			req *driversettlementservice.ResolveDisputeRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*driversettlementservice.ResolveDisputePlan, error) {
 			return reviewer.PlanResolveDispute(ctx, req, params.Actor)
 		},
@@ -332,7 +334,7 @@ func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agentports.Agen
 		Run: func(
 			ctx context.Context,
 			req *driversettlementservice.ResolveDisputeRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := reviewer.ResolveDispute(ctx, req, params.Actor)
 			if err != nil {
@@ -391,7 +393,7 @@ func renderSettlementDisputeResolution(
 }
 
 func reviewExpenseFrom(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*driversettlementservice.ReviewExpenseRequest, error) {
 	id, err := common.RequirePulid(params.Params, paramExpenseID)
 	if err != nil {
@@ -413,7 +415,7 @@ func reviewExpenseFrom(
 	}, nil
 }
 
-func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agentports.AgentTool {
+func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agenttoolports.AgentTool {
 	spec := targeting(personOnly(withSchema(wfSpec(
 		"settlement_review_driver_expense",
 		"Draft the decision on a driver's expense claim for a person to approve. Approve "+
@@ -452,7 +454,7 @@ func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agentports.AgentTool
 		Plan: func(
 			ctx context.Context,
 			req *driversettlementservice.ReviewExpenseRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*driversettlementservice.ReviewExpensePlan, error) {
 			return reviewer.PlanReviewExpense(ctx, req, params.Actor)
 		},
@@ -500,7 +502,7 @@ func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agentports.AgentTool
 		Run: func(
 			ctx context.Context,
 			req *driversettlementservice.ReviewExpenseRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := reviewer.ReviewExpense(ctx, req, params.Actor)
 			if err != nil {
@@ -514,16 +516,16 @@ func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agentports.AgentTool
 
 func provideStartSettlementDisputeReviewTool(
 	s *driversettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newStartSettlementDisputeReviewTool(s)
 }
 
 func provideResolveSettlementDisputeTool(
 	s *driversettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newResolveSettlementDisputeTool(s)
 }
 
-func provideReviewDriverExpenseTool(s *driversettlementservice.Service) agentports.AgentTool {
+func provideReviewDriverExpenseTool(s *driversettlementservice.Service) agenttoolports.AgentTool {
 	return newReviewDriverExpenseTool(s)
 }

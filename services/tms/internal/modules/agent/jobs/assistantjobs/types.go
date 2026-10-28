@@ -23,7 +23,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -40,7 +41,7 @@ type FinishTurnInput struct {
 	// RejectionParams are the figures the refusal carried, such as which
 	// usage cap and when it lifts.
 	RejectionParams map[string]string             `json:"rejectionParams,omitempty"`
-	Run             *agentports.RunResult         `json:"run,omitempty"`
+	Run             *agentruntimeports.RunResult  `json:"run,omitempty"`
 	Failure         *modelcallcontract.Failure    `json:"failure,omitempty"`
 	Artifacts       []*assistantartifact.Artifact `json:"artifacts,omitempty"`
 	Events          []temporaltype.StreamItem     `json:"events,omitempty"`
@@ -59,7 +60,7 @@ type TurnEnding struct {
 	Compact *CompactionCue `json:"compact,omitempty"`
 	// Next is the turn the conversation's queue started once this one was
 	// saved.
-	Next *agentports.QueuedTurn `json:"next,omitempty"`
+	Next *assistantports.QueuedTurn `json:"next,omitempty"`
 }
 
 // CompactionCue is a conversation a turn left full enough to compact itself.

@@ -7,7 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,17 +20,17 @@ import (
 )
 
 type fakeMemories struct {
-	agentports.AgentMemoryService
+	agentmemoryports.AgentMemoryService
 
-	asked  *agentports.MemoryContextRequest
-	answer *agentports.MemoryContext
+	asked  *agentmemoryports.MemoryContextRequest
+	answer *agentmemoryports.MemoryContext
 	used   []pulid.ID
 }
 
 func (f *fakeMemories) ForContext(
 	_ context.Context,
-	req agentports.MemoryContextRequest,
-) (*agentports.MemoryContext, error) {
+	req agentmemoryports.MemoryContextRequest,
+) (*agentmemoryports.MemoryContext, error) {
 	f.asked = &req
 
 	return f.answer, nil
@@ -35,7 +38,7 @@ func (f *fakeMemories) ForContext(
 
 func (f *fakeMemories) RecordUse(
 	_ context.Context,
-	req agentports.RecordMemoryUseRequest,
+	req agentmemoryports.RecordMemoryUseRequest,
 ) error {
 	f.used = append(f.used, req.IDs...)
 
@@ -46,7 +49,7 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 	t.Parallel()
 
 	customer := pulid.MustNew("cus_")
-	memories := &fakeMemories{answer: &agentports.MemoryContext{
+	memories := &fakeMemories{answer: &agentmemoryports.MemoryContext{
 		Memories: []*agent.Memory{{ID: pulid.MustNew("amem_"), Content: "Acme pays late."}},
 		Subjects: []agent.MemorySubject{{
 			Type:     agent.MemorySubjectCustomer,
@@ -62,7 +65,7 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 		runtime: newRuntime(
 			&scriptedCompletion{},
 			&stubQueryRegistry{},
-			&stubActionRegistry{Tools: []agentports.AgentTool{
+			&stubActionRegistry{Tools: []agenttoolports.AgentTool{
 				actionTool("dispatch_assign_move", agent.TierPropose, nil),
 			}},
 			nil,
@@ -74,7 +77,7 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 	location := pulid.MustNew("loc_").String()
 	parentRecord := pulid.MustNew("wrk_").String()
 	definition := testDefinition("dispatch_assign_move")
-	rc, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
+	rc, err := builder.Build(t.Context(), &agentruntimeports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Trigger:    agent.RunTriggerChat,
@@ -130,7 +133,7 @@ func TestOpenTurn_CarriesWhatFitsTheBudgetAndCountsOnlyThat(t *testing.T) {
 	}
 	pool = append(pool, tainted)
 
-	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "What do we know?",
@@ -153,7 +156,7 @@ func TestOpenTurn_ReadsNoMemoryForAnAgentThatDoesNotAskForIt(t *testing.T) {
 
 	definition := testDefinition()
 	definition.ContextProviders = []agentdefinition.ContextProvider{agentdefinition.ContextClock}
-	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "Hello",
@@ -223,7 +226,7 @@ func TestOpenTurn_CountsOnlyTheMemoriesThatBearOnTheTurn(t *testing.T) {
 		Content: "The yard closes at six.",
 	}
 
-	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Let the customer know the load delivered.",
@@ -250,8 +253,8 @@ func TestNoteToolMemories_AToolsMemoriesAreUsedOnceItIsCalled(t *testing.T) {
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	fix := pulid.MustNew("amem_")
 	already := pulid.MustNew("amem_")
-	turn := rt.RestoreTurn(&agentports.RunRequest{Definition: testDefinition()}, TurnState{
-		Result:       agentports.RunResult{UsedMemoryIDs: []pulid.ID{already}},
+	turn := rt.RestoreTurn(&agentruntimeports.RunRequest{Definition: testDefinition()}, TurnState{
+		Result:       agentruntimeports.RunResult{UsedMemoryIDs: []pulid.ID{already}},
 		ToolMemories: map[string][]pulid.ID{"dispatch_assign_move": {fix}},
 	})
 	fx := &memoryEvents{}
@@ -261,7 +264,7 @@ func TestNoteToolMemories_AToolsMemoriesAreUsedOnceItIsCalled(t *testing.T) {
 
 	turn.noteToolMemories(fx, "dispatch_assign_move")
 	require.Len(t, fx.events, 1)
-	assert.Equal(t, agentports.AssistantEventMemoryUsed, fx.events[0].Event)
+	assert.Equal(t, assistantports.AssistantEventMemoryUsed, fx.events[0].Event)
 	assert.Equal(t, []pulid.ID{already, fix}, turn.State().Result.UsedMemoryIDs)
 	assert.Empty(t, turn.State().ToolMemories)
 

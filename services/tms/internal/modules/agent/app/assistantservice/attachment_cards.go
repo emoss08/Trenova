@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -146,7 +148,7 @@ func (s *Service) AttachmentExtracted(ctx context.Context, event *agentports.Age
 		BuID:   doc.BusinessUnitID,
 		UserID: doc.UploadedByID,
 	}
-	sent, err := s.conversations.CarriesAttachment(ctx, &agentports.CarriesAttachmentRequest{
+	sent, err := s.conversations.CarriesAttachment(ctx, &assistantports.CarriesAttachmentRequest{
 		ThreadID:   threads[0],
 		DocumentID: doc.ID,
 		TenantInfo: tenant,
@@ -159,7 +161,7 @@ func (s *Service) AttachmentExtracted(ctx context.Context, event *agentports.Age
 		return
 	}
 
-	thread, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, assistantports.GetThreadRequest{
 		ID:         threads[0],
 		UserID:     doc.UploadedByID,
 		TenantInfo: tenant,
@@ -196,7 +198,7 @@ type UnreadFileRun struct {
 func (s *Service) WaitOnUnreadFile(
 	ctx context.Context,
 	run *UnreadFileRun,
-	observation *agentports.ToolObservation,
+	observation *agentruntimeports.ToolObservation,
 ) {
 	if s.readWaits == nil || run == nil || run.Delegated || run.ThreadID.IsNil() ||
 		run.Actor == nil || observation == nil || observation.Failed ||

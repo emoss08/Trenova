@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransfercriteria"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -33,7 +33,7 @@ type listBillingTransferCandidatesTool struct {
 
 func newListBillingTransferCandidatesTool(
 	shipments shipmentports.ShipmentService,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &listBillingTransferCandidatesTool{shipments: shipments}
 }
 
@@ -63,7 +63,7 @@ func (t *listBillingTransferCandidatesTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(properties, defaultListLimit, maxListLimit))
 }
 
-func (t *listBillingTransferCandidatesTool) Policy() agentports.ToolPolicy {
+func (t *listBillingTransferCandidatesTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceShipment})
 }
 
@@ -97,7 +97,7 @@ type billingTransferCandidatesResult struct {
 
 func (t *listBillingTransferCandidatesTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -162,7 +162,7 @@ func (t *listBillingTransferCandidatesTool) Query(
 // and reported one load while eighteen more were waiting.
 func (t *listBillingTransferCandidatesTool) completedAlsoWaiting(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	selection billingtransfercriteria.Criteria,
 ) string {
 	selection.Status = shipment.StatusCompleted

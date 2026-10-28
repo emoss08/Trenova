@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"go.uber.org/zap"
 )
 
@@ -23,8 +25,8 @@ import (
 func (s *Service) runScriptTool(
 	ctx context.Context,
 	p *dispatchParams,
-	tool agentports.AgentQueryTool,
-	call *agentports.ToolCall,
+	tool agenttoolports.AgentQueryTool,
+	call *llmports.ToolCall,
 ) toolOutcome {
 	req := p.req
 	decision := s.codeMode.Decide(req.CodeMode, p.gate.model, s.scriptSettings(ctx, req, p.gate))
@@ -79,7 +81,7 @@ func (s *Service) runScriptTool(
 // scriptsOffered reports whether a turn opening now may be shown the script
 // tool: some provider that may answer it has scripts on. Only a turn left to
 // the providers' settings asks; a failed read offers nothing.
-func (s *Service) scriptsOffered(ctx context.Context, req *agentports.RunRequest) bool {
+func (s *Service) scriptsOffered(ctx context.Context, req *agentruntimeports.RunRequest) bool {
 	if req.CodeMode != codemode.OverrideDefault || s.scripts == nil || req.Actor == nil {
 		return false
 	}
@@ -97,7 +99,7 @@ func (s *Service) scriptsOffered(ctx context.Context, req *agentports.RunRequest
 // A failed read runs no script.
 func (s *Service) scriptSettings(
 	ctx context.Context,
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 	gate scriptGate,
 ) aiprovider.ScriptSettings {
 	if req.CodeMode != codemode.OverrideDefault || s.scripts == nil || req.Actor == nil {
@@ -173,7 +175,7 @@ func scriptContinuation(data any) codemode.Continuation {
 // before its arguments are checked: a continuation leaves out what the
 // script it continues already has, and told "title is required" a model
 // never learned that the script it named was the trouble.
-func continuationRefusal(call *agentports.ToolCall, gate scriptGate) (toolOutcome, bool) {
+func continuationRefusal(call *llmports.ToolCall, gate scriptGate) (toolOutcome, bool) {
 	continues := strings.TrimSpace(stringArg(call.Arguments, codemode.ParamScriptContinues))
 	if continues == "" || gate.continues != nil {
 		return toolOutcome{}, false

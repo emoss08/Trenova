@@ -3,24 +3,23 @@ package shipmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/shopspring/decimal"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -33,7 +32,7 @@ func TestServiceTransferOwnership_SucceedsForCurrentOwner(t *testing.T) {
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 
 	shipmentID := pulid.MustNew("shp_")
 	orgID := pulid.MustNew("org_")
@@ -76,7 +75,7 @@ func TestServiceTransferOwnership_SucceedsForCurrentOwner(t *testing.T) {
 		Once()
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" && req.Action == "ownership_transferred" &&
 				req.RecordID == shipmentID
 		})).
@@ -121,7 +120,7 @@ func TestServiceTransferOwnership_SucceedsForAdmin(t *testing.T) {
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	permissions := permissionportsmock.NewMockPermissionEngine(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 
 	shipmentID := pulid.MustNew("shp_")
 	orgID := pulid.MustNew("org_")
@@ -196,7 +195,7 @@ func TestServiceTransferOwnership_RejectsAPIKeyActor(t *testing.T) {
 		userRepo:     tenantportsmock.NewMockUserRepository(t),
 		validator:    newTestValidator(t),
 		auditService: auditportsmock.NewMockAuditService(t),
-		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
+		invalidator:  newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -229,7 +228,7 @@ func TestServiceTransferOwnership_RejectsAnAgentCarryingTheSystemUser(t *testing
 		userRepo:     tenantportsmock.NewMockUserRepository(t),
 		validator:    newTestValidator(t),
 		auditService: auditportsmock.NewMockAuditService(t),
-		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
+		invalidator:  newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -289,7 +288,7 @@ func TestServiceCreate_RejectsDuplicateBOLBeforePersist(t *testing.T) {
 			freight,
 			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		),
-		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
+		invalidator:  newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}

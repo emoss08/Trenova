@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -221,11 +221,19 @@ func TestAssignWorkerShift_PreviewsTheNewPatternAndTheOneItEnds(t *testing.T) {
 		paramCycleOffsetWeeks:     float64(1),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, schedules.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		schedules.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	require.Len(t, preview.Changes, 2)
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 	assert.Contains(t, preview.Summary, "Early days")
 	assert.Contains(t, preview.Summary, "2026-10-12")
 
@@ -254,7 +262,7 @@ func TestAssignWorkerShift_ATeamGrantReachesOnlyTheTeam(t *testing.T) {
 		teams,
 	)
 	tool := NewAssignWorkerShiftTool(schedules, scope)
-	paramsFor := func(workerID pulid.ID) agentports.ToolExecuteParams {
+	paramsFor := func(workerID pulid.ID) agenttoolports.ToolExecuteParams {
 		return agenttoolstest.ExecuteParams(map[string]any{
 			common.ParamWorkerID:      workerID.String(),
 			paramShiftTemplateID:      pulid.MustNew("shft_").String(),
@@ -262,21 +270,21 @@ func TestAssignWorkerShift_ATeamGrantReachesOnlyTheTeam(t *testing.T) {
 		})
 	}
 
-	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), paramsFor(member)))
-	require.ErrorIs(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.NoError(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), paramsFor(member)))
+	require.ErrorIs(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		paramsFor(stranger)), teamscope.ErrOutsideTeam)
 	require.ErrorIs(t, tool.Execute(t.Context(), paramsFor(stranger)), teamscope.ErrOutsideTeam)
 	assert.Nil(t, schedules.assigned)
 
 	refusing := NewAssignWorkerShiftTool(schedules,
 		NewTeamScope(&scopedPermissions{allowed: false}, nil))
-	require.Error(t, refusing.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, refusing.(agenttoolports.ToolValidator).Validate(t.Context(),
 		paramsFor(member)))
 
 	unresolved := NewAssignWorkerShiftTool(schedules, NewTeamScope(
 		&scopedPermissions{allowed: true, scope: permission.DataScopeTeam}, nil,
 	))
-	require.ErrorIs(t, unresolved.(agentports.ToolValidator).Validate(t.Context(),
+	require.ErrorIs(t, unresolved.(agenttoolports.ToolValidator).Validate(t.Context(),
 		paramsFor(member)), teamscope.ErrOutsideTeam, "a team grant nobody can resolve is refused")
 }
 
@@ -294,18 +302,22 @@ func TestEndWorkerShiftAssignment_ChecksTheTeamOfTheAssignmentsWorker(t *testing
 		common.FieldEffectiveTo: "2026-11-01",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, schedules.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		schedules.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "2026-11-01")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, schedules.ended)
 	assert.Contains(t, teams.asked, schedules.assignment.WorkerID)
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceWorkerSchedule, target.Resource)
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			paramShiftAssignmentID:  schedules.assignment.ID.String(),
 			common.FieldEffectiveTo: float64(1_900_000_000),
@@ -326,9 +338,13 @@ func TestSetWorkerAvailabilityPreference_ReadsTheWeekdayByName(t *testing.T) {
 		common.ParamNote:     "Coaches his son's team",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, schedules.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		schedules.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "unavailable on Saturday")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -342,7 +358,7 @@ func TestSetWorkerAvailabilityPreference_ReadsTheWeekdayByName(t *testing.T) {
 		"an unknown day":     {common.ParamWorkerID: workerID.String(), paramDayOfWeek: "Funday", paramPreference: "Available"},
 		"a wrong preference": {common.ParamWorkerID: workerID.String(), paramDayOfWeek: "Monday", paramPreference: "Maybe"},
 	} {
-		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+		require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 			agenttoolstest.ExecuteParams(raw)), name)
 	}
 }
@@ -361,10 +377,18 @@ func TestProposeShiftSwap_RaisesATradeWithBothDays(t *testing.T) {
 		common.FieldReason:        "Wedding",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, schedules.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		schedules.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, schedules.proposed)
@@ -381,7 +405,7 @@ func TestShiftSwapDecisions_EachNamesItsOwnPermission(t *testing.T) {
 
 	schedules := newFakeSchedules()
 	for _, tc := range []struct {
-		tool      agentports.AgentTool
+		tool      agenttoolports.AgentTool
 		operation permission.Operation
 		status    worker.ShiftSwapStatus
 		maxTier   agent.AutonomyTier
@@ -399,11 +423,23 @@ func TestShiftSwapDecisions_EachNamesItsOwnPermission(t *testing.T) {
 			paramSwapID:      schedules.swap.ID.String(),
 			common.ParamNote: "Covered",
 		})
-		preview := agenttoolstest.PreviewWithoutWrites(t, schedules.guard, func() (*agent.ToolPreview, error) {
-			return tc.tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-		})
-		assert.Equal(t, string(tc.status),
-			agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), common.FieldStatus).After, policy.Name)
+		preview := agenttoolstest.PreviewWithoutWrites(
+			t,
+			schedules.guard,
+			func() (*agent.ToolPreview, error) {
+				return tc.tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+			},
+		)
+		assert.Equal(
+			t,
+			string(tc.status),
+			agenttoolstest.FieldByPath(
+				t,
+				agenttoolstest.PreviewChange(t, preview, 0),
+				common.FieldStatus,
+			).After,
+			policy.Name,
+		)
 		require.NoError(t, tc.tool.Execute(t.Context(), params), policy.Name)
 		assert.Equal(t, tc.status, schedules.transitions[len(schedules.transitions)-1].Status)
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
@@ -70,7 +70,9 @@ func TestCreateShipment_EntersTheShipmentUnderTheActorTenant(t *testing.T) {
 
 	writer := &agenttoolstest.FakeShipmentWriter{}
 	imports := &fakeImportCompleter{}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: writer, Imports: imports})
+	tool := operationstools.NewCreateShipmentTool(
+		operationstools.CreateShipmentDeps{Shipments: writer, Imports: imports},
+	)
 	assert.Equal(t, permission.ResourceShipment, tool.Policy().Resource)
 	assert.Equal(t, permission.OpCreate, tool.Policy().Operation)
 	assert.Equal(t, agent.TierActWithApproval, tool.Policy().DefaultTier)
@@ -85,7 +87,9 @@ func TestCreateShipment_EntersTheShipmentUnderTheActorTenant(t *testing.T) {
 	payload["id"] = pulid.MustNew("shp_").String()
 	docID := pulid.MustNew("doc_")
 
-	params := agenttoolstest.ExecuteParams(map[string]any{"shipment": payload, "sourceDocumentId": docID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{"shipment": payload, "sourceDocumentId": docID.String()},
+	)
 	params.IdempotencyKey = "idem-1"
 	require.NoError(t, tool.Execute(t.Context(), params))
 
@@ -119,7 +123,9 @@ func TestCreateShipment_RefusesAWriteWithoutAnIdempotencyKeyOrAMismatchedActor(t
 	t.Parallel()
 
 	writer := &agenttoolstest.FakeShipmentWriter{}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: writer})
+	tool := operationstools.NewCreateShipmentTool(
+		operationstools.CreateShipmentDeps{Shipments: writer},
+	)
 	payload := shipmentPayload(
 		pulid.MustNew("cust_"),
 		pulid.MustNew("st_"),
@@ -135,7 +141,9 @@ func TestCreateShipment_RefusesAWriteWithoutAnIdempotencyKeyOrAMismatchedActor(t
 	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrTenantMismatch)
 	assert.Nil(t, writer.Created)
 
-	params = agenttoolstest.ExecuteParams(map[string]any{"shipment": payload, "sourceDocumentId": "not-an-id"})
+	params = agenttoolstest.ExecuteParams(
+		map[string]any{"shipment": payload, "sourceDocumentId": "not-an-id"},
+	)
 	params.IdempotencyKey = "idem-3"
 	require.Error(t, tool.Execute(t.Context(), params))
 	assert.Nil(t, writer.Created)
@@ -154,7 +162,7 @@ func TestCreateShipment_ValidateRefusesWhatTheServiceWould(t *testing.T) {
 		Shipments: writer,
 		Imports:   &fakeImportCompleter{},
 	})
-	validator, ok := tool.(agentports.ToolValidator)
+	validator, ok := tool.(agenttoolports.ToolValidator)
 	require.True(t, ok, "shipment_create checks a call before it is filed")
 
 	payload := shipmentPayload(
@@ -204,7 +212,7 @@ func TestUpdateShipment_PatchesOnlyTheNamedFields(t *testing.T) {
 	)
 	assert.Equal(t, params.OrganizationID, writer.LastGet.TenantInfo.OrgID)
 
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, shipmentID, target.ID)
 	assert.Equal(t, permission.ResourceShipment, target.Resource)
@@ -251,7 +259,7 @@ func TestTenderToRoutingGuide_StartsAWaterfallForTheMove(t *testing.T) {
 	assert.Equal(t, guideID, *tenders.Waterfall.RoutingGuideID)
 	assert.Equal(t, params.OrganizationID, tenders.Waterfall.TenantInfo.OrgID)
 
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceShipmentMove, target.Resource)
 }

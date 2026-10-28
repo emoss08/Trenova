@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -16,15 +16,15 @@ import (
 )
 
 type fakeRetrievalSearcher struct {
-	documents *agentports.DocumentSearchResult
-	messages  *agentports.InboundMessageSearchResult
-	requests  []agentports.RetrievalSearchRequest
+	documents *retrievalports.DocumentSearchResult
+	messages  *retrievalports.InboundMessageSearchResult
+	requests  []retrievalports.RetrievalSearchRequest
 }
 
 func (f *fakeRetrievalSearcher) SearchDocuments(
 	_ context.Context,
-	req *agentports.RetrievalSearchRequest,
-) (*agentports.DocumentSearchResult, error) {
+	req *retrievalports.RetrievalSearchRequest,
+) (*retrievalports.DocumentSearchResult, error) {
 	f.requests = append(f.requests, *req)
 
 	return f.documents, nil
@@ -32,8 +32,8 @@ func (f *fakeRetrievalSearcher) SearchDocuments(
 
 func (f *fakeRetrievalSearcher) SearchInboundMessages(
 	_ context.Context,
-	req *agentports.RetrievalSearchRequest,
-) (*agentports.InboundMessageSearchResult, error) {
+	req *retrievalports.RetrievalSearchRequest,
+) (*retrievalports.InboundMessageSearchResult, error) {
 	f.requests = append(f.requests, *req)
 
 	return f.messages, nil
@@ -50,18 +50,18 @@ func TestSearchDocumentsReturnsRowsAndMarksEveryDocument(t *testing.T) {
 		ResourceID:   "shp_1",
 	}
 	second := &document.Document{ID: pulid.MustNew("doc_"), OriginalName: "private.pdf"}
-	searcher := &fakeRetrievalSearcher{documents: &agentports.DocumentSearchResult{
-		Hits: []agentports.DocumentSearchHit{
+	searcher := &fakeRetrievalSearcher{documents: &retrievalports.DocumentSearchResult{
+		Hits: []retrievalports.DocumentSearchHit{
 			{
 				Document:      first,
 				Page:          2,
 				Snippet:       "Lumper fee reimbursed with receipt.",
 				ShowsFileName: true,
-				Match:         agentports.RetrievalMatchBoth,
+				Match:         retrievalports.RetrievalMatchBoth,
 			},
-			{Document: second, Match: agentports.RetrievalMatchMeaning},
+			{Document: second, Match: retrievalports.RetrievalMatchMeaning},
 		},
-		Semantics: agentports.RetrievalSemantics{Used: true},
+		Semantics: retrievalports.RetrievalSemantics{Used: true},
 	}}
 	tool := newSearchDocumentsTool(searcher, &fakePermissions{allowed: true}, nil)
 
@@ -101,9 +101,9 @@ func TestSearchDocumentsReturnsRowsAndMarksEveryDocument(t *testing.T) {
 func TestSearchDocumentsSaysWhenMeaningWasNotSearched(t *testing.T) {
 	t.Parallel()
 
-	searcher := &fakeRetrievalSearcher{documents: &agentports.DocumentSearchResult{
-		Hits: []agentports.DocumentSearchHit{},
-		Semantics: agentports.RetrievalSemantics{
+	searcher := &fakeRetrievalSearcher{documents: &retrievalports.DocumentSearchResult{
+		Hits: []retrievalports.DocumentSearchHit{},
+		Semantics: retrievalports.RetrievalSemantics{
 			Reason: airetrieval.UnavailableReasonNoProvider,
 		},
 	}}

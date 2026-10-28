@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/docrender"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -17,7 +17,7 @@ import (
 
 func (s *Service) boardDocument(
 	ctx context.Context,
-	req *agentports.GetThreadRequest,
+	req *assistantports.GetThreadRequest,
 	artifactID pulid.ID,
 ) (*docrender.Document, bool, error) {
 	if s.boards == nil || s.artifacts == nil {
@@ -37,7 +37,7 @@ func (s *Service) boardDocument(
 		return nil, false, nil
 	}
 
-	card, err := s.boards.Card(ctx, &agentports.BoardCardRequest{
+	card, err := s.boards.Card(ctx, &assistantports.BoardCardRequest{
 		Thread:     *req,
 		ArtifactID: artifactID,
 		Actor: &permissionports.RequestActor{

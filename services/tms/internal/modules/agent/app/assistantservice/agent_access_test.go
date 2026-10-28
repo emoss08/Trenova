@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,7 +25,7 @@ func restrictedChatDefinition(name string) *agentdefinition.Definition {
 func startAs(
 	t *testing.T,
 	svc *Service,
-	req *agentports.StartThreadRequest,
+	req *assistantports.StartThreadRequest,
 	actor *permissionports.RequestActor,
 ) (*conversation.Thread, error) {
 	t.Helper()
@@ -45,7 +46,7 @@ func TestStartThread_RefusesAnAgentThePersonMayNotUse(t *testing.T) {
 	restricted := restrictedChatDefinition("Payroll Helper")
 	svc, conversations, permissions := subjectService(restricted)
 
-	_, err := startAs(t, svc, &agentports.StartThreadRequest{
+	_, err := startAs(t, svc, &assistantports.StartThreadRequest{
 		AgentDefinitionID: restricted.ID,
 	}, testActor())
 
@@ -56,7 +57,7 @@ func TestStartThread_RefusesAnAgentThePersonMayNotUse(t *testing.T) {
 	assert.Equal(t, []pulid.ID{restricted.ID}, permissions.agentChecks)
 
 	permissions.granted = []pulid.ID{restricted.ID}
-	thread, err := startAs(t, svc, &agentports.StartThreadRequest{
+	thread, err := startAs(t, svc, &assistantports.StartThreadRequest{
 		AgentDefinitionID: restricted.ID,
 	}, testActor())
 
@@ -73,7 +74,7 @@ func TestStartThread_RefusesEveryAgentWithoutTheAssistant(t *testing.T) {
 	svc, conversations, permissions := subjectService(open)
 	permissions.allowed = map[string]bool{}
 
-	_, err := startAs(t, svc, &agentports.StartThreadRequest{
+	_, err := startAs(t, svc, &assistantports.StartThreadRequest{
 		AgentDefinitionID: open.ID,
 	}, testActor())
 
@@ -90,7 +91,7 @@ never called.
 func TestSendMessage_RefusesATurnWithAnAgentThePersonLostAccessTo(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		textTurn("never reached"),
 	}}
 	restricted := testDefinition()
@@ -99,7 +100,7 @@ func TestSendMessage_RefusesATurnWithAnAgentThePersonLostAccessTo(t *testing.T) 
 	svc.permissions = &subjectPermissions{allowed: map[string]bool{"assistant:create": true}}
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "What did we pay drivers last week?",
 		TenantInfo: actor.TenantInfo(),
@@ -152,7 +153,7 @@ func TestGetThread_StaysReadableAndSaysWhetherItCanContinue(t *testing.T) {
 
 	f := newContinuableFixture()
 	actor := testActor()
-	req := agentports.GetThreadRequest{
+	req := assistantports.GetThreadRequest{
 		ID:         f.thread.ID,
 		UserID:     actor.UserID,
 		TenantInfo: actor.TenantInfo(),
@@ -186,7 +187,7 @@ func TestGetThread_SaysWhyItCannotContinue(t *testing.T) {
 
 	f := newContinuableFixture()
 	actor := testActor()
-	req := agentports.GetThreadRequest{
+	req := assistantports.GetThreadRequest{
 		ID:         f.thread.ID,
 		UserID:     actor.UserID,
 		TenantInfo: actor.TenantInfo(),
@@ -252,7 +253,7 @@ func TestGetThread_CannotContinueWithoutTheAssistant(t *testing.T) {
 	f.permissions.allowed = map[string]bool{}
 	actor := testActor()
 
-	thread, err := f.svc.GetThread(t.Context(), agentports.GetThreadRequest{
+	thread, err := f.svc.GetThread(t.Context(), assistantports.GetThreadRequest{
 		ID:         f.thread.ID,
 		UserID:     actor.UserID,
 		TenantInfo: actor.TenantInfo(),
@@ -272,7 +273,7 @@ administrator can grant it. The read is narrowed to their audience either way.
 func TestAsk_ChoosesTheGeneralAssistantOnlyWhenThePersonMayUseIt(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{textTurn("ok")}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
 	general := chatDefinition("Assistant", agentdefinition.TemplateGeneralAssistant)
 	general.AccessMode = agentdefinition.AccessRoles
@@ -287,7 +288,11 @@ func TestAsk_ChoosesTheGeneralAssistantOnlyWhenThePersonMayUseIt(t *testing.T) {
 
 	_, err := svc.askAgent(t.Context(), actor.TenantInfo(), actor)
 	require.Error(t, err)
-	assert.True(t, errortypes.IsAuthorizationError(err), "the open dispatch agent does not stand in")
+	assert.True(
+		t,
+		errortypes.IsAuthorizationError(err),
+		"the open dispatch agent does not stand in",
+	)
 	chooser := definitions.requests[0]
 	require.NotNil(t, chooser.Audience, "the read is narrowed to the person's agents")
 	assert.Empty(t, chooser.Audience.GrantedAgentIDs)

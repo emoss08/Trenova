@@ -6,7 +6,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -20,14 +21,14 @@ import (
 // every request it was sent.
 type keyedReader struct {
 	mu       sync.Mutex
-	answers  map[string]*agentports.GraphQLReadResult
-	requests []*agentports.GraphQLReadRequest
+	answers  map[string]*graphqlreadports.GraphQLReadResult
+	requests []*graphqlreadports.GraphQLReadRequest
 }
 
 func (r *keyedReader) Read(
 	_ context.Context,
-	req *agentports.GraphQLReadRequest,
-) (*agentports.GraphQLReadResult, error) {
+	req *graphqlreadports.GraphQLReadRequest,
+) (*graphqlreadports.GraphQLReadResult, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.requests = append(r.requests, req)
@@ -35,10 +36,10 @@ func (r *keyedReader) Read(
 		return answer, nil
 	}
 
-	return &agentports.GraphQLReadResult{Data: map[string]any{}}, nil
+	return &graphqlreadports.GraphQLReadResult{Data: map[string]any{}}, nil
 }
 
-func (r *keyedReader) sent(operation string) *agentports.GraphQLReadRequest {
+func (r *keyedReader) sent(operation string) *graphqlreadports.GraphQLReadRequest {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	for _, req := range r.requests {
@@ -63,7 +64,7 @@ func keyedSpec(t *testing.T, name string) *graphQLListSpec {
 	return nil
 }
 
-func keyedCall(params map[string]any) *agentports.QueryToolParams {
+func keyedCall(params map[string]any) *agenttoolports.QueryToolParams {
 	actor := &permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
@@ -72,7 +73,7 @@ func keyedCall(params map[string]any) *agentports.QueryToolParams {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	return &agentports.QueryToolParams{
+	return &agenttoolports.QueryToolParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		Actor:          actor,
@@ -82,8 +83,8 @@ func keyedCall(params map[string]any) *agentports.QueryToolParams {
 	}
 }
 
-func checklistAnswer() *agentports.GraphQLReadResult {
-	return &agentports.GraphQLReadResult{
+func checklistAnswer() *graphqlreadports.GraphQLReadResult {
+	return &graphqlreadports.GraphQLReadResult{
 		Data: map[string]any{"workerChecklists": []any{map[string]any{
 			"id": "wcl_1", "name": "Onboarding", "status": "Open", "__typename": "WorkerChecklist",
 			"items": []any{map[string]any{"id": "wcli_1", "label": "Sign handbook", "note": nil}},
@@ -92,8 +93,8 @@ func checklistAnswer() *agentports.GraphQLReadResult {
 	}
 }
 
-func templateAnswer(more bool) *agentports.GraphQLReadResult {
-	return &agentports.GraphQLReadResult{Data: map[string]any{
+func templateAnswer(more bool) *graphqlreadports.GraphQLReadResult {
+	return &graphqlreadports.GraphQLReadResult{Data: map[string]any{
 		"workerChecklistTemplates": map[string]any{
 			"edges": []any{map[string]any{"node": map[string]any{
 				"id": "wclt_1", "code": "ONB", "name": "Onboarding",
@@ -106,7 +107,7 @@ func templateAnswer(more bool) *agentports.GraphQLReadResult {
 func TestUnpagedList_SendsTheWorkerAndReadsOpenOnesByDefault(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskWorkerChecklists":         checklistAnswer(),
 		"DeskWorkerChecklistTemplates": templateAnswer(false),
 	}}
@@ -138,7 +139,7 @@ func TestUnpagedList_SendsTheWorkerAndReadsOpenOnesByDefault(t *testing.T) {
 func TestUnpagedList_ReadsTheTemplatesAPersonStartsByHand(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskWorkerChecklists":         checklistAnswer(),
 		"DeskWorkerChecklistTemplates": templateAnswer(true),
 	}}
@@ -167,7 +168,7 @@ func TestUnpagedList_ReadsTheTemplatesAPersonStartsByHand(t *testing.T) {
 func TestUnpagedList_LeavesOutTheTemplatesAReaderCannotRead(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskWorkerChecklists": checklistAnswer(),
 	}}
 	engine := &mocks.DenyResourcesPermissionEngine{
@@ -181,7 +182,11 @@ func TestUnpagedList_LeavesOutTheTemplatesAReaderCannotRead(t *testing.T) {
 	}))
 	require.NoError(t, err)
 
-	assert.Nil(t, reader.sent("DeskWorkerChecklistTemplates"), "nothing is read that would be refused")
+	assert.Nil(
+		t,
+		reader.sent("DeskWorkerChecklistTemplates"),
+		"nothing is read that would be refused",
+	)
 	outcome, _ := data.(map[string]any)
 	assert.NotContains(t, outcome, "templatesStartedByHand")
 }
@@ -246,7 +251,7 @@ func TestUnpagedList_ReadsTheWholeOrganizationWithAPageAndSaysWhenItIsFull(t *te
 	for idx := range graphQLListLimit {
 		rows = append(rows, map[string]any{"id": "wdt_" + strconv.Itoa(idx), "status": "Scheduled"})
 	}
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskWorkerDotTests": {Data: map[string]any{"workerDotTests": rows}},
 	}}
 	tool, err := newGraphQLUnpagedListTool(keyedSpec(t, toolListWorkerDOTTests), reader,
@@ -267,7 +272,7 @@ func TestUnpagedList_ReadsTheWholeOrganizationWithAPageAndSaysWhenItIsFull(t *te
 func TestUnpagedList_LeavesOutTheWorkerOfAPrivacyCase(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskWorkerInjuries": {Data: map[string]any{"workerInjuries": []any{
 			map[string]any{
 				"id": "winj_1", "workerId": "wrk_1", "privacyCase": true, "logName": "Privacy Case",
@@ -297,8 +302,8 @@ func TestUnpagedList_LeavesOutTheWorkerOfAPrivacyCase(t *testing.T) {
 	assert.Contains(t, items[1], "worker")
 }
 
-func safetyAnswers() map[string]*agentports.GraphQLReadResult {
-	return map[string]*agentports.GraphQLReadResult{
+func safetyAnswers() map[string]*graphqlreadports.GraphQLReadResult {
+	return map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskWorkerSafetyEvents": {Data: map[string]any{"workerSafetyEvents": []any{
 			map[string]any{
 				"id": "wsev_1", "kind": "Inspection", "status": "Open",
@@ -307,7 +312,11 @@ func safetyAnswers() map[string]*agentports.GraphQLReadResult {
 		}}},
 		"DeskWorkerRecognitions": {
 			Data: map[string]any{"workerRecognitions": []any{
-				map[string]any{"id": "wrec_1", "title": "Ten years", "__typename": "WorkerRecognition"},
+				map[string]any{
+					"id":         "wrec_1",
+					"title":      "Ten years",
+					"__typename": "WorkerRecognition",
+				},
 			}},
 			Withheld: []string{"workerRecognitions.title"},
 		},
@@ -364,7 +373,11 @@ func TestUnpagedList_AKeyedReadAlongsideTakesOnlyTheVariablesItLeavesToTheSpec(t
 
 	spec := keyedSpec(t, toolListWorkerSafetyEvents)
 	spec.alongside[0].inputs = map[string]any{inputStatus: activeStatus}
-	_, err := newGraphQLUnpagedListTool(spec, &keyedReader{}, &mocks.DenyResourcesPermissionEngine{})
+	_, err := newGraphQLUnpagedListTool(
+		spec,
+		&keyedReader{},
+		&mocks.DenyResourcesPermissionEngine{},
+	)
 	require.ErrorContains(t, err, "takes no status of the spec's")
 }
 
@@ -408,8 +421,8 @@ func TestUnpagedList_ReadsTheFleetsOpenEventsByDefaultAndOneWorkersWhole(t *test
 	}
 }
 
-func credentialAnswers() map[string]*agentports.GraphQLReadResult {
-	return map[string]*agentports.GraphQLReadResult{
+func credentialAnswers() map[string]*graphqlreadports.GraphQLReadResult {
+	return map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskWorkerCredentialList": {Data: map[string]any{"workerCredentials": []any{
 			map[string]any{"id": "wcr_1", "status": "Active", "daysUntilExpiry": float64(12)},
 		}}},
@@ -503,7 +516,7 @@ func credentialRows(from, count int) []any {
 func TestUnpagedList_PagesWhatFallsDueByCursor(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskWorkerCredentialList": {Data: map[string]any{
 			"workerCredentials": credentialRows(0, 3),
 		}},
@@ -528,7 +541,7 @@ func TestUnpagedList_PagesWhatFallsDueByCursor(t *testing.T) {
 	assert.Equal(t, 3, sent.Variables["limit"])
 	assert.Equal(t, 0, sent.Variables["offset"])
 
-	next := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	next := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskWorkerCredentialList": {Data: map[string]any{
 			"workerCredentials": credentialRows(2, 1),
 		}},

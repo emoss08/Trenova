@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/assignmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
@@ -76,7 +77,7 @@ func (f *savingAssignments) AssignToMove(
 }
 
 type checkingConsole struct {
-	agentports.DispatchConsoleService
+	dispatchconsoleports.DispatchConsoleService
 
 	preview *dispatchconsoleservice.AssignmentPreview
 }
@@ -104,7 +105,9 @@ func uncoveredShipment() *shipment.Shipment {
 	}
 }
 
-func assignParams(entity *shipment.Shipment) (agentports.ToolExecuteParams, pulid.ID, pulid.ID) {
+func assignParams(
+	entity *shipment.Shipment,
+) (agenttoolports.ToolExecuteParams, pulid.ID, pulid.ID) {
 	workerID := pulid.MustNew("wrk_")
 	tractorID := pulid.MustNew("trc_")
 
@@ -132,9 +135,13 @@ func TestAssignMove_PreviewMatchesWhatIsSaved(t *testing.T) {
 	tool := NewAssignMoveTool(assignments, console).(*AssignMoveTool)
 	params, workerID, tractorID := assignParams(entity)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &assignments.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&assignments.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	assert.Empty(t, preview.Warnings)
 	assert.Contains(t, preview.Summary, "Ana Reyes")
@@ -181,9 +188,13 @@ func TestAssignMove_PreviewWarnsWhenDispatchRulesBlockTheDriver(t *testing.T) {
 	tool := NewAssignMoveTool(assignments, console).(*AssignMoveTool)
 	params, _, _ := assignParams(entity)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &assignments.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&assignments.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 	assert.Contains(t, preview.Warnings[0].Message, "Driver is out of drive time")
@@ -213,9 +224,13 @@ func TestAssignMove_PreviewWarnsForEquipmentOnALoadInProgress(t *testing.T) {
 	tool := NewAssignMoveTool(assignments, nil).(*AssignMoveTool)
 	params, _, _ := assignParams(entity)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &assignments.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&assignments.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningEquipmentInUse)
 	assert.Nil(t, preview.Refusal(), "booking a unit's next load while it runs this one is allowed")
@@ -239,9 +254,13 @@ func TestAssignMove_PreviewWarnsForAMoveAlreadyCovered(t *testing.T) {
 	tool := NewAssignMoveTool(assignments, nil).(*AssignMoveTool)
 	params, _, _ := assignParams(entity)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &assignments.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&assignments.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)

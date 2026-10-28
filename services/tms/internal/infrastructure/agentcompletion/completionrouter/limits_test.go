@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -54,7 +55,10 @@ func newFakeSlots() *fakeSlots {
 	}
 }
 
-func (f *fakeSlots) Acquire(_ context.Context, req agentports.AcquireProviderSlotRequest) (bool, error) {
+func (f *fakeSlots) Acquire(
+	_ context.Context,
+	req llmports.AcquireProviderSlotRequest,
+) (bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.tries[req.ProviderID]++
@@ -66,11 +70,11 @@ func (f *fakeSlots) Acquire(_ context.Context, req agentports.AcquireProviderSlo
 	return true, nil
 }
 
-func (f *fakeSlots) Refresh(_ context.Context, _ agentports.ProviderSlotRequest) (bool, error) {
+func (f *fakeSlots) Refresh(_ context.Context, _ llmports.ProviderSlotRequest) (bool, error) {
 	return true, nil
 }
 
-func (f *fakeSlots) Release(_ context.Context, req agentports.ProviderSlotRequest) error {
+func (f *fakeSlots) Release(_ context.Context, req llmports.ProviderSlotRequest) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	delete(f.held, req.Token)
@@ -80,13 +84,16 @@ func (f *fakeSlots) Release(_ context.Context, req agentports.ProviderSlotReques
 }
 
 type fakeKeys struct {
-	agentports.AIProviderKeyRepository
+	aiproviderports.AIProviderKeyRepository
 
 	mu      sync.Mutex
 	touched []pulid.ID
 }
 
-func (f *fakeKeys) TouchUsed(_ context.Context, req agentports.TouchAIProviderKeyRequest) error {
+func (f *fakeKeys) TouchUsed(
+	_ context.Context,
+	req aiproviderports.TouchAIProviderKeyRequest,
+) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.touched = append(f.touched, req.ID)
@@ -100,7 +107,11 @@ func withLimits(service *Service, p *Params) *Service {
 	return service
 }
 
-func capped(provider *aiprovider.Provider, cap string, onCap aiprovider.CapAction) *aiprovider.Provider {
+func capped(
+	provider *aiprovider.Provider,
+	cap string,
+	onCap aiprovider.CapAction,
+) *aiprovider.Provider {
 	value := decimal.RequireFromString(cap)
 	provider.MonthlyCapUSD = &value
 	provider.OnCap = onCap
@@ -113,7 +124,11 @@ func TestCap_MovesATaskPastAProviderThatSpentItsCap(t *testing.T) {
 
 	firstServer, firstCalls := chatServer(t, http.StatusOK, `{"ok":true}`)
 	secondServer, secondCalls := chatServer(t, http.StatusOK, `{"ok":true}`)
-	first := capped(openAIChatProvider("first", firstServer.URL, 10), "50", aiprovider.CapActionNext)
+	first := capped(
+		openAIChatProvider("first", firstServer.URL, 10),
+		"50",
+		aiprovider.CapActionNext,
+	)
 	second := openAIChatProvider("second", secondServer.URL, 20)
 	service := withLimits(newTestService(t, first, second), &Params{
 		Spend: &fakeSpend{spend: map[pulid.ID]decimal.Decimal{first.ID: decimal.NewFromInt(50)}},
@@ -131,14 +146,18 @@ func TestCap_StopsATaskAtAProviderSetToStop(t *testing.T) {
 
 	firstServer, firstCalls := chatServer(t, http.StatusOK, `{"ok":true}`)
 	secondServer, secondCalls := chatServer(t, http.StatusOK, `{"ok":true}`)
-	first := capped(openAIChatProvider("first", firstServer.URL, 10), "50", aiprovider.CapActionStop)
+	first := capped(
+		openAIChatProvider("first", firstServer.URL, 10),
+		"50",
+		aiprovider.CapActionStop,
+	)
 	second := openAIChatProvider("second", secondServer.URL, 20)
 	service := withLimits(newTestService(t, first, second), &Params{
 		Spend: &fakeSpend{spend: map[pulid.ID]decimal.Decimal{first.ID: decimal.NewFromInt(60)}},
 	})
 
 	_, err := service.CompleteStructured(t.Context(), generalRequest())
-	require.ErrorIs(t, err, agentports.ErrProviderCapReached)
+	require.ErrorIs(t, err, llmports.ErrProviderCapReached)
 	assert.Zero(t, firstCalls.Load())
 	assert.Zero(t, secondCalls.Load(), "a provider set to stop does not hand the task on")
 }
@@ -149,7 +168,9 @@ func TestCap_LeavesAProviderUnderItsCapInLine(t *testing.T) {
 	server, calls := chatServer(t, http.StatusOK, `{"ok":true}`)
 	provider := capped(openAIChatProvider("only", server.URL, 10), "50", aiprovider.CapActionStop)
 	service := withLimits(newTestService(t, provider), &Params{
-		Spend: &fakeSpend{spend: map[pulid.ID]decimal.Decimal{provider.ID: decimal.RequireFromString("49.99")}},
+		Spend: &fakeSpend{
+			spend: map[pulid.ID]decimal.Decimal{provider.ID: decimal.RequireFromString("49.99")},
+		},
 	})
 
 	_, err := service.CompleteStructured(t.Context(), generalRequest())
@@ -336,5 +357,10 @@ func TestResolveAPIKey_ReadsOnlyAKeyBoundToItsOwnProvider(t *testing.T) {
 	provider.APIKey = legacy
 	key, err = service.resolveAPIKey(provider)
 	require.NoError(t, err)
-	assert.Equal(t, "sk-legacy", key, "an unbound key from before keeps working until it is rebound")
+	assert.Equal(
+		t,
+		"sk-legacy",
+		key,
+		"an unbound key from before keeps working until it is rebound",
+	)
 }

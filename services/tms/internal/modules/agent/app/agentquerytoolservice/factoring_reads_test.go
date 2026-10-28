@@ -3,7 +3,8 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,8 +16,8 @@ import (
 func factoringTool(
 	t *testing.T,
 	name string,
-	reader agentports.GraphQLReader,
-) agentports.AgentQueryTool {
+	reader graphqlreadports.GraphQLReader,
+) agenttoolports.AgentQueryTool {
 	t.Helper()
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
@@ -45,7 +46,7 @@ func factoringTool(
 func TestFactoringReadiness_ReadsReadyByDefaultWithTheQueueTotals(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskFactoringInvoiceStates": {Data: connectionPage("factoringInvoiceStates",
 			map[string]any{"invoiceId": "inv_1", "verdict": "Ready", "checks": []any{
 				map[string]any{"code": "Noa", "passed": true},
@@ -98,7 +99,7 @@ func TestFactoringNoas_SayWhetherEachNoticeIsEffective(t *testing.T) {
 	t.Parallel()
 
 	now := timeutils.NowUnix()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskFactoringNoas": {Data: connectionPage("factoringNoas",
 			map[string]any{"id": "fnoa_1", "status": "Acknowledged"},
 			map[string]any{"id": "fnoa_2", "status": "Acknowledged", fieldExpiresAt: now - 60},
@@ -133,7 +134,7 @@ func TestFactoringAgreements_MarkTheOneInForce(t *testing.T) {
 	t.Parallel()
 
 	now := timeutils.NowUnix()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskFactoringAgreements": {Data: map[string]any{"factoringAgreements": []any{
 			map[string]any{"id": "fagr_1", "status": "Active", fieldEffectiveFrom: now - 60,
 				fieldSubmissionTime: 930},
@@ -168,7 +169,7 @@ func TestFactoringAgreements_MarkTheOneInForce(t *testing.T) {
 func TestFactoringRemittance_ReadsItsLinesByMatchStatus(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskFactoringRemittance": {Data: map[string]any{"factoringRemittance": map[string]any{
 			"id": "frem_1", "status": "Parsed", "lines": []any{
 				map[string]any{"id": "freml_1", fieldMatchStatus: "Error",
@@ -204,7 +205,7 @@ func TestFactoringRemittance_ReadsItsLinesByMatchStatus(t *testing.T) {
 func TestFactoringReserveBalance_IsReadByTheFactor(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"FactoringReserveBalance": {Data: map[string]any{"factoringReserveBalance": map[string]any{
 			"factoringCompanyId": "fco_1", "entryCount": 3,
 		}}},
@@ -230,7 +231,7 @@ func TestFactoringReserveBalance_IsReadByTheFactor(t *testing.T) {
 func TestFactoringGetReadiness_EvaluatesTheInvoiceItNames(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskFactoringReadiness": {Data: map[string]any{"factoringReadiness": map[string]any{
 			"invoiceId": "inv_1", "verdict": "NotReady",
 		}}},
@@ -257,8 +258,11 @@ func TestFactoringGets_TypeTheirKeyByTheRecordItBelongsTo(t *testing.T) {
 		param    string
 		recordOf string
 	}{
-		"factoring_get_readiness":       {param: paramFactoringInvoice, recordOf: "invoice"},
-		"factoring_get_reserve_balance": {param: paramFactoringCompany, recordOf: "factoring_company"},
+		"factoring_get_readiness": {param: paramFactoringInvoice, recordOf: "invoice"},
+		"factoring_get_reserve_balance": {
+			param:    paramFactoringCompany,
+			recordOf: "factoring_company",
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

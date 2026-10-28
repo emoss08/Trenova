@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
@@ -18,8 +19,8 @@ type AssignMoveTool struct {
 
 func NewAssignMoveTool(
 	assignments shipmentports.AssignmentService,
-	console agentports.DispatchConsoleService,
-) agentports.AgentTool {
+	console dispatchconsoleports.DispatchConsoleService,
+) agenttoolports.AgentTool {
 	return &AssignMoveTool{assignments: assignments, console: console}
 }
 
@@ -80,8 +81,8 @@ func (t *AssignMoveTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *AssignMoveTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *AssignMoveTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
@@ -100,7 +101,7 @@ func (t *AssignMoveTool) Policy() agentports.ToolPolicy {
 
 func (t *AssignMoveTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -117,7 +118,7 @@ func (t *AssignMoveTool) Execute(
 }
 
 func (t *AssignMoveTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentports.AssignShipmentMoveRequest, error) {
 	moveID, err := common.RequirePulid(params.Params, "shipmentMoveId")
 	if err != nil {
@@ -155,6 +156,6 @@ func (t *AssignMoveTool) request(
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *AssignMoveTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *AssignMoveTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
 }

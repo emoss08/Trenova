@@ -12,18 +12,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/realtimebroker"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/realtimeservice"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -160,18 +159,18 @@ func TestStreamEndToEnd(t *testing.T) {
 
 	stream := readSSE(t, bufio.NewReader(resp.Body))
 
-	var ready agentports.RealtimeReadyEvent
+	var ready realtimeports.RealtimeReadyEvent
 	require.NoError(t, sonic.UnmarshalString(stream.next(t, "ready").data, &ready))
 	require.NotEmpty(t, ready.ConnectionID)
 
-	var snapshot agentports.RealtimePresenceSnapshot
+	var snapshot realtimeports.RealtimePresenceSnapshot
 	require.NoError(t, sonic.UnmarshalString(stream.next(t, "presence.snapshot").data, &snapshot))
 	require.Len(t, snapshot.Members, 1)
 	assert.Equal(t, "Dana Dispatcher", snapshot.Members[0].Name)
 
 	t.Run("an invalidation arrives with a resumable id", func(t *testing.T) {
 		require.NoError(t, publish.PublishResourceInvalidation(t.Context(),
-			&agentports.PublishResourceInvalidationRequest{
+			&realtimeports.PublishResourceInvalidationRequest{
 				OrganizationID: testOrgID,
 				BusinessUnitID: testBUID,
 				Resource:       "shipments",
@@ -206,7 +205,7 @@ func TestStreamEndToEnd(t *testing.T) {
 		_ = typingResp.Body.Close()
 		require.Equal(t, http.StatusNoContent, typingResp.StatusCode)
 
-		var typing agentports.RealtimeTypingEvent
+		var typing realtimeports.RealtimeTypingEvent
 		require.NoError(t, sonic.UnmarshalString(stream.next(t, "typing").data, &typing))
 		assert.Equal(t, "shipment-comments:"+shipmentID, typing.Scope)
 		assert.Equal(t, testUserID.String(), typing.UserID)
@@ -223,7 +222,7 @@ func TestStreamEndToEnd(t *testing.T) {
 		started := time.Now()
 		for range n {
 			require.NoError(t, publish.PublishResourceInvalidation(t.Context(),
-				&agentports.PublishResourceInvalidationRequest{
+				&realtimeports.PublishResourceInvalidationRequest{
 					OrganizationID: otherOrg,
 					BusinessUnitID: otherBU,
 					Resource:       "billing_queue",
@@ -241,8 +240,8 @@ func TestStreamEndToEnd(t *testing.T) {
 
 	t.Run("draining ends the stream with a shutdown notice", func(t *testing.T) {
 		gateway.Drain()
-		var closing agentports.RealtimeCloseEvent
+		var closing realtimeports.RealtimeCloseEvent
 		require.NoError(t, sonic.UnmarshalString(stream.next(t, "close").data, &closing))
-		assert.Equal(t, agentports.RealtimeCloseShutdown, closing.Reason)
+		assert.Equal(t, realtimeports.RealtimeCloseShutdown, closing.Reason)
 	})
 }

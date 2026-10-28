@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -73,8 +75,8 @@ type CompactionPlan struct {
 	Kept   []string `json:"kept,omitempty"`
 	// Instructions carries the measure of the agent's prompt to the
 	// measure taken after, which builds no prompt.
-	Instructions int                               `json:"instructions"`
-	Request      *agentports.ChatCompletionRequest `json:"request"`
+	Instructions int                             `json:"instructions"`
+	Request      *llmports.ChatCompletionRequest `json:"request"`
 }
 
 // CompactionReply is what the model wrote for a compaction.
@@ -107,7 +109,7 @@ func (s *Service) PrepareCompaction(
 	req *CompactRequest,
 	actor *permissionports.RequestActor,
 ) (*CompactionPlan, error) {
-	thread, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, assistantports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -116,7 +118,7 @@ func (s *Service) PrepareCompaction(
 		return nil, err
 	}
 
-	definition, err := s.usableDefinition(ctx, thread, actor, &agentports.SendMessageRequest{
+	definition, err := s.usableDefinition(ctx, thread, actor, &assistantports.SendMessageRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -158,11 +160,11 @@ func (s *Service) PrepareCompaction(
 		After:        before.Total() - before.Frees(),
 		Kept:         kept,
 		Instructions: before.Instructions,
-		Request: &agentports.ChatCompletionRequest{
+		Request: &llmports.ChatCompletionRequest{
 			TenantInfo: actor.TenantInfo(),
 			System:     compactionPrompt(definition.Name, chaptered(older, titles)),
-			Messages: []agentports.Message{
-				{Role: agentports.RoleUser, Content: compactionTranscript(older, titles)},
+			Messages: []llmports.Message{
+				{Role: llmports.RoleUser, Content: compactionTranscript(older, titles)},
 			},
 			MaxTokens:           conversation.SummaryTokenBudget,
 			PreferredProviderID: compactionProvider(thread, definition),
@@ -192,7 +194,7 @@ func (s *Service) FinishCompaction(
 	summary = stringutils.Ellipsize(summary, maxSummaryChars)
 
 	tenant := actor.TenantInfo()
-	thread, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, assistantports.GetThreadRequest{
 		ID:         plan.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: tenant,
@@ -244,7 +246,7 @@ func (s *Service) FinishCompaction(
 	})
 	message.Compaction.After = usage.Total()
 
-	saved, err := s.conversations.AppendTurn(ctx, agentports.AppendTurnRequest{
+	saved, err := s.conversations.AppendTurn(ctx, assistantports.AppendTurnRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
 		Messages:   []conversation.Message{message},
@@ -271,7 +273,7 @@ func (s *Service) StopCompactingItself(
 ) error {
 	off := true
 
-	return s.conversations.UpdateThreadContext(ctx, agentports.UpdateThreadContextRequest{
+	return s.conversations.UpdateThreadContext(ctx, assistantports.UpdateThreadContextRequest{
 		ThreadID:       threadID,
 		TenantInfo:     tenant,
 		AutoCompactOff: &off,
@@ -315,8 +317,8 @@ func (s *Service) measureAfterTurn(
 
 	if emit != nil {
 		emit(kernelports.StreamEvent{
-			Event: agentports.AssistantEventContext,
-			Data: agentports.AssistantContextEvent{
+			Event: assistantports.AssistantEventContext,
+			Data: assistantports.AssistantContextEvent{
 				ThreadID:       thread.ID,
 				Usage:          &usage,
 				AutoCompactOff: thread.AutoCompactOff,
@@ -333,7 +335,7 @@ func (s *Service) keepContextUsage(
 	tenant pagination.TenantInfo,
 ) {
 	thread.ContextUsage = usage
-	if err := s.conversations.UpdateThreadContext(ctx, agentports.UpdateThreadContextRequest{
+	if err := s.conversations.UpdateThreadContext(ctx, assistantports.UpdateThreadContextRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
 		Usage:      usage,
@@ -352,7 +354,7 @@ func (s *Service) modelHistory(
 	threadID pulid.ID,
 	tenant pagination.TenantInfo,
 ) ([]conversation.Message, error) {
-	return s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
+	return s.conversations.ListMessages(ctx, assistantports.ListMessagesRequest{
 		ThreadID:        threadID,
 		TenantInfo:      tenant,
 		Limit:           historyLimit,
@@ -366,7 +368,7 @@ func (s *Service) modelHistory(
 func (s *Service) currentUsage(
 	thread *conversation.Thread,
 	history []conversation.Message,
-	outcomes []agentports.ProposalOutcome,
+	outcomes []agentruntimeports.ProposalOutcome,
 ) conversation.ContextUsage {
 	return agentruntime.MeasureContext(agentruntime.ContextRequest{
 		Instructions: lastInstructions(thread),
@@ -480,7 +482,7 @@ func compactionAttribution(
 		DefinitionVersion: &version,
 	}
 	if turnID.IsNotNil() {
-		attribution.OwnerKind = agentports.RunStepOwnerAssistantTurn
+		attribution.OwnerKind = agentruntimeports.RunStepOwnerAssistantTurn
 		attribution.OwnerID = turnID
 	}
 

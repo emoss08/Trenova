@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/redis/go-redis/v9"
@@ -62,7 +62,7 @@ func (b *Broker) expiresAt() float64 {
 
 func (b *Broker) registerConnection(
 	ctx context.Context,
-	conn *agentports.RealtimeConnection,
+	conn *realtimeports.RealtimeConnection,
 ) error {
 	portal := "0"
 	if conn.Portal {
@@ -86,7 +86,7 @@ func (b *Broker) registerConnection(
 func (b *Broker) Connection(
 	ctx context.Context,
 	connectionID string,
-) (*agentports.RealtimeConnection, error) {
+) (*realtimeports.RealtimeConnection, error) {
 	values, err := b.client.HGetAll(ctx, connectionKey(connectionID)).Result()
 	if err != nil {
 		return nil, err
@@ -108,7 +108,7 @@ func (b *Broker) Connection(
 		return nil, ErrConnectionNotFound
 	}
 
-	return &agentports.RealtimeConnection{
+	return &realtimeports.RealtimeConnection{
 		ConnectionID:   connectionID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
@@ -126,10 +126,10 @@ func (b *Broker) Connection(
 // member between the two.
 func (b *Broker) JoinPresence(
 	ctx context.Context,
-	conn *agentports.RealtimeConnection,
+	conn *realtimeports.RealtimeConnection,
 	scope string,
-	state agentports.RealtimePresenceState,
-) (*agentports.RealtimePresenceSnapshot, error) {
+	state realtimeports.RealtimePresenceState,
+) (*realtimeports.RealtimePresenceSnapshot, error) {
 	tenant := tenantKey(conn.OrganizationID, conn.BusinessUnitID)
 	expKey := presenceExpiryKey(tenant, scope)
 	dataKey := presenceDataKey(tenant, scope)
@@ -154,7 +154,7 @@ func (b *Broker) JoinPresence(
 		return nil, err
 	}
 
-	if err = b.announce(ctx, conn, scope, agentports.RealtimePresenceEnter, state); err != nil {
+	if err = b.announce(ctx, conn, scope, realtimeports.RealtimePresenceEnter, state); err != nil {
 		return nil, err
 	}
 
@@ -163,7 +163,7 @@ func (b *Broker) JoinPresence(
 
 func (b *Broker) LeavePresence(
 	ctx context.Context,
-	conn *agentports.RealtimeConnection,
+	conn *realtimeports.RealtimeConnection,
 	scope string,
 ) error {
 	tenant := tenantKey(conn.OrganizationID, conn.BusinessUnitID)
@@ -172,7 +172,7 @@ func (b *Broker) LeavePresence(
 
 func (b *Broker) withdraw(
 	ctx context.Context,
-	conn *agentports.RealtimeConnection,
+	conn *realtimeports.RealtimeConnection,
 	tenant, scope string,
 ) error {
 	pipe := b.client.TxPipeline()
@@ -187,7 +187,7 @@ func (b *Broker) withdraw(
 		return nil
 	}
 
-	return b.announce(ctx, conn, scope, agentports.RealtimePresenceLeave, heldState(held.Val()))
+	return b.announce(ctx, conn, scope, realtimeports.RealtimePresenceLeave, heldState(held.Val()))
 }
 
 // dropConnection withdraws every membership a closed connection held. The
@@ -196,7 +196,7 @@ func (b *Broker) withdraw(
 // one before the stream closed.
 func (b *Broker) dropConnection(
 	ctx context.Context,
-	conn *agentports.RealtimeConnection,
+	conn *realtimeports.RealtimeConnection,
 	tenant string,
 	local []string,
 ) {
@@ -236,7 +236,7 @@ func (b *Broker) dropConnection(
 func (b *Broker) members(
 	ctx context.Context,
 	tenant, scope string,
-) (*agentports.RealtimePresenceSnapshot, error) {
+) (*realtimeports.RealtimePresenceSnapshot, error) {
 	now := strconv.FormatInt(time.Now().UnixMilli(), 10)
 	ids, err := b.client.ZRangeArgs(ctx, redis.ZRangeArgs{
 		Key:     presenceExpiryKey(tenant, scope),
@@ -248,9 +248,9 @@ func (b *Broker) members(
 		return nil, err
 	}
 
-	snapshot := &agentports.RealtimePresenceSnapshot{
+	snapshot := &realtimeports.RealtimePresenceSnapshot{
 		Scope:   scope,
-		Members: make([]agentports.RealtimePresenceMember, 0, len(ids)),
+		Members: make([]realtimeports.RealtimePresenceMember, 0, len(ids)),
 	}
 	if len(ids) == 0 {
 		return snapshot, nil
@@ -270,7 +270,7 @@ func (b *Broker) members(
 		if sonic.UnmarshalString(raw, &data) != nil || data.UserID == "" {
 			continue
 		}
-		snapshot.Members = append(snapshot.Members, agentports.RealtimePresenceMember{
+		snapshot.Members = append(snapshot.Members, realtimeports.RealtimePresenceMember{
 			UserID:       data.UserID,
 			ConnectionID: id,
 			Name:         data.Name,
@@ -284,9 +284,9 @@ func (b *Broker) members(
 
 func (b *Broker) announce(
 	ctx context.Context,
-	conn *agentports.RealtimeConnection,
+	conn *realtimeports.RealtimeConnection,
 	scope, action string,
-	state agentports.RealtimePresenceState,
+	state realtimeports.RealtimePresenceState,
 ) error {
 	return b.announceMember(ctx, &announcement{
 		orgID:        conn.OrganizationID,
@@ -300,17 +300,17 @@ func (b *Broker) announce(
 	})
 }
 
-func heldState(raw string) agentports.RealtimePresenceState {
+func heldState(raw string) realtimeports.RealtimePresenceState {
 	if raw == "" {
-		return agentports.RealtimePresenceState{}
+		return realtimeports.RealtimePresenceState{}
 	}
 
 	var data presenceData
 	if err := sonic.UnmarshalString(raw, &data); err != nil {
-		return agentports.RealtimePresenceState{}
+		return realtimeports.RealtimePresenceState{}
 	}
 
-	return agentports.RealtimePresenceState{MessageID: data.MessageID, Activity: data.Activity}
+	return realtimeports.RealtimePresenceState{MessageID: data.MessageID, Activity: data.Activity}
 }
 
 type announcement struct {
@@ -321,11 +321,11 @@ type announcement struct {
 	userID       string
 	connectionID string
 	name         string
-	state        agentports.RealtimePresenceState
+	state        realtimeports.RealtimePresenceState
 }
 
 func (b *Broker) announceMember(ctx context.Context, a *announcement) error {
-	payload, err := sonic.Marshal(agentports.RealtimePresenceEvent{
+	payload, err := sonic.Marshal(realtimeports.RealtimePresenceEvent{
 		Scope:        a.scope,
 		Action:       a.action,
 		UserID:       a.userID,
@@ -338,10 +338,10 @@ func (b *Broker) announceMember(ctx context.Context, a *announcement) error {
 		return err
 	}
 
-	return b.Publish(ctx, &agentports.RealtimeEnvelope{
+	return b.Publish(ctx, &realtimeports.RealtimeEnvelope{
 		OrganizationID:       a.orgID,
 		BusinessUnitID:       a.buID,
-		Event:                agentports.RealtimeEventPresence,
+		Event:                realtimeports.RealtimeEventPresence,
 		Scope:                a.scope,
 		Payload:              payload,
 		PresenceConnectionID: a.connectionID,
@@ -467,11 +467,11 @@ func (b *Broker) sweepScope(ctx context.Context, tenant, scope, member, now stri
 			orgID:        orgID,
 			buID:         buID,
 			scope:        scope,
-			action:       agentports.RealtimePresenceLeave,
+			action:       realtimeports.RealtimePresenceLeave,
 			userID:       data.UserID,
 			connectionID: result[i],
 			name:         data.Name,
-			state: agentports.RealtimePresenceState{
+			state: realtimeports.RealtimePresenceState{
 				MessageID: data.MessageID,
 				Activity:  data.Activity,
 			},

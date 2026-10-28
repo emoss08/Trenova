@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,18 +38,21 @@ func definition(
 	return &agentdefinition.Definition{AutonomyCeiling: ceiling, ToolTiers: tiers}
 }
 
-func call(actor *permissionports.RequestActor, args map[string]any) agentports.ToolExecuteParams {
-	return agentports.ToolExecuteParams{Actor: actor, Params: args}
+func call(
+	actor *permissionports.RequestActor,
+	args map[string]any,
+) agenttoolports.ToolExecuteParams {
+	return agenttoolports.ToolExecuteParams{Actor: actor, Params: args}
 }
 
 func withCondition(
-	policy agentports.ToolPolicy,
+	policy agenttoolports.ToolPolicy,
 	limit agent.AutonomyTier,
-) agentports.ToolPolicy {
+) agenttoolports.ToolPolicy {
 	description := policy.Condition.Description
-	policy.Condition = &agentports.TierCondition{
+	policy.Condition = &agenttoolports.TierCondition{
 		Description: description,
-		Limit: func(context.Context, agentports.ToolExecuteParams) agent.AutonomyTier {
+		Limit: func(context.Context, agenttoolports.ToolExecuteParams) agent.AutonomyTier {
 			return limit
 		},
 	}
@@ -582,7 +585,7 @@ func TestPromotable(t *testing.T) {
 		assert.Equal(t, want, agenttoolpolicy.Promotable(registeredPolicy(t, name)), name)
 	}
 
-	uncapped := agentports.ToolPolicy{
+	uncapped := agenttoolports.ToolPolicy{
 		MaxTier: agent.TierAutoExecute,
 		Egress:  []agent.EgressClass{agent.EgressDriverVisible},
 	}

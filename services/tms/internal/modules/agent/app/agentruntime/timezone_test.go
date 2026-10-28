@@ -5,7 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,14 +20,14 @@ func TestRun_HandsAToolTheRunsTimezoneWhereverItIsAsked(t *testing.T) {
 	tool := &validatingActionTool{
 		stubActionToolAlias: actionTool("report_update", agent.TierAutoExecute, nil),
 	}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 
-	_, err := rt.Run(t.Context(), &agentports.RunRequest{
+	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: autoDefinition("report_update"),
 		Actor:      testActor(),
 		Input:      "update",
@@ -42,22 +44,22 @@ func TestRun_TheFilingBaselineReadsTheRunsTimezone(t *testing.T) {
 
 	shipmentID := pulid.MustNew("shp_")
 	tool := &targetedStubTool{actionTool("shipment_place_hold", agent.TierPropose, nil)}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("shipment_place_hold", map[string]any{"shipmentId": shipmentID.String()}),
 		textTurn("I have proposed a hold."),
 	}}
-	previews := &recordingPreviews{target: &agentports.ProposalTarget{
+	previews := &recordingPreviews{target: &agentruntimeports.ProposalTarget{
 		Resource: permission.ResourceShipment,
 		ID:       shipmentID,
 		Version:  7,
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
-		Tools: []agentports.AgentTool{tool},
+		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
 	rt.versions = stubVersions{version: 7}
 	rt.previews = previews
 
-	_, err := rt.Run(t.Context(), &agentports.RunRequest{
+	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("shipment_place_hold"),
 		Actor:      testActor(),
 		Input:      "hold it",

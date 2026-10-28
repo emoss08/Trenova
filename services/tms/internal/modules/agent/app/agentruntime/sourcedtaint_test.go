@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,8 +37,8 @@ type recordFeed struct {
 
 func (f *recordFeed) TaintedRecords() []agent.RecordRef { return f.records }
 
-func feedPolicy(reads agent.ExternalRead) agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func feedPolicy(reads agent.ExternalRead) agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          "exception_list_watchtower_items",
 		ReadsExternal: reads,
 		Source:        agent.TaintSourceInboundMessage,
@@ -48,8 +50,8 @@ func feedPolicy(reads agent.ExternalRead) agentports.ToolPolicy {
 	}
 }
 
-func feedCall() agentports.ToolCall {
-	return agentports.ToolCall{ID: "call_feed", Name: "exception_list_watchtower_items"}
+func feedCall() llmports.ToolCall {
+	return llmports.ToolCall{ID: "call_feed", Name: "exception_list_watchtower_items"}
 }
 
 func TestCallTaint_EachSourcedRowIsMarkedWithItsOwnSource(t *testing.T) {
@@ -133,7 +135,7 @@ func TestCallTaint_ARecordCarrierIsMarkedWithThePolicySource(t *testing.T) {
 	feed := &recordFeed{records: []agent.RecordRef{
 		{EntityType: agent.TaintEntityAgentRun, ID: "ar_1"},
 	}}
-	policy := agentports.ToolPolicy{
+	policy := agenttoolports.ToolPolicy{
 		ReadsExternal: agent.ExternalReadMarked,
 		Source:        agent.TaintSourceRunRecord,
 	}
@@ -184,17 +186,17 @@ func TestRun_AFeedRowFromAnInboundEmailTaintsTheRunAndHoldsMoney(t *testing.T) {
 		Sources: []agent.TaintSource{agent.TaintSourceWeather},
 	}
 	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("exception_list_watchtower_items", map[string]any{}),
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_9911"}),
 		textTurn("The payment waits for a person."),
 	}}
 	rt := newRuntime(completion,
-		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{feed}},
-		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{feed}},
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	rt.budgets = &moneyBudgets{Limits: roomyMoneyLimits()}
 
-	run := runTainted(t, rt, &agentports.RunRequest{
+	run := runTainted(t, rt, &agentruntimeports.RunRequest{
 		Definition: autoDefinition("exception_list_watchtower_items", "apply_payment"),
 		Actor:      testActor(),
 		Input:      "Work the tower.",
@@ -224,17 +226,17 @@ func TestRun_AFeedWithNoOutsideRowLeavesTheRunClean(t *testing.T) {
 		Source:   agent.TaintSourceInboundMessage,
 	}
 	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("exception_list_watchtower_items", map[string]any{}),
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
 		textTurn("Applied."),
 	}}
 	rt := newRuntime(completion,
-		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{feed}},
-		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{feed}},
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	rt.budgets = &moneyBudgets{Limits: roomyMoneyLimits()}
 
-	run := runTainted(t, rt, &agentports.RunRequest{
+	run := runTainted(t, rt, &agentruntimeports.RunRequest{
 		Definition: autoDefinition("exception_list_watchtower_items", "apply_payment"),
 		Actor:      testActor(),
 		Input:      "Work the tower.",

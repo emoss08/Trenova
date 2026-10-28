@@ -9,16 +9,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolsimulation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -32,10 +36,10 @@ import (
 type toolOutcome struct {
 	content string
 	failed  bool
-	action  *agentports.PendingAction
+	action  *agentruntimeports.PendingAction
 	// batch is what a script prepared and filed for a person as one batch;
 	// none of it ran.
-	batch []agentports.PendingAction
+	batch []agentruntimeports.PendingAction
 	// continuation is how a later call of the turn may continue a script.
 	continuation codemode.Continuation
 	// data is what a query tool returned, before it was encoded for the
@@ -63,9 +67,9 @@ type toolOutcome struct {
 	// memories are the memories a recall read back, and saved the one a
 	// remember kept or offered.
 	memories []pulid.ID
-	saved    *agentports.SavedMemory
+	saved    *agentmemoryports.SavedMemory
 	// shown is what the observer put in front of the person for the call.
-	shown *agentports.ShownArtifact
+	shown *agentruntimeports.ShownArtifact
 }
 
 func failedOutcome(format string, args ...any) toolOutcome {
@@ -82,13 +86,13 @@ func refusedOutcome(verdict, reason, format string, args ...any) toolOutcome {
 
 // dispatchParams groups one tool call and everything deciding how it runs.
 type dispatchParams struct {
-	req            *agentports.RunRequest
-	call           agentports.ToolCall
+	req            *agentruntimeports.RunRequest
+	call           llmports.ToolCall
 	completionText string
 	// argumentNote is what the runtime changed about the call's arguments
 	// before the tool read them, told back to the model with the result.
 	argumentNote  string
-	proposedSoFar []agentports.PendingAction
+	proposedSoFar []agentruntimeports.PendingAction
 	moneySpent    agent.MoneyUse
 	// idempotencyKey names this operation to the tool. It is the run's step
 	// key where there is a ledger, and the provider's call id otherwise.
@@ -130,7 +134,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			"Tool %q is not available to this agent.", call.Name)
 	}
 
-	selfScoped := agentports.IsSelfScoped(s.toolNamed(call.Name))
+	selfScoped := agenttoolports.IsSelfScoped(s.toolNamed(call.Name))
 	if selfScoped && (req.Unattended || req.Actor == nil ||
 		req.Actor.PrincipalType != permissionports.PrincipalTypeUser) {
 		return refusedOutcome(
@@ -151,7 +155,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			}
 		}
 
-		if tool.Policy().Script == agentports.ScriptRunner {
+		if tool.Policy().Script == agenttoolports.ScriptRunner {
 			if refusal, refused := continuationRefusal(&call, p.gate); refused {
 				return refusal
 			}
@@ -165,7 +169,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}
 		call.Arguments = contract.args
 
-		if tool.Policy().Script == agentports.ScriptRunner {
+		if tool.Policy().Script == agenttoolports.ScriptRunner {
 			return s.runScriptTool(ctx, &p, tool, &call)
 		}
 
@@ -209,10 +213,10 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		// the model's own call as recorded in the thread is left as it sent it.
 		owned := make(map[string]any, len(call.Arguments)+1)
 		maps.Copy(owned, call.Arguments)
-		owned[agentports.SelfScopeOwnerParam] = req.Actor.UserID.String()
+		owned[agenttoolports.SelfScopeOwnerParam] = req.Actor.UserID.String()
 		call.Arguments = owned
 	}
-	if resolver, resolves := tool.(agentports.ToolSelectionResolver); resolves {
+	if resolver, resolves := tool.(agenttoolports.ToolSelectionResolver); resolves {
 		resolved, rErr := resolver.ResolveSelection(
 			ctx, runToolParams(req, p.idempotencyKey, call.Arguments),
 		)
@@ -247,7 +251,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		tier, heldForHours = s.heldForBusinessHours(ctx, req, tier)
 	}
 	if tier != agent.TierAutoExecute {
-		if pinner, pins := tool.(agentports.ToolProposalSelectionResolver); pins {
+		if pinner, pins := tool.(agenttoolports.ToolProposalSelectionResolver); pins {
 			pinned, pErr := pinner.ResolveProposalSelection(
 				ctx, runToolParams(req, p.idempotencyKey, call.Arguments),
 			)
@@ -258,7 +262,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			p.call = call
 		}
 	}
-	action := &agentports.PendingAction{
+	action := &agentruntimeports.PendingAction{
 		ToolName:  call.Name,
 		Arguments: call.Arguments,
 		Rationale: proposalRationale(rationaleInput{
@@ -300,7 +304,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	// while the model can still fix the call: before a person is asked to
 	// approve a proposal that was never going to run, before a simulation
 	// records what it would have done, and before an automatic write runs.
-	if validator, validates := tool.(agentports.ToolValidator); validates {
+	if validator, validates := tool.(agenttoolports.ToolValidator); validates {
 		if vErr := validator.Validate(
 			ctx, runToolParams(req, p.idempotencyKey, call.Arguments),
 		); vErr != nil {
@@ -392,9 +396,9 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 }
 
 type filedTextParams struct {
-	req      *agentports.RunRequest
+	req      *agentruntimeports.RunRequest
 	toolName string
-	action   *agentports.PendingAction
+	action   *agentruntimeports.PendingAction
 	tier     agent.AutonomyTier
 	prepared bool
 }
@@ -423,11 +427,11 @@ func unresolvedSelection(toolName, verb string, err error) toolOutcome {
 }
 
 func runToolParams(
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 	idempotencyKey string,
 	arguments map[string]any,
-) agentports.ToolExecuteParams {
-	return agentports.ToolExecuteParams{
+) agenttoolports.ToolExecuteParams {
+	return agenttoolports.ToolExecuteParams{
 		OrganizationID: req.Actor.OrganizationID,
 		BusinessUnitID: req.Actor.BusinessUnitID,
 		Actor:          req.Actor,
@@ -441,7 +445,7 @@ func runToolParams(
 	}
 }
 
-func definitionIDOf(req *agentports.RunRequest) pulid.ID {
+func definitionIDOf(req *agentruntimeports.RunRequest) pulid.ID {
 	if req.Definition == nil {
 		return pulid.Nil
 	}
@@ -453,9 +457,9 @@ func definitionIDOf(req *agentports.RunRequest) pulid.ID {
 // model is told which cap and to say so, rather than left to try again.
 func (s *Service) withinBudget(
 	ctx context.Context,
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 	toolName string,
-	soFar []agentports.PendingAction,
+	soFar []agentruntimeports.PendingAction,
 ) (toolOutcome, bool) {
 	if s.budgets == nil {
 		return toolOutcome{}, false
@@ -489,7 +493,7 @@ func (s *Service) withinBudget(
 }
 
 func (s *Service) moneyAllowance(
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 	spent agent.MoneyUse,
 ) agenttoolpolicy.MoneyAllowanceReader {
 	if s.budgets == nil {
@@ -523,7 +527,7 @@ func (t *Turn) moneySpent() agent.MoneyUse {
 	return spent
 }
 
-func unrecordedMoney(actions []agentports.PendingAction) agent.MoneyUse {
+func unrecordedMoney(actions []agentruntimeports.PendingAction) agent.MoneyUse {
 	use := agent.MoneyUse{}
 	for i := range actions {
 		action := &actions[i]
@@ -536,14 +540,14 @@ func unrecordedMoney(actions []agentports.PendingAction) agent.MoneyUse {
 	return use
 }
 
-func movedMoney(action *agentports.PendingAction) bool {
+func movedMoney(action *agentruntimeports.PendingAction) bool {
 	return action.MoneyMinor != nil && !action.Withdrawn && action.ExecutionError == "" &&
 		(action.Executed || action.Simulated)
 }
 
 // executedCount is how many times this turn already ran a tool for real. Those
 // writes are recorded as proposals only when the turn ends.
-func executedCount(actions []agentports.PendingAction, toolName string) int {
+func executedCount(actions []agentruntimeports.PendingAction, toolName string) int {
 	n := 0
 	for i := range actions {
 		if actions[i].ToolName == toolName && actions[i].Executed && !actions[i].Simulated {
@@ -558,13 +562,13 @@ func executedCount(actions []agentports.PendingAction, toolName string) int {
 type actionParams struct {
 	dispatchParams
 
-	tool   agentports.AgentTool
-	action *agentports.PendingAction
+	tool   agenttoolports.AgentTool
+	action *agentruntimeports.PendingAction
 }
 
 // executeParams is what the tool is handed, built once so the simulated and
 // the executed path cannot drift apart in what they pass.
-func (a actionParams) executeParams() agentports.ToolExecuteParams {
+func (a actionParams) executeParams() agenttoolports.ToolExecuteParams {
 	params := runToolParams(a.req, a.idempotencyKey, a.call.Arguments)
 	if a.tool.Policy().CarriesTaint {
 		params.Taint = a.taint.Clone()
@@ -682,7 +686,7 @@ func deniedAccess(
 // organizationToday is the reading of "today" for a call's day parameters:
 // the calendar day it is now in the organization's timezone, which is the
 // day the runtime context told the model.
-func organizationToday(req *agentports.RunRequest) toolschema.CoerceOption {
+func organizationToday(req *agentruntimeports.RunRequest) toolschema.CoerceOption {
 	return toolschema.WithToday(
 		time.Unix(timeutils.NowUnix(), 0).In(timeutils.LoadLocation(req.Context.Timezone)),
 	)
@@ -728,12 +732,12 @@ type queryExtras struct {
 
 func (s *Service) runQueryToolWith(
 	ctx context.Context,
-	req *agentports.RunRequest,
-	tool agentports.AgentQueryTool,
-	call *agentports.ToolCall,
+	req *agentruntimeports.RunRequest,
+	tool agenttoolports.AgentQueryTool,
+	call *llmports.ToolCall,
 	extras *queryExtras,
 ) toolOutcome {
-	data, err := tool.Query(ctx, &agentports.QueryToolParams{
+	data, err := tool.Query(ctx, &agenttoolports.QueryToolParams{
 		OrganizationID:    req.Actor.OrganizationID,
 		BusinessUnitID:    req.Actor.BusinessUnitID,
 		Actor:             req.Actor,
@@ -749,7 +753,7 @@ func (s *Service) runQueryToolWith(
 		Continues:         extras.continues,
 		IncludeTotal:      extras.fitPage && firstPage(call.Arguments),
 	})
-	if refused, ok := errors.AsType[*agentports.ReadRefusedError](err); ok {
+	if refused, ok := errors.AsType[*graphqlreadports.ReadRefusedError](err); ok {
 		return refusedOutcome(
 			aitrace.OutcomeDenied,
 			fmt.Sprintf("lacks %s access to %s", permission.OpRead, refused.Resource.String()),
@@ -789,7 +793,7 @@ func (s *Service) runQueryToolWith(
 		taint:   callTaint(s.ruled(ctx, req, tool.Policy()), *call, data, now),
 		verdict: aitrace.OutcomeRan,
 	}
-	if recall, ok := data.(agentports.MemoryRecall); ok {
+	if recall, ok := data.(agentmemoryports.MemoryRecall); ok {
 		outcome.memories = recall.RecalledMemoryIDs()
 	}
 
@@ -819,18 +823,18 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 	action.ExecutedAt = timeutils.NowUnix()
 	var (
 		result    *agent.ToolExecutionResult
-		saved     *agentports.SavedMemory
+		saved     *agentmemoryports.SavedMemory
 		refreshed *agent.Memory
 		err       error
 	)
-	if recorder, records := a.tool.(agentports.MemoryRecordingTool); records {
+	if recorder, records := a.tool.(agentmemoryports.MemoryRecordingTool); records {
 		var memory *agent.Memory
 		memory, err = recorder.Record(writeCtx, a.executeParams())
 		if err == nil && memory != nil {
 			saved, refreshed = savedOrRefreshed(memory, call.ID)
 		}
 	} else {
-		result, err = agentports.ExecuteTool(writeCtx, a.tool, a.executeParams())
+		result, err = agenttoolports.ExecuteTool(writeCtx, a.tool, a.executeParams())
 	}
 	if err != nil {
 		aitrace.MarkFailed(write, aitrace.OutcomeFailed)
@@ -877,7 +881,7 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 // kept or only offered. Both used to read "ran successfully", and a model
 // told the person "I'll remember that" about a memory they had asked to be
 // asked about first, which then sat on a card they had not decided.
-func savedMemoryContent(name string, saved *agentports.SavedMemory) string {
+func savedMemoryContent(name string, saved *agentmemoryports.SavedMemory) string {
 	if saved.Pending {
 		return fmt.Sprintf(
 			"Tool %q ran: the memory is offered to the person on a card under your reply, "+
@@ -990,12 +994,12 @@ func egressReason(egress agent.EgressClass) string {
 func savedOrRefreshed(
 	memory *agent.Memory,
 	callID string,
-) (*agentports.SavedMemory, *agent.Memory) {
+) (*agentmemoryports.SavedMemory, *agent.Memory) {
 	if memory.Refreshed {
 		return nil, memory
 	}
 
-	return &agentports.SavedMemory{
+	return &agentmemoryports.SavedMemory{
 		ID:      memory.ID,
 		CallID:  callID,
 		Pending: memory.Status == agent.MemoryStatusSuggested,
@@ -1035,14 +1039,14 @@ func (s *Service) startWrite(
 
 func (s *Service) versionAfter(
 	ctx context.Context,
-	req *agentports.RunRequest,
-	target *agentports.ProposalTarget,
+	req *agentruntimeports.RunRequest,
+	target *agentruntimeports.ProposalTarget,
 ) *int64 {
 	if target == nil || s.versions == nil {
 		return nil
 	}
 
-	version, err := s.versions.Version(ctx, req.Actor.TenantInfo(), agentports.ToolTarget{
+	version, err := s.versions.Version(ctx, req.Actor.TenantInfo(), agenttoolports.ToolTarget{
 		Resource: target.Resource,
 		ID:       target.ID,
 	})
@@ -1085,11 +1089,11 @@ func ranContent(name string, result *agent.ToolExecutionResult) string {
 // still gets to decide, they just decide without the staleness check.
 func (s *Service) snapshotTarget(
 	ctx context.Context,
-	req *agentports.RunRequest,
-	tool agentports.AgentTool,
-	call agentports.ToolCall,
-) *agentports.ProposalTarget {
-	targeted, ok := tool.(agentports.TargetedTool)
+	req *agentruntimeports.RunRequest,
+	tool agenttoolports.AgentTool,
+	call llmports.ToolCall,
+) *agentruntimeports.ProposalTarget {
+	targeted, ok := tool.(agenttoolports.TargetedTool)
 	if !ok || s.versions == nil {
 		return nil
 	}
@@ -1111,16 +1115,20 @@ func (s *Service) snapshotTarget(
 		return nil
 	}
 
-	return &agentports.ProposalTarget{Resource: target.Resource, ID: target.ID, Version: version}
+	return &agentruntimeports.ProposalTarget{
+		Resource: target.Resource,
+		ID:       target.ID,
+		Version:  version,
+	}
 }
 
 // ruled is a tool's policy as the organization holds it: never looser than the
 // rule declared beside the tool, and lower where the organization says so.
 func (s *Service) ruled(
 	ctx context.Context,
-	req *agentports.RunRequest,
-	policy agentports.ToolPolicy,
-) agentports.ToolPolicy {
+	req *agentruntimeports.RunRequest,
+	policy agenttoolports.ToolPolicy,
+) agenttoolports.ToolPolicy {
 	if s.rules == nil || req == nil || req.Actor == nil {
 		return policy
 	}

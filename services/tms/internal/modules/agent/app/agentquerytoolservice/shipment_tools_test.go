@@ -7,11 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	tariffrules "github.com/emoss08/trenova/pkg/rules"
-	"github.com/emoss08/trenova/pkg/tarifftypes"
-
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -33,6 +30,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
+	tariffrules "github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -168,7 +167,10 @@ func TestSearchShipments_ReturnsTheCuratedRowNotTheStoredEntity(t *testing.T) {
 		Status:    shipment.StatusNew,
 	}}}
 
-	result, err := newShipmentListTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{}))
+	result, err := newShipmentListTool(
+		repo,
+		shipmentPartySources{},
+	).Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
 	outcome, ok := result.(searchOutcome)
@@ -191,7 +193,10 @@ func TestSearchShipments_DistinguishesInTransitFromUnrecorded(t *testing.T) {
 		ID: pulid.MustNew("shp_"), ProNumber: "S-1001", Status: shipment.StatusNew,
 	}}}
 
-	result, err := newShipmentListTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{}))
+	result, err := newShipmentListTool(
+		repo,
+		shipmentPartySources{},
+	).Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
 	outcome, _ := result.(searchOutcome)
@@ -217,7 +222,10 @@ func TestSearchShipments_RefusesAStatusThatDoesNotExist(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{}
-	_, err := newShipmentListTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{
+	_, err := newShipmentListTool(
+		repo,
+		shipmentPartySources{},
+	).Query(t.Context(), testParams(map[string]any{
 		"status": "Delivered",
 	}))
 
@@ -230,7 +238,10 @@ func TestSearchShipments_AcceptsAStatusThatExists(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{}
-	_, err := newShipmentListTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{
+	_, err := newShipmentListTool(
+		repo,
+		shipmentPartySources{},
+	).Query(t.Context(), testParams(map[string]any{
 		"status": "InTransit",
 	}))
 
@@ -247,7 +258,10 @@ func TestSearchShipments_TakesSeveralStatusesInOneCall(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{}
-	_, err := newShipmentListTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{
+	_, err := newShipmentListTool(
+		repo,
+		shipmentPartySources{},
+	).Query(t.Context(), testParams(map[string]any{
 		"status": []any{"New", "PartiallyAssigned", "Assigned", "New"},
 	}))
 
@@ -256,7 +270,10 @@ func TestSearchShipments_TakesSeveralStatusesInOneCall(t *testing.T) {
 		statusFilterOf(t, repo.captured))
 
 	repo = &fakeShipmentRepo{}
-	_, err = newShipmentListTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{
+	_, err = newShipmentListTool(
+		repo,
+		shipmentPartySources{},
+	).Query(t.Context(), testParams(map[string]any{
 		"query":  "chicago",
 		"status": []any{"New", "Assigned"},
 	}))
@@ -547,7 +564,7 @@ func queryShipment(
 	t *testing.T,
 	fixture shipmentFixture,
 	permissions *fakePermissions,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) map[string]any {
 	t.Helper()
 
@@ -1016,7 +1033,11 @@ stop on the load.
 func TestSearchShipments_RequiresAStopAtEachPlaceNamed(t *testing.T) {
 	t.Parallel()
 
-	denver := &location.Location{ID: pulid.MustNew("loc_"), Name: "Denver Drop Point", City: "Denver"}
+	denver := &location.Location{
+		ID:   pulid.MustNew("loc_"),
+		Name: "Denver Drop Point",
+		City: "Denver",
+	}
 	phoenix := &location.Location{
 		ID: pulid.MustNew("loc_"), Name: "Phoenix Cold Storage", City: "Phoenix",
 	}
@@ -1138,7 +1159,10 @@ func TestGetShipment_ReadsTheShipmentAPersonNamedByItsProNumber(t *testing.T) {
 	t.Parallel()
 
 	fixture := realisticShipment()
-	other := &shipment.Shipment{ID: pulid.MustNew("shp_"), ProNumber: fixture.entity.ProNumber + "1"}
+	other := &shipment.Shipment{
+		ID:        pulid.MustNew("shp_"),
+		ProNumber: fixture.entity.ProNumber + "1",
+	}
 	repo := &proShipmentRepo{items: []*shipment.Shipment{other, fixture.entity}}
 	tool := newGetShipmentTool(repo, nil, nil, &fakePermissions{allowed: true})
 

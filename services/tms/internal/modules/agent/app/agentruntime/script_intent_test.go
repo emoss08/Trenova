@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,18 +27,18 @@ func intentDispatch(
 	t.Helper()
 
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{
-		Tools: []agentports.AgentTool{tool},
+		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
 	definition := testDefinition(tool.ToolName)
 	definition.AutonomyCeiling = agent.TierAutoExecute
 	definition.ToolTiers = map[string]agent.AutonomyTier{tool.ToolName: agent.TierAutoExecute}
 	p := dispatchParams{
-		req: &agentports.RunRequest{
+		req: &agentruntimeports.RunRequest{
 			Definition: definition,
 			Actor:      testActor(),
 			Input:      "post the drafts",
 		},
-		call: agentports.ToolCall{
+		call: llmports.ToolCall{
 			ID:        "script-step:1",
 			Name:      tool.ToolName,
 			Arguments: map[string]any{},
@@ -102,14 +104,14 @@ func TestDispatch_AScriptsWriteTheActorMayNotMakeIsRefused(t *testing.T) {
 
 	tool := &agenttest.StubActionTool{ToolName: "dispatch_assign_move", Tier: agent.TierAutoExecute}
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{
-		Tools: []agentports.AgentTool{tool},
+		Tools: []agenttoolports.AgentTool{tool},
 	}, &stubPermissions{Denied: map[string]bool{"shipment_move:update": true}})
 	outcome := rt.dispatch(t.Context(), dispatchParams{
-		req: &agentports.RunRequest{
+		req: &agentruntimeports.RunRequest{
 			Definition: testDefinition(tool.ToolName),
 			Actor:      testActor(),
 		},
-		call:          agentports.ToolCall{ID: "script-step:1", Name: tool.ToolName},
+		call:          llmports.ToolCall{ID: "script-step:1", Name: tool.ToolName},
 		taint:         &agent.RunTaint{},
 		scriptStepKey: preparedScriptStep,
 	})
@@ -169,23 +171,23 @@ func guardedWrite(
 	t.Helper()
 
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 	rt.budgets = &moneyBudgets{Limits: roomyMoneyLimits()}
 
 	return rt.guardedDispatch(t.Context(), &guardedDispatchParams{
-		req: &agentports.RunRequest{
+		req: &agentruntimeports.RunRequest{
 			Definition: autoDefinition(tool.ToolName),
 			Actor:      testActor(),
 			Input:      "do it",
 			RunID:      runID,
 			Steps:      ledger,
-			StepOwner: agentports.RunStepOwner{
-				Kind: agentports.RunStepOwnerAgentRun,
+			StepOwner: agentruntimeports.RunStepOwner{
+				Kind: agentruntimeports.RunStepOwnerAgentRun,
 				ID:   runID,
 			},
 			Attempt: 1,
 		},
-		call:          agentports.ToolCall{ID: "call_1", Name: tool.ToolName, Arguments: args},
+		call:          llmports.ToolCall{ID: "call_1", Name: tool.ToolName, Arguments: args},
 		ordinal:       1,
 		taint:         &agent.RunTaint{},
 		scriptStepKey: scriptStepKey,
@@ -223,7 +225,11 @@ func TestDispatch_NoPathRunsAScriptsWrite(t *testing.T) {
 			require.Len(t, ledger.steps, 1, "every attempt reads the one step")
 			for _, step := range ledger.steps {
 				require.NotNil(t, step.Outcome.Action)
-				assert.False(t, step.Outcome.Action.Executed, "the ledger records no executed write")
+				assert.False(
+					t,
+					step.Outcome.Action.Executed,
+					"the ledger records no executed write",
+				)
 				assert.Equal(t, preparedScriptStep, step.Outcome.Action.ScriptStepKey)
 			}
 		})

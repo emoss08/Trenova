@@ -7,7 +7,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,9 +40,9 @@ const suggestSystem = "You are the formula assistant in Trenova's Formula Studio
 
 func (s *Service) SuggestTests(
 	ctx context.Context,
-	req *agentports.SuggestFormulaTestsRequest,
+	req *formulastudioports.SuggestFormulaTestsRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.SuggestFormulaTestsResponse, error) {
+) (*formulastudioports.SuggestFormulaTestsResponse, error) {
 	definition, err := s.assistant(ctx, req.TenantInfo, actor)
 	if err != nil {
 		return nil, err
@@ -121,7 +122,7 @@ func (s *Service) SuggestTests(
 		blocks[i].Failures = result.Failures
 	}
 
-	return &agentports.SuggestFormulaTestsResponse{Tests: blocks}, nil
+	return &formulastudioports.SuggestFormulaTestsResponse{Tests: blocks}, nil
 }
 
 type suggestedTest struct {
@@ -148,8 +149,8 @@ func suggestSchema() map[string]any {
 func boundSuggestedTests(
 	tests []suggestedTest,
 	taken map[string]struct{},
-) []agentports.SuggestedFormulaTest {
-	out := make([]agentports.SuggestedFormulaTest, 0, maxSuggestedTests)
+) []formulastudioports.SuggestedFormulaTest {
+	out := make([]formulastudioports.SuggestedFormulaTest, 0, maxSuggestedTests)
 	for _, test := range tests {
 		if len(out) >= maxSuggestedTests {
 			break
@@ -184,7 +185,7 @@ func boundSuggestedTests(
 		}
 
 		taken[name] = struct{}{}
-		out = append(out, agentports.SuggestedFormulaTest{
+		out = append(out, formulastudioports.SuggestedFormulaTest{
 			Name:  name,
 			Block: fmt.Sprintf("test %q {\n%s\n}", name, strings.Join(lines, "\n")),
 		})
@@ -209,9 +210,9 @@ const explainTestSystem = "You are the formula assistant in Trenova's Formula St
 
 func (s *Service) ExplainTest(
 	ctx context.Context,
-	req *agentports.ExplainFormulaTestRequest,
+	req *formulastudioports.ExplainFormulaTestRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.ExplainFormulaTestResponse, error) {
+) (*formulastudioports.ExplainFormulaTestResponse, error) {
 	definition, err := s.assistant(ctx, req.TenantInfo, actor)
 	if err != nil {
 		return nil, err
@@ -241,9 +242,9 @@ func (s *Service) ExplainTest(
 		)
 	}
 
-	resp := &agentports.ExplainFormulaTestResponse{Test: test}
+	resp := &formulastudioports.ExplainFormulaTestResponse{Test: test}
 	if test.Status == rules.TariffTestPassed {
-		resp.Verdict = agentports.FormulaTestVerdictIntended
+		resp.Verdict = formulastudioports.FormulaTestVerdictIntended
 		resp.Why = "This test passes on the current source."
 		return resp, nil
 	}
@@ -254,7 +255,7 @@ func (s *Service) ExplainTest(
 		definition: definition,
 		feature:    aiusage.FeatureFormulaExplain,
 		system:     explainTestSystem,
-		sections: append(draftSections(&req.Draft, run.Inputs), agentports.ContextSection{
+		sections: append(draftSections(&req.Draft, run.Inputs), llmports.ContextSection{
 			Title:   "Engine failure",
 			Content: testFailureText(locale, test),
 		}),
@@ -264,17 +265,17 @@ func (s *Service) ExplainTest(
 	}, &reply)
 	switch {
 	case err != nil && noProvider(err):
-		resp.Verdict = agentports.FormulaTestVerdictUnclear
+		resp.Verdict = formulastudioports.FormulaTestVerdictUnclear
 		resp.Why = stringutils.Ellipsize(testFailureText(locale, test), maxWhyRunes)
 		return resp, nil
 	case err != nil:
 		return nil, modelFailure(definition, err)
 	}
 
-	verdict := agentports.FormulaTestVerdict(strings.TrimSpace(reply.Verdict))
+	verdict := formulastudioports.FormulaTestVerdict(strings.TrimSpace(reply.Verdict))
 	why := stringutils.CollapseWhitespace(reply.Why)
 	if !verdict.IsValid() || why == "" {
-		resp.Verdict = agentports.FormulaTestVerdictUnclear
+		resp.Verdict = formulastudioports.FormulaTestVerdictUnclear
 		resp.Why = stringutils.Ellipsize(testFailureText(locale, test), maxWhyRunes)
 		return resp, nil
 	}
@@ -293,9 +294,9 @@ type explainTestReply struct {
 func explainTestSchema() map[string]any {
 	verdict := typedField("string", "")
 	verdict["enum"] = []string{
-		string(agentports.FormulaTestVerdictIntended),
-		string(agentports.FormulaTestVerdictBug),
-		string(agentports.FormulaTestVerdictUnclear),
+		string(formulastudioports.FormulaTestVerdictIntended),
+		string(formulastudioports.FormulaTestVerdictBug),
+		string(formulastudioports.FormulaTestVerdictUnclear),
 	}
 	return objectSchema(map[string]any{
 		"verdict": verdict,

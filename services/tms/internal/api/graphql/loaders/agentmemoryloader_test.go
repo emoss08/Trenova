@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,12 +14,12 @@ import (
 )
 
 type stubMemoryReplacements struct {
-	list func(context.Context, agentports.ListAgentMemoryReplacementsRequest) ([]*agent.Memory, error)
+	list func(context.Context, agentmemoryports.ListAgentMemoryReplacementsRequest) ([]*agent.Memory, error)
 }
 
 func (s *stubMemoryReplacements) ListReplacements(
 	ctx context.Context,
-	req agentports.ListAgentMemoryReplacementsRequest,
+	req agentmemoryports.ListAgentMemoryReplacementsRequest,
 ) ([]*agent.Memory, error) {
 	return s.list(ctx, req)
 }
@@ -51,7 +51,7 @@ func TestReplacementBatch_GivesEachMemoryTheNewestThatTookEffect(t *testing.T) {
 	stub := &stubMemoryReplacements{
 		list: func(
 			_ context.Context,
-			req agentports.ListAgentMemoryReplacementsRequest,
+			req agentmemoryports.ListAgentMemoryReplacementsRequest,
 		) ([]*agent.Memory, error) {
 			assert.Equal(t, tenant, req.TenantInfo)
 			assert.Equal(t, []pulid.ID{replaced, untouched}, req.ReplacedIDs)
@@ -82,7 +82,7 @@ func TestReplacementBatch_AFailedReadFailsEveryKey(t *testing.T) {
 	stub := &stubMemoryReplacements{
 		list: func(
 			context.Context,
-			agentports.ListAgentMemoryReplacementsRequest,
+			agentmemoryports.ListAgentMemoryReplacementsRequest,
 		) ([]*agent.Memory, error) {
 			return nil, failure
 		},

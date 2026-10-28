@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -77,7 +79,7 @@ type watchtowerFeedReader interface {
 type agentRunsByIDs interface {
 	ListByIDs(
 		ctx context.Context,
-		req agentports.ListAgentRunsByIDsRequest,
+		req agentruntimeports.ListAgentRunsByIDsRequest,
 	) ([]*agent.AgentRun, error)
 }
 
@@ -112,7 +114,7 @@ type watchtowerRunLinks struct {
 type watchtowerRunRepositories struct {
 	fx.In
 
-	Runs       agentports.AgentRunRepository
+	Runs       agentruntimeports.AgentRunRepository
 	Proposals  agentports.AgentProposalRepository
 	Plans      agentports.AgentPlanRepository
 	Exceptions agentports.AgentExceptionRepository
@@ -126,7 +128,7 @@ type listWatchtowerItemsTool struct {
 func provideListWatchtowerItemsTool(
 	feed watchtowerports.WatchtowerService,
 	repos watchtowerRunRepositories,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListWatchtowerItemsTool(feed, watchtowerRunLinks{
 		runs:       repos.Runs,
 		proposals:  repos.Proposals,
@@ -211,7 +213,7 @@ func (t *listWatchtowerItemsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listWatchtowerItemsTool) Policy() agentports.ToolPolicy {
+func (t *listWatchtowerItemsTool) Policy() agenttoolports.ToolPolicy {
 	policy := readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceWatchtower,
 		reads:    agent.ExternalReadMarked,
@@ -265,7 +267,7 @@ func (f *watchtowerFeed) TaintedMarks() []agent.SourcedRef { return f.marks }
 
 func (t *listWatchtowerItemsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -681,7 +683,7 @@ func (l watchtowerRunLinks) taintedRuns(
 		ids = append(ids, runID)
 	}
 
-	runs, err := l.runs.ListByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
+	runs, err := l.runs.ListByIDs(ctx, agentruntimeports.ListAgentRunsByIDsRequest{
 		IDs:        ids,
 		TenantInfo: tenant,
 	})

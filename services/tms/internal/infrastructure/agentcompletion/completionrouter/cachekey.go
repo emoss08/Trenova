@@ -5,14 +5,14 @@ import (
 	"encoding/hex"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 )
 
 // promptCacheKey names the requests that share a prompt prefix: one agent, at
 // one version, in one organization. It is hashed so a provider sees no
 // identifier of ours, and names no person, so two people asking the same
 // agent share the agent's cached rules and tools.
-func promptCacheKey(req *agentports.ChatCompletionRequest) string {
+func promptCacheKey(req *llmports.ChatCompletionRequest) string {
 	agent := "chat"
 	if id := req.Attribution.AgentDefinitionID; !id.IsNil() {
 		agent = id.String()

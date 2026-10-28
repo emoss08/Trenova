@@ -8,17 +8,16 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert/tablechangealertdb"
-
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/tcasubscriptionrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert/tablechangealertdb"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
@@ -84,11 +83,31 @@ func writeAlertRows(
 	return &alertTenant{
 		ctx: readscope.With(dbscope.WithTenant(ctx, tenant.Scope()), nil),
 		alerts: []string{
-			alert(tenant.Actor.UserID, "Big invoices "+label, "invoices", tablechangealert.SubscriptionStatusActive),
-			alert(tenant.Actor.UserID, "Delivered "+label, "shipments", tablechangealert.SubscriptionStatusActive),
-			alert(tenant.Actor.UserID, "Paused "+label, "shipments", tablechangealert.SubscriptionStatusPaused),
+			alert(
+				tenant.Actor.UserID,
+				"Big invoices "+label,
+				"invoices",
+				tablechangealert.SubscriptionStatusActive,
+			),
+			alert(
+				tenant.Actor.UserID,
+				"Delivered "+label,
+				"shipments",
+				tablechangealert.SubscriptionStatusActive,
+			),
+			alert(
+				tenant.Actor.UserID,
+				"Paused "+label,
+				"shipments",
+				tablechangealert.SubscriptionStatusPaused,
+			),
 		},
-		colleagues: alert(colleague, "Colleague "+label, "invoices", tablechangealert.SubscriptionStatusActive),
+		colleagues: alert(
+			colleague,
+			"Colleague "+label,
+			"invoices",
+			tablechangealert.SubscriptionStatusActive,
+		),
 	}
 }
 
@@ -118,12 +137,12 @@ func (r tcaRestrictedRole) GetResourcePermissionsBatch(
 
 func alertQuery(
 	ctx context.Context,
-	tool agentports.AgentQueryTool,
+	tool agenttoolports.AgentQueryTool,
 	actor *permissionports.RequestActor,
 	args map[string]any,
 	ceiling permission.FieldSensitivity,
 ) (any, error) {
-	return tool.Query(ctx, &agentports.QueryToolParams{
+	return tool.Query(ctx, &agenttoolports.QueryToolParams{
 		OrganizationID: actor.OrganizationID, BusinessUnitID: actor.BusinessUnitID,
 		Actor: actor, Timezone: "America/Chicago", Params: args,
 		DataAccessCeiling: ceiling, RunID: pulid.MustNew("ar_"),
@@ -150,7 +169,10 @@ func TestConvertedLists_TableChangeAlertsUnderRowLevelSecurity(t *testing.T) {
 		}),
 	}
 	engine := &mocks.DenyResourcesPermissionEngine{}
-	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
+	reader := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: engine, Resolvers: resolvers},
+	)
 	restrictedEngine := &tcaRestrictedRole{}
 	restricted := agentreadtest.NewReader(t, agentreadtest.Options{
 		Engine: restrictedEngine, Resolvers: resolvers,

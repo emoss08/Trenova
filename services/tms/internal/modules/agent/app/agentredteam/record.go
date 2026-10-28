@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -41,7 +41,7 @@ type DispatchRecord struct {
 
 type ExecutionRecord struct {
 	Tool       string
-	Params     agentports.ToolExecuteParams
+	Params     agenttoolports.ToolExecuteParams
 	Egress     agent.EgressClass
 	SourceRead bool
 }

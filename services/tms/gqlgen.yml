@@ -2311,7 +2311,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemoryEvidence
   AgentMemoryUsage:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentMemoryUsage
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports.AgentMemoryUsage
   AgentReflection:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.Reflection
@@ -2691,7 +2691,7 @@ models:
         resolver: true
   AIProviderDraftTestResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.TestAIProviderResult
+      - github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports.TestAIProviderResult
   AIProviderKind:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.Kind
@@ -2742,25 +2742,25 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval.PauseReason
   AIRetrievalAvailability:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalAvailability
+      - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalAvailability
   AIRetrievalSettings:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalSettings
+      - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalSettings
   AIRetrievalSourceStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalSourceStatus
+      - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalSourceStatus
   AIRetrievalModelChange:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalModelChange
+      - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalModelChange
   AIRetrievalStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalStatus
+      - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalStatus
   AIRetrievalReindexEstimate:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalReindexEstimate
+      - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalReindexEstimate
   AIRetrievalFailedEntry:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalFailedEntry
+      - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalFailedEntry
   AgentStarter:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.Starter
@@ -2944,13 +2944,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.ReachWarningKind
   AgentReachWarning:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentReachWarning
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.AgentReachWarning
   AgentToolAutonomy:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.ToolAutonomy
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.ToolAutonomy
   AgentToolSafety:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentToolSafety
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.AgentToolSafety
     fields:
       id:
         resolver: true
@@ -2958,7 +2958,7 @@ models:
         resolver: true
   AgentSafetySummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentSafetySummary
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.AgentSafetySummary
     fields:
       openSensitiveAgentIds:
         resolver: true
@@ -2974,19 +2974,19 @@ models:
         resolver: true
   AgentToolRuleImpact:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentToolRuleImpact
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.AgentToolRuleImpact
   AgentToolHolders:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentToolHolders
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.AgentToolHolders
     fields:
       agentIds:
         resolver: true
   AgentEgressCount:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentEgressCount
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.AgentEgressCount
   AgentSafety:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentSafetySubject
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.AgentSafetySubject
     fields:
       agentId:
         resolver: true

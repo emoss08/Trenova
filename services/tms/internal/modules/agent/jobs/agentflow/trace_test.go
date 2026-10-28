@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,7 +28,7 @@ func TestRunStampsEachEventWithTheWorkflowsClock(t *testing.T) {
 		ToolName: "shipment_get",
 		Result:   map[string]any{"status": "InTransit"},
 	}
-	h := newHarness(t, harnessParams{query: []agentports.AgentQueryTool{lookup}})
+	h := newHarness(t, harnessParams{query: []agenttoolports.AgentQueryTool{lookup}})
 	h.replies(
 		toolReply("shipment_get", map[string]any{"proNumber": "12345"}),
 		textReply("It is in transit."),
@@ -70,8 +72,8 @@ func delegateInput(t *testing.T) *OpenDelegateInput {
 
 	rc := runContext()
 	rc.Definition.ID = pulid.MustNew("agdef_")
-	rc.StepOwner = agentports.RunStepOwner{
-		Kind: agentports.RunStepOwnerAssistantTurn,
+	rc.StepOwner = agentruntimeports.RunStepOwner{
+		Kind: agentruntimeports.RunStepOwnerAssistantTurn,
 		ID:   pulid.MustNew("atrn_"),
 	}
 	delegate := delegateDefinition()
@@ -79,7 +81,7 @@ func delegateInput(t *testing.T) *OpenDelegateInput {
 	return &OpenDelegateInput{
 		Run: rc,
 		Call: agentruntime.DelegateCall{
-			Call:     agentports.ToolCall{ID: "call_task_7", Name: "delegate_task"},
+			Call:     llmports.ToolCall{ID: "call_task_7", Name: "delegate_task"},
 			Delegate: agentdefinition.RuntimeDelegate{ID: delegate.ID, Name: delegate.Name},
 			Task:     "Find load 12345.",
 		},
@@ -142,7 +144,7 @@ func TestModelCallActivity_TellsTheCompletionWhichAttemptItIs(t *testing.T) {
 	rt := agentruntime.New(agentruntime.Params{
 		Logger: zap.NewNop(),
 		Completion: &agenttest.ScriptedCompletion{
-			Turns: []*agentports.ChatCompletionResult{textReply("Done.")},
+			Turns: []*llmports.ChatCompletionResult{textReply("Done.")},
 		},
 		QueryTools:  &agenttest.StubQueryRegistry{},
 		ActionTools: &agenttest.StubActionRegistry{},
@@ -151,8 +153,8 @@ func TestModelCallActivity_TellsTheCompletionWhichAttemptItIs(t *testing.T) {
 	env.RegisterActivity(NewActivities(ActivitiesParams{Logger: zap.NewNop(), Runtime: rt}))
 
 	runID := pulid.MustNew("ar_")
-	req := &agentports.ChatCompletionRequest{Attribution: aiusageports.AIUsageAttribution{
-		OwnerKind: agentports.RunStepOwnerAgentRun,
+	req := &llmports.ChatCompletionRequest{Attribution: aiusageports.AIUsageAttribution{
+		OwnerKind: agentruntimeports.RunStepOwnerAgentRun,
 		OwnerID:   runID,
 		RunID:     runID,
 	}}

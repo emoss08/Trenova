@@ -5,7 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +15,7 @@ import (
 func TestNamePlan_NamesThePlanTheTurnFiles(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("shipment_create", map[string]any{"customerId": "cus_1"}),
 		toolTurn("shipment_create", map[string]any{"customerId": "cus_2"}),
 		toolTurn(namePlanName, map[string]any{
@@ -38,7 +40,7 @@ func TestNamePlan_NamesThePlanTheTurnFiles(t *testing.T) {
 func TestNamePlan_SaysTheNameIsUnusedUntilTwoProposalsAreFiled(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("shipment_create", map[string]any{"customerId": "cus_1"}),
 		toolTurn(namePlanName, map[string]any{"title": "Enter the Acme load"}),
 		textTurn("Proposed."),
@@ -56,7 +58,7 @@ func TestNamePlan_SaysTheNameIsUnusedUntilTwoProposalsAreFiled(t *testing.T) {
 func TestNamePlan_TheLastNameGivenIsKept(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn(namePlanName, map[string]any{"title": "First name"}),
 		toolTurn(namePlanName, map[string]any{"title": "Second name"}),
 		textTurn("Done."),
@@ -86,7 +88,7 @@ func TestNamePlan_RefusesANameThatIsEmptyOrTooLong(t *testing.T) {
 			if tc.title != nil {
 				arguments["title"] = tc.title
 			}
-			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+			completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 				toolTurn(namePlanName, arguments),
 				textTurn("Done."),
 			}}
@@ -106,7 +108,7 @@ func TestNamePlan_AcceptsANameOfExactlyTheLimit(t *testing.T) {
 	t.Parallel()
 
 	title := strings.Repeat("é", 80)
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn(namePlanName, map[string]any{"title": title}),
 		textTurn("Done."),
 	}}
@@ -119,12 +121,12 @@ func TestNamePlan_AcceptsANameOfExactlyTheLimit(t *testing.T) {
 func TestNamePlan_IsNeverOfferedToADelegate(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn(namePlanName, map[string]any{"title": "Mine"}),
 		textTurn("Proposed."),
 	}}
 	req := proposingRequest()
-	req.Delegation = &agentports.Delegation{CallID: "call_parent", StepScope: "d1"}
+	req.Delegation = &agentruntimeports.Delegation{CallID: "call_parent", StepScope: "d1"}
 
 	result, err := proposingRuntime(completion).Run(t.Context(), req)
 	require.NoError(t, err)
@@ -141,15 +143,15 @@ func TestNamePlan_IsNeverOfferedToADelegate(t *testing.T) {
 func TestNamePlan_IsNotDeclaredWhereNothingCanBeProposed(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn(namePlanName, map[string]any{"title": "Nothing"}),
 		textTurn("Nothing to do."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
+		Tools: []agenttoolports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
 	}, &stubActionRegistry{}, nil)
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "where is S-1",

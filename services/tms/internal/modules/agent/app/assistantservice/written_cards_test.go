@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -32,14 +34,17 @@ func (r *shipmentReader) ParamSchema() map[string]any {
 	}
 }
 
-func (r *shipmentReader) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (r *shipmentReader) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name: "shipment_get", Kind: agent.ToolKindQuery,
 		Resource: permission.ResourceShipment, Operation: permission.OpRead,
 	}
 }
 
-func (r *shipmentReader) Query(_ context.Context, params *agentports.QueryToolParams) (any, error) {
+func (r *shipmentReader) Query(
+	_ context.Context,
+	params *agenttoolports.QueryToolParams,
+) (any, error) {
 	r.asked = params.Params
 
 	return map[string]any{
@@ -50,7 +55,10 @@ func (r *shipmentReader) Query(_ context.Context, params *agentports.QueryToolPa
 	}, nil
 }
 
-func writtenRecorder(t *testing.T, reads ...agentports.AgentQueryTool) (*artifactRecorder, *stubArtifactRepo) {
+func writtenRecorder(
+	t *testing.T,
+	reads ...agenttoolports.AgentQueryTool,
+) (*artifactRecorder, *stubArtifactRepo) {
 	t.Helper()
 
 	repo := &stubArtifactRepo{}
@@ -70,10 +78,17 @@ func writtenRecorder(t *testing.T, reads ...agentports.AgentQueryTool) (*artifac
 	return svc.newArtifactRecorder(t.Context(), thread, tenant, testActor(), nil), repo
 }
 
-func executedWrite(tool string, result *agent.ToolExecutionResult) agentports.ToolObservation {
-	return agentports.ToolObservation{
-		Call:   agentports.ToolCall{ID: "call_write", Name: tool},
-		Action: &agentports.PendingAction{ToolName: tool, Executed: true, ExecutionResult: result},
+func executedWrite(
+	tool string,
+	result *agent.ToolExecutionResult,
+) agentruntimeports.ToolObservation {
+	return agentruntimeports.ToolObservation{
+		Call: llmports.ToolCall{ID: "call_write", Name: tool},
+		Action: &agentruntimeports.PendingAction{
+			ToolName:        tool,
+			Executed:        true,
+			ExecutionResult: result,
+		},
 	}
 }
 
@@ -149,8 +164,10 @@ func TestShowWritten_PointsTheFollowUpAtWhatTheApprovalMade(t *testing.T) {
 		logger:    zap.NewNop(),
 		artifacts: repo,
 		runtime: agentruntime.New(agentruntime.Params{
-			Logger:      zap.NewNop(),
-			QueryTools:  &stubQueryRegistry{Tools: []agentports.AgentQueryTool{&shipmentReader{}}},
+			Logger: zap.NewNop(),
+			QueryTools: &stubQueryRegistry{
+				Tools: []agenttoolports.AgentQueryTool{&shipmentReader{}},
+			},
 			ActionTools: &stubActionRegistry{},
 			Permissions: &agenttest.StubPermissions{},
 		}),

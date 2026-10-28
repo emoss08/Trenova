@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -25,7 +26,7 @@ func (s *Service) ToolEffect(name string) agent.ToolEffect {
 		return policy.Effect
 	}
 
-	return agentports.EffectOf(s.toolNamed(name))
+	return agenttoolports.EffectOf(s.toolNamed(name))
 }
 
 func (s *Service) MarkToolEffects(messages []conversation.Message) {
@@ -55,7 +56,7 @@ func (s *Service) callsWithEffects(
 	return marked
 }
 
-func summarizeOutcome(call agentports.ToolCall, outcome toolOutcome) string {
+func summarizeOutcome(call llmports.ToolCall, outcome toolOutcome) string {
 	if outcome.failed {
 		return ""
 	}
@@ -117,7 +118,7 @@ func countSummary(toolName string, items []any, count int, more bool) string {
 }
 
 func collectionNoun(toolName string) string {
-	subject := agentports.ReadingOrder(toolName)
+	subject := agenttoolports.ReadingOrder(toolName)
 	for _, prefix := range collectionPrefixes {
 		if trimmed, found := strings.CutPrefix(subject, prefix); found {
 			subject = trimmed

@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,17 +31,17 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Completion    agentports.StructuredCompleter
+	Completion    llmports.StructuredCompleter
 	Definitions   agentdefinitionports.AgentDefinitionService
-	Providers     agentports.AIProviderRepository
+	Providers     aiproviderports.AIProviderRepository
 	Organizations tenantports.OrganizationRepository
 }
 
 type Service struct {
 	l             *zap.Logger
-	completion    agentports.StructuredCompleter
+	completion    llmports.StructuredCompleter
 	definitions   agentdefinitionports.AgentDefinitionService
-	providers     agentports.AIProviderRepository
+	providers     aiproviderports.AIProviderRepository
 	organizations tenantports.OrganizationRepository
 }
 
@@ -56,7 +58,7 @@ func New(p Params) *Service {
 }
 
 func (s *Service) Available(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
-	providers, err := s.providers.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
+	providers, err := s.providers.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
 		Task:       draftingTask,
 		TenantInfo: tenantInfo,
 	})
@@ -84,7 +86,7 @@ func (s *Service) DraftFromDescription(
 
 	completion, err := s.completion.CompleteStructured(
 		ctx,
-		&agentports.StructuredCompletionRequest{
+		&llmports.StructuredCompletionRequest{
 			TenantInfo: req.TenantInfo,
 			Task:       draftingTask,
 			System:     draftSystemPrompt,
@@ -152,7 +154,7 @@ func (s *Service) TightenInstructions(
 
 	completion, err := s.completion.CompleteStructured(
 		ctx,
-		&agentports.StructuredCompletionRequest{
+		&llmports.StructuredCompletionRequest{
 			TenantInfo:   req.TenantInfo,
 			Task:         draftingTask,
 			System:       tightenSystemPrompt,

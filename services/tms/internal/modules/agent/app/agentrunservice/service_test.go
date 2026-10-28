@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,7 +24,7 @@ import (
 )
 
 type fakeAgentRunRepo struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 	create func(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
 	update func(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
 }

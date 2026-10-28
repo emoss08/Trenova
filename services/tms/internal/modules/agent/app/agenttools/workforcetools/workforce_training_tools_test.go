@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -213,9 +213,13 @@ func TestAssignWorkerTraining_RoutesOnePairToAssign(t *testing.T) {
 		wfParamDueDate:       "2026-10-31",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, training.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		training.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would assign 1 course(s)")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, training.assigned)
@@ -238,16 +242,20 @@ func TestAssignWorkerTraining_SendsSeveralToBulkAssign(t *testing.T) {
 		paramCourseIDs: []any{training.course.ID.String()},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, training.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		training.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Len(t, preview.Changes, 2)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, training.bulkAssigned)
 	assert.Len(t, training.bulkAssigned.WorkerIDs, 2)
 
 	training.failed = []workertrainingservice.BulkAssignOutcome{{Error: "Course is retired"}}
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params),
 		"a run that assigns nothing is refused")
 }
 
@@ -256,11 +264,17 @@ func TestAssignRequiredWorkerTraining_CountsTheMissingCourses(t *testing.T) {
 
 	training := newFakeTraining()
 	tool := newAssignRequiredWorkerTrainingTool(training)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamWorkerID: training.record.WorkerID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{common.ParamWorkerID: training.record.WorkerID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, training.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		training.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "1 required course(s)")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, []pulid.ID{training.record.WorkerID}, training.required)
@@ -277,9 +291,13 @@ func TestRecordTrainingCompletion_SaysWhetherItPassed(t *testing.T) {
 		paramScore:      "72",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, training.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		training.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "a fail below the passing mark")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, training.completed)
@@ -291,13 +309,25 @@ func TestRecordTrainingCompletion_SaysWhetherItPassed(t *testing.T) {
 		common.ParamWorkerID: training.record.WorkerID.String(),
 		paramCourseID:        training.course.ID.String(),
 	})
-	preview = agenttoolstest.PreviewWithoutWrites(t, training.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), direct)
-	})
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	preview = agenttoolstest.PreviewWithoutWrites(
+		t,
+		training.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), direct)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{common.ParamWorkerID: training.record.WorkerID.String()})))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{common.ParamWorkerID: training.record.WorkerID.String()},
+		),
+	))
 }
 
 func TestCloseWorkerTraining_WaiveNeedsAReason(t *testing.T) {
@@ -305,7 +335,7 @@ func TestCloseWorkerTraining_WaiveNeedsAReason(t *testing.T) {
 
 	training := newFakeTraining()
 	tool := newCloseWorkerTrainingTool(training)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			paramTrainingID:    training.record.ID.String(),
 			paramTrainingClose: "Waive",

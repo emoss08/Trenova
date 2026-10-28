@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -18,13 +18,13 @@ func (s *Service) fileSource(tenant pagination.TenantInfo) modeladapter.FileSour
 		return nil
 	}
 
-	return func(ctx context.Context, documentID string) (*agentports.MessageFileContent, error) {
+	return func(ctx context.Context, documentID string) (*assistantports.MessageFileContent, error) {
 		id, err := pulid.Parse(documentID)
 		if err != nil {
 			return nil, err
 		}
 
-		return s.files.ReadMessageFile(ctx, &agentports.ReadMessageFileRequest{
+		return s.files.ReadMessageFile(ctx, &assistantports.ReadMessageFileRequest{
 			TenantInfo: tenant,
 			DocumentID: id,
 		})

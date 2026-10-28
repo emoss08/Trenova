@@ -5,12 +5,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -74,12 +75,14 @@ func (s *CompactionWorkflowTestSuite) prepares(err error) {
 		Through:  39,
 		Before:   172_000,
 		After:    31_000,
-		Request:  &agentports.ChatCompletionRequest{System: "Summarize."},
+		Request:  &llmports.ChatCompletionRequest{System: "Summarize."},
 	}
 	if err != nil {
 		plan = nil
 	}
-	s.env.OnActivity(a.PrepareCompactionActivity, mock.Anything, mock.Anything).Return(plan, err).Once()
+	s.env.OnActivity(a.PrepareCompactionActivity, mock.Anything, mock.Anything).
+		Return(plan, err).
+		Once()
 }
 
 func (s *CompactionWorkflowTestSuite) ends() {
@@ -108,7 +111,7 @@ func (s *CompactionWorkflowTestSuite) TestSavesTheSummaryAndClosesTheTurn() {
 			s.False(in.Stream, "nobody reads the summary as it is written")
 			s.Equal("Summarize.", in.Request.System)
 
-			return &agentruntime.ModelReply{Completion: &agentports.ChatCompletionResult{
+			return &agentruntime.ModelReply{Completion: &llmports.ChatCompletionResult{
 				Text:            "- Customer 1 had 40 loads.",
 				ModelIdentifier: "test-model",
 			}}, nil
@@ -120,7 +123,7 @@ func (s *CompactionWorkflowTestSuite) TestSavesTheSummaryAndClosesTheTurn() {
 			s.saved = in
 
 			return &CompactionEnding{Event: temporaltype.StreamItem{
-				Event: agentports.AssistantEventCompactionFinished,
+				Event: assistantports.AssistantEventCompactionFinished,
 			}}, nil
 		},
 	).Once()
@@ -178,17 +181,21 @@ func TestCompactionEndingFor_TellsTheReaderHowItEnded(t *testing.T) {
 		Payload: payload,
 		Status:  conversation.AssistantTurnStatusStopped,
 	}, true)
-	assert.Equal(t, agentports.AssistantEventCompactionCancelled, cancelled.Event.Event)
-	data, ok := cancelled.Event.Data.(agentports.AssistantCompactionEvent)
+	assert.Equal(t, assistantports.AssistantEventCompactionCancelled, cancelled.Event.Event)
+	data, ok := cancelled.Event.Data.(assistantports.AssistantCompactionEvent)
 	assert.True(t, ok)
-	assert.True(t, data.AutoCompactOff, "the reader is told the conversation stopped compacting itself")
+	assert.True(
+		t,
+		data.AutoCompactOff,
+		"the reader is told the conversation stopped compacting itself",
+	)
 
 	failed := compactionEndingFor(&CompactionEndInput{
 		Payload: payload,
 		Status:  conversation.AssistantTurnStatusFailed,
 		Message: compactionFailedMessage,
 	}, false)
-	assert.Equal(t, agentports.AssistantEventError, failed.Event.Event)
+	assert.Equal(t, assistantports.AssistantEventError, failed.Event.Event)
 }
 
 /*
@@ -203,9 +210,14 @@ func TestCompactionCue_IsSetOnlyByAnAnsweredTurnThatFilledTheConversation(t *tes
 		Instructions: 6000, Messages: 40_000, ToolResults: 130_000,
 		Compactable: 150_000, Window: 200_000,
 	}
-	roomy := &conversation.ContextUsage{Instructions: 6000, Messages: 20_000, Compactable: 15_000, Window: 200_000}
-	result := func(usage *conversation.ContextUsage, off bool) *agentports.SendMessageResult {
-		return &agentports.SendMessageResult{Thread: &conversation.Thread{
+	roomy := &conversation.ContextUsage{
+		Instructions: 6000,
+		Messages:     20_000,
+		Compactable:  15_000,
+		Window:       200_000,
+	}
+	result := func(usage *conversation.ContextUsage, off bool) *assistantports.SendMessageResult {
+		return &assistantports.SendMessageResult{Thread: &conversation.Thread{
 			ContextUsage:   usage,
 			AutoCompactOff: off,
 		}}
@@ -244,7 +256,8 @@ func (s *AssistantTurnWorkflowTestSuite) TestStartsCompactingAConversationTheTur
 
 			return &StartedCompaction{TurnID: pulid.MustNew("atrn_")}, nil
 		},
-	).Once()
+	).
+		Once()
 
 	s.run()
 

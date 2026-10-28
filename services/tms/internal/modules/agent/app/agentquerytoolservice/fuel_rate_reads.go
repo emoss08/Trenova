@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -49,7 +49,7 @@ type listRateImportsTool struct {
 
 func newListRateImportsTool(
 	imports rateimportports.RateImportRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &listRateImportsTool{imports: imports}
 }
 
@@ -74,13 +74,13 @@ func (t *listRateImportsTool) ParamSchema() map[string]any {
 	})
 }
 
-func (t *listRateImportsTool) Policy() agentports.ToolPolicy {
+func (t *listRateImportsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceRateAgreement})
 }
 
 func (t *listRateImportsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

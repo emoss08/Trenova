@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -54,13 +54,13 @@ var classes = map[agent.EgressClass]classInfo{
 	},
 }
 
-func Render(policies []agentports.ToolPolicy) []byte {
+func Render(policies []agenttoolports.ToolPolicy) []byte {
 	sorted := slices.Clone(policies)
-	slices.SortStableFunc(sorted, func(a, b agentports.ToolPolicy) int {
+	slices.SortStableFunc(sorted, func(a, b agenttoolports.ToolPolicy) int {
 		return strings.Compare(a.Name, b.Name)
 	})
 
-	groups := make(map[agent.EgressClass][]agentports.ToolPolicy, len(classes))
+	groups := make(map[agent.EgressClass][]agenttoolports.ToolPolicy, len(classes))
 	for idx := range sorted {
 		class := sorted[idx].HighestEgress()
 		groups[class] = append(groups[class], sorted[idx])
@@ -166,7 +166,7 @@ and Confidential fields never reach a model at all.
 `, command, total)
 }
 
-func writeClassTable(buf *bytes.Buffer, policies []agentports.ToolPolicy) {
+func writeClassTable(buf *bytes.Buffer, policies []agenttoolports.ToolPolicy) {
 	buf.WriteString("## Classes\n\n")
 	buf.WriteString("| Class | Means | Runs at most | Held once tainted | Tools that reach it |\n")
 	buf.WriteString("| --- | --- | --- | --- | --- |\n")
@@ -183,7 +183,7 @@ func writeClassTable(buf *bytes.Buffer, policies []agentports.ToolPolicy) {
 	buf.WriteString("\n")
 }
 
-func writeGroup(buf *bytes.Buffer, class agent.EgressClass, policies []agentports.ToolPolicy) {
+func writeGroup(buf *bytes.Buffer, class agent.EgressClass, policies []agenttoolports.ToolPolicy) {
 	if len(policies) == 0 {
 		return
 	}
@@ -198,7 +198,7 @@ func writeGroup(buf *bytes.Buffer, class agent.EgressClass, policies []agentport
 			stringutils.MarkdownTableCell(fmt.Sprintf(
 				"%s (`%s`)",
 				stringutils.HumanizeCamelCaseSentence(
-					agentports.ReadingOrder(policy.Name),
+					agenttoolports.ReadingOrder(policy.Name),
 				),
 				policy.Name,
 			)),
@@ -212,7 +212,7 @@ func writeGroup(buf *bytes.Buffer, class agent.EgressClass, policies []agentport
 	buf.WriteString("\n")
 }
 
-func reaching(policies []agentports.ToolPolicy, class agent.EgressClass) int {
+func reaching(policies []agenttoolports.ToolPolicy, class agent.EgressClass) int {
 	count := 0
 	for idx := range policies {
 		if policies[idx].HasEgress(class) {
@@ -235,7 +235,7 @@ func classList(egress []agent.EgressClass) string {
 	return stringutils.CapitalizeFirst(strings.Join(names, ", "))
 }
 
-func condition(policy *agentports.ToolPolicy) string {
+func condition(policy *agenttoolports.ToolPolicy) string {
 	parts := make([]string, 0, 4)
 	if policy.Classify != nil {
 		parts = append(parts, "Each call is classified by what it reaches.")
@@ -261,7 +261,7 @@ func condition(policy *agentports.ToolPolicy) string {
 	return strings.Join(parts, " ")
 }
 
-func externalRead(policy *agentports.ToolPolicy) string {
+func externalRead(policy *agenttoolports.ToolPolicy) string {
 	var read string
 	switch policy.ReadsExternal {
 	case agent.ExternalReadAlways:
@@ -284,7 +284,7 @@ func externalRead(policy *agentports.ToolPolicy) string {
 	return read
 }
 
-func sourceLabels(policy *agentports.ToolPolicy) string {
+func sourceLabels(policy *agenttoolports.ToolPolicy) string {
 	if len(policy.Sources) == 0 {
 		return sourceLabel(policy.Source)
 	}

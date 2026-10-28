@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -77,7 +77,7 @@ func TestStreamChat_KeepsWhatArrivedWhenTheStreamDies(t *testing.T) {
 	// looking at when the turn ends is only the last attempt's text.
 	var streamed strings.Builder
 	request := chatRequest(pulid.Nil)
-	request.RetrySink = func(agentports.ChatRetryNotice) { streamed.Reset() }
+	request.RetrySink = func(llmports.ChatRetryNotice) { streamed.Reset() }
 	result, err := service.StreamChat(t.Context(), request, func(delta string) {
 		streamed.WriteString(delta)
 	})
@@ -153,9 +153,9 @@ func TestStreamChat_StartsOverOnTheNextProviderWhenAReplyDies(t *testing.T) {
 		chatProvider("finishes", good.URL, 20),
 	)
 
-	var notices []agentports.ChatRetryNotice
+	var notices []llmports.ChatRetryNotice
 	request := chatRequest(pulid.Nil)
-	request.RetrySink = func(notice agentports.ChatRetryNotice) { notices = append(notices, notice) }
+	request.RetrySink = func(notice llmports.ChatRetryNotice) { notices = append(notices, notice) }
 
 	var streamed strings.Builder
 	result, err := service.StreamChat(
@@ -188,7 +188,7 @@ func TestStreamChat_KeepsThePartialReplyOnceTheRetriesAreSpent(t *testing.T) {
 
 	retries := 0
 	request := chatRequest(pulid.Nil)
-	request.RetrySink = func(agentports.ChatRetryNotice) { retries++ }
+	request.RetrySink = func(llmports.ChatRetryNotice) { retries++ }
 
 	result, err := service.StreamChat(t.Context(), request, func(string) {})
 	require.NoError(t, err)
@@ -295,8 +295,10 @@ func TestStreamChat_ReturnsAReplyTheLimitCutBeforeAnyAnswer(t *testing.T) {
 func TestStreamChat_NamesTheCallTheLimitCut(t *testing.T) {
 	t.Parallel()
 
-	server := cutOffStreamServer(t,
-		`{"choices":[{"delta":{"content":"<tool_call>transfer_to_billing<arg_key>shipmentIds</arg_key><arg_value>[\"shp_"}}]}`)
+	server := cutOffStreamServer(
+		t,
+		`{"choices":[{"delta":{"content":"<tool_call>transfer_to_billing<arg_key>shipmentIds</arg_key><arg_value>[\"shp_"}}]}`,
+	)
 	provider := chatProvider("glm", server.URL, 10)
 
 	result, err := newTestService(t, provider).

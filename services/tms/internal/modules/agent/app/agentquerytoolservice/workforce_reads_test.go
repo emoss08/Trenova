@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
@@ -94,7 +94,7 @@ func TestWorkforceReads_AreClosedReadsOfTheirResource(t *testing.T) {
 	t.Parallel()
 
 	reads := &fakeWorkforceReads{}
-	for _, tool := range []agentports.AgentQueryTool{
+	for _, tool := range []agenttoolports.AgentQueryTool{
 		newListShipmentPermitsTool(reads, nil),
 	} {
 		assert.Equal(t, false, tool.ParamSchema()["additionalProperties"], tool.Name())

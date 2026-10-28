@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +21,7 @@ type replacingRepo struct {
 
 func (f *replacingRepo) GetByID(
 	_ context.Context,
-	req agentports.GetAgentMemoryByIDRequest,
+	req agentmemoryports.GetAgentMemoryByIDRequest,
 ) (*agent.Memory, error) {
 	memory, ok := f.stored[req.ID]
 	if !ok {
@@ -33,7 +33,7 @@ func (f *replacingRepo) GetByID(
 
 func (f *replacingRepo) SetStatus(
 	_ context.Context,
-	req agentports.SetAgentMemoryStatusQuery,
+	req agentmemoryports.SetAgentMemoryStatusQuery,
 ) (*agent.Memory, error) {
 	f.retired = append(f.retired, req.ID)
 	memory := *f.stored[req.ID]
@@ -80,7 +80,7 @@ func TestRemember_ReplacingThePersonsOwnMemoryKeepsItsReadersAndSavesAtOnce(t *t
 	repo := newReplacingRepo(old)
 	svc := replacingService(repo)
 
-	got, err := svc.Remember(t.Context(), &agentports.RememberRequest{
+	got, err := svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo:   tenant(),
 		Kind:         agent.MemoryKindInstruction,
 		Content:      "Show me the queue item, not the invoice",
@@ -113,7 +113,7 @@ func TestRemember_ReplacingAnOrganizationMemoryWaitsForSomeoneAllowedToChangeIt(
 	repo := newReplacingRepo(old)
 	svc := replacingService(repo)
 
-	got, err := svc.Remember(t.Context(), &agentports.RememberRequest{
+	got, err := svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo:   tenant(),
 		Content:      "Acme's terms are net 45",
 		PersonUserID: pulid.MustNew("usr_"),
@@ -134,7 +134,7 @@ func TestRemember_SomeoneElsesMemoryCannotBeReplaced(t *testing.T) {
 	repo := newReplacingRepo(old)
 	svc := replacingService(repo)
 
-	_, err := svc.Remember(t.Context(), &agentports.RememberRequest{
+	_, err := svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo:   tenant(),
 		Content:      "Something else",
 		PersonUserID: pulid.MustNew("usr_"),
@@ -153,7 +153,7 @@ func TestRemember_ARetiredMemoryHasNothingLeftToReplace(t *testing.T) {
 	repo := newReplacingRepo(old)
 	svc := replacingService(repo)
 
-	_, err := svc.Remember(t.Context(), &agentports.RememberRequest{
+	_, err := svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo:   tenant(),
 		Content:      "Show me the queue item",
 		PersonUserID: person,
@@ -183,7 +183,7 @@ func TestRemember_AnAgentReplacesOnlyItsOwnAgentMemory(t *testing.T) {
 	// memory keeps the replacement at once, so the answer shows as its status.
 	svc.permissions = &fakePermissions{manages: true}
 
-	got, err := svc.Remember(t.Context(), &agentports.RememberRequest{
+	got, err := svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo:        tenant(),
 		Kind:              agent.MemoryKindProcedure,
 		Content:           "Look up the move, then its stops, before assigning it",
@@ -196,7 +196,7 @@ func TestRemember_AnAgentReplacesOnlyItsOwnAgentMemory(t *testing.T) {
 	assert.Equal(t, agent.MemoryStatusActive, got.Status)
 	assert.Equal(t, agent.MemoryScopeAgent, got.Scope)
 
-	_, err = svc.Remember(t.Context(), &agentports.RememberRequest{
+	_, err = svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo:        tenant(),
 		Kind:              agent.MemoryKindProcedure,
 		Content:           "Something else",
@@ -219,7 +219,7 @@ func TestRemember_RestatingWhatAlreadyReplacedRetiresTheOldOne(t *testing.T) {
 	repo.found = kept
 	svc := replacingService(repo)
 
-	got, err := svc.Remember(t.Context(), &agentports.RememberRequest{
+	got, err := svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo:   tenant(),
 		Content:      "Show me the queue item",
 		PersonUserID: person,

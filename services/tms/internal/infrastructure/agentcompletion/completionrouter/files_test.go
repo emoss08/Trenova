@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -12,16 +12,19 @@ import (
 )
 
 type recordingFileReader struct {
-	seen []*agentports.ReadMessageFileRequest
+	seen []*assistantports.ReadMessageFileRequest
 }
 
 func (r *recordingFileReader) ReadMessageFile(
 	_ context.Context,
-	req *agentports.ReadMessageFileRequest,
-) (*agentports.MessageFileContent, error) {
+	req *assistantports.ReadMessageFileRequest,
+) (*assistantports.MessageFileContent, error) {
 	r.seen = append(r.seen, req)
 
-	return &agentports.MessageFileContent{Data: []byte("%PDF"), ContentType: "application/pdf"}, nil
+	return &assistantports.MessageFileContent{
+		Data:        []byte("%PDF"),
+		ContentType: "application/pdf",
+	}, nil
 }
 
 // A file is read within the tenant of the request that carries it, and only

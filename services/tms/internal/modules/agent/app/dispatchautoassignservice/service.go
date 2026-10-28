@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
@@ -78,8 +79,8 @@ func New(p Params) *Service {
 
 func (s *Service) Plan(
 	ctx context.Context,
-	req *agentports.DispatchPlanRequest,
-) (*agentports.DispatchPlan, error) {
+	req *dispatchconsoleports.DispatchPlanRequest,
+) (*dispatchconsoleports.DispatchPlan, error) {
 	control, err := s.dispatchControlRepo.GetOrCreate(
 		ctx,
 		req.TenantInfo.OrgID,
@@ -154,11 +155,11 @@ func emptyPlan(
 	control *dispatchcontrol.DispatchControl,
 	policy Policy,
 	now int64,
-) *agentports.DispatchPlan {
-	return &agentports.DispatchPlan{
-		Assignments:  []*agentports.DispatchPlannedAssignment{},
-		Uncovered:    []*agentports.DispatchUncoveredMove{},
-		Tours:        []*agentports.DispatchTour{},
+) *dispatchconsoleports.DispatchPlan {
+	return &dispatchconsoleports.DispatchPlan{
+		Assignments:  []*dispatchconsoleports.DispatchPlannedAssignment{},
+		Uncovered:    []*dispatchconsoleports.DispatchUncoveredMove{},
+		Tours:        []*dispatchconsoleports.DispatchTour{},
 		PlanningMode: control.ResolvedPlanningMode().String(),
 		ShadowMode:   policy.ShadowMode,
 		AutonomyTier: policy.Tier,
@@ -167,7 +168,7 @@ func emptyPlan(
 }
 
 func buildFilter(
-	req *agentports.DispatchPlanRequest,
+	req *dispatchconsoleports.DispatchPlanRequest,
 	control *dispatchcontrol.DispatchControl,
 	now int64,
 ) *shipmentports.DispatchBoardFilter {
@@ -196,7 +197,7 @@ type solveParams struct {
 	Now      int64
 }
 
-func (s *Service) solve(p *solveParams) *agentports.DispatchPlan {
+func (s *Service) solve(p *solveParams) *dispatchconsoleports.DispatchPlan {
 	if len(p.Snapshot.Drivers) == 0 {
 		return uncoveredOnlyPlan(p)
 	}
@@ -208,16 +209,16 @@ func (s *Service) solve(p *solveParams) *agentports.DispatchPlan {
 	return s.solveImmediate(p)
 }
 
-func uncoveredOnlyPlan(p *solveParams) *agentports.DispatchPlan {
+func uncoveredOnlyPlan(p *solveParams) *dispatchconsoleports.DispatchPlan {
 	plan := emptyPlan(p.Control, p.Policy, p.Now)
-	plan.Uncovered = make([]*agentports.DispatchUncoveredMove, 0, len(p.Moves))
+	plan.Uncovered = make([]*dispatchconsoleports.DispatchUncoveredMove, 0, len(p.Moves))
 	for _, move := range p.Moves {
 		plan.Uncovered = append(plan.Uncovered, uncoveredFor(move, nil, p.Control))
 	}
 	return plan
 }
 
-func (s *Service) solveImmediate(p *solveParams) *agentports.DispatchPlan {
+func (s *Service) solveImmediate(p *solveParams) *dispatchconsoleports.DispatchPlan {
 	drivers := p.Snapshot.Drivers
 
 	cost := make([][]float64, len(p.Moves))
@@ -264,14 +265,14 @@ type buildPlanParams struct {
 	Now      int64
 }
 
-func buildPlan(p *buildPlanParams) *agentports.DispatchPlan {
+func buildPlan(p *buildPlanParams) *dispatchconsoleports.DispatchPlan {
 	tier := p.Policy.Tier
 	threshold := p.Control.ConfidenceThreshold()
 
-	plan := &agentports.DispatchPlan{
-		Assignments:  make([]*agentports.DispatchPlannedAssignment, 0, len(p.Moves)),
-		Uncovered:    make([]*agentports.DispatchUncoveredMove, 0, len(p.Moves)),
-		Tours:        []*agentports.DispatchTour{},
+	plan := &dispatchconsoleports.DispatchPlan{
+		Assignments:  make([]*dispatchconsoleports.DispatchPlannedAssignment, 0, len(p.Moves)),
+		Uncovered:    make([]*dispatchconsoleports.DispatchUncoveredMove, 0, len(p.Moves)),
+		Tours:        []*dispatchconsoleports.DispatchTour{},
 		PlanningMode: dispatchcontrol.PlanningModeImmediate.String(),
 		ShadowMode:   p.Policy.ShadowMode,
 		AutonomyTier: tier,
@@ -308,8 +309,8 @@ func uncoveredFor(
 	move *shipmentports.BoardMove,
 	scores []*dispatchcandidateservice.CandidateScore,
 	control *dispatchcontrol.DispatchControl,
-) *agentports.DispatchUncoveredMove {
-	uncovered := &agentports.DispatchUncoveredMove{
+) *dispatchconsoleports.DispatchUncoveredMove {
+	uncovered := &dispatchconsoleports.DispatchUncoveredMove{
 		MoveID:              move.MoveID,
 		ProNumber:           move.ProNumber,
 		Reason:              "No eligible driver was available for this move",
@@ -358,9 +359,9 @@ func uncoveredFor(
 
 func (s *Service) recordPlan(
 	ctx context.Context,
-	req *agentports.DispatchPlanRequest,
+	req *dispatchconsoleports.DispatchPlanRequest,
 	policy Policy,
-	plan *agentports.DispatchPlan,
+	plan *dispatchconsoleports.DispatchPlan,
 ) ([]*agent.AgentProposal, error) {
 	if len(plan.Assignments) == 0 {
 		return nil, nil
@@ -432,8 +433,8 @@ func (s *Service) egressOf(proposal *agent.AgentProposal) agent.EgressClass {
 
 func (s *Service) applyAutoExecutable(
 	ctx context.Context,
-	req *agentports.DispatchPlanRequest,
-	plan *agentports.DispatchPlan,
+	req *dispatchconsoleports.DispatchPlanRequest,
+	plan *dispatchconsoleports.DispatchPlan,
 	proposals []*agent.AgentProposal,
 ) {
 	if plan.ShadowMode {
@@ -466,7 +467,9 @@ type assignMoveToolParams struct {
 	TrailerID       string `json:"trailerId,omitempty"`
 }
 
-func toolParamsFor(planned *agentports.DispatchPlannedAssignment) (map[string]any, error) {
+func toolParamsFor(
+	planned *dispatchconsoleports.DispatchPlannedAssignment,
+) (map[string]any, error) {
 	params := assignMoveToolParams{
 		ShipmentMoveID:  planned.MoveID.String(),
 		PrimaryWorkerID: planned.WorkerID.String(),
@@ -489,7 +492,7 @@ func toolParamsFor(planned *agentports.DispatchPlannedAssignment) (map[string]an
 	return out, nil
 }
 
-func actorFor(req *agentports.DispatchPlanRequest) *permissionports.RequestActor {
+func actorFor(req *dispatchconsoleports.DispatchPlanRequest) *permissionports.RequestActor {
 	return &permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    req.TenantInfo.UserID,

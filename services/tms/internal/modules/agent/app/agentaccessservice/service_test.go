@@ -4,17 +4,17 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/permchangetest"
-
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -285,12 +285,16 @@ func TestSetAgentAccess_RestrictsGrantsAndInvalidatesTheChangedRoles(t *testing.
 	f := newFixture(t)
 	f.grants.agentRoles[f.agent.ID] = []pulid.ID{f.roleB.ID}
 
-	access, err := f.service.SetAgentAccess(t.Context(), &agentdefinitionports.SetAgentAccessRequest{
-		TenantInfo: f.tenant,
-		AgentID:    f.agent.ID,
-		Mode:       agentdefinition.AccessRoles,
-		RoleIDs:    []pulid.ID{f.roleA.ID},
-	}, f.actor)
+	access, err := f.service.SetAgentAccess(
+		t.Context(),
+		&agentdefinitionports.SetAgentAccessRequest{
+			TenantInfo: f.tenant,
+			AgentID:    f.agent.ID,
+			Mode:       agentdefinition.AccessRoles,
+			RoleIDs:    []pulid.ID{f.roleA.ID},
+		},
+		f.actor,
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, agentdefinition.AccessRoles, access.Agent.AccessMode)
@@ -350,11 +354,15 @@ func TestSetAgentAccess_NeedsAgentAndRoleUpdate(t *testing.T) {
 			f := newFixture(t)
 			f.permissions.denied[denied] = true
 
-			_, err := f.service.SetAgentAccess(t.Context(), &agentdefinitionports.SetAgentAccessRequest{
-				TenantInfo: f.tenant,
-				AgentID:    f.agent.ID,
-				Mode:       agentdefinition.AccessRoles,
-			}, f.actor)
+			_, err := f.service.SetAgentAccess(
+				t.Context(),
+				&agentdefinitionports.SetAgentAccessRequest{
+					TenantInfo: f.tenant,
+					AgentID:    f.agent.ID,
+					Mode:       agentdefinition.AccessRoles,
+				},
+				f.actor,
+			)
 
 			assert.True(t, errortypes.IsAuthorizationError(err))
 			assert.Zero(t, f.db.transactions)
@@ -402,11 +410,15 @@ func TestSetAgentAccess_RemovingTheLastRoleKeepsItRestricted(t *testing.T) {
 	f.agent.AccessMode = agentdefinition.AccessRoles
 	f.grants.agentRoles[f.agent.ID] = []pulid.ID{f.roleA.ID}
 
-	access, err := f.service.SetAgentAccess(t.Context(), &agentdefinitionports.SetAgentAccessRequest{
-		TenantInfo: f.tenant,
-		AgentID:    f.agent.ID,
-		Mode:       agentdefinition.AccessRoles,
-	}, f.actor)
+	access, err := f.service.SetAgentAccess(
+		t.Context(),
+		&agentdefinitionports.SetAgentAccessRequest{
+			TenantInfo: f.tenant,
+			AgentID:    f.agent.ID,
+			Mode:       agentdefinition.AccessRoles,
+		},
+		f.actor,
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, agentdefinition.AccessRoles, access.Agent.AccessMode)
@@ -487,7 +499,12 @@ func TestInvalidate_AnnouncesOnceForAnyChangedRole(t *testing.T) {
 
 	f := newFixture(t)
 
-	f.service.invalidate(t.Context(), f.tenant, []pulid.ID{f.roleA.ID, f.roleB.ID}, []pulid.ID{f.roleA.ID})
+	f.service.invalidate(
+		t.Context(),
+		f.tenant,
+		[]pulid.ID{f.roleA.ID, f.roleB.ID},
+		[]pulid.ID{f.roleA.ID},
+	)
 
 	require.Len(t, f.notifier.Organizations(), 1)
 	assert.Equal(t, f.tenant.OrgID, f.notifier.Organizations()[0].OrgID)
@@ -504,7 +521,7 @@ func TestInvalidate_AnnouncesNothingWhenNoRoleChanged(t *testing.T) {
 }
 
 type summarizingRuntime struct {
-	agentports.AgentRuntime
+	agentruntimeports.AgentRuntime
 	names []string
 }
 
@@ -519,9 +536,9 @@ func (r summarizingRuntime) ToolSummaries(
 	return out
 }
 
-type policyTable map[string]agentports.ToolPolicy
+type policyTable map[string]agenttoolports.ToolPolicy
 
-func (p policyTable) Get(name string) (agentports.ToolPolicy, bool) {
+func (p policyTable) Get(name string) (agenttoolports.ToolPolicy, bool) {
 	policy, ok := p[name]
 	return policy, ok
 }
@@ -537,7 +554,13 @@ func TestHeldTools_ReadsEachToolsPolicy(t *testing.T) {
 
 	f := newFixture(t)
 	f.service.runtime = summarizingRuntime{
-		names: []string{"shipment_get", "customer_send_email", "agent_create_memory", "shipment_get", "gone"},
+		names: []string{
+			"shipment_get",
+			"customer_send_email",
+			"agent_create_memory",
+			"shipment_get",
+			"gone",
+		},
 	}
 	f.service.policies = policyTable{
 		"shipment_get": {Name: "shipment_get", Resource: "shipment"},

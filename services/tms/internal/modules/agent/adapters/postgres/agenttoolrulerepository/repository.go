@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/resultcache"
@@ -27,7 +27,7 @@ type repository struct {
 	db *postgres.Connection
 }
 
-func New(p Params) agentports.AgentToolRuleOverrideRepository {
+func New(p Params) agenttoolports.AgentToolRuleOverrideRepository {
 	return &repository{db: p.DB}
 }
 
@@ -51,7 +51,7 @@ func (r *repository) List(
 
 func (r *repository) Get(
 	ctx context.Context,
-	req agentports.GetToolRuleOverrideRequest,
+	req agenttoolports.GetToolRuleOverrideRequest,
 ) (*agent.ToolRuleOverride, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.ToolRuleOverride, error) {
 		o := agentdb.ToolRuleOverrides

@@ -5,8 +5,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -15,12 +15,12 @@ import (
 
 type recordingRealtimeService struct {
 	mu       sync.Mutex
-	requests []*agentports.PublishResourceInvalidationRequest
+	requests []*realtimeports.PublishResourceInvalidationRequest
 }
 
 func (s *recordingRealtimeService) PublishResourceInvalidation(
 	_ context.Context,
-	req *agentports.PublishResourceInvalidationRequest,
+	req *realtimeports.PublishResourceInvalidationRequest,
 ) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -28,10 +28,10 @@ func (s *recordingRealtimeService) PublishResourceInvalidation(
 	return nil
 }
 
-func (s *recordingRealtimeService) recordChanges() []*agentports.PublishResourceInvalidationRequest {
+func (s *recordingRealtimeService) recordChanges() []*realtimeports.PublishResourceInvalidationRequest {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	changes := make([]*agentports.PublishResourceInvalidationRequest, 0, len(s.requests))
+	changes := make([]*realtimeports.PublishResourceInvalidationRequest, 0, len(s.requests))
 	for _, req := range s.requests {
 		if req.Resource != "audit-logs" {
 			changes = append(changes, req)
@@ -93,7 +93,7 @@ func TestLogActions_PublishesOneBulkChangePerResource(t *testing.T) {
 
 	changes := realtime.recordChanges()
 	require.Len(t, changes, 2)
-	byResource := map[string]*agentports.PublishResourceInvalidationRequest{}
+	byResource := map[string]*realtimeports.PublishResourceInvalidationRequest{}
 	for _, change := range changes {
 		byResource[change.Resource] = change
 	}

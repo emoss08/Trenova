@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -12,7 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func briefingTool(t *testing.T, reader agentports.GraphQLReader) agentports.AgentQueryTool {
+func briefingTool(
+	t *testing.T,
+	reader graphqlreadports.GraphQLReader,
+) agenttoolports.AgentQueryTool {
 	t.Helper()
 
 	spec := dailyBriefingGetSpec()
@@ -22,8 +26,8 @@ func briefingTool(t *testing.T, reader agentports.GraphQLReader) agentports.Agen
 	return tool
 }
 
-func briefingAnswer(page any) map[string]*agentports.GraphQLReadResult {
-	return map[string]*agentports.GraphQLReadResult{
+func briefingAnswer(page any) map[string]*graphqlreadports.GraphQLReadResult {
+	return map[string]*graphqlreadports.GraphQLReadResult{
 		"TodaysBriefing": {Data: map[string]any{"todaysBriefing": page}},
 	}
 }

@@ -8,14 +8,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type stubChapters struct {
-	agentports.ChapterRepository
+	assistantports.ChapterRepository
 
 	chapters []*conversation.Chapter
 	err      error
@@ -23,7 +23,7 @@ type stubChapters struct {
 
 func (s *stubChapters) List(
 	context.Context,
-	agentports.ListChaptersRequest,
+	assistantports.ListChaptersRequest,
 ) ([]*conversation.Chapter, error) {
 	return s.chapters, s.err
 }
@@ -72,7 +72,11 @@ func TestSnapToChapter_EndsTheSummaryWhereTheLatestChapterInsideItStarts(t *test
 
 	older := spokenStretch(0, 9)
 
-	snapped, through := snapToChapter(older, 9, map[int]string{0: "Late loads", 6: "Acme invoice dispute"})
+	snapped, through := snapToChapter(
+		older,
+		9,
+		map[int]string{0: "Late loads", 6: "Acme invoice dispute"},
+	)
 
 	assert.Equal(t, 5, through)
 	assert.Equal(t, []int{0, 1, 2, 3, 4, 5}, sequencesOf(snapped),
@@ -203,11 +207,16 @@ func TestTranscriptLines_WithoutChaptersHasNoChapterLines(t *testing.T) {
 func TestCompactionTranscript_CarriesTheChapterTitles(t *testing.T) {
 	t.Parallel()
 
-	transcript := compactionTranscript(spokenStretch(0, 3), map[int]string{0: "Late loads", 2: "Acme"})
+	transcript := compactionTranscript(
+		spokenStretch(0, 3),
+		map[int]string{0: "Late loads", 2: "Acme"},
+	)
 
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"Chapter: Late loads\n\nPerson: m0\n\nAgent: m1\n\nChapter: Acme\n\nPerson: m2\n\nAgent: m3",
-		transcript)
+		transcript,
+	)
 }
 
 func TestChaptered_OnlyWhenAChapterStartsAtASpokenMessage(t *testing.T) {
@@ -243,7 +252,10 @@ func TestPrepareCompaction_SummarizesUpToTheLatestChapterStart(t *testing.T) {
 
 	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
 	conversations.messages = longConversation(12)
-	conversations.thread.ContextUsage = &conversation.ContextUsage{Instructions: 6200, Model: "claude-sonnet-4-5"}
+	conversations.thread.ContextUsage = &conversation.ContextUsage{
+		Instructions: 6200,
+		Model:        "claude-sonnet-4-5",
+	}
 	svc.chapters = &stubChapters{chapters: []*conversation.Chapter{
 		{ID: "achp_1", Title: "Customers 0 to 5", StartSequence: startedAt(0)},
 		{ID: "achp_2", Title: "Customers 6 to 9", StartSequence: startedAt(24)},
@@ -261,7 +273,13 @@ func TestPrepareCompaction_SummarizesUpToTheLatestChapterStart(t *testing.T) {
 	assert.Equal(t, 24, plan.Summarized)
 	assert.Contains(t, plan.Request.System, "divided into chapters")
 	transcript := plan.Request.Messages[0].Content
-	assert.True(t, strings.HasPrefix(transcript, "Chapter: Customers 0 to 5\n\nPerson: Which loads for customer 0?"))
+	assert.True(
+		t,
+		strings.HasPrefix(
+			transcript,
+			"Chapter: Customers 0 to 5\n\nPerson: Which loads for customer 0?",
+		),
+	)
 	assert.NotContains(t, transcript, "Customers 6 to 9")
 	assert.NotContains(t, transcript, "customer 6?")
 }
@@ -271,7 +289,10 @@ func TestPrepareCompaction_ReadsOnWhenTheChaptersCannotBeRead(t *testing.T) {
 
 	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
 	conversations.messages = longConversation(12)
-	conversations.thread.ContextUsage = &conversation.ContextUsage{Instructions: 6200, Model: "claude-sonnet-4-5"}
+	conversations.thread.ContextUsage = &conversation.ContextUsage{
+		Instructions: 6200,
+		Model:        "claude-sonnet-4-5",
+	}
 	svc.chapters = &stubChapters{err: errors.New("database is down")}
 	actor := testActor()
 
@@ -296,10 +317,30 @@ func chapterTranscriptInput(chapters map[int]string) *transcriptInput {
 		},
 		AgentName: "Dispatch desk",
 		Messages: []conversation.Message{
-			{Sequence: 1, Role: conversation.RoleUser, Content: "Which loads are late?", CreatedAt: 1_790_000_000},
-			{Sequence: 2, Role: conversation.RoleAssistant, Content: "Three are late.", CreatedAt: 1_790_000_010},
-			{Sequence: 3, Role: conversation.RoleUser, Content: "Open the Acme dispute", CreatedAt: 1_790_000_020},
-			{Sequence: 4, Role: conversation.RoleAssistant, Content: "It is open.", CreatedAt: 1_790_000_030},
+			{
+				Sequence:  1,
+				Role:      conversation.RoleUser,
+				Content:   "Which loads are late?",
+				CreatedAt: 1_790_000_000,
+			},
+			{
+				Sequence:  2,
+				Role:      conversation.RoleAssistant,
+				Content:   "Three are late.",
+				CreatedAt: 1_790_000_010,
+			},
+			{
+				Sequence:  3,
+				Role:      conversation.RoleUser,
+				Content:   "Open the Acme dispute",
+				CreatedAt: 1_790_000_020,
+			},
+			{
+				Sequence:  4,
+				Role:      conversation.RoleAssistant,
+				Content:   "It is open.",
+				CreatedAt: 1_790_000_030,
+			},
 		},
 		Chapters:   chapters,
 		ExportedAt: 1_790_000_070,
@@ -322,7 +363,11 @@ func TestRenderTranscript_NumbersTheChaptersInTheOrderTheyStart(t *testing.T) {
 	assert.Less(t, first, strings.Index(body, "Which loads are late?"))
 	assert.Less(t, strings.Index(body, "Three are late."), second)
 	assert.Less(t, second, strings.Index(body, "Open the Acme dispute"))
-	assert.Less(t, strings.Index(body, "- **Last message:**"), strings.Index(body, "- **Chapters:**"))
+	assert.Less(
+		t,
+		strings.Index(body, "- **Last message:**"),
+		strings.Index(body, "- **Chapters:**"),
+	)
 	assert.Less(t, strings.Index(body, "- **Chapters:**"), strings.Index(body, "- **Messages:**"))
 }
 
@@ -349,7 +394,10 @@ func TestTranscript_HeadsEachChapterFromTheConversationsChapters(t *testing.T) {
 		{ID: "achp_3", Title: "Being answered"},
 	}}
 
-	transcript, err := svc.Transcript(t.Context(), agentports.GetThreadRequest{ID: input.Thread.ID})
+	transcript, err := svc.Transcript(
+		t.Context(),
+		assistantports.GetThreadRequest{ID: input.Thread.ID},
+	)
 	require.NoError(t, err)
 
 	assert.Contains(t, transcript.Body, "- **Chapters:** 2\n",

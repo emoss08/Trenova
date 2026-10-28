@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -51,7 +51,7 @@ type Params struct {
 	FiscalPeriodRepo  fiscalperiodports.FiscalPeriodRepository
 	Generator         seqgen.Generator
 	AuditService      auditports.AuditService
-	Realtime          agentports.RealtimeService
+	Realtime          realtimeports.RealtimeService
 	Sync              accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
 }
 
@@ -74,7 +74,7 @@ type Service struct {
 	fiscalPeriodRepo  fiscalperiodports.FiscalPeriodRepository
 	generator         seqgen.Generator
 	auditService      auditports.AuditService
-	realtime          agentports.RealtimeService
+	realtime          realtimeports.RealtimeService
 	sync              accountingsyncports.AccountingSyncEnqueuer
 }
 

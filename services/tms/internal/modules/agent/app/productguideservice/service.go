@@ -12,7 +12,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsearch"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/productguideports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -55,8 +56,8 @@ type Params struct {
 	Logger         *zap.Logger
 	Permissions    permissionports.PermissionEngine
 	Organizations  tenantports.OrganizationRepository
-	Vectorizer     agentports.QueryVectorizer    `optional:"true"`
-	CatalogVectors agentports.CatalogVectorIndex `optional:"true"`
+	Vectorizer     retrievalports.QueryVectorizer    `optional:"true"`
+	CatalogVectors retrievalports.CatalogVectorIndex `optional:"true"`
 }
 
 type Service struct {
@@ -66,9 +67,9 @@ type Service struct {
 	organizations tenantports.OrganizationRepository
 	index         []indexedPage
 	resources     *permission.Registry
-	vectorizer    agentports.QueryVectorizer
-	vectors       agentports.CatalogVectorIndex
-	items         []agentports.EmbeddingCatalogItem
+	vectorizer    retrievalports.QueryVectorizer
+	vectors       retrievalports.CatalogVectorIndex
+	items         []retrievalports.EmbeddingCatalogItem
 }
 
 type indexedPage struct {
@@ -88,7 +89,7 @@ type indexedTask struct {
 	steps    map[string]struct{}
 }
 
-func New(p Params) agentports.ProductGuide {
+func New(p Params) productguideports.ProductGuide {
 	return newService(p, productguide.Default)
 }
 
@@ -146,8 +147,8 @@ type scored struct {
 
 func (s *Service) Search(
 	ctx context.Context,
-	req *agentports.ProductGuideSearchRequest,
-) ([]agentports.ProductGuideMatch, error) {
+	req *productguideports.ProductGuideSearchRequest,
+) ([]productguideports.ProductGuideMatch, error) {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = DefaultLimit
@@ -155,13 +156,13 @@ func (s *Service) Search(
 	limit = min(limit, MaxLimit)
 
 	onlyPage := strings.TrimSpace(req.Page)
-	var similarities agentports.CatalogSimilarities
+	var similarities retrievalports.CatalogSimilarities
 	if onlyPage == "" {
 		similarities = s.similarities(ctx, req)
 	}
 	candidates := s.ranked(req.Query, onlyPage, similarities, limit)
 	if len(candidates) == 0 {
-		return []agentports.ProductGuideMatch{}, nil
+		return []productguideports.ProductGuideMatch{}, nil
 	}
 
 	pages := make([]*productguide.Page, 0, len(candidates))
@@ -173,10 +174,10 @@ func (s *Service) Search(
 		return nil, err
 	}
 
-	matches := make([]agentports.ProductGuideMatch, 0, len(candidates))
+	matches := make([]productguideports.ProductGuideMatch, 0, len(candidates))
 	for _, candidate := range candidates {
 		canOpen, missing := access.check(candidate.entry.page)
-		matches = append(matches, agentports.ProductGuideMatch{
+		matches = append(matches, productguideports.ProductGuideMatch{
 			Page:    candidate.entry.page,
 			Task:    candidate.task,
 			CanOpen: canOpen,
@@ -281,8 +282,8 @@ func bestTask(entry *indexedPage, terms map[string]struct{}) (*productguide.Task
 
 func (s *Service) Destination(
 	ctx context.Context,
-	req *agentports.ProductGuideDestinationRequest,
-) (*agentports.ProductGuideDestination, error) {
+	req *productguideports.ProductGuideDestinationRequest,
+) (*productguideports.ProductGuideDestination, error) {
 	entity := strings.TrimSpace(req.Entity)
 	pagePath := strings.TrimSpace(req.Page)
 
@@ -356,7 +357,7 @@ func (s *Service) Destination(
 		))
 	}
 
-	return &agentports.ProductGuideDestination{Path: path, Page: page, Label: label}, nil
+	return &productguideports.ProductGuideDestination{Path: path, Page: page, Label: label}, nil
 }
 
 func (s *Service) recordEntities() []string {

@@ -8,15 +8,17 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // baselineCall is one write whose target is pinned as it is decided.
 type baselineCall struct {
-	req        *agentports.RunRequest
-	tool       agentports.AgentTool
-	call       agentports.ToolCall
+	req        *agentruntimeports.RunRequest
+	tool       agenttoolports.AgentTool
+	call       llmports.ToolCall
 	proposalID pulid.ID
 	persist    bool
 	// fileRefused files the write even when its preview says it would be
@@ -35,12 +37,12 @@ type baselineCall struct {
 func (s *Service) fileBaseline(
 	ctx context.Context,
 	b *baselineCall,
-) (*agentports.ProposalTarget, *agentports.ProposalBaselineResult) {
+) (*agentruntimeports.ProposalTarget, *agentruntimeports.ProposalBaselineResult) {
 	if s.previews == nil {
 		return s.snapshotTarget(ctx, b.req, b.tool, b.call), nil
 	}
 
-	result := s.previews.Baseline(ctx, &agentports.ProposalBaselineRequest{
+	result := s.previews.Baseline(ctx, &agentruntimeports.ProposalBaselineRequest{
 		ProposalID:  b.proposalID,
 		Tool:        b.tool,
 		Params:      runToolParams(b.req, b.call.ID, b.call.Arguments),
@@ -60,11 +62,11 @@ func (s *Service) fileBaseline(
 // the earlier one changes, so the later one is filed as it stands and the
 // plan's preview says it depends on the earlier step.
 func dependsOnEarlierStep(
-	tool agentports.AgentTool,
-	call *agentports.ToolCall,
-	proposedSoFar []agentports.PendingAction,
+	tool agenttoolports.AgentTool,
+	call *llmports.ToolCall,
+	proposedSoFar []agentruntimeports.PendingAction,
 ) bool {
-	targeted, ok := tool.(agentports.TargetedTool)
+	targeted, ok := tool.(agenttoolports.TargetedTool)
 	if !ok {
 		return false
 	}

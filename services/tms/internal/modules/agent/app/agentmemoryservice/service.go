@@ -22,7 +22,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -52,12 +54,15 @@ type SubjectLabeler interface {
 	Label(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
-		ref agentports.MemorySubjectRef,
+		ref agentmemoryports.MemorySubjectRef,
 	) (string, error)
 }
 
 type runReader interface {
-	GetByID(ctx context.Context, req agentports.GetAgentRunByIDRequest) (*agent.AgentRun, error)
+	GetByID(
+		ctx context.Context,
+		req agentruntimeports.GetAgentRunByIDRequest,
+	) (*agent.AgentRun, error)
 }
 
 type actionLogger interface {
@@ -68,19 +73,19 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         agentports.AgentMemoryRepository
-	Runs         agentports.AgentRunRepository
+	Repo         agentmemoryports.AgentMemoryRepository
+	Runs         agentruntimeports.AgentRunRepository
 	Labeler      SubjectLabeler
 	AuditService auditports.AuditService
 	// Subjects reads which records a shipment, a document or a message
 	// names. Without it a turn reads the memories of the records it is
 	// directly about and no others.
-	Subjects agentports.AgentMemorySubjectRepository `optional:"true"`
+	Subjects agentmemoryports.AgentMemorySubjectRepository `optional:"true"`
 	// Ranker orders the memories a prompt may carry. Without one they are
 	// ordered by how recently they were recorded and how often they are used.
-	Ranker  agentports.MemoryRanker         `optional:"true"`
-	Indexer agentports.RetrievalIndexer     `optional:"true"`
-	Vectors agentports.MemoryVectorSearcher `optional:"true"`
+	Ranker  agentmemoryports.MemoryRanker       `optional:"true"`
+	Indexer retrievalports.RetrievalIndexer     `optional:"true"`
+	Vectors retrievalports.MemoryVectorSearcher `optional:"true"`
 	// Roles says which roles a person holds, so a memory kept for a role
 	// reaches its holders. Without it only the organization's and a person's
 	// own memories are read.
@@ -95,20 +100,20 @@ type Params struct {
 
 type Service struct {
 	l           *zap.Logger
-	repo        agentports.AgentMemoryRepository
+	repo        agentmemoryports.AgentMemoryRepository
 	runs        runReader
 	labeler     SubjectLabeler
 	audit       actionLogger
 	subjects    SubjectResolver
-	ranker      agentports.MemoryRanker
-	indexer     agentports.RetrievalIndexer
-	vectors     agentports.MemoryVectorSearcher
+	ranker      agentmemoryports.MemoryRanker
+	indexer     retrievalports.RetrievalIndexer
+	vectors     retrievalports.MemoryVectorSearcher
 	roles       roleReader
 	security    permissionports.SecurityAuditor
 	permissions permissionports.PermissionEngine
 }
 
-func New(p Params) agentports.AgentMemoryService {
+func New(p Params) agentmemoryports.AgentMemoryService {
 	ranker := p.Ranker
 	if ranker == nil {
 		ranker = NewRecencyRanker()
@@ -186,7 +191,7 @@ func errSharedMemoryManaged() error {
 
 func (s *Service) Remember(
 	ctx context.Context,
-	req *agentports.RememberRequest,
+	req *agentmemoryports.RememberRequest,
 	actor *permissionports.RequestActor,
 ) (*agent.Memory, error) {
 	return s.remember(ctx, req, actor, s.manages(ctx, req.TenantInfo, actor))
@@ -197,7 +202,7 @@ func (s *Service) Remember(
 // other caller asks the permission engine.
 func (s *Service) remember(
 	ctx context.Context,
-	req *agentports.RememberRequest,
+	req *agentmemoryports.RememberRequest,
 	actor *permissionports.RequestActor,
 	manages bool,
 ) (*agent.Memory, error) {
@@ -246,7 +251,7 @@ func (s *Service) refresh(
 	}
 
 	now := timeutils.NowUnix()
-	if err := s.repo.MarkUsed(ctx, agentports.MarkAgentMemoriesUsedRequest{
+	if err := s.repo.MarkUsed(ctx, agentmemoryports.MarkAgentMemoriesUsedRequest{
 		TenantInfo: tenant,
 		IDs:        []pulid.ID{existing.ID},
 		At:         now,
@@ -262,18 +267,18 @@ func (s *Service) refresh(
 
 func (s *Service) PreviewRemember(
 	ctx context.Context,
-	req *agentports.RememberRequest,
+	req *agentmemoryports.RememberRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.RememberPlan, error) {
+) (*agentmemoryports.RememberPlan, error) {
 	return s.planRemember(ctx, req, actor, s.manages(ctx, req.TenantInfo, actor))
 }
 
 func (s *Service) planRemember(
 	ctx context.Context,
-	req *agentports.RememberRequest,
+	req *agentmemoryports.RememberRequest,
 	actor *permissionports.RequestActor,
 	manages bool,
-) (*agentports.RememberPlan, error) {
+) (*agentmemoryports.RememberPlan, error) {
 	if actor == nil {
 		return nil, errortypes.NewValidationError(
 			"actor",
@@ -285,7 +290,7 @@ func (s *Service) planRemember(
 	entity := NewMemory(req, actor)
 
 	if req.RunID.IsNotNil() {
-		if run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+		if run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 			ID:         req.RunID,
 			TenantInfo: &req.TenantInfo,
 		}); err != nil {
@@ -308,7 +313,7 @@ func (s *Service) planRemember(
 		}
 	}
 
-	plan := &agentports.RememberPlan{Memory: entity}
+	plan := &agentmemoryports.RememberPlan{Memory: entity}
 	if req.Replaces.IsNotNil() {
 		replaced, held, err := s.planReplacement(ctx, req, entity)
 		if err != nil {
@@ -351,7 +356,10 @@ func (s *Service) planRemember(
 	return plan, nil
 }
 
-func NewMemory(req *agentports.RememberRequest, actor *permissionports.RequestActor) *agent.Memory {
+func NewMemory(
+	req *agentmemoryports.RememberRequest,
+	actor *permissionports.RequestActor,
+) *agent.Memory {
 	kind := req.Kind
 	if kind == "" {
 		kind = agent.MemoryKindFact
@@ -416,7 +424,7 @@ func NewMemory(req *agentports.RememberRequest, actor *permissionports.RequestAc
 
 func (s *Service) Update(
 	ctx context.Context,
-	req *agentports.UpdateAgentMemoryRequest,
+	req *agentmemoryports.UpdateAgentMemoryRequest,
 	actor *permissionports.RequestActor,
 ) (*agent.Memory, error) {
 	if !actor.IsUser() {
@@ -427,7 +435,7 @@ func (s *Service) Update(
 		)
 	}
 
-	entity, err := s.repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+	entity, err := s.repo.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -503,7 +511,7 @@ func mayChangeStatus(
 
 func (s *Service) SetStatus(
 	ctx context.Context,
-	req agentports.SetAgentMemoryStatusRequest,
+	req agentmemoryports.SetAgentMemoryStatusRequest,
 	actor *permissionports.RequestActor,
 ) (*agent.Memory, error) {
 	return s.setStatus(ctx, &req, actor, s.manages(ctx, req.TenantInfo, actor))
@@ -511,7 +519,7 @@ func (s *Service) SetStatus(
 
 func (s *Service) PreviewSetStatus(
 	ctx context.Context,
-	req *agentports.SetAgentMemoryStatusRequest,
+	req *agentmemoryports.SetAgentMemoryStatusRequest,
 	actor *permissionports.RequestActor,
 ) (*agent.Memory, error) {
 	return s.statusTarget(ctx, req, actor, s.manages(ctx, req.TenantInfo, actor))
@@ -522,7 +530,7 @@ func (s *Service) PreviewSetStatus(
 // the write goes on from it.
 func (s *Service) statusTarget(
 	ctx context.Context,
-	req *agentports.SetAgentMemoryStatusRequest,
+	req *agentmemoryports.SetAgentMemoryStatusRequest,
 	actor *permissionports.RequestActor,
 	manages bool,
 ) (*agent.Memory, error) {
@@ -537,7 +545,7 @@ func (s *Service) statusTarget(
 		return nil, err
 	}
 
-	current, err := s.repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+	current, err := s.repo.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -553,7 +561,7 @@ func (s *Service) statusTarget(
 
 func (s *Service) setStatus(
 	ctx context.Context,
-	req *agentports.SetAgentMemoryStatusRequest,
+	req *agentmemoryports.SetAgentMemoryStatusRequest,
 	actor *permissionports.RequestActor,
 	manages bool,
 ) (*agent.Memory, error) {
@@ -572,7 +580,7 @@ func (s *Service) setStatus(
 		return nil, err
 	}
 
-	updated, err := s.repo.SetStatus(ctx, agentports.SetAgentMemoryStatusQuery{
+	updated, err := s.repo.SetStatus(ctx, agentmemoryports.SetAgentMemoryStatusQuery{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 		Status:     change.Status,
@@ -592,7 +600,7 @@ func (s *Service) setStatus(
 
 func (s *Service) Review(
 	ctx context.Context,
-	req agentports.ReviewAgentMemoryRequest,
+	req agentmemoryports.ReviewAgentMemoryRequest,
 	actor *permissionports.RequestActor,
 ) (*agent.Memory, error) {
 	if !actor.IsUser() {
@@ -603,7 +611,7 @@ func (s *Service) Review(
 		)
 	}
 
-	current, err := s.repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+	current, err := s.repo.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -614,7 +622,7 @@ func (s *Service) Review(
 		return nil, err
 	}
 
-	reviewed, err := s.repo.Review(ctx, agentports.ReviewAgentMemoryQuery{
+	reviewed, err := s.repo.Review(ctx, agentmemoryports.ReviewAgentMemoryQuery{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 		ByUserID:   actor.UserID,
@@ -686,7 +694,7 @@ func (s *Service) recordReview(
 
 func (s *Service) ApproveSuggestion(
 	ctx context.Context,
-	req *agentports.ApproveAgentMemorySuggestionRequest,
+	req *agentmemoryports.ApproveAgentMemorySuggestionRequest,
 	actor *permissionports.RequestActor,
 ) (*agent.Memory, error) {
 	if !actor.IsUser() {
@@ -718,19 +726,22 @@ func (s *Service) ApproveSuggestion(
 		return nil, me
 	}
 
-	approved, err := s.repo.ResolveSuggestion(ctx, agentports.ResolveAgentMemorySuggestionRequest{
-		ID:          req.ID,
-		TenantInfo:  req.TenantInfo,
-		Status:      agent.MemoryStatusActive,
-		Kind:        candidate.Kind,
-		Content:     candidate.Content,
-		Scope:       candidate.Scope,
-		OwnerUserID: pulid.ConvertFromPtr(current.OwnerUserID),
-		RoleID:      pulid.ConvertFromPtr(current.RoleID),
-		ByUserID:    actor.UserID,
-		At:          timeutils.NowUnix(),
-		Version:     req.Version,
-	})
+	approved, err := s.repo.ResolveSuggestion(
+		ctx,
+		agentmemoryports.ResolveAgentMemorySuggestionRequest{
+			ID:          req.ID,
+			TenantInfo:  req.TenantInfo,
+			Status:      agent.MemoryStatusActive,
+			Kind:        candidate.Kind,
+			Content:     candidate.Content,
+			Scope:       candidate.Scope,
+			OwnerUserID: pulid.ConvertFromPtr(current.OwnerUserID),
+			RoleID:      pulid.ConvertFromPtr(current.RoleID),
+			ByUserID:    actor.UserID,
+			At:          timeutils.NowUnix(),
+			Version:     req.Version,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -773,7 +784,7 @@ func approvedScope(requested agent.MemoryScope, suggestion *agent.Memory) agent.
 
 func (s *Service) DismissSuggestion(
 	ctx context.Context,
-	req agentports.DismissAgentMemorySuggestionRequest,
+	req agentmemoryports.DismissAgentMemorySuggestionRequest,
 	actor *permissionports.RequestActor,
 ) (*agent.Memory, error) {
 	if !actor.IsUser() {
@@ -789,14 +800,17 @@ func (s *Service) DismissSuggestion(
 		return nil, err
 	}
 
-	dismissed, err := s.repo.ResolveSuggestion(ctx, agentports.ResolveAgentMemorySuggestionRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-		Status:     agent.MemoryStatusDismissed,
-		ByUserID:   actor.UserID,
-		At:         timeutils.NowUnix(),
-		Version:    req.Version,
-	})
+	dismissed, err := s.repo.ResolveSuggestion(
+		ctx,
+		agentmemoryports.ResolveAgentMemorySuggestionRequest{
+			ID:         req.ID,
+			TenantInfo: req.TenantInfo,
+			Status:     agent.MemoryStatusDismissed,
+			ByUserID:   actor.UserID,
+			At:         timeutils.NowUnix(),
+			Version:    req.Version,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -817,7 +831,7 @@ func (s *Service) suggestion(
 	id pulid.ID,
 	tenant pagination.TenantInfo,
 ) (*agent.Memory, error) {
-	current, err := s.repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+	current, err := s.repo.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID:         id,
 		TenantInfo: tenant,
 	})
@@ -837,22 +851,22 @@ func (s *Service) suggestion(
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req agentports.GetAgentMemoryByIDRequest,
+	req agentmemoryports.GetAgentMemoryByIDRequest,
 ) (*agent.Memory, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *agentports.ListAgentMemoryConnectionRequest,
+	req *agentmemoryports.ListAgentMemoryConnectionRequest,
 ) (*pagination.CursorListResult[*agent.Memory], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Recall(
 	ctx context.Context,
-	req agentports.RecallAgentMemoriesRequest,
-) ([]agentports.RecalledMemory, error) {
+	req agentmemoryports.RecallAgentMemoriesRequest,
+) ([]agentmemoryports.RecalledMemory, error) {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = agent.DefaultMemoryRecallLimit
@@ -861,7 +875,7 @@ func (s *Service) Recall(
 
 	reader := s.promptReader(ctx, req.TenantInfo, req.ReaderUserID)
 
-	search := agentports.SearchAgentMemoriesRequest{
+	search := agentmemoryports.SearchAgentMemoriesRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Reader:            reader,
@@ -874,7 +888,10 @@ func (s *Service) Recall(
 		Limit:             limit,
 	}
 	if req.SubjectType != "" && req.SubjectID.IsNotNil() {
-		search.Subject = &agentports.MemorySubjectRef{Type: req.SubjectType, ID: req.SubjectID}
+		search.Subject = &agentmemoryports.MemorySubjectRef{
+			Type: req.SubjectType,
+			ID:   req.SubjectID,
+		}
 	}
 
 	found, err := s.repo.Search(ctx, search)
@@ -893,10 +910,13 @@ func (s *Service) Recall(
 	return s.fuseRecall(ctx, &search, found, similar)
 }
 
-func recalledAs(memories []*agent.Memory, match agent.MemoryMatch) []agentports.RecalledMemory {
-	recalled := make([]agentports.RecalledMemory, 0, len(memories))
+func recalledAs(
+	memories []*agent.Memory,
+	match agent.MemoryMatch,
+) []agentmemoryports.RecalledMemory {
+	recalled := make([]agentmemoryports.RecalledMemory, 0, len(memories))
 	for _, memory := range memories {
-		recalled = append(recalled, agentports.RecalledMemory{Memory: memory, Match: match})
+		recalled = append(recalled, agentmemoryports.RecalledMemory{Memory: memory, Match: match})
 	}
 
 	return recalled
@@ -904,14 +924,14 @@ func recalledAs(memories []*agent.Memory, match agent.MemoryMatch) []agentports.
 
 func (s *Service) similar(
 	ctx context.Context,
-	req *agentports.RecallAgentMemoriesRequest,
-	search *agentports.SearchAgentMemoriesRequest,
-) (agentports.SimilarMemories, bool) {
+	req *agentmemoryports.RecallAgentMemoriesRequest,
+	search *agentmemoryports.SearchAgentMemoriesRequest,
+) (retrievalports.SimilarMemories, bool) {
 	if s.vectors == nil {
-		return agentports.SimilarMemories{}, false
+		return retrievalports.SimilarMemories{}, false
 	}
 
-	similar, err := s.vectors.SimilarMemories(ctx, &agentports.SimilarMemoriesRequest{
+	similar, err := s.vectors.SimilarMemories(ctx, &retrievalports.SimilarMemoriesRequest{
 		TenantInfo:  search.TenantInfo,
 		Text:        search.Query,
 		Limit:       search.Limit * recallCandidateFactor,
@@ -922,7 +942,7 @@ func (s *Service) similar(
 			zap.String("organization", search.TenantInfo.OrgID.String()),
 			zap.Error(err),
 		)
-		return agentports.SimilarMemories{}, false
+		return retrievalports.SimilarMemories{}, false
 	}
 
 	return similar, similar.Semantics.Used
@@ -930,10 +950,10 @@ func (s *Service) similar(
 
 func (s *Service) fuseRecall(
 	ctx context.Context,
-	search *agentports.SearchAgentMemoriesRequest,
+	search *agentmemoryports.SearchAgentMemoriesRequest,
 	found []*agent.Memory,
-	similar agentports.SimilarMemories,
-) ([]agentports.RecalledMemory, error) {
+	similar retrievalports.SimilarMemories,
+) ([]agentmemoryports.RecalledMemory, error) {
 	byID := make(map[pulid.ID]*agent.Memory, len(found)+len(similar.Memories))
 	keywordIDs := make([]pulid.ID, 0, len(found))
 	for _, memory := range found {
@@ -976,7 +996,7 @@ func FuseRecall(
 	byID map[pulid.ID]*agent.Memory,
 	keywordIDs, vectorIDs []pulid.ID,
 	limit int,
-) []agentports.RecalledMemory {
+) []agentmemoryports.RecalledMemory {
 	scores := rankfusion.Reciprocal(rankfusion.DefaultK, keywordIDs, vectorIDs)
 	order := make([]pulid.ID, 0, len(scores))
 	order = append(order, keywordIDs...)
@@ -989,13 +1009,13 @@ func FuseRecall(
 		return cmp.Compare(scores[b], scores[a])
 	})
 
-	recalled := make([]agentports.RecalledMemory, 0, min(len(order), limit))
+	recalled := make([]agentmemoryports.RecalledMemory, 0, min(len(order), limit))
 	for _, id := range order {
 		memory, ok := byID[id]
 		if !ok {
 			continue
 		}
-		recalled = append(recalled, agentports.RecalledMemory{
+		recalled = append(recalled, agentmemoryports.RecalledMemory{
 			Memory: memory,
 			Match:  recallMatch(slices.Contains(keywordIDs, id), slices.Contains(vectorIDs, id)),
 		})
@@ -1020,8 +1040,8 @@ func recallMatch(words, meaning bool) agent.MemoryMatch {
 
 func (s *Service) ForContext(
 	ctx context.Context,
-	req agentports.MemoryContextRequest,
-) (*agentports.MemoryContext, error) {
+	req agentmemoryports.MemoryContextRequest,
+) (*agentmemoryports.MemoryContext, error) {
 	now := timeutils.NowUnix()
 
 	subjects, err := s.subjects.Resolve(ctx, req.TenantInfo, req.Records)
@@ -1034,7 +1054,7 @@ func (s *Service) ForContext(
 
 	reader := s.promptReader(ctx, req.TenantInfo, req.ReaderUserID)
 
-	memories, err := s.repo.ListActive(ctx, agentports.ListActiveAgentMemoriesRequest{
+	memories, err := s.repo.ListActive(ctx, agentmemoryports.ListActiveAgentMemoriesRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Reader:            reader,
@@ -1052,7 +1072,7 @@ func (s *Service) ForContext(
 	if ranker == nil {
 		ranker = NewRecencyRanker()
 	}
-	ranked, err := ranker.RankMemories(ctx, &agentports.RankMemoriesRequest{
+	ranked, err := ranker.RankMemories(ctx, &agentmemoryports.RankMemoriesRequest{
 		TenantInfo: req.TenantInfo,
 		Now:        now,
 		Memories:   memories,
@@ -1063,22 +1083,25 @@ func (s *Service) ForContext(
 			zap.String("organization", req.TenantInfo.OrgID.String()),
 			zap.Error(err),
 		)
-		ranked = agentports.RankedMemories{Memories: RankByRecencyAndUse(memories, now)}
+		ranked = agentmemoryports.RankedMemories{Memories: RankByRecencyAndUse(memories, now)}
 	}
 
-	return &agentports.MemoryContext{
+	return &agentmemoryports.MemoryContext{
 		Memories:  ranked.Memories,
 		Subjects:  subjects,
 		Relevance: Relevance(req.Focus, req.Text, ranked),
 	}, nil
 }
 
-func (s *Service) RecordUse(ctx context.Context, req agentports.RecordMemoryUseRequest) error {
+func (s *Service) RecordUse(
+	ctx context.Context,
+	req agentmemoryports.RecordMemoryUseRequest,
+) error {
 	if len(req.IDs) == 0 {
 		return nil
 	}
 
-	return s.repo.MarkUsed(ctx, agentports.MarkAgentMemoriesUsedRequest{
+	return s.repo.MarkUsed(ctx, agentmemoryports.MarkAgentMemoriesUsedRequest{
 		TenantInfo: req.TenantInfo,
 		IDs:        req.IDs,
 		At:         timeutils.NowUnix(),
@@ -1088,8 +1111,8 @@ func (s *Service) RecordUse(ctx context.Context, req agentports.RecordMemoryUseR
 func (s *Service) Usage(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (*agentports.AgentMemoryUsage, error) {
-	count, err := s.repo.CountActive(ctx, agentports.CountActiveAgentMemoriesRequest{
+) (*agentmemoryports.AgentMemoryUsage, error) {
+	count, err := s.repo.CountActive(ctx, agentmemoryports.CountActiveAgentMemoriesRequest{
 		TenantInfo: tenant,
 		Now:        timeutils.NowUnix(),
 	})
@@ -1097,7 +1120,7 @@ func (s *Service) Usage(
 		return nil, err
 	}
 
-	return &agentports.AgentMemoryUsage{
+	return &agentmemoryports.AgentMemoryUsage{
 		ActiveCount:   count,
 		ActiveSoftCap: agent.MemoryActiveSoftCap,
 		WarnAt:        agent.MemoryActiveWarnAt,
@@ -1177,7 +1200,7 @@ func (s *Service) label(
 		return nil
 	}
 
-	label, err := s.labeler.Label(ctx, tenant, agentports.MemorySubjectRef{
+	label, err := s.labeler.Label(ctx, tenant, agentmemoryports.MemorySubjectRef{
 		Type: entity.SubjectType,
 		ID:   *entity.SubjectID,
 	})
@@ -1237,7 +1260,7 @@ func (s *Service) logChange(
 func sameMemoryRequest(
 	tenant pagination.TenantInfo,
 	entity *agent.Memory,
-) agentports.FindActiveAgentMemoryRequest {
+) agentmemoryports.FindActiveAgentMemoryRequest {
 	scope := entity.Scope
 	if scope == "" {
 		scope = agent.MemoryScopeOrganization
@@ -1254,7 +1277,7 @@ func sameMemoryRequest(
 		role = *entity.RoleID
 	}
 
-	return agentports.FindActiveAgentMemoryRequest{
+	return agentmemoryports.FindActiveAgentMemoryRequest{
 		OwnerUserID:       owner,
 		RoleID:            role,
 		TenantInfo:        tenant,
@@ -1268,12 +1291,12 @@ func sameMemoryRequest(
 	}
 }
 
-func subjectRefOf(entity *agent.Memory) *agentports.MemorySubjectRef {
+func subjectRefOf(entity *agent.Memory) *agentmemoryports.MemorySubjectRef {
 	if entity.SubjectType == "" || entity.SubjectID == nil {
 		return nil
 	}
 
-	return &agentports.MemorySubjectRef{Type: entity.SubjectType, ID: *entity.SubjectID}
+	return &agentmemoryports.MemorySubjectRef{Type: entity.SubjectType, ID: *entity.SubjectID}
 }
 
 var (

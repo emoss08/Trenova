@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -187,7 +187,7 @@ func recipientsProperty(description string) map[string]any {
 	}
 }
 
-func NewUpdateInvoiceDraftTool(invoices invoiceDraftEditor) agentports.AgentTool {
+func NewUpdateInvoiceDraftTool(invoices invoiceDraftEditor) agenttoolports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
 		Name: "invoice_update_draft",
 		Description: "Change what a draft invoice says and where it goes: its memo, remittance " +
@@ -202,7 +202,7 @@ func NewUpdateInvoiceDraftTool(invoices invoiceDraftEditor) agentports.AgentTool
 		Reversible:  true,
 		TaintHold: "Outside content could put its own wording or recipients on an invoice " +
 			"the customer receives.",
-		Condition: &agentports.TierCondition{
+		Condition: &agenttoolports.TierCondition{
 			Description: "Changing who the invoice is emailed to is a proposal a person " +
 				"decides; any other change runs once a person approves it.",
 			Limit: draftUpdateTierLimit,
@@ -249,7 +249,7 @@ func NewUpdateInvoiceDraftTool(invoices invoiceDraftEditor) agentports.AgentTool
 		Plan: func(
 			ctx context.Context,
 			req *invoiceports.UpdateInvoiceDraftRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*invoiceports.InvoiceDraftUpdatePreview, error) {
 			return invoices.PreviewUpdateDraft(ctx, req)
 		},
@@ -260,7 +260,7 @@ func NewUpdateInvoiceDraftTool(invoices invoiceDraftEditor) agentports.AgentTool
 		Run: func(
 			ctx context.Context,
 			req *invoiceports.UpdateInvoiceDraftRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := invoices.UpdateDraft(ctx, req, params.Actor)
 			return nil, err
@@ -270,7 +270,7 @@ func NewUpdateInvoiceDraftTool(invoices invoiceDraftEditor) agentports.AgentTool
 
 func draftUpdateTierLimit(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	for _, key := range recipientParams {
 		if _, ok := params.Params[key]; ok {
@@ -282,7 +282,7 @@ func draftUpdateTierLimit(
 }
 
 func draftUpdateRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*invoiceports.UpdateInvoiceDraftRequest, error) {
 	invoiceID, err := common.RequirePulid(params.Params, common.ParamInvoiceID)
 	if err != nil {
@@ -423,11 +423,11 @@ func presentIDs(params map[string]any, key string, limit int) (*[]pulid.ID, erro
 	return &ids, nil
 }
 
-func NewGenerateInvoicePDFTool(invoices invoicePDFGenerator) agentports.AgentTool {
+func NewGenerateInvoicePDFTool(invoices invoicePDFGenerator) agenttoolports.AgentTool {
 	plan := func(
 		ctx context.Context,
 		req *invoiceports.InvoicePreviewRequest,
-		params *agentports.ToolExecuteParams,
+		params *agenttoolports.ToolExecuteParams,
 	) (*invoiceports.InvoicePDFGenerationPlan, error) {
 		generation, err := invoices.PlanPDFGeneration(ctx, req, params.Actor)
 		if err != nil {
@@ -455,7 +455,7 @@ func NewGenerateInvoicePDFTool(invoices invoicePDFGenerator) agentports.AgentToo
 		Required:   []string{common.ParamInvoiceID},
 		Target:     common.TargetInvoice,
 	}, common.ReceivablePlan[*invoiceports.InvoicePreviewRequest, *invoiceports.InvoicePDFGenerationPlan]{
-		Request: func(params *agentports.ToolExecuteParams) (*invoiceports.InvoicePreviewRequest, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*invoiceports.InvoicePreviewRequest, error) {
 			invoiceID, err := common.RequirePulid(params.Params, common.ParamInvoiceID)
 			if err != nil {
 				return nil, err
@@ -473,7 +473,7 @@ func NewGenerateInvoicePDFTool(invoices invoicePDFGenerator) agentports.AgentToo
 		Run: func(
 			ctx context.Context,
 			req *invoiceports.InvoicePreviewRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if _, err := plan(ctx, req, params); err != nil {
 				return nil, err
@@ -488,7 +488,7 @@ type createInvoicesRequest struct {
 	plan *invoiceports.PlanCreateInvoicesRequest
 }
 
-func NewCreateInvoiceTool(invoices invoiceCreator) agentports.AgentTool {
+func NewCreateInvoiceTool(invoices invoiceCreator) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
 		Name:        "invoice_create",
 		SearchTerms: []string{"invoice delivered", "bill completed"},
@@ -523,7 +523,7 @@ func NewCreateInvoiceTool(invoices invoiceCreator) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *createInvoicesRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*invoiceports.CreateInvoicesPlan, error) {
 			return invoices.PlanCreateInvoices(ctx, req.plan)
 		},
@@ -540,7 +540,7 @@ func NewCreateInvoiceTool(invoices invoiceCreator) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *createInvoicesRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			var (
 				made *invoiceports.CreateInvoicesResult
@@ -571,7 +571,7 @@ func NewCreateInvoiceTool(invoices invoiceCreator) agentports.AgentTool {
 }
 
 func createInvoicesRequestFrom(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*createInvoicesRequest, error) {
 	orderID, hasOrder, err := common.OptionalPulid(params.Params, common.ParamOrderID)
 	if err != nil {
@@ -616,7 +616,7 @@ func invoiceResult(action string, entity *invoice.Invoice) *agent.ToolExecutionR
 	}
 }
 
-func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agentports.AgentTool {
+func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
 		Name: "invoice_create_memo",
 		Description: "Propose a draft credit or debit memo to a customer with no shipment " +
@@ -688,7 +688,7 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *invoiceports.CreateMemoRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*invoice.Invoice, error) {
 			return invoices.PreviewMemo(ctx, req)
 		},
@@ -699,7 +699,7 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *invoiceports.CreateMemoRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := invoices.CreateMemo(ctx, req, params.Actor)
 			if err != nil {
@@ -710,7 +710,9 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agentports.AgentTool {
 	})
 }
 
-func memoRequest(params *agentports.ToolExecuteParams) (*invoiceports.CreateMemoRequest, error) {
+func memoRequest(
+	params *agenttoolports.ToolExecuteParams,
+) (*invoiceports.CreateMemoRequest, error) {
 	customerID, err := common.RequirePulid(params.Params, common.ParamCustomerID)
 	if err != nil {
 		return nil, err
@@ -813,7 +815,7 @@ func memoLine(fields map[string]any) (*invoiceports.CreateMemoLineInput, error) 
 	return line, nil
 }
 
-func NewVoidInvoiceTool(invoices invoiceVoider) agentports.AgentTool {
+func NewVoidInvoiceTool(invoices invoiceVoider) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
 		Name:        "invoice_void",
 		SearchTerms: []string{"kill invoice", "cancel invoice"},
@@ -844,7 +846,7 @@ func NewVoidInvoiceTool(invoices invoiceVoider) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *invoiceports.VoidInvoiceRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*invoiceports.InvoiceVoidPreview, error) {
 			return invoices.PreviewVoid(ctx, req, params.Actor)
 		},
@@ -855,7 +857,7 @@ func NewVoidInvoiceTool(invoices invoiceVoider) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *invoiceports.VoidInvoiceRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			result, err := invoices.VoidInvoice(ctx, req, params.Actor)
 			if err != nil {
@@ -870,7 +872,9 @@ func NewVoidInvoiceTool(invoices invoiceVoider) agentports.AgentTool {
 	})
 }
 
-func voidRequest(params *agentports.ToolExecuteParams) (*invoiceports.VoidInvoiceRequest, error) {
+func voidRequest(
+	params *agenttoolports.ToolExecuteParams,
+) (*invoiceports.VoidInvoiceRequest, error) {
 	invoiceID, err := common.RequirePulid(params.Params, common.ParamInvoiceID)
 	if err != nil {
 		return nil, err
@@ -900,7 +904,7 @@ func voidRequest(params *agentports.ToolExecuteParams) (*invoiceports.VoidInvoic
 	}, nil
 }
 
-func NewSendInvoiceEDITool(invoices invoiceEDISender) agentports.AgentTool {
+func NewSendInvoiceEDITool(invoices invoiceEDISender) agenttoolports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
 		Name: "invoice_send_edi",
 		Description: "Propose sending a posted invoice to the customer's EDI partner as a 210. " +
@@ -924,7 +928,7 @@ func NewSendInvoiceEDITool(invoices invoiceEDISender) agentports.AgentTool {
 		Required: []string{common.ParamInvoiceID},
 		Target:   common.TargetInvoice,
 	}, common.ReceivablePlan[*invoiceports.SendInvoiceEDIRequest, *invoiceports.InvoiceEDISendPreview]{
-		Request: func(params *agentports.ToolExecuteParams) (*invoiceports.SendInvoiceEDIRequest, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*invoiceports.SendInvoiceEDIRequest, error) {
 			invoiceID, err := common.RequirePulid(params.Params, common.ParamInvoiceID)
 			if err != nil {
 				return nil, err
@@ -938,7 +942,7 @@ func NewSendInvoiceEDITool(invoices invoiceEDISender) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *invoiceports.SendInvoiceEDIRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*invoiceports.InvoiceEDISendPreview, error) {
 			return invoices.PreviewSendEDI(ctx, req, params.Actor)
 		},
@@ -949,7 +953,7 @@ func NewSendInvoiceEDITool(invoices invoiceEDISender) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *invoiceports.SendInvoiceEDIRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := invoices.SendEDI(ctx, req, params.Actor)
 			return nil, err

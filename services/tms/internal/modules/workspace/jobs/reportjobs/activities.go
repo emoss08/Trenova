@@ -9,12 +9,11 @@ import (
 
 	"github.com/emoss08/keel/analytics/export"
 	"github.com/emoss08/keel/analytics/ir"
-
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/uploadpipe"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -67,7 +66,7 @@ type ActivitiesParams struct {
 	NotificationService *notificationservice.Service
 	EmailService        emailports.EmailService `optional:"true"`
 	Templates           documenttemplateports.DocumentTemplateResolver
-	RealtimeService     agentports.RealtimeService `optional:"true"`
+	RealtimeService     realtimeports.RealtimeService `optional:"true"`
 	ReadScopes          permissionports.ReadScopes
 	AuditService        auditports.AuditService
 	Metrics             *metrics.Registry `optional:"true"`
@@ -90,7 +89,7 @@ type Activities struct {
 	notification *notificationservice.Service
 	email        emailports.EmailService
 	templates    documenttemplateports.DocumentTemplateResolver
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 	readScopes   permissionports.ReadScopes
 	audit        auditports.AuditService
 	metrics      *metrics.Report
@@ -735,7 +734,7 @@ func (a *Activities) emitInvalidation(ctx context.Context, run *report.ReportRun
 	}
 	if err := a.realtime.PublishResourceInvalidation(
 		ctx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: run.OrganizationID,
 			BusinessUnitID: run.BusinessUnitID,
 			Resource:       "report-run",

@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
 const toolList = "docs/engineering/ai-tool-safety.md"
@@ -13,7 +13,7 @@ const toolList = "docs/engineering/ai-tool-safety.md"
 func Check(
 	writes []Write,
 	mapping Mapping,
-	tools map[string]agentports.ToolPolicy,
+	tools map[string]agenttoolports.ToolPolicy,
 ) []string {
 	problems := make([]string, 0)
 	known := make(map[string]struct{}, len(writes))
@@ -72,7 +72,7 @@ func missingEntry(write *Write) string {
 func checkDecision(
 	key string,
 	decision Decision,
-	tools map[string]agentports.ToolPolicy,
+	tools map[string]agenttoolports.ToolPolicy,
 ) []string {
 	problems := make([]string, 0)
 	fail := func(format string, args ...any) {

@@ -6,7 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,10 +30,10 @@ func (c *steppedClock) Now() int64 {
 func effectRuntime() *Service {
 	return newRuntime(
 		&scriptedCompletion{},
-		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			queryTool("customer_list", nil, nil),
 		}},
-		&stubActionRegistry{Tools: []agentports.AgentTool{
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{
 			actionTool("report_create", agent.TierPropose, nil),
 		}},
 		nil,
@@ -180,11 +183,14 @@ func TestSummarizeResult(t *testing.T) {
 func TestSummarizeOutcome_FailedCallsHaveNone(t *testing.T) {
 	t.Parallel()
 
-	call := agentports.ToolCall{Name: "report_create", Arguments: map[string]any{"name": "Late loads"}}
+	call := llmports.ToolCall{
+		Name:      "report_create",
+		Arguments: map[string]any{"name": "Late loads"},
+	}
 
 	assert.Empty(t, summarizeOutcome(call, toolOutcome{failed: true, summary: "Late loads"}))
 	assert.Equal(t, "Late loads", summarizeOutcome(call, toolOutcome{
-		action: &agentports.PendingAction{ToolName: "report_create"},
+		action: &agentruntimeports.PendingAction{ToolName: "report_create"},
 	}))
 	assert.Empty(t, summarizeOutcome(call, toolOutcome{content: "done"}))
 }
@@ -206,13 +212,13 @@ func TestSummaryLine_KeepsOneShortLine(t *testing.T) {
 func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("customer_list", map[string]any{"query": "peak"}),
 		textTurn("Peak Distributing is on file."),
 	}}
 	rt := newRuntime(
 		completion,
-		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			queryTool("customer_list", map[string]any{
 				"count": 1,
 				"items": []map[string]any{{"name": "Peak Distributing"}},
@@ -223,7 +229,7 @@ func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *test
 	)
 
 	var events []kernelports.StreamEvent
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: testDefinition("customer_list"),
 		Actor:      testActor(),
 		Input:      "Is Peak on file?",
@@ -253,16 +259,16 @@ func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *test
 	assert.Equal(t, "Peak Distributing", answered.ToolSummary)
 	assert.Empty(t, asked.ToolCalls[0].Effect, "the call is stored as the model sent it")
 
-	var started *agentports.AssistantToolStartedEvent
-	var finished *agentports.AssistantToolFinishedEvent
-	var message *agentports.AssistantMessageEvent
+	var started *assistantports.AssistantToolStartedEvent
+	var finished *assistantports.AssistantToolFinishedEvent
+	var message *assistantports.AssistantMessageEvent
 	for _, event := range events {
 		switch data := event.Data.(type) {
-		case agentports.AssistantToolStartedEvent:
+		case assistantports.AssistantToolStartedEvent:
 			started = &data
-		case agentports.AssistantToolFinishedEvent:
+		case assistantports.AssistantToolFinishedEvent:
 			finished = &data
-		case agentports.AssistantMessageEvent:
+		case assistantports.AssistantMessageEvent:
 			message = &data
 		}
 	}
@@ -280,26 +286,26 @@ func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *test
 func TestRun_AProposedWriteIsLabelledAChangeAndNamedFromItsArguments(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("report_create", map[string]any{"name": "Late loads"}),
 		textTurn("I proposed the report."),
 	}}
 	rt := newRuntime(
 		completion,
 		&stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{
 			actionTool("report_create", agent.TierPropose, nil),
 		}},
 		nil,
 	)
 
-	var finished *agentports.AssistantToolFinishedEvent
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	var finished *assistantports.AssistantToolFinishedEvent
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("report_create"),
 		Actor:      testActor(),
 		Input:      "Save a late loads report.",
 		Emit: func(event kernelports.StreamEvent) {
-			if data, ok := event.Data.(agentports.AssistantToolFinishedEvent); ok {
+			if data, ok := event.Data.(assistantports.AssistantToolFinishedEvent); ok {
 				finished = &data
 			}
 		},

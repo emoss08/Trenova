@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
@@ -166,20 +166,33 @@ func TestStartSettlementDisputeReview_OnlyAnOpenDispute(t *testing.T) {
 
 	reviews := newFakeDriverPayReviews()
 	tool := newStartSettlementDisputeReviewTool(reviews)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamDisputeID: reviews.dispute.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{common.ParamDisputeID: reviews.dispute.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reviews.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, string(driversettlement.DisputeStatusInReview),
-		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), common.FieldStatus).After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reviews.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		string(driversettlement.DisputeStatusInReview),
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			common.FieldStatus,
+		).After,
+	)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, []pulid.ID{reviews.dispute.ID}, reviews.startedReview)
 	assert.Equal(t, permission.ResourceSettlementDispute, tool.Policy().Resource)
 	assert.Equal(t, permission.OpUpdate, tool.Policy().Operation)
 
 	reviews.dispute.Status = driversettlement.DisputeStatusInReview
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestResolveSettlementDispute_ClassifiesByWhetherPayMoves(t *testing.T) {
@@ -195,21 +208,36 @@ func TestResolveSettlementDispute_ClassifiesByWhetherPayMoves(t *testing.T) {
 		paramAdjustmentLabel:       "Detention at Joliet DC",
 	}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reviews.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), agenttoolstest.ExecuteParams(approve))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reviews.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(
+				t.Context(),
+				agenttoolstest.ExecuteParams(approve),
+			)
+		},
+	)
 	assert.Contains(t, preview.Summary, "approve the pay dispute and tell the driver")
 	assert.Contains(t, preview.Summary, "settlement DS-2026-0412")
 	require.Len(t, preview.Changes, 2)
 
 	policy := tool.Policy()
-	assert.Equal(t, agent.EgressMoney, policy.Classified(agenttoolstest.ExecuteParams(approve)).Egress)
+	assert.Equal(
+		t,
+		agent.EgressMoney,
+		policy.Classified(agenttoolstest.ExecuteParams(approve)).Egress,
+	)
 	deny := map[string]any{
 		common.ParamDisputeID: reviews.dispute.ID.String(),
 		paramDecision:         "Deny",
 		paramResolutionNote:   "The load was paid on DS-2026-0398",
 	}
-	assert.Equal(t, agent.EgressDriverVisible, policy.Classified(agenttoolstest.ExecuteParams(deny)).Egress)
+	assert.Equal(
+		t,
+		agent.EgressDriverVisible,
+		policy.Classified(agenttoolstest.ExecuteParams(deny)).Egress,
+	)
 	assert.Equal(t, permission.OpApprove, policy.Operation)
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
 
@@ -229,9 +257,9 @@ func TestResolveSettlementDispute_ClassifiesByWhetherPayMoves(t *testing.T) {
 		paramAdjustmentAmountMoney: "10.00",
 		paramAdjustmentLabel:       "x",
 	}
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(deniedWithPay)), "validation runs the service's plan")
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			common.ParamDisputeID:      reviews.dispute.ID.String(),
 			paramDecision:              "Approve",
@@ -250,9 +278,16 @@ func TestReviewDriverExpense_ARejectionSaysWhy(t *testing.T) {
 		paramDecision:  "Approve",
 	}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reviews.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), agenttoolstest.ExecuteParams(approve))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reviews.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(
+				t.Context(),
+				agenttoolstest.ExecuteParams(approve),
+			)
+		},
+	)
 	assert.Contains(
 		t,
 		preview.Summary,
@@ -264,18 +299,33 @@ func TestReviewDriverExpense_ARejectionSaysWhy(t *testing.T) {
 		paramExpenseID: reviews.expense.ID.String(),
 		paramDecision:  "Reject",
 	}
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(reject)))
 	reject[common.FieldNote] = "No receipt attached"
-	preview = agenttoolstest.PreviewWithoutWrites(t, reviews.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), agenttoolstest.ExecuteParams(reject))
-	})
+	preview = agenttoolstest.PreviewWithoutWrites(
+		t,
+		reviews.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(
+				t.Context(),
+				agenttoolstest.ExecuteParams(reject),
+			)
+		},
+	)
 	assert.Contains(t, preview.Summary, "reject the 42.50 USD expense")
 	assert.Len(t, preview.Changes, 1)
 
 	policy := tool.Policy()
-	assert.Equal(t, agent.EgressMoney, policy.Classified(agenttoolstest.ExecuteParams(approve)).Egress)
-	assert.Equal(t, agent.EgressDriverVisible, policy.Classified(agenttoolstest.ExecuteParams(reject)).Egress)
+	assert.Equal(
+		t,
+		agent.EgressMoney,
+		policy.Classified(agenttoolstest.ExecuteParams(approve)).Egress,
+	)
+	assert.Equal(
+		t,
+		agent.EgressDriverVisible,
+		policy.Classified(agenttoolstest.ExecuteParams(reject)).Egress,
+	)
 	assert.Equal(t, permission.ResourceDriverExpense, policy.Resource)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(reject)))

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -50,7 +50,7 @@ type readAttachmentTool struct {
 func newReadAttachmentTool(
 	documents documentports.DocumentRepository,
 	contents contentReader,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &readAttachmentTool{
 		documents: documents,
 		contents:  contents,
@@ -89,7 +89,7 @@ func (t *readAttachmentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *readAttachmentTool) Policy() agentports.ToolPolicy {
+func (t *readAttachmentTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceAssistant,
 		scope:    agent.ToolScopeSelf,
@@ -116,7 +116,7 @@ type attachedFile struct {
 
 func (t *readAttachmentTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

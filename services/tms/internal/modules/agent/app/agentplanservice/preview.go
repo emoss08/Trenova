@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -74,10 +75,10 @@ func (s *Service) settlePreview(
 		return nil, nil //nolint:nilnil // an ungated plan with nothing to preview it is decided unseen
 	}
 
-	preview, err := s.previews.ForPlan(ctx, &agentports.PlanPreviewRequest{
+	preview, err := s.previews.ForPlan(ctx, &agentruntimeports.PlanPreviewRequest{
 		Plan:   plan,
 		Steps:  steps,
-		Viewer: &agentports.PreviewViewer{Actor: actor},
+		Viewer: &agentruntimeports.PreviewViewer{Actor: actor},
 	})
 	if err != nil {
 		return nil, err

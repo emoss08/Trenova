@@ -12,7 +12,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -90,7 +91,7 @@ type graphQLUnpagedListTool struct {
 	paged       bool
 	required    []string
 	beside      besideReads
-	reader      agentports.GraphQLReader
+	reader      graphqlreadports.GraphQLReader
 	permissions permissionports.PermissionEngine
 }
 
@@ -98,9 +99,9 @@ type graphQLUnpagedListTool struct {
 // reads: paged through a table input, or unpaged by its own arguments.
 func newGraphQLReadTool(
 	spec *graphQLListSpec,
-	reader agentports.GraphQLReader,
+	reader graphqlreadports.GraphQLReader,
 	permissions permissionports.PermissionEngine,
-) (agentports.AgentQueryTool, error) {
+) (agenttoolports.AgentQueryTool, error) {
 	if read, ok := graphQLReads[spec.name]; ok && read.Unpaged {
 		return newGraphQLUnpagedListTool(spec, reader, permissions)
 	}
@@ -114,7 +115,7 @@ func newGraphQLReadTool(
 
 func newGraphQLUnpagedListTool(
 	spec *graphQLListSpec,
-	reader agentports.GraphQLReader,
+	reader graphqlreadports.GraphQLReader,
 	permissions permissionports.PermissionEngine,
 ) (*graphQLUnpagedListTool, error) {
 	read, ok := graphQLReads[spec.name]
@@ -330,7 +331,7 @@ func (t *graphQLUnpagedListTool) Description() string { return t.spec.summary }
 
 func (t *graphQLUnpagedListTool) SearchTerms() []string { return t.spec.searchTerms }
 
-func (t *graphQLUnpagedListTool) Policy() agentports.ToolPolicy {
+func (t *graphQLUnpagedListTool) Policy() agenttoolports.ToolPolicy {
 	spec := t.spec.reads
 	spec.resource = t.spec.resource
 
@@ -365,7 +366,7 @@ func (t *graphQLUnpagedListTool) ParamSchema() map[string]any {
 
 func (t *graphQLUnpagedListTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -392,7 +393,7 @@ func (t *graphQLUnpagedListTool) Query(
 		variables[paramOffset] = window.offset
 	}
 
-	result, err := t.reader.Read(ctx, &agentports.GraphQLReadRequest{
+	result, err := t.reader.Read(ctx, &graphqlreadports.GraphQLReadRequest{
 		Actor:             params.Actor,
 		Operation:         t.read.Operation,
 		Variables:         variables,

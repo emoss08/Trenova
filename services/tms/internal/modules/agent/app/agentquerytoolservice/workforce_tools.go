@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,7 +39,7 @@ type workforceRead struct {
 	access      fieldAccess
 	run         func(
 		ctx context.Context,
-		params *agentports.QueryToolParams,
+		params *agenttoolports.QueryToolParams,
 		gate *fieldGate,
 	) (any, error)
 }
@@ -63,7 +63,7 @@ func (t *workforceRead) ParamSchema() map[string]any {
 	return schema
 }
 
-func (t *workforceRead) Policy() agentports.ToolPolicy {
+func (t *workforceRead) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.name, readSpec{
 		resource:  t.resource,
 		reads:     t.reads,
@@ -74,7 +74,7 @@ func (t *workforceRead) Policy() agentports.ToolPolicy {
 
 func (t *workforceRead) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

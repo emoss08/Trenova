@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -90,13 +90,13 @@ func TestClassify(t *testing.T) {
 		},
 		{
 			name:         "no provider is not retried",
-			err:          fmt.Errorf("route: %w", agentports.ErrNoProviderConfigured),
+			err:          fmt.Errorf("route: %w", llmports.ErrNoProviderConfigured),
 			nonRetryable: true,
 			errType:      ErrTypeNoProviderConfigured,
 		},
 		{
 			name:      "resting providers are asked again after their rest",
-			err:       agentports.ErrProvidersResting,
+			err:       llmports.ErrProvidersResting,
 			errType:   ErrTypeProvidersResting,
 			nextDelay: restingBackoff,
 		},
@@ -144,7 +144,7 @@ func TestFailureSurvivesTheActivityBoundary(t *testing.T) {
 			name: "a provider's refusal",
 			err:  providerError{status: http.StatusBadRequest},
 			check: func(t *testing.T, err error) {
-				var failure agentports.ProviderFailure
+				var failure llmports.ProviderFailure
 				require.ErrorAs(t, err, &failure)
 				assert.Equal(t, http.StatusBadRequest, failure.ProviderStatus())
 				assert.False(t, failure.ProviderRetryable())
@@ -152,9 +152,9 @@ func TestFailureSurvivesTheActivityBoundary(t *testing.T) {
 		},
 		{
 			name: "every provider resting",
-			err:  agentports.ErrProvidersResting,
+			err:  llmports.ErrProvidersResting,
 			check: func(t *testing.T, err error) {
-				assert.ErrorIs(t, err, agentports.ErrProvidersResting)
+				assert.ErrorIs(t, err, llmports.ErrProvidersResting)
 			},
 		},
 		{
@@ -197,10 +197,10 @@ func TestTransient(t *testing.T) {
 
 	assert.True(t, Transient(providerError{status: http.StatusTooManyRequests}))
 	assert.True(t, Transient(errors.New("connection reset")))
-	assert.True(t, Transient(agentports.ErrProvidersResting))
+	assert.True(t, Transient(llmports.ErrProvidersResting))
 	assert.False(t, Transient(providerError{status: http.StatusBadRequest}))
 	assert.False(t, Transient(errortypes.NewBusinessError("the model refused")))
-	assert.False(t, Transient(agentports.ErrNoProviderConfigured))
+	assert.False(t, Transient(llmports.ErrNoProviderConfigured))
 	assert.False(t, Transient(context.Canceled))
 	assert.False(t, Transient(nil))
 }
@@ -235,13 +235,13 @@ func TestErrRebuildsWhatTheCallReturned(t *testing.T) {
 
 	assert.ErrorIs(
 		t,
-		modelcallcontract.Err(cross(fmt.Errorf("route: %w", agentports.ErrNoProviderConfigured))),
-		agentports.ErrNoProviderConfigured,
+		modelcallcontract.Err(cross(fmt.Errorf("route: %w", llmports.ErrNoProviderConfigured))),
+		llmports.ErrNoProviderConfigured,
 	)
 	assert.ErrorIs(
 		t,
-		modelcallcontract.Err(cross(fmt.Errorf("parse: %w", agentports.ErrModelSchemaValidation))),
-		agentports.ErrModelSchemaValidation,
+		modelcallcontract.Err(cross(fmt.Errorf("parse: %w", llmports.ErrModelSchemaValidation))),
+		llmports.ErrModelSchemaValidation,
 	)
 
 	assert.ErrorIs(
@@ -269,14 +269,14 @@ func TestFailureErrKeepsTheModelsAsked(t *testing.T) {
 		Message:   "every provider failed",
 		Status:    529,
 		Retryable: true,
-		Providers: []agentports.ChatProviderFailure{{Name: "Anthropic", Status: "Overloaded"}},
+		Providers: []llmports.ChatProviderFailure{{Name: "Anthropic", Status: "Overloaded"}},
 	}
 
-	var exhausted *agentports.ChatProvidersFailedError
+	var exhausted *llmports.ChatProvidersFailedError
 	require.ErrorAs(t, failure.Err(), &exhausted)
 	assert.Equal(t, "Anthropic", exhausted.Failures[0].Name)
 
-	var provider agentports.ProviderFailure
+	var provider llmports.ProviderFailure
 	require.ErrorAs(t, failure.Err(), &provider, "the status is still readable underneath")
 	assert.Equal(t, 529, provider.ProviderStatus())
 }

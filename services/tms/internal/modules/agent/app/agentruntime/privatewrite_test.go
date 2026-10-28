@@ -7,7 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,16 +21,16 @@ type privateActionTool struct {
 	private bool
 }
 
-func (t *privateActionTool) Policy() agentports.ToolPolicy {
+func (t *privateActionTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.StubActionTool.Policy()
 	policy.Egress = []agent.EgressClass{agent.EgressPersonal, agent.EgressInternal}
 	policy.PersonalRunsUnasked = true
-	policy.Classify = func(agentports.ToolExecuteParams) agentports.CallPolicy {
+	policy.Classify = func(agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
 		if t.private {
-			return agentports.CallPolicy{Egress: agent.EgressPersonal}
+			return agenttoolports.CallPolicy{Egress: agent.EgressPersonal}
 		}
 
-		return agentports.CallPolicy{Egress: agent.EgressInternal}
+		return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
 	}
 
 	return policy
@@ -37,8 +39,8 @@ func (t *privateActionTool) Policy() agentports.ToolPolicy {
 func runPrivate(
 	t *testing.T,
 	tool *privateActionTool,
-	configure func(*agentports.RunRequest),
-) *agentports.RunResult {
+	configure func(*agentruntimeports.RunRequest),
+) *agentruntimeports.RunResult {
 	t.Helper()
 
 	return runPrivateWithTrust(t, tool, nil, configure)
@@ -47,19 +49,19 @@ func runPrivate(
 func runPrivateWithTrust(
 	t *testing.T,
 	tool *privateActionTool,
-	trust agentports.AgentToolTrustRepository,
-	configure func(*agentports.RunRequest),
-) *agentports.RunResult {
+	trust agenttoolports.AgentToolTrustRepository,
+	configure func(*agentruntimeports.RunRequest),
+) *agentruntimeports.RunResult {
 	t.Helper()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("report_create", map[string]any{"name": "Late loads"}),
 		textTurn("Saved."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 	rt.trust = trust
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: testDefinition("report_create"),
 		Actor:      testActor(),
 		Input:      "Save a report of late loads",
@@ -118,19 +120,19 @@ func TestRun_APrivateWriteKeepsAnAgentsOwnSettingAndNeedsAPerson(t *testing.T) {
 		}
 	}
 
-	set := runPrivate(t, newTool(), func(req *agentports.RunRequest) {
+	set := runPrivate(t, newTool(), func(req *agentruntimeports.RunRequest) {
 		req.Definition.ToolTiers = map[string]agent.AutonomyTier{"report_create": agent.TierPropose}
 	})
 	assert.Equal(t, agent.TierPropose, set.Actions[0].Tier)
 
-	unattended := runPrivate(t, newTool(), func(req *agentports.RunRequest) {
+	unattended := runPrivate(t, newTool(), func(req *agentruntimeports.RunRequest) {
 		req.Unattended = true
 	})
 	assert.Equal(t, agent.TierPropose, unattended.Actions[0].Tier)
 }
 
 type ledgerTrust struct {
-	agentports.AgentToolTrustRepository
+	agenttoolports.AgentToolTrustRepository
 
 	rows []*agent.ToolTrust
 	err  error
@@ -139,15 +141,15 @@ type ledgerTrust struct {
 
 func (l *ledgerTrust) ListByDefinition(
 	_ context.Context,
-	_ agentports.ListToolTrustRequest,
+	_ agenttoolports.ListToolTrustRequest,
 ) ([]*agent.ToolTrust, error) {
 	l.asks++
 
 	return l.rows, l.err
 }
 
-func onRecordedAgent(tier agent.AutonomyTier) func(*agentports.RunRequest) {
-	return func(req *agentports.RunRequest) {
+func onRecordedAgent(tier agent.AutonomyTier) func(*agentruntimeports.RunRequest) {
+	return func(req *agentruntimeports.RunRequest) {
 		req.Definition.ID = pulid.MustNew("agdef_")
 		req.Definition.OrganizationID = pulid.MustNew("org_")
 		req.Definition.BusinessUnitID = pulid.MustNew("bu_")

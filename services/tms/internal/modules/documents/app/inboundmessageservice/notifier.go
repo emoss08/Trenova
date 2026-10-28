@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -30,21 +30,21 @@ type NotifierParams struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Realtime   agentports.RealtimeService                    `optional:"true"`
+	Realtime   realtimeports.RealtimeService                 `optional:"true"`
 	Watchtower watchtowerports.WatchtowerProjector           `optional:"true"`
 	Briefing   inboundmessageports.TriageBriefingInvalidator `optional:"true"`
 }
 
 type notifierDeps struct {
 	logger     *zap.Logger
-	realtime   agentports.RealtimeService
+	realtime   realtimeports.RealtimeService
 	watchtower watchtowerports.WatchtowerProjector
 	briefing   inboundmessageports.TriageBriefingInvalidator
 }
 
 type Notifier struct {
 	l          *zap.Logger
-	realtime   agentports.RealtimeService
+	realtime   realtimeports.RealtimeService
 	watchtower watchtowerports.WatchtowerProjector
 	briefing   inboundmessageports.TriageBriefingInvalidator
 }

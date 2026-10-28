@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -98,7 +100,7 @@ type fakeThreads struct{ refuse bool }
 
 func (f *fakeThreads) GetThread(
 	context.Context,
-	agentports.GetThreadRequest,
+	assistantports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if f.refuse {
 		return nil, errortypes.NewNotFoundError("Thread not found")
@@ -205,8 +207,8 @@ func newFixture() *fixture {
 	return f
 }
 
-func (f *fixture) request(shown *board.Board) *agentports.BoardFillRequest {
-	return &agentports.BoardFillRequest{Actor: f.actor, ThreadID: f.thread, Board: shown}
+func (f *fixture) request(shown *board.Board) *assistantports.BoardFillRequest {
+	return &assistantports.BoardFillRequest{Actor: f.actor, ThreadID: f.thread, Board: shown}
 }
 
 func parsed(t *testing.T, args map[string]any) *board.Board {
@@ -376,7 +378,7 @@ func TestCheckRefusesWhatTheReaderMayNotRead(t *testing.T) {
 
 	err := f.svc.Check(t.Context(), f.request(shown))
 
-	var mistake *agentports.PublishMistake
+	var mistake *agentruntimeports.PublishMistake
 	require.ErrorAs(t, err, &mistake)
 	assert.Contains(t, mistake.Reason, "may not read invoices")
 }
@@ -395,7 +397,7 @@ func TestCheckRefusesAnAnalysisFromAnotherConversation(t *testing.T) {
 
 	err := f.svc.Check(t.Context(), f.request(shown))
 
-	var mistake *agentports.PublishMistake
+	var mistake *agentruntimeports.PublishMistake
 	require.ErrorAs(t, err, &mistake)
 	assert.Contains(t, mistake.Reason, "not one an analysis_run result kept in this conversation")
 }
@@ -412,7 +414,7 @@ func TestCheckRefusesAChartTheAnalysisNeverDrew(t *testing.T) {
 
 	err := f.svc.Check(t.Context(), f.request(shown))
 
-	var mistake *agentports.PublishMistake
+	var mistake *agentruntimeports.PublishMistake
 	require.ErrorAs(t, err, &mistake)
 	assert.Equal(t, "block 1 asks for chart 2 of an analysis that drew 1", mistake.Reason)
 }
@@ -437,7 +439,7 @@ func TestCheckRefusesAComparisonByAColumnTheTableLacks(t *testing.T) {
 
 	err := f.svc.Check(t.Context(), f.request(shown))
 
-	var mistake *agentports.PublishMistake
+	var mistake *agentruntimeports.PublishMistake
 	require.ErrorAs(t, err, &mistake)
 	assert.Equal(t,
 		`block 1: the table has no "claims" column; its columns are carrier_id, on_time`,
@@ -450,12 +452,14 @@ func TestCheckRefusesATimelineWithoutTheAuditLog(t *testing.T) {
 	f := newFixture()
 	shown := parsed(t, map[string]any{
 		"title": "One load", "verdict": "Stuck [here][1].",
-		"blocks": []any{map[string]any{"type": "timeline", "record": pulid.MustNew("shp_").String()}},
+		"blocks": []any{
+			map[string]any{"type": "timeline", "record": pulid.MustNew("shp_").String()},
+		},
 	})
 
 	err := f.svc.Check(t.Context(), f.request(shown))
 
-	var mistake *agentports.PublishMistake
+	var mistake *agentruntimeports.PublishMistake
 	require.ErrorAs(t, err, &mistake)
 	assert.Contains(t, mistake.Reason, "leave the timeline out")
 }
@@ -502,8 +506,8 @@ func TestCardComparesTheBoardWithWhatItShowedWhenAnswered(t *testing.T) {
 		f.artifacts.questions[artifact.MessageID] = "Why are these late?"
 	}
 
-	card, err := f.svc.Card(t.Context(), &agentports.BoardCardRequest{
-		Thread:     agentports.GetThreadRequest{ID: f.thread},
+	card, err := f.svc.Card(t.Context(), &assistantports.BoardCardRequest{
+		Thread:     assistantports.GetThreadRequest{ID: f.thread},
 		ArtifactID: id,
 		Actor:      f.actor,
 	})
@@ -524,16 +528,16 @@ func TestCardRefusesWhatIsNotABoardOfThisConversation(t *testing.T) {
 	f := newFixture()
 	id := f.board(t, pulid.MustNew("shp_"), board.Snapshot{})
 
-	_, err := f.svc.Card(t.Context(), &agentports.BoardCardRequest{
-		Thread:     agentports.GetThreadRequest{ID: pulid.MustNew("thr_")},
+	_, err := f.svc.Card(t.Context(), &assistantports.BoardCardRequest{
+		Thread:     assistantports.GetThreadRequest{ID: pulid.MustNew("thr_")},
 		ArtifactID: id,
 		Actor:      f.actor,
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
 	f.threads.refuse = true
-	_, err = f.svc.Card(t.Context(), &agentports.BoardCardRequest{
-		Thread:     agentports.GetThreadRequest{ID: f.thread},
+	_, err = f.svc.Card(t.Context(), &assistantports.BoardCardRequest{
+		Thread:     assistantports.GetThreadRequest{ID: f.thread},
 		ArtifactID: id,
 		Actor:      f.actor,
 	})

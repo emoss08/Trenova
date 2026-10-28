@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +19,7 @@ import (
 // a whole turn rather than one tool set.
 func wideRun(
 	t *testing.T,
-	turns ...*agentports.ChatCompletionResult,
+	turns ...*llmports.ChatCompletionResult,
 ) (*Service, *scriptedCompletion, []string) {
 	t.Helper()
 
@@ -28,11 +30,11 @@ func wideRun(
 	return service, completion, names
 }
 
-func requestTools(req *agentports.ChatCompletionRequest) []string {
+func requestTools(req *llmports.ChatCompletionRequest) []string {
 	return specNames(req.Tools)
 }
 
-func loadedIn(req *agentports.ChatCompletionRequest) []string {
+func loadedIn(req *llmports.ChatCompletionRequest) []string {
 	loaded := make([]string, 0, len(req.Tools))
 	for _, spec := range req.Tools {
 		if !spec.Deferred {
@@ -63,7 +65,7 @@ func TestRun_FindToolsLoadsAToolIntoTheNextRequest(t *testing.T) {
 		textTurn("Two trailers are due."),
 	)
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(names...),
 		Actor:      testActor(),
 		Input:      "say hello",
@@ -158,7 +160,7 @@ func TestRun_RefusesAQuestionInARunNobodyIsWatching(t *testing.T) {
 		textTurn("Raised it for a person."),
 	)
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(names[:3]...),
 		Actor:      testActor(),
 		Input:      "check the fleet",
@@ -176,7 +178,7 @@ func TestRun_RefusesAQuestionInARunNobodyIsWatching(t *testing.T) {
 func TestRun_FindToolsIsNotChargedUntilTheCap(t *testing.T) {
 	t.Parallel()
 
-	turns := make([]*agentports.ChatCompletionResult, 0, maxFindCalls+2)
+	turns := make([]*llmports.ChatCompletionResult, 0, maxFindCalls+2)
 	for range maxFindCalls + 1 {
 		turns = append(turns, toolTurn(findToolsName, map[string]any{"need": "tractors"}))
 	}
@@ -185,7 +187,7 @@ func TestRun_FindToolsIsNotChargedUntilTheCap(t *testing.T) {
 	definition := testDefinition(names...)
 	definition.MaxToolCalls = 1
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "say hello",
@@ -239,15 +241,15 @@ func TestRun_HoldsTheReadsAHeldToolTakesItsArgumentsFrom(t *testing.T) {
 	t.Parallel()
 
 	reports := queryTool("report_list", []map[string]any{{"id": "rpt_1"}}, nil)
-	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{reports}}
-	action := &stubActionRegistry{Tools: []agentports.AgentTool{
+	query := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{reports}}
+	action := &stubActionRegistry{Tools: []agenttoolports.AgentTool{
 		&dependentTool{
 			StubActionTool: actionTool("report_create_dashboard", agent.TierPropose, nil),
 			needs:          []string{"report_list", "report_delete"},
 		},
 		actionTool("report_delete", agent.TierPropose, nil),
 	}}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("report_list", map[string]any{}),
 		toolTurn("report_delete", map[string]any{}),
 		textTurn("Found one report."),
@@ -258,7 +260,7 @@ func TestRun_HoldsTheReadsAHeldToolTakesItsArgumentsFrom(t *testing.T) {
 		ActionTools: action,
 	})
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("report_create_dashboard"),
 		Actor:      testActor(),
 		Input:      "build me a dashboard",
@@ -292,8 +294,8 @@ func TestRun_HoldsTheWritesAHeldToolNamesAsCompanions(t *testing.T) {
 	t.Parallel()
 
 	categories := queryTool("location_list_categories", []map[string]any{}, nil)
-	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{categories}}
-	action := &stubActionRegistry{Tools: []agentports.AgentTool{
+	query := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{categories}}
+	action := &stubActionRegistry{Tools: []agenttoolports.AgentTool{
 		&companionTool{
 			StubActionTool: actionTool("shipment_create", agent.TierPropose, nil),
 			brings:         []string{"customer_create", "location_create"},
@@ -351,7 +353,7 @@ func TestRun_RefusalLoadsTheNearestToolsTheAgentHolds(t *testing.T) {
 		}
 	}
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(held...),
 		Actor:      testActor(),
 		Input:      "say hello",
@@ -387,7 +389,7 @@ func TestRun_ADisclosedTurnNeverChangesItsToolArray(t *testing.T) {
 		toolTurn("list_trailer_inspection_dates", map[string]any{}),
 		textTurn("Done."),
 	)
-	_, err := service.Run(t.Context(), &agentports.RunRequest{
+	_, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      input,

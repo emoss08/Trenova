@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -55,7 +55,7 @@ func (r *readingContents) GetContent(
 	return r.content, nil
 }
 
-func attachmentParams(threadID pulid.ID, params map[string]any) *agentports.QueryToolParams {
+func attachmentParams(threadID pulid.ID, params map[string]any) *agenttoolports.QueryToolParams {
 	out := testParams(params)
 	out.Actor.PrincipalType = permissionports.PrincipalTypeUser
 	out.ThreadID = threadID

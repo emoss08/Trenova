@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
@@ -38,7 +38,11 @@ func testTenant() pagination.TenantInfo {
 }
 
 func testActor() *permissionports.RequestActor {
-	return &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser, PrincipalID: testUser, UserID: testUser}
+	return &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
+		PrincipalID:   testUser,
+		UserID:        testUser,
+	}
 }
 
 type caseStore struct {
@@ -52,7 +56,9 @@ func (f *caseStore) Create(
 ) (*extractioneval.ExtractionCase, error) {
 	for _, item := range f.items {
 		if item.InputHash == entity.InputHash {
-			return nil, errortypes.NewBusinessError("This document is already in the evaluation set")
+			return nil, errortypes.NewBusinessError(
+				"This document is already in the evaluation set",
+			)
 		}
 	}
 	entity.ID = pulid.MustNew("eec_")
@@ -100,7 +106,10 @@ func (f *caseStore) Update(
 	return nil, errortypes.NewNotFoundError("case not found")
 }
 
-func (f *caseStore) Delete(_ context.Context, req extractionevalports.GetExtractionEvalCaseRequest) error {
+func (f *caseStore) Delete(
+	_ context.Context,
+	req extractionevalports.GetExtractionEvalCaseRequest,
+) error {
 	f.items = slices.DeleteFunc(f.items, func(item *extractioneval.ExtractionCase) bool {
 		return item.ID == req.ID
 	})
@@ -380,14 +389,14 @@ func (f *casePagesStore) Get(
 }
 
 type providerStore struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 	providers map[pulid.ID]*aiprovider.Provider
 	err       error
 }
 
 func (f *providerStore) GetByID(
 	_ context.Context,
-	req agentports.GetAIProviderByIDRequest,
+	req aiproviderports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	if f.err != nil {
 		return nil, f.err
@@ -479,9 +488,12 @@ type world struct {
 func newWorld() *world {
 	results := &resultStore{}
 	w := &world{
-		cases:       &caseStore{},
-		results:     results,
-		runs:        &runStore{runs: map[pulid.ID]*extractioneval.ExtractionRun{}, results: results},
+		cases:   &caseStore{},
+		results: results,
+		runs: &runStore{
+			runs:    map[pulid.ID]*extractioneval.ExtractionRun{},
+			results: results,
+		},
 		corrections: &correctionStore{items: map[pulid.ID]*aicorrection.Correction{}},
 		documents:   &documentStore{docs: map[pulid.ID]*document.Document{}},
 		contents:    &contentStore{},

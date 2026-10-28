@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransfercriteria"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -87,7 +87,7 @@ type TransferToBillingTool struct {
 func NewTransferToBillingTool(
 	shipments billingTransferPlanner,
 	runs billingTransferRunStarter,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &TransferToBillingTool{shipments: shipments, runs: runs}
 }
 
@@ -152,8 +152,8 @@ func (t *TransferToBillingTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *TransferToBillingTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *TransferToBillingTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipment,
@@ -191,7 +191,7 @@ func (r transferRequest) background() bool {
 }
 
 func (t *TransferToBillingTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (transferRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return transferRequest{}, err
@@ -249,7 +249,7 @@ func (t *TransferToBillingTool) request(
 
 func (t *TransferToBillingTool) ResolveSelection(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
 ) (map[string]any, error) {
 	request, err := t.request(&params)
 	if err != nil {
@@ -302,7 +302,7 @@ func withoutCriteria(params map[string]any) map[string]any {
 
 func (t *TransferToBillingTool) transferable(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	request *transferRequest,
 ) ([]pulid.ID, *shipmentports.BillingTransferPlan, error) {
 	tenant := common.TenantFrom(*params)
@@ -376,7 +376,7 @@ func isBillType(billType billingqueue.BillType) bool {
 
 func (t *TransferToBillingTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	_, err := t.request(&params)
 
@@ -385,7 +385,7 @@ func (t *TransferToBillingTool) Validate(
 
 func (t *TransferToBillingTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -397,7 +397,7 @@ func (t *TransferToBillingTool) Execute(
 // set was handed to.
 func (t *TransferToBillingTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return nil, err
@@ -436,7 +436,7 @@ func (t *TransferToBillingTool) ExecuteWithResult(
 
 func (t *TransferToBillingTool) startRun(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	request transferRequest,
 ) (*agent.ToolExecutionResult, error) {
 	run, err := t.runs.Start(ctx, &billingtransferservice.StartRunRequest{

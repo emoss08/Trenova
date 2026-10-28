@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
@@ -46,7 +46,7 @@ func NewLabeler(p LabelerParams) SubjectLabeler {
 func (l *repositoryLabeler) Label(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	ref agentports.MemorySubjectRef,
+	ref agentmemoryports.MemorySubjectRef,
 ) (string, error) {
 	switch ref.Type {
 	case agent.MemorySubjectCustomer:

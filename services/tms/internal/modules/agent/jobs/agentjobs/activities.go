@@ -25,7 +25,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
@@ -56,15 +60,15 @@ type ActivitiesParams struct {
 	Logger       *zap.Logger
 	Definitions  agentdefinitionports.AgentDefinitionRepository
 	Controls     tenantports.AgentControlRepository
-	RunRepo      agentports.AgentRunRepository
+	RunRepo      agentruntimeports.AgentRunRepository
 	ProposalRepo agentports.AgentProposalRepository
 	Runs         agentports.AgentRunService
 	Runtime      *agentruntime.Service
-	Steps        agentports.RunStepLedger
-	Trajectory   agentports.AgentRunEventRecorder `optional:"true"`
-	Contexts     agentports.RuntimeContextBuilder
+	Steps        agentruntimeports.RunStepLedger
+	Trajectory   agentruntimeports.AgentRunEventRecorder `optional:"true"`
+	Contexts     agentruntimeports.RuntimeContextBuilder
 	Recorder     *proposalrecorder.Service
-	Subjects     agentports.AgentSubjectDescriber
+	Subjects     agentruntimeports.AgentSubjectDescriber
 	Activity     agentports.AgentActivityPublisher `optional:"true"`
 	Notifier     agentports.AgentProposalNotifier  `optional:"true"`
 	Plans        agentports.AgentPlanRepository    `optional:"true"`
@@ -75,10 +79,10 @@ type ActivitiesParams struct {
 	EvalCases     agentqualityports.AgentEvalCaseRepository
 	CaseService   agentports.AgentEvalCaseService `optional:"true"`
 	Users         tenantports.UserRepository
-	QueryTools    agentports.AgentQueryToolRegistry `optional:"true"`
-	ActionTools   agentports.AgentToolRegistry      `optional:"true"`
+	QueryTools    agenttoolports.AgentQueryToolRegistry `optional:"true"`
+	ActionTools   agenttoolports.AgentToolRegistry      `optional:"true"`
 	Decisions     agentports.AgentDecisionRepository
-	Conversations agentports.ConversationRepository `optional:"true"`
+	Conversations assistantports.ConversationRepository `optional:"true"`
 	// Watchtower puts a run that could not finish on the feed, so a
 	// failure nobody was watching for still reaches someone.
 	Watchtower    watchtowerports.WatchtowerProjector `optional:"true"`
@@ -93,13 +97,13 @@ type Activities struct {
 	logger        *zap.Logger
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	controls      tenantports.AgentControlRepository
-	runRepo       agentports.AgentRunRepository
+	runRepo       agentruntimeports.AgentRunRepository
 	proposalRepo  agentports.AgentProposalRepository
 	runs          agentports.AgentRunService
 	runtime       *agentruntime.Service
-	steps         agentports.RunStepLedger
-	trajectory    agentports.AgentRunEventRecorder
-	contexts      agentports.RuntimeContextBuilder
+	steps         agentruntimeports.RunStepLedger
+	trajectory    agentruntimeports.AgentRunEventRecorder
+	contexts      agentruntimeports.RuntimeContextBuilder
 	recorder      *proposalrecorder.Service
 	notifier      agentports.AgentProposalNotifier
 	plans         agentports.AgentPlanRepository
@@ -110,8 +114,8 @@ type Activities struct {
 	users         tenantports.UserRepository
 	scorer        *agentscoring.Scorer
 	decisions     agentports.AgentDecisionRepository
-	conversations agentports.ConversationRepository
-	subjects      agentports.AgentSubjectDescriber
+	conversations assistantports.ConversationRepository
+	subjects      agentruntimeports.AgentSubjectDescriber
 	activity      agentports.AgentActivityPublisher
 	watchtower    watchtowerports.WatchtowerProjector
 	reflections   agentports.AgentReflectionScheduler
@@ -222,13 +226,13 @@ func (a *Activities) trajectoryFor(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	runID pulid.ID,
-) agentports.AgentRunEventWriter {
+) agentruntimeports.AgentRunEventWriter {
 	if a.trajectory == nil {
 		return nil
 	}
 
-	return a.trajectory.Recorder(ctx, tenant, agentports.RunStepOwner{
-		Kind: agentports.RunStepOwnerAgentRun,
+	return a.trajectory.Recorder(ctx, tenant, agentruntimeports.RunStepOwner{
+		Kind: agentruntimeports.RunStepOwnerAgentRun,
 		ID:   runID,
 	})
 }
@@ -240,7 +244,7 @@ func (a *Activities) runRequest(
 	payload *agentcontract.AgentRunPayload,
 	definition *agentdefinition.Definition,
 	subject *agentdefinition.RuntimeSubject,
-) (*agentports.RunRequest, error) {
+) (*agentruntimeports.RunRequest, error) {
 	tenant := payload.TenantInfo()
 	actor, err := a.unattendedActor(ctx, tenant, definition)
 	if err != nil {
@@ -259,12 +263,12 @@ func (a *Activities) runRequest(
 		taint = resumed.Taint.Clone()
 		outsideText = resumed.CarriesOutsideText()
 	}
-	runtimeContext, err := a.contexts.Build(ctx, &agentports.RuntimeContextRequest{
+	runtimeContext, err := a.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      actor,
 		Trigger:    payload.Trigger,
 		Subject:    subject,
-		Query: (&agentports.ContextQuery{
+		Query: (&retrievalports.ContextQuery{
 			Actor:        actor,
 			DefinitionID: definition.ID,
 			RunID:        payload.RunID,
@@ -280,7 +284,7 @@ func (a *Activities) runRequest(
 		definition.Template,
 	)
 
-	return &agentports.RunRequest{
+	return &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      actor,
 		Context:    runtimeContext,
@@ -298,8 +302,8 @@ func (a *Activities) runRequest(
 		// not dedupe: RequiresIdempotencyKey is checked for presence and, bar
 		// the two that forward it to an email provider, never looked up.
 		Steps: a.steps,
-		StepOwner: agentports.RunStepOwner{
-			Kind: agentports.RunStepOwnerAgentRun,
+		StepOwner: agentruntimeports.RunStepOwner{
+			Kind: agentruntimeports.RunStepOwnerAgentRun,
 			ID:   payload.RunID,
 		},
 		Attempt: int(activity.GetInfo(ctx).Attempt),
@@ -343,7 +347,7 @@ func (a *Activities) FinishRunActivity(
 ) (*FinishRunResult, error) {
 	outcome := input.Run
 	if outcome == nil {
-		outcome = &agentports.RunResult{}
+		outcome = &agentruntimeports.RunResult{}
 	}
 
 	settled, run, err := a.settleRun(ctx, settleRunParams{
@@ -374,7 +378,7 @@ func (a *Activities) FinishRunActivity(
 func (a *Activities) recordLoopRefusals(
 	ctx context.Context,
 	input *FinishRunInput,
-	outcome *agentports.RunResult,
+	outcome *agentruntimeports.RunResult,
 ) {
 	if len(outcome.LoopRefusals) == 0 || input.Definition == nil {
 		return
@@ -382,8 +386,8 @@ func (a *Activities) recordLoopRefusals(
 	failed := agentruntime.RecordLoopRefusals(ctx, &agentruntime.RecordLoopRefusalsRequest{
 		Ledger: a.steps,
 		Tenant: input.Payload.TenantInfo(),
-		Owner: agentports.RunStepOwner{
-			Kind: agentports.RunStepOwnerAgentRun,
+		Owner: agentruntimeports.RunStepOwner{
+			Kind: agentruntimeports.RunStepOwnerAgentRun,
 			ID:   input.Payload.RunID,
 		},
 		DefinitionID: input.Definition.ID,
@@ -416,7 +420,7 @@ func emitRunRoot(
 	agentflow.EmitRoot(ctx, &agentflow.RootParams{
 		Anchor:     aitrace.AnchorFor(aitrace.AnchorAgentRun, payload.RunID.String()),
 		Definition: input.Definition,
-		OwnerKind:  agentports.RunStepOwnerAgentRun,
+		OwnerKind:  agentruntimeports.RunStepOwnerAgentRun,
 		OwnerID:    payload.RunID,
 		RunID:      payload.RunID,
 		UserID:     payload.UserID,
@@ -466,13 +470,13 @@ func (a *Activities) recordTrajectory(
 ) {
 	writer := a.trajectoryFor(ctx, payload.TenantInfo(), payload.RunID)
 	for _, event := range events {
-		agentports.RecordTrajectory(writer, ctx, kernelports.StreamEvent{
+		agentruntimeports.RecordTrajectory(writer, ctx, kernelports.StreamEvent{
 			Event: event.Event,
 			Data:  event.Data,
 			At:    event.At,
 		})
 	}
-	agentports.FlushTrajectory(writer, ctx)
+	agentruntimeports.FlushTrajectory(writer, ctx)
 }
 
 // settleRunParams groups what filing a finished run needs.
@@ -480,7 +484,7 @@ type settleRunParams struct {
 	Payload    *agentcontract.AgentRunPayload
 	Definition *agentdefinition.Definition
 	Subject    *agentdefinition.RuntimeSubject
-	Outcome    *agentports.RunResult
+	Outcome    *agentruntimeports.RunResult
 	// Failed says the loop did not finish. What it proposed is still filed,
 	// but the run is not left awaiting a decision it will never hear.
 	Failed bool
@@ -493,7 +497,7 @@ func (a *Activities) settleRun(
 ) (*FinishRunResult, *agent.AgentRun, error) {
 	tenant := p.Payload.TenantInfo()
 
-	run, err := a.runRepo.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := a.runRepo.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         p.Payload.RunID,
 		TenantInfo: &tenant,
 	})
@@ -682,7 +686,7 @@ func (a *Activities) StartScheduledRunActivity(
 		return &StartScheduledRunResult{Skipped: "ended"}, nil
 	}
 
-	open, err := a.runRepo.CountOpen(ctx, agentports.CountOpenAgentRunsRequest{
+	open, err := a.runRepo.CountOpen(ctx, agentruntimeports.CountOpenAgentRunsRequest{
 		TenantInfo:   tenant,
 		DefinitionID: definition.ID,
 	})
@@ -747,7 +751,7 @@ func (a *Activities) updateRun(
 	runID pulid.ID,
 	mutate func(run *agent.AgentRun),
 ) error {
-	run, err := a.runRepo.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := a.runRepo.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         runID,
 		TenantInfo: &tenant,
 	})
@@ -844,7 +848,7 @@ func subjectEvidence(
 	subject *agentdefinition.RuntimeSubject,
 	runID pulid.ID,
 ) proposalrecorder.EvidenceFunc {
-	return func(action agentports.PendingAction, _ pulid.ID) []agent.EvidenceRef {
+	return func(action agentruntimeports.PendingAction, _ pulid.ID) []agent.EvidenceRef {
 		evidence := []agent.EvidenceRef{{
 			Type: "agent_run",
 			ID:   runID.String(),
@@ -968,11 +972,14 @@ func (a *Activities) DeleteStaleAskThreadsActivity(
 		return &DeleteStaleAskThreadsResult{}, nil
 	}
 
-	deleted, err := a.conversations.DeleteStaleThreads(ctx, agentports.DeleteStaleThreadsRequest{
-		Origin: conversation.ThreadOriginAsk,
-		Before: input.Before,
-		Limit:  deleteStaleAskBatch,
-	})
+	deleted, err := a.conversations.DeleteStaleThreads(
+		ctx,
+		assistantports.DeleteStaleThreadsRequest{
+			Origin: conversation.ThreadOriginAsk,
+			Before: input.Before,
+			Limit:  deleteStaleAskBatch,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("delete stale ask threads: %w", err)
 	}
@@ -980,7 +987,7 @@ func (a *Activities) DeleteStaleAskThreadsActivity(
 		a.logger.Info("removed quick questions nobody kept", zap.Int("deleted", deleted))
 	}
 
-	drafts, err := a.conversations.DeleteStaleThreads(ctx, agentports.DeleteStaleThreadsRequest{
+	drafts, err := a.conversations.DeleteStaleThreads(ctx, assistantports.DeleteStaleThreadsRequest{
 		Origin:          conversation.ThreadOriginFormula,
 		Before:          input.Before,
 		Limit:           deleteStaleAskBatch,
@@ -1031,7 +1038,7 @@ func (a *Activities) RemindPendingProposalsActivity(
 type recordProposalsParams struct {
 	Definition *agentdefinition.Definition
 	Run        *agent.AgentRun
-	Actions    []agentports.PendingAction
+	Actions    []agentruntimeports.PendingAction
 	PlanTitle  string
 	Subject    *agentdefinition.RuntimeSubject
 	TenantInfo pagination.TenantInfo

@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +22,7 @@ func followUpService(
 ) (*Service, *stubConversations, *scriptedCompletion) {
 	t.Helper()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		textTurn("The Operations dashboard is ready under Reports."),
 	}}
 	svc, conversations := newConversationService(completion, testDefinition())
@@ -49,7 +51,7 @@ func TestSendMessageStream_AnswersADecision(t *testing.T) {
 	svc, conversations, completion := followUpService(t, proposal)
 	actor := testActor()
 
-	result, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	result, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:           conversations.thread.ID,
 		FollowUpProposalID: proposal.ID,
 		TenantInfo:         actor.TenantInfo(),
@@ -85,7 +87,7 @@ func TestSendMessageStream_SaysWhyAnApprovedChangeFailed(t *testing.T) {
 	svc, conversations, _ := followUpService(t, proposal)
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:           conversations.thread.ID,
 		FollowUpProposalID: proposal.ID,
 		TenantInfo:         actor.TenantInfo(),
@@ -159,7 +161,7 @@ func TestSendMessageStream_RefusesAFollowUpThatCannotBeAnswered(t *testing.T) {
 	}
 	actor := testActor()
 	send := func(svc *Service, threadID, proposalID pulid.ID, content string) error {
-		_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+		_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 			ThreadID:           threadID,
 			Content:            content,
 			FollowUpProposalID: proposalID,
@@ -224,7 +226,7 @@ func TestSendMessageStream_AnswersAPlanDecision(t *testing.T) {
 	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{plan}}
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:       conversations.thread.ID,
 		FollowUpPlanID: plan.ID,
 		TenantInfo:     actor.TenantInfo(),
@@ -251,7 +253,7 @@ func TestSendMessageStream_RefusesAPlanFollowUpThatCannotBeAnswered(t *testing.T
 	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{pending}}
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:       conversations.thread.ID,
 		FollowUpPlanID: pending.ID,
 		TenantInfo:     actor.TenantInfo(),
@@ -259,7 +261,7 @@ func TestSendMessageStream_RefusesAPlanFollowUpThatCannotBeAnswered(t *testing.T
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 
-	_, err = svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err = svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:           conversations.thread.ID,
 		FollowUpPlanID:     pending.ID,
 		FollowUpProposalID: pulid.MustNew("ap_"),
@@ -311,8 +313,16 @@ func TestRanWith_NamesTheApprovedValuesOfAWriteWithNoResult(t *testing.T) {
 	got := ranWith(proposal, changed)
 	assert.Equal(t, " It ran with pieces: 12; weight: 38500.", got)
 
-	proposal.ExecutionResult = &agent.ToolExecutionResult{Action: "created", Kind: "report", Name: "On-time"}
-	assert.Empty(t, ranWith(proposal, nil), "a write that describes its own result says that instead")
+	proposal.ExecutionResult = &agent.ToolExecutionResult{
+		Action: "created",
+		Kind:   "report",
+		Name:   "On-time",
+	}
+	assert.Empty(
+		t,
+		ranWith(proposal, nil),
+		"a write that describes its own result says that instead",
+	)
 
 	proposal.ExecutionResult = nil
 	proposal.Status = agent.ProposalStatusRejected

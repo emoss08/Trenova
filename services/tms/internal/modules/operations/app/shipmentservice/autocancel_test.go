@@ -3,16 +3,15 @@ package shipmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -81,7 +80,7 @@ func TestServiceAutoCancelShipments_SkipsWhenDisabled(t *testing.T) {
 		l:           zap.NewNop(),
 		repo:        shipmentportsmock.NewMockShipmentRepository(t),
 		controlRepo: controlRepo,
-		invalidator: newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
+		invalidator: newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 	}
 
 	entities, err := svc.AutoCancelShipments(t.Context(), &shipmentports.AutoCancelShipmentsRequest{
@@ -123,9 +122,9 @@ func TestServiceAutoCancelShipments_PublishesBulkInvalidation(t *testing.T) {
 		}}, nil).
 		Once()
 
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" &&
 				req.Action == "bulk_canceled" &&
 				req.OrganizationID == orgID &&

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -170,7 +170,7 @@ func drawRecord(draw *worker.DOTRandomDraw) toolpreview.Record {
 		"Random testing round "+draw.PeriodKey, draw.Version)
 }
 
-func scheduledTestFrom(params *agentports.ToolExecuteParams) (*worker.WorkerDOTTest, error) {
+func scheduledTestFrom(params *agenttoolports.ToolExecuteParams) (*worker.WorkerDOTTest, error) {
 	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
 	if err != nil {
 		return nil, err
@@ -226,7 +226,7 @@ func scheduledTestFrom(params *agentports.ToolExecuteParams) (*worker.WorkerDOTT
 	return test, nil
 }
 
-func newScheduleDOTTestTool(tests DrugAlcoholKeeper) agentports.AgentTool {
+func newScheduleDOTTestTool(tests DrugAlcoholKeeper) agenttoolports.AgentTool {
 	spec := withSchema(wfSpec(
 		"worker_schedule_dot_test",
 		"Schedule a drug or alcohol test for a driver. It covers a random selection's "+
@@ -270,7 +270,7 @@ func newScheduleDOTTestTool(tests DrugAlcoholKeeper) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				test *worker.WorkerDOTTest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*worker.WorkerDOTTest, error) {
 				return tests.PlanRecordTest(ctx, test, params.Actor.UserID)
 			},
@@ -296,7 +296,7 @@ func newScheduleDOTTestTool(tests DrugAlcoholKeeper) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				test *worker.WorkerDOTTest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				created, err := tests.RecordTest(ctx, test, params.Actor.UserID)
 				if err != nil {
@@ -317,8 +317,8 @@ type reasonedRecord struct {
 
 func reasonedRecordFrom(
 	idKey, reasonKey string,
-) func(*agentports.ToolExecuteParams) (*reasonedRecord, error) {
-	return func(params *agentports.ToolExecuteParams) (*reasonedRecord, error) {
+) func(*agenttoolports.ToolExecuteParams) (*reasonedRecord, error) {
+	return func(params *agenttoolports.ToolExecuteParams) (*reasonedRecord, error) {
 		id, err := common.RequirePulid(params.Params, idKey)
 		if err != nil {
 			return nil, err
@@ -336,7 +336,7 @@ func reasonedRecordFrom(
 	}
 }
 
-func newCancelDOTTestTool(tests DrugAlcoholKeeper) agentports.AgentTool {
+func newCancelDOTTestTool(tests DrugAlcoholKeeper) agenttoolports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"worker_cancel_dot_test",
 		"Cancel a drug or alcohol test that did not happen, with the reason kept on the "+
@@ -359,7 +359,7 @@ func newCancelDOTTestTool(tests DrugAlcoholKeeper) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				req *reasonedRecord,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*workerdrugalcoholservice.TestChange, error) {
 				return tests.PlanCancelTest(ctx, req.tenant, req.id, req.reason)
 			},
@@ -379,7 +379,7 @@ func newCancelDOTTestTool(tests DrugAlcoholKeeper) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				req *reasonedRecord,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				cancelled, err := tests.CancelTest(ctx, req.tenant, req.id, req.reason, req.userID)
 				if err != nil {
@@ -392,7 +392,7 @@ func newCancelDOTTestTool(tests DrugAlcoholKeeper) agentports.AgentTool {
 }
 
 func drawRequestFrom(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*workerdrugalcoholservice.RunDrawRequest, error) {
 	poolID, err := common.OptionalID(params.Params, paramPoolID)
 	if err != nil {
@@ -418,7 +418,7 @@ func drawRequestFrom(
 	return req, nil
 }
 
-func newRunDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool {
+func newRunDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentTool {
 	spec := withSchema(wfSpec(
 		"worker_run_dot_random_draw",
 		"Draw a random testing round from a pool for the period a day falls in, today by "+
@@ -452,7 +452,7 @@ func newRunDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *workerdrugalcoholservice.RunDrawRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*worker.DOTRandomDraw, error) {
 			return draws.PlanRunDraw(ctx, req)
 		},
@@ -483,7 +483,7 @@ func newRunDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *workerdrugalcoholservice.RunDrawRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := draws.RunDraw(ctx, req)
 			return nil, err
@@ -518,7 +518,7 @@ func renderDrawChange(summary string) func(
 	}
 }
 
-func newFinalizeDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool {
+func newFinalizeDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentTool {
 	spec := personOnly(targeting(withSchema(wfSpec(
 		"worker_finalize_dot_random_draw",
 		"Finalize a draft random testing round so its selections stand as the evidence of "+
@@ -542,7 +542,7 @@ func newFinalizeDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool 
 	return common.NewReceivableTool(
 		spec,
 		common.ReceivablePlan[*drawDecision, *workerdrugalcoholservice.DrawChange]{
-			Request: func(params *agentports.ToolExecuteParams) (*drawDecision, error) {
+			Request: func(params *agenttoolports.ToolExecuteParams) (*drawDecision, error) {
 				id, err := common.RequirePulid(params.Params, paramDrawID)
 				if err != nil {
 					return nil, err
@@ -553,7 +553,7 @@ func newFinalizeDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool 
 			Plan: func(
 				ctx context.Context,
 				req *drawDecision,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*workerdrugalcoholservice.DrawChange, error) {
 				return draws.PlanFinalizeDraw(ctx, req.tenant, req.id)
 			},
@@ -567,7 +567,7 @@ func newFinalizeDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool 
 			Run: func(
 				ctx context.Context,
 				req *drawDecision,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				_, err := draws.FinalizeDraw(ctx, req.tenant, req.id, req.userID)
 				return nil, err
@@ -576,7 +576,7 @@ func newFinalizeDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool 
 	)
 }
 
-func newCancelDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool {
+func newCancelDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"worker_cancel_dot_random_draw",
 		"Cancel a random testing round, draft or final, so the period can be drawn again. "+
@@ -602,7 +602,7 @@ func newCancelDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *reasonedRecord,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*workerdrugalcoholservice.DrawChange, error) {
 			return draws.PlanCancelDraw(ctx, req.tenant, req.id, req.reason)
 		},
@@ -616,7 +616,7 @@ func newCancelDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *reasonedRecord,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := draws.CancelDraw(ctx, req.tenant, req.id, req.reason, req.userID)
 			return nil, err
@@ -624,7 +624,7 @@ func newCancelDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool {
 	})
 }
 
-func newUpdateDOTRandomSelectionTool(draws DrugAlcoholKeeper) agentports.AgentTool {
+func newUpdateDOTRandomSelectionTool(draws DrugAlcoholKeeper) agenttoolports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"worker_update_dot_random_selection",
 		"Record where one random testing selection stands. Notified once the driver has "+
@@ -650,7 +650,7 @@ func newUpdateDOTRandomSelectionTool(draws DrugAlcoholKeeper) agentports.AgentTo
 		*workerdrugalcoholservice.UpdateEntryRequest, *workerdrugalcoholservice.EntryChange,
 	]{
 		Request: func(
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*workerdrugalcoholservice.UpdateEntryRequest, error) {
 			id, err := common.RequirePulid(params.Params, paramDrawEntryID)
 			if err != nil {
@@ -676,7 +676,7 @@ func newUpdateDOTRandomSelectionTool(draws DrugAlcoholKeeper) agentports.AgentTo
 		Plan: func(
 			ctx context.Context,
 			req *workerdrugalcoholservice.UpdateEntryRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*workerdrugalcoholservice.EntryChange, error) {
 			return draws.PlanUpdateDrawEntry(ctx, req)
 		},
@@ -703,7 +703,7 @@ func newUpdateDOTRandomSelectionTool(draws DrugAlcoholKeeper) agentports.AgentTo
 		Run: func(
 			ctx context.Context,
 			req *workerdrugalcoholservice.UpdateEntryRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := draws.UpdateDrawEntry(ctx, req)
 			if err != nil {
@@ -715,30 +715,30 @@ func newUpdateDOTRandomSelectionTool(draws DrugAlcoholKeeper) agentports.AgentTo
 	})
 }
 
-func provideScheduleDOTTestTool(s *workerdrugalcoholservice.Service) agentports.AgentTool {
+func provideScheduleDOTTestTool(s *workerdrugalcoholservice.Service) agenttoolports.AgentTool {
 	return newScheduleDOTTestTool(s)
 }
 
-func provideCancelDOTTestTool(s *workerdrugalcoholservice.Service) agentports.AgentTool {
+func provideCancelDOTTestTool(s *workerdrugalcoholservice.Service) agenttoolports.AgentTool {
 	return newCancelDOTTestTool(s)
 }
 
-func provideRunDOTRandomDrawTool(s *workerdrugalcoholservice.Service) agentports.AgentTool {
+func provideRunDOTRandomDrawTool(s *workerdrugalcoholservice.Service) agenttoolports.AgentTool {
 	return newRunDOTRandomDrawTool(s)
 }
 
 func provideFinalizeDOTRandomDrawTool(
 	s *workerdrugalcoholservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newFinalizeDOTRandomDrawTool(s)
 }
 
-func provideCancelDOTRandomDrawTool(s *workerdrugalcoholservice.Service) agentports.AgentTool {
+func provideCancelDOTRandomDrawTool(s *workerdrugalcoholservice.Service) agenttoolports.AgentTool {
 	return newCancelDOTRandomDrawTool(s)
 }
 
 func provideUpdateDOTRandomSelectionTool(
 	s *workerdrugalcoholservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newUpdateDOTRandomSelectionTool(s)
 }

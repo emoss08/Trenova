@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,23 +17,25 @@ import (
 
 type memorySharedVectors struct {
 	mu      sync.Mutex
-	vectors map[agentports.QueryVectorCacheKey]agentports.QueryVector
+	vectors map[retrievalports.QueryVectorCacheKey]retrievalports.QueryVector
 	ttls    []time.Duration
 	failGet bool
 }
 
 func newMemorySharedVectors() *memorySharedVectors {
-	return &memorySharedVectors{vectors: map[agentports.QueryVectorCacheKey]agentports.QueryVector{}}
+	return &memorySharedVectors{
+		vectors: map[retrievalports.QueryVectorCacheKey]retrievalports.QueryVector{},
+	}
 }
 
 func (m *memorySharedVectors) Get(
 	_ context.Context,
-	key *agentports.QueryVectorCacheKey,
-) (agentports.QueryVector, bool, error) {
+	key *retrievalports.QueryVectorCacheKey,
+) (retrievalports.QueryVector, bool, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.failGet {
-		return agentports.QueryVector{}, false, errors.New("redis is down")
+		return retrievalports.QueryVector{}, false, errors.New("redis is down")
 	}
 	vector, ok := m.vectors[*key]
 
@@ -42,8 +44,8 @@ func (m *memorySharedVectors) Get(
 
 func (m *memorySharedVectors) Set(
 	_ context.Context,
-	key *agentports.QueryVectorCacheKey,
-	vector agentports.QueryVector,
+	key *retrievalports.QueryVectorCacheKey,
+	vector retrievalports.QueryVector,
 	ttl time.Duration,
 ) error {
 	m.mu.Lock()
@@ -57,9 +59,11 @@ func (m *memorySharedVectors) Set(
 func sharedVectorizer(
 	repo *fakeRepository,
 	embeddings *fakeEmbeddings,
-	shared agentports.QueryVectorCache,
+	shared retrievalports.QueryVectorCache,
 ) *Service {
-	return New(Params{Logger: zap.NewNop(), Repository: repo, Embeddings: embeddings, Shared: shared})
+	return New(
+		Params{Logger: zap.NewNop(), Repository: repo, Embeddings: embeddings, Shared: shared},
+	)
 }
 
 func TestVectorize_AnotherProcessReusesTheSharedVector(t *testing.T) {
@@ -74,11 +78,18 @@ func TestVectorize_AnotherProcessReusesTheSharedVector(t *testing.T) {
 
 	first, err := api.Vectorize(t.Context(), queryRequest(tenant, "which invoices are past due?"))
 	require.NoError(t, err)
-	second, err := worker.Vectorize(t.Context(), queryRequest(tenant, "which invoices are past due?"))
+	second, err := worker.Vectorize(
+		t.Context(),
+		queryRequest(tenant, "which invoices are past due?"),
+	)
 	require.NoError(t, err)
 
 	assert.Len(t, apiEmbeddings.calls(), 1)
-	assert.Empty(t, workerEmbeddings.calls(), "the worker reads the vector the API already paid for")
+	assert.Empty(
+		t,
+		workerEmbeddings.calls(),
+		"the worker reads the vector the API already paid for",
+	)
 	assert.Equal(t, first.Vector, second.Vector)
 	assert.Equal(t, []time.Duration{queryCacheTTL}, shared.ttls)
 }
@@ -117,7 +128,7 @@ func TestVectorize_IgnoresASharedVectorOfTheWrongSize(t *testing.T) {
 		businessUnitID: tenant.BuID,
 		modelKey:       testModelKey,
 		textHash:       hashutils.SHA256Hex(text),
-	})] = agentports.QueryVector{
+	})] = retrievalports.QueryVector{
 		Available:  true,
 		Vector:     make([]float32, airetrieval.Dimensions1536),
 		ModelKey:   testModelKey,

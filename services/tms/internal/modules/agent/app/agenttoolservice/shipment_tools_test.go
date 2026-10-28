@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -289,20 +289,24 @@ func TestShipmentWriteTools_SurfaceServiceFailures(t *testing.T) {
 	failure := errors.New("shipment is already delivered")
 
 	holds := &fakeHoldService{err: failure}
-	require.ErrorIs(t,
-		shipmenttools.NewPlaceShipmentHoldTool(holds).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			"shipmentId":   pulid.MustNew("shp_").String(),
-			"holdReasonId": pulid.MustNew("hrsn_").String(),
-		})),
+	require.ErrorIs(
+		t,
+		shipmenttools.NewPlaceShipmentHoldTool(holds).
+			Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				"shipmentId":   pulid.MustNew("shp_").String(),
+				"holdReasonId": pulid.MustNew("hrsn_").String(),
+			})),
 		failure,
 	)
 
 	shipments := &fakeShipmentService{err: failure}
-	require.ErrorIs(t,
-		shipmenttools.NewCancelShipmentTool(shipments, nil, nil).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			"shipmentId": pulid.MustNew("shp_").String(),
-			"reason":     "duplicate booking",
-		})),
+	require.ErrorIs(
+		t,
+		shipmenttools.NewCancelShipmentTool(shipments, nil, nil).
+			Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				"shipmentId": pulid.MustNew("shp_").String(),
+				"reason":     "duplicate booking",
+			})),
 		failure,
 	)
 }
@@ -314,7 +318,7 @@ func TestShipmentWriteTools_AuthorizeAgainstWhatTheyWrite(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range []struct {
-		tool      agentports.AgentTool
+		tool      agenttoolports.AgentTool
 		resource  permission.Resource
 		operation permission.Operation
 	}{

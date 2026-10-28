@@ -7,12 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-func ToolPolicyViewToModel(view *agentports.AgentToolPolicyView) *gqlmodel.AgentToolPolicy {
+func ToolPolicyViewToModel(view *agenttoolports.AgentToolPolicyView) *gqlmodel.AgentToolPolicy {
 	policy := &view.Policy
 	out := &gqlmodel.AgentToolPolicy{
 		ID:                 policy.Name,
@@ -62,7 +62,7 @@ func ToolPolicyViewToModel(view *agentports.AgentToolPolicyView) *gqlmodel.Agent
 	return out
 }
 
-func applyRule(out *gqlmodel.AgentToolPolicy, view *agentports.AgentToolPolicyView) {
+func applyRule(out *gqlmodel.AgentToolPolicy, view *agenttoolports.AgentToolPolicyView) {
 	declared := &view.Policy
 	if view.Declared != nil {
 		declared = view.Declared
@@ -82,7 +82,7 @@ func applyRule(out *gqlmodel.AgentToolPolicy, view *agentports.AgentToolPolicyVi
 }
 
 func (r *Deps) AgentToolSafetyPolicy(
-	obj *agentports.AgentToolSafety,
+	obj *agenttoolports.AgentToolSafety,
 ) (*gqlmodel.AgentToolPolicy, error) {
 	if obj == nil {
 		return nil, errortypes.NewNotFoundError("Tool not found")
@@ -109,10 +109,10 @@ func tierOr(tier, fallback agent.AutonomyTier) agent.AutonomyTier {
 
 func (r *Deps) AgentSafetyTools(
 	ctx context.Context,
-	obj *agentports.AgentSafetySubject,
-) ([]*agentports.AgentToolSafety, error) {
+	obj *agenttoolports.AgentSafetySubject,
+) ([]*agenttoolports.AgentToolSafety, error) {
 	if obj == nil || obj.Agent == nil {
-		return []*agentports.AgentToolSafety{}, nil
+		return []*agenttoolports.AgentToolSafety{}, nil
 	}
 
 	if !loaders.Available(ctx) {
@@ -124,11 +124,11 @@ func (r *Deps) AgentSafetyTools(
 		return nil, err
 	}
 
-	assessed := r.AgentSafetyService.Assess(ctx, &agentports.AssessAgentSafetyRequest{
+	assessed := r.AgentSafetyService.Assess(ctx, &agenttoolports.AssessAgentSafetyRequest{
 		Subject: obj,
 		Trust:   trust,
 	})
-	out := make([]*agentports.AgentToolSafety, 0, len(assessed))
+	out := make([]*agenttoolports.AgentToolSafety, 0, len(assessed))
 	for idx := range assessed {
 		out = append(out, &assessed[idx])
 	}
@@ -138,7 +138,7 @@ func (r *Deps) AgentSafetyTools(
 
 func (r *Deps) AgentSafetyReach(
 	ctx context.Context,
-	obj *agentports.AgentSafetySubject,
+	obj *agenttoolports.AgentSafetySubject,
 ) (*gqlmodel.AgentReach, error) {
 	if obj == nil || obj.Agent == nil {
 		return nil, errortypes.NewNotFoundError("Agent not found")
@@ -158,14 +158,14 @@ func (r *Deps) AgentSafetyReach(
 		return nil, err
 	}
 
-	warnings := r.AgentSafetyService.ReachWarnings(&agentports.AgentReachRequest{
+	warnings := r.AgentSafetyService.ReachWarnings(&agenttoolports.AgentReachRequest{
 		Subject:      obj,
 		GrantedRoles: len(granted),
 	})
 	reach := &gqlmodel.AgentReach{
 		AccessMode: obj.Agent.EffectiveAccessMode(),
 		Roles:      []*permission.Role{},
-		Warnings:   make([]*agentports.AgentReachWarning, 0, len(warnings)),
+		Warnings:   make([]*agenttoolports.AgentReachWarning, 0, len(warnings)),
 	}
 	for idx := range warnings {
 		reach.Warnings = append(reach.Warnings, &warnings[idx])
@@ -177,8 +177,8 @@ func (r *Deps) AgentSafetyReach(
 	return reach, nil
 }
 
-func toolRuleChange(input *gqlmodel.AgentToolRuleInput) agentports.ToolRuleChange {
-	var change agentports.ToolRuleChange
+func toolRuleChange(input *gqlmodel.AgentToolRuleInput) agenttoolports.ToolRuleChange {
+	var change agenttoolports.ToolRuleChange
 	if input.MaxTier != nil {
 		change.MaxTier = *input.MaxTier
 	}
@@ -189,8 +189,10 @@ func toolRuleChange(input *gqlmodel.AgentToolRuleInput) agentports.ToolRuleChang
 	return change
 }
 
-func impactPointers(impacts []agentports.AgentToolRuleImpact) []*agentports.AgentToolRuleImpact {
-	out := make([]*agentports.AgentToolRuleImpact, len(impacts))
+func impactPointers(
+	impacts []agenttoolports.AgentToolRuleImpact,
+) []*agenttoolports.AgentToolRuleImpact {
+	out := make([]*agenttoolports.AgentToolRuleImpact, len(impacts))
 	for idx := range impacts {
 		out[idx] = &impacts[idx]
 	}

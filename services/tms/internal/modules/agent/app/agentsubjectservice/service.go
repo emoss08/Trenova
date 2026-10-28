@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
@@ -124,7 +124,7 @@ type Service struct {
 	logger            *zap.Logger
 }
 
-func New(p Params) agentports.AgentSubjectDescriber {
+func New(p Params) agentruntimeports.AgentSubjectDescriber {
 	return &Service{
 		content:           p.Content,
 		billingQueue:      p.BillingQueue,

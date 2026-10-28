@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -42,6 +42,6 @@ func TestAddShipmentComment_TakesEveryDomainPriorityAndRefusesTheRest(t *testing
 	assert.Contains(t, err.Error(), "Customers")
 	assert.Nil(t, comments.created)
 
-	_, validates := tool.(agentports.ToolValidator)
+	_, validates := tool.(agenttoolports.ToolValidator)
 	assert.True(t, validates, "the note is checked before it is filed")
 }

@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -37,8 +37,8 @@ func (t *subsetTool) ParamSchema() map[string]any {
 		"additionalProperties": false,
 	}
 }
-func (t *subsetTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *subsetTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipment,
@@ -52,7 +52,7 @@ func (t *subsetTool) Policy() agentports.ToolPolicy {
 		Rationale:     "A subset stub.",
 	}
 }
-func (t *subsetTool) Execute(_ context.Context, params agentports.ToolExecuteParams) error {
+func (t *subsetTool) Execute(_ context.Context, params agenttoolports.ToolExecuteParams) error {
 	t.ran = params.Params
 
 	return nil

@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -60,7 +61,12 @@ func TestReplayHistory_ShortensAnOldResultInsideAClosedFence(t *testing.T) {
 	closeAt := strings.Index(shortened, untrustedCloseTag)
 	note := shortened[closeAt:]
 	assert.Contains(t, note, "shipment_list again", "the note, outside the fence, names the tool")
-	assert.Contains(t, note, "Shown to the person as a table.", "a note that followed the result is kept")
+	assert.Contains(
+		t,
+		note,
+		"Shown to the person as a table.",
+		"a note that followed the result is kept",
+	)
 	assert.NotContains(t, shortened[:closeAt], "again")
 }
 
@@ -86,14 +92,17 @@ func TestReplayHistory_KeepsRecentResultsWholeOnlyUpToABudget(t *testing.T) {
 			Content:    FenceToolResult("shipment_list", strings.Repeat("x", 11000)),
 		})
 	}
-	history = append(history, conversation.Message{Role: conversation.RoleAssistant, ToolCalls: calls})
+	history = append(
+		history,
+		conversation.Message{Role: conversation.RoleAssistant, ToolCalls: calls},
+	)
 	history = append(history, results...)
 
 	messages, _ := replayHistory(history, nil)
 
 	kept := 0
 	for _, message := range messages {
-		if message.Role == agentports.RoleTool {
+		if message.Role == llmports.RoleTool {
 			kept += len(message.Content)
 		}
 	}
@@ -136,7 +145,7 @@ func TestOpenTurn_KeepsTheFiguresOfShortenedResultsAsEvidence(t *testing.T) {
 		quietTurns(recentToolTurns)...,
 	)
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		History:    history,

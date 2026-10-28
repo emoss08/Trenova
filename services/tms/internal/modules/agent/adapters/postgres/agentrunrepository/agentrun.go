@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,7 +35,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.AgentRunRepository {
+func New(p Params) agentruntimeports.AgentRunRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentrun-repository"),
@@ -45,7 +45,7 @@ func New(p Params) agentports.AgentRunRepository {
 // ReadableBy keeps the runs a reader may see: for a person, every run but
 // those of conversations someone else owns. run is the runs table as the
 // statement references it.
-func ReadableBy(run *agentdb.AgentRunsTable, reader agentports.RunReader) keel.Pred {
+func ReadableBy(run *agentdb.AgentRunsTable, reader agentruntimeports.RunReader) keel.Pred {
 	if !reader.ForPerson() {
 		return nil
 	}
@@ -63,13 +63,13 @@ func ReadableBy(run *agentdb.AgentRunsTable, reader agentports.RunReader) keel.P
 	)))
 }
 
-func readableRuns(reader agentports.RunReader) *keel.Query[*agent.AgentRun] {
+func readableRuns(reader agentruntimeports.RunReader) *keel.Query[*agent.AgentRun] {
 	run := agentdb.AgentRuns
 
 	return run.Omit(run.Transcript).Where(ReadableBy(run, reader))
 }
 
-func transcripts(ids []pulid.ID, reader agentports.RunReader) *keel.Query[*agent.AgentRun] {
+func transcripts(ids []pulid.ID, reader agentruntimeports.RunReader) *keel.Query[*agent.AgentRun] {
 	run := agentdb.AgentRuns
 
 	return run.Pick(run.ID, run.BusinessUnitID, run.OrganizationID, run.Transcript).
@@ -79,7 +79,7 @@ func transcripts(ids []pulid.ID, reader agentports.RunReader) *keel.Query[*agent
 
 func (r *repository) List(
 	ctx context.Context,
-	req *agentports.ListAgentRunRequest,
+	req *agentruntimeports.ListAgentRunRequest,
 ) (*pagination.ListResult[*agent.AgentRun], error) {
 	return dbtx.Read(
 		ctx,
@@ -110,7 +110,7 @@ func (r *repository) List(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *agentports.ListAgentRunConnectionRequest,
+	req *agentruntimeports.ListAgentRunConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentRun], error) {
 	return dbtx.Read(
 		ctx,
@@ -146,7 +146,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) ListByIDs(
 	ctx context.Context,
-	req agentports.ListAgentRunsByIDsRequest,
+	req agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRun, error) {
 		if len(req.IDs) == 0 {
@@ -170,7 +170,7 @@ func (r *repository) ListByIDs(
 
 func (r *repository) ListTranscriptsByIDs(
 	ctx context.Context,
-	req agentports.ListAgentRunsByIDsRequest,
+	req agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRun, error) {
 		if len(req.IDs) == 0 {
@@ -190,7 +190,7 @@ func (r *repository) ListTranscriptsByIDs(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentRun, error) {
 		run := agentdb.AgentRuns
@@ -253,7 +253,7 @@ func closedRunStatuses() []agent.RunStatus {
 
 func (r *repository) CountOpen(
 	ctx context.Context,
-	req agentports.CountOpenAgentRunsRequest,
+	req agentruntimeports.CountOpenAgentRunsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		run := agentdb.AgentRuns
@@ -273,7 +273,7 @@ func (r *repository) CountOpen(
 
 func (r *repository) CountSince(
 	ctx context.Context,
-	req agentports.CountAgentRunsSinceRequest,
+	req agentruntimeports.CountAgentRunsSinceRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		run := agentdb.AgentRuns

@@ -7,8 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -38,7 +40,7 @@ type retrievalOutcome struct {
 
 func (o *retrievalOutcome) TaintedRecords() []agent.RecordRef { return o.tainted }
 
-func searchedBy(semantics agentports.RetrievalSemantics) string {
+func searchedBy(semantics retrievalports.RetrievalSemantics) string {
 	if semantics.Used {
 		return "words and meaning"
 	}
@@ -62,14 +64,14 @@ func searchedBy(semantics agentports.RetrievalSemantics) string {
 	return "words only: meaning search is not set up"
 }
 
-func retrievalAttribution(params *agentports.QueryToolParams) aiusageports.AIUsageAttribution {
+func retrievalAttribution(params *agenttoolports.QueryToolParams) aiusageports.AIUsageAttribution {
 	return aiusageports.AIUsageAttribution{
 		AgentDefinitionID: params.AgentDefinitionID,
 		UserID:            params.Actor.PersonUserID(),
 	}
 }
 
-func searchQuery(params *agentports.QueryToolParams) (string, error) {
+func searchQuery(params *agenttoolports.QueryToolParams) (string, error) {
 	query := strings.TrimSpace(optionalString(params.Params, paramQuery))
 	if query == "" {
 		return "", errSearchQueryRequired
@@ -78,20 +80,20 @@ func searchQuery(params *agentports.QueryToolParams) (string, error) {
 	return query, nil
 }
 
-func searchLimit(params *agentports.QueryToolParams, fallback, ceiling int) int {
+func searchLimit(params *agenttoolports.QueryToolParams, fallback, ceiling int) int {
 	return min(max(optionalInt(params.Params, paramLimit, fallback), 1), ceiling)
 }
 
 type searchDocumentsTool struct {
-	searcher agentports.RetrievalSearcher
+	searcher retrievalports.RetrievalSearcher
 	access   fieldAccess
 }
 
 func newSearchDocumentsTool(
-	searcher agentports.RetrievalSearcher,
+	searcher retrievalports.RetrievalSearcher,
 	permissions permissionports.PermissionEngine,
-	threads agentports.ThreadOwnerRepository,
-) agentports.AgentQueryTool {
+	threads assistantports.ThreadOwnerRepository,
+) agenttoolports.AgentQueryTool {
 	return &searchDocumentsTool{
 		searcher: searcher,
 		access:   newFieldAccess(permissions).withThreads(threads),
@@ -142,7 +144,7 @@ func (t *searchDocumentsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *searchDocumentsTool) Policy() agentports.ToolPolicy {
+func (t *searchDocumentsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceDocument,
 		reads:    agent.ExternalReadAlways,
@@ -165,7 +167,7 @@ type documentSearchRow struct {
 
 func (t *searchDocumentsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -176,7 +178,7 @@ func (t *searchDocumentsTool) Query(
 		return nil, err
 	}
 
-	result, err := t.searcher.SearchDocuments(ctx, &agentports.RetrievalSearchRequest{
+	result, err := t.searcher.SearchDocuments(ctx, &retrievalports.RetrievalSearchRequest{
 		TenantInfo:  tenantOf(params),
 		Query:       query,
 		Limit:       searchLimit(params, documentSearchDefaultLimit, documentSearchMaxLimit),

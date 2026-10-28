@@ -9,9 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -59,10 +61,10 @@ type Params struct {
 	Plans            platformplanports.PlanService                  `optional:"true"`
 	Scheduler        agentprofileports.Scheduler                    `optional:"true"`
 	Audit            auditports.AuditService                        `optional:"true"`
-	Realtime         agentports.RealtimeService                     `optional:"true"`
+	Realtime         realtimeports.RealtimeService                  `optional:"true"`
 	// Memories says who manages agent memory, and so keeps guidance about
 	// the organization at once. Without it everyone offers it.
-	Memories agentports.AgentMemoryService `optional:"true"`
+	Memories agentmemoryports.AgentMemoryService `optional:"true"`
 }
 
 type Service struct {
@@ -78,8 +80,8 @@ type Service struct {
 	plans            platformplanports.PlanService
 	scheduler        agentprofileports.Scheduler
 	audit            auditports.AuditService
-	realtime         agentports.RealtimeService
-	memories         agentports.AgentMemoryService
+	realtime         realtimeports.RealtimeService
+	memories         agentmemoryports.AgentMemoryService
 	now              func() int64
 }
 
@@ -220,7 +222,7 @@ func (s *Service) Prepare(
 		return plan, nil
 	}
 
-	plan.Request = &agentports.StructuredCompletionRequest{
+	plan.Request = &llmports.StructuredCompletionRequest{
 		TenantInfo: req.Ref.Tenant(),
 		Task:       aiprovider.TaskAssistantChat,
 		System:     systemPrompt(req.Ref.Subject),
@@ -977,7 +979,7 @@ func (s *Service) announce(
 		return
 	}
 
-	req := &agentports.PublishResourceInvalidationRequest{
+	req := &realtimeports.PublishResourceInvalidationRequest{
 		OrganizationID: ref.OrganizationID,
 		BusinessUnitID: ref.BusinessUnitID,
 		Resource:       agentprofileports.RealtimeResource,

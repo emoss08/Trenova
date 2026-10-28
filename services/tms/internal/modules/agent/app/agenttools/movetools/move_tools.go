@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
@@ -40,7 +40,7 @@ func newRecordStopActualTool(
 	moves shipmentports.ShipmentMoveService,
 	reports stopReporter,
 	moveStops moveStopReader,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &RecordStopActualTool{moves: moves, reports: reports, moveStops: moveStops}
 }
 
@@ -48,7 +48,7 @@ func ProvideRecordStopActualTool(
 	moves shipmentports.ShipmentMoveService,
 	reports trackingeventports.TrackingEventService,
 	moveStops shipmentports.ShipmentMoveRepository,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newRecordStopActualTool(moves, reports, moveStops)
 }
 
@@ -104,8 +104,8 @@ func (t *RecordStopActualTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *RecordStopActualTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *RecordStopActualTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
@@ -123,7 +123,7 @@ func (t *RecordStopActualTool) Policy() agentports.ToolPolicy {
 
 func (t *RecordStopActualTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -153,14 +153,14 @@ func (t *RecordStopActualTool) Execute(
 // state does not admit is refused to the model before it is proposed.
 func (t *RecordStopActualTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return common.PreviewValidates(ctx, t, &params)
 }
 
 func (t *RecordStopActualTool) request(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentports.RecordStopActualRequest, error) {
 	moveID, err := common.RequirePulid(params.Params, "moveId")
 	if err != nil {
@@ -252,6 +252,6 @@ func (t *RecordStopActualTool) stopZone(
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *RecordStopActualTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *RecordStopActualTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, "moveId", permission.ResourceShipmentMove)
 }

@@ -6,14 +6,15 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakePreviews struct {
-	agentports.ProposalPreviewService
+	agentruntimeports.ProposalPreviewService
 
 	stale     bool
 	staleStep int
@@ -22,12 +23,15 @@ type fakePreviews struct {
 
 func (f *fakePreviews) ForPlan(
 	_ context.Context,
-	req *agentports.PlanPreviewRequest,
+	req *agentruntimeports.PlanPreviewRequest,
 ) (*agent.PlanPreview, error) {
 	f.asked++
 	preview := &agent.PlanPreview{PlanID: req.Plan.ID, Stale: f.stale, Digest: "plan-digest"}
 	for _, step := range req.Steps {
-		stepPreview := &agent.ProposalPreview{ProposalID: step.ID, Digest: "step-" + step.ID.String()}
+		stepPreview := &agent.ProposalPreview{
+			ProposalID: step.ID,
+			Digest:     "step-" + step.ID.String(),
+		}
 		if f.stale && (f.staleStep == 0 || f.staleStep == step.PlanStep) {
 			stepPreview.Staleness = &agent.PreviewStaleness{
 				Pinned: true, ProposedVersion: 3, CurrentVersion: 4,
@@ -44,10 +48,13 @@ func (f *fakePreviews) ForPlan(
 }
 
 type recordedFollowUps struct {
-	requests []agentports.DecisionFollowUpRequest
+	requests []assistantports.DecisionFollowUpRequest
 }
 
-func (r *recordedFollowUps) FollowUp(_ context.Context, req agentports.DecisionFollowUpRequest) {
+func (r *recordedFollowUps) FollowUp(
+	_ context.Context,
+	req assistantports.DecisionFollowUpRequest,
+) {
 	r.requests = append(r.requests, req)
 }
 
@@ -76,7 +83,11 @@ func TestDecide_AStalePlanIsRefusedAsApprovedAndNothingRuns(t *testing.T) {
 	refused := h.decider.decided[0]
 	assert.Equal(t, h.steps.steps[1].ID, refused.ProposalID)
 	assert.True(t, refused.WithinPlan)
-	assert.True(t, refused.StepPreview.IsStale(), "the step is refused on the preview it moved on in")
+	assert.True(
+		t,
+		refused.StepPreview.IsStale(),
+		"the step is refused on the preview it moved on in",
+	)
 	assert.Equal(t, 1, h.steps.skipped, "the steps that were not stale are skipped, never run")
 
 	require.Len(t, h.plans.statuses, 1)

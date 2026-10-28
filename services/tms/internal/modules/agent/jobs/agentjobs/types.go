@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -51,7 +51,7 @@ type FinishRunInput struct {
 	Payload    *agentcontract.AgentRunPayload  `json:"payload"`
 	Definition *agentdefinition.Definition     `json:"definition"`
 	Subject    *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
-	Run        *agentports.RunResult           `json:"run,omitempty"`
+	Run        *agentruntimeports.RunResult    `json:"run,omitempty"`
 	Failure    *modelcallcontract.Failure      `json:"failure,omitempty"`
 	Events     []temporaltype.StreamItem       `json:"events,omitempty"`
 }
@@ -132,7 +132,7 @@ type OpenReplayResult struct {
 type FinishReplayInput struct {
 	Payload   *agentcontract.AgentEvaluationPayload `json:"payload"`
 	Originals []agent.OriginalProposal              `json:"originals,omitempty"`
-	Run       *agentports.RunResult                 `json:"run,omitempty"`
+	Run       *agentruntimeports.RunResult          `json:"run,omitempty"`
 }
 
 type ReplayRunResult struct {

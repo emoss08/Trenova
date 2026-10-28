@@ -6,6 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -20,12 +23,12 @@ import (
 
 type fakeRunList struct {
 	runs     []*agent.AgentRun
-	requests []*agentports.ListAgentRunRequest
+	requests []*agentruntimeports.ListAgentRunRequest
 }
 
 func (f *fakeRunList) List(
 	_ context.Context,
-	req *agentports.ListAgentRunRequest,
+	req *agentruntimeports.ListAgentRunRequest,
 ) (*pagination.ListResult[*agent.AgentRun], error) {
 	f.requests = append(f.requests, req)
 
@@ -63,8 +66,8 @@ func threadRun(threadID pulid.ID) *agent.AgentRun {
 
 func queryRuns(
 	t *testing.T,
-	tool agentports.AgentQueryTool,
-	params *agentports.QueryToolParams,
+	tool agenttoolports.AgentQueryTool,
+	params *agenttoolports.QueryToolParams,
 ) *agentRunsOutcome {
 	t.Helper()
 
@@ -109,7 +112,7 @@ func TestListAgentRuns_ReadsForThePersonInTheConversation(t *testing.T) {
 
 	assert.Equal(t, []string{background.ID.String(), own.ID.String()}, runIDs(outcome))
 	require.Len(t, runs.requests, 1)
-	assert.Equal(t, agentports.PersonRunRead(params.Actor.UserID), runs.requests[0].Reader,
+	assert.Equal(t, agentruntimeports.PersonRunRead(params.Actor.UserID), runs.requests[0].Reader,
 		"the repository keeps conversation runs to their owner, so a page stays full")
 	assert.Contains(t, outcome.Notes, personThreadRunsNote)
 }
@@ -268,12 +271,12 @@ func TestListAgentRuns_DeclaresAMarkedRunRecordRead(t *testing.T) {
 type fakeRunGetter struct {
 	run     *agent.AgentRun
 	owner   pulid.ID
-	readers []agentports.RunReader
+	readers []agentruntimeports.RunReader
 }
 
 func (f *fakeRunGetter) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	f.readers = append(f.readers, req.Reader)
 	if f.run == nil || f.run.ID != req.ID {
@@ -304,7 +307,7 @@ func (f *fakeRunProposals) ListByRun(
 type fakeRunEvents struct {
 	next     int
 	events   []*agent.AgentRunEvent
-	requests []agentports.ListAgentRunEventsRequest
+	requests []agentruntimeports.ListAgentRunEventsRequest
 }
 
 func (f *fakeRunEvents) NextSequence(
@@ -318,7 +321,7 @@ func (f *fakeRunEvents) NextSequence(
 
 func (f *fakeRunEvents) List(
 	_ context.Context,
-	req agentports.ListAgentRunEventsRequest,
+	req agentruntimeports.ListAgentRunEventsRequest,
 ) ([]*agent.AgentRunEvent, error) {
 	f.requests = append(f.requests, req)
 
@@ -341,7 +344,7 @@ func newRunFixture(run *agent.AgentRun) *runFixture {
 	}
 }
 
-func (f *runFixture) tool() agentports.AgentQueryTool {
+func (f *runFixture) tool() agenttoolports.AgentQueryTool {
 	return &getAgentRunTool{
 		runs:      f.runs,
 		proposals: f.proposals,
@@ -353,7 +356,7 @@ func (f *runFixture) tool() agentports.AgentQueryTool {
 func getRun(
 	t *testing.T,
 	fixture *runFixture,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) *agentRunDetail {
 	t.Helper()
 
@@ -376,7 +379,7 @@ func TestGetAgentRun_ReadsAConversationRunOnlyForItsOwner(t *testing.T) {
 	owner.Params = map[string]any{paramRunID: run.ID.String()}
 	fixture.runs.owner = owner.Actor.UserID
 	assert.Equal(t, run.ID.String(), getRun(t, fixture, owner).ID)
-	assert.Equal(t, agentports.PersonRunRead(owner.Actor.UserID), fixture.runs.readers[0])
+	assert.Equal(t, agentruntimeports.PersonRunRead(owner.Actor.UserID), fixture.runs.readers[0])
 
 	colleague := personParams(permissionports.PrincipalTypeUser)
 	colleague.Params = map[string]any{paramRunID: run.ID.String()}
@@ -420,7 +423,7 @@ func TestGetAgentRun_ReadsABackgroundRunAndMarksItsTaint(t *testing.T) {
 	assert.Nil(t, detail.Proposals, "proposals are added only when asked for")
 	assert.Nil(t, detail.Events)
 	assert.Zero(t, fixture.proposals.calls)
-	assert.Equal(t, agentports.PersonRunRead(pulid.Nil), fixture.runs.readers[0],
+	assert.Equal(t, agentruntimeports.PersonRunRead(pulid.Nil), fixture.runs.readers[0],
 		"an agent reads with no person, and a background run is still found")
 }
 
@@ -443,13 +446,13 @@ func TestGetAgentRun_AddsBoundedProposalsAndTheLastFiftySteps(t *testing.T) {
 	fixture.events.events = []*agent.AgentRunEvent{
 		{
 			Sequence: 71,
-			Kind:     agentports.AssistantEventToolStarted,
+			Kind:     assistantports.AssistantEventToolStarted,
 			CallID:   "call_1",
 			Payload:  map[string]any{"name": "shipment_get", "arguments": map[string]any{"x": 1}},
 		},
 		{
 			Sequence: 72,
-			Kind:     agentports.AssistantEventToolFinished,
+			Kind:     assistantports.AssistantEventToolFinished,
 			CallID:   "call_1",
 			Payload: map[string]any{
 				"name":    "shipment_get",
@@ -459,7 +462,7 @@ func TestGetAgentRun_AddsBoundedProposalsAndTheLastFiftySteps(t *testing.T) {
 		},
 		{
 			Sequence: 73,
-			Kind:     agentports.AssistantEventRunTainted,
+			Kind:     assistantports.AssistantEventRunTainted,
 			Payload:  map[string]any{"mark": map[string]any{"source": "record_note"}},
 		},
 	}
@@ -481,9 +484,9 @@ func TestGetAgentRun_AddsBoundedProposalsAndTheLastFiftySteps(t *testing.T) {
 	request := fixture.events.requests[0]
 	assert.Equal(t, agentRunEventLimit, request.Limit)
 	assert.Equal(t, 70, request.After, "the last fifty of 120 steps start after 70")
-	assert.Equal(t, string(agentports.RunStepOwnerAgentRun), request.OwnerKind)
+	assert.Equal(t, string(agentruntimeports.RunStepOwnerAgentRun), request.OwnerKind)
 	assert.Equal(t, run.ID, request.OwnerID)
-	assert.Equal(t, agentports.PersonRunRead(params.Actor.UserID), request.Reader,
+	assert.Equal(t, agentruntimeports.PersonRunRead(params.Actor.UserID), request.Reader,
 		"a run's steps are read for the same person as the run")
 
 	require.Len(t, detail.Events, 3)
@@ -543,7 +546,7 @@ func TestAgentRunEventView_CarriesTheVerdictOfAToolThatDidNotRun(t *testing.T) {
 
 	view := agentRunEventViewFrom(&agent.AgentRunEvent{
 		Sequence: 4,
-		Kind:     agentports.AssistantEventToolFinished,
+		Kind:     assistantports.AssistantEventToolFinished,
 		CallID:   "call_1",
 		Payload: map[string]any{
 			"name":    "update_worker",
@@ -558,7 +561,7 @@ func TestAgentRunEventView_CarriesTheVerdictOfAToolThatDidNotRun(t *testing.T) {
 	assert.Equal(t, "denied", view.Verdict)
 
 	ran := agentRunEventViewFrom(&agent.AgentRunEvent{
-		Kind:    agentports.AssistantEventToolStarted,
+		Kind:    assistantports.AssistantEventToolStarted,
 		Payload: map[string]any{"name": "shipment_get"},
 	})
 	assert.Empty(t, ran.Verdict, "a started call has no verdict yet")

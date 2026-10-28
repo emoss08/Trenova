@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,7 +28,7 @@ func replayRuntime() *agentruntime.Service {
 		Logger:     zap.NewNop(),
 		Completion: &agenttest.ScriptedCompletion{},
 		QueryTools: &agenttest.StubQueryRegistry{
-			Tools: []agentports.AgentQueryTool{&agenttest.StubQueryTool{
+			Tools: []agenttoolports.AgentQueryTool{&agenttest.StubQueryTool{
 				ToolName: replayToolName,
 			}},
 		},

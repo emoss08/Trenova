@@ -10,12 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -497,9 +497,13 @@ func (f *fakeSource) ListSteps(
 	_ context.Context,
 	req aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentRunStep, error) {
-	return page(f.steps, func(r *agent.AgentRunStep) int64 { return r.UpdatedAt },
-		func(r *agent.AgentRunStep) string { return r.ID.String() }, req,
-		func(r *agent.AgentRunStep) bool { return r.Kind == string(agentports.RunStepTool) }), nil
+	return page(
+		f.steps,
+		func(r *agent.AgentRunStep) int64 { return r.UpdatedAt },
+		func(r *agent.AgentRunStep) string { return r.ID.String() },
+		req,
+		func(r *agent.AgentRunStep) bool { return r.Kind == string(agentruntimeports.RunStepTool) },
+	), nil
 }
 
 func (f *fakeSource) ListEvents(
@@ -601,8 +605,8 @@ func (f *fakeSource) StartedToolSteps(
 	out := make([]*agent.AgentRunStep, 0)
 	for _, step := range f.steps {
 		if slices.Contains(owners, step.OwnerID) &&
-			step.Status == string(agentports.RunStepStarted) &&
-			step.Kind == string(agentports.RunStepTool) {
+			step.Status == string(agentruntimeports.RunStepStarted) &&
+			step.Kind == string(agentruntimeports.RunStepTool) {
 			out = append(out, step)
 		}
 	}

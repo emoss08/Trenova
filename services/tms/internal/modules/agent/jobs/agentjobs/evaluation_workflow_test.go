@@ -12,8 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -72,7 +73,7 @@ func runEvaluationWorkflow(
 			if err != nil || opened.Done {
 				return opened, err
 			}
-			req := &agentports.RunRequest{
+			req := &agentruntimeports.RunRequest{
 				Definition: replayDefinition(),
 				Actor: &permissionports.RequestActor{
 					PrincipalType: permissionports.PrincipalTypeUser,
@@ -88,9 +89,10 @@ func runEvaluationWorkflow(
 			opened.Turn = runtime.OpenTurn(ctx, req).State()
 
 			return opened, nil
-		}).Once()
+		}).
+		Once()
 	env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).
-		Return(&agentruntime.ModelReply{Completion: &agentports.ChatCompletionResult{
+		Return(&agentruntime.ModelReply{Completion: &llmports.ChatCompletionResult{
 			Text:            "The rate stays at 1,350.",
 			ModelIdentifier: "test-model",
 		}}, nil).Maybe()
@@ -105,13 +107,16 @@ func runEvaluationWorkflow(
 			return nil
 		}).Maybe()
 
-	env.ExecuteWorkflow(agentcontract.AgentEvaluationWorkflowName, &agentcontract.AgentEvaluationPayload{
-		BasePayload: temporaltype.BasePayload{
-			OrganizationID: pulid.MustNew("org_"),
-			BusinessUnitID: pulid.MustNew("bu_"),
+	env.ExecuteWorkflow(
+		agentcontract.AgentEvaluationWorkflowName,
+		&agentcontract.AgentEvaluationPayload{
+			BasePayload: temporaltype.BasePayload{
+				OrganizationID: pulid.MustNew("org_"),
+				BusinessUnitID: pulid.MustNew("bu_"),
+			},
+			EvaluationID: pulid.MustNew(agent.EvaluationIDPrefix),
 		},
-		EvaluationID: pulid.MustNew(agent.EvaluationIDPrefix),
-	})
+	)
 	require.True(t, env.IsWorkflowCompleted())
 	result.err = env.GetWorkflowError()
 

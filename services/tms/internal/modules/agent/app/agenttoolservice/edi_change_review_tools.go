@@ -2,11 +2,11 @@ package agenttoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/editools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
-var _ agentports.ToolPreviewer = (*editools.EdiChangeReviewTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*editools.EdiChangeReviewTool)(nil)
 
-var _ agentports.ToolValidator = (*editools.EdiChangeReviewTool)(nil)
+var _ agenttoolports.ToolValidator = (*editools.EdiChangeReviewTool)(nil)
 
-var _ agentports.TargetedTool = (*editools.EdiChangeReviewTool)(nil)
+var _ agenttoolports.TargetedTool = (*editools.EdiChangeReviewTool)(nil)

@@ -4,17 +4,17 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentinvalidation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,7 +29,7 @@ func TestActivitiesBulkDuplicateShipmentsActivity(t *testing.T) {
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -53,7 +53,7 @@ func TestActivitiesBulkDuplicateShipmentsActivity(t *testing.T) {
 
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Twice()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" &&
 				req.Action == "bulk_created" &&
 				req.OrganizationID == orgID &&
@@ -115,7 +115,7 @@ func TestActivitiesAutoDelayShipmentsActivity(t *testing.T) {
 	t.Parallel()
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -131,7 +131,7 @@ func TestActivitiesAutoDelayShipmentsActivity(t *testing.T) {
 		}}, nil).
 		Once()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" &&
 				req.Action == "delayed" &&
 				req.RecordID == shipmentID
@@ -158,7 +158,7 @@ func TestActivitiesAutoCancelShipmentsActivity(t *testing.T) {
 	t.Parallel()
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -174,7 +174,7 @@ func TestActivitiesAutoCancelShipmentsActivity(t *testing.T) {
 		}}, nil).
 		Once()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" &&
 				req.Action == "bulk_canceled" &&
 				req.OrganizationID == orgID &&
@@ -204,7 +204,7 @@ func TestActivitiesAutoCancelShipmentsActivity_PublishesPerAffectedTenant(t *tes
 	t.Parallel()
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 
 	orgOne := pulid.MustNew("org_")
 	buOne := pulid.MustNew("bu_")
@@ -235,7 +235,7 @@ func TestActivitiesAutoCancelShipmentsActivity_PublishesPerAffectedTenant(t *tes
 		}, nil).
 		Once()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" &&
 				req.Action == "bulk_canceled" &&
 				req.OrganizationID == orgOne &&
@@ -245,7 +245,7 @@ func TestActivitiesAutoCancelShipmentsActivity_PublishesPerAffectedTenant(t *tes
 		Return(nil).
 		Once()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" &&
 				req.Action == "bulk_canceled" &&
 				req.OrganizationID == orgTwo &&

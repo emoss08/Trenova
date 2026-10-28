@@ -5,12 +5,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +28,7 @@ func turnAttribution() aiusageports.AIUsageAttribution {
 		AgentDefinitionID: pulid.MustNew("agdef_"),
 		ThreadID:          pulid.MustNew("athr_"),
 		Feature:           aiusage.FeatureAgentTurn,
-		OwnerKind:         agentports.RunStepOwnerAssistantTurn,
+		OwnerKind:         agentruntimeports.RunStepOwnerAssistantTurn,
 		OwnerID:           pulid.MustNew("atrn_"),
 		DefinitionVersion: &version,
 	}

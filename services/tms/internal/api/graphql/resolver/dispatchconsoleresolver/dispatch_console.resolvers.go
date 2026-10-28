@@ -11,10 +11,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -167,7 +167,7 @@ func (r *MutationResolver) DispatchPlanAutoAssign(ctx context.Context, input gql
 		return nil, err
 	}
 
-	req := &agentports.DispatchPlanRequest{
+	req := &dispatchconsoleports.DispatchPlanRequest{
 		TenantInfo:  base.TenantInfo(authCtx),
 		WindowStart: int64(base.IntValue(input.WindowStart)),
 		WindowEnd:   int64(base.IntValue(input.WindowEnd)),

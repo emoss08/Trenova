@@ -3,7 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -25,11 +25,14 @@ func TestGetRateMatrix_ReadsAPageOfCellsAndSaysWhereTheNextStarts(t *testing.T) 
 			"d1Min": "0", "d1Max": "500", "value": "2.15",
 		})
 	}
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskRateMatrixCard": {Data: map[string]any{"rateMatrix": map[string]any{
 			"id": "rmx_1", "code": "LTL-70", "cellCount": 450,
-			"dimensions": []any{map[string]any{"kind": "Zone"}, map[string]any{"kind": "WeightBreak"}},
-			"cells":      cells,
+			"dimensions": []any{
+				map[string]any{"kind": "Zone"},
+				map[string]any{"kind": "WeightBreak"},
+			},
+			"cells": cells,
 		}}},
 	}}
 	spec := rateMatrixGetSpec()

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +25,12 @@ func TestGraphQLReadsAreBoundToRegisteredResources(t *testing.T) {
 			assert.Truef(t, registry.HasResource(read.Resource),
 				"%s reads %s, which the permission registry does not know", tool, read.Resource)
 		}
-		assert.NotEmptyf(t, agentports.NamespaceOf(tool), "%s is outside a tool namespace", tool)
+		assert.NotEmptyf(
+			t,
+			agenttoolports.NamespaceOf(tool),
+			"%s is outside a tool namespace",
+			tool,
+		)
 	}
 }
 
@@ -173,7 +178,7 @@ func TestGraphQLReadsCheckTheToolsOwnResource(t *testing.T) {
 		for idx := range args {
 			args[idx] = reflect.Zero(fn.Type().In(idx))
 		}
-		tool, ok := fn.Call(args)[0].Interface().(agentports.AgentQueryTool)
+		tool, ok := fn.Call(args)[0].Interface().(agenttoolports.AgentQueryTool)
 		if !ok || tool == nil {
 			continue
 		}

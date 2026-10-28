@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -27,10 +28,10 @@ import (
 // bumps its version, a tier change is made only against the version it was
 // decided from, and a reader is handed a copy of the row as it stood.
 type fakeTrustRepo struct {
-	agentports.AgentToolTrustRepository
+	agenttoolports.AgentToolTrustRepository
 	row      *agent.ToolTrust
 	recorded []agent.TrustOutcome
-	marks    []agentports.MarkToolTierChangeRequest
+	marks    []agenttoolports.MarkToolTierChangeRequest
 	// beforeMark runs once, as the first tier change is about to be made, so
 	// a test can land another decision in between.
 	beforeMark func()
@@ -38,7 +39,7 @@ type fakeTrustRepo struct {
 
 func (f *fakeTrustRepo) Record(
 	_ context.Context,
-	req agentports.RecordToolTrustRequest,
+	req agenttoolports.RecordToolTrustRequest,
 ) (*agent.ToolTrust, error) {
 	f.recorded = append(f.recorded, req.Outcome)
 	f.row.ToolName = req.ToolName
@@ -66,7 +67,7 @@ func (f *fakeTrustRepo) Record(
 
 func (f *fakeTrustRepo) MarkTierChange(
 	_ context.Context,
-	req agentports.MarkToolTierChangeRequest,
+	req agenttoolports.MarkToolTierChangeRequest,
 ) (*agent.ToolTrust, error) {
 	if hook := f.beforeMark; hook != nil {
 		f.beforeMark = nil
@@ -140,31 +141,31 @@ func (f fakeControls) GetOrCreate(
 }
 
 type fakeRuns struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 	run *agent.AgentRun
 }
 
 func (f fakeRuns) GetByID(
 	context.Context,
-	agentports.GetAgentRunByIDRequest,
+	agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return f.run, nil
 }
 
 type fakeTool struct {
-	agentports.AgentTool
+	agenttoolports.AgentTool
 	tier agent.AutonomyTier
 }
 
-func (f fakeTool) Policy() agentports.ToolPolicy {
+func (f fakeTool) Policy() agenttoolports.ToolPolicy {
 	return trustPolicy(f.tier, agent.TierAutoExecute, agent.EgressInternal)
 }
 
 func trustPolicy(
 	tier, maxTier agent.AutonomyTier,
 	egress agent.EgressClass,
-) agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+) agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          "dispatch_assign_move",
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
@@ -179,12 +180,12 @@ func trustPolicy(
 	}
 }
 
-func boundedMoneyPolicy() agentports.ToolPolicy {
+func boundedMoneyPolicy() agenttoolports.ToolPolicy {
 	policy := trustPolicy(agent.TierActWithApproval, agent.TierAutoExecute, agent.EgressMoney)
-	policy.Condition = &agentports.TierCondition{
+	policy.Condition = &agenttoolports.TierCondition{
 		Description: "Runs on its own only within bounds.",
-		Bounds: func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-			return agentports.WithinMoneyBound(1, "USD")
+		Bounds: func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+			return agenttoolports.WithinMoneyBound(1, "USD")
 		},
 	}
 
@@ -192,11 +193,11 @@ func boundedMoneyPolicy() agentports.ToolPolicy {
 }
 
 type fakeRegistry struct {
-	agentports.AgentToolRegistry
+	agenttoolports.AgentToolRegistry
 	tools map[string]agent.AutonomyTier
 }
 
-func (f fakeRegistry) Get(name string) (agentports.AgentTool, bool) {
+func (f fakeRegistry) Get(name string) (agenttoolports.AgentTool, bool) {
 	tier, ok := f.tools[name]
 	if !ok {
 		return nil, false
@@ -481,14 +482,14 @@ func TestRecordDecision_NilInputsAreNoOps(t *testing.T) {
 }
 
 type cappedRegistry struct {
-	agentports.AgentToolRegistry
+	agenttoolports.AgentToolRegistry
 }
 
 type cappedTool struct {
-	agentports.AgentTool
+	agenttoolports.AgentTool
 }
 
-func (cappedTool) Policy() agentports.ToolPolicy {
+func (cappedTool) Policy() agenttoolports.ToolPolicy {
 	return trustPolicy(
 		agent.TierActWithApproval,
 		agent.TierActWithApproval,
@@ -496,7 +497,7 @@ func (cappedTool) Policy() agentports.ToolPolicy {
 	)
 }
 
-func (cappedRegistry) Get(string) (agentports.AgentTool, bool) { return cappedTool{}, true }
+func (cappedRegistry) Get(string) (agenttoolports.AgentTool, bool) { return cappedTool{}, true }
 
 // A tool that sends work outside the organization is never earned past a
 // person's approval: the streak keeps counting, and nothing is promoted.
@@ -577,20 +578,20 @@ func TestRecordDecision_ARejectionInBetweenStopsThePromotion(t *testing.T) {
 }
 
 type policyTool struct {
-	agentports.AgentTool
+	agenttoolports.AgentTool
 
-	policy agentports.ToolPolicy
+	policy agenttoolports.ToolPolicy
 }
 
-func (p policyTool) Policy() agentports.ToolPolicy { return p.policy }
+func (p policyTool) Policy() agenttoolports.ToolPolicy { return p.policy }
 
 type policyRegistry struct {
-	agentports.AgentToolRegistry
+	agenttoolports.AgentToolRegistry
 
 	tool policyTool
 }
 
-func (r policyRegistry) Get(string) (agentports.AgentTool, bool) { return r.tool, true }
+func (r policyRegistry) Get(string) (agenttoolports.AgentTool, bool) { return r.tool, true }
 
 /*
 Promotion stops where the tool's policy says a call may run alone, and not one
@@ -603,7 +604,7 @@ func TestRecordDecision_PromotesNoFurtherThanThePolicyAllows(t *testing.T) {
 
 	cases := []struct {
 		name     string
-		policy   agentports.ToolPolicy
+		policy   agenttoolports.ToolPolicy
 		promoted bool
 	}{
 		{

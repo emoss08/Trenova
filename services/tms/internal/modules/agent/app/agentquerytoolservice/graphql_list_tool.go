@@ -12,7 +12,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -252,7 +253,7 @@ type graphQLListTool struct {
 	sortable    agenttoolschema.EnumSource[string]
 	beside      besideReads
 	instead     []insteadRead
-	reader      agentports.GraphQLReader
+	reader      graphqlreadports.GraphQLReader
 	permissions permissionports.PermissionEngine
 	registry    *permission.Registry
 	rowFields   []graphQLField
@@ -273,7 +274,7 @@ type insteadRead struct {
 
 func newGraphQLListTool(
 	spec *graphQLListSpec,
-	reader agentports.GraphQLReader,
+	reader graphqlreadports.GraphQLReader,
 	permissions permissionports.PermissionEngine,
 ) (*graphQLListTool, error) {
 	read, ok := graphQLReads[spec.name]
@@ -676,9 +677,9 @@ func graphQLListProviders() []any {
 	for idx := range specs {
 		spec := &specs[idx]
 		providers = append(providers, func(
-			reader agentports.GraphQLReader,
+			reader graphqlreadports.GraphQLReader,
 			permissions permissionports.PermissionEngine,
-		) (agentports.AgentQueryTool, error) {
+		) (agenttoolports.AgentQueryTool, error) {
 			return newGraphQLReadTool(spec, reader, permissions)
 		})
 	}
@@ -816,7 +817,7 @@ func describedName(param graphQLParam) (string, bool) {
 
 func (t *graphQLListTool) SearchTerms() []string { return t.spec.searchTerms }
 
-func (t *graphQLListTool) Policy() agentports.ToolPolicy {
+func (t *graphQLListTool) Policy() agenttoolports.ToolPolicy {
 	spec := t.spec.reads
 	spec.resource = t.spec.resource
 
@@ -901,7 +902,7 @@ func (t *graphQLListTool) chooseInstead(args map[string]any) (*insteadRead, bool
 // refusing any of the list's filters, which do not apply to it.
 func (t *graphQLListTool) readInstead(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	instead *insteadRead,
 	clk clock,
 ) (any, error) {
@@ -923,7 +924,7 @@ func (t *graphQLListTool) readInstead(
 		return nil, err
 	}
 	resource := permission.Resource(instead.bound.Resource)
-	result, err := t.reader.Read(ctx, &agentports.GraphQLReadRequest{
+	result, err := t.reader.Read(ctx, &graphqlreadports.GraphQLReadRequest{
 		Actor:             params.Actor,
 		Operation:         instead.bound.Operation,
 		Variables:         variables,
@@ -1068,7 +1069,7 @@ func markedRows(spec *graphQLListSpec, items []map[string]any) []agent.RecordRef
 
 func (t *graphQLListTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -1266,10 +1267,10 @@ type graphQLPage struct {
 
 func (t *graphQLListTool) page(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	req *pageRequest,
 ) (*graphQLPage, error) {
-	result, err := t.reader.Read(ctx, &agentports.GraphQLReadRequest{
+	result, err := t.reader.Read(ctx, &graphqlreadports.GraphQLReadRequest{
 		Actor:             params.Actor,
 		Operation:         t.read.Operation,
 		Variables:         t.variables(req),
@@ -1408,15 +1409,15 @@ func (r *graphQLRead) declares(name string) bool {
 
 // readFailure turns the operation's errors into the tool's: a refusal the
 // screen would have shown, a spent budget, or a read that failed.
-func readFailure(result *agentports.GraphQLReadResult, resource permission.Resource) error {
+func readFailure(result *graphqlreadports.GraphQLReadResult, resource permission.Resource) error {
 	if len(result.Errors) == 0 {
 		return nil
 	}
 	first := result.Errors[0]
 	switch first.Code {
-	case agentports.GraphQLCodeForbidden, agentports.GraphQLCodeUnauthorized:
-		return &agentports.ReadRefusedError{Resource: resource, Message: first.Message}
-	case agentports.GraphQLCodeBudgetExceeded:
+	case graphqlreadports.GraphQLCodeForbidden, graphqlreadports.GraphQLCodeUnauthorized:
+		return &graphqlreadports.ReadRefusedError{Resource: resource, Message: first.Message}
+	case graphqlreadports.GraphQLCodeBudgetExceeded:
 		return fmt.Errorf("the read budget for this person is spent; try again in %s",
 			result.RetryAfter.Round(1e9))
 	}
@@ -1536,7 +1537,7 @@ func (t *graphQLListTool) sort(args map[string]any) []map[string]any {
 // it one row at a time.
 func (t *graphQLListTool) refuseWithheld(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) error {
 	fields := make([]string, 0, len(t.params)+1)
 	for _, param := range t.params {
@@ -1585,7 +1586,7 @@ func searchedFields(tool string, fields []graphQLField, searches []string) error
 // filter on it would.
 func (t *graphQLListTool) refuseSearch(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) error {
 	if err := t.refuseFields(ctx, params, t.searched); err != nil {
 		return fmt.Errorf(
@@ -1599,7 +1600,7 @@ func (t *graphQLListTool) refuseSearch(
 // refuseFields refuses the first of fields the caller may not be shown.
 func (t *graphQLListTool) refuseFields(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	fields []string,
 ) error {
 	if len(fields) == 0 {
@@ -1644,7 +1645,7 @@ func (t *graphQLListTool) fieldOwner(field string) (resource permission.Resource
 // one, alone, kept every row out.
 func (t *graphQLListTool) nearMiss(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	asked *pageRequest,
 ) string {
 	query, inputs, args, filters := asked.query, asked.inputs, asked.args, asked.filters
@@ -1803,7 +1804,7 @@ func scalarText(value any) (string, bool) {
 // may not be shown, as a call is refused.
 func (t *graphQLListTool) runView(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	query string,
 	filters []domaintypes.FieldFilter,
 	sorting []domaintypes.SortField,

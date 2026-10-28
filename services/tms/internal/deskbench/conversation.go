@@ -7,15 +7,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -93,7 +94,7 @@ func (s *Session) Open(ctx context.Context, req OpenConversation) (*Conversation
 		if req.Agent == nil {
 			return nil, errors.New("a new conversation needs an agent")
 		}
-		thread, err = s.bench.Assistant.StartThread(ctx, &agentports.StartThreadRequest{
+		thread, err = s.bench.Assistant.StartThread(ctx, &assistantports.StartThreadRequest{
 			AgentDefinitionID: req.Agent.ID,
 			Title:             benchTitlePrefix + strings.TrimSpace(req.Title),
 			TenantInfo:        s.Tenant,
@@ -119,8 +120,8 @@ func (s *Session) Open(ctx context.Context, req OpenConversation) (*Conversation
 	}, nil
 }
 
-func (s *Session) threadRequest(threadID pulid.ID) agentports.GetThreadRequest {
-	return agentports.GetThreadRequest{ID: threadID, UserID: s.User.ID, TenantInfo: s.Tenant}
+func (s *Session) threadRequest(threadID pulid.ID) assistantports.GetThreadRequest {
+	return assistantports.GetThreadRequest{ID: threadID, UserID: s.User.ID, TenantInfo: s.Tenant}
 }
 
 func (c *Conversation) Turns() []*TurnRecord {
@@ -431,7 +432,7 @@ func (c *Conversation) fill(
 
 func (c *Conversation) describeProposal(
 	ctx context.Context,
-	summary *agentports.AssistantProposal,
+	summary *assistantports.AssistantProposal,
 ) *ProposalRecord {
 	record := &ProposalRecord{
 		ID:        summary.ID,
@@ -458,10 +459,13 @@ func (c *Conversation) describeProposal(
 		return record
 	}
 
-	preview, err := c.session.bench.Previews.ForProposal(ctx, &agentports.ProposalPreviewRequest{
-		Proposal: proposal,
-		Viewer:   &agentports.PreviewViewer{Actor: &c.session.Actor},
-	})
+	preview, err := c.session.bench.Previews.ForProposal(
+		ctx,
+		&agentruntimeports.ProposalPreviewRequest{
+			Proposal: proposal,
+			Viewer:   &agentruntimeports.PreviewViewer{Actor: &c.session.Actor},
+		},
+	)
 	if err != nil {
 		record.Error = "preview: " + err.Error()
 		return record
@@ -628,11 +632,14 @@ func (c *Conversation) proposalDigest(
 	if err != nil {
 		return "", err
 	}
-	preview, err := c.session.bench.Previews.ForProposal(ctx, &agentports.ProposalPreviewRequest{
-		Proposal:      current,
-		Modifications: modifications,
-		Viewer:        &agentports.PreviewViewer{Actor: &c.session.Actor},
-	})
+	preview, err := c.session.bench.Previews.ForProposal(
+		ctx,
+		&agentruntimeports.ProposalPreviewRequest{
+			Proposal:      current,
+			Modifications: modifications,
+			Viewer:        &agentruntimeports.PreviewViewer{Actor: &c.session.Actor},
+		},
+	)
 	if err != nil {
 		return "", err
 	}
@@ -648,9 +655,9 @@ func (c *Conversation) planDigest(ctx context.Context, planID pulid.ID) (string,
 	if err != nil {
 		return "", err
 	}
-	preview, err := c.session.bench.Previews.ForPlan(ctx, &agentports.PlanPreviewRequest{
+	preview, err := c.session.bench.Previews.ForPlan(ctx, &agentruntimeports.PlanPreviewRequest{
 		Plan:   plan,
-		Viewer: &agentports.PreviewViewer{Actor: &c.session.Actor},
+		Viewer: &agentruntimeports.PreviewViewer{Actor: &c.session.Actor},
 	})
 	if err != nil {
 		return "", err
@@ -709,7 +716,7 @@ func (c *Conversation) lookupTurn(
 	ctx context.Context,
 	turnID pulid.ID,
 ) (*conversation.AssistantTurn, error) {
-	req := agentports.GetAssistantTurnRequest{
+	req := assistantports.GetAssistantTurnRequest{
 		ID:         turnID,
 		TenantInfo: c.session.Tenant,
 		UserID:     c.session.User.ID,

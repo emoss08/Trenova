@@ -1,12 +1,12 @@
 package agentquerytoolservice
 
 import (
-	"github.com/bytedance/sonic"
 	"context"
 	"testing"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
@@ -107,7 +107,10 @@ func (f *fakeWorkbench) Propose(
 	req *formulaassistantservice.ProposeRequest,
 ) (*formulaassistantservice.Proposed, error) {
 	f.proposed = req
-	return &formulaassistantservice.Proposed{Checked: f.outcomeOrDefault(), Proposal: f.proposal}, nil
+	return &formulaassistantservice.Proposed{
+		Checked:  f.outcomeOrDefault(),
+		Proposal: f.proposal,
+	}, nil
 }
 
 type authorPermissions struct {
@@ -360,7 +363,11 @@ func TestProposeFormula_TellsTheModelWhyNothingWasShown(t *testing.T) {
 	failing := &fakeWorkbench{outcome: &formulaassistantservice.Checked{
 		Findings: []tariff.Finding{{Severity: "error", Message: "There is no `ratee`"}},
 	}}
-	result, err := newProposeSourceTool(&proposeFormulaSpec, failing, author).Query(t.Context(), params)
+	result, err := newProposeSourceTool(
+		&proposeFormulaSpec,
+		failing,
+		author,
+	).Query(t.Context(), params)
 	require.NoError(t, err)
 	refused := result.(refusedProposal)
 	assert.False(t, refused.Applied)
@@ -368,7 +375,11 @@ func TestProposeFormula_TellsTheModelWhyNothingWasShown(t *testing.T) {
 	assert.NotNil(t, refused.Findings)
 
 	untested := &fakeWorkbench{outcome: &formulaassistantservice.Checked{OK: true}}
-	result, err = newProposeSourceTool(&proposeFormulaSpec, untested, author).Query(t.Context(), params)
+	result, err = newProposeSourceTool(
+		&proposeFormulaSpec,
+		untested,
+		author,
+	).Query(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, result.(refusedProposal).Note, "no tests")
 
@@ -408,7 +419,11 @@ func TestProposeFormula_RefusesAPersonWhoMayOnlyRead(t *testing.T) {
 	require.ErrorContains(t, err, "formula library", "a template author is not a library author")
 }
 
-func formulaGetTool(t *testing.T, spec getSpec, reader agentports.GraphQLReader) *graphQLGetTool {
+func formulaGetTool(
+	t *testing.T,
+	spec getSpec,
+	reader graphqlreadports.GraphQLReader,
+) *graphQLGetTool {
 	t.Helper()
 
 	tool, err := newGraphQLGetTool(&spec, reader, &fakePermissions{allowed: true})
@@ -424,7 +439,7 @@ func TestGetFormulaTemplate_ReadsTheSourceWholeThroughTheCard(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("ft_").String()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskFormulaTemplateCard": {Data: map[string]any{"formulaTemplate": map[string]any{
 			"id": id, "name": "Per Mile", "status": "Active", "source": toolPerMileSource,
 			"inputs":  []any{map[string]any{"name": "rate", "type": "Money/mi", "required": true}},
@@ -456,7 +471,7 @@ func TestGetFormulaLibrary_ReadsTheSourceWholeThroughTheCard(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("fl_").String()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskFormulaLibraryCard": {Data: map[string]any{"formulaLibrary": map[string]any{
 			"id": id, "name": "accessorials", "path": "org.accessorials",
 			"source": "library \"org.accessorials\"\n",

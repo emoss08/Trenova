@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/productguideports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -33,7 +34,7 @@ const (
 	createAction     = "create"
 )
 
-func guideTenant(params *agentports.QueryToolParams) pagination.TenantInfo {
+func guideTenant(params *agenttoolports.QueryToolParams) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  params.OrganizationID,
 		BuID:   params.BusinessUnitID,
@@ -42,10 +43,10 @@ func guideTenant(params *agentports.QueryToolParams) pagination.TenantInfo {
 }
 
 type findInTrenovaTool struct {
-	guide agentports.ProductGuide
+	guide productguideports.ProductGuide
 }
 
-func newFindInTrenovaTool(guide agentports.ProductGuide) agentports.AgentQueryTool {
+func newFindInTrenovaTool(guide productguideports.ProductGuide) agenttoolports.AgentQueryTool {
 	return &findInTrenovaTool{guide: guide}
 }
 
@@ -79,7 +80,7 @@ func (t *findInTrenovaTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *findInTrenovaTool) Policy() agentports.ToolPolicy {
+func (t *findInTrenovaTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceAssistant,
 		scope:    agent.ToolScopeSelf,
@@ -125,7 +126,7 @@ type guideSearchResult struct {
 
 func (t *findInTrenovaTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -137,7 +138,7 @@ func (t *findInTrenovaTool) Query(
 	}
 
 	page := optionalString(params.Params, "page")
-	matches, err := t.guide.Search(ctx, &agentports.ProductGuideSearchRequest{
+	matches, err := t.guide.Search(ctx, &productguideports.ProductGuideSearchRequest{
 		Actor:      params.Actor,
 		TenantInfo: guideTenant(params),
 		Query:      question,
@@ -180,7 +181,7 @@ func (t *findInTrenovaTool) Query(
 // answerFrom shapes one match. Only the best one carries its steps: the
 // others are alternatives the person may mean, and their steps would crowd
 // the answer out of the model's context.
-func answerFrom(match *agentports.ProductGuideMatch, withSteps bool) guideAnswer {
+func answerFrom(match *productguideports.ProductGuideMatch, withSteps bool) guideAnswer {
 	page := match.Page
 	answer := guideAnswer{
 		Name:     page.Name,
@@ -203,7 +204,7 @@ func answerFrom(match *agentports.ProductGuideMatch, withSteps bool) guideAnswer
 	return answer
 }
 
-func pageAnswerFrom(match *agentports.ProductGuideMatch) guideAnswer {
+func pageAnswerFrom(match *productguideports.ProductGuideMatch) guideAnswer {
 	answer := answerFrom(match, true)
 	answer.Notes = match.Page.Notes
 	answer.OtherTasks = make([]string, 0, len(match.Page.Tasks))
@@ -219,10 +220,10 @@ func pageAnswerFrom(match *agentports.ProductGuideMatch) guideAnswer {
 }
 
 type openPageTool struct {
-	guide agentports.ProductGuide
+	guide productguideports.ProductGuide
 }
 
-func newOpenPageTool(guide agentports.ProductGuide) agentports.AgentQueryTool {
+func newOpenPageTool(guide productguideports.ProductGuide) agenttoolports.AgentQueryTool {
 	return &openPageTool{guide: guide}
 }
 
@@ -262,7 +263,7 @@ func (t *openPageTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *openPageTool) Policy() agentports.ToolPolicy {
+func (t *openPageTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:  permission.ResourceAssistant,
 		scope:     agent.ToolScopeSelf,
@@ -289,13 +290,13 @@ type NavigationResult struct {
 
 func (t *openPageTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
 	}
 
-	destination, err := t.guide.Destination(ctx, &agentports.ProductGuideDestinationRequest{
+	destination, err := t.guide.Destination(ctx, &productguideports.ProductGuideDestinationRequest{
 		Actor:      params.Actor,
 		TenantInfo: guideTenant(params),
 		Page:       optionalString(params.Params, "page"),

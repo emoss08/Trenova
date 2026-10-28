@@ -31,7 +31,7 @@ Four things make that observable and repeatable:
   a bench turn, and a bench run never touches the dev worker's work. Edit a tool description,
   run the bench again, and the new description is what the model reads. The edition's
   worker-only options are left out, since they add schedules of their own.
-- **A recorder on the model router.** `agentports.CompletionService` is decorated
+- **A recorder on the model router.** `llmports.CompletionService` is decorated
   (`deskbench.Recorder`) so every chat, streamed and structured call is copied as it was sent and
   as it came back: the system prompt, the messages, the tools offered, thinking, tool calls,
   tokens, latency, cost, retries, fallbacks and errors. Calls are tied to a turn by their usage

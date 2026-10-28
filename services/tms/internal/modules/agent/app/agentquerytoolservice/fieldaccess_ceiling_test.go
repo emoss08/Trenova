@@ -3,8 +3,8 @@ package agentquerytoolservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +13,7 @@ import (
 func agentParams(
 	params map[string]any,
 	dataAccess permission.FieldSensitivity,
-) *agentports.QueryToolParams {
+) *agenttoolports.QueryToolParams {
 	out := testParams(params)
 	out.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 	out.Actor.PrincipalID = pulid.MustNew("agdef_")
@@ -26,7 +26,7 @@ func agentParams(
 func chatParams(
 	params map[string]any,
 	dataAccess permission.FieldSensitivity,
-) *agentports.QueryToolParams {
+) *agenttoolports.QueryToolParams {
 	out := testParams(params)
 	out.Actor.PrincipalType = permissionports.PrincipalTypeUser
 	out.Actor.PrincipalID = out.Actor.UserID

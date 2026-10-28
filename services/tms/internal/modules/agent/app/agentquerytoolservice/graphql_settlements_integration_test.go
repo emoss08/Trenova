@@ -3,40 +3,33 @@
 package agentquerytoolservice_test
 
 import (
-	"slices"
-
-	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/pkg/dbscope"
-
 	"context"
 	"errors"
+	"slices"
 	"sync"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/carriersettlementrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/driverpayrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/driversettlementrepository"
@@ -44,11 +37,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -213,9 +211,11 @@ func settlementServices(conn *postgres.Connection, services *agentread.ResolverP
 		AssignmentRepo: assignments, DeductionRepo: deductions, EarningRepo: earnings,
 		PayCodeRepo: codes, AdvanceRepo: advances, EscrowRepo: escrow, PayService: payService,
 	})
-	services.CarrierSettlementService = carriersettlementservice.New(carriersettlementservice.Params{
-		Logger: logger, DB: conn, SettlementRepo: carrierSettlements,
-	})
+	services.CarrierSettlementService = carriersettlementservice.New(
+		carriersettlementservice.Params{
+			Logger: logger, DB: conn, SettlementRepo: carrierSettlements,
+		},
+	)
 }
 
 // settlementListCases are the settlement lists, each written as its screen
@@ -344,7 +344,12 @@ func settlementListCases(
 				if err != nil {
 					return pulid.Nil, err
 				}
-				code, err := rows.payCode(ctx, tenant, "D"+label, driverpay.PayCodeDirectionDeduction)
+				code, err := rows.payCode(
+					ctx,
+					tenant,
+					"D"+label,
+					driverpay.PayCodeDirectionDeduction,
+				)
 				if err != nil {
 					return pulid.Nil, err
 				}
@@ -627,7 +632,10 @@ func TestConvertedGets_SettlementsReadOneRecordUnderRowLevelSecurity(t *testing.
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
-	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: services})
+	public := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: &publicRole{}, Resolvers: services},
+	)
 	restricted := agentreadtest.NewReader(t, agentreadtest.Options{
 		Engine: &restrictedRole{}, Resolvers: services,
 	})
@@ -651,7 +659,11 @@ func TestConvertedGets_SettlementsReadOneRecordUnderRowLevelSecurity(t *testing.
 			})
 
 			t.Run("nothing is withheld where access reaches Restricted", func(t *testing.T) {
-				open, err := agentquerytoolservice.ConvertedGetTool(name, restricted, &restrictedRole{})
+				open, err := agentquerytoolservice.ConvertedGetTool(
+					name,
+					restricted,
+					&restrictedRole{},
+				)
 				require.NoError(t, err)
 				params := internalCall(actor, map[string]any{param: ours.rows[0]})
 				params.DataAccessCeiling = permission.SensitivityRestricted
@@ -661,7 +673,10 @@ func TestConvertedGets_SettlementsReadOneRecordUnderRowLevelSecurity(t *testing.
 			})
 
 			t.Run("only the documented fields are withheld at Internal", func(t *testing.T) {
-				data, err := get.Query(ours.ctx, internalCall(actor, map[string]any{param: ours.rows[0]}))
+				data, err := get.Query(
+					ours.ctx,
+					internalCall(actor, map[string]any{param: ours.rows[0]}),
+				)
 				require.NoError(t, err)
 				withheld, _ := asMap(t, data)["withheldByAccess"].([]any)
 				for _, path := range withheld {
@@ -670,7 +685,10 @@ func TestConvertedGets_SettlementsReadOneRecordUnderRowLevelSecurity(t *testing.
 			})
 
 			t.Run("another tenant's record is not found", func(t *testing.T) {
-				_, err := get.Query(ours.ctx, internalCall(actor, map[string]any{param: other.rows[0]}))
+				_, err := get.Query(
+					ours.ctx,
+					internalCall(actor, map[string]any{param: other.rows[0]}),
+				)
 				require.Error(t, err)
 			})
 
@@ -720,7 +738,11 @@ func TestConvertedGets_DriverEarningsAreReadByTheWorker(t *testing.T) {
 		return event.WorkerID.String()
 	}
 
-	get, err := agentquerytoolservice.ConvertedGetTool("settlement_get_driver_earnings", reader, engine)
+	get, err := agentquerytoolservice.ConvertedGetTool(
+		"settlement_get_driver_earnings",
+		reader,
+		engine,
+	)
 	require.NoError(t, err)
 
 	mineID := workerOf(ours.rows[0])
@@ -773,7 +795,11 @@ func TestConvertedReads_MarkTheDriversWordsOnlyWhenShown(t *testing.T) {
 	mine := agentreadtest.SeedTenant(t, admin, "A")
 	ours := writeReferenceRows(t, expenses, mine, "A")
 
-	list, err := agentquerytoolservice.ConvertedListTool("settlement_list_driver_expenses", reader, engine)
+	list, err := agentquerytoolservice.ConvertedListTool(
+		"settlement_list_driver_expenses",
+		reader,
+		engine,
+	)
 	require.NoError(t, err)
 	params := internalCall(mine.Actor, map[string]any{"limit": 50})
 
@@ -802,8 +828,8 @@ func TestConvertedReads_MarkTheDriversWordsOnlyWhenShown(t *testing.T) {
 func internalCall(
 	actor *permissionports.RequestActor,
 	args map[string]any,
-) *agentports.QueryToolParams {
-	return &agentports.QueryToolParams{
+) *agenttoolports.QueryToolParams {
+	return &agenttoolports.QueryToolParams{
 		OrganizationID:    actor.OrganizationID,
 		BusinessUnitID:    actor.BusinessUnitID,
 		Actor:             actor,
@@ -837,7 +863,7 @@ func TestConvertedLists_EscrowAccountsSearchWithoutTheirMoney(t *testing.T) {
 			Engine: restrictedEngine, Resolvers: services,
 		}), restrictedEngine)
 	require.NoError(t, err)
-	data, err := reached.Query(ours.ctx, &agentports.QueryToolParams{
+	data, err := reached.Query(ours.ctx, &agenttoolports.QueryToolParams{
 		OrganizationID: mine.Actor.OrganizationID, BusinessUnitID: mine.Actor.BusinessUnitID,
 		Actor: mine.Actor, Timezone: "America/Chicago",
 		Params:            map[string]any{"query": "Closed"},

@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
@@ -145,7 +145,7 @@ type listBankReceiptExceptionsTool struct {
 func newListBankReceiptExceptionsTool(
 	receipts bankReceiptReader,
 	items workItemReader,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &listBankReceiptExceptionsTool{receipts: receipts, items: items}
 }
 
@@ -175,7 +175,7 @@ func (t *listBankReceiptExceptionsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listBankReceiptExceptionsTool) Policy() agentports.ToolPolicy {
+func (t *listBankReceiptExceptionsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceBankReceipt,
 		reads:    agent.ExternalReadAlways,
@@ -187,7 +187,7 @@ func (t *listBankReceiptExceptionsTool) Policy() agentports.ToolPolicy {
 
 func (t *listBankReceiptExceptionsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -298,7 +298,7 @@ type getBankReceiptTool struct {
 func newGetBankReceiptTool(
 	receipts bankReceiptReader,
 	items workItemReader,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &getBankReceiptTool{receipts: receipts, items: items}
 }
 
@@ -325,7 +325,7 @@ func (t *getBankReceiptTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getBankReceiptTool) Policy() agentports.ToolPolicy {
+func (t *getBankReceiptTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceBankReceipt,
 		reads:    agent.ExternalReadAlways,
@@ -337,7 +337,7 @@ func (t *getBankReceiptTool) Policy() agentports.ToolPolicy {
 
 func (t *getBankReceiptTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

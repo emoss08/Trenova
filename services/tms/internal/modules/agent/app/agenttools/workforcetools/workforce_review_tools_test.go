@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -146,10 +146,18 @@ func TestStartPerformanceReview_OpensADraft(t *testing.T) {
 		common.FieldPeriodEnd:   "2026-12-31",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reviews.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reviews.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, reviews.created)
 	assert.Equal(t, int64(1_767_225_600), reviews.created.PeriodStart)
@@ -174,9 +182,13 @@ func TestDraftPerformanceReview_MergesRatingsByKey(t *testing.T) {
 		}},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reviews.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reviews.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "2026 annual review")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, reviews.saved)
@@ -211,12 +223,12 @@ func TestDraftPerformanceReview_MergesRatingsByKey(t *testing.T) {
 			}},
 		},
 	} {
-		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+		require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 			agenttoolstest.ExecuteParams(raw)), name)
 	}
 
 	reviews.review.Status = worker.ReviewStatusSubmitted
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params),
 		"a submitted review is the reviewer's")
 }
 
@@ -225,16 +237,26 @@ func TestDeletePerformanceReview_OnlyADraft(t *testing.T) {
 
 	reviews := newFakeReviews()
 	tool := newDeletePerformanceReviewTool(reviews)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramReviewID: reviews.review.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramReviewID: reviews.review.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reviews.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, agent.PreviewOperationDelete, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reviews.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationDelete,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, []pulid.ID{reviews.review.ID}, reviews.deleted)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 
 	reviews.review.Status = worker.ReviewStatusClosed
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }

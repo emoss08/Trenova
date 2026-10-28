@@ -3,11 +3,11 @@ package agenttoolservice
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
-var _ agentports.ToolPreviewer = (*shipmenttools.AddShipmentCommentTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*shipmenttools.AddShipmentCommentTool)(nil)
 
-var _ agentports.ToolPreviewer = (*operationstools.UpdateShipmentTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*operationstools.UpdateShipmentTool)(nil)
 
-var _ agentports.ToolPreviewer = (*shipmenttools.CancelShipmentTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*shipmenttools.CancelShipmentTool)(nil)

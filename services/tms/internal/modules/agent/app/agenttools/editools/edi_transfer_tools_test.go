@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -176,7 +176,7 @@ func tenderParams(transfer *edi.EDITransfer, extra map[string]any) map[string]an
 func TestEDITenderDecisions_ArePersonOnlyProposalsOnTheEDIResource(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		NewAcceptEDILoadTenderTool(nil),
 		NewDeclineEDILoadTenderTool(nil),
 		NewCancelEDILoadTenderTool(nil),
@@ -195,11 +195,11 @@ func TestEDITenderDecisions_ArePersonOnlyProposalsOnTheEDIResource(t *testing.T)
 		)
 
 		id := pulid.MustNew("edilt_")
-		target, ok := tool.(agentports.TargetedTool).Target(
+		target, ok := tool.(agenttoolports.TargetedTool).Target(
 			map[string]any{paramEDITransferID: id.String()},
 		)
 		require.True(t, ok, tool.Name())
-		assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceEDI, ID: id}, target)
+		assert.Equal(t, agenttoolports.ToolTarget{Resource: permission.ResourceEDI, ID: id}, target)
 	}
 }
 
@@ -213,9 +213,13 @@ func TestAcceptEDILoadTender_PreviewsTheShipmentAndThe990ThenRunsOnlyWhenApprove
 	tool := NewAcceptEDILoadTenderTool(transfers).(*EdiTransferDecisionTool)
 	args := tenderParams(transfers.transfer, nil)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, transfers.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		transfers.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+		},
+	)
 	status := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceEDI, status.Resource)
 	assert.Equal(t, transfers.transfer.ID, status.EntityID)
@@ -235,7 +239,11 @@ func TestAcceptEDILoadTender_PreviewsTheShipmentAndThe990ThenRunsOnlyWhenApprove
 	assert.Contains(t, preview.Summary, "Acme Foods")
 
 	require.NoError(t, tool.Validate(t.Context(), agenttoolstest.AgentParamsFor(args)))
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)), ErrEDIDecisionNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)),
+		ErrEDIDecisionNeedsAPerson,
+	)
 	assert.Nil(t, transfers.approved, "an agent never accepts a tender on its own")
 
 	approved := agenttoolstest.ApprovedParams(args)
@@ -258,9 +266,13 @@ func TestAcceptEDILoadTender_RefusesATenderWhoseMappingsAreIncomplete(t *testing
 	args := agenttoolstest.AgentParamsFor(tenderParams(transfers.transfer, nil))
 
 	require.Error(t, tool.Validate(t.Context(), args))
-	preview := agenttoolstest.PreviewWithoutWrites(t, transfers.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), args)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		transfers.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), args)
+		},
+	)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 	assert.Empty(t, preview.Changes)
 }
@@ -280,9 +292,13 @@ func TestDeclineEDILoadTender_CarriesTheReasonToThePartner(t *testing.T) {
 	args := tenderParams(transfers.transfer, map[string]any{
 		common.FieldReason: "No reefer capacity on that lane this week",
 	})
-	preview := agenttoolstest.PreviewWithoutWrites(t, transfers.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		transfers.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+		},
+	)
 	status := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "Rejected", agenttoolstest.FieldByPath(t, status, "status").After)
 	assert.Equal(t, "No reefer capacity on that lane this week",
@@ -293,7 +309,11 @@ func TestDeclineEDILoadTender_CarriesTheReasonToThePartner(t *testing.T) {
 	assert.Contains(t, response.Message.Body, "No reefer capacity on that lane this week")
 	assert.Equal(t, []string{ediservice.TransferDirectionInbound}, transfers.directions)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)), ErrEDIDecisionNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)),
+		ErrEDIDecisionNeedsAPerson,
+	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(args)))
 	require.NotNil(t, transfers.rejected)
 	assert.Equal(t, "No reefer capacity on that lane this week", transfers.rejected.Reason)
@@ -303,7 +323,7 @@ func TestCancelAndExpireEDILoadTender_ReadTheSideTheServiceActsOn(t *testing.T) 
 	t.Parallel()
 
 	cases := map[string]struct {
-		build     func(ediTransferDecider) agentports.AgentTool
+		build     func(ediTransferDecider) agenttoolports.AgentTool
 		direction string
 		status    string
 		wrote     func(*fakeTransfers) bool
@@ -334,11 +354,23 @@ func TestCancelAndExpireEDILoadTender_ReadTheSideTheServiceActsOn(t *testing.T) 
 			tool := tc.build(transfers).(*EdiTransferDecisionTool)
 			args := tenderParams(transfers.transfer, nil)
 
-			preview := agenttoolstest.PreviewWithoutWrites(t, transfers.guard, func() (*agent.ToolPreview, error) {
-				return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
-			})
+			preview := agenttoolstest.PreviewWithoutWrites(
+				t,
+				transfers.guard,
+				func() (*agent.ToolPreview, error) {
+					return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+				},
+			)
 			require.Len(t, preview.Changes, 1, "a tender between organizations sends no 990")
-			assert.Equal(t, tc.status, agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After)
+			assert.Equal(
+				t,
+				tc.status,
+				agenttoolstest.FieldByPath(
+					t,
+					agenttoolstest.PreviewChange(t, preview, 0),
+					"status",
+				).After,
+			)
 			assert.Equal(t, []string{tc.direction}, transfers.directions)
 
 			require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(args)))
@@ -350,7 +382,7 @@ func TestCancelAndExpireEDILoadTender_ReadTheSideTheServiceActsOn(t *testing.T) 
 func TestEDITenderDecisions_RefuseAFinalizedTransfer(t *testing.T) {
 	t.Parallel()
 
-	for _, build := range []func(ediTransferDecider) agentports.AgentTool{
+	for _, build := range []func(ediTransferDecider) agenttoolports.AgentTool{
 		NewAcceptEDILoadTenderTool,
 		NewDeclineEDILoadTenderTool,
 		NewCancelEDILoadTenderTool,
@@ -369,9 +401,13 @@ func TestEDITenderDecisions_RefuseAFinalizedTransfer(t *testing.T) {
 		require.Error(t, err, tool.Name())
 		assert.Contains(t, err.Error(), "finalized or processing", tool.Name())
 
-		preview := agenttoolstest.PreviewWithoutWrites(t, transfers.guard, func() (*agent.ToolPreview, error) {
-			return tool.Preview(t.Context(), args)
-		})
+		preview := agenttoolstest.PreviewWithoutWrites(
+			t,
+			transfers.guard,
+			func() (*agent.ToolPreview, error) {
+				return tool.Preview(t.Context(), args)
+			},
+		)
 		agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 	}
 }

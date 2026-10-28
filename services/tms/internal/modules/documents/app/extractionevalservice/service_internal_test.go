@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
@@ -40,7 +40,10 @@ func confirmedSnapshot() *aicorrection.Snapshot {
 
 func (w *world) seedCorrection() *aicorrection.Correction {
 	documentID := pulid.MustNew("doc_")
-	w.documents.docs[documentID] = &document.Document{ID: documentID, OriginalName: "ratecon-4471.pdf"}
+	w.documents.docs[documentID] = &document.Document{
+		ID:           documentID,
+		OriginalName: "ratecon-4471.pdf",
+	}
 	w.contents.pages = []*documentcontent.Page{
 		{
 			PageNumber:    1,
@@ -71,11 +74,15 @@ func (w *world) seedCorrection() *aicorrection.Correction {
 func (w *world) seedActiveCase(t *testing.T) *extractioneval.ExtractionCase {
 	t.Helper()
 	correction := w.seedCorrection()
-	created, err := w.svc.PromoteCorrection(t.Context(), &extractionevalports.PromoteCorrectionRequest{
-		TenantInfo:   testTenant(),
-		CorrectionID: correction.ID,
-		Activate:     true,
-	}, testActor())
+	created, err := w.svc.PromoteCorrection(
+		t.Context(),
+		&extractionevalports.PromoteCorrectionRequest{
+			TenantInfo:   testTenant(),
+			CorrectionID: correction.ID,
+			Activate:     true,
+		},
+		testActor(),
+	)
 	require.NoError(t, err)
 	return created
 }
@@ -98,10 +105,14 @@ func TestPromoteCorrection_FreezesTheDocumentAndConfirmedValues(t *testing.T) {
 	w := newWorld()
 	correction := w.seedCorrection()
 
-	created, err := w.svc.PromoteCorrection(t.Context(), &extractionevalports.PromoteCorrectionRequest{
-		TenantInfo:   testTenant(),
-		CorrectionID: correction.ID,
-	}, testActor())
+	created, err := w.svc.PromoteCorrection(
+		t.Context(),
+		&extractionevalports.PromoteCorrectionRequest{
+			TenantInfo:   testTenant(),
+			CorrectionID: correction.ID,
+		},
+		testActor(),
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, extractioneval.CaseStatusCandidate, created.Status)
@@ -124,7 +135,10 @@ func TestPromoteCorrection_RefusesTwiceAndWithoutText(t *testing.T) {
 
 	w := newWorld()
 	correction := w.seedCorrection()
-	request := &extractionevalports.PromoteCorrectionRequest{TenantInfo: testTenant(), CorrectionID: correction.ID}
+	request := &extractionevalports.PromoteCorrectionRequest{
+		TenantInfo:   testTenant(),
+		CorrectionID: correction.ID,
+	}
 
 	_, err := w.svc.PromoteCorrection(t.Context(), request, testActor())
 	require.NoError(t, err)
@@ -145,10 +159,14 @@ func TestPromoteCorrection_RefusesTwiceAndWithoutText(t *testing.T) {
 	deleted := newWorld()
 	third := deleted.seedCorrection()
 	clear(deleted.documents.docs)
-	_, err = deleted.svc.PromoteCorrection(t.Context(), &extractionevalports.PromoteCorrectionRequest{
-		TenantInfo:   testTenant(),
-		CorrectionID: third.ID,
-	}, testActor())
+	_, err = deleted.svc.PromoteCorrection(
+		t.Context(),
+		&extractionevalports.PromoteCorrectionRequest{
+			TenantInfo:   testTenant(),
+			CorrectionID: third.ID,
+		},
+		testActor(),
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 }
@@ -298,11 +316,24 @@ func TestEvaluateResult_ScoresThePredictionAgainstTheCase(t *testing.T) {
 	w.predictor.prediction = &extractionevalports.ExtractionPrediction{
 		DraftData: map[string]any{
 			"fields": map[string]any{
-				"referenceNumber": map[string]any{"value": "LD-10442", "source": "ai", "confidence": 0.9},
-				"rate":            map[string]any{"value": "$2,500.00", "source": "ai", "confidence": 0.8},
+				"referenceNumber": map[string]any{
+					"value":      "LD-10442",
+					"source":     "ai",
+					"confidence": 0.9,
+				},
+				"rate": map[string]any{
+					"value":      "$2,500.00",
+					"source":     "ai",
+					"confidence": 0.8,
+				},
 			},
 			"stops": []map[string]any{
-				{"role": "pickup", "name": "Northwind Foods", "city": "Dallas", "date": "03/15/2026"},
+				{
+					"role": "pickup",
+					"name": "Northwind Foods",
+					"city": "Dallas",
+					"date": "03/15/2026",
+				},
 			},
 		},
 		Model:        "trenova-extract-8b-q4",
@@ -329,17 +360,25 @@ func TestEvaluateResult_ScoresThePredictionAgainstTheCase(t *testing.T) {
 	assert.Equal(t, "trenova-extract-8b-q4", result.Model)
 	assert.Equal(t, 1, result.CorrectedCount, "the rate was wrong")
 	assert.Positive(t, result.CorrectCount)
-	assert.InDelta(t, float64(result.CorrectCount)/float64(result.ScoredCount), result.Accuracy, 1e-9)
+	assert.InDelta(
+		t,
+		float64(result.CorrectCount)/float64(result.ScoredCount),
+		result.Accuracy,
+		1e-9,
+	)
 	assert.True(t, cost.Equal(result.CostUSD))
 	assert.Equal(t, int64(2100), result.LatencyMs)
 	require.NotNil(t, result.Predicted)
 	assert.Len(t, result.Predicted.Stops, 1)
 
-	finished, err := w.svc.FinishRun(t.Context(), &extractionevalports.FinishExtractionEvalRunRequest{
-		TenantInfo: testTenant(),
-		RunID:      run.ID,
-		Status:     extractioneval.RunStatusCompleted,
-	})
+	finished, err := w.svc.FinishRun(
+		t.Context(),
+		&extractionevalports.FinishExtractionEvalRunRequest{
+			TenantInfo: testTenant(),
+			RunID:      run.ID,
+			Status:     extractioneval.RunStatusCompleted,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, extractioneval.RunStatusCompleted, finished.Status)
 	assert.Equal(t, 1, finished.CasesCompleted)
@@ -389,7 +428,7 @@ func TestEvaluateResult_ASchemaFailureIsNotRetried(t *testing.T) {
 
 	w := newWorld()
 	startedRun(t, w)
-	w.predictor.err = agentports.ErrModelSchemaValidation
+	w.predictor.err = llmports.ErrModelSchemaValidation
 
 	err := w.svc.EvaluateResult(t.Context(), &extractionevalports.EvaluateExtractionResultRequest{
 		TenantInfo: testTenant(),
@@ -397,7 +436,11 @@ func TestEvaluateResult_ASchemaFailureIsNotRetried(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, extractioneval.ResultStatusFailed, w.results.items[0].Status)
-	assert.Equal(t, "The model's answer did not match the extraction schema", w.results.items[0].ErrorMessage)
+	assert.Equal(
+		t,
+		"The model's answer did not match the extraction schema",
+		w.results.items[0].ErrorMessage,
+	)
 }
 
 func TestCheckContinue_StopsForTheBudgetAndForACancel(t *testing.T) {
@@ -411,7 +454,10 @@ func TestCheckContinue_StopsForTheBudgetAndForACancel(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, decision.Stop)
 
-	w.budget.decision = &agentquality.BudgetDecision{Stop: true, Reason: "Tonight's budget is spent."}
+	w.budget.decision = &agentquality.BudgetDecision{
+		Stop:   true,
+		Reason: "Tonight's budget is spent.",
+	}
 	decision, err = w.svc.CheckContinue(t.Context(), request)
 	require.NoError(t, err)
 	assert.True(t, decision.Stop)
@@ -430,13 +476,21 @@ func TestCheckContinue_StopsForTheBudgetAndForACancel(t *testing.T) {
 	_, err = w.svc.CancelRun(t.Context(), request, testActor())
 	require.Error(t, err, "a finished run cannot be canceled")
 
-	finished, err := w.svc.FinishRun(t.Context(), &extractionevalports.FinishExtractionEvalRunRequest{
-		TenantInfo: testTenant(),
-		RunID:      run.ID,
-		Status:     extractioneval.RunStatusCanceled,
-	})
+	finished, err := w.svc.FinishRun(
+		t.Context(),
+		&extractionevalports.FinishExtractionEvalRunRequest{
+			TenantInfo: testTenant(),
+			RunID:      run.ID,
+			Status:     extractioneval.RunStatusCanceled,
+		},
+	)
 	require.NoError(t, err)
-	assert.Equal(t, extractioneval.RunStatusCanceled, finished.Status, "finishing a canceled run keeps it canceled")
+	assert.Equal(
+		t,
+		extractioneval.RunStatusCanceled,
+		finished.Status,
+		"finishing a canceled run keeps it canceled",
+	)
 }
 
 func TestAccuracy_GroupsProductionCorrectionsByModelAndKind(t *testing.T) {
@@ -448,12 +502,16 @@ func TestAccuracy_GroupsProductionCorrectionsByModelAndKind(t *testing.T) {
 		{
 			ExtractionModel: "gpt-large", DocumentKind: "RateConfirmation",
 			ScoredCount: 10, CorrectCount: 9, CorrectedCount: 1,
-			FieldResults: []aicorrection.FieldResult{{Key: "rate", Outcome: aicorrection.OutcomeCorrect}},
+			FieldResults: []aicorrection.FieldResult{
+				{Key: "rate", Outcome: aicorrection.OutcomeCorrect},
+			},
 		},
 		{
 			ExtractionModel: "gpt-large", DocumentKind: "BillOfLading",
 			ScoredCount: 10, CorrectCount: 5, MissedCount: 5,
-			FieldResults: []aicorrection.FieldResult{{Key: "rate", Outcome: aicorrection.OutcomeMissed}},
+			FieldResults: []aicorrection.FieldResult{
+				{Key: "rate", Outcome: aicorrection.OutcomeMissed},
+			},
 		},
 		{
 			DocumentKind: "RateConfirmation",
@@ -461,7 +519,10 @@ func TestAccuracy_GroupsProductionCorrectionsByModelAndKind(t *testing.T) {
 		},
 	}
 
-	report, err := w.svc.Accuracy(t.Context(), &extractionevalports.ExtractionAccuracyRequest{TenantInfo: testTenant()})
+	report, err := w.svc.Accuracy(
+		t.Context(),
+		&extractionevalports.ExtractionAccuracyRequest{TenantInfo: testTenant()},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, 30, report.WindowDays)
@@ -509,9 +570,12 @@ func TestDeleteCase_RemovesIt(t *testing.T) {
 	w := newWorld()
 	created := w.seedActiveCase(t)
 
-	require.NoError(t, w.svc.DeleteCase(t.Context(), extractionevalports.GetExtractionEvalCaseRequest{
-		TenantInfo: testTenant(),
-		ID:         created.ID,
-	}, testActor()))
+	require.NoError(
+		t,
+		w.svc.DeleteCase(t.Context(), extractionevalports.GetExtractionEvalCaseRequest{
+			TenantInfo: testTenant(),
+			ID:         created.ID,
+		}, testActor()),
+	)
 	assert.Empty(t, w.cases.items)
 }

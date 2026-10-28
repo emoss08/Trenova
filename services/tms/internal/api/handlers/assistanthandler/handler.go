@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -32,30 +32,30 @@ const resultsKey = "results"
 type Params struct {
 	fx.In
 
-	Service              agentports.AssistantService
+	Service              assistantports.AssistantService
 	Turns                *assistantturnservice.Service
 	Workflows            kernelports.WorkflowStarter
 	Schedules            *conversationscheduleservice.Service
-	Handoffs             agentports.AssistantHandoffService `optional:"true"`
+	Handoffs             assistantports.AssistantHandoffService `optional:"true"`
 	Queue                *assistantqueueservice.Service
 	Waits                *agentwaitservice.Service
 	Cases                deskcaseports.AssistantCaseService
-	Chapters             agentports.AssistantChapterService
+	Chapters             assistantports.AssistantChapterService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
 }
 
 type Handler struct {
-	service   agentports.AssistantService
+	service   assistantports.AssistantService
 	turns     *assistantturnservice.Service
 	workflows kernelports.WorkflowStarter
 	schedules scheduleService
-	handoffs  agentports.AssistantHandoffService
+	handoffs  assistantports.AssistantHandoffService
 	queue     *assistantqueueservice.Service
 	waits     *agentwaitservice.Service
 	cases     deskcaseports.AssistantCaseService
-	chapters  agentports.AssistantChapterService
+	chapters  assistantports.AssistantChapterService
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware
 	logger    *zap.Logger
@@ -271,15 +271,15 @@ func tenantFromAuthContext(authCtx *authctx.AuthContext) pagination.TenantInfo {
 // threadRequest builds the per-user scoped read used by every thread route. The
 // user comes from the auth context rather than the path, so one person cannot
 // read another's conversation by guessing an id.
-func threadRequest(c *gin.Context) (agentports.GetThreadRequest, error) {
+func threadRequest(c *gin.Context) (assistantports.GetThreadRequest, error) {
 	authCtx := authctx.GetAuthContext(c)
 
 	threadID, err := pulid.Parse(c.Param("threadID"))
 	if err != nil {
-		return agentports.GetThreadRequest{}, err
+		return assistantports.GetThreadRequest{}, err
 	}
 
-	return agentports.GetThreadRequest{
+	return assistantports.GetThreadRequest{
 		ID:         threadID,
 		UserID:     authCtx.UserID,
 		TenantInfo: tenantFromAuthContext(authCtx),
@@ -304,7 +304,7 @@ func (h *Handler) listThreads(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.ListThreads(c.Request.Context(), agentports.ListThreadsRequest{
+	result, err := h.service.ListThreads(c.Request.Context(), assistantports.ListThreadsRequest{
 		UserID:        authCtx.UserID,
 		TenantInfo:    tenantFromAuthContext(authCtx),
 		Limit:         query.Limit,
@@ -337,7 +337,7 @@ func (h *Handler) countThreadShelves(c *gin.Context) {
 
 	result, err := h.service.CountThreadShelves(
 		c.Request.Context(),
-		&agentports.CountThreadShelvesRequest{
+		&assistantports.CountThreadShelvesRequest{
 			UserID:     authCtx.UserID,
 			TenantInfo: tenantFromAuthContext(authCtx),
 			Edges:      query.Edges,
@@ -386,7 +386,7 @@ func (h *Handler) startThread(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	thread, err := h.service.StartThread(c.Request.Context(), &agentports.StartThreadRequest{
+	thread, err := h.service.StartThread(c.Request.Context(), &assistantports.StartThreadRequest{
 		AgentDefinitionID: agentID,
 		Title:             body.Title,
 		TenantInfo:        tenantFromAuthContext(authCtx),
@@ -450,7 +450,7 @@ func (h *Handler) requestMore(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.RequestMore(c.Request.Context(), agentports.RequestMoreRequest{
+	result, err := h.service.RequestMore(c.Request.Context(), assistantports.RequestMoreRequest{
 		Thread: req,
 		Kind:   body.Kind,
 	})
@@ -502,7 +502,7 @@ func (h *Handler) updateThread(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authctx.GetAuthContext(c))
-	thread, err := h.service.UpdateThread(c.Request.Context(), &agentports.UpdateThreadRequest{
+	thread, err := h.service.UpdateThread(c.Request.Context(), &assistantports.UpdateThreadRequest{
 		ThreadID:    req.ID,
 		TenantInfo:  req.TenantInfo,
 		Title:       body.Title,
@@ -656,11 +656,14 @@ func (h *Handler) listMessages(c *gin.Context) {
 		return
 	}
 
-	page, err := h.service.ListMessages(c.Request.Context(), agentports.ListThreadMessagesRequest{
-		Thread:         req,
-		Limit:          query.Limit,
-		BeforeSequence: query.Before,
-	})
+	page, err := h.service.ListMessages(
+		c.Request.Context(),
+		assistantports.ListThreadMessagesRequest{
+			Thread:         req,
+			Limit:          query.Limit,
+			BeforeSequence: query.Before,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -781,7 +784,7 @@ func (h *Handler) searchMentions(c *gin.Context) {
 		page, err := h.service.SearchMentionPage(
 			c.Request.Context(),
 			requestActorFromAuthContext(authCtx),
-			agentports.MentionPageRequest{
+			assistantports.MentionPageRequest{
 				Query:  query.Query,
 				Kind:   query.Kind,
 				Offset: query.Offset,
@@ -799,7 +802,7 @@ func (h *Handler) searchMentions(c *gin.Context) {
 	results, err := h.service.SearchMentions(
 		c.Request.Context(),
 		requestActorFromAuthContext(authCtx),
-		agentports.MentionSearchRequest{Query: query.Query, Kind: query.Type},
+		assistantports.MentionSearchRequest{Query: query.Query, Kind: query.Type},
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -826,7 +829,7 @@ func (h *Handler) searchDesk(c *gin.Context) {
 	results, err := h.service.SearchDesk(
 		c.Request.Context(),
 		requestActorFromAuthContext(authCtx),
-		agentports.DeskSearchRequest{Query: query.Query, Kind: query.Kind},
+		assistantports.DeskSearchRequest{Query: query.Query, Kind: query.Kind},
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -848,7 +851,7 @@ func (h *Handler) commandAvailability(c *gin.Context) {
 
 	availability, err := h.service.CommandAvailability(
 		c.Request.Context(),
-		&agentports.CommandAvailabilityRequest{
+		&assistantports.CommandAvailabilityRequest{
 			AgentID:    agentID,
 			TenantInfo: tenantFromAuthContext(authCtx),
 		},

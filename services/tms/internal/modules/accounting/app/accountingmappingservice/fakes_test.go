@@ -7,10 +7,10 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,7 +39,8 @@ func (f *fakeConnections) GetByType(
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for _, row := range f.rows {
-		if row.OrganizationID == req.TenantInfo.OrgID && row.BusinessUnitID == req.TenantInfo.BuID &&
+		if row.OrganizationID == req.TenantInfo.OrgID &&
+			row.BusinessUnitID == req.TenantInfo.BuID &&
 			row.IntegrationType == req.IntegrationType {
 			out := *row
 			return &out, nil
@@ -182,7 +183,8 @@ func (f *fakeReferences) Search(
 	defer f.mu.Unlock()
 	out := make([]*accountingsync.AccountingReferenceObject, 0)
 	for _, row := range f.rows {
-		if row.Kind == req.Kind && strings.Contains(strings.ToLower(row.Name), strings.ToLower(req.Query)) {
+		if row.Kind == req.Kind &&
+			strings.Contains(strings.ToLower(row.Name), strings.ToLower(req.Query)) {
 			out = append(out, row)
 		}
 	}
@@ -219,7 +221,10 @@ func cloneMapping(row *accountingsync.AccountingMapping) *accountingsync.Account
 }
 
 func (f *fakeMappings) find(id pulid.ID) int {
-	return slices.IndexFunc(f.rows, func(r *accountingsync.AccountingMapping) bool { return r.ID == id })
+	return slices.IndexFunc(
+		f.rows,
+		func(r *accountingsync.AccountingMapping) bool { return r.ID == id },
+	)
 }
 
 func (f *fakeMappings) byTarget(
@@ -228,7 +233,8 @@ func (f *fakeMappings) byTarget(
 	key string,
 ) *accountingsync.AccountingMapping {
 	for _, row := range f.rows {
-		if row.TargetType == targetType && row.TrenovaObjectID == objectID && row.TrenovaKey == key {
+		if row.TargetType == targetType && row.TrenovaObjectID == objectID &&
+			row.TrenovaKey == key {
 			return row
 		}
 	}
@@ -378,7 +384,11 @@ func (f *fakeMappings) Update(
 		return nil, errortypes.NewNotFoundError("Accounting mapping not found")
 	}
 	if f.rows[idx].Version != entity.Version {
-		return nil, errortypes.NewValidationError("version", errortypes.ErrVersionMismatch, "Version mismatch")
+		return nil, errortypes.NewValidationError(
+			"version",
+			errortypes.ErrVersionMismatch,
+			"Version mismatch",
+		)
 	}
 	row := cloneMapping(entity)
 	row.Version++
@@ -527,21 +537,21 @@ func (f *fakeAudit) LogAction(params *auditports.LogActionParams, _ ...auditport
 }
 
 type fakeCompletion struct {
-	agentports.CompletionService
+	llmports.CompletionService
 	reply    string
 	err      error
-	requests []*agentports.StructuredCompletionRequest
+	requests []*llmports.StructuredCompletionRequest
 }
 
 func (f *fakeCompletion) CompleteStructured(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	f.requests = append(f.requests, req)
 	if f.err != nil {
 		return nil, f.err
 	}
-	return &agentports.StructuredCompletionResult{Text: f.reply}, nil
+	return &llmports.StructuredCompletionResult{Text: f.reply}, nil
 }
 
 type fakeRefresher struct {

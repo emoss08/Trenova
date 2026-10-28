@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -65,11 +66,11 @@ func NewAgentPlanHoldLoaderFactory(p AgentPlanHoldLoaderFactoryParams) *AgentPla
 
 func newAgentPlanHoldLoader(f *AgentPlanHoldLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, *agentports.ProposalHold] {
+) *dataloadgen.Loader[string, *assistantports.ProposalHold] {
 	return newLoader(batchValueFunc(
-		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]*agentports.ProposalHold, error) {
+		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]*assistantports.ProposalHold, error) {
 			if f.plans == nil || f.planService == nil {
-				return map[pulid.ID]*agentports.ProposalHold{}, nil
+				return map[pulid.ID]*assistantports.ProposalHold{}, nil
 			}
 			plans, err := f.plans.ListByIDs(ctx, agentports.ListAgentPlansByIDsRequest{
 				IDs:        ids,

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -71,7 +71,7 @@ func newGetShipmentTrackingTool(
 	board boardMoveLister,
 	reader telematicsReader,
 	stopEtas stopEtaReader,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &getShipmentTrackingTool{
 		shipments:  shipments,
 		board:      board,
@@ -119,7 +119,7 @@ func proNumberProperty() map[string]any {
 	}
 }
 
-func (t *getShipmentTrackingTool) Policy() agentports.ToolPolicy {
+func (t *getShipmentTrackingTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipment,
 	})
@@ -127,7 +127,7 @@ func (t *getShipmentTrackingTool) Policy() agentports.ToolPolicy {
 
 func (t *getShipmentTrackingTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func (t *getShipmentTrackingTool) Query(
 
 func (t *getShipmentTrackingTool) snapshots(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	entities []*shipment.Shipment,
 ) ([]*shipmenttracking.Snapshot, error) {
 	if len(entities) == 0 {
@@ -377,7 +377,7 @@ func (t *getShipmentTrackingTool) hours(
 	return out, nil
 }
 
-func tenantOf(params *agentports.QueryToolParams) pagination.TenantInfo {
+func tenantOf(params *agenttoolports.QueryToolParams) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  params.OrganizationID,
 		BuID:   params.BusinessUnitID,

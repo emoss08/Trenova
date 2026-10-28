@@ -4,9 +4,8 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/graphql"
-
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/readscope"
@@ -79,9 +78,9 @@ func TestRead_RunsOnlyBoundOperations(t *testing.T) {
 	reader := &Reader{operations: map[string]Operation{"CustomerTable": {Name: "CustomerTable"}}}
 	ctx := readscope.With(t.Context(), nil)
 
-	_, err := reader.Read(ctx, &agentports.GraphQLReadRequest{Operation: "AnythingElse"})
+	_, err := reader.Read(ctx, &graphqlreadports.GraphQLReadRequest{Operation: "AnythingElse"})
 
-	assert.ErrorIs(t, err, agentports.ErrUnknownReadOperation)
+	assert.ErrorIs(t, err, graphqlreadports.ErrUnknownReadOperation)
 }
 
 func TestRead_RefusesToReadWithoutTheToolCallsReadScope(t *testing.T) {
@@ -89,7 +88,10 @@ func TestRead_RefusesToReadWithoutTheToolCallsReadScope(t *testing.T) {
 
 	reader := &Reader{operations: map[string]Operation{"CustomerTable": {Name: "CustomerTable"}}}
 
-	_, err := reader.Read(t.Context(), &agentports.GraphQLReadRequest{Operation: "CustomerTable"})
+	_, err := reader.Read(
+		t.Context(),
+		&graphqlreadports.GraphQLReadRequest{Operation: "CustomerTable"},
+	)
 
 	assert.ErrorIs(t, err, ErrNoReadScope)
 }

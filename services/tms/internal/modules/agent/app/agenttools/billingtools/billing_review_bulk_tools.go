@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
@@ -48,7 +48,7 @@ type AssignBillersTool struct {
 	batch  *common.RecordBatch
 }
 
-func NewAssignBillersTool(billing common.BillingQueueDecider) agentports.AgentTool {
+func NewAssignBillersTool(billing common.BillingQueueDecider) agenttoolports.AgentTool {
 	single, _ := NewAssignBillerTool(billing).(*AssignBillerTool)
 
 	return &AssignBillersTool{
@@ -80,7 +80,7 @@ func (t *AssignBillersTool) Recipe() []string {
 	}
 }
 
-func (t *AssignBillersTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *AssignBillersTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return t.batch.Target(params)
 }
 
@@ -96,7 +96,7 @@ func (t *AssignBillersTool) ParamSchema() map[string]any {
 	})
 }
 
-func (t *AssignBillersTool) Policy() agentports.ToolPolicy {
+func (t *AssignBillersTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
 	policy.Artifact = artifactBillingQueueItem
@@ -108,7 +108,7 @@ func (t *AssignBillersTool) Policy() agentports.ToolPolicy {
 
 func (t *AssignBillersTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	return t.batch.Preview(ctx, t, &params)
 }
@@ -119,14 +119,14 @@ func (t *AssignBillersTool) SplitRecords(params map[string]any) ([]map[string]an
 
 func (t *AssignBillersTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return t.batch.Validate(ctx, t, &params)
 }
 
 func (t *AssignBillersTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -135,7 +135,7 @@ func (t *AssignBillersTool) Execute(
 
 func (t *AssignBillersTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	return t.batch.Execute(ctx, t, &params)
 }
@@ -147,7 +147,7 @@ type TransitionItemsToInReviewTool struct {
 	batch  *common.RecordBatch
 }
 
-func NewTransitionItemsToInReviewTool(billing common.BillingQueueDecider) agentports.AgentTool {
+func NewTransitionItemsToInReviewTool(billing common.BillingQueueDecider) agenttoolports.AgentTool {
 	single, _ := NewTransitionToInReviewTool(billing).(*TransitionToInReviewTool)
 
 	return &TransitionItemsToInReviewTool{
@@ -173,7 +173,7 @@ func (t *TransitionItemsToInReviewTool) Name() string { return toolStartReview }
 
 func (t *TransitionItemsToInReviewTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return t.batch.Target(params)
 }
 
@@ -189,11 +189,11 @@ func (t *TransitionItemsToInReviewTool) ParamSchema() map[string]any {
 	})
 }
 
-func (t *TransitionItemsToInReviewTool) Policy() agentports.ToolPolicy {
+func (t *TransitionItemsToInReviewTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
 	policy.Artifact = artifactBillingQueueItem
-	policy.Condition = &agentports.TierCondition{
+	policy.Condition = &agenttoolports.TierCondition{
 		Description: inReviewConditionDescription + " A set is held to what its most " +
 			"guarded item allows.",
 		Limit: t.tierLimit,
@@ -208,7 +208,7 @@ func (t *TransitionItemsToInReviewTool) Policy() agentports.ToolPolicy {
 // so a held item among ten waiting ones still puts the call before a person.
 func (t *TransitionItemsToInReviewTool) tierLimit(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	if params.Actor == nil {
 		return agent.TierPropose
@@ -233,7 +233,7 @@ func (t *TransitionItemsToInReviewTool) tierLimit(
 
 func (t *TransitionItemsToInReviewTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	return t.batch.Preview(ctx, t, &params)
 }
@@ -246,14 +246,14 @@ func (t *TransitionItemsToInReviewTool) SplitRecords(
 
 func (t *TransitionItemsToInReviewTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return t.batch.Validate(ctx, t, &params)
 }
 
 func (t *TransitionItemsToInReviewTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -262,7 +262,7 @@ func (t *TransitionItemsToInReviewTool) Execute(
 
 func (t *TransitionItemsToInReviewTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	return t.batch.Execute(ctx, t, &params)
 }

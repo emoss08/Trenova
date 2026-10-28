@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -60,10 +60,10 @@ func contractCall(
 	opts ...toolschema.CoerceOption,
 ) (argumentContract, error) {
 	aliased, aliases := aliasArguments(schema, args)
-	if _, owned := aliased[agentports.SelfScopeOwnerParam]; owned {
+	if _, owned := aliased[agenttoolports.SelfScopeOwnerParam]; owned {
 		stripped := make(map[string]any, len(aliased)-1)
 		for key, value := range aliased {
-			if key != agentports.SelfScopeOwnerParam {
+			if key != agenttoolports.SelfScopeOwnerParam {
 				stripped[key] = value
 			}
 		}

@@ -9,8 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/llmtokens"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -31,7 +32,7 @@ type EstimateInputs struct {
 	Sources        int
 	Skipped        int
 	AverageChars   float64
-	MeasuredChunks agentports.IndexChunkAverage
+	MeasuredChunks retrievalports.IndexChunkAverage
 	InputPrice     *decimal.Decimal
 	HasModel       bool
 }
@@ -103,7 +104,7 @@ func (s *Service) ReindexEstimate(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	sourceType airetrieval.SourceType,
-) (*agentports.AIRetrievalReindexEstimate, error) {
+) (*retrievalports.AIRetrievalReindexEstimate, error) {
 	if err := validateTenant(tenant); err != nil {
 		return nil, err
 	}
@@ -129,7 +130,7 @@ func (s *Service) ReindexEstimate(
 
 	group, gctx := errgroup.WithContext(ctx)
 	group.Go(func() error {
-		count, gerr := s.sources.CountSources(gctx, agentports.CountRetrievalSourcesRequest{
+		count, gerr := s.sources.CountSources(gctx, retrievalports.CountRetrievalSourcesRequest{
 			TenantInfo: tenant,
 			SourceType: sourceType,
 		})
@@ -139,7 +140,7 @@ func (s *Service) ReindexEstimate(
 	group.Go(func() error {
 		chars, gerr := s.sources.AverageSourceChars(
 			gctx,
-			agentports.AverageRetrievalSourceCharsRequest{
+			retrievalports.AverageRetrievalSourceCharsRequest{
 				TenantInfo: tenant,
 				SourceType: sourceType,
 				Sample:     EstimateTextSample,
@@ -178,7 +179,7 @@ func (s *Service) ReindexEstimate(
 		settings.MonthlyIndexingBudgetUSD.Sub(costOf(spent)),
 	)
 
-	out := &agentports.AIRetrievalReindexEstimate{
+	out := &retrievalports.AIRetrievalReindexEstimate{
 		SourceType:            sourceType,
 		ModelKey:              stringutils.Ptr(modelKey),
 		Sources:               estimate.Sources,
@@ -205,7 +206,7 @@ func (s *Service) measureIndexed(
 	modelKey string,
 	in *EstimateInputs,
 ) error {
-	average, err := s.repo.AverageIndexChunks(ctx, &agentports.AverageIndexChunksRequest{
+	average, err := s.repo.AverageIndexChunks(ctx, &retrievalports.AverageIndexChunksRequest{
 		TenantInfo: tenant,
 		SourceType: sourceType,
 		ModelKey:   modelKey,
@@ -233,7 +234,7 @@ func (s *Service) inputPrice(
 	tenant pagination.TenantInfo,
 	modelKey string,
 ) (decimal.Decimal, bool, error) {
-	providers, err := s.providers.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
+	providers, err := s.providers.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
 		Task:       aiprovider.TaskEmbedding,
 		TenantInfo: tenant,
 	})

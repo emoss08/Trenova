@@ -4,15 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -25,6 +16,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -44,7 +43,7 @@ type bulkTransferFixture struct {
 	documentRepo *documentportsmock.MockDocumentRepository
 	billingQueue *billingqueueportsmock.MockBillingQueueService
 	audit        *auditportsmock.MockAuditService
-	realtime     *agentportsmock.MockRealtimeService
+	realtime     *realtimeportsmock.MockRealtimeService
 	svc          *service
 
 	// billingControlExpected keeps the org-level read registered once, which is
@@ -65,7 +64,7 @@ func newBulkTransferFixture(t *testing.T) *bulkTransferFixture {
 		documentRepo: documentportsmock.NewMockDocumentRepository(t),
 		billingQueue: billingqueueportsmock.NewMockBillingQueueService(t),
 		audit:        auditportsmock.NewMockAuditService(t),
-		realtime:     agentportsmock.NewMockRealtimeService(t),
+		realtime:     realtimeportsmock.NewMockRealtimeService(t),
 	}
 	f.svc = &service{
 		l:                   zap.NewNop(),
@@ -507,7 +506,9 @@ func TestBillingTransferPolicyViolation(t *testing.T) {
 	missingDocument := []shipmentports.ShipmentBillingRequirement{
 		{DocumentTypeName: "Proof of Delivery"},
 	}
-	rateFailure := []shipmentports.ShipmentBillingValidation{{Code: "rate_variance_requires_action"}}
+	rateFailure := []shipmentports.ShipmentBillingValidation{
+		{Code: "rate_variance_requires_action"},
+	}
 
 	tests := []struct {
 		name      string

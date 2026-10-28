@@ -5,7 +5,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -14,7 +14,7 @@ import (
 
 func (s *Service) Patch(
 	ctx context.Context,
-	req *agentports.PatchAIProviderRequest,
+	req *aiproviderports.PatchAIProviderRequest,
 	actor *permissionports.RequestActor,
 ) (*aiprovider.Provider, error) {
 	if req.Version < 0 {
@@ -25,7 +25,7 @@ func (s *Service) Patch(
 
 	var stored *aiprovider.Provider
 	if req.APIKey.Set {
-		loaded, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+		loaded, err := s.repo.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -70,7 +70,7 @@ func (s *Service) Patch(
 type providerEdit func(*aiprovider.Provider)
 
 func (s *Service) patchEdits(
-	req *agentports.PatchAIProviderRequest,
+	req *aiproviderports.PatchAIProviderRequest,
 	stored *aiprovider.Provider,
 	actor *permissionports.RequestActor,
 ) ([]providerEdit, error) {

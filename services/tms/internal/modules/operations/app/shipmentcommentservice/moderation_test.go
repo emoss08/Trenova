@@ -4,19 +4,18 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,7 +32,7 @@ type commentServiceMocks struct {
 	userRepo     *tenantportsmock.MockUserRepository
 	docRepo      *documentportsmock.MockDocumentRepository
 	audit        *auditportsmock.MockAuditService
-	realtime     *agentportsmock.MockRealtimeService
+	realtime     *realtimeportsmock.MockRealtimeService
 }
 
 func newCommentService(t *testing.T) (shipmentports.ShipmentCommentService, commentServiceMocks) {
@@ -45,7 +44,7 @@ func newCommentService(t *testing.T) (shipmentports.ShipmentCommentService, comm
 		userRepo:     tenantportsmock.NewMockUserRepository(t),
 		docRepo:      documentportsmock.NewMockDocumentRepository(t),
 		audit:        auditportsmock.NewMockAuditService(t),
-		realtime:     agentportsmock.NewMockRealtimeService(t),
+		realtime:     realtimeportsmock.NewMockRealtimeService(t),
 	}
 	m.docRepo.EXPECT().
 		GetByResourceIDs(mock.Anything, mock.Anything).
@@ -325,7 +324,7 @@ func TestDelete_TombstonesWhenCommentHasReplies(t *testing.T) {
 	m.realtime.EXPECT().
 		PublishResourceInvalidation(
 			mock.Anything,
-			mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+			mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 				return req.Action == "updated"
 			}),
 		).
@@ -371,7 +370,7 @@ func TestDelete_HardDeletesWithoutReplies(t *testing.T) {
 	m.realtime.EXPECT().
 		PublishResourceInvalidation(
 			mock.Anything,
-			mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+			mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 				return req.Action == "deleted"
 			}),
 		).
@@ -601,7 +600,7 @@ func TestPin_PublishesPinnedAction(t *testing.T) {
 	m.realtime.EXPECT().
 		PublishResourceInvalidation(
 			mock.Anything,
-			mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+			mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 				return req.Action == "pinned"
 			}),
 		).
@@ -709,7 +708,7 @@ func TestResolve_PublishesResolvedAction(t *testing.T) {
 	m.realtime.EXPECT().
 		PublishResourceInvalidation(
 			mock.Anything,
-			mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+			mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 				return req.Action == "resolved"
 			}),
 		).

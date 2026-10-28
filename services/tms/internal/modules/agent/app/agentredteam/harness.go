@@ -15,7 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -40,7 +42,7 @@ var (
 
 type RunParams struct {
 	Case       *Case
-	Completion agentports.CompletionService
+	Completion llmports.CompletionService
 	Tenant     *Tenant
 }
 
@@ -54,7 +56,7 @@ type Outcome struct {
 	Case              *Case
 	Actor             *permissionports.RequestActor
 	Main              *agentdefinition.Definition
-	Result            *agentports.RunResult
+	Result            *agentruntimeports.RunResult
 	RunErr            error
 	Kit               *agentevalgate.Kit
 	DefinitionsBefore map[pulid.ID]string
@@ -70,11 +72,11 @@ type Outcome struct {
 }
 
 func Script(c *Case) *agenttest.ScriptedCompletion {
-	turns := make([]*agentports.ChatCompletionResult, 0, len(c.Script))
+	turns := make([]*llmports.ChatCompletionResult, 0, len(c.Script))
 	for stepIdx, step := range c.Script {
-		result := &agentports.ChatCompletionResult{Text: step.Reply, ModelIdentifier: scriptModel}
+		result := &llmports.ChatCompletionResult{Text: step.Reply, ModelIdentifier: scriptModel}
 		for callIdx, call := range step.Calls {
-			result.ToolCalls = append(result.ToolCalls, agentports.ToolCall{
+			result.ToolCalls = append(result.ToolCalls, llmports.ToolCall{
 				ID:        fmt.Sprintf("call_%d_%d", stepIdx, callIdx),
 				Name:      call.Name,
 				Arguments: maps.Clone(call.Args),
@@ -116,7 +118,7 @@ func Run(ctx context.Context, p RunParams) (*Outcome, error) {
 	}
 
 	actor := actorFor(c.Agent.Unattended, *tenant)
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: primary,
 		Actor:      actor,
 		Context:    contextFor(c, definitions, *tenant),
@@ -172,7 +174,7 @@ func Run(ctx context.Context, p RunParams) (*Outcome, error) {
 func newRuntime(
 	rec *recorder,
 	c *Case,
-	completion agentports.CompletionService,
+	completion llmports.CompletionService,
 ) (*agentevalgate.Kit, *agentruntime.Service, error) {
 	built, err := buildTools(rec, c.Responses)
 	if err != nil {
@@ -196,7 +198,7 @@ func newRuntime(
 type reopenRequest struct {
 	definition *agentdefinition.Definition
 	actor      *permissionports.RequestActor
-	base       *agentports.RunRequest
+	base       *agentruntimeports.RunRequest
 }
 
 func reopen(
@@ -222,7 +224,7 @@ func reopen(
 		Trigger:          p.base.Context.Trigger,
 		Memories:         written,
 	}
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: p.definition,
 		Actor:      p.actor,
 		Context:    rc,
@@ -417,7 +419,7 @@ func (fx *effects) events() []kernelports.StreamEvent {
 
 func (fx *effects) Complete(
 	t *agentruntime.Turn,
-	req *agentports.ChatCompletionRequest,
+	req *llmports.ChatCompletionRequest,
 ) (agentruntime.ModelReply, error) {
 	fx.rec.read(ReadCompletion, t.Definition().Name, req.TenantInfo)
 
@@ -482,7 +484,7 @@ func (fx *effects) Emit(event kernelports.StreamEvent) {
 
 func (fx *effects) Observe(
 	_ *agentruntime.Turn,
-	call *agentports.ToolCall,
+	call *llmports.ToolCall,
 	outcome agentruntime.ToolOutcome,
 ) agentruntime.ToolOutcome {
 	return fx.rt.ObserveCall(nil, call, outcome)
@@ -530,7 +532,7 @@ func (fx *effects) delegate(
 	fx.rec.delegated(&record)
 
 	parentReq := t.Request()
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      parentReq.Actor,
 		Context: agentdefinition.RuntimeContext{
@@ -542,7 +544,7 @@ func (fx *effects) delegate(
 		},
 		Input:    call.Task,
 		ThreadID: parentReq.ThreadID,
-		Delegation: &agentports.Delegation{
+		Delegation: &agentruntimeports.Delegation{
 			ParentAgentID:   parent.ID,
 			ParentAgentName: parent.Name,
 			CallID:          call.Call.ID,
@@ -590,7 +592,7 @@ const pinnedVersion = 1
 func (pinnedVersions) Version(
 	context.Context,
 	pagination.TenantInfo,
-	agentports.ToolTarget,
+	agenttoolports.ToolTarget,
 ) (int64, error) {
 	return pinnedVersion, nil
 }

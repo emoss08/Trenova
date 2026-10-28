@@ -11,8 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,21 +42,21 @@ func (subsetProposalTool) ParamSchema() map[string]any {
 	}
 }
 
-func (subsetProposalTool) Policy() agentports.ToolPolicy { return agentports.ToolPolicy{} }
+func (subsetProposalTool) Policy() agenttoolports.ToolPolicy { return agenttoolports.ToolPolicy{} }
 
-func (subsetProposalTool) Execute(context.Context, agentports.ToolExecuteParams) error {
+func (subsetProposalTool) Execute(context.Context, agenttoolports.ToolExecuteParams) error {
 	return nil
 }
 
 type subsetToolRegistry struct{}
 
-func (subsetToolRegistry) Get(string) (agentports.AgentTool, bool) {
+func (subsetToolRegistry) Get(string) (agenttoolports.AgentTool, bool) {
 	return subsetProposalTool{}, true
 }
 
-func (subsetToolRegistry) All() []agentports.AgentTool { return nil }
+func (subsetToolRegistry) All() []agenttoolports.AgentTool { return nil }
 
-func (subsetToolRegistry) Descriptors() []agentports.AgentToolDescriptor { return nil }
+func (subsetToolRegistry) Descriptors() []agenttoolports.AgentToolDescriptor { return nil }
 
 // A client builds the approval form from parameterFields: a record-subset
 // parameter comes back as RecordSubset naming the resource its ids belong to,
@@ -91,7 +92,7 @@ func TestAgentProposalParameterFields_ExposeARecordSubset(t *testing.T) {
 
 type choiceLabeler struct {
 	mu     sync.Mutex
-	labels agentports.RecordLabels
+	labels agentruntimeports.RecordLabels
 	reads  int
 }
 
@@ -99,12 +100,12 @@ func (l *choiceLabeler) Labels(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	refs map[permission.Resource][]pulid.ID,
-) (agentports.RecordLabels, error) {
+) (agentruntimeports.RecordLabels, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.reads++
 
-	out := make(agentports.RecordLabels, len(refs))
+	out := make(agentruntimeports.RecordLabels, len(refs))
 	for resource, ids := range refs {
 		out[resource] = make(map[pulid.ID]string, len(ids))
 		for _, id := range ids {
@@ -144,7 +145,7 @@ func newChoicesHarness(t *testing.T, granted bool) *choicesHarness {
 		gone:  pulid.MustNew("shp_"),
 		other: pulid.MustNew("shp_"),
 	}
-	h.labeler = &choiceLabeler{labels: agentports.RecordLabels{
+	h.labeler = &choiceLabeler{labels: agentruntimeports.RecordLabels{
 		permission.ResourceShipment: {h.known: "PRO-1001", h.other: "PRO-2002"},
 	}}
 	auth := &authctx.AuthContext{
@@ -159,7 +160,10 @@ func newChoicesHarness(t *testing.T, granted bool) *choicesHarness {
 		grants[permission.ResourceShipment.String()+"|"+string(permission.OpRead)] = true
 	}
 	r := &Deps{
-		Core:       &base.Core{L: zap.NewNop(), PermissionEngine: &resolvertest.PreviewPermissions{Granted: grants}},
+		Core: &base.Core{
+			L:                zap.NewNop(),
+			PermissionEngine: &resolvertest.PreviewPermissions{Granted: grants},
+		},
 		AgentTools: subsetToolRegistry{},
 	}
 	h.resolver = &AgentProposalResolver{r}

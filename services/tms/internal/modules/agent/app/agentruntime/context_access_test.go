@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -55,7 +55,7 @@ func (s *listedDefinitions) List(
 }
 
 type toollessRuntime struct {
-	agentports.AgentRuntime
+	agentruntimeports.AgentRuntime
 }
 
 func (toollessRuntime) ToolSummaries(*agentdefinition.Definition) []agentdefinition.ToolSummary {
@@ -109,7 +109,7 @@ func TestContextBuilder_OffersOnlyDelegatesThePersonMayUse(t *testing.T) {
 			restricted.ID: restricted,
 		}},
 	}
-	req := &agentports.RuntimeContextRequest{
+	req := &agentruntimeports.RuntimeContextRequest{
 		Definition: parent,
 		Actor:      testActor(),
 		Trigger:    agent.RunTriggerChat,

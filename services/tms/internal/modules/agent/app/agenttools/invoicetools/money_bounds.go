@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -44,26 +44,26 @@ const correctChargeBoundText = "Runs on its own only while nothing has been invo
 
 func (t *PostCustomerPaymentTool) withinBounds(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
-) agentports.MoneyBound {
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
+) agenttoolports.MoneyBound {
 	if t.payments == nil || t.receipts == nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 	args, err := t.arguments(ctx, params)
 	if err != nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 	posted, err := t.payments.PreviewPostAndApply(ctx, args.request, params.Actor)
 	if err != nil || posted == nil || posted.Payment == nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 
 	if args.receipt == nil || !recordsTheReceipt(args.request, args.receipt) ||
 		!remittanceMatches(args.receipt, posted) {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyExactMatch)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyExactMatch)
 	}
 
-	return agentports.WithinMoneyBound(args.request.AmountMinor, posted.Payment.CurrencyCode).
+	return agenttoolports.WithinMoneyBound(args.request.AmountMinor, posted.Payment.CurrencyCode).
 		Rereading(agent.TaintSourceBankReceipt, receiptRef(args.receipt.ID))
 }
 
@@ -124,23 +124,23 @@ func remittanceMatches(
 
 func (t *MatchBankReceiptTool) withinBounds(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
-) agentports.MoneyBound {
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
+) agenttoolports.MoneyBound {
 	if t.receipts == nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 	request, err := t.request(params)
 	if err != nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 	match, err := t.receipts.PreviewMatch(ctx, request, params.Actor)
 	if err != nil || match == nil || match.ReceiptBefore == nil || match.Payment == nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 
 	receipt, payment := match.ReceiptBefore, match.Payment
 	if !exactReceiptMatch(receipt, payment) {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyExactMatch)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyExactMatch)
 	}
 
 	candidates, err := t.receipts.PaymentsOfReceiptAmount(
@@ -152,13 +152,13 @@ func (t *MatchBankReceiptTool) withinBounds(
 		},
 	)
 	if err != nil || len(candidates) > matchCandidateLimit {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 	if !onlyExactCandidate(receipt, payment, candidates) {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyExactMatch)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyExactMatch)
 	}
 
-	return agentports.WithinMoneyBound(receipt.AmountMinor, payment.CurrencyCode).
+	return agenttoolports.WithinMoneyBound(receipt.AmountMinor, payment.CurrencyCode).
 		Rereading(agent.TaintSourceBankReceipt, receiptRef(receipt.ID))
 }
 
@@ -190,24 +190,24 @@ func onlyExactCandidate(
 
 func (t *CorrectChargeCodeTool) withinBounds(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
-) agentports.MoneyBound {
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
+) agenttoolports.MoneyBound {
 	if t.billing == nil || t.profiles == nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 	request, err := t.request(&params)
 	if err != nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 	plan, err := t.billing.PreviewUpdateCharges(ctx, request, params.Actor)
 	if err != nil || plan == nil || plan.Item == nil || plan.Before == nil || plan.After == nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 	if !uninvoiced(plan.Item) {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyRecordState)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyRecordState)
 	}
 	if plan.Item.BillToCustomerID.IsNil() {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 	profile, err := t.profiles.GetBillingProfile(
 		ctx,
@@ -220,16 +220,16 @@ func (t *CorrectChargeCodeTool) withinBounds(
 		},
 	)
 	if err != nil || profile == nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 	payer := customer.Customer{BillingProfile: profile}
 
 	gross, err := grossChargeChange(ctx, plan.Before, plan.After)
 	if err != nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 
-	return agentports.WithinMoneyBound(money.MinorUnits(gross), payer.BillingCurrencyCode())
+	return agenttoolports.WithinMoneyBound(money.MinorUnits(gross), payer.BillingCurrencyCode())
 }
 
 func grossChargeChange(

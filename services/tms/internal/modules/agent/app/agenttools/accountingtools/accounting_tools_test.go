@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -47,7 +47,9 @@ func (f *fakeAccountingChecker) CheckHealth(
 	return f.status.Connection, nil
 }
 
-func connectedStatus(status accountingsync.ConnectionStatus) *accountingsyncports.AccountingSyncStatus {
+func connectedStatus(
+	status accountingsync.ConnectionStatus,
+) *accountingsyncports.AccountingSyncStatus {
 	return &accountingsyncports.AccountingSyncStatus{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ProviderName:    "QuickBooks Online",
@@ -64,7 +66,9 @@ func connectedStatus(status accountingsync.ConnectionStatus) *accountingsyncport
 func TestCheckAccountingConnection_ChecksTheTenantsConnection(t *testing.T) {
 	t.Parallel()
 
-	checker := &fakeAccountingChecker{status: connectedStatus(accountingsync.ConnectionStatusDegraded)}
+	checker := &fakeAccountingChecker{
+		status: connectedStatus(accountingsync.ConnectionStatusDegraded),
+	}
 	tool := newCheckAccountingConnectionTool(checker)
 	params := agenttoolstest.ExecuteParams(map[string]any{"system": "QuickBooksOnline"})
 
@@ -85,7 +89,7 @@ func TestCheckAccountingConnection_RefusesAConnectionThatNeedsAPerson(t *testing
 		tool := newCheckAccountingConnectionTool(checker)
 		params := agenttoolstest.ExecuteParams(map[string]any{"system": "QuickBooksOnline"})
 
-		err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
+		err := tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
 		require.Error(t, err)
 		assert.True(t, errortypes.IsBusinessError(err))
 		require.Error(t, tool.Execute(t.Context(), params))
@@ -109,6 +113,12 @@ func TestCheckAccountingConnection_RejectsUnknownSystems(t *testing.T) {
 	tool := newCheckAccountingConnectionTool(&fakeAccountingChecker{
 		status: connectedStatus(accountingsync.ConnectionStatusConnected),
 	})
-	require.Error(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{"system": "SageIntacct"})))
+	require.Error(
+		t,
+		tool.Execute(
+			t.Context(),
+			agenttoolstest.ExecuteParams(map[string]any{"system": "SageIntacct"}),
+		),
+	)
 	require.Error(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{})))
 }

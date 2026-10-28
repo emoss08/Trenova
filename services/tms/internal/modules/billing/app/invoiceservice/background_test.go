@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,14 +21,14 @@ import (
 func newBackgroundService(
 	t *testing.T,
 	repo *invoiceportsmock.MockInvoiceRepository,
-) (*Service, *[]*agentports.PublishResourceInvalidationRequest) {
+) (*Service, *[]*realtimeports.PublishResourceInvalidationRequest) {
 	t.Helper()
 
-	published := make([]*agentports.PublishResourceInvalidationRequest, 0, 1)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	published := make([]*realtimeports.PublishResourceInvalidationRequest, 0, 1)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().
 		PublishResourceInvalidation(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *agentports.PublishResourceInvalidationRequest) error {
+		RunAndReturn(func(_ context.Context, req *realtimeports.PublishResourceInvalidationRequest) error {
 			published = append(published, req)
 			return nil
 		}).
@@ -87,7 +87,10 @@ func TestReportAutoPostFailureAnnouncesTheReasonOnADraft(t *testing.T) {
 
 	f := newVoidFixture()
 	repo := invoiceportsmock.NewMockInvoiceRepository(t)
-	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(f.invoice(invoice.StatusDraft), nil).Once()
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(f.invoice(invoice.StatusDraft), nil).
+		Once()
 
 	svc, published := newBackgroundService(t, repo)
 	err := svc.ReportAutoPostFailure(t.Context(), &invoiceports.ReportAutoPostFailureRequest{
@@ -104,7 +107,11 @@ func TestReportAutoPostFailureAnnouncesTheReasonOnADraft(t *testing.T) {
 	snapshot, ok := event.Entity.(*invoice.RealtimeSnapshot)
 	require.True(t, ok)
 	assert.Equal(t, "The fiscal period is closed", snapshot.PostError)
-	assert.True(t, snapshot.NotifiedUserID.IsNil(), "no notification service, so nobody was notified")
+	assert.True(
+		t,
+		snapshot.NotifiedUserID.IsNil(),
+		"no notification service, so nobody was notified",
+	)
 }
 
 func TestReportAutoPostFailureStaysQuietOnceTheInvoiceMovedOn(t *testing.T) {
@@ -116,15 +123,21 @@ func TestReportAutoPostFailureStaysQuietOnceTheInvoiceMovedOn(t *testing.T) {
 
 			f := newVoidFixture()
 			repo := invoiceportsmock.NewMockInvoiceRepository(t)
-			repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(f.invoice(status), nil).Once()
+			repo.EXPECT().
+				GetByID(mock.Anything, mock.Anything).
+				Return(f.invoice(status), nil).
+				Once()
 
 			svc, published := newBackgroundService(t, repo)
-			err := svc.ReportAutoPostFailure(t.Context(), &invoiceports.ReportAutoPostFailureRequest{
-				InvoiceID:  f.invoiceID,
-				TenantInfo: f.tenantInfo,
-				Reason:     "closed",
-				Actor:      f.auditActor(),
-			})
+			err := svc.ReportAutoPostFailure(
+				t.Context(),
+				&invoiceports.ReportAutoPostFailureRequest{
+					InvoiceID:  f.invoiceID,
+					TenantInfo: f.tenantInfo,
+					Reason:     "closed",
+					Actor:      f.auditActor(),
+				},
+			)
 
 			require.NoError(t, err)
 			assert.Empty(t, *published)

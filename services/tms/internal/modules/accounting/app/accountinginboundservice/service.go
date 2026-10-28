@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -64,7 +65,7 @@ type Params struct {
 	Drift             accountingsyncports.AccountingDriftRechecker     `optional:"true"`
 	Publisher         agentports.AgentEventPublisher                   `optional:"true"`
 	Watchtower        watchtowerports.WatchtowerProjector              `optional:"true"`
-	Realtime          agentports.RealtimeService                       `optional:"true"`
+	Realtime          realtimeports.RealtimeService                    `optional:"true"`
 }
 
 type Service struct {
@@ -90,7 +91,7 @@ type Service struct {
 	drift            accountingsyncports.AccountingDriftRechecker
 	publisher        agentports.AgentEventPublisher
 	watchtower       watchtowerports.WatchtowerProjector
-	realtime         agentports.RealtimeService
+	realtime         realtimeports.RealtimeService
 	now              func() time.Time
 }
 

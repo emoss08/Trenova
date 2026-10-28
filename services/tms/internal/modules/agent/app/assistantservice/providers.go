@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -26,8 +27,8 @@ so this endpoint decides what is offered, never what is permitted.
 func (s *Service) SelectableProviders(
 	ctx context.Context,
 	tenant permissionports.RequestActor,
-) ([]agentports.AssistantProviderOption, error) {
-	providers, err := s.providers.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
+) ([]assistantports.AssistantProviderOption, error) {
+	providers, err := s.providers.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
 		Task:       aiprovider.TaskAssistantChat,
 		TenantInfo: tenant.TenantInfo(),
 	})
@@ -35,13 +36,13 @@ func (s *Service) SelectableProviders(
 		return nil, err
 	}
 
-	options := make([]agentports.AssistantProviderOption, 0, len(providers))
+	options := make([]assistantports.AssistantProviderOption, 0, len(providers))
 	for _, provider := range providers {
 		if ok, _ := provider.CanServeTask(aiprovider.TaskAssistantChat); !ok {
 			continue
 		}
 
-		options = append(options, agentports.AssistantProviderOption{
+		options = append(options, assistantports.AssistantProviderOption{
 			ID:          provider.ID,
 			Name:        provider.Name,
 			Kind:        string(provider.Kind),

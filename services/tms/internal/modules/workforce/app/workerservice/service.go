@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -40,7 +40,7 @@ type Params struct {
 	TemporalClient            client.Client
 	Validator                 *Validator
 	AuditService              auditports.AuditService
-	Realtime                  agentports.RealtimeService
+	Realtime                  realtimeports.RealtimeService
 	CustomFieldsValuesService *customfieldservice.ValuesService
 	PTOPolicyService          *ptopolicyservice.Service                  `optional:"true"`
 	CredentialService         *workercredentialservice.Service           `optional:"true"`
@@ -56,7 +56,7 @@ type Service struct {
 	userRepo                  tenantports.UserRepository
 	temporalClient            client.Client
 	auditService              auditports.AuditService
-	realtime                  agentports.RealtimeService
+	realtime                  realtimeports.RealtimeService
 	customFieldsValuesService *customfieldservice.ValuesService
 	validator                 *Validator
 	ptoPolicyService          *ptopolicyservice.Service

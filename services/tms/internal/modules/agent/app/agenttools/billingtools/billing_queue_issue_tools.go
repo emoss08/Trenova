@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -81,7 +81,7 @@ func issueProperty() map[string]any {
 		"item's issues. Never guess one.", 0)
 }
 
-func queueTarget(params map[string]any) (agentports.ToolTarget, bool) {
+func queueTarget(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, common.ParamBillingQueueItemID, permission.ResourceBillingQueue)
 }
 
@@ -93,14 +93,14 @@ type releasePlan struct {
 func NewReleaseBillingQueueItemTool(
 	items common.BillingQueueDecider,
 	review billingqueueports.BillingQueueReviewService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newReleaseBillingQueueItemTool(items, review)
 }
 
 func newReleaseBillingQueueItemTool(
 	items queueItemReader,
 	review queueReviewer,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name: toolReleaseBillingQueueItem,
@@ -134,7 +134,7 @@ func newReleaseBillingQueueItemTool(
 		},
 		common.ReceivablePlan[*billingqueueports.BillingQueueItemRequest, *releasePlan]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*billingqueueports.BillingQueueItemRequest, error) {
 				itemID, err := common.RequirePulid(params.Params, common.ParamBillingQueueItemID)
 				if err != nil {
@@ -148,7 +148,7 @@ func newReleaseBillingQueueItemTool(
 			Plan: func(
 				ctx context.Context,
 				req *billingqueueports.BillingQueueItemRequest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*releasePlan, error) {
 				return planRelease(ctx, items, req, params.Actor)
 			},
@@ -179,7 +179,7 @@ func newReleaseBillingQueueItemTool(
 			Run: func(
 				ctx context.Context,
 				req *billingqueueports.BillingQueueItemRequest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				released, err := review.Release(ctx, req, params.Actor)
 				if err != nil {
@@ -349,23 +349,23 @@ func chargeClause(plan *billingqueueports.IssueSettlementPlan) string {
 }
 
 func classifyIssueOption(
-	params agentports.ToolExecuteParams, //nolint:gocritic // Classify passes params by value
-) agentports.CallPolicy {
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // Classify passes params by value
+) agenttoolports.CallPolicy {
 	if strings.TrimSpace(common.OptionalString(params.Params, paramOptionKey)) ==
 		billingqueue.OptionKeyRequest {
-		return agentports.CallPolicy{Egress: agent.EgressDriverVisible}
+		return agenttoolports.CallPolicy{Egress: agent.EgressDriverVisible}
 	}
 
-	return agentports.CallPolicy{Egress: agent.EgressMoney}
+	return agenttoolports.CallPolicy{Egress: agent.EgressMoney}
 }
 
 func NewResolveBillingQueueIssueTool(
 	review billingqueueports.BillingQueueReviewService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newResolveBillingQueueIssueTool(review)
 }
 
-func newResolveBillingQueueIssueTool(review queueReviewer) agentports.AgentTool {
+func newResolveBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:          toolResolveBillingQueueIssue,
@@ -419,7 +419,7 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agentports.AgentTool 
 			*billingqueueports.IssueSettlementPlan,
 		]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*billingqueueports.ResolveBillingQueueIssueRequest, error) {
 				itemID, issueID, err := queueIssueIDs(params)
 				if err != nil {
@@ -443,7 +443,7 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agentports.AgentTool 
 			Plan: func(
 				ctx context.Context,
 				req *billingqueueports.ResolveBillingQueueIssueRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*billingqueueports.IssueSettlementPlan, error) {
 				return review.PlanResolveIssue(ctx, req)
 			},
@@ -454,7 +454,7 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agentports.AgentTool 
 			Run: func(
 				ctx context.Context,
 				req *billingqueueports.ResolveBillingQueueIssueRequest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				item, err := review.ResolveIssue(ctx, req, params.Actor)
 				if err != nil {
@@ -466,7 +466,7 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agentports.AgentTool 
 	)
 }
 
-func queueIssueIDs(params *agentports.ToolExecuteParams) (itemID, issueID pulid.ID, err error) {
+func queueIssueIDs(params *agenttoolports.ToolExecuteParams) (itemID, issueID pulid.ID, err error) {
 	itemID, err = common.RequirePulid(params.Params, common.ParamBillingQueueItemID)
 	if err != nil {
 		return pulid.Nil, pulid.Nil, err
@@ -539,11 +539,11 @@ func driverLabel(name string) string {
 
 func NewUndoBillingQueueIssueTool(
 	review billingqueueports.BillingQueueReviewService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newUndoBillingQueueIssueTool(review)
 }
 
-func newUndoBillingQueueIssueTool(review queueReviewer) agentports.AgentTool {
+func newUndoBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:          toolUndoBillingQueueIssue,
@@ -578,7 +578,7 @@ func newUndoBillingQueueIssueTool(review queueReviewer) agentports.AgentTool {
 			*billingqueueports.IssueSettlementPlan,
 		]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*billingqueueports.UndoBillingQueueIssueRequest, error) {
 				itemID, issueID, err := queueIssueIDs(params)
 				if err != nil {
@@ -593,7 +593,7 @@ func newUndoBillingQueueIssueTool(review queueReviewer) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				req *billingqueueports.UndoBillingQueueIssueRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*billingqueueports.IssueSettlementPlan, error) {
 				return review.PlanUndoIssue(ctx, req)
 			},
@@ -604,7 +604,7 @@ func newUndoBillingQueueIssueTool(review queueReviewer) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				req *billingqueueports.UndoBillingQueueIssueRequest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				item, err := review.UndoIssue(ctx, req, params.Actor)
 				if err != nil {

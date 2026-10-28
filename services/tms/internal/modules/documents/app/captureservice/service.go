@@ -13,7 +13,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
@@ -85,8 +85,8 @@ type Params struct {
 	Workflows kernelports.WorkflowStarter `optional:"true"`
 	// Realtime keeps the intake queue and the device's stream current. Without
 	// it both are right on their next load, and the device polls.
-	Realtime agentports.RealtimeService `optional:"true"`
-	Audit    auditports.AuditService    `optional:"true"`
+	Realtime realtimeports.RealtimeService `optional:"true"`
+	Audit    auditports.AuditService       `optional:"true"`
 	// Analyzer suggests what a document is and which shipment it belongs to.
 	// Without it every item waits for a person to say.
 	Analyzer captureports.CaptureAnalyzer `optional:"true"`
@@ -143,7 +143,7 @@ type Service struct {
 	qrCodes       captureports.CaptureQREncoder
 	notifications notifier
 	workflows     kernelports.WorkflowStarter
-	realtime      agentports.RealtimeService
+	realtime      realtimeports.RealtimeService
 	audit         auditports.AuditService
 	analyzer      captureports.CaptureAnalyzer
 	shipments     inboundmessageports.InboundShipmentFinder
@@ -294,7 +294,7 @@ func (s *Service) publish(
 
 	if err := s.realtime.PublishResourceInvalidation(
 		ctx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			AudienceUserID: audience,

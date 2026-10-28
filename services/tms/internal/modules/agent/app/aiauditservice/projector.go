@@ -13,8 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -503,7 +504,7 @@ func collectNeeds(need *needs, rows *tenantRows) {
 	}
 	for _, event := range rows.events {
 		need.owner(event.OwnerKind, event.OwnerID)
-		if event.Kind == agentports.AssistantEventToolFinished && event.CallID != "" {
+		if event.Kind == assistantports.AssistantEventToolFinished && event.CallID != "" {
 			need.calls = append(need.calls, aiauditports.OwnerCall{
 				OwnerID: event.OwnerID,
 				CallID:  event.CallID,
@@ -537,7 +538,7 @@ func (p *Projector) derive(found *lookups, rows *tenantRows) ([]*aiaudit.AIAudit
 		events = append(events, p.deriver.usageEvent(found, record))
 	}
 	for _, step := range rows.steps {
-		if step.Status == string(agentports.RunStepStarted) {
+		if step.Status == string(agentruntimeports.RunStepStarted) {
 			owner := found.ownerOf(step.OwnerKind, step.OwnerID)
 			if !owner.terminal {
 				continue

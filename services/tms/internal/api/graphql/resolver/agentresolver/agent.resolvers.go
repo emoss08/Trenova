@@ -15,7 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -98,7 +101,7 @@ func (r *AgentProposalResolver) ParameterFields(ctx context.Context, obj *agent.
 		return []*toolschema.Field{}, nil
 	}
 
-	fields := agentports.ProposalFields(tool, obj.ToolParams)
+	fields := agenttoolports.ProposalFields(tool, obj.ToolParams)
 	out := make([]*toolschema.Field, 0, len(fields))
 	for i := range fields {
 		out = append(out, &fields[i])
@@ -359,7 +362,7 @@ func (r *MutationResolver) CreateAgentMemory(ctx context.Context, input gqlmodel
 		return nil, err
 	}
 
-	return r.AgentMemoryService.Remember(ctx, &agentports.RememberRequest{
+	return r.AgentMemoryService.Remember(ctx, &agentmemoryports.RememberRequest{
 		TenantInfo:  base.TenantInfo(authCtx),
 		Kind:        input.Kind,
 		Content:     input.Content,
@@ -394,7 +397,7 @@ func (r *MutationResolver) UpdateAgentMemory(ctx context.Context, id string, inp
 		return nil, err
 	}
 
-	return r.AgentMemoryService.Update(ctx, &agentports.UpdateAgentMemoryRequest{
+	return r.AgentMemoryService.Update(ctx, &agentmemoryports.UpdateAgentMemoryRequest{
 		ID:          memoryID,
 		TenantInfo:  base.TenantInfo(authCtx),
 		Kind:        input.Kind,
@@ -418,7 +421,7 @@ func (r *MutationResolver) SetAgentMemoryStatus(ctx context.Context, id string, 
 		return nil, err
 	}
 
-	return r.AgentMemoryService.SetStatus(ctx, agentports.SetAgentMemoryStatusRequest{
+	return r.AgentMemoryService.SetStatus(ctx, agentmemoryports.SetAgentMemoryStatusRequest{
 		ID:         memoryID,
 		TenantInfo: base.TenantInfo(authCtx),
 		Status:     status,
@@ -436,7 +439,7 @@ func (r *MutationResolver) ReviewAgentMemory(ctx context.Context, id string, ver
 		return nil, err
 	}
 
-	return r.AgentMemoryService.Review(ctx, agentports.ReviewAgentMemoryRequest{
+	return r.AgentMemoryService.Review(ctx, agentmemoryports.ReviewAgentMemoryRequest{
 		ID:         memoryID,
 		TenantInfo: base.TenantInfo(authCtx),
 		Version:    int64(version),
@@ -464,7 +467,7 @@ func (r *MutationResolver) ApproveAgentMemorySuggestion(ctx context.Context, id 
 		scope = *input.Scope
 	}
 
-	return r.AgentMemoryService.ApproveSuggestion(ctx, &agentports.ApproveAgentMemorySuggestionRequest{
+	return r.AgentMemoryService.ApproveSuggestion(ctx, &agentmemoryports.ApproveAgentMemorySuggestionRequest{
 		ID:         memoryID,
 		TenantInfo: base.TenantInfo(authCtx),
 		Kind:       kind,
@@ -485,7 +488,7 @@ func (r *MutationResolver) DismissAgentMemorySuggestion(ctx context.Context, id 
 		return nil, err
 	}
 
-	return r.AgentMemoryService.DismissSuggestion(ctx, agentports.DismissAgentMemorySuggestionRequest{
+	return r.AgentMemoryService.DismissSuggestion(ctx, agentmemoryports.DismissAgentMemorySuggestionRequest{
 		ID:         memoryID,
 		TenantInfo: base.TenantInfo(authCtx),
 		Version:    int64(version),
@@ -563,11 +566,11 @@ func (r *QueryResolver) AgentRuns(ctx context.Context, input gqlmodel.DataTableC
 
 	result, err := r.AgentRunService.ListConnection(
 		ctx,
-		&agentports.ListAgentRunConnectionRequest{
+		&agentruntimeports.ListAgentRunConnectionRequest{
 			Filter:  tableInput.Filter,
 			Cursor:  tableInput.Cursor,
 			Columns: agentRunColumns(ctx, "edges.node"),
-			Reader:  agentports.PersonRunRead(authCtx.UserID),
+			Reader:  agentruntimeports.PersonRunRead(authCtx.UserID),
 		},
 	)
 	if err != nil {
@@ -589,10 +592,10 @@ func (r *QueryResolver) AgentRun(ctx context.Context, id string) (*agent.AgentRu
 	}
 
 	ti := base.TenantInfo(authCtx)
-	return r.AgentRunService.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	return r.AgentRunService.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         runID,
 		TenantInfo: &ti,
-		Reader:     agentports.PersonRunRead(authCtx.UserID),
+		Reader:     agentruntimeports.PersonRunRead(authCtx.UserID),
 	})
 }
 
@@ -712,7 +715,7 @@ func (r *QueryResolver) AgentMemories(ctx context.Context, input gqlmodel.DataTa
 
 	result, err := r.AgentMemoryService.ListConnection(
 		ctx,
-		&agentports.ListAgentMemoryConnectionRequest{
+		&agentmemoryports.ListAgentMemoryConnectionRequest{
 			Filter:  tableInput.Filter,
 			Cursor:  tableInput.Cursor,
 			Columns: agentMemoryColumns(ctx, "edges.node"),
@@ -805,13 +808,13 @@ func (r *QueryResolver) AgentMemory(ctx context.Context, id string) (*agent.Memo
 		return nil, err
 	}
 
-	return r.AgentMemoryService.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+	return r.AgentMemoryService.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID:         memoryID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
 }
 
-func (r *QueryResolver) AgentMemoryUsage(ctx context.Context) (*agentports.AgentMemoryUsage, error) {
+func (r *QueryResolver) AgentMemoryUsage(ctx context.Context) (*agentmemoryports.AgentMemoryUsage, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpRead)
 	if err != nil {
 		return nil, err

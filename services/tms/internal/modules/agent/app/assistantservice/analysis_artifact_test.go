@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,7 +33,7 @@ func analysisResult() map[string]any {
 	}
 }
 
-func analysisObservation(result map[string]any, code string) agentports.ToolObservation {
+func analysisObservation(result map[string]any, code string) agentruntimeports.ToolObservation {
 	call := observation(codemode.ToolRunScript, result)
 	call.Call.Arguments = map[string]any{"code": code, "purpose": "Margin by lane for Q3"}
 
@@ -101,7 +101,7 @@ func TestArtifactFromObservation_AnAnalysisFitsItsPayload(t *testing.T) {
 func TestAnAnalysisMustBeNamedInTheReply(t *testing.T) {
 	t.Parallel()
 
-	shown := agentports.ShownArtifact{Kind: string(assistantartifact.KindAnalysis)}
+	shown := agentruntimeports.ShownArtifact{Kind: string(assistantartifact.KindAnalysis)}
 	assert.True(t, shown.MustBeLinked())
 }
 

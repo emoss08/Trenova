@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
@@ -68,10 +68,10 @@ type workItemRoute struct {
 	move     workItemMove
 	id       pulid.ID
 	assignee pulid.ID
-	params   *agentports.ToolExecuteParams
+	params   *agenttoolports.ToolExecuteParams
 }
 
-func workItemRouteFrom(params *agentports.ToolExecuteParams) (*workItemRoute, error) {
+func workItemRouteFrom(params *agenttoolports.ToolExecuteParams) (*workItemRoute, error) {
 	id, err := common.RequirePulid(params.Params, paramWorkItemID)
 	if err != nil {
 		return nil, err
@@ -137,7 +137,7 @@ func (r *workItemRoute) run(ctx context.Context, items WorkItemRouter) error {
 	return err
 }
 
-func newTriageBankReceiptWorkItemTool(items WorkItemRouter) agentports.AgentTool {
+func newTriageBankReceiptWorkItemTool(items WorkItemRouter) agenttoolports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
 		Name:   "receivable_triage_bank_receipt_work_item",
 		Recipe: []string{"receivable_get_bank_receipt", "receivable_triage_bank_receipt_work_item"},
@@ -168,7 +168,7 @@ func newTriageBankReceiptWorkItemTool(items WorkItemRouter) agentports.AgentTool
 			),
 		},
 		Required: []string{paramWorkItemID, paramWorkItemMove},
-		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
+		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return common.TargetOf(params, paramWorkItemID, permission.ResourceBankReceiptWorkItem)
 		},
 	}, common.ReceivablePlan[*workItemRoute, *bankreceiptworkitemports.BankReceiptWorkItemChange]{
@@ -176,7 +176,7 @@ func newTriageBankReceiptWorkItemTool(items WorkItemRouter) agentports.AgentTool
 		Plan: func(
 			ctx context.Context,
 			route *workItemRoute,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*bankreceiptworkitemports.BankReceiptWorkItemChange, error) {
 			return route.plan(ctx, items)
 		},
@@ -191,7 +191,7 @@ func newTriageBankReceiptWorkItemTool(items WorkItemRouter) agentports.AgentTool
 		Run: func(
 			ctx context.Context,
 			route *workItemRoute,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			return nil, route.run(ctx, items)
 		},
@@ -238,6 +238,6 @@ func renderWorkItemRoute(
 
 func ProvideTriageBankReceiptWorkItemTool(
 	items *bankreceiptworkitemservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newTriageBankReceiptWorkItemTool(items)
 }

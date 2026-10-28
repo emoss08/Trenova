@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
@@ -28,13 +28,13 @@ type sensitivityLookup interface {
 }
 
 type toolResources struct {
-	tools   agentports.AgentToolRegistry
-	queries agentports.AgentQueryToolRegistry
+	tools   agenttoolports.AgentToolRegistry
+	queries agenttoolports.AgentQueryToolRegistry
 }
 
 func newToolResources(
-	tools agentports.AgentToolRegistry,
-	queries agentports.AgentQueryToolRegistry,
+	tools agenttoolports.AgentToolRegistry,
+	queries agenttoolports.AgentQueryToolRegistry,
 ) toolResources {
 	return toolResources{tools: tools, queries: queries}
 }

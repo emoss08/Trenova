@@ -4,12 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/holdreasonportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -17,6 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/holdreasonports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/holdreasonportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,7 +33,7 @@ func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	holdReasonRepo := holdreasonportsmock.NewMockHoldReasonRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 
 	svc := New(Params{
 		Logger:         zap.NewNop(),
@@ -87,7 +86,7 @@ func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 		Return(nil).Once()
 
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == permission.ResourceShipmentHold.String() &&
 				req.Action == "created" &&
 				req.RecordID == shipmentID
@@ -120,7 +119,7 @@ func TestUpdate_RejectsReleasedHold(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	holdReasonRepo := holdreasonportsmock.NewMockHoldReasonRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 
 	svc := New(Params{
 		Logger:         zap.NewNop(),
@@ -173,7 +172,7 @@ func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	holdReasonRepo := holdreasonportsmock.NewMockHoldReasonRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 
 	svc := New(Params{
 		Logger:         zap.NewNop(),
@@ -208,7 +207,7 @@ func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 		Return(nil).Once()
 
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == permission.ResourceShipmentHold.String() &&
 				req.Action == "released" &&
 				req.RecordID == shipmentID

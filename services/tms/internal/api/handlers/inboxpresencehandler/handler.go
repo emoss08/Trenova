@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -19,13 +19,13 @@ const Scope = "inbox:messages"
 type Params struct {
 	fx.In
 
-	Gateway              agentports.RealtimeGateway
+	Gateway              realtimeports.RealtimeGateway
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	gateway agentports.RealtimeGateway
+	gateway realtimeports.RealtimeGateway
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -71,7 +71,7 @@ func (h *Handler) join(c *gin.Context) {
 	}
 
 	req := scopeRequest(c, body.ConnectionID)
-	req.State = agentports.RealtimePresenceState{
+	req.State = realtimeports.RealtimePresenceState{
 		MessageID: strings.TrimSpace(stringutils.FromPtr(body.MessageID)),
 		Activity:  strings.TrimSpace(stringutils.FromPtr(body.Activity)),
 	}
@@ -105,10 +105,10 @@ func (h *Handler) leave(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func scopeRequest(c *gin.Context, connectionID string) *agentports.RealtimeScopeRequest {
+func scopeRequest(c *gin.Context, connectionID string) *realtimeports.RealtimeScopeRequest {
 	authCtx := authctx.GetAuthContext(c)
 
-	return &agentports.RealtimeScopeRequest{
+	return &realtimeports.RealtimeScopeRequest{
 		OrganizationID: authCtx.OrganizationID,
 		BusinessUnitID: authCtx.BusinessUnitID,
 		UserID:         authCtx.UserID,

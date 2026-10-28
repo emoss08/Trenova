@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -50,7 +51,7 @@ var transcriptJSON = sonic.Config{SortMapKeys: true}.Froze()
 
 func (s *Service) Transcript(
 	ctx context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 ) (*kernelports.TranscriptFile, error) {
 	thread, err := s.conversations.GetThread(ctx, req)
 	if err != nil {
@@ -88,14 +89,14 @@ func (s *Service) Transcript(
 // run out, and hands it back oldest first.
 func (s *Service) allMessages(
 	ctx context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 ) ([]conversation.Message, error) {
 	pages := make([][]conversation.Message, 0, 1)
 	total := 0
 	var before *int
 
 	for page := 0; page < transcriptMaxPages; page++ {
-		messages, err := s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
+		messages, err := s.conversations.ListMessages(ctx, assistantports.ListMessagesRequest{
 			ThreadID:       req.ID,
 			TenantInfo:     req.TenantInfo,
 			Limit:          transcriptPageSize,
@@ -130,7 +131,7 @@ func (s *Service) allMessages(
 // been deleted leaves the conversation readable under a plain name.
 func (s *Service) agentName(
 	ctx context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 	thread *conversation.Thread,
 ) string {
 	if s.definitions == nil || thread.AgentDefinitionID.IsNil() {
@@ -177,9 +178,9 @@ type transcriptInput struct {
 	Thread    *conversation.Thread
 	AgentName string
 	// Delegates names the agents the conversation's agent handed tasks to.
-	Delegates  map[pulid.ID]string
-	Messages   []conversation.Message
-	Proposals  []*agent.AgentProposal
+	Delegates map[pulid.ID]string
+	Messages  []conversation.Message
+	Proposals []*agent.AgentProposal
 	// Chapters are the conversation's chapter titles by the sequence of the
 	// message each starts at.
 	Chapters   map[int]string

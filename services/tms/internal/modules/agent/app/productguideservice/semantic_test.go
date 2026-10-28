@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/productguideports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,14 +23,14 @@ const (
 )
 
 type stubVectorizer struct {
-	vector   agentports.QueryVector
-	requests []agentports.QueryVectorRequest
+	vector   retrievalports.QueryVector
+	requests []retrievalports.QueryVectorRequest
 }
 
 func (v *stubVectorizer) Vectorize(
 	_ context.Context,
-	req *agentports.QueryVectorRequest,
-) (agentports.QueryVector, error) {
+	req *retrievalports.QueryVectorRequest,
+) (retrievalports.QueryVector, error) {
 	v.requests = append(v.requests, *req)
 
 	return v.vector, nil
@@ -44,23 +45,23 @@ func (v *stubVectorizer) Availability(
 
 type stubVectors struct {
 	similarity map[string]float64
-	requests   []agentports.CatalogSimilarityRequest
+	requests   []retrievalports.CatalogSimilarityRequest
 }
 
 func (s *stubVectors) Similarities(
 	_ context.Context,
-	req *agentports.CatalogSimilarityRequest,
-) (agentports.CatalogSimilarities, error) {
+	req *retrievalports.CatalogSimilarityRequest,
+) (retrievalports.CatalogSimilarities, error) {
 	s.requests = append(s.requests, *req)
 
-	return agentports.CatalogSimilarities{Available: true, ByKey: s.similarity}, nil
+	return retrievalports.CatalogSimilarities{Available: true, ByKey: s.similarity}, nil
 }
 
-func guideQueryVector() agentports.QueryVector {
+func guideQueryVector() retrievalports.QueryVector {
 	vector := make([]float32, airetrieval.Dimensions768)
 	vector[5] = 1
 
-	return agentports.QueryVector{
+	return retrievalports.QueryVector{
 		Available:  true,
 		Vector:     vector,
 		ModelKey:   "localhost/nomic-embed-text@768",
@@ -70,7 +71,7 @@ func guideQueryVector() agentports.QueryVector {
 
 func semanticHarness(
 	t *testing.T,
-	query agentports.QueryVector,
+	query retrievalports.QueryVector,
 	similarity map[string]float64,
 ) (*harness, *stubVectorizer, *stubVectors) {
 	t.Helper()
@@ -89,11 +90,11 @@ func tenantSearch(
 	h *harness,
 	query string,
 	attribution aiusageports.AIUsageAttribution,
-) []agentports.ProductGuideMatch {
+) []productguideports.ProductGuideMatch {
 	t.Helper()
 
 	requester := actor()
-	matches, err := h.service.Search(t.Context(), &agentports.ProductGuideSearchRequest{
+	matches, err := h.service.Search(t.Context(), &productguideports.ProductGuideSearchRequest{
 		Actor:       requester,
 		TenantInfo:  requester.TenantInfo(),
 		Query:       query,
@@ -104,7 +105,7 @@ func tenantSearch(
 	return matches
 }
 
-func paths(matches []agentports.ProductGuideMatch) []string {
+func paths(matches []productguideports.ProductGuideMatch) []string {
 	out := make([]string, 0, len(matches))
 	for _, match := range matches {
 		out = append(out, match.Page.Path)
@@ -124,7 +125,7 @@ func TestSearch_KeywordAnswersAreUnchangedWithoutAVector(t *testing.T) {
 	} {
 		keyword := newHarness(t, "rate_matrix:read", "shipment:read")
 		unavailable, vectorizer, vectors := semanticHarness(t,
-			agentports.UnavailableQueryVector(airetrieval.UnavailableReasonNoProvider),
+			retrievalports.UnavailableQueryVector(airetrieval.UnavailableReasonNoProvider),
 			map[string]float64{carriersPath: 0.99},
 		)
 
@@ -187,7 +188,7 @@ func TestSearch_NonsenseStillFindsNothing(t *testing.T) {
 	t.Parallel()
 
 	h, _, _ := semanticHarness(t, guideQueryVector(), map[string]float64{
-		carriersPath:     agentports.DefaultCatalogSimilarityFloor - 0.01,
+		carriersPath:     retrievalports.DefaultCatalogSimilarityFloor - 0.01,
 		shipmentsPath:    0.3,
 		rateMatricesPath: 0.1,
 	})
@@ -202,7 +203,7 @@ func TestSearch_OnePageQuestionIgnoresMeaning(t *testing.T) {
 		carriersPath: 0.99,
 	})
 	requester := actor()
-	matches, err := h.service.Search(t.Context(), &agentports.ProductGuideSearchRequest{
+	matches, err := h.service.Search(t.Context(), &productguideports.ProductGuideSearchRequest{
 		Actor:      requester,
 		TenantInfo: requester.TenantInfo(),
 		Query:      "retire it",

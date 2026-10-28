@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -84,7 +84,7 @@ func (s *Service) checkCandidate(
 	providerID pulid.ID,
 	enabled bool,
 ) error {
-	provider, err := s.providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	provider, err := s.providers.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenant,
 	})

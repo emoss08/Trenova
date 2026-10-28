@@ -4,12 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/pagetest"
-
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
@@ -18,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -84,7 +83,7 @@ func readJurisdictions(
 	)
 	require.NoError(t, err)
 	person := agentreadtest.Person()
-	data, err := tool.Query(readscope.With(t.Context(), nil), &agentports.QueryToolParams{
+	data, err := tool.Query(readscope.With(t.Context(), nil), &agenttoolports.QueryToolParams{
 		OrganizationID: person.OrganizationID,
 		BusinessUnitID: person.BusinessUnitID,
 		Actor:          person,
@@ -173,7 +172,7 @@ func TestFuelPurchases_TypedFiltersReachTheResolver(t *testing.T) {
 	require.NoError(t, err)
 	jurisdiction := pulid.MustNew("ifj_").String()
 	person := agentreadtest.Person()
-	data, err := tool.Query(readscope.With(t.Context(), nil), &agentports.QueryToolParams{
+	data, err := tool.Query(readscope.With(t.Context(), nil), &agenttoolports.QueryToolParams{
 		OrganizationID: person.OrganizationID,
 		BusinessUnitID: person.BusinessUnitID,
 		Actor:          person,

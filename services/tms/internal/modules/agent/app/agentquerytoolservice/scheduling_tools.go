@@ -3,13 +3,12 @@ package agentquerytoolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment/recurringshipmentdb"
-	"github.com/emoss08/trenova/pkg/listquery"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment/recurringshipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -71,7 +70,7 @@ func recurringShipmentRowFrom(entity *recurringshipment.RecurringShipment) recur
 
 func newListRecurringShipmentsTool(
 	repo recurringshipmentports.RecurringShipmentRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "shipment_list_recurring",
 		entityPlural: "recurring shipments",

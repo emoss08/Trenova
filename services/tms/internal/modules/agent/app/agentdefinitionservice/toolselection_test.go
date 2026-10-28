@@ -5,12 +5,11 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,7 +20,7 @@ import (
 )
 
 func testRegistries() (*agenttest.StubActionRegistry, *agenttest.StubQueryRegistry) {
-	actions := &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
+	actions := &agenttest.StubActionRegistry{Tools: []agenttoolports.AgentTool{
 		&agenttest.StubActionTool{
 			ToolName: "reassign_move",
 			Resource: permission.ResourceShipmentMove,
@@ -38,7 +37,7 @@ func testRegistries() (*agenttest.StubActionRegistry, *agenttest.StubQueryRegist
 			Tier:     agent.TierActWithApproval,
 		},
 	}}
-	queries := &agenttest.StubQueryRegistry{Tools: []agentports.AgentQueryTool{
+	queries := &agenttest.StubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 		&agenttest.StubQueryTool{
 			ToolName: "shipment_get",
 			Resource: permission.ResourceShipment,
@@ -65,7 +64,10 @@ func validate(t *testing.T, d *agentdefinition.Definition) map[string]bool {
 
 	actions, queries := testRegistries()
 	multiErr := errortypes.NewMultiError()
-	validateToolSelection(toolSelection{definition: d, actions: actions, queries: queries}, multiErr)
+	validateToolSelection(
+		toolSelection{definition: d, actions: actions, queries: queries},
+		multiErr,
+	)
 
 	fields := make(map[string]bool)
 	for _, e := range multiErr.Errors {
@@ -82,7 +84,10 @@ func TestValidateToolSelection_AcceptsAnyRegisteredToolOnAnyTemplate(t *testing.
 
 	assert.Empty(
 		t,
-		validate(t, definition(agentdefinition.TemplateCustomerAssistant, "billing_correct_charge_codes")),
+		validate(
+			t,
+			definition(agentdefinition.TemplateCustomerAssistant, "billing_correct_charge_codes"),
+		),
 	)
 	assert.Empty(
 		t,
@@ -246,8 +251,13 @@ func TestApply_StoresNoCoreTool(t *testing.T) {
 
 	d := &agentdefinition.Definition{}
 	apply(d, &agentdefinitionports.SaveAgentDefinitionRequest{
-		Name:      "Report builder",
-		ToolNames: []string{"agent_list_memories", " report_list ", "agent_create_memory", "report_create"},
+		Name: "Report builder",
+		ToolNames: []string{
+			"agent_list_memories",
+			" report_list ",
+			"agent_create_memory",
+			"report_create",
+		},
 	})
 
 	assert.Equal(t, []string{"report_list", "report_create"}, d.ToolNames)
@@ -278,7 +288,7 @@ type cappedStubTool struct {
 	*agenttest.StubActionTool
 }
 
-func (t cappedStubTool) Policy() agentports.ToolPolicy {
+func (t cappedStubTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.StubActionTool.Policy()
 	policy.MaxTier = agent.TierActWithApproval
 	policy.Egress = []agent.EgressClass{agent.EgressExternalRecipient}
@@ -291,7 +301,7 @@ func (t cappedStubTool) Policy() agentports.ToolPolicy {
 func TestValidateToolSelection_RefusesATierAboveAToolsCeiling(t *testing.T) {
 	t.Parallel()
 
-	actions := &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
+	actions := &agenttest.StubActionRegistry{Tools: []agenttoolports.AgentTool{
 		cappedStubTool{&agenttest.StubActionTool{
 			ToolName: "customer_send_email",
 			Resource: permission.ResourceCustomer,
@@ -308,7 +318,10 @@ func TestValidateToolSelection_RefusesATierAboveAToolsCeiling(t *testing.T) {
 		d := definition("", "customer_send_email")
 		d.ToolTiers = map[string]agent.AutonomyTier{"customer_send_email": tier}
 		multiErr := errortypes.NewMultiError()
-		validateToolSelection(toolSelection{definition: d, actions: actions, queries: queries}, multiErr)
+		validateToolSelection(
+			toolSelection{definition: d, actions: actions, queries: queries},
+			multiErr,
+		)
 
 		fields := make(map[string]bool)
 		for _, e := range multiErr.Errors {
@@ -321,10 +334,10 @@ func TestValidateToolSelection_RefusesATierAboveAToolsCeiling(t *testing.T) {
 type policyStubTool struct {
 	*agenttest.StubActionTool
 
-	policy agentports.ToolPolicy
+	policy agenttoolports.ToolPolicy
 }
 
-func (t policyStubTool) Policy() agentports.ToolPolicy { return t.policy }
+func (t policyStubTool) Policy() agenttoolports.ToolPolicy { return t.policy }
 
 func tierMessages(
 	t *testing.T,
@@ -333,7 +346,7 @@ func tierMessages(
 ) map[string]string {
 	t.Helper()
 
-	actions := &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{tool}}
+	actions := &agenttest.StubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}
 	d := definition("", tool.ToolName)
 	d.ToolTiers = map[string]agent.AutonomyTier{tool.ToolName: tier}
 	multiErr := errortypes.NewMultiError()
@@ -392,7 +405,10 @@ func TestApply_StoresTheMemoryBudgetAsSent(t *testing.T) {
 
 	budget := 12000
 	d := &agentdefinition.Definition{}
-	apply(d, &agentdefinitionports.SaveAgentDefinitionRequest{Name: "Rates", MemoryTokenBudget: &budget})
+	apply(
+		d,
+		&agentdefinitionports.SaveAgentDefinitionRequest{Name: "Rates", MemoryTokenBudget: &budget},
+	)
 	require.NotNil(t, d.MemoryTokenBudget)
 	assert.Equal(t, 12000, d.EffectiveMemoryTokenBudget())
 
@@ -404,11 +420,11 @@ func TestApply_StoresTheMemoryBudgetAsSent(t *testing.T) {
 func TestBuildToolCatalog_NamesTheMostEachChangeMayBeGiven(t *testing.T) {
 	t.Parallel()
 
-	actions := &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
+	actions := &agenttest.StubActionRegistry{Tools: []agenttoolports.AgentTool{
 		&agenttest.StubActionTool{ToolName: "customer_update"},
 		&agenttest.StubActionTool{ToolName: "pay_carrier", Egress: agent.EgressMoney},
 	}}
-	queries := &agenttest.StubQueryRegistry{Tools: []agentports.AgentQueryTool{
+	queries := &agenttest.StubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 		&agenttest.StubQueryTool{ToolName: "shipment_get"},
 	}}
 

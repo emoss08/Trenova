@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -66,7 +66,7 @@ func LiftedHold(toolResult string, proposalID pulid.ID) string {
 	return ""
 }
 
-func (s *Service) proposalHold(ctx context.Context, req *agentports.RunRequest) string {
+func (s *Service) proposalHold(ctx context.Context, req *agentruntimeports.RunRequest) string {
 	if s.shadow == nil || req.Actor == nil || req.Definition == nil {
 		return ""
 	}

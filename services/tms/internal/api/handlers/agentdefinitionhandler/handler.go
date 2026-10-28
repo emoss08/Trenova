@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -29,7 +31,7 @@ type Params struct {
 	Trust                agentports.AgentTrustService
 	Budgets              agentports.AgentBudgetService
 	Workflows            kernelports.WorkflowStarter
-	Streams              agentports.TurnStreamReader
+	Streams              assistantports.TurnStreamReader
 	Logger               *zap.Logger
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
@@ -40,7 +42,7 @@ type Handler struct {
 	trust     agentports.AgentTrustService
 	budgets   agentports.AgentBudgetService
 	workflows kernelports.WorkflowStarter
-	streams   agentports.TurnStreamReader
+	streams   assistantports.TurnStreamReader
 	logger    *zap.Logger
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware
@@ -185,7 +187,7 @@ func (h *Handler) trustLedger(c *gin.Context) {
 		return
 	}
 
-	rows, err := h.trust.ListForDefinition(c.Request.Context(), agentports.ListToolTrustRequest{
+	rows, err := h.trust.ListForDefinition(c.Request.Context(), agenttoolports.ListToolTrustRequest{
 		TenantInfo:        tenantFromAuthContext(authCtx),
 		AgentDefinitionID: agentID,
 	})

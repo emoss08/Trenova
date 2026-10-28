@@ -14,7 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
@@ -33,7 +35,7 @@ const scriptUnpreparedRefusal = "%q changes something a script may not prepare: 
 
 type scriptBroker struct {
 	s             *Service
-	req           *agentports.RunRequest
+	req           *agentruntimeports.RunRequest
 	taint         *agent.RunTaint
 	afterExternal bool
 	index         []codemode.Read
@@ -54,7 +56,7 @@ type scriptBroker struct {
 }
 
 type scriptBrokerParams struct {
-	req           *agentports.RunRequest
+	req           *agentruntimeports.RunRequest
 	parentKey     string
 	parentCallID  string
 	taint         *agent.RunTaint
@@ -101,7 +103,10 @@ func (s *Service) newScriptBroker(ctx context.Context, p *scriptBrokerParams) *s
 
 // scriptIndex is every read the turn holds that a script may call, with the
 // schema the model reads for it, in name order.
-func (s *Service) scriptIndex(ctx context.Context, req *agentports.RunRequest) []codemode.Read {
+func (s *Service) scriptIndex(
+	ctx context.Context,
+	req *agentruntimeports.RunRequest,
+) []codemode.Read {
 	held := s.heldTools(req.Definition)
 	candidates := make([]string, 0, len(held))
 	for _, name := range held {
@@ -128,7 +133,7 @@ func (s *Service) scriptIndex(ctx context.Context, req *agentports.RunRequest) [
 	return index
 }
 
-func scriptMayCall(tool agentports.AgentQueryTool) bool {
+func scriptMayCall(tool agenttoolports.AgentQueryTool) bool {
 	name := tool.Name()
 
 	policy := tool.Policy()
@@ -191,7 +196,7 @@ func (b *scriptBroker) Read(ctx context.Context, call codemode.Call) codemode.Re
 	started := time.Now()
 	outcome := b.s.guardedDispatch(ctx, &guardedDispatchParams{
 		req: b.req,
-		call: agentports.ToolCall{
+		call: llmports.ToolCall{
 			ID:        ScriptCallID(b.callID, call.Seq),
 			Name:      call.Tool,
 			Arguments: call.Arguments,

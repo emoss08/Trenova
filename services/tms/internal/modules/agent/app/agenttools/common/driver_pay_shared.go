@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -35,8 +35,8 @@ type PersonOnlyPolicy struct {
 	Rationale string `json:"-"`
 }
 
-func (p *PersonOnlyPolicy) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (p *PersonOnlyPolicy) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          p.Name,
 		Kind:          agent.ToolKindAction,
 		Resource:      p.Resource,
@@ -52,7 +52,7 @@ func (p *PersonOnlyPolicy) Policy() agentports.ToolPolicy {
 	}
 }
 
-func RequirePersonsApproval(params *agentports.ToolExecuteParams) error {
+func RequirePersonsApproval(params *agenttoolports.ToolExecuteParams) error {
 	if !params.ApprovedFromProposal() {
 		return ErrDriverPayNeedsAPerson
 	}

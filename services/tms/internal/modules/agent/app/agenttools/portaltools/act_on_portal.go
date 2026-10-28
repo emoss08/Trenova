@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -43,7 +43,7 @@ func NewActOnPortalTool(
 	portals agentextensionports.PortalAutomator,
 	waits agentextensionports.PortalRunWaits,
 	logger *zap.Logger,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
@@ -87,8 +87,8 @@ func (t *ActOnPortalTool) ParamSchema() map[string]any {
 	}, paramSiteID, paramInstruction)
 }
 
-func (t *ActOnPortalTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *ActOnPortalTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourcePortalAutomation,
@@ -114,7 +114,7 @@ func (t *ActOnPortalTool) SearchTerms() []string {
 }
 
 func (t *ActOnPortalTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentextensionports.PortalActionRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (t *ActOnPortalTool) request(
 
 func (t *ActOnPortalTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -167,7 +167,7 @@ func (t *ActOnPortalTool) Validate(
 // the details it will type. It never reaches the vendor.
 func (t *ActOnPortalTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	summary := "Would ask a browser to act on a portal."
 	req, err := t.request(&params)
@@ -210,7 +210,7 @@ func (t *ActOnPortalTool) Preview(
 
 func (t *ActOnPortalTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -222,7 +222,7 @@ func (t *ActOnPortalTool) Execute(
 // approval is the idempotency key, so a retry finds the task it started.
 func (t *ActOnPortalTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return nil, err

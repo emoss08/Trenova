@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,7 +34,7 @@ type runTranscriptInput struct {
 
 func (s *Service) RunTranscript(
 	ctx context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*kernelports.TranscriptFile, error) {
 	if s.runs == nil {
 		return nil, errortypes.NewBusinessError("Agent run transcripts are not available")
@@ -91,7 +92,7 @@ func (s *Service) runTranscriptOf(
 	runID pulid.ID,
 	tenant pagination.TenantInfo,
 ) (*agent.RunTranscript, error) {
-	rows, err := s.runs.ListTranscriptsByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
+	rows, err := s.runs.ListTranscriptsByIDs(ctx, agentruntimeports.ListAgentRunsByIDsRequest{
 		IDs:        []pulid.ID{runID},
 		TenantInfo: tenant,
 	})

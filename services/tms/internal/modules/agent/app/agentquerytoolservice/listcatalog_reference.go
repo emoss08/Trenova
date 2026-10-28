@@ -3,40 +3,38 @@ package agentquerytoolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
-	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory/locationcategorydb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial/hazardousmaterialdb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
-	"github.com/emoss08/trenova/pkg/listquery"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory/locationcategorydb"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial/hazardousmaterialdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
@@ -44,6 +42,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/holdreasonports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -83,7 +82,7 @@ func codedFields() []listField {
 
 func newListEquipmentTypesTool(
 	repo equipmenttypeports.EquipmentTypeRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	fields := append(codedFields(), listField{
 		Name:   "class",
 		Kind:   filterEnum,
@@ -123,7 +122,7 @@ func newListEquipmentTypesTool(
 	})
 }
 
-func newListFleetCodesTool(repo fleetcodeports.FleetCodeRepository) agentports.AgentQueryTool {
+func newListFleetCodesTool(repo fleetcodeports.FleetCodeRepository) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListFleetCodes,
 		entityPlural: "fleet codes",
@@ -154,7 +153,7 @@ func newListFleetCodesTool(repo fleetcodeports.FleetCodeRepository) agentports.A
 
 func newListServiceTypesTool(
 	repo servicetypeports.ServiceTypeRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolMasterdataListServiceTypes,
 		entityPlural: "service types",
@@ -185,7 +184,7 @@ func newListServiceTypesTool(
 
 func newListShipmentTypesTool(
 	repo shipmenttypeports.ShipmentTypeRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListShipmentTypes,
 		entityPlural: "shipment types",
@@ -225,7 +224,7 @@ type commodityRow struct {
 	TemperatureOK bool   `json:"temperatureControlled"`
 }
 
-func newListCommoditiesTool(repo commodityports.CommodityRepository) agentports.AgentQueryTool {
+func newListCommoditiesTool(repo commodityports.CommodityRepository) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListCommodities,
 		entityPlural: pluralCommodities,
@@ -285,7 +284,7 @@ type hazmatRow struct {
 
 func newListHazardousMaterialsTool(
 	repo hazardousmaterialports.HazardousMaterialRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListHazardousMaterials,
 		entityPlural: "hazardous materials",
@@ -343,7 +342,7 @@ type accessorialRow struct {
 
 func newListAccessorialChargesTool(
 	repo accessorialchargeports.AccessorialChargeRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListAccessorialCharges,
 		entityPlural: "accessorial charges",
@@ -387,7 +386,7 @@ func newListAccessorialChargesTool(
 
 func newListDocumentTypesTool(
 	repo documenttypeports.DocumentTypeRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListDocumentTypes,
 		entityPlural: "document types",
@@ -428,7 +427,7 @@ func newListDocumentTypesTool(
 
 func newListLocationCategoriesTool(
 	repo locationcategoryports.LocationCategoryRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListLocationCategories,
 		entityPlural: "location categories",
@@ -486,7 +485,7 @@ type invoiceRow struct {
 func newListInvoicesTool(
 	repo invoiceports.InvoiceRepository,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "invoice_list",
 		entityPlural: "invoices",
@@ -583,7 +582,7 @@ type carrierRow struct {
 	MCNumber         string `json:"mcNumber,omitempty"`
 }
 
-func newListCarriersTool(repo carrierports.CarrierRepository) agentports.AgentQueryTool {
+func newListCarriersTool(repo carrierports.CarrierRepository) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolCarrierList,
 		entityPlural: pluralCarriers,
@@ -651,7 +650,7 @@ type holdReasonRow struct {
 
 func newListHoldReasonsTool(
 	repo holdreasonports.HoldReasonRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListHoldReasons,
 		entityPlural: "hold reasons",

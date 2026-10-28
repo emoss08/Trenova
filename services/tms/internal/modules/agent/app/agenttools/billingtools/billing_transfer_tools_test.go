@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
@@ -144,13 +144,25 @@ func TestTransferToBilling_PreviewSaysWhatHappensToEachShipment(t *testing.T) {
 	refused := preview.Changes[0]
 	assert.Equal(t, blocked, refused.EntityID, "a refusal is listed first")
 	assert.Equal(t, permission.ResourceShipment, refused.Resource)
-	assert.Contains(t, agenttoolstest.FieldByPath(t, &refused, "outcome").After, "RequirementsUnmet")
-	assert.Equal(t, "Proof of Delivery", agenttoolstest.FieldByPath(t, &refused, "missingDocuments").After)
+	assert.Contains(
+		t,
+		agenttoolstest.FieldByPath(t, &refused, "outcome").After,
+		"RequirementsUnmet",
+	)
+	assert.Equal(
+		t,
+		"Proof of Delivery",
+		agenttoolstest.FieldByPath(t, &refused, "missingDocuments").After,
+	)
 
 	queued := preview.Changes[1]
 	assert.Equal(t, ready, queued.EntityID)
 	assert.Equal(t, "PRO-1", queued.Label)
-	assert.Equal(t, "ReadyForReview", agenttoolstest.FieldByPath(t, &queued, "billingTransferStatus").After)
+	assert.Equal(
+		t,
+		"ReadyForReview",
+		agenttoolstest.FieldByPath(t, &queued, "billingTransferStatus").After,
+	)
 	assert.Contains(t, agenttoolstest.FieldByPath(t, &queued, "outcome").After, "auto-approve")
 	require.NotNil(t, queued.Version)
 	assert.Equal(t, int64(4), *queued.Version)
@@ -302,7 +314,7 @@ func TestTransferToBilling_DeclaresItsShipmentsASubsetAPersonMayNarrow(t *testin
 	tool := NewTransferToBillingTool(&fakeTransferPlanner{}, &fakeRunStarter{})
 
 	proposed := shipmentIDs(2)
-	fields := agentports.ProposalFields(tool, map[string]any{common.ParamShipmentIDs: proposed})
+	fields := agenttoolports.ProposalFields(tool, map[string]any{common.ParamShipmentIDs: proposed})
 	var subset *toolschema.Field
 	for idx := range fields {
 		if fields[idx].Name == common.ParamShipmentIDs {

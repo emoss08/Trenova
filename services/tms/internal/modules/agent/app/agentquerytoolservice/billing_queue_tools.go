@@ -5,12 +5,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
-	"github.com/emoss08/trenova/pkg/listquery"
-
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -20,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -88,14 +87,14 @@ type billingQueueRow struct {
 func newListBillingQueueItemsTool(
 	repo billingqueueports.BillingQueueRepository,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return buildBillingQueueList(repo, newFieldAccess(permissions))
 }
 
 func buildBillingQueueList(
 	lister billingQueueLister,
 	access fieldAccess,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "billing_list_queue_items",
 		entityPlural: "billing queue items",
@@ -265,7 +264,7 @@ func newGetBillingQueueItemTool(
 	shipments shipmentports.ShipmentService,
 	invoices invoiceports.InvoiceRepository,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &getBillingQueueItemTool{
 		items:     items,
 		readiness: shipments,
@@ -308,7 +307,7 @@ func (t *getBillingQueueItemTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getBillingQueueItemTool) Policy() agentports.ToolPolicy {
+func (t *getBillingQueueItemTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceBillingQueue})
 }
 
@@ -360,7 +359,7 @@ type billingQueueDetail struct {
 
 func (t *getBillingQueueItemTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

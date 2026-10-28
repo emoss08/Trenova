@@ -8,8 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -58,7 +59,7 @@ func TestRememberQueuesTheNewMemoryForIndexing(t *testing.T) {
 	svc := newService(&fakeMemoryRepo{}, &fakeRuns{}, &fakeLabeler{})
 	svc.indexer = indexer
 
-	memory, err := svc.Remember(t.Context(), &agentports.RememberRequest{
+	memory, err := svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo: tenant(),
 		Kind:       agent.MemoryKindFact,
 		Content:    "Acme closes at 3 PM on Fridays.",
@@ -76,7 +77,7 @@ func TestRememberDoesNotQueueAMemoryItAlreadyHad(t *testing.T) {
 	svc := newService(&fakeMemoryRepo{found: existing}, &fakeRuns{}, &fakeLabeler{})
 	svc.indexer = indexer
 
-	_, err := svc.Remember(t.Context(), &agentports.RememberRequest{
+	_, err := svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo: tenant(),
 		Kind:       agent.MemoryKindFact,
 		Content:    "Acme closes at 3 PM on Fridays.",
@@ -92,7 +93,7 @@ func TestAnIndexingFailureNeverFailsTheWrite(t *testing.T) {
 	svc := newService(&fakeMemoryRepo{}, &fakeRuns{}, &fakeLabeler{})
 	svc.indexer = indexer
 
-	memory, err := svc.Remember(t.Context(), &agentports.RememberRequest{
+	memory, err := svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo: tenant(),
 		Kind:       agent.MemoryKindInstruction,
 		Content:    "Always book Globex with an appointment.",
@@ -128,12 +129,12 @@ type searchingMemoryRepo struct {
 
 	byWords  []*agent.Memory
 	eligible []*agent.Memory
-	searches []agentports.SearchAgentMemoriesRequest
+	searches []agentmemoryports.SearchAgentMemoriesRequest
 }
 
 func (f *searchingMemoryRepo) Search(
 	_ context.Context,
-	req agentports.SearchAgentMemoriesRequest,
+	req agentmemoryports.SearchAgentMemoriesRequest,
 ) ([]*agent.Memory, error) {
 	f.searches = append(f.searches, req)
 	if req.Query != "" {
@@ -146,15 +147,15 @@ func (f *searchingMemoryRepo) Search(
 }
 
 type fakeVectors struct {
-	similar agentports.SimilarMemories
+	similar retrievalports.SimilarMemories
 	err     error
-	asked   []agentports.SimilarMemoriesRequest
+	asked   []retrievalports.SimilarMemoriesRequest
 }
 
 func (f *fakeVectors) SimilarMemories(
 	_ context.Context,
-	req *agentports.SimilarMemoriesRequest,
-) (agentports.SimilarMemories, error) {
+	req *retrievalports.SimilarMemoriesRequest,
+) (retrievalports.SimilarMemories, error) {
 	f.asked = append(f.asked, *req)
 
 	return f.similar, f.err
@@ -177,21 +178,21 @@ func TestRecallFusesWordsAndMeaning(t *testing.T) {
 		byWords:  []*agent.Memory{both, words},
 		eligible: []*agent.Memory{both, words, meaning, weak},
 	}
-	vectors := &fakeVectors{similar: agentports.SimilarMemories{
-		Memories: []agentports.MemorySimilarity{
+	vectors := &fakeVectors{similar: retrievalports.SimilarMemories{
+		Memories: []retrievalports.MemorySimilarity{
 			{MemoryID: meaning.ID, Similarity: 0.82},
 			{MemoryID: both.ID, Similarity: 0.8},
 			{MemoryID: hidden.ID, Similarity: 0.79},
 			{MemoryID: weak.ID, Similarity: 0.2},
 		},
-		Semantics: agentports.RetrievalSemantics{Used: true},
+		Semantics: retrievalports.RetrievalSemantics{Used: true},
 		Floor:     0.5,
 	}}
 	svc := newService(&repo.fakeMemoryRepo, &fakeRuns{}, &fakeLabeler{})
 	svc.repo = repo
 	svc.vectors = vectors
 
-	recalled, err := svc.Recall(t.Context(), agentports.RecallAgentMemoriesRequest{
+	recalled, err := svc.Recall(t.Context(), agentmemoryports.RecallAgentMemoriesRequest{
 		TenantInfo:  tenant(),
 		Query:       "free time before detention",
 		Limit:       10,
@@ -226,8 +227,10 @@ func TestRecallStaysOnWordsWithoutMeaning(t *testing.T) {
 	repo := &searchingMemoryRepo{byWords: []*agent.Memory{found}}
 
 	cases := map[string]*fakeVectors{
-		"meaning unavailable": {similar: agentports.SimilarMemories{
-			Semantics: agentports.RetrievalSemantics{Reason: airetrieval.UnavailableReasonNoProvider},
+		"meaning unavailable": {similar: retrievalports.SimilarMemories{
+			Semantics: retrievalports.RetrievalSemantics{
+				Reason: airetrieval.UnavailableReasonNoProvider,
+			},
 		}},
 		"meaning failed": {err: errors.New("boom")},
 	}
@@ -239,7 +242,7 @@ func TestRecallStaysOnWordsWithoutMeaning(t *testing.T) {
 			svc.repo = &searchingMemoryRepo{byWords: repo.byWords}
 			svc.vectors = vectors
 
-			recalled, err := svc.Recall(t.Context(), agentports.RecallAgentMemoriesRequest{
+			recalled, err := svc.Recall(t.Context(), agentmemoryports.RecallAgentMemoriesRequest{
 				TenantInfo: tenant(),
 				Query:      "free time",
 			})
@@ -253,7 +256,7 @@ func TestRecallStaysOnWordsWithoutMeaning(t *testing.T) {
 	svc.repo = &searchingMemoryRepo{eligible: []*agent.Memory{found}}
 	vectors := &fakeVectors{}
 	svc.vectors = vectors
-	listed, err := svc.Recall(t.Context(), agentports.RecallAgentMemoriesRequest{
+	listed, err := svc.Recall(t.Context(), agentmemoryports.RecallAgentMemoriesRequest{
 		TenantInfo: tenant(),
 		IDs:        []pulid.ID{found.ID},
 	})

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -125,7 +125,7 @@ func checklistRecord(checklist *worker.WorkerChecklist) toolpreview.Record {
 		checklist.Version)
 }
 
-func newStartWorkerChecklistTool(checklists ChecklistKeeper) agentports.AgentTool {
+func newStartWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.AgentTool {
 	spec := withSchema(wfSpec(
 		"worker_start_checklist",
 		"Start a checklist for a worker from one of the organization's hand-started "+
@@ -151,7 +151,7 @@ func newStartWorkerChecklistTool(checklists ChecklistKeeper) agentports.AgentToo
 		*workerchecklistservice.StartRequest, *workerchecklistservice.StartPlan,
 	]{
 		Request: func(
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*workerchecklistservice.StartRequest, error) {
 			workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
 			if err != nil {
@@ -179,7 +179,7 @@ func newStartWorkerChecklistTool(checklists ChecklistKeeper) agentports.AgentToo
 		Plan: func(
 			ctx context.Context,
 			req *workerchecklistservice.StartRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*workerchecklistservice.StartPlan, error) {
 			return checklists.PlanStart(ctx, req)
 		},
@@ -208,7 +208,7 @@ func newStartWorkerChecklistTool(checklists ChecklistKeeper) agentports.AgentToo
 		Run: func(
 			ctx context.Context,
 			req *workerchecklistservice.StartRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			started, err := checklists.Start(ctx, req)
 			if err != nil {
@@ -226,7 +226,9 @@ type checklistItemChange struct {
 	reopen *workerchecklistservice.ReopenItemRequest
 }
 
-func checklistItemChangeFrom(params *agentports.ToolExecuteParams) (*checklistItemChange, error) {
+func checklistItemChangeFrom(
+	params *agenttoolports.ToolExecuteParams,
+) (*checklistItemChange, error) {
 	id, err := common.RequirePulid(params.Params, paramChecklistItemID)
 	if err != nil {
 		return nil, err
@@ -297,7 +299,7 @@ func (c *checklistItemChange) run(
 	return nil, common.ErrUnknownValue(paramItemMove, string(c.move), checklistItemMoves.Names())
 }
 
-func newUpdateWorkerChecklistItemTool(checklists ChecklistKeeper) agentports.AgentTool {
+func newUpdateWorkerChecklistItemTool(checklists ChecklistKeeper) agenttoolports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"worker_update_checklist_item",
 		"Settle or reopen one item on a worker's open checklist. Complete it when it is "+
@@ -336,7 +338,7 @@ func newUpdateWorkerChecklistItemTool(checklists ChecklistKeeper) agentports.Age
 		Plan: func(
 			ctx context.Context,
 			change *checklistItemChange,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*workerchecklistservice.ItemPlan, error) {
 			return change.plan(ctx, checklists)
 		},
@@ -362,7 +364,7 @@ func newUpdateWorkerChecklistItemTool(checklists ChecklistKeeper) agentports.Age
 		Run: func(
 			ctx context.Context,
 			change *checklistItemChange,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			checklist, err := change.run(ctx, checklists)
 			if err != nil {
@@ -408,7 +410,7 @@ func checklistMovePast(move checklistItemMove) string {
 	return string(move)
 }
 
-func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agentports.AgentTool {
+func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"worker_cancel_checklist",
 		"Cancel an open checklist that no longer applies, with the reason kept. Its items "+
@@ -432,7 +434,7 @@ func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agentports.AgentTo
 		*workerchecklistservice.CancelRequest, *workerchecklistservice.ChecklistChange,
 	]{
 		Request: func(
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*workerchecklistservice.CancelRequest, error) {
 			id, err := common.RequirePulid(params.Params, paramChecklistID)
 			if err != nil {
@@ -456,7 +458,7 @@ func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agentports.AgentTo
 		Plan: func(
 			ctx context.Context,
 			req *workerchecklistservice.CancelRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*workerchecklistservice.ChecklistChange, error) {
 			return checklists.PlanCancel(ctx, req)
 		},
@@ -483,7 +485,7 @@ func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agentports.AgentTo
 		Run: func(
 			ctx context.Context,
 			req *workerchecklistservice.CancelRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			cancelled, err := checklists.Cancel(ctx, req)
 			if err != nil {
@@ -495,16 +497,16 @@ func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agentports.AgentTo
 	})
 }
 
-func provideStartWorkerChecklistTool(s *workerchecklistservice.Service) agentports.AgentTool {
+func provideStartWorkerChecklistTool(s *workerchecklistservice.Service) agenttoolports.AgentTool {
 	return newStartWorkerChecklistTool(s)
 }
 
 func provideUpdateWorkerChecklistItemTool(
 	s *workerchecklistservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newUpdateWorkerChecklistItemTool(s)
 }
 
-func provideCancelWorkerChecklistTool(s *workerchecklistservice.Service) agentports.AgentTool {
+func provideCancelWorkerChecklistTool(s *workerchecklistservice.Service) agenttoolports.AgentTool {
 	return newCancelWorkerChecklistTool(s)
 }

@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -31,7 +31,7 @@ type Params struct {
 	CacheRepo    customerports.CustomerCacheRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService
+	Realtime     realtimeports.RealtimeService
 	Transformer  accessorialchargeports.DataTransformer
 	DB           kernelports.Transactor                     `optional:"true"`
 	Sync         accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
@@ -44,7 +44,7 @@ type Service struct {
 	cacheRepo    customerports.CustomerCacheRepository
 	validator    *Validator
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 	transformer  accessorialchargeports.DataTransformer
 	db           kernelports.Transactor
 	sync         accountingsyncports.AccountingSyncEnqueuer

@@ -16,8 +16,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,13 +42,13 @@ const clockLineLayout = "Monday 2006-01-02 15:04"
 // never reads a clock, a database or the network, which is what lets it replay.
 type Turn struct {
 	s      *Service
-	req    *agentports.RunRequest
+	req    *agentruntimeports.RunRequest
 	budget int
 	system string
 	// systemStable is how many leading bytes of system are the same on every
 	// turn of the agent for the person, which a provider can cache.
 	systemStable int
-	messages     []agentports.Message
+	messages     []llmports.Message
 	// evidence is the figures of the tool results the replay shortened, which
 	// the grounding guard still counts as read.
 	evidence []string
@@ -73,14 +78,14 @@ type Turn struct {
 	// callIDs is every tool call id the conversation holds, so a provider
 	// that reuses one is given a fresh id rather than a clash.
 	callIDs map[string]struct{}
-	result  *agentports.RunResult
+	result  *agentruntimeports.RunResult
 	// delegates are the agents the turn may hand a task to, taken when it
 	// opened, and delegations how many tasks it has handed out.
 	delegates   []agentdefinition.RuntimeDelegate
 	delegations int
 	// directed is a task the person handed straight to another agent, which
 	// the turn runs instead of asking its own model.
-	directed *agentports.DirectedTask
+	directed *agentruntimeports.DirectedTask
 	// command is the extension command the person opened the turn with, and
 	// the turn is held to it.
 	command agentextension.Command
@@ -99,7 +104,7 @@ type Turn struct {
 	toolMemories map[string][]pulid.ID
 	// artifacts are what the turn put beside the conversation, in the order
 	// it did.
-	artifacts    []agentports.ShownArtifact
+	artifacts    []agentruntimeports.ShownArtifact
 	providerKind aiprovider.Kind
 	reask        string
 }
@@ -109,7 +114,7 @@ type TurnEffects interface {
 	// Complete asks the model for the next step, streaming the reply as it
 	// arrives. Looped reports the reply fell into a repetition and was
 	// stopped; it is only meaningful when the error is nil.
-	Complete(t *Turn, req *agentports.ChatCompletionRequest) (ModelReply, error)
+	Complete(t *Turn, req *llmports.ChatCompletionRequest) (ModelReply, error)
 	// Dispatch runs one tool call the loop has decided to make.
 	Dispatch(t *Turn, call DispatchCall) ToolOutcome
 	// DispatchReads runs reads the loop has decided to make, which may run
@@ -121,7 +126,7 @@ type TurnEffects interface {
 	// Observe hands a finished call to whatever shows it to the person, and
 	// returns the outcome with what it showed folded into what the model
 	// reads. A published document is kept here.
-	Observe(t *Turn, call *agentports.ToolCall, outcome ToolOutcome) ToolOutcome
+	Observe(t *Turn, call *llmports.ToolCall, outcome ToolOutcome) ToolOutcome
 	// NewCallID mints a tool call id, for a provider that gave none or reused
 	// one. Minting is random, so workflow code has it recorded.
 	NewCallID() string
@@ -138,15 +143,15 @@ type TurnEffects interface {
 
 // ModelReply is one completion as the loop sees it.
 type ModelReply struct {
-	Completion *agentports.ChatCompletionResult `json:"completion"`
-	Looped     bool                             `json:"looped"`
+	Completion *llmports.ChatCompletionResult `json:"completion"`
+	Looped     bool                           `json:"looped"`
 	// InReasoning says the loop was in the model's thinking rather than its
 	// reply.
-	InReasoning bool                 `json:"inReasoning,omitempty"`
-	Usage       *agentports.RunUsage `json:"usage,omitempty"`
+	InReasoning bool                        `json:"inReasoning,omitempty"`
+	Usage       *agentruntimeports.RunUsage `json:"usage,omitempty"`
 }
 
-func (r ModelReply) usage() *agentports.RunUsage {
+func (r ModelReply) usage() *agentruntimeports.RunUsage {
 	if r.Usage != nil {
 		return r.Usage
 	}
@@ -154,7 +159,7 @@ func (r ModelReply) usage() *agentports.RunUsage {
 		return nil
 	}
 
-	return &agentports.RunUsage{
+	return &agentruntimeports.RunUsage{
 		ModelCalls:       1,
 		InputTokens:      int64(r.Completion.InputTokens),
 		OutputTokens:     int64(r.Completion.OutputTokens),
@@ -166,9 +171,9 @@ func (r ModelReply) usage() *agentports.RunUsage {
 
 // DispatchCall is one tool call the loop has decided to run.
 type DispatchCall struct {
-	Call           agentports.ToolCall        `json:"call"`
-	CompletionText string                     `json:"completionText"`
-	ProposedSoFar  []agentports.PendingAction `json:"proposedSoFar,omitempty"`
+	Call           llmports.ToolCall                 `json:"call"`
+	CompletionText string                            `json:"completionText"`
+	ProposedSoFar  []agentruntimeports.PendingAction `json:"proposedSoFar,omitempty"`
 	// Ordinal numbers this exact call within the run, so the step key of a
 	// legitimately repeated call differs from the first one's.
 	Ordinal int `json:"ordinal"`
@@ -198,11 +203,11 @@ type DispatchCall struct {
 
 // ToolOutcome is what one tool call came to.
 type ToolOutcome struct {
-	Content string                    `json:"content"`
-	Failed  bool                      `json:"failed"`
-	Action  *agentports.PendingAction `json:"action,omitempty"`
+	Content string                           `json:"content"`
+	Failed  bool                             `json:"failed"`
+	Action  *agentruntimeports.PendingAction `json:"action,omitempty"`
 	// Batch is what a script prepared, filed as one batch for a person.
-	Batch []agentports.PendingAction `json:"batch,omitempty"`
+	Batch []agentruntimeports.PendingAction `json:"batch,omitempty"`
 	// Publishes marks a document still to be kept. What the model reads is
 	// written once it has been.
 	Publishes bool   `json:"publishes,omitempty"`
@@ -216,11 +221,11 @@ type ToolOutcome struct {
 	Verdict string            `json:"verdict,omitempty"`
 	// Memories are what a recall read back; SavedMemory is what a remember
 	// kept or offered to keep.
-	Memories    []pulid.ID              `json:"memories,omitempty"`
-	SavedMemory *agentports.SavedMemory `json:"savedMemory,omitempty"`
+	Memories    []pulid.ID                    `json:"memories,omitempty"`
+	SavedMemory *agentmemoryports.SavedMemory `json:"savedMemory,omitempty"`
 	// Shown is what the call put in front of the person, which the loop
 	// keeps when it is a table, for the pass over the final reply.
-	Shown *agentports.ShownArtifact `json:"shown,omitempty"`
+	Shown *agentruntimeports.ShownArtifact `json:"shown,omitempty"`
 	// Continuation is how a later call of the turn may continue the script
 	// the call ran.
 	Continuation codemode.Continuation `json:"continuation,omitempty"`
@@ -277,7 +282,7 @@ func (o ToolOutcome) internal() toolOutcome {
 
 // Request is what the turn was asked. Effects read it; the loop does not
 // change it.
-func (t *Turn) Request() *agentports.RunRequest { return t.req }
+func (t *Turn) Request() *agentruntimeports.RunRequest { return t.req }
 
 // Definition is the agent the turn runs as.
 func (t *Turn) Definition() *agentdefinition.Definition { return t.req.Definition }
@@ -309,8 +314,8 @@ type TurnState struct {
 	Budget int    `json:"budget"`
 	System string `json:"system"`
 	// SystemStable is how much of System leads every turn unchanged.
-	SystemStable int                  `json:"systemStable,omitempty"`
-	Messages     []agentports.Message `json:"messages"`
+	SystemStable int                `json:"systemStable,omitempty"`
+	Messages     []llmports.Message `json:"messages"`
 	// Evidence is the figures of the tool results the replay shortened.
 	Evidence []string     `json:"evidence,omitempty"`
 	Tools    ToolSetState `json:"tools"`
@@ -319,18 +324,18 @@ type TurnState struct {
 	Beyond map[string]agent.AutonomyTier `json:"beyond,omitempty"`
 	Mode   ProfileMode                   `json:"mode,omitempty"`
 	// Reads are the held tools that only look something up.
-	Reads     []string             `json:"reads,omitempty"`
-	Failures  map[string]string    `json:"failures,omitempty"`
-	Ordinals  map[string]int       `json:"ordinals,omitempty"`
-	Questions []string             `json:"questions,omitempty"`
-	CallIDs   []string             `json:"callIds,omitempty"`
-	Result    agentports.RunResult `json:"result"`
+	Reads     []string                    `json:"reads,omitempty"`
+	Failures  map[string]string           `json:"failures,omitempty"`
+	Ordinals  map[string]int              `json:"ordinals,omitempty"`
+	Questions []string                    `json:"questions,omitempty"`
+	CallIDs   []string                    `json:"callIds,omitempty"`
+	Result    agentruntimeports.RunResult `json:"result"`
 	// Delegates are the agents the turn may hand a task to, and Delegations
 	// how many it has handed out.
 	Delegates   []agentdefinition.RuntimeDelegate `json:"delegates,omitempty"`
 	Delegations int                               `json:"delegations,omitempty"`
 	// Directed is a task the person handed straight to another agent.
-	Directed *agentports.DirectedTask `json:"directed,omitempty"`
+	Directed *agentruntimeports.DirectedTask `json:"directed,omitempty"`
 	// Command is the extension command the turn is held to.
 	Command agentextension.Command `json:"command,omitempty"`
 	// TaintOpened are the marks the turn's opening added, still to be
@@ -418,7 +423,7 @@ func (t *Turn) LoadTools(names []string) {
 
 // RestoreTurn rebuilds a Turn from its state. The rebuilt tool set cannot check
 // permissions, so whatever answers its find_tools must: see TurnEffects.Find.
-func (s *Service) RestoreTurn(req *agentports.RunRequest, state TurnState) *Turn {
+func (s *Service) RestoreTurn(req *agentruntimeports.RunRequest, state TurnState) *Turn {
 	result := state.Result
 	questions := make(map[string]struct{}, len(state.Questions))
 	for _, question := range state.Questions {
@@ -536,7 +541,7 @@ func (t *toolSet) loadedDeferred() []string {
 // OpenTurn builds a turn: the tool set the actor may use, what earlier attempts
 // of the run already learned, and the prompt. It reads permissions and the
 // ledger, so it runs where those can be read: in process, or in an activity.
-func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Turn {
+func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunRequest) *Turn {
 	definition := req.Definition
 	budget := definition.MaxToolCalls
 	if budget <= 0 {
@@ -646,8 +651,8 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 	if definition.HasContextProvider(agentdefinition.ContextClock) {
 		input = clockLine(now, runtimeContext.Timezone) + input
 	}
-	messages = append(messages, agentports.Message{
-		Role:    agentports.RoleUser,
+	messages = append(messages, llmports.Message{
+		Role:    llmports.RoleUser,
 		Content: input,
 		Files:   messageFiles(input, runtimeContext.Attachments, &attached),
 	})
@@ -673,7 +678,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		questions:    askedQuestions(history),
 		decisions:    make(map[pulid.ID]struct{}, 1),
 		callIDs:      usedCallIDs(req.History),
-		result: &agentports.RunResult{
+		result: &agentruntimeports.RunResult{
 			Messages: []conversation.Message{{
 				Role:      conversation.RoleUser,
 				Content:   req.Input,
@@ -717,11 +722,11 @@ func clockLine(now int64, timezone string) string {
 
 // completionRequest is what the turn is ready to send the model now, with its
 // older tool results shortened when they would no longer fit the window.
-func (t *Turn) completionRequest() *agentports.ChatCompletionRequest {
+func (t *Turn) completionRequest() *llmports.ChatCompletionRequest {
 	req := t.req
 	definition := req.Definition
 
-	completion := &agentports.ChatCompletionRequest{
+	completion := &llmports.ChatCompletionRequest{
 		TenantInfo:          req.Actor.TenantInfo(),
 		System:              t.system,
 		SystemStable:        t.systemStable,
@@ -739,7 +744,7 @@ func (t *Turn) completionRequest() *agentports.ChatCompletionRequest {
 	return completion
 }
 
-func turnAttribution(req *agentports.RunRequest) aiusageports.AIUsageAttribution {
+func turnAttribution(req *agentruntimeports.RunRequest) aiusageports.AIUsageAttribution {
 	definition := req.Definition
 	version := definition.Version
 	attribution := aiusageports.AIUsageAttribution{
@@ -768,14 +773,14 @@ type localEffects struct {
 	s        *Service
 	ctx      context.Context
 	emit     kernelports.AssistantStreamEmitter
-	observer agentports.ToolObserver
+	observer agentruntimeports.ToolObserver
 }
 
 func (*localEffects) Now() int64 { return timeutils.NowUnix() }
 
 func (fx *localEffects) Complete(
 	_ *Turn,
-	req *agentports.ChatCompletionRequest,
+	req *llmports.ChatCompletionRequest,
 ) (ModelReply, error) {
 	return fx.s.StreamCompletion(fx.ctx, req, fx.Emit)
 }
@@ -790,7 +795,7 @@ func (fx *localEffects) Complete(
 // run's stream.
 func (s *Service) StreamCompletion(
 	ctx context.Context,
-	req *agentports.ChatCompletionRequest,
+	req *llmports.ChatCompletionRequest,
 	emit kernelports.AssistantStreamEmitter,
 ) (ModelReply, error) {
 	req = s.declareTools(req)
@@ -801,13 +806,13 @@ func (s *Service) StreamCompletion(
 	return reply, err
 }
 
-func replyUsage(tally *aitrace.CompletionTally, reply ModelReply) *agentports.RunUsage {
+func replyUsage(tally *aitrace.CompletionTally, reply ModelReply) *agentruntimeports.RunUsage {
 	totals := tally.Totals()
 	if totals.Attempts == 0 {
 		return reply.usage()
 	}
 
-	return &agentports.RunUsage{
+	return &agentruntimeports.RunUsage{
 		ModelCalls:       totals.Attempts,
 		InputTokens:      totals.InputTokens,
 		OutputTokens:     totals.OutputTokens,
@@ -819,7 +824,7 @@ func replyUsage(tally *aitrace.CompletionTally, reply ModelReply) *agentports.Ru
 
 func (s *Service) streamCompletion(
 	ctx context.Context,
-	req *agentports.ChatCompletionRequest,
+	req *llmports.ChatCompletionRequest,
 	emit kernelports.AssistantStreamEmitter,
 ) (ModelReply, error) {
 	origin := aitrace.CallOriginFrom(ctx)
@@ -846,7 +851,7 @@ func (s *Service) streamCompletion(
 			emit(reasoningEvent(delta))
 		}
 	}
-	req.RetrySink = func(notice agentports.ChatRetryNotice) { emit(retryEvent(notice)) }
+	req.RetrySink = func(notice llmports.ChatRetryNotice) { emit(retryEvent(notice)) }
 
 	completion, err := s.completion.StreamChat(streamCtx, req, func(delta string) {
 		if guard.feed(delta) {
@@ -859,7 +864,7 @@ func (s *Service) streamCompletion(
 	// fine and is asked again.
 	if (guard.tripped || thinking.tripped) && ctx.Err() == nil {
 		if completion == nil {
-			completion = &agentports.ChatCompletionResult{}
+			completion = &llmports.ChatCompletionResult{}
 		}
 		span.SetAttributes(aitrace.AILooped.Bool(true))
 
@@ -883,9 +888,9 @@ func completionErrorType(ctx context.Context, err error) string {
 		return "cancelled"
 	case errors.Is(err, context.DeadlineExceeded):
 		return "timeout"
-	case errors.Is(err, agentports.ErrNoProviderConfigured):
+	case errors.Is(err, llmports.ErrNoProviderConfigured):
 		return "no_provider"
-	case errors.Is(err, agentports.ErrProvidersResting):
+	case errors.Is(err, llmports.ErrProvidersResting):
 		return "providers_resting"
 	default:
 		return "provider_error"
@@ -893,8 +898,8 @@ func completionErrorType(ctx context.Context, err error) string {
 }
 
 func (s *Service) declareTools(
-	req *agentports.ChatCompletionRequest,
-) *agentports.ChatCompletionRequest {
+	req *llmports.ChatCompletionRequest,
+) *llmports.ChatCompletionRequest {
 	if len(req.DeferredTools) == 0 {
 		return req
 	}
@@ -946,7 +951,7 @@ func (fx *localEffects) Emit(event kernelports.StreamEvent) { fx.emit(event) }
 
 func (fx *localEffects) Observe(
 	t *Turn,
-	call *agentports.ToolCall,
+	call *llmports.ToolCall,
 	outcome ToolOutcome,
 ) ToolOutcome {
 	return fx.s.observe(fx.observer, *call, outcome.internal(), t.earlier(call.Name)).exported()
@@ -958,7 +963,7 @@ func (fx *localEffects) Interject(t *Turn, check *WorldCheck) Interjections {
 	if check == nil || fx.s.changes == nil || t.req.Actor == nil {
 		return Interjections{}
 	}
-	found, err := fx.s.changes.Since(fx.ctx, &agentports.RecordChangesRequest{
+	found, err := fx.s.changes.Since(fx.ctx, &realtimeports.RecordChangesRequest{
 		OrganizationID: t.req.Actor.OrganizationID,
 		BusinessUnitID: t.req.Actor.BusinessUnitID,
 		Cursor:         check.Cursor,
@@ -991,15 +996,15 @@ func (*localEffects) Delegate(_ *Turn, calls []DelegateCall) []DelegateRun {
 // person into what the model reads. It is what a durable tool activity runs
 // after the call, where the call's raw result exists.
 func (s *Service) ObserveCall(
-	observe agentports.ToolObserver,
-	call *agentports.ToolCall,
+	observe agentruntimeports.ToolObserver,
+	call *llmports.ToolCall,
 	outcome ToolOutcome,
 ) ToolOutcome {
 	return s.observe(observe, *call, outcome.internal(), nil).exported()
 }
 
 func (s *Service) ObserveDispatch(
-	observe agentports.ToolObserver,
+	observe agentruntimeports.ToolObserver,
 	call *DispatchCall,
 	outcome *ToolOutcome,
 ) ToolOutcome {
@@ -1011,8 +1016,8 @@ func (s *Service) ObserveDispatch(
 // read again from the call, because what the loop parsed stays in workflow
 // code.
 func (s *Service) PublishStep(
-	observe agentports.ToolObserver,
-	call *agentports.ToolCall,
+	observe agentruntimeports.ToolObserver,
+	call *llmports.ToolCall,
 ) ToolOutcome {
 	if call.Name == requestDecisionName {
 		return s.observe(observe, *call, decisionStepOutcome(call.Arguments), nil).exported()
@@ -1026,22 +1031,22 @@ func (s *Service) PublishStep(
 
 func deltaEvent(text string) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
-		Event: agentports.AssistantEventDelta,
-		Data:  agentports.AssistantDeltaEvent{Text: text},
+		Event: assistantports.AssistantEventDelta,
+		Data:  assistantports.AssistantDeltaEvent{Text: text},
 	}
 }
 
 func reasoningEvent(text string) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
-		Event: agentports.AssistantEventReasoning,
-		Data:  agentports.AssistantReasoningEvent{Text: text},
+		Event: assistantports.AssistantEventReasoning,
+		Data:  assistantports.AssistantReasoningEvent{Text: text},
 	}
 }
 
-func retryEvent(notice agentports.ChatRetryNotice) kernelports.StreamEvent {
+func retryEvent(notice llmports.ChatRetryNotice) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
-		Event: agentports.AssistantEventRetrying,
-		Data: agentports.AssistantRetryingEvent{
+		Event: assistantports.AssistantEventRetrying,
+		Data: assistantports.AssistantRetryingEvent{
 			Attempt:     notice.Attempt,
 			Provider:    notice.Provider,
 			Reason:      notice.Reason,
@@ -1058,7 +1063,7 @@ func retryEvent(notice agentports.ChatRetryNotice) kernelports.StreamEvent {
 // and the tools can be reached.
 func (s *Service) DispatchStep(
 	ctx context.Context,
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 	call DispatchCall,
 ) ToolOutcome {
 	outcome := s.guardedDispatch(ctx, &guardedDispatchParams{
@@ -1090,7 +1095,7 @@ func (s *Service) DispatchStep(
 // permission check, so this runs where permissions can be read.
 func (s *Service) FindFor(
 	ctx context.Context,
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 	state ToolSetState,
 	arguments map[string]any,
 ) FoundTools {
@@ -1116,7 +1121,7 @@ func (s *Service) FindFor(
 const getToolPrefix = "get_"
 
 func isFetch(name string) bool {
-	return strings.HasPrefix(agentports.ReadingOrder(name), getToolPrefix)
+	return strings.HasPrefix(agenttoolports.ReadingOrder(name), getToolPrefix)
 }
 
 func (t *Turn) earlier(name string) []string {
@@ -1127,7 +1132,7 @@ func (t *Turn) earlier(name string) []string {
 	return slices.Clone(t.shown[name])
 }
 
-func (t *Turn) noteShown(call *agentports.ToolCall) {
+func (t *Turn) noteShown(call *llmports.ToolCall) {
 	if !isFetch(call.Name) || call.ID == "" {
 		return
 	}

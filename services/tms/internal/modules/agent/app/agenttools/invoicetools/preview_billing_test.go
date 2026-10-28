@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -88,7 +88,7 @@ func TestCorrectChargeCodePreview_ShowsEachChargeAndTheTotal(t *testing.T) {
 		}},
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "BQ-10")
 	assert.Contains(t, preview.Summary, "from 2150.00 to 2200.00")

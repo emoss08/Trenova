@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -129,7 +129,7 @@ func openDisputePlan() *invoiceports.InvoiceDisputePreview {
 	}
 }
 
-func openDisputeParams(invoiceID pulid.ID) agentports.ToolExecuteParams {
+func openDisputeParams(invoiceID pulid.ID) agenttoolports.ToolExecuteParams {
 	return agenttoolstest.ExecuteParams(map[string]any{
 		common.ParamInvoiceID:  invoiceID.String(),
 		paramDisputeReasonCode: string(invoice.DisputeReasonAccessorialDisputed),
@@ -142,15 +142,22 @@ func TestOpenInvoiceDispute_PreviewShowsTheCaseAndTheFlag(t *testing.T) {
 	t.Parallel()
 
 	disputer := &fakeDisputer{preview: openDisputePlan(), guard: &agenttoolstest.WriteGuard{}}
-	tool := NewOpenInvoiceDisputeTool(disputer).(agentports.ToolPreviewer)
+	tool := NewOpenInvoiceDisputeTool(disputer).(agenttoolports.ToolPreviewer)
 	params := openDisputeParams(disputer.preview.InvoiceBefore.ID)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, disputer.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		disputer.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
-	assert.Equal(t, "Would open a dispute on Invoice INV-4100 for 150.00 USD (AccessorialDisputed).",
-		preview.Summary)
+	assert.Equal(
+		t,
+		"Would open a dispute on Invoice INV-4100 for 150.00 USD (AccessorialDisputed).",
+		preview.Summary,
+	)
 	require.Len(t, preview.Changes, 2)
 	created := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceInvoiceDispute, created.Resource)
@@ -176,12 +183,12 @@ func TestOpenInvoiceDispute_ARefusalIsAWouldFail(t *testing.T) {
 	tool := NewOpenInvoiceDisputeTool(disputer)
 	params := openDisputeParams(disputer.preview.InvoiceBefore.ID)
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 	assert.Empty(t, preview.Changes)
 
-	err = tool.(agentports.ToolValidator).Validate(t.Context(), params)
+	err = tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "exceeds the open balance")
 }
@@ -205,7 +212,7 @@ func TestOpenInvoiceDispute_RefusesBadArguments(t *testing.T) {
 	for name, raw := range cases {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+			require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 				agenttoolstest.ExecuteParams(raw)))
 		})
 	}
@@ -229,7 +236,7 @@ func TestOpenInvoiceDispute_OpensAsTheActorWithTrimmedNotes(t *testing.T) {
 	assert.Equal(t, permission.OpCreate, policy.Operation)
 	assert.Equal(t, agent.TierActWithApproval, policy.MaxTier)
 	assert.NotNil(t, policy.TaintHold)
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceInvoice, target.Resource)
 }
@@ -262,13 +269,29 @@ func TestResolveInvoiceDispute_OnlyAPersonResolves(t *testing.T) {
 		paramResolutionNotes:   "Detention was on the rate confirmation",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, disputer.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		disputer.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "Resolved", agenttoolstest.FieldByPath(t, change, "status").After)
-	assert.Equal(t, "InvoiceUpheld", agenttoolstest.FieldByPath(t, change, paramDisputeResolution).After)
-	assert.Equal(t, "None", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 1), fieldDisputeStatus).After)
+	assert.Equal(
+		t,
+		"InvoiceUpheld",
+		agenttoolstest.FieldByPath(t, change, paramDisputeResolution).After,
+	)
+	assert.Equal(
+		t,
+		"None",
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 1),
+			fieldDisputeStatus,
+		).After,
+	)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
 	assert.Nil(t, disputer.resolved)
@@ -281,7 +304,7 @@ func TestResolveInvoiceDispute_OnlyAPersonResolves(t *testing.T) {
 	policy := tool.Policy()
 	assert.Equal(t, permission.OpApprove, policy.Operation)
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceInvoiceDispute, target.Resource)
 }
@@ -290,7 +313,7 @@ func TestResolveInvoiceDispute_AnAgentPrincipalCannotEvenPreviewIt(t *testing.T)
 	t.Parallel()
 
 	disputer := &fakeDisputer{preview: resolvedDisputePlan()}
-	tool := NewResolveInvoiceDisputeTool(disputer).(agentports.ToolPreviewer)
+	tool := NewResolveInvoiceDisputeTool(disputer).(agenttoolports.ToolPreviewer)
 	params := agenttoolstest.AgentParamsFor(map[string]any{
 		common.ParamDisputeID:  disputer.preview.Before.ID.String(),
 		paramDisputeResolution: string(invoice.DisputeResolutionInvoiceUpheld),
@@ -313,11 +336,19 @@ func TestWithdrawInvoiceDispute_WithdrawsWithItsNotes(t *testing.T) {
 		common.ParamNote:      "Paid in full on the 12th",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, disputer.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		disputer.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would withdraw")
-	assert.Equal(t, "Withdrawn", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After)
+	assert.Equal(
+		t,
+		"Withdrawn",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, disputer.withdrawn)

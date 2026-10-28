@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -52,7 +52,7 @@ func importDraftToolProviders() []any {
 	}
 }
 
-func draftPolicy(name string) agentports.ToolPolicy {
+func draftPolicy(name string) agenttoolports.ToolPolicy {
 	return readPolicy(name, readSpec{
 		resource:  permission.ResourceDocument,
 		scope:     agent.ToolScopeSelf,
@@ -100,7 +100,7 @@ func requireStopIndex(params map[string]any) (int, error) {
 
 type acceptFieldTool struct{}
 
-func newAcceptFieldTool() agentports.AgentQueryTool { return &acceptFieldTool{} }
+func newAcceptFieldTool() agenttoolports.AgentQueryTool { return &acceptFieldTool{} }
 
 func (t *acceptFieldTool) Name() string { return string(pagedraft.ActionAcceptField) }
 
@@ -121,7 +121,7 @@ func (t *acceptFieldTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *acceptFieldTool) Policy() agentports.ToolPolicy { return draftPolicy(t.Name()) }
+func (t *acceptFieldTool) Policy() agenttoolports.ToolPolicy { return draftPolicy(t.Name()) }
 
 func (t *acceptFieldTool) SearchTerms() []string {
 	return []string{"accept extracted value", "confirm draft field", importPageTerm}
@@ -129,7 +129,7 @@ func (t *acceptFieldTool) SearchTerms() []string {
 
 func (t *acceptFieldTool) Query(
 	_ context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -148,7 +148,7 @@ func (t *acceptFieldTool) Query(
 
 type acceptAllConfidentTool struct{}
 
-func newAcceptAllConfidentTool() agentports.AgentQueryTool {
+func newAcceptAllConfidentTool() agenttoolports.AgentQueryTool {
 	return &acceptAllConfidentTool{}
 }
 
@@ -170,7 +170,7 @@ func (t *acceptAllConfidentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *acceptAllConfidentTool) Policy() agentports.ToolPolicy {
+func (t *acceptAllConfidentTool) Policy() agenttoolports.ToolPolicy {
 	return draftPolicy(t.Name())
 }
 
@@ -180,7 +180,7 @@ func (t *acceptAllConfidentTool) SearchTerms() []string {
 
 func (t *acceptAllConfidentTool) Query(
 	_ context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -191,7 +191,7 @@ func (t *acceptAllConfidentTool) Query(
 
 type setFieldValueTool struct{}
 
-func newSetFieldValueTool() agentports.AgentQueryTool { return &setFieldValueTool{} }
+func newSetFieldValueTool() agenttoolports.AgentQueryTool { return &setFieldValueTool{} }
 
 func (t *setFieldValueTool) Name() string { return string(pagedraft.ActionSetFieldValue) }
 
@@ -216,7 +216,7 @@ func (t *setFieldValueTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *setFieldValueTool) Policy() agentports.ToolPolicy { return draftPolicy(t.Name()) }
+func (t *setFieldValueTool) Policy() agenttoolports.ToolPolicy { return draftPolicy(t.Name()) }
 
 func (t *setFieldValueTool) SearchTerms() []string {
 	return []string{"correct extracted value", "draft field", importPageTerm}
@@ -224,7 +224,7 @@ func (t *setFieldValueTool) SearchTerms() []string {
 
 func (t *setFieldValueTool) Query(
 	_ context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -344,7 +344,7 @@ func provideSetRequiredFieldTool(
 	serviceTypes servicetypeports.ServiceTypeRepository,
 	shipmentTypes shipmenttypeports.ShipmentTypeRepository,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &setRequiredFieldTool{
 		records: requiredRecordReader{
 			customers:     customers,
@@ -385,7 +385,7 @@ func (t *setRequiredFieldTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *setRequiredFieldTool) Policy() agentports.ToolPolicy { return draftPolicy(t.Name()) }
+func (t *setRequiredFieldTool) Policy() agenttoolports.ToolPolicy { return draftPolicy(t.Name()) }
 
 func (t *setRequiredFieldTool) SearchTerms() []string {
 	return []string{"draft required field", importPageTerm}
@@ -393,7 +393,7 @@ func (t *setRequiredFieldTool) SearchTerms() []string {
 
 func (t *setRequiredFieldTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -451,7 +451,7 @@ type setStopLocationTool struct {
 func provideSetStopLocationTool(
 	locations locationports.LocationRepository,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &setStopLocationTool{locations: locations, access: newFieldAccess(permissions)}
 }
 
@@ -480,7 +480,7 @@ func (t *setStopLocationTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *setStopLocationTool) Policy() agentports.ToolPolicy { return draftPolicy(t.Name()) }
+func (t *setStopLocationTool) Policy() agenttoolports.ToolPolicy { return draftPolicy(t.Name()) }
 
 func (t *setStopLocationTool) SearchTerms() []string {
 	return []string{"match draft stop", importPageTerm}
@@ -488,7 +488,7 @@ func (t *setStopLocationTool) SearchTerms() []string {
 
 func (t *setStopLocationTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -542,7 +542,7 @@ func locationLabel(code, name, city string) string {
 
 type setStopScheduleTool struct{}
 
-func newSetStopScheduleTool() agentports.AgentQueryTool { return &setStopScheduleTool{} }
+func newSetStopScheduleTool() agenttoolports.AgentQueryTool { return &setStopScheduleTool{} }
 
 func (t *setStopScheduleTool) Name() string { return string(pagedraft.ActionSetStopSchedule) }
 
@@ -569,7 +569,7 @@ func (t *setStopScheduleTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *setStopScheduleTool) Policy() agentports.ToolPolicy { return draftPolicy(t.Name()) }
+func (t *setStopScheduleTool) Policy() agenttoolports.ToolPolicy { return draftPolicy(t.Name()) }
 
 func (t *setStopScheduleTool) SearchTerms() []string {
 	return []string{
@@ -583,7 +583,7 @@ func (t *setStopScheduleTool) SearchTerms() []string {
 
 func (t *setStopScheduleTool) Query(
 	_ context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

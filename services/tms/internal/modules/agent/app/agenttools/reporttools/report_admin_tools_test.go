@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -212,11 +212,17 @@ func TestCancelReportRun_StopsARunWithoutChangingAnything(t *testing.T) {
 
 	reports := adminReports()
 	tool := NewCancelReportRunTool(reports)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramReportRunID: reports.run.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramReportRunID: reports.run.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reports.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reports.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Equal(t, "Would cancel the report run that is running.", preview.Summary)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, reports.run.ID, reports.canceled.RunID)
@@ -229,27 +235,49 @@ func TestReportDeletions_AreOnlyEverProposed(t *testing.T) {
 
 	reports := adminReports()
 	report := NewDeleteReportTool(reports)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramDefinitionID: reports.definition.ID.String()})
-	preview := agenttoolstest.PreviewWithoutWrites(t, reports.guard, func() (*agent.ToolPreview, error) {
-		return report.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramDefinitionID: reports.definition.ID.String()},
+	)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reports.guard,
+		func() (*agent.ToolPreview, error) {
+			return report.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Equal(t, `Would delete the saved report "Late deliveries", which shows on every `+
 		"colleague's Reports page.", preview.Summary)
 	require.NoError(t, report.Execute(t.Context(), params))
 
 	dashboard := NewDeleteDashboardTool(reports)
-	board := agenttoolstest.ExecuteParams(map[string]any{paramDashboardID: reports.dashboard.ID.String()})
-	preview = agenttoolstest.PreviewWithoutWrites(t, reports.guard, func() (*agent.ToolPreview, error) {
-		return dashboard.(agentports.ToolPreviewer).Preview(t.Context(), board)
-	})
-	assert.Equal(t, permission.ResourceDashboard, agenttoolstest.PreviewChange(t, preview, 0).Resource)
+	board := agenttoolstest.ExecuteParams(
+		map[string]any{paramDashboardID: reports.dashboard.ID.String()},
+	)
+	preview = agenttoolstest.PreviewWithoutWrites(
+		t,
+		reports.guard,
+		func() (*agent.ToolPreview, error) {
+			return dashboard.(agenttoolports.ToolPreviewer).Preview(t.Context(), board)
+		},
+	)
+	assert.Equal(
+		t,
+		permission.ResourceDashboard,
+		agenttoolstest.PreviewChange(t, preview, 0).Resource,
+	)
 	require.NoError(t, dashboard.Execute(t.Context(), board))
 
 	schedule := NewDeleteReportScheduleTool(reports)
-	stop := agenttoolstest.ExecuteParams(map[string]any{paramReportScheduleID: reports.schedule.ID.String()})
-	preview = agenttoolstest.PreviewWithoutWrites(t, reports.guard, func() (*agent.ToolPreview, error) {
-		return schedule.(agentports.ToolPreviewer).Preview(t.Context(), stop)
-	})
+	stop := agenttoolstest.ExecuteParams(
+		map[string]any{paramReportScheduleID: reports.schedule.ID.String()},
+	)
+	preview = agenttoolstest.PreviewWithoutWrites(
+		t,
+		reports.guard,
+		func() (*agent.ToolPreview, error) {
+			return schedule.(agenttoolports.ToolPreviewer).Preview(t.Context(), stop)
+		},
+	)
 	assert.Contains(t, preview.Summary, "runs 0 7 * * 1; the report is kept")
 	require.NoError(t, schedule.Execute(t.Context(), stop))
 
@@ -258,7 +286,7 @@ func TestReportDeletions_AreOnlyEverProposed(t *testing.T) {
 		reports.dashboard.ID,
 		reports.schedule.ID,
 	}, reports.deleted)
-	for _, tool := range []agentports.AgentTool{report, dashboard, schedule} {
+	for _, tool := range []agenttoolports.AgentTool{report, dashboard, schedule} {
 		assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier, tool.Name())
 	}
 }
@@ -268,11 +296,17 @@ func TestResetReportFork_ShowsWhatTheBuiltInPutsBack(t *testing.T) {
 
 	reports := adminReports()
 	tool := NewResetReportForkTool(reports)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramDefinitionID: reports.definition.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramDefinitionID: reports.definition.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reports.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reports.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "dropping the changes made to it")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, reports.definition.ID, reports.reset.DefinitionID)
@@ -289,9 +323,13 @@ func TestUpdateReportSchedule_KeepsWhatItIsNotGivenAndNeverLeavesUnasked(t *test
 		paramFormats:          []any{"xlsx"},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reports.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reports.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Equal(t, `Would change the schedule of the report "Late deliveries" to run `+
 		"0 7 * * 1 (America/Chicago) and email it to 2 recipients.", preview.Summary)
 
@@ -309,5 +347,5 @@ func TestUpdateReportSchedule_KeepsWhatItIsNotGivenAndNeverLeavesUnasked(t *test
 	assert.Equal(t, permission.OpExport, policy.Operation)
 
 	params.Params[paramFormats] = []any{"docx"}
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }

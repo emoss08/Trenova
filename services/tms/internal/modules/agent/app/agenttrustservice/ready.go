@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -92,7 +93,7 @@ func (s *Service) ready(
 		return []readyTool{}, nil
 	}
 
-	rows, err := s.trust.ListReady(ctx, agentports.ListReadyToolTrustRequest{
+	rows, err := s.trust.ListReady(ctx, agenttoolports.ListReadyToolTrustRequest{
 		TenantInfo: req.TenantInfo,
 		MinStreak:  req.Threshold,
 		Limit:      maxReadyTools,

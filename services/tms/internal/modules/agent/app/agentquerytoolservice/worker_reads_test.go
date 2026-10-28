@@ -3,7 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/stretchr/testify/assert"
@@ -123,7 +123,12 @@ func TestShapeWorkerRow(t *testing.T) {
 		assert.Equal(t, true, row[workerAssignable])
 		assert.Contains(t, profile, "hazmatExpiry")
 		assert.Nil(t, profile["hazmatExpiry"])
-		assert.NotContains(t, profile, "medicalCardExpiry", "a withheld date is not shown as missing")
+		assert.NotContains(
+			t,
+			profile,
+			"medicalCardExpiry",
+			"a withheld date is not shown as missing",
+		)
 	})
 }
 
@@ -188,7 +193,7 @@ func TestWorkerList_DispatchableFiltersByHoldEmploymentAndCompliance(t *testing.
 	require.ErrorContains(t, err, "must be true or false")
 }
 
-func dispatchCall(params map[string]any) *agentports.QueryToolParams {
+func dispatchCall(params map[string]any) *agenttoolports.QueryToolParams {
 	call := keyedCall(params)
 	call.DataAccessCeiling = permission.SensitivityInternal
 

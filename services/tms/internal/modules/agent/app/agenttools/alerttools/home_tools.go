@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -71,7 +71,7 @@ type homeEditor struct {
 	targets homeTargetChecker
 }
 
-func homeRequestFor(params agentports.ToolExecuteParams) *homelayoutservice.Request {
+func homeRequestFor(params agenttoolports.ToolExecuteParams) *homelayoutservice.Request {
 	return &homelayoutservice.Request{
 		TenantInfo: common.TenantFrom(params),
 		Principal: kernelports.PrincipalInfo{
@@ -88,13 +88,13 @@ func homeRequestFor(params agentports.ToolExecuteParams) *homelayoutservice.Requ
 // what a person approves is what runs.
 func (e homeEditor) plan(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 	edit homeEdit,
 ) (*homePlan, error) {
 	if params.Actor == nil || params.Actor.PrincipalType != permissionports.PrincipalTypeUser {
 		return nil, errortypes.NewAuthorizationError("Only a person has a home page to change")
 	}
-	owner := common.OptionalString(params.Params, agentports.SelfScopeOwnerParam)
+	owner := common.OptionalString(params.Params, agenttoolports.SelfScopeOwnerParam)
 	if owner == "" || owner != params.Actor.UserID.String() {
 		return nil, errortypes.NewAuthorizationError(
 			"This change is to someone else's home page; only they can approve it",
@@ -155,7 +155,7 @@ func (e homeEditor) plan(
 
 func (e homeEditor) execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 	edit homeEdit,
 ) error {
 	plan, err := e.plan(ctx, params, edit)
@@ -200,14 +200,14 @@ type AddHomeWidgetTool struct {
 func NewAddHomeWidgetTool(
 	layouts *homelayoutservice.Service,
 	reports *reporting.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &AddHomeWidgetTool{homeToolBase{editor: homeEditor{layouts: layouts, targets: reports}}}
 }
 
 func (t *AddHomeWidgetTool) Name() string { return "home_add_widget" }
 
-func (t *AddHomeWidgetTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *AddHomeWidgetTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceHomeLayoutPreset,
@@ -324,7 +324,7 @@ func (t *AddHomeWidgetTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *AddHomeWidgetTool) edit(params agentports.ToolExecuteParams) homeEdit {
+func (t *AddHomeWidgetTool) edit(params agenttoolports.ToolExecuteParams) homeEdit {
 	return func(
 		ctx context.Context,
 		layout *homelayout.Layout,
@@ -382,7 +382,7 @@ func (t *AddHomeWidgetTool) edit(params agentports.ToolExecuteParams) homeEdit {
 
 func (t *AddHomeWidgetTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.editor.plan(ctx, params, t.edit(params))
 	return err
@@ -390,7 +390,7 @@ func (t *AddHomeWidgetTool) Validate(
 
 func (t *AddHomeWidgetTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -500,7 +500,7 @@ func checkWidgetMetrics(
 // checkWidgetTargets refuses a report or dashboard the person cannot open.
 func (e homeEditor) checkWidgetTargets(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 	kind homelayout.ConfigKind,
 	config homelayout.WidgetConfig,
 	multiErr *errortypes.MultiError,
@@ -549,14 +549,14 @@ type RemoveHomeWidgetTool struct {
 	homeToolBase
 }
 
-func NewRemoveHomeWidgetTool(layouts *homelayoutservice.Service) agentports.AgentTool {
+func NewRemoveHomeWidgetTool(layouts *homelayoutservice.Service) agenttoolports.AgentTool {
 	return &RemoveHomeWidgetTool{homeToolBase{editor: homeEditor{layouts: layouts}}}
 }
 
 func (t *RemoveHomeWidgetTool) Name() string { return "home_remove_widget" }
 
-func (t *RemoveHomeWidgetTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *RemoveHomeWidgetTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceHomeLayoutPreset,
@@ -596,7 +596,7 @@ func (t *RemoveHomeWidgetTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *RemoveHomeWidgetTool) edit(params agentports.ToolExecuteParams) homeEdit {
+func (t *RemoveHomeWidgetTool) edit(params agenttoolports.ToolExecuteParams) homeEdit {
 	return func(
 		_ context.Context,
 		layout *homelayout.Layout,
@@ -619,7 +619,7 @@ func (t *RemoveHomeWidgetTool) edit(params agentports.ToolExecuteParams) homeEdi
 
 func (t *RemoveHomeWidgetTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.editor.plan(ctx, params, t.edit(params))
 	return err
@@ -627,7 +627,7 @@ func (t *RemoveHomeWidgetTool) Validate(
 
 func (t *RemoveHomeWidgetTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -640,7 +640,7 @@ type ArrangeHomeLayoutTool struct {
 	homeToolBase
 }
 
-func NewArrangeHomeLayoutTool(layouts *homelayoutservice.Service) agentports.AgentTool {
+func NewArrangeHomeLayoutTool(layouts *homelayoutservice.Service) agenttoolports.AgentTool {
 	return &ArrangeHomeLayoutTool{homeToolBase{editor: homeEditor{layouts: layouts}}}
 }
 
@@ -650,8 +650,8 @@ func (t *ArrangeHomeLayoutTool) SearchTerms() []string {
 	return append(homelayout.SpokenNames(), "reorder", "rearrange")
 }
 
-func (t *ArrangeHomeLayoutTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *ArrangeHomeLayoutTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceHomeLayoutPreset,
@@ -693,7 +693,7 @@ func (t *ArrangeHomeLayoutTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *ArrangeHomeLayoutTool) edit(params agentports.ToolExecuteParams) homeEdit {
+func (t *ArrangeHomeLayoutTool) edit(params agenttoolports.ToolExecuteParams) homeEdit {
 	return func(
 		_ context.Context,
 		layout *homelayout.Layout,
@@ -738,7 +738,7 @@ func (t *ArrangeHomeLayoutTool) edit(params agentports.ToolExecuteParams) homeEd
 
 func (t *ArrangeHomeLayoutTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.editor.plan(ctx, params, t.edit(params))
 	return err
@@ -746,7 +746,7 @@ func (t *ArrangeHomeLayoutTool) Validate(
 
 func (t *ArrangeHomeLayoutTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err

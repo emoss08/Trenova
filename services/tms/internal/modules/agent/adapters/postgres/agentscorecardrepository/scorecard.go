@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -179,18 +180,18 @@ func verdictsQuery(req *agentports.ScorecardRequest) *keel.Query[*keel.Row] {
 			step.ToolName,
 			step.Outcome.Text("verdict").NullIf("").Coalesce(keel.CaseString().
 				When(
-					step.Status.Eq(string(agentports.RunStepStarted)),
+					step.Status.Eq(string(agentruntimeports.RunStepStarted)),
 					keel.Text(string(aitrace.OutcomeUnknown)),
 				).
 				When(
-					step.Status.Eq(string(agentports.RunStepFailed)),
+					step.Status.Eq(string(agentruntimeports.RunStepFailed)),
 					keel.Text(string(aitrace.OutcomeFailed)),
 				).
 				Else(keel.Text(string(aitrace.OutcomeRan)))),
 			step.Outcome.Text("reason").Coalesce(""),
 		).
 		Where(
-			step.Kind.Eq(string(agentports.RunStepTool)),
+			step.Kind.Eq(string(agentruntimeports.RunStepTool)),
 			step.AgentDefinitionID.Eq(req.AgentDefinitionID),
 			step.CreatedAt.Gte(req.Since),
 		))

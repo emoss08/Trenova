@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/keel/analytics/table"
 	"github.com/emoss08/keel/analytics/value"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
@@ -52,7 +52,7 @@ var errNoReportNamed = errors.New(
 func resolveReportSource(
 	ctx context.Context,
 	reports reportRunner,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (reportSource, error) {
 	if raw := optionalString(params.Params, "definitionId"); raw != "" {
 		id, err := pulid.Parse(raw)
@@ -131,7 +131,7 @@ type actorCatalog struct {
 func catalogFor(
 	ctx context.Context,
 	reports reportRunner,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (*actorCatalog, error) {
 	request := reportingRequestFor(params)
 	catalog, err := reports.Catalog(ctx, &request)
@@ -191,7 +191,7 @@ type listReportDatasetsTool struct {
 	reports reportRunner
 }
 
-func newListReportDatasetsTool(reports reportRunner) agentports.AgentQueryTool {
+func newListReportDatasetsTool(reports reportRunner) agenttoolports.AgentQueryTool {
 	return &listReportDatasetsTool{reports: reports}
 }
 
@@ -223,7 +223,7 @@ func (t *listReportDatasetsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listReportDatasetsTool) Policy() agentports.ToolPolicy {
+func (t *listReportDatasetsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
 	})
@@ -231,7 +231,7 @@ func (t *listReportDatasetsTool) Policy() agentports.ToolPolicy {
 
 func (t *listReportDatasetsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -412,7 +412,7 @@ type describeReportDatasetTool struct {
 	reports reportRunner
 }
 
-func newDescribeReportDatasetTool(reports reportRunner) agentports.AgentQueryTool {
+func newDescribeReportDatasetTool(reports reportRunner) agenttoolports.AgentQueryTool {
 	return &describeReportDatasetTool{reports: reports}
 }
 
@@ -444,7 +444,7 @@ func (t *describeReportDatasetTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *describeReportDatasetTool) Policy() agentports.ToolPolicy {
+func (t *describeReportDatasetTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
 	})
@@ -463,7 +463,7 @@ const datasetNote = "Refer to a field by its dotted path: \"<key>\" for a field 
 
 func (t *describeReportDatasetTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -704,7 +704,7 @@ type describeReportTool struct {
 	reports reportRunner
 }
 
-func newDescribeReportTool(reports reportRunner) agentports.AgentQueryTool {
+func newDescribeReportTool(reports reportRunner) agenttoolports.AgentQueryTool {
 	return &describeReportTool{reports: reports}
 }
 
@@ -736,7 +736,7 @@ func (t *describeReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *describeReportTool) Policy() agentports.ToolPolicy {
+func (t *describeReportTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
 	})
@@ -744,7 +744,7 @@ func (t *describeReportTool) Policy() agentports.ToolPolicy {
 
 func (t *describeReportTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -922,7 +922,7 @@ type previewReportTool struct {
 	reports reportRunner
 }
 
-func newPreviewReportTool(reports reportRunner) agentports.AgentQueryTool {
+func newPreviewReportTool(reports reportRunner) agenttoolports.AgentQueryTool {
 	return &previewReportTool{reports: reports}
 }
 
@@ -965,7 +965,7 @@ func (t *previewReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *previewReportTool) Policy() agentports.ToolPolicy {
+func (t *previewReportTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
 	})
@@ -973,7 +973,7 @@ func (t *previewReportTool) Policy() agentports.ToolPolicy {
 
 func (t *previewReportTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -1006,7 +1006,7 @@ func (t *previewReportTool) Query(
 
 func (t *previewReportTool) source(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (reportSource, error) {
 	raw, given := params.Params["definition"]
 	if given && raw != nil {

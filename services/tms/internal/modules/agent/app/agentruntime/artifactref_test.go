@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,7 +14,7 @@ func TestArtifactRef(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("aart_")
-	shown := &agentports.ShownArtifact{ID: id, Kind: "table", Title: "Missing a [biller]"}
+	shown := &agentruntimeports.ShownArtifact{ID: id, Kind: "table", Title: "Missing a [biller]"}
 
 	ref := ArtifactRef(shown)
 	assert.Equal(t, "[Missing a biller](artifact:"+id.String()+")", ref)
@@ -25,9 +25,12 @@ func TestArtifactRef(t *testing.T) {
 func TestStripArtifactLinks(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"Eleven have no biller: Missing a biller. See the queue.",
-		StripArtifactLinks("Eleven have no biller: [Missing a biller](artifact:aart_01ABC). See the queue."),
+		StripArtifactLinks(
+			"Eleven have no biller: [Missing a biller](artifact:aart_01ABC). See the queue.",
+		),
 	)
 	assert.Equal(t,
 		"Open [the docs](https://example.com) for more.",
@@ -39,7 +42,7 @@ func TestStripArtifactLinks(t *testing.T) {
 func TestShownNote_NeverCallsPointingOptionalForAnArtifactThatMustBeLinked(t *testing.T) {
 	t.Parallel()
 
-	shown := &agentports.ShownArtifact{
+	shown := &agentruntimeports.ShownArtifact{
 		ID:    pulid.MustNew("aart_"),
 		Kind:  string(assistantartifact.KindEDIConnectionDraft),
 		Title: "EDI connection for Acme Retail Group",
@@ -58,7 +61,7 @@ func TestShownNote_NeverCallsPointingOptionalForAnArtifactThatMustBeLinked(t *te
 func TestShownNote_APagedTableIsPointedToHoweverShortItsPage(t *testing.T) {
 	t.Parallel()
 
-	shown := &agentports.ShownArtifact{
+	shown := &agentruntimeports.ShownArtifact{
 		ID:    pulid.MustNew("aart_"),
 		Kind:  string(assistantartifact.KindTableView),
 		Title: "Shipments",
@@ -80,7 +83,7 @@ func TestShownNote_APagedTableIsPointedToHoweverShortItsPage(t *testing.T) {
 func TestShownNote_AShortTableThatIsTheWholeListMayBeAnsweredInline(t *testing.T) {
 	t.Parallel()
 
-	shown := &agentports.ShownArtifact{
+	shown := &agentruntimeports.ShownArtifact{
 		ID:    pulid.MustNew("aart_"),
 		Kind:  string(assistantartifact.KindTableView),
 		Title: "Shipments",

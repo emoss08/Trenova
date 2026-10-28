@@ -3,7 +3,7 @@ package agentruntime
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -16,12 +16,12 @@ const loopRefusalKeyPrefix = "loop-refusal:"
 // RecordLoopRefusalsRequest names the turn or run whose loop refusals to
 // write and the agent that made the calls.
 type RecordLoopRefusalsRequest struct {
-	Ledger       agentports.RunStepLedger
+	Ledger       agentruntimeports.RunStepLedger
 	Tenant       pagination.TenantInfo
-	Owner        agentports.RunStepOwner
+	Owner        agentruntimeports.RunStepOwner
 	DefinitionID pulid.ID
 	Attempt      int
-	Refusals     []agentports.LoopRefusal
+	Refusals     []agentruntimeports.LoopRefusal
 }
 
 // RecordLoopRefusals writes each call the loop refused without dispatching
@@ -45,12 +45,12 @@ func RecordLoopRefusals(ctx context.Context, req *RecordLoopRefusalsRequest) int
 		if refusal.CallID == "" {
 			continue
 		}
-		step := agentports.RunStep{
+		step := agentruntimeports.RunStep{
 			OwnerKind:    req.Owner.Kind,
 			OwnerID:      req.Owner.ID,
 			Attempt:      req.Attempt,
-			Kind:         agentports.RunStepTool,
-			Status:       agentports.RunStepStarted,
+			Kind:         agentruntimeports.RunStepTool,
+			Status:       agentruntimeports.RunStepStarted,
 			Key:          loopRefusalKeyPrefix + refusal.CallID,
 			ToolName:     refusal.ToolName,
 			CallID:       refusal.CallID,
@@ -62,11 +62,11 @@ func RecordLoopRefusals(ctx context.Context, req *RecordLoopRefusalsRequest) int
 
 			continue
 		}
-		if verdict.State != agentports.StepFresh {
+		if verdict.State != agentruntimeports.StepFresh {
 			continue
 		}
-		step.Status = agentports.RunStepFailed
-		step.Outcome = agentports.RunStepOutcome{
+		step.Status = agentruntimeports.RunStepFailed
+		step.Outcome = agentruntimeports.RunStepOutcome{
 			Content: refusal.Content,
 			Failed:  true,
 			Reason:  refusal.Reason,

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -115,7 +115,7 @@ func (p *holdPatch) request(
 	return req
 }
 
-func readHoldPatch(params *agentports.ToolExecuteParams) (*holdPatch, error) {
+func readHoldPatch(params *agenttoolports.ToolExecuteParams) (*holdPatch, error) {
 	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 	if err != nil {
 		return nil, err
@@ -172,16 +172,16 @@ func readHoldPatch(params *agentports.ToolExecuteParams) (*holdPatch, error) {
 }
 
 func classifyHoldVisibility(
-	params agentports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
-) agentports.CallPolicy {
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+) agenttoolports.CallPolicy {
 	if common.OptionalBool(params.Params, ParamVisibleToCustomer) {
-		return agentports.CallPolicy{Egress: agent.EgressCustomerVisible}
+		return agenttoolports.CallPolicy{Egress: agent.EgressCustomerVisible}
 	}
 
-	return agentports.CallPolicy{Egress: agent.EgressInternal}
+	return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
 }
 
-func NewUpdateShipmentHoldTool(holds holdUpdater) agentports.AgentTool {
+func NewUpdateShipmentHoldTool(holds holdUpdater) agenttoolports.AgentTool {
 	base := common.NewReportingReceivableTool(&common.ReceivableSpec{
 		Name:     "shipment_update_hold",
 		Artifact: common.ShipmentRecordEntity,
@@ -228,7 +228,7 @@ func NewUpdateShipmentHoldTool(holds holdUpdater) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			patch *holdPatch,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*holdUpdatePlan, error) {
 			current, err := holds.GetByID(ctx, &patch.get)
 			if err != nil {
@@ -246,7 +246,7 @@ func NewUpdateShipmentHoldTool(holds holdUpdater) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			patch *holdPatch,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			current, err := holds.GetByID(ctx, &patch.get)
 			if err != nil {

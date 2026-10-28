@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -125,7 +125,7 @@ type listTool struct {
 	description string
 }
 
-func newListTool(spec listSpec) agentports.AgentQueryTool {
+func newListTool(spec listSpec) agenttoolports.AgentQueryTool {
 	return buildListTool(&spec)
 }
 
@@ -238,7 +238,7 @@ func (t *listTool) Description() string { return t.description }
 
 func (t *listTool) SearchTerms() []string { return t.spec.searchTerms }
 
-func (t *listTool) Policy() agentports.ToolPolicy {
+func (t *listTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: t.spec.resource,
 	})
@@ -327,7 +327,7 @@ func sortDirectionSchema() map[string]any {
 
 func (t *listTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -478,7 +478,7 @@ func (w *listWindow) outcome(
 }
 
 type listFetch struct {
-	params   *agentports.QueryToolParams
+	params   *agenttoolports.QueryToolParams
 	opts     *pagination.QueryOptions
 	cursor   pagination.CursorInfo
 	gate     *fieldGate
@@ -538,7 +538,7 @@ type viewRun struct {
 // row past limit to say whether there are more.
 func (t *listTool) runView(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	query string,
 	filters []domaintypes.FieldFilter,
 	sorting []domaintypes.SortField,

@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -80,17 +80,17 @@ func (s *Service) SubmitJudgeBatch(
 	}
 
 	room := decision.Room
-	handle, err := s.batches.SubmitBatch(ctx, &agentports.BatchCompletionRequest{
+	handle, err := s.batches.SubmitBatch(ctx, &llmports.BatchCompletionRequest{
 		TenantInfo:    req.TenantInfo,
 		Task:          aiprovider.TaskEvaluationJudge,
 		Items:         items,
 		SpendLimitUSD: &room,
 	})
 	switch {
-	case errors.Is(err, agentports.ErrBatchUnsupported),
-		errors.Is(err, agentports.ErrNoProviderConfigured):
+	case errors.Is(err, llmports.ErrBatchUnsupported),
+		errors.Is(err, llmports.ErrNoProviderConfigured):
 		return &JudgeBatch{Note: batchUnsupportedNote}, nil
-	case errors.Is(err, agentports.ErrBatchOverBudget):
+	case errors.Is(err, llmports.ErrBatchOverBudget):
 		return &JudgeBatch{Note: batchOverBudgetNote}, nil
 	case err != nil:
 		return nil, err
@@ -121,7 +121,7 @@ func (s *Service) SubmitJudgeBatch(
 func (s *Service) judgeBatchItems(
 	ctx context.Context,
 	req *SubmitJudgeBatchRequest,
-) ([]agentports.BatchCompletionItem, []pulid.ID, error) {
+) ([]llmports.BatchCompletionItem, []pulid.ID, error) {
 	run, err := s.suiteRuns.GetByID(ctx, agentqualityports.GetAgentSuiteRunRequest{
 		ID:         req.SuiteRunID,
 		TenantInfo: req.TenantInfo,
@@ -146,7 +146,7 @@ func (s *Service) judgeBatchItems(
 		caseByID[evalCase.ID] = evalCase
 	}
 
-	items := make([]agentports.BatchCompletionItem, 0, len(req.EvaluationIDs))
+	items := make([]llmports.BatchCompletionItem, 0, len(req.EvaluationIDs))
 	deferred := make([]pulid.ID, 0)
 	for _, id := range req.EvaluationIDs {
 		evaluation, ok := evaluations[id]
@@ -164,7 +164,7 @@ func (s *Service) judgeBatchItems(
 
 			continue
 		}
-		items = append(items, agentports.BatchCompletionItem{
+		items = append(items, llmports.BatchCompletionItem{
 			CustomID: id.String(),
 			Request:  *judgeRequest(req.TenantInfo, evaluation, evalCase),
 		})
@@ -213,7 +213,7 @@ func (s *Service) CheckJudgeBatch(
 		return nil, errortypes.NewBusinessError(batchUnavailableNote)
 	}
 
-	status, err := s.batches.BatchStatus(ctx, &agentports.BatchStatusRequest{
+	status, err := s.batches.BatchStatus(ctx, &llmports.BatchStatusRequest{
 		TenantInfo: req.TenantInfo,
 		ProviderID: req.Batch.ProviderID,
 		BatchID:    req.Batch.BatchID,
@@ -262,7 +262,7 @@ func (s *Service) CollectJudgeBatch(
 		}
 	}
 
-	results, err := s.batches.BatchResults(ctx, &agentports.BatchResultsRequest{
+	results, err := s.batches.BatchResults(ctx, &llmports.BatchResultsRequest{
 		TenantInfo:   req.TenantInfo,
 		Task:         aiprovider.TaskEvaluationJudge,
 		ProviderID:   req.Batch.ProviderID,

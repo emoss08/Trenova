@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
@@ -19,14 +19,14 @@ type sensitivityReader interface {
 
 type Redactor struct {
 	sensitivity sensitivityReader
-	queryTools  agentports.AgentQueryToolRegistry
-	actionTools agentports.AgentToolRegistry
+	queryTools  agenttoolports.AgentQueryToolRegistry
+	actionTools agenttoolports.AgentToolRegistry
 }
 
 func NewRedactor(
 	sensitivity sensitivityReader,
-	queryTools agentports.AgentQueryToolRegistry,
-	actionTools agentports.AgentToolRegistry,
+	queryTools agenttoolports.AgentQueryToolRegistry,
+	actionTools agenttoolports.AgentToolRegistry,
 ) *Redactor {
 	return &Redactor{sensitivity: sensitivity, queryTools: queryTools, actionTools: actionTools}
 }

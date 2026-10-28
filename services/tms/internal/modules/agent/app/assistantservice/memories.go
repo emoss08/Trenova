@@ -5,7 +5,8 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +17,7 @@ import (
 // keepTurnMemories puts what the turn did with memory on its last reply of
 // its own: the memories it used, shown above the reply, and what it kept,
 // shown under it. Another agent's steps are never that reply.
-func keepTurnMemories(messages []conversation.Message, run *agentports.RunResult) {
+func keepTurnMemories(messages []conversation.Message, run *agentruntimeports.RunResult) {
 	if run == nil || (len(run.UsedMemoryIDs) == 0 && len(run.SavedMemories) == 0) {
 		return
 	}
@@ -98,7 +99,7 @@ func (s *Service) deskMemoryActor(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	userID pulid.ID,
-) *agentports.DeskMemoryActor {
+) *agentmemoryports.DeskMemoryActor {
 	actor := &permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    userID,
@@ -107,13 +108,13 @@ func (s *Service) deskMemoryActor(
 		BusinessUnitID: tenant.BuID,
 	}
 
-	return &agentports.DeskMemoryActor{
+	return &agentmemoryports.DeskMemoryActor{
 		Actor:           actor,
 		MayManageShared: s.memories.MayManageShared(ctx, tenant, userID),
 	}
 }
 
-func memoryNote(memory *agentports.DeskMemory) conversation.MemoryNote {
+func memoryNote(memory *agentmemoryports.DeskMemory) conversation.MemoryNote {
 	note := conversation.MemoryNote{
 		ID:          memory.Memory.ID,
 		Content:     memory.Memory.Content,
@@ -137,7 +138,7 @@ func memoryNote(memory *agentports.DeskMemory) conversation.MemoryNote {
 	return note
 }
 
-func memoryNoteLink(link *agentports.DeskMemoryLink) *conversation.MemoryNoteLink {
+func memoryNoteLink(link *agentmemoryports.DeskMemoryLink) *conversation.MemoryNoteLink {
 	if link == nil {
 		return nil
 	}

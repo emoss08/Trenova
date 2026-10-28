@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/teamscope"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -47,7 +47,7 @@ func NewLeaveScope(
 
 func (s LeaveScope) worker(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	operation permission.Operation,
 	workerID pulid.ID,
 ) error {
@@ -63,7 +63,7 @@ func (s LeaveScope) worker(
 
 func (s LeaveScope) leaveCase(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	operation permission.Operation,
 	caseID pulid.ID,
 ) error {
@@ -79,7 +79,7 @@ func (s LeaveScope) leaveCase(
 
 func (s LeaveScope) entry(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	operation permission.Operation,
 	entryID pulid.ID,
 ) error {

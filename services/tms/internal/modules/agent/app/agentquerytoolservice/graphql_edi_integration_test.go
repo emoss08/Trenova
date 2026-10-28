@@ -8,12 +8,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicarrierinvoicerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediinboundfilerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimappingprofilerepository"
@@ -23,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -206,7 +205,10 @@ func TestConvertedReads_EDIReadsUnderRowLevelSecurity(t *testing.T) {
 		}),
 	}
 	engine := &mocks.DenyResourcesPermissionEngine{}
-	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
+	reader := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: engine, Resolvers: resolvers},
+	)
 	public := agentreadtest.NewReader(t, agentreadtest.Options{
 		Engine: &publicRole{}, Resolvers: resolvers,
 	})
@@ -284,7 +286,13 @@ func TestConvertedReads_EDIReadsUnderRowLevelSecurity(t *testing.T) {
 	}{
 		{"edi_get_inbound_file", "inboundFileId", ours.files[0], other.files[0], "file.fileName"},
 		{"edi_get_message", "messageId", ours.messages[0], other.messages[0], "message.status"},
-		{"edi_get_transfer", "transferId", ours.transfers[0], other.transfers[0], "transfer.status"},
+		{
+			"edi_get_transfer",
+			"transferId",
+			ours.transfers[0],
+			other.transfers[0],
+			"transfer.status",
+		},
 	}
 	for _, g := range gets {
 		t.Run(g.tool, func(t *testing.T) {
@@ -298,7 +306,7 @@ func TestConvertedReads_EDIReadsUnderRowLevelSecurity(t *testing.T) {
 			}
 			assert.NotContains(t, fmt.Sprint(record), "SECRET")
 
-			_, err = converted.Query(ours.ctx, &agentports.QueryToolParams{
+			_, err = converted.Query(ours.ctx, &agenttoolports.QueryToolParams{
 				OrganizationID: actor.OrganizationID,
 				BusinessUnitID: actor.BusinessUnitID,
 				Actor:          actor,

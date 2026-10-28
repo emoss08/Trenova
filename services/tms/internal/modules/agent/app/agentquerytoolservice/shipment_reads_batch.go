@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -143,7 +143,7 @@ func (t *getShipmentTool) withBatchReads(
 
 func (t *getShipmentTool) several(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	ids []pulid.ID,
 	detail shipmentDetail,
 ) (any, error) {
@@ -225,7 +225,7 @@ func shipmentReadRowOf(entity *shipment.Shipment) shipmentReadRow {
 
 func (t *getShipmentTool) readableBatch(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) shipmentActivityAccess {
 	var access shipmentActivityAccess
 	if t.batchComments != nil {

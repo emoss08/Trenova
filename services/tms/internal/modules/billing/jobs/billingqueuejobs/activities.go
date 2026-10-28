@@ -3,7 +3,7 @@ package billingqueuejobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingqueuejobs/billingqueuecontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -22,14 +22,14 @@ type ActivitiesParams struct {
 
 	ReviewRepo billingqueueports.BillingQueueReviewRepository
 	Review     billingqueueports.BillingQueueReviewService
-	Realtime   agentports.RealtimeService `optional:"true"`
+	Realtime   realtimeports.RealtimeService `optional:"true"`
 	Logger     *zap.Logger
 }
 
 type Activities struct {
 	repo     billingqueueports.BillingQueueReviewRepository
 	review   billingqueueports.BillingQueueReviewService
-	realtime agentports.RealtimeService
+	realtime realtimeports.RealtimeService
 	l        *zap.Logger
 }
 
@@ -224,7 +224,7 @@ func (a *Activities) publishRunChanged(
 	}
 	if err := a.realtime.PublishResourceInvalidation(
 		ctx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: tenant.OrgID,
 			BusinessUnitID: tenant.BuID,
 			Resource:       invalidationResource,

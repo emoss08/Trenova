@@ -9,8 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/completionjobs/completioncontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,8 +39,8 @@ func newEnv(t *testing.T) *testsuite.TestWorkflowEnvironment {
 	return env
 }
 
-func request() *agentports.StructuredCompletionRequest {
-	return &agentports.StructuredCompletionRequest{
+func request() *llmports.StructuredCompletionRequest {
+	return &llmports.StructuredCompletionRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		System:     "Answer in JSON.",
 	}
@@ -51,7 +52,7 @@ func TestStructuredCompletionWorkflow_ReturnsTheModelsAnswer(t *testing.T) {
 	env := newEnv(t)
 	var a *Activities
 	env.OnActivity(a.CompleteStructuredActivity, mock.Anything, mock.Anything).
-		Return(&agentports.StructuredCompletionResult{Text: `{"ok":true}`, ModelIdentifier: "m"}, nil).
+		Return(&llmports.StructuredCompletionResult{Text: `{"ok":true}`, ModelIdentifier: "m"}, nil).
 		Once()
 
 	env.ExecuteWorkflow(
@@ -61,7 +62,7 @@ func TestStructuredCompletionWorkflow_ReturnsTheModelsAnswer(t *testing.T) {
 
 	require.True(t, env.IsWorkflowCompleted())
 	require.NoError(t, env.GetWorkflowError())
-	var result agentports.StructuredCompletionResult
+	var result llmports.StructuredCompletionResult
 	require.NoError(t, env.GetWorkflowResult(&result))
 	assert.JSONEq(t, `{"ok":true}`, result.Text)
 	env.AssertExpectations(t)
@@ -75,13 +76,13 @@ func TestStructuredCompletionWorkflow_RetriesATransientFailure(t *testing.T) {
 	var a *Activities
 	calls := 0
 	env.OnActivity(a.CompleteStructuredActivity, mock.Anything, mock.Anything).
-		Return(func(context.Context, *agentports.StructuredCompletionRequest) (*agentports.StructuredCompletionResult, error) {
+		Return(func(context.Context, *llmports.StructuredCompletionRequest) (*llmports.StructuredCompletionResult, error) {
 			calls++
 			if calls == 1 {
 				return nil, modelcall.Classify(context.DeadlineExceeded)
 			}
 
-			return &agentports.StructuredCompletionResult{Text: "{}"}, nil
+			return &llmports.StructuredCompletionResult{Text: "{}"}, nil
 		})
 
 	env.ExecuteWorkflow(
@@ -102,7 +103,7 @@ func TestStructuredCompletionWorkflow_DoesNotRetryARejection(t *testing.T) {
 	var a *Activities
 	calls := 0
 	env.OnActivity(a.CompleteStructuredActivity, mock.Anything, mock.Anything).
-		Return(func(context.Context, *agentports.StructuredCompletionRequest) (*agentports.StructuredCompletionResult, error) {
+		Return(func(context.Context, *llmports.StructuredCompletionRequest) (*llmports.StructuredCompletionResult, error) {
 			calls++
 
 			return nil, modelcall.Classify(rejected{})
@@ -117,7 +118,7 @@ func TestStructuredCompletionWorkflow_DoesNotRetryARejection(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, 1, calls)
 
-	var failure agentports.ProviderFailure
+	var failure llmports.ProviderFailure
 	require.ErrorAs(t, modelcallcontract.Err(err), &failure)
 	assert.Equal(t, http.StatusBadRequest, failure.ProviderStatus())
 }
@@ -153,7 +154,7 @@ func TestTestAIProviderWorkflow_ProbesOnce(t *testing.T) {
 		Return(func(
 			context.Context,
 			*completioncontract.TestAIProviderPayload,
-		) (*agentports.TestAIProviderResult, error) {
+		) (*aiproviderports.TestAIProviderResult, error) {
 			calls++
 
 			return nil, modelcall.Classify(context.DeadlineExceeded)

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
@@ -179,7 +179,7 @@ func (t *RecurringPayTool[E]) ParamSchema() map[string]any {
 	)
 }
 
-func (t *RecurringPayTool[E]) Policy() agentports.ToolPolicy {
+func (t *RecurringPayTool[E]) Policy() agenttoolports.ToolPolicy {
 	operation := permission.OpCreate
 	rationale := "Sets money taken from or added to a driver's pay every settlement; only a " +
 		"person agrees it."
@@ -197,9 +197,9 @@ func (t *RecurringPayTool[E]) Policy() agentports.ToolPolicy {
 	}).Policy()
 }
 
-func (t *RecurringPayTool[E]) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *RecurringPayTool[E]) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	if !t.update {
-		return agentports.ToolTarget{}, false
+		return agenttoolports.ToolTarget{}, false
 	}
 
 	return common.TargetOf(params, t.kind.idParam, t.kind.resource)
@@ -288,7 +288,7 @@ type recurringPlan[E any] struct {
 
 func (t *RecurringPayTool[E]) planned(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*recurringPlan[E], error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -352,7 +352,7 @@ func (t *RecurringPayTool[E]) planned(
 
 func (t *RecurringPayTool[E]) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
@@ -364,7 +364,7 @@ func (t *RecurringPayTool[E]) Validate(
 
 func (t *RecurringPayTool[E]) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -388,7 +388,7 @@ func (t *RecurringPayTool[E]) Execute(
 
 func (t *RecurringPayTool[E]) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
@@ -732,14 +732,14 @@ func (b EarningBook) update(
 	return b.pay.UpdateEarning(ctx, entity, actor)
 }
 
-func ProvideCreateRecurringDeductionTool(s *driverpayservice.Service) agentports.AgentTool {
+func ProvideCreateRecurringDeductionTool(s *driverpayservice.Service) agenttoolports.AgentTool {
 	return &RecurringPayTool[driverpay.RecurringDeduction]{
 		kind: deductionKind(),
 		book: DeductionBook{pay: s},
 	}
 }
 
-func ProvideUpdateRecurringDeductionTool(s *driverpayservice.Service) agentports.AgentTool {
+func ProvideUpdateRecurringDeductionTool(s *driverpayservice.Service) agenttoolports.AgentTool {
 	return &RecurringPayTool[driverpay.RecurringDeduction]{
 		kind:   deductionKind(),
 		book:   DeductionBook{pay: s},
@@ -747,14 +747,14 @@ func ProvideUpdateRecurringDeductionTool(s *driverpayservice.Service) agentports
 	}
 }
 
-func ProvideCreateRecurringEarningTool(s *driverpayservice.Service) agentports.AgentTool {
+func ProvideCreateRecurringEarningTool(s *driverpayservice.Service) agenttoolports.AgentTool {
 	return &RecurringPayTool[driverpay.RecurringEarning]{
 		kind: earningKind(),
 		book: EarningBook{pay: s},
 	}
 }
 
-func ProvideUpdateRecurringEarningTool(s *driverpayservice.Service) agentports.AgentTool {
+func ProvideUpdateRecurringEarningTool(s *driverpayservice.Service) agenttoolports.AgentTool {
 	return &RecurringPayTool[driverpay.RecurringEarning]{
 		kind:   earningKind(),
 		book:   EarningBook{pay: s},

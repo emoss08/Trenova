@@ -7,7 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -309,7 +310,7 @@ func TestShipmentList_HoldsFollowTheReadersAccess(t *testing.T) {
 		))
 
 	_, err := tool.Query(t.Context(), chatParams(map[string]any{"onHold": true}, ""))
-	var refused *agentports.ReadRefusedError
+	var refused *graphqlreadports.ReadRefusedError
 	require.True(t, errors.As(err, &refused), "a hold filter is refused, not ignored")
 	assert.Equal(t, permission.ResourceShipmentHold, refused.Resource)
 
@@ -348,7 +349,7 @@ func TestGetShipment_SaysWhenCommentsAndHoldsAreLeftOutForAccess(t *testing.T) {
 		Comment: "Chicago DC closed the dock for an inventory count",
 	}}}
 	_, holds := heldShipments()
-	newTool := func(permissions *fakePermissions) agentports.AgentQueryTool {
+	newTool := func(permissions *fakePermissions) agenttoolports.AgentQueryTool {
 		return newGetShipmentTool(
 			&fakeShipmentGetter{entity: fixture.entity},
 			comments,

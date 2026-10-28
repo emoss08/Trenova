@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -24,7 +25,7 @@ type Params struct {
 
 	ProposalService      agentports.AgentProposalService
 	DecisionService      agentports.AgentDecisionService
-	PreviewService       agentports.ProposalPreviewService `optional:"true"`
+	PreviewService       agentruntimeports.ProposalPreviewService `optional:"true"`
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
@@ -32,7 +33,7 @@ type Params struct {
 type Handler struct {
 	proposalService agentports.AgentProposalService
 	decisionService agentports.AgentDecisionService
-	previews        agentports.ProposalPreviewService
+	previews        agentruntimeports.ProposalPreviewService
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
 }
@@ -133,11 +134,14 @@ func (h *Handler) preview(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	preview, err := h.previews.ForProposal(c.Request.Context(), &agentports.ProposalPreviewRequest{
-		Proposal:      proposal,
-		Modifications: modifications,
-		Viewer:        &agentports.PreviewViewer{Actor: &actor},
-	})
+	preview, err := h.previews.ForProposal(
+		c.Request.Context(),
+		&agentruntimeports.ProposalPreviewRequest{
+			Proposal:      proposal,
+			Modifications: modifications,
+			Viewer:        &agentruntimeports.PreviewViewer{Actor: &actor},
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

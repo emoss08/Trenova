@@ -8,19 +8,19 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/pagetest"
-
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -44,7 +44,9 @@ type manufacturerRows struct {
 	connections []*equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest
 }
 
-func (m *manufacturerRows) matching(filter *pagination.QueryOptions) []*equipmentmanufacturer.EquipmentManufacturer {
+func (m *manufacturerRows) matching(
+	filter *pagination.QueryOptions,
+) []*equipmentmanufacturer.EquipmentManufacturer {
 	out := make([]*equipmentmanufacturer.EquipmentManufacturer, 0, len(m.rows))
 	for _, row := range m.rows {
 		if matches(row, filter) {
@@ -55,11 +57,15 @@ func (m *manufacturerRows) matching(filter *pagination.QueryOptions) []*equipmen
 	return out
 }
 
-func matches(row *equipmentmanufacturer.EquipmentManufacturer, filter *pagination.QueryOptions) bool {
+func matches(
+	row *equipmentmanufacturer.EquipmentManufacturer,
+	filter *pagination.QueryOptions,
+) bool {
 	if filter == nil {
 		return true
 	}
-	if filter.Query != "" && !strings.Contains(strings.ToLower(row.Name), strings.ToLower(filter.Query)) {
+	if filter.Query != "" &&
+		!strings.Contains(strings.ToLower(row.Name), strings.ToLower(filter.Query)) {
 		return false
 	}
 	for _, f := range filter.FieldFilters {
@@ -158,7 +164,7 @@ func seedManufacturers() *manufacturerRows {
 type harness struct {
 	repo   *manufacturerRows
 	engine permissionports.PermissionEngine
-	tool   agentports.AgentQueryTool
+	tool   agenttoolports.AgentQueryTool
 }
 
 func newHarness(t *testing.T, engine permissionports.PermissionEngine) *harness {
@@ -197,7 +203,7 @@ func (h *harness) read(
 ) (map[string]any, error) {
 	t.Helper()
 
-	data, err := h.tool.Query(readscope.With(t.Context(), nil), &agentports.QueryToolParams{
+	data, err := h.tool.Query(readscope.With(t.Context(), nil), &agenttoolports.QueryToolParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		Actor:          actor,
@@ -345,7 +351,11 @@ func TestGraphQLListTool_KeepsTheCursorContract(t *testing.T) {
 	t.Run("a smaller page", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := h.query(t, person, map[string]any{"status": []any{"Active"}, "limit": 2, "after": cursor})
+		_, err := h.query(
+			t,
+			person,
+			map[string]any{"status": []any{"Active"}, "limit": 2, "after": cursor},
+		)
 		require.NoError(t, err)
 	})
 }
@@ -372,13 +382,18 @@ func TestGraphQLListTool_RefusesExactlyWhatAuthorizeRefuses(t *testing.T) {
 			t.Run(engineName+"/"+actorName, func(t *testing.T) {
 				t.Parallel()
 
-				check, err := engine.Check(t.Context(),
-					actor.PermissionCheck(permission.ResourceEquipmentManufacturer, permission.OpRead))
+				check, err := engine.Check(
+					t.Context(),
+					actor.PermissionCheck(
+						permission.ResourceEquipmentManufacturer,
+						permission.OpRead,
+					),
+				)
 				require.NoError(t, err)
 
 				_, readErr := newHarness(t, engine).query(t, actor, map[string]any{"limit": 5})
 
-				var refused *agentports.ReadRefusedError
+				var refused *graphqlreadports.ReadRefusedError
 				assert.Equal(t, !check.Allowed, errors.As(readErr, &refused),
 					"authorize allowed=%v, the read returned %v", check.Allowed, readErr)
 				if check.Allowed {
@@ -415,7 +430,7 @@ func TestGraphQLListTool_ReadsWhatTheRepositoryToolRead(t *testing.T) {
 					"field": "status", "operator": "in", "values": status,
 				}}
 			}
-			before, err := old.Query(t.Context(), &agentports.QueryToolParams{
+			before, err := old.Query(t.Context(), &agenttoolports.QueryToolParams{
 				OrganizationID: person.OrganizationID,
 				BusinessUnitID: person.BusinessUnitID,
 				Actor:          person,
@@ -461,7 +476,7 @@ func TestGraphQLListTool_PagesThroughWhatTheRepositoryToolPagedThrough(t *testin
 	oldArgs := map[string]any{"limit": 2}
 	for pages := 0; ; pages++ {
 		require.Less(t, pages, 10, "the repository tool never reached its last page")
-		got, err := old.Query(t.Context(), &agentports.QueryToolParams{
+		got, err := old.Query(t.Context(), &agenttoolports.QueryToolParams{
 			OrganizationID: person.OrganizationID,
 			BusinessUnitID: person.BusinessUnitID,
 			Actor:          person,
@@ -498,7 +513,9 @@ func (publicRole) GetResourcePermissions(
 	pulid.ID,
 	string,
 ) (*permissionports.ResourcePermissionDetail, error) {
-	return &permissionports.ResourcePermissionDetail{MaxSensitivity: permission.SensitivityPublic}, nil
+	return &permissionports.ResourcePermissionDetail{
+		MaxSensitivity: permission.SensitivityPublic,
+	}, nil
 }
 
 func (r publicRole) GetResourcePermissionsBatch(
@@ -541,7 +558,7 @@ func TestGraphQLListTool_AViewCannotFilterOnAWithheldField(t *testing.T) {
 
 	h := newHarness(t, &publicRole{})
 	person := agentreadtest.Person()
-	params := &agentports.QueryToolParams{
+	params := &agenttoolports.QueryToolParams{
 		OrganizationID: person.OrganizationID,
 		BusinessUnitID: person.BusinessUnitID,
 		Actor:          person,

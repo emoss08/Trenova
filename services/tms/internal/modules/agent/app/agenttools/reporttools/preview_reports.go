@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
@@ -132,7 +132,7 @@ func reportAudience(visibility report.Visibility) string {
 
 func (t *CreateReportTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	save, err := t.prepare(params)
 	if err != nil {
@@ -172,7 +172,7 @@ func warnUnsaveableReport(
 
 func (t *UpdateReportTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	save, existing, err := t.prepare(ctx, params)
 	if err != nil {
@@ -201,7 +201,7 @@ func (t *UpdateReportTool) Preview(
 }
 
 func (t *ForkReportTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*reporting.ForkCannedRequest, *canned.Entry, error) {
 	key, err := common.RequireString(params.Params, "reportKey")
 	if err != nil {
@@ -226,7 +226,7 @@ func (t *ForkReportTool) request(
 
 func (t *ForkReportTool) Preview(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := common.GuardPreview(t, &params); err != nil {
 		return nil, err

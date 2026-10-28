@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentboardbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
@@ -40,7 +40,7 @@ type detentionDesk interface {
 type Params struct {
 	fx.In
 
-	Console         agentports.DispatchConsoleService
+	Console         dispatchconsoleports.DispatchConsoleService
 	Capabilities    shipmentports.ShipmentBoardCapabilitiesReader
 	Watchlist       shipmentports.ShipmentWatchlistReader
 	Comments        shipmentports.ShipmentCommentService
@@ -57,7 +57,7 @@ type Params struct {
 }
 
 type Dependencies struct {
-	Console         agentports.DispatchConsoleService
+	Console         dispatchconsoleports.DispatchConsoleService
 	Capabilities    shipmentports.ShipmentBoardCapabilitiesReader
 	Watchlist       shipmentports.ShipmentWatchlistReader
 	Comments        shipmentports.ShipmentCommentService
@@ -75,7 +75,7 @@ type Dependencies struct {
 }
 
 type Service struct {
-	console         agentports.DispatchConsoleService
+	console         dispatchconsoleports.DispatchConsoleService
 	capabilities    shipmentports.ShipmentBoardCapabilitiesReader
 	watchlist       shipmentports.ShipmentWatchlistReader
 	comments        shipmentports.ShipmentCommentService

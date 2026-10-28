@@ -23,6 +23,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -69,11 +71,17 @@ type shadowReader interface {
 }
 
 type runReader interface {
-	GetByID(ctx context.Context, req agentports.GetAgentRunByIDRequest) (*agent.AgentRun, error)
+	GetByID(
+		ctx context.Context,
+		req agentruntimeports.GetAgentRunByIDRequest,
+	) (*agent.AgentRun, error)
 }
 
 type threadReader interface {
-	GetThread(ctx context.Context, req agentports.GetThreadRequest) (*conversation.Thread, error)
+	GetThread(
+		ctx context.Context,
+		req assistantports.GetThreadRequest,
+	) (*conversation.Thread, error)
 }
 
 type definitionReader interface {
@@ -102,23 +110,23 @@ type Params struct {
 	Plans       agentports.AgentPlanRepository
 	Proposals   agentports.AgentProposalRepository
 	Decisions   agentports.AgentDecisionService
-	Runs        agentports.AgentRunRepository
+	Runs        agentruntimeports.AgentRunRepository
 	Definitions agentdefinitionports.AgentDefinitionRepository
 	Permissions permissionports.PermissionEngine
 	// Conversations says whose conversation raised a plan, for a person
 	// deciding their own.
-	Conversations agentports.ConversationRepository `optional:"true"`
+	Conversations assistantports.ConversationRepository `optional:"true"`
 	Shadow        *agentshadow.Resolver
 	AuditService  auditports.AuditService
 	Activity      agentports.AgentActivityPublisher `optional:"true"`
 	// Watchtower takes a decided plan off the feed.
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// FollowUps has the conversation that raised the plan report its outcome.
-	FollowUps agentports.DecisionFollowUps `optional:"true"`
+	FollowUps assistantports.DecisionFollowUps `optional:"true"`
 	// Previews says what the plan's steps would do, as the decider sees it,
 	// so an approval approves what was shown and nothing that moved on.
-	Previews agentports.ProposalPreviewService `optional:"true"`
-	Metrics  *metrics.Registry                 `optional:"true"`
+	Previews agentruntimeports.ProposalPreviewService `optional:"true"`
+	Metrics  *metrics.Registry                        `optional:"true"`
 	// Workflows holds an approval from a person's own conversation for its
 	// undo window. Without it an approval goes through at once.
 	Workflows kernelports.WorkflowStarter `optional:"true"`
@@ -137,8 +145,8 @@ type Service struct {
 	audit      actionLogger
 	activity   agentports.AgentActivityPublisher
 	watchtower watchtowerports.WatchtowerProjector
-	followUps  agentports.DecisionFollowUps
-	previews   agentports.ProposalPreviewService
+	followUps  assistantports.DecisionFollowUps
+	previews   agentruntimeports.ProposalPreviewService
 	metrics    *metrics.ProposalPreview
 	workflows  kernelports.WorkflowStarter
 }
@@ -411,7 +419,7 @@ func (s *Service) AssertOwnPlan(
 		return err
 	}
 
-	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         plan.RunID,
 		TenantInfo: &tenant,
 	})
@@ -426,7 +434,7 @@ func (s *Service) AssertOwnPlan(
 		return notYours
 	}
 
-	if _, err = s.threads.GetThread(ctx, agentports.GetThreadRequest{
+	if _, err = s.threads.GetThread(ctx, assistantports.GetThreadRequest{
 		ID:         run.SubjectID,
 		UserID:     actor.UserID,
 		TenantInfo: tenant,
@@ -481,7 +489,7 @@ func (s *Service) stepRuns(
 	runs := make([]*agent.AgentRun, 0, len(steps)+1)
 	runs = append(runs, planRun)
 	for _, runID := range otherStepRuns(plan, steps) {
-		stepRun, runErr := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+		stepRun, runErr := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 			ID:         runID,
 			TenantInfo: &tenant,
 		})
@@ -533,8 +541,8 @@ func (s *Service) PlanHolds(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	plans []*agent.AgentPlan,
-) (map[pulid.ID]*agentports.ProposalHold, error) {
-	holds := make(map[pulid.ID]*agentports.ProposalHold, len(plans))
+) (map[pulid.ID]*assistantports.ProposalHold, error) {
+	holds := make(map[pulid.ID]*assistantports.ProposalHold, len(plans))
 	waiting := make([]pulid.ID, 0, len(plans))
 	for _, plan := range plans {
 		if plan != nil && plan.Status == agent.PlanStatusPending {
@@ -641,7 +649,7 @@ func (s *Service) followUp(
 		return
 	}
 
-	s.followUps.FollowUp(ctx, agentports.DecisionFollowUpRequest{
+	s.followUps.FollowUp(ctx, assistantports.DecisionFollowUpRequest{
 		TenantInfo: tenant,
 		RunID:      plan.RunID,
 		PlanID:     plan.ID,

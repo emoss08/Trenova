@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -169,7 +169,7 @@ type getDispatchBoardTool struct {
 	board boardReader
 }
 
-func newGetDispatchBoardTool(board boardReader) agentports.AgentQueryTool {
+func newGetDispatchBoardTool(board boardReader) agenttoolports.AgentQueryTool {
 	return &getDispatchBoardTool{board: board}
 }
 
@@ -234,7 +234,7 @@ func (t *getDispatchBoardTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getDispatchBoardTool) Policy() agentports.ToolPolicy {
+func (t *getDispatchBoardTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipmentMove,
 	})
@@ -242,7 +242,7 @@ func (t *getDispatchBoardTool) Policy() agentports.ToolPolicy {
 
 func (t *getDispatchBoardTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

@@ -7,7 +7,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,13 +22,13 @@ type stubCompletion struct {
 	need     string
 	err      error
 	calls    int
-	lastReq  *agentports.StructuredCompletionRequest
+	lastReq  *llmports.StructuredCompletionRequest
 }
 
 func (s *stubCompletion) CompleteStructured(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	s.calls++
 	s.lastReq = req
 	if s.err != nil {
@@ -42,21 +42,21 @@ func (s *stubCompletion) CompleteStructured(
 		Need:      s.need,
 	})
 
-	return &agentports.StructuredCompletionResult{Text: string(text)}, nil
+	return &llmports.StructuredCompletionResult{Text: string(text)}, nil
 }
 
 func (s *stubCompletion) CompleteChat(
 	_ context.Context,
-	_ *agentports.ChatCompletionRequest,
-) (*agentports.ChatCompletionResult, error) {
+	_ *llmports.ChatCompletionRequest,
+) (*llmports.ChatCompletionResult, error) {
 	return nil, errors.New("not used")
 }
 
 func (s *stubCompletion) StreamChat(
 	context.Context,
-	*agentports.ChatCompletionRequest,
-	agentports.ChatStreamSink,
-) (*agentports.ChatCompletionResult, error) {
+	*llmports.ChatCompletionRequest,
+	llmports.ChatStreamSink,
+) (*llmports.ChatCompletionResult, error) {
 	return nil, errors.New("not used")
 }
 
@@ -160,7 +160,7 @@ func TestEvaluate_AllowsWhenNoClassifierConfigured(t *testing.T) {
 
 	stub := &stubCompletion{
 		err: errortypes.NewBusinessError("no provider").
-			WithInternal(agentports.ErrNoProviderConfigured),
+			WithInternal(llmports.ErrNoProviderConfigured),
 	}
 	decision := newGuard(
 		t,
@@ -320,20 +320,20 @@ func TestEvaluateOutput(t *testing.T) {
 // to poll.
 func (s *stubCompletion) SubmitBackground(
 	ctx context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.BackgroundSubmission, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.BackgroundSubmission, error) {
 	result, err := s.CompleteStructured(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return &agentports.BackgroundSubmission{Result: result}, nil
+	return &llmports.BackgroundSubmission{Result: result}, nil
 }
 
 func (s *stubCompletion) PollBackground(
 	context.Context,
-	*agentports.BackgroundPollRequest,
-) (*agentports.BackgroundOutcome, error) {
+	*llmports.BackgroundPollRequest,
+) (*llmports.BackgroundOutcome, error) {
 	return nil, errors.New("this completion runs inline and issues no handle to poll")
 }
 

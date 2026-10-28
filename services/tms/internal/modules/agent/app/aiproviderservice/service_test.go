@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,17 +18,17 @@ import (
 )
 
 type fakeProviderRepo struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 
 	provider *aiprovider.Provider
 	getErr   error
-	marked   []agentports.MarkAIProviderTestedRequest
+	marked   []aiproviderports.MarkAIProviderTestedRequest
 	markErr  error
 }
 
 func (f *fakeProviderRepo) GetByID(
 	_ context.Context,
-	_ agentports.GetAIProviderByIDRequest,
+	_ aiproviderports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	if f.getErr != nil {
 		return nil, f.getErr
@@ -39,14 +39,14 @@ func (f *fakeProviderRepo) GetByID(
 
 func (f *fakeProviderRepo) MarkTested(
 	_ context.Context,
-	req agentports.MarkAIProviderTestedRequest,
+	req aiproviderports.MarkAIProviderTestedRequest,
 ) error {
 	f.marked = append(f.marked, req)
 	return f.markErr
 }
 
 type fakeProber struct {
-	result *agentports.TestAIProviderResult
+	result *aiproviderports.TestAIProviderResult
 	seen   string
 	probed *aiprovider.Provider
 }
@@ -55,7 +55,7 @@ func (f *fakeProber) Probe(
 	_ context.Context,
 	provider *aiprovider.Provider,
 	apiKey string,
-) *agentports.TestAIProviderResult {
+) *aiproviderports.TestAIProviderResult {
 	f.seen = apiKey
 	f.probed = provider
 	return f.result
@@ -65,7 +65,7 @@ func (f *fakeProber) ListModels(
 	_ context.Context,
 	_ *aiprovider.Provider,
 	apiKey string,
-) ([]agentports.AIProviderModelOption, error) {
+) ([]aiproviderports.AIProviderModelOption, error) {
 	f.seen = apiKey
 	return nil, nil
 }
@@ -99,7 +99,7 @@ func testProvider(t *testing.T, svc *Service) *aiprovider.Provider {
 
 func TestRunTestRecordsProbeOutcomeOnProvider(t *testing.T) {
 	repo := &fakeProviderRepo{}
-	prober := &fakeProber{result: &agentports.TestAIProviderResult{
+	prober := &fakeProber{result: &aiproviderports.TestAIProviderResult{
 		Success:         true,
 		Message:         "Connected",
 		ModelIdentifier: "qwen3:32b",
@@ -109,7 +109,7 @@ func TestRunTestRecordsProbeOutcomeOnProvider(t *testing.T) {
 	svc := newTestService(repo, prober)
 	repo.provider = testProvider(t, svc)
 
-	result, err := svc.RunTest(t.Context(), agentports.GetAIProviderByIDRequest{
+	result, err := svc.RunTest(t.Context(), aiproviderports.GetAIProviderByIDRequest{
 		ID: repo.provider.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: repo.provider.OrganizationID,
@@ -135,12 +135,12 @@ func TestRunTestRecordsProbeOutcomeOnProvider(t *testing.T) {
 func TestRunTestStillReturnsProbeResultWhenRecordingFails(t *testing.T) {
 	repo := &fakeProviderRepo{markErr: errors.New("db down")}
 	prober := &fakeProber{
-		result: &agentports.TestAIProviderResult{Success: false, Message: "Refused"},
+		result: &aiproviderports.TestAIProviderResult{Success: false, Message: "Refused"},
 	}
 	svc := newTestService(repo, prober)
 	repo.provider = testProvider(t, svc)
 
-	result, err := svc.RunTest(t.Context(), agentports.GetAIProviderByIDRequest{
+	result, err := svc.RunTest(t.Context(), aiproviderports.GetAIProviderByIDRequest{
 		ID: repo.provider.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: repo.provider.OrganizationID,
@@ -155,14 +155,14 @@ func TestRunTestStillReturnsProbeResultWhenRecordingFails(t *testing.T) {
 }
 
 type fakeTester struct {
-	asked  []agentports.GetAIProviderByIDRequest
-	result *agentports.TestAIProviderResult
+	asked  []aiproviderports.GetAIProviderByIDRequest
+	result *aiproviderports.TestAIProviderResult
 }
 
 func (f *fakeTester) Test(
 	_ context.Context,
-	req agentports.GetAIProviderByIDRequest,
-) (*agentports.TestAIProviderResult, error) {
+	req aiproviderports.GetAIProviderByIDRequest,
+) (*aiproviderports.TestAIProviderResult, error) {
 	f.asked = append(f.asked, req)
 
 	return f.result, nil
@@ -170,15 +170,15 @@ func (f *fakeTester) Test(
 
 func (f *fakeTester) ListModels(
 	_ context.Context,
-	_ *agentports.ProbeAIProviderModelsRequest,
-) ([]agentports.AIProviderModelOption, error) {
+	_ *aiproviderports.ProbeAIProviderModelsRequest,
+) ([]aiproviderports.AIProviderModelOption, error) {
 	return nil, nil
 }
 
 func (f *fakeTester) TestDraft(
 	_ context.Context,
-	_ *agentports.ProbeAIProviderDraftRequest,
-) (*agentports.AIProviderDraftTestResult, error) {
+	_ *aiproviderports.ProbeAIProviderDraftRequest,
+) (*aiproviderports.AIProviderDraftTestResult, error) {
 	return f.result, nil
 }
 
@@ -186,11 +186,11 @@ func (f *fakeTester) TestDraft(
 // the provider exists and hands it over.
 func TestTestHandsTheProbeToAWorker(t *testing.T) {
 	repo := &fakeProviderRepo{}
-	tester := &fakeTester{result: &agentports.TestAIProviderResult{Success: true}}
+	tester := &fakeTester{result: &aiproviderports.TestAIProviderResult{Success: true}}
 	svc := newTestService(repo, &fakeProber{})
 	svc.tester = tester
 	repo.provider = testProvider(t, svc)
-	req := agentports.GetAIProviderByIDRequest{
+	req := aiproviderports.GetAIProviderByIDRequest{
 		ID: repo.provider.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: repo.provider.OrganizationID,
@@ -214,7 +214,7 @@ func TestTestOfAMissingProviderStartsNothing(t *testing.T) {
 	svc := newTestService(repo, &fakeProber{})
 	svc.tester = tester
 
-	_, err := svc.Test(t.Context(), agentports.GetAIProviderByIDRequest{
+	_, err := svc.Test(t.Context(), aiproviderports.GetAIProviderByIDRequest{
 		ID: pulid.MustNew("aiprv_"),
 	})
 	require.Error(t, err)
@@ -223,8 +223,12 @@ func TestTestOfAMissingProviderStartsNothing(t *testing.T) {
 
 func strPtr(value string) *string { return &value }
 
-func saveRequest(provider *aiprovider.Provider, baseURL string, key *string) *agentports.SaveAIProviderRequest {
-	return &agentports.SaveAIProviderRequest{
+func saveRequest(
+	provider *aiprovider.Provider,
+	baseURL string,
+	key *string,
+) *aiproviderports.SaveAIProviderRequest {
+	return &aiproviderports.SaveAIProviderRequest{
 		ID:      provider.ID,
 		Name:    provider.Name,
 		Kind:    provider.Kind,
@@ -254,7 +258,11 @@ func TestUpdate_RefusesToKeepTheKeyForANewServer(t *testing.T) {
 	provider.BaseURL = "https://api.openai.com/v1"
 	svc.repo = &fakeProviderRepo{provider: provider}
 
-	_, err := svc.Update(t.Context(), saveRequest(provider, "https://attacker.example/v1", nil), nil)
+	_, err := svc.Update(
+		t.Context(),
+		saveRequest(provider, "https://attacker.example/v1", nil),
+		nil,
+	)
 
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
@@ -274,24 +282,42 @@ func TestKeptKeyForNewEndpoint(t *testing.T) {
 
 	moved := *existing
 	moved.BaseURL = "https://attacker.example/v1"
-	assert.True(t, keptKeyForNewEndpoint(existing, &moved, saveRequest(existing, moved.BaseURL, nil)))
-	assert.False(t,
-		keptKeyForNewEndpoint(existing, &moved, saveRequest(existing, moved.BaseURL, strPtr("sk-new"))),
-		"a key entered with the move is the new server's own")
+	assert.True(
+		t,
+		keptKeyForNewEndpoint(existing, &moved, saveRequest(existing, moved.BaseURL, nil)),
+	)
+	assert.False(
+		t,
+		keptKeyForNewEndpoint(
+			existing,
+			&moved,
+			saveRequest(existing, moved.BaseURL, strPtr("sk-new")),
+		),
+		"a key entered with the move is the new server's own",
+	)
 
 	repathed := *existing
 	repathed.BaseURL = "https://api.openai.com/v2"
-	assert.False(t, keptKeyForNewEndpoint(existing, &repathed, saveRequest(existing, repathed.BaseURL, nil)),
-		"the same server keeps its key")
+	assert.False(
+		t,
+		keptKeyForNewEndpoint(existing, &repathed, saveRequest(existing, repathed.BaseURL, nil)),
+		"the same server keeps its key",
+	)
 
 	rekinded := *existing
 	rekinded.Kind = aiprovider.KindOpenAIResponses
-	assert.True(t, keptKeyForNewEndpoint(existing, &rekinded, saveRequest(existing, existing.BaseURL, nil)))
+	assert.True(
+		t,
+		keptKeyForNewEndpoint(existing, &rekinded, saveRequest(existing, existing.BaseURL, nil)),
+	)
 
 	keyless := *existing
 	keyless.APIKey = ""
-	assert.False(t, keptKeyForNewEndpoint(&keyless, &moved, saveRequest(existing, moved.BaseURL, nil)),
-		"nothing stored, nothing to leak")
+	assert.False(
+		t,
+		keptKeyForNewEndpoint(&keyless, &moved, saveRequest(existing, moved.BaseURL, nil)),
+		"nothing stored, nothing to leak",
+	)
 }
 
 // A deployment that hosts many organizations turns private addresses off, so
@@ -312,7 +338,11 @@ func TestApply_RefusesAPrivateNetworkTheServerDisallows(t *testing.T) {
 	assert.False(t, provider.AllowPrivateNetwork)
 
 	svc.ai = nil
-	require.NoError(t, svc.apply(provider, req, nil), "an absent setting keeps self-hosted models working")
+	require.NoError(
+		t,
+		svc.apply(provider, req, nil),
+		"an absent setting keeps self-hosted models working",
+	)
 	assert.True(t, provider.AllowPrivateNetwork)
 }
 

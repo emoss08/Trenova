@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -98,9 +99,9 @@ func (s *Service) settlePreview(
 		return nil, agent.ReviewRequiredError()
 	}
 
-	previewReq := &agentports.ProposalPreviewRequest{
+	previewReq := &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
-		Viewer:   &agentports.PreviewViewer{Actor: actor},
+		Viewer:   &agentruntimeports.PreviewViewer{Actor: actor},
 		Deciding: true,
 	}
 	if len(req.Modifications) > 0 {

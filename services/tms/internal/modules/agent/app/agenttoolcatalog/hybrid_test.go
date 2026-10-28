@@ -3,7 +3,7 @@ package agenttoolcatalog
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -191,7 +191,12 @@ func TestRankHybrid_FillsItsSlotsAndNeverWidens(t *testing.T) {
 	t.Parallel()
 
 	catalog := testCatalog()
-	allowed := []string{"worker_list", "equipment_list_tractors", "dispatch_assign_move", "report_run"}
+	allowed := []string{
+		"worker_list",
+		"equipment_list_tractors",
+		"dispatch_assign_move",
+		"report_run",
+	}
 	ranked := catalog.RankHybrid(Query{
 		Allowed: allowed,
 		Text:    "zzzz",
@@ -229,7 +234,7 @@ func TestItems_KeyEachToolByTheHashOfItsText(t *testing.T) {
 	items[0].Key = "changed"
 	assert.NotEqual(t, "changed", catalog.Items()[0].Key, "callers get a copy")
 
-	edited := New([]agentports.AgentToolDescriptor{
+	edited := New([]agenttoolports.AgentToolDescriptor{
 		descriptor("worker_list", "List every worker."),
 	})
 	original := ""
@@ -246,7 +251,7 @@ func TestItems_KeyEachToolByTheHashOfItsText(t *testing.T) {
 func TestDescriptorText_NamesTheToolAndWhatPeopleCallIt(t *testing.T) {
 	t.Parallel()
 
-	text := DescriptorText(&agentports.AgentToolDescriptor{
+	text := DescriptorText(&agenttoolports.AgentToolDescriptor{
 		Name:        "home_get_layout",
 		Description: " Read the person's home page. ",
 		SearchTerms: []string{"my dashboard", "home"},

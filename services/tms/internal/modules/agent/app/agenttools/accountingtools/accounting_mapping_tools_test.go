@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -69,7 +69,8 @@ func (f *fakeMappingWriter) GetReferenceObjects(
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	out := make([]*accountingsync.AccountingReferenceObject, 0, 1)
 	for _, ref := range f.refs {
-		if ref.Kind == req.Kind && len(req.ExternalIDs) == 1 && ref.ExternalID == req.ExternalIDs[0] {
+		if ref.Kind == req.Kind && len(req.ExternalIDs) == 1 &&
+			ref.ExternalID == req.ExternalIDs[0] {
 			out = append(out, ref)
 		}
 	}
@@ -207,12 +208,15 @@ func TestSetAccountingMapping_RefusesAnInventedOrInactiveRecord(t *testing.T) {
 	tool := newSetAccountingMappingTool(writer)
 
 	for _, externalID := range []string{"999", "52"} {
-		err := tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			"system":     "QuickBooksOnline",
-			"mappingId":  row.ID.String(),
-			"externalId": externalID,
-			"reason":     "guess",
-		}))
+		err := tool.(agenttoolports.ToolValidator).Validate(
+			t.Context(),
+			agenttoolstest.ExecuteParams(map[string]any{
+				"system":     "QuickBooksOnline",
+				"mappingId":  row.ID.String(),
+				"externalId": externalID,
+				"reason":     "guess",
+			}),
+		)
 		require.Error(t, err, externalID)
 	}
 	assert.Nil(t, writer.set)
@@ -252,7 +256,9 @@ func TestClearAccountingMapping_RefusesAnUnmatchedMapping(t *testing.T) {
 	row := proposedCustomerMapping()
 	writer := &fakeMappingWriter{row: row}
 	tool := newClearAccountingMappingTool(writer)
-	params := agenttoolstest.ExecuteParams(map[string]any{"system": "QuickBooksOnline", "mappingId": row.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{"system": "QuickBooksOnline", "mappingId": row.ID.String()},
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, writer.cleared)
@@ -319,7 +325,7 @@ func TestAccountingMappingTools_AskAPersonBeforeChangingWhatPosts(t *testing.T) 
 	t.Parallel()
 
 	writer := &fakeMappingWriter{}
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		newSetAccountingMappingTool(writer),
 		newClearAccountingMappingTool(writer),
 		newCreateAccountingReferenceRecordTool(writer),

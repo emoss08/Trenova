@@ -3,10 +3,12 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,17 +23,17 @@ func TestRun_HandsQueryToolsTheAgentsDataAccess(t *testing.T) {
 	}
 	for setting, want := range cases {
 		tool := &agenttest.StubQueryTool{ToolName: "invoice_get", Result: map[string]any{}}
-		completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 			toolTurn("invoice_get", map[string]any{"invoiceId": "inv_1"}),
 			textTurn("done"),
 		}}
 		rt := newRuntime(completion, &stubQueryRegistry{
-			Tools: []agentports.AgentQueryTool{tool},
+			Tools: []agenttoolports.AgentQueryTool{tool},
 		}, &stubActionRegistry{}, nil)
 
 		definition := testDefinition("invoice_get")
 		definition.DataAccessCeiling = setting
-		_, err := rt.Run(t.Context(), &agentports.RunRequest{
+		_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 			Definition: definition,
 			Actor:      testActor(),
 			Input:      "what does the invoice say",

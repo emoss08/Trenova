@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -189,7 +190,7 @@ func (s *Service) runMessages(
 	tenant pagination.TenantInfo,
 	runID pulid.ID,
 ) ([]conversation.Message, error) {
-	runs, err := s.runs.ListTranscriptsByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
+	runs, err := s.runs.ListTranscriptsByIDs(ctx, agentruntimeports.ListAgentRunsByIDsRequest{
 		IDs:        []pulid.ID{runID},
 		TenantInfo: tenant,
 	})

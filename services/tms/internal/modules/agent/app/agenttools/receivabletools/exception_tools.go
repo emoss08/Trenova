@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -71,7 +71,7 @@ func exceptionNoteProperty(what string) map[string]any {
 }
 
 func exceptionTargetFrom(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (watchtowerports.ExceptionTarget, error) {
 	id, err := common.RequirePulid(params.Params, paramWatchtowerItemID)
 	if err != nil {
@@ -82,7 +82,7 @@ func exceptionTargetFrom(
 
 type exceptionChangeSpec[R any] struct {
 	spec    *common.ReceivableSpec
-	request func(params *agentports.ToolExecuteParams) (R, error)
+	request func(params *agenttoolports.ToolExecuteParams) (R, error)
 	target  func(req R) *watchtowerports.ExceptionTarget
 	apply   func(
 		ctx context.Context,
@@ -96,17 +96,17 @@ type exceptionChangeSpec[R any] struct {
 func newExceptionChangeTool[R any](
 	exceptions watchtowerports.ExceptionService,
 	cfg *exceptionChangeSpec[R],
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	cfg.spec.Resource = permission.ResourceWatchtower
 	cfg.spec.Operation = permission.OpUpdate
 	cfg.spec.Egress = agent.EgressInternal
-	cfg.spec.Target = func(params map[string]any) (agentports.ToolTarget, bool) {
+	cfg.spec.Target = func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 		return common.TargetOf(params, paramWatchtowerItemID, permission.ResourceWatchtower)
 	}
 	plan := func(
 		ctx context.Context,
 		req R,
-		params *agentports.ToolExecuteParams,
+		params *agenttoolports.ToolExecuteParams,
 	) (*kernelports.RecordChange[watchtower.Item], error) {
 		target := cfg.target(req)
 		before, err := exceptions.GetException(ctx, watchtowerports.GetWatchtowerItemRequest{
@@ -133,7 +133,7 @@ func newExceptionChangeTool[R any](
 		cfg.spec,
 		common.ReceivablePlan[R, *kernelports.RecordChange[watchtower.Item]]{
 			Request: cfg.request,
-			Settle: func(ctx context.Context, req R, params *agentports.ToolExecuteParams) error {
+			Settle: func(ctx context.Context, req R, params *agenttoolports.ToolExecuteParams) error {
 				_, err := plan(ctx, req, params)
 				return err
 			},
@@ -157,7 +157,7 @@ func newExceptionChangeTool[R any](
 			Run: func(
 				ctx context.Context,
 				req R,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				target := cfg.target(req)
 				target.DryRun = false
@@ -176,7 +176,7 @@ func newExceptionChangeTool[R any](
 	)
 }
 
-func NewAssignExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
+func NewAssignExceptionTool(exceptions watchtowerports.ExceptionService) agenttoolports.AgentTool {
 	return newExceptionChangeTool(
 		exceptions,
 		&exceptionChangeSpec[*watchtowerports.AssignExceptionRequest]{
@@ -203,7 +203,7 @@ func NewAssignExceptionTool(exceptions watchtowerports.ExceptionService) agentpo
 				Required:    []string{paramWatchtowerItemID},
 				SearchTerms: []string{"assign exception", "give to", "owner", "reassign alert"},
 			},
-			request: func(params *agentports.ToolExecuteParams) (*watchtowerports.AssignExceptionRequest, error) {
+			request: func(params *agenttoolports.ToolExecuteParams) (*watchtowerports.AssignExceptionRequest, error) {
 				target, err := exceptionTargetFrom(params)
 				if err != nil {
 					return nil, err
@@ -245,7 +245,7 @@ func NewAssignExceptionTool(exceptions watchtowerports.ExceptionService) agentpo
 	)
 }
 
-func NewSnoozeExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
+func NewSnoozeExceptionTool(exceptions watchtowerports.ExceptionService) agenttoolports.AgentTool {
 	return newExceptionChangeTool(
 		exceptions,
 		&exceptionChangeSpec[*watchtowerports.SnoozeExceptionRequest]{
@@ -269,7 +269,7 @@ func NewSnoozeExceptionTool(exceptions watchtowerports.ExceptionService) agentpo
 				Required:    []string{paramWatchtowerItemID, paramSnoozeUntil},
 				SearchTerms: []string{"snooze exception", "remind me later", "put aside"},
 			},
-			request: func(params *agentports.ToolExecuteParams) (*watchtowerports.SnoozeExceptionRequest, error) {
+			request: func(params *agenttoolports.ToolExecuteParams) (*watchtowerports.SnoozeExceptionRequest, error) {
 				target, err := exceptionTargetFrom(params)
 				if err != nil {
 					return nil, err
@@ -303,7 +303,7 @@ func NewSnoozeExceptionTool(exceptions watchtowerports.ExceptionService) agentpo
 	)
 }
 
-func NewWakeExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
+func NewWakeExceptionTool(exceptions watchtowerports.ExceptionService) agenttoolports.AgentTool {
 	return newExceptionChangeTool(
 		exceptions,
 		&exceptionChangeSpec[*watchtowerports.UnsnoozeExceptionRequest]{
@@ -326,7 +326,7 @@ func NewWakeExceptionTool(exceptions watchtowerports.ExceptionService) agentport
 				SearchTerms: []string{"wake exception", "unsnooze", "bring back"},
 			},
 			request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*watchtowerports.UnsnoozeExceptionRequest, error) {
 				target, err := exceptionTargetFrom(params)
 				if err != nil {
@@ -354,7 +354,7 @@ func NewWakeExceptionTool(exceptions watchtowerports.ExceptionService) agentport
 	)
 }
 
-func NewSetExceptionDueTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
+func NewSetExceptionDueTool(exceptions watchtowerports.ExceptionService) agenttoolports.AgentTool {
 	return newExceptionChangeTool(
 		exceptions,
 		&exceptionChangeSpec[*watchtowerports.SetExceptionDueRequest]{
@@ -376,7 +376,7 @@ func NewSetExceptionDueTool(exceptions watchtowerports.ExceptionService) agentpo
 				Required:    []string{paramWatchtowerItemID},
 				SearchTerms: []string{"exception due", "extend deadline", "due time"},
 			},
-			request: func(params *agentports.ToolExecuteParams) (*watchtowerports.SetExceptionDueRequest, error) {
+			request: func(params *agenttoolports.ToolExecuteParams) (*watchtowerports.SetExceptionDueRequest, error) {
 				target, err := exceptionTargetFrom(params)
 				if err != nil {
 					return nil, err
@@ -413,7 +413,7 @@ func NewSetExceptionDueTool(exceptions watchtowerports.ExceptionService) agentpo
 	)
 }
 
-func NewResolveExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
+func NewResolveExceptionTool(exceptions watchtowerports.ExceptionService) agenttoolports.AgentTool {
 	return newExceptionChangeTool(
 		exceptions,
 		&exceptionChangeSpec[*watchtowerports.ResolveExceptionRequest]{
@@ -440,7 +440,7 @@ func NewResolveExceptionTool(exceptions watchtowerports.ExceptionService) agentp
 				Required:    []string{paramWatchtowerItemID, paramResolutionCode},
 				SearchTerms: []string{"resolve exception", "close exception", "mark handled"},
 			},
-			request: func(params *agentports.ToolExecuteParams) (*watchtowerports.ResolveExceptionRequest, error) {
+			request: func(params *agenttoolports.ToolExecuteParams) (*watchtowerports.ResolveExceptionRequest, error) {
 				target, err := exceptionTargetFrom(params)
 				if err != nil {
 					return nil, err
@@ -485,7 +485,7 @@ func NewResolveExceptionTool(exceptions watchtowerports.ExceptionService) agentp
 	)
 }
 
-func NewReopenExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
+func NewReopenExceptionTool(exceptions watchtowerports.ExceptionService) agenttoolports.AgentTool {
 	return newExceptionChangeTool(
 		exceptions,
 		&exceptionChangeSpec[*watchtowerports.ReopenExceptionRequest]{
@@ -507,7 +507,7 @@ func NewReopenExceptionTool(exceptions watchtowerports.ExceptionService) agentpo
 				Required:    []string{paramWatchtowerItemID},
 				SearchTerms: []string{"reopen exception", "not resolved"},
 			},
-			request: func(params *agentports.ToolExecuteParams) (*watchtowerports.ReopenExceptionRequest, error) {
+			request: func(params *agenttoolports.ToolExecuteParams) (*watchtowerports.ReopenExceptionRequest, error) {
 				target, err := exceptionTargetFrom(params)
 				if err != nil {
 					return nil, err
@@ -535,7 +535,9 @@ func NewReopenExceptionTool(exceptions watchtowerports.ExceptionService) agentpo
 	)
 }
 
-func NewCommentOnExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
+func NewCommentOnExceptionTool(
+	exceptions watchtowerports.ExceptionService,
+) agenttoolports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
 		Name:   "exception_add_comment",
 		Recipe: []string{toolListWatchtowerItems, "exception_add_comment"},
@@ -554,11 +556,11 @@ func NewCommentOnExceptionTool(exceptions watchtowerports.ExceptionService) agen
 		},
 		Required:    []string{paramWatchtowerItemID, paramCommentBody},
 		SearchTerms: []string{"comment on exception", "note on alert", "exception history"},
-		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
+		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return common.TargetOf(params, paramWatchtowerItemID, permission.ResourceWatchtower)
 		},
 	}, common.ReceivablePlan[*watchtowerports.CommentOnExceptionRequest, *watchtower.Event]{
-		Request: func(params *agentports.ToolExecuteParams) (*watchtowerports.CommentOnExceptionRequest, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*watchtowerports.CommentOnExceptionRequest, error) {
 			target, err := exceptionTargetFrom(params)
 			if err != nil {
 				return nil, err
@@ -575,7 +577,7 @@ func NewCommentOnExceptionTool(exceptions watchtowerports.ExceptionService) agen
 		Settle: func(
 			ctx context.Context,
 			req *watchtowerports.CommentOnExceptionRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) error {
 			_, err := previewComment(ctx, exceptions, req, params)
 			return err
@@ -583,7 +585,7 @@ func NewCommentOnExceptionTool(exceptions watchtowerports.ExceptionService) agen
 		Plan: func(
 			ctx context.Context,
 			req *watchtowerports.CommentOnExceptionRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*watchtower.Event, error) {
 			return previewComment(ctx, exceptions, req, params)
 		},
@@ -612,7 +614,7 @@ func NewCommentOnExceptionTool(exceptions watchtowerports.ExceptionService) agen
 		Run: func(
 			ctx context.Context,
 			req *watchtowerports.CommentOnExceptionRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req.DryRun = false
 			event, err := exceptions.CommentOnException(ctx, req, params.Actor)
@@ -632,7 +634,7 @@ func previewComment(
 	ctx context.Context,
 	exceptions watchtowerports.ExceptionService,
 	req *watchtowerports.CommentOnExceptionRequest,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*watchtower.Event, error) {
 	req.DryRun = true
 	event, err := exceptions.CommentOnException(ctx, req, params.Actor)

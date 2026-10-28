@@ -7,8 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -36,7 +38,9 @@ func TestFire_Validation(t *testing.T) {
 
 	cases := map[string]*Fire{
 		"an event the template does not answer": {
-			Agent: string(agentdefinition.TemplateBillingException), Event: agent.EventShipmentCreated,
+			Agent: string(
+				agentdefinition.TemplateBillingException,
+			), Event: agent.EventShipmentCreated,
 			Subject: "select 1",
 		},
 		"an event run with no subject": {
@@ -46,18 +50,25 @@ func TestFire_Validation(t *testing.T) {
 		"a scheduled agent fired by an event": {
 			Agent: string(agentdefinition.TemplateLoadMonitor), Event: agent.EventShipmentCreated,
 		},
-		"a chat agent":        {Agent: string(agentdefinition.TemplateDispatchAssistant), Schedule: true},
+		"a chat agent": {
+			Agent:    string(agentdefinition.TemplateDispatchAssistant),
+			Schedule: true,
+		},
 		"an unknown template": {Agent: "NoSuchDesk", Schedule: true},
 		"a subject that writes": {
 			Agent: string(agentdefinition.TemplateBillingException),
 			Event: agent.EventBillingQueueItemException, Subject: "delete from shipments",
 		},
 		"a ceiling that is no tier": {
-			Agent: string(agentdefinition.TemplateLoadMonitor), Schedule: true, Ceiling: "Sometimes",
+			Agent: string(
+				agentdefinition.TemplateLoadMonitor,
+			), Schedule: true, Ceiling: "Sometimes",
 		},
 		"a tier that is no tier": {
 			Agent: string(agentdefinition.TemplateLoadMonitor), Schedule: true,
-			ToolTiers: map[string]agent.AutonomyTier{agentdefinition.CoreToolRaiseException: "Loud"},
+			ToolTiers: map[string]agent.AutonomyTier{
+				agentdefinition.CoreToolRaiseException: "Loud",
+			},
 		},
 		"a tier on a tool the agent does not hold": {
 			Agent: string(agentdefinition.TemplateLoadMonitor), Schedule: true,
@@ -137,7 +148,7 @@ func TestRecorderPin_HoldsARunToItsCell(t *testing.T) {
 		Effort:     aiprovider.ReasoningLow,
 	})
 
-	req := &agentports.ChatCompletionRequest{
+	req := &llmports.ChatCompletionRequest{
 		Attribution: aiusageports.AIUsageAttribution{AgentDefinitionID: definitionID},
 	}
 	recorder.pin(req)
@@ -147,7 +158,7 @@ func TestRecorderPin_HoldsARunToItsCell(t *testing.T) {
 	assert.Nil(t, req.Advisor)
 
 	release()
-	other := &agentports.ChatCompletionRequest{
+	other := &llmports.ChatCompletionRequest{
 		Attribution: aiusageports.AIUsageAttribution{AgentDefinitionID: definitionID},
 	}
 	recorder.pin(other)
@@ -165,21 +176,21 @@ func TestRecorderPin_HandsTheCellsAdvisorToEveryCall(t *testing.T) {
 			Model: "claude-haiku-5-5",
 		},
 		Effort:  aiprovider.ReasoningLow,
-		Advisor: agentports.DefaultAdvisor(""),
+		Advisor: llmports.DefaultAdvisor(""),
 	}
 	release := recorder.Pin(threadID, ProviderPin{Effort: cell.Effort, Advisor: cell.Advisor})
 	defer release()
 
-	first := &agentports.ChatCompletionRequest{
+	first := &llmports.ChatCompletionRequest{
 		Attribution: aiusageports.AIUsageAttribution{ThreadID: threadID},
 	}
 	recorder.pin(first)
 	require.NotNil(t, first.Advisor)
-	assert.Equal(t, agentports.AdvisorSpec{Model: "claude-opus-5-5", MaxUses: 2}, *first.Advisor)
+	assert.Equal(t, llmports.AdvisorSpec{Model: "claude-opus-5-5", MaxUses: 2}, *first.Advisor)
 	assert.Equal(t, aiprovider.ReasoningLow, first.Reasoning)
 
 	first.Advisor.MaxUses = 9
-	second := &agentports.ChatCompletionRequest{
+	second := &llmports.ChatCompletionRequest{
 		Attribution: aiusageports.AIUsageAttribution{ThreadID: threadID},
 	}
 	recorder.pin(second)
@@ -221,13 +232,13 @@ func TestRunOutcome_SubstitutesItsIDs(t *testing.T) {
 }
 
 type fakeProviders struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 	provider *aiprovider.Provider
 }
 
 func (f *fakeProviders) GetByID(
 	context.Context,
-	agentports.GetAIProviderByIDRequest,
+	aiproviderports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	return f.provider, nil
 }
@@ -238,11 +249,11 @@ func (fakeReference) Prices(
 	_ context.Context,
 	_ aiprovider.Kind,
 	ids []string,
-) map[string]agentports.ReferencePrice {
+) map[string]aiproviderports.ReferencePrice {
 	output := decimal.RequireFromString("8")
 	read := decimal.RequireFromString("0.1")
 
-	return map[string]agentports.ReferencePrice{ids[0]: {
+	return map[string]aiproviderports.ReferencePrice{ids[0]: {
 		InputCostPerMillion:     decimal.RequireFromString("1"),
 		OutputCostPerMillion:    &output,
 		CacheReadCostPerMillion: &read,
@@ -254,7 +265,9 @@ func TestPricer_PricesAnUnpricedProviderFromTheListThenTheReference(t *testing.T
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	haiku := &aiprovider.Provider{
-		ID: pulid.MustNew("aiprv_"), Kind: aiprovider.KindAnthropicMessages, Model: "claude-haiku-5-5",
+		ID: pulid.MustNew(
+			"aiprv_",
+		), Kind: aiprovider.KindAnthropicMessages, Model: "claude-haiku-5-5",
 	}
 	listed := newPricer(&fakeProviders{provider: haiku}, fakeReference{})
 	price := listed.price(t.Context(), tenant, &tokenCount{
@@ -290,7 +303,9 @@ func TestPricer_PricesEachModelAProviderServedOnItsOwn(t *testing.T) {
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	gateway := &aiprovider.Provider{
-		ID: pulid.MustNew("aiprv_"), Kind: aiprovider.KindAnthropicMessages, Model: "claude-haiku-5-5",
+		ID: pulid.MustNew(
+			"aiprv_",
+		), Kind: aiprovider.KindAnthropicMessages, Model: "claude-haiku-5-5",
 	}
 	pricer := newPricer(&fakeProviders{provider: gateway}, fakeReference{})
 	usage := aiprovider.TokenUsage{Input: 1_000, Output: 1_000}
@@ -312,7 +327,9 @@ func TestPricer_PricesTheAdvisorsTokensAtTheAdvisorsRate(t *testing.T) {
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	haiku := &aiprovider.Provider{
-		ID: pulid.MustNew("aiprv_"), Kind: aiprovider.KindAnthropicMessages, Model: "claude-haiku-5-5",
+		ID: pulid.MustNew(
+			"aiprv_",
+		), Kind: aiprovider.KindAnthropicMessages, Model: "claude-haiku-5-5",
 	}
 	pricer := newPricer(&fakeProviders{provider: haiku}, fakeReference{})
 	tokens := tokenCount{
@@ -345,7 +362,9 @@ func TestPricer_PricesEachExecutorIterationOnItsOwnTier(t *testing.T) {
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	haiku := &aiprovider.Provider{
-		ID: pulid.MustNew("aiprv_"), Kind: aiprovider.KindAnthropicMessages, Model: "claude-haiku-5-5",
+		ID: pulid.MustNew(
+			"aiprv_",
+		), Kind: aiprovider.KindAnthropicMessages, Model: "claude-haiku-5-5",
 	}
 	pricer := newPricer(&fakeProviders{provider: haiku}, fakeReference{})
 	price := pricer.price(t.Context(), tenant, &tokenCount{
@@ -363,14 +382,18 @@ func TestPricer_PricesEachExecutorIterationOnItsOwnTier(t *testing.T) {
 	})
 
 	require.NotNil(t, price.cost)
-	assert.True(t, price.cost.Equal(decimal.RequireFromString("0.073")), price.cost.String(),
-		"each 60K-prompt iteration at Haiku 5.5's short rates, not the summed 120K at the long ones")
+	assert.True(
+		t,
+		price.cost.Equal(decimal.RequireFromString("0.073")),
+		price.cost.String(),
+		"each 60K-prompt iteration at Haiku 5.5's short rates, not the summed 120K at the long ones",
+	)
 }
 
 func TestUsageOf_CountsTheAdvisorApart(t *testing.T) {
 	t.Parallel()
 
-	call := &ModelCall{ChatResult: &agentports.ChatCompletionResult{
+	call := &ModelCall{ChatResult: &llmports.ChatCompletionResult{
 		ModelIdentifier: "claude-haiku-5-5",
 		InputTokens:     100,
 		OutputTokens:    20,
@@ -412,7 +435,7 @@ func TestCaseErrors_NamesTheStepAFireFailedIn(t *testing.T) {
 }
 
 type runRecordsFake struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 
 	run        *agent.AgentRun
 	transcript *agent.RunTranscript
@@ -420,7 +443,7 @@ type runRecordsFake struct {
 
 func (f *runRecordsFake) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	if req.ID != f.run.ID {
 		return nil, assert.AnError
@@ -432,7 +455,7 @@ func (f *runRecordsFake) GetByID(
 
 func (f *runRecordsFake) ListTranscriptsByIDs(
 	_ context.Context,
-	req agentports.ListAgentRunsByIDsRequest,
+	req agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	runs := make([]*agent.AgentRun, 0, len(req.IDs))
 	for _, id := range req.IDs {

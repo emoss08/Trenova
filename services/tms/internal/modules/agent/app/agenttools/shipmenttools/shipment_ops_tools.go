@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -82,11 +82,11 @@ type shipmentOperator interface {
 	) (*shipmentports.ShipmentDuplicatePreview, error)
 }
 
-func targetShipment(params map[string]any) (agentports.ToolTarget, bool) {
+func targetShipment(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
 }
 
-func NewUncancelShipmentTool(shipments shipmentOperator) agentports.AgentTool {
+func NewUncancelShipmentTool(shipments shipmentOperator) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
 		Name:     "shipment_uncancel",
 		Artifact: common.ShipmentRecordEntity,
@@ -108,7 +108,7 @@ func NewUncancelShipmentTool(shipments shipmentOperator) agentports.AgentTool {
 		Required: []string{common.ParamShipmentID},
 		Target:   targetShipment,
 	}, common.ReceivablePlan[*shipmentports.UncancelShipmentRequest, *shipmentports.ShipmentChangePreview]{
-		Request: func(params *agentports.ToolExecuteParams) (*shipmentports.UncancelShipmentRequest, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*shipmentports.UncancelShipmentRequest, error) {
 			shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 			if err != nil {
 				return nil, err
@@ -122,7 +122,7 @@ func NewUncancelShipmentTool(shipments shipmentOperator) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *shipmentports.UncancelShipmentRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*shipmentports.ShipmentChangePreview, error) {
 			return shipments.PreviewUncancel(ctx, req)
 		},
@@ -133,7 +133,7 @@ func NewUncancelShipmentTool(shipments shipmentOperator) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *shipmentports.UncancelShipmentRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			entity, err := shipments.Uncancel(ctx, req, params.Actor)
 			if err != nil {
@@ -147,7 +147,7 @@ func NewUncancelShipmentTool(shipments shipmentOperator) agentports.AgentTool {
 
 type ownershipRequest = shipmentports.TransferOwnershipRequest
 
-func NewTransferShipmentOwnershipTool(shipments shipmentOperator) agentports.AgentTool {
+func NewTransferShipmentOwnershipTool(shipments shipmentOperator) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
 		Name:     "shipment_transfer_ownership",
 		Artifact: common.ShipmentRecordEntity,
@@ -175,7 +175,7 @@ func NewTransferShipmentOwnershipTool(shipments shipmentOperator) agentports.Age
 		Required: []string{common.ParamShipmentID, common.ParamOwnerID},
 		Target:   targetShipment,
 	}, common.ReceivablePlan[*ownershipRequest, *shipmentports.ShipmentChangePreview]{
-		Request: func(params *agentports.ToolExecuteParams) (*ownershipRequest, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*ownershipRequest, error) {
 			shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 			if err != nil {
 				return nil, err
@@ -194,7 +194,7 @@ func NewTransferShipmentOwnershipTool(shipments shipmentOperator) agentports.Age
 		Plan: func(
 			ctx context.Context,
 			req *ownershipRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*shipmentports.ShipmentChangePreview, error) {
 			return shipments.PreviewTransferOwnership(ctx, req, params.Actor)
 		},
@@ -205,7 +205,7 @@ func NewTransferShipmentOwnershipTool(shipments shipmentOperator) agentports.Age
 		Run: func(
 			ctx context.Context,
 			req *ownershipRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			entity, err := shipments.TransferOwnership(ctx, req, params.Actor)
 			if err != nil {
@@ -217,7 +217,7 @@ func NewTransferShipmentOwnershipTool(shipments shipmentOperator) agentports.Age
 	})
 }
 
-func NewRerateShipmentTool(shipments shipmentOperator) agentports.AgentTool {
+func NewRerateShipmentTool(shipments shipmentOperator) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
 		Name:     "shipment_rerate",
 		Artifact: common.ShipmentRecordEntity,
@@ -241,7 +241,7 @@ func NewRerateShipmentTool(shipments shipmentOperator) agentports.AgentTool {
 		Target:   targetShipment,
 	}, common.ReceivablePlan[*shipmentports.AutoRateShipmentRequest, *reratePlan]{
 		Request: func(
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*shipmentports.AutoRateShipmentRequest, error) {
 			shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 			if err != nil {
@@ -256,7 +256,7 @@ func NewRerateShipmentTool(shipments shipmentOperator) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *shipmentports.AutoRateShipmentRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*reratePlan, error) {
 			preview, err := shipments.PreviewAutoRate(ctx, req, params.Actor)
 			if err != nil {
@@ -282,7 +282,7 @@ func NewRerateShipmentTool(shipments shipmentOperator) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *shipmentports.AutoRateShipmentRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			entity, application, err := shipments.AutoRate(ctx, req, params.Actor)
 			if err != nil {
@@ -304,7 +304,7 @@ type distanceRequest struct {
 	tenant     pagination.TenantInfo
 }
 
-func NewRecalculateShipmentDistanceTool(shipments shipmentOperator) agentports.AgentTool {
+func NewRecalculateShipmentDistanceTool(shipments shipmentOperator) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
 		Name:        "shipment_recalculate_distance",
 		SearchTerms: []string{"recalculate miles", "shipment mileage", "rerun distance"},
@@ -328,7 +328,7 @@ func NewRecalculateShipmentDistanceTool(shipments shipmentOperator) agentports.A
 		Required: []string{common.ParamShipmentID},
 		Target:   targetShipment,
 	}, common.ReceivablePlan[*distanceRequest, *shipmentports.ShipmentDistancePreview]{
-		Request: func(params *agentports.ToolExecuteParams) (*distanceRequest, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*distanceRequest, error) {
 			shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 			if err != nil {
 				return nil, err
@@ -339,7 +339,7 @@ func NewRecalculateShipmentDistanceTool(shipments shipmentOperator) agentports.A
 		Plan: func(
 			ctx context.Context,
 			req *distanceRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*shipmentports.ShipmentDistancePreview, error) {
 			return shipments.PreviewRecalculateDistance(ctx, req.shipmentID, req.tenant)
 		},
@@ -350,7 +350,7 @@ func NewRecalculateShipmentDistanceTool(shipments shipmentOperator) agentports.A
 		Run: func(
 			ctx context.Context,
 			req *distanceRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			response, err := shipments.RecalculateDistance(ctx, req.shipmentID, req.tenant)
 			if err != nil {
@@ -381,7 +381,7 @@ type DuplicateShipmentDeps struct {
 	Locations common.LocationZoneReader
 }
 
-func NewDuplicateShipmentTool(deps DuplicateShipmentDeps) agentports.AgentTool {
+func NewDuplicateShipmentTool(deps DuplicateShipmentDeps) agenttoolports.AgentTool {
 	shipments := deps.Shipments
 
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
@@ -421,14 +421,14 @@ func NewDuplicateShipmentTool(deps DuplicateShipmentDeps) agentports.AgentTool {
 		Settle: func(
 			ctx context.Context,
 			req *shipmentports.BulkDuplicateShipmentRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) error {
 			return settleFirstPickup(ctx, &deps, req, params)
 		},
 		Plan: func(
 			ctx context.Context,
 			req *shipmentports.BulkDuplicateShipmentRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*shipmentports.ShipmentDuplicatePreview, error) {
 			return shipments.PreviewDuplicate(ctx, req)
 		},
@@ -442,7 +442,7 @@ func NewDuplicateShipmentTool(deps DuplicateShipmentDeps) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *shipmentports.BulkDuplicateShipmentRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			started, err := shipments.Duplicate(ctx, req)
 			if err != nil {
@@ -464,7 +464,7 @@ func NewDuplicateShipmentTool(deps DuplicateShipmentDeps) agentports.AgentTool {
 }
 
 func duplicateRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentports.BulkDuplicateShipmentRequest, error) {
 	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 	if err != nil {
@@ -491,7 +491,7 @@ func settleFirstPickup(
 	ctx context.Context,
 	deps *DuplicateShipmentDeps,
 	req *shipmentports.BulkDuplicateShipmentRequest,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	if _, given := params.Params[ParamFirstPickupAt]; !given {
 		return nil

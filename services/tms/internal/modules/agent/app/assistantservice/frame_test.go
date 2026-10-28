@@ -6,21 +6,21 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
 type framingClassifier struct {
-	agentports.CompletionService
+	llmports.CompletionService
 }
 
 func (framingClassifier) CompleteStructured(
 	context.Context,
-	*agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
-	return &agentports.StructuredCompletionResult{
+	*llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
+	return &llmports.StructuredCompletionResult{
 		Text: `{"category":"TransportationOperations","reasoning":"stub",` +
 			`"goal":"Count the shipments in transit.","need":"list shipments by status"}`,
 	}, nil

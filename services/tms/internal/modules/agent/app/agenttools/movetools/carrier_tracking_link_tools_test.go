@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
@@ -120,7 +120,7 @@ func TestIssueCarrierTrackingLink_EmailsTheCarrierAndNeverHandsTheLinkBack(t *te
 		"recipientEmail": "dispatch@lonestar.test",
 	})
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 
 	require.Len(t, links.issued, 1)
@@ -150,7 +150,7 @@ func TestIssueCarrierTrackingLink_SaysWhenTheEmailFailed(t *testing.T) {
 		"recipientEmail": "dispatch@lonestar.test",
 	})
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, result.State, "mailbox unavailable")
 	assert.NotContains(t, result.State, "secret-token")
@@ -165,7 +165,7 @@ func TestIssueCarrierTrackingLink_NeedsAnAddressToSendTo(t *testing.T) {
 		"moveId": pulid.MustNew("sm_").String(),
 	})
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 	require.Error(t, tool.Execute(t.Context(), params))
 	assert.Empty(t, links.issued)
 }
@@ -184,7 +184,7 @@ func TestIssueCarrierTrackingLink_PreviewIsTheEmailAndTheLinkItReplaces(t *testi
 		*agent.ToolPreview,
 		error,
 	) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	})
 
 	require.Len(t, preview.Changes, 2)
@@ -215,17 +215,17 @@ func TestIssueCarrierTrackingLink_APreviewTheServiceRefusesWarnsItWouldFail(t *t
 		"recipientEmail": "dispatch@lonestar.test",
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.NotEmpty(t, preview.Warnings)
 	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestCarrierTrackingLinks_ReachOutsideAndStopAtAskFirst(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		newIssueCarrierTrackingLinkTool(nil),
 		newRevokeCarrierTrackingLinkTool(nil),
 	} {
@@ -251,7 +251,7 @@ func TestRevokeCarrierTrackingLink_PreviewsTheLiveLinkThenRevokesIt(t *testing.T
 		*agent.ToolPreview,
 		error,
 	) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "old-dispatch@lonestar.test")
 	assert.Empty(t, links.revoked)
@@ -268,10 +268,10 @@ func TestRevokeCarrierTrackingLink_RefusesAMoveWithNoLiveLink(t *testing.T) {
 	tool := newRevokeCarrierTrackingLinkTool(links)
 	params := agenttoolstest.ExecuteParams(map[string]any{"moveId": pulid.MustNew("sm_").String()})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.NotEmpty(t, preview.Warnings)
 	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 	assert.Empty(t, links.revoked)
 }

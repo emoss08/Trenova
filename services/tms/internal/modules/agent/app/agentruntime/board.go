@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -258,7 +259,7 @@ func boardStepOutcome(arguments map[string]any) toolOutcome {
 
 	return toolOutcome{
 		publishes: true,
-		data:      agentports.BoardRequest{Board: *parsed, ArtifactID: revises},
+		data:      agentruntimeports.BoardRequest{Board: *parsed, ArtifactID: revises},
 	}
 }
 
@@ -267,7 +268,7 @@ func (t *Turn) showBoard(arguments map[string]any) toolOutcome {
 	if outcome.failed {
 		return outcome
 	}
-	request, _ := outcome.data.(agentports.BoardRequest)
+	request, _ := outcome.data.(agentruntimeports.BoardRequest)
 
 	if unread := t.unreadRecords(request.Board.Records()); len(unread) > 0 {
 		return failedOutcome("Tool %q was not run: the board names %s, which no tool in this "+
@@ -282,7 +283,7 @@ func (t *Turn) unreadRecords(refs map[permission.Resource][]pulid.ID) []string {
 	read := make([]string, 0, len(t.messages)+1)
 	for idx := range t.messages {
 		message := &t.messages[idx]
-		if message.Role == agentports.RoleTool && !message.IsError {
+		if message.Role == llmports.RoleTool && !message.IsError {
 			read = append(read, message.Content)
 		}
 	}
@@ -306,7 +307,7 @@ func (t *Turn) unreadRecords(refs map[permission.Resource][]pulid.ID) []string {
 	return unread
 }
 
-func boardContent(shown *agentports.ShownArtifact) string {
+func boardContent(shown *agentruntimeports.ShownArtifact) string {
 	encoded := fmt.Sprintf(`{"artifactId":%q,"title":%q,"status":"shown"}`,
 		shown.ID.String(), shown.Title)
 	brief := stringutils.TruncateRunes(shown.Brief, maxBoardBriefRunes)

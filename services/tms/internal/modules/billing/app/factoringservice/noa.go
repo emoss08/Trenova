@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -54,7 +54,7 @@ type NoaParams struct {
 	Email         emailports.EmailService
 	Requester     factoringports.EvaluationRequester `optional:"true"`
 	Audit         auditports.AuditService
-	Realtime      agentports.RealtimeService `optional:"true"`
+	Realtime      realtimeports.RealtimeService `optional:"true"`
 	Logger        *zap.Logger
 }
 

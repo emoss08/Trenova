@@ -12,13 +12,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
-
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	workflowstarterservice "github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
+	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -80,7 +79,7 @@ type Params struct {
 	ThumbnailGenerator   *thumbnailservice.Generator
 	PageRenders          *pagerender.Store
 	Encryption           *encryptionservice.Service
-	Realtime             agentports.RealtimeService
+	Realtime             realtimeports.RealtimeService
 	AICorrections        aicorrectionports.AICorrectionService `optional:"true"`
 	Triage               inboundmessageports.TriageEventSink   `optional:"true"`
 	Permissions          permissionports.PermissionEngine
@@ -108,7 +107,7 @@ type Service struct {
 	thumbnailGenerator   *thumbnailservice.Generator
 	pageRenders          *pagerender.Store
 	encryption           *encryptionservice.Service
-	realtime             agentports.RealtimeService
+	realtime             realtimeports.RealtimeService
 	aiCorrections        aicorrectionports.AICorrectionService
 	triage               inboundmessageports.TriageEventSink
 	permissions          permissionports.PermissionEngine

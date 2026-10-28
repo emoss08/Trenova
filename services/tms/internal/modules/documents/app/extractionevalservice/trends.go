@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
@@ -95,7 +95,7 @@ func (s *Service) trendProvider(
 	tenant pagination.TenantInfo,
 	providerID pulid.ID,
 ) (*aiprovider.Provider, bool, error) {
-	provider, err := s.providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	provider, err := s.providers.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenant,
 	})

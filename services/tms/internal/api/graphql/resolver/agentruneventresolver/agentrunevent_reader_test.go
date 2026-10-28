@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,14 +20,14 @@ import (
 )
 
 type recordingEventRepo struct {
-	agentports.AgentRunEventRepository
+	agentruntimeports.AgentRunEventRepository
 
-	requests []*agentports.ListAgentRunEventConnectionRequest
+	requests []*agentruntimeports.ListAgentRunEventConnectionRequest
 }
 
 func (r *recordingEventRepo) ListConnection(
 	_ context.Context,
-	req *agentports.ListAgentRunEventConnectionRequest,
+	req *agentruntimeports.ListAgentRunEventConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
 	r.requests = append(r.requests, req)
 
@@ -68,7 +68,17 @@ func TestAgentRunEvents_ReadForThePersonAsking(t *testing.T) {
 		require.NoError(t, err, name)
 
 		require.Len(t, events.requests, 1, name)
-		assert.Equal(t, agentports.PersonRunRead(principal.userID), events.requests[0].Reader, name)
-		assert.Equal(t, string(agentports.RunStepOwnerAgentRun), events.requests[0].OwnerKind, name)
+		assert.Equal(
+			t,
+			agentruntimeports.PersonRunRead(principal.userID),
+			events.requests[0].Reader,
+			name,
+		)
+		assert.Equal(
+			t,
+			string(agentruntimeports.RunStepOwnerAgentRun),
+			events.requests[0].OwnerKind,
+			name,
+		)
 	}
 }

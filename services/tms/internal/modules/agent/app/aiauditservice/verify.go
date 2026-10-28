@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -54,7 +54,7 @@ type Verifier struct {
 	keyring  *Keyring
 	notifier PermittedNotifier
 	audit    auditports.AuditService
-	realtime agentports.RealtimeService
+	realtime realtimeports.RealtimeService
 	metrics  *metrics.AIAudit
 	now      func() time.Time
 	l        *zap.Logger
@@ -65,7 +65,7 @@ type VerifierParams struct {
 	Keyring  *Keyring
 	Notifier PermittedNotifier
 	Audit    auditports.AuditService
-	Realtime agentports.RealtimeService
+	Realtime realtimeports.RealtimeService
 	Metrics  *metrics.AIAudit
 	Now      func() time.Time
 	Logger   *zap.Logger
@@ -346,7 +346,7 @@ func (v *Verifier) publish(ctx context.Context, tenantInfo pagination.TenantInfo
 		return
 	}
 	if err := v.realtime.PublishResourceInvalidation(ctx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			Resource:       aiauditports.AIAuditChainResource,

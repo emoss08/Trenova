@@ -3,12 +3,15 @@ package agentruntime
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 func openTaint(
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 	rc *agentdefinition.RuntimeContext,
 	now int64,
 ) (*agent.RunTaint, []agent.TaintMark) {
@@ -56,8 +59,8 @@ func contextTaint(rc *agentdefinition.RuntimeContext, now int64) []agent.TaintMa
 }
 
 func callTaint(
-	policy agentports.ToolPolicy,
-	call agentports.ToolCall,
+	policy agenttoolports.ToolPolicy,
+	call llmports.ToolCall,
 	data any,
 	now int64,
 ) []agent.TaintMark {
@@ -85,7 +88,7 @@ func callTaint(
 	return marks
 }
 
-func carriedRefs(policy *agentports.ToolPolicy, data any) []agent.SourcedRef {
+func carriedRefs(policy *agenttoolports.ToolPolicy, data any) []agent.SourcedRef {
 	if carrier, ok := data.(agent.SourcedTaintCarrier); ok {
 		sourced := carrier.TaintedMarks()
 		refs := make([]agent.SourcedRef, 0, len(sourced))
@@ -113,7 +116,7 @@ func carriedRefs(policy *agentports.ToolPolicy, data any) []agent.SourcedRef {
 }
 
 func callMark(
-	call agentports.ToolCall,
+	call llmports.ToolCall,
 	source agent.TaintSource,
 	ref *agent.RecordRef,
 	now int64,
@@ -129,8 +132,8 @@ func callMark(
 
 func taintedEvent(mark agent.TaintMark, marks int) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
-		Event: agentports.AssistantEventRunTainted,
-		Data:  agentports.AssistantRunTaintedEvent{Mark: mark, Marks: marks},
+		Event: assistantports.AssistantEventRunTainted,
+		Data:  assistantports.AssistantRunTaintedEvent{Mark: mark, Marks: marks},
 	}
 }
 
@@ -151,7 +154,7 @@ func (t *Turn) announceOpened(fx TurnEffects) {
 	}
 }
 
-func (t *Turn) inheritDelegateTaint(fx TurnEffects, result *agentports.RunResult) {
+func (t *Turn) inheritDelegateTaint(fx TurnEffects, result *agentruntimeports.RunResult) {
 	if result == nil {
 		return
 	}

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -161,16 +161,24 @@ func TestRequestWorkerPTO_SaysWhenThePolicyBooksItAtOnce(t *testing.T) {
 		common.FieldReason:   "Wedding",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, requests.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		requests.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would request 3 days of Vacation")
 	assert.NotContains(t, preview.Summary, "booked at once")
 
 	requests.autoApprove = true
-	preview = agenttoolstest.PreviewWithoutWrites(t, requests.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview = agenttoolstest.PreviewWithoutWrites(
+		t,
+		requests.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "booked at once and the driver is told")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -187,8 +195,8 @@ func TestRequestWorkerPTO_SaysWhenThePolicyBooksItAtOnce(t *testing.T) {
 		paramPTOEnd:          "2026-10-05",
 		common.FieldReason:   "Wedding",
 	})
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), backwards))
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), backwards))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			common.ParamWorkerID: requests.pto.WorkerID.String(),
 			paramPTOType:         "Sabbatical",
@@ -211,9 +219,13 @@ func TestUpdateWorkerPTO_OnlyAPendingRequest(t *testing.T) {
 		paramPTOStart:      "2026-10-05",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, requests.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		requests.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Equal(t, "Would change the time-off request.", preview.Summary)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, requests.updated)
@@ -229,7 +241,7 @@ func TestUpdateWorkerPTO_OnlyAPendingRequest(t *testing.T) {
 	assert.Equal(t, requests.pto.StartDate, requests.updated.StartDate)
 
 	requests.pto.Status = worker.PTOStatusApproved
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), partial))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), partial))
 }
 
 func TestAdjustWorkerPTOBalance_IsAPersonsDecision(t *testing.T) {
@@ -244,12 +256,23 @@ func TestAdjustWorkerPTOBalance_IsAPersonsDecision(t *testing.T) {
 		common.FieldNote:     "Carried over from the previous payroll system",
 	}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, ledger.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		ledger.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(
+				t.Context(),
+				agenttoolstest.ExecuteParams(raw),
+			)
+		},
+	)
 	assert.Contains(t, preview.Summary, "from 5 to 7.5")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)),
+		common.ErrNeedsAPersonsApproval,
+	)
 	assert.Nil(t, ledger.adjusted)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
 	require.NotNil(t, ledger.adjusted)
@@ -270,7 +293,7 @@ func TestAdjustWorkerPTOBalance_IsAPersonsDecision(t *testing.T) {
 			paramAmountDays: "1",
 		},
 	} {
-		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+		require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 			agenttoolstest.ExecuteParams(params)), name)
 	}
 }

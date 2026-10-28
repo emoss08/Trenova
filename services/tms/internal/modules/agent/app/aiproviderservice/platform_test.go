@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +22,11 @@ const (
 		`"token_uri":"https://oauth2.googleapis.com/token"}`
 )
 
-func bedrockRequest(provider *aiprovider.Provider, region string, key *string) *agentports.SaveAIProviderRequest {
+func bedrockRequest(
+	provider *aiprovider.Provider,
+	region string,
+	key *string,
+) *aiproviderports.SaveAIProviderRequest {
 	req := saveRequest(provider, "", key)
 	req.Kind = aiprovider.KindAnthropicMessages
 	req.Model = "anthropic.claude-opus-5-5"
@@ -55,7 +59,10 @@ func TestApply_StoresThePlatformAndItsSecret(t *testing.T) {
 	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
 	provider := testProvider(t, svc)
 
-	require.NoError(t, svc.apply(provider, bedrockRequest(provider, "US-EAST-1", strPtr(serviceSecretKey)), nil))
+	require.NoError(
+		t,
+		svc.apply(provider, bedrockRequest(provider, "US-EAST-1", strPtr(serviceSecretKey)), nil),
+	)
 
 	assert.Equal(t, aiprovider.PlatformBedrock, provider.Platform)
 	require.NotNil(t, provider.PlatformSettings)
@@ -91,7 +98,11 @@ func TestApply_RefusesACredentialThePlatformCannotUse(t *testing.T) {
 
 	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
 	provider := testProvider(t, svc)
-	req := saveRequest(provider, "", strPtr(`{"type":"external_account","credential_source":{"file":"/etc/shadow"}}`))
+	req := saveRequest(
+		provider,
+		"",
+		strPtr(`{"type":"external_account","credential_source":{"file":"/etc/shadow"}}`),
+	)
 	req.Kind = aiprovider.KindAnthropicMessages
 	req.Platform = aiprovider.PlatformVertexAI
 	req.PlatformSettings = &aiprovider.PlatformSettings{
@@ -111,7 +122,10 @@ func TestApply_RefusesServerCredentialsTheServerDisallows(t *testing.T) {
 	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
 	provider := testProvider(t, svc)
 	req := bedrockRequest(provider, "us-east-1", nil)
-	req.PlatformSettings = &aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthServer, Region: "us-east-1"}
+	req.PlatformSettings = &aiprovider.PlatformSettings{
+		Auth:   aiprovider.PlatformAuthServer,
+		Region: "us-east-1",
+	}
 
 	err := svc.apply(provider, req, nil)
 	var validation *errortypes.Error
@@ -133,7 +147,10 @@ func TestUpdate_RefusesToKeepTheKeyForAnotherRegionOrIdentity(t *testing.T) {
 
 	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
 	provider := testProvider(t, svc)
-	require.NoError(t, svc.apply(provider, bedrockRequest(provider, "us-east-1", strPtr(serviceSecretKey)), nil))
+	require.NoError(
+		t,
+		svc.apply(provider, bedrockRequest(provider, "us-east-1", strPtr(serviceSecretKey)), nil),
+	)
 	svc.repo = &fakeProviderRepo{provider: provider}
 
 	_, err := svc.Update(t.Context(), bedrockRequest(provider, "eu-west-1", nil), nil)
@@ -159,11 +176,14 @@ func TestSeal_ReusesTheStoredKeyOnlyForItsOwnTarget(t *testing.T) {
 
 	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
 	stored := testProvider(t, svc)
-	require.NoError(t, svc.apply(stored, bedrockRequest(stored, "us-east-1", strPtr(serviceSecretKey)), nil))
+	require.NoError(
+		t,
+		svc.apply(stored, bedrockRequest(stored, "us-east-1", strPtr(serviceSecretKey)), nil),
+	)
 	svc.repo = &fakeProviderRepo{provider: stored}
 
-	endpoint := func(region string) *agentports.AIProviderEndpoint {
-		return &agentports.AIProviderEndpoint{
+	endpoint := func(region string) *aiproviderports.AIProviderEndpoint {
+		return &aiproviderports.AIProviderEndpoint{
 			ProviderID: stored.ID,
 			Kind:       aiprovider.KindAnthropicMessages,
 			Platform:   aiprovider.PlatformBedrock,
@@ -194,13 +214,13 @@ func TestSeal_ReusesTheStoredKeyOnlyForItsOwnTarget(t *testing.T) {
 func TestRunTestDraft_ProbesThePlatformItWasSealedFor(t *testing.T) {
 	t.Parallel()
 
-	prober := &fakeProber{result: &agentports.TestAIProviderResult{Success: true}}
+	prober := &fakeProber{result: &aiproviderports.TestAIProviderResult{Success: true}}
 	svc := newTestService(&fakeProviderRepo{}, prober)
 	encrypted, err := svc.encryption.EncryptString(serviceSecretKey)
 	require.NoError(t, err)
 
-	_, err = svc.RunTestDraft(t.Context(), &agentports.ProbeAIProviderDraftRequest{
-		Endpoint: agentports.SealedAIProviderEndpoint{
+	_, err = svc.RunTestDraft(t.Context(), &aiproviderports.ProbeAIProviderDraftRequest{
+		Endpoint: aiproviderports.SealedAIProviderEndpoint{
 			Kind:     aiprovider.KindAnthropicMessages,
 			Platform: aiprovider.PlatformBedrock,
 			PlatformSettings: &aiprovider.PlatformSettings{
@@ -215,6 +235,10 @@ func TestRunTestDraft_ProbesThePlatformItWasSealedFor(t *testing.T) {
 
 	require.NotNil(t, prober.probed)
 	assert.Equal(t, aiprovider.PlatformBedrock, prober.probed.ResolvedPlatform())
-	assert.Equal(t, "https://bedrock-mantle.us-east-1.api.aws/anthropic", prober.probed.ResolvedBaseURL())
+	assert.Equal(
+		t,
+		"https://bedrock-mantle.us-east-1.api.aws/anthropic",
+		prober.probed.ResolvedBaseURL(),
+	)
 	assert.Equal(t, serviceSecretKey, prober.seen)
 }

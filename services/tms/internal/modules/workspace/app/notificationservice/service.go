@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/webpushservice"
@@ -24,7 +24,7 @@ type Params struct {
 
 	Logger   *zap.Logger
 	Repo     notificationports.NotificationRepository
-	Realtime agentports.RealtimeService
+	Realtime realtimeports.RealtimeService
 	WebPush  *webpushservice.Service `optional:"true"`
 	// Roles answers who may read a resource, for NotifyPermitted.
 	Roles       permissionports.RoleRepository         `optional:"true"`
@@ -37,7 +37,7 @@ type Params struct {
 type Service struct {
 	l           *zap.Logger
 	repo        notificationports.NotificationRepository
-	realtime    agentports.RealtimeService
+	realtime    realtimeports.RealtimeService
 	webPush     *webpushservice.Service
 	roles       permissionports.RoleRepository
 	users       tenantports.UserRepository
@@ -100,7 +100,7 @@ func (s *Service) Create(
 
 	pubErr := s.realtime.PublishResourceInvalidation(
 		ctx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: created.OrganizationID,
 			BusinessUnitID: buID,
 			AudienceUserID: pulid.ConvertFromPtr(created.TargetUserID),

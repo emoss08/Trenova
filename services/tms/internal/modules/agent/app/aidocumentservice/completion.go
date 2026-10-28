@@ -7,8 +7,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,14 +25,14 @@ type structuredCall struct {
 	metric     string
 	system     string
 	schemaName string
-	context    agentports.DelimitedContext
+	context    llmports.DelimitedContext
 	schema     map[string]any
 	providerID pulid.ID
 	evaluation bool
 }
 
-func (c *structuredCall) request() *agentports.StructuredCompletionRequest {
-	request := &agentports.StructuredCompletionRequest{
+func (c *structuredCall) request() *llmports.StructuredCompletionRequest {
+	request := &llmports.StructuredCompletionRequest{
 		TenantInfo:   c.tenant,
 		Task:         c.task,
 		System:       c.system,
@@ -73,7 +73,7 @@ func (s *Service) runStructured(
 	ctx context.Context,
 	call *structuredCall,
 	out any,
-) (*agentports.StructuredCompletionResult, error) {
+) (*llmports.StructuredCompletionResult, error) {
 	if err := s.requireDocumentIntelligence(ctx, call.tenant); err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func decodeStructured(text string, out any) error {
 	}
 
 	if err := sonic.Unmarshal([]byte(text), out); err != nil {
-		return errors.Join(agentports.ErrModelSchemaValidation, err)
+		return errors.Join(llmports.ErrModelSchemaValidation, err)
 	}
 
 	return nil
@@ -117,9 +117,9 @@ func decodeStructured(text string, out any) error {
 // the same thing to do about it.
 func failureOutcome(err error) string {
 	switch {
-	case errors.Is(err, agentports.ErrNoProviderConfigured):
+	case errors.Is(err, llmports.ErrNoProviderConfigured):
 		return "missing_config"
-	case errors.Is(err, agentports.ErrModelSchemaValidation):
+	case errors.Is(err, llmports.ErrModelSchemaValidation):
 		return "invalid_output"
 	default:
 		return "error"

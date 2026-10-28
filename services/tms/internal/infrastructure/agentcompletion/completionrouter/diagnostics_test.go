@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,10 +26,12 @@ func diagnosedServer(t *testing.T, diagnostics string) *httptest.Server {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"id":"msg_01REPLY","model":"claude-opus-5-5","stop_reason":"end_turn",` +
-			`"content":[{"type":"text","text":"Answered."}],` +
-			`"usage":{"input_tokens":10,"output_tokens":2,"cache_creation_input_tokens":40000},` +
-			`"diagnostics":` + diagnostics + `}`))
+		_, _ = w.Write(
+			[]byte(`{"id":"msg_01REPLY","model":"claude-opus-5-5","stop_reason":"end_turn",` +
+				`"content":[{"type":"text","text":"Answered."}],` +
+				`"usage":{"input_tokens":10,"output_tokens":2,"cache_creation_input_tokens":40000},` +
+				`"diagnostics":` + diagnostics + `}`),
+		)
 	}))
 	t.Cleanup(server.Close)
 
@@ -110,8 +112,12 @@ func TestCompleteChat_KeepsAnUncomparedCallOutOfTheOperatorsLog(t *testing.T) {
 		require.NoError(t, err, tc.diagnostics)
 		assert.Empty(t, logs.FilterMessage("the prompt stopped matching the call before it").All(),
 			tc.diagnostics)
-		assert.Len(t, logs.FilterMessage("the prompt was not compared with the call before it").All(),
-			tc.debug, tc.diagnostics)
+		assert.Len(
+			t,
+			logs.FilterMessage("the prompt was not compared with the call before it").All(),
+			tc.debug,
+			tc.diagnostics,
+		)
 	}
 }
 
@@ -149,8 +155,10 @@ func TestCompleteChat_AsksTheClaudeAPIAboutTheCallBeforeWhenTurnedOn(t *testing.
 			bodies = append(bodies, body)
 			mu.Unlock()
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"id":"msg_01REPLY","model":"claude-opus-5-5","stop_reason":"end_turn",` +
-				`"content":[{"type":"text","text":"Answered."}],"usage":{"input_tokens":1,"output_tokens":1}}`))
+			_, _ = w.Write(
+				[]byte(`{"id":"msg_01REPLY","model":"claude-opus-5-5","stop_reason":"end_turn",` +
+					`"content":[{"type":"text","text":"Answered."}],"usage":{"input_tokens":1,"output_tokens":1}}`),
+			)
 		}))
 		t.Cleanup(server.Close)
 		target, err := url.Parse(server.URL)
@@ -168,15 +176,15 @@ func TestCompleteChat_AsksTheClaudeAPIAboutTheCallBeforeWhenTurnedOn(t *testing.
 		require.NoError(t, err)
 		provider.APIKey = key
 		req := chatRequest(pulid.Nil)
-		req.Messages = []agentports.Message{
-			{Role: agentports.RoleUser, Content: "Where is S1?"},
+		req.Messages = []llmports.Message{
+			{Role: llmports.RoleUser, Content: "Where is S1?"},
 			{
-				Role:          agentports.RoleAssistant,
+				Role:          llmports.RoleAssistant,
 				Content:       "In Dallas.",
 				ReplyID:       "msg_01BEFORE",
 				ReplyProvider: provider.ID,
 			},
-			{Role: agentports.RoleUser, Content: "And S2?"},
+			{Role: llmports.RoleUser, Content: "And S2?"},
 		}
 
 		_, err = svc.CompleteChat(t.Context(), req)

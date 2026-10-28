@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
@@ -46,7 +46,7 @@ type Params struct {
 	Corrections   aicorrectionports.AICorrectionRepository
 	Documents     documentports.DocumentRepository
 	Contents      documentcontentports.DocumentContentRepository
-	Providers     agentports.AIProviderRepository
+	Providers     aiproviderports.AIProviderRepository
 	Audit         auditports.AuditService
 	Retention     tenantports.DataRetentionRepository
 	Budget        agentqualityports.EvaluationBudget           `optional:"true"`
@@ -66,7 +66,7 @@ type Service struct {
 	corrections aicorrectionports.AICorrectionRepository
 	documents   documentports.DocumentRepository
 	contents    documentcontentports.DocumentContentRepository
-	providers   agentports.AIProviderRepository
+	providers   aiproviderports.AIProviderRepository
 	audit       auditports.AuditService
 	retention   tenantports.DataRetentionRepository
 	budget      agentqualityports.EvaluationBudget

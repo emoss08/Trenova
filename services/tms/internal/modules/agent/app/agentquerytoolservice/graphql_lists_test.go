@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/readscope"
@@ -38,7 +39,7 @@ func TestConvertedLists_RefuseExactlyWhatAuthorizeRefuses(t *testing.T) {
 				t.Parallel()
 
 				_, readErr := tool.Query(readscope.With(t.Context(), nil),
-					&agentports.QueryToolParams{
+					&agenttoolports.QueryToolParams{
 						OrganizationID: actor.OrganizationID,
 						BusinessUnitID: actor.BusinessUnitID,
 						Actor:          actor,
@@ -47,7 +48,7 @@ func TestConvertedLists_RefuseExactlyWhatAuthorizeRefuses(t *testing.T) {
 						RunID:          pulid.MustNew("ar_"),
 					})
 
-				var refused *agentports.ReadRefusedError
+				var refused *graphqlreadports.ReadRefusedError
 				require.True(t, errors.As(readErr, &refused), "got %v", readErr)
 				assert.Equal(t, resource, refused.Resource)
 			})
@@ -80,16 +81,19 @@ func TestConvertedGets_RefuseExactlyWhatAuthorizeRefuses(t *testing.T) {
 				t.Parallel()
 
 				_, readErr := tool.Query(readscope.With(t.Context(), nil),
-					&agentports.QueryToolParams{
+					&agenttoolports.QueryToolParams{
 						OrganizationID: actor.OrganizationID,
 						BusinessUnitID: actor.BusinessUnitID,
 						Actor:          actor,
 						Timezone:       "America/Chicago",
-						Params:         agentquerytoolservice.ConvertedGetCall(tool, pulid.MustNew("x_")),
-						RunID:          pulid.MustNew("ar_"),
+						Params: agentquerytoolservice.ConvertedGetCall(
+							tool,
+							pulid.MustNew("x_"),
+						),
+						RunID: pulid.MustNew("ar_"),
 					})
 
-				var refused *agentports.ReadRefusedError
+				var refused *graphqlreadports.ReadRefusedError
 				require.True(t, errors.As(readErr, &refused), "got %v", readErr)
 				assert.Equal(t, resource, refused.Resource)
 			})

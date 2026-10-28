@@ -179,11 +179,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -905,14 +909,14 @@ type AgentRunEventResolver interface {
 }
 
 type AgentSafetyResolver interface {
-	AgentID(ctx context.Context, obj *agentports.AgentSafetySubject) (string, error)
-	OrganizationShadow(ctx context.Context, obj *agentports.AgentSafetySubject) (bool, error)
-	Tools(ctx context.Context, obj *agentports.AgentSafetySubject) ([]*agentports.AgentToolSafety, error)
-	Reach(ctx context.Context, obj *agentports.AgentSafetySubject) (*gqlmodel.AgentReach, error)
+	AgentID(ctx context.Context, obj *agenttoolports.AgentSafetySubject) (string, error)
+	OrganizationShadow(ctx context.Context, obj *agenttoolports.AgentSafetySubject) (bool, error)
+	Tools(ctx context.Context, obj *agenttoolports.AgentSafetySubject) ([]*agenttoolports.AgentToolSafety, error)
+	Reach(ctx context.Context, obj *agenttoolports.AgentSafetySubject) (*gqlmodel.AgentReach, error)
 }
 
 type AgentSafetySummaryResolver interface {
-	OpenSensitiveAgentIds(ctx context.Context, obj *agentports.AgentSafetySummary) ([]string, error)
+	OpenSensitiveAgentIds(ctx context.Context, obj *agenttoolports.AgentSafetySummary) ([]string, error)
 }
 
 type AgentSuiteRunResolver interface {
@@ -924,7 +928,7 @@ type AgentSuiteRunResolver interface {
 }
 
 type AgentToolHoldersResolver interface {
-	AgentIds(ctx context.Context, obj *agentports.AgentToolHolders) ([]string, error)
+	AgentIds(ctx context.Context, obj *agenttoolports.AgentToolHolders) ([]string, error)
 }
 
 type AgentToolRuleResolver interface {
@@ -934,8 +938,8 @@ type AgentToolRuleResolver interface {
 }
 
 type AgentToolSafetyResolver interface {
-	ID(ctx context.Context, obj *agentports.AgentToolSafety) (string, error)
-	Policy(ctx context.Context, obj *agentports.AgentToolSafety) (*gqlmodel.AgentToolPolicy, error)
+	ID(ctx context.Context, obj *agenttoolports.AgentToolSafety) (string, error)
+	Policy(ctx context.Context, obj *agenttoolports.AgentToolSafety) (*gqlmodel.AgentToolPolicy, error)
 }
 
 type AgentWorstRatedAnswerResolver interface {
@@ -2014,12 +2018,12 @@ type MutationResolver interface {
 	RestoreAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error)
 	SetMyAIFeedback(ctx context.Context, input gqlmodel.SetMyAIFeedbackInput) (*aifeedback.Feedback, error)
 	ClearMyAIFeedback(ctx context.Context, input gqlmodel.AIFeedbackTargetInput) (bool, error)
-	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*agentports.TestAIProviderResult, error)
+	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*aiproviderports.TestAIProviderResult, error)
 	ReorderAIProviders(ctx context.Context, ids []string) ([]*aiprovider.Provider, error)
 	RouteAITask(ctx context.Context, task aiprovider.Task, providerID string) ([]*aiprovider.Provider, error)
 	PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error)
-	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*agentports.AIRetrievalStatus, error)
-	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*agentports.AIRetrievalStatus, error)
+	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*retrievalports.AIRetrievalStatus, error)
+	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*retrievalports.AIRetrievalStatus, error)
 	CreateBenefitPlan(ctx context.Context, input gqlmodel.BenefitPlanInput) (*driverpay.BenefitPlan, error)
 	UpdateBenefitPlan(ctx context.Context, input gqlmodel.UpdateBenefitPlanInput) (*driverpay.BenefitPlan, error)
 	EnrollBenefit(ctx context.Context, input gqlmodel.EnrollBenefitInput) (*driverpay.WorkerBenefitEnrollment, error)
@@ -2749,7 +2753,7 @@ type QueryResolver interface {
 	AgentEvaluation(ctx context.Context, id string) (*agent.Evaluation, error)
 	AgentMemory(ctx context.Context, id string) (*agent.Memory, error)
 	AgentReflections(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentReflectionConnection, error)
-	AgentMemoryUsage(ctx context.Context) (*agentports.AgentMemoryUsage, error)
+	AgentMemoryUsage(ctx context.Context) (*agentmemoryports.AgentMemoryUsage, error)
 	AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error)
 	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
 	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
@@ -2786,12 +2790,12 @@ type QueryResolver interface {
 	AgentSuiteRunCaseConnection(ctx context.Context, suiteRunID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunCaseConnection, error)
 	AgentQualityControl(ctx context.Context) (*agentquality.Control, error)
 	AgentRunEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentRunEventConnection, error)
-	AgentToolRuleImpact(ctx context.Context, name string, input gqlmodel.AgentToolRuleInput) ([]*agentports.AgentToolRuleImpact, error)
-	AgentToolHolders(ctx context.Context) ([]*agentports.AgentToolHolders, error)
+	AgentToolRuleImpact(ctx context.Context, name string, input gqlmodel.AgentToolRuleInput) ([]*agenttoolports.AgentToolRuleImpact, error)
+	AgentToolHolders(ctx context.Context) ([]*agenttoolports.AgentToolHolders, error)
 	AgentToolRuleConnection(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error)
 	AgentToolSafetyConnection(ctx context.Context, agentIds []string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolSafetyConnection, error)
-	AgentSafetySummary(ctx context.Context) (*agentports.AgentSafetySummary, error)
-	AgentSafety(ctx context.Context, agentIds []string) ([]*agentports.AgentSafetySubject, error)
+	AgentSafetySummary(ctx context.Context) (*agenttoolports.AgentSafetySummary, error)
+	AgentSafety(ctx context.Context, agentIds []string) ([]*agenttoolports.AgentSafetySubject, error)
 	AgentScorecard(ctx context.Context, input gqlmodel.AgentScorecardInput) (*gqlmodel.AgentScorecard, error)
 	AgentAnalytics(ctx context.Context, input gqlmodel.AIAnalyticsInput) (*gqlmodel.AgentAnalytics, error)
 	AgentAnalyticsToolFailures(ctx context.Context, input gqlmodel.AIAnalyticsInput, seriesKey string, toolName string) (*gqlmodel.AgentAnalyticsToolFailures, error)
@@ -2810,8 +2814,8 @@ type QueryResolver interface {
 	AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error)
 	AiProvider(ctx context.Context, id string) (*aiprovider.Provider, error)
 	AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*aiprovider.TaskRoute, error)
-	AiRetrievalStatus(ctx context.Context) (*agentports.AIRetrievalStatus, error)
-	AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*agentports.AIRetrievalReindexEstimate, error)
+	AiRetrievalStatus(ctx context.Context) (*retrievalports.AIRetrievalStatus, error)
+	AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*retrievalports.AIRetrievalReindexEstimate, error)
 	AiRetrievalFailedEntryConnection(ctx context.Context, sourceType *airetrieval.SourceType, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIRetrievalFailedEntryConnection, error)
 	AiTrainingExportHistory(ctx context.Context) ([]*aitraining.ExportHistoryEntry, error)
 	AiUsageFeatures(ctx context.Context, input gqlmodel.DataTableConnectionInput, days *int) (*gqlmodel.AIUsageFeatureConnection, error)

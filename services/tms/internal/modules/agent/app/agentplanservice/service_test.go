@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -389,8 +390,11 @@ func TestListConnectionAndGetByID_KeepAPlanTheOrganizationPauseHolds(t *testing.
 
 	_, err = h.svc.Decide(t.Context(), h.req, h.actor)
 	require.Error(t, err, "a decision on a held plan is still refused")
-	assert.Equal(t, shadowRefusal(agentshadow.Verdict{Cause: agentshadow.CauseOrganization}).Error(),
-		err.Error())
+	assert.Equal(
+		t,
+		shadowRefusal(agentshadow.Verdict{Cause: agentshadow.CauseOrganization}).Error(),
+		err.Error(),
+	)
 	assert.Empty(t, h.plans.statuses, "a held plan is not moved out of Pending")
 	assert.Empty(t, h.decider.decided, "no step of a held plan is decided")
 }
@@ -420,7 +424,7 @@ func TestPlanHolds_HoldsAPlanByAStepAnotherRunRaisedAsDecideRefusesIt(t *testing
 
 	holds, err := h.svc.PlanHolds(t.Context(), h.req.TenantInfo, []*agent.AgentPlan{h.plans.plan})
 	require.NoError(t, err)
-	assert.Equal(t, map[pulid.ID]*agentports.ProposalHold{
+	assert.Equal(t, map[pulid.ID]*assistantports.ProposalHold{
 		planID: {Reason: string(agentshadow.CauseDefinition), AgentName: "Shipment Desk"},
 	}, holds)
 
@@ -439,7 +443,11 @@ func TestPlanHolds_LeavesADecidedPlanAndAFreeOneUnheld(t *testing.T) {
 	assert.Empty(t, holds)
 
 	free := newHarness(t, 1, false)
-	holds, err = free.svc.PlanHolds(t.Context(), free.req.TenantInfo, []*agent.AgentPlan{free.plans.plan})
+	holds, err = free.svc.PlanHolds(
+		t.Context(),
+		free.req.TenantInfo,
+		[]*agent.AgentPlan{free.plans.plan},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, holds)
 }

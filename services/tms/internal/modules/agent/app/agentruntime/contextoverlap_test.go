@@ -8,8 +8,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,19 +57,19 @@ func (m *meetingOrganizations) GetByID(
 }
 
 type meetingVectorizer struct {
-	agentports.QueryVectorizer
+	retrievalports.QueryVectorizer
 
 	meeting *meeting
 }
 
 func (m *meetingVectorizer) Vectorize(
 	ctx context.Context,
-	_ *agentports.QueryVectorRequest,
-) (agentports.QueryVector, error) {
+	_ *retrievalports.QueryVectorRequest,
+) (retrievalports.QueryVector, error) {
 	close(m.meeting.vectorStarted)
 	m.meeting.vectorSawOrg.Store(meet(ctx, m.meeting.orgStarted))
 
-	return agentports.QueryVector{}, nil
+	return retrievalports.QueryVector{}, nil
 }
 
 /*
@@ -81,7 +83,7 @@ func TestContextBuilder_ReadsTheOrganizationWhileTheQuestionIsEmbedded(t *testin
 	t.Parallel()
 
 	m := &meeting{orgStarted: make(chan struct{}), vectorStarted: make(chan struct{})}
-	memories := &fakeMemories{answer: &agentports.MemoryContext{}}
+	memories := &fakeMemories{answer: &agentmemoryports.MemoryContext{}}
 	builder := &ContextBuilder{
 		logger: zap.NewNop(),
 		organizations: &meetingOrganizations{
@@ -105,11 +107,11 @@ func TestContextBuilder_ReadsTheOrganizationWhileTheQuestionIsEmbedded(t *testin
 		agentdefinition.ContextMemory,
 	}
 
-	rc, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
+	rc, err := builder.Build(t.Context(), &agentruntimeports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      actor,
 		Trigger:    agent.RunTriggerChat,
-		Query: agentports.QueryVectorRequest{
+		Query: retrievalports.QueryVectorRequest{
 			TenantInfo: actor.TenantInfo(),
 			Text:       "where is S1",
 		},

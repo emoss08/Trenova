@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
@@ -163,14 +163,24 @@ func TestRecordWorkerCredential_RenewalShowsWhatItSupersedes(t *testing.T) {
 		"expiresAt":           "2028-09-30",
 	}
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(raw)),
-		"a second active credential of a type is refused without renew")
+	require.Error(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(
+			t.Context(),
+			agenttoolstest.ExecuteParams(raw),
+		),
+		"a second active credential of a type is refused without renew",
+	)
 
 	raw[paramRenew] = true
 	params := agenttoolstest.ExecuteParams(raw)
-	preview := agenttoolstest.PreviewWithoutWrites(t, credentials.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		credentials.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	require.Len(t, preview.Changes, 2)
 	assert.Contains(t, preview.Summary, "archived as superseded")
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -190,9 +200,13 @@ func TestUpdateWorkerCredential_SaysWhenVerificationClears(t *testing.T) {
 		paramCredentialNumber: "MC-1002",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, credentials.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		credentials.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "verification is cleared")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, credentials.updated)
@@ -213,8 +227,12 @@ func TestAttachWorkerCredentialDocument_NamesTheDocument(t *testing.T) {
 	})))
 	require.NotNil(t, credentials.attached)
 	assert.Equal(t, documentID, credentials.attached.DocumentID)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{paramCredentialID: credentials.credential.ID.String()})))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{paramCredentialID: credentials.credential.ID.String()},
+		),
+	))
 }
 
 func TestArchiveWorkerCredential_IsOnlyProposed(t *testing.T) {
@@ -227,9 +245,13 @@ func TestArchiveWorkerCredential_IsOnlyProposed(t *testing.T) {
 		common.FieldReason: "Endorsement surrendered",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, credentials.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		credentials.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Equal(t, "Would archive Medical card.", preview.Summary)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, credentials.archived)

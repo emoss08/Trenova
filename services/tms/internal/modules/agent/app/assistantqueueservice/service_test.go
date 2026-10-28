@@ -7,13 +7,13 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,7 +41,7 @@ func (q *memoryQueue) sorted() []*conversation.QueuedMessage {
 
 func (q *memoryQueue) List(
 	_ context.Context,
-	scope *agentports.AssistantQueueScope,
+	scope *assistantports.AssistantQueueScope,
 ) ([]*conversation.QueuedMessage, error) {
 	out := make([]*conversation.QueuedMessage, 0, len(q.items))
 	for _, item := range q.sorted() {
@@ -55,7 +55,7 @@ func (q *memoryQueue) List(
 
 func (q *memoryQueue) Get(
 	_ context.Context,
-	req *agentports.QueuedMessageRequest,
+	req *assistantports.QueuedMessageRequest,
 ) (*conversation.QueuedMessage, error) {
 	for _, item := range q.items {
 		if item.ID == req.ID {
@@ -64,7 +64,10 @@ func (q *memoryQueue) Get(
 		}
 	}
 
-	return nil, errortypes.NewNotFoundError("{0} not found within your organization", "Queued message")
+	return nil, errortypes.NewNotFoundError(
+		"{0} not found within your organization",
+		"Queued message",
+	)
 }
 
 func (q *memoryQueue) Insert(
@@ -72,7 +75,7 @@ func (q *memoryQueue) Insert(
 	entity *conversation.QueuedMessage,
 ) (*conversation.QueuedMessage, error) {
 	if len(q.items) >= conversation.MaxQueuedPerThread {
-		return nil, agentports.ErrQueueFull
+		return nil, assistantports.ErrQueueFull
 	}
 	entity.ID = pulid.MustNew(conversation.QueuedMessageIDPrefix)
 	entity.Position = int64(len(q.items) + 1)
@@ -97,7 +100,7 @@ func (q *memoryQueue) Update(
 
 func (q *memoryQueue) MarkSteer(
 	ctx context.Context,
-	req *agentports.QueuedMessageRequest,
+	req *assistantports.QueuedMessageRequest,
 ) (*conversation.QueuedMessage, error) {
 	for _, item := range q.items {
 		if item.ID == req.ID {
@@ -108,7 +111,7 @@ func (q *memoryQueue) MarkSteer(
 	return q.Get(ctx, req)
 }
 
-func (q *memoryQueue) Delete(_ context.Context, req *agentports.QueuedMessageRequest) error {
+func (q *memoryQueue) Delete(_ context.Context, req *assistantports.QueuedMessageRequest) error {
 	q.items = slices.DeleteFunc(q.items, func(item *conversation.QueuedMessage) bool {
 		return item.ID == req.ID
 	})
@@ -118,7 +121,7 @@ func (q *memoryQueue) Delete(_ context.Context, req *agentports.QueuedMessageReq
 
 func (q *memoryQueue) DeleteMany(
 	_ context.Context,
-	req *agentports.DeleteQueuedMessagesRequest,
+	req *assistantports.DeleteQueuedMessagesRequest,
 ) error {
 	q.items = slices.DeleteFunc(q.items, func(item *conversation.QueuedMessage) bool {
 		return slices.Contains(req.IDs, item.ID)
@@ -129,7 +132,7 @@ func (q *memoryQueue) DeleteMany(
 
 func (q *memoryQueue) Reorder(
 	_ context.Context,
-	req *agentports.ReorderQueuedMessagesRequest,
+	req *assistantports.ReorderQueuedMessagesRequest,
 ) ([]*conversation.QueuedMessage, error) {
 	for _, item := range q.items {
 		item.Position = int64(slices.Index(req.IDs, item.ID) + 1)
@@ -140,7 +143,7 @@ func (q *memoryQueue) Reorder(
 
 func (q *memoryQueue) ClaimNext(
 	_ context.Context,
-	scope *agentports.AssistantQueueScope,
+	scope *assistantports.AssistantQueueScope,
 ) (*conversation.QueuedMessage, error) {
 	for _, item := range q.sorted() {
 		if item.ThreadID == scope.ThreadID {
@@ -151,12 +154,12 @@ func (q *memoryQueue) ClaimNext(
 		}
 	}
 
-	return nil, agentports.ErrQueueEmpty
+	return nil, assistantports.ErrQueueEmpty
 }
 
 func (q *memoryQueue) Claim(
 	_ context.Context,
-	req *agentports.QueuedMessageRequest,
+	req *assistantports.QueuedMessageRequest,
 ) (*conversation.QueuedMessage, error) {
 	for _, item := range q.items {
 		if item.ID == req.ID {
@@ -167,7 +170,7 @@ func (q *memoryQueue) Claim(
 		}
 	}
 
-	return nil, agentports.ErrQueueEmpty
+	return nil, assistantports.ErrQueueEmpty
 }
 
 func (q *memoryQueue) Restore(_ context.Context, entity *conversation.QueuedMessage) error {
@@ -185,7 +188,7 @@ type fakeTurns struct {
 
 func (f *fakeTurns) Active(
 	context.Context,
-	agentports.ActiveAssistantTurnRequest,
+	assistantports.ActiveAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	return f.active, nil
 }
@@ -270,7 +273,7 @@ type ownedThreads struct{}
 
 func (ownedThreads) GetThread(
 	_ context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return &conversation.Thread{ID: req.ID, UserID: req.UserID}, nil
 }
@@ -321,8 +324,8 @@ func (h *harness) running() *conversation.AssistantTurn {
 	return h.turns.active
 }
 
-func (h *harness) settle(read []pulid.ID, dispatch bool) *agentports.QueuedTurn {
-	return h.svc.SettleQueue(context.Background(), &agentports.SettleQueueRequest{
+func (h *harness) settle(read []pulid.ID, dispatch bool) *assistantports.QueuedTurn {
+	return h.svc.SettleQueue(context.Background(), &assistantports.SettleQueueRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: h.scope.Actor.OrganizationID,
 			BuID:  h.scope.Actor.BusinessUnitID,
@@ -344,7 +347,9 @@ func TestEnqueue_SteersTheReplyUnderWay(t *testing.T) {
 		Scope:   h.scope,
 		Content: "  Actually the carrier is Werner.  ",
 		Request: conversation.QueuedRequest{
-			Mentions: []agent.EntityRef{{Type: "carrier", ID: pulid.MustNew("car_").String(), Label: "Werner"}},
+			Mentions: []agent.EntityRef{
+				{Type: "carrier", ID: pulid.MustNew("car_").String(), Label: "Werner"},
+			},
 		},
 		Steer: true,
 	})
@@ -415,8 +420,10 @@ func TestEnqueue_RefusesFilesOnASteerAndAnEmptyMessage(t *testing.T) {
 	_, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{
 		Scope:   h.scope,
 		Content: "Read this",
-		Request: conversation.QueuedRequest{AttachmentDocumentIDs: []pulid.ID{pulid.MustNew("doc_")}},
-		Steer:   true,
+		Request: conversation.QueuedRequest{
+			AttachmentDocumentIDs: []pulid.ID{pulid.MustNew("doc_")},
+		},
+		Steer: true,
 	})
 	assert.True(t, errortypes.IsMultiError(err), "files go with a queued message, not a steer")
 
@@ -430,9 +437,15 @@ func TestSettleQueue_ClearsWhatWasReadAndSendsTheNextAfterACompletedTurn(t *test
 
 	h := newHarness()
 	h.running()
-	read, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{Scope: h.scope, Content: "Steered", Steer: true})
+	read, err := h.svc.Enqueue(
+		t.Context(),
+		&EnqueueRequest{Scope: h.scope, Content: "Steered", Steer: true},
+	)
 	require.NoError(t, err)
-	queued, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{Scope: h.scope, Content: "Then bill it"})
+	queued, err := h.svc.Enqueue(
+		t.Context(),
+		&EnqueueRequest{Scope: h.scope, Content: "Then bill it"},
+	)
 	require.NoError(t, err)
 	h.turns.active = nil
 
@@ -443,7 +456,12 @@ func TestSettleQueue_ClearsWhatWasReadAndSendsTheNextAfterACompletedTurn(t *test
 	assert.Equal(t, "Then bill it", next.Input)
 	assert.Empty(t, h.queue.items)
 	require.Len(t, h.turns.started, 1)
-	assert.Equal(t, h.scope.Actor.UserID, h.turns.started[0].UserID, "sent as the conversation's owner")
+	assert.Equal(
+		t,
+		h.scope.Actor.UserID,
+		h.turns.started[0].UserID,
+		"sent as the conversation's owner",
+	)
 }
 
 func TestSettleQueue_AStoppedTurnHoldsTheQueue(t *testing.T) {
@@ -465,10 +483,15 @@ func TestSettleQueue_AMessageThatCannotStartGoesBack(t *testing.T) {
 
 	h := newHarness()
 	h.running()
-	queued, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{Scope: h.scope, Content: "Then bill it"})
+	queued, err := h.svc.Enqueue(
+		t.Context(),
+		&EnqueueRequest{Scope: h.scope, Content: "Then bill it"},
+	)
 	require.NoError(t, err)
 	h.turns.active = nil
-	h.turns.startErr = errortypes.NewBusinessError("This conversation is already working on a reply.")
+	h.turns.startErr = errortypes.NewBusinessError(
+		"This conversation is already working on a reply.",
+	)
 
 	assert.Nil(t, h.settle(nil, true))
 	assert.Equal(t, []pulid.ID{queued.Item.ID}, h.queue.restored)
@@ -485,7 +508,10 @@ func TestReorder_MustNameEveryWaitingMessageOnce(t *testing.T) {
 	second, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{Scope: h.scope, Content: "Two"})
 	require.NoError(t, err)
 
-	_, err = h.svc.Reorder(t.Context(), &ReorderRequest{Scope: h.scope, IDs: []pulid.ID{second.Item.ID}})
+	_, err = h.svc.Reorder(
+		t.Context(),
+		&ReorderRequest{Scope: h.scope, IDs: []pulid.ID{second.Item.ID}},
+	)
 	assert.True(t, errortypes.IsError(err))
 	_, err = h.svc.Reorder(t.Context(), &ReorderRequest{
 		Scope: h.scope,
@@ -506,14 +532,23 @@ func TestEdit_AMessageHandedToTheReplyIsTheReplys(t *testing.T) {
 
 	h := newHarness()
 	h.running()
-	handed, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{Scope: h.scope, Content: "Werner", Steer: true})
+	handed, err := h.svc.Enqueue(
+		t.Context(),
+		&EnqueueRequest{Scope: h.scope, Content: "Werner", Steer: true},
+	)
 	require.NoError(t, err)
 
-	_, err = h.svc.Edit(t.Context(), &EditRequest{Scope: h.scope, ID: handed.Item.ID, Content: "Schneider"})
+	_, err = h.svc.Edit(
+		t.Context(),
+		&EditRequest{Scope: h.scope, ID: handed.Item.ID, Content: "Schneider"},
+	)
 	assert.True(t, errortypes.IsBusinessError(err))
 
 	h.turns.active = nil
-	edited, err := h.svc.Edit(t.Context(), &EditRequest{Scope: h.scope, ID: handed.Item.ID, Content: "Schneider"})
+	edited, err := h.svc.Edit(
+		t.Context(),
+		&EditRequest{Scope: h.scope, ID: handed.Item.ID, Content: "Schneider"},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "Schneider", edited.Content)
 	assert.False(t, edited.Steer, "once the reply ended it is an ordinary waiting message")
@@ -527,7 +562,9 @@ func TestSendNow_RefusesToSteerWithFiles(t *testing.T) {
 	queued, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{
 		Scope:   h.scope,
 		Content: "Read the POD",
-		Request: conversation.QueuedRequest{AttachmentDocumentIDs: []pulid.ID{pulid.MustNew("doc_")}},
+		Request: conversation.QueuedRequest{
+			AttachmentDocumentIDs: []pulid.ID{pulid.MustNew("doc_")},
+		},
 	})
 	require.NoError(t, err)
 

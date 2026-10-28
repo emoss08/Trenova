@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -40,8 +40,16 @@ func seededBriefing(tenant *agentreadtest.Tenant) *briefing.Briefing {
 				Key: briefing.SectionAttention, Title: "Needs attention",
 				Summary: "12 items open.", Body: "Twelve things want you.",
 				Items: []briefing.Item{
-					{Label: "Service failure", Value: "4", Path: "/desk/watchtower?kinds=ServiceFailure"},
-					{Label: "EDI quarantined", Value: "8", Path: "/desk/watchtower?kinds=EDIInboundQuarantined"},
+					{
+						Label: "Service failure",
+						Value: "4",
+						Path:  "/desk/watchtower?kinds=ServiceFailure",
+					},
+					{
+						Label: "EDI quarantined",
+						Value: "8",
+						Path:  "/desk/watchtower?kinds=EDIInboundQuarantined",
+					},
 				},
 			},
 			{
@@ -75,13 +83,20 @@ func TestConvertedGets_DailyBriefingIsCutToTheReader(t *testing.T) {
 	_, err := repo.Upsert(mineCtx, seededBriefing(mine))
 	require.NoError(t, err)
 
-	tool := func(t *testing.T, engine permissionports.PermissionEngine) agentports.AgentQueryTool {
+	tool := func(t *testing.T, engine permissionports.PermissionEngine) agenttoolports.AgentQueryTool {
 		t.Helper()
 		resolvers.BriefingService = briefingservice.New(briefingservice.Params{
 			Logger: logger, Repo: repo, Permissions: engine,
 		})
-		reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
-		get, getErr := agentquerytoolservice.ConvertedGetTool("insight_get_daily_briefing", reader, engine)
+		reader := agentreadtest.NewReader(
+			t,
+			agentreadtest.Options{Engine: engine, Resolvers: resolvers},
+		)
+		get, getErr := agentquerytoolservice.ConvertedGetTool(
+			"insight_get_daily_briefing",
+			reader,
+			engine,
+		)
 		require.NoError(t, getErr)
 
 		return get
@@ -105,7 +120,13 @@ func TestConvertedGets_DailyBriefingIsCutToTheReader(t *testing.T) {
 		engine := &mocks.DenyResourcesPermissionEngine{
 			Denied: []string{permission.ResourceCustomerPayment.String()},
 		}
-		page := callTool(t, mineCtx, tool(t, engine), mine.Actor, map[string]any{"date": briefingDay})
+		page := callTool(
+			t,
+			mineCtx,
+			tool(t, engine),
+			mine.Actor,
+			map[string]any{"date": briefingDay},
+		)
 
 		assert.Empty(t, page["headline"], "the headline cites the cash")
 		assert.Equal(t, false, page["narrated"])
@@ -121,8 +142,16 @@ func TestConvertedGets_DailyBriefingIsCutToTheReader(t *testing.T) {
 	})
 
 	t.Run("a reader missing one watchtower kind keeps the lines they may read", func(t *testing.T) {
-		engine := &mocks.DenyResourcesPermissionEngine{Denied: []string{permission.ResourceEDI.String()}}
-		page := callTool(t, mineCtx, tool(t, engine), mine.Actor, map[string]any{"date": briefingDay})
+		engine := &mocks.DenyResourcesPermissionEngine{
+			Denied: []string{permission.ResourceEDI.String()},
+		}
+		page := callTool(
+			t,
+			mineCtx,
+			tool(t, engine),
+			mine.Actor,
+			map[string]any{"date": briefingDay},
+		)
 
 		sections, _ := page["sections"].([]any)
 		require.Len(t, sections, 2)
@@ -147,7 +176,7 @@ func TestConvertedGets_DailyBriefingIsCutToTheReader(t *testing.T) {
 
 	t.Run("nothing the page selects is withheld at Internal", func(t *testing.T) {
 		get := tool(t, &mocks.DenyResourcesPermissionEngine{})
-		data, queryErr := get.Query(mineCtx, &agentports.QueryToolParams{
+		data, queryErr := get.Query(mineCtx, &agenttoolports.QueryToolParams{
 			OrganizationID: mine.Actor.OrganizationID, BusinessUnitID: mine.Actor.BusinessUnitID,
 			Actor: mine.Actor, Timezone: "America/Chicago",
 			DataAccessCeiling: permission.SensitivityInternal,

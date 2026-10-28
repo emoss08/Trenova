@@ -2,7 +2,7 @@ package agenttoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
-var _ agentports.ToolPreviewer = (*masterdatatools.AssignMoveTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*masterdatatools.AssignMoveTool)(nil)

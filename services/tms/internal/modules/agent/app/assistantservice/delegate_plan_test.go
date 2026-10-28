@@ -9,6 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -39,12 +42,12 @@ type handOffEffects struct {
 	svc      *Service
 	parent   *agentdefinition.Definition
 	threadID pulid.ID
-	opened   []*agentports.RunRequest
+	opened   []*agentruntimeports.RunRequest
 }
 
 func (fx *handOffEffects) Complete(
 	_ *agentruntime.Turn,
-	req *agentports.ChatCompletionRequest,
+	req *llmports.ChatCompletionRequest,
 ) (agentruntime.ModelReply, error) {
 	return fx.svc.runtime.StreamCompletion(fx.ctx, req, fx.Emit)
 }
@@ -76,7 +79,7 @@ func (*handOffEffects) Emit(kernelports.StreamEvent) {}
 
 func (fx *handOffEffects) Observe(
 	_ *agentruntime.Turn,
-	call *agentports.ToolCall,
+	call *llmports.ToolCall,
 	outcome agentruntime.ToolOutcome,
 ) agentruntime.ToolOutcome {
 	return fx.svc.runtime.ObserveCall(nil, call, outcome)
@@ -160,7 +163,7 @@ func TestPersistProposals_AReadOnlyHandOffLeavesItsRun(t *testing.T) {
 	svc := newProposalService(runs, proposals, &stubConversationRepo{})
 	params := proposalTestParams(nil, nil)
 	params.TurnID = pulid.MustNew("atrn_")
-	params.Delegations = []agentports.DelegatedRun{{
+	params.Delegations = []agentruntimeports.DelegatedRun{{
 		Definition: &agentdefinition.Definition{
 			ID:   pulid.MustNew("agd_"),
 			Name: "Shipment Desk",
@@ -230,7 +233,7 @@ func TestListThreadPlans_HoldsAPlanWithAStepFromAnAgentInShadowMode(t *testing.T
 		&stubConversationRepo{thread: thread}, shadowSwitches{definition: delegate})
 	svc.plans = &threadPlans{plans: []*agent.AgentPlan{plan}}
 
-	listed, err := svc.ListThreadPlans(t.Context(), agentports.GetThreadRequest{ID: thread.ID})
+	listed, err := svc.ListThreadPlans(t.Context(), assistantports.GetThreadRequest{ID: thread.ID})
 	require.NoError(t, err)
 
 	require.Len(t, listed, 1)

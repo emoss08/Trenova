@@ -151,7 +151,7 @@ host) for a one-minute cooldown, so a turn stops paying for attempts on a
 provider that is down. The count of failures is per process; the rest is
 shared. When a worker opens the breaker it also writes `ai:breaker:{providerID}`
 to Redis with a TTL equal to the cooldown, through the
-`agentports.ProviderBreakerRepository` port
+`llmports.ProviderBreakerRepository` port
 (`redis/repositories/providerbreaker.go`, provided in `RedisRepositoriesModule`
 and injected `optional:"true"`). The key is the provider row's id, so a
 tenant-owned provider is its own breaker, and the value is a marker: nothing
@@ -303,7 +303,7 @@ The API keeps a short-lived fingerprint only of a call that asked, so every call
 sends `diagnostics`: `previous_message_id` null when there is nothing to name, else
 the id of the last reply this provider gave in the conversation
 (`modeladapter.previousReply`). That id travels on the assistant message
-(`agentports.Message.ReplyID`/`ReplyProvider`, from
+(`llmports.Message.ReplyID`/`ReplyProvider`, from
 `ChatCompletionResult.ProviderMessageID`) and is saved in
 `assistant_messages.provider_message_id`, so a turn's first call names the last call
 of the turn before. A reply from another provider is passed over; one from this
@@ -416,7 +416,7 @@ Control → Providers, off by default: `advisorEnabled`, and `advisorModel`, whi
 - **A refusal is recorded and the call answered without it.** When the API refuses the
   provider's advisor (a 400 whose message names the advisor, `refusedAdvisor`), the router keeps
   the refusal on the provider (`aiprovider.AdvisorRefusal`: advisor, model, message, time),
-  through `agentports.AIProviderAdvisorRecorder` (`aiproviderrepository.NewAdvisorRecorder`,
+  through `aiproviderports.AIProviderAdvisorRecorder` (`aiproviderrepository.NewAdvisorRecorder`,
   which writes only while the provider still has the advisor on for the same model, and does
   not bump the version). It retries that call once without the advisor, and every later call to
   the provider goes out without it (`ResolvedAdvisorModel` is empty while `AdvisorRefused`)
@@ -476,7 +476,7 @@ The Anthropic adapter (`modeladapter/anthropicadvisor.go`):
 ### Files the person attached
 
 A turn's user message carries the files attached to it as references
-(`agentports.Message.Files`): the document id, name, type, size, pages, and
+(`llmports.Message.Files`): the document id, name, type, size, pages, and
 where the file's entry sits in the attachments block (`EntryStart`/`EntryEnd`),
 with the entry that replaces it when the file itself is sent (`NativeEntry`,
 rendered by `agentdefinition.RenderAttachments`). Only the current message's
@@ -486,7 +486,7 @@ durable boundary.
 
 The Anthropic adapter reads them at call time (`modeladapter/anthropicfiles.go`)
 through `Call.Files`, which the router binds to the request's tenant from
-`agentports.MessageFileReader` (`messagefileservice`, over the documents module's
+`assistantports.MessageFileReader` (`messagefileservice`, over the documents module's
 `conversationfileservice`, which decrypts through `storedobject` and finds only a
 conversation's documents; no view is recorded, as for document intelligence).
 `aiprovider.Provider.FileInput` decides who reads files: an Anthropic Messages
@@ -698,7 +698,7 @@ work read.
   who owns that conversation, and never to an agent principal or an API key.
   Each tainted row is a `run_record` mark.
 - That ownership rule holds for every read made for a request, not only the
-  tools: each agent-run request carries an `agentports.RunReader`, and
+  tools: each agent-run request carries an `agentruntimeports.RunReader`, and
   `agentrunrepository` applies it in SQL (`subject_type <> 'AssistantThread'` or
   an `EXISTS` on the thread's primary key and `user_id`), so lists, counts,
   gets, the by-id loaders and transcripts agree and a page stays full. GraphQL
@@ -769,7 +769,7 @@ The records a turn is about come first; the ones they name follow in the order
 a person reads the record. The links are batched reads
 (`agentmemorysubjectrepository.ListRecordLinks`, one query per kind per hop). Up
 to 500 active, unexpired candidates are then read, subject rows first, and
-ordered by `agentports.MemoryRanker`: `retrievalservice.MemoryRanker` fuses
+ordered by `agentmemoryports.MemoryRanker`: `retrievalservice.MemoryRanker` fuses
 recency and use count (`agentmemoryservice.RankByRecencyAndUse`) with the
 memories nearest the turn's query vector, and falls back to recency and use
 alone when the organization is not indexed or the search fails. The ranker
@@ -1248,7 +1248,7 @@ the workflow does, so a reader can never attach ahead of it.
 Every tool call a reader sees says what it does. `tool_started`, `tool_finished`
 and the tool calls on `message` carry `effect` (`lookup`, `change`, `navigate`,
 `discover`, `present`, `ask` or `delegate`), read from the tool's metadata
-(`agentports.EffectOf`, which reads `Effect` from the tool's `Policy()`;
+(`agenttoolports.EffectOf`, which reads `Effect` from the tool's `Policy()`;
 `find_tools`, `ask_user`, `publish_artifact` and `delegate_task` declare theirs in
 `agentruntime/runtimepolicies.go`). `tool_finished` also carries `summary`, a one-line label worked out
 where the tool ran from what it returned, or from a write's name or title. The
@@ -1520,7 +1520,7 @@ Delegated turns neither watch nor steer.
 ### Notices are system messages
 
 What the runtime tells the model mid-turn is not something the person said, so
-it travels as `agentports.RoleSystem` (`agentports.NoticeMessage`): the steer
+it travels as `llmports.RoleSystem` (`llmports.NoticeMessage`): the steer
 notice, a world-change notice, the grounding, placement and command corrections
 (`groundingguard.go`, `placement.go`, `command.go`) and the final-answer note
 sent with `tool_choice: none`. History replays a saved `WorldChange` message as a
@@ -1945,7 +1945,7 @@ condition, outside content, business hours, or the money bound it exceeded), a p
 tell the person and not to try another way (`deniedAdvice`), and `agent_create_memory`
 says whether the memory is kept or only offered on a card
 (`savedMemoryContent`). A tool done as a sequence declares it
-(`agentports.RecipeTool`), and the order is shown in the prompt's tool
+(`agenttoolports.RecipeTool`), and the order is shown in the prompt's tool
 section and under the tool in a `find_tools` answer, with the prerequisite
 reads that were loaded alongside it. A `find_tools` need that names a tool the
 agent holds outright (`worker_list`) loads that tool first, ahead of the ranked
@@ -1966,7 +1966,7 @@ with `find_tools` first. A lookup many held recipes start from (`shipment_list`,
 `shipment_get`) brings none of them.
 
 A prerequisite only ever grants a read. A write a tool cannot finish its job without is
-declared instead as a companion (`agentports.CompanionTool`): `shipment_create` names
+declared instead as a companion (`agenttoolports.CompanionTool`): `shipment_create` names
 `customer_create`, `location_create` and `masterdata_create_commodity`, because a load from a broker
 Trenova has never seen names a customer, facilities and freight that do not exist yet, and an
 agent made in AI Control that held only shipment tools ended with "no match was found; no
@@ -2212,7 +2212,7 @@ A list page is cut before that, by the runtime, so the page and its cursor agree
 (`pagefit.go`). The fence keeps the page's own `nextCursor`, so fifty workers read,
 thirteen shown, and the next page started at the fifty-first: the rows between were never
 read by anyone, and asked for every inactive worker an agent answered from a quarter of
-them. A list page implements `agentports.PageCutter`, and when a model's read of it is over
+them. A list page implements `agenttoolports.PageCutter`, and when a model's read of it is over
 the bound, `fitPage` finds the most rows that fit (a binary search over the encoded result,
 at most seven encodings), and the page it hands on ends there with `hasMore` and a
 `nextCursor` that starts at the first row it left out, followed by a note outside the fence
@@ -2648,7 +2648,7 @@ sampled case at once with `JudgeCaseActivity`, as before.
   never to a second batch). `agentqualityservice.SubmitJudgeBatch` reads the suite's
   evaluations and the agent's cases in three bounded queries, builds each request with
   `judgeRequest`, the builder `JudgeCase` uses, and hands them to
-  `agentports.BatchCompletionService`. The completion router batches only on the provider it
+  `llmports.BatchCompletionService`. The completion router batches only on the provider it
   would ask first for `EvaluationJudge`, and only when that provider's adapter is a
   `modeladapter.BatchRunner` that takes batches for it: today an Anthropic Messages provider
   on the Claude API itself (`Provider.OnClaudeAPI`, Message Batches through the SDK's
@@ -2809,7 +2809,7 @@ server's words; an archived thread (the document was re-extracted) offers a
 fresh one.
 
 **The studio's one-shot calls.** Besides its thread, the Formula Studio asks the
-formula assistant five single questions through `agentports.FormulaStudioAssist`
+formula assistant five single questions through `formulastudioports.FormulaStudioAssist`
 (`formulastudioservice`): `POST /formula-templates/ai/explain` (one sentence per
 step of the rate trace), `ai/describe-inputs` (doc comments for inputs that have
 none), `ai/suggest-tests` (up to five `test` blocks, each run by `tariff.test`

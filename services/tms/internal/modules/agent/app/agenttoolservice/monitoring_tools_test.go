@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -51,7 +51,10 @@ func TestEvaluateServiceFailures_RunsTheEvaluatorForTheShipmentAsTheActor(t *tes
 		"force":      true,
 	})
 
-	require.NoError(t, operationstools.NewEvaluateServiceFailuresTool(failures).Execute(t.Context(), params))
+	require.NoError(
+		t,
+		operationstools.NewEvaluateServiceFailuresTool(failures).Execute(t.Context(), params),
+	)
 
 	require.NotNil(t, failures.Evaluated)
 	assert.Equal(t, params.Params["shipmentId"], failures.Evaluated.ShipmentID.String())
@@ -67,13 +70,17 @@ func TestResolveServiceFailure_CarriesTheVersionAndTheReason(t *testing.T) {
 	failures := &agenttoolstest.FakeFailureDecider{Existing: existing}
 	reasonID := pulid.MustNew("sfrc_")
 
-	require.NoError(t, operationstools.NewResolveServiceFailureTool(failures).Execute(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{
-			"serviceFailureId": existing.ID.String(),
-			"reasonCodeId":     reasonID.String(),
-			"note":             "  Shipper closed early; driver waited until opening. ",
-		},
-	)))
+	require.NoError(
+		t,
+		operationstools.NewResolveServiceFailureTool(failures).
+			Execute(t.Context(), agenttoolstest.ExecuteParams(
+				map[string]any{
+					"serviceFailureId": existing.ID.String(),
+					"reasonCodeId":     reasonID.String(),
+					"note":             "  Shipper closed early; driver waited until opening. ",
+				},
+			)),
+	)
 
 	require.NotNil(t, failures.Resolved)
 	assert.Equal(t, existing.ID, failures.Resolved.ID)
@@ -92,19 +99,25 @@ func TestResolveServiceFailure_InsistsOnAReasonWhenNoneIsOnFile(t *testing.T) {
 	existing := openFailure()
 	failures := &agenttoolstest.FakeFailureDecider{Existing: existing}
 
-	err := operationstools.NewResolveServiceFailureTool(failures).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		"serviceFailureId": existing.ID.String(),
-		"note":             "Done.",
-	}))
+	err := operationstools.NewResolveServiceFailureTool(failures).
+		Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+			"serviceFailureId": existing.ID.String(),
+			"note":             "Done.",
+		}))
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "exception_list_service_failure_reason_codes")
 	assert.Nil(t, failures.Resolved)
 
 	existing.ReasonCodeID = pulid.PtrOrNil(pulid.MustNew("sfrc_"))
-	require.NoError(t, operationstools.NewResolveServiceFailureTool(failures).Execute(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{"serviceFailureId": existing.ID.String(), "note": "Done."},
-	)), "a failure that already carries a reason keeps it")
+	require.NoError(
+		t,
+		operationstools.NewResolveServiceFailureTool(failures).
+			Execute(t.Context(), agenttoolstest.ExecuteParams(
+				map[string]any{"serviceFailureId": existing.ID.String(), "note": "Done."},
+			)),
+		"a failure that already carries a reason keeps it",
+	)
 	assert.True(t, failures.Resolved.ReasonCodeID.IsNil())
 }
 
@@ -115,10 +128,11 @@ func TestResolveServiceFailure_RefusesATerminalOne(t *testing.T) {
 	existing.Status = servicefailure.StatusResolved
 	failures := &agenttoolstest.FakeFailureDecider{Existing: existing}
 
-	err := operationstools.NewResolveServiceFailureTool(failures).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		"serviceFailureId": existing.ID.String(),
-		"note":             "Again.",
-	}))
+	err := operationstools.NewResolveServiceFailureTool(failures).
+		Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+			"serviceFailureId": existing.ID.String(),
+			"note":             "Again.",
+		}))
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "already Resolved")
@@ -391,7 +405,7 @@ func TestMonitoringActionTools_RejectAMismatchedActor(t *testing.T) {
 	t.Parallel()
 
 	tool, _, _, _, _ := agenttoolstest.CustomerEmailFixture()
-	for _, candidate := range []agentports.AgentTool{
+	for _, candidate := range []agenttoolports.AgentTool{
 		operationstools.NewEvaluateServiceFailuresTool(&agenttoolstest.FakeFailureDecider{}),
 		operationstools.NewResolveServiceFailureTool(&agenttoolstest.FakeFailureDecider{}),
 		operationstools.NewNotifyDriverTool(&fakeDriverNotifier{}),
@@ -420,12 +434,18 @@ func TestOutboundTools_AreGatedOnTheCommunicationTheySend(t *testing.T) {
 
 	customerTool, _, _, _, _ := agenttoolstest.CustomerEmailFixture()
 	tools := []struct {
-		tool     agentports.AgentTool
+		tool     agenttoolports.AgentTool
 		resource permission.Resource
 	}{
-		{operationstools.NewNotifyDriverTool(&fakeDriverNotifier{}), permission.ResourceDriverMessage},
+		{
+			operationstools.NewNotifyDriverTool(&fakeDriverNotifier{}),
+			permission.ResourceDriverMessage,
+		},
 		{customerTool, permission.ResourceCustomerCommunication},
-		{operationstools.NewSendDetentionNoticeTool(&agenttoolstest.FakeDetention{}), permission.ResourceCustomerCommunication},
+		{
+			operationstools.NewSendDetentionNoticeTool(&agenttoolstest.FakeDetention{}),
+			permission.ResourceCustomerCommunication,
+		},
 	}
 	for _, entry := range tools {
 		assert.Equal(t, entry.resource, entry.tool.Policy().Resource, entry.tool.Name())

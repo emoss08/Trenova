@@ -22,7 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -52,8 +53,8 @@ func TestRecordAgentLoopHistories(t *testing.T) {
 	require.NoError(t, err)
 	defer c.Close()
 
-	read := &agentruntime.ModelReply{Completion: &agentports.ChatCompletionResult{
-		ToolCalls: []agentports.ToolCall{{
+	read := &agentruntime.ModelReply{Completion: &llmports.ChatCompletionResult{
+		ToolCalls: []llmports.ToolCall{{
 			ID:        "call_recorded_read",
 			Name:      loopReplayRead,
 			Arguments: map[string]any{"proNumber": "12345"},
@@ -62,8 +63,8 @@ func TestRecordAgentLoopHistories(t *testing.T) {
 		InputTokens:     900,
 		OutputTokens:    30,
 	}}
-	write := &agentruntime.ModelReply{Completion: &agentports.ChatCompletionResult{
-		ToolCalls: []agentports.ToolCall{{
+	write := &agentruntime.ModelReply{Completion: &llmports.ChatCompletionResult{
+		ToolCalls: []llmports.ToolCall{{
 			ID:        "call_recorded_write",
 			Name:      loopReplayWrite,
 			Arguments: map[string]any{"moveId": "smv_recorded", "workerId": "wrk_recorded"},
@@ -72,7 +73,7 @@ func TestRecordAgentLoopHistories(t *testing.T) {
 		InputTokens:     1000,
 		OutputTokens:    35,
 	}}
-	answer := &agentruntime.ModelReply{Completion: &agentports.ChatCompletionResult{
+	answer := &agentruntime.ModelReply{Completion: &llmports.ChatCompletionResult{
 		Text:            "Proposed assigning the move.",
 		ModelIdentifier: "recorded-model",
 		InputTokens:     1100,
@@ -170,14 +171,14 @@ func registerLoopStandIns(
 	w.RegisterActivityWithOptions(
 		func(ctx context.Context, in *OpenRunInput) (*OpenRunResult, error) {
 			tenant := in.Payload.TenantInfo()
-			req := &agentports.RunRequest{
+			req := &agentruntimeports.RunRequest{
 				Definition: in.Definition,
 				Actor:      agentActor(tenant),
 				Input:      "A shipment was created.",
 				RunID:      in.Payload.RunID,
 				Unattended: true,
-				StepOwner: agentports.RunStepOwner{
-					Kind: agentports.RunStepOwnerAgentRun,
+				StepOwner: agentruntimeports.RunStepOwner{
+					Kind: agentruntimeports.RunStepOwnerAgentRun,
 					ID:   in.Payload.RunID,
 				},
 				Attempt: 1,
@@ -217,7 +218,7 @@ func registerLoopStandIns(
 			return &agentflow.ToolResult{Outcome: agentruntime.ToolOutcome{
 				Content: "Recorded a proposal to run \"assign_move\". It is awaiting a " +
 					"person's review at the Propose tier and has not run.",
-				Action: &agentports.PendingAction{
+				Action: &agentruntimeports.PendingAction{
 					ToolName:   in.Call.Call.Name,
 					Arguments:  in.Call.Call.Arguments,
 					Rationale:  "Cover the move.",

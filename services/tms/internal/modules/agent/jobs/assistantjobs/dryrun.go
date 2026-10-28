@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"go.temporal.io/sdk/temporal"
@@ -105,7 +105,7 @@ func (w *Workflows) dryRun(
 	})
 	if plan.Refused() {
 		return temporaltype.StreamItem{
-			Event: agentports.AssistantEventDone,
+			Event: assistantports.AssistantEventDone,
 			Data:  map[string]any{"reply": plan.Decision.Message},
 			At:    workflow.Now(ctx).Unix(),
 		}
@@ -142,7 +142,7 @@ func (w *Workflows) dryRun(
 	})
 
 	return temporaltype.StreamItem{
-		Event: agentports.AssistantEventDone,
+		Event: assistantports.AssistantEventDone,
 		Data:  map[string]any{"reply": reply},
 		At:    workflow.Now(ctx).Unix(),
 	}
@@ -157,7 +157,7 @@ func dryRunError(ctx workflow.Context, err error) temporaltype.StreamItem {
 	}
 
 	return temporaltype.StreamItem{
-		Event: agentports.AssistantEventError,
+		Event: assistantports.AssistantEventError,
 		Data:  map[string]any{"message": message},
 		At:    workflow.Now(ctx).Unix(),
 	}
@@ -172,10 +172,10 @@ func dryRunSteps(plan *assistantservice.DryRunPlan, outcome *agentflow.Outcome) 
 	calls := make([]agentdryrun.Call, 0, len(outcome.Events))
 	for idx := range outcome.Events {
 		item := &outcome.Events[idx]
-		if item.Event != agentports.AssistantEventToolFinished {
+		if item.Event != assistantports.AssistantEventToolFinished {
 			continue
 		}
-		var finished agentports.AssistantToolFinishedEvent
+		var finished assistantports.AssistantToolFinishedEvent
 		if err := jsonutils.Convert(
 			item.Data,
 			&finished,

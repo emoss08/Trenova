@@ -13,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/productguideservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/vectorutils"
@@ -47,7 +47,7 @@ type EmbeddingFixture struct {
 }
 
 type EmbeddingInputs struct {
-	Documents []agentports.EmbeddingCatalogItem
+	Documents []retrievalports.EmbeddingCatalogItem
 	Queries   []string
 }
 
@@ -59,7 +59,7 @@ type Embed func(
 
 func QueryHash(query string) string { return hashutils.SHA256Hex(query) }
 
-func GuideItems() []agentports.EmbeddingCatalogItem {
+func GuideItems() []retrievalports.EmbeddingCatalogItem {
 	return productguideservice.CatalogItems(productguide.Default)
 }
 
@@ -156,7 +156,7 @@ func (f *EmbeddingFixture) Stale(inputs EmbeddingInputs) error {
 
 func (f *EmbeddingFixture) Similarities(
 	query string,
-	items []agentports.EmbeddingCatalogItem,
+	items []retrievalports.EmbeddingCatalogItem,
 ) (map[string]float64, error) {
 	vector, ok := f.Query(query)
 	if !ok {
@@ -183,8 +183,8 @@ func (f *EmbeddingFixture) Similarities(
 
 func (f *EmbeddingFixture) CatalogSimilarities(
 	similarity map[string]float64,
-) agentports.CatalogSimilarities {
-	return agentports.CatalogSimilarities{
+) retrievalports.CatalogSimilarities {
+	return retrievalports.CatalogSimilarities{
 		Available: true,
 		ByKey:     similarity,
 		Floor:     airetrieval.SimilarityFloor(f.Model),

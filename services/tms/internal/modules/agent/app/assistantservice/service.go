@@ -6,11 +6,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -28,25 +34,25 @@ type Params struct {
 	Logger        *zap.Logger
 	Guard         *agentguard.Service
 	Runtime       *agentruntime.Service
-	Contexts      agentports.RuntimeContextBuilder
-	Conversations agentports.ConversationRepository
+	Contexts      agentruntimeports.RuntimeContextBuilder
+	Conversations assistantports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Recorder      *proposalrecorder.Service
 	Proposals     agentports.AgentProposalRepository
 	Plans         agentports.AgentPlanRepository `optional:"true"`
-	AIProviders   agentports.AIProviderRepository
+	AIProviders   aiproviderports.AIProviderRepository
 	Shadow        *agentshadow.Resolver
 	Budgets       agentports.AgentBudgetService `optional:"true"`
 	// Tools names the parameters a proposal's tool takes, for the fields a
 	// person may edit before approving; Decisions carries what they changed.
-	Tools     agentports.AgentToolRegistry       `optional:"true"`
+	Tools     agenttoolports.AgentToolRegistry   `optional:"true"`
 	Decisions agentports.AgentDecisionRepository `optional:"true"`
 	// Labeler names the records a proposal offers for a person to untick.
-	Labeler agentports.RecordLabeler `optional:"true"`
+	Labeler agentruntimeports.RecordLabeler `optional:"true"`
 	// Artifacts keeps what a turn produced besides words; Subjects describes
 	// the record a conversation was opened from.
 	Artifacts assistantartifactports.AssistantArtifactRepository `optional:"true"`
-	Subjects  agentports.AgentSubjectDescriber                   `optional:"true"`
+	Subjects  agentruntimeports.AgentSubjectDescriber            `optional:"true"`
 	Anchors   agentports.RecordAnchorReader                      `optional:"true"`
 	Activity  agentports.AgentActivityPublisher                  `optional:"true"`
 	// Documents checks that an attached file is the person's own; Contents
@@ -60,9 +66,9 @@ type Params struct {
 	Cases deskcaseports.AssistantCaseStates `optional:"true"`
 	// Runs says which agent raised each of a conversation's proposals: its
 	// own, or one it handed a task to.
-	Runs         agentports.AgentRunRepository               `optional:"true"`
+	Runs         agentruntimeports.AgentRunRepository        `optional:"true"`
 	SystemAgents agentdefinitionports.SystemAgentProvisioner `optional:"true"`
-	PageThreads  agentports.PageThreadRepository             `optional:"true"`
+	PageThreads  assistantports.PageThreadRepository         `optional:"true"`
 	// AgentControls holds the per-person allowance; without it nobody is
 	// limited.
 	AgentControls tenantports.AgentControlRepository `optional:"true"`
@@ -73,17 +79,17 @@ type Params struct {
 	Notifications *notificationservice.Service `optional:"true"`
 	// Completion rewrites a passage of a document a person asked to change,
 	// with the same models the conversation's agent uses.
-	Completion agentports.StructuredCompleter `optional:"true"`
+	Completion llmports.StructuredCompleter `optional:"true"`
 	// Reports re-runs a report preview whole for its download, and Queries
 	// re-runs the list a table was read from; PDFs prints a document.
-	Reports *reporting.Service                `optional:"true"`
-	Queries agentports.AgentQueryToolRegistry `optional:"true"`
-	PDFs    documenttemplateports.PDFRenderer `optional:"true"`
-	Boards  agentports.BoardFiller            `optional:"true"`
+	Reports *reporting.Service                    `optional:"true"`
+	Queries agenttoolports.AgentQueryToolRegistry `optional:"true"`
+	PDFs    documenttemplateports.PDFRenderer     `optional:"true"`
+	Boards  assistantports.BoardFiller            `optional:"true"`
 	// Memories describes the memories a reply used or saved, as the thread
 	// is served.
-	Memories agentports.AgentMemoryService `optional:"true"`
-	Quota    platformplanports.QuotaGuard  `optional:"true"`
+	Memories agentmemoryports.AgentMemoryService `optional:"true"`
+	Quota    platformplanports.QuotaGuard        `optional:"true"`
 	// Waits reads a wait whose ending a turn picks up.
 	Waits agentwaitports.AgentWaitRepository `optional:"true"`
 	// ReadWaits parks a conversation on a file still being read.
@@ -91,7 +97,7 @@ type Params struct {
 	// Schedules settles the requests scheduled in a conversation being
 	// deleted, so none fires again and no open list keeps showing one.
 	Schedules conversationscheduleports.ConversationThreadSchedules `optional:"true"`
-	Chapters  agentports.ChapterRepository                          `optional:"true"`
+	Chapters  assistantports.ChapterRepository                      `optional:"true"`
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
@@ -100,8 +106,8 @@ var Module = fx.Module("assistant",
 	fx.Provide(fx.Annotate(
 		New,
 		fx.As(fx.Self()),
-		fx.As(new(agentports.AssistantService)),
-		fx.As(new(agentports.PageAssistant)),
+		fx.As(new(assistantports.AssistantService)),
+		fx.As(new(assistantports.PageAssistant)),
 		fx.As(new(agentports.AgentRunTranscriptService)),
 	)),
 	fx.Provide(fx.Annotate(
@@ -114,45 +120,45 @@ type Service struct {
 	logger        *zap.Logger
 	guard         *agentguard.Service
 	runtime       *agentruntime.Service
-	contexts      agentports.RuntimeContextBuilder
-	conversations agentports.ConversationRepository
+	contexts      agentruntimeports.RuntimeContextBuilder
+	conversations assistantports.ConversationRepository
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	recorder      *proposalrecorder.Service
 	proposals     chatProposalStore
 	proposalEdits proposalEditStore
 	plans         chatPlanStore
-	providers     agentports.AIProviderRepository
+	providers     aiproviderports.AIProviderRepository
 	shadow        *agentshadow.Resolver
 	budgets       agentports.AgentBudgetService
-	tools         agentports.AgentToolRegistry
+	tools         agenttoolports.AgentToolRegistry
 	decisions     agentports.AgentDecisionRepository
-	labeler       agentports.RecordLabeler
+	labeler       agentruntimeports.RecordLabeler
 	artifacts     assistantartifactports.AssistantArtifactRepository
-	subjects      agentports.AgentSubjectDescriber
+	subjects      agentruntimeports.AgentSubjectDescriber
 	anchors       agentports.RecordAnchorReader
 	activity      agentports.AgentActivityPublisher
 	documents     documentports.DocumentRepository
 	contents      documentports.DocumentContentService
 	permissions   permissionports.PermissionEngine
 	cases         deskcaseports.AssistantCaseStates
-	runs          agentports.AgentRunRepository
+	runs          agentruntimeports.AgentRunRepository
 	systemAgents  agentdefinitionports.SystemAgentProvisioner
-	pageThreads   agentports.PageThreadRepository
+	pageThreads   assistantports.PageThreadRepository
 	agentControls tenantports.AgentControlRepository
 	users         tenantports.UserRepository
 	notifier      raiseNotifier
-	completion    agentports.StructuredCompleter
+	completion    llmports.StructuredCompleter
 	reports       *reporting.Service
 	reportRuns    reportRerunner
-	queries       agentports.AgentQueryToolRegistry
+	queries       agenttoolports.AgentQueryToolRegistry
 	pdfs          documenttemplateports.PDFRenderer
-	boards        agentports.BoardFiller
-	memories      agentports.AgentMemoryService
+	boards        assistantports.BoardFiller
+	memories      agentmemoryports.AgentMemoryService
 	quota         platformplanports.QuotaGuard
 	waits         agentwaitports.AgentWaitRepository
 	readWaits     agentwaitports.DocumentReadWaiter
 	schedules     conversationscheduleports.ConversationThreadSchedules
-	chapters      agentports.ChapterRepository
+	chapters      assistantports.ChapterRepository
 }
 
 func New(p Params) *Service {

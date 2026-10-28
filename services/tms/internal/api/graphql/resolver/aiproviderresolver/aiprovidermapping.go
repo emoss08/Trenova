@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/optional"
@@ -73,19 +73,19 @@ func aiProviderConnectionToModel(
 
 func endpointFromInput(
 	input *gqlmodel.AIProviderEndpointInput,
-) (agentports.AIProviderEndpoint, error) {
+) (aiproviderports.AIProviderEndpoint, error) {
 	if input == nil {
-		return agentports.AIProviderEndpoint{}, errortypes.NewValidationError(
+		return aiproviderports.AIProviderEndpoint{}, errortypes.NewValidationError(
 			"endpoint", errortypes.ErrRequired, "Endpoint is required",
 		)
 	}
 
 	providerID, err := base.OptionalID(input.ProviderID)
 	if err != nil {
-		return agentports.AIProviderEndpoint{}, err
+		return aiproviderports.AIProviderEndpoint{}, err
 	}
 
-	endpoint := agentports.AIProviderEndpoint{
+	endpoint := aiproviderports.AIProviderEndpoint{
 		ProviderID:          providerID,
 		Kind:                input.Kind,
 		Platform:            aiprovider.PlatformDirect,
@@ -126,7 +126,7 @@ func platformSettingsFromInput(
 
 func patchFromInput(
 	input *gqlmodel.AIProviderPatchInput,
-) (*agentports.PatchAIProviderRequest, error) {
+) (*aiproviderports.PatchAIProviderRequest, error) {
 	inputCost, err := omittableDecimal("inputCostPerMillion", input.InputCostPerMillion)
 	if err != nil {
 		return nil, err
@@ -147,7 +147,7 @@ func patchFromInput(
 		return nil, err
 	}
 
-	req := &agentports.PatchAIProviderRequest{
+	req := &aiproviderports.PatchAIProviderRequest{
 		Enabled:                  base.NullableOmittable(input.Enabled),
 		Trusted:                  base.NullableOmittable(input.Trusted),
 		AllowPrivateNetwork:      base.NullableOmittable(input.AllowPrivateNetwork),
@@ -184,7 +184,7 @@ func omittableDecimal(
 }
 
 func modelOptionsToModel(
-	models []agentports.AIProviderModelOption,
+	models []aiproviderports.AIProviderModelOption,
 ) []*gqlmodel.AIProviderModelOption {
 	out := make([]*gqlmodel.AIProviderModelOption, 0, len(models))
 	for idx := range models {
@@ -205,7 +205,7 @@ func modelOptionsToModel(
 	return out
 }
 
-func priceSourceToModel(source agentports.ModelPriceSource) *gqlmodel.AIModelPriceSource {
+func priceSourceToModel(source aiproviderports.ModelPriceSource) *gqlmodel.AIModelPriceSource {
 	if source == "" {
 		return nil
 	}

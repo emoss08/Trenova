@@ -13,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -87,7 +87,7 @@ func (s *Service) ModelPass(
 		batch := newModelBatch(pending[start:min(start+modelBatchSize, len(pending))])
 		changed, reviewed, batchErr := s.runModelBatch(ctx, tenantInfo, connectionID, batch)
 		if batchErr != nil {
-			if errors.Is(batchErr, agentports.ErrNoProviderConfigured) {
+			if errors.Is(batchErr, llmports.ErrNoProviderConfigured) {
 				return applied, nil
 			}
 			return applied, batchErr
@@ -126,7 +126,7 @@ func newModelBatch(rows []*accountingsync.AccountingMapping) *modelBatch {
 	return batch
 }
 
-func (b *modelBatch) context() agentports.DelimitedContext {
+func (b *modelBatch) context() llmports.DelimitedContext {
 	var body strings.Builder
 	for idx, row := range b.rows {
 		label := "T" + strconv.Itoa(idx+1)
@@ -136,8 +136,8 @@ func (b *modelBatch) context() agentports.DelimitedContext {
 			fmt.Fprintf(&body, "  C%d: %s\n", cidx+1, candidate.Name)
 		}
 	}
-	return agentports.DelimitedContext{
-		Sections: []agentports.ContextSection{{
+	return llmports.DelimitedContext{
+		Sections: []llmports.ContextSection{{
 			Title:   "Targets and their candidates",
 			Trusted: false,
 			Content: body.String(),
@@ -163,7 +163,7 @@ func (s *Service) runModelBatch(
 	connectionID pulid.ID,
 	batch *modelBatch,
 ) ([]*accountingsync.AccountingMapping, bool, error) {
-	result, err := s.completion.CompleteStructured(ctx, &agentports.StructuredCompletionRequest{
+	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
 		TenantInfo:   tenantInfo,
 		Task:         aiprovider.TaskAccountingMapping,
 		System:       modelSystemPrompt,

@@ -12,7 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -46,13 +49,13 @@ func (o *scriptedOpener) OpenDelegate(
 		return nil, &DelegateDeclinedError{Reason: o.declined}
 	}
 
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: o.definition,
 		Actor:      run.Actor,
 		Input:      call.Task,
 		ThreadID:   run.ThreadID,
 		StepOwner:  run.StepOwner,
-		Delegation: &agentports.Delegation{
+		Delegation: &agentruntimeports.Delegation{
 			ParentAgentID:   run.Definition.ID,
 			ParentAgentName: run.Definition.Name,
 			CallID:          call.Call.ID,
@@ -91,8 +94,8 @@ func (h *harness) delegatingRun(
 	rc := runContext()
 	rc.Definition.ID = pulid.MustNew("agdef_")
 	rc.ThreadID = pulid.MustNew("athr_")
-	rc.StepOwner = agentports.RunStepOwner{
-		Kind: agentports.RunStepOwnerAssistantTurn,
+	rc.StepOwner = agentruntimeports.RunStepOwner{
+		Kind: agentruntimeports.RunStepOwnerAssistantTurn,
 		ID:   pulid.MustNew("atrn_"),
 	}
 	req := rc.request()
@@ -108,7 +111,7 @@ func (h *harness) delegatingRun(
 // scopedReplies scripts the model for the calls in one scope, in order.
 func (h *harness) scopedReplies(
 	scope func(*ModelCallInput) bool,
-	replies ...*agentports.ChatCompletionResult,
+	replies ...*llmports.ChatCompletionResult,
 ) {
 	for _, reply := range replies {
 		h.env.OnActivity(h.activities.ModelCallActivity, mock.Anything, mock.MatchedBy(scope)).
@@ -150,7 +153,7 @@ func TestRunDrivesADelegatesTurnInTheSameWorkflow(t *testing.T) {
 	delegate := delegateDefinition("shipment_get")
 	opener := &scriptedOpener{definition: delegate}
 	h := newHarness(t, harnessParams{
-		query:     []agentports.AgentQueryTool{lookup},
+		query:     []agenttoolports.AgentQueryTool{lookup},
 		delegates: opener,
 	})
 	opener.runtime = h.runtime
@@ -181,14 +184,14 @@ func TestRunDrivesADelegatesTurnInTheSameWorkflow(t *testing.T) {
 	assert.Equal(t, "The Shipment Desk found it in Memphis.", result.Outcome.Result.Reply)
 
 	assert.Equal(t, []string{
-		agentports.AssistantEventMessage,
-		agentports.AssistantEventToolStarted,
-		agentports.AssistantEventDelegateStarted,
-		agentports.AssistantEventMessage,
-		agentports.AssistantEventToolStarted,
-		agentports.AssistantEventToolFinished,
-		agentports.AssistantEventDelegateFinished,
-		agentports.AssistantEventToolFinished,
+		assistantports.AssistantEventMessage,
+		assistantports.AssistantEventToolStarted,
+		assistantports.AssistantEventDelegateStarted,
+		assistantports.AssistantEventMessage,
+		assistantports.AssistantEventToolStarted,
+		assistantports.AssistantEventToolFinished,
+		assistantports.AssistantEventDelegateFinished,
+		assistantports.AssistantEventToolFinished,
 	}, eventNames(result.Outcome))
 	nested, ok := result.Outcome.Events[4].Data.(map[string]any)
 	require.True(t, ok)
@@ -294,7 +297,7 @@ func TestRunContext_CarriesTheRecordsTheTurnIsAboutAsData(t *testing.T) {
 		{Type: "customer", ID: pulid.MustNew("cus_").String()},
 		{Type: string(agent.SubjectShipment), ID: pulid.MustNew("shp_").String()},
 	}
-	run := NewRunContext(&agentports.RunRequest{
+	run := NewRunContext(&agentruntimeports.RunRequest{
 		Definition: &agentdefinition.Definition{ID: pulid.MustNew("agdef_")},
 		Records:    records,
 	}, agentflowcontract.PriorityInteractive)

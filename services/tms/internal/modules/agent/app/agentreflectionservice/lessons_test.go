@@ -7,7 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,10 +21,10 @@ import (
 )
 
 type fakeMemories struct {
-	agentports.AgentMemoryService
+	agentmemoryports.AgentMemoryService
 	mode       agent.MemorySavingMode
 	roles      []pulid.ID
-	remembered []*agentports.RememberRequest
+	remembered []*agentmemoryports.RememberRequest
 	refuse     error
 }
 
@@ -47,7 +50,7 @@ func (f *fakeMemories) Reader(
 
 func (f *fakeMemories) Remember(
 	_ context.Context,
-	req *agentports.RememberRequest,
+	req *agentmemoryports.RememberRequest,
 	_ *permissionports.RequestActor,
 ) (*agent.Memory, error) {
 	if f.refuse != nil {
@@ -91,13 +94,13 @@ func (f *fakeReflections) Update(
 }
 
 type fakeConversations struct {
-	agentports.ConversationRepository
-	added []agentports.AddSavedMemoriesRequest
+	assistantports.ConversationRepository
+	added []assistantports.AddSavedMemoriesRequest
 }
 
 func (f *fakeConversations) AddSavedMemories(
 	_ context.Context,
-	req agentports.AddSavedMemoriesRequest,
+	req assistantports.AddSavedMemoriesRequest,
 ) error {
 	f.added = append(f.added, req)
 
@@ -377,7 +380,7 @@ func TestFinish_KeepsLessonsRecordsThemAndShowsThemOnTheReply(t *testing.T) {
 	svc.repo = reflections
 	svc.conversations = conversations
 
-	outcome, err := svc.Finish(t.Context(), plan, &agentports.StructuredCompletionResult{
+	outcome, err := svc.Finish(t.Context(), plan, &llmports.StructuredCompletionResult{
 		Text: `{"lessons":[` +
 			`{"kind":"Procedure","content":"Pass the move id to dispatch_assign_move.","audience":"me","subjectType":"","subjectId":"","toolName":"dispatch_assign_move","replaces":"","evidence":"failed twice","why":"Avoids the failure."},` +
 			`{"kind":"Correction","content":"Nope","audience":"me","subjectType":"","subjectId":"","toolName":"","replaces":"","evidence":"","why":""}` +
@@ -429,7 +432,7 @@ func TestFinish_ARefusalFromTheMemoryServiceIsRecordedNotRetried(t *testing.T) {
 	svc.repo = reflections
 	svc.conversations = &fakeConversations{}
 
-	outcome, err := svc.Finish(t.Context(), plan, &agentports.StructuredCompletionResult{
+	outcome, err := svc.Finish(t.Context(), plan, &llmports.StructuredCompletionResult{
 		Text: `{"lessons":[{"kind":"Fact","content":"x","audience":"me","subjectType":"","subjectId":"","toolName":"","replaces":"","evidence":"","why":""}],"notes":""}`,
 	})
 	require.NoError(t, err)
@@ -448,7 +451,7 @@ func TestFinish_AnUnreadableAnswerFailsTheLookBack(t *testing.T) {
 	svc := lessonService(&fakeMemories{})
 	svc.repo = reflections
 
-	outcome, err := svc.Finish(t.Context(), plan, &agentports.StructuredCompletionResult{Text: "{"})
+	outcome, err := svc.Finish(t.Context(), plan, &llmports.StructuredCompletionResult{Text: "{"})
 	require.NoError(t, err)
 	assert.Equal(t, agent.ReflectionStatusFailed, outcome.Status)
 	assert.NotEmpty(t, reflections.stored.ErrorMessage)

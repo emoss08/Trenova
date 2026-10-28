@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -44,7 +44,7 @@ type rescheduleStopTool struct {
 func NewRescheduleStopTool(
 	shipments common.ShipmentWriter,
 	partners common.ShipmentPartnerNotices,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &rescheduleStopTool{shipments: shipments, partners: partners}
 }
 
@@ -90,8 +90,8 @@ func (t *rescheduleStopTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *rescheduleStopTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *rescheduleStopTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipment,
@@ -123,7 +123,7 @@ type stopScheduleView struct {
 
 func (t *rescheduleStopTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -137,14 +137,14 @@ func (t *rescheduleStopTool) Execute(
 
 func (t *rescheduleStopTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return common.PreviewValidates(ctx, t, &params)
 }
 
 func (t *rescheduleStopTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*stopSchedulePlan, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -243,7 +243,7 @@ func scheduleViewOf(stop *shipment.Stop, zone *time.Location) stopScheduleView {
 
 func (t *rescheduleStopTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -283,7 +283,7 @@ func (t *rescheduleStopTool) Preview(
 	return toolpreview.Build(summary, append([]*agent.RecordChange{change}, changes...)...), nil
 }
 
-func (t *rescheduleStopTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *rescheduleStopTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
 }
 
@@ -295,7 +295,7 @@ type addShipmentChargeTool struct {
 func NewAddShipmentChargeTool(
 	shipments common.ShipmentWriter,
 	accessorials accessorialchargeports.AccessorialChargeRepository,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &addShipmentChargeTool{shipments: shipments, accessorials: accessorials}
 }
 
@@ -349,8 +349,8 @@ func (t *addShipmentChargeTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *addShipmentChargeTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *addShipmentChargeTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipment,
@@ -375,7 +375,7 @@ type shipmentChargePlan struct {
 
 func (t *addShipmentChargeTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -389,14 +389,14 @@ func (t *addShipmentChargeTool) Execute(
 
 func (t *addShipmentChargeTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return common.PreviewValidates(ctx, t, &params)
 }
 
 func (t *addShipmentChargeTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentChargePlan, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -523,7 +523,7 @@ func shipmentChargeViewOf(plan *shipmentChargePlan) *shipmentChargeView {
 
 func (t *addShipmentChargeTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -556,6 +556,6 @@ func (t *addShipmentChargeTool) Preview(
 	return toolpreview.Build(summary+".", change), nil
 }
 
-func (t *addShipmentChargeTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *addShipmentChargeTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
 }

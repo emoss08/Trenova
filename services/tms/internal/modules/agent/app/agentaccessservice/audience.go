@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -187,7 +187,7 @@ func (s *Service) heldTool(name string) (HeldTool, bool) {
 	return HeldToolOf(policy), true
 }
 
-func HeldToolOf(policy agentports.ToolPolicy) HeldTool {
+func HeldToolOf(policy agenttoolports.ToolPolicy) HeldTool {
 	held := HeldTool{Name: policy.Name, Egress: policy.Egress}
 	if policy.Scope == agent.ToolScopeSelf || policy.Resource == "" {
 		return held

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -38,7 +38,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.ConversationRepository {
+func New(p Params) assistantports.ConversationRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.conversation-repository"),
@@ -61,7 +61,7 @@ func (r *repository) CreateThread(
 
 func (r *repository) GetThread(
 	ctx context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
 		th := conversationdb.Threads
@@ -76,7 +76,7 @@ func (r *repository) GetThread(
 
 func (r *repository) GetThreadOwned(
 	ctx context.Context,
-	req agentports.GetThreadOwnedRequest,
+	req assistantports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
 		entity, err := conversationdb.Threads.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -90,7 +90,7 @@ func (r *repository) GetThreadOwned(
 
 func (r *repository) ListThreadAgentsByIDs(
 	ctx context.Context,
-	req agentports.ListThreadAgentsByIDsRequest,
+	req assistantports.ListThreadAgentsByIDsRequest,
 ) ([]*conversation.Thread, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.Thread, error) {
 		if len(req.IDs) == 0 {
@@ -112,21 +112,21 @@ func (r *repository) ListThreadAgentsByIDs(
 
 func (r *repository) ListThreads(
 	ctx context.Context,
-	req agentports.ListThreadsRequest,
-) (*agentports.ThreadPage, error) {
+	req assistantports.ListThreadsRequest,
+) (*assistantports.ThreadPage, error) {
 	window, err := threadWindowOf(&req)
 	if err != nil {
 		return nil, err
 	}
 
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentports.ThreadPage, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*assistantports.ThreadPage, error) {
 		entities, listErr := threadPageQuery(&req, window).List(ctx, r.db.Keel(ctx))
 		if listErr != nil {
 			r.l.Error("failed to list threads", zap.Error(listErr))
 			return nil, listErr
 		}
 
-		page := &agentports.ThreadPage{Items: entities}
+		page := &assistantports.ThreadPage{Items: entities}
 		switch {
 		case len(entities) > window.limit:
 			page.Items = entities[:window.limit]
@@ -145,7 +145,7 @@ type threadWindow struct {
 	limit int
 }
 
-func threadWindowOf(req *agentports.ListThreadsRequest) (threadWindow, error) {
+func threadWindowOf(req *assistantports.ListThreadsRequest) (threadWindow, error) {
 	window := threadWindow{limit: req.Limit}
 	if window.limit <= 0 {
 		window.limit = defaultThreadLimit
@@ -204,7 +204,7 @@ func threadPositionPred(
 }
 
 func threadPageQuery(
-	req *agentports.ListThreadsRequest,
+	req *assistantports.ListThreadsRequest,
 	window threadWindow,
 ) *keel.Query[*conversation.Thread] {
 	th := conversationdb.Threads
@@ -244,7 +244,7 @@ func threadShelfBandExpr(edges []int64) keel.Expr {
 }
 
 func threadShelfCountQuery(
-	req *agentports.CountThreadShelvesRequest,
+	req *assistantports.CountThreadShelvesRequest,
 ) *keel.Query[*conversation.Thread] {
 	th := conversationdb.Threads
 	band := threadShelfBandExpr(req.Edges)
@@ -256,19 +256,19 @@ func threadShelfCountQuery(
 
 func (r *repository) CountThreadShelves(
 	ctx context.Context,
-	req *agentports.CountThreadShelvesRequest,
-) (*agentports.ThreadShelfCounts, error) {
+	req *assistantports.CountThreadShelvesRequest,
+) (*assistantports.ThreadShelfCounts, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*agentports.ThreadShelfCounts, error) {
+		func(ctx context.Context) (*assistantports.ThreadShelfCounts, error) {
 			rows, err := keel.Into[threadShelfBand](ctx, r.db.Keel(ctx), threadShelfCountQuery(req))
 			if err != nil {
 				r.l.Error("failed to count thread shelves", zap.Error(err))
 				return nil, err
 			}
 
-			counts := &agentports.ThreadShelfCounts{Bands: make([]int, len(req.Edges)+1)}
+			counts := &assistantports.ThreadShelfCounts{Bands: make([]int, len(req.Edges)+1)}
 			for _, row := range rows {
 				switch {
 				case row.Band < 0:
@@ -335,7 +335,7 @@ func (r *repository) UpdateThread(
 
 func (r *repository) MarkThreadTainted(
 	ctx context.Context,
-	req agentports.MarkThreadTaintedRequest,
+	req assistantports.MarkThreadTaintedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if !req.Taint.Tainted() {
@@ -359,7 +359,7 @@ func (r *repository) MarkThreadTainted(
 
 func (r *repository) UpdateThreadContext(
 	ctx context.Context,
-	req agentports.UpdateThreadContextRequest,
+	req assistantports.UpdateThreadContextRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if req.Usage == nil && req.AutoCompactOff == nil && req.WorkingSet == nil {
@@ -389,7 +389,7 @@ func (r *repository) UpdateThreadContext(
 
 func (r *repository) AddSavedMemories(
 	ctx context.Context,
-	req agentports.AddSavedMemoriesRequest,
+	req assistantports.AddSavedMemoriesRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(req.Memories) == 0 {
@@ -422,7 +422,7 @@ func (r *repository) AddSavedMemories(
 
 func (r *repository) DeleteThread(
 	ctx context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
@@ -441,7 +441,7 @@ func (r *repository) DeleteThread(
 	})
 }
 
-func messagesQuery(req *agentports.ListMessagesRequest) *keel.Query[*conversation.Message] {
+func messagesQuery(req *assistantports.ListMessagesRequest) *keel.Query[*conversation.Message] {
 	m := conversationdb.Messages
 
 	var before, after, sinceCompaction keel.Pred
@@ -479,7 +479,7 @@ func afterLatestCompaction(threadID pulid.ID) keel.Pred {
 
 func (r *repository) ListMessages(
 	ctx context.Context,
-	req agentports.ListMessagesRequest,
+	req assistantports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]conversation.Message, error) {
 		m := conversationdb.Messages
@@ -516,7 +516,7 @@ func derefMessages(rows []*conversation.Message) []conversation.Message {
 
 func (r *repository) CountMessages(
 	ctx context.Context,
-	req agentports.CountMessagesRequest,
+	req assistantports.CountMessagesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		m := conversationdb.Messages
@@ -531,7 +531,7 @@ func (r *repository) CountMessages(
 
 func (r *repository) CarriesAttachment(
 	ctx context.Context,
-	req *agentports.CarriesAttachmentRequest,
+	req *assistantports.CarriesAttachmentRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		return carriesAttachmentQuery(req).Exists(ctx, r.db.Keel(ctx))
@@ -539,7 +539,7 @@ func (r *repository) CarriesAttachment(
 }
 
 func carriesAttachmentQuery(
-	req *agentports.CarriesAttachmentRequest,
+	req *assistantports.CarriesAttachmentRequest,
 ) *keel.Query[*conversation.Message] {
 	m := conversationdb.Messages
 
@@ -575,7 +575,7 @@ func nextSequence(ctx context.Context, db *keel.DB, threadID pulid.ID) (int, err
 
 func (r *repository) AppendTurn(
 	ctx context.Context,
-	req agentports.AppendTurnRequest,
+	req assistantports.AppendTurnRequest,
 ) ([]conversation.Message, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]conversation.Message, error) {
 		if len(req.Messages) == 0 {
@@ -622,7 +622,7 @@ func (r *repository) AppendTurn(
 }
 
 func staleThreadsQuery(
-	req *agentports.DeleteStaleThreadsRequest,
+	req *assistantports.DeleteStaleThreadsRequest,
 	limit int,
 ) *keel.Query[*conversation.Thread] {
 	th := conversationdb.Threads
@@ -641,7 +641,7 @@ func staleThreadsQuery(
 
 func (r *repository) DeleteStaleThreads(
 	ctx context.Context,
-	req agentports.DeleteStaleThreadsRequest,
+	req assistantports.DeleteStaleThreadsRequest,
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "delete stale ask threads across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
@@ -669,7 +669,7 @@ func (r *repository) DeleteStaleThreads(
 
 func (r *repository) deleteStaleThreads(
 	ctx context.Context,
-	req *agentports.DeleteStaleThreadsRequest,
+	req *assistantports.DeleteStaleThreadsRequest,
 	limit int,
 ) (int, error) {
 	db := r.db.Keel(ctx)

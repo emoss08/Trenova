@@ -7,7 +7,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 )
 
 const (
@@ -18,17 +18,19 @@ const (
 
 type RecencyRanker struct{}
 
-func NewRecencyRanker() agentports.MemoryRanker { return RecencyRanker{} }
+func NewRecencyRanker() agentmemoryports.MemoryRanker { return RecencyRanker{} }
 
 func (RecencyRanker) RankMemories(
 	_ context.Context,
-	req *agentports.RankMemoriesRequest,
-) (agentports.RankedMemories, error) {
+	req *agentmemoryports.RankMemoriesRequest,
+) (agentmemoryports.RankedMemories, error) {
 	if req == nil {
-		return agentports.RankedMemories{Memories: []*agent.Memory{}}, nil
+		return agentmemoryports.RankedMemories{Memories: []*agent.Memory{}}, nil
 	}
 
-	return agentports.RankedMemories{Memories: RankByRecencyAndUse(req.Memories, req.Now)}, nil
+	return agentmemoryports.RankedMemories{
+		Memories: RankByRecencyAndUse(req.Memories, req.Now),
+	}, nil
 }
 
 type scoredMemory struct {

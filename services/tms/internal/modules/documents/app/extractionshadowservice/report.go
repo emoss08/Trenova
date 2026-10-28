@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -191,7 +191,7 @@ func (s *Service) providerName(
 	tenant pagination.TenantInfo,
 	providerID pulid.ID,
 ) string {
-	provider, err := s.providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	provider, err := s.providers.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenant,
 	})

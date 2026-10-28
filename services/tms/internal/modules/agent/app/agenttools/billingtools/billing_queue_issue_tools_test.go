@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -138,7 +138,7 @@ func issueParams(
 	item *billingqueue.BillingQueueItem,
 	issue *billingqueue.Issue,
 	option string,
-) agentports.ToolExecuteParams {
+) agenttoolports.ToolExecuteParams {
 	values := map[string]any{
 		common.ParamBillingQueueItemID: item.ID.String(),
 		paramIssueID:                   issue.ID.String(),
@@ -166,7 +166,7 @@ func TestReleaseBillingQueueItem_PreviewsTheStatusTheHoldFoundThenReleases(t *te
 		*agent.ToolPreview,
 		error,
 	) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	status := agenttoolstest.FieldByPath(t, change, common.FieldStatus)
@@ -191,8 +191,8 @@ func TestReleaseBillingQueueItem_RefusesAnItemThatIsNotOnHold(t *testing.T) {
 		common.ParamBillingQueueItemID: item.ID.String(),
 	})
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.NotEmpty(t, preview.Warnings)
 	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
@@ -267,7 +267,7 @@ func TestResolveBillingQueueIssue_PreviewShowsTheSettlementAndTheChargeItRemoves
 		*agent.ToolPreview,
 		error,
 	) {
-		return tool.(agentports.ToolPreviewer).Preview(
+		return tool.(agenttoolports.ToolPreviewer).Preview(
 			t.Context(),
 			issueParams(item, issue, "drop"),
 		)
@@ -310,7 +310,7 @@ func TestResolveBillingQueueIssue_AskingTheDriverPreviewsTheirMessage(t *testing
 		*agent.ToolPreview,
 		error,
 	) {
-		return tool.(agentports.ToolPreviewer).Preview(
+		return tool.(agenttoolports.ToolPreviewer).Preview(
 			t.Context(),
 			issueParams(item, issue, billingqueue.OptionKeyRequest),
 		)
@@ -335,11 +335,11 @@ func TestResolveBillingQueueIssue_AChoiceTheCheckDoesNotOfferWouldFail(t *testin
 	tool := newResolveBillingQueueIssueTool(review)
 	params := issueParams(item, issue, "bogus")
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.NotEmpty(t, preview.Warnings)
 	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestUndoBillingQueueIssue_PreviewPutsTheRemovedChargeBack(t *testing.T) {
@@ -366,7 +366,7 @@ func TestUndoBillingQueueIssue_PreviewPutsTheRemovedChargeBack(t *testing.T) {
 		*agent.ToolPreview,
 		error,
 	) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	require.Len(t, preview.Changes, 2)
 	check := agenttoolstest.PreviewChange(t, preview, 0)

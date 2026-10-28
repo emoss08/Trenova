@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -93,7 +93,7 @@ func targeting(
 	key string,
 	resource permission.Resource,
 ) *common.ReceivableSpec {
-	spec.Target = func(params map[string]any) (agentports.ToolTarget, bool) {
+	spec.Target = func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 		return common.TargetOf(params, key, resource)
 	}
 

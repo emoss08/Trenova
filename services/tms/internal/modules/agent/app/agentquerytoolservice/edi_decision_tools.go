@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -75,11 +75,11 @@ type ediTransferChangeLister interface {
 	) (*pagination.ListResult[*edi.TransferChange], error)
 }
 
-func provideListEDITenderChangesTool(ediSvc *ediservice.Service) agentports.AgentQueryTool {
+func provideListEDITenderChangesTool(ediSvc *ediservice.Service) agenttoolports.AgentQueryTool {
 	return newListEDITenderChangesTool(ediSvc)
 }
 
-func provideListEDITransferChangesTool(ediSvc *ediservice.Service) agentports.AgentQueryTool {
+func provideListEDITransferChangesTool(ediSvc *ediservice.Service) agenttoolports.AgentQueryTool {
 	return newListEDITransferChangesTool(ediSvc)
 }
 
@@ -87,7 +87,7 @@ type listEDITenderChangesTool struct {
 	changes ediTenderChangeLister
 }
 
-func newListEDITenderChangesTool(changes ediTenderChangeLister) agentports.AgentQueryTool {
+func newListEDITenderChangesTool(changes ediTenderChangeLister) agenttoolports.AgentQueryTool {
 	return &listEDITenderChangesTool{changes: changes}
 }
 
@@ -110,7 +110,7 @@ func (t *listEDITenderChangesTool) ParamSchema() map[string]any {
 	}, defaultListLimit, maxListLimit))
 }
 
-func (t *listEDITenderChangesTool) Policy() agentports.ToolPolicy {
+func (t *listEDITenderChangesTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceEDI,
 		reads:    agent.ExternalReadAlways,
@@ -143,7 +143,7 @@ type ediTenderChangeRow struct {
 
 func (t *listEDITenderChangesTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -253,7 +253,7 @@ type listEDITransferChangesTool struct {
 	changes ediTransferChangeLister
 }
 
-func newListEDITransferChangesTool(changes ediTransferChangeLister) agentports.AgentQueryTool {
+func newListEDITransferChangesTool(changes ediTransferChangeLister) agenttoolports.AgentQueryTool {
 	return &listEDITransferChangesTool{changes: changes}
 }
 
@@ -276,7 +276,7 @@ func (t *listEDITransferChangesTool) ParamSchema() map[string]any {
 	}, defaultListLimit, maxListLimit))
 }
 
-func (t *listEDITransferChangesTool) Policy() agentports.ToolPolicy {
+func (t *listEDITransferChangesTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceEDI,
 		reads:    agent.ExternalReadAlways,
@@ -302,7 +302,7 @@ type ediTransferChangeRow struct {
 
 func (t *listEDITransferChangesTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

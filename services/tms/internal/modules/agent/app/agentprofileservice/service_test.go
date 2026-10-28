@@ -8,8 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
@@ -142,7 +143,10 @@ type fakeGuidance struct {
 	lines []*agentprofile.Guidance
 }
 
-func (f *fakeGuidance) matching(ref agentprofileports.SubjectRef, active bool) []*agentprofile.Guidance {
+func (f *fakeGuidance) matching(
+	ref agentprofileports.SubjectRef,
+	active bool,
+) []*agentprofile.Guidance {
 	out := make([]*agentprofile.Guidance, 0, len(f.lines))
 	for _, line := range f.lines {
 		if sameSubject(line, ref) && (!active || line.IsActive()) {
@@ -189,7 +193,10 @@ func (f *fakeGuidance) List(
 	return f.open(req.Ref), nil
 }
 
-func (f *fakeGuidance) CountActive(_ context.Context, ref agentprofileports.SubjectRef) (int, error) {
+func (f *fakeGuidance) CountActive(
+	_ context.Context,
+	ref agentprofileports.SubjectRef,
+) (int, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -206,7 +213,7 @@ func (f *fakeGuidance) CountOpen(_ context.Context, ref agentprofileports.Subjec
 // fakeMemories answers the one question the profile service asks the memory
 // service: whether the person manages agent memory.
 type fakeMemories struct {
-	agentports.AgentMemoryService
+	agentmemoryports.AgentMemoryService
 	manages bool
 }
 
@@ -280,13 +287,19 @@ type fakeControls struct {
 	control tenant.AgentControl
 }
 
-func (f *fakeControls) GetOrCreate(context.Context, pagination.TenantInfo) (*tenant.AgentControl, error) {
+func (f *fakeControls) GetOrCreate(
+	context.Context,
+	pagination.TenantInfo,
+) (*tenant.AgentControl, error) {
 	control := f.control
 
 	return &control, nil
 }
 
-func (f *fakeControls) Update(_ context.Context, entity *tenant.AgentControl) (*tenant.AgentControl, error) {
+func (f *fakeControls) Update(
+	_ context.Context,
+	entity *tenant.AgentControl,
+) (*tenant.AgentControl, error) {
 	return entity, nil
 }
 
@@ -368,8 +381,8 @@ func (h *harness) org() agentprofileports.SubjectRef {
 	return agentprofileports.OrganizationSubject(h.tenant)
 }
 
-func reply(profile string) *agentports.StructuredCompletionResult {
-	return &agentports.StructuredCompletionResult{
+func reply(profile string) *llmports.StructuredCompletionResult {
+	return &llmports.StructuredCompletionResult{
 		Text:            `{"profile":` + quote(profile) + `,"notes":""}`,
 		ModelIdentifier: "test-model",
 	}
@@ -470,8 +483,10 @@ func TestFinish_KeepsAProfileThatCitesOnlyTheFacts(t *testing.T) {
 	require.NoError(t, err)
 
 	outcome, err := h.svc.Finish(t.Context(), &agentprofileports.FinishGenerationRequest{
-		Plan:   plan,
-		Result: reply("Acme Freight runs its own fleet, mostly sleepers, and brokers about 40% of its moves."),
+		Plan: plan,
+		Result: reply(
+			"Acme Freight runs its own fleet, mostly sleepers, and brokers about 40% of its moves.",
+		),
 	})
 	require.NoError(t, err)
 	assert.Equal(t, agentprofile.StatusCurrent, outcome.Status)
@@ -595,7 +610,12 @@ func TestAddGuidance_IsOfferedByAPersonWhoDoesNotManageAgentMemory(t *testing.T)
 		Actor:   h.person(),
 	})
 	require.NoError(t, err)
-	assert.Equal(t, agentprofile.GuidanceStatusActive, own.Status, "a person's own profile is theirs")
+	assert.Equal(
+		t,
+		agentprofile.GuidanceStatusActive,
+		own.Status,
+		"a person's own profile is theirs",
+	)
 	require.Len(t, h.scheduler.requests, 1)
 }
 
@@ -649,7 +669,11 @@ func TestDismissGuidance_ClosesAnOfferedLineWithoutWritingAgain(t *testing.T) {
 	_, err = h.svc.DismissGuidance(t.Context(), &agentprofileports.DecideGuidanceRequest{
 		Ref: agentprofileports.UserSubject(h.tenant, h.userID), ID: offered.ID, Actor: h.person(),
 	})
-	assert.True(t, errortypes.IsNotFoundError(err), "lines are offered about the organization alone")
+	assert.True(
+		t,
+		errortypes.IsNotFoundError(err),
+		"lines are offered about the organization alone",
+	)
 }
 
 func TestAddGuidance_RefusesPastTheCap(t *testing.T) {

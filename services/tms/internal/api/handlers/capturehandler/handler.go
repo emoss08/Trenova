@@ -21,7 +21,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -46,7 +46,7 @@ type Params struct {
 
 	Service      *captureservice.Service
 	Releases     *capturereleaseservice.Service
-	Gateway      agentports.RealtimeGateway `optional:"true"`
+	Gateway      realtimeports.RealtimeGateway `optional:"true"`
 	Edition      ediports.EditionInfo
 	ErrorHandler *helpers.ErrorHandler
 	Config       *config.Config
@@ -56,7 +56,7 @@ type Params struct {
 type Handler struct {
 	service     *captureservice.Service
 	releases    *capturereleaseservice.Service
-	gateway     agentports.RealtimeGateway
+	gateway     realtimeports.RealtimeGateway
 	edition     ediports.EditionInfo
 	eh          *helpers.ErrorHandler
 	maxLifetime int64

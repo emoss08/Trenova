@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/stretchr/testify/assert"
@@ -33,16 +33,16 @@ func (p *mentionPermissions) CheckBatch(
 }
 
 type mentionConversations struct {
-	agentports.ConversationRepository
+	assistantports.ConversationRepository
 
-	captured agentports.SearchMentionsRequest
-	rows     []agentports.MentionRow
+	captured assistantports.SearchMentionsRequest
+	rows     []assistantports.MentionRow
 }
 
 func (c *mentionConversations) SearchMentions(
 	_ context.Context,
-	req agentports.SearchMentionsRequest,
-) ([]agentports.MentionRow, error) {
+	req assistantports.SearchMentionsRequest,
+) ([]assistantports.MentionRow, error) {
 	c.captured = req
 
 	return c.rows, nil
@@ -51,7 +51,7 @@ func (c *mentionConversations) SearchMentions(
 func TestSearchMentions_OnlySearchesWhatThePersonMayRead(t *testing.T) {
 	t.Parallel()
 
-	repo := &mentionConversations{rows: []agentports.MentionRow{
+	repo := &mentionConversations{rows: []assistantports.MentionRow{
 		{Type: "shipment", ID: "shp_1", Label: "SEED-SHP-001", Subtitle: "New"},
 	}}
 	service := &Service{
@@ -65,7 +65,7 @@ func TestSearchMentions_OnlySearchesWhatThePersonMayRead(t *testing.T) {
 	results, err := service.SearchMentions(
 		t.Context(),
 		providerActor(),
-		agentports.MentionSearchRequest{Query: " seed "},
+		assistantports.MentionSearchRequest{Query: " seed "},
 	)
 	require.NoError(t, err)
 
@@ -91,7 +91,7 @@ func TestSearchMentions_InvoiceTabCoversTheBillingQueue(t *testing.T) {
 	_, err := service.SearchMentions(
 		t.Context(),
 		providerActor(),
-		agentports.MentionSearchRequest{Kind: "invoice"},
+		assistantports.MentionSearchRequest{Kind: "invoice"},
 	)
 	require.NoError(t, err)
 
@@ -111,7 +111,7 @@ func TestSearchMentions_NothingReadableSearchesNothing(t *testing.T) {
 	results, err := service.SearchMentions(
 		t.Context(),
 		providerActor(),
-		agentports.MentionSearchRequest{Query: "acme"},
+		assistantports.MentionSearchRequest{Query: "acme"},
 	)
 	require.NoError(t, err)
 
@@ -131,7 +131,11 @@ func TestSearchMentions_AllLeavesOutTheKindsOnlyAPickerAsksFor(t *testing.T) {
 		}},
 	}
 
-	_, err := service.SearchMentions(t.Context(), providerActor(), agentports.MentionSearchRequest{})
+	_, err := service.SearchMentions(
+		t.Context(),
+		providerActor(),
+		assistantports.MentionSearchRequest{},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{"invoice"}, repo.captured.Kinds)
@@ -147,7 +151,11 @@ func TestSearchMentions_LocationsAreSearchedOnlyUnderTheirOwnTab(t *testing.T) {
 
 	all := &mentionConversations{}
 	service := &Service{conversations: all, permissions: &mentionPermissions{readable: readable}}
-	_, err := service.SearchMentions(t.Context(), providerActor(), agentports.MentionSearchRequest{})
+	_, err := service.SearchMentions(
+		t.Context(),
+		providerActor(),
+		assistantports.MentionSearchRequest{},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"customer"}, all.captured.Kinds)
 
@@ -156,7 +164,7 @@ func TestSearchMentions_LocationsAreSearchedOnlyUnderTheirOwnTab(t *testing.T) {
 	_, err = service.SearchMentions(
 		t.Context(),
 		providerActor(),
-		agentports.MentionSearchRequest{Kind: "location"},
+		assistantports.MentionSearchRequest{Kind: "location"},
 	)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"location"}, tab.captured.Kinds)
@@ -165,9 +173,9 @@ func TestSearchMentions_LocationsAreSearchedOnlyUnderTheirOwnTab(t *testing.T) {
 func TestSearchMentionPage_PagesOneKindAndSaysWhetherMoreFollow(t *testing.T) {
 	t.Parallel()
 
-	rows := make([]agentports.MentionRow, 0, 4)
+	rows := make([]assistantports.MentionRow, 0, 4)
 	for _, id := range []string{"idsp_1", "idsp_2", "idsp_3", "idsp_4"} {
-		rows = append(rows, agentports.MentionRow{Type: "invoice_dispute", ID: id})
+		rows = append(rows, assistantports.MentionRow{Type: "invoice_dispute", ID: id})
 	}
 	repo := &mentionConversations{rows: rows}
 	service := &Service{
@@ -177,12 +185,16 @@ func TestSearchMentionPage_PagesOneKindAndSaysWhetherMoreFollow(t *testing.T) {
 		}},
 	}
 
-	page, err := service.SearchMentionPage(t.Context(), providerActor(), agentports.MentionPageRequest{
-		Query:  "INV",
-		Kind:   "invoice_dispute",
-		Offset: 30,
-		Limit:  3,
-	})
+	page, err := service.SearchMentionPage(
+		t.Context(),
+		providerActor(),
+		assistantports.MentionPageRequest{
+			Query:  "INV",
+			Kind:   "invoice_dispute",
+			Offset: 30,
+			Limit:  3,
+		},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{"invoice_dispute"}, repo.captured.Kinds)
@@ -193,10 +205,14 @@ func TestSearchMentionPage_PagesOneKindAndSaysWhetherMoreFollow(t *testing.T) {
 	assert.Equal(t, "idsp_3", page.Results[2].ID)
 
 	repo.rows = rows[:2]
-	page, err = service.SearchMentionPage(t.Context(), providerActor(), agentports.MentionPageRequest{
-		Kind:  "invoice_dispute",
-		Limit: 3,
-	})
+	page, err = service.SearchMentionPage(
+		t.Context(),
+		providerActor(),
+		assistantports.MentionPageRequest{
+			Kind:  "invoice_dispute",
+			Limit: 3,
+		},
+	)
 	require.NoError(t, err)
 	assert.False(t, page.HasMore)
 	assert.Len(t, page.Results, 2)
@@ -213,18 +229,26 @@ func TestSearchMentionPage_CapsThePageAndRefusesAnUnknownKind(t *testing.T) {
 		}},
 	}
 
-	_, err := service.SearchMentionPage(t.Context(), providerActor(), agentports.MentionPageRequest{
-		Kind:   "shipment",
-		Limit:  5000,
-		Offset: -4,
-	})
+	_, err := service.SearchMentionPage(
+		t.Context(),
+		providerActor(),
+		assistantports.MentionPageRequest{
+			Kind:   "shipment",
+			Limit:  5000,
+			Offset: -4,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, mentionPageMax+1, repo.captured.LimitPerKind)
 	assert.Zero(t, repo.captured.Offset)
 
-	_, err = service.SearchMentionPage(t.Context(), providerActor(), agentports.MentionPageRequest{
-		Kind: "all",
-	})
+	_, err = service.SearchMentionPage(
+		t.Context(),
+		providerActor(),
+		assistantports.MentionPageRequest{
+			Kind: "all",
+		},
+	)
 	require.Error(t, err)
 }
 
@@ -233,7 +257,11 @@ func TestMentionKindsAreKindsOfRecordGuardedByTheirResource(t *testing.T) {
 
 	for _, candidate := range mentionKinds {
 		assert.True(t, candidate.kind.Known(), candidate.kind)
-		assert.True(t, permission.NewRegistry().HasResource(candidate.kind.Resource().String()), candidate.kind)
+		assert.True(
+			t,
+			permission.NewRegistry().HasResource(candidate.kind.Resource().String()),
+			candidate.kind,
+		)
 	}
 	idx := slices.IndexFunc(mentionKinds, func(candidate mentionKind) bool {
 		return candidate.kind == permission.KindBillingQueueItem

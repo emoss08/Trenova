@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -108,7 +108,7 @@ func (s *Service) suggestForAgent(ctx context.Context, p suggestForAgentParams) 
 
 	existing, err := s.memories.ListSuggestionContext(
 		ctx,
-		agentports.ListAgentMemorySuggestionContextRequest{
+		agentmemoryports.ListAgentMemorySuggestionContextRequest{
 			TenantInfo:        p.tenant,
 			AgentDefinitionID: p.agentID,
 			Now:               p.now,

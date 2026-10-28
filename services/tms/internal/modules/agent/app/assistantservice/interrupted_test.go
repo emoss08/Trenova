@@ -10,15 +10,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func lookupTurn(name string) *agentports.ChatCompletionResult {
-	return &agentports.ChatCompletionResult{
-		ToolCalls: []agentports.ToolCall{
+func lookupTurn(name string) *llmports.ChatCompletionResult {
+	return &llmports.ChatCompletionResult{
+		ToolCalls: []llmports.ToolCall{
 			{ID: "call_1", Name: name, Arguments: map[string]any{"id": "S1"}},
 		},
 		ModelIdentifier: "test-model",
@@ -38,11 +41,11 @@ func TestSendMessageStream_KeepsWhatRanWhenTheModelFailsPartway(t *testing.T) {
 		Result:   map[string]any{"proNumber": "S1"},
 	}
 	completion := &scriptedCompletion{
-		Turns:  []*agentports.ChatCompletionResult{lookupTurn("shipment_get")},
+		Turns:  []*llmports.ChatCompletionResult{lookupTurn("shipment_get")},
 		Errors: map[int]error{1: errors.New("every configured chat provider failed")},
 	}
 	svc := newService(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{tool},
+		Tools: []agenttoolports.AgentQueryTool{tool},
 	}, &stubActionRegistry{})
 	conversations := &stubConversations{thread: &conversation.Thread{
 		ID:                pulid.MustNew("athr_"),
@@ -53,7 +56,7 @@ func TestSendMessageStream_KeepsWhatRanWhenTheModelFailsPartway(t *testing.T) {
 	svc.definitions = &stubDefinitions{definition: testDefinition("shipment_get")}
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Where is S1?",
 		TenantInfo: actor.TenantInfo(),
@@ -77,7 +80,7 @@ func TestSendMessageStream_KeepsWhatRanWhenTheModelFailsPartway(t *testing.T) {
 func TestSendMessageStream_SavesTheTurnOnACancelledRequest(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		textTurn("It is in Los Angeles."),
 	}}
 	svc, conversations := newConversationService(completion, testDefinition())
@@ -86,7 +89,7 @@ func TestSendMessageStream_SavesTheTurnOnACancelledRequest(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
-	_, _ = svc.sendMessage(ctx, &agentports.SendMessageRequest{
+	_, _ = svc.sendMessage(ctx, &assistantports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Where is it?",
 		TenantInfo: actor.TenantInfo(),
@@ -103,7 +106,7 @@ func TestInterruptedTurn_SaysNothingRanWhenNothingDid(t *testing.T) {
 	t.Parallel()
 
 	req := &TurnRequest{Input: "Where is S1?"}
-	nothingRan := &agentports.RunResult{
+	nothingRan := &agentruntimeports.RunResult{
 		Messages: []conversation.Message{{Role: conversation.RoleUser, Content: "Where is S1?"}},
 	}
 
@@ -129,7 +132,7 @@ func TestInterruptedTurn_SaysNothingRanWhenNothingDid(t *testing.T) {
 	assert.Contains(t, failed.Reply, "before it started")
 	assert.Contains(t, failed.Reply, "Ask again")
 
-	ran := &agentports.RunResult{Messages: []conversation.Message{
+	ran := &agentruntimeports.RunResult{Messages: []conversation.Message{
 		{Role: conversation.RoleUser, Content: "Where is S1?"},
 		{Role: conversation.RoleAssistant, Content: "Looking it up."},
 	}}
@@ -163,7 +166,7 @@ func TestInterruptedTurn_KeepsTheQuestionWhenNoRunCameBack(t *testing.T) {
 	empty := interruptedTurn(
 		req.Input,
 		agentguard.Decision{Allowed: true},
-		&agentports.RunResult{},
+		&agentruntimeports.RunResult{},
 		context.Canceled,
 	)
 	require.NotNil(t, empty)
@@ -201,7 +204,7 @@ func TestClosingNotice_SaysWhetherTheProviderRefusedOrWasUnavailable(t *testing.
 	assert.Contains(t, unavailable, "unavailable (status 503)")
 	assert.Contains(t, unavailable, "before it started")
 
-	resting := closingNotice(fmt.Errorf("chat: %w", agentports.ErrProvidersResting), false)
+	resting := closingNotice(fmt.Errorf("chat: %w", llmports.ErrProvidersResting), false)
 	assert.Contains(t, resting, "paused after repeated failures")
 
 	plain := closingNotice(errors.New("something else"), false)
@@ -211,7 +214,7 @@ func TestClosingNotice_SaysWhetherTheProviderRefusedOrWasUnavailable(t *testing.
 func TestTurnResult_KeepsWhenEachMessageWasWritten(t *testing.T) {
 	t.Parallel()
 
-	run := &agentports.RunResult{
+	run := &agentruntimeports.RunResult{
 		Reply: "S1 is in Denver.",
 		Messages: []conversation.Message{
 			{Role: conversation.RoleUser, Content: "Where is S1?", CreatedAt: 100},
@@ -233,7 +236,7 @@ func TestTurnResult_KeepsWhenEachMessageWasWritten(t *testing.T) {
 	stopped := interruptedTurn(
 		"Where is S1?",
 		agentguard.Decision{Allowed: true},
-		&agentports.RunResult{Messages: run.Messages[:3]},
+		&agentruntimeports.RunResult{Messages: run.Messages[:3]},
 		context.Canceled,
 	)
 	require.Len(t, stopped.Messages, 4)

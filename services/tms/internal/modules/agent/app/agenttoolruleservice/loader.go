@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 )
@@ -12,20 +12,20 @@ import (
 type LoaderParams struct {
 	fx.In
 
-	Repo agentports.AgentToolRuleOverrideRepository
+	Repo agenttoolports.AgentToolRuleOverrideRepository
 }
 
 type Loader struct {
-	repo agentports.AgentToolRuleOverrideRepository
+	repo agenttoolports.AgentToolRuleOverrideRepository
 }
 
-var _ agentports.ToolRuleOverrides = (*Loader)(nil)
+var _ agenttoolports.ToolRuleOverrides = (*Loader)(nil)
 
 func NewLoader(p LoaderParams) *Loader {
 	return newLoader(p.Repo)
 }
 
-func newLoader(repo agentports.AgentToolRuleOverrideRepository) *Loader {
+func newLoader(repo agenttoolports.AgentToolRuleOverrideRepository) *Loader {
 	return &Loader{repo: repo}
 }
 

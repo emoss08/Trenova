@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
@@ -34,17 +34,17 @@ type Params struct {
 	Logger       *zap.Logger
 	Config       *config.Config
 	Metrics      *metrics.Registry
-	Completion   agentports.CompletionService
-	Availability agentports.ProviderAvailability `optional:"true"`
-	Plans        platformplanports.PlanService   `optional:"true"`
+	Completion   llmports.CompletionService
+	Availability llmports.ProviderAvailability `optional:"true"`
+	Plans        platformplanports.PlanService `optional:"true"`
 }
 
 type Service struct {
 	logger       *zap.Logger
 	cfg          *config.AIConfig
 	metrics      *metrics.Registry
-	completion   agentports.CompletionService
-	availability agentports.ProviderAvailability
+	completion   llmports.CompletionService
+	availability llmports.ProviderAvailability
 	plans        platformplanports.PlanService
 }
 
@@ -322,7 +322,7 @@ func (s *Service) PollRateConfirmationBackgroundExtraction(
 		)
 	}
 
-	outcome, err := s.completion.PollBackground(ctx, &agentports.BackgroundPollRequest{
+	outcome, err := s.completion.PollBackground(ctx, &llmports.BackgroundPollRequest{
 		TenantInfo:  req.TenantInfo,
 		ProviderID:  req.ProviderID,
 		Handle:      req.ResponseID,
@@ -344,7 +344,7 @@ func (s *Service) PollRateConfirmationBackgroundExtraction(
 
 func (s *Service) describePoll(
 	req *documentaiextractionports.AIBackgroundExtractPollRequest,
-	outcome *agentports.BackgroundOutcome,
+	outcome *llmports.BackgroundOutcome,
 ) *documentaiextractionports.AIBackgroundExtractPollResult {
 	result := &documentaiextractionports.AIBackgroundExtractPollResult{
 		ResponseID: req.ResponseID,
@@ -353,12 +353,12 @@ func (s *Service) describePoll(
 	}
 
 	switch outcome.State {
-	case agentports.BackgroundPending:
+	case llmports.BackgroundPending:
 		result.Status = documentaiextractionports.AIBackgroundExtractionStatusPending
 		s.recordAIUsage("extract_background_poll", true, "pending")
 
 		return result
-	case agentports.BackgroundFailed:
+	case llmports.BackgroundFailed:
 		result.Status = documentaiextractionports.AIBackgroundExtractionStatusFailed
 		result.FailureCode = stringutils.FirstNonEmptyTrimmed(
 			outcome.FailureCode,
@@ -372,7 +372,7 @@ func (s *Service) describePoll(
 		s.recordAIUsage("extract_background_poll", true, "terminal_failure")
 
 		return result
-	case agentports.BackgroundCompleted:
+	case llmports.BackgroundCompleted:
 	}
 
 	if outcome.Result == nil || strings.TrimSpace(outcome.Result.Text) == "" {

@@ -3,7 +3,8 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -23,10 +24,18 @@ func rateSpec(t *testing.T, name string) *graphQLListSpec {
 	return nil
 }
 
-func rateTool(t *testing.T, name string, reader agentports.GraphQLReader) agentports.AgentQueryTool {
+func rateTool(
+	t *testing.T,
+	name string,
+	reader graphqlreadports.GraphQLReader,
+) agenttoolports.AgentQueryTool {
 	t.Helper()
 
-	tool, err := newGraphQLReadTool(rateSpec(t, name), reader, &mocks.DenyResourcesPermissionEngine{})
+	tool, err := newGraphQLReadTool(
+		rateSpec(t, name),
+		reader,
+		&mocks.DenyResourcesPermissionEngine{},
+	)
 	require.NoError(t, err)
 
 	return tool
@@ -67,16 +76,20 @@ func TestFuelIndexPrices_RefusesADayThatIsNotADayAndACallWithoutAnIndex(t *testi
 	assert.Empty(t, reader.requests, "nothing is read for a call refused")
 }
 
-func fuelRatesAnswer(withheld ...string) map[string]*agentports.GraphQLReadResult {
+func fuelRatesAnswer(withheld ...string) map[string]*graphqlreadports.GraphQLReadResult {
 	program := func(code, name string) map[string]any {
 		return map[string]any{"id": "fsp_" + code, "code": code, "name": name}
 	}
 
-	return map[string]*agentports.GraphQLReadResult{"DeskFuelProgramCurrentRates": {
+	return map[string]*graphqlreadports.GraphQLReadResult{"DeskFuelProgramCurrentRates": {
 		Data: map[string]any{"fuelProgramCurrentRates": []any{
 			map[string]any{
 				"program": program("DOE-STD", "DOE standard"), "usedFallback": false,
-				"price":       map[string]any{"id": "fip_1", "priceDate": "2026-10-19", "price": "3.71"},
+				"price": map[string]any{
+					"id":        "fip_1",
+					"priceDate": "2026-10-19",
+					"price":     "3.71",
+				},
 				"ratePerMile": "0.42",
 			},
 			map[string]any{"program": program("REEFER", "Reefer table"), "usedFallback": false},
@@ -145,7 +158,7 @@ func TestRateAgreementGet_ReadsTheCardWithItsLanes(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("rag_").String()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskRateAgreementCard": {
 			Data: map[string]any{"rateAgreement": map[string]any{
 				"id": id, "code": "ACME-2026", "laneCount": 1, "inputs": nil,

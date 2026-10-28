@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/contrib/workflowstreams"
@@ -106,7 +108,7 @@ func (fx *workflowEffects) Interject(
 // checkWorld reads the changes as a local activity: a read of the realtime
 // stream on the worker running the turn, with no queue between steps. A read
 // that fails leaves the cursor where it was, so the next step looks again.
-func (fx *workflowEffects) checkWorld(check *agentruntime.WorldCheck) *agentports.RecordChanges {
+func (fx *workflowEffects) checkWorld(check *agentruntime.WorldCheck) *realtimeports.RecordChanges {
 	if fx.run.Actor == nil {
 		return nil
 	}
@@ -118,7 +120,7 @@ func (fx *workflowEffects) checkWorld(check *agentruntime.WorldCheck) *agentport
 		RetryPolicy:            &temporal.RetryPolicy{MaximumAttempts: 2},
 	})
 
-	var found agentports.RecordChanges
+	var found realtimeports.RecordChanges
 	err := workflow.ExecuteLocalActivity(ctx, a.CheckWorldActivity, &WorldCheckInput{
 		OrganizationID: fx.run.Actor.OrganizationID,
 		BusinessUnitID: fx.run.Actor.BusinessUnitID,
@@ -135,7 +137,7 @@ func (fx *workflowEffects) checkWorld(check *agentruntime.WorldCheck) *agentport
 
 func (fx *workflowEffects) Complete(
 	_ *agentruntime.Turn,
-	req *agentports.ChatCompletionRequest,
+	req *llmports.ChatCompletionRequest,
 ) (agentruntime.ModelReply, error) {
 	var a *Activities
 	ctx := workflow.WithActivityOptions(fx.ctx, fx.modelOptions())
@@ -276,10 +278,10 @@ func (fx *workflowEffects) Emit(event kernelports.StreamEvent) {
 // which the transcript keeps whole.
 func streamedText(event string) bool {
 	switch event {
-	case agentports.AssistantEventDelta,
-		agentports.AssistantEventReasoning,
-		agentports.AssistantEventDelegateDelta,
-		agentports.AssistantEventDelegateReasoning:
+	case assistantports.AssistantEventDelta,
+		assistantports.AssistantEventReasoning,
+		assistantports.AssistantEventDelegateDelta,
+		assistantports.AssistantEventDelegateReasoning:
 		return true
 	default:
 		return false
@@ -291,7 +293,7 @@ func streamedText(event string) bool {
 // raw result exist, and what it showed is already in the outcome.
 func (fx *workflowEffects) Observe(
 	_ *agentruntime.Turn,
-	call *agentports.ToolCall,
+	call *llmports.ToolCall,
 	outcome agentruntime.ToolOutcome,
 ) agentruntime.ToolOutcome {
 	if !outcome.Publishes {
@@ -452,13 +454,13 @@ func delegateFailureReason(name string, failure *modelcallcontract.Failure) stri
 // shown to the person as they always are; they are not what it made.
 func publishedDocuments(
 	artifacts []*assistantartifact.Artifact,
-) []agentports.DelegateDocument {
-	documents := make([]agentports.DelegateDocument, 0, len(artifacts))
+) []assistantports.DelegateDocument {
+	documents := make([]assistantports.DelegateDocument, 0, len(artifacts))
 	for _, artifact := range artifacts {
 		if artifact == nil || artifact.Kind != assistantartifact.KindDocument {
 			continue
 		}
-		documents = append(documents, agentports.DelegateDocument{
+		documents = append(documents, assistantports.DelegateDocument{
 			ID:    artifact.ID,
 			Kind:  string(artifact.Kind),
 			Title: artifact.Title,

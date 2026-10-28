@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -14,10 +15,13 @@ import (
 )
 
 type recordedFollowUps struct {
-	requests []agentports.DecisionFollowUpRequest
+	requests []assistantports.DecisionFollowUpRequest
 }
 
-func (r *recordedFollowUps) FollowUp(_ context.Context, req agentports.DecisionFollowUpRequest) {
+func (r *recordedFollowUps) FollowUp(
+	_ context.Context,
+	req assistantports.DecisionFollowUpRequest,
+) {
 	r.requests = append(r.requests, req)
 }
 

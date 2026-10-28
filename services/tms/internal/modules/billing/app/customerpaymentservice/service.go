@@ -6,17 +6,16 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -54,7 +53,7 @@ type Params struct {
 	Validator          *Validator
 	AuditService       auditports.AuditService
 	AccountingSync     accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
-	Realtime           agentports.RealtimeService                 `optional:"true"`
+	Realtime           realtimeports.RealtimeService              `optional:"true"`
 	Triage             inboundmessageports.TriageEventSink        `optional:"true"`
 	ReceiptMatches     bankreceiptports.BankReceiptService        `optional:"true"`
 }
@@ -72,7 +71,7 @@ type Service struct {
 	validator          *Validator
 	auditService       auditports.AuditService
 	accountingSync     accountingsyncports.AccountingSyncEnqueuer
-	realtime           agentports.RealtimeService
+	realtime           realtimeports.RealtimeService
 	triage             inboundmessageports.TriageEventSink
 	receiptMatches     receiptMatchReleaser
 }

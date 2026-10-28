@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,7 +31,7 @@ func (h *Handler) activeTurn(c *gin.Context) {
 		return
 	}
 
-	turn, err := h.turns.Active(c.Request.Context(), agentports.ActiveAssistantTurnRequest{
+	turn, err := h.turns.Active(c.Request.Context(), assistantports.ActiveAssistantTurnRequest{
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -60,7 +60,7 @@ type liveTurnsResponse struct {
 	Items []liveTurn `json:"items"`
 }
 
-func liveTurnsFrom(turns []*agentports.LiveAssistantTurn) liveTurnsResponse {
+func liveTurnsFrom(turns []*assistantports.LiveAssistantTurn) liveTurnsResponse {
 	items := make([]liveTurn, 0, len(turns))
 	for _, turn := range turns {
 		items = append(items, liveTurn{
@@ -84,7 +84,7 @@ func (h *Handler) activeTurns(c *gin.Context) {
 
 	turns, err := h.turns.ListLive(
 		c.Request.Context(),
-		agentports.ListLiveAssistantTurnsRequest{
+		assistantports.ListLiveAssistantTurnsRequest{
 			UserID:         authCtx.UserID,
 			TenantInfo:     tenantFromAuthContext(authCtx),
 			ExcludeOrigins: conversation.AnsweredInPlaceOrigins(),
@@ -112,7 +112,7 @@ func (h *Handler) streamTurn(c *gin.Context) {
 		return
 	}
 
-	turn, err := h.turns.Get(c.Request.Context(), agentports.GetAssistantTurnRequest{
+	turn, err := h.turns.Get(c.Request.Context(), assistantports.GetAssistantTurnRequest{
 		ID:         turnID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 		UserID:     authCtx.UserID,
@@ -132,7 +132,7 @@ func (h *Handler) streamTurn(c *gin.Context) {
 	err = h.turns.Relay(c.Request.Context(), assistantturnservice.RelayRequest{
 		Turn:   turn,
 		Cursor: cursorFrom(c),
-	}, func(frame agentports.TurnStreamFrame) error {
+	}, func(frame assistantports.TurnStreamFrame) error {
 		// The frame's payload arrives already encoded and leaves the same
 		// way: decoding it here to encode it again would spend the stream's
 		// throughput learning nothing.
@@ -145,7 +145,7 @@ func (h *Handler) streamTurn(c *gin.Context) {
 			zap.String("turn", turnID.String()),
 			zap.Error(err),
 		)
-		_ = stream.Emit(agentports.AssistantEventError, gin.H{
+		_ = stream.Emit(assistantports.AssistantEventError, gin.H{
 			"message": "The live view of this reply ended. It will appear in the conversation.",
 		})
 	}
@@ -270,7 +270,7 @@ func (h *Handler) ask(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	thread, err := h.service.StartAsk(c.Request.Context(), &agentports.AskRequest{
+	thread, err := h.service.StartAsk(c.Request.Context(), &assistantports.AskRequest{
 		Content:    body.Content,
 		Page:       body.Context.page(),
 		Mentions:   body.Mentions,
@@ -309,7 +309,7 @@ func (h *Handler) askWorker(
 	// slot is taken. Recording the turn first let anyone who knew a thread's
 	// id hold it, and the owner saw "already working on a reply" until the
 	// stranger's workflow failed.
-	if _, err := h.service.GetThread(c.Request.Context(), agentports.GetThreadRequest{
+	if _, err := h.service.GetThread(c.Request.Context(), assistantports.GetThreadRequest{
 		ID:         threadID,
 		UserID:     authCtx.UserID,
 		TenantInfo: tenantFromAuthContext(authCtx),
@@ -425,7 +425,7 @@ func (h *Handler) stopTurn(c *gin.Context) {
 		return
 	}
 
-	turn, err := h.turns.Get(c.Request.Context(), agentports.GetAssistantTurnRequest{
+	turn, err := h.turns.Get(c.Request.Context(), assistantports.GetAssistantTurnRequest{
 		ID:         turnID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 		UserID:     authCtx.UserID,

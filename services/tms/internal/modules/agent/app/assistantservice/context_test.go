@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -57,7 +58,10 @@ func (s *stubContents) GetContent(
 	return s.content, s.err
 }
 
-func ownDocument(thread *conversation.Thread, actor *permissionports.RequestActor) *document.Document {
+func ownDocument(
+	thread *conversation.Thread,
+	actor *permissionports.RequestActor,
+) *document.Document {
 	return &document.Document{
 		ID:           pulid.MustNew("doc_"),
 		OriginalName: "rate-con.pdf",
@@ -72,7 +76,7 @@ func ownDocument(thread *conversation.Thread, actor *permissionports.RequestActo
 func TestSendMessageStream_StoresAttachmentsAndMentionsOnTheUserTurn(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		textTurn("The rate confirmation is for Acme."),
 	}}
 	svc, conversations := newConversationService(completion, testDefinition())
@@ -87,7 +91,7 @@ func TestSendMessageStream_StoresAttachmentsAndMentionsOnTheUserTurn(t *testing.
 	}}
 
 	customer := pulid.MustNew("cust_")
-	result, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	result, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:              conversations.thread.ID,
 		Content:               "Does this match what we quoted?",
 		TenantInfo:            actor.TenantInfo(),
@@ -135,7 +139,7 @@ func TestSendMessageStream_StoresAttachmentsAndMentionsOnTheUserTurn(t *testing.
 func TestSendMessageStream_RefusesAnAttachmentThatIsNotTheirs(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{textTurn("ok")}}
 	svc, conversations := newConversationService(completion, testDefinition())
 	actor := testActor()
 
@@ -157,7 +161,7 @@ func TestSendMessageStream_RefusesAnAttachmentThatIsNotTheirs(t *testing.T) {
 		"a shipment's file":     shipmentFile.ID,
 		"an unknown document":   pulid.MustNew("doc_"),
 	} {
-		_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+		_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 			ThreadID:              conversations.thread.ID,
 			Content:               "Read this",
 			TenantInfo:            actor.TenantInfo(),
@@ -174,7 +178,7 @@ func TestSendMessageStream_RefusesAnAttachmentThatIsNotTheirs(t *testing.T) {
 func TestSendMessageStream_BoundsAttachmentsAndMentions(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{textTurn("ok")}}
 	svc, conversations := newConversationService(completion, testDefinition())
 	actor := testActor()
 	svc.documents = &stubDocuments{}
@@ -183,7 +187,7 @@ func TestSendMessageStream_BoundsAttachmentsAndMentions(t *testing.T) {
 	for i := range tooManyFiles {
 		tooManyFiles[i] = pulid.MustNew("doc_")
 	}
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:              conversations.thread.ID,
 		Content:               "Read these",
 		TenantInfo:            actor.TenantInfo(),
@@ -193,7 +197,7 @@ func TestSendMessageStream_BoundsAttachmentsAndMentions(t *testing.T) {
 	require.ErrorAs(t, err, &multiErr)
 	assert.Equal(t, "attachmentDocumentIds", multiErr.Errors[0].Field)
 
-	_, err = svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err = svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Who is this",
 		TenantInfo: actor.TenantInfo(),
@@ -214,14 +218,14 @@ func TestSendMessageStream_BoundsAttachmentsAndMentions(t *testing.T) {
 func TestSendMessageStream_NamesAPendingAttachment(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{textTurn("ok")}}
 	svc, conversations := newConversationService(completion, testDefinition())
 	actor := testActor()
 	doc := ownDocument(conversations.thread, actor)
 	svc.documents = &stubDocuments{docs: map[pulid.ID]*document.Document{doc.ID: doc}}
 	svc.contents = &stubContents{err: errors.New("no content yet")}
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:              conversations.thread.ID,
 		Content:               "What is this?",
 		TenantInfo:            actor.TenantInfo(),
@@ -234,11 +238,11 @@ func TestSendMessageStream_NamesAPendingAttachment(t *testing.T) {
 	assert.Contains(t, question, "reading: still being read")
 }
 
-func askedWith(t *testing.T, req *agentports.ChatCompletionRequest) string {
+func askedWith(t *testing.T, req *llmports.ChatCompletionRequest) string {
 	t.Helper()
 
 	for idx := len(req.Messages) - 1; idx >= 0; idx-- {
-		if req.Messages[idx].Role == agentports.RoleUser {
+		if req.Messages[idx].Role == llmports.RoleUser {
 			return req.Messages[idx].Content
 		}
 	}
@@ -250,12 +254,12 @@ func askedWith(t *testing.T, req *agentports.ChatCompletionRequest) string {
 func TestSendMessageStream_RendersTheTableView(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{textTurn("ok")}}
 	svc, conversations := newConversationService(completion, testDefinition())
 	actor := testActor()
 
 	rows := 17
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Why are these late?",
 		TenantInfo: actor.TenantInfo(),
@@ -366,7 +370,7 @@ func chatDefinition(name string, template agentdefinition.Template) *agentdefini
 func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		textTurn("Twelve loads are late."),
 	}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
@@ -382,13 +386,13 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 
 	var events []string
 	var announced *conversation.Thread
-	result, err := svc.ask(t.Context(), &agentports.AskRequest{
+	result, err := svc.ask(t.Context(), &assistantports.AskRequest{
 		Content:    "How many loads are late today?",
 		TenantInfo: actor.TenantInfo(),
 		Page:       &agent.PageContext{Path: "/dispatch"},
 	}, actor, func(event kernelports.StreamEvent) {
 		events = append(events, event.Event)
-		if event.Event == agentports.AssistantEventThread {
+		if event.Event == assistantports.AssistantEventThread {
 			announced = event.Data.(*conversation.Thread)
 		}
 	})
@@ -414,7 +418,7 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 	assert.Equal(t, "How many loads are late today?", conversations.created.Title)
 	require.NotNil(t, announced)
 	assert.Equal(t, conversations.created.ID, announced.ID)
-	assert.Equal(t, agentports.AssistantEventThread, events[0], "the thread is announced first")
+	assert.Equal(t, assistantports.AssistantEventThread, events[0], "the thread is announced first")
 	assert.Equal(t, "Twelve loads are late.", result.Reply)
 	assert.Equal(t, "/dispatch", conversations.appended[0].PageContext.Path)
 }
@@ -422,7 +426,7 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 func TestAsk_RefusesWithoutTheGeneralAssistantRatherThanAskingAnotherAgent(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{textTurn("ok")}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
 	activity := chatDefinition("Agent Activity Desk", "")
 	dispatch := chatDefinition("Dispatch", agentdefinition.TemplateDispatchAssistant)
@@ -434,7 +438,7 @@ func TestAsk_RefusesWithoutTheGeneralAssistantRatherThanAskingAnotherAgent(t *te
 	svc.conversations = conversations
 	actor := testActor()
 
-	_, err := svc.ask(t.Context(), &agentports.AskRequest{
+	_, err := svc.ask(t.Context(), &assistantports.AskRequest{
 		Content:    "Tell me about SEED-PAY-002?",
 		TenantInfo: actor.TenantInfo(),
 	}, actor, nil)
@@ -443,7 +447,7 @@ func TestAsk_RefusesWithoutTheGeneralAssistantRatherThanAskingAnotherAgent(t *te
 	assert.Contains(t, err.Error(), "general assistant, which is turned off")
 	assert.Nil(t, conversations.created, "no other agent answers in its place")
 
-	_, err = svc.ask(t.Context(), &agentports.AskRequest{
+	_, err = svc.ask(t.Context(), &assistantports.AskRequest{
 		Content:    "   ",
 		TenantInfo: actor.TenantInfo(),
 	}, actor, nil)
@@ -455,7 +459,9 @@ func TestEarlierFileTexts_ReadsTheFilesTheConversationCarried(t *testing.T) {
 	t.Parallel()
 
 	svc, _ := newConversationService(&scriptedCompletion{}, testDefinition())
-	svc.contents = &stubContents{content: &documentcontent.Content{ContentText: "Total:   $2,410.00"}}
+	svc.contents = &stubContents{
+		content: &documentcontent.Content{ContentText: "Total:   $2,410.00"},
+	}
 	doc := pulid.MustNew("doc_")
 	history := []conversation.Message{
 		{Role: conversation.RoleUser, Content: "Build it",

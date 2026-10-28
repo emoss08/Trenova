@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"go.uber.org/zap"
 )
@@ -61,7 +61,11 @@ func touchesExtensions(names []string) bool {
 	return slices.ContainsFunc(names, agentextension.IsExtensionTool)
 }
 
-func (s *Service) holdsFor(ctx context.Context, req *agentports.RunRequest, name string) bool {
+func (s *Service) holdsFor(
+	ctx context.Context,
+	req *agentruntimeports.RunRequest,
+	name string,
+) bool {
 	if s.holds(req.Definition, name) {
 		return true
 	}
@@ -74,7 +78,7 @@ func (s *Service) holdsFor(ctx context.Context, req *agentports.RunRequest, name
 
 func (s *Service) extensionRefusal(
 	ctx context.Context,
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 	name string,
 ) (toolOutcome, bool) {
 	capability, isExtension := agentextension.CapabilityForTool(name)

@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
@@ -134,4 +134,4 @@ func TestExtractionAvailabilityReturnsTheRouterError(t *testing.T) {
 	require.ErrorIs(t, err, failure)
 }
 
-var _ agentports.ProviderAvailability = (*providerAvailability)(nil)
+var _ llmports.ProviderAvailability = (*providerAvailability)(nil)

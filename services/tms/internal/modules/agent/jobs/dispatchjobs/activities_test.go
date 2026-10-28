@@ -5,11 +5,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchconsoleportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -121,7 +121,7 @@ func (m *stubProposalRepo) UpdateStatus(
 type activityMocks struct {
 	controls   *dispatchcontrolportsmock.MockDispatchControlRepository
 	proposals  *stubProposalRepo
-	autoAssign *agentportsmock.MockDispatchAutoAssignService
+	autoAssign *dispatchconsoleportsmock.MockDispatchAutoAssignService
 }
 
 func newActivities(t *testing.T) (*Activities, *activityMocks) {
@@ -130,7 +130,7 @@ func newActivities(t *testing.T) (*Activities, *activityMocks) {
 	deps := &activityMocks{
 		controls:   dispatchcontrolportsmock.NewMockDispatchControlRepository(t),
 		proposals:  new(stubProposalRepo),
-		autoAssign: agentportsmock.NewMockDispatchAutoAssignService(t),
+		autoAssign: dispatchconsoleportsmock.NewMockDispatchAutoAssignService(t),
 	}
 
 	return NewActivities(ActivitiesParams{
@@ -143,23 +143,23 @@ func newActivities(t *testing.T) (*Activities, *activityMocks) {
 
 func planWithRun(
 	assignments, uncovered int,
-	tours ...*agentports.DispatchTour,
-) *agentports.DispatchPlan {
-	return &agentports.DispatchPlan{
+	tours ...*dispatchconsoleports.DispatchTour,
+) *dispatchconsoleports.DispatchPlan {
+	return &dispatchconsoleports.DispatchPlan{
 		RunID:       pulid.MustNew("arun_"),
-		Assignments: make([]*agentports.DispatchPlannedAssignment, assignments),
-		Uncovered:   make([]*agentports.DispatchUncoveredMove, uncovered),
+		Assignments: make([]*dispatchconsoleports.DispatchPlannedAssignment, assignments),
+		Uncovered:   make([]*dispatchconsoleports.DispatchUncoveredMove, uncovered),
 		Tours:       tours,
 	}
 }
 
-func tourOf(moves int, deadhead float64) *agentports.DispatchTour {
+func tourOf(moves int, deadhead float64) *dispatchconsoleports.DispatchTour {
 	moveIDs := make([]pulid.ID, 0, moves)
 	for range moves {
 		moveIDs = append(moveIDs, pulid.MustNew("mov_"))
 	}
 
-	return &agentports.DispatchTour{
+	return &dispatchconsoleports.DispatchTour{
 		TourID:             pulid.MustNew("tour_"),
 		WorkerID:           pulid.MustNew("wrk_"),
 		MoveIDs:            moveIDs,
@@ -178,14 +178,14 @@ func TestHorizonPlanSweepActivity_SummarisesEachTenant(t *testing.T) {
 		Return([]pagination.TenantInfo{first, second}, nil)
 
 	deps.autoAssign.EXPECT().
-		Plan(mock.Anything, mock.MatchedBy(func(req *agentports.DispatchPlanRequest) bool {
+		Plan(mock.Anything, mock.MatchedBy(func(req *dispatchconsoleports.DispatchPlanRequest) bool {
 			return req.TenantInfo.OrgID == first.OrgID
 		})).
-		Return(&agentports.DispatchPlan{
+		Return(&dispatchconsoleports.DispatchPlan{
 			RunID:       pulid.MustNew("arun_"),
-			Assignments: make([]*agentports.DispatchPlannedAssignment, 5),
-			Uncovered:   make([]*agentports.DispatchUncoveredMove, 2),
-			Tours:       []*agentports.DispatchTour{tourOf(3, 40), tourOf(2, 25)},
+			Assignments: make([]*dispatchconsoleports.DispatchPlannedAssignment, 5),
+			Uncovered:   make([]*dispatchconsoleports.DispatchUncoveredMove, 2),
+			Tours:       []*dispatchconsoleports.DispatchTour{tourOf(3, 40), tourOf(2, 25)},
 			TotalScore:  400,
 			ShadowMode:  true,
 		}, nil)
@@ -193,13 +193,13 @@ func TestHorizonPlanSweepActivity_SummarisesEachTenant(t *testing.T) {
 	deps.proposals.On("ExpirePendingByRun", mock.Anything, mock.Anything).Return(5, nil)
 
 	deps.autoAssign.EXPECT().
-		Plan(mock.Anything, mock.MatchedBy(func(req *agentports.DispatchPlanRequest) bool {
+		Plan(mock.Anything, mock.MatchedBy(func(req *dispatchconsoleports.DispatchPlanRequest) bool {
 			return req.TenantInfo.OrgID == second.OrgID
 		})).
-		Return(&agentports.DispatchPlan{
-			Assignments: make([]*agentports.DispatchPlannedAssignment, 1),
-			Uncovered:   make([]*agentports.DispatchUncoveredMove, 0),
-			Tours:       []*agentports.DispatchTour{tourOf(1, 10)},
+		Return(&dispatchconsoleports.DispatchPlan{
+			Assignments: make([]*dispatchconsoleports.DispatchPlannedAssignment, 1),
+			Uncovered:   make([]*dispatchconsoleports.DispatchUncoveredMove, 0),
+			Tours:       []*dispatchconsoleports.DispatchTour{tourOf(1, 10)},
 			TotalScore:  90,
 		}, nil)
 
@@ -287,7 +287,7 @@ func TestHorizonPlanSweepActivity_SkipsRetirementWithoutARun(t *testing.T) {
 
 	deps.autoAssign.EXPECT().
 		Plan(mock.Anything, mock.Anything).
-		Return(&agentports.DispatchPlan{}, nil)
+		Return(&dispatchconsoleports.DispatchPlan{}, nil)
 
 	result, err := activities.HorizonPlanSweepActivity(t.Context())
 	require.NoError(t, err)
@@ -307,10 +307,10 @@ func TestHorizonPlanSweepActivity_NeverApplies(t *testing.T) {
 		Return([]pagination.TenantInfo{only}, nil)
 
 	deps.autoAssign.EXPECT().
-		Plan(mock.Anything, mock.MatchedBy(func(req *agentports.DispatchPlanRequest) bool {
+		Plan(mock.Anything, mock.MatchedBy(func(req *dispatchconsoleports.DispatchPlanRequest) bool {
 			return !req.Apply
 		})).
-		Return(&agentports.DispatchPlan{}, nil)
+		Return(&dispatchconsoleports.DispatchPlan{}, nil)
 
 	_, err := activities.HorizonPlanSweepActivity(t.Context())
 	require.NoError(t, err)
@@ -327,18 +327,18 @@ func TestHorizonPlanSweepActivity_OneTenantFailingDoesNotStopTheSweep(t *testing
 		Return([]pagination.TenantInfo{broken, healthy}, nil)
 
 	deps.autoAssign.EXPECT().
-		Plan(mock.Anything, mock.MatchedBy(func(req *agentports.DispatchPlanRequest) bool {
+		Plan(mock.Anything, mock.MatchedBy(func(req *dispatchconsoleports.DispatchPlanRequest) bool {
 			return req.TenantInfo.OrgID == broken.OrgID
 		})).
 		Return(nil, errors.New("Auto assignment is disabled for this organization"))
 
 	deps.autoAssign.EXPECT().
-		Plan(mock.Anything, mock.MatchedBy(func(req *agentports.DispatchPlanRequest) bool {
+		Plan(mock.Anything, mock.MatchedBy(func(req *dispatchconsoleports.DispatchPlanRequest) bool {
 			return req.TenantInfo.OrgID == healthy.OrgID
 		})).
-		Return(&agentports.DispatchPlan{
-			Assignments: make([]*agentports.DispatchPlannedAssignment, 2),
-			Tours:       []*agentports.DispatchTour{tourOf(2, 15)},
+		Return(&dispatchconsoleports.DispatchPlan{
+			Assignments: make([]*dispatchconsoleports.DispatchPlannedAssignment, 2),
+			Tours:       []*dispatchconsoleports.DispatchTour{tourOf(2, 15)},
 		}, nil)
 
 	result, err := activities.HorizonPlanSweepActivity(t.Context())

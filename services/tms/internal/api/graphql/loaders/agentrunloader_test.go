@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,12 +15,12 @@ import (
 
 type stubRunsByIDs struct {
 	visible  []*agent.AgentRun
-	requests []agentports.ListAgentRunsByIDsRequest
+	requests []agentruntimeports.ListAgentRunsByIDsRequest
 }
 
 func (s *stubRunsByIDs) ListByIDs(
 	_ context.Context,
-	req agentports.ListAgentRunsByIDsRequest,
+	req agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	s.requests = append(s.requests, req)
 
@@ -29,7 +29,7 @@ func (s *stubRunsByIDs) ListByIDs(
 
 func (s *stubRunsByIDs) ListTranscriptsByIDs(
 	ctx context.Context,
-	req agentports.ListAgentRunsByIDsRequest,
+	req agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	return s.ListByIDs(ctx, req)
 }
@@ -71,7 +71,7 @@ func TestAgentRunLoaders_ReadForThePersonMakingTheRequest(t *testing.T) {
 
 		require.NotEmpty(t, runs.requests, name)
 		for _, req := range runs.requests {
-			assert.Equal(t, agentports.PersonRunRead(userID), req.Reader, name)
+			assert.Equal(t, agentruntimeports.PersonRunRead(userID), req.Reader, name)
 			assert.Equal(t, tenant, req.TenantInfo, name)
 		}
 	}

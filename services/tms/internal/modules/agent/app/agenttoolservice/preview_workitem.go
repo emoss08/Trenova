@@ -2,7 +2,7 @@ package agenttoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
-var _ agentports.ToolPreviewer = (*invoicetools.ResolveBankReceiptWorkItemTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*invoicetools.ResolveBankReceiptWorkItemTool)(nil)

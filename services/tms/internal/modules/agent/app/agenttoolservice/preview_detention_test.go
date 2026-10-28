@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -44,7 +44,10 @@ func TestWaiveDetentionPreview_ShowsTheRevenueGivenUp(t *testing.T) {
 	sibling.BillableAmount = decimal.NewFromInt(100)
 	sibling.Status = detention.OccurrenceStatusApproved
 	after := *before
-	require.NoError(t, after.Waive(detention.WaiverReasonWeather, "Ice storm", pulid.MustNew("usr_"), 10))
+	require.NoError(
+		t,
+		after.Waive(detention.WaiverReasonWeather, "Ice storm", pulid.MustNew("usr_"), 10),
+	)
 
 	det := &agenttoolstest.FakeDetention{Change: &detentionservice.OccurrenceChange{
 		Before:   before,
@@ -58,7 +61,7 @@ func TestWaiveDetentionPreview_ShowsTheRevenueGivenUp(t *testing.T) {
 		"note":         "Ice storm",
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, det.Waived, "a preview must not waive")
 	assert.Contains(t, preview.Summary, "425.00 USD")
@@ -116,7 +119,7 @@ func TestSendDetentionNoticePreview_ShowsTheNoticeAsSent(t *testing.T) {
 	tool := operationstools.NewSendDetentionNoticeTool(det)
 	params := agenttoolstest.ExecuteParams(map[string]any{"occurrenceId": before.ID.String()})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, det.Noticed, "a preview must not send")
 

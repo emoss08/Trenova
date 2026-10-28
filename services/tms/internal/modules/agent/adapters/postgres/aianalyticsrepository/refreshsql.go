@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
@@ -117,7 +117,7 @@ func stepCause(s *agentdb.AgentRunStepsTable) keel.StringExpr {
 	}
 
 	return keel.CaseString().
-		When(s.Status.Ne(string(agentports.RunStepFailed)), keel.Text("")).
+		When(s.Status.Ne(string(agentruntimeports.RunStepFailed)), keel.Text("")).
 		When(
 			cause.Coalesce("").In(sliceutils.Strings(aianalytics.AllCauses())...),
 			cause,
@@ -393,8 +393,8 @@ func ownedUnitsSource(src *ownedSource, req *unitRefresh) *keel.Query[*keel.Row]
 		Where(
 			s.OwnerKind.Eq(string(src.ownerKind)),
 			s.OwnerID.InQuery(owners.Query().Pick(owners.Col("id"))),
-			s.Kind.Eq(string(agentports.RunStepTool)),
-			s.Status.Ne(string(agentports.RunStepStarted)),
+			s.Kind.Eq(string(agentruntimeports.RunStepTool)),
+			s.Status.Ne(string(agentruntimeports.RunStepStarted)),
 		).
 		Group(s.OwnerID))
 
@@ -578,8 +578,8 @@ func unitToolsSource(stamp int64) *keel.Query[*aianalytics.WorkUnit] {
 		Where(
 			w.RefreshStamp.Eq(stamp),
 			w.Source.In(unitSources...),
-			s.Kind.Eq(string(agentports.RunStepTool)),
-			s.Status.Ne(string(agentports.RunStepStarted)),
+			s.Kind.Eq(string(agentruntimeports.RunStepTool)),
+			s.Status.Ne(string(agentruntimeports.RunStepStarted)),
 			s.ToolName.Ne(""),
 		).
 		Group(s.OwnerID, s.ToolName, cause, w.FinishedAt, w.ModelKey, w.ProviderID,

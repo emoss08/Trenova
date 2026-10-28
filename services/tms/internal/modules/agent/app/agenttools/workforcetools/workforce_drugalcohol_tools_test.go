@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -208,13 +208,17 @@ func TestScheduleDOTTest_RecordsAnOrderAndNoResult(t *testing.T) {
 		common.FieldReason:   "Jackknife on I-80 with a tow-away",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, tests.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		tests.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "No result is recorded")
-	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.NoError(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, tests.recorded)
 	assert.Equal(t, worker.DOTTestStatusScheduled, tests.recorded.Status)
@@ -229,9 +233,9 @@ func TestScheduleDOTTest_RecordsAnOrderAndNoResult(t *testing.T) {
 		paramDOTTestType:     "PostAccident",
 		paramSubstance:       "Drug",
 	})
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), missingReason),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), missingReason),
 		"validation runs the service's plan")
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			common.ParamWorkerID: tests.test.WorkerID.String(),
 			paramDOTTestType:     "Positive",
@@ -249,18 +253,29 @@ func TestCancelDOTTest_RefusesATestWithAResult(t *testing.T) {
 		common.FieldReason: "Driver was on leave",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, tests.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, string(worker.DOTTestStatusCancelled),
-		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), common.FieldStatus).After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		tests.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		string(worker.DOTTestStatusCancelled),
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			common.FieldStatus,
+		).After,
+	)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, []string{"Driver was on leave"}, tests.cancelled)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 	assert.False(t, tool.Policy().Reversible)
 
 	tests.test.Result = worker.DOTResultNegative
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestRunDOTRandomDraw_PreviewNamesNoOne(t *testing.T) {
@@ -270,9 +285,13 @@ func TestRunDOTRandomDraw_PreviewNamesNoOne(t *testing.T) {
 	tool := newRunDOTRandomDrawTool(draws)
 	params := agenttoolstest.ExecuteParams(map[string]any{paramDrawDay: "2026-08-15"})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, draws.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		draws.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "5 for drug testing and 1 for alcohol")
 	assert.Contains(t, preview.Summary, "decided when it is drawn")
 
@@ -280,7 +299,7 @@ func TestRunDOTRandomDraw_PreviewNamesNoOne(t *testing.T) {
 	require.NotNil(t, draws.drawn)
 	assert.Equal(t, int64(1_786_752_000), draws.drawn.At)
 	assert.Equal(t, permission.OpManage, tool.Policy().Operation)
-	_, reports := tool.(agentports.ToolResultReporter)
+	_, reports := tool.(agenttoolports.ToolResultReporter)
 	assert.False(t, reports, "a round has no record page to link")
 }
 
@@ -305,12 +324,12 @@ func TestUpdateDOTRandomSelection_AnExcuseSaysWhy(t *testing.T) {
 
 	draws := newFakeDrugAlcohol()
 	tool := newUpdateDOTRandomSelectionTool(draws)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			paramDrawEntryID:   draws.entry.ID.String(),
 			paramSelectionMove: "Excused",
 		})))
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			paramDrawEntryID:   draws.entry.ID.String(),
 			paramSelectionMove: "Completed",
@@ -321,9 +340,13 @@ func TestUpdateDOTRandomSelection_AnExcuseSaysWhy(t *testing.T) {
 		paramSelectionMove: "Excused",
 		paramExcuseReason:  "Extended medical leave",
 	})
-	preview := agenttoolstest.PreviewWithoutWrites(t, draws.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		draws.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Excused")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, draws.moved)

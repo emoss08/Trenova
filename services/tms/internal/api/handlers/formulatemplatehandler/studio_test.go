@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -17,66 +17,73 @@ import (
 )
 
 type recordingStudio struct {
-	explained []*agentports.ExplainFormulaRequest
-	described []*agentports.DescribeFormulaInputsRequest
-	suggested []*agentports.SuggestFormulaTestsRequest
-	tested    []*agentports.ExplainFormulaTestRequest
-	notes     []*agentports.DraftFormulaReviewNoteRequest
+	explained []*formulastudioports.ExplainFormulaRequest
+	described []*formulastudioports.DescribeFormulaInputsRequest
+	suggested []*formulastudioports.SuggestFormulaTestsRequest
+	tested    []*formulastudioports.ExplainFormulaTestRequest
+	notes     []*formulastudioports.DraftFormulaReviewNoteRequest
 	actors    []*permissionports.RequestActor
 }
 
 func (s *recordingStudio) ExplainFormula(
 	_ context.Context,
-	req *agentports.ExplainFormulaRequest,
+	req *formulastudioports.ExplainFormulaRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.ExplainFormulaResponse, error) {
+) (*formulastudioports.ExplainFormulaResponse, error) {
 	s.explained = append(s.explained, req)
 	s.actors = append(s.actors, actor)
-	return &agentports.ExplainFormulaResponse{
-		Items: []agentports.FormulaTraceNote{{Index: 0, Says: "It charges by the mile."}},
+	return &formulastudioports.ExplainFormulaResponse{
+		Items: []formulastudioports.FormulaTraceNote{{Index: 0, Says: "It charges by the mile."}},
 	}, nil
 }
 
 func (s *recordingStudio) DescribeInputs(
 	_ context.Context,
-	req *agentports.DescribeFormulaInputsRequest,
+	req *formulastudioports.DescribeFormulaInputsRequest,
 	_ *permissionports.RequestActor,
-) (*agentports.DescribeFormulaInputsResponse, error) {
+) (*formulastudioports.DescribeFormulaInputsResponse, error) {
 	s.described = append(s.described, req)
-	return &agentports.DescribeFormulaInputsResponse{
+	return &formulastudioports.DescribeFormulaInputsResponse{
 		Descriptions: map[string]string{"rate": "What the contract pays per mile"},
 	}, nil
 }
 
 func (s *recordingStudio) SuggestTests(
 	_ context.Context,
-	req *agentports.SuggestFormulaTestsRequest,
+	req *formulastudioports.SuggestFormulaTestsRequest,
 	_ *permissionports.RequestActor,
-) (*agentports.SuggestFormulaTestsResponse, error) {
+) (*formulastudioports.SuggestFormulaTestsResponse, error) {
 	s.suggested = append(s.suggested, req)
-	return &agentports.SuggestFormulaTestsResponse{Tests: []agentports.SuggestedFormulaTest{{
-		Name:   "Minimum reached",
-		Block:  "test \"Minimum reached\" {\n  expect total >= $0\n}",
-		Status: rules.TariffTestPassed,
-	}}}, nil
+	return &formulastudioports.SuggestFormulaTestsResponse{
+		Tests: []formulastudioports.SuggestedFormulaTest{{
+			Name:   "Minimum reached",
+			Block:  "test \"Minimum reached\" {\n  expect total >= $0\n}",
+			Status: rules.TariffTestPassed,
+		}},
+	}, nil
 }
 
 func (s *recordingStudio) ExplainTest(
 	_ context.Context,
-	req *agentports.ExplainFormulaTestRequest,
+	req *formulastudioports.ExplainFormulaTestRequest,
 	_ *permissionports.RequestActor,
-) (*agentports.ExplainFormulaTestResponse, error) {
+) (*formulastudioports.ExplainFormulaTestResponse, error) {
 	s.tested = append(s.tested, req)
-	return &agentports.ExplainFormulaTestResponse{Verdict: agentports.FormulaTestVerdictUnclear}, nil
+	return &formulastudioports.ExplainFormulaTestResponse{
+		Verdict: formulastudioports.FormulaTestVerdictUnclear,
+	}, nil
 }
 
 func (s *recordingStudio) DraftReviewNote(
 	_ context.Context,
-	req *agentports.DraftFormulaReviewNoteRequest,
+	req *formulastudioports.DraftFormulaReviewNoteRequest,
 	_ *permissionports.RequestActor,
-) (*agentports.DraftFormulaReviewNoteResponse, error) {
+) (*formulastudioports.DraftFormulaReviewNoteResponse, error) {
 	s.notes = append(s.notes, req)
-	return &agentports.DraftFormulaReviewNoteResponse{Note: "Raised the rate.", Generated: true}, nil
+	return &formulastudioports.DraftFormulaReviewNoteResponse{
+		Note:      "Raised the rate.",
+		Generated: true,
+	}, nil
 }
 
 func newStudioFixture(t *testing.T, granted map[string]bool, studio *recordingStudio) *fixture {

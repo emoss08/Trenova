@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
@@ -173,9 +173,13 @@ func TestCreateRecurringShipment_ReadsDaysInTheSeriesTimezone(t *testing.T) {
 		paramAutoGenerate:          true,
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, series.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		series.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
 	assert.Equal(t, "0 8 * * 1-5", agenttoolstest.FieldByPath(t, change, ParamCronExpression).After)
@@ -226,7 +230,7 @@ func TestCreateRecurringShipment_RefusesBadArguments(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+			require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 				agenttoolstest.ExecuteParams(raw)))
 		})
 	}
@@ -242,22 +246,37 @@ func TestUpdateRecurringShipment_ChangesOnlyWhatIsSent(t *testing.T) {
 		ParamCronExpression:      "0 6 * * 1-5",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, series.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, "0 6 * * 1-5",
-		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), ParamCronExpression).After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		series.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		"0 6 * * 1-5",
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			ParamCronExpression,
+		).After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, series.updated)
 	assert.Equal(t, "Acme weekday run", series.updated.Name)
 	assert.Equal(t, int64(9), series.updated.Version)
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceRecurringShipment, target.Resource)
 
-	require.ErrorIs(t, tool.(agentports.ToolValidator).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{paramRecurringShipmentID: series.current.ID.String()})),
+	require.ErrorIs(t, tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{paramRecurringShipmentID: series.current.ID.String()},
+		),
+	),
 		common.ErrNothingToChange)
 }
 
@@ -271,17 +290,29 @@ func TestSetRecurringShipmentStatus_PausesAtTheCurrentVersion(t *testing.T) {
 		common.FieldStatus:       "Paused",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, series.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, "Paused", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), common.FieldStatus).After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		series.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		"Paused",
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			common.FieldStatus,
+		).After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, series.status)
 	assert.Equal(t, recurringshipment.StatusPaused, series.status.Status)
 	assert.Equal(t, int64(9), series.status.Version)
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			paramRecurringShipmentID: series.current.ID.String(),
 			common.FieldStatus:       "Stopped",
@@ -298,14 +329,18 @@ func TestGenerateRecurringShipment_ShowsTheCopyAndSkipsAFilledSlot(t *testing.T)
 		paramOccurrenceAt:        "2030-03-17T17:46:40Z",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, series.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		series.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	created := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
 	assert.Equal(t, "BOL-2030", agenttoolstest.FieldByPath(t, created, common.FieldBol).After)
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, series.generate)
 	require.NotNil(t, series.generate.OccurrenceAt)
@@ -316,7 +351,7 @@ func TestGenerateRecurringShipment_ShowsTheCopyAndSkipsAFilledSlot(t *testing.T)
 	assert.Equal(t, permission.OpDuplicate, tool.Policy().Operation)
 
 	series.generated = true
-	filled, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	filled, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Empty(t, filled.Changes)
 	assert.Contains(t, filled.Summary, "already has its shipment")

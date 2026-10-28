@@ -11,7 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
@@ -99,7 +102,10 @@ type planReader interface {
 }
 
 type runReader interface {
-	GetByID(ctx context.Context, req agentports.GetAgentRunByIDRequest) (*agent.AgentRun, error)
+	GetByID(
+		ctx context.Context,
+		req agentruntimeports.GetAgentRunByIDRequest,
+	) (*agent.AgentRun, error)
 }
 
 type exceptionReader interface {
@@ -120,7 +126,7 @@ type memoryStore interface {
 	Create(ctx context.Context, entity *agent.Memory) (*agent.Memory, error)
 	ListSuggestionContext(
 		ctx context.Context,
-		req agentports.ListAgentMemorySuggestionContextRequest,
+		req agentmemoryports.ListAgentMemorySuggestionContextRequest,
 	) ([]*agent.Memory, error)
 }
 
@@ -146,15 +152,15 @@ type Params struct {
 	Watchtower    watchtowerports.WatchtowerRepository
 	Proposals     agentports.AgentProposalRepository
 	Plans         agentports.AgentPlanRepository
-	Runs          agentports.AgentRunRepository
+	Runs          agentruntimeports.AgentRunRepository
 	Exceptions    agentports.AgentExceptionRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
-	Memories      agentports.AgentMemoryRepository
+	Memories      agentmemoryports.AgentMemoryRepository
 	Retention     tenantports.DataRetentionRepository
 	Organizations tenantports.OrganizationRepository
 	Permissions   permissionports.PermissionEngine
-	Tools         agentports.AgentToolRegistry      `optional:"true"`
-	QueryTools    agentports.AgentQueryToolRegistry `optional:"true"`
+	Tools         agenttoolports.AgentToolRegistry      `optional:"true"`
+	QueryTools    agenttoolports.AgentQueryToolRegistry `optional:"true"`
 }
 
 type Service struct {

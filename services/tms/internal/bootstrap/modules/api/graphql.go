@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"go.uber.org/fx"
 )
 
@@ -128,7 +128,7 @@ var graphQLServerModule = fx.Module("api-graphql-server", fx.Provide(
 // without the full resolver root.
 var agentReadModule = fx.Module("api-graphql-agent-read", fx.Provide(
 	agentread.NewSchema,
-	fx.Annotate(agentread.New, fx.As(new(agentports.GraphQLReader))),
+	fx.Annotate(agentread.New, fx.As(new(graphqlreadports.GraphQLReader))),
 ))
 
 var graphQLHandlerModule = fx.Module("api-graphql-handler", fx.Provide(

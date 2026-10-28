@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -71,7 +72,11 @@ func (f *fakeRenderer) RenderMessage(
 ) (*documenttemplateports.RenderedMessage, error) {
 	f.requests = append(f.requests, req)
 
-	return &documenttemplateports.RenderedMessage{Subject: "reminder", HTML: "<p>x</p>", Text: "x"}, nil
+	return &documenttemplateports.RenderedMessage{
+		Subject: "reminder",
+		HTML:    "<p>x</p>",
+		Text:    "x",
+	}, nil
 }
 
 type fakeShadow struct{ shadow bool }
@@ -108,7 +113,7 @@ type fakeRuns struct{ runs map[pulid.ID]*agent.AgentRun }
 
 func (f fakeRuns) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return f.runs[req.ID], nil
 }

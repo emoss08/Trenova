@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -18,11 +18,11 @@ type selfScopedTool struct {
 	*recordingTool
 }
 
-func (t selfScopedTool) Policy() agentports.ToolPolicy {
+func (t selfScopedTool) Policy() agenttoolports.ToolPolicy {
 	return selfScopedPolicy(t.recordingTool.Policy())
 }
 
-func selfScopedPolicy(policy agentports.ToolPolicy) agentports.ToolPolicy {
+func selfScopedPolicy(policy agenttoolports.ToolPolicy) agenttoolports.ToolPolicy {
 	policy.Scope = agent.ToolScopeSelf
 	policy.Egress = []agent.EgressClass{agent.EgressPersonal}
 	policy.MaxTier = agent.TierAutoExecute
@@ -69,17 +69,22 @@ type ownedSchemaTool struct {
 	validated map[string]any
 }
 
-func (t *ownedSchemaTool) Policy() agentports.ToolPolicy {
+func (t *ownedSchemaTool) Policy() agenttoolports.ToolPolicy {
 	return selfScopedPolicy(t.schemaTool.Policy())
 }
 
-func (t *ownedSchemaTool) Validate(_ context.Context, params agentports.ToolExecuteParams) error {
+func (t *ownedSchemaTool) Validate(
+	_ context.Context,
+	params agenttoolports.ToolExecuteParams,
+) error {
 	t.validated = params.Params
 
 	return nil
 }
 
-func ownedProposal(t *testing.T) (*ownedSchemaTool, *agent.AgentProposal, *permissionports.RequestActor) {
+func ownedProposal(
+	t *testing.T,
+) (*ownedSchemaTool, *agent.AgentProposal, *permissionports.RequestActor) {
 	t.Helper()
 
 	tool := &ownedSchemaTool{schemaTool: &schemaTool{}}
@@ -88,7 +93,7 @@ func ownedProposal(t *testing.T) (*ownedSchemaTool, *agent.AgentProposal, *permi
 		"message":  "Call in",
 	})
 	actor := testActor(proposal.OrganizationID, proposal.BusinessUnitID)
-	proposal.ToolParams[agentports.SelfScopeOwnerParam] = actor.UserID.String()
+	proposal.ToolParams[agenttoolports.SelfScopeOwnerParam] = actor.UserID.String()
 
 	return tool, proposal, actor
 }
@@ -99,7 +104,7 @@ func ownerFieldRefused(t *testing.T, err error) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, agentports.SelfScopeOwnerParam, multiErr.Errors[0].Field)
+	assert.Equal(t, agenttoolports.SelfScopeOwnerParam, multiErr.Errors[0].Field)
 	assert.Equal(t, errortypes.ErrForbidden, multiErr.Errors[0].Code)
 }
 
@@ -120,10 +125,10 @@ func TestExecute_ApprovesWithChangesAProposalForThePersonsOwnRecords(t *testing.
 	))
 
 	assert.Equal(t, map[string]any{
-		"workerId":                     "wrk_1",
-		"message":                      "Call in",
-		"priority":                     "high",
-		agentports.SelfScopeOwnerParam: actor.UserID.String(),
+		"workerId":                         "wrk_1",
+		"message":                          "Call in",
+		"priority":                         "high",
+		agenttoolports.SelfScopeOwnerParam: actor.UserID.String(),
 	}, tool.ran)
 	require.Len(t, repo.recorded, 1)
 	assert.Equal(t, agent.ProposalStatusExecuted, repo.recorded[0].status)
@@ -143,11 +148,11 @@ func TestCheckModifications_ChecksAProposalForThePersonsOwnRecords(t *testing.T)
 	)
 
 	require.NoError(t, err)
-	assert.Equal(t, actor.UserID.String(), params[agentports.SelfScopeOwnerParam])
+	assert.Equal(t, actor.UserID.String(), params[agenttoolports.SelfScopeOwnerParam])
 	assert.Equal(
 		t,
 		actor.UserID.String(),
-		tool.validated[agentports.SelfScopeOwnerParam],
+		tool.validated[agenttoolports.SelfScopeOwnerParam],
 		"the tool checks the owner it will run for",
 	)
 }
@@ -163,15 +168,15 @@ func TestExecute_RefusesAChangeToWhoseRecordsItIsFor(t *testing.T) {
 	someoneElse := pulid.MustNew("usr_").String()
 
 	err := executor.Execute(t.Context(), proposal, map[string]any{
-		"priority":                     "high",
-		agentports.SelfScopeOwnerParam: someoneElse,
+		"priority":                         "high",
+		agenttoolports.SelfScopeOwnerParam: someoneElse,
 	}, actor)
 
 	ownerFieldRefused(t, err)
 	assert.Nil(t, tool.ran, "the tool did not run")
 	require.Len(t, repo.recorded, 1)
 	assert.Equal(t, agent.ProposalStatusExecutionFailed, repo.recorded[0].status)
-	assert.Equal(t, actor.UserID.String(), proposal.ToolParams[agentports.SelfScopeOwnerParam])
+	assert.Equal(t, actor.UserID.String(), proposal.ToolParams[agenttoolports.SelfScopeOwnerParam])
 }
 
 func TestCheckModifications_RefusesAChangeToWhoseRecordsItIsFor(t *testing.T) {
@@ -181,7 +186,7 @@ func TestCheckModifications_RefusesAChangeToWhoseRecordsItIsFor(t *testing.T) {
 	executor := newExecutor(tool, &fakeProposalRepo{}, &fakePermissions{allowed: false})
 
 	_, err := executor.CheckModifications(t.Context(), proposal, map[string]any{
-		agentports.SelfScopeOwnerParam: pulid.MustNew("usr_").String(),
+		agenttoolports.SelfScopeOwnerParam: pulid.MustNew("usr_").String(),
 	}, actor)
 
 	ownerFieldRefused(t, err)
@@ -208,14 +213,14 @@ func TestMergeParams_KeepsTheStoredOwner(t *testing.T) {
 
 	stored := pulid.MustNew("usr_").String()
 	merged := MergeParams(
-		map[string]any{"message": "Call in", agentports.SelfScopeOwnerParam: stored},
-		map[string]any{agentports.SelfScopeOwnerParam: pulid.MustNew("usr_").String()},
+		map[string]any{"message": "Call in", agenttoolports.SelfScopeOwnerParam: stored},
+		map[string]any{agenttoolports.SelfScopeOwnerParam: pulid.MustNew("usr_").String()},
 	)
-	assert.Equal(t, stored, merged[agentports.SelfScopeOwnerParam])
+	assert.Equal(t, stored, merged[agenttoolports.SelfScopeOwnerParam])
 
 	unowned := MergeParams(
 		map[string]any{"message": "Call in"},
-		map[string]any{agentports.SelfScopeOwnerParam: stored},
+		map[string]any{agenttoolports.SelfScopeOwnerParam: stored},
 	)
-	assert.NotContains(t, unowned, agentports.SelfScopeOwnerParam)
+	assert.NotContains(t, unowned, agenttoolports.SelfScopeOwnerParam)
 }

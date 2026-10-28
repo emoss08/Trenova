@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -77,7 +77,7 @@ type Reader struct {
 	tracer      trace.Tracer
 }
 
-var _ agentports.GraphQLReader = (*Reader)(nil)
+var _ graphqlreadports.GraphQLReader = (*Reader)(nil)
 
 func New(p Params) *Reader { //nolint:gocritic // fx params are passed by value
 	exec := executor.New(gqlext.NewCostLimitedSchema(p.Schema.ExecutableSchema))
@@ -105,11 +105,11 @@ func New(p Params) *Reader { //nolint:gocritic // fx params are passed by value
 
 func (r *Reader) Read(
 	ctx context.Context,
-	req *agentports.GraphQLReadRequest,
-) (*agentports.GraphQLReadResult, error) {
+	req *graphqlreadports.GraphQLReadRequest,
+) (*graphqlreadports.GraphQLReadResult, error) {
 	op, ok := r.operations[req.Operation]
 	if !ok {
-		return nil, fmt.Errorf("%w: %s", agentports.ErrUnknownReadOperation, req.Operation)
+		return nil, fmt.Errorf("%w: %s", graphqlreadports.ErrUnknownReadOperation, req.Operation)
 	}
 	if readscope.Current(ctx) == nil {
 		return nil, ErrNoReadScope
@@ -265,8 +265,8 @@ func authContextFor(actor *permissionports.RequestActor) (*authctx.AuthContext, 
 func decode(
 	response *graphql.Response,
 	ceiling *gqlctx.FieldCeiling,
-) (*agentports.GraphQLReadResult, error) {
-	result := &agentports.GraphQLReadResult{Withheld: ceiling.Withheld()}
+) (*graphqlreadports.GraphQLReadResult, error) {
+	result := &graphqlreadports.GraphQLReadResult{Withheld: ceiling.Withheld()}
 	if response == nil {
 		return result, nil
 	}
@@ -283,14 +283,14 @@ func decode(
 	return result, nil
 }
 
-func readErrors(list gqlerror.List) []agentports.GraphQLReadError {
+func readErrors(list gqlerror.List) []graphqlreadports.GraphQLReadError {
 	if len(list) == 0 {
 		return nil
 	}
-	out := make([]agentports.GraphQLReadError, 0, len(list))
+	out := make([]graphqlreadports.GraphQLReadError, 0, len(list))
 	for _, gqlErr := range list {
 		code, _ := gqlErr.Extensions["code"].(string)
-		out = append(out, agentports.GraphQLReadError{
+		out = append(out, graphqlreadports.GraphQLReadError{
 			Message: gqlErr.Message,
 			Path:    gqlErr.Path.String(),
 			Code:    code,
@@ -300,7 +300,7 @@ func readErrors(list gqlerror.List) []agentports.GraphQLReadError {
 	return out
 }
 
-func errorCodes(result *agentports.GraphQLReadResult) []string {
+func errorCodes(result *graphqlreadports.GraphQLReadResult) []string {
 	out := make([]string, 0, len(result.Errors))
 	for _, readErr := range result.Errors {
 		out = append(out, readErr.Code)

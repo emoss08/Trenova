@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
@@ -66,7 +67,7 @@ type SubmissionParams struct {
 	Requester        factoringports.EvaluationRequester   `optional:"true"`
 	Events           agentports.AgentEventPublisher       `optional:"true"`
 	Audit            auditports.AuditService
-	Realtime         agentports.RealtimeService `optional:"true"`
+	Realtime         realtimeports.RealtimeService `optional:"true"`
 	Logger           *zap.Logger
 }
 

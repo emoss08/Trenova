@@ -3,22 +3,23 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type boardObserver struct {
-	boards []agentports.BoardRequest
-	shown  *agentports.ShownArtifact
+	boards []agentruntimeports.BoardRequest
+	shown  *agentruntimeports.ShownArtifact
 	err    error
 }
 
 func (o *boardObserver) observe(
-	observation agentports.ToolObservation,
-) (*agentports.ShownArtifact, error) {
-	request, ok := observation.Data.(agentports.BoardRequest)
+	observation agentruntimeports.ToolObservation,
+) (*agentruntimeports.ShownArtifact, error) {
+	request, ok := observation.Data.(agentruntimeports.BoardRequest)
 	if !ok {
 		return nil, nil
 	}
@@ -48,7 +49,7 @@ func shipmentBoard(ids ...string) map[string]any {
 	}
 }
 
-func listedShipments(ids ...string) agentports.AgentQueryTool {
+func listedShipments(ids ...string) agenttoolports.AgentQueryTool {
 	items := make([]any, 0, len(ids))
 	for _, id := range ids {
 		items = append(items, map[string]any{"id": id, "proNumber": "S2610-" + id[len(id)-4:]})
@@ -71,12 +72,12 @@ func TestRun_ShowsABoardOfRecordsTheConversationRead(t *testing.T) {
 
 	first, second := pulid.MustNew("shp_").String(), pulid.MustNew("shp_").String()
 	board := pulid.MustNew("art_")
-	observer := &boardObserver{shown: &agentports.ShownArtifact{
+	observer := &boardObserver{shown: &agentruntimeports.ShownArtifact{
 		ID: board, Kind: "board", Title: "Late shipments on the Dallas lanes",
 		Brief: "# Late shipments on the Dallas lanes\n\n| Shipment | Detail | Status | Behind |",
 	}}
 	result, _ := runWithObserver(t, observer.observe,
-		[]agentports.AgentQueryTool{listedShipments(first, second)},
+		[]agenttoolports.AgentQueryTool{listedShipments(first, second)},
 		toolTurn("shipment_list", map[string]any{"query": "late"}),
 		toolTurn(showBoardName, shipmentBoard(first, second)),
 		textTurn("The board is beside the conversation."),
@@ -101,7 +102,7 @@ func TestRun_RefusesABoardNamingARecordNoToolReturned(t *testing.T) {
 	read, invented := pulid.MustNew("shp_").String(), pulid.MustNew("shp_").String()
 	observer := &boardObserver{}
 	result, _ := runWithObserver(t, observer.observe,
-		[]agentports.AgentQueryTool{listedShipments(read)},
+		[]agenttoolports.AgentQueryTool{listedShipments(read)},
 		toolTurn("shipment_list", map[string]any{"query": "late"}),
 		toolTurn(showBoardName, shipmentBoard(read, invented)),
 		textTurn("Sorry."),
@@ -122,7 +123,7 @@ func TestRun_RefusesABoardWhoseWordsStateFigures(t *testing.T) {
 	args["verdict"] = "The two cost $48,210.55 in [lost revenue][1]."
 	observer := &boardObserver{}
 	result, _ := runWithObserver(t, observer.observe,
-		[]agentports.AgentQueryTool{listedShipments(id)},
+		[]agenttoolports.AgentQueryTool{listedShipments(id)},
 		toolTurn("shipment_list", map[string]any{"query": "late"}),
 		toolTurn(showBoardName, args),
 		textTurn("Sorry."),
@@ -152,11 +153,11 @@ func TestRun_AFixableBoardIsSentAgain(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("shp_").String()
-	observer := &boardObserver{err: &agentports.PublishMistake{
+	observer := &boardObserver{err: &agentruntimeports.PublishMistake{
 		Reason: "the person may not read shipments, so leave the blocks that name them out",
 	}}
 	result, _ := runWithObserver(t, observer.observe,
-		[]agentports.AgentQueryTool{listedShipments(id)},
+		[]agenttoolports.AgentQueryTool{listedShipments(id)},
 		toolTurn("shipment_list", map[string]any{"query": "late"}),
 		toolTurn(showBoardName, shipmentBoard(id)),
 		textTurn("Sorry."),
@@ -178,7 +179,7 @@ func TestBoardStepOutcome_ReadsTheBoardItRevises(t *testing.T) {
 	outcome := boardStepOutcome(args)
 
 	require.False(t, outcome.failed, outcome.content)
-	request, ok := outcome.data.(agentports.BoardRequest)
+	request, ok := outcome.data.(agentruntimeports.BoardRequest)
 	require.True(t, ok)
 	assert.Equal(t, revises, request.ArtifactID)
 	assert.True(t, outcome.publishes)
@@ -187,5 +188,5 @@ func TestBoardStepOutcome_ReadsTheBoardItRevises(t *testing.T) {
 func TestShownArtifact_ABoardMustBeLinked(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, (&agentports.ShownArtifact{Kind: "board"}).MustBeLinked())
+	assert.True(t, (&agentruntimeports.ShownArtifact{Kind: "board"}).MustBeLinked())
 }

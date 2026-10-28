@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -1757,7 +1758,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentports.AgentMemoryUsage)
+					obj := o.(*agentmemoryports.AgentMemoryUsage)
 					return obj.ActiveCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1767,7 +1768,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentports.AgentMemoryUsage)
+					obj := o.(*agentmemoryports.AgentMemoryUsage)
 					return obj.ActiveSoftCap, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1777,7 +1778,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentports.AgentMemoryUsage)
+					obj := o.(*agentmemoryports.AgentMemoryUsage)
 					return obj.WarnAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -4328,7 +4329,7 @@ type resolverQuery interface {
 	AgentEvaluation(ctx context.Context, id string) (*agent.Evaluation, error)
 	AgentMemory(ctx context.Context, id string) (*agent.Memory, error)
 	AgentReflections(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentReflectionConnection, error)
-	AgentMemoryUsage(ctx context.Context) (*agentports.AgentMemoryUsage, error)
+	AgentMemoryUsage(ctx context.Context) (*agentmemoryports.AgentMemoryUsage, error)
 	AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error)
 	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
 	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
@@ -5684,7 +5685,7 @@ func marshalNAgentMemoryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return res
 }
 
-func marshalNAgentMemoryUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAgentMemoryUsage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentports.AgentMemoryUsage) graphql.Marshaler {
+func marshalNAgentMemoryUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAgentMemoryUsage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentmemoryports.AgentMemoryUsage) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

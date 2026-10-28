@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
@@ -36,9 +36,13 @@ func TestEscalateDetention_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"reason":       "the notice window closed",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &stub.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&stub.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	require.Len(t, preview.Changes, 2)
 	update := agenttoolstest.PreviewChange(t, preview, 0)
@@ -69,12 +73,16 @@ func TestEscalateDetention_PreviewWarnsWhenItWouldBeRefused(t *testing.T) {
 	stub := &stubEscalator{occurrence: occurrence}
 	tool := NewEscalateDetentionTool(stub).(*EscalateDetentionTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &stub.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.DeskParams(map[string]any{
-			"occurrenceId": occurrence.ID.String(),
-			"reason":       "look at it",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&stub.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.DeskParams(map[string]any{
+				"occurrenceId": occurrence.ID.String(),
+				"reason":       "look at it",
+			}))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
@@ -98,9 +106,13 @@ func TestPlaceWorkerDispatchHold_PreviewReadsTheDriver(t *testing.T) {
 		"reason":   "medical card lapsed on the 3rd",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &stub.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&stub.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceWorker, change.Resource)
@@ -110,7 +122,13 @@ func TestPlaceWorkerDispatchHold_PreviewReadsTheDriver(t *testing.T) {
 	assert.Contains(t, preview.Summary, "Ana Reyes")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	agenttoolstest.RequireUpdateParity(t, change, &before, driver, toolpreview.Only("canBeAssigned"))
+	agenttoolstest.RequireUpdateParity(
+		t,
+		change,
+		&before,
+		driver,
+		toolpreview.Only("canBeAssigned"),
+	)
 }
 
 func TestPlaceWorkerDispatchHold_PreviewWarnsForADriverAlreadyHeld(t *testing.T) {
@@ -120,12 +138,16 @@ func TestPlaceWorkerDispatchHold_PreviewWarnsForADriverAlreadyHeld(t *testing.T)
 	stub := &stubWorkerHolder{held: driver}
 	tool := NewPlaceWorkerDispatchHoldTool(stub).(*PlaceWorkerDispatchHoldTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &stub.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.DeskParams(map[string]any{
-			"workerId": driver.ID.String(),
-			"reason":   "medical card lapsed",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&stub.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.DeskParams(map[string]any{
+				"workerId": driver.ID.String(),
+				"reason":   "medical card lapsed",
+			}))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
@@ -146,9 +168,13 @@ func TestResolveCarrierIntelEvent_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"note":       "authority revoked; not to be tendered",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &stub.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&stub.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "Operating authority revoked", change.Label)
@@ -173,9 +199,13 @@ func TestAcknowledgeCarrierIntelEvent_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"note":    "new mailing address, nothing to do",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &stub.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&stub.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "Acknowledged", agenttoolstest.FieldByPath(t, change, "status").After)
@@ -188,7 +218,7 @@ func TestAcknowledgeCarrierIntelEvent_PreviewMatchesWhatIsSaved(t *testing.T) {
 func TestCarrierIntelEventTools_PreviewWarnsOnAClosedFinding(t *testing.T) {
 	t.Parallel()
 
-	for name, build := range map[string]func(carrierIntelActor) agentports.AgentTool{
+	for name, build := range map[string]func(carrierIntelActor) agenttoolports.AgentTool{
 		"acknowledge": NewAcknowledgeCarrierIntelEventTool,
 		"resolve":     NewResolveCarrierIntelEventTool,
 	} {
@@ -198,15 +228,19 @@ func TestCarrierIntelEventTools_PreviewWarnsOnAClosedFinding(t *testing.T) {
 			event := openFinding()
 			event.Status = carrierintel.EventStatusResolved
 			stub := &stubCarrierIntel{event: event}
-			tool := build(stub).(agentports.ToolPreviewer)
+			tool := build(stub).(agenttoolports.ToolPreviewer)
 
-			preview := agenttoolstest.PreviewWithoutWrites(t, &stub.guard, func() (*agent.ToolPreview, error) {
-				return tool.Preview(t.Context(), agenttoolstest.DeskParams(map[string]any{
-					"eventId":    event.ID.String(),
-					"resolution": string(carrierintel.EventResolutionCarrierUpdated),
-					"note":       "already done",
-				}))
-			})
+			preview := agenttoolstest.PreviewWithoutWrites(
+				t,
+				&stub.guard,
+				func() (*agent.ToolPreview, error) {
+					return tool.Preview(t.Context(), agenttoolstest.DeskParams(map[string]any{
+						"eventId":    event.ID.String(),
+						"resolution": string(carrierintel.EventResolutionCarrierUpdated),
+						"note":       "already done",
+					}))
+				},
+			)
 
 			assert.Empty(t, preview.Changes)
 			agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)

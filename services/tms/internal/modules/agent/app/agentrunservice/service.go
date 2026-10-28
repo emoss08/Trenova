@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
@@ -48,7 +49,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         agentports.AgentRunRepository
+	Repo         agentruntimeports.AgentRunRepository
 	Definitions  agentdefinitionports.AgentDefinitionRepository
 	Workflows    kernelports.WorkflowStarter
 	Validator    *Validator
@@ -60,7 +61,7 @@ type Params struct {
 
 type Service struct {
 	l           *zap.Logger
-	repo        agentports.AgentRunRepository
+	repo        agentruntimeports.AgentRunRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
 	validator   *Validator
 	workflows   kernelports.WorkflowStarter
@@ -313,14 +314,14 @@ func (s *Service) StartInline(
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *agentports.ListAgentRunConnectionRequest,
+	req *agentruntimeports.ListAgentRunConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentRun], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return s.repo.GetByID(ctx, req)
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
@@ -55,7 +55,7 @@ import (
 	"go.uber.org/fx"
 )
 
-const MaxIDsPerResource = agentports.MaxRecordLabelsPerResource
+const MaxIDsPerResource = agentruntimeports.MaxRecordLabelsPerResource
 
 type Params struct {
 	fx.In
@@ -67,7 +67,7 @@ type Labeler struct {
 	db *postgres.Connection
 }
 
-func New(p Params) agentports.RecordLabeler {
+func New(p Params) agentruntimeports.RecordLabeler {
 	return &Labeler{db: p.DB}
 }
 
@@ -337,8 +337,8 @@ func (l *Labeler) Labels(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	refs map[permission.Resource][]pulid.ID,
-) (agentports.RecordLabels, error) {
-	labels := make(agentports.RecordLabels, len(refs))
+) (agentruntimeports.RecordLabels, error) {
+	labels := make(agentruntimeports.RecordLabels, len(refs))
 
 	resources := make([]permission.Resource, 0, len(refs))
 	for resource := range refs {

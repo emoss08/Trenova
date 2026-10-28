@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/stretchr/testify/assert"
@@ -39,11 +39,11 @@ type cannedList struct {
 func (c *cannedList) Name() string                { return "list_" + c.resource.String() }
 func (c *cannedList) Description() string         { return "" }
 func (c *cannedList) ParamSchema() map[string]any { return map[string]any{} }
-func (c *cannedList) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{Resource: c.resource}
+func (c *cannedList) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{Resource: c.resource}
 }
 
-func (c *cannedList) Query(_ context.Context, params *agentports.QueryToolParams) (any, error) {
+func (c *cannedList) Query(_ context.Context, params *agenttoolports.QueryToolParams) (any, error) {
 	c.mu.Lock()
 	c.asked = append(c.asked, params.Params)
 	c.mu.Unlock()
@@ -59,16 +59,35 @@ func recordsTool(permissions permissionports.PermissionEngine) (
 	*cannedList,
 	*cannedList,
 ) {
-	customers := &cannedList{resource: permission.ResourceCustomer, answers: map[string][]map[string]any{
-		"ACME": {{"id": "cus_1", "code": "ACME", "name": "Acme Manufacturing", "billingProfile": "x"}},
-	}}
-	locations := &cannedList{resource: permission.ResourceLocation, answers: map[string][]map[string]any{
-		"1200 E 7th St": {{"id": "loc_1", "code": "TERM-LA", "name": "Los Angeles Terminal"}},
-	}}
-	commodities := &cannedList{resource: permission.ResourceCommodity, answers: map[string][]map[string]any{}}
-	categories := &cannedList{resource: permission.ResourceLocationCategory, answers: map[string][]map[string]any{
-		"": {{"id": "lc_1", "name": "Central Warehouse", "description": "Main storage"}},
-	}}
+	customers := &cannedList{
+		resource: permission.ResourceCustomer,
+		answers: map[string][]map[string]any{
+			"ACME": {
+				{
+					"id":             "cus_1",
+					"code":           "ACME",
+					"name":           "Acme Manufacturing",
+					"billingProfile": "x",
+				},
+			},
+		},
+	}
+	locations := &cannedList{
+		resource: permission.ResourceLocation,
+		answers: map[string][]map[string]any{
+			"1200 E 7th St": {{"id": "loc_1", "code": "TERM-LA", "name": "Los Angeles Terminal"}},
+		},
+	}
+	commodities := &cannedList{
+		resource: permission.ResourceCommodity,
+		answers:  map[string][]map[string]any{},
+	}
+	categories := &cannedList{
+		resource: permission.ResourceLocationCategory,
+		answers: map[string][]map[string]any{
+			"": {{"id": "lc_1", "name": "Central Warehouse", "description": "Main storage"}},
+		},
+	}
 
 	return &findShipmentRecordsTool{
 		customers:   customers,
@@ -108,7 +127,11 @@ func TestFindShipmentRecords_MatchesEverythingTheLoadNamesInOneCall(t *testing.T
 	assert.Equal(t, "ACME", customers.asked[0]["query"], "a code is the surest match")
 
 	require.Len(t, records.Locations, 2)
-	assert.True(t, records.Locations[0].Found, "a place is found by its street when its name misses")
+	assert.True(
+		t,
+		records.Locations[0].Found,
+		"a place is found by its street when its name misses",
+	)
 	assert.Len(t, locations.asked, 3)
 	assert.False(t, records.Locations[1].Found)
 	assert.Equal(t, "Summit Sports Boise, Boise ID", records.Locations[1].Asked)

@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower/watchtowerdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem/bankreceiptworkitemdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
@@ -70,7 +70,7 @@ type Reader struct {
 	db *postgres.Connection
 }
 
-func New(p Params) agentports.RecordVersionReader {
+func New(p Params) agenttoolports.RecordVersionReader {
 	return &Reader{db: p.DB}
 }
 
@@ -278,11 +278,11 @@ var lookups = map[permission.Resource]lookup{
 		t := customerpaymentdb.Payments
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
-	agentports.RecordInvoiceAdjustment: by(func(id pulid.ID) keel.Projection {
+	agenttoolports.RecordInvoiceAdjustment: by(func(id pulid.ID) keel.Projection {
 		t := invoiceadjustmentdb.InvoiceAdjustments
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
-	agentports.RecordCreditMemoApplication: by(func(id pulid.ID) keel.Projection {
+	agenttoolports.RecordCreditMemoApplication: by(func(id pulid.ID) keel.Projection {
 		t := customerpaymentdb.CreditMemoApplications
 		return t.Pick(t.UpdatedAt).Where(t.ID.Eq(id))
 	}),
@@ -458,7 +458,7 @@ var lookups = map[permission.Resource]lookup{
 func (r *Reader) Version(
 	ctx context.Context,
 	_ pagination.TenantInfo,
-	target agentports.ToolTarget,
+	target agenttoolports.ToolTarget,
 ) (int64, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
 		entry, ok := lookups[target.Resource]
@@ -466,7 +466,11 @@ func (r *Reader) Version(
 			entry, ok = entry.kinds[target.ID.Prefix()]
 		}
 		if !ok {
-			return 0, fmt.Errorf("%w: %s", agentports.ErrRecordVersionUnsupported, target.Resource)
+			return 0, fmt.Errorf(
+				"%w: %s",
+				agenttoolports.ErrRecordVersionUnsupported,
+				target.Resource,
+			)
 		}
 
 		version, err := keel.IntoOne[int64](ctx, r.db.Keel(ctx), entry.read(target.ID))

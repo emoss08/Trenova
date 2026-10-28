@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
@@ -187,7 +187,7 @@ func chargeSpec(name, description, rationale string, properties map[string]any,
 	}
 }
 
-func NewAddOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
+func NewAddOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(chargeSpec(
 		"order_add_charge",
 		"Add an order-level charge, one billed once for the whole order rather than on a "+
@@ -211,7 +211,7 @@ func NewAddOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 		},
 		common.ParamOrderID, common.FieldDescription, common.ParamAmount,
 	), common.ReceivablePlan[*orderservice.AddChargeRequest, *orderservice.ChargePlan]{
-		Request: func(params *agentports.ToolExecuteParams) (*orderservice.AddChargeRequest, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*orderservice.AddChargeRequest, error) {
 			orderID, err := common.RequirePulid(params.Params, common.ParamOrderID)
 			if err != nil {
 				return nil, err
@@ -247,7 +247,7 @@ func NewAddOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *orderservice.AddChargeRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*orderservice.ChargePlan, error) {
 			return charges.PlanAddCharge(ctx, req)
 		},
@@ -260,7 +260,7 @@ func NewAddOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *orderservice.AddChargeRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := charges.AddChargeWithAllocations(ctx, req, params.Actor)
 			if err != nil {
@@ -279,7 +279,7 @@ type chargeRef struct {
 	params   map[string]any
 }
 
-func readChargeRef(params *agentports.ToolExecuteParams) (*chargeRef, error) {
+func readChargeRef(params *agenttoolports.ToolExecuteParams) (*chargeRef, error) {
 	orderID, err := common.RequirePulid(params.Params, common.ParamOrderID)
 	if err != nil {
 		return nil, err
@@ -382,7 +382,7 @@ func (r *chargeRef) allocationRequest(
 	}, nil
 }
 
-func NewUpdateOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
+func NewUpdateOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentTool {
 	spec := chargeSpec(
 		"order_update_charge",
 		"Change an order charge's description, amount or payer split. Send only what "+
@@ -409,7 +409,7 @@ func NewUpdateOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		spec,
 		common.ReceivablePlan[*chargeRef, *orderservice.ChargePlan]{
-			Request: func(params *agentports.ToolExecuteParams) (*chargeRef, error) {
+			Request: func(params *agenttoolports.ToolExecuteParams) (*chargeRef, error) {
 				ref, err := readChargeRef(params)
 				if err != nil {
 					return nil, err
@@ -428,7 +428,7 @@ func NewUpdateOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				ref *chargeRef,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*orderservice.ChargePlan, error) {
 				req, err := ref.updateRequest(ctx, charges)
 				if err != nil {
@@ -444,7 +444,7 @@ func NewUpdateOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				ref *chargeRef,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				req, err := ref.updateRequest(ctx, charges)
 				if err != nil {
@@ -461,7 +461,7 @@ func NewUpdateOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 	)
 }
 
-func NewSetOrderChargeAllocationsTool(charges orderChargeKeeper) agentports.AgentTool {
+func NewSetOrderChargeAllocationsTool(charges orderChargeKeeper) agenttoolports.AgentTool {
 	spec := chargeSpec(
 		"order_set_charge_allocations",
 		"Replace how one order charge is split among payers without touching the charge "+
@@ -481,7 +481,7 @@ func NewSetOrderChargeAllocationsTool(charges orderChargeKeeper) agentports.Agen
 	return common.NewReportingReceivableTool(
 		spec,
 		common.ReceivablePlan[*chargeRef, *orderservice.ChargePlan]{
-			Request: func(params *agentports.ToolExecuteParams) (*chargeRef, error) {
+			Request: func(params *agenttoolports.ToolExecuteParams) (*chargeRef, error) {
 				ref, err := readChargeRef(params)
 				if err != nil {
 					return nil, err
@@ -499,7 +499,7 @@ func NewSetOrderChargeAllocationsTool(charges orderChargeKeeper) agentports.Agen
 			Plan: func(
 				ctx context.Context,
 				ref *chargeRef,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*orderservice.ChargePlan, error) {
 				req, err := ref.allocationRequest(ctx, charges)
 				if err != nil {
@@ -515,7 +515,7 @@ func NewSetOrderChargeAllocationsTool(charges orderChargeKeeper) agentports.Agen
 			Run: func(
 				ctx context.Context,
 				ref *chargeRef,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				req, err := ref.allocationRequest(ctx, charges)
 				if err != nil {
@@ -532,7 +532,7 @@ func NewSetOrderChargeAllocationsTool(charges orderChargeKeeper) agentports.Agen
 	)
 }
 
-func NewRemoveOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
+func NewRemoveOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentTool {
 	spec := chargeSpec(
 		"order_remove_charge",
 		"Take a charge off an order before it is invoiced. An invoiced charge stays; "+
@@ -554,7 +554,7 @@ func NewRemoveOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				ref *chargeRef,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*orderservice.ChargePlan, error) {
 				return charges.PlanRemoveCharge(ctx, ref.tenant, ref.orderID, ref.chargeID)
 			},
@@ -565,7 +565,7 @@ func NewRemoveOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				ref *chargeRef,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				updated, err := charges.RemoveCharge(ctx, ref.tenant, ref.orderID, ref.chargeID,
 					params.Actor)

@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -28,13 +28,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func boundsOf(t *testing.T, tool agentports.AgentTool) func(
+func boundsOf(t *testing.T, tool agenttoolports.AgentTool) func(
 	context.Context,
-	agentports.ToolExecuteParams,
-) agentports.MoneyBound {
+	agenttoolports.ToolExecuteParams,
+) agenttoolports.MoneyBound {
 	t.Helper()
 
-	policy, ok := agentports.PolicyOf(tool)
+	policy, ok := agenttoolports.PolicyOf(tool)
 	require.True(t, ok)
 	require.True(t, policy.Bounded(), "%s proves its bounds", policy.Name)
 
@@ -112,13 +112,16 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 		held     string
 	}{
 		{
-			name:     "a remittance naming each invoice paid to its balance is within bounds",
-			memo:     "Remit INV-1001 INV-1002",
-			invoices: []*invoice.Invoice{openInvoice(customerID, "INV-1001", 100_000), openInvoice(customerID, "INV-1002", 50_000)},
-			applied:  []string{"1000.00", "500.00"},
-			amount:   "1500.00",
-			receipt:  true,
-			within:   true,
+			name: "a remittance naming each invoice paid to its balance is within bounds",
+			memo: "Remit INV-1001 INV-1002",
+			invoices: []*invoice.Invoice{
+				openInvoice(customerID, "INV-1001", 100_000),
+				openInvoice(customerID, "INV-1002", 50_000),
+			},
+			applied: []string{"1000.00", "500.00"},
+			amount:  "1500.00",
+			receipt: true,
+			within:  true,
 		},
 		{
 			name:     "a payment with no bank receipt has no remittance to match",
@@ -129,13 +132,16 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 			held:     agent.HeldByMoneyExactMatch,
 		},
 		{
-			name:     "an invoice the remittance does not name is not an exact match",
-			memo:     "Remit INV-1001",
-			invoices: []*invoice.Invoice{openInvoice(customerID, "INV-1001", 100_000), openInvoice(customerID, "INV-1002", 50_000)},
-			applied:  []string{"1000.00", "500.00"},
-			amount:   "1500.00",
-			receipt:  true,
-			held:     agent.HeldByMoneyExactMatch,
+			name: "an invoice the remittance does not name is not an exact match",
+			memo: "Remit INV-1001",
+			invoices: []*invoice.Invoice{
+				openInvoice(customerID, "INV-1001", 100_000),
+				openInvoice(customerID, "INV-1002", 50_000),
+			},
+			applied: []string{"1000.00", "500.00"},
+			amount:  "1500.00",
+			receipt: true,
+			held:    agent.HeldByMoneyExactMatch,
 		},
 		{
 			name:     "a part payment is not an exact match",
@@ -271,7 +277,10 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 				assert.Equal(t, "USD", bound.Currency)
 				assert.Equal(t, []agent.SourcedRef{{
 					Source: agent.TaintSourceBankReceipt,
-					Ref:    agent.RecordRef{EntityType: agent.TaintEntityBankReceipt, ID: receipt.ID.String()},
+					Ref: agent.RecordRef{
+						EntityType: agent.TaintEntityBankReceipt,
+						ID:         receipt.ID.String(),
+					},
 				}}, bound.Reread, "the receipt it records was read again from the organization's records")
 				return
 			}
@@ -384,7 +393,10 @@ func TestMatchBankReceiptBounds(t *testing.T) {
 				assert.Equal(t, "USD", bound.Currency)
 				assert.Equal(t, []agent.SourcedRef{{
 					Source: agent.TaintSourceBankReceipt,
-					Ref:    agent.RecordRef{EntityType: agent.TaintEntityBankReceipt, ID: receipt.ID.String()},
+					Ref: agent.RecordRef{
+						EntityType: agent.TaintEntityBankReceipt,
+						ID:         receipt.ID.String(),
+					},
 				}}, bound.Reread)
 				return
 			}
@@ -420,17 +432,17 @@ func TestMatchBankReceiptBounds_CandidatesThatCannotBeReadProveNothing(t *testin
 func TestBankReceiptTools_VouchOnlyForTheReceiptsTheyReread(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		NewMatchBankReceiptTool(&fakeReceiptMatcher{}),
 		NewPostCustomerPaymentTool(&remittancePoster{}, &fakeReceiptMatcher{}, &allowingPermissions{}),
 	} {
-		policy, ok := agentports.PolicyOf(tool)
+		policy, ok := agenttoolports.PolicyOf(tool)
 		require.True(t, ok)
 		assert.Equal(t, []agent.TaintSource{agent.TaintSourceBankReceipt}, policy.Condition.Vouches,
 			policy.Name)
 	}
 
-	policy, ok := agentports.PolicyOf(NewCorrectChargeCodeTool(nil, nil))
+	policy, ok := agenttoolports.PolicyOf(NewCorrectChargeCodeTool(nil, nil))
 	require.True(t, ok)
 	assert.Empty(t, policy.Condition.Vouches, "a charge correction re-reads no outside record")
 }
@@ -479,7 +491,7 @@ func chargeBound(
 	item *billingqueue.BillingQueueItem,
 	books *payerBooks,
 	before, after []*shipment.AdditionalCharge,
-) agentports.MoneyBound {
+) agenttoolports.MoneyBound {
 	t.Helper()
 
 	freight := decimal.NewNullDecimal(decimal.NewFromInt(2000))
@@ -516,8 +528,11 @@ func TestCorrectChargeCodeBounds(t *testing.T) {
 		held   string
 	}{
 		{
-			name:   "an item in review with nothing invoiced is within bounds",
-			item:   &billingqueue.BillingQueueItem{Status: billingqueue.StatusInReview, BillToCustomerID: payer},
+			name: "an item in review with nothing invoiced is within bounds",
+			item: &billingqueue.BillingQueueItem{
+				Status:           billingqueue.StatusInReview,
+				BillToCustomerID: payer,
+			},
 			within: true,
 		},
 		{
@@ -536,7 +551,10 @@ func TestCorrectChargeCodeBounds(t *testing.T) {
 		},
 		{
 			name: "a posted item is not",
-			item: &billingqueue.BillingQueueItem{Status: billingqueue.StatusPosted, BillToCustomerID: payer},
+			item: &billingqueue.BillingQueueItem{
+				Status:           billingqueue.StatusPosted,
+				BillToCustomerID: payer,
+			},
 			held: agent.HeldByMoneyRecordState,
 		},
 		{
@@ -545,8 +563,11 @@ func TestCorrectChargeCodeBounds(t *testing.T) {
 			held: agent.HeldByMoneyUnproven,
 		},
 		{
-			name:  "a payer whose billing profile cannot be read proves nothing",
-			item:  &billingqueue.BillingQueueItem{Status: billingqueue.StatusInReview, BillToCustomerID: payer},
+			name: "a payer whose billing profile cannot be read proves nothing",
+			item: &billingqueue.BillingQueueItem{
+				Status:           billingqueue.StatusInReview,
+				BillToCustomerID: payer,
+			},
 			books: &payerBooks{err: errors.New("database down")},
 			held:  agent.HeldByMoneyUnproven,
 		},

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -42,7 +42,7 @@ func (h *Handler) listChapters(c *gin.Context) {
 		return
 	}
 
-	items, err := h.chapters.List(c.Request.Context(), agentports.ThreadChaptersRequest{
+	items, err := h.chapters.List(c.Request.Context(), assistantports.ThreadChaptersRequest{
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -71,7 +71,7 @@ func (h *Handler) openChapter(c *gin.Context) {
 		return
 	}
 
-	chapter, err := h.chapters.Open(c.Request.Context(), agentports.OpenChapterRequest{
+	chapter, err := h.chapters.Open(c.Request.Context(), assistantports.OpenChapterRequest{
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
 		MessageID:  body.MessageID,
@@ -98,7 +98,7 @@ func (h *Handler) renameChapter(c *gin.Context) {
 		return
 	}
 
-	chapter, err := h.chapters.Rename(c.Request.Context(), agentports.RenameChapterRequest{
+	chapter, err := h.chapters.Rename(c.Request.Context(), assistantports.RenameChapterRequest{
 		ID:         chapterID,
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
@@ -121,7 +121,7 @@ func (h *Handler) removeChapter(c *gin.Context) {
 		return
 	}
 
-	if err = h.chapters.Remove(c.Request.Context(), agentports.RemoveChapterRequest{
+	if err = h.chapters.Remove(c.Request.Context(), assistantports.RemoveChapterRequest{
 		ID:         chapterID,
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
@@ -134,7 +134,7 @@ func (h *Handler) removeChapter(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func chapterRequest(c *gin.Context) (agentports.GetThreadRequest, pulid.ID, error) {
+func chapterRequest(c *gin.Context) (assistantports.GetThreadRequest, pulid.ID, error) {
 	req, err := threadRequest(c)
 	if err != nil {
 		return req, pulid.Nil, err

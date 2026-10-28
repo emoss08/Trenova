@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -294,7 +294,11 @@ func (f *FakeDetention) PreviewDispute(
 		return nil, err
 	}
 
-	return &detentionservice.OccurrenceChange{Before: before, After: &after, Now: 1_700_000_000}, nil
+	return &detentionservice.OccurrenceChange{
+		Before: before,
+		After:  &after,
+		Now:    1_700_000_000,
+	}, nil
 }
 
 func (f *FakeDetention) PreviewWaive(
@@ -306,7 +310,7 @@ func (f *FakeDetention) PreviewWaive(
 	return f.Change, nil
 }
 
-func ApprovedParams(params map[string]any) agentports.ToolExecuteParams {
+func ApprovedParams(params map[string]any) agenttoolports.ToolExecuteParams {
 	execute := ExecuteParams(params)
 	execute.ProposalID = pulid.MustNew("agp_")
 

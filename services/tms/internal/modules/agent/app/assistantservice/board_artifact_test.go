@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,12 +22,12 @@ import (
 )
 
 type stubBoards struct {
-	checked []*agentports.BoardFillRequest
-	filled  []*agentports.BoardFillRequest
+	checked []*assistantports.BoardFillRequest
+	filled  []*assistantports.BoardFillRequest
 	refuse  error
 }
 
-func (s *stubBoards) Check(_ context.Context, req *agentports.BoardFillRequest) error {
+func (s *stubBoards) Check(_ context.Context, req *assistantports.BoardFillRequest) error {
 	s.checked = append(s.checked, req)
 
 	return s.refuse
@@ -33,7 +35,7 @@ func (s *stubBoards) Check(_ context.Context, req *agentports.BoardFillRequest) 
 
 func (s *stubBoards) Fill(
 	_ context.Context,
-	req *agentports.BoardFillRequest,
+	req *assistantports.BoardFillRequest,
 ) (*board.Filled, error) {
 	s.filled = append(s.filled, req)
 
@@ -52,8 +54,8 @@ func (s *stubBoards) Fill(
 
 func (s *stubBoards) Card(
 	context.Context,
-	*agentports.BoardCardRequest,
-) (*agentports.BoardCard, error) {
+	*assistantports.BoardCardRequest,
+) (*assistantports.BoardCard, error) {
 	return nil, nil
 }
 
@@ -64,7 +66,7 @@ func (s *stubBoards) Location(context.Context, pagination.TenantInfo) *time.Loca
 func boardRecorder(
 	t *testing.T,
 	repo *stubArtifactRepo,
-	boards agentports.BoardFiller,
+	boards assistantports.BoardFiller,
 ) (*artifactRecorder, *conversation.Thread) {
 	t.Helper()
 
@@ -75,7 +77,7 @@ func boardRecorder(
 	return svc.newArtifactRecorder(t.Context(), thread, tenant, testActor(), nil), thread
 }
 
-func shownBoard(t *testing.T, revises pulid.ID) agentports.ToolObservation {
+func shownBoard(t *testing.T, revises pulid.ID) agentruntimeports.ToolObservation {
 	t.Helper()
 	parsed, problems := board.Parse(map[string]any{
 		"title":   "Six late shipments",
@@ -88,9 +90,9 @@ func shownBoard(t *testing.T, revises pulid.ID) agentports.ToolObservation {
 	})
 	require.Empty(t, problems)
 
-	return agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: "call_board", Name: "show_board"},
-		Data: agentports.BoardRequest{Board: *parsed, ArtifactID: revises},
+	return agentruntimeports.ToolObservation{
+		Call: llmports.ToolCall{ID: "call_board", Name: "show_board"},
+		Data: agentruntimeports.BoardRequest{Board: *parsed, ArtifactID: revises},
 	}
 }
 
@@ -167,7 +169,7 @@ func TestArtifactRecorder_SaysWhyABoardWasRefused(t *testing.T) {
 	t.Parallel()
 
 	repo := &stubArtifactRepo{}
-	refusal := &agentports.PublishMistake{Reason: "the person may not read shipments"}
+	refusal := &agentruntimeports.PublishMistake{Reason: "the person may not read shipments"}
 	recorder, _ := boardRecorder(t, repo, &stubBoards{refuse: refusal})
 
 	_, err := recorder.observe(shownBoard(t, pulid.Nil))
@@ -190,16 +192,16 @@ func TestArtifactRecorder_ShowsNoBoardWhereNoneCanBeFilled(t *testing.T) {
 
 type cardBoards struct {
 	stubBoards
-	asked []*agentports.BoardCardRequest
+	asked []*assistantports.BoardCardRequest
 }
 
 func (c *cardBoards) Card(
 	_ context.Context,
-	req *agentports.BoardCardRequest,
-) (*agentports.BoardCard, error) {
+	req *assistantports.BoardCardRequest,
+) (*assistantports.BoardCard, error) {
 	c.asked = append(c.asked, req)
 
-	return &agentports.BoardCard{
+	return &assistantports.BoardCard{
 		Title:      "Six late shipments",
 		Author:     "Dispatch Desk",
 		AnsweredAt: 1_793_000_000,
@@ -224,7 +226,7 @@ func TestExportDocument_PrintsABoardAsItReadsNow(t *testing.T) {
 		},
 		boards: boards,
 	}
-	req := agentports.GetThreadRequest{
+	req := assistantports.GetThreadRequest{
 		ID:         thread.ID,
 		UserID:     pulid.MustNew("usr_"),
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},

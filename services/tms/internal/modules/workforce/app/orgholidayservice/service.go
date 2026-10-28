@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -31,14 +31,14 @@ type Params struct {
 	Logger       *zap.Logger
 	Repo         workerports.OrgHolidayRepository
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
 	repo         workerports.OrgHolidayRepository
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 }
 
 func New(p Params) *Service {

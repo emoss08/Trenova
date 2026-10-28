@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -142,7 +142,7 @@ func TestStreamChat_SaysWhenThePinnedProviderIsResting(t *testing.T) {
 
 	_, err := service.CompleteChat(t.Context(), request)
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, agentports.ErrProvidersResting), "%v", err)
+	assert.True(t, errors.Is(err, llmports.ErrProvidersResting), "%v", err)
 	assert.True(t, errortypes.IsBusinessError(err))
 	assert.Contains(t, err.Error(), "down is paused")
 	assert.EqualValues(t, breakerThreshold*maxBusyAttempts, downCalls.Load())

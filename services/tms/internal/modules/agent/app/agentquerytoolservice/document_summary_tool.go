@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -41,8 +42,8 @@ func newGetDocumentSummaryTool(
 	documents documentports.DocumentRepository,
 	contents contentReader,
 	permissions permissionports.PermissionEngine,
-	threads agentports.ThreadOwnerRepository,
-) agentports.AgentQueryTool {
+	threads assistantports.ThreadOwnerRepository,
+) agenttoolports.AgentQueryTool {
 	return &getDocumentSummaryTool{
 		documents: documents,
 		contents:  contents,
@@ -79,7 +80,7 @@ func (t *getDocumentSummaryTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getDocumentSummaryTool) Policy() agentports.ToolPolicy {
+func (t *getDocumentSummaryTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceDocument,
 		reads:    agent.ExternalReadAlways,
@@ -91,7 +92,7 @@ func (t *getDocumentSummaryTool) Policy() agentports.ToolPolicy {
 
 func (t *getDocumentSummaryTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

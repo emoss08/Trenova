@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,13 +40,13 @@ func (p *provisioner) EnsureSystem(
 }
 
 type pageThreads struct {
-	live     map[agentports.PageThreadKey]*conversation.Thread
+	live     map[assistantports.PageThreadKey]*conversation.Thread
 	claimed  []*conversation.Thread
-	archived []agentports.ArchiveSubjectThreadsRequest
+	archived []assistantports.ArchiveSubjectThreadsRequest
 }
 
-func keyOf(thread *conversation.Thread) agentports.PageThreadKey {
-	return agentports.PageThreadKey{
+func keyOf(thread *conversation.Thread) assistantports.PageThreadKey {
+	return assistantports.PageThreadKey{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: thread.OrganizationID,
 			BuID:  thread.BusinessUnitID,
@@ -60,7 +60,7 @@ func keyOf(thread *conversation.Thread) agentports.PageThreadKey {
 
 func (p *pageThreads) GetPageThread(
 	_ context.Context,
-	key agentports.PageThreadKey,
+	key assistantports.PageThreadKey,
 ) (*conversation.Thread, error) {
 	key.TenantInfo.UserID = pulid.Nil
 	if thread, ok := p.live[key]; ok {
@@ -87,7 +87,7 @@ func (p *pageThreads) ClaimPageThread(
 
 func (p *pageThreads) ArchiveSubjectThreads(
 	_ context.Context,
-	req agentports.ArchiveSubjectThreadsRequest,
+	req assistantports.ArchiveSubjectThreadsRequest,
 ) (int, error) {
 	p.archived = append(p.archived, req)
 	closed := 0
@@ -118,7 +118,7 @@ func newPageFixture(allowed ...string) *pageFixture {
 	}
 	fixture := &pageFixture{
 		provisioner:   &provisioner{definitions: map[string]*agentdefinition.Definition{}},
-		threads:       &pageThreads{live: map[agentports.PageThreadKey]*conversation.Thread{}},
+		threads:       &pageThreads{live: map[assistantports.PageThreadKey]*conversation.Thread{}},
 		conversations: &creatingConversations{},
 		permissions:   permissions,
 		actor:         testActor(),
@@ -142,7 +142,7 @@ func (f *pageFixture) open(
 ) (*conversation.Thread, error) {
 	t.Helper()
 
-	opened, err := f.svc.OpenPageThread(t.Context(), &agentports.OpenPageThreadRequest{
+	opened, err := f.svc.OpenPageThread(t.Context(), &assistantports.OpenPageThreadRequest{
 		TenantInfo:  f.actor.TenantInfo(),
 		Origin:      origin,
 		SubjectType: subjectType,
@@ -159,7 +159,7 @@ func TestOpenPageThread_NamesTheAgentThePageTalksTo(t *testing.T) {
 	t.Parallel()
 
 	fixture := newPageFixture("formula_template:read")
-	opened, err := fixture.svc.OpenPageThread(t.Context(), &agentports.OpenPageThreadRequest{
+	opened, err := fixture.svc.OpenPageThread(t.Context(), &assistantports.OpenPageThreadRequest{
 		TenantInfo: fixture.actor.TenantInfo(),
 		Origin:     conversation.ThreadOriginFormula,
 	}, fixture.actor)

@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -24,7 +24,7 @@ Rules:
 func buildContext(
 	facts *Facts,
 	plain []shipmentbriefports.ShipmentBriefingSegment,
-) agentports.DelimitedContext {
+) llmports.DelimitedContext {
 	var builder strings.Builder
 
 	writeFact(&builder, "Loads delivering today", facts.DeliveringToday,
@@ -50,8 +50,8 @@ func buildContext(
 	}
 	builder.WriteString("\n")
 
-	return agentports.DelimitedContext{
-		Sections: []agentports.ContextSection{{
+	return llmports.DelimitedContext{
+		Sections: []llmports.ContextSection{{
 			Title:   "Shipment board",
 			Trusted: false,
 			Content: builder.String(),

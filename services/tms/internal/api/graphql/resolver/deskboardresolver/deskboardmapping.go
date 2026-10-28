@@ -3,11 +3,11 @@ package deskboardresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/jsonutils"
 )
 
-func boardCardToModel(card *agentports.BoardCard) *gqlmodel.DeskBoardCard {
+func boardCardToModel(card *assistantports.BoardCard) *gqlmodel.DeskBoardCard {
 	model := &gqlmodel.DeskBoardCard{
 		ArtifactID: card.ArtifactID.String(),
 		ThreadID:   card.ThreadID.String(),

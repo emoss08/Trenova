@@ -3,14 +3,13 @@ package agentquerytoolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
-	"github.com/emoss08/trenova/pkg/listquery"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 )
@@ -78,7 +77,7 @@ func orderRowFrom(entity *order.Order, gate *fieldGate) orderRow {
 func newListOrdersTool(
 	repo orderports.OrderRepository,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "order_list",
 		entityPlural: "orders",

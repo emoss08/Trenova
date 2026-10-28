@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -144,7 +145,7 @@ func lookBack(ctx workflow.Context, plan *agentports.ReflectionPlan, result *Ref
 	}
 
 	var a *Activities
-	var completion agentports.StructuredCompletionResult
+	var completion llmports.StructuredCompletionResult
 	err := workflow.ExecuteActivity(
 		withPriority(ctx, modelOptions, plan.TenantInfo),
 		a.ReflectionModelActivity, plan,

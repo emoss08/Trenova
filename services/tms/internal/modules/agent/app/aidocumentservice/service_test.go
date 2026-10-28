@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,23 +26,23 @@ import (
 // is that it no longer knows what is behind the port, so the test does not
 // stand up an HTTP server for one vendor's API either.
 type stubCompletion struct {
-	agentports.CompletionService
+	llmports.CompletionService
 
-	structured    *agentports.StructuredCompletionResult
+	structured    *llmports.StructuredCompletionResult
 	structuredErr error
-	submission    *agentports.BackgroundSubmission
+	submission    *llmports.BackgroundSubmission
 	submitErr     error
-	outcome       *agentports.BackgroundOutcome
+	outcome       *llmports.BackgroundOutcome
 	pollErr       error
 
-	sawRequest *agentports.StructuredCompletionRequest
-	sawPoll    *agentports.BackgroundPollRequest
+	sawRequest *llmports.StructuredCompletionRequest
+	sawPoll    *llmports.BackgroundPollRequest
 }
 
 func (s *stubCompletion) CompleteStructured(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	s.sawRequest = req
 	if s.structuredErr != nil {
 		return nil, s.structuredErr
@@ -53,8 +53,8 @@ func (s *stubCompletion) CompleteStructured(
 
 func (s *stubCompletion) SubmitBackground(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.BackgroundSubmission, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.BackgroundSubmission, error) {
 	s.sawRequest = req
 	if s.submitErr != nil {
 		return nil, s.submitErr
@@ -65,8 +65,8 @@ func (s *stubCompletion) SubmitBackground(
 
 func (s *stubCompletion) PollBackground(
 	_ context.Context,
-	req *agentports.BackgroundPollRequest,
-) (*agentports.BackgroundOutcome, error) {
+	req *llmports.BackgroundPollRequest,
+) (*llmports.BackgroundOutcome, error) {
 	s.sawPoll = req
 	if s.pollErr != nil {
 		return nil, s.pollErr
@@ -152,7 +152,7 @@ func TestRouteDocument_ShapesTheResult(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{
-		structured: &agentports.StructuredCompletionResult{
+		structured: &llmports.StructuredCompletionResult{
 			Text: `{"shouldExtract": true, "documentKind": " RateConfirmation ",
 			        "confidence": 0.91, "reviewStatus": "needs_review"}`,
 			ModelIdentifier: "llama3.3:70b",
@@ -173,7 +173,7 @@ func TestRouteDocument_ReadsTheReceiversSignature(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{
-		structured: &agentports.StructuredCompletionResult{
+		structured: &llmports.StructuredCompletionResult{
 			Text: `{"shouldExtract": false, "documentKind": "ProofOfDelivery",
 			        "confidence": 0.9, "reviewStatus": "ready",
 			        "signature": {"status": " Signed ", "confidence": 1.3,
@@ -195,7 +195,7 @@ func TestRouteDocument_LeavesTheSignatureUnreadWhenTheReplyHasNone(t *testing.T)
 	t.Parallel()
 
 	completion := &stubCompletion{
-		structured: &agentports.StructuredCompletionResult{
+		structured: &llmports.StructuredCompletionResult{
 			Text: `{"shouldExtract": true, "documentKind": "RateConfirmation", "confidence": 0.9}`,
 		},
 	}
@@ -232,7 +232,7 @@ func TestRouteDocument_SendsDocumentTextAsUntrusted(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{
-		structured: &agentports.StructuredCompletionResult{Text: `{"documentKind": "Other"}`},
+		structured: &llmports.StructuredCompletionResult{Text: `{"documentKind": "Other"}`},
 	}
 	service := newTestService(t, completion)
 
@@ -251,7 +251,7 @@ func TestRouteDocument_RoutesToTheClassificationTask(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{
-		structured: &agentports.StructuredCompletionResult{Text: `{"documentKind": "Other"}`},
+		structured: &llmports.StructuredCompletionResult{Text: `{"documentKind": "Other"}`},
 	}
 	service := newTestService(t, completion)
 
@@ -265,7 +265,7 @@ func TestExtractRateConfirmation_ConvertsAndClamps(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{
-		structured: &agentports.StructuredCompletionResult{Text: extractPayload},
+		structured: &llmports.StructuredCompletionResult{Text: extractPayload},
 	}
 	service := newTestService(t, completion)
 
@@ -284,19 +284,19 @@ func TestExtractRateConfirmation_SurfacesASchemaFailure(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{
-		structured: &agentports.StructuredCompletionResult{Text: "not json at all"},
+		structured: &llmports.StructuredCompletionResult{Text: "not json at all"},
 	}
 	service := newTestService(t, completion)
 
 	_, err := service.ExtractRateConfirmation(t.Context(), extractRequest())
-	require.ErrorIs(t, err, agentports.ErrModelSchemaValidation)
+	require.ErrorIs(t, err, llmports.ErrModelSchemaValidation)
 }
 
 func TestRouteDocument_AttributesTheCallToThePersonAndDocument(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{
-		structured: &agentports.StructuredCompletionResult{
+		structured: &llmports.StructuredCompletionResult{
 			Text: `{"shouldExtract":true,"documentKind":"RateConfirmation","confidence":0.9}`,
 		},
 	}
@@ -321,7 +321,7 @@ func TestExtractRateConfirmation_AttributesTheCallToThePersonAndDocument(t *test
 	t.Parallel()
 
 	completion := &stubCompletion{
-		structured: &agentports.StructuredCompletionResult{Text: extractPayload},
+		structured: &llmports.StructuredCompletionResult{Text: extractPayload},
 	}
 	service := newTestService(t, completion)
 	request := extractRequest()
@@ -344,7 +344,7 @@ func TestSubmitBackgroundExtraction_AttributesTheCallToThePersonAndDocument(t *t
 	t.Parallel()
 
 	completion := &stubCompletion{
-		submission: &agentports.BackgroundSubmission{
+		submission: &llmports.BackgroundSubmission{
 			Handle:     "resp_123",
 			ProviderID: pulid.MustNew("aipr_"),
 		},
@@ -370,7 +370,7 @@ func TestSubmitBackgroundExtraction_AsksARolloutCandidateFirstWithoutRequiringIt
 	t.Parallel()
 
 	completion := &stubCompletion{
-		submission: &agentports.BackgroundSubmission{
+		submission: &llmports.BackgroundSubmission{
 			Handle:     "resp_123",
 			ProviderID: pulid.MustNew("aipr_"),
 		},
@@ -394,7 +394,7 @@ func TestSubmitBackgroundExtraction_LeavesTheOrderAloneWithoutAPreference(t *tes
 	t.Parallel()
 
 	completion := &stubCompletion{
-		submission: &agentports.BackgroundSubmission{
+		submission: &llmports.BackgroundSubmission{
 			Handle:     "resp_123",
 			ProviderID: pulid.MustNew("aipr_"),
 		},
@@ -413,9 +413,9 @@ func TestPollBackgroundExtraction_AttributesTheOutcomeToThePersonAndDocument(t *
 	t.Parallel()
 
 	completion := &stubCompletion{
-		outcome: &agentports.BackgroundOutcome{
-			State:  agentports.BackgroundCompleted,
-			Result: &agentports.StructuredCompletionResult{Text: extractPayload},
+		outcome: &llmports.BackgroundOutcome{
+			State:  llmports.BackgroundCompleted,
+			Result: &llmports.StructuredCompletionResult{Text: extractPayload},
 		},
 	}
 	service := newTestService(t, completion)
@@ -448,7 +448,7 @@ func TestSubmitBackgroundExtraction_CarriesTheProviderWithTheHandle(t *testing.T
 
 	providerID := pulid.MustNew("aipr_")
 	completion := &stubCompletion{
-		submission: &agentports.BackgroundSubmission{
+		submission: &llmports.BackgroundSubmission{
 			Handle:          "resp_123",
 			ProviderID:      providerID,
 			ModelIdentifier: "gpt-5",
@@ -478,8 +478,8 @@ func TestSubmitBackgroundExtraction_ReturnsAnInlineResultWhenNothingCanDefer(t *
 	t.Parallel()
 
 	completion := &stubCompletion{
-		submission: &agentports.BackgroundSubmission{
-			Result: &agentports.StructuredCompletionResult{
+		submission: &llmports.BackgroundSubmission{
+			Result: &llmports.StructuredCompletionResult{
 				Text:            extractPayload,
 				ModelIdentifier: "llama3.3:70b",
 			},
@@ -493,7 +493,11 @@ func TestSubmitBackgroundExtraction_ReturnsAnInlineResultWhenNothingCanDefer(t *
 	require.NoError(t, err)
 
 	assert.Empty(t, submission.ResponseID, "there is nothing to poll")
-	assert.Equal(t, string(documentaiextractionports.AIBackgroundExtractionStatusCompleted), submission.Status)
+	assert.Equal(
+		t,
+		string(documentaiextractionports.AIBackgroundExtractionStatusCompleted),
+		submission.Status,
+	)
 	require.NotNil(t, submission.ExtractResult)
 	assert.Equal(t, "4471", submission.ExtractResult.Fields["loadNumber"].Value)
 	assert.Equal(t, "llama3.3:70b", submission.Model)
@@ -502,7 +506,7 @@ func TestSubmitBackgroundExtraction_ReturnsAnInlineResultWhenNothingCanDefer(t *
 func TestSubmitBackgroundExtraction_FailsWhenThereIsNeitherHandleNorResult(t *testing.T) {
 	t.Parallel()
 
-	completion := &stubCompletion{submission: &agentports.BackgroundSubmission{}}
+	completion := &stubCompletion{submission: &llmports.BackgroundSubmission{}}
 	service := newTestService(t, completion)
 
 	_, err := service.SubmitRateConfirmationBackgroundExtraction(t.Context(), extractRequest())
@@ -537,7 +541,7 @@ func TestPollBackgroundExtraction_AsksTheProviderThatIssuedTheHandle(t *testing.
 
 	providerID := pulid.MustNew("aipr_")
 	completion := &stubCompletion{
-		outcome: &agentports.BackgroundOutcome{State: agentports.BackgroundPending},
+		outcome: &llmports.BackgroundOutcome{State: llmports.BackgroundPending},
 	}
 	service := newTestService(t, completion)
 
@@ -561,10 +565,10 @@ func TestPollBackgroundExtraction_ReturnsTheExtraction(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{
-		outcome: &agentports.BackgroundOutcome{
-			State:           agentports.BackgroundCompleted,
+		outcome: &llmports.BackgroundOutcome{
+			State:           llmports.BackgroundCompleted,
 			ModelIdentifier: "gpt-5",
-			Result:          &agentports.StructuredCompletionResult{Text: extractPayload},
+			Result:          &llmports.StructuredCompletionResult{Text: extractPayload},
 		},
 	}
 	service := newTestService(t, completion)
@@ -588,8 +592,8 @@ func TestPollBackgroundExtraction_ReportsAFailureWithItsReason(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{
-		outcome: &agentports.BackgroundOutcome{
-			State:          agentports.BackgroundFailed,
+		outcome: &llmports.BackgroundOutcome{
+			State:          llmports.BackgroundFailed,
 			RawStatus:      "incomplete",
 			FailureCode:    "max_output_tokens",
 			FailureMessage: "the reply was cut short",
@@ -618,9 +622,9 @@ func TestPollBackgroundExtraction_TreatsAnEmptyCompletionAsFailure(t *testing.T)
 	t.Parallel()
 
 	completion := &stubCompletion{
-		outcome: &agentports.BackgroundOutcome{
-			State:  agentports.BackgroundCompleted,
-			Result: &agentports.StructuredCompletionResult{Text: "   "},
+		outcome: &llmports.BackgroundOutcome{
+			State:  llmports.BackgroundCompleted,
+			Result: &llmports.StructuredCompletionResult{Text: "   "},
 		},
 	}
 	service := newTestService(t, completion)
@@ -662,8 +666,8 @@ func TestService_RefusesEveryCallWhenAIIsDisabled(t *testing.T) {
 func TestFailureOutcome_KeepsTheMetricLabelForAnUnconfiguredProvider(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "missing_config", failureOutcome(agentports.ErrNoProviderConfigured))
-	assert.Equal(t, "invalid_output", failureOutcome(agentports.ErrModelSchemaValidation))
+	assert.Equal(t, "missing_config", failureOutcome(llmports.ErrNoProviderConfigured))
+	assert.Equal(t, "invalid_output", failureOutcome(llmports.ErrModelSchemaValidation))
 	assert.Equal(t, "error", failureOutcome(errors.New("connection refused")))
 }
 
@@ -673,7 +677,7 @@ func TestExtractRateConfirmationForEvaluation_PinsTheProviderAndBillsTheEvaluati
 	providerID := pulid.MustNew("aiprv_")
 	cost := decimal.RequireFromString("0.0042")
 	completion := &stubCompletion{
-		structured: &agentports.StructuredCompletionResult{
+		structured: &llmports.StructuredCompletionResult{
 			Text:            extractPayload,
 			ModelIdentifier: "tuned-extractor",
 			ProviderID:      providerID,
@@ -735,7 +739,7 @@ func TestExtractRateConfirmationForShadow_SendsProductionsInputToThePinnedProvid
 
 	providerID := pulid.MustNew("aiprv_")
 	completion := &stubCompletion{
-		structured: &agentports.StructuredCompletionResult{
+		structured: &llmports.StructuredCompletionResult{
 			Text:            extractPayload,
 			ModelIdentifier: "tuned-extractor",
 			ProviderID:      providerID,
@@ -777,7 +781,7 @@ func TestExtractRateConfirmation_LiveCallsAreNotPinned(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{
-		structured: &agentports.StructuredCompletionResult{Text: extractPayload},
+		structured: &llmports.StructuredCompletionResult{Text: extractPayload},
 	}
 	service := newTestService(t, completion)
 

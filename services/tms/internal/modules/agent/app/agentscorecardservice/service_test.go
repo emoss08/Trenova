@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,14 +42,14 @@ func (s *stubScorecards) Aggregate(
 }
 
 type stubTrust struct {
-	agentports.AgentToolTrustRepository
+	agenttoolports.AgentToolTrustRepository
 
 	rows []*agent.ToolTrust
 }
 
 func (s *stubTrust) ListByDefinition(
 	_ context.Context,
-	_ agentports.ListToolTrustRequest,
+	_ agenttoolports.ListToolTrustRequest,
 ) ([]*agent.ToolTrust, error) {
 	return s.rows, nil
 }

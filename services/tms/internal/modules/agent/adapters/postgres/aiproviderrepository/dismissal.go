@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"go.uber.org/fx"
 )
 
@@ -23,13 +23,15 @@ type dismissalRepository struct {
 	db *postgres.Connection
 }
 
-func NewDismissalRepository(p DismissalParams) agentports.AIProviderFailureDismissalRepository {
+func NewDismissalRepository(
+	p DismissalParams,
+) aiproviderports.AIProviderFailureDismissalRepository {
 	return &dismissalRepository{db: p.DB}
 }
 
 func (r *dismissalRepository) List(
 	ctx context.Context,
-	req *agentports.ListFailureDismissalsRequest,
+	req *aiproviderports.ListFailureDismissalsRequest,
 ) ([]*aiprovider.FailureDismissal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiprovider.FailureDismissal, error) {
 		d := aiproviderdb.FailureDismissals
@@ -61,7 +63,7 @@ func (r *dismissalRepository) Upsert(
 
 func (r *dismissalRepository) Delete(
 	ctx context.Context,
-	req *agentports.DeleteFailureDismissalRequest,
+	req *aiproviderports.DeleteFailureDismissalRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		d := aiproviderdb.FailureDismissals

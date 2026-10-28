@@ -11,7 +11,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -55,12 +56,12 @@ type graphQLGetTool struct {
 	key    string
 	keyRef *idReference
 	beside besideReads
-	reader agentports.GraphQLReader
+	reader graphqlreadports.GraphQLReader
 }
 
 func newGraphQLGetTool(
 	spec *getSpec,
-	reader agentports.GraphQLReader,
+	reader graphqlreadports.GraphQLReader,
 	permissions permissionports.PermissionEngine,
 ) (*graphQLGetTool, error) {
 	read, ok := graphQLReads[spec.name]
@@ -161,7 +162,7 @@ func (t *graphQLGetTool) idProperty() any {
 
 func (t *graphQLGetTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -181,12 +182,12 @@ func (t *graphQLGetTool) Query(
 // of a batch read together.
 func (t *graphQLGetTool) one(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	variables map[string]any,
 	named string,
 	several bool,
 ) (any, error) {
-	result, err := t.reader.Read(ctx, &agentports.GraphQLReadRequest{
+	result, err := t.reader.Read(ctx, &graphqlreadports.GraphQLReadRequest{
 		Actor:             params.Actor,
 		Operation:         t.read.Operation,
 		Variables:         variables,
@@ -252,12 +253,12 @@ func (t *graphQLGetTool) one(
 
 // missingRecord reports whether a read found no record: its root came back
 // empty, or its only error says the record does not exist.
-func missingRecord(result *agentports.GraphQLReadResult) bool {
+func missingRecord(result *graphqlreadports.GraphQLReadResult) bool {
 	if len(result.Errors) == 0 {
 		return true
 	}
 
-	return len(result.Errors) == 1 && result.Errors[0].Code == agentports.GraphQLCodeNotFound
+	return len(result.Errors) == 1 && result.Errors[0].Code == graphqlreadports.GraphQLCodeNotFound
 }
 
 // several reads each id the call names, one read per id and at most
@@ -267,7 +268,7 @@ func missingRecord(result *agentports.GraphQLReadResult) bool {
 // named in the note. A refusal or a failed read fails the call.
 func (t *graphQLGetTool) several(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	ids, err := requireIDList(params.Params, t.spec.paramName, t.spec.batch)
 	if err != nil {
@@ -373,7 +374,7 @@ func (r *markedRecord) TaintedRecords() []agent.RecordRef { return r.outside }
 // paraphrased id is refused rather than read as a missing record, and the
 // operation's other arguments; and how a missing record is named.
 func (t *graphQLGetTool) variables(
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (variables map[string]any, named string, err error) {
 	if variables, err = t.arguments(params); err != nil {
 		return nil, "", err
@@ -401,7 +402,7 @@ func (t *graphQLGetTool) variables(
 // arguments are the operation's variables other than the id, as the call
 // names them. A required input the call names nothing of is sent empty, as
 // the generator proved every field of it optional.
-func (t *graphQLGetTool) arguments(params *agentports.QueryToolParams) (map[string]any, error) {
+func (t *graphQLGetTool) arguments(params *agenttoolports.QueryToolParams) (map[string]any, error) {
 	if err := requireArguments(t.required, params.Params); err != nil {
 		return nil, err
 	}

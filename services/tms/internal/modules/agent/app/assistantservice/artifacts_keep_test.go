@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,13 +22,19 @@ type deletingArtifactRepo struct {
 	deleted []pulid.ID
 }
 
-func (r *deletingArtifactRepo) Delete(_ context.Context, req *assistantartifactports.DeleteArtifactsRequest) error {
+func (r *deletingArtifactRepo) Delete(
+	_ context.Context,
+	req *assistantartifactports.DeleteArtifactsRequest,
+) error {
 	r.deleted = append(r.deleted, req.IDs...)
 
 	return nil
 }
 
-func keepRecorder(t *testing.T, repo assistantartifactports.AssistantArtifactRepository) *artifactRecorder {
+func keepRecorder(
+	t *testing.T,
+	repo assistantartifactports.AssistantArtifactRepository,
+) *artifactRecorder {
 	t.Helper()
 	svc := &Service{logger: zap.NewNop(), artifacts: repo}
 
@@ -47,18 +54,30 @@ func TestArtifactRecorder_KeepsOnlyTheLookupsTheReplyPointsTo(t *testing.T) {
 
 	repo := &deletingArtifactRepo{stubArtifactRepo: &stubArtifactRepo{}}
 	recorder := keepRecorder(t, repo)
-	used, _ := recorder.observe(observation("customer_get", map[string]any{"id": "cus_1", "name": "Acme"}))
-	unused, _ := recorder.observe(observation("worker_get", map[string]any{"id": "wrk_1", "name": "Dana"}))
-	document, _ := recorder.observe(observation("publish_artifact", agentports.PublishedDocument{
-		Title: "Brief", Body: "# Brief",
-	}))
+	used, _ := recorder.observe(
+		observation("customer_get", map[string]any{"id": "cus_1", "name": "Acme"}),
+	)
+	unused, _ := recorder.observe(
+		observation("worker_get", map[string]any{"id": "wrk_1", "name": "Dana"}),
+	)
+	document, _ := recorder.observe(
+		observation("publish_artifact", agentruntimeports.PublishedDocument{
+			Title: "Brief", Body: "# Brief",
+		}),
+	)
 	require.NotNil(t, used)
 	require.NotNil(t, unused)
 	require.NotNil(t, document)
 
 	reply := []conversation.Message{
-		{Role: conversation.RoleUser, Content: "[Not a reply](artifact:" + unused.ID.String() + ")"},
-		{Role: conversation.RoleAssistant, Content: "Acme is on [Customer Acme](artifact:" + used.ID.String() + ")."},
+		{
+			Role:    conversation.RoleUser,
+			Content: "[Not a reply](artifact:" + unused.ID.String() + ")",
+		},
+		{
+			Role:    conversation.RoleAssistant,
+			Content: "Acme is on [Customer Acme](artifact:" + used.ID.String() + ").",
+		},
 	}
 	recorder.keepLinked(linkedArtifacts(reply))
 
@@ -80,8 +99,12 @@ func TestArtifactRecorder_ADelegatesCitationsDoNotKeepItsLookups(t *testing.T) {
 
 	repo := &deletingArtifactRepo{stubArtifactRepo: &stubArtifactRepo{}}
 	recorder := keepRecorder(t, repo)
-	cited, _ := recorder.observe(observation("shipment_get", map[string]any{"id": "shp_1", "proNumber": "P-1"}))
-	both, _ := recorder.observe(observation("customer_get", map[string]any{"id": "cus_1", "name": "Acme"}))
+	cited, _ := recorder.observe(
+		observation("shipment_get", map[string]any{"id": "shp_1", "proNumber": "P-1"}),
+	)
+	both, _ := recorder.observe(
+		observation("customer_get", map[string]any{"id": "cus_1", "name": "Acme"}),
+	)
 	require.NotNil(t, cited)
 	require.NotNil(t, both)
 
@@ -92,7 +115,10 @@ func TestArtifactRecorder_ADelegatesCitationsDoNotKeepItsLookups(t *testing.T) {
 			Content: "See [shipment P-1](artifact:" + cited.ID.String() + ") and " +
 				"[Acme](artifact:" + both.ID.String() + ").",
 		},
-		{Role: conversation.RoleAssistant, Content: "Acme is on [Customer Acme](artifact:" + both.ID.String() + ")."},
+		{
+			Role:    conversation.RoleAssistant,
+			Content: "Acme is on [Customer Acme](artifact:" + both.ID.String() + ").",
+		},
 	}
 	recorder.keepLinked(linkedArtifacts(reply))
 
@@ -106,16 +132,28 @@ func TestArtifactRecorder_AnUnchangedLookupReusesItsLastVersion(t *testing.T) {
 
 	repo := &stubArtifactRepo{}
 	recorder := keepRecorder(t, repo)
-	first, _ := recorder.observe(agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: "call_1", Name: "customer_get", Arguments: map[string]any{"id": "cus_1"}},
+	first, _ := recorder.observe(agentruntimeports.ToolObservation{
+		Call: llmports.ToolCall{
+			ID:        "call_1",
+			Name:      "customer_get",
+			Arguments: map[string]any{"id": "cus_1"},
+		},
 		Data: map[string]any{"id": "cus_1", "name": "Acme"},
 	})
-	again, _ := recorder.observe(agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: "call_2", Name: "customer_get", Arguments: map[string]any{"id": "cus_1"}},
+	again, _ := recorder.observe(agentruntimeports.ToolObservation{
+		Call: llmports.ToolCall{
+			ID:        "call_2",
+			Name:      "customer_get",
+			Arguments: map[string]any{"id": "cus_1"},
+		},
 		Data: map[string]any{"id": "cus_1", "name": "Acme"},
 	})
-	changed, _ := recorder.observe(agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: "call_3", Name: "customer_get", Arguments: map[string]any{"id": "cus_1"}},
+	changed, _ := recorder.observe(agentruntimeports.ToolObservation{
+		Call: llmports.ToolCall{
+			ID:        "call_3",
+			Name:      "customer_get",
+			Arguments: map[string]any{"id": "cus_1"},
+		},
 		Data: map[string]any{"id": "cus_1", "name": "Acme Manufacturing"},
 	})
 
@@ -140,8 +178,16 @@ func TestMustBePointedTo_KeepsLongRankedAndActionableTables(t *testing.T) {
 	}
 
 	assert.True(t, mustBePointedTo(table(map[string]any{"rowCount": 40})), "a long table")
-	assert.True(t, mustBePointedTo(table(map[string]any{"rowCount": 5, payloadRanked: true})), "a ranking")
-	assert.True(t, mustBePointedTo(table(map[string]any{"rowCount": 3, "path": "/billing/queue"})), "a live view")
+	assert.True(
+		t,
+		mustBePointedTo(table(map[string]any{"rowCount": 5, payloadRanked: true})),
+		"a ranking",
+	)
+	assert.True(
+		t,
+		mustBePointedTo(table(map[string]any{"rowCount": 3, "path": "/billing/queue"})),
+		"a live view",
+	)
 	assert.False(t, mustBePointedTo(table(map[string]any{"rowCount": 5})), "a short table")
 	assert.False(t, mustBePointedTo(&assistantartifact.Artifact{
 		Kind: assistantartifact.KindEntityCard, Payload: map[string]any{},

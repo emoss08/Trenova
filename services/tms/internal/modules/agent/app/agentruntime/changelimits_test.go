@@ -8,6 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -66,10 +69,10 @@ func runOneCall(
 	t *testing.T,
 	rt *Service,
 	definition *agentdefinition.Definition,
-) *agentports.RunResult {
+) *agentruntimeports.RunResult {
 	t.Helper()
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "approve these",
@@ -120,12 +123,12 @@ func TestRun_RefusesAChangeBiggerThanTheAgentsLargest(t *testing.T) {
 
 	tool := actionTool("approve_billing_items", agent.TierAutoExecute, nil)
 	tool.Schema = batchSchema()
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("approve_billing_items", map[string]any{"billingQueueItemIds": ids(12)}),
 		textTurn("I will split it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 	definition := autoChangeDefinition("approve_billing_items")
 	definition.MaxChangeItems = 10
 
@@ -143,12 +146,12 @@ func TestRun_AChangeWithinTheLimitRuns(t *testing.T) {
 
 	tool := actionTool("approve_billing_items", agent.TierAutoExecute, nil)
 	tool.Schema = batchSchema()
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("approve_billing_items", map[string]any{"billingQueueItemIds": ids(10)}),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 	definition := autoChangeDefinition("approve_billing_items")
 	definition.MaxChangeItems = 10
 
@@ -165,12 +168,12 @@ func TestRun_HoldsAnAutomaticChangeOutsideBusinessHours(t *testing.T) {
 	t.Parallel()
 
 	tool := actionTool("dispatch_assign_move", agent.TierAutoExecute, nil)
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
 		textTurn("It is waiting for you."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 	rt.budgets = hoursBudgets{within: false}
 	definition := autoChangeDefinition("dispatch_assign_move")
 	definition.BusinessHoursOnly = true
@@ -189,12 +192,12 @@ func TestRun_RunsAnAutomaticChangeInsideBusinessHours(t *testing.T) {
 	t.Parallel()
 
 	tool := actionTool("dispatch_assign_move", agent.TierAutoExecute, nil)
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
 		textTurn("Assigned."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 	rt.budgets = hoursBudgets{within: true}
 	definition := autoChangeDefinition("dispatch_assign_move")
 	definition.BusinessHoursOnly = true

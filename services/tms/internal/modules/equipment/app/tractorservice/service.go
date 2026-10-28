@@ -3,7 +3,7 @@ package tractorservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
@@ -34,7 +34,7 @@ type Params struct {
 	LocationRepo              locationports.LocationRepository
 	Validator                 *Validator
 	AuditService              auditports.AuditService
-	Realtime                  agentports.RealtimeService
+	Realtime                  realtimeports.RealtimeService
 	CustomFieldsValuesService *customfieldservice.ValuesService
 }
 
@@ -47,7 +47,7 @@ type Service struct {
 	locationRepo              locationports.LocationRepository
 	validator                 *Validator
 	auditService              auditports.AuditService
-	realtime                  agentports.RealtimeService
+	realtime                  realtimeports.RealtimeService
 	customFieldsValuesService *customfieldservice.ValuesService
 }
 

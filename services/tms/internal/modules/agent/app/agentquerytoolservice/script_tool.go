@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/analysisports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/scriptports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -87,7 +87,7 @@ type runScriptToolParams struct {
 	Analyses    analysisports.RunRecorder
 }
 
-func newRunScriptTool(p *runScriptToolParams) agentports.AgentQueryTool {
+func newRunScriptTool(p *runScriptToolParams) agenttoolports.AgentQueryTool {
 	return &runScriptTool{
 		runner: p.Runner,
 		datasets: &scriptDatasets{
@@ -188,7 +188,7 @@ func (t *runScriptTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *runScriptTool) Policy() agentports.ToolPolicy {
+func (t *runScriptTool) Policy() agenttoolports.ToolPolicy {
 	policy := readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceCodeMode,
 		reads:    agent.ExternalReadMarked,
@@ -200,7 +200,7 @@ func (t *runScriptTool) Policy() agentports.ToolPolicy {
 			"changes nothing itself: a change it prepares is proposed with the rest of its " +
 			"batch for a person to approve.",
 	})
-	policy.Script = agentports.ScriptRunner
+	policy.Script = agenttoolports.ScriptRunner
 	policy.Sources = scriptTaintSources
 
 	return policy
@@ -324,7 +324,7 @@ func (a *scriptAnswer) ScriptContinuation() codemode.Continuation { return a.con
 
 func (t *runScriptTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if params.Broker == nil {
 		return nil, errScriptBrokerMissing
@@ -443,7 +443,7 @@ var errContinuationReadsItsOwn = errors.New(
 		"leave datasets and inputs out",
 )
 
-func scriptRunOf(params *agentports.QueryToolParams) (*scriptRun, error) {
+func scriptRunOf(params *agenttoolports.QueryToolParams) (*scriptRun, error) {
 	code, _ := params.Params[paramScriptCode].(string)
 	run := &scriptRun{
 		title:    optionalString(params.Params, paramScriptTitle),
@@ -489,7 +489,7 @@ func hasItems(value any) bool {
 }
 
 type analysisRecord struct {
-	params   *agentports.QueryToolParams
+	params   *agenttoolports.QueryToolParams
 	answer   *scriptAnswer
 	outcome  *scriptports.Outcome
 	purpose  string

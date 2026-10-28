@@ -5,12 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/stretchr/testify/assert"
 )
 
-func declaredRule() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func declaredRule() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          "shipment_update",
 		Kind:          agent.ToolKindAction,
 		DefaultTier:   agent.TierActWithApproval,
@@ -28,7 +28,12 @@ func TestApplyOverride_HoldsTheToolLower(t *testing.T) {
 	})
 
 	assert.Equal(t, agent.TierPropose, got.MaxTier)
-	assert.Equal(t, agent.TierPropose, got.DefaultTier, "the default never sits above the most freedom")
+	assert.Equal(
+		t,
+		agent.TierPropose,
+		got.DefaultTier,
+		"the default never sits above the most freedom",
+	)
 	assert.Equal(t, agent.ExternalReadAlways, got.ReadsExternal)
 }
 
@@ -53,8 +58,16 @@ func TestApplyOverride_LeavesTheDeclaredRuleWithoutAnOverride(t *testing.T) {
 	declared := declaredRule()
 
 	assert.Equal(t, declared, agenttoolpolicy.ApplyOverride(declared, nil))
-	assert.Equal(t, declared, agenttoolpolicy.ApplyOverride(declared, &agent.ToolRuleOverride{Reason: "reset"}))
-	assert.Equal(t, declared, agenttoolpolicy.ApplyOverrides(declared, map[string]*agent.ToolRuleOverride{
-		"other_tool": {MaxTier: agent.TierPropose},
-	}))
+	assert.Equal(
+		t,
+		declared,
+		agenttoolpolicy.ApplyOverride(declared, &agent.ToolRuleOverride{Reason: "reset"}),
+	)
+	assert.Equal(
+		t,
+		declared,
+		agenttoolpolicy.ApplyOverrides(declared, map[string]*agent.ToolRuleOverride{
+			"other_tool": {MaxTier: agent.TierPropose},
+		}),
+	)
 }

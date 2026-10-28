@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -94,7 +95,7 @@ func (s *Service) ownerOf(
 			"A {0} is picked up by the work that asked for it, and this one names none", what,
 		)
 	}
-	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         asked.RunID,
 		TenantInfo: &tenant,
 	})
@@ -130,7 +131,7 @@ func (s *Service) threadWaitOwner(
 	tenant pagination.TenantInfo,
 	threadID pulid.ID,
 ) (*waitOwner, error) {
-	thread, err := s.conversations.GetThreadOwned(ctx, agentports.GetThreadOwnedRequest{
+	thread, err := s.conversations.GetThreadOwned(ctx, assistantports.GetThreadOwnedRequest{
 		ID:         threadID,
 		TenantInfo: tenant,
 	})

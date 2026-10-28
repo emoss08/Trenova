@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -75,7 +75,7 @@ func driftLabel(finding *accountingsync.AccountingDriftFinding) string {
 	return string(finding.ObjectType) + " " + label
 }
 
-func driftFindingID(params *agentports.ToolExecuteParams) (pulid.ID, error) {
+func driftFindingID(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
 	return common.RequirePulid(params.Params, paramDriftFindingID)
 }
 
@@ -83,13 +83,13 @@ type ResolveAccountingDriftTool struct {
 	drift accountingDriftOperator
 }
 
-func newResolveAccountingDriftTool(drift accountingDriftOperator) agentports.AgentTool {
+func newResolveAccountingDriftTool(drift accountingDriftOperator) agenttoolports.AgentTool {
 	return &ResolveAccountingDriftTool{drift: drift}
 }
 
 func ProvideResolveAccountingDriftTool(
 	drift accountingsyncports.AccountingDriftService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newResolveAccountingDriftTool(drift)
 }
 
@@ -131,8 +131,8 @@ func (t *ResolveAccountingDriftTool) ParamSchema() map[string]any {
 	}, paramDriftFindingID, paramDriftDirection)
 }
 
-func (t *ResolveAccountingDriftTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *ResolveAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceAccountingSync,
@@ -151,12 +151,12 @@ func (t *ResolveAccountingDriftTool) Policy() agentports.ToolPolicy {
 
 func (t *ResolveAccountingDriftTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramDriftFindingID, permission.ResourceAccountingSync)
 }
 
 func (t *ResolveAccountingDriftTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.ResolveAccountingDriftRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -186,7 +186,7 @@ func (t *ResolveAccountingDriftTool) request(
 
 func (t *ResolveAccountingDriftTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.ResolveAccountingDriftRequest, *accountingsyncports.AccountingDriftFixPreview, error) {
 	req, err := t.request(params)
 	if err != nil {
@@ -201,7 +201,7 @@ func (t *ResolveAccountingDriftTool) plan(
 
 func (t *ResolveAccountingDriftTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, _, err := t.plan(ctx, &params)
 	return err
@@ -209,7 +209,7 @@ func (t *ResolveAccountingDriftTool) Validate(
 
 func (t *ResolveAccountingDriftTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, _, err := t.plan(ctx, &params)
 	if err != nil {
@@ -223,13 +223,13 @@ type DismissAccountingDriftTool struct {
 	drift accountingDriftOperator
 }
 
-func newDismissAccountingDriftTool(drift accountingDriftOperator) agentports.AgentTool {
+func newDismissAccountingDriftTool(drift accountingDriftOperator) agenttoolports.AgentTool {
 	return &DismissAccountingDriftTool{drift: drift}
 }
 
 func ProvideDismissAccountingDriftTool(
 	drift accountingsyncports.AccountingDriftService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newDismissAccountingDriftTool(drift)
 }
 
@@ -264,7 +264,7 @@ func (t *DismissAccountingDriftTool) ParamSchema() map[string]any {
 	}, paramDriftFindingID, paramDriftNote)
 }
 
-func (t *DismissAccountingDriftTool) Policy() agentports.ToolPolicy {
+func (t *DismissAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:  permission.ResourceAccountingSync,
 		operation: permission.OpUpdate,
@@ -276,13 +276,13 @@ func (t *DismissAccountingDriftTool) Policy() agentports.ToolPolicy {
 
 func (t *DismissAccountingDriftTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramDriftFindingID, permission.ResourceAccountingSync)
 }
 
 func (t *DismissAccountingDriftTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.DismissAccountingDriftRequest, *accountingsyncports.AccountingDriftFixPreview, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
@@ -316,7 +316,7 @@ func (t *DismissAccountingDriftTool) plan(
 
 func (t *DismissAccountingDriftTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, _, err := t.plan(ctx, &params)
 	return err
@@ -324,7 +324,7 @@ func (t *DismissAccountingDriftTool) Validate(
 
 func (t *DismissAccountingDriftTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, _, err := t.plan(ctx, &params)
 	if err != nil {
@@ -338,13 +338,13 @@ type CheckAccountingDriftTool struct {
 	drift accountingDriftOperator
 }
 
-func newCheckAccountingDriftTool(drift accountingDriftOperator) agentports.AgentTool {
+func newCheckAccountingDriftTool(drift accountingDriftOperator) agenttoolports.AgentTool {
 	return &CheckAccountingDriftTool{drift: drift}
 }
 
 func ProvideCheckAccountingDriftTool(
 	drift accountingsyncports.AccountingDriftService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newCheckAccountingDriftTool(drift)
 }
 
@@ -369,7 +369,7 @@ func (t *CheckAccountingDriftTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *CheckAccountingDriftTool) Policy() agentports.ToolPolicy {
+func (t *CheckAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:   permission.ResourceAccountingSync,
 		operation:  permission.OpUpdate,
@@ -382,7 +382,7 @@ func (t *CheckAccountingDriftTool) Policy() agentports.ToolPolicy {
 
 func (t *CheckAccountingDriftTool) setup(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (integration.Type, *accountingsyncports.AccountingDriftOverview, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return "", nil, err
@@ -403,7 +403,7 @@ func (t *CheckAccountingDriftTool) setup(
 
 func (t *CheckAccountingDriftTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, _, err := t.setup(ctx, &params)
 	return err
@@ -411,7 +411,7 @@ func (t *CheckAccountingDriftTool) Validate(
 
 func (t *CheckAccountingDriftTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	system, _, err := t.setup(ctx, &params)
 	if err != nil {

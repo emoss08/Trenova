@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +25,7 @@ func setupScopeVerdictCache(t *testing.T) *scopeVerdictCacheRepository {
 func TestScopeVerdictCache_SetAndGet_Integration(t *testing.T) {
 	repo := setupScopeVerdictCache(t)
 
-	verdict := &agentports.CachedScopeVerdict{
+	verdict := &agenttoolports.CachedScopeVerdict{
 		Category:  "TransportationOperations",
 		Reasoning: "asks about drivers",
 	}
@@ -52,7 +52,7 @@ func TestScopeVerdictCache_Expires_Integration(t *testing.T) {
 		repo.Set(
 			t.Context(),
 			"org_1:short",
-			&agentports.CachedScopeVerdict{Category: "x"},
+			&agenttoolports.CachedScopeVerdict{Category: "x"},
 			time.Second,
 		),
 	)

@@ -8,17 +8,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoiceadjustmentrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicedisputerepository"
@@ -26,13 +20,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -114,7 +113,10 @@ func (b *billingSeed) invoice(
 		BillToCustomerID: fixture.Customer.ID, Number: "INV-" + label,
 		Status: billingqueue.StatusPosted, BillType: billingqueue.BillTypeInvoice,
 	}
-	require.NoError(b.t, billingqueuedb.BillingQueueItems.Create(tenant.Ctx(b.t.Context()), b.admin, queue))
+	require.NoError(
+		b.t,
+		billingqueuedb.BillingQueueItems.Create(tenant.Ctx(b.t.Context()), b.admin, queue),
+	)
 
 	posted := timeutils.NowUnix()
 	due := posted + 30*86_400
@@ -158,7 +160,10 @@ func (b *billingSeed) adjustment(
 		OrganizationID: info.OrgID, BusinessUnitID: info.BuID, RootInvoiceID: original.ID,
 	}
 	tenantCtx := tenant.Ctx(b.t.Context())
-	require.NoError(b.t, invoiceadjustmentdb.InvoiceAdjustmentCorrectionGroups.Create(tenantCtx, b.admin, group))
+	require.NoError(
+		b.t,
+		invoiceadjustmentdb.InvoiceAdjustmentCorrectionGroups.Create(tenantCtx, b.admin, group),
+	)
 	adjustment := &invoiceadjustment.InvoiceAdjustment{
 		OrganizationID: info.OrgID, BusinessUnitID: info.BuID, CorrectionGroupID: group.ID,
 		OriginalInvoiceID: original.ID, Kind: invoiceadjustment.KindCreditOnly,
@@ -167,13 +172,23 @@ func (b *billingSeed) adjustment(
 		CreditTotalAmount: decimal.NewFromInt(-25), CreditTotalAmountMinor: -2_500,
 		NetDeltaAmount: decimal.NewFromInt(-25), NetDeltaAmountMinor: -2_500,
 	}
-	require.NoError(b.t, invoiceadjustmentdb.InvoiceAdjustments.Create(tenantCtx, b.admin, adjustment))
-	require.NoError(b.t, invoiceadjustmentdb.InvoiceAdjustmentLines.Create(tenantCtx, b.admin, &invoiceadjustment.InvoiceAdjustmentLine{
-		OrganizationID: info.OrgID, BusinessUnitID: info.BuID, AdjustmentID: adjustment.ID,
-		OriginalInvoiceID: original.ID, OriginalLineID: original.Lines[0].ID, LineNumber: 1,
-		Description: "Linehaul", CreditQuantity: decimal.NewFromInt(1),
-		CreditAmount: decimal.NewFromInt(-25), CreditAmountMinor: -2_500,
-	}))
+	require.NoError(
+		b.t,
+		invoiceadjustmentdb.InvoiceAdjustments.Create(tenantCtx, b.admin, adjustment),
+	)
+	require.NoError(
+		b.t,
+		invoiceadjustmentdb.InvoiceAdjustmentLines.Create(
+			tenantCtx,
+			b.admin,
+			&invoiceadjustment.InvoiceAdjustmentLine{
+				OrganizationID: info.OrgID, BusinessUnitID: info.BuID, AdjustmentID: adjustment.ID,
+				OriginalInvoiceID: original.ID, OriginalLineID: original.Lines[0].ID, LineNumber: 1,
+				Description: "Linehaul", CreditQuantity: decimal.NewFromInt(1),
+				CreditAmount: decimal.NewFromInt(-25), CreditAmountMinor: -2_500,
+			},
+		),
+	)
 
 	return adjustment.ID, nil
 }
@@ -241,10 +256,14 @@ func billingServices(
 		invoicedisputerepository.Params{DB: conn, Logger: logger})
 	services.InvoiceAdjustmentService = invoiceadjustmentservice.New(
 		invoiceadjustmentservice.Params{
-			Logger:       logger,
-			Repo:         invoiceadjustmentrepository.New(invoiceadjustmentrepository.Params{DB: conn, Logger: logger}),
-			DocumentRepo: documentrepository.New(documentrepository.Params{DB: conn, Logger: logger}),
-			InvoiceRepo:  invoices,
+			Logger: logger,
+			Repo: invoiceadjustmentrepository.New(
+				invoiceadjustmentrepository.Params{DB: conn, Logger: logger},
+			),
+			DocumentRepo: documentrepository.New(
+				documentrepository.Params{DB: conn, Logger: logger},
+			),
+			InvoiceRepo: invoices,
 		})
 
 	seed := &billingSeed{
@@ -255,7 +274,9 @@ func billingServices(
 	return seed, services, invoices
 }
 
-func TestConvertedLists_BillingReadsReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *testing.T) {
+func TestConvertedLists_BillingReadsReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(
+	t *testing.T,
+) {
 	_, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
@@ -263,7 +284,10 @@ func TestConvertedLists_BillingReadsReadWhatTheRepositoryToolsReadUnderRowLevelS
 	seed, services, invoices := billingServices(t, conn, admin)
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	readers := &convertedListEnv{
-		reader: agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services}),
+		reader: agentreadtest.NewReader(
+			t,
+			agentreadtest.Options{Engine: engine, Resolvers: services},
+		),
 		public: agentreadtest.NewReader(t, agentreadtest.Options{
 			Engine: &publicRole{}, Resolvers: services,
 		}),
@@ -323,8 +347,8 @@ func TestConvertedLists_BillingReadsWithholdTheMoneyAtInternal(t *testing.T) {
 	require.NoError(t, err)
 	seed.payment(tenant, "A1", false)
 
-	read := func(tool agentports.AgentQueryTool) map[string]any {
-		data, readErr := tool.Query(ctx, &agentports.QueryToolParams{
+	read := func(tool agenttoolports.AgentQueryTool) map[string]any {
+		data, readErr := tool.Query(ctx, &agenttoolports.QueryToolParams{
 			OrganizationID:    tenant.Actor.OrganizationID,
 			BusinessUnitID:    tenant.Actor.BusinessUnitID,
 			Actor:             tenant.Actor,
@@ -434,7 +458,7 @@ func TestConvertedLists_InvoiceDisputesReadTheNamedInvoicesUnderRowLevelSecurity
 
 	tool, err := agentquerytoolservice.ConvertedListTool("invoice_list_disputes", reader, engine)
 	require.NoError(t, err)
-	data, err := tool.Query(mineCtx, &agentports.QueryToolParams{
+	data, err := tool.Query(mineCtx, &agenttoolports.QueryToolParams{
 		OrganizationID:    mine.Actor.OrganizationID,
 		BusinessUnitID:    mine.Actor.BusinessUnitID,
 		Actor:             mine.Actor,
@@ -449,7 +473,11 @@ func TestConvertedLists_InvoiceDisputesReadTheNamedInvoicesUnderRowLevelSecurity
 	assert.ElementsMatch(t, []any{"disputedAmount", "notes", "resolutionNotes"},
 		page["withheldByAccess"])
 
-	hidden, err := agentquerytoolservice.ConvertedListTool("invoice_list_disputes", public, &publicRole{})
+	hidden, err := agentquerytoolservice.ConvertedListTool(
+		"invoice_list_disputes",
+		public,
+		&publicRole{},
+	)
 	require.NoError(t, err)
 	page = callTool(t, mineCtx, hidden, mine.Actor, call)
 	withheld, _ := page["withheldByAccess"].([]any)
@@ -471,7 +499,10 @@ func TestConvertedGets_InvoicesAndAdjustmentsReadOneRecordUnderRowLevelSecurity(
 	seed, services, _ := billingServices(t, conn, admin)
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	readers := &convertedListEnv{
-		reader: agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services}),
+		reader: agentreadtest.NewReader(
+			t,
+			agentreadtest.Options{Engine: engine, Resolvers: services},
+		),
 		public: agentreadtest.NewReader(t, agentreadtest.Options{
 			Engine: &publicRole{}, Resolvers: services,
 		}),
@@ -485,7 +516,13 @@ func TestConvertedGets_InvoicesAndAdjustmentsReadOneRecordUnderRowLevelSecurity(
 			tool:               "invoice_get",
 			withheldAtInternal: invoiceWithheldAtInternal,
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, _ bool) (pulid.ID, error) {
-				row, err := seed.invoice(ctx, tenant, label, invoice.SettlementStatusUnpaid, pulid.Nil)
+				row, err := seed.invoice(
+					ctx,
+					tenant,
+					label,
+					invoice.SettlementStatusUnpaid,
+					pulid.Nil,
+				)
 				return created(row, err)
 			},
 		}, readers, recordID)

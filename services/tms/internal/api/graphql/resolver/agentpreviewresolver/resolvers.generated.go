@@ -5,6 +5,7 @@ package agentpreviewresolver
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 )
 
 type Deps struct {
@@ -12,7 +13,7 @@ type Deps struct {
 	AgentProposalService   agentports.AgentProposalService
 	AgentPlanService       agentports.AgentPlanService
 	AgentDecisionService   agentports.AgentDecisionService
-	ProposalPreviewService agentports.ProposalPreviewService
+	ProposalPreviewService agentruntimeports.ProposalPreviewService
 }
 
 type AgentDecisionResolver struct{ *Deps }

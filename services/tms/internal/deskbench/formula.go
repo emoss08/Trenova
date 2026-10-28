@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary/formulalibrarydb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
@@ -56,7 +56,7 @@ func (s *Session) OpenFormula(
 	ctx = s.Context(ctx)
 
 	state := &formulaState{library: page.editsLibrary()}
-	req := &agentports.OpenPageThreadRequest{
+	req := &assistantports.OpenPageThreadRequest{
 		TenantInfo:  s.Tenant,
 		Origin:      conversation.ThreadOriginFormula,
 		SubjectType: agent.SubjectFormulaTemplate,
@@ -203,7 +203,7 @@ func (f *formulaState) page() *agent.PageContext {
 	}
 }
 
-func (f *formulaState) apply(artifacts []agentports.AssistantArtifact) {
+func (f *formulaState) apply(artifacts []assistantports.AssistantArtifact) {
 	for idx := range artifacts {
 		artifact := &artifacts[idx]
 		if artifact.Kind != assistantartifact.KindDraftEdit {

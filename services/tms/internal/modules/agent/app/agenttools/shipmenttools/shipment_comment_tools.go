@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -150,7 +150,7 @@ func commentResult(action string, comment *shipment.ShipmentComment) *agent.Tool
 }
 
 func toggleCommentRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentports.ToggleShipmentCommentRequest, error) {
 	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 	if err != nil {
@@ -208,7 +208,7 @@ type commentToggleSpec struct {
 func newCommentToggleTool(
 	comments commentModerator,
 	spec *commentToggleSpec,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	properties := map[string]any{
 		common.ParamShipmentID: common.ShipmentIDProperty("The shipment the comment is on"),
 		ParamCommentID:         commentIDProperty(),
@@ -237,7 +237,7 @@ func newCommentToggleTool(
 		Plan: func(
 			ctx context.Context,
 			req *shipmentports.ToggleShipmentCommentRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*shipmentports.ShipmentCommentChange, error) {
 			if spec.pinned != nil {
 				return comments.PreviewPin(ctx, req, params.Actor, *spec.pinned)
@@ -252,7 +252,7 @@ func newCommentToggleTool(
 		Run: func(
 			ctx context.Context,
 			req *shipmentports.ToggleShipmentCommentRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			var (
 				saved *shipment.ShipmentComment
@@ -277,13 +277,13 @@ func newCommentToggleTool(
 	})
 }
 
-func targetComment(params map[string]any) (agentports.ToolTarget, bool) {
+func targetComment(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, ParamCommentID, permission.ResourceShipmentComment)
 }
 
 func BoolPointer(value bool) *bool { return &value }
 
-func NewPinShipmentCommentTool(comments commentModerator) agentports.AgentTool {
+func NewPinShipmentCommentTool(comments commentModerator) agenttoolports.AgentTool {
 	return newCommentToggleTool(comments, &commentToggleSpec{
 		name: "shipment_pin_comment",
 		description: "Pin a comment to the top of a shipment's thread so dispatch sees " +
@@ -300,7 +300,7 @@ func NewPinShipmentCommentTool(comments commentModerator) agentports.AgentTool {
 	})
 }
 
-func NewUnpinShipmentCommentTool(comments commentModerator) agentports.AgentTool {
+func NewUnpinShipmentCommentTool(comments commentModerator) agenttoolports.AgentTool {
 	return newCommentToggleTool(comments, &commentToggleSpec{
 		name: "shipment_unpin_comment",
 		description: "Take a pinned comment off the top of a shipment's thread once " +
@@ -315,7 +315,7 @@ func NewUnpinShipmentCommentTool(comments commentModerator) agentports.AgentTool
 	})
 }
 
-func NewResolveShipmentCommentTool(comments commentModerator) agentports.AgentTool {
+func NewResolveShipmentCommentTool(comments commentModerator) agenttoolports.AgentTool {
 	return newCommentToggleTool(comments, &commentToggleSpec{
 		name: "shipment_resolve_comment",
 		description: "Mark a comment on a shipment resolved once what it asked for is " +
@@ -347,7 +347,7 @@ type commentEdit struct {
 	requiresAck *bool
 }
 
-func readCommentEdit(params *agentports.ToolExecuteParams) (*commentEdit, error) {
+func readCommentEdit(params *agenttoolports.ToolExecuteParams) (*commentEdit, error) {
 	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 	if err != nil {
 		return nil, err
@@ -454,8 +454,8 @@ func (e *commentEdit) entity(
 }
 
 func classifyCommentEditVisibility(
-	params agentports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
-) agentports.CallPolicy {
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+) agenttoolports.CallPolicy {
 	return common.ClassifyCommentVisibility(params)
 }
 
@@ -490,7 +490,7 @@ func moderatorFor(
 func NewEditShipmentCommentTool(
 	comments commentModerator,
 	permissions commentPermissions,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	base := common.NewReportingReceivableTool(&common.ReceivableSpec{
 		Name:        "shipment_update_comment",
 		SearchTerms: []string{"fix comment", "reword comment", "typo"},
@@ -529,7 +529,7 @@ func NewEditShipmentCommentTool(
 		Plan: func(
 			ctx context.Context,
 			edit *commentEdit,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*commentEditPlan, error) {
 			req, err := commentUpdateRequest(ctx, comments, permissions, edit, params.Actor)
 			if err != nil {
@@ -547,7 +547,7 @@ func NewEditShipmentCommentTool(
 		Run: func(
 			ctx context.Context,
 			edit *commentEdit,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := commentUpdateRequest(ctx, comments, permissions, edit, params.Actor)
 			if err != nil {
@@ -623,7 +623,7 @@ type commentDeletion struct {
 func NewDeleteShipmentCommentTool(
 	comments commentModerator,
 	permissions commentPermissions,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
 		Name:     "shipment_delete_comment",
 		Artifact: common.ShipmentRecordEntity,
@@ -645,7 +645,7 @@ func NewDeleteShipmentCommentTool(
 		Required: []string{common.ParamShipmentID, ParamCommentID},
 		Target:   targetComment,
 	}, common.ReceivablePlan[*commentDeletion, *shipmentports.ShipmentCommentDeletion]{
-		Request: func(params *agentports.ToolExecuteParams) (*commentDeletion, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*commentDeletion, error) {
 			toggle, err := toggleCommentRequest(params)
 			if err != nil {
 				return nil, err
@@ -660,7 +660,7 @@ func NewDeleteShipmentCommentTool(
 		Plan: func(
 			ctx context.Context,
 			deletion *commentDeletion,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*shipmentports.ShipmentCommentDeletion, error) {
 			req, err := commentDeleteRequest(ctx, comments, permissions, deletion, params.Actor)
 			if err != nil {
@@ -690,7 +690,7 @@ func NewDeleteShipmentCommentTool(
 		Run: func(
 			ctx context.Context,
 			deletion *commentDeletion,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := commentDeleteRequest(ctx, comments, permissions, deletion, params.Actor)
 			if err != nil {

@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
@@ -307,7 +307,7 @@ func TestMatchBankReceipt_MatchesAsTheApprover(t *testing.T) {
 	assert.Equal(t, params.OrganizationID, receipts.matched.TenantInfo.OrgID)
 	assert.Same(t, params.Actor, receipts.actor)
 
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceBankReceipt, target.Resource)
 	assert.Equal(t, receiptID, target.ID)
@@ -322,7 +322,7 @@ func TestMatchBankReceipt_PreviewRefusesAnAmountMismatch(t *testing.T) {
 	receipt := unmatchedReceipt(125_000)
 	receipts := &fakeReceiptMatcher{receipt: receipt, paymentAmount: 120_000}
 	tool := NewMatchBankReceiptTool(receipts)
-	previewer := tool.(agentports.ToolPreviewer)
+	previewer := tool.(agenttoolports.ToolPreviewer)
 	params := agenttoolstest.MemoryParams(map[string]any{
 		"bankReceiptId":     receipt.ID.String(),
 		"customerPaymentId": pulid.MustNew("cpay_").String(),
@@ -446,7 +446,7 @@ func TestPostCustomerPayment_MatchesTheReceiptItRecords(t *testing.T) {
 	assert.Equal(t, permission.OpUpdate, perms.lastReq.Operation)
 	assert.Equal(t, params.Actor.UserID, perms.lastReq.UserID)
 
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, receipt.ID, target.ID)
 }
@@ -455,7 +455,10 @@ func TestPostCustomerPayment_APostedPaymentIsNotFailedByAReceiptThatWillNotMatch
 	t.Parallel()
 
 	receipt := unmatchedReceipt(125_000)
-	receipts := &fakeReceiptMatcher{receipt: receipt, matchErr: errors.New("the receipt was matched meanwhile")}
+	receipts := &fakeReceiptMatcher{
+		receipt:  receipt,
+		matchErr: errors.New("the receipt was matched meanwhile"),
+	}
 	poster := &fakePaymentPoster{}
 	tool := NewPostCustomerPaymentTool(poster, receipts, &allowingPermissions{allowed: true})
 	params := agenttoolstest.MemoryParams(map[string]any{
@@ -465,7 +468,7 @@ func TestPostCustomerPayment_APostedPaymentIsNotFailedByAReceiptThatWillNotMatch
 		"bankReceiptId": receipt.ID.String(),
 	})
 
-	reporter, ok := tool.(agentports.ToolResultReporter)
+	reporter, ok := tool.(agenttoolports.ToolResultReporter)
 	require.True(t, ok)
 	result, err := reporter.ExecuteWithResult(t.Context(), params)
 
@@ -535,7 +538,7 @@ func TestPostCustomerPayment_PreviewShowsWhatStaysUnapplied(t *testing.T) {
 		},
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Nil(t, poster.posted, "a preview must not post")
 	assert.Nil(t, receipts.matched, "a preview must not match")

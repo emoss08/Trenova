@@ -7,7 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -19,7 +22,7 @@ import (
 func finishedVerdicts(events *[]kernelports.StreamEvent) map[string]string {
 	verdicts := make(map[string]string)
 	for _, event := range *events {
-		finished, ok := event.Data.(agentports.AssistantToolFinishedEvent)
+		finished, ok := event.Data.(assistantports.AssistantToolFinishedEvent)
 		if !ok {
 			continue
 		}
@@ -29,15 +32,15 @@ func finishedVerdicts(events *[]kernelports.StreamEvent) map[string]string {
 	return verdicts
 }
 
-func recordEvents(req *agentports.RunRequest) *[]kernelports.StreamEvent {
+func recordEvents(req *agentruntimeports.RunRequest) *[]kernelports.StreamEvent {
 	events := make([]kernelports.StreamEvent, 0, 8)
 	req.Emit = func(event kernelports.StreamEvent) { events = append(events, event) }
 
 	return &events
 }
 
-func callsTurn(calls ...agentports.ToolCall) *agentports.ChatCompletionResult {
-	return &agentports.ChatCompletionResult{ToolCalls: calls, ModelIdentifier: "test-model"}
+func callsTurn(calls ...llmports.ToolCall) *llmports.ChatCompletionResult {
+	return &llmports.ChatCompletionResult{ToolCalls: calls, ModelIdentifier: "test-model"}
 }
 
 func systemUserActor() *permissionports.RequestActor {
@@ -55,29 +58,29 @@ func TestRun_TheLoopsOwnRefusalsCarryAVerdict(t *testing.T) {
 
 	registered := queryTool("worker_list", map[string]any{}, nil)
 	broken := queryTool("shipment_get", nil, errors.New("connection reset"))
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		callsTurn(
-			agentports.ToolCall{ID: "unknown", Name: "delete_everything"},
-			agentports.ToolCall{ID: "unheld", Name: "worker_list"},
-			agentports.ToolCall{
+			llmports.ToolCall{ID: "unknown", Name: "delete_everything"},
+			llmports.ToolCall{ID: "unheld", Name: "worker_list"},
+			llmports.ToolCall{
 				ID:             "cut_off",
 				Name:           "shipment_get",
 				Arguments:      map[string]any{},
 				ArgumentsError: "unexpected end of JSON input",
 			},
-			agentports.ToolCall{
+			llmports.ToolCall{
 				ID:        "first",
 				Name:      "shipment_get",
 				Arguments: map[string]any{"id": "shp_1"},
 			},
 		),
 		callsTurn(
-			agentports.ToolCall{
+			llmports.ToolCall{
 				ID:        "repeat",
 				Name:      "shipment_get",
 				Arguments: map[string]any{"id": "shp_1"},
 			},
-			agentports.ToolCall{
+			llmports.ToolCall{
 				ID:        "spent",
 				Name:      "shipment_get",
 				Arguments: map[string]any{"id": "shp_2"},
@@ -86,12 +89,12 @@ func TestRun_TheLoopsOwnRefusalsCarryAVerdict(t *testing.T) {
 		textTurn("I could not finish."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{registered, broken},
+		Tools: []agenttoolports.AgentQueryTool{registered, broken},
 	}, &stubActionRegistry{}, nil)
 	definition := testDefinition("shipment_get")
 	definition.MaxToolCalls = 5
 
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "Look it up.",
@@ -113,8 +116,8 @@ func TestRun_TheLoopsOwnRefusalsCarryAVerdict(t *testing.T) {
 func TestRun_AnUnattendedQuestionIsDenied(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		callsTurn(agentports.ToolCall{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		callsTurn(llmports.ToolCall{
 			ID:        "ask",
 			Name:      askUserName,
 			Arguments: map[string]any{"question": "Which load?"},
@@ -122,7 +125,7 @@ func TestRun_AnUnattendedQuestionIsDenied(t *testing.T) {
 		textTurn("Nobody to ask."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      systemUserActor(),
 		Input:      "A shipment was created.",
@@ -140,8 +143,8 @@ func TestRun_ACallThatRanCarriesNoRefusalVerdict(t *testing.T) {
 	t.Parallel()
 
 	tool := queryTool("shipment_get", map[string]any{"id": "shp_1"}, nil)
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		callsTurn(agentports.ToolCall{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		callsTurn(llmports.ToolCall{
 			ID:        "read",
 			Name:      "shipment_get",
 			Arguments: map[string]any{"id": "shp_1"},
@@ -149,9 +152,9 @@ func TestRun_ACallThatRanCarriesNoRefusalVerdict(t *testing.T) {
 		textTurn("Found it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{tool},
+		Tools: []agenttoolports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Look it up.",
@@ -207,10 +210,10 @@ func TestRun_EachToolMessageKeepsTheVerdictTheStreamCarried(t *testing.T) {
 	t.Parallel()
 
 	tool := queryTool("shipment_get", map[string]any{"id": "shp_1"}, nil)
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		callsTurn(
-			agentports.ToolCall{ID: "unheld", Name: "worker_list"},
-			agentports.ToolCall{
+			llmports.ToolCall{ID: "unheld", Name: "worker_list"},
+			llmports.ToolCall{
 				ID:        "read",
 				Name:      "shipment_get",
 				Arguments: map[string]any{"id": "shp_1"},
@@ -219,9 +222,9 @@ func TestRun_EachToolMessageKeepsTheVerdictTheStreamCarried(t *testing.T) {
 		textTurn("Found it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{tool, queryTool("worker_list", nil, nil)},
+		Tools: []agenttoolports.AgentQueryTool{tool, queryTool("worker_list", nil, nil)},
 	}, &stubActionRegistry{}, nil)
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Look it up.",

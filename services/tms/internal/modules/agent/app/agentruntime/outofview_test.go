@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,7 +27,7 @@ func TestOutOfViewDecisions_TellsTheModelWhatBecameOfADelegatesProposal(t *testi
 		{ID: visible, Role: conversation.RoleAssistant, Content: "Handed it on."},
 	}
 
-	note := outOfViewDecisions(history, []agentports.ProposalOutcome{
+	note := outOfViewDecisions(history, []agentruntimeports.ProposalOutcome{
 		{
 			SourceMessageID: pulid.MustNew("amsg_"),
 			ToolName:        "agent_raise_exception",
@@ -56,7 +56,12 @@ func TestOutOfViewDecisions_TellsTheModelWhatBecameOfADelegatesProposal(t *testi
 	assert.Contains(t, note, `approved the proposal to run "agent_raise_exception"`)
 	assert.NotContains(t, note, "report_update", "the ledger already swaps a call in view")
 	assert.NotContains(t, note, "report_create", "a waiting card is what the model was told")
-	assert.NotContains(t, note, "report_save_table_view", "a write that ran on its own was not decided")
+	assert.NotContains(
+		t,
+		note,
+		"report_save_table_view",
+		"a write that ran on its own was not decided",
+	)
 	assert.NotContains(t, note, "home_add_widget", "a proposal with no source is not placed")
 	assert.True(t, strings.HasSuffix(note, "]\n\n"), "the note stands apart from the question")
 }
@@ -67,7 +72,7 @@ func TestOutOfViewDecisions_SaysNothingWhenEverythingIsInView(t *testing.T) {
 	source := pulid.MustNew("amsg_")
 	history := []conversation.Message{{ID: source, Role: conversation.RoleAssistant}}
 
-	assert.Empty(t, outOfViewDecisions(history, []agentports.ProposalOutcome{{
+	assert.Empty(t, outOfViewDecisions(history, []agentruntimeports.ProposalOutcome{{
 		SourceMessageID: source,
 		ToolName:        "report_update",
 		Status:          agent.ProposalStatusExecuted,
@@ -80,12 +85,12 @@ func TestOutOfViewDecisions_SaysNothingWhenEverythingIsInView(t *testing.T) {
 func TestOutOfViewDecisions_KeepsTheNewestFew(t *testing.T) {
 	t.Parallel()
 
-	outcomes := make([]agentports.ProposalOutcome, 0, maxOutOfViewDecisions+2)
+	outcomes := make([]agentruntimeports.ProposalOutcome, 0, maxOutOfViewDecisions+2)
 	names := make([]string, 0, cap(outcomes))
 	for idx := range maxOutOfViewDecisions + 2 {
 		name := "tool_" + string(rune('a'+idx))
 		names = append(names, name)
-		outcomes = append(outcomes, agentports.ProposalOutcome{
+		outcomes = append(outcomes, agentruntimeports.ProposalOutcome{
 			SourceMessageID: pulid.MustNew("amsg_"),
 			ToolName:        name,
 			Status:          agent.ProposalStatusRejected,

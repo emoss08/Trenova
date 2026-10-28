@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -65,9 +65,9 @@ type SettlementLedger[E any] struct {
 }
 
 func ClassifyAsMoney(
-	agentports.ToolExecuteParams,
-) agentports.CallPolicy {
-	return agentports.CallPolicy{Egress: agent.EgressMoney}
+	agenttoolports.ToolExecuteParams,
+) agenttoolports.CallPolicy {
+	return agenttoolports.CallPolicy{Egress: agent.EgressMoney}
 }
 
 func BoundedString(

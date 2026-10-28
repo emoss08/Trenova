@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -28,7 +29,7 @@ func pageRecord(data any) (map[string]any, bool) {
 	return nil, false
 }
 
-func workersAnswer() *agentports.GraphQLReadResult {
+func workersAnswer() *graphqlreadports.GraphQLReadResult {
 	edge := func(id, name, city, cursor string) map[string]any {
 		return map[string]any{"cursor": cursor, "node": map[string]any{
 			"id": id, "wholeName": name, "firstName": name, "city": city, "status": "Active",
@@ -37,7 +38,7 @@ func workersAnswer() *agentports.GraphQLReadResult {
 		}}
 	}
 
-	return &agentports.GraphQLReadResult{Data: map[string]any{"workers": map[string]any{
+	return &graphqlreadports.GraphQLReadResult{Data: map[string]any{"workers": map[string]any{
 		"edges": []any{
 			edge("wrk_1", "Ann", "Dallas", "c1"),
 			edge("wrk_2", "Bo", "Tulsa", "c2"),
@@ -50,7 +51,7 @@ func workersAnswer() *agentports.GraphQLReadResult {
 func workerList(t *testing.T) (*graphQLListTool, *keyedReader) {
 	t.Helper()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskWorkers": workersAnswer(),
 	}}
 	tool, err := newGraphQLListTool(keyedSpec(t, toolWorkerList), reader,
@@ -170,7 +171,12 @@ func TestSearchOutcome_ACutResumesByCursorOrOffset(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "k1", key)
 
-	byOffset := searchOutcome{Count: 3, Items: rows, Offset: 25, resume: &pageResume{byOffset: true}}
+	byOffset := searchOutcome{
+		Count:  3,
+		Items:  rows,
+		Offset: 25,
+		resume: &pageResume{byOffset: true},
+	}
 	cut, ok = byOffset.CutPage(2)
 	require.True(t, ok)
 	short, _ = cut.(searchOutcome)
@@ -226,7 +232,7 @@ func TestBesidePage_ACutKeepsWhatWasReadBeside(t *testing.T) {
 	beside, err := withBeside(&page, map[string]any{"catalog": []any{"x"}})
 	require.NoError(t, err)
 
-	cut, ok := beside.(agentports.PageCutter).CutPage(1)
+	cut, ok := beside.(agenttoolports.PageCutter).CutPage(1)
 	require.True(t, ok)
 	record, ok := pageRecord(cut)
 	require.True(t, ok)

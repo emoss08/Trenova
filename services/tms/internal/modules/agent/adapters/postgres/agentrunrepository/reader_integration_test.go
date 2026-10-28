@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -75,29 +75,29 @@ func TestRunReads_KeepAConversationsRunsToItsOwner(t *testing.T) {
 	all := []pulid.ID{conversationRun.ID, orphanRun.ID, shipmentRun.ID}
 
 	readers := map[string]struct {
-		reader agentports.RunReader
+		reader agentruntimeports.RunReader
 		sees   []pulid.ID
 	}{
 		"the owner": {
-			reader: agentports.PersonRunRead(owner),
+			reader: agentruntimeports.PersonRunRead(owner),
 			sees:   []pulid.ID{conversationRun.ID, shipmentRun.ID},
 		},
 		"a colleague": {
-			reader: agentports.PersonRunRead(pulid.MustNew("usr_")),
+			reader: agentruntimeports.PersonRunRead(pulid.MustNew("usr_")),
 			sees:   []pulid.ID{shipmentRun.ID},
 		},
 		"an agent or an API key": {
-			reader: agentports.PersonRunRead(pulid.Nil),
+			reader: agentruntimeports.PersonRunRead(pulid.Nil),
 			sees:   []pulid.ID{shipmentRun.ID},
 		},
 		"the runtime": {
-			reader: agentports.UnattendedRunRead(),
+			reader: agentruntimeports.UnattendedRunRead(),
 			sees:   all,
 		},
 	}
 
 	for name, tc := range readers {
-		listed, listErr := repo.List(ctx, &agentports.ListAgentRunRequest{
+		listed, listErr := repo.List(ctx, &agentruntimeports.ListAgentRunRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: tenant,
 				Pagination: pagination.Info{Limit: 10},
@@ -108,21 +108,24 @@ func TestRunReads_KeepAConversationsRunsToItsOwner(t *testing.T) {
 		assert.ElementsMatch(t, tc.sees, storedRunIDs(listed.Items), name)
 		assert.Equal(t, len(tc.sees), listed.Total, name)
 
-		connection, connErr := repo.ListConnection(ctx, &agentports.ListAgentRunConnectionRequest{
-			Filter: &pagination.QueryOptions{
-				TenantInfo: tenant,
-				Pagination: pagination.Info{Limit: 10},
+		connection, connErr := repo.ListConnection(
+			ctx,
+			&agentruntimeports.ListAgentRunConnectionRequest{
+				Filter: &pagination.QueryOptions{
+					TenantInfo: tenant,
+					Pagination: pagination.Info{Limit: 10},
+				},
+				Cursor: pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
+				Reader: tc.reader,
 			},
-			Cursor: pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
-			Reader: tc.reader,
-		})
+		)
 		require.NoError(t, connErr, name)
 		assert.ElementsMatch(t, tc.sees, storedRunIDs(connection.Items), name)
 		require.NotNil(t, connection.TotalCount, name)
 		assert.Equal(t, len(tc.sees), *connection.TotalCount,
 			"%s: the count leaves out what the page leaves out", name)
 
-		byIDs, idsErr := repo.ListByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
+		byIDs, idsErr := repo.ListByIDs(ctx, agentruntimeports.ListAgentRunsByIDsRequest{
 			IDs:        all,
 			TenantInfo: tenant,
 			Reader:     tc.reader,
@@ -130,16 +133,19 @@ func TestRunReads_KeepAConversationsRunsToItsOwner(t *testing.T) {
 		require.NoError(t, idsErr, name)
 		assert.ElementsMatch(t, tc.sees, storedRunIDs(byIDs), name)
 
-		transcripts, trErr := repo.ListTranscriptsByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
-			IDs:        all,
-			TenantInfo: tenant,
-			Reader:     tc.reader,
-		})
+		transcripts, trErr := repo.ListTranscriptsByIDs(
+			ctx,
+			agentruntimeports.ListAgentRunsByIDsRequest{
+				IDs:        all,
+				TenantInfo: tenant,
+				Reader:     tc.reader,
+			},
+		)
 		require.NoError(t, trErr, name)
 		assert.ElementsMatch(t, tc.sees, storedRunIDs(transcripts), name)
 
 		for _, id := range all {
-			got, getErr := repo.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+			got, getErr := repo.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 				ID:         id,
 				TenantInfo: &tenant,
 				Reader:     tc.reader,
@@ -156,10 +162,10 @@ func TestRunReads_KeepAConversationsRunsToItsOwner(t *testing.T) {
 		}
 	}
 
-	_, err := repo.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	_, err := repo.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         pulid.MustNew("ar_"),
 		TenantInfo: &tenant,
-		Reader:     agentports.PersonRunRead(owner),
+		Reader:     agentruntimeports.PersonRunRead(owner),
 	})
 	assert.True(t, errortypes.IsNotFoundError(err), "a missing id reads the same way")
 }

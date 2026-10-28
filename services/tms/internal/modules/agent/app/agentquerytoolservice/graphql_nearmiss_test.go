@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,8 +20,8 @@ type conditionalReader struct {
 
 func (r *conditionalReader) Read(
 	_ context.Context,
-	req *agentports.GraphQLReadRequest,
-) (*agentports.GraphQLReadResult, error) {
+	req *graphqlreadports.GraphQLReadRequest,
+) (*graphqlreadports.GraphQLReadResult, error) {
 	encoded, err := sonic.MarshalString(req.Variables)
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (r *conditionalReader) Read(
 		}
 	}
 
-	return &agentports.GraphQLReadResult{Data: map[string]any{r.root: map[string]any{
+	return &graphqlreadports.GraphQLReadResult{Data: map[string]any{r.root: map[string]any{
 		connectionEdges:    edges,
 		connectionPageInfo: map[string]any{pageHasNext: false},
 	}}}, nil

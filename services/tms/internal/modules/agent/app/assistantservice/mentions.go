@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -56,8 +56,8 @@ var mentionKinds = []mentionKind{
 func (s *Service) SearchMentions(
 	ctx context.Context,
 	actor permissionports.RequestActor,
-	req agentports.MentionSearchRequest,
-) ([]agentports.MentionCandidate, error) {
+	req assistantports.MentionSearchRequest,
+) ([]assistantports.MentionCandidate, error) {
 	tab := strings.TrimSpace(req.Kind)
 	if tab == "all" {
 		tab = ""
@@ -88,8 +88,8 @@ func (s *Service) SearchMentions(
 func (s *Service) SearchMentionPage(
 	ctx context.Context,
 	actor permissionports.RequestActor,
-	req agentports.MentionPageRequest,
-) (*agentports.MentionPage, error) {
+	req assistantports.MentionPageRequest,
+) (*assistantports.MentionPage, error) {
 	kind := strings.TrimSpace(req.Kind)
 	idx := slices.IndexFunc(mentionKinds, func(candidate mentionKind) bool {
 		return string(candidate.kind) == kind
@@ -116,7 +116,7 @@ func (s *Service) SearchMentionPage(
 		return nil, err
 	}
 
-	page := &agentports.MentionPage{Results: rows, HasMore: len(rows) > limit}
+	page := &assistantports.MentionPage{Results: rows, HasMore: len(rows) > limit}
 	if page.HasMore {
 		page.Results = rows[:limit]
 	}
@@ -137,13 +137,13 @@ func (s *Service) searchKinds(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
 	search *mentionSearch,
-) ([]agentports.MentionCandidate, error) {
+) ([]assistantports.MentionCandidate, error) {
 	query := strings.TrimSpace(search.query)
 	if len(query) > maxMentionQueryLen {
 		query = query[:maxMentionQueryLen]
 	}
 	if len(search.wanted) == 0 || s.permissions == nil {
-		return []agentports.MentionCandidate{}, nil
+		return []assistantports.MentionCandidate{}, nil
 	}
 
 	checks := make([]permissionports.ResourceOperationCheck, 0, len(search.wanted))
@@ -173,10 +173,10 @@ func (s *Service) searchKinds(
 		}
 	}
 	if len(kinds) == 0 {
-		return []agentports.MentionCandidate{}, nil
+		return []assistantports.MentionCandidate{}, nil
 	}
 
-	rows, err := s.conversations.SearchMentions(ctx, agentports.SearchMentionsRequest{
+	rows, err := s.conversations.SearchMentions(ctx, assistantports.SearchMentionsRequest{
 		TenantInfo:   actor.TenantInfo(),
 		Query:        query,
 		Kinds:        kinds,
@@ -187,9 +187,9 @@ func (s *Service) searchKinds(
 		return nil, err
 	}
 
-	out := make([]agentports.MentionCandidate, 0, len(rows))
+	out := make([]assistantports.MentionCandidate, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, agentports.MentionCandidate(row))
+		out = append(out, assistantports.MentionCandidate(row))
 	}
 
 	return out, nil

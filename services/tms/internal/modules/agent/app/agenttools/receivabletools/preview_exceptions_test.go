@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,9 +50,13 @@ func TestRaiseException_PreviewMatchesWhatIsSaved(t *testing.T) {
 	params := raiseExceptionParams("Shipment", shipmentID)
 	params.Params["blastRadius"] = float64(3)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &exceptions.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&exceptions.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
@@ -78,9 +83,13 @@ func TestRaiseException_PreviewWarnsOutsideARun(t *testing.T) {
 	params := raiseExceptionParams("Shipment", pulid.MustNew("shp_"))
 	params.RunID = pulid.Nil
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &exceptions.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&exceptions.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
@@ -104,9 +113,13 @@ func TestRaiseException_FlagsABillingQueueItemWithItsEvidence(t *testing.T) {
 		"note": "rate confirmation",
 	}}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &exceptions.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&exceptions.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "High", agenttoolstest.FieldByPath(t, change, "severity").After)
@@ -163,7 +176,7 @@ func TestRaiseException_RefusesEvidenceWithoutATypeOrAnID(t *testing.T) {
 		params := raiseExceptionParams("BillingQueueItem", pulid.MustNew("bqi_"))
 		params.Params["evidence"] = evidence
 
-		validator, ok := tool.(agentports.ToolValidator)
+		validator, ok := tool.(agenttoolports.ToolValidator)
 		require.True(t, ok)
 		require.Error(t, validator.Validate(t.Context(), params), name)
 		require.Error(t, tool.Execute(t.Context(), params), name)

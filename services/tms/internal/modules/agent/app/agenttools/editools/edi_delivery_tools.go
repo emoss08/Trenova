@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -64,8 +64,8 @@ type inboundFileReprocessor interface {
 }
 
 func ediRecordSet(
-	tool agentports.AgentTool,
-	params *agentports.ToolExecuteParams,
+	tool agenttoolports.AgentTool,
+	params *agenttoolports.ToolExecuteParams,
 	key string,
 ) ([]pulid.ID, error) {
 	if err := common.GuardPreview(tool, params); err != nil {
@@ -92,8 +92,8 @@ func ediRecordSubset(description string) map[string]any {
 	})
 }
 
-func ediOutboundPolicy(name, rationale string) agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func ediOutboundPolicy(name, rationale string) agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          name,
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceEDI,
@@ -129,7 +129,7 @@ type RetryEDIMessageDeliveryTool struct {
 	deliveries ediDeliveryRetrier
 }
 
-func NewRetryEDIMessageDeliveryTool(deliveries ediDeliveryRetrier) agentports.AgentTool {
+func NewRetryEDIMessageDeliveryTool(deliveries ediDeliveryRetrier) agenttoolports.AgentTool {
 	return &RetryEDIMessageDeliveryTool{deliveries: deliveries}
 }
 
@@ -151,7 +151,7 @@ func (t *RetryEDIMessageDeliveryTool) ParamSchema() map[string]any {
 	}, paramEDIMessageIDs)
 }
 
-func (t *RetryEDIMessageDeliveryTool) Policy() agentports.ToolPolicy {
+func (t *RetryEDIMessageDeliveryTool) Policy() agenttoolports.ToolPolicy {
 	policy := ediOutboundPolicy(t.Name(),
 		"Sends documents to trading partners outside the organization, who act on "+
 			"what they receive; a document sent cannot be recalled.")
@@ -162,7 +162,7 @@ func (t *RetryEDIMessageDeliveryTool) Policy() agentports.ToolPolicy {
 
 func (t *RetryEDIMessageDeliveryTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	_, err := ediRecordSet(t, &params, paramEDIMessageIDs)
 
@@ -171,7 +171,7 @@ func (t *RetryEDIMessageDeliveryTool) Validate(
 
 func (t *RetryEDIMessageDeliveryTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -180,7 +180,7 @@ func (t *RetryEDIMessageDeliveryTool) Execute(
 
 func (t *RetryEDIMessageDeliveryTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return nil, err
@@ -216,7 +216,7 @@ type ReplayEDIMessageTool struct {
 	deliveries ediMessageReplayer
 }
 
-func NewReplayEDIMessageTool(deliveries ediMessageReplayer) agentports.AgentTool {
+func NewReplayEDIMessageTool(deliveries ediMessageReplayer) agenttoolports.AgentTool {
 	return &ReplayEDIMessageTool{deliveries: deliveries}
 }
 
@@ -236,18 +236,18 @@ func (t *ReplayEDIMessageTool) ParamSchema() map[string]any {
 	}, paramEDIMessageID)
 }
 
-func (t *ReplayEDIMessageTool) Policy() agentports.ToolPolicy {
+func (t *ReplayEDIMessageTool) Policy() agenttoolports.ToolPolicy {
 	return ediOutboundPolicy(t.Name(),
 		"Sends a trading partner a document it already has, which it may act on a "+
 			"second time; a document sent cannot be recalled.")
 }
 
-func (t *ReplayEDIMessageTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *ReplayEDIMessageTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramEDIMessageID, permission.ResourceEDI)
 }
 
 func (t *ReplayEDIMessageTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*ediservice.RetryMessageDeliveryRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -266,7 +266,7 @@ func (t *ReplayEDIMessageTool) request(
 
 func (t *ReplayEDIMessageTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -280,7 +280,7 @@ func (t *ReplayEDIMessageTool) Validate(
 
 func (t *ReplayEDIMessageTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -303,7 +303,7 @@ type ReprocessEDIInboundFilesTool struct {
 	files inboundFileReprocessor
 }
 
-func NewReprocessEDIInboundFilesTool(files inboundFileReprocessor) agentports.AgentTool {
+func NewReprocessEDIInboundFilesTool(files inboundFileReprocessor) agenttoolports.AgentTool {
 	return &ReprocessEDIInboundFilesTool{files: files}
 }
 
@@ -334,7 +334,7 @@ func (t *ReprocessEDIInboundFilesTool) ParamSchema() map[string]any {
 	}, paramEDIInboundFileIDs)
 }
 
-func (t *ReprocessEDIInboundFilesTool) Policy() agentports.ToolPolicy {
+func (t *ReprocessEDIInboundFilesTool) Policy() agenttoolports.ToolPolicy {
 	policy := ediOutboundPolicy(t.Name(),
 		"Turns what trading partners sent into tenders, status updates and invoices "+
 			"again, and sends each partner acknowledgments they act on.")
@@ -345,7 +345,7 @@ func (t *ReprocessEDIInboundFilesTool) Policy() agentports.ToolPolicy {
 
 func (t *ReprocessEDIInboundFilesTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	_, err := ediRecordSet(t, &params, paramEDIInboundFileIDs)
 
@@ -354,7 +354,7 @@ func (t *ReprocessEDIInboundFilesTool) Validate(
 
 func (t *ReprocessEDIInboundFilesTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -363,7 +363,7 @@ func (t *ReprocessEDIInboundFilesTool) Execute(
 
 func (t *ReprocessEDIInboundFilesTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return nil, err

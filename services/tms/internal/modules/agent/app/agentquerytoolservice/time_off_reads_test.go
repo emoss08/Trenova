@@ -8,7 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -31,8 +32,8 @@ type timeOffReader struct {
 
 func (r *timeOffReader) Read(
 	_ context.Context,
-	req *agentports.GraphQLReadRequest,
-) (*agentports.GraphQLReadResult, error) {
+	req *graphqlreadports.GraphQLReadRequest,
+) (*graphqlreadports.GraphQLReadResult, error) {
 	input, _ := req.Variables["input"].(map[string]any)
 	r.mu.Lock()
 	r.inputs = append(r.inputs, input)
@@ -45,7 +46,7 @@ func (r *timeOffReader) Read(
 		}})
 	}
 
-	return &agentports.GraphQLReadResult{Data: map[string]any{
+	return &graphqlreadports.GraphQLReadResult{Data: map[string]any{
 		"workerPTOEntries": map[string]any{
 			"edges":    edges,
 			"pageInfo": map[string]any{"hasNextPage": false},
@@ -62,7 +63,7 @@ func (r *timeOffReader) first() map[string]any {
 
 func queryTimeOff(
 	t *testing.T,
-	reader agentports.GraphQLReader,
+	reader graphqlreadports.GraphQLReader,
 	args map[string]any,
 ) map[string]any {
 	t.Helper()
@@ -72,7 +73,7 @@ func queryTimeOff(
 	)
 	require.NoError(t, err)
 	person := agentreadtest.Person()
-	result, err := tool.Query(t.Context(), &agentports.QueryToolParams{
+	result, err := tool.Query(t.Context(), &agenttoolports.QueryToolParams{
 		OrganizationID: person.OrganizationID,
 		BusinessUnitID: person.BusinessUnitID,
 		Actor:          person,

@@ -7,27 +7,29 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type echoPreviews struct {
-	agentports.ProposalPreviewService
+	agentruntimeports.ProposalPreviewService
 
 	preview *agent.ToolPreview
 }
 
 func (p echoPreviews) Baseline(
 	context.Context,
-	*agentports.ProposalBaselineRequest,
-) *agentports.ProposalBaselineResult {
-	return &agentports.ProposalBaselineResult{Preview: p.preview}
+	*agentruntimeports.ProposalBaselineRequest,
+) *agentruntimeports.ProposalBaselineResult {
+	return &agentruntimeports.ProposalBaselineResult{Preview: p.preview}
 }
 
 func filedContent(
 	t *testing.T,
-	previews agentports.ProposalPreviewService,
+	previews agentruntimeports.ProposalPreviewService,
 	schema map[string]any,
 	args map[string]any,
 ) string {
@@ -38,18 +40,18 @@ func filedContent(
 		Tier:     agent.TierPropose,
 		Schema:   schema,
 	}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("shipment_create", args),
 		textTurn("I have proposed the shipment."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
-		Tools: []agentports.AgentTool{tool},
+		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
 	if previews != nil {
 		rt.previews = previews
 	}
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("shipment_create"),
 		Actor:      testActor(),
 		Input:      "copy PRO-100 for Tuesday",

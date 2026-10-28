@@ -1,7 +1,7 @@
 package operations
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/assignmentrepository"
@@ -173,7 +173,7 @@ func SharedOptions() fx.Option {
 			assignmentservice.New,
 			fx.Annotate(
 				dispatchconsoleservice.New,
-				fx.As(new(agentports.DispatchConsoleService)),
+				fx.As(new(dispatchconsoleports.DispatchConsoleService)),
 			),
 			orderservice.New,
 			shipmenteventservice.New,

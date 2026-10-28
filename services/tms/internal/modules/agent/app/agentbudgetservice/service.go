@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -36,7 +37,7 @@ type Params struct {
 
 	Logger        *zap.Logger
 	Usage         aiusageports.AIUsageRepository
-	Runs          agentports.AgentRunRepository
+	Runs          agentruntimeports.AgentRunRepository
 	Proposals     agentports.AgentProposalRepository
 	Organizations tenantports.OrganizationRepository
 	Controls      tenantports.AgentControlRepository
@@ -78,7 +79,7 @@ type costReader interface {
 }
 
 type runCounter interface {
-	CountSince(ctx context.Context, req agentports.CountAgentRunsSinceRequest) (int, error)
+	CountSince(ctx context.Context, req agentruntimeports.CountAgentRunsSinceRequest) (int, error)
 }
 
 type toolCounter interface {
@@ -135,7 +136,7 @@ func (s *Service) CheckRun(
 	}
 
 	if definition.DailyRunLimit > 0 {
-		started, err := s.runs.CountSince(ctx, agentports.CountAgentRunsSinceRequest{
+		started, err := s.runs.CountSince(ctx, agentruntimeports.CountAgentRunsSinceRequest{
 			TenantInfo:   tenant,
 			DefinitionID: definition.ID,
 			Since:        windows.dayStart,
@@ -312,7 +313,7 @@ func (s *Service) Status(
 	if err != nil {
 		return nil, err
 	}
-	started, err := s.runs.CountSince(ctx, agentports.CountAgentRunsSinceRequest{
+	started, err := s.runs.CountSince(ctx, agentruntimeports.CountAgentRunsSinceRequest{
 		TenantInfo:   tenant,
 		DefinitionID: definition.ID,
 		Since:        windows.dayStart,

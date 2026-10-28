@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
@@ -95,14 +95,14 @@ type draftReplyCall struct {
 	write *inboundreplyservice.DraftReplyRequest
 }
 
-func NewDraftInboundReplyTool(p triageToolParams) agentports.AgentTool {
+func NewDraftInboundReplyTool(p triageToolParams) agenttoolports.AgentTool {
 	return newDraftInboundReplyTool(p.Inbox, p.Replies)
 }
 
 func newDraftInboundReplyTool(
 	inbox inboundMessageReader,
 	replies triageReplies,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_draft_reply",
@@ -146,7 +146,7 @@ func newDraftInboundReplyTool(
 			Plan: func(
 				ctx context.Context,
 				call *draftReplyCall,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*inboundreplyservice.DraftPlan, error) {
 				if call.save != nil {
 					return replies.PlanSaveDraft(ctx, call.save)
@@ -161,7 +161,7 @@ func newDraftInboundReplyTool(
 			Run: func(
 				ctx context.Context,
 				call *draftReplyCall,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				var (
 					reply *triage.Reply
@@ -188,7 +188,7 @@ func newDraftInboundReplyTool(
 	)
 }
 
-func draftReplyRequest(params *agentports.ToolExecuteParams) (*draftReplyCall, error) {
+func draftReplyRequest(params *agenttoolports.ToolExecuteParams) (*draftReplyCall, error) {
 	messageID, err := common.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
 		return nil, err
@@ -260,11 +260,11 @@ func renderReplyDraft(
 	return preview, nil
 }
 
-func NewDiscardInboundReplyDraftTool(p triageToolParams) agentports.AgentTool {
+func NewDiscardInboundReplyDraftTool(p triageToolParams) agenttoolports.AgentTool {
 	return newDiscardInboundReplyDraftTool(p.Replies)
 }
 
-func newDiscardInboundReplyDraftTool(replies triageReplies) agentports.AgentTool {
+func newDiscardInboundReplyDraftTool(replies triageReplies) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_discard_reply_draft",
@@ -298,7 +298,7 @@ func newDiscardInboundReplyDraftTool(replies triageReplies) agentports.AgentTool
 			Plan: func(
 				ctx context.Context,
 				req *inboundmessageservice.MessageActionRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*inboundreplyservice.DraftPlan, error) {
 				return replies.PlanDiscardDraft(ctx, req.TenantInfo, req.MessageID)
 			},
@@ -325,7 +325,7 @@ func newDiscardInboundReplyDraftTool(replies triageReplies) agentports.AgentTool
 			Run: func(
 				ctx context.Context,
 				req *inboundmessageservice.MessageActionRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				plan, err := replies.PlanDiscardDraft(ctx, req.TenantInfo, req.MessageID)
 				if err != nil {

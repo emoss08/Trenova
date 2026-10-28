@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -47,7 +47,7 @@ func customerNoteProperty(what string) map[string]any {
 	return common.StringProperty(what, maxCustomerEmailNoteChars)
 }
 
-func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agentports.AgentTool {
+func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name: toolSendPaymentReminder,
@@ -93,7 +93,7 @@ func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agentpor
 			[]*paymentreminderports.SendNowPreview,
 		]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*paymentreminderports.SendNowRequest, error) {
 				customerID, err := common.RequirePulid(params.Params, common.ParamCustomerID)
 				if err != nil {
@@ -116,7 +116,7 @@ func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agentpor
 			Plan: func(
 				ctx context.Context,
 				req *paymentreminderports.SendNowRequest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) ([]*paymentreminderports.SendNowPreview, error) {
 				return reminders.PreviewSendNow(ctx, req, params.Actor)
 			},
@@ -127,7 +127,7 @@ func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agentpor
 			Run: func(
 				ctx context.Context,
 				req *paymentreminderports.SendNowRequest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				sent, err := reminders.SendNow(ctx, req, params.Actor)
 				if err != nil {
@@ -192,7 +192,9 @@ func renderReminders(
 	return toolpreview.Build(summary, changes...), nil
 }
 
-func NewSendCustomerStatementTool(statements customerstatementports.Service) agentports.AgentTool {
+func NewSendCustomerStatementTool(
+	statements customerstatementports.Service,
+) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name: toolSendCustomerStatement,
@@ -244,7 +246,7 @@ func NewSendCustomerStatementTool(statements customerstatementports.Service) age
 			Plan: func(
 				ctx context.Context,
 				req *customerstatementports.SendRequest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*customerstatementports.SendPreview, error) {
 				return statements.PreviewSend(ctx, req, params.Actor)
 			},
@@ -255,7 +257,7 @@ func NewSendCustomerStatementTool(statements customerstatementports.Service) age
 			Run: func(
 				ctx context.Context,
 				req *customerstatementports.SendRequest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				sent, err := statements.Send(ctx, req, params.Actor)
 				if err != nil {
@@ -276,7 +278,7 @@ func NewSendCustomerStatementTool(statements customerstatementports.Service) age
 }
 
 func statementRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*customerstatementports.SendRequest, error) {
 	customerID, err := common.RequirePulid(params.Params, common.ParamCustomerID)
 	if err != nil {

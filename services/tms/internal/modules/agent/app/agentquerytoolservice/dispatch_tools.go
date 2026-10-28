@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
@@ -39,7 +40,7 @@ type rankMoveCandidatesTool struct {
 	ranker candidateRanker
 }
 
-func newRankMoveCandidatesTool(ranker candidateRanker) agentports.AgentQueryTool {
+func newRankMoveCandidatesTool(ranker candidateRanker) agenttoolports.AgentQueryTool {
 	return &rankMoveCandidatesTool{ranker: ranker}
 }
 
@@ -78,7 +79,7 @@ func (t *rankMoveCandidatesTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *rankMoveCandidatesTool) Policy() agentports.ToolPolicy {
+func (t *rankMoveCandidatesTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipmentMove,
 	})
@@ -124,7 +125,7 @@ type candidatesView struct {
 
 func (t *rankMoveCandidatesTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -239,8 +240,8 @@ func hoursOf(millis int64) float64 {
 type dispatchPlanner interface {
 	Plan(
 		ctx context.Context,
-		req *agentports.DispatchPlanRequest,
-	) (*agentports.DispatchPlan, error)
+		req *dispatchconsoleports.DispatchPlanRequest,
+	) (*dispatchconsoleports.DispatchPlan, error)
 }
 
 // planDispatchTool runs the auto-assignment planner over a window without
@@ -250,7 +251,7 @@ type planDispatchTool struct {
 	planner dispatchPlanner
 }
 
-func newPlanDispatchTool(planner dispatchPlanner) agentports.AgentQueryTool {
+func newPlanDispatchTool(planner dispatchPlanner) agenttoolports.AgentQueryTool {
 	return &planDispatchTool{planner: planner}
 }
 
@@ -286,7 +287,7 @@ func (t *planDispatchTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *planDispatchTool) Policy() agentports.ToolPolicy {
+func (t *planDispatchTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipmentMove,
 		effect:   agent.ToolEffectPresent,
@@ -323,7 +324,7 @@ type planView struct {
 
 func (t *planDispatchTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -343,7 +344,7 @@ func (t *planDispatchTool) Query(
 	}
 
 	now := clockFor(params).Instant()
-	plan, err := t.planner.Plan(ctx, &agentports.DispatchPlanRequest{
+	plan, err := t.planner.Plan(ctx, &dispatchconsoleports.DispatchPlanRequest{
 		TenantInfo:   tenantOf(params),
 		WindowStart:  now,
 		WindowEnd:    now + int64(hours)*3600,
@@ -358,7 +359,7 @@ func (t *planDispatchTool) Query(
 	return planViewOf(plan), nil
 }
 
-func planViewOf(plan *agentports.DispatchPlan) *planView {
+func planViewOf(plan *dispatchconsoleports.DispatchPlan) *planView {
 	view := &planView{
 		PlanningMode: plan.PlanningMode,
 		TotalScore:   plan.TotalScore,

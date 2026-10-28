@@ -7,7 +7,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -263,7 +264,7 @@ func matchAlongside(
 type besideReads struct {
 	specs       []alongsideSpec
 	bound       []graphQLAlongside
-	reader      agentports.GraphQLReader
+	reader      graphqlreadports.GraphQLReader
 	permissions permissionports.PermissionEngine
 }
 
@@ -274,7 +275,7 @@ type besideReads struct {
 // one of the tool's references.
 func (b *besideReads) read(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	sent map[string]any,
 	scoped bool,
 ) (records map[string]any, withheld, notes []string, err error) {
@@ -303,8 +304,8 @@ func (b *besideReads) read(
 			continue
 		}
 
-		var result *agentports.GraphQLReadResult
-		result, err = b.reader.Read(ctx, &agentports.GraphQLReadRequest{
+		var result *graphqlreadports.GraphQLReadResult
+		result, err = b.reader.Read(ctx, &graphqlreadports.GraphQLReadRequest{
 			Actor:             params.Actor,
 			Operation:         bound.Operation,
 			Variables:         variables,
@@ -315,7 +316,7 @@ func (b *besideReads) read(
 			return nil, nil, nil, err
 		}
 		if err = readFailure(result, resource); err != nil {
-			var refused *agentports.ReadRefusedError
+			var refused *graphqlreadports.ReadRefusedError
 			if errors.As(err, &refused) {
 				if spec.withheld != "" {
 					notes = append(notes, spec.withheld)

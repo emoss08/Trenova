@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,9 +22,9 @@ import (
 func (r *Deps) PreviewViewer(
 	ctx context.Context,
 	authCtx *authctx.AuthContext,
-) *agentports.PreviewViewer {
+) *agentruntimeports.PreviewViewer {
 	actor := actorutil.FromAuthContext(authCtx)
-	viewer := &agentports.PreviewViewer{
+	viewer := &agentruntimeports.PreviewViewer{
 		Actor: actor,
 		Reads: fieldsensitivity.NewReadAccess(r.PermissionEngine, actor),
 	}
@@ -32,7 +33,7 @@ func (r *Deps) PreviewViewer(
 	return viewer
 }
 
-func (r *Deps) previewService() (agentports.ProposalPreviewService, error) {
+func (r *Deps) previewService() (agentruntimeports.ProposalPreviewService, error) {
 	if r.ProposalPreviewService == nil {
 		return nil, errortypes.NewBusinessError("Previews of proposed changes are not available")
 	}
@@ -60,7 +61,7 @@ func (r *Deps) ProposalPreview(
 		return nil, err
 	}
 
-	return previews.ForProposal(ctx, &agentports.ProposalPreviewRequest{
+	return previews.ForProposal(ctx, &agentruntimeports.ProposalPreviewRequest{
 		Proposal:      proposal,
 		Modifications: modifications,
 		Viewer:        r.PreviewViewer(ctx, authCtx),
@@ -85,7 +86,7 @@ func (r *Deps) PlanPreview(
 		return nil, err
 	}
 
-	return previews.ForPlan(ctx, &agentports.PlanPreviewRequest{
+	return previews.ForPlan(ctx, &agentruntimeports.PlanPreviewRequest{
 		Plan:   plan,
 		Viewer: r.PreviewViewer(ctx, authCtx),
 	})

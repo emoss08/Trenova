@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -31,7 +31,7 @@ type JournalRevision struct {
 
 func (r *JournalRevision) Over(
 	current *manualjournal.Request,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) *manualjournalports.UpdateManualJournalDraftRequest {
 	req := &manualjournalports.UpdateManualJournalDraftRequest{
 		RequestID:      current.ID,

@@ -9,9 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,14 +41,14 @@ func entryCount(
 	sourceType airetrieval.SourceType,
 	status airetrieval.IndexStatus,
 	count int,
-) agentports.IndexEntryCount {
-	return agentports.IndexEntryCount{SourceType: sourceType, Status: status, Count: count}
+) retrievalports.IndexEntryCount {
+	return retrievalports.IndexEntryCount{SourceType: sourceType, Status: status, Count: count}
 }
 
 func stamped(
-	count agentports.IndexEntryCount,
+	count retrievalports.IndexEntryCount,
 	lastIndexedAt, lastAttemptAt *int64,
-) agentports.IndexEntryCount {
+) retrievalports.IndexEntryCount {
 	count.LastIndexedAt = lastIndexedAt
 	count.LastAttemptAt = lastAttemptAt
 
@@ -54,15 +56,15 @@ func stamped(
 }
 
 type fakeRepo struct {
-	agentports.AIRetrievalRepository
+	retrievalports.AIRetrievalRepository
 
 	mu            sync.Mutex
 	settings      *airetrieval.Settings
-	counts        map[string][]agentports.IndexEntryCount
+	counts        map[string][]retrievalports.IndexEntryCount
 	countedKeys   []string
-	averages      map[airetrieval.SourceType]agentports.IndexChunkAverage
+	averages      map[airetrieval.SourceType]retrievalports.IndexChunkAverage
 	errored       []*airetrieval.IndexEntry
-	erroredReq    *agentports.ListErroredIndexEntriesRequest
+	erroredReq    *retrievalports.ListErroredIndexEntriesRequest
 	updates       []*airetrieval.Settings
 	mismatchFirst int
 	settingsErr   error
@@ -113,8 +115,8 @@ func (r *fakeRepo) UpdateSettings(
 
 func (r *fakeRepo) CountIndexEntries(
 	_ context.Context,
-	req agentports.CountIndexEntriesRequest,
-) ([]agentports.IndexEntryCount, error) {
+	req retrievalports.CountIndexEntriesRequest,
+) ([]retrievalports.IndexEntryCount, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -125,14 +127,14 @@ func (r *fakeRepo) CountIndexEntries(
 
 func (r *fakeRepo) AverageIndexChunks(
 	_ context.Context,
-	req *agentports.AverageIndexChunksRequest,
-) (agentports.IndexChunkAverage, error) {
+	req *retrievalports.AverageIndexChunksRequest,
+) (retrievalports.IndexChunkAverage, error) {
 	return r.averages[req.SourceType], nil
 }
 
 func (r *fakeRepo) ListErroredIndexEntries(
 	_ context.Context,
-	req *agentports.ListErroredIndexEntriesRequest,
+	req *retrievalports.ListErroredIndexEntriesRequest,
 ) ([]*airetrieval.IndexEntry, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -143,7 +145,7 @@ func (r *fakeRepo) ListErroredIndexEntries(
 }
 
 type fakeSources struct {
-	agentports.RetrievalSourceRepository
+	retrievalports.RetrievalSourceRepository
 
 	totals map[airetrieval.SourceType]int
 	chars  map[airetrieval.SourceType]float64
@@ -151,16 +153,19 @@ type fakeSources struct {
 
 func (s *fakeSources) CountSources(
 	_ context.Context,
-	req agentports.CountRetrievalSourcesRequest,
+	req retrievalports.CountRetrievalSourcesRequest,
 ) (int, error) {
 	return s.totals[req.SourceType], nil
 }
 
 func (s *fakeSources) AverageSourceChars(
 	_ context.Context,
-	req agentports.AverageRetrievalSourceCharsRequest,
-) (agentports.RetrievalSourceChars, error) {
-	return agentports.RetrievalSourceChars{Sampled: 10, AverageChars: s.chars[req.SourceType]}, nil
+	req retrievalports.AverageRetrievalSourceCharsRequest,
+) (retrievalports.RetrievalSourceChars, error) {
+	return retrievalports.RetrievalSourceChars{
+		Sampled:      10,
+		AverageChars: s.chars[req.SourceType],
+	}, nil
 }
 
 type fakeUsage struct {
@@ -187,20 +192,20 @@ func (u *fakeUsage) SurfaceCost(
 }
 
 type fakeProviders struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 
 	providers []*aiprovider.Provider
 }
 
 func (p *fakeProviders) ListForTask(
 	_ context.Context,
-	_ agentports.ListAIProvidersForTaskRequest,
+	_ aiproviderports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
 	return p.providers, nil
 }
 
 type fakeVectorizer struct {
-	agentports.QueryVectorizer
+	retrievalports.QueryVectorizer
 
 	availability airetrieval.Availability
 }
@@ -213,7 +218,7 @@ func (v *fakeVectorizer) Availability(
 }
 
 type fakeIndexer struct {
-	agentports.RetrievalIndexer
+	retrievalports.RetrievalIndexer
 
 	reindexed []airetrieval.SourceType
 }
@@ -228,7 +233,7 @@ func (i *fakeIndexer) Reindex(
 }
 
 type fakePipeline struct {
-	agentports.RetrievalIndexPipeline
+	retrievalports.RetrievalIndexPipeline
 
 	woken int
 }
@@ -282,7 +287,7 @@ func newFixture(t *testing.T) *fixture {
 
 	f := &fixture{
 		tenant:    pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
-		repo:      &fakeRepo{counts: map[string][]agentports.IndexEntryCount{}},
+		repo:      &fakeRepo{counts: map[string][]retrievalports.IndexEntryCount{}},
 		sources:   &fakeSources{totals: map[airetrieval.SourceType]int{}},
 		usage:     &fakeUsage{costs: map[aiusage.Surface]*aiusageports.AIUsageCost{}},
 		providers: &fakeProviders{},
@@ -324,9 +329,9 @@ func (f *fixture) withSettings(mutate func(*airetrieval.Settings)) {
 }
 
 func sourceOf(
-	status *agentports.AIRetrievalStatus,
+	status *retrievalports.AIRetrievalStatus,
 	sourceType airetrieval.SourceType,
-) *agentports.AIRetrievalSourceStatus {
+) *retrievalports.AIRetrievalSourceStatus {
 	for _, source := range status.Sources {
 		if source.SourceType == sourceType {
 			return source
@@ -346,7 +351,7 @@ func TestStatus_CountsEachSourceUnderTheActiveModel(t *testing.T) {
 		airetrieval.SourceTypeDocument:       120,
 		airetrieval.SourceTypeInboundMessage: 7,
 	}
-	f.repo.counts[activeKey] = []agentports.IndexEntryCount{
+	f.repo.counts[activeKey] = []retrievalports.IndexEntryCount{
 		stamped(
 			entryCount(airetrieval.SourceTypeMemory, airetrieval.IndexStatusIndexed, 30),
 			int64p(1_000),
@@ -415,7 +420,7 @@ func TestStatus_WithoutAnActiveModelReadsNoEntries(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	f.embeddings.err = agentports.ErrNoProviderConfigured
+	f.embeddings.err = llmports.ErrNoProviderConfigured
 	f.vectorizer.availability = airetrieval.Availability{
 		Reason:             airetrieval.UnavailableReasonNoProvider,
 		ExtensionInstalled: true,
@@ -529,7 +534,7 @@ func TestStatus_ReportsModelChangeProgressOverEnabledSources(t *testing.T) {
 		airetrieval.SourceTypeDocument:       30,
 		airetrieval.SourceTypeInboundMessage: 500,
 	}
-	f.repo.counts[pendingKey] = []agentports.IndexEntryCount{
+	f.repo.counts[pendingKey] = []retrievalports.IndexEntryCount{
 		entryCount(airetrieval.SourceTypeMemory, airetrieval.IndexStatusIndexed, 9),
 		entryCount(airetrieval.SourceTypeMemory, airetrieval.IndexStatusSkipped, 1),
 		entryCount(airetrieval.SourceTypeDocument, airetrieval.IndexStatusIndexed, 12),
@@ -542,7 +547,7 @@ func TestStatus_ReportsModelChangeProgressOverEnabledSources(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NotNil(t, status.ModelChange)
-	assert.Equal(t, &agentports.AIRetrievalModelChange{
+	assert.Equal(t, &retrievalports.AIRetrievalModelChange{
 		FromModelKey: activeKey,
 		ToModelKey:   pendingKey,
 		Dimensions:   1536,
@@ -571,7 +576,7 @@ func TestModelChangeProgress_NeverReportsMoreDoneThanTotal(t *testing.T) {
 	change := ModelChangeProgress(
 		settings,
 		map[airetrieval.SourceType]int{airetrieval.SourceTypeMemory: 2},
-		[]agentports.IndexEntryCount{
+		[]retrievalports.IndexEntryCount{
 			entryCount(airetrieval.SourceTypeMemory, airetrieval.IndexStatusIndexed, 5),
 		},
 	)
@@ -638,12 +643,15 @@ func TestUpdateSettings_ChangesOnlyTheGivenFields(t *testing.T) {
 	f.withSettings(nil)
 	budget := decimal.RequireFromString("42.5")
 
-	status, err := f.svc.UpdateSettings(t.Context(), &agentports.UpdateAIRetrievalSettingsRequest{
-		TenantInfo:               f.tenant,
-		DocumentsEnabled:         boolp(false),
-		MonthlyIndexingBudgetUSD: &budget,
-		Actor:                    &permissionports.RequestActor{UserID: pulid.MustNew("usr_")},
-	})
+	status, err := f.svc.UpdateSettings(
+		t.Context(),
+		&retrievalports.UpdateAIRetrievalSettingsRequest{
+			TenantInfo:               f.tenant,
+			DocumentsEnabled:         boolp(false),
+			MonthlyIndexingBudgetUSD: &budget,
+			Actor:                    &permissionports.RequestActor{UserID: pulid.MustNew("usr_")},
+		},
+	)
 	require.NoError(t, err)
 
 	require.Len(t, f.repo.updates, 1)
@@ -652,7 +660,12 @@ func TestUpdateSettings_ChangesOnlyTheGivenFields(t *testing.T) {
 	assert.True(t, saved.MemoryEnabled)
 	assert.True(t, saved.InboundMessagesEnabled)
 	assert.True(t, budget.Equal(saved.MonthlyIndexingBudgetUSD))
-	assert.Equal(t, activeKey, saved.ActiveModelKey, "the model is the indexer's, never the patch's")
+	assert.Equal(
+		t,
+		activeKey,
+		saved.ActiveModelKey,
+		"the model is the indexer's, never the patch's",
+	)
 	assert.Equal(t, "42.50", status.Settings.MonthlyIndexingBudgetUSD)
 	assert.False(t, status.Settings.DocumentsEnabled)
 
@@ -668,7 +681,7 @@ func TestUpdateSettings_NothingChangedWritesNothing(t *testing.T) {
 	f := newFixture(t)
 	f.withSettings(nil)
 
-	_, err := f.svc.UpdateSettings(t.Context(), &agentports.UpdateAIRetrievalSettingsRequest{
+	_, err := f.svc.UpdateSettings(t.Context(), &retrievalports.UpdateAIRetrievalSettingsRequest{
 		TenantInfo:    f.tenant,
 		MemoryEnabled: boolp(true),
 	})
@@ -686,7 +699,7 @@ func TestUpdateSettings_RetriesWhenTheIndexerWroteFirst(t *testing.T) {
 	f.withSettings(nil)
 	f.repo.mismatchFirst = 2
 
-	_, err := f.svc.UpdateSettings(t.Context(), &agentports.UpdateAIRetrievalSettingsRequest{
+	_, err := f.svc.UpdateSettings(t.Context(), &retrievalports.UpdateAIRetrievalSettingsRequest{
 		TenantInfo:    f.tenant,
 		MemoryEnabled: boolp(false),
 	})
@@ -702,7 +715,7 @@ func TestUpdateSettings_GivesUpAfterRepeatedConflicts(t *testing.T) {
 	f.withSettings(nil)
 	f.repo.mismatchFirst = maxSettingsWriteAttempts
 
-	_, err := f.svc.UpdateSettings(t.Context(), &agentports.UpdateAIRetrievalSettingsRequest{
+	_, err := f.svc.UpdateSettings(t.Context(), &retrievalports.UpdateAIRetrievalSettingsRequest{
 		TenantInfo:    f.tenant,
 		MemoryEnabled: boolp(false),
 	})
@@ -718,7 +731,7 @@ func TestUpdateSettings_RefusesABudgetOutOfRange(t *testing.T) {
 	f.withSettings(nil)
 	negative := decimal.RequireFromString("-1")
 
-	_, err := f.svc.UpdateSettings(t.Context(), &agentports.UpdateAIRetrievalSettingsRequest{
+	_, err := f.svc.UpdateSettings(t.Context(), &retrievalports.UpdateAIRetrievalSettingsRequest{
 		TenantInfo:               f.tenant,
 		MonthlyIndexingBudgetUSD: &negative,
 	})
@@ -734,10 +747,13 @@ func TestUpdateSettings_PausingIsManualAndDoesNotWakeTheIndexer(t *testing.T) {
 	f := newFixture(t)
 	f.withSettings(nil)
 
-	status, err := f.svc.UpdateSettings(t.Context(), &agentports.UpdateAIRetrievalSettingsRequest{
-		TenantInfo: f.tenant,
-		Paused:     boolp(true),
-	})
+	status, err := f.svc.UpdateSettings(
+		t.Context(),
+		&retrievalports.UpdateAIRetrievalSettingsRequest{
+			TenantInfo: f.tenant,
+			Paused:     boolp(true),
+		},
+	)
 	require.NoError(t, err)
 
 	require.Len(t, f.repo.updates, 1)
@@ -760,10 +776,13 @@ func TestUpdateSettings_ResumingLiftsABudgetPauseAndWakesTheIndexer(t *testing.T
 		s.PausedAt = int64p(testNow - 60)
 	})
 
-	status, err := f.svc.UpdateSettings(t.Context(), &agentports.UpdateAIRetrievalSettingsRequest{
-		TenantInfo: f.tenant,
-		Paused:     boolp(false),
-	})
+	status, err := f.svc.UpdateSettings(
+		t.Context(),
+		&retrievalports.UpdateAIRetrievalSettingsRequest{
+			TenantInfo: f.tenant,
+			Paused:     boolp(false),
+		},
+	)
 	require.NoError(t, err)
 
 	require.Len(t, f.repo.updates, 1)
@@ -785,14 +804,18 @@ func TestUpdateSettings_RaisingTheBudgetWhileBudgetPausedWakesTheIndexer(t *test
 	})
 	raised := decimal.RequireFromString("50")
 
-	_, err := f.svc.UpdateSettings(t.Context(), &agentports.UpdateAIRetrievalSettingsRequest{
+	_, err := f.svc.UpdateSettings(t.Context(), &retrievalports.UpdateAIRetrievalSettingsRequest{
 		TenantInfo:               f.tenant,
 		MonthlyIndexingBudgetUSD: &raised,
 	})
 	require.NoError(t, err)
 
 	require.Len(t, f.repo.updates, 1)
-	assert.True(t, f.repo.updates[0].PausedByBudget(), "the plan lifts a budget pause, not the patch")
+	assert.True(
+		t,
+		f.repo.updates[0].PausedByBudget(),
+		"the plan lifts a budget pause, not the patch",
+	)
 	assert.Equal(t, 1, f.pipeline.woken)
 }
 
@@ -804,7 +827,7 @@ func TestApplySettingsPatch_PausingOverABudgetPauseMakesItManual(t *testing.T) {
 	settings.PausedReason = airetrieval.PauseReasonBudget
 	settings.PausedAt = int64p(5)
 
-	changed := ApplySettingsPatch(settings, &agentports.UpdateAIRetrievalSettingsRequest{
+	changed := ApplySettingsPatch(settings, &retrievalports.UpdateAIRetrievalSettingsRequest{
 		Paused: boolp(true),
 	}, testNow)
 
@@ -812,7 +835,7 @@ func TestApplySettingsPatch_PausingOverABudgetPauseMakesItManual(t *testing.T) {
 	assert.Equal(t, airetrieval.PauseReasonManual, settings.PausedReason)
 	assert.Equal(t, testNow, *settings.PausedAt)
 
-	assert.False(t, ApplySettingsPatch(settings, &agentports.UpdateAIRetrievalSettingsRequest{
+	assert.False(t, ApplySettingsPatch(settings, &retrievalports.UpdateAIRetrievalSettingsRequest{
 		Paused: boolp(true),
 	}, testNow+10), "pausing what a person already paused changes nothing")
 	assert.Equal(t, testNow, *settings.PausedAt)
@@ -824,7 +847,7 @@ func TestReindex_StartsTheSourcesReindex(t *testing.T) {
 	f := newFixture(t)
 	f.withSettings(nil)
 
-	_, err := f.svc.Reindex(t.Context(), &agentports.ReindexAIRetrievalSourceRequest{
+	_, err := f.svc.Reindex(t.Context(), &retrievalports.ReindexAIRetrievalSourceRequest{
 		TenantInfo: f.tenant,
 		SourceType: airetrieval.SourceTypeDocument,
 		Actor:      &permissionports.RequestActor{UserID: pulid.MustNew("usr_")},
@@ -850,16 +873,20 @@ func TestReindex_RefusesWhatCannotBeIndexed(t *testing.T) {
 			availability: airetrieval.Availability{Available: true},
 		},
 		{
-			name:         "extension missing",
-			availability: airetrieval.Availability{Reason: airetrieval.UnavailableReasonExtensionMissing},
+			name: "extension missing",
+			availability: airetrieval.Availability{
+				Reason: airetrieval.UnavailableReasonExtensionMissing,
+			},
 		},
 		{
 			name:         "extension too old",
 			availability: airetrieval.Availability{Reason: airetrieval.UnavailableReasonTooOld},
 		},
 		{
-			name:         "schema missing",
-			availability: airetrieval.Availability{Reason: airetrieval.UnavailableReasonSchemaMissing},
+			name: "schema missing",
+			availability: airetrieval.Availability{
+				Reason: airetrieval.UnavailableReasonSchemaMissing,
+			},
 		},
 		{
 			name:         "no provider",
@@ -883,7 +910,7 @@ func TestReindex_RefusesWhatCannotBeIndexed(t *testing.T) {
 			f.withSettings(tc.settings)
 			f.vectorizer.availability = tc.availability
 
-			_, err := f.svc.Reindex(t.Context(), &agentports.ReindexAIRetrievalSourceRequest{
+			_, err := f.svc.Reindex(t.Context(), &retrievalports.ReindexAIRetrievalSourceRequest{
 				TenantInfo: f.tenant,
 				SourceType: airetrieval.SourceTypeDocument,
 			})
@@ -904,9 +931,11 @@ func TestReindex_WaitsOutAPauseRatherThanRefusing(t *testing.T) {
 		s.Paused = true
 		s.PausedReason = airetrieval.PauseReasonManual
 	})
-	f.vectorizer.availability = airetrieval.Availability{Reason: airetrieval.UnavailableReasonDisabled}
+	f.vectorizer.availability = airetrieval.Availability{
+		Reason: airetrieval.UnavailableReasonDisabled,
+	}
 
-	_, err := f.svc.Reindex(t.Context(), &agentports.ReindexAIRetrievalSourceRequest{
+	_, err := f.svc.Reindex(t.Context(), &retrievalports.ReindexAIRetrievalSourceRequest{
 		TenantInfo: f.tenant,
 		SourceType: airetrieval.SourceTypeMemory,
 	})
@@ -918,7 +947,7 @@ func TestReindex_RefusesAnUnknownSourceType(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	_, err := f.svc.Reindex(t.Context(), &agentports.ReindexAIRetrievalSourceRequest{
+	_, err := f.svc.Reindex(t.Context(), &retrievalports.ReindexAIRetrievalSourceRequest{
 		TenantInfo: f.tenant,
 		SourceType: "Shipments",
 	})
@@ -940,7 +969,7 @@ func TestEstimateReindex(t *testing.T) {
 			Sources:        110,
 			Skipped:        10,
 			AverageChars:   4000,
-			MeasuredChunks: agentports.IndexChunkAverage{Entries: 90, AverageChunks: 4},
+			MeasuredChunks: retrievalports.IndexChunkAverage{Entries: 90, AverageChunks: 4},
 			InputPrice:     &price,
 			HasModel:       true,
 		})
@@ -951,7 +980,11 @@ func TestEstimateReindex(t *testing.T) {
 		assert.InDelta(t, 287.5+ChunkHeaderTokens, got.AverageTokensPerChunk, 0.05)
 		assert.Equal(t, 124_600, got.EstimatedTokens)
 		require.NotNil(t, got.CostUSD)
-		assert.True(t, decimal.RequireFromString("0.007476").Equal(*got.CostUSD), got.CostUSD.String())
+		assert.True(
+			t,
+			decimal.RequireFromString("0.007476").Equal(*got.CostUSD),
+			got.CostUSD.String(),
+		)
 	})
 
 	t.Run("unmeasured documents assume the chunker's windows", func(t *testing.T) {
@@ -993,7 +1026,7 @@ func TestEstimateReindex(t *testing.T) {
 			SourceType:     airetrieval.SourceTypeInboundMessage,
 			Sources:        1,
 			AverageChars:   100,
-			MeasuredChunks: agentports.IndexChunkAverage{Entries: 1, AverageChunks: 90},
+			MeasuredChunks: retrievalports.IndexChunkAverage{Entries: 1, AverageChunks: 90},
 			HasModel:       true,
 		})
 
@@ -1060,11 +1093,11 @@ func TestReindexEstimate_PricesWithTheProviderServingTheModel(t *testing.T) {
 	f.withSettings(func(s *airetrieval.Settings) { s.ActiveModelKey = key })
 	f.sources.totals[airetrieval.SourceTypeMemory] = 12
 	f.sources.chars = map[airetrieval.SourceType]float64{airetrieval.SourceTypeMemory: 400}
-	f.repo.counts[key] = []agentports.IndexEntryCount{
+	f.repo.counts[key] = []retrievalports.IndexEntryCount{
 		entryCount(airetrieval.SourceTypeMemory, airetrieval.IndexStatusSkipped, 2),
 		entryCount(airetrieval.SourceTypeDocument, airetrieval.IndexStatusSkipped, 7),
 	}
-	f.repo.averages = map[airetrieval.SourceType]agentports.IndexChunkAverage{
+	f.repo.averages = map[airetrieval.SourceType]retrievalports.IndexChunkAverage{
 		airetrieval.SourceTypeMemory: {Entries: 8, AverageChunks: 1},
 	}
 	f.usage.costs[aiusage.SurfaceIndexing] = &aiusageports.AIUsageCost{
@@ -1090,7 +1123,7 @@ func TestReindexEstimate_WithoutAProviderHasNoCost(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	f.embeddings.err = agentports.ErrNoProviderConfigured
+	f.embeddings.err = llmports.ErrNoProviderConfigured
 	f.usage.costs[aiusage.SurfaceIndexing] = &aiusageports.AIUsageCost{
 		CostUSD: decimal.RequireFromString("25"),
 	}
@@ -1136,14 +1169,32 @@ func TestListFailedEntries_ReadsTheIndexedModelsAndPages(t *testing.T) {
 		s.PendingDimensions = 1536
 	})
 	f.repo.errored = []*airetrieval.IndexEntry{
-		erroredEntry(airetrieval.SourceTypeDocument, airetrieval.IndexStatusFailed, 8, someFailure, 300),
-		erroredEntry(airetrieval.SourceTypeDocument, airetrieval.IndexStatusPending, 2, "timed out", 200),
-		erroredEntry(airetrieval.SourceTypeDocument, airetrieval.IndexStatusFailed, 1, "wrong size", 100),
+		erroredEntry(
+			airetrieval.SourceTypeDocument,
+			airetrieval.IndexStatusFailed,
+			8,
+			someFailure,
+			300,
+		),
+		erroredEntry(
+			airetrieval.SourceTypeDocument,
+			airetrieval.IndexStatusPending,
+			2,
+			"timed out",
+			200,
+		),
+		erroredEntry(
+			airetrieval.SourceTypeDocument,
+			airetrieval.IndexStatusFailed,
+			1,
+			"wrong size",
+			100,
+		),
 	}
 
 	page, err := f.svc.ListFailedEntries(
 		t.Context(),
-		&agentports.ListAIRetrievalFailedEntriesRequest{
+		&retrievalports.ListAIRetrievalFailedEntriesRequest{
 			TenantInfo: f.tenant,
 			SourceType: airetrieval.SourceTypeDocument,
 			Table:      memtable.Request{First: 2, IncludeTotalCount: true},
@@ -1173,12 +1224,18 @@ func TestListFailedEntries_CountsOnlyWhenAsked(t *testing.T) {
 	f := newFixture(t)
 	f.withSettings(nil)
 	f.repo.errored = []*airetrieval.IndexEntry{
-		erroredEntry(airetrieval.SourceTypeMemory, airetrieval.IndexStatusFailed, 8, someFailure, 1),
+		erroredEntry(
+			airetrieval.SourceTypeMemory,
+			airetrieval.IndexStatusFailed,
+			8,
+			someFailure,
+			1,
+		),
 	}
 
 	page, err := f.svc.ListFailedEntries(
 		t.Context(),
-		&agentports.ListAIRetrievalFailedEntriesRequest{
+		&retrievalports.ListAIRetrievalFailedEntriesRequest{
 			TenantInfo: f.tenant,
 		},
 	)
@@ -1195,7 +1252,13 @@ func TestListFailedEntries_SearchesTheErrorText(t *testing.T) {
 	f := newFixture(t)
 	f.withSettings(nil)
 	f.repo.errored = []*airetrieval.IndexEntry{
-		erroredEntry(airetrieval.SourceTypeMemory, airetrieval.IndexStatusFailed, 8, someFailure, 2),
+		erroredEntry(
+			airetrieval.SourceTypeMemory,
+			airetrieval.IndexStatusFailed,
+			8,
+			someFailure,
+			2,
+		),
 		erroredEntry(
 			airetrieval.SourceTypeMemory,
 			airetrieval.IndexStatusFailed,
@@ -1207,7 +1270,7 @@ func TestListFailedEntries_SearchesTheErrorText(t *testing.T) {
 
 	page, err := f.svc.ListFailedEntries(
 		t.Context(),
-		&agentports.ListAIRetrievalFailedEntriesRequest{
+		&retrievalports.ListAIRetrievalFailedEntriesRequest{
 			TenantInfo: f.tenant,
 			Table:      memtable.Request{Query: "dimension", IncludeTotalCount: true},
 		},
@@ -1226,7 +1289,7 @@ func TestListFailedEntries_WithoutAModelListsNothing(t *testing.T) {
 
 	page, err := f.svc.ListFailedEntries(
 		t.Context(),
-		&agentports.ListAIRetrievalFailedEntriesRequest{
+		&retrievalports.ListAIRetrievalFailedEntriesRequest{
 			TenantInfo: f.tenant,
 			Table:      memtable.Request{IncludeTotalCount: true},
 		},
@@ -1243,10 +1306,13 @@ func TestListFailedEntries_RefusesAnUnknownSourceType(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	_, err := f.svc.ListFailedEntries(t.Context(), &agentports.ListAIRetrievalFailedEntriesRequest{
-		TenantInfo: f.tenant,
-		SourceType: "Shipments",
-	})
+	_, err := f.svc.ListFailedEntries(
+		t.Context(),
+		&retrievalports.ListAIRetrievalFailedEntriesRequest{
+			TenantInfo: f.tenant,
+			SourceType: "Shipments",
+		},
+	)
 
 	require.Error(t, err)
 	assert.Nil(t, f.repo.erroredReq)

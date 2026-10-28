@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -61,7 +61,7 @@ func newLogCheckCallTool(
 	checkCalls checkCallLogger,
 	moves stopActualPreviewer,
 	moveStops moveStopReader,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &LogCheckCallTool{checkCalls: checkCalls, moves: moves, moveStops: moveStops}
 }
 
@@ -69,7 +69,7 @@ func ProvideLogCheckCallTool(
 	checkCalls checkcallports.CheckCallService,
 	moves shipmentports.ShipmentMoveService,
 	moveStops shipmentports.ShipmentMoveRepository,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newLogCheckCallTool(checkCalls, moves, moveStops)
 }
 
@@ -142,8 +142,8 @@ func (t *LogCheckCallTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *LogCheckCallTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *LogCheckCallTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
@@ -161,7 +161,7 @@ func (t *LogCheckCallTool) Policy() agentports.ToolPolicy {
 
 func (t *LogCheckCallTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -179,18 +179,18 @@ func (t *LogCheckCallTool) Execute(
 
 func (t *LogCheckCallTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return common.PreviewValidates(ctx, t, &params)
 }
 
-func (t *LogCheckCallTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *LogCheckCallTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, ParamMoveID, permission.ResourceShipmentMove)
 }
 
 func (t *LogCheckCallTool) request(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*checkcallports.LogCheckCallRequest, error) {
 	moveID, err := common.RequirePulid(params.Params, ParamMoveID)
 	if err != nil {

@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -84,7 +84,9 @@ func draftJournal() *manualjournal.Request {
 	return entity
 }
 
-func (f *fakeManualJournals) change(status manualjournal.Status) *manualjournalports.ManualJournalChange {
+func (f *fakeManualJournals) change(
+	status manualjournal.Status,
+) *manualjournalports.ManualJournalChange {
 	before := *f.current
 	after := *f.current
 	after.Status = status
@@ -293,9 +295,13 @@ func TestDraftManualJournal_PreviewNamesTheAccountsAndDraftsWithoutPosting(t *te
 	tool := newDraftManualJournalTool(journals, fakeLedgerAccounts{})
 	params := agenttoolstest.ExecuteParams(draftParams())
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, journals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		journals.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 
 	assert.Contains(t, preview.Summary, "Would draft the manual journal \"Accrue September fuel\"")
 	assert.Contains(t, preview.Summary, "Its debits and credits balance.")
@@ -308,7 +314,7 @@ func TestDraftManualJournal_PreviewNamesTheAccountsAndDraftsWithoutPosting(t *te
 	assert.Equal(t, "2100 Accrued liabilities (credit)", change.Money.Lines[1].Label)
 	assert.True(t, change.Money.TotalAfter.Decimal.IsZero())
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, journals.created)
 	assert.Equal(t, int64(2500), journals.created.Lines[0].DebitAmount)
@@ -347,7 +353,7 @@ func TestDraftManualJournal_RefusesLinesItCannotBook(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(agentports.ToolValidator).Validate(
+			require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
 				t.Context(),
 				agenttoolstest.ExecuteParams(raw),
 			))
@@ -365,14 +371,25 @@ func TestReviseManualJournalDraft_KeepsWhatItIsNotGiven(t *testing.T) {
 		paramJournalDescription: "Accrue fuel for September",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, journals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		journals.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would revise draft manual journal MJR-7")
-	assert.Equal(t, "Accrue fuel for September",
-		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "description").After)
+	assert.Equal(
+		t,
+		"Accrue fuel for September",
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			"description",
+		).After,
+	)
 
-	_, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	_, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, journals.updated)
 	assert.Equal(t, "Accrue fuel for September", journals.updated.Description)
@@ -380,7 +397,7 @@ func TestReviseManualJournalDraft_KeepsWhatItIsNotGiven(t *testing.T) {
 	require.Len(t, journals.updated.Lines, 2)
 	assert.Equal(t, fuelAccountID, journals.updated.Lines[0].GLAccountID)
 
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceManualJournal, target.Resource)
 }
@@ -392,10 +409,17 @@ func TestSubmitManualJournal_AnAgentNeverApprovesByTheBackDoor(t *testing.T) {
 	tool := newSubmitManualJournalTool(journals, fakeLedgerAccounts{})
 	raw := map[string]any{paramManualJournalID: journals.current.ID.String()}
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(raw)), errAgentCannotApproveJournal)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(raw)),
+		errAgentCannotApproveJournal,
+	)
 	assert.False(t, journals.submitted)
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(
+		t.Context(),
+		agenttoolstest.ExecuteParams(raw),
+	)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "approval is turned off")
 
@@ -409,13 +433,23 @@ func TestSubmitManualJournal_AnAgentSubmitsForApproval(t *testing.T) {
 
 	journals := &fakeManualJournals{current: draftJournal(), guard: &agenttoolstest.WriteGuard{}}
 	tool := newSubmitManualJournalTool(journals, fakeLedgerAccounts{})
-	params := agenttoolstest.AgentParamsFor(map[string]any{paramManualJournalID: journals.current.ID.String()})
+	params := agenttoolstest.AgentParamsFor(
+		map[string]any{paramManualJournalID: journals.current.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, journals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		journals.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would submit manual journal MJR-7 for approval")
-	assert.Equal(t, "PendingApproval", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After)
+	assert.Equal(
+		t,
+		"PendingApproval",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.True(t, journals.submitted)
@@ -427,17 +461,24 @@ func TestCancelManualJournal_NeedsAReason(t *testing.T) {
 	journals := &fakeManualJournals{current: draftJournal(), guard: &agenttoolstest.WriteGuard{}}
 	tool := newCancelManualJournalTool(journals, fakeLedgerAccounts{})
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{paramManualJournalID: journals.current.ID.String()},
-	)))
+	require.Error(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
+			map[string]any{paramManualJournalID: journals.current.ID.String()},
+		)),
+	)
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramManualJournalID: journals.current.ID.String(),
 		common.ParamReason:   "Entered twice",
 	})
-	preview := agenttoolstest.PreviewWithoutWrites(t, journals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		journals.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would cancel manual journal MJR-7 (now Draft)")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, journals.cancelled)
@@ -451,15 +492,25 @@ func TestPostManualJournal_OnlyAPersonPostsAndThePreviewShowsTheEntry(t *testing
 	approved.Status = manualjournal.StatusApproved
 	journals := &fakeManualJournals{current: approved, guard: &agenttoolstest.WriteGuard{}}
 	tool := newPostManualJournalTool(journals, fakeLedgerAccounts{})
-	params := agenttoolstest.ExecuteParams(map[string]any{paramManualJournalID: approved.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramManualJournalID: approved.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, journals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		journals.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would post manual journal MJR-7 to the general ledger")
 	assert.Contains(t, preview.Summary, "falls in a closed period")
 	require.Len(t, preview.Changes, 2)
-	assert.Equal(t, "Posted", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After)
+	assert.Equal(
+		t,
+		"Posted",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
+	)
 	entry := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, permission.ResourceJournalEntry, entry.Resource)
 	require.NotNil(t, entry.Money)
@@ -489,9 +540,11 @@ func TestPostManualJournal_ARefusalIsAWouldFail(t *testing.T) {
 		),
 	}
 	tool := newPostManualJournalTool(journals, fakeLedgerAccounts{})
-	params := agenttoolstest.ExecuteParams(map[string]any{paramManualJournalID: journals.current.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramManualJournalID: journals.current.ID.String()},
+	)
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 }
@@ -625,9 +678,13 @@ func TestRequestJournalReversal_OnlyAPersonRequestsOne(t *testing.T) {
 		paramReversalReasonText:    "Posted to fuel instead of tolls",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reversals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reversals.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would request a reversal of journal entry JE-104")
 	assert.Contains(t, preview.Summary, "approved at once")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
@@ -635,15 +692,15 @@ func TestRequestJournalReversal_OnlyAPersonRequestsOne(t *testing.T) {
 	require.NotNil(t, change.Money)
 	assert.Equal(t, "6100 Fuel expense (credit)", change.Money.Lines[0].Label)
 
-	_, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	_, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.ErrorIs(t, err, common.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, reversals.created)
 	assert.Equal(t, "requested", result.Action)
 
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceJournalEntry, target.Resource)
 	assert.Equal(t, permission.OpCreate, tool.Policy().Operation)
@@ -666,9 +723,13 @@ func TestCancelJournalReversal_KeepsTheOriginalEntry(t *testing.T) {
 		common.ParamReason:     "The entry was right after all",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reversals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reversals.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "the original entry stands as posted")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, reversals.cancelled)
@@ -687,12 +748,24 @@ func TestPostJournalReversal_ShowsTheEntryAndTheOriginalReversed(t *testing.T) {
 		paramJournalReversalID: reversals.change.Before.ID.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reversals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reversals.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	require.Len(t, preview.Changes, 3)
-	assert.Equal(t, permission.ResourceJournalEntry, agenttoolstest.PreviewChange(t, preview, 1).Resource)
-	assert.Equal(t, "Reversed", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 2), "status").After)
+	assert.Equal(
+		t,
+		permission.ResourceJournalEntry,
+		agenttoolstest.PreviewChange(t, preview, 1).Resource,
+	)
+	assert.Equal(
+		t,
+		"Reversed",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 2), "status").After,
+	)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")

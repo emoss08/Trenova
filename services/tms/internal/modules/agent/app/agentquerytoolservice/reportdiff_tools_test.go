@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/keel/analytics/format"
 	"github.com/emoss08/keel/analytics/table"
 	"github.com/emoss08/keel/analytics/value"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -66,7 +66,7 @@ func succeededRun(id pulid.ID, rowsKey string) *report.ReportRun {
 
 type comparisonFixture struct {
 	service *fakeReporting
-	tools   map[string]agentports.AgentQueryTool
+	tools   map[string]agenttoolports.AgentQueryTool
 	earlier pulid.ID
 	later   pulid.ID
 }

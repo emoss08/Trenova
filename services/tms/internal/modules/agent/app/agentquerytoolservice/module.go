@@ -2,8 +2,11 @@ package agentquerytoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/analysisports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/scriptports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
@@ -122,14 +125,14 @@ func grouped() []any {
 // without the whole reporting stack; fx holds the concrete service, so the
 // widening happens here rather than in the tools.
 
-func provideListReportsTool(reports *reporting.Service) agentports.AgentQueryTool {
+func provideListReportsTool(reports *reporting.Service) agenttoolports.AgentQueryTool {
 	return newListReportsTool(reports)
 }
 
 func provideRunReportTool(
 	reports *reporting.Service,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newRunReportTool(reports, permissions)
 }
 
@@ -139,7 +142,7 @@ func provideRunScriptTool(
 	files documentports.ConversationFileReader,
 	permissions permissionports.PermissionEngine,
 	analyses analysisports.RunRecorder,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newRunScriptTool(&runScriptToolParams{
 		Runner:      runner,
 		Reports:     reports,
@@ -149,27 +152,27 @@ func provideRunScriptTool(
 	})
 }
 
-func provideGetReportRunTool(reports *reporting.Service) agentports.AgentQueryTool {
+func provideGetReportRunTool(reports *reporting.Service) agenttoolports.AgentQueryTool {
 	return newGetReportRunTool(reports)
 }
 
-func provideCompareReportRunsTool(reports *reporting.Service) agentports.AgentQueryTool {
+func provideCompareReportRunsTool(reports *reporting.Service) agenttoolports.AgentQueryTool {
 	return newCompareReportRunsTool(reports)
 }
 
-func provideDescribeReportTool(reports *reporting.Service) agentports.AgentQueryTool {
+func provideDescribeReportTool(reports *reporting.Service) agenttoolports.AgentQueryTool {
 	return newDescribeReportTool(reports)
 }
 
-func provideListReportDatasetsTool(reports *reporting.Service) agentports.AgentQueryTool {
+func provideListReportDatasetsTool(reports *reporting.Service) agenttoolports.AgentQueryTool {
 	return newListReportDatasetsTool(reports)
 }
 
-func provideDescribeReportDatasetTool(reports *reporting.Service) agentports.AgentQueryTool {
+func provideDescribeReportDatasetTool(reports *reporting.Service) agenttoolports.AgentQueryTool {
 	return newDescribeReportDatasetTool(reports)
 }
 
-func providePreviewReportTool(reports *reporting.Service) agentports.AgentQueryTool {
+func providePreviewReportTool(reports *reporting.Service) agenttoolports.AgentQueryTool {
 	return newPreviewReportTool(reports)
 }
 
@@ -182,19 +185,19 @@ func provideGetShipmentTrackingTool(
 	console shipmentports.DispatchConsoleRepository,
 	telematics *telematicsservice.Service,
 	stopEtas stopetaports.Repository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newGetShipmentTrackingTool(shipments, console, telematics, stopEtas)
 }
 
 func provideGetDispatchBoardTool(
-	board agentports.DispatchConsoleService,
-) agentports.AgentQueryTool {
+	board dispatchconsoleports.DispatchConsoleService,
+) agenttoolports.AgentQueryTool {
 	return newGetDispatchBoardTool(board)
 }
 
 func provideListWeatherAlertsTool(
 	weather weatheralertports.WeatherAlertService,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListWeatherAlertsTool(weather)
 }
 
@@ -202,33 +205,33 @@ func provideGetDocumentSummaryTool(
 	documents documentports.DocumentRepository,
 	content documentports.DocumentContentService,
 	permissions permissionports.PermissionEngine,
-	threads agentports.ThreadOwnerRepository,
-) agentports.AgentQueryTool {
+	threads assistantports.ThreadOwnerRepository,
+) agenttoolports.AgentQueryTool {
 	return newGetDocumentSummaryTool(documents, content, permissions, threads)
 }
 
 //nolint:gocritic // fx.In parameter structs are passed by value
-func provideFindShipmentRecordsTool(p ShipmentRecordsToolParams) agentports.AgentQueryTool {
+func provideFindShipmentRecordsTool(p ShipmentRecordsToolParams) agenttoolports.AgentQueryTool {
 	return newFindShipmentRecordsTool(&p)
 }
 
 func provideReadAttachmentTool(
 	documents documentports.DocumentRepository,
 	content documentports.DocumentContentService,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newReadAttachmentTool(documents, content)
 }
 
 func provideGetShipmentDraftTool(
 	content documentports.DocumentContentService,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newGetShipmentDraftTool(content)
 }
 
 func provideQuoteShipmentTool(
 	quotes *ratequoteservice.Service,
 	locations locationports.LocationRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newQuoteShipmentTool(quotes, locations)
 }
 
@@ -236,48 +239,48 @@ func provideShopCarriersTool(
 	quotes *ratequoteservice.Service,
 	carriers carrierports.CarrierRepository,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newShopCarriersTool(quotes, carriers, permissions)
 }
 
 func provideRankMoveCandidatesTool(
-	console agentports.DispatchConsoleService,
-) agentports.AgentQueryTool {
+	console dispatchconsoleports.DispatchConsoleService,
+) agenttoolports.AgentQueryTool {
 	return newRankMoveCandidatesTool(console)
 }
 
 func providePlanDispatchTool(
-	planner agentports.DispatchAutoAssignService,
-) agentports.AgentQueryTool {
+	planner dispatchconsoleports.DispatchAutoAssignService,
+) agenttoolports.AgentQueryTool {
 	return newPlanDispatchTool(planner)
 }
 
-func provideListInsightsTool(insights *insightservice.Service) agentports.AgentQueryTool {
+func provideListInsightsTool(insights *insightservice.Service) agenttoolports.AgentQueryTool {
 	return newListInsightsTool(insights)
 }
 
-func provideGetInsightTool(insights *insightservice.Service) agentports.AgentQueryTool {
+func provideGetInsightTool(insights *insightservice.Service) agenttoolports.AgentQueryTool {
 	return newGetInsightTool(insights)
 }
 
 func provideListBankReceiptExceptionsTool(
 	receipts *bankreceiptservice.Service,
 	items bankreceiptworkitemports.BankReceiptWorkItemRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListBankReceiptExceptionsTool(receipts, items)
 }
 
 func provideGetBankReceiptTool(
 	receipts *bankreceiptservice.Service,
 	items bankreceiptworkitemports.BankReceiptWorkItemRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newGetBankReceiptTool(receipts, items)
 }
 
 func provideSearchDocumentsTool(
-	searcher agentports.RetrievalSearcher,
+	searcher retrievalports.RetrievalSearcher,
 	permissions permissionports.PermissionEngine,
-	threads agentports.ThreadOwnerRepository,
-) agentports.AgentQueryTool {
+	threads assistantports.ThreadOwnerRepository,
+) agenttoolports.AgentQueryTool {
 	return newSearchDocumentsTool(searcher, permissions, threads)
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -71,7 +71,7 @@ type Params struct {
 	AccountingSync     accountingsyncports.AccountingSyncEnqueuer  `optional:"true"`
 	CustomerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
 	AccountingPolicy   *accountingcontrolpolicyservice.Service
-	Realtime           agentports.RealtimeService `optional:"true"`
+	Realtime           realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
@@ -106,7 +106,7 @@ type Service struct {
 	accountingSync     accountingsyncports.AccountingSyncEnqueuer
 	customerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
 	accountingPolicy   *accountingcontrolpolicyservice.Service
-	realtime           agentports.RealtimeService
+	realtime           realtimeports.RealtimeService
 }
 
 type previewComputation struct {

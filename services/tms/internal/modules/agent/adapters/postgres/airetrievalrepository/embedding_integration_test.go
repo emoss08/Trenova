@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,29 +39,29 @@ func TestSearch_FiltersByTenantAndModelAndKeepsTheBestChunk(t *testing.T) {
 	otherModel := pulid.MustNew("amem_")
 
 	h.replace(t, h.tenant, airetrieval.SourceTypeMemory, exact, modelA, 768,
-		agentports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "h-exact-0",
+		retrievalports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "h-exact-0",
 			Vector: axisVector(768, map[int]float32{1: 1})},
-		agentports.EmbeddingChunk{ChunkIndex: 1, ContentHash: "h-exact-1",
+		retrievalports.EmbeddingChunk{ChunkIndex: 1, ContentHash: "h-exact-1",
 			Vector: axisVector(768, map[int]float32{0: 1})},
 	)
 	h.replace(t, h.tenant, airetrieval.SourceTypeMemory, near, modelA, 768,
-		agentports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "h-near-0",
+		retrievalports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "h-near-0",
 			Vector: axisVector(768, map[int]float32{0: 0.8, 1: 0.6})},
 	)
 	h.replace(t, h.tenant, airetrieval.SourceTypeMemory, far, modelA, 768,
-		agentports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "h-far-0",
+		retrievalports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "h-far-0",
 			Vector: axisVector(768, map[int]float32{2: 1})},
 	)
 	h.replace(t, otherTenant, airetrieval.SourceTypeMemory, otherTenants, modelA, 768,
-		agentports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "h-other-0",
+		retrievalports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "h-other-0",
 			Vector: axisVector(768, map[int]float32{0: 1})},
 	)
 	h.replace(t, h.tenant, airetrieval.SourceTypeMemory, otherModel, modelB, 1024,
-		agentports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "h-model-0",
+		retrievalports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "h-model-0",
 			Vector: axisVector(1024, map[int]float32{0: 1})},
 	)
 
-	hits, err := h.repo.Search(h.ctx, &agentports.VectorSearchRequest{
+	hits, err := h.repo.Search(h.ctx, &retrievalports.VectorSearchRequest{
 		TenantInfo:  h.tenant,
 		SourceTypes: []airetrieval.SourceType{airetrieval.SourceTypeMemory},
 		ModelKey:    modelA,
@@ -85,7 +85,7 @@ func TestSearch_FiltersByTenantAndModelAndKeepsTheBestChunk(t *testing.T) {
 		assert.Equal(t, airetrieval.SourceTypeMemory, hit.SourceType)
 	}
 
-	floored, err := h.repo.Search(h.ctx, &agentports.VectorSearchRequest{
+	floored, err := h.repo.Search(h.ctx, &retrievalports.VectorSearchRequest{
 		TenantInfo:    h.tenant,
 		ModelKey:      modelA,
 		Dimensions:    768,
@@ -95,7 +95,7 @@ func TestSearch_FiltersByTenantAndModelAndKeepsTheBestChunk(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, floored, 2, "the similarity floor drops the unrelated source")
 
-	documents, err := h.repo.Search(h.ctx, &agentports.VectorSearchRequest{
+	documents, err := h.repo.Search(h.ctx, &retrievalports.VectorSearchRequest{
 		TenantInfo:  h.tenant,
 		SourceTypes: []airetrieval.SourceType{airetrieval.SourceTypeDocument},
 		ModelKey:    modelA,
@@ -105,7 +105,7 @@ func TestSearch_FiltersByTenantAndModelAndKeepsTheBestChunk(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, documents, "the source type filter is applied")
 
-	_, err = h.repo.Search(h.ctx, &agentports.VectorSearchRequest{
+	_, err = h.repo.Search(h.ctx, &retrievalports.VectorSearchRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 		Dimensions: 768,
@@ -126,7 +126,7 @@ func TestSearch_UsesThePartialHNSWIndexForItsDimensions(t *testing.T) {
 			pulid.MustNew("amem_"),
 			modelA,
 			768,
-			agentports.EmbeddingChunk{
+			retrievalports.EmbeddingChunk{
 				ChunkIndex:  0,
 				ContentHash: "h-" + pulid.MustNew("x_").String(),
 				Vector:      axisVector(768, map[int]float32{i % 768: 1}),
@@ -134,7 +134,7 @@ func TestSearch_UsesThePartialHNSWIndexForItsDimensions(t *testing.T) {
 		)
 	}
 
-	req := &agentports.VectorSearchRequest{
+	req := &retrievalports.VectorSearchRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 		Dimensions: 768,
@@ -175,24 +175,24 @@ func TestReplaceChunks_KeepsUnchangedHashesAndDropsRemovedChunks(t *testing.T) {
 
 	sourceID := pulid.MustNew("doc_")
 	first := h.replace(t, h.tenant, airetrieval.SourceTypeDocument, sourceID, modelA, 768,
-		agentports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "page-1",
+		retrievalports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "page-1",
 			Vector: axisVector(768, map[int]float32{0: 1})},
-		agentports.EmbeddingChunk{ChunkIndex: 1, ContentHash: "page-2",
+		retrievalports.EmbeddingChunk{ChunkIndex: 1, ContentHash: "page-2",
 			Vector: axisVector(768, map[int]float32{1: 1})},
-		agentports.EmbeddingChunk{ChunkIndex: 2, ContentHash: "page-3",
+		retrievalports.EmbeddingChunk{ChunkIndex: 2, ContentHash: "page-3",
 			Vector: axisVector(768, map[int]float32{2: 1})},
 	)
-	assert.Equal(t, agentports.ReplaceEmbeddingChunksResult{Written: 3}, first)
+	assert.Equal(t, retrievalports.ReplaceEmbeddingChunksResult{Written: 3}, first)
 
 	before := h.rowVersion(t, sourceID, 0)
 
 	second := h.replace(t, h.tenant, airetrieval.SourceTypeDocument, sourceID, modelA, 768,
-		agentports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "page-1",
+		retrievalports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "page-1",
 			Vector: axisVector(768, map[int]float32{5: 1})},
-		agentports.EmbeddingChunk{ChunkIndex: 1, ContentHash: "page-2-edited",
+		retrievalports.EmbeddingChunk{ChunkIndex: 1, ContentHash: "page-2-edited",
 			Vector: axisVector(768, map[int]float32{3: 1})},
 	)
-	assert.Equal(t, agentports.ReplaceEmbeddingChunksResult{
+	assert.Equal(t, retrievalports.ReplaceEmbeddingChunksResult{
 		Written:   1,
 		Unchanged: 1,
 		Removed:   1,
@@ -200,8 +200,8 @@ func TestReplaceChunks_KeepsUnchangedHashesAndDropsRemovedChunks(t *testing.T) {
 	assert.Equal(t, before, h.rowVersion(t, sourceID, 0),
 		"a chunk whose hash did not change is not written again")
 
-	hashes, err := h.repo.ListChunkHashes(h.ctx, &agentports.ListEmbeddingChunkHashesRequest{
-		Source: agentports.AIRetrievalSourceRef{
+	hashes, err := h.repo.ListChunkHashes(h.ctx, &retrievalports.ListEmbeddingChunkHashesRequest{
+		Source: retrievalports.AIRetrievalSourceRef{
 			TenantInfo: h.tenant,
 			SourceType: airetrieval.SourceTypeDocument,
 			SourceID:   sourceID,
@@ -209,27 +209,27 @@ func TestReplaceChunks_KeepsUnchangedHashesAndDropsRemovedChunks(t *testing.T) {
 		ModelKey: modelA,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, []agentports.EmbeddingChunkHash{
+	assert.Equal(t, []retrievalports.EmbeddingChunkHash{
 		{ChunkIndex: 0, ContentHash: "page-1"},
 		{ChunkIndex: 1, ContentHash: "page-2-edited"},
 	}, hashes)
 
 	unchanged := h.replace(t, h.tenant, airetrieval.SourceTypeDocument, sourceID, modelA, 768,
-		agentports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "page-1"},
-		agentports.EmbeddingChunk{ChunkIndex: 1, ContentHash: "page-2-edited"},
+		retrievalports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "page-1"},
+		retrievalports.EmbeddingChunk{ChunkIndex: 1, ContentHash: "page-2-edited"},
 	)
-	assert.Equal(t, agentports.ReplaceEmbeddingChunksResult{Unchanged: 2}, unchanged,
+	assert.Equal(t, retrievalports.ReplaceEmbeddingChunksResult{Unchanged: 2}, unchanged,
 		"an unchanged chunk needs no embedding")
 
-	_, err = h.repo.ReplaceChunks(h.ctx, &agentports.ReplaceEmbeddingChunksRequest{
-		Source: agentports.AIRetrievalSourceRef{
+	_, err = h.repo.ReplaceChunks(h.ctx, &retrievalports.ReplaceEmbeddingChunksRequest{
+		Source: retrievalports.AIRetrievalSourceRef{
 			TenantInfo: h.tenant,
 			SourceType: airetrieval.SourceTypeDocument,
 			SourceID:   sourceID,
 		},
 		ModelKey:   modelA,
 		Dimensions: 768,
-		Chunks:     []agentports.EmbeddingChunk{{ChunkIndex: 0, ContentHash: "page-1-edited"}},
+		Chunks:     []retrievalports.EmbeddingChunk{{ChunkIndex: 0, ContentHash: "page-1-edited"}},
 	})
 	require.ErrorIs(t, err, airetrieval.ErrChunkEmbeddingMissing)
 	assert.Equal(t, 2, h.countEmbeddings(t, sourceID, modelA), "a refused replace changes nothing")
@@ -251,11 +251,11 @@ func TestCatalogEmbeddings_AreKeyedByModelCorpusItemAndHash(t *testing.T) {
 	h := newHarness(t)
 	h.requireVector(t)
 
-	written, err := h.repo.PutCatalogEmbeddings(h.ctx, agentports.PutCatalogEmbeddingsRequest{
+	written, err := h.repo.PutCatalogEmbeddings(h.ctx, retrievalports.PutCatalogEmbeddingsRequest{
 		ModelKey:   modelA,
 		Corpus:     airetrieval.CatalogCorpusTools,
 		Dimensions: 768,
-		Items: []agentports.CatalogEmbeddingInput{
+		Items: []retrievalports.CatalogEmbeddingInput{
 			{
 				ItemKey:     "shipment_list",
 				ContentHash: "v1",
@@ -271,11 +271,11 @@ func TestCatalogEmbeddings_AreKeyedByModelCorpusItemAndHash(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, written)
 
-	again, err := h.repo.PutCatalogEmbeddings(h.ctx, agentports.PutCatalogEmbeddingsRequest{
+	again, err := h.repo.PutCatalogEmbeddings(h.ctx, retrievalports.PutCatalogEmbeddingsRequest{
 		ModelKey:   modelA,
 		Corpus:     airetrieval.CatalogCorpusTools,
 		Dimensions: 768,
-		Items: []agentports.CatalogEmbeddingInput{
+		Items: []retrievalports.CatalogEmbeddingInput{
 			{
 				ItemKey:     "shipment_list",
 				ContentHash: "v1",
@@ -291,7 +291,7 @@ func TestCatalogEmbeddings_AreKeyedByModelCorpusItemAndHash(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, again, "an item already stored for this hash is not written again")
 
-	found, err := h.repo.GetCatalogEmbeddings(h.ctx, agentports.GetCatalogEmbeddingsRequest{
+	found, err := h.repo.GetCatalogEmbeddings(h.ctx, retrievalports.GetCatalogEmbeddingsRequest{
 		ModelKey: modelA,
 		Corpus:   airetrieval.CatalogCorpusTools,
 		Items: []airetrieval.CatalogItemRef{
@@ -307,14 +307,17 @@ func TestCatalogEmbeddings_AreKeyedByModelCorpusItemAndHash(t *testing.T) {
 	assert.Equal(t, "v2", found[1].ContentHash)
 	assert.InDelta(t, 1.0, found[1].Vector()[2], 0.001)
 
-	pruned, err := h.repo.PruneCatalogEmbeddings(h.ctx, agentports.PruneCatalogEmbeddingsRequest{
-		ModelKey: modelA,
-		Corpus:   airetrieval.CatalogCorpusTools,
-		Keep: []airetrieval.CatalogItemRef{
-			{ItemKey: "shipment_list", ContentHash: "v2"},
-			{ItemKey: "customer_get", ContentHash: "v1"},
+	pruned, err := h.repo.PruneCatalogEmbeddings(
+		h.ctx,
+		retrievalports.PruneCatalogEmbeddingsRequest{
+			ModelKey: modelA,
+			Corpus:   airetrieval.CatalogCorpusTools,
+			Keep: []airetrieval.CatalogItemRef{
+				{ItemKey: "shipment_list", ContentHash: "v2"},
+				{ItemKey: "customer_get", ContentHash: "v1"},
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
 	assert.Equal(t, 1, pruned, "only the superseded hash is pruned")
 }
@@ -336,13 +339,13 @@ func TestModelSwap_PromotesThePendingModelAndPurgesTheOldOneInBatches(t *testing
 		sourceID := pulid.MustNew("amem_")
 		sources = append(sources, sourceID)
 		h.replace(t, h.tenant, airetrieval.SourceTypeMemory, sourceID, modelA, 768,
-			agentports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "a",
+			retrievalports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "a",
 				Vector: axisVector(768, map[int]float32{i: 1})})
 		h.replace(t, h.tenant, airetrieval.SourceTypeMemory, sourceID, modelB, 1024,
-			agentports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "a",
+			retrievalports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "a",
 				Vector: axisVector(1024, map[int]float32{i: 1})})
 	}
-	_, err = h.repo.MarkStale(h.ctx, &agentports.MarkAIRetrievalStaleRequest{
+	_, err = h.repo.MarkStale(h.ctx, &retrievalports.MarkAIRetrievalStaleRequest{
 		TenantInfo: h.tenant,
 		SourceType: airetrieval.SourceTypeMemory,
 		SourceIDs:  sources,
@@ -350,19 +353,19 @@ func TestModelSwap_PromotesThePendingModelAndPurgesTheOldOneInBatches(t *testing
 	})
 	require.NoError(t, err)
 
-	_, err = h.repo.PurgeModel(h.ctx, agentports.PurgeAIRetrievalModelRequest{
+	_, err = h.repo.PurgeModel(h.ctx, retrievalports.PurgeAIRetrievalModelRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 	})
 	require.ErrorIs(t, err, airetrieval.ErrModelInUse, "the active model is never purged")
 
-	_, err = h.repo.SwapModel(h.ctx, agentports.SwapAIRetrievalModelRequest{
+	_, err = h.repo.SwapModel(h.ctx, retrievalports.SwapAIRetrievalModelRequest{
 		TenantInfo:      h.tenant,
 		PendingModelKey: "api.example.test/something-else/768",
 	})
 	require.ErrorIs(t, err, airetrieval.ErrPendingModelMoved)
 
-	swapped, err := h.repo.SwapModel(h.ctx, agentports.SwapAIRetrievalModelRequest{
+	swapped, err := h.repo.SwapModel(h.ctx, retrievalports.SwapAIRetrievalModelRequest{
 		TenantInfo:      h.tenant,
 		PendingModelKey: modelB,
 	})
@@ -377,7 +380,7 @@ func TestModelSwap_PromotesThePendingModelAndPurgesTheOldOneInBatches(t *testing
 	assert.Equal(t, modelB, stored.ActiveModelKey)
 	assert.Empty(t, stored.PendingModelKey)
 
-	_, err = h.repo.PurgeModel(h.ctx, agentports.PurgeAIRetrievalModelRequest{
+	_, err = h.repo.PurgeModel(h.ctx, retrievalports.PurgeAIRetrievalModelRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelB,
 	})
@@ -385,7 +388,7 @@ func TestModelSwap_PromotesThePendingModelAndPurgesTheOldOneInBatches(t *testing
 
 	rounds := 0
 	for {
-		purged, purgeErr := h.repo.PurgeModel(h.ctx, agentports.PurgeAIRetrievalModelRequest{
+		purged, purgeErr := h.repo.PurgeModel(h.ctx, retrievalports.PurgeAIRetrievalModelRequest{
 			TenantInfo: h.tenant,
 			ModelKey:   modelA,
 			BatchSize:  2,
@@ -408,7 +411,7 @@ func TestModelSwap_PromotesThePendingModelAndPurgesTheOldOneInBatches(t *testing
 		assert.Equal(t, 1, h.countIndexEntries(t, sourceID, modelB))
 	}
 
-	_, err = h.repo.SwapModel(h.ctx, agentports.SwapAIRetrievalModelRequest{
+	_, err = h.repo.SwapModel(h.ctx, retrievalports.SwapAIRetrievalModelRequest{
 		TenantInfo:      h.tenant,
 		PendingModelKey: modelB,
 	})

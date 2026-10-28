@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/keel/analytics/table"
 	"github.com/emoss08/keel/analytics/value"
 	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -257,7 +257,7 @@ func agingEntry() *canned.Entry {
 
 func reportingTools(
 	t *testing.T,
-) (*fakeReporting, *fakePermissions, map[string]agentports.AgentQueryTool) {
+) (*fakeReporting, *fakePermissions, map[string]agenttoolports.AgentQueryTool) {
 	t.Helper()
 
 	service := &fakeReporting{
@@ -280,8 +280,8 @@ func reportingTools(
 	runner.settleWindow = 40 * time.Millisecond
 	runner.settlePoll = 2 * time.Millisecond
 
-	tools := map[string]agentports.AgentQueryTool{}
-	for _, tool := range []agentports.AgentQueryTool{
+	tools := map[string]agenttoolports.AgentQueryTool{}
+	for _, tool := range []agenttoolports.AgentQueryTool{
 		newListReportsTool(service),
 		runner,
 		newGetReportRunTool(service),

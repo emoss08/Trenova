@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -135,9 +135,13 @@ func TestRecordWorkerInjury_TakesTheNextCaseNumber(t *testing.T) {
 		paramBodyPart:           "Right hand",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, injuries.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		injuries.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "case 2026-8")
 	assert.Contains(t, preview.Summary, "FirstAidOnly")
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -146,14 +150,14 @@ func TestRecordWorkerInjury_TakesTheNextCaseNumber(t *testing.T) {
 	assert.Equal(t, int64(1_790_075_700), injuries.recorded.OccurredAt)
 	assert.Equal(t, permission.ResourceWorkerInjury, tool.Policy().Resource)
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			common.ParamWorkerID:    injuries.injury.WorkerID.String(),
 			wfParamOccurred:         "2026-09-22T06:15:00-05:00",
 			common.FieldDescription: "Fractured wrist",
 			paramClassification:     "DaysAway",
 		})), "validation runs the service's plan")
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			common.ParamWorkerID: injuries.injury.WorkerID.String(),
 			wfParamOccurred:      "2026-09-22T06:15:00-05:00",
@@ -170,9 +174,13 @@ func TestUpdateWorkerInjury_ChangesOnlyWhatIsNamed(t *testing.T) {
 		"returnedToWorkAt": "2026-09-29",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, injuries.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		injuries.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Equal(t, "Would correct case 2026-7.", preview.Summary)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, injuries.updated)
@@ -186,12 +194,22 @@ func TestDeleteWorkerInjury_IsOnlyProposed(t *testing.T) {
 
 	injuries := newFakeInjuries()
 	tool := newDeleteWorkerInjuryTool(injuries)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramInjuryID: injuries.injury.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramInjuryID: injuries.injury.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, injuries.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, agent.PreviewOperationDelete, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		injuries.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationDelete,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, []pulid.ID{injuries.injury.ID}, injuries.deleted)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)

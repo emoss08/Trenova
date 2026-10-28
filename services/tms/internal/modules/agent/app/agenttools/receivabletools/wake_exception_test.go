@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -47,7 +47,7 @@ func TestWakeException_PreviewsThenBringsItBackToTheQueue(t *testing.T) {
 		*agent.ToolPreview,
 		error,
 	) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "Open", agenttoolstest.FieldByPath(t, change, "status").After)
@@ -69,7 +69,7 @@ func TestWakeException_RefusesAnExceptionThatIsNotSnoozed(t *testing.T) {
 		paramWatchtowerItemID: exceptions.item.ID.String(),
 	})
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 	require.Error(t, tool.Execute(t.Context(), params))
 	assert.Nil(t, exceptions.saved)
 }

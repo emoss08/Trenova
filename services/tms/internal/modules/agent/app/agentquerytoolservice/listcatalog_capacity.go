@@ -3,13 +3,12 @@ package agentquerytoolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity/carriercapacitydb"
-	"github.com/emoss08/trenova/pkg/listquery"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity/carriercapacitydb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
@@ -68,7 +67,7 @@ func toCapacityPostingRow(item *carriercapacity.Posting) capacityPostingRow {
 
 func newListCarrierCapacityPostingsTool(
 	repo carriercapacityports.CarrierCapacityPostingRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "carrier_list_capacity_postings",
 		entityPlural: "carrier capacity postings",

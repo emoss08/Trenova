@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"go.uber.org/zap"
 )
@@ -28,7 +29,7 @@ type profile struct {
 	beyond map[string]agent.AutonomyTier
 }
 
-func profileModeOf(req *agentports.RunRequest) ProfileMode {
+func profileModeOf(req *agentruntimeports.RunRequest) ProfileMode {
 	switch {
 	case req.Delegation != nil && req.Delegation.ReadOnly:
 		return ProfileFanOut
@@ -43,7 +44,7 @@ func profileModeOf(req *agentports.RunRequest) ProfileMode {
 
 func (s *Service) profileFor(
 	ctx context.Context,
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 	granted []string,
 ) profile {
 	mode := profileModeOf(req)
@@ -62,7 +63,11 @@ func (s *Service) profileFor(
 	}
 }
 
-func (s *Service) profileHolds(req *agentports.RunRequest, mode ProfileMode, name string) bool {
+func (s *Service) profileHolds(
+	req *agentruntimeports.RunRequest,
+	mode ProfileMode,
+	name string,
+) bool {
 	switch name {
 	case agentdefinition.CoreToolOpenPage:
 		return req.Delegation == nil
@@ -87,17 +92,17 @@ func (s *Service) looksUp(name string) bool {
 	}
 	tool, ok := s.queryTools.Get(name)
 
-	return ok && agentports.EffectOf(tool) == agent.ToolEffectLookup
+	return ok && agenttoolports.EffectOf(tool) == agent.ToolEffectLookup
 }
 
-func reachesBeyond(req *agentports.RunRequest, mode ProfileMode) bool {
+func reachesBeyond(req *agentruntimeports.RunRequest, mode ProfileMode) bool {
 	return mode == ProfileConversation && !req.Inline && req.ThreadID.IsNotNil() &&
 		req.Actor != nil && req.Actor.PrincipalType == permissionports.PrincipalTypeUser
 }
 
 func (s *Service) beyondFor(
 	ctx context.Context,
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 	mode ProfileMode,
 	held []string,
 ) map[string]agent.AutonomyTier {
@@ -165,6 +170,6 @@ func beyondNames(beyond map[string]agent.AutonomyTier) []string {
 	return slices.Sorted(maps.Keys(beyond))
 }
 
-func (s *Service) reachable(req *agentports.RunRequest, beyond agent.AutonomyTier) bool {
+func (s *Service) reachable(req *agentruntimeports.RunRequest, beyond agent.AutonomyTier) bool {
 	return beyond.IsValid() && reachesBeyond(req, profileModeOf(req))
 }

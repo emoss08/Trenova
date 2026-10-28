@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -47,7 +48,7 @@ func waitFor(ctx context.Context, ch <-chan struct{}) bool {
 }
 
 type rendezvousClassifier struct {
-	agentports.CompletionService
+	llmports.CompletionService
 
 	meet     *rendezvous
 	category agentguard.Category
@@ -55,12 +56,12 @@ type rendezvousClassifier struct {
 
 func (c *rendezvousClassifier) CompleteStructured(
 	ctx context.Context,
-	_ *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	_ *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	close(c.meet.guardStarted)
 	c.meet.guardSawContext.Store(waitFor(ctx, c.meet.contextStarted))
 
-	return &agentports.StructuredCompletionResult{
+	return &llmports.StructuredCompletionResult{
 		Text: `{"category":"` + string(c.category) + `","reasoning":"stub"}`,
 	}, nil
 }
@@ -72,7 +73,7 @@ type rendezvousContexts struct {
 
 func (c *rendezvousContexts) Build(
 	ctx context.Context,
-	_ *agentports.RuntimeContextRequest,
+	_ *agentruntimeports.RuntimeContextRequest,
 ) (agentdefinition.RuntimeContext, error) {
 	c.calls.Add(1)
 	close(c.meet.contextStarted)
@@ -160,18 +161,18 @@ func TestAdmit_ADeterministicRefusalBuildsNothing(t *testing.T) {
 }
 
 type countingClassifier struct {
-	agentports.CompletionService
+	llmports.CompletionService
 
 	calls atomic.Int32
 }
 
 func (c *countingClassifier) CompleteStructured(
 	context.Context,
-	*agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	*llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	c.calls.Add(1)
 
-	return &agentports.StructuredCompletionResult{
+	return &llmports.StructuredCompletionResult{
 		Text: `{"category":"PromptManipulation","reasoning":"reads like instructions"}`,
 	}, nil
 }

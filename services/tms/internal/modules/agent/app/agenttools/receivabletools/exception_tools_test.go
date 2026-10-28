@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -112,9 +112,13 @@ func TestResolveException_PreviewsThenResolves(t *testing.T) {
 		paramResolutionCode:   "CarrierDelay",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, exceptions.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		exceptions.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "Resolved", agenttoolstest.FieldByPath(t, change, "status").After)
 	assert.Nil(t, exceptions.saved)
@@ -155,10 +159,18 @@ func TestAssignException_GivesTheItemToTheNamedPerson(t *testing.T) {
 		paramExceptionAssignee: assignee.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, exceptions.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, agent.PreviewOperationUpdate, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		exceptions.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationUpdate,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 	assert.Nil(t, exceptions.saved)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -176,7 +188,7 @@ func TestCommentOnException_PreviewsWithoutWriting(t *testing.T) {
 	})
 
 	agenttoolstest.PreviewWithoutWrites(t, exceptions.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Empty(t, exceptions.comments)
 

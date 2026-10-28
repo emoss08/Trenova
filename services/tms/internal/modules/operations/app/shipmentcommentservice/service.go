@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -66,7 +66,7 @@ type Params struct {
 	Templates           documenttemplateports.DocumentTemplateResolver
 	AuditService        auditports.AuditService
 	EventService        shipmenteventports.ShipmentEventService
-	Realtime            agentports.RealtimeService
+	Realtime            realtimeports.RealtimeService
 	NotificationService *notificationservice.Service
 }
 
@@ -80,7 +80,7 @@ type service struct {
 	templates           documenttemplateports.DocumentTemplateResolver
 	auditService        auditports.AuditService
 	eventService        shipmenteventports.ShipmentEventService
-	realtime            agentports.RealtimeService
+	realtime            realtimeports.RealtimeService
 	notificationService *notificationservice.Service
 }
 

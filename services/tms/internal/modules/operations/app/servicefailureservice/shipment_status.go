@@ -3,7 +3,7 @@ package servicefailureservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -29,7 +29,7 @@ type delayedShipmentMarkerParams struct {
 	logger          *zap.Logger
 	shipmentRepo    shipmentports.ShipmentRepository
 	auditService    auditports.AuditService
-	realtime        agentports.RealtimeService
+	realtime        realtimeports.RealtimeService
 	orderDerivation orderports.OrderDerivationService
 }
 
@@ -43,7 +43,7 @@ type shipmentStatusMarker struct {
 	l               *zap.Logger
 	shipmentRepo    shipmentports.ShipmentRepository
 	auditService    auditports.AuditService
-	realtime        agentports.RealtimeService
+	realtime        realtimeports.RealtimeService
 	orderDerivation orderports.OrderDerivationService
 }
 

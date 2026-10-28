@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -128,7 +128,7 @@ type noopRealtimeService struct{}
 
 func (s *noopRealtimeService) PublishResourceInvalidation(
 	_ context.Context,
-	_ *agentports.PublishResourceInvalidationRequest,
+	_ *realtimeports.PublishResourceInvalidationRequest,
 ) error {
 	return nil
 }
@@ -136,7 +136,7 @@ func (s *noopRealtimeService) PublishResourceInvalidation(
 func newTestService(
 	repo *mockAuditRepository,
 	bufferRepo *mockBufferRepository,
-	realtime agentports.RealtimeService,
+	realtime realtimeports.RealtimeService,
 ) *service {
 	logger := zap.NewNop()
 	cfg := &config.Config{

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func carrierCardAnswer(id string) map[string]*agentports.GraphQLReadResult {
-	return map[string]*agentports.GraphQLReadResult{
+func carrierCardAnswer(id string) map[string]*graphqlreadports.GraphQLReadResult {
+	return map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskCarrierCard": {
 			Data: map[string]any{"carrier": map[string]any{
 				"id": id, "name": "Red River Freight", "dbaName": nil, "__typename": "Carrier",
@@ -74,9 +74,9 @@ func TestGraphQLGet_RefusesWhatIsNotAnID(t *testing.T) {
 func TestGraphQLGet_AReadTheServerRefusesIsARefusal(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
-		"DeskLocationCard": {Errors: []agentports.GraphQLReadError{{
-			Code: agentports.GraphQLCodeForbidden, Message: "not allowed",
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
+		"DeskLocationCard": {Errors: []graphqlreadports.GraphQLReadError{{
+			Code: graphqlreadports.GraphQLCodeForbidden, Message: "not allowed",
 		}}},
 	}}
 	spec := locationGetSpec()
@@ -86,7 +86,7 @@ func TestGraphQLGet_AReadTheServerRefusesIsARefusal(t *testing.T) {
 	_, err = tool.Query(t.Context(), keyedCall(map[string]any{
 		locationIDParam: pulid.MustNew("loc_").String(),
 	}))
-	var refused *agentports.ReadRefusedError
+	var refused *graphqlreadports.ReadRefusedError
 	require.ErrorAs(t, err, &refused)
 	assert.Equal(t, permission.ResourceLocation, refused.Resource)
 }

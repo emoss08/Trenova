@@ -9,7 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,15 +40,15 @@ var errStalePage = errortypes.NewValidationError(
 )
 
 type listReader struct {
-	tool      agentports.AgentQueryTool
-	params    agentports.QueryToolParams
+	tool      agenttoolports.AgentQueryTool
+	params    agenttoolports.QueryToolParams
 	arguments map[string]any
 	entity    string
 }
 
 func (s *Service) listOf(
 	ctx context.Context,
-	req *agentports.GetThreadRequest,
+	req *assistantports.GetThreadRequest,
 	actor *permissionports.RequestActor,
 	source *exportSource,
 ) (*listReader, error) {
@@ -72,7 +73,7 @@ func (s *Service) listOf(
 
 	return &listReader{
 		tool: tool,
-		params: agentports.QueryToolParams{
+		params: agenttoolports.QueryToolParams{
 			OrganizationID:    req.TenantInfo.OrgID,
 			BusinessUnitID:    req.TenantInfo.BuID,
 			Actor:             actor,
@@ -149,10 +150,10 @@ func sortFieldFor(key string, fields []string) (string, bool) {
 //nolint:gocritic // hugeParam: GetThreadRequest is passed by value across AssistantService.
 func (s *Service) ArtifactRows(
 	ctx context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 	artifactID pulid.ID,
-	query *agentports.ArtifactRowsQuery,
-) (*agentports.ArtifactRows, error) {
+	query *assistantports.ArtifactRowsQuery,
+) (*assistantports.ArtifactRows, error) {
 	source, err := s.exportSourceOf(ctx, req, artifactID)
 	if err != nil {
 		return nil, err
@@ -182,7 +183,7 @@ func (s *Service) ArtifactRows(
 		return nil, err
 	}
 
-	return &agentports.ArtifactRows{
+	return &assistantports.ArtifactRows{
 		Rows: projectRows(
 			columns,
 			typeutils.StringOfTrimmed(source.artifact.Payload["recordEntity"]),
@@ -200,7 +201,7 @@ func (s *Service) ArtifactRows(
 }
 
 func rowsArguments(
-	query *agentports.ArtifactRowsQuery,
+	query *assistantports.ArtifactRowsQuery,
 	sortable map[string]string,
 	searchable bool,
 ) (map[string]any, error) {

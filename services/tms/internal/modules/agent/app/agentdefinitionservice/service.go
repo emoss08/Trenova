@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
@@ -38,9 +40,9 @@ type Params struct {
 	Versions     agentdefinitionports.AgentDefinitionVersionRepository
 	Proposals    agentports.AgentProposalRepository
 	AgentPlans   agentports.AgentPlanRepository
-	Tools        agentports.AgentToolRegistry
-	QueryTools   agentports.AgentQueryToolRegistry
-	Contexts     agentports.RuntimeContextBuilder
+	Tools        agenttoolports.AgentToolRegistry
+	QueryTools   agenttoolports.AgentQueryToolRegistry
+	Contexts     agentruntimeports.RuntimeContextBuilder
 	AuditService auditports.AuditService
 	// Schedules keeps the schedule behind a scheduled or continuous agent
 	// in line with the agent as it is saved.
@@ -61,9 +63,9 @@ type Service struct {
 	versions    agentdefinitionports.AgentDefinitionVersionRepository
 	proposals   agentports.AgentProposalRepository
 	agentPlans  agentports.AgentPlanRepository
-	tools       agentports.AgentToolRegistry
-	queryTools  agentports.AgentQueryToolRegistry
-	contexts    agentports.RuntimeContextBuilder
+	tools       agenttoolports.AgentToolRegistry
+	queryTools  agenttoolports.AgentQueryToolRegistry
+	contexts    agentruntimeports.RuntimeContextBuilder
 	audit       auditports.AuditService
 	schedules   agentdefinitionports.AgentDefinitionScheduler
 	extensions  agentextensionports.AgentExtensionGate
@@ -395,7 +397,7 @@ func (s *Service) PreviewPrompt(
 		Trigger: definition.TriggerMode.RunTrigger(),
 	}
 	if s.contexts != nil {
-		built, err := s.contexts.Build(ctx, &agentports.RuntimeContextRequest{
+		built, err := s.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{
 			Definition: definition,
 			Actor:      req.Actor,
 			Trigger:    definition.TriggerMode.RunTrigger(),

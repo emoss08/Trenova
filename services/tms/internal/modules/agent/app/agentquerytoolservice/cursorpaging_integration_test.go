@@ -8,7 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -67,7 +67,7 @@ func TestWorkerList_PagesARealCursorRepositoryWithoutRepeats(t *testing.T) {
 	}
 
 	tool := newListWorkersTool(repo, &fakePermissions{})
-	params := &agentports.QueryToolParams{
+	params := &agenttoolports.QueryToolParams{
 		OrganizationID: data.Organization.ID,
 		BusinessUnitID: data.BusinessUnit.ID,
 		Actor: &permissionports.RequestActor{

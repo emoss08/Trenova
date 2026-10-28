@@ -32,8 +32,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -618,7 +620,7 @@ type AIRetrievalFailedEntryConnection struct {
 }
 
 type AIRetrievalFailedEntryEdge struct {
-	Node   *agentports.AIRetrievalFailedEntry `json:"node"`
+	Node   *retrievalports.AIRetrievalFailedEntry `json:"node"`
 	Cursor string                             `json:"cursor"`
 }
 
@@ -1239,7 +1241,7 @@ type AgentReach struct {
 	AccessMode agentdefinition.AccessMode `json:"accessMode"`
 	// The roles granted the agent. Empty for a reader who may not read roles.
 	Roles    []*permission.Role              `json:"roles"`
-	Warnings []*agentports.AgentReachWarning `json:"warnings"`
+	Warnings []*agenttoolports.AgentReachWarning `json:"warnings"`
 }
 
 type AgentReflectionConnection struct {
@@ -1433,7 +1435,7 @@ type AgentToolRuleInput struct {
 type AgentToolRuleSaved struct {
 	Tool *AgentToolPolicy `json:"tool"`
 	// The agents whose answer moved.
-	Affected []*agentports.AgentToolRuleImpact `json:"affected"`
+	Affected []*agenttoolports.AgentToolRuleImpact `json:"affected"`
 }
 
 type AgentToolSafetyConnection struct {
@@ -1446,7 +1448,7 @@ type AgentToolSafetyConnection struct {
 }
 
 type AgentToolSafetyEdge struct {
-	Node   *agentports.AgentToolSafety `json:"node"`
+	Node   *agenttoolports.AgentToolSafety `json:"node"`
 	Cursor string                      `json:"cursor"`
 }
 

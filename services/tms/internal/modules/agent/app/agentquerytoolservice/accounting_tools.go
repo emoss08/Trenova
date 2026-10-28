@@ -8,23 +8,22 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
-	"github.com/emoss08/trenova/pkg/listquery"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -82,34 +81,34 @@ type receivablesReader interface {
 func provideGetARAgingTool(
 	receivables *accountsreceivableservice.Service,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newGetARAgingTool(receivables, permissions)
 }
 
 func provideListAROpenItemsTool(
 	receivables *accountsreceivableservice.Service,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListAROpenItemsTool(receivables, permissions)
 }
 
 func provideGetCustomerStatementTool(
 	receivables *accountsreceivableservice.Service,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newGetCustomerStatementTool(receivables, permissions)
 }
 
 func provideListCollectionsWorklistTool(
 	receivables *accountsreceivableservice.Service,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListCollectionsWorklistTool(receivables, permissions)
 }
 
 func provideGetFiscalCloseBlockersTool(
 	periods *fiscalperiodservice.Service,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newGetFiscalCloseBlockersTool(periods)
 }
 
@@ -160,7 +159,7 @@ type getARAgingTool struct {
 func newGetARAgingTool(
 	receivables receivablesReader,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &getARAgingTool{receivables: receivables, access: newFieldAccess(permissions)}
 }
 
@@ -183,7 +182,7 @@ func (t *getARAgingTool) ParamSchema() map[string]any {
 	}, defaultAccountingRows, maxAccountingRows))
 }
 
-func (t *getARAgingTool) Policy() agentports.ToolPolicy {
+func (t *getARAgingTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountsReceivable})
 }
 
@@ -211,7 +210,7 @@ type arAgingOutcome struct {
 
 func (t *getARAgingTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -335,7 +334,7 @@ type listAROpenItemsTool struct {
 func newListAROpenItemsTool(
 	receivables receivablesReader,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &listAROpenItemsTool{receivables: receivables, access: newFieldAccess(permissions)}
 }
 
@@ -358,7 +357,7 @@ func (t *listAROpenItemsTool) ParamSchema() map[string]any {
 	}, defaultAccountingRows, maxAccountingRows))
 }
 
-func (t *listAROpenItemsTool) Policy() agentports.ToolPolicy {
+func (t *listAROpenItemsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountsReceivable})
 }
 
@@ -408,7 +407,7 @@ func arOpenItemRowFrom(item *customerledgerports.AROpenItem, showAmounts bool) a
 
 func (t *listAROpenItemsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -483,7 +482,7 @@ type getCustomerStatementTool struct {
 func newGetCustomerStatementTool(
 	receivables receivablesReader,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &getCustomerStatementTool{receivables: receivables, access: newFieldAccess(permissions)}
 }
 
@@ -508,7 +507,7 @@ func (t *getCustomerStatementTool) ParamSchema() map[string]any {
 	}, paramCustomerID)
 }
 
-func (t *getCustomerStatementTool) Policy() agentports.ToolPolicy {
+func (t *getCustomerStatementTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountsReceivable})
 }
 
@@ -543,7 +542,7 @@ type customerStatementView struct {
 
 func (t *getCustomerStatementTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -665,7 +664,7 @@ type listCollectionsWorklistTool struct {
 func newListCollectionsWorklistTool(
 	receivables receivablesReader,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &listCollectionsWorklistTool{
 		receivables: receivables,
 		access:      newFieldAccess(permissions),
@@ -693,7 +692,7 @@ func (t *listCollectionsWorklistTool) ParamSchema() map[string]any {
 	})
 }
 
-func (t *listCollectionsWorklistTool) Policy() agentports.ToolPolicy {
+func (t *listCollectionsWorklistTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountsReceivable})
 }
 
@@ -715,7 +714,7 @@ type worklistRow struct {
 
 func (t *listCollectionsWorklistTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -814,7 +813,7 @@ type glAccountRow struct {
 func newListGLAccountsTool(
 	repo glaccountports.GLAccountRepository,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "ledger_list_accounts",
 		entityPlural: "general ledger accounts",
@@ -897,7 +896,7 @@ type fiscalPeriodRow struct {
 func newListFiscalPeriodsTool(
 	repo fiscalperiodports.FiscalPeriodRepository,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "ledger_list_fiscal_periods",
 		entityPlural: "fiscal periods",
@@ -996,7 +995,7 @@ type getFiscalCloseBlockersTool struct {
 	periods closeBlockerReader
 }
 
-func newGetFiscalCloseBlockersTool(periods closeBlockerReader) agentports.AgentQueryTool {
+func newGetFiscalCloseBlockersTool(periods closeBlockerReader) agenttoolports.AgentQueryTool {
 	return &getFiscalCloseBlockersTool{periods: periods}
 }
 
@@ -1023,7 +1022,7 @@ func (t *getFiscalCloseBlockersTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getFiscalCloseBlockersTool) Policy() agentports.ToolPolicy {
+func (t *getFiscalCloseBlockersTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceFiscalPeriod})
 }
 
@@ -1046,7 +1045,7 @@ type closeBlockersView struct {
 
 func (t *getFiscalCloseBlockersTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

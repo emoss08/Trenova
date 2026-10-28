@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,7 +27,7 @@ type PublishParams struct {
 
 func Publish(
 	ctx context.Context,
-	realtime agentports.RealtimeService,
+	realtime realtimeports.RealtimeService,
 	params *PublishParams,
 ) error {
 	if params == nil {
@@ -36,7 +36,7 @@ func Publish(
 
 	return realtime.PublishResourceInvalidation(
 		ctx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: params.OrganizationID,
 			BusinessUnitID: params.BusinessUnitID,
 			Resource:       params.Resource,

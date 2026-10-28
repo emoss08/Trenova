@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
@@ -26,29 +27,29 @@ type Params struct {
 	fx.In
 
 	Logger    *zap.Logger
-	Turns     agentports.AssistantTurnRepository
-	Reader    agentports.TurnStreamReader
-	Canceller agentports.AssistantTurnCanceller
-	Realtime  agentports.RealtimeService
-	Metrics   *metrics.Registry             `optional:"true"`
-	Quota     platformplanports.QuotaGuard  `optional:"true"`
-	Plans     platformplanports.PlanService `optional:"true"`
-	Chapters  agentports.ChapterScheduler   `optional:"true"`
+	Turns     assistantports.AssistantTurnRepository
+	Reader    assistantports.TurnStreamReader
+	Canceller assistantports.AssistantTurnCanceller
+	Realtime  realtimeports.RealtimeService
+	Metrics   *metrics.Registry               `optional:"true"`
+	Quota     platformplanports.QuotaGuard    `optional:"true"`
+	Plans     platformplanports.PlanService   `optional:"true"`
+	Chapters  assistantports.ChapterScheduler `optional:"true"`
 }
 
 type Service struct {
 	l         *zap.Logger
-	turns     agentports.AssistantTurnRepository
-	reader    agentports.TurnStreamReader
-	canceller agentports.AssistantTurnCanceller
-	realtime  agentports.RealtimeService
+	turns     assistantports.AssistantTurnRepository
+	reader    assistantports.TurnStreamReader
+	canceller assistantports.AssistantTurnCanceller
+	realtime  realtimeports.RealtimeService
 	metrics   *metrics.Assistant
 	quota     platformplanports.QuotaGuard
 	plans     platformplanports.PlanService
-	chapters  agentports.ChapterScheduler
+	chapters  assistantports.ChapterScheduler
 }
 
-var _ agentports.AssistantTurnStopper = (*Service)(nil)
+var _ assistantports.AssistantTurnStopper = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
@@ -102,7 +103,7 @@ func (s *Service) Start(
 		Status:         conversation.AssistantTurnStatusRunning,
 	})
 	if err != nil {
-		if errors.Is(err, agentports.ErrTurnAlreadyRunning) {
+		if errors.Is(err, assistantports.ErrTurnAlreadyRunning) {
 			return nil, errortypes.NewBusinessError(
 				"This conversation is already working on a reply. Wait for it to finish, or stop it first.",
 			)
@@ -137,7 +138,7 @@ func (s *Service) assertPlanAllows(ctx context.Context, req StartRequest) error 
 // Active is the turn a conversation is still producing, or nil.
 func (s *Service) Active(
 	ctx context.Context,
-	req agentports.ActiveAssistantTurnRequest,
+	req assistantports.ActiveAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	return s.turns.Active(ctx, req)
 }
@@ -147,15 +148,15 @@ func (s *Service) Active(
 // other.
 func (s *Service) ListLive(
 	ctx context.Context,
-	req agentports.ListLiveAssistantTurnsRequest,
-) ([]*agentports.LiveAssistantTurn, error) {
+	req assistantports.ListLiveAssistantTurnsRequest,
+) ([]*assistantports.LiveAssistantTurn, error) {
 	return s.turns.ListLive(ctx, req)
 }
 
 // Get reads one turn, scoped to whoever asked for it.
 func (s *Service) Get(
 	ctx context.Context,
-	req agentports.GetAssistantTurnRequest,
+	req assistantports.GetAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	return s.turns.GetByID(ctx, req)
 }
@@ -168,7 +169,7 @@ func (s *Service) Close(
 	status conversation.AssistantTurnStatus,
 	message string,
 ) error {
-	err := s.turns.Complete(ctx, agentports.CompleteAssistantTurnRequest{
+	err := s.turns.Complete(ctx, assistantports.CompleteAssistantTurnRequest{
 		ID:         turn.ID,
 		TenantInfo: tenantOf(turn),
 		Status:     status,
@@ -235,8 +236,8 @@ func tenantOf(turn *conversation.AssistantTurn) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: turn.OrganizationID, BuID: turn.BusinessUnitID}
 }
 
-func streamRef(turn *conversation.AssistantTurn) agentports.TurnStreamRef {
-	return agentports.TurnStreamRef{
+func streamRef(turn *conversation.AssistantTurn) assistantports.TurnStreamRef {
+	return assistantports.TurnStreamRef{
 		TenantInfo: tenantOf(turn),
 		TurnID:     turn.ID,
 		WorkflowID: turn.ExecutionID(),
@@ -286,19 +287,19 @@ func (s *Service) cueChapter(ctx context.Context, turn *conversation.AssistantTu
 	if s.chapters == nil {
 		return
 	}
-	s.chapters.Cue(ctx, &agentports.ChapterTurnRequest{
+	s.chapters.Cue(ctx, &assistantports.ChapterTurnRequest{
 		TenantInfo: tenantOf(turn),
 		ThreadID:   turn.ThreadID,
 		UserID:     turn.UserID,
 		TurnID:     turn.ID,
-		Phase:      agentports.ChapterPhaseOpened,
+		Phase:      assistantports.ChapterPhaseOpened,
 	})
 }
 
 // ErrNoExecution is what a cancel reports when no execution carries the
 // turn, which is how Stop tells a turn it must close itself from one it asked
 // to stop.
-var ErrNoExecution = agentports.ErrNoTurnExecution
+var ErrNoExecution = assistantports.ErrNoTurnExecution
 
 // Stop ends a turn somebody is no longer waiting for.
 //
@@ -349,9 +350,9 @@ func (s *Service) Stop(ctx context.Context, turn *conversation.AssistantTurn) er
 // running, and every failure is reported together.
 func (s *Service) StopAllForUser(
 	ctx context.Context,
-	req agentports.StopUserTurnsRequest,
+	req assistantports.StopUserTurnsRequest,
 ) error {
-	live, err := s.turns.ListLive(ctx, agentports.ListLiveAssistantTurnsRequest{
+	live, err := s.turns.ListLive(ctx, assistantports.ListLiveAssistantTurnsRequest{
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
 	})

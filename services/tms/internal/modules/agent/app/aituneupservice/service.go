@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -37,8 +38,8 @@ type Params struct {
 	Control          tenantports.AgentControlRepository
 	Definitions      agentdefinitionports.AgentDefinitionRepository
 	AgentDefinitions agentdefinitionports.AgentDefinitionService
-	Providers        agentports.AIProviderRepository
-	ProviderService  agentports.AIProviderService
+	Providers        aiproviderports.AIProviderRepository
+	ProviderService  aiproviderports.AIProviderService
 	Trust            agentports.AgentTrustService
 	Shadow           agentshadowports.AgentShadowService
 	Usage            aiusageports.AIUsageRepository
@@ -51,8 +52,8 @@ type Service struct {
 	control          tenantports.AgentControlRepository
 	definitions      agentdefinitionports.AgentDefinitionRepository
 	agentDefinitions agentdefinitionports.AgentDefinitionService
-	providers        agentports.AIProviderRepository
-	providerService  agentports.AIProviderService
+	providers        aiproviderports.AIProviderRepository
+	providerService  aiproviderports.AIProviderService
 	trust            agentports.AgentTrustService
 	shadow           agentshadowports.AgentShadowService
 	usage            aiusageports.AIUsageRepository

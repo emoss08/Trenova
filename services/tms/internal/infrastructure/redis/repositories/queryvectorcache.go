@@ -8,7 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/shared/vectorutils"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -35,14 +35,14 @@ type cachedQueryVector struct {
 	Vector     []byte `json:"v"`
 }
 
-func NewQueryVectorCache(p QueryVectorCacheParams) agentports.QueryVectorCache {
+func NewQueryVectorCache(p QueryVectorCacheParams) retrievalports.QueryVectorCache {
 	return &queryVectorCache{
 		client: p.Client,
 		l:      p.Logger.Named("repository.query-vector-cache"),
 	}
 }
 
-func (c *queryVectorCache) key(key *agentports.QueryVectorCacheKey) string {
+func (c *queryVectorCache) key(key *retrievalports.QueryVectorCacheKey) string {
 	return fmt.Sprintf(
 		"%s:%s:%s:%s:%s",
 		queryVectorPrefix,
@@ -55,22 +55,22 @@ func (c *queryVectorCache) key(key *agentports.QueryVectorCacheKey) string {
 
 func (c *queryVectorCache) Get(
 	ctx context.Context,
-	key *agentports.QueryVectorCacheKey,
-) (agentports.QueryVector, bool, error) {
+	key *retrievalports.QueryVectorCacheKey,
+) (retrievalports.QueryVector, bool, error) {
 	raw, err := c.client.Get(ctx, c.key(key)).Bytes()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return agentports.QueryVector{}, false, nil
+			return retrievalports.QueryVector{}, false, nil
 		}
 
-		return agentports.QueryVector{}, false, fmt.Errorf("read query vector: %w", err)
+		return retrievalports.QueryVector{}, false, fmt.Errorf("read query vector: %w", err)
 	}
 
 	var cached cachedQueryVector
 	if err = sonic.Unmarshal(raw, &cached); err != nil {
 		c.drop(ctx, key, err)
 
-		return agentports.QueryVector{}, false, nil
+		return retrievalports.QueryVector{}, false, nil
 	}
 	vector, err := vectorutils.Unpack(cached.Vector)
 	if err == nil {
@@ -79,10 +79,10 @@ func (c *queryVectorCache) Get(
 	if err != nil {
 		c.drop(ctx, key, err)
 
-		return agentports.QueryVector{}, false, nil
+		return retrievalports.QueryVector{}, false, nil
 	}
 
-	return agentports.QueryVector{
+	return retrievalports.QueryVector{
 		Available:  true,
 		Vector:     vector,
 		ModelKey:   cached.ModelKey,
@@ -92,8 +92,8 @@ func (c *queryVectorCache) Get(
 
 func (c *queryVectorCache) Set(
 	ctx context.Context,
-	key *agentports.QueryVectorCacheKey,
-	vector agentports.QueryVector,
+	key *retrievalports.QueryVectorCacheKey,
+	vector retrievalports.QueryVector,
 	ttl time.Duration,
 ) error {
 	if !vector.Usable() {
@@ -115,7 +115,7 @@ func (c *queryVectorCache) Set(
 }
 
 func cachedVectorMismatch(
-	key *agentports.QueryVectorCacheKey,
+	key *retrievalports.QueryVectorCacheKey,
 	cached cachedQueryVector,
 	length int,
 ) error {
@@ -133,7 +133,7 @@ func cachedVectorMismatch(
 
 func (c *queryVectorCache) drop(
 	ctx context.Context,
-	key *agentports.QueryVectorCacheKey,
+	key *retrievalports.QueryVectorCacheKey,
 	cause error,
 ) {
 	c.l.Warn("dropping an unreadable cached query vector", zap.Error(cause))

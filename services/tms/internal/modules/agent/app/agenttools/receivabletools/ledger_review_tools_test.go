@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -100,18 +100,33 @@ func TestFiscalPeriodTools_EachIsAPersonsDecisionUnderItsOwnPermission(t *testin
 		t.Run(tc.move.name, func(t *testing.T) {
 			t.Parallel()
 
-			periods := &fakeFiscalPeriods{period: septemberPeriod(tc.from), guard: &agenttoolstest.WriteGuard{}}
+			periods := &fakeFiscalPeriods{
+				period: septemberPeriod(tc.from),
+				guard:  &agenttoolstest.WriteGuard{},
+			}
 			tool := newFiscalPeriodTool(periods, tc.move)
 			params := agenttoolstest.ExecuteParams(map[string]any{
 				paramFiscalPeriodID: periods.period.ID.String(),
 				common.ParamReason:  "A late fuel invoice belongs in September",
 			})
 
-			preview := agenttoolstest.PreviewWithoutWrites(t, periods.guard, func() (*agent.ToolPreview, error) {
-				return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-			})
+			preview := agenttoolstest.PreviewWithoutWrites(
+				t,
+				periods.guard,
+				func() (*agent.ToolPreview, error) {
+					return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+				},
+			)
 			assert.Contains(t, preview.Summary, "September 2026")
-			assert.Equal(t, tc.want, agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After)
+			assert.Equal(
+				t,
+				tc.want,
+				agenttoolstest.FieldByPath(
+					t,
+					agenttoolstest.PreviewChange(t, preview, 0),
+					"status",
+				).After,
+			)
 
 			require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
 			params.ProposalID = pulid.MustNew("ap_")
@@ -124,7 +139,7 @@ func TestFiscalPeriodTools_EachIsAPersonsDecisionUnderItsOwnPermission(t *testin
 			assert.Equal(t, tc.operation, policy.Operation)
 			assert.Equal(t, agent.TierPropose, policy.MaxTier)
 			assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
-			target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+			target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 			require.True(t, ok)
 			assert.Equal(t, permission.ResourceFiscalPeriod, target.Resource)
 		})
@@ -137,9 +152,12 @@ func TestReopenFiscalPeriod_NeedsAReason(t *testing.T) {
 	periods := &fakeFiscalPeriods{period: septemberPeriod(fiscalperiod.StatusClosed)}
 	tool := newFiscalPeriodTool(periods, reopenFiscalPeriodMove())
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{paramFiscalPeriodID: periods.period.ID.String()},
-	)))
+	require.Error(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
+			map[string]any{paramFiscalPeriodID: periods.period.ID.String()},
+		)),
+	)
 	assert.Contains(t, tool.ParamSchema()[toolschema.KeyRequired], common.ParamReason)
 }
 
@@ -155,9 +173,11 @@ func TestCloseFiscalPeriod_ABlockedCloseIsAWouldFail(t *testing.T) {
 		),
 	}
 	tool := newFiscalPeriodTool(periods, closeFiscalPeriodMove())
-	params := agenttoolstest.ExecuteParams(map[string]any{paramFiscalPeriodID: periods.period.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramFiscalPeriodID: periods.period.ID.String()},
+	)
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 }
@@ -249,17 +269,33 @@ func TestConfirmAccountingMappingProposals_ConfirmsWhatWasShownAsTheAgent(t *tes
 	reviewer := &fakeMappingReviewer{rows: []*accountingsync.AccountingMapping{ar, fuel},
 		guard: &agenttoolstest.WriteGuard{}}
 	tool := accountingtools.NewConfirmAccountingMappingProposalsTool(reviewer)
-	params := agenttoolstest.ExecuteParams(map[string]any{accountingtools.ParamMappingProposals: []any{
-		map[string]any{accountingtools.ParamMappingID: ar.ID.String(), accountingtools.ParamExternalID: "1"},
-		map[string]any{accountingtools.ParamMappingID: fuel.ID.String(), accountingtools.ParamExternalID: "91"},
-	}})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{accountingtools.ParamMappingProposals: []any{
+			map[string]any{
+				accountingtools.ParamMappingID:  ar.ID.String(),
+				accountingtools.ParamExternalID: "1",
+			},
+			map[string]any{
+				accountingtools.ParamMappingID:  fuel.ID.String(),
+				accountingtools.ParamExternalID: "91",
+			},
+		}},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reviewer.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reviewer.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would confirm 2 accounting mappings as proposed")
 	require.Len(t, preview.Changes, 2)
-	assert.Equal(t, "Confirmed", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "state").After)
+	assert.Equal(
+		t,
+		"Confirmed",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "state").After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, reviewer.confirmed)
@@ -281,12 +317,21 @@ func TestConfirmAccountingMappingProposals_RefusesARepeatedMapping(t *testing.T)
 		rows: []*accountingsync.AccountingMapping{ar},
 	})
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{accountingtools.ParamMappingProposals: []any{
-			map[string]any{accountingtools.ParamMappingID: ar.ID.String(), accountingtools.ParamExternalID: "1"},
-			map[string]any{accountingtools.ParamMappingID: ar.ID.String(), accountingtools.ParamExternalID: "1"},
-		}},
-	)))
+	require.Error(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
+			map[string]any{accountingtools.ParamMappingProposals: []any{
+				map[string]any{
+					accountingtools.ParamMappingID:  ar.ID.String(),
+					accountingtools.ParamExternalID: "1",
+				},
+				map[string]any{
+					accountingtools.ParamMappingID:  ar.ID.String(),
+					accountingtools.ParamExternalID: "1",
+				},
+			}},
+		)),
+	)
 }
 
 func TestRejectAccountingMappingProposal_UnmatchesItAsTheAgent(t *testing.T) {
@@ -296,13 +341,23 @@ func TestRejectAccountingMappingProposal_UnmatchesItAsTheAgent(t *testing.T) {
 	reviewer := &fakeMappingReviewer{rows: []*accountingsync.AccountingMapping{customer},
 		guard: &agenttoolstest.WriteGuard{}}
 	tool := accountingtools.NewRejectAccountingMappingProposalTool(reviewer)
-	params := agenttoolstest.ExecuteParams(map[string]any{accountingtools.ParamMappingID: customer.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{accountingtools.ParamMappingID: customer.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reviewer.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reviewer.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would turn down Acme Freight LLC for Acme Freight")
-	assert.Equal(t, "Unmatched", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "state").After)
+	assert.Equal(
+		t,
+		"Unmatched",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "state").After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, reviewer.rejected)
@@ -398,11 +453,19 @@ func TestReleaseAccountingSync_OnlyAPersonReleasesHeldDocuments(t *testing.T) {
 		accountingtools.ParamSyncRecordIDs:    []any{held.ID.String()},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, sync.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		sync.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would release 1 document held for approval")
-	assert.Equal(t, "Queued", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After)
+	assert.Equal(
+		t,
+		"Queued",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
+	)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
@@ -427,10 +490,13 @@ func TestReleaseAccountingSync_RefusesADocumentThatIsNotHeld(t *testing.T) {
 		records: map[pulid.ID]*accountingsync.AccountingSyncRecord{failed.ID: failed},
 	})
 
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		accountingtools.ParamAccountingSystem: string(integration.TypeQuickBooksOnline),
-		accountingtools.ParamSyncRecordIDs:    []any{failed.ID.String()},
-	}))
+	err := tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{
+			accountingtools.ParamAccountingSystem: string(integration.TypeQuickBooksOnline),
+			accountingtools.ParamSyncRecordIDs:    []any{failed.ID.String()},
+		}),
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 }
@@ -449,11 +515,19 @@ func TestChangeAccountingBackfill_ActsOnTheBackfillInProgress(t *testing.T) {
 		accountingtools.ParamBackfillAction:   string(accountingsyncports.AccountingBackfillPause),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, sync.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		sync.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would pause the QuickBooks Online backfill (now running)")
-	assert.Equal(t, "Paused", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After)
+	assert.Equal(
+		t,
+		"Paused",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, sync.changed)
@@ -474,13 +548,13 @@ func TestChangeAccountingBackfill_RefusesAMoveTheBackfillCannotMake(t *testing.T
 		accountingtools.ParamAccountingSystem: string(integration.TypeQuickBooksOnline),
 		accountingtools.ParamBackfillAction:   string(accountingsyncports.AccountingBackfillResume),
 	})
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), resume))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), resume))
 
 	agentCall := agenttoolstest.AgentParamsFor(map[string]any{
 		accountingtools.ParamAccountingSystem: string(integration.TypeQuickBooksOnline),
 		accountingtools.ParamBackfillAction:   string(accountingsyncports.AccountingBackfillCancel),
 	})
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), agentCall))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), agentCall))
 }
 
 type fakeWorkItemRouter struct {
@@ -564,11 +638,19 @@ func TestTriageBankReceiptWorkItem_AssignsOrMarksItUnderReview(t *testing.T) {
 		paramAssigneeID:   assignee.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, items.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), assign)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		items.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), assign)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would assign the reconciliation item")
-	assert.Equal(t, "Assigned", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After)
+	assert.Equal(
+		t,
+		"Assigned",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
+	)
 	require.NoError(t, tool.Execute(t.Context(), assign))
 	require.NotNil(t, items.assigned)
 	assert.Equal(t, assignee, items.assigned.AssignedToUserID)
@@ -608,7 +690,7 @@ func TestTriageBankReceiptWorkItem_RefusesAMismatchedAssignee(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(agentports.ToolValidator).Validate(
+			require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
 				t.Context(),
 				agenttoolstest.ExecuteParams(raw),
 			))

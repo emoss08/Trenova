@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/memtable"
 )
 
@@ -16,7 +16,7 @@ const (
 )
 
 type failedEntryRow struct {
-	entry *agentports.AIRetrievalFailedEntry
+	entry *retrievalports.AIRetrievalFailedEntry
 	rank  int
 }
 
@@ -103,8 +103,8 @@ func FailedEntryID(entry *airetrieval.IndexEntry) string {
 	return entry.SourceType.String() + ":" + entry.SourceID.String() + "@" + entry.ModelKey
 }
 
-func failedEntryView(entry *airetrieval.IndexEntry) *agentports.AIRetrievalFailedEntry {
-	return &agentports.AIRetrievalFailedEntry{
+func failedEntryView(entry *airetrieval.IndexEntry) *retrievalports.AIRetrievalFailedEntry {
+	return &retrievalports.AIRetrievalFailedEntry{
 		ID:            FailedEntryID(entry),
 		SourceType:    entry.SourceType,
 		SourceID:      entry.SourceID,
@@ -119,10 +119,10 @@ func failedEntryView(entry *airetrieval.IndexEntry) *agentports.AIRetrievalFaile
 
 func (s *Service) ListFailedEntries(
 	ctx context.Context,
-	req *agentports.ListAIRetrievalFailedEntriesRequest,
-) (*agentports.AIRetrievalFailedEntryPage, error) {
+	req *retrievalports.ListAIRetrievalFailedEntriesRequest,
+) (*retrievalports.AIRetrievalFailedEntryPage, error) {
 	if req == nil {
-		req = &agentports.ListAIRetrievalFailedEntriesRequest{}
+		req = &retrievalports.ListAIRetrievalFailedEntriesRequest{}
 	}
 	if err := validateTenant(req.TenantInfo); err != nil {
 		return nil, err
@@ -142,7 +142,7 @@ func (s *Service) ListFailedEntries(
 	if keys := settings.IndexedModelKeys(); len(keys) > 0 {
 		entries, lerr := s.repo.ListErroredIndexEntries(
 			ctx,
-			&agentports.ListErroredIndexEntriesRequest{
+			&retrievalports.ListErroredIndexEntriesRequest{
 				TenantInfo: req.TenantInfo,
 				SourceType: req.SourceType,
 				ModelKeys:  keys,
@@ -163,14 +163,14 @@ func (s *Service) ListFailedEntries(
 		return nil, err
 	}
 
-	out := &agentports.AIRetrievalFailedEntryPage{
-		Edges:           make([]*agentports.AIRetrievalFailedEntryEdge, 0, len(page.Items)),
+	out := &retrievalports.AIRetrievalFailedEntryPage{
+		Edges:           make([]*retrievalports.AIRetrievalFailedEntryEdge, 0, len(page.Items)),
 		HasNextPage:     page.HasNextPage,
 		TotalCount:      page.TotalCount,
 		TotalCountExact: page.TotalCountExact,
 	}
 	for idx, row := range page.Items {
-		out.Edges = append(out.Edges, &agentports.AIRetrievalFailedEntryEdge{
+		out.Edges = append(out.Edges, &retrievalports.AIRetrievalFailedEntryEdge{
 			Node:   row.entry,
 			Cursor: page.Cursors[idx],
 		})

@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -354,10 +354,10 @@ func (s *Service) readLoadWithNova(
 	message *inboundmessage.InboundMessage,
 	mode triagenova.Mode,
 ) (*inboundmessage.LoadDraft, error) {
-	result, err := s.nova.Complete(ctx, mode, &agentports.StructuredCompletionRequest{
+	result, err := s.nova.Complete(ctx, mode, &llmports.StructuredCompletionRequest{
 		TenantInfo: tenantOf(message),
 		System:     loadSystemPrompt,
-		Context: agentports.DelimitedContext{Sections: []agentports.ContextSection{
+		Context: llmports.DelimitedContext{Sections: []llmports.ContextSection{
 			{Title: "Sender", Content: message.FromName + " <" + message.FromAddress + ">"},
 			{
 				Title:   "Subject",

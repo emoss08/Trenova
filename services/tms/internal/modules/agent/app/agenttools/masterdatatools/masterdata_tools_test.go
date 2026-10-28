@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
@@ -105,11 +105,17 @@ type fakeCustomers struct {
 	*fakeMaster[customer.Customer]
 }
 
-func (f fakeCustomers) Get(context.Context, customerports.GetCustomerByIDRequest) (*customer.Customer, error) {
+func (f fakeCustomers) Get(
+	context.Context,
+	customerports.GetCustomerByIDRequest,
+) (*customer.Customer, error) {
 	return f.get()
 }
 
-func (f fakeCustomers) PlanCreate(ctx context.Context, e *customer.Customer) (*customer.Customer, error) {
+func (f fakeCustomers) PlanCreate(
+	ctx context.Context,
+	e *customer.Customer,
+) (*customer.Customer, error) {
 	return f.planCreate(ctx, e)
 }
 
@@ -173,10 +179,18 @@ func TestCreateCustomer_StatusEmailRecipientsAreHeldAsLeavingTheOrganization(t *
 		mdPostalCode:   "75201",
 	}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, customers.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), idempotentParams(args))
-	})
-	assert.Equal(t, "TX", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), mdState).After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		customers.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), idempotentParams(args))
+		},
+	)
+	assert.Equal(
+		t,
+		"TX",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), mdState).After,
+	)
 	assert.Equal(t, agent.EgressInternal, tool.Policy().Classify(idempotentParams(args)).Egress)
 
 	args[customerUpdateRecipients] = "ops@acme.example"
@@ -184,7 +198,7 @@ func TestCreateCustomer_StatusEmailRecipientsAreHeldAsLeavingTheOrganization(t *
 	assert.Equal(t, agent.EgressExternalRecipient, call.Egress)
 	assert.Equal(t, agent.TierPropose, call.MaxTier)
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(),
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(),
 		idempotentParams(args))
 	require.NoError(t, err)
 	assert.Equal(t, states.State.ID, customers.created.StateID)
@@ -192,7 +206,7 @@ func TestCreateCustomer_StatusEmailRecipientsAreHeldAsLeavingTheOrganization(t *
 	assert.Equal(t, common.CustomerRecordEntity, result.Record.EntityType)
 
 	delete(args, mdState)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		idempotentParams(args)))
 }
 
@@ -209,9 +223,13 @@ func TestUpdateCustomer_LeavesTheBillingProfileAlone(t *testing.T) {
 		BillingProfile: &customer.CustomerBillingProfile{},
 		Version:        7,
 	}
-	customers := fakeCustomers{&fakeMaster[customer.Customer]{guard: &agenttoolstest.WriteGuard{}, stored: stored}}
+	customers := fakeCustomers{
+		&fakeMaster[customer.Customer]{guard: &agenttoolstest.WriteGuard{}, stored: stored},
+	}
 	tool := NewUpdateCustomerTool(customers, states)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamCustomerID: stored.ID.String(), mdCity: "Plano"})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{common.ParamCustomerID: stored.ID.String(), mdCity: "Plano"},
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, "Plano", customers.updated.City)
@@ -230,11 +248,17 @@ type fakeCommodities struct {
 	*fakeMaster[commodity.Commodity]
 }
 
-func (f fakeCommodities) Get(context.Context, commodityports.GetCommodityByIDRequest) (*commodity.Commodity, error) {
+func (f fakeCommodities) Get(
+	context.Context,
+	commodityports.GetCommodityByIDRequest,
+) (*commodity.Commodity, error) {
 	return f.get()
 }
 
-func (f fakeCommodities) PlanCreate(ctx context.Context, e *commodity.Commodity) (*commodity.Commodity, error) {
+func (f fakeCommodities) PlanCreate(
+	ctx context.Context,
+	e *commodity.Commodity,
+) (*commodity.Commodity, error) {
 	return f.planCreate(ctx, e)
 }
 
@@ -294,10 +318,22 @@ func TestCreateCommodity_ReadsDecimalsAndTheFreightClass(t *testing.T) {
 		"stackable":      true,
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, commodities.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, "42.5", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "weightPerUnit").After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		commodities.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		"42.5",
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			"weightPerUnit",
+		).After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, commodity.FreightClass70, commodities.created.FreightClass)
@@ -308,14 +344,14 @@ func TestCreateCommodity_ReadsDecimalsAndTheFreightClass(t *testing.T) {
 	bad := idempotentParams(map[string]any{
 		MdName: "Peas", mdDescription: "Peas", "freightClass": "Class71",
 	})
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), bad))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), bad))
 
 	status := NewUpdateCommodityStatusTool(commodities)
 	statusParams := agenttoolstest.ExecuteParams(map[string]any{
 		"commodityIds":     []any{pulid.MustNew("com_").String()},
 		common.FieldStatus: "Inactive",
 	})
-	statusPreview, err := status.(agentports.ToolPreviewer).Preview(t.Context(), statusParams)
+	statusPreview, err := status.(agenttoolports.ToolPreviewer).Preview(t.Context(), statusParams)
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, statusPreview, agent.PreviewWarningWouldFail)
 }
@@ -392,7 +428,7 @@ func TestHazardousMaterialTools_AlwaysWaitForAPerson(t *testing.T) {
 		stored: stored,
 		setID:  func(h *hazardousmaterial.HazardousMaterial) { h.ID = pulid.MustNew("hm_") },
 	}}
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		NewCreateHazardousMaterialTool(materials),
 		NewUpdateHazardousMaterialTool(materials),
 	} {
@@ -406,10 +442,18 @@ func TestHazardousMaterialTools_AlwaysWaitForAPerson(t *testing.T) {
 		"placardRequired": true,
 		"class":           "HazardClass8",
 	})
-	preview := agenttoolstest.PreviewWithoutWrites(t, materials.guard, func() (*agent.ToolPreview, error) {
-		return update.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, "HazardClass8", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "class").After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		materials.guard,
+		func() (*agent.ToolPreview, error) {
+			return update.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		"HazardClass8",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "class").After,
+	)
 	require.NoError(t, update.Execute(t.Context(), params))
 	assert.True(t, materials.updated.PlacardRequired)
 	assert.Equal(t, "1203", materials.updated.UNNumber)
@@ -420,7 +464,10 @@ type fakeLocations struct {
 	bulk *locationports.BulkUpdateLocationStatusRequest
 }
 
-func (f *fakeLocations) Get(context.Context, locationports.GetLocationByIDRequest) (*location.Location, error) {
+func (f *fakeLocations) Get(
+	context.Context,
+	locationports.GetLocationByIDRequest,
+) (*location.Location, error) {
 	return f.get()
 }
 
@@ -486,10 +533,22 @@ func TestUpdateLocation_ChangesTheAddressAndKeepsTheCode(t *testing.T) {
 		mdAddressLine1:  "9 Dock St",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, locations.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, "9 Dock St", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), mdAddressLine1).After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		locations.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		"9 Dock St",
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			mdAddressLine1,
+		).After,
+	)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, "DALWH01", locations.updated.Code)
 	assert.Equal(t, "9 Dock St", locations.updated.AddressLine1)
@@ -508,11 +567,17 @@ type fakeTractors struct {
 	located *tractorports.LocateTractorRequest
 }
 
-func (f *fakeTractors) Get(context.Context, tractorports.GetTractorByIDRequest) (*tractor.Tractor, error) {
+func (f *fakeTractors) Get(
+	context.Context,
+	tractorports.GetTractorByIDRequest,
+) (*tractor.Tractor, error) {
 	return f.get()
 }
 
-func (f *fakeTractors) PlanCreate(ctx context.Context, e *tractor.Tractor) (*tractor.Tractor, error) {
+func (f *fakeTractors) PlanCreate(
+	ctx context.Context,
+	e *tractor.Tractor,
+) (*tractor.Tractor, error) {
 	return f.planCreate(ctx, e)
 }
 
@@ -580,7 +645,7 @@ func TestCreateTractor_DefaultsWhatTheFormDefaults(t *testing.T) {
 		mdVIN:                "1fuj",
 	})
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	created := tractors.created
 	assert.Equal(t, domaintypes.EquipmentStatusAvailable, created.Status)
@@ -598,7 +663,7 @@ func TestCreateTractor_DefaultsWhatTheFormDefaults(t *testing.T) {
 		mdManufacturerID:     pulid.MustNew("em_").String(),
 		mdRegistrationExpiry: "03/31/2027",
 	})
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), bad))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), bad))
 }
 
 func TestLocateTractor_ShowsWhereItWasAndGoes(t *testing.T) {
@@ -621,15 +686,21 @@ func TestLocateTractor_ShowsWhereItWasAndGoes(t *testing.T) {
 		paramNewLocationID:    to.ID.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, tractors.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		tractors.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would record tractor T-100 at Dallas yard")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, to.ID, tractors.located.NewLocationID)
 
-	tractors.refusal = errortypes.NewBusinessError("Tractor is currently in progress on another move")
-	refused, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	tractors.refusal = errortypes.NewBusinessError(
+		"Tractor is currently in progress on another move",
+	)
+	refused, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, refused, agent.PreviewWarningWouldFail)
 }
@@ -640,11 +711,17 @@ type fakeTrailers struct {
 	located *trailerports.LocateTrailerRequest
 }
 
-func (f *fakeTrailers) Get(context.Context, trailerports.GetTrailerByIDRequest) (*trailer.Trailer, error) {
+func (f *fakeTrailers) Get(
+	context.Context,
+	trailerports.GetTrailerByIDRequest,
+) (*trailer.Trailer, error) {
 	return f.get()
 }
 
-func (f *fakeTrailers) PlanCreate(ctx context.Context, e *trailer.Trailer) (*trailer.Trailer, error) {
+func (f *fakeTrailers) PlanCreate(
+	ctx context.Context,
+	e *trailer.Trailer,
+) (*trailer.Trailer, error) {
 	return f.planCreate(ctx, e)
 }
 
@@ -709,7 +786,9 @@ func TestLocateTrailer_ShowsTheReRatedShipmentAndWaitsForAPerson(t *testing.T) {
 		plan: &trailerservice.LocatePlan{
 			Trailer:  unit,
 			Location: &location.Location{ID: pulid.MustNew("loc_"), Name: "Drop yard"},
-			Current:  &equipmentcontinuity.EquipmentContinuity{CurrentLocationID: pulid.MustNew("loc_")},
+			Current: &equipmentcontinuity.EquipmentContinuity{
+				CurrentLocationID: pulid.MustNew("loc_"),
+			},
 			Previous: previous,
 			Updated:  &updated,
 		},
@@ -720,15 +799,26 @@ func TestLocateTrailer_ShowsTheReRatedShipmentAndWaitsForAPerson(t *testing.T) {
 		paramNewLocationID: trailers.plan.Location.ID.String(),
 	}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, trailers.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), agenttoolstest.ExecuteParams(args))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		trailers.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(
+				t.Context(),
+				agenttoolstest.ExecuteParams(args),
+			)
+		},
+	)
 	assert.Contains(t, preview.Summary, "re-rating it")
 	shipmentChange := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, permission.ResourceShipment, shipmentChange.Resource)
 	require.NotNil(t, shipmentChange.Money)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(args)), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.ExecuteParams(args)),
+		common.ErrNeedsAPersonsApproval,
+	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(args)))
 	assert.Equal(t, unit.ID, trailers.located.TrailerID)
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, tool.Policy().Egress)

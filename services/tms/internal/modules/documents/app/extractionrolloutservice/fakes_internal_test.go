@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -208,7 +208,8 @@ func (f *correctionStore) TotalsByProvider(
 	var candidate, production aicorrectionports.AICorrectionProviderTotal
 	candidate.Candidate = true
 	for _, item := range f.items {
-		if item.Task != req.Task || item.CapturedAt < req.Since || item.ExtractionProviderID == nil {
+		if item.Task != req.Task || item.CapturedAt < req.Since ||
+			item.ExtractionProviderID == nil {
 			continue
 		}
 		side := &production
@@ -235,14 +236,14 @@ func (f *correctionStore) ListForAccuracy(
 }
 
 type providerStore struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 	providers map[pulid.ID]*aiprovider.Provider
 	err       error
 }
 
 func (f *providerStore) GetByID(
 	_ context.Context,
-	req agentports.GetAIProviderByIDRequest,
+	req aiproviderports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	if f.err != nil {
 		return nil, f.err

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +14,7 @@ import (
 )
 
 type indexedTenantsPipeline struct {
-	agentports.RetrievalIndexPipeline
+	retrievalports.RetrievalIndexPipeline
 	tenants []pagination.TenantInfo
 	after   *pagination.TenantInfo
 	limit   int
@@ -89,7 +89,10 @@ func TestListRetrievalOrganizationsActivity_DefaultsThePageSize(t *testing.T) {
 	pipeline := &indexedTenantsPipeline{}
 	activities := NewActivities(ActivitiesParams{Pipeline: pipeline, Logger: zap.NewNop()})
 
-	page, err := activities.ListRetrievalOrganizationsActivity(t.Context(), &ListOrganizationsInput{})
+	page, err := activities.ListRetrievalOrganizationsActivity(
+		t.Context(),
+		&ListOrganizationsInput{},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, temporaljobs.DefaultOrganizationPageSize+1, pipeline.limit)

@@ -2,6 +2,7 @@ package proposalrecorder
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"go.uber.org/fx"
 )
 
@@ -15,6 +16,6 @@ func NewPlanStore(plans agentports.AgentPlanRepository) PlanStore {
 	return plans
 }
 
-func NewScriptSteps(steps agentports.AgentRunStepRepository) ScriptStepReader {
+func NewScriptSteps(steps agentruntimeports.AgentRunStepRepository) ScriptStepReader {
 	return steps
 }

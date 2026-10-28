@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -42,11 +42,11 @@ func (s *Service) summarize(
 		return fallback
 	}
 
-	result, err := s.completion.CompleteStructured(ctx, &agentports.StructuredCompletionRequest{
+	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
 		TenantInfo: tenant,
 		Task:       aiprovider.TaskAssistantChat,
 		System:     summarySystem,
-		Context: agentports.DelimitedContext{Sections: []agentports.ContextSection{{
+		Context: llmports.DelimitedContext{Sections: []llmports.ContextSection{{
 			Title:   "Conversation with " + source.Name,
 			Content: transcript,
 		}}},
@@ -71,7 +71,7 @@ func (s *Service) summarize(
 		},
 	})
 	if err != nil {
-		if !errors.Is(err, agentports.ErrNoProviderConfigured) {
+		if !errors.Is(err, llmports.ErrNoProviderConfigured) {
 			s.l.Warn("hand-off summary failed; carrying the last exchanges", zap.Error(err))
 		}
 		return fallback

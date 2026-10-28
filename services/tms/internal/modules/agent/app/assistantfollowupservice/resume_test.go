@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -17,12 +18,12 @@ import (
 type notedConversations struct {
 	*fakeConversations
 	notes []conversation.Message
-	asked []agentports.ListMessagesRequest
+	asked []assistantports.ListMessagesRequest
 }
 
 func (f *notedConversations) ListMessages(
 	_ context.Context,
-	req agentports.ListMessagesRequest,
+	req assistantports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	f.asked = append(f.asked, req)
 
@@ -108,7 +109,7 @@ func (f *resumeFixture) decide(status agent.ProposalStatus, at int64) *agent.Age
 func (f *resumeFixture) resume(t *testing.T) {
 	t.Helper()
 
-	f.service.ResumeFollowUps(t.Context(), agentports.ResumeFollowUpsRequest{
+	f.service.ResumeFollowUps(t.Context(), assistantports.ResumeFollowUpsRequest{
 		TenantInfo: f.tenant,
 		ThreadID:   f.thread.ID,
 	})

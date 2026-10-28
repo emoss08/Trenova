@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,13 +32,13 @@ type turnChecks struct {
 	allowanceErr  error
 	roomErr       error
 
-	directed    *agentports.DirectedTask
+	directed    *agentruntimeports.DirectedTask
 	directedErr error
 
 	history    []conversation.Message
 	historyErr error
 
-	proposals    []agentports.ProposalOutcome
+	proposals    []agentruntimeports.ProposalOutcome
 	subject      *agentdefinition.RuntimeSubject
 	anchors      []agentdefinition.RuntimeAnchor
 	earlierFiles map[string]string
@@ -75,7 +76,7 @@ func (c *turnChecks) err() error {
 func (s *Service) checkTurn(
 	ctx context.Context,
 	thread *conversation.Thread,
-	req *agentports.SendMessageRequest,
+	req *assistantports.SendMessageRequest,
 	actor *permissionports.RequestActor,
 	page *agent.PageContext,
 ) *turnChecks {
@@ -145,7 +146,7 @@ func (s *Service) usableDefinition(
 	ctx context.Context,
 	thread *conversation.Thread,
 	actor *permissionports.RequestActor,
-	req *agentports.SendMessageRequest,
+	req *assistantports.SendMessageRequest,
 ) (*agentdefinition.Definition, error) {
 	definition, err := s.usableAgent(ctx, thread.AgentDefinitionID, actor, req.TenantInfo)
 	if err != nil {
@@ -199,8 +200,8 @@ func (s *Service) directedTask(
 	ctx context.Context,
 	thread *conversation.Thread,
 	actor *permissionports.RequestActor,
-	req *agentports.SendMessageRequest,
-) (*agentports.DirectedTask, error) {
+	req *assistantports.SendMessageRequest,
+) (*agentruntimeports.DirectedTask, error) {
 	if req.DirectedAgentID.IsNil() {
 		return nil, nil //nolint:nilnil // no other agent was chosen
 	}
@@ -217,7 +218,7 @@ func (s *Service) directedTask(
 		return nil, err
 	}
 
-	return &agentports.DirectedTask{
+	return &agentruntimeports.DirectedTask{
 		Delegate: definition.AsDelegate(),
 		Task:     strings.TrimSpace(req.Content),
 	}, nil

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/keel/analytics/diff"
 	"github.com/emoss08/keel/analytics/export"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,7 +21,7 @@ type compareReportRunsTool struct {
 	reports reportRunner
 }
 
-func newCompareReportRunsTool(reports reportRunner) agentports.AgentQueryTool {
+func newCompareReportRunsTool(reports reportRunner) agenttoolports.AgentQueryTool {
 	return &compareReportRunsTool{reports: reports}
 }
 
@@ -73,7 +73,7 @@ func (t *compareReportRunsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *compareReportRunsTool) Policy() agentports.ToolPolicy {
+func (t *compareReportRunsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
 		effect:   agent.ToolEffectPresent,
@@ -82,7 +82,7 @@ func (t *compareReportRunsTool) Policy() agentports.ToolPolicy {
 
 func (t *compareReportRunsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

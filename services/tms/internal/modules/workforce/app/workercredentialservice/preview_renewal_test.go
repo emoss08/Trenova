@@ -4,11 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
@@ -16,6 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -48,7 +47,7 @@ func TestPreviewRenewal_IsTheAskRequestRenewalSends(t *testing.T) {
 			}, nil
 		})
 	notifications := notificationportsmock.NewMockNotificationRepository(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()

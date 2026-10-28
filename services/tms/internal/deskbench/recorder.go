@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -22,18 +22,18 @@ const (
 )
 
 type ModelCall struct {
-	Seq              int                                     `json:"seq"`
-	Kind             ModelCallKind                           `json:"kind"`
-	StartedAt        time.Time                               `json:"startedAt"`
-	FinishedAt       time.Time                               `json:"finishedAt"`
-	Attribution      aiusageports.AIUsageAttribution         `json:"attribution"`
-	Chat             *agentports.ChatCompletionRequest       `json:"chat,omitempty"`
-	Structured       *agentports.StructuredCompletionRequest `json:"structured,omitempty"`
-	ChatResult       *agentports.ChatCompletionResult        `json:"chatResult,omitempty"`
-	StructuredResult *agentports.StructuredCompletionResult  `json:"structuredResult,omitempty"`
-	Retries          []agentports.ChatRetryNotice            `json:"retries,omitempty"`
-	Error            string                                  `json:"error,omitempty"`
-	FirstTokenAt     time.Time                               `json:"firstTokenAt,omitzero"`
+	Seq              int                                   `json:"seq"`
+	Kind             ModelCallKind                         `json:"kind"`
+	StartedAt        time.Time                             `json:"startedAt"`
+	FinishedAt       time.Time                             `json:"finishedAt"`
+	Attribution      aiusageports.AIUsageAttribution       `json:"attribution"`
+	Chat             *llmports.ChatCompletionRequest       `json:"chat,omitempty"`
+	Structured       *llmports.StructuredCompletionRequest `json:"structured,omitempty"`
+	ChatResult       *llmports.ChatCompletionResult        `json:"chatResult,omitempty"`
+	StructuredResult *llmports.StructuredCompletionResult  `json:"structuredResult,omitempty"`
+	Retries          []llmports.ChatRetryNotice            `json:"retries,omitempty"`
+	Error            string                                `json:"error,omitempty"`
+	FirstTokenAt     time.Time                             `json:"firstTokenAt,omitzero"`
 }
 
 func (c *ModelCall) Duration() time.Duration {
@@ -49,7 +49,7 @@ func (c *ModelCall) belongsTo(threadID, turnID pulid.ID) bool {
 }
 
 type Recorder struct {
-	agentports.CompletionService
+	llmports.CompletionService
 
 	mu    sync.Mutex
 	seq   int
@@ -60,14 +60,14 @@ type Recorder struct {
 type ProviderPin struct {
 	ProviderID pulid.ID
 	Effort     aiprovider.ReasoningEffort
-	Advisor    *agentports.AdvisorSpec
+	Advisor    *llmports.AdvisorSpec
 }
 
 func (p ProviderPin) empty() bool {
 	return p.ProviderID.IsNil() && p.Effort == "" && p.Advisor == nil
 }
 
-func NewRecorder(inner agentports.CompletionService) *Recorder {
+func NewRecorder(inner llmports.CompletionService) *Recorder {
 	return &Recorder{CompletionService: inner, pins: make(map[pulid.ID]ProviderPin, 4)}
 }
 
@@ -87,7 +87,7 @@ func (r *Recorder) Pin(key pulid.ID, pin ProviderPin) func() {
 	}
 }
 
-func (r *Recorder) pin(req *agentports.ChatCompletionRequest) {
+func (r *Recorder) pin(req *llmports.ChatCompletionRequest) {
 	r.mu.Lock()
 	pin, ok := r.pins[req.Attribution.ThreadID]
 	if !ok {
@@ -113,8 +113,8 @@ func (r *Recorder) pin(req *agentports.ChatCompletionRequest) {
 
 func (r *Recorder) CompleteChat(
 	ctx context.Context,
-	req *agentports.ChatCompletionRequest,
-) (*agentports.ChatCompletionResult, error) {
+	req *llmports.ChatCompletionRequest,
+) (*llmports.ChatCompletionResult, error) {
 	r.pin(req)
 	call := r.openChat(ModelCallChat, req)
 	restore := call.watchRetries(&r.mu, req)
@@ -130,9 +130,9 @@ func (r *Recorder) CompleteChat(
 
 func (r *Recorder) StreamChat(
 	ctx context.Context,
-	req *agentports.ChatCompletionRequest,
-	sink agentports.ChatStreamSink,
-) (*agentports.ChatCompletionResult, error) {
+	req *llmports.ChatCompletionRequest,
+	sink llmports.ChatStreamSink,
+) (*llmports.ChatCompletionResult, error) {
 	r.pin(req)
 	call := r.openChat(ModelCallStream, req)
 	restore := call.watchRetries(&r.mu, req)
@@ -148,8 +148,8 @@ func (r *Recorder) StreamChat(
 
 func (r *Recorder) CompleteStructured(
 	ctx context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	call := &ModelCall{
 		Kind:        ModelCallStructured,
 		StartedAt:   time.Now(),
@@ -214,7 +214,7 @@ func (r *Recorder) open(call *ModelCall) {
 	r.calls = append(r.calls, call)
 }
 
-func (r *Recorder) openChat(kind ModelCallKind, req *agentports.ChatCompletionRequest) *ModelCall {
+func (r *Recorder) openChat(kind ModelCallKind, req *llmports.ChatCompletionRequest) *ModelCall {
 	call := &ModelCall{
 		Kind:        kind,
 		StartedAt:   time.Now(),
@@ -228,7 +228,7 @@ func (r *Recorder) openChat(kind ModelCallKind, req *agentports.ChatCompletionRe
 
 func (r *Recorder) closeChat(
 	call *ModelCall,
-	result *agentports.ChatCompletionResult,
+	result *llmports.ChatCompletionResult,
 	err error,
 ) {
 	r.mu.Lock()
@@ -241,9 +241,9 @@ func (r *Recorder) closeChat(
 	}
 }
 
-func (c *ModelCall) watchRetries(mu *sync.Mutex, req *agentports.ChatCompletionRequest) func() {
+func (c *ModelCall) watchRetries(mu *sync.Mutex, req *llmports.ChatCompletionRequest) func() {
 	original := req.RetrySink
-	req.RetrySink = func(notice agentports.ChatRetryNotice) {
+	req.RetrySink = func(notice llmports.ChatRetryNotice) {
 		mu.Lock()
 		c.Retries = append(c.Retries, notice)
 		mu.Unlock()
@@ -265,8 +265,8 @@ func (c *ModelCall) markFirstToken(mu *sync.Mutex) {
 
 func (c *ModelCall) firstTokenSink(
 	mu *sync.Mutex,
-	sink agentports.ChatStreamSink,
-) agentports.ChatStreamSink {
+	sink llmports.ChatStreamSink,
+) llmports.ChatStreamSink {
 	return func(delta string) {
 		if delta != "" {
 			c.markFirstToken(mu)
@@ -277,7 +277,7 @@ func (c *ModelCall) firstTokenSink(
 	}
 }
 
-func (c *ModelCall) watchFirstToken(mu *sync.Mutex, req *agentports.ChatCompletionRequest) func() {
+func (c *ModelCall) watchFirstToken(mu *sync.Mutex, req *llmports.ChatCompletionRequest) func() {
 	original := req.ReasoningSink
 	if original == nil {
 		return func() {}

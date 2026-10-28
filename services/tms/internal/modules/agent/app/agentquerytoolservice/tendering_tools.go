@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
@@ -41,7 +41,7 @@ type listRateConfirmationsTool struct {
 
 func newListRateConfirmationsTool(
 	rateCons rateconfirmationports.RateConfirmationRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &listRateConfirmationsTool{rateCons: rateCons}
 }
 
@@ -63,7 +63,7 @@ func (t *listRateConfirmationsTool) ParamSchema() map[string]any {
 	}, paramShipmentMoveID)
 }
 
-func (t *listRateConfirmationsTool) Policy() agentports.ToolPolicy {
+func (t *listRateConfirmationsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceRateConfirmation,
 		rationale: "Reads a move's rate confirmation revisions; the name a carrier typed " +
@@ -89,7 +89,7 @@ type rateConfirmationRow struct {
 
 func (t *listRateConfirmationsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

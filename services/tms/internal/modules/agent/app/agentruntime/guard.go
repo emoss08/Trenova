@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -25,7 +26,7 @@ func newOrdinals() *ordinals {
 }
 
 // next returns this call's ordinal and counts it.
-func (o *ordinals) next(call agentports.ToolCall) int {
+func (o *ordinals) next(call llmports.ToolCall) int {
 	key, ok := callKey(call)
 	if !ok {
 		return 0
@@ -39,10 +40,10 @@ func (o *ordinals) next(call agentports.ToolCall) int {
 
 // guardedDispatchParams groups what running one guarded call needs.
 type guardedDispatchParams struct {
-	req            *agentports.RunRequest
-	call           agentports.ToolCall
+	req            *agentruntimeports.RunRequest
+	call           llmports.ToolCall
 	completionText string
-	proposedSoFar  []agentports.PendingAction
+	proposedSoFar  []agentruntimeports.PendingAction
 	moneySpent     agent.MoneyUse
 	// ordinal numbers this exact call within the run; the loop assigns it.
 	ordinal int
@@ -122,11 +123,11 @@ func (s *Service) guardedDispatch(
 		return outcome
 	}
 
-	step := agentports.RunStep{
+	step := agentruntimeports.RunStep{
 		OwnerKind: req.StepOwner.Kind,
 		OwnerID:   req.StepOwner.ID,
 		Attempt:   req.Attempt,
-		Kind:      agentports.RunStepTool,
+		Kind:      agentruntimeports.RunStepTool,
 		Key:       key,
 		ToolName:  p.call.Name,
 		CallID:    p.call.ID,
@@ -151,7 +152,7 @@ func (s *Service) guardedDispatch(
 func (s *Service) claimAndDispatch(
 	ctx context.Context,
 	p *guardedDispatchParams,
-	step *agentports.RunStep,
+	step *agentruntimeports.RunStep,
 ) toolOutcome {
 	req := p.req
 	key := step.Key
@@ -180,9 +181,9 @@ func (s *Service) claimAndDispatch(
 
 	span.SetAttributes(aitrace.AIStepState.String(stepState(verdict.State)))
 	switch verdict.State {
-	case agentports.StepCompleted, agentports.StepFailed:
+	case agentruntimeports.StepCompleted, agentruntimeports.StepFailed:
 		return replayedOutcome(verdict.Outcome)
-	case agentports.StepUnknown:
+	case agentruntimeports.StepUnknown:
 		return unknownOutcome(p.call.Name)
 	}
 
@@ -202,11 +203,11 @@ func (s *Service) claimAndDispatch(
 		caller:         p.caller,
 	})
 
-	step.Status = agentports.RunStepCompleted
+	step.Status = agentruntimeports.RunStepCompleted
 	if outcome.failed {
-		step.Status = agentports.RunStepFailed
+		step.Status = agentruntimeports.RunStepFailed
 	}
-	step.Outcome = agentports.RunStepOutcome{
+	step.Outcome = agentruntimeports.RunStepOutcome{
 		Content: outcome.content,
 		Failed:  outcome.failed,
 		Action:  outcome.action,
@@ -249,7 +250,7 @@ func (s *Service) claimAndDispatch(
 // The result comes back too, when it was kept, so what the original call
 // showed beside the conversation is shown again rather than lost with the
 // attempt that made it.
-func replayedOutcome(recorded agentports.RunStepOutcome) toolOutcome {
+func replayedOutcome(recorded agentruntimeports.RunStepOutcome) toolOutcome {
 	content := recorded.Content
 	if content == "" {
 		content = "This call was made on an earlier attempt of this run. " +
@@ -282,7 +283,7 @@ const maxStoredStepDataBytes = 64 * 1024
 
 // showsResults reports whether anything beside the run shows what its tools
 // return. Only a conversation does, and only there is a result worth keeping.
-func showsResults(req *agentports.RunRequest) bool {
+func showsResults(req *agentruntimeports.RunRequest) bool {
 	return req.ToolObserver != nil || !req.ThreadID.IsNil()
 }
 
@@ -337,7 +338,7 @@ func unknownOutcome(toolName string) toolOutcome {
 // earlier attempt's calls minted a new key, and the write ran a second time.
 func (s *Service) seedFromLedger(
 	ctx context.Context,
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 	repeats *repeatGuard,
 ) {
 	if req.Steps == nil || req.StepOwner.ID.IsNil() {
@@ -362,14 +363,14 @@ func (s *Service) seedFromLedger(
 
 	replayed := 0
 	for _, step := range steps {
-		if step.Kind != agentports.RunStepTool {
+		if step.Kind != agentruntimeports.RunStepTool {
 			continue
 		}
 		replayed++
 
-		if step.Status == agentports.RunStepFailed && step.Outcome.Content != "" {
+		if step.Status == agentruntimeports.RunStepFailed && step.Outcome.Content != "" {
 			repeats.record(
-				agentports.ToolCall{Name: step.ToolName, Arguments: step.Args},
+				llmports.ToolCall{Name: step.ToolName, Arguments: step.Args},
 				step.Outcome.Content,
 			)
 		}

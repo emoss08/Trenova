@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
@@ -95,14 +95,14 @@ func TestRankMoveCandidates_ExplainsAnEmptyList(t *testing.T) {
 }
 
 type fakePlanner struct {
-	plan    *agentports.DispatchPlan
-	lastReq *agentports.DispatchPlanRequest
+	plan    *dispatchconsoleports.DispatchPlan
+	lastReq *dispatchconsoleports.DispatchPlanRequest
 }
 
 func (f *fakePlanner) Plan(
 	_ context.Context,
-	req *agentports.DispatchPlanRequest,
-) (*agentports.DispatchPlan, error) {
+	req *dispatchconsoleports.DispatchPlanRequest,
+) (*dispatchconsoleports.DispatchPlan, error) {
 	f.lastReq = req
 
 	return f.plan, nil
@@ -111,17 +111,17 @@ func (f *fakePlanner) Plan(
 func TestPlanDispatch_IsAlwaysADryRunOverTheWindow(t *testing.T) {
 	t.Parallel()
 
-	planner := &fakePlanner{plan: &agentports.DispatchPlan{
+	planner := &fakePlanner{plan: &dispatchconsoleports.DispatchPlan{
 		PlanningMode: "Balanced",
 		TotalScore:   140,
-		Assignments: []*agentports.DispatchPlannedAssignment{{
+		Assignments: []*dispatchconsoleports.DispatchPlannedAssignment{{
 			MoveID: pulid.MustNew(
 				"smv_",
 			), ProNumber: "S1", WorkerID: pulid.MustNew("wrk_"), WorkerName: "Dana Ortiz",
 			Confidence: decimal.NewFromFloat(0.9), Rationale: "closest with hours",
 			Score: &dispatchcandidateservice.CandidateScore{Score: 88},
 		}},
-		Uncovered: []*agentports.DispatchUncoveredMove{{
+		Uncovered: []*dispatchconsoleports.DispatchUncoveredMove{{
 			MoveID: pulid.MustNew("smv_"), ProNumber: "S2", Reason: "no eligible driver",
 			BestBlockedFindings: []dispatcheligibility.Finding{
 				{Code: "HOS_DRIVE", Message: "No drive time left"},

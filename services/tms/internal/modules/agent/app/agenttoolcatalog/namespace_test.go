@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +19,9 @@ const maxToolsOutsideANamespace = 0
 var (
 	namespaceName  = regexp.MustCompile(`^[a-z]+$`)
 	namespacedTool = regexp.MustCompile(`^[a-z]+(_[a-z0-9]+)+$`)
-	dateParameter  = regexp.MustCompile(`(At|Date|On|Day)$|^(windowStart|windowEnd|from|to|since|until)$`)
+	dateParameter  = regexp.MustCompile(
+		`(At|Date|On|Day)$|^(windowStart|windowEnd|from|to|since|until)$`,
+	)
 )
 
 var renamedFreeText = map[string]string{
@@ -34,7 +36,7 @@ func TestEveryNamespaceIsOneWordWithASummary(t *testing.T) {
 	t.Parallel()
 
 	seen := make(map[string]struct{})
-	for _, namespace := range agentports.ToolNamespaces() {
+	for _, namespace := range agenttoolports.ToolNamespaces() {
 		assert.Regexp(t, namespaceName, namespace.Name)
 		assert.NotEmptyf(t, namespace.Title, "%s has no title", namespace.Name)
 		assert.NotEmptyf(t, namespace.Summary, "%s has no summary for the namespace map",
@@ -50,7 +52,7 @@ func TestToolsMoveIntoNamespacesAndNeverOut(t *testing.T) {
 
 	outside := make([]string, 0, 512)
 	for _, tool := range buildTools(t) {
-		if agentports.NamespaceOf(tool.Name()) == "" {
+		if agenttoolports.NamespaceOf(tool.Name()) == "" {
 			outside = append(outside, tool.Name())
 		}
 	}
@@ -70,7 +72,7 @@ func TestNamespacedToolsFollowTheConventions(t *testing.T) {
 	var problems []string
 	for _, tool := range buildTools(t) {
 		name := tool.Name()
-		if agentports.NamespaceOf(name) == "" {
+		if agenttoolports.NamespaceOf(name) == "" {
 			continue
 		}
 		if !namespacedTool.MatchString(name) {

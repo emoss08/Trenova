@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -83,7 +83,7 @@ func inboundPostingSummary(preview *accountingsyncports.AccountingInboundApplyPr
 
 func (t *ApplyAccountingInboundChangeTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const refusedSummary = "Would bring a payment from the accounting system into Trenova."
 
@@ -118,7 +118,7 @@ func (t *ApplyAccountingInboundChangeTool) Preview(
 
 func (t *IgnoreAccountingInboundChangeTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const refusedSummary = "Would keep a payment from the accounting system out of Trenova."
 

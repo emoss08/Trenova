@@ -5,14 +5,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -23,6 +15,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
@@ -47,7 +46,11 @@ type memoryReview struct {
 	open   int
 }
 
-func (m *memoryReview) ListIssues(_ context.Context, _ pagination.TenantInfo, itemID pulid.ID) ([]*billingqueue.Issue, error) {
+func (m *memoryReview) ListIssues(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	itemID pulid.ID,
+) ([]*billingqueue.Issue, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	out := make([]*billingqueue.Issue, 0, len(m.issues))
@@ -106,7 +109,10 @@ func (m *memoryReview) SyncIssues(
 	return result, err
 }
 
-func (m *memoryReview) GetIssue(_ context.Context, req *billingqueueports.GetBillingQueueIssueRequest) (*billingqueue.Issue, error) {
+func (m *memoryReview) GetIssue(
+	_ context.Context,
+	req *billingqueueports.GetBillingQueueIssueRequest,
+) (*billingqueue.Issue, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for _, issue := range m.issues {
@@ -119,7 +125,10 @@ func (m *memoryReview) GetIssue(_ context.Context, req *billingqueueports.GetBil
 	return nil, errortypes.NewNotFoundError("Billing queue issue not found")
 }
 
-func (m *memoryReview) UpdateIssue(_ context.Context, issue *billingqueue.Issue) (*billingqueue.Issue, error) {
+func (m *memoryReview) UpdateIssue(
+	_ context.Context,
+	issue *billingqueue.Issue,
+) (*billingqueue.Issue, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for i, stored := range m.issues {
@@ -133,7 +142,11 @@ func (m *memoryReview) UpdateIssue(_ context.Context, issue *billingqueue.Issue)
 	return nil, errortypes.NewNotFoundError("Billing queue issue not found")
 }
 
-func (m *memoryReview) CountOpenIssues(_ context.Context, _ pagination.TenantInfo, itemID pulid.ID) (int, error) {
+func (m *memoryReview) CountOpenIssues(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	itemID pulid.ID,
+) (int, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	count := m.open
@@ -154,7 +167,10 @@ func (m *memoryReview) CreateEvents(_ context.Context, events ...*billingqueue.I
 	return nil
 }
 
-func (m *memoryReview) FindDuplicates(context.Context, *billingqueueports.FindBillingQueueDuplicatesRequest) ([]*billingqueue.DuplicateRef, error) {
+func (m *memoryReview) FindDuplicates(
+	context.Context,
+	*billingqueueports.FindBillingQueueDuplicatesRequest,
+) ([]*billingqueue.DuplicateRef, error) {
 	return nil, nil
 }
 
@@ -259,7 +275,8 @@ func newReviewWorld(t *testing.T, status billingqueue.Status) *reviewWorld {
 			clone := *w.item
 			clone.Review = nil
 			return &clone, nil
-		}).Maybe()
+		}).
+		Maybe()
 	repo.EXPECT().Update(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *billingqueue.BillingQueueItem) (*billingqueue.BillingQueueItem, error) {
 			w.mu.Lock()
@@ -267,7 +284,8 @@ func newReviewWorld(t *testing.T, status billingqueue.Status) *reviewWorld {
 			clone := *entity
 			w.item = &clone
 			return entity, nil
-		}).Maybe()
+		}).
+		Maybe()
 
 	shipments := shipmentportsmock.NewMockShipmentRepository(t)
 	shipments.EXPECT().GetByID(mock.Anything, mock.Anything).
@@ -275,13 +293,18 @@ func newReviewWorld(t *testing.T, status billingqueue.Status) *reviewWorld {
 			w.mu.Lock()
 			defer w.mu.Unlock()
 			clone := *w.shp
-			clone.AdditionalCharges = make([]*shipment.AdditionalCharge, 0, len(w.shp.AdditionalCharges))
+			clone.AdditionalCharges = make(
+				[]*shipment.AdditionalCharge,
+				0,
+				len(w.shp.AdditionalCharges),
+			)
 			for _, charge := range w.shp.AdditionalCharges {
 				c := *charge
 				clone.AdditionalCharges = append(clone.AdditionalCharges, &c)
 			}
 			return &clone, nil
-		}).Maybe()
+		}).
+		Maybe()
 	shipments.EXPECT().UpdateDerivedState(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, shp *shipment.Shipment) (*shipment.Shipment, error) {
 			w.mu.Lock()
@@ -293,7 +316,9 @@ func newReviewWorld(t *testing.T, status billingqueue.Status) *reviewWorld {
 					c.ID = pulid.MustNew("ac_")
 				}
 				if c.AccessorialCharge == nil {
-					c.AccessorialCharge = &accessorialcharge.AccessorialCharge{Description: "Lumper fee"}
+					c.AccessorialCharge = &accessorialcharge.AccessorialCharge{
+						Description: "Lumper fee",
+					}
 				}
 				charges = append(charges, &c)
 			}
@@ -304,7 +329,10 @@ func newReviewWorld(t *testing.T, status billingqueue.Status) *reviewWorld {
 
 	customers := customerportsmock.NewMockCustomerRepository(t)
 	customers.EXPECT().GetByID(mock.Anything, mock.Anything).Return(cus, nil).Maybe()
-	customers.EXPECT().GetByIDs(mock.Anything, mock.Anything).Return([]*customer.Customer{cus}, nil).Maybe()
+	customers.EXPECT().
+		GetByIDs(mock.Anything, mock.Anything).
+		Return([]*customer.Customer{cus}, nil).
+		Maybe()
 
 	invoices := invoiceportsmock.NewMockInvoiceRepository(t)
 	invoices.EXPECT().ListByShipmentIDs(mock.Anything, mock.Anything).
@@ -312,7 +340,7 @@ func newReviewWorld(t *testing.T, status billingqueue.Status) *reviewWorld {
 
 	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 	users := tenantportsmock.NewMockUserRepository(t)
 	users.EXPECT().GetByID(mock.Anything, mock.Anything).
@@ -397,7 +425,11 @@ func TestReviewRaisesTheLumperFeeOnceAndHoldsApproval(t *testing.T) {
 	assert.True(t, decimal.RequireFromString("110").Equal(item.Review.Charges.Difference))
 
 	require.Len(t, w.review.issues, 1, "a second read raises nothing new")
-	assert.Equal(t, []string{"Flagged: $110.00 lumper fee isn't on the rate con"}, w.review.eventTexts())
+	assert.Equal(
+		t,
+		[]string{"Flagged: $110.00 lumper fee isn't on the rate con"},
+		w.review.eventTexts(),
+	)
 
 	_, err := w.svc.UpdateStatus(t.Context(), &billingqueueports.UpdateBillingQueueStatusRequest{
 		ItemID:     w.item.ID,
@@ -495,11 +527,15 @@ func TestApproveFromReadyForReviewStartsTheReview(t *testing.T) {
 
 	svc, _, item, tenantInfo := statusChangeFixture(t, billingqueue.StatusReadyForReview)
 
-	approved, err := svc.UpdateStatus(t.Context(), &billingqueueports.UpdateBillingQueueStatusRequest{
-		ItemID:     item.ID,
-		NewStatus:  billingqueue.StatusApproved,
-		TenantInfo: tenantInfo,
-	}, userActor(tenantInfo))
+	approved, err := svc.UpdateStatus(
+		t.Context(),
+		&billingqueueports.UpdateBillingQueueStatusRequest{
+			ItemID:     item.ID,
+			NewStatus:  billingqueue.StatusApproved,
+			TenantInfo: tenantInfo,
+		},
+		userActor(tenantInfo),
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, billingqueue.StatusApproved, approved.Status)
@@ -569,7 +605,11 @@ func TestPostPostsTheItemsInvoiceAndSaysWhereItWent(t *testing.T) {
 	w.shp.Customer.BillingProfile.AutoSendInvoiceOnGeneration = true
 	w.shp.Customer.BillingProfile.EmailInvoiceEnabled = true
 
-	draft := &invoice.Invoice{ID: pulid.MustNew("inv_"), Number: "INV-24101", Status: invoice.StatusDraft}
+	draft := &invoice.Invoice{
+		ID:     pulid.MustNew("inv_"),
+		Number: "INV-24101",
+		Status: invoice.StatusDraft,
+	}
 	invoices := invoiceportsmock.NewMockInvoiceRepository(t)
 	invoices.EXPECT().GetByBillingQueueItemID(mock.Anything, mock.Anything).Return(draft, nil)
 	invoiceSvc := invoiceportsmock.NewMockInvoiceService(t)

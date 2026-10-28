@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -115,7 +115,7 @@ func outboundMessage(status edi.MessageDeliveryStatus) *edi.EDIMessage {
 func TestEDIDeliveryTools_ArePersonOnlyProposals(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		NewRetryEDIMessageDeliveryTool(nil),
 		NewReplayEDIMessageTool(nil),
 		NewReprocessEDIInboundFilesTool(nil),
@@ -152,13 +152,21 @@ func TestRetryEDIMessageDelivery_PreviewsEachMessageAndRefusalWithoutItsContent(
 		paramEDIMessageIDs: []any{failed.ID.String(), sent.ID.String(), failed.ID.String()},
 	}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, deliveries.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		deliveries.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+		},
+	)
 	require.Len(t, preview.Changes, 2, "a message named twice is sent once")
 	refused := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, sent.ID, refused.EntityID, "refusals come first")
-	assert.Contains(t, agenttoolstest.FieldByPath(t, refused, "outcome").After, "Only queued, failed")
+	assert.Contains(
+		t,
+		agenttoolstest.FieldByPath(t, refused, "outcome").After,
+		"Only queued, failed",
+	)
 	queued := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, "Queued", agenttoolstest.FieldByPath(t, queued, "deliveryStatus").After)
 	require.NotNil(t, queued.Message)
@@ -167,7 +175,11 @@ func TestRetryEDIMessageDelivery_PreviewsEachMessageAndRefusalWithoutItsContent(
 	assert.Contains(t, preview.Summary, "1 of 2")
 
 	require.NoError(t, tool.Validate(t.Context(), agenttoolstest.AgentParamsFor(args)))
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)), ErrEDIDecisionNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)),
+		ErrEDIDecisionNeedsAPerson,
+	)
 
 	result, err := tool.ExecuteWithResult(t.Context(), agenttoolstest.ApprovedParams(args))
 	require.NoError(t, err)
@@ -189,12 +201,20 @@ func TestReplayEDIMessage_SendsADeliveredDocumentAgainOnlyWhenApproved(t *testin
 
 	target, ok := tool.Target(map[string]any{paramEDIMessageID: sent.ID.String()})
 	require.True(t, ok)
-	assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceEDI, ID: sent.ID}, target)
+	assert.Equal(
+		t,
+		agenttoolports.ToolTarget{Resource: permission.ResourceEDI, ID: sent.ID},
+		target,
+	)
 
 	args := map[string]any{paramEDIMessageID: sent.ID.String()}
-	preview := agenttoolstest.PreviewWithoutWrites(t, deliveries.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		deliveries.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	require.NotNil(t, change.Version)
 	assert.Equal(t, int64(3), *change.Version)
@@ -203,7 +223,11 @@ func TestReplayEDIMessage_SendsADeliveredDocumentAgainOnlyWhenApproved(t *testin
 	refused := map[string]any{paramEDIMessageID: failed.ID.String()}
 	require.Error(t, tool.Validate(t.Context(), agenttoolstest.AgentParamsFor(refused)))
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)), ErrEDIDecisionNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)),
+		ErrEDIDecisionNeedsAPerson,
+	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(args)))
 	require.NotNil(t, deliveries.replayed)
 	assert.Equal(t, sent.ID, deliveries.replayed.MessageID)
@@ -271,9 +295,13 @@ func TestReprocessEDIInboundFiles_PreviewsWhichFilesWouldRunAgain(t *testing.T) 
 		paramEDIInboundFileIDs: []any{quarantined.ID.String(), processed.ID.String()},
 	}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, files.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		files.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+		},
+	)
 	require.Len(t, preview.Changes, 2)
 	refused := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, processed.ID, refused.EntityID)
@@ -282,7 +310,11 @@ func TestReprocessEDIInboundFiles_PreviewsWhichFilesWouldRunAgain(t *testing.T) 
 	assert.Equal(t, "204_0921.x12", again.Label)
 	assert.True(t, preview.Partial, "what each transaction becomes is decided when it runs")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)), ErrEDIDecisionNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)),
+		ErrEDIDecisionNeedsAPerson,
+	)
 	result, err := tool.ExecuteWithResult(t.Context(), agenttoolstest.ApprovedParams(args))
 	require.NoError(t, err)
 	require.NotNil(t, files.reprocessed)
@@ -299,7 +331,7 @@ func TestEDIBulkTools_RefuseMoreThanTheServiceTakes(t *testing.T) {
 	}
 
 	tool := NewRetryEDIMessageDeliveryTool(&fakeDeliveries{})
-	err := tool.(agentports.ToolValidator).Validate(
+	err := tool.(agenttoolports.ToolValidator).Validate(
 		t.Context(),
 		agenttoolstest.AgentParamsFor(map[string]any{paramEDIMessageIDs: ids}),
 	)

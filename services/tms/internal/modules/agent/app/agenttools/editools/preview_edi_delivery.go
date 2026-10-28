@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -144,7 +144,7 @@ func refusedRecord(
 
 func (t *RetryEDIMessageDeliveryTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	ids, err := ediRecordSet(t, &params, paramEDIMessageIDs)
 	if err != nil {
@@ -191,7 +191,7 @@ func (t *RetryEDIMessageDeliveryTool) Preview(
 
 func (t *ReplayEDIMessageTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
@@ -223,7 +223,7 @@ func (t *ReplayEDIMessageTool) Preview(
 
 func (t *ReprocessEDIInboundFilesTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	ids, err := ediRecordSet(t, &params, paramEDIInboundFileIDs)
 	if err != nil {
@@ -253,7 +253,7 @@ func (t *ReprocessEDIInboundFilesTool) Preview(
 
 func (t *ReprocessEDIInboundFilesTool) planFile(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	id pulid.ID,
 ) (plannedEDIRecord, error) {
 	file, err := t.files.GetInboundFile(ctx, ediports.GetEDIInboundFileByIDRequest{

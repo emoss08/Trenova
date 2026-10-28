@@ -6,7 +6,10 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,9 +37,9 @@ func newBatchRecorder(t *testing.T, rt *Service) *batchRecorder {
 
 func (fx *batchRecorder) record(event kernelports.StreamEvent) {
 	switch data := event.Data.(type) {
-	case agentports.AssistantToolStartedEvent:
+	case assistantports.AssistantToolStartedEvent:
 		fx.events = append(fx.events, "started "+data.CallID)
-	case agentports.AssistantToolFinishedEvent:
+	case assistantports.AssistantToolFinishedEvent:
 		fx.events = append(fx.events, "finished "+data.CallID)
 	}
 }
@@ -65,32 +68,35 @@ func (fx *batchRecorder) DispatchReads(_ *Turn, calls []DispatchCall) []ToolOutc
 	return outcomes
 }
 
-func readCall(id, name string, args map[string]any) agentports.ToolCall {
-	return agentports.ToolCall{ID: id, Name: name, Arguments: args}
+func readCall(id, name string, args map[string]any) llmports.ToolCall {
+	return llmports.ToolCall{ID: id, Name: name, Arguments: args}
 }
 
 type readScenario struct {
-	calls  []agentports.ToolCall
+	calls  []llmports.ToolCall
 	budget int
 }
 
 // driveReads runs one reply's calls through the loop against a recorder, with
 // worker_list, search_customer and shipment_get held as reads and
 // record_case held as a write.
-func driveReads(t *testing.T, scenario readScenario) (*batchRecorder, *agentports.RunResult) {
+func driveReads(
+	t *testing.T,
+	scenario readScenario,
+) (*batchRecorder, *agentruntimeports.RunResult) {
 	t.Helper()
 
 	rt := newRuntime(
-		&scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		&scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 			callsTurn(scenario.calls...),
 			textTurn("Done."),
 		}},
-		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			queryTool("worker_list", map[string]any{"results": []any{}}, nil),
 			queryTool("search_customer", map[string]any{"results": []any{}}, nil),
 			queryTool("shipment_get", map[string]any{"id": "shp_1"}, nil),
 		}},
-		&stubActionRegistry{Tools: []agentports.AgentTool{
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{
 			actionTool("record_case", agent.TierAutoExecute, nil),
 		}},
 		nil,
@@ -101,7 +107,7 @@ func driveReads(t *testing.T, scenario readScenario) (*batchRecorder, *agentport
 	}
 
 	fx := newBatchRecorder(t, rt)
-	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
+	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "Look it all up.",
@@ -111,7 +117,7 @@ func driveReads(t *testing.T, scenario readScenario) (*batchRecorder, *agentport
 	return fx, result
 }
 
-func resultCallIDs(result *agentports.RunResult) []string {
+func resultCallIDs(result *agentruntimeports.RunResult) []string {
 	ids := make([]string, 0, len(result.Messages))
 	for idx := range result.Messages {
 		if result.Messages[idx].ToolCallID != "" {
@@ -122,7 +128,7 @@ func resultCallIDs(result *agentports.RunResult) []string {
 	return ids
 }
 
-func resultContent(result *agentports.RunResult, callID string) string {
+func resultContent(result *agentruntimeports.RunResult, callID string) string {
 	for idx := range result.Messages {
 		if result.Messages[idx].ToolCallID == callID {
 			return result.Messages[idx].Content
@@ -140,7 +146,7 @@ transcript read still comes back in the order it asked.
 func TestDrive_RunsAReplysReadsTogether(t *testing.T) {
 	t.Parallel()
 
-	fx, result := driveReads(t, readScenario{calls: []agentports.ToolCall{
+	fx, result := driveReads(t, readScenario{calls: []llmports.ToolCall{
 		readCall("c1", "worker_list", map[string]any{"status": "Active"}),
 		readCall("c2", "search_customer", map[string]any{"query": "Acme"}),
 		readCall("c3", "shipment_get", map[string]any{"id": "shp_1"}),
@@ -160,7 +166,7 @@ func TestDrive_RunsAReplysReadsTogether(t *testing.T) {
 func TestDrive_AWriteRunsBetweenTheReadsAroundIt(t *testing.T) {
 	t.Parallel()
 
-	fx, result := driveReads(t, readScenario{calls: []agentports.ToolCall{
+	fx, result := driveReads(t, readScenario{calls: []llmports.ToolCall{
 		readCall("c1", "worker_list", map[string]any{"status": "Active"}),
 		readCall("c2", "search_customer", map[string]any{"query": "Acme"}),
 		readCall("c3", "record_case", map[string]any{"subject": "late"}),
@@ -180,7 +186,7 @@ second is told about the first, so the cards still join one table.
 func TestDrive_FetchesOfOneKindRunApartAndStillBunch(t *testing.T) {
 	t.Parallel()
 
-	fx, _ := driveReads(t, readScenario{calls: []agentports.ToolCall{
+	fx, _ := driveReads(t, readScenario{calls: []llmports.ToolCall{
 		readCall("c1", "shipment_get", map[string]any{"id": "shp_1"}),
 		readCall("c2", "shipment_get", map[string]any{"id": "shp_2"}),
 		readCall("c3", "worker_list", map[string]any{"status": "Active"}),
@@ -194,7 +200,7 @@ func TestDrive_AnswersARepeatedReadInOneReplyFromTheFirst(t *testing.T) {
 	t.Parallel()
 
 	args := map[string]any{"status": "Active"}
-	fx, result := driveReads(t, readScenario{calls: []agentports.ToolCall{
+	fx, result := driveReads(t, readScenario{calls: []llmports.ToolCall{
 		readCall("c1", "worker_list", args),
 		readCall("c2", "worker_list", args),
 	}})
@@ -207,7 +213,7 @@ func TestDrive_AnswersARepeatedReadInOneReplyFromTheFirst(t *testing.T) {
 func TestDrive_HoldsAReadBatchToTheToolBudget(t *testing.T) {
 	t.Parallel()
 
-	fx, result := driveReads(t, readScenario{budget: 2, calls: []agentports.ToolCall{
+	fx, result := driveReads(t, readScenario{budget: 2, calls: []llmports.ToolCall{
 		readCall("c1", "worker_list", map[string]any{"status": "Active"}),
 		readCall("c2", "search_customer", map[string]any{"query": "Acme"}),
 		readCall("c3", "shipment_get", map[string]any{"id": "shp_1"}),
@@ -221,7 +227,7 @@ func TestDrive_HoldsAReadBatchToTheToolBudget(t *testing.T) {
 func TestDrive_RunsAtMostEightReadsAtOnce(t *testing.T) {
 	t.Parallel()
 
-	calls := make([]agentports.ToolCall, 0, 10)
+	calls := make([]llmports.ToolCall, 0, 10)
 	ids := make([]string, 0, 10)
 	for idx := range 10 {
 		id := "c" + string(rune('a'+idx))
@@ -244,16 +250,16 @@ func TestRestoreTurn_BatchesOnlyTheReadsTheTurnOpenedWith(t *testing.T) {
 
 	rt := newRuntime(
 		nil,
-		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			queryTool("worker_list", map[string]any{"results": []any{}}, nil),
 			queryTool("search_customer", map[string]any{"results": []any{}}, nil),
 		}},
-		&stubActionRegistry{Tools: []agentports.AgentTool{
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{
 			actionTool("record_case", agent.TierAutoExecute, nil),
 		}},
 		nil,
 	)
-	request := &agentports.RunRequest{
+	request := &agentruntimeports.RunRequest{
 		Definition: testDefinition("worker_list", "search_customer", "record_case"),
 		Actor:      testActor(),
 		Input:      "Who is free?",
@@ -269,7 +275,7 @@ func TestRestoreTurn_BatchesOnlyTheReadsTheTurnOpenedWith(t *testing.T) {
 	require.Equal(t, state.Reads, carried.Reads)
 
 	drive := func(state TurnState) []string {
-		rt.completion = &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		rt.completion = &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 			callsTurn(
 				readCall("c1", "worker_list", map[string]any{"status": "Active"}),
 				readCall("c2", "search_customer", map[string]any{"query": "Acme"}),

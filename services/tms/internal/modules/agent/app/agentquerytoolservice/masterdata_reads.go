@@ -3,14 +3,14 @@ package agentquerytoolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturerdb"
-	"github.com/emoss08/trenova/pkg/listquery"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturerdb"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -36,9 +36,9 @@ const equipmentManufacturersSummary = "List equipment manufacturers — who buil
 // provideListEquipmentManufacturersTool reads the manufacturer list through
 // EquipmentManufacturerTable, the operation the manufacturers page sends.
 func provideListEquipmentManufacturersTool(
-	reader agentports.GraphQLReader,
+	reader graphqlreadports.GraphQLReader,
 	permissions permissionports.PermissionEngine,
-) (agentports.AgentQueryTool, error) {
+) (agenttoolports.AgentQueryTool, error) {
 	return newGraphQLListTool(&graphQLListSpec{
 		name:         toolListEquipmentManufacturers,
 		entityPlural: "equipment manufacturers",
@@ -52,7 +52,7 @@ func provideListEquipmentManufacturersTool(
 // through GraphQL.
 func newListEquipmentManufacturersTool(
 	repo equipmentmanufacturerports.EquipmentManufacturerRepository,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListEquipmentManufacturers,
 		entityPlural: "equipment manufacturers",

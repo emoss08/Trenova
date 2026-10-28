@@ -3,7 +3,7 @@ package dispatchconsoleresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
@@ -280,7 +280,7 @@ func mapDispatchFindings(
 	return mapped
 }
 
-func mapDispatchPlan(plan *agentports.DispatchPlan) *gqlmodel.DispatchPlan {
+func mapDispatchPlan(plan *dispatchconsoleports.DispatchPlan) *gqlmodel.DispatchPlan {
 	if plan == nil {
 		return nil
 	}

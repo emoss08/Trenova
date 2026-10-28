@@ -12,7 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -36,46 +39,46 @@ type Params struct {
 	Logger       *zap.Logger
 	DecisionRepo agentports.AgentDecisionRepository
 	ProposalRepo agentports.AgentProposalRepository
-	RunRepo      agentports.AgentRunRepository
+	RunRepo      agentruntimeports.AgentRunRepository
 	// Conversations says whose conversation raised a proposal, for a person
 	// deciding their own.
-	Conversations agentports.ConversationRepository `optional:"true"`
+	Conversations assistantports.ConversationRepository `optional:"true"`
 	Shadow        *agentshadow.Resolver
 	Permissions   permissionports.PermissionEngine
 	Workflows     kernelports.WorkflowStarter
 	Executor      *proposalexecutor.Service
 	AuditService  auditports.AuditService
 	Trust         agentports.AgentTrustService
-	Memories      agentports.AgentMemoryService     `optional:"true"`
-	Activity      agentports.AgentActivityPublisher `optional:"true"`
+	Memories      agentmemoryports.AgentMemoryService `optional:"true"`
+	Activity      agentports.AgentActivityPublisher   `optional:"true"`
 	// Watchtower takes a decided proposal off the feed.
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// FollowUps has the conversation that raised a proposal report what came
 	// of deciding it.
-	FollowUps agentports.DecisionFollowUps `optional:"true"`
+	FollowUps assistantports.DecisionFollowUps `optional:"true"`
 	// Previews says what an approval would do, as the decider sees it, so
 	// the decision records what was approved and refuses what moved on.
-	Previews agentports.ProposalPreviewService `optional:"true"`
-	Metrics  *metrics.Registry                 `optional:"true"`
+	Previews agentruntimeports.ProposalPreviewService `optional:"true"`
+	Metrics  *metrics.Registry                        `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
 	decisionRepo agentports.AgentDecisionRepository
 	proposalRepo agentports.AgentProposalRepository
-	runRepo      agentports.AgentRunRepository
-	threads      agentports.ConversationRepository
+	runRepo      agentruntimeports.AgentRunRepository
+	threads      assistantports.ConversationRepository
 	shadow       *agentshadow.Resolver
 	permissions  permissionports.PermissionEngine
 	workflows    kernelports.WorkflowStarter
 	executor     *proposalexecutor.Service
 	audit        auditports.AuditService
 	trust        agentports.AgentTrustService
-	memories     agentports.AgentMemoryService
+	memories     agentmemoryports.AgentMemoryService
 	activity     agentports.AgentActivityPublisher
 	watchtower   watchtowerports.WatchtowerProjector
-	followUps    agentports.DecisionFollowUps
-	previews     agentports.ProposalPreviewService
+	followUps    assistantports.DecisionFollowUps
+	previews     agentruntimeports.ProposalPreviewService
 	metrics      *metrics.ProposalPreview
 }
 
@@ -163,7 +166,7 @@ func (s *Service) AssertOwnProposal(
 		return err
 	}
 
-	run, err := s.runRepo.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runRepo.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         proposal.RunID,
 		TenantInfo: &tenant,
 	})
@@ -178,7 +181,7 @@ func (s *Service) AssertOwnProposal(
 		return notYours
 	}
 
-	if _, err = s.threads.GetThread(ctx, agentports.GetThreadRequest{
+	if _, err = s.threads.GetThread(ctx, assistantports.GetThreadRequest{
 		ID:         run.SubjectID,
 		UserID:     actor.UserID,
 		TenantInfo: tenant,
@@ -418,7 +421,7 @@ func (s *Service) carryOut(
 	// Last, once the change has run or failed: the report is of the outcome,
 	// not of the click. A plan's steps are reported once, by the plan.
 	if !req.WithinPlan && s.followUps != nil {
-		s.followUps.FollowUp(ctx, agentports.DecisionFollowUpRequest{
+		s.followUps.FollowUp(ctx, assistantports.DecisionFollowUpRequest{
 			TenantInfo: req.TenantInfo,
 			RunID:      proposal.RunID,
 			ProposalID: proposal.ID,
@@ -651,7 +654,7 @@ func (s *Service) signalWorkflow(
 	req *agentports.DecideAgentProposalRequest,
 	decision *agent.AgentDecision,
 ) error {
-	run, err := s.runRepo.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runRepo.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         runID,
 		TenantInfo: &req.TenantInfo,
 	})

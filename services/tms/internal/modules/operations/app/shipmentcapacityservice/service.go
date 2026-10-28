@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -55,7 +55,7 @@ type tenderer interface {
 type Params struct {
 	fx.In
 
-	Console      agentports.DispatchConsoleService
+	Console      dispatchconsoleports.DispatchConsoleService
 	Capabilities shipmentports.ShipmentBoardCapabilitiesReader
 	Postings     carriercapacityports.CarrierCapacityPostingRepository
 	Performance  shipmentports.CarrierPerformanceRepository
@@ -67,7 +67,7 @@ type Params struct {
 }
 
 type Dependencies struct {
-	Console      agentports.DispatchConsoleService
+	Console      dispatchconsoleports.DispatchConsoleService
 	Capabilities shipmentports.ShipmentBoardCapabilitiesReader
 	Postings     carriercapacityports.CarrierCapacityPostingRepository
 	Performance  shipmentports.CarrierPerformanceRepository
@@ -80,7 +80,7 @@ type Dependencies struct {
 }
 
 type Service struct {
-	console      agentports.DispatchConsoleService
+	console      dispatchconsoleports.DispatchConsoleService
 	capabilities shipmentports.ShipmentBoardCapabilitiesReader
 	postings     carriercapacityports.CarrierCapacityPostingRepository
 	performance  shipmentports.CarrierPerformanceRepository

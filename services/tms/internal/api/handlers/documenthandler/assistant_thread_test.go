@@ -9,10 +9,10 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,21 +40,21 @@ func (e *grantedEngine) Check(
 }
 
 type pageAssistant struct {
-	opened []*agentports.OpenPageThreadRequest
+	opened []*assistantports.OpenPageThreadRequest
 	actor  *permissionports.RequestActor
 }
 
 func (p *pageAssistant) OpenPageThread(
 	_ context.Context,
-	req *agentports.OpenPageThreadRequest,
+	req *assistantports.OpenPageThreadRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.PageThread, error) {
+) (*assistantports.PageThread, error) {
 	p.opened = append(p.opened, req)
 	p.actor = actor
 
 	agentID := pulid.MustNew("agdef_")
 
-	return &agentports.PageThread{
+	return &assistantports.PageThread{
 		Thread: &conversation.Thread{
 			ID:                pulid.MustNew("athr_"),
 			AgentDefinitionID: agentID,
@@ -63,7 +63,7 @@ func (p *pageAssistant) OpenPageThread(
 			SubjectID:         req.SubjectID,
 			CanContinue:       true,
 		},
-		Agent: agentports.PageAgent{
+		Agent: assistantports.PageAgent{
 			ID:        agentID,
 			Name:      "Shipment import assistant",
 			SystemKey: "import_assistant",

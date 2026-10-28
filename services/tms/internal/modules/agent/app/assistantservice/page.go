@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -89,9 +89,9 @@ var pageSurfaces = map[conversation.ThreadOrigin]pageSurface{
 
 func (s *Service) OpenPageThread(
 	ctx context.Context,
-	req *agentports.OpenPageThreadRequest,
+	req *assistantports.OpenPageThreadRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.PageThread, error) {
+) (*assistantports.PageThread, error) {
 	surface, ok := pageSurfaces[req.Origin]
 	if !ok {
 		return nil, errortypes.NewValidationError(
@@ -144,11 +144,11 @@ func (s *Service) OpenPageThread(
 	}
 	thread.MarkContinuable()
 
-	return &agentports.PageThread{Thread: thread, Agent: pageAgentOf(definition)}, nil
+	return &assistantports.PageThread{Thread: thread, Agent: pageAgentOf(definition)}, nil
 }
 
-func pageAgentOf(definition *agentdefinition.Definition) agentports.PageAgent {
-	return agentports.PageAgent{
+func pageAgentOf(definition *agentdefinition.Definition) assistantports.PageAgent {
+	return assistantports.PageAgent{
 		ID:          definition.ID,
 		Name:        definition.Name,
 		Description: definition.Description,
@@ -163,7 +163,7 @@ func pageAgentOf(definition *agentdefinition.Definition) agentports.PageAgent {
 
 func checkPageSubject(
 	surface *pageSurface,
-	req *agentports.OpenPageThreadRequest,
+	req *assistantports.OpenPageThreadRequest,
 ) (pageSubject, error) {
 	subject, ok := surface.subject(req.SubjectType)
 	if !ok {
@@ -208,7 +208,7 @@ func (s *Service) assertPageAgentUsable(
 
 func (s *Service) claimPageThread(
 	ctx context.Context,
-	req *agentports.OpenPageThreadRequest,
+	req *assistantports.OpenPageThreadRequest,
 	subject pageSubject,
 	definition *agentdefinition.Definition,
 	actor *permissionports.RequestActor,
@@ -219,7 +219,7 @@ func (s *Service) claimPageThread(
 	}
 
 	if req.SubjectID.IsNotNil() {
-		existing, err := s.pageThreads.GetPageThread(ctx, agentports.PageThreadKey{
+		existing, err := s.pageThreads.GetPageThread(ctx, assistantports.PageThreadKey{
 			TenantInfo:  req.TenantInfo,
 			UserID:      actor.UserID,
 			Origin:      req.Origin,
@@ -232,7 +232,7 @@ func (s *Service) claimPageThread(
 				return existing, nil
 			}
 			if _, archiveErr := s.pageThreads.ArchiveSubjectThreads(ctx,
-				agentports.ArchiveSubjectThreadsRequest{
+				assistantports.ArchiveSubjectThreadsRequest{
 					TenantInfo:  req.TenantInfo,
 					Origin:      req.Origin,
 					SubjectType: subjectType,

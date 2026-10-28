@@ -3,7 +3,7 @@ package shipmentboardservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
@@ -26,7 +26,7 @@ type Params struct {
 
 	Repo            shipmentports.ShipmentBoardRepository
 	QuickFilters    shipmentports.ShipmentQuickFilterBasisResolver
-	AIProviders     agentports.AIProviderRepository
+	AIProviders     aiproviderports.AIProviderRepository
 	Organizations   tenantports.OrganizationRepository
 	Integrations    integrationports.IntegrationRepository
 	IntegrationsSvc *integrationservice.Service
@@ -35,7 +35,7 @@ type Params struct {
 type Service struct {
 	repo          shipmentports.ShipmentBoardRepository
 	quickFilters  shipmentports.ShipmentQuickFilterBasisResolver
-	aiProviders   agentports.AIProviderRepository
+	aiProviders   aiproviderports.AIProviderRepository
 	organizations tenantports.OrganizationRepository
 	integrations  integrationports.IntegrationRepository
 	maps          MapsReadiness
@@ -50,7 +50,7 @@ var (
 type Dependencies struct {
 	Repo          shipmentports.ShipmentBoardRepository
 	QuickFilters  shipmentports.ShipmentQuickFilterBasisResolver
-	AIProviders   agentports.AIProviderRepository
+	AIProviders   aiproviderports.AIProviderRepository
 	Organizations tenantports.OrganizationRepository
 	Integrations  integrationports.IntegrationRepository
 	Maps          MapsReadiness

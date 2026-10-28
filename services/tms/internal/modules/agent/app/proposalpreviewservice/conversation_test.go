@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,7 +17,10 @@ type stubRuns struct {
 	err error
 }
 
-func (r stubRuns) GetByID(context.Context, agentports.GetAgentRunByIDRequest) (*agent.AgentRun, error) {
+func (r stubRuns) GetByID(
+	context.Context,
+	agentruntimeports.GetAgentRunByIDRequest,
+) (*agent.AgentRun, error) {
 	return r.run, r.err
 }
 
@@ -31,7 +34,7 @@ func TestForProposal_PreviewsInTheConversationTheRunAnswered(t *testing.T) {
 		SubjectID:   thread,
 	}}
 
-	_, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	_, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: f.proposal(f.cancelParams()),
 		Viewer:   f.viewer(),
 	})
@@ -48,7 +51,7 @@ func TestForProposal_SaysWhenTheRunCannotBeRead(t *testing.T) {
 	f := newFixture()
 	f.svc.runs = stubRuns{err: errors.New("database is down")}
 
-	_, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	_, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: f.proposal(f.cancelParams()),
 		Viewer:   f.viewer(),
 	})

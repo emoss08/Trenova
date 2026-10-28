@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -71,8 +71,8 @@ type draftContextInput struct {
 	description string
 }
 
-func draftContext(in *draftContextInput) agentports.DelimitedContext {
-	return agentports.DelimitedContext{Sections: []agentports.ContextSection{
+func draftContext(in *draftContextInput) llmports.DelimitedContext {
+	return llmports.DelimitedContext{Sections: []llmports.ContextSection{
 		{Title: "tools", Trusted: true, Content: describeTools(in.catalog)},
 		{Title: "events", Trusted: true, Content: describeEvents()},
 		{Title: "identity", Trusted: true, Content: describeIdentity()},
@@ -81,17 +81,17 @@ func draftContext(in *draftContextInput) agentports.DelimitedContext {
 	}}
 }
 
-func tightenContext(instructions string) agentports.DelimitedContext {
-	sections := make([]agentports.ContextSection, 0, 2)
+func tightenContext(instructions string) llmports.DelimitedContext {
+	sections := make([]llmports.ContextSection, 0, 2)
 	if variables := agentdefinition.InstructionVariables(instructions); len(variables) > 0 {
-		sections = append(sections, agentports.ContextSection{
+		sections = append(sections, llmports.ContextSection{
 			Title:   "placeholders",
 			Trusted: true,
 			Content: "Keep each of these exactly: " + strings.Join(variables, " "),
 		})
 	}
 
-	return agentports.DelimitedContext{Sections: append(sections, agentports.ContextSection{
+	return llmports.DelimitedContext{Sections: append(sections, llmports.ContextSection{
 		Title:   "instructions",
 		Content: instructions,
 	})}

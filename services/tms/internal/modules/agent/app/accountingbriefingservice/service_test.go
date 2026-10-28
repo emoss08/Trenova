@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/collection"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
@@ -103,7 +103,12 @@ func TestDeterministicWordingLeadsWithWhatTheDashboardDoesNotShow(t *testing.T) 
 			"invoice falls due in the next 7 days and Acme Freight holds 42% of everything past due.",
 		joined(segments),
 	)
-	assert.NotContains(t, joined(segments), "$48,250", "the open balance is on the dashboard already")
+	assert.NotContains(
+		t,
+		joined(segments),
+		"$48,250",
+		"the open balance is on the dashboard already",
+	)
 
 	links := make([]accountingbrief.Link, 0, len(segments))
 	for _, segment := range segments {
@@ -244,7 +249,10 @@ func TestAcceptNarration(t *testing.T) {
 
 	cases := map[string][]accountingbriefports.AccountingBriefingSegment{
 		"an invented figure": {
-			{Text: "$90,000 is about to pass 90 days", Link: link(accountingbrief.LinkCrossingNinety)},
+			{
+				Text: "$90,000 is about to pass 90 days",
+				Link: link(accountingbrief.LinkCrossingNinety),
+			},
 		},
 		"a link outside the allowed set": {
 			{Text: "nothing is refunded", Link: link(accountingbrief.Link("Refunds"))},
@@ -292,7 +300,7 @@ func TestNarrationCannotCiteAChangeWithoutABaseline(t *testing.T) {
 func TestFactsReadTheLedgerAndTheWorklist(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured})
 	facts, err := f.service.Facts(t.Context(), tenantInfo(), "America/Chicago")
 	require.NoError(t, err)
 
@@ -316,7 +324,7 @@ func TestFactsReadTheLedgerAndTheWorklist(t *testing.T) {
 func TestFactsFailWhenTheLedgerCannotBeRead(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured})
 	f.receivables.err = errors.New("ledger unavailable")
 
 	_, err := f.service.Briefing(t.Context(), tenantInfo())
@@ -327,7 +335,7 @@ func TestFactsFailWhenTheLedgerCannotBeRead(t *testing.T) {
 func TestFactsFailWhenTheWorklistCannotBeRead(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured})
 	f.collections.err = errors.New("worklist unavailable")
 
 	_, err := f.service.Briefing(t.Context(), tenantInfo())
@@ -338,7 +346,7 @@ func TestFactsFailWhenTheWorklistCannotBeRead(t *testing.T) {
 func TestBriefingFallsBackWithoutAModel(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured})
 	briefing, err := f.service.Briefing(t.Context(), tenantInfo())
 	require.NoError(t, err)
 
@@ -412,7 +420,7 @@ func TestBriefingIsWrittenOnceAndThenRead(t *testing.T) {
 	t.Parallel()
 
 	calls := 0
-	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured, calls: &calls})
+	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured, calls: &calls})
 	first, err := f.service.Briefing(t.Context(), tenantInfo())
 	require.NoError(t, err)
 	reads := f.receivables.reads
@@ -431,7 +439,7 @@ func TestBriefingIsWrittenOnceAndThenRead(t *testing.T) {
 func TestBriefingIsRewrittenWhenTheFindingsMove(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured})
 	_, err := f.service.Briefing(t.Context(), tenantInfo())
 	require.NoError(t, err)
 
@@ -449,7 +457,7 @@ func TestBriefingIsRewrittenWhenTheFindingsMove(t *testing.T) {
 func TestBriefingIsKeptAndVerifiedWhenTheFindingsHold(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured})
 	first, err := f.service.Briefing(t.Context(), tenantInfo())
 	require.NoError(t, err)
 
@@ -471,7 +479,7 @@ func TestBriefingIsKeptAndVerifiedWhenTheFindingsHold(t *testing.T) {
 func TestBriefingStopsRewritingAfterTheDaysLimit(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured})
 	generation := 0
 	for range 20 {
 		f.clock.advance(refreshAfter + time.Minute)
@@ -489,7 +497,7 @@ func TestBriefingStopsRewritingAfterTheDaysLimit(t *testing.T) {
 func TestWriteBriefForTheMorning(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured})
 	req := &accountingbriefports.WriteAccountingBriefRequest{
 		TenantInfo: tenantInfo(),
 		Trigger:    accountingbrief.TriggerScheduled,
@@ -516,8 +524,11 @@ func TestContextSetsTheFindingsApartFromTheHeadlineFigures(t *testing.T) {
 	require.Len(t, ctx.Sections, 3)
 	assert.Equal(t, []string{findingsSection, headlineSection, plainWordingSection},
 		[]string{ctx.Sections[0].Title, ctx.Sections[1].Title, ctx.Sections[2].Title})
-	assert.Contains(t, ctx.Sections[0].Content,
-		"Missed promises to pay: 1 promise to pay lapsed unpaid, $4,000 still owed, by Acme Freight (link BrokenPromise)")
+	assert.Contains(
+		t,
+		ctx.Sections[0].Content,
+		"Missed promises to pay: 1 promise to pay lapsed unpaid, $4,000 still owed, by Acme Freight (link BrokenPromise)",
+	)
 	assert.Contains(t, ctx.Sections[0].Content,
 		"Change in days sales outstanding over the last 4 weeks: +3.1 days, now 42.3")
 	assert.NotContains(t, ctx.Sections[0].Content, "Open receivables")
@@ -839,7 +850,7 @@ func (m *memoryBriefs) DeleteBefore(
 }
 
 type stubCompletion struct {
-	agentports.CompletionService
+	llmports.CompletionService
 	text  string
 	err   error
 	calls *int
@@ -847,8 +858,8 @@ type stubCompletion struct {
 
 func (s stubCompletion) CompleteStructured(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	if s.calls != nil {
 		*s.calls++
 	}
@@ -858,7 +869,7 @@ func (s stubCompletion) CompleteStructured(
 	if req.SchemaName != schemaName {
 		return nil, errors.New("no wording in this test")
 	}
-	return &agentports.StructuredCompletionResult{Text: s.text, ModelIdentifier: "test-model"}, nil
+	return &llmports.StructuredCompletionResult{Text: s.text, ModelIdentifier: "test-model"}, nil
 }
 
 type fixture struct {

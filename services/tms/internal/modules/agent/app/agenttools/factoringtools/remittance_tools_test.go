@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -195,7 +195,7 @@ func TestRemittanceToolPolicies(t *testing.T) {
 	assert.Equal(t, agent.TierPropose, apply.MaxTier, "booking a remittance is a person's")
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, apply.Egress)
 
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		NewResolveFactoringRemittanceLineTool(remittances),
 		NewRematchFactoringRemittanceTool(remittances),
 		NewDiscardFactoringRemittanceTool(remittances),
@@ -222,9 +222,13 @@ func TestResolveFactoringRemittanceLine_PreviewsTheMatch(t *testing.T) {
 		paramItemID:       itemID.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &remittances.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&remittances.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	require.Len(t, preview.Changes, 2)
 	assert.Contains(t, preview.Summary, "Row 4 matched to invoice INV-7")
 
@@ -239,7 +243,7 @@ func TestResolveFactoringRemittanceLine_PreviewsTheMatch(t *testing.T) {
 		paramLineID:       remittances.line.ID.String(),
 		paramLineAction:   string(factoringports.RemittanceLineActionMatch),
 	})
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), missingItem))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), missingItem))
 
 	badAction := toolParams(map[string]any{
 		paramRemittanceID: remittances.rem.ID.String(),
@@ -247,7 +251,7 @@ func TestResolveFactoringRemittanceLine_PreviewsTheMatch(t *testing.T) {
 		paramLineID:       remittances.line.ID.String(),
 		paramLineAction:   "Book",
 	})
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), badAction))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), badAction))
 }
 
 func TestApplyFactoringRemittance_PreviewsTheJournalAndRunsOnlyWhenApproved(t *testing.T) {
@@ -260,9 +264,13 @@ func TestApplyFactoringRemittance_PreviewsTheJournalAndRunsOnlyWhenApproved(t *t
 		paramVersion:       float64(remittances.rem.Version),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &remittances.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&remittances.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	require.Len(t, preview.Changes, 1)
 	assert.Equal(t, permission.ResourceJournalEntry, preview.Changes[0].Resource)
 	assert.Contains(t, preview.Summary, "rts-funding.csv")
@@ -279,7 +287,7 @@ func TestApplyFactoringRemittance_PreviewsTheJournalAndRunsOnlyWhenApproved(t *t
 		paramRemittanceID2: remittances.rem.ID.String(),
 		paramVersion:       float64(4),
 	})
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), stale))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), stale))
 }
 
 func TestDiscardAndRematchFactoringRemittance(t *testing.T) {
@@ -291,11 +299,11 @@ func TestDiscardAndRematchFactoringRemittance(t *testing.T) {
 		paramRemittanceID2: remittances.rem.ID.String(),
 		paramVersion:       float64(remittances.rem.Version),
 	})
-	require.Error(t, discard.(agentports.ToolValidator).Validate(t.Context(), params),
+	require.Error(t, discard.(agenttoolports.ToolValidator).Validate(t.Context(), params),
 		"a discard says why")
 
 	params.Params[paramReason] = "A duplicate of yesterday's report"
-	preview, err := discard.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := discard.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Len(t, preview.Changes, 1)
 	require.NoError(t, discard.Execute(t.Context(), params))
@@ -306,11 +314,11 @@ func TestDiscardAndRematchFactoringRemittance(t *testing.T) {
 		paramRemittanceID2: remittances.rem.ID.String(),
 		paramVersion:       float64(remittances.rem.Version),
 	})
-	require.NoError(t, rematch.(agentports.ToolValidator).Validate(t.Context(), rematchParams))
+	require.NoError(t, rematch.(agenttoolports.ToolValidator).Validate(t.Context(), rematchParams))
 	require.NoError(t, rematch.Execute(t.Context(), rematchParams))
 	require.NotNil(t, remittances.rematched)
 
 	remittances.rem.Status = factoring.RemittanceStatusApplied
-	require.Error(t, rematch.(agentports.ToolValidator).Validate(t.Context(), rematchParams),
+	require.Error(t, rematch.(agenttoolports.ToolValidator).Validate(t.Context(), rematchParams),
 		"an applied remittance cannot be matched again")
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
@@ -63,7 +63,7 @@ type UpdateTractorStatusTool struct {
 	tractors tractorStatusUpdater
 }
 
-func NewUpdateTractorStatusTool(tractors tractorStatusUpdater) agentports.AgentTool {
+func NewUpdateTractorStatusTool(tractors tractorStatusUpdater) agenttoolports.AgentTool {
 	return &UpdateTractorStatusTool{tractors: tractors}
 }
 
@@ -91,8 +91,8 @@ func (t *UpdateTractorStatusTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *UpdateTractorStatusTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *UpdateTractorStatusTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceTractor,
@@ -110,7 +110,7 @@ func (t *UpdateTractorStatusTool) Policy() agentports.ToolPolicy {
 
 func (t *UpdateTractorStatusTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -134,7 +134,7 @@ type UpdateTrailerStatusTool struct {
 	trailers trailerStatusUpdater
 }
 
-func NewUpdateTrailerStatusTool(trailers trailerStatusUpdater) agentports.AgentTool {
+func NewUpdateTrailerStatusTool(trailers trailerStatusUpdater) agenttoolports.AgentTool {
 	return &UpdateTrailerStatusTool{trailers: trailers}
 }
 
@@ -162,8 +162,8 @@ func (t *UpdateTrailerStatusTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *UpdateTrailerStatusTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *UpdateTrailerStatusTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceTrailer,
@@ -181,7 +181,7 @@ func (t *UpdateTrailerStatusTool) Policy() agentports.ToolPolicy {
 
 func (t *UpdateTrailerStatusTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err

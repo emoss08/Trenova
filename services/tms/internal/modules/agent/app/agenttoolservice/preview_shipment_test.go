@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -118,7 +118,7 @@ func TestUpdateShipmentPreview_IsThePatchExecuteSaves(t *testing.T) {
 		"customerId": customerID.String(),
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, writer.Updated, "a preview must not save")
 	assert.Equal(t, "BOL-1", writer.Existing.BOL, "a preview must not touch what it read")
@@ -156,7 +156,7 @@ func TestCancelShipmentPreview_ShowsWhoIsToldAndWhatIsWithdrawn(t *testing.T) {
 		"reason":     "Customer pulled the load",
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, shipments.canceled, "a preview must not cancel")
 	assert.Contains(t, preview.Summary, "SHP-3001")
@@ -164,7 +164,11 @@ func TestCancelShipmentPreview_ShowsWhoIsToldAndWhatIsWithdrawn(t *testing.T) {
 
 	status := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
 	assert.Equal(t, "Canceled", agenttoolstest.FindField(t, status, "status").After)
-	assert.Equal(t, "Customer pulled the load", agenttoolstest.FindField(t, status, "cancelReason").After)
+	assert.Equal(
+		t,
+		"Customer pulled the load",
+		agenttoolstest.FindField(t, status, "cancelReason").After,
+	)
 	assert.True(t, agenttoolstest.FindField(t, status, "canceledAt").Volatile)
 
 	var channels []agent.MessageChannel
@@ -173,8 +177,12 @@ func TestCancelShipmentPreview_ShowsWhoIsToldAndWhatIsWithdrawn(t *testing.T) {
 			channels = append(channels, message.Channel)
 		}
 	}
-	assert.Equal(t, []agent.MessageChannel{agent.MessageChannelEDI, agent.MessageChannelEmail}, channels,
-		"the linked partner is sent the 214, and only the carrier holding an offer is told")
+	assert.Equal(
+		t,
+		[]agent.MessageChannel{agent.MessageChannelEDI, agent.MessageChannelEmail},
+		channels,
+		"the linked partner is sent the 214, and only the carrier holding an offer is told",
+	)
 	withdrawn := agenttoolstest.FindChange(t, preview, agent.PreviewOperationArchive)
 	assert.Equal(t, permission.ResourceTender, withdrawn.Resource)
 
@@ -194,7 +202,7 @@ func TestAddShipmentCommentPreview_ShowsTheNoteAndWhoReadsIt(t *testing.T) {
 		"visibility": "Customer",
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, comments.created, "a preview must not comment")
 
@@ -209,5 +217,9 @@ func TestAddShipmentCommentPreview_ShowsTheNoteAndWhoReadsIt(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, comments.created)
 	assert.Equal(t, comments.created.Comment, shared.Message.Body)
-	assert.Equal(t, string(comments.created.Type), agenttoolstest.FindField(t, created, "type").After)
+	assert.Equal(
+		t,
+		string(comments.created.Type),
+		agenttoolstest.FindField(t, created, "type").After,
+	)
 }

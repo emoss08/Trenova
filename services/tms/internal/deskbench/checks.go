@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/emoss08/trenova/shared/recordids"
@@ -251,15 +251,15 @@ func artifactLinkChecks(turns []*TurnRecord) []CheckResult {
 func artifactCorrections(events []Event) []string {
 	if !slices.ContainsFunc(events, func(event Event) bool {
 		data, ok := event.Data.(map[string]any)
-		return ok && event.Name == agentports.AssistantEventReplyRegrounded &&
-			data["action"] == string(agentports.RegroundRelinkArtifacts)
+		return ok && event.Name == assistantports.AssistantEventReplyRegrounded &&
+			data["action"] == string(assistantports.RegroundRelinkArtifacts)
 	}) {
 		return nil
 	}
 
 	var actions []string
 	for _, event := range events {
-		if event.Name != agentports.AssistantEventReplyRegrounded {
+		if event.Name != assistantports.AssistantEventReplyRegrounded {
 			continue
 		}
 		data, ok := event.Data.(map[string]any)
@@ -267,10 +267,10 @@ func artifactCorrections(events []Event) []string {
 			continue
 		}
 		action, _ := data["action"].(string)
-		if reground := agentports.RegroundAction(
+		if reground := assistantports.RegroundAction(
 			action,
-		); reground == agentports.RegroundRelinkArtifacts ||
-			reground == agentports.RegroundPlaceArtifacts {
+		); reground == assistantports.RegroundRelinkArtifacts ||
+			reground == assistantports.RegroundPlaceArtifacts {
 			actions = append(actions, action)
 		}
 	}
@@ -286,7 +286,7 @@ func groundingCheck(turns []*TurnRecord) CheckResult {
 	var corrected []string
 	for _, turn := range turns {
 		for _, event := range turn.Events {
-			if event.Name != agentports.AssistantEventReplyRegrounded {
+			if event.Name != assistantports.AssistantEventReplyRegrounded {
 				continue
 			}
 			data, ok := event.Data.(map[string]any)
@@ -294,8 +294,9 @@ func groundingCheck(turns []*TurnRecord) CheckResult {
 				continue
 			}
 			action, _ := data["action"].(string)
-			reground := agentports.RegroundAction(action)
-			if reground != agentports.RegroundRewrite && reground != agentports.RegroundNote {
+			reground := assistantports.RegroundAction(action)
+			if reground != assistantports.RegroundRewrite &&
+				reground != assistantports.RegroundNote {
 				continue
 			}
 			corrected = append(corrected, action+": "+strings.Join(

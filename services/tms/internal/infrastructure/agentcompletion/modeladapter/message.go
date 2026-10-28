@@ -2,7 +2,8 @@ package modeladapter
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
@@ -11,30 +12,30 @@ import (
 // infrastructure. They are aliased here so adapter code reads in its own terms
 // rather than qualifying every message type.
 type (
-	Role     = agentports.Role
-	Message  = agentports.Message
+	Role     = llmports.Role
+	Message  = llmports.Message
 	ToolSpec = kernelports.ToolSpec
-	ToolCall = agentports.ToolCall
+	ToolCall = llmports.ToolCall
 	// ReasoningTrace is the conversation domain's, so what an adapter reads
 	// off the wire is what the message stores and what the next call replays.
 	ReasoningTrace = conversation.ReasoningTrace
-	CutOffToolCall = agentports.CutOffToolCall
+	CutOffToolCall = llmports.CutOffToolCall
 	// MessageFile is a file a user message carries, and MessageFileContent
 	// its bytes as read for a model that reads files itself.
-	MessageFile        = agentports.MessageFile
-	MessageFileContent = agentports.MessageFileContent
-	AdvisorSpec        = agentports.AdvisorSpec
+	MessageFile        = llmports.MessageFile
+	MessageFileContent = assistantports.MessageFileContent
+	AdvisorSpec        = llmports.AdvisorSpec
 	ProviderBlock      = conversation.ProviderBlock
 )
 
 const (
-	RoleUser      = agentports.RoleUser
-	RoleAssistant = agentports.RoleAssistant
-	RoleTool      = agentports.RoleTool
-	RoleSystem    = agentports.RoleSystem
+	RoleUser      = llmports.RoleUser
+	RoleAssistant = llmports.RoleAssistant
+	RoleTool      = llmports.RoleTool
+	RoleSystem    = llmports.RoleSystem
 )
 
 // UserMessage is the common single-turn case.
 func UserMessage(content string) []Message {
-	return agentports.UserMessage(content)
+	return llmports.UserMessage(content)
 }

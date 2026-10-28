@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,7 +24,7 @@ func (s *capturingStore) Create(
 	return p, nil
 }
 
-func recordOne(t *testing.T, action agentports.PendingAction) *agent.AgentProposal {
+func recordOne(t *testing.T, action agentruntimeports.PendingAction) *agent.AgentProposal {
 	t.Helper()
 
 	store := &capturingStore{}
@@ -39,7 +39,7 @@ func recordOne(t *testing.T, action agentports.PendingAction) *agent.AgentPropos
 	_, err := NewWithStores(nil, nil, store).Record(t.Context(), &RecordRequest{
 		Actor:    actor,
 		Run:      &agent.AgentRun{ID: pulid.MustNew("arun_")},
-		Actions:  []agentports.PendingAction{action},
+		Actions:  []agentruntimeports.PendingAction{action},
 		Evidence: messageEvidence,
 	})
 	require.NoError(t, err)
@@ -55,12 +55,12 @@ func TestRecord_KeepsThePinnedTargetOnTheProposal(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("shp_")
-	proposal := recordOne(t, agentports.PendingAction{
+	proposal := recordOne(t, agentruntimeports.PendingAction{
 		ToolName:  "shipment_place_hold",
 		Arguments: map[string]any{"shipmentId": id.String()},
 		Rationale: "it is late",
 		Tier:      agent.TierPropose,
-		Target: &agentports.ProposalTarget{
+		Target: &agentruntimeports.ProposalTarget{
 			Resource: permission.ResourceShipment,
 			ID:       id,
 			Version:  4,
@@ -75,7 +75,7 @@ func TestRecord_KeepsThePinnedTargetOnTheProposal(t *testing.T) {
 func TestRecord_LeavesAnUnpinnedActionUnpinned(t *testing.T) {
 	t.Parallel()
 
-	proposal := recordOne(t, agentports.PendingAction{
+	proposal := recordOne(t, agentruntimeports.PendingAction{
 		ToolName:  "agent_raise_exception",
 		Arguments: map[string]any{},
 		Rationale: "something is off",

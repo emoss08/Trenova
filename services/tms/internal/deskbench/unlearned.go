@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 )
 
 // unlearned stands in for the reflection scheduler on the bench's worker. A
@@ -22,7 +23,7 @@ func (unlearned) AfterRun(context.Context, *agentports.ReflectOnRunRequest) {}
 // would land in the recorder beside the turns being measured.
 type unchaptered struct{}
 
-func (unchaptered) Cue(context.Context, *agentports.ChapterTurnRequest) {}
+func (unchaptered) Cue(context.Context, *assistantports.ChapterTurnRequest) {}
 
 // untrusted keeps the bench's decisions out of the earned-autonomy ledger.
 // The bench approves the same proposals run after run and rejects whatever a

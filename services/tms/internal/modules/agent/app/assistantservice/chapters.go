@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -19,7 +19,7 @@ func (s *Service) chapterTitles(
 		return nil
 	}
 
-	chapters, err := s.chapters.List(ctx, agentports.ListChaptersRequest{
+	chapters, err := s.chapters.List(ctx, assistantports.ListChaptersRequest{
 		ThreadID:   threadID,
 		TenantInfo: tenant,
 	})

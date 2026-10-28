@@ -6,7 +6,7 @@ package performancereviewservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -41,7 +41,7 @@ type Params struct {
 	WorkerRepo   workerports.WorkerRepository
 	UserRepo     tenantports.UserRepository
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService         `optional:"true"`
+	Realtime     realtimeports.RealtimeService      `optional:"true"`
 	DriverNotify *drivernotificationservice.Service `optional:"true"`
 }
 
@@ -51,7 +51,7 @@ type Service struct {
 	workerRepo   workerports.WorkerRepository
 	userRepo     tenantports.UserRepository
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 	driverNotify *drivernotificationservice.Service
 }
 

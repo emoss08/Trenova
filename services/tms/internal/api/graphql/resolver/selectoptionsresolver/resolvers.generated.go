@@ -9,7 +9,7 @@ import (
 	fiscalperiodports "github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	fiscalyearports "github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
-	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	captureservice "github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	ediservice "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
@@ -102,7 +102,7 @@ type Deps struct {
 	DistanceProfileService       *distanceprofileservice.Service
 	JournalEntryService          *journalentryservice.Service
 	ServiceFailureReasonCodeSvc  servicefailureports.ServiceFailureReasonCodeService
-	AiProviderService            agentports.AIProviderService
+	AiProviderService            aiproviderports.AIProviderService
 	CaptureService               *captureservice.Service
 	RoleService                  *roleservice.Service
 	UserService                  *userservice.Service

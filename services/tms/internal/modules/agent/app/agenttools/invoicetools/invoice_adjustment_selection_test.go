@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -52,9 +52,9 @@ func TestSaveInvoiceAdjustmentDraft_TakesTheDraftsOwnInvoiceBesideIt(t *testing.
 		common.ParamReason:    "Customer disputes the lumper fee",
 	})
 
-	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.NoError(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 
-	_, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	_, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, adjuster.saved)
 	assert.Equal(t, detail.ID, adjuster.saved.AdjustmentID)
@@ -73,20 +73,24 @@ func TestSaveInvoiceAdjustmentDraft_ARefusalForADraftOnAnotherInvoiceShowsBothCa
 		common.ParamReason:    "Customer disputes the lumper fee",
 	})
 
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
+	err := tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "send adjustmentId without invoiceId")
 	assert.Contains(t, err.Error(), "send invoiceId without adjustmentId")
 	assert.Contains(t, err.Error(), other.String())
 
-	_, err = tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	_, err = tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.Error(t, err)
 	assert.Nil(t, adjuster.saved, "a draft is never rewritten under another invoice's name")
 
-	require.ErrorIs(t,
-		tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.AgentParamsFor(map[string]any{
-			paramAdjustmentKind: string(invoiceadjustment.KindCreditOnly),
-		})),
+	require.ErrorIs(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(
+			t.Context(),
+			agenttoolstest.AgentParamsFor(map[string]any{
+				paramAdjustmentKind: string(invoiceadjustment.KindCreditOnly),
+			}),
+		),
 		errNoDraftTarget,
 	)
 }
@@ -96,20 +100,27 @@ func TestSubmitInvoiceAdjustment_ARefusalForBothSelectionsShowsBothCalls(t *test
 
 	tool := NewSubmitInvoiceAdjustmentTool(&fakeAdjuster{figures: adjustmentFigures(false)})
 
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		ParamDraftAdjustmentID: pulid.MustNew("iadj_").String(),
-		paramAdjustments: []any{map[string]any{
-			common.ParamInvoiceID: pulid.MustNew("inv_").String(),
-			paramAdjustmentKind:   string(invoiceadjustment.KindCreditOnly),
-			common.ParamReason:    "x",
-		}},
-	}))
+	err := tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{
+			ParamDraftAdjustmentID: pulid.MustNew("iadj_").String(),
+			paramAdjustments: []any{map[string]any{
+				common.ParamInvoiceID: pulid.MustNew("inv_").String(),
+				paramAdjustmentKind:   string(invoiceadjustment.KindCreditOnly),
+				common.ParamReason:    "x",
+			}},
+		}),
+	)
 	require.ErrorIs(t, err, errDraftAndAdjustments)
 	assert.Contains(t, err.Error(), "send draftAdjustmentId without adjustments")
 	assert.Contains(t, err.Error(), "send adjustments without draftAdjustmentId")
 
-	require.ErrorIs(t,
-		tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(map[string]any{})),
+	require.ErrorIs(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(
+			t.Context(),
+			agenttoolstest.ExecuteParams(map[string]any{}),
+		),
 		errDraftOrAdjustments,
 	)
 }

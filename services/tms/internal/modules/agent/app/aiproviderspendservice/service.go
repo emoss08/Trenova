@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,7 +39,7 @@ type Service struct {
 	cached map[pulid.ID]entry
 }
 
-var _ agentports.AIProviderSpendService = (*Service)(nil)
+var _ aiproviderports.AIProviderSpendService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return newService(p.Usage, time.Now)

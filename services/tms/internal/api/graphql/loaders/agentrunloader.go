@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -16,14 +16,14 @@ import (
 type agentRunsByIDsLister interface {
 	ListByIDs(
 		ctx context.Context,
-		req agentports.ListAgentRunsByIDsRequest,
+		req agentruntimeports.ListAgentRunsByIDsRequest,
 	) ([]*agent.AgentRun, error)
 }
 
 type AgentRunByIDLoaderFactoryParams struct {
 	fx.In
 
-	Runs agentports.AgentRunRepository
+	Runs agentruntimeports.AgentRunRepository
 }
 
 // AgentRunByIDLoaderFactory reads the runs behind a page of proposals or
@@ -42,10 +42,10 @@ func newAgentRunByIDLoader(f *AgentRunByIDLoaderFactory,
 ) *dataloadgen.Loader[string, *agent.AgentRun] {
 	return newLoader(batchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*agent.AgentRun, error) {
-			return f.runs.ListByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
+			return f.runs.ListByIDs(ctx, agentruntimeports.ListAgentRunsByIDsRequest{
 				IDs:        ids,
 				TenantInfo: tenantInfo,
-				Reader:     agentports.PersonRunRead(tenantInfo.UserID),
+				Reader:     agentruntimeports.PersonRunRead(tenantInfo.UserID),
 			})
 		},
 		"Agent run not found",
@@ -55,14 +55,14 @@ func newAgentRunByIDLoader(f *AgentRunByIDLoaderFactory,
 type agentRunTranscriptsByIDsLister interface {
 	ListTranscriptsByIDs(
 		ctx context.Context,
-		req agentports.ListAgentRunsByIDsRequest,
+		req agentruntimeports.ListAgentRunsByIDsRequest,
 	) ([]*agent.AgentRun, error)
 }
 
 type AgentRunTranscriptByIDLoaderFactoryParams struct {
 	fx.In
 
-	Runs agentports.AgentRunRepository
+	Runs agentruntimeports.AgentRunRepository
 }
 
 type AgentRunTranscriptByIDLoaderFactory struct {
@@ -80,10 +80,10 @@ func newAgentRunTranscriptByIDLoader(f *AgentRunTranscriptByIDLoaderFactory,
 ) *dataloadgen.Loader[string, *agent.AgentRun] {
 	return newLoader(batchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*agent.AgentRun, error) {
-			return f.runs.ListTranscriptsByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
+			return f.runs.ListTranscriptsByIDs(ctx, agentruntimeports.ListAgentRunsByIDsRequest{
 				IDs:        ids,
 				TenantInfo: tenantInfo,
-				Reader:     agentports.PersonRunRead(tenantInfo.UserID),
+				Reader:     agentruntimeports.PersonRunRead(tenantInfo.UserID),
 			})
 		},
 		"Agent run not found",

@@ -13,7 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -30,13 +32,13 @@ const (
 // preview shows a person what it would do to each record it names.
 func (s *Service) scriptWriteIndex(
 	ctx context.Context,
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 ) []codemode.Read {
 	held := s.heldTools(req.Definition)
 	candidates := make([]string, 0, len(held))
 	for _, name := range held {
 		tool, ok := s.actionTools.Get(name)
-		if !ok || !agentports.PreparableFromScript(tool) {
+		if !ok || !agenttoolports.PreparableFromScript(tool) {
 			continue
 		}
 		candidates = append(candidates, name)
@@ -132,19 +134,19 @@ func (b *scriptBroker) prepare(ctx context.Context, call codemode.Call) codemode
 
 type heldIntent struct {
 	admission scriptoutbox.Admission
-	action    *agentports.PendingAction
+	action    *agentruntimeports.PendingAction
 	summary   string
 }
 
 func (b *scriptBroker) decideIntent(
 	ctx context.Context,
-	tool agentports.AgentTool,
+	tool agenttoolports.AgentTool,
 	call codemode.Call,
 	idx int,
 	arguments map[string]any,
 ) (heldIntent, codemode.Reply, bool) {
 	intent := scriptoutbox.Call{Tool: call.Tool, Arguments: arguments}
-	if targeted, ok := tool.(agentports.TargetedTool); ok {
+	if targeted, ok := tool.(agenttoolports.TargetedTool); ok {
 		if target, pinned := targeted.Target(arguments); pinned {
 			intent.Target = &target
 		}
@@ -163,7 +165,7 @@ func (b *scriptBroker) decideIntent(
 	}
 	outcome := b.s.guardedDispatch(ctx, &guardedDispatchParams{
 		req: b.req,
-		call: agentports.ToolCall{
+		call: llmports.ToolCall{
 			ID:        callID,
 			Name:      call.Tool,
 			Arguments: arguments,
@@ -240,7 +242,10 @@ type scriptSettlement struct {
 
 // settle closes the script's outbox and returns the batch to file: nothing
 // for a script that did not finish or whose batch was refused.
-func (b *scriptBroker) settle(ctx context.Context, p *scriptSettlement) []agentports.PendingAction {
+func (b *scriptBroker) settle(
+	ctx context.Context,
+	p *scriptSettlement,
+) []agentruntimeports.PendingAction {
 	if b.outbox == nil {
 		return nil
 	}
@@ -250,7 +255,7 @@ func (b *scriptBroker) settle(ctx context.Context, p *scriptSettlement) []agentp
 		Completed:       p.completed,
 		Tainted:         p.taint.Tainted() || p.taint.Unknown(),
 		ExternalContent: p.afterExternal,
-		Redecide: func(action *agentports.PendingAction) agenttoolpolicy.Decision {
+		Redecide: func(action *agentruntimeports.PendingAction) agenttoolpolicy.Decision {
 			tool, ok := b.s.actionTools.Get(action.ToolName)
 			if !ok {
 				return agenttoolpolicy.Decision{Tier: agent.TierPropose}

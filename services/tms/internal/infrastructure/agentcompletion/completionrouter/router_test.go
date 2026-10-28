@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +22,7 @@ import (
 )
 
 type fakeRepo struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 
 	providers []*aiprovider.Provider
 	byID      *aiprovider.Provider
@@ -30,21 +31,21 @@ type fakeRepo struct {
 
 func (f *fakeRepo) ListForTask(
 	_ context.Context,
-	_ agentports.ListAIProvidersForTaskRequest,
+	_ aiproviderports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
 	return f.providers, f.err
 }
 
 func (f *fakeRepo) List(
 	_ context.Context,
-	_ *agentports.ListAIProviderRequest,
+	_ *aiproviderports.ListAIProviderRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	return nil, nil
 }
 
 func (f *fakeRepo) GetByID(
 	_ context.Context,
-	_ agentports.GetAIProviderByIDRequest,
+	_ aiproviderports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	return f.byID, f.err
 }
@@ -63,7 +64,7 @@ func (f *fakeRepo) Update(
 	return e, nil
 }
 
-func (f *fakeRepo) Delete(_ context.Context, _ agentports.DeleteAIProviderRequest) error {
+func (f *fakeRepo) Delete(_ context.Context, _ aiproviderports.DeleteAIProviderRequest) error {
 	return nil
 }
 
@@ -129,16 +130,16 @@ func openAIChatProvider(name, baseURL string, priority int) *aiprovider.Provider
 	}
 }
 
-func generalRequest() *agentports.StructuredCompletionRequest {
-	return &agentports.StructuredCompletionRequest{
+func generalRequest() *llmports.StructuredCompletionRequest {
+	return &llmports.StructuredCompletionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
 		Task:   aiprovider.TaskGeneral,
 		System: "You are a test.",
-		Context: agentports.DelimitedContext{
-			Sections: []agentports.ContextSection{
+		Context: llmports.DelimitedContext{
+			Sections: []llmports.ContextSection{
 				{Title: "Input", Trusted: true, Content: "hello"},
 			},
 		},
@@ -296,15 +297,15 @@ func TestCompleteStructured_FallsThroughOnUnparseableOutput(t *testing.T) {
 
 	svc := newTestService(t, weak, strong)
 
-	result, err := svc.CompleteStructured(t.Context(), &agentports.StructuredCompletionRequest{
+	result, err := svc.CompleteStructured(t.Context(), &llmports.StructuredCompletionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
 		Task:   aiprovider.TaskBillingDiagnosis,
 		System: "Diagnose the blocker.",
-		Context: agentports.DelimitedContext{
-			Sections: []agentports.ContextSection{
+		Context: llmports.DelimitedContext{
+			Sections: []llmports.ContextSection{
 				{Title: "Item", Trusted: true, Content: "blocked"},
 			},
 		},
@@ -339,7 +340,7 @@ func TestCompleteStructured_RefusesUntrustedProviderForLedgerTask(t *testing.T) 
 
 	svc := newTestService(t, provider)
 
-	_, err := svc.CompleteStructured(t.Context(), &agentports.StructuredCompletionRequest{
+	_, err := svc.CompleteStructured(t.Context(), &llmports.StructuredCompletionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
@@ -370,7 +371,12 @@ func TestCompleteStructured_RequiredProviderNeverFallsThrough(t *testing.T) {
 	_, err := svc.CompleteStructured(t.Context(), request)
 	require.Error(t, err)
 	assert.Positive(t, failingCalls.Load())
-	assert.Equal(t, int32(0), healthyCalls.Load(), "a required provider is never replaced by another")
+	assert.Equal(
+		t,
+		int32(0),
+		healthyCalls.Load(),
+		"a required provider is never replaced by another",
+	)
 }
 
 func TestCompleteStructured_RequiredProviderServesTheCall(t *testing.T) {
@@ -409,6 +415,6 @@ func TestCompleteStructured_RequiredProviderMustServeTheTask(t *testing.T) {
 	request.RequireProvider = true
 
 	_, err := svc.CompleteStructured(t.Context(), request)
-	require.ErrorIs(t, err, agentports.ErrRequiredProviderUnavailable)
+	require.ErrorIs(t, err, llmports.ErrRequiredProviderUnavailable)
 	assert.Equal(t, int32(0), calls.Load())
 }

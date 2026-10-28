@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,14 +18,17 @@ func deferredCoreRuntime(t *testing.T) (*Service, []string) {
 	t.Helper()
 
 	service, names := wideRuntime(t)
-	core := []agentports.AgentQueryTool{
+	core := []agenttoolports.AgentQueryTool{
 		describedTool(
 			agentdefinition.CoreToolRecallMemory,
 			"Look up what the organization recorded.",
 		),
 		describedTool(agentdefinition.CoreToolWaitUntil,
 			"Wait until something happens: a truck arriving, a reply, a time."),
-		describedTool(agentdefinition.CoreToolCancelWait, "Stop waiting on something you were waiting for."),
+		describedTool(
+			agentdefinition.CoreToolCancelWait,
+			"Stop waiting on something you were waiting for.",
+		),
 	}
 	query := service.queryTools.(*stubQueryRegistry)
 	query.Tools = append(query.Tools, core...)
@@ -82,7 +86,7 @@ func TestFindFor_LoadsWhatTheActivityFoundIntoTheTurnAsReferences(t *testing.T) 
 	t.Parallel()
 
 	service, names := wideRuntime(t)
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: testDefinition(names...),
 		Actor:      testActor(),
 		Input:      "say hello",
@@ -104,14 +108,18 @@ func TestFindFor_LoadsWhatTheActivityFoundIntoTheTurnAsReferences(t *testing.T) 
 		"the next tool result names it")
 
 	restored := service.RestoreTurn(req, turn.State())
-	assert.True(t, restored.tools.offers("equipment_list_trailers"), "a restored turn keeps what it loaded")
+	assert.True(
+		t,
+		restored.tools.offers("equipment_list_trailers"),
+		"a restored turn keeps what it loaded",
+	)
 }
 
 func TestStreamCompletion_DeclaresEachDeferredToolInFullAndSorted(t *testing.T) {
 	t.Parallel()
 
 	service, names := wideRuntime(t)
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: testDefinition(names...),
 		Actor:      testActor(),
 		Input:      "say hello",
@@ -145,7 +153,7 @@ func TestStreamCompletion_DeclaresEachDeferredToolInFullAndSorted(t *testing.T) 
 func TestToolMap_GroupsTheToolsByAreaOfTrenova(t *testing.T) {
 	t.Parallel()
 
-	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+	query := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 		&agenttest.StubQueryTool{ToolName: "shipment_list", Resource: permission.ResourceShipment},
 		&agenttest.StubQueryTool{ToolName: "shipment_get", Resource: permission.ResourceShipment},
 		&agenttest.StubQueryTool{ToolName: "invoice_list", Resource: permission.ResourceInvoice},

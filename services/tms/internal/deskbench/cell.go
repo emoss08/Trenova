@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 )
 
 const (
@@ -20,7 +20,7 @@ const (
 type Cell struct {
 	Provider *aiprovider.Provider
 	Effort   aiprovider.ReasoningEffort
-	Advisor  *agentports.AdvisorSpec
+	Advisor  *llmports.AdvisorSpec
 }
 
 func (c Cell) Label() string {
@@ -35,8 +35,8 @@ func (c Cell) Label() string {
 	return label
 }
 
-func advisorLabel(advisor *agentports.AdvisorSpec) string {
-	if advisor.Model == agentports.DefaultAdvisorModel {
+func advisorLabel(advisor *llmports.AdvisorSpec) string {
+	if advisor.Model == llmports.DefaultAdvisorModel {
 		return suffixSeparator + advisorSuffix
 	}
 
@@ -50,7 +50,7 @@ func (c Cell) pin() ProviderPin {
 type cellRef struct {
 	name    string
 	effort  aiprovider.ReasoningEffort
-	advisor *agentports.AdvisorSpec
+	advisor *llmports.AdvisorSpec
 }
 
 func parseCellRef(ref string) (cellRef, error) {
@@ -83,7 +83,7 @@ func (r *cellRef) applySuffix(suffix string) error {
 	if valued && value == "" {
 		return fmt.Errorf("%s%s%s names no model", suffixSeparator, advisorSuffix, valueSeparator)
 	}
-	r.advisor = agentports.DefaultAdvisor(value)
+	r.advisor = llmports.DefaultAdvisor(value)
 
 	return nil
 }
@@ -120,7 +120,7 @@ var errAdvisorNeedsAnthropic = errors.New(
 	suffixSeparator + advisorSuffix + " needs a named provider that speaks the Anthropic Messages API",
 )
 
-func checkAdvisor(provider *aiprovider.Provider, advisor *agentports.AdvisorSpec) error {
+func checkAdvisor(provider *aiprovider.Provider, advisor *llmports.AdvisorSpec) error {
 	if advisor == nil {
 		return nil
 	}

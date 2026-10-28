@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -66,7 +66,7 @@ type CreateScheduleTool struct {
 
 func NewCreateScheduleTool(
 	planner conversationscheduleports.ConversationSchedulePlanner,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &CreateScheduleTool{planner: planner}
 }
 
@@ -125,8 +125,8 @@ func (t *CreateScheduleTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *CreateScheduleTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *CreateScheduleTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceAssistant,
@@ -148,7 +148,7 @@ func (t *CreateScheduleTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *CreateScheduleTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (conversationscheduleports.PlanConversationScheduleRequest, error) {
 	person := params.Actor.PersonUserID()
 	if person.IsNil() {
@@ -192,7 +192,7 @@ func (t *CreateScheduleTool) request(
 // request in it.
 func (t *CreateScheduleTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*conversationscheduleports.PlannedConversationSchedule, error) {
 	if t.planner == nil {
 		return nil, errNoSchedules
@@ -212,7 +212,7 @@ func (t *CreateScheduleTool) plan(
 
 func (t *CreateScheduleTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -232,7 +232,7 @@ func (t *CreateScheduleTool) Validate(
 
 func (t *CreateScheduleTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := common.GuardPreview(t, &params); err != nil {
 		return nil, err
@@ -271,7 +271,7 @@ func (t *CreateScheduleTool) Preview(
 
 func (t *CreateScheduleTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -280,7 +280,7 @@ func (t *CreateScheduleTool) Execute(
 
 func (t *CreateScheduleTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return nil, err

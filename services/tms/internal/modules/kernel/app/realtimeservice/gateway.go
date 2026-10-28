@@ -5,7 +5,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,7 +25,7 @@ type GatewayParams struct {
 
 	Logger   *zap.Logger
 	Config   *config.Config
-	Broker   agentports.RealtimeBroker
+	Broker   realtimeports.RealtimeBroker
 	UserRepo tenantports.UserRepository
 }
 
@@ -35,12 +35,12 @@ type GatewayParams struct {
 // checked against the caller, so one person cannot act through another's.
 type Gateway struct {
 	l      *zap.Logger
-	broker agentports.RealtimeBroker
+	broker realtimeports.RealtimeBroker
 	users  tenantports.UserRepository
 	cfg    config.RealtimeConfig
 }
 
-func NewGateway(p GatewayParams) agentports.RealtimeGateway {
+func NewGateway(p GatewayParams) realtimeports.RealtimeGateway {
 	return &Gateway{
 		l:      p.Logger.Named("service.realtime-gateway"),
 		broker: p.Broker,
@@ -51,8 +51,8 @@ func NewGateway(p GatewayParams) agentports.RealtimeGateway {
 
 func (g *Gateway) Open(
 	ctx context.Context,
-	req *agentports.OpenRealtimeStreamRequest,
-) (agentports.RealtimeStream, error) {
+	req *realtimeports.OpenRealtimeStreamRequest,
+) (realtimeports.RealtimeStream, error) {
 	if req == nil || req.UserID.IsNil() || req.OrganizationID.IsNil() ||
 		req.BusinessUnitID.IsNil() {
 		return nil, errortypes.NewAuthenticationError(
@@ -72,8 +72,8 @@ func (g *Gateway) Open(
 		return nil, err
 	}
 
-	return g.broker.Subscribe(ctx, &agentports.RealtimeSubscribeRequest{
-		Connection: &agentports.RealtimeConnection{
+	return g.broker.Subscribe(ctx, &realtimeports.RealtimeSubscribeRequest{
+		Connection: &realtimeports.RealtimeConnection{
 			ConnectionID:   pulid.MustNew("rtc_").String(),
 			OrganizationID: req.OrganizationID,
 			BusinessUnitID: req.BusinessUnitID,
@@ -88,8 +88,8 @@ func (g *Gateway) Open(
 
 func (g *Gateway) JoinPresence(
 	ctx context.Context,
-	req *agentports.RealtimeScopeRequest,
-) (*agentports.RealtimePresenceSnapshot, error) {
+	req *realtimeports.RealtimeScopeRequest,
+) (*realtimeports.RealtimePresenceSnapshot, error) {
 	conn, err := g.connectionFor(ctx, req)
 	if err != nil {
 		return nil, err
@@ -98,7 +98,10 @@ func (g *Gateway) JoinPresence(
 	return g.broker.JoinPresence(ctx, conn, req.Scope, req.State)
 }
 
-func (g *Gateway) LeavePresence(ctx context.Context, req *agentports.RealtimeScopeRequest) error {
+func (g *Gateway) LeavePresence(
+	ctx context.Context,
+	req *realtimeports.RealtimeScopeRequest,
+) error {
 	conn, err := g.connectionFor(ctx, req)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
@@ -113,7 +116,10 @@ func (g *Gateway) LeavePresence(ctx context.Context, req *agentports.RealtimeSco
 // SignalTyping tells the scope's other members that the caller is typing, at
 // most once per throttle window per connection. A stop always goes through and
 // reopens the window, so the next keystroke is announced at once.
-func (g *Gateway) SignalTyping(ctx context.Context, req *agentports.RealtimeTypingRequest) error {
+func (g *Gateway) SignalTyping(
+	ctx context.Context,
+	req *realtimeports.RealtimeTypingRequest,
+) error {
 	if req == nil {
 		return errortypes.NewValidationError("scope", errortypes.ErrRequired, "Scope is required")
 	}
@@ -142,7 +148,7 @@ func (g *Gateway) SignalTyping(ctx context.Context, req *agentports.RealtimeTypi
 		}
 	}
 
-	payload, err := sonic.Marshal(agentports.RealtimeTypingEvent{
+	payload, err := sonic.Marshal(realtimeports.RealtimeTypingEvent{
 		Scope:  req.Scope,
 		UserID: conn.UserID.String(),
 		Name:   conn.Name,
@@ -152,10 +158,10 @@ func (g *Gateway) SignalTyping(ctx context.Context, req *agentports.RealtimeTypi
 		return err
 	}
 
-	g.broker.Enqueue(&agentports.RealtimeEnvelope{
+	g.broker.Enqueue(&realtimeports.RealtimeEnvelope{
 		OrganizationID: conn.OrganizationID,
 		BusinessUnitID: conn.BusinessUnitID,
-		Event:          agentports.RealtimeEventTyping,
+		Event:          realtimeports.RealtimeEventTyping,
 		Scope:          req.Scope,
 		Payload:        payload,
 		Ephemeral:      true,
@@ -172,8 +178,8 @@ func (g *Gateway) Drain() {
 // caller's own, in the caller's current tenant.
 func (g *Gateway) connectionFor(
 	ctx context.Context,
-	req *agentports.RealtimeScopeRequest,
-) (*agentports.RealtimeConnection, error) {
+	req *realtimeports.RealtimeScopeRequest,
+) (*realtimeports.RealtimeConnection, error) {
 	if err := validateScopeRequest(req); err != nil {
 		return nil, err
 	}
@@ -195,7 +201,7 @@ func (g *Gateway) connectionFor(
 	return conn, nil
 }
 
-func validateScopeRequest(req *agentports.RealtimeScopeRequest) error {
+func validateScopeRequest(req *realtimeports.RealtimeScopeRequest) error {
 	if req == nil {
 		return errortypes.NewValidationError("scope", errortypes.ErrRequired, "Scope is required")
 	}
@@ -212,7 +218,7 @@ func validateScopeRequest(req *agentports.RealtimeScopeRequest) error {
 		multiErr.Add("scope", errortypes.ErrRequired, "Scope is required")
 	case len(req.Scope) > maxScopeLength:
 		multiErr.Add("scope", errortypes.ErrInvalid, "Scope is too long")
-	case req.Scope == agentports.RealtimeScopeUsers:
+	case req.Scope == realtimeports.RealtimeScopeUsers:
 		multiErr.Add("scope", errortypes.ErrInvalid, "Scope is reserved")
 	case !validScope(req.Scope):
 		multiErr.Add("scope", errortypes.ErrInvalid, "Scope is invalid")
@@ -232,7 +238,7 @@ func validateScopeRequest(req *agentports.RealtimeScopeRequest) error {
 }
 
 func validatePresenceState(
-	state agentports.RealtimePresenceState,
+	state realtimeports.RealtimePresenceState,
 	multiErr *errortypes.MultiError,
 ) {
 	if state.MessageID != "" && !pulid.LooksLike(state.MessageID) {
@@ -241,7 +247,7 @@ func validatePresenceState(
 
 	switch state.Activity {
 	case "":
-	case agentports.RealtimeActivityViewing, agentports.RealtimeActivityWriting:
+	case realtimeports.RealtimeActivityViewing, realtimeports.RealtimeActivityWriting:
 		if state.MessageID == "" {
 			multiErr.Add(
 				"activity",

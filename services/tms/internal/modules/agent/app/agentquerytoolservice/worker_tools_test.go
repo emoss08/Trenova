@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -39,11 +39,11 @@ func (f *fakeWorkerRepo) List(
 	return &pagination.CursorListResult[*worker.Worker]{Items: f.items}, nil
 }
 
-func testParams(params map[string]any) *agentports.QueryToolParams {
+func testParams(params map[string]any) *agenttoolports.QueryToolParams {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	return &agentports.QueryToolParams{
+	return &agenttoolports.QueryToolParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor: &permissionports.RequestActor{
@@ -233,7 +233,7 @@ func TestRegistry_ResolvesTheLegacyWorkerSearchName(t *testing.T) {
 	t.Parallel()
 
 	reg := NewRegistry(RegistryParams{
-		Tools: []agentports.AgentQueryTool{
+		Tools: []agenttoolports.AgentQueryTool{
 			newListWorkersTool(&fakeWorkerRepo{}, &fakePermissions{}),
 		},
 	})
@@ -247,7 +247,7 @@ func TestRegistry_DoesNotAdvertiseTheLegacyName(t *testing.T) {
 	t.Parallel()
 
 	reg := NewRegistry(RegistryParams{
-		Tools: []agentports.AgentQueryTool{
+		Tools: []agenttoolports.AgentQueryTool{
 			newListWorkersTool(&fakeWorkerRepo{}, &fakePermissions{}),
 		},
 	})

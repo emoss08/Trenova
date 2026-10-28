@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -97,7 +97,7 @@ func nestedPeopleRecord(fixture *nestedPeopleFixture) map[string]any {
 func redact(
 	t *testing.T,
 	permissions *fakePermissions,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	record map[string]any,
 ) map[string]any {
 	t.Helper()

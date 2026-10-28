@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -76,7 +76,7 @@ func TestEscalateDetention_HandsOverWithoutTouchingTheCharge(t *testing.T) {
 		"reason":       "the notice window closed and the customer has no recipients",
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Contains(t, preview.Summary, "90 billable minutes")
 	for _, change := range preview.Changes {
@@ -101,10 +101,13 @@ func TestEscalateDetention_RefusesAWaivedClock(t *testing.T) {
 	}}
 	tool := NewEscalateDetentionTool(stub)
 
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.DeskParams(map[string]any{
-		"occurrenceId": occurrenceID.String(),
-		"reason":       "please look at this",
-	}))
+	err := tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.DeskParams(map[string]any{
+			"occurrenceId": occurrenceID.String(),
+			"reason":       "please look at this",
+		}),
+	)
 	require.ErrorContains(t, err, "waived")
 }
 
@@ -138,11 +141,14 @@ func TestRequestCredentialRenewal_RefusesAnEmptyAsk(t *testing.T) {
 	t.Parallel()
 
 	tool := NewRequestCredentialRenewalTool(&agenttoolstest.StubCredentialActor{})
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.DeskParams(map[string]any{
-		"workerId":      pulid.MustNew("wrk_").String(),
-		"credentialIds": []any{},
-		"note":          "please renew",
-	}))
+	err := tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.DeskParams(map[string]any{
+			"workerId":      pulid.MustNew("wrk_").String(),
+			"credentialIds": []any{},
+			"note":          "please renew",
+		}),
+	)
 	require.ErrorContains(t, err, "at least one credential")
 }
 
@@ -210,10 +216,13 @@ func TestPlaceWorkerDispatchHold_RefusesADriverAlreadyHeld(t *testing.T) {
 	stub := &stubWorkerHolder{held: &worker.Worker{ID: workerID, CanBeAssigned: false}}
 	tool := NewPlaceWorkerDispatchHoldTool(stub)
 
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.DeskParams(map[string]any{
-		"workerId": workerID.String(),
-		"reason":   "medical card lapsed",
-	}))
+	err := tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.DeskParams(map[string]any{
+			"workerId": workerID.String(),
+			"reason":   "medical card lapsed",
+		}),
+	)
 	require.ErrorContains(t, err, "already off dispatch")
 }
 
@@ -303,11 +312,14 @@ func TestResolveCarrierIntelEvent_RefusesAnOutcomeItDoesNotHave(t *testing.T) {
 	event := openFinding()
 	tool := NewResolveCarrierIntelEventTool(&stubCarrierIntel{event: event})
 
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.DeskParams(map[string]any{
-		"eventId":    event.ID.String(),
-		"resolution": "SeemedFine",
-		"note":       "looked alright",
-	}))
+	err := tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.DeskParams(map[string]any{
+			"eventId":    event.ID.String(),
+			"resolution": "SeemedFine",
+			"note":       "looked alright",
+		}),
+	)
 	require.ErrorContains(t, err, "not an outcome")
 }
 
@@ -337,14 +349,14 @@ func TestCarrierIntelEventTools_RefuseAFindingAlreadyClosed(t *testing.T) {
 	event := openFinding()
 	event.Status = carrierintel.EventStatusResolved
 
-	for name, tool := range map[string]agentports.AgentTool{
+	for name, tool := range map[string]agenttoolports.AgentTool{
 		"acknowledge": NewAcknowledgeCarrierIntelEventTool(&stubCarrierIntel{event: event}),
 		"resolve":     NewResolveCarrierIntelEventTool(&stubCarrierIntel{event: event}),
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			err := tool.(agentports.ToolValidator).Validate(
+			err := tool.(agenttoolports.ToolValidator).Validate(
 				t.Context(),
 				agenttoolstest.DeskParams(map[string]any{
 					"eventId":    event.ID.String(),

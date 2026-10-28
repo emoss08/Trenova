@@ -5,15 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/teamscope"
-
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/teamscope"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -202,9 +201,13 @@ func TestOpenLeaveCase_WaitsForADecision(t *testing.T) {
 		paramEligibilityHours: float64(1800),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, cases.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		cases.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "waiting for a decision")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, cases.opened)
@@ -216,12 +219,12 @@ func TestOpenLeaveCase_WaitsForADecision(t *testing.T) {
 	assert.Equal(t, int32(1800), *cases.opened.EligibilityHoursWorked)
 	assert.Equal(t, permission.ResourceWorkerLeave, tool.Policy().Resource)
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			common.ParamWorkerID: cases.lcase.WorkerID.String(),
 			"startsAt":           "2026-10-05",
 		})), "validation runs the plan, which needs a leave type")
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			common.ParamWorkerID: cases.lcase.WorkerID.String(),
 			paramLeaveType:       "FMLA",
@@ -254,7 +257,11 @@ func TestCloseLeaveCase_IsAPersonsDecision(t *testing.T) {
 	tool := newCloseLeaveCaseTool(cases, orgLeaveScope(cases))
 	raw := map[string]any{paramLeaveCaseID: cases.lcase.ID.String()}
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)),
+		common.ErrNeedsAPersonsApproval,
+	)
 	assert.Empty(t, cases.closed)
 	assert.Equal(t, permission.OpApprove, tool.Policy().Operation)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
@@ -263,7 +270,13 @@ func TestCloseLeaveCase_IsAPersonsDecision(t *testing.T) {
 	assert.Equal(t, []pulid.ID{cases.lcase.ID}, cases.closed)
 
 	cases.lcase.Status = worker.LeaveCasePending
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(raw)))
+	require.Error(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(
+			t.Context(),
+			agenttoolstest.ExecuteParams(raw),
+		),
+	)
 }
 
 func TestRecordLeaveDay_SaysWhetherItCounts(t *testing.T) {
@@ -277,9 +290,13 @@ func TestRecordLeaveDay_SaysWhetherItCounts(t *testing.T) {
 		paramLeaveHours:  "4.5",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, cases.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		cases.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "4.5 hours")
 	assert.Contains(t, preview.Summary, "counts against the entitlement")
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -292,25 +309,43 @@ func TestDeleteLeaveDay_IsOnlyProposed(t *testing.T) {
 
 	cases := newFakeLeave()
 	tool := newDeleteLeaveDayTool(cases, orgLeaveScope(cases))
-	params := agenttoolstest.ExecuteParams(map[string]any{paramLeaveEntryID: cases.entry.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramLeaveEntryID: cases.entry.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, cases.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, agent.PreviewOperationDelete, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		cases.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationDelete,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, []pulid.ID{cases.entry.ID}, cases.deleted)
 }
 
-func (f *fakeLeave) CaseWorker(_ context.Context, _ pagination.TenantInfo, id pulid.ID) (pulid.ID, error) {
+func (f *fakeLeave) CaseWorker(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	id pulid.ID,
+) (pulid.ID, error) {
 	if id != f.lcase.ID {
 		return pulid.Nil, errortypes.NewNotFoundError("Leave case not found")
 	}
 	return f.lcase.WorkerID, nil
 }
 
-func (f *fakeLeave) EntryWorker(_ context.Context, _ pagination.TenantInfo, id pulid.ID) (pulid.ID, error) {
+func (f *fakeLeave) EntryWorker(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	id pulid.ID,
+) (pulid.ID, error) {
 	if id != f.entry.ID {
 		return pulid.Nil, errortypes.NewNotFoundError("Leave day not found")
 	}
@@ -358,7 +393,7 @@ func TestLeaveTools_ATeamGrantReachesOnlyTheTeamsCases(t *testing.T) {
 		agenttoolstest.ApprovedParams(closeCase)), teamscope.ErrOutsideTeam)
 	require.ErrorIs(t, newDeleteLeaveDayTool(cases, offTeam).Execute(t.Context(),
 		agenttoolstest.ExecuteParams(removeDay)), teamscope.ErrOutsideTeam)
-	require.ErrorIs(t, newOpenLeaveCaseTool(cases, offTeam).(agentports.ToolValidator).Validate(
+	require.ErrorIs(t, newOpenLeaveCaseTool(cases, offTeam).(agenttoolports.ToolValidator).Validate(
 		t.Context(), agenttoolstest.ExecuteParams(openCase)), teamscope.ErrOutsideTeam)
 	assert.Empty(t, cases.closed)
 	assert.Empty(t, cases.deleted)

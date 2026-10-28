@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
@@ -62,7 +63,7 @@ type ActivitiesParams struct {
 	Imaging             kernelports.Imaging
 	Converter           kernelports.DocumentConverter       `optional:"true"`
 	Triage              inboundmessageports.TriageEventSink `optional:"true"`
-	Realtime            agentports.RealtimeService          `optional:"true"`
+	Realtime            realtimeports.RealtimeService       `optional:"true"`
 }
 
 type Activities struct {
@@ -87,7 +88,7 @@ type Activities struct {
 	converter           kernelports.DocumentConverter
 	conversionCfg       *config.DocumentConversionConfig
 	triage              inboundmessageports.TriageEventSink
-	realtime            agentports.RealtimeService
+	realtime            realtimeports.RealtimeService
 }
 
 //nolint:gocritic // dependency injection param

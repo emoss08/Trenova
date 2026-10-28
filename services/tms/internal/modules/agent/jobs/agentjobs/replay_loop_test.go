@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/worker"
 	"go.temporal.io/sdk/workflow"
@@ -27,12 +27,12 @@ func loopReplayRuntime() *agentruntime.Service {
 		Logger:     zap.NewNop(),
 		Completion: &agenttest.ScriptedCompletion{},
 		QueryTools: &agenttest.StubQueryRegistry{
-			Tools: []agentports.AgentQueryTool{&agenttest.StubQueryTool{
+			Tools: []agenttoolports.AgentQueryTool{&agenttest.StubQueryTool{
 				ToolName: loopReplayRead,
 			}},
 		},
 		ActionTools: &agenttest.StubActionRegistry{
-			Tools: []agentports.AgentTool{&agenttest.StubActionTool{
+			Tools: []agenttoolports.AgentTool{&agenttest.StubActionTool{
 				ToolName: loopReplayWrite,
 			}},
 		},

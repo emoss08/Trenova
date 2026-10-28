@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -63,7 +63,7 @@ func (h *Handler) listThreadArtifacts(c *gin.Context) {
 	page, err := h.service.ListThreadArtifacts(
 		c.Request.Context(),
 		req,
-		agentports.ListArtifactsOptions{
+		assistantports.ListArtifactsOptions{
 			Limit:      query.Limit,
 			Cursor:     query.Cursor,
 			Query:      query.Query,
@@ -153,7 +153,7 @@ func (h *Handler) artifactRows(c *gin.Context) {
 		c.Request.Context(),
 		req,
 		artifactID,
-		&agentports.ArtifactRowsQuery{
+		&assistantports.ArtifactRowsQuery{
 			After:         query.After,
 			Offset:        query.Offset,
 			Limit:         query.Limit,
@@ -245,7 +245,7 @@ func (h *Handler) saveDocumentVersion(c *gin.Context) {
 		return
 	}
 
-	var body agentports.SaveDocumentVersionRequest
+	var body assistantports.SaveDocumentVersionRequest
 	if err = c.ShouldBindJSON(&body); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -314,7 +314,7 @@ func (h *Handler) rewriteDocument(c *gin.Context) {
 		return
 	}
 
-	var body agentports.DocumentRewriteRequest
+	var body assistantports.DocumentRewriteRequest
 	if err = c.ShouldBindJSON(&body); err != nil {
 		h.eh.HandleError(c, err)
 		return

@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -14,7 +16,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func inboxList(t *testing.T, name string, reader agentports.GraphQLReader) agentports.AgentQueryTool {
+func inboxList(
+	t *testing.T,
+	name string,
+	reader graphqlreadports.GraphQLReader,
+) agenttoolports.AgentQueryTool {
 	t.Helper()
 
 	for _, spec := range inboxReadSpecs() {
@@ -32,9 +38,9 @@ func inboxList(t *testing.T, name string, reader agentports.GraphQLReader) agent
 
 func inboundList(
 	t *testing.T,
-	reader agentports.GraphQLReader,
-	searcher agentports.RetrievalSearcher,
-) agentports.AgentQueryTool {
+	reader graphqlreadports.GraphQLReader,
+	searcher retrievalports.RetrievalSearcher,
+) agenttoolports.AgentQueryTool {
 	t.Helper()
 
 	tool, err := provideListInboundMessagesTool(reader, &fakePermissions{allowed: true}, searcher)
@@ -43,7 +49,7 @@ func inboundList(
 	return tool
 }
 
-func inputOf(t *testing.T, req *agentports.GraphQLReadRequest) map[string]any {
+func inputOf(t *testing.T, req *graphqlreadports.GraphQLReadRequest) map[string]any {
 	t.Helper()
 
 	require.NotNil(t, req)
@@ -60,7 +66,7 @@ func TestInboundMessages_ListThroughTheDesksOperationWithoutWords(t *testing.T) 
 	t.Parallel()
 
 	mailboxID, ownerID := pulid.MustNew("imbx_").String(), pulid.MustNew("usr_").String()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskInboundMessages": {Data: connectionPage("inboundMessages", map[string]any{
 			"id": "imsg_1", "fromName": "Dana Ruiz", "fromAddress": "dana@shipper.example",
 			"subject": "Load for Thursday", "status": "InReview", "needsReview": true,
@@ -136,15 +142,15 @@ func TestInboundMessages_RankByWhatTheMailSaysWhenGivenWords(t *testing.T) {
 		Classification: inboundmessage.ClassificationDetentionDispute,
 		ReceivedAt:     1_790_000_000,
 	}
-	searcher := &fakeRetrievalSearcher{messages: &agentports.InboundMessageSearchResult{
-		Hits: []agentports.InboundMessageSearchHit{{
+	searcher := &fakeRetrievalSearcher{messages: &retrievalports.InboundMessageSearchResult{
+		Hits: []retrievalports.InboundMessageSearchHit{{
 			Message: message,
 			Subject: "Detention charges on invoice 7781",
 			From:    "ap@globex.test",
 			Snippet: "We dispute the detention.",
-			Match:   agentports.RetrievalMatchWords,
+			Match:   retrievalports.RetrievalMatchWords,
 		}},
-		Semantics: agentports.RetrievalSemantics{Used: true},
+		Semantics: retrievalports.RetrievalSemantics{Used: true},
 	}}
 	reader := &keyedReader{}
 	tool := inboundList(t, reader, searcher)
@@ -160,7 +166,7 @@ func TestInboundMessages_RankByWhatTheMailSaysWhenGivenWords(t *testing.T) {
 	assert.Equal(t, "detention dispute", asked.Query)
 	assert.Equal(t, inboundSearchDefaultLimit, asked.Limit)
 	assert.NotNil(t, asked.Access)
-	assert.Equal(t, agentports.InboundMessageFilter{}, asked.Messages)
+	assert.Equal(t, retrievalports.InboundMessageFilter{}, asked.Messages)
 
 	outcome := result.(*retrievalOutcome)
 	assert.Equal(t, "words and meaning", outcome.SearchedBy)
@@ -182,8 +188,8 @@ func TestInboundMessages_RankWordsWithinTheFilters(t *testing.T) {
 	t.Parallel()
 
 	mailboxID := pulid.MustNew("imbx_")
-	searcher := &fakeRetrievalSearcher{messages: &agentports.InboundMessageSearchResult{
-		Hits: []agentports.InboundMessageSearchHit{},
+	searcher := &fakeRetrievalSearcher{messages: &retrievalports.InboundMessageSearchResult{
+		Hits: []retrievalports.InboundMessageSearchHit{},
 	}}
 	tool := inboundList(t, &keyedReader{}, searcher)
 
@@ -199,7 +205,7 @@ func TestInboundMessages_RankWordsWithinTheFilters(t *testing.T) {
 	require.Len(t, searcher.requests, 1)
 	asked := searcher.requests[0]
 	assert.Equal(t, inboundSearchMost, asked.Limit)
-	assert.Equal(t, agentports.InboundMessageFilter{
+	assert.Equal(t, retrievalports.InboundMessageFilter{
 		Statuses: []inboundmessage.Status{
 			inboundmessage.StatusInReview,
 			inboundmessage.StatusQuarantined,
@@ -255,22 +261,22 @@ func TestInboundMessageFilter_AdmitsOnlyWhatItNames(t *testing.T) {
 		MailboxID:      mailboxID,
 	}
 
-	assert.True(t, (&agentports.InboundMessageFilter{}).Admits(message))
-	assert.False(t, (&agentports.InboundMessageFilter{}).Admits(nil))
-	assert.True(t, (&agentports.InboundMessageFilter{
+	assert.True(t, (&retrievalports.InboundMessageFilter{}).Admits(message))
+	assert.False(t, (&retrievalports.InboundMessageFilter{}).Admits(nil))
+	assert.True(t, (&retrievalports.InboundMessageFilter{
 		Statuses: []inboundmessage.Status{
 			inboundmessage.StatusQuarantined, inboundmessage.StatusInReview,
 		},
 		Classification: inboundmessage.ClassificationTender,
 		MailboxID:      mailboxID,
 	}).Admits(message))
-	assert.False(t, (&agentports.InboundMessageFilter{
+	assert.False(t, (&retrievalports.InboundMessageFilter{
 		Statuses: []inboundmessage.Status{inboundmessage.StatusActioned},
 	}).Admits(message))
-	assert.False(t, (&agentports.InboundMessageFilter{
+	assert.False(t, (&retrievalports.InboundMessageFilter{
 		Classification: inboundmessage.ClassificationStatusRequest,
 	}).Admits(message))
-	assert.False(t, (&agentports.InboundMessageFilter{
+	assert.False(t, (&retrievalports.InboundMessageFilter{
 		MailboxID: pulid.MustNew("imbx_"),
 	}).Admits(message))
 }
@@ -298,7 +304,7 @@ func TestInboundMessage_GetBoundsTheBodyAndSaysSo(t *testing.T) {
 
 	id := pulid.MustNew("imsg_").String()
 	answer := func(body string) *keyedReader {
-		return &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+		return &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 			"DeskInboundMessage": {Data: map[string]any{"inboundMessage": map[string]any{
 				"id": id, "textBody": body, "fromName": "", "fromAddress": "ap@broker.example",
 				"mailbox": map[string]any{"name": "Loads", "address": "loads@carrier.example"},
@@ -331,7 +337,7 @@ func TestInboundMessage_GetBoundsTheBodyAndSaysSo(t *testing.T) {
 func TestEmailProfiles_ListTheActiveOnesUnlessAsked(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskEmailProfiles": {Data: connectionPage("emailProfiles", map[string]any{
 			"id": "emlprof_1", "name": "Operations", "senderEmail": "ops@carrier.example",
 		})},
@@ -364,7 +370,7 @@ func TestCaptureBatches_ListOpenStacksOrReadOne(t *testing.T) {
 	t.Parallel()
 
 	batchID := pulid.MustNew("cbat_").String()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskCaptureBatches": {Data: connectionPage("captureBatches", map[string]any{
 			"id": batchID, "status": "Ready", "items": []any{map[string]any{"id": "citm_1"}},
 		})},
@@ -410,7 +416,7 @@ func TestTriageAssignees_MarkWhoIsOnCall(t *testing.T) {
 	t.Parallel()
 
 	onCall := pulid.MustNew("usr_").String()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"TriageAssignees": {Data: map[string]any{"triageAssignees": []any{
 			map[string]any{"waiting": 3, "user": map[string]any{"id": onCall, "name": "Ana"}},
 			map[string]any{"waiting": 0, "user": map[string]any{"id": "usr_2", "name": "Bo"}},

@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +21,7 @@ import (
 // counts how many reads run at once.
 type invoiceCards struct {
 	mu       sync.Mutex
-	cards    map[string]*agentports.GraphQLReadResult
+	cards    map[string]*graphqlreadports.GraphQLReadResult
 	sent     []string
 	inFlight atomic.Int32
 	most     atomic.Int32
@@ -29,8 +29,8 @@ type invoiceCards struct {
 
 func (c *invoiceCards) Read(
 	_ context.Context,
-	req *agentports.GraphQLReadRequest,
-) (*agentports.GraphQLReadResult, error) {
+	req *graphqlreadports.GraphQLReadRequest,
+) (*graphqlreadports.GraphQLReadResult, error) {
 	now := c.inFlight.Add(1)
 	defer c.inFlight.Add(-1)
 	for {
@@ -49,14 +49,14 @@ func (c *invoiceCards) Read(
 		return card, nil
 	}
 
-	return &agentports.GraphQLReadResult{
-		Errors: []agentports.GraphQLReadError{{
-			Code: agentports.GraphQLCodeNotFound, Message: "invoice not found",
+	return &graphqlreadports.GraphQLReadResult{
+		Errors: []graphqlreadports.GraphQLReadError{{
+			Code: graphqlreadports.GraphQLCodeNotFound, Message: "invoice not found",
 		}},
 	}, nil
 }
 
-func invoiceCard(id, number string, lines int) *agentports.GraphQLReadResult {
+func invoiceCard(id, number string, lines int) *graphqlreadports.GraphQLReadResult {
 	rows := make([]any, 0, lines)
 	for idx := range lines {
 		rows = append(rows, map[string]any{
@@ -64,7 +64,7 @@ func invoiceCard(id, number string, lines int) *agentports.GraphQLReadResult {
 		})
 	}
 
-	return &agentports.GraphQLReadResult{
+	return &graphqlreadports.GraphQLReadResult{
 		Data: map[string]any{"invoice": map[string]any{
 			"id": id, "number": number, "status": "Posted", "memo": nil, "lines": rows,
 		}},
@@ -72,7 +72,7 @@ func invoiceCard(id, number string, lines int) *agentports.GraphQLReadResult {
 	}
 }
 
-func invoiceGetTool(t *testing.T, reader agentports.GraphQLReader) *graphQLGetTool {
+func invoiceGetTool(t *testing.T, reader graphqlreadports.GraphQLReader) *graphQLGetTool {
 	t.Helper()
 
 	spec := invoiceGetSpec()
@@ -86,7 +86,7 @@ func TestInvoiceGet_OneIDReadsTheInvoiceWithEveryLineByID(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("inv_").String()
-	reader := &invoiceCards{cards: map[string]*agentports.GraphQLReadResult{
+	reader := &invoiceCards{cards: map[string]*graphqlreadports.GraphQLReadResult{
 		id: invoiceCard(id, "INV-1042", 3),
 	}}
 
@@ -110,7 +110,7 @@ func TestInvoiceGet_OneIDReadsTheInvoiceWithEveryLineByID(t *testing.T) {
 func TestInvoiceGet_SeveralIDsAreReadOneAtATimeAtMostTenAtOnce(t *testing.T) {
 	t.Parallel()
 
-	cards := make(map[string]*agentports.GraphQLReadResult)
+	cards := make(map[string]*graphqlreadports.GraphQLReadResult)
 	ids := make([]any, 0, 30)
 	for idx := range 30 {
 		id := pulid.MustNew("inv_").String()
@@ -134,7 +134,12 @@ func TestInvoiceGet_SeveralIDsAreReadOneAtATimeAtMostTenAtOnce(t *testing.T) {
 	assert.Equal(t, "INV-1", items[1]["number"])
 	for _, item := range items {
 		lines, _ := item["lines"].([]any)
-		assert.Len(t, lines, invoiceLinesShownEach, "an invoice read beside others shows fewer lines")
+		assert.Len(
+			t,
+			lines,
+			invoiceLinesShownEach,
+			"an invoice read beside others shows fewer lines",
+		)
 		assert.Equal(t, true, item[fieldLinesTruncated])
 		assert.Equal(t, 40, item[fieldLineCount])
 		assert.NotContains(t, item, outcomeWithheld, "what is withheld is named once")
@@ -151,17 +156,17 @@ func TestInvoiceGet_ARefusedReadRefusesTheCall(t *testing.T) {
 
 	allowed := pulid.MustNew("inv_").String()
 	refused := pulid.MustNew("inv_").String()
-	reader := &invoiceCards{cards: map[string]*agentports.GraphQLReadResult{
+	reader := &invoiceCards{cards: map[string]*graphqlreadports.GraphQLReadResult{
 		allowed: invoiceCard(allowed, "INV-1", 1),
-		refused: {Errors: []agentports.GraphQLReadError{{
-			Code: agentports.GraphQLCodeForbidden, Message: "not allowed",
+		refused: {Errors: []graphqlreadports.GraphQLReadError{{
+			Code: graphqlreadports.GraphQLCodeForbidden, Message: "not allowed",
 		}}},
 	}}
 
 	_, err := invoiceGetTool(t, reader).Query(t.Context(), keyedCall(map[string]any{
 		"invoiceIds": []any{allowed, refused},
 	}))
-	var denied *agentports.ReadRefusedError
+	var denied *graphqlreadports.ReadRefusedError
 	require.ErrorAs(t, err, &denied)
 	assert.Equal(t, permission.ResourceInvoice, denied.Resource)
 }
@@ -193,7 +198,7 @@ func TestInvoiceDisputes_SendsTheInvoicesTheCallNames(t *testing.T) {
 	t.Parallel()
 
 	first, second := pulid.MustNew("inv_").String(), pulid.MustNew("inv_").String()
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskInvoiceDisputes": {Data: map[string]any{"invoiceDisputes": []any{
 			map[string]any{"id": "idsp_1", "invoiceId": first, "status": "Open"},
 		}}, Withheld: []string{"invoiceDisputes.notes"}},

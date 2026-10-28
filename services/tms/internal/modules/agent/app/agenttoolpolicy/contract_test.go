@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy/registered"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +23,7 @@ func buildRegistered(t *testing.T) registered.Tools {
 	return tools
 }
 
-func registeredPolicy(t *testing.T, name string) agentports.ToolPolicy {
+func registeredPolicy(t *testing.T, name string) agenttoolports.ToolPolicy {
 	t.Helper()
 
 	tools := buildRegistered(t)
@@ -39,7 +39,7 @@ func registeredPolicy(t *testing.T, name string) agentports.ToolPolicy {
 	}
 	t.Fatalf("%q is not a registered tool", name)
 
-	return agentports.ToolPolicy{}
+	return agenttoolports.ToolPolicy{}
 }
 
 /*
@@ -549,19 +549,31 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"shipment_record_permit":                        {agent.EgressInternal},
 		"shipment_update_permit":                        {agent.EgressInternal},
 		"settlement_start_dispute_review":               {agent.EgressDriverVisible},
-		"settlement_resolve_dispute":                    {agent.EgressDriverVisible, agent.EgressMoney},
-		"settlement_review_driver_expense":              {agent.EgressDriverVisible, agent.EgressMoney},
-		"settlement_generate_payroll_export":            {agent.EgressMoney},
-		"settlement_void_payroll_export":                {agent.EgressMoney},
+		"settlement_resolve_dispute": {
+			agent.EgressDriverVisible,
+			agent.EgressMoney,
+		},
+		"settlement_review_driver_expense": {
+			agent.EgressDriverVisible,
+			agent.EgressMoney,
+		},
+		"settlement_generate_payroll_export": {agent.EgressMoney},
+		"settlement_void_payroll_export":     {agent.EgressMoney},
 
-		"carrier_create":                           {agent.EgressInternal, agent.EgressMoney},
-		"carrier_update":                           {agent.EgressInternal, agent.EgressMoney},
-		"carrier_create_capacity_posting":          {agent.EgressInternal},
-		"carrier_update_capacity_posting":          {agent.EgressInternal},
-		"carrier_delete_capacity_posting":          {agent.EgressInternal},
-		"carrier_set_status":                       {agent.EgressInternal},
-		"customer_create":                          {agent.EgressInternal, agent.EgressExternalRecipient},
-		"customer_update":                          {agent.EgressInternal, agent.EgressExternalRecipient},
+		"carrier_create":                  {agent.EgressInternal, agent.EgressMoney},
+		"carrier_update":                  {agent.EgressInternal, agent.EgressMoney},
+		"carrier_create_capacity_posting": {agent.EgressInternal},
+		"carrier_update_capacity_posting": {agent.EgressInternal},
+		"carrier_delete_capacity_posting": {agent.EgressInternal},
+		"carrier_set_status":              {agent.EgressInternal},
+		"customer_create": {
+			agent.EgressInternal,
+			agent.EgressExternalRecipient,
+		},
+		"customer_update": {
+			agent.EgressInternal,
+			agent.EgressExternalRecipient,
+		},
 		"customer_set_status":                      {agent.EgressInternal},
 		"masterdata_create_commodity":              {agent.EgressInternal},
 		"masterdata_update_commodity":              {agent.EgressInternal},
@@ -690,9 +702,14 @@ func TestScriptsCallOnlyReads(t *testing.T) {
 	runners := 0
 	for _, tool := range tools.Queries {
 		policy := tool.Policy()
-		if policy.Script == agentports.ScriptRunner {
+		if policy.Script == agenttoolports.ScriptRunner {
 			runners++
-			assert.False(t, policy.CallableFromScript(), "%s never runs inside a script", tool.Name())
+			assert.False(
+				t,
+				policy.CallableFromScript(),
+				"%s never runs inside a script",
+				tool.Name(),
+			)
 		}
 		if !policy.CallableFromScript() {
 			continue
@@ -717,7 +734,7 @@ func TestScriptsPrepareOnlyWritesThatNameAndPreviewTheirRecord(t *testing.T) {
 	tools := buildRegistered(t)
 	preparable := 0
 	for _, tool := range tools.Actions {
-		if !agentports.PreparableFromScript(tool) {
+		if !agenttoolports.PreparableFromScript(tool) {
 			continue
 		}
 		preparable++
@@ -727,8 +744,8 @@ func TestScriptsPrepareOnlyWritesThatNameAndPreviewTheirRecord(t *testing.T) {
 		assert.Nil(t, policy.TaintHold, tool.Name())
 		assert.NotEqual(t, agent.ToolEffectLookup, policy.EffectiveEffect(), tool.Name())
 		assert.False(t, strings.HasPrefix(tool.Name(), "agent_"), tool.Name())
-		_, previews := tool.(agentports.ToolPreviewer)
-		_, targeted := tool.(agentports.TargetedTool)
+		_, previews := tool.(agenttoolports.ToolPreviewer)
+		_, targeted := tool.(agenttoolports.TargetedTool)
 		assert.True(t, previews && targeted, "%s names and previews its record", tool.Name())
 	}
 	assert.Positive(t, preparable, "scripts have writes they may prepare")
@@ -739,7 +756,12 @@ func TestScriptsPrepareOnlyWritesThatNameAndPreviewTheirRecord(t *testing.T) {
 	} {
 		for _, tool := range tools.Actions {
 			if tool.Name() == name {
-				assert.False(t, agentports.PreparableFromScript(tool), "%s is the agent's own work", name)
+				assert.False(
+					t,
+					agenttoolports.PreparableFromScript(tool),
+					"%s is the agent's own work",
+					name,
+				)
 			}
 		}
 	}

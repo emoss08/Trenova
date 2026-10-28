@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -19,7 +19,7 @@ func (s *Service) CanServe(
 	}
 
 	if _, err := s.usableFor(ctx, task, tenant); err != nil {
-		if errors.Is(err, agentports.ErrNoProviderConfigured) {
+		if errors.Is(err, llmports.ErrNoProviderConfigured) {
 			return false, nil
 		}
 		return false, err

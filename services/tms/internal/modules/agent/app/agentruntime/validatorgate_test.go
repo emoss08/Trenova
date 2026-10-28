@@ -6,7 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -69,15 +71,15 @@ func TestRun_AToolThatSaysItWouldFailIsRefusedAtEveryTier(t *testing.T) {
 				stubActionToolAlias: actionTool("report_update", tc.tier, nil),
 				invalid:             errors.New("the report no longer has a column named lateness"),
 			}
-			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+			completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 				toolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
 				textTurn("I will fix the column."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{},
-				&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
+				&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 			actor := testActor()
 
-			result, err := rt.Run(t.Context(), &agentports.RunRequest{
+			result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 				Definition: tc.definition("report_update"),
 				Actor:      actor,
 				Input:      "update",
@@ -114,14 +116,14 @@ func TestRun_AToolThatValidatesRunsWhenItsCheckPasses(t *testing.T) {
 	tool := &validatingActionTool{
 		stubActionToolAlias: actionTool("report_update", agent.TierAutoExecute, nil),
 	}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: autoDefinition("report_update"),
 		Actor:      testActor(),
 		Input:      "update",

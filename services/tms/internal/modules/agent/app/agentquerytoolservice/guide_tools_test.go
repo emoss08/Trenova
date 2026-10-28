@@ -4,7 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/productguideports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/stretchr/testify/assert"
@@ -12,17 +13,17 @@ import (
 )
 
 type stubGuide struct {
-	matches     []agentports.ProductGuideMatch
-	destination *agentports.ProductGuideDestination
+	matches     []productguideports.ProductGuideMatch
+	destination *productguideports.ProductGuideDestination
 	err         error
-	searched    *agentports.ProductGuideSearchRequest
-	resolved    *agentports.ProductGuideDestinationRequest
+	searched    *productguideports.ProductGuideSearchRequest
+	resolved    *productguideports.ProductGuideDestinationRequest
 }
 
 func (s *stubGuide) Search(
 	_ context.Context,
-	req *agentports.ProductGuideSearchRequest,
-) ([]agentports.ProductGuideMatch, error) {
+	req *productguideports.ProductGuideSearchRequest,
+) ([]productguideports.ProductGuideMatch, error) {
 	s.searched = req
 
 	return s.matches, s.err
@@ -30,8 +31,8 @@ func (s *stubGuide) Search(
 
 func (s *stubGuide) Destination(
 	_ context.Context,
-	req *agentports.ProductGuideDestinationRequest,
-) (*agentports.ProductGuideDestination, error) {
+	req *productguideports.ProductGuideDestinationRequest,
+) (*productguideports.ProductGuideDestination, error) {
 	s.resolved = req
 
 	return s.destination, s.err
@@ -59,10 +60,13 @@ func TestFindInTrenova_AnswersWithTheBestPagesStepsAndTheOthersNamed(t *testing.
 		Breadcrumb: []string{"Billing", "Configuration files", "Rate zones"},
 		Tasks:      []productguide.Task{{Title: "Add a rate zone", Steps: []string{"Open it."}}},
 	}
-	guide := &stubGuide{matches: []agentports.ProductGuideMatch{
+	guide := &stubGuide{matches: []productguideports.ProductGuideMatch{
 		{
-			Page:    best,
-			Task:    &productguide.Task{Title: "Add a rate matrix", Steps: []string{"Open it.", "Save."}},
+			Page: best,
+			Task: &productguide.Task{
+				Title: "Add a rate matrix",
+				Steps: []string{"Open it.", "Save."},
+			},
 			CanOpen: true,
 		},
 		{Page: other, Task: &other.Tasks[0], CanOpen: false, Missing: []string{"Rate zone access"}},
@@ -143,7 +147,7 @@ func TestOpenPage_ReturnsWhereTheAppIsGoing(t *testing.T) {
 	t.Parallel()
 
 	page := rateMatrices()
-	guide := &stubGuide{destination: &agentports.ProductGuideDestination{
+	guide := &stubGuide{destination: &productguideports.ProductGuideDestination{
 		Path:  page.Path + "?panelType=create",
 		Page:  page,
 		Label: page.Name,
@@ -172,7 +176,7 @@ func TestOpenPage_PassesARecordThrough(t *testing.T) {
 	t.Parallel()
 
 	page := rateMatrices()
-	guide := &stubGuide{destination: &agentports.ProductGuideDestination{
+	guide := &stubGuide{destination: &productguideports.ProductGuideDestination{
 		Path: "/billing/invoices?item=inv_1", Page: page, Label: "Invoice",
 	}}
 
@@ -206,8 +210,8 @@ func TestOpenPage_CarriesTheRefusal(t *testing.T) {
 func TestGuideTools_AreSelfScoped(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, agentports.IsSelfScoped(newFindInTrenovaTool(&stubGuide{})))
-	assert.True(t, agentports.IsSelfScoped(newOpenPageTool(&stubGuide{})))
+	assert.True(t, agenttoolports.IsSelfScoped(newFindInTrenovaTool(&stubGuide{})))
+	assert.True(t, agenttoolports.IsSelfScoped(newOpenPageTool(&stubGuide{})))
 }
 
 // The record kinds agent_open_page offers are exactly the ones the registry knows
@@ -239,11 +243,14 @@ func TestFindInTrenova_AnswersAQuestionAboutOnePageFromAllOfIt(t *testing.T) {
 		Related:    []string{"/desk/decisions"},
 		Tasks: []productguide.Task{
 			{Title: "Ask an agent a question", Steps: []string{"Open Desk."}},
-			{Title: "Steer an agent while it is replying", Steps: []string{"Type.", "Press Enter."}},
+			{
+				Title: "Steer an agent while it is replying",
+				Steps: []string{"Type.", "Press Enter."},
+			},
 			{Title: "Snooze a case", Steps: []string{"Select Case."}},
 		},
 	}
-	guide := &stubGuide{matches: []agentports.ProductGuideMatch{
+	guide := &stubGuide{matches: []productguideports.ProductGuideMatch{
 		{Page: desk, Task: &desk.Tasks[1], CanOpen: true},
 	}}
 
@@ -277,7 +284,7 @@ func TestFindInTrenova_KeepsAnswersShortWhenNoPageWasNamed(t *testing.T) {
 		{Title: "Add a rate matrix", Steps: []string{"Open it."}},
 		{Title: "Retire a rate matrix", Steps: []string{"Set Status."}},
 	}
-	guide := &stubGuide{matches: []agentports.ProductGuideMatch{
+	guide := &stubGuide{matches: []productguideports.ProductGuideMatch{
 		{Page: page, Task: &page.Tasks[0], CanOpen: true},
 	}}
 

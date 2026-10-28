@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
@@ -133,8 +134,8 @@ func (f *fakeRecords) ShipmentRecord(
 
 type fixtureOptions struct {
 	granted   map[string]bool
-	studio    agentports.FormulaStudioAssist
-	assistant agentports.PageAssistant
+	studio    formulastudioports.FormulaStudioAssist
+	assistant assistantports.PageAssistant
 }
 
 type fixture struct {
@@ -179,12 +180,14 @@ func newFixture(t *testing.T, opts fixtureOptions) *fixture {
 		VersionRepo:     f.versions,
 		ReviewRepo:      formulatemplateportsmock.NewMockFormulaTemplateReviewRepository(t),
 		LibraryVersions: f.libraryVersions,
-		Checker:         tariff.NewChecker(tariff.CheckerParams{Resolver: resolver, Context: emptyContext{}}),
-		Resolver:        resolver,
-		Rater:           f.rater,
-		Dependents:      noDependents{},
-		Records:         f.records,
-		AuditService:    &mocks.NoopAuditService{},
+		Checker: tariff.NewChecker(
+			tariff.CheckerParams{Resolver: resolver, Context: emptyContext{}},
+		),
+		Resolver:     resolver,
+		Rater:        f.rater,
+		Dependents:   noDependents{},
+		Records:      f.records,
+		AuditService: &mocks.NoopAuditService{},
 	})
 	f.handler = formulatemplatehandler.New(formulatemplatehandler.Params{
 		Service:       service,

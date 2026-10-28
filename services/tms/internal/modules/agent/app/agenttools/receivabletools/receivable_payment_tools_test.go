@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -169,7 +169,7 @@ func applyChangePlan() *customerpaymentports.CustomerPaymentChangePreview {
 	}
 }
 
-func applyPaymentParams(paymentID, invoiceID pulid.ID) agentports.ToolExecuteParams {
+func applyPaymentParams(paymentID, invoiceID pulid.ID) agenttoolports.ToolExecuteParams {
 	return agenttoolstest.ExecuteParams(map[string]any{
 		ParamCustomerPaymentID:     paymentID.String(),
 		common.ParamAccountingDate: "2026-09-20",
@@ -183,15 +183,19 @@ func TestApplyCustomerPayment_PreviewShowsThePaymentTheInvoicesAndTheEntry(t *te
 	t.Parallel()
 
 	receivables := &fakeReceivables{change: applyChangePlan(), guard: &agenttoolstest.WriteGuard{}}
-	tool := NewApplyCustomerPaymentTool(receivables).(agentports.ToolPreviewer)
+	tool := NewApplyCustomerPaymentTool(receivables).(agenttoolports.ToolPreviewer)
 	params := applyPaymentParams(
 		receivables.change.PaymentBefore.ID,
 		receivables.change.InvoicesBefore[0].ID,
 	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, receivables.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		receivables.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	assert.Contains(t, preview.Summary, "Would apply 50.00 USD of payment ACH-9001 to 1 invoice")
 	assert.Contains(t, preview.Summary, "leaving 0.00 USD unapplied")
@@ -232,7 +236,7 @@ func TestApplyCustomerPayment_OnlyAPersonApplies(t *testing.T) {
 	assert.Equal(t, permission.OpUpdate, policy.Operation)
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceCustomerPayment, target.Resource)
 }
@@ -256,13 +260,15 @@ func TestApplyCustomerPayment_RefusesBadApplications(t *testing.T) {
 		},
 		"a bad date": {
 			ParamCustomerPaymentID: paymentID, common.ParamAccountingDate: "20 Sept",
-			common.ParamApplications: []any{map[string]any{common.ParamInvoiceID: invoiceID, "amount": "10"}},
+			common.ParamApplications: []any{
+				map[string]any{common.ParamInvoiceID: invoiceID, "amount": "10"},
+			},
 		},
 	}
 	for name, raw := range cases {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+			require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 				agenttoolstest.ExecuteParams(raw)))
 		})
 	}
@@ -285,10 +291,10 @@ func TestApplyCustomerPayment_ARefusalIsAWouldFail(t *testing.T) {
 		receivables.change.InvoicesBefore[0].ID,
 	)
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
 func reverseChangePlan() *customerpaymentports.CustomerPaymentChangePreview {
@@ -307,7 +313,10 @@ func reverseChangePlan() *customerpaymentports.CustomerPaymentChangePreview {
 func TestReverseCustomerPayment_PreviewAndPersonOnly(t *testing.T) {
 	t.Parallel()
 
-	receivables := &fakeReceivables{change: reverseChangePlan(), guard: &agenttoolstest.WriteGuard{}}
+	receivables := &fakeReceivables{
+		change: reverseChangePlan(),
+		guard:  &agenttoolstest.WriteGuard{},
+	}
 	tool := NewReverseCustomerPaymentTool(receivables)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		ParamCustomerPaymentID:     receivables.change.PaymentBefore.ID.String(),
@@ -315,11 +324,19 @@ func TestReverseCustomerPayment_PreviewAndPersonOnly(t *testing.T) {
 		common.ParamReason:         "Chargeback",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, receivables.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		receivables.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would reverse payment ACH-9001")
-	assert.Equal(t, "Reversed", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After)
+	assert.Equal(
+		t,
+		"Reversed",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
+	)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
@@ -357,7 +374,10 @@ func creditApplicationPlan() *customerpaymentports.CreditMemoApplicationPreview 
 func TestApplyCreditMemo_PreviewAndPersonOnly(t *testing.T) {
 	t.Parallel()
 
-	receivables := &fakeReceivables{credit: creditApplicationPlan(), guard: &agenttoolstest.WriteGuard{}}
+	receivables := &fakeReceivables{
+		credit: creditApplicationPlan(),
+		guard:  &agenttoolstest.WriteGuard{},
+	}
 	tool := NewApplyCreditMemoTool(receivables)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramCreditMemoID:          receivables.credit.CreditMemoBefore.ID.String(),
@@ -368,14 +388,29 @@ func TestApplyCreditMemo_PreviewAndPersonOnly(t *testing.T) {
 		}},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, receivables.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		receivables.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would apply 30.00 USD of credit memo CM-12 to 1 invoice")
 	require.Len(t, preview.Changes, 3)
-	assert.Equal(t, "PartiallyPaid",
-		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 1), "settlementStatus").After)
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 2).Operation)
+	assert.Equal(
+		t,
+		"PartiallyPaid",
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 1),
+			"settlementStatus",
+		).After,
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 2).Operation,
+	)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
@@ -385,7 +420,7 @@ func TestApplyCreditMemo_PreviewAndPersonOnly(t *testing.T) {
 
 	policy := tool.Policy()
 	assert.Equal(t, permission.OpCreate, policy.Operation)
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceInvoice, target.Resource)
 }
@@ -411,9 +446,13 @@ func TestUnapplyCreditMemo_PreviewAndPersonOnly(t *testing.T) {
 		common.ParamReason:           "Wrong invoice",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, receivables.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		receivables.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would take back 30.00 USD of credit memo CM-12")
 	application := agenttoolstest.PreviewChange(t, preview, 2)
 	assert.Equal(t, "Unapplied", agenttoolstest.FieldByPath(t, application, "status").After)

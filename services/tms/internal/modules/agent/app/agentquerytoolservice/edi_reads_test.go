@@ -3,7 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ func TestEDIPartner_ReadsTheCardByThePartnersID(t *testing.T) {
 	t.Parallel()
 
 	partner := pulid.MustNew("edip_")
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskEdiPartnerCard": {Data: map[string]any{"ediPartnerCard": map[string]any{
 			"partner":   map[string]any{"id": partner.String(), "code": "ACME"},
 			"readiness": map[string]any{"ready": false, "items": []any{}},
@@ -65,7 +65,7 @@ func TestAckAnswer_SaysWhatCameBackOutOfWhatWasSent(t *testing.T) {
 func TestEDITransfers_DefaultTheDirectionTheRootRequires(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskEdiTransfers": {Data: connectionPage("ediTransfers",
 			map[string]any{"id": "edilt_1", "status": "PendingApproval"})},
 	}}

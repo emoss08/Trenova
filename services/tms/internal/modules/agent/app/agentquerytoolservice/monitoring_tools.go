@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -50,7 +50,7 @@ type listWeatherAlertsTool struct {
 	weather weatherReader
 }
 
-func newListWeatherAlertsTool(weather weatherReader) agentports.AgentQueryTool {
+func newListWeatherAlertsTool(weather weatherReader) agenttoolports.AgentQueryTool {
 	return &listWeatherAlertsTool{weather: weather}
 }
 
@@ -81,7 +81,7 @@ func (t *listWeatherAlertsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listWeatherAlertsTool) Policy() agentports.ToolPolicy {
+func (t *listWeatherAlertsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipment,
 		reads:    agent.ExternalReadAlways,
@@ -98,7 +98,7 @@ var severityRank = map[string]int{
 
 func (t *listWeatherAlertsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

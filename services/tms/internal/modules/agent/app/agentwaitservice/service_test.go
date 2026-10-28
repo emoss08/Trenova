@@ -5,20 +5,21 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -55,7 +56,10 @@ func (m *memoryWaits) Insert(_ context.Context, entity *agentwait.Wait) (*agentw
 	return entity, nil
 }
 
-func (m *memoryWaits) Get(_ context.Context, req *agentwaitports.GetAgentWaitRequest) (*agentwait.Wait, error) {
+func (m *memoryWaits) Get(
+	_ context.Context,
+	req *agentwaitports.GetAgentWaitRequest,
+) (*agentwait.Wait, error) {
 	wait, ok := m.items[req.ID]
 	if !ok || (req.ThreadID.IsNotNil() && wait.ThreadID != req.ThreadID) {
 		return nil, errortypes.NewNotFoundError("Wait not found")
@@ -158,7 +162,10 @@ func (m *memoryWaits) Resolve(
 	return wait, true, nil
 }
 
-func (m *memoryWaits) MarkResumed(_ context.Context, req *agentwaitports.MarkAgentWaitResumedRequest) error {
+func (m *memoryWaits) MarkResumed(
+	_ context.Context,
+	req *agentwaitports.MarkAgentWaitResumedRequest,
+) error {
 	m.resumed = append(m.resumed, *req)
 	wait := m.items[req.ID]
 	wait.ResumedTurnID = req.TurnID
@@ -173,7 +180,10 @@ type fakeMoves struct {
 	move *shipment.ShipmentMove
 }
 
-func (f *fakeMoves) GetByID(context.Context, *shipmentports.GetMoveByIDRequest) (*shipment.ShipmentMove, error) {
+func (f *fakeMoves) GetByID(
+	context.Context,
+	*shipmentports.GetMoveByIDRequest,
+) (*shipment.ShipmentMove, error) {
 	if f.move == nil {
 		return nil, errortypes.NewNotFoundError("Move not found")
 	}
@@ -256,7 +266,10 @@ type fakeTurns struct {
 	started []assistantturnservice.StartRequest
 }
 
-func (f *fakeTurns) Active(context.Context, agentports.ActiveAssistantTurnRequest) (*conversation.AssistantTurn, error) {
+func (f *fakeTurns) Active(
+	context.Context,
+	assistantports.ActiveAssistantTurnRequest,
+) (*conversation.AssistantTurn, error) {
 	return f.active, nil
 }
 
@@ -275,12 +288,12 @@ func (f *fakeTurns) StartTurn(
 }
 
 type fakeConversations struct {
-	agentports.ConversationRepository
+	assistantports.ConversationRepository
 }
 
 func (fakeConversations) GetThreadOwned(
 	_ context.Context,
-	req agentports.GetThreadOwnedRequest,
+	req assistantports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	return &conversation.Thread{
 		ID:             req.ID,
@@ -348,7 +361,10 @@ func newHarness(items ...*agentwait.Wait) *harness {
 	return h
 }
 
-func (h *harness) register(kind agentwait.Kind, condition agentwait.Condition) (*agentwait.Wait, error) {
+func (h *harness) register(
+	kind agentwait.Kind,
+	condition agentwait.Condition,
+) (*agentwait.Wait, error) {
 	return h.svc.Register(context.Background(), &agentwaitports.RegisterWaitRequest{
 		Actor:        h.actor,
 		DefinitionID: pulid.MustNew("agdef_"),
@@ -360,7 +376,11 @@ func (h *harness) register(kind agentwait.Kind, condition agentwait.Condition) (
 }
 
 func moveWithStop(arrived *int64) (*shipment.ShipmentMove, *shipment.Stop) {
-	stop := &shipment.Stop{ID: pulid.MustNew("stp_"), ScheduledWindowStart: now + 4*3600, ActualArrival: arrived}
+	stop := &shipment.Stop{
+		ID:                   pulid.MustNew("stp_"),
+		ScheduledWindowStart: now + 4*3600,
+		ActualArrival:        arrived,
+	}
 	move := &shipment.ShipmentMove{
 		ID:     pulid.MustNew("smv_"),
 		Status: shipment.MoveStatusInTransit,
@@ -479,8 +499,14 @@ func TestNotifyEvent_EndsOnlyTheWaitOnThatStop(t *testing.T) {
 
 	move := pulid.MustNew("smv_")
 	here, there := pulid.MustNew("stp_"), pulid.MustNew("stp_")
-	atHere := openWait(agentwait.KindStopArrival, agentwait.Condition{ShipmentMoveID: move, StopID: here})
-	atThere := openWait(agentwait.KindStopArrival, agentwait.Condition{ShipmentMoveID: move, StopID: there})
+	atHere := openWait(
+		agentwait.KindStopArrival,
+		agentwait.Condition{ShipmentMoveID: move, StopID: here},
+	)
+	atThere := openWait(
+		agentwait.KindStopArrival,
+		agentwait.Condition{ShipmentMoveID: move, StopID: there},
+	)
 	anyStop := openWait(agentwait.KindStopArrival, agentwait.Condition{ShipmentMoveID: move})
 	leaving := openWait(agentwait.KindStopDeparture, agentwait.Condition{ShipmentMoveID: move})
 	h := newHarness(atHere, atThere, anyStop, leaving)
@@ -523,7 +549,10 @@ func TestNotifyHOS_EndsTheWaitOnceDriveTimeDropsBelow(t *testing.T) {
 	t.Parallel()
 
 	worker := pulid.MustNew("wrk_")
-	waiting := openWait(agentwait.KindHOSDriveBelow, agentwait.Condition{WorkerID: worker, DriveMinutesBelow: 120})
+	waiting := openWait(
+		agentwait.KindHOSDriveBelow,
+		agentwait.Condition{WorkerID: worker, DriveMinutesBelow: 120},
+	)
 	h := newHarness(waiting)
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
@@ -589,7 +618,10 @@ func TestFinish_ABackgroundRunPicksUpOnTheSameRecord(t *testing.T) {
 	wait.SubjectID = pulid.MustNew("smv_")
 	h := newHarness(wait)
 
-	require.NoError(t, h.svc.Finish(context.Background(), finishInput(wait, agentwait.StatusTimedOut)))
+	require.NoError(
+		t,
+		h.svc.Finish(context.Background(), finishInput(wait, agentwait.StatusTimedOut)),
+	)
 
 	require.Len(t, h.runs.started, 1)
 	started := h.runs.started[0]
@@ -669,7 +701,10 @@ func TestNotifyHOS_MovesTheDueTimeAndTellsTheWorkflow(t *testing.T) {
 	t.Parallel()
 
 	worker := pulid.MustNew("wrk_")
-	waiting := openWait(agentwait.KindHOSDriveBelow, agentwait.Condition{WorkerID: worker, DriveMinutesBelow: 60})
+	waiting := openWait(
+		agentwait.KindHOSDriveBelow,
+		agentwait.Condition{WorkerID: worker, DriveMinutesBelow: 60},
+	)
 	h := newHarness(waiting)
 	tenant := pagination.TenantInfo{OrgID: waiting.OrganizationID, BuID: waiting.BusinessUnitID}
 
@@ -698,7 +733,10 @@ func TestCheck_ProjectsDriveTimeFromTheLastClockRead(t *testing.T) {
 	t.Parallel()
 
 	worker := pulid.MustNew("wrk_")
-	waiting := openWait(agentwait.KindHOSDriveBelow, agentwait.Condition{WorkerID: worker, DriveMinutesBelow: 60})
+	waiting := openWait(
+		agentwait.KindHOSDriveBelow,
+		agentwait.Condition{WorkerID: worker, DriveMinutesBelow: 60},
+	)
 	h := newHarness(waiting)
 	h.hos.state = &telematics.WorkerHOSState{
 		DutyStatus: telematics.DutyStatusDriving, DriveRemainingMs: 90 * 60 * 1000, RecordedAt: now - 31*60,
@@ -782,7 +820,9 @@ func TestNotifyPositions_LeavingIsBeingOutsideAfterBeingInside(t *testing.T) {
 	tractor := pulid.MustNew("trc_")
 	h.svc.facts.assignments = &fakeAssignments{tractor: tractor}
 	tenant := pagination.TenantInfo{OrgID: waiting.OrganizationID, BuID: waiting.BusinessUnitID}
-	outside := []*telematics.VehiclePosition{{TractorID: tractor, Latitude: 36.40, Longitude: -94.2088, RecordedAt: now}}
+	outside := []*telematics.VehiclePosition{
+		{TractorID: tractor, Latitude: 36.40, Longitude: -94.2088, RecordedAt: now},
+	}
 
 	h.svc.NotifyPositions(context.Background(), tenant, outside)
 	assert.Empty(t, h.workflows.signals, "outside before ever being inside is not leaving")
@@ -812,7 +852,12 @@ func TestNotifyPositions_AStalePositionSaysNothing(t *testing.T) {
 	h.svc.NotifyPositions(context.Background(),
 		pagination.TenantInfo{OrgID: waiting.OrganizationID, BuID: waiting.BusinessUnitID},
 		[]*telematics.VehiclePosition{
-			{TractorID: tractor, Latitude: 36.3731, Longitude: -94.2088, RecordedAt: now - positionFreshFor - 1},
+			{
+				TractorID:  tractor,
+				Latitude:   36.3731,
+				Longitude:  -94.2088,
+				RecordedAt: now - positionFreshFor - 1,
+			},
 		})
 
 	assert.Empty(t, h.workflows.signals)
@@ -821,7 +866,10 @@ func TestNotifyPositions_AStalePositionSaysNothing(t *testing.T) {
 func TestMeet_ASecondNoticeOfAWaitAlreadyEndedPicksNothingUp(t *testing.T) {
 	t.Parallel()
 
-	waiting := openWait(agentwait.KindStopArrival, agentwait.Condition{ShipmentMoveID: pulid.MustNew("smv_")})
+	waiting := openWait(
+		agentwait.KindStopArrival,
+		agentwait.Condition{ShipmentMoveID: pulid.MustNew("smv_")},
+	)
 	waiting.Status = agentwait.StatusMet
 	h := newHarness(waiting)
 	h.workflows.signalFn = func(string) error { return serviceerror.NewNotFound("workflow completed") }
@@ -834,7 +882,10 @@ func TestMeet_ASecondNoticeOfAWaitAlreadyEndedPicksNothingUp(t *testing.T) {
 func TestMeet_AnOpenWaitWhoseWorkflowIsGoneIsPickedUpHere(t *testing.T) {
 	t.Parallel()
 
-	waiting := openWait(agentwait.KindStopArrival, agentwait.Condition{ShipmentMoveID: pulid.MustNew("smv_")})
+	waiting := openWait(
+		agentwait.KindStopArrival,
+		agentwait.Condition{ShipmentMoveID: pulid.MustNew("smv_")},
+	)
 	h := newHarness(waiting)
 	h.workflows.signalFn = func(string) error { return serviceerror.NewNotFound("no such workflow") }
 

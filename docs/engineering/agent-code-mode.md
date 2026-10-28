@@ -452,7 +452,7 @@ The gate has two parts.
    reply, while the tools are sent with the first request and must not change mid-turn.
    - **Offering.** The gate is checked twice. When the turn opens, the script tool is offered
      only while some provider that may answer the tenant's assistant chat has Scripts on
-     (`Gate.Offered`, from `agentports.ScriptProviders.ScriptsOffered`, which `completionrouter`
+     (`Gate.Offered`, from `llmports.ScriptProviders.ScriptsOffered`, which `completionrouter`
      implements in `scripts.go`); otherwise `OpenTurn` takes it out of the turn's tools
      (`withoutScripts`). Turning Scripts on mid-turn does not add the tool to a turn already
      open.
@@ -676,7 +676,7 @@ decides from its own use whether to keep it.
 |---|---|
 | Gate, limits, call and reply types | `internal/modules/agent/domain/codemode/` (`gate.go`, `limits.go`, `script.go`) |
 | Provider settings (Scripts, Scripts may propose writes) | `aiprovider` (`agentsettings.go`, `ScriptSettings`); migrations `20261231010200_ai_provider_agent_settings` and `20261231010530_code_mode_scripts_on` |
-| Which providers offer scripts, and the answering provider's settings at dispatch | `completionrouter/scripts.go` (`agentports.ScriptProviders`) |
+| Which providers offer scripts, and the answering provider's settings at dispatch | `completionrouter/scripts.go` (`llmports.ScriptProviders`) |
 | Broker, index, gate check, per-turn count | `agentruntime/scriptbroker.go`, `scripttool.go` |
 | `ToolPolicy.Script`, `CallableFromScript`, `QueryToolParams.Broker` | `agentports/toolpolicy.go`, `agentquerytool.go` |
 | The tool | `agentquerytoolservice/script_tool.go` |

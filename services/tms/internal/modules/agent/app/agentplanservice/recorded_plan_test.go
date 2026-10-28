@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -90,16 +91,16 @@ func TestRecordedTurn_FilesOnePlanThatApproveAllRuns(t *testing.T) {
 		Plans:     proposalrecorder.NewPlanStore(plans),
 	})
 
-	actions := make([]agentports.PendingAction, 0, 5)
+	actions := make([]agentruntimeports.PendingAction, 0, 5)
 	for range 5 {
-		actions = append(actions, agentports.PendingAction{
+		actions = append(actions, agentruntimeports.PendingAction{
 			ProposalID: pulid.MustNew("ap_"),
 			ToolName:   "billing_start_review",
 			Arguments:  map[string]any{"invoiceId": pulid.MustNew("inv_").String()},
 			Rationale:  "move the drafts into review",
 			Tier:       agent.TierPropose,
 			Egress:     agent.EgressInternal,
-			Target: &agentports.ProposalTarget{
+			Target: &agentruntimeports.ProposalTarget{
 				Resource: permission.ResourceInvoice,
 				ID:       pulid.MustNew("inv_"),
 			},
@@ -122,7 +123,7 @@ func TestRecordedTurn_FilesOnePlanThatApproveAllRuns(t *testing.T) {
 			BusinessUnitID: buID,
 		},
 		Actions: actions,
-		Evidence: func(agentports.PendingAction, pulid.ID) []agent.EvidenceRef {
+		Evidence: func(agentruntimeports.PendingAction, pulid.ID) []agent.EvidenceRef {
 			return []agent.EvidenceRef{{Type: "message", ID: "amsg_1"}}
 		},
 	})

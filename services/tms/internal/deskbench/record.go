@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -116,32 +117,32 @@ type ProposalRecord struct {
 }
 
 type TurnRecord struct {
-	TurnID       pulid.ID                         `json:"turnId"`
-	RunID        pulid.ID                         `json:"runId,omitzero"`
-	ThreadID     pulid.ID                         `json:"threadId"`
-	TraceID      string                           `json:"traceId,omitempty"`
-	Origin       conversation.AssistantTurnOrigin `json:"origin"`
-	Input        string                           `json:"input,omitempty"`
-	Status       conversation.AssistantTurnStatus `json:"status"`
-	Refused      bool                             `json:"refused"`
-	Failure      string                           `json:"failure,omitempty"`
-	Reply        string                           `json:"reply"`
-	StartedAt    time.Time                        `json:"startedAt"`
-	FinishedAt   time.Time                        `json:"finishedAt"`
-	Tools        []*ToolCallRecord                `json:"tools"`
-	Events       []Event                          `json:"events"`
-	StreamDeltas int                              `json:"streamDeltas"`
-	ModelCalls   []*ModelCall                     `json:"-"`
-	Calls        []CallSummary                    `json:"modelCalls"`
-	Messages     []conversation.Message           `json:"messages,omitempty"`
-	Proposals    []*ProposalRecord                `json:"proposals,omitempty"`
-	Artifacts    []agentports.AssistantArtifact   `json:"artifacts,omitempty"`
-	Usage        Usage                            `json:"usage"`
-	FirstTokenMs *int64                           `json:"firstTokenMs,omitempty"`
-	Disclosures  []Disclosure                     `json:"disclosures,omitempty"`
-	Models       []string                         `json:"models,omitempty"`
-	Unattributed []CallSummary                    `json:"unattributedModelCalls,omitempty"`
-	CaptureError string                           `json:"captureError,omitempty"`
+	TurnID       pulid.ID                           `json:"turnId"`
+	RunID        pulid.ID                           `json:"runId,omitzero"`
+	ThreadID     pulid.ID                           `json:"threadId"`
+	TraceID      string                             `json:"traceId,omitempty"`
+	Origin       conversation.AssistantTurnOrigin   `json:"origin"`
+	Input        string                             `json:"input,omitempty"`
+	Status       conversation.AssistantTurnStatus   `json:"status"`
+	Refused      bool                               `json:"refused"`
+	Failure      string                             `json:"failure,omitempty"`
+	Reply        string                             `json:"reply"`
+	StartedAt    time.Time                          `json:"startedAt"`
+	FinishedAt   time.Time                          `json:"finishedAt"`
+	Tools        []*ToolCallRecord                  `json:"tools"`
+	Events       []Event                            `json:"events"`
+	StreamDeltas int                                `json:"streamDeltas"`
+	ModelCalls   []*ModelCall                       `json:"-"`
+	Calls        []CallSummary                      `json:"modelCalls"`
+	Messages     []conversation.Message             `json:"messages,omitempty"`
+	Proposals    []*ProposalRecord                  `json:"proposals,omitempty"`
+	Artifacts    []assistantports.AssistantArtifact `json:"artifacts,omitempty"`
+	Usage        Usage                              `json:"usage"`
+	FirstTokenMs *int64                             `json:"firstTokenMs,omitempty"`
+	Disclosures  []Disclosure                       `json:"disclosures,omitempty"`
+	Models       []string                           `json:"models,omitempty"`
+	Unattributed []CallSummary                      `json:"unattributedModelCalls,omitempty"`
+	CaptureError string                             `json:"captureError,omitempty"`
 }
 
 func (t *TurnRecord) Duration() time.Duration {
@@ -149,35 +150,35 @@ func (t *TurnRecord) Duration() time.Duration {
 }
 
 type CallSummary struct {
-	Seq             int                             `json:"seq"`
-	Kind            ModelCallKind                   `json:"kind"`
-	File            string                          `json:"file,omitempty"`
-	Model           string                          `json:"model,omitempty"`
-	Provider        string                          `json:"provider,omitempty"`
-	Delegate        string                          `json:"delegateCallId,omitempty"`
-	Messages        int                             `json:"messages"`
-	Tools           int                             `json:"tools"`
-	SystemDigest    string                          `json:"systemDigest,omitempty"`
-	ToolsDigest     string                          `json:"toolsDigest,omitempty"`
-	InputTokens     int                             `json:"inputTokens"`
-	CacheRead       int                             `json:"cacheReadTokens,omitempty"`
-	CacheWrite      int                             `json:"cacheWriteTokens,omitempty"`
-	OutputTokens    int                             `json:"outputTokens"`
-	ReasoningTokens int                             `json:"reasoningTokens"`
-	Advisor         *aiprovider.AdvisorUsage        `json:"advisor,omitempty"`
-	CostUSD         *decimal.Decimal                `json:"costUsd,omitempty"`
-	PriceSource     PriceSource                     `json:"priceSource,omitempty"`
-	Reask           string                          `json:"reask,omitempty"`
-	FirstTokenMs    *int64                          `json:"firstTokenMs,omitempty"`
-	LatencyMs       int64                           `json:"latencyMs"`
-	Truncated       bool                            `json:"truncated,omitempty"`
-	CutOffCall      string                          `json:"cutOffCall,omitempty"`
-	Text            string                          `json:"text,omitempty"`
-	Thinking        string                          `json:"thinking,omitempty"`
-	ToolCalls       []agentports.ToolCall           `json:"toolCalls,omitempty"`
-	FallbackFrom    *agentports.ChatProviderFailure `json:"fallbackFrom,omitempty"`
-	Retries         []agentports.ChatRetryNotice    `json:"retries,omitempty"`
-	Error           string                          `json:"error,omitempty"`
+	Seq             int                           `json:"seq"`
+	Kind            ModelCallKind                 `json:"kind"`
+	File            string                        `json:"file,omitempty"`
+	Model           string                        `json:"model,omitempty"`
+	Provider        string                        `json:"provider,omitempty"`
+	Delegate        string                        `json:"delegateCallId,omitempty"`
+	Messages        int                           `json:"messages"`
+	Tools           int                           `json:"tools"`
+	SystemDigest    string                        `json:"systemDigest,omitempty"`
+	ToolsDigest     string                        `json:"toolsDigest,omitempty"`
+	InputTokens     int                           `json:"inputTokens"`
+	CacheRead       int                           `json:"cacheReadTokens,omitempty"`
+	CacheWrite      int                           `json:"cacheWriteTokens,omitempty"`
+	OutputTokens    int                           `json:"outputTokens"`
+	ReasoningTokens int                           `json:"reasoningTokens"`
+	Advisor         *aiprovider.AdvisorUsage      `json:"advisor,omitempty"`
+	CostUSD         *decimal.Decimal              `json:"costUsd,omitempty"`
+	PriceSource     PriceSource                   `json:"priceSource,omitempty"`
+	Reask           string                        `json:"reask,omitempty"`
+	FirstTokenMs    *int64                        `json:"firstTokenMs,omitempty"`
+	LatencyMs       int64                         `json:"latencyMs"`
+	Truncated       bool                          `json:"truncated,omitempty"`
+	CutOffCall      string                        `json:"cutOffCall,omitempty"`
+	Text            string                        `json:"text,omitempty"`
+	Thinking        string                        `json:"thinking,omitempty"`
+	ToolCalls       []llmports.ToolCall           `json:"toolCalls,omitempty"`
+	FallbackFrom    *llmports.ChatProviderFailure `json:"fallbackFrom,omitempty"`
+	Retries         []llmports.ChatRetryNotice    `json:"retries,omitempty"`
+	Error           string                        `json:"error,omitempty"`
 }
 
 type DecisionRecord struct {

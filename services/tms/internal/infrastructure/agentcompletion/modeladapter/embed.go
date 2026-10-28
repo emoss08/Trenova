@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -136,7 +136,7 @@ func (r *Registry) Embedder(kind aiprovider.Kind) (Embedder, error) {
 	if !ok {
 		return nil, errortypes.NewBusinessError(
 			"The {0} protocol has no embedding endpoint", string(kind),
-		).WithInternal(agentports.ErrNoProviderConfigured)
+		).WithInternal(llmports.ErrNoProviderConfigured)
 	}
 
 	return embedder, nil

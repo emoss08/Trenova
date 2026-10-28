@@ -8,7 +8,7 @@ package workersafetyservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -59,7 +59,7 @@ type Params struct {
 	DocumentRepo documentports.DocumentRepository
 	Employment   *workeremploymentservice.Service
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService         `optional:"true"`
+	Realtime     realtimeports.RealtimeService      `optional:"true"`
 	DriverNotify *drivernotificationservice.Service `optional:"true"`
 }
 
@@ -70,7 +70,7 @@ type Service struct {
 	documentRepo documentports.DocumentRepository
 	employment   EmploymentRecorder
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 	driverNotify *drivernotificationservice.Service
 }
 

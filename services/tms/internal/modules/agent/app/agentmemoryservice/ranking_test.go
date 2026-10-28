@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -64,7 +64,7 @@ func TestRecencyRanker_RanksThroughThePort(t *testing.T) {
 	now := int64(1_800_000_000)
 	old, recent := memoryAt(now-60*day, 0), memoryAt(now, 0)
 
-	ranked, err := NewRecencyRanker().RankMemories(t.Context(), &agentports.RankMemoriesRequest{
+	ranked, err := NewRecencyRanker().RankMemories(t.Context(), &agentmemoryports.RankMemoriesRequest{
 		TenantInfo: tenant(),
 		Now:        now,
 		Memories:   []*agent.Memory{old, recent},

@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -50,7 +50,7 @@ func (r *QueryResolver) AiProviders(ctx context.Context, input gqlmodel.DataTabl
 
 	result, err := r.AiProviderService.ListConnection(
 		ctx,
-		&agentports.ListAIProviderConnectionRequest{
+		&aiproviderports.ListAIProviderConnectionRequest{
 			Filter:  tableInput.Filter,
 			Cursor:  tableInput.Cursor,
 			Columns: aiProviderColumns(ctx, "edges.node"),
@@ -74,7 +74,7 @@ func (r *QueryResolver) AiProvider(ctx context.Context, id string) (*aiprovider.
 		return nil, err
 	}
 
-	return r.AiProviderService.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	return r.AiProviderService.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -95,9 +95,9 @@ func (r *QueryResolver) AiRoutePreview(ctx context.Context, draft gqlmodel.AIPro
 		return nil, err
 	}
 
-	routes, err := r.AiProviderService.RoutePreview(ctx, &agentports.AIProviderRoutePreviewRequest{
+	routes, err := r.AiProviderService.RoutePreview(ctx, &aiproviderports.AIProviderRoutePreviewRequest{
 		TenantInfo: base.TenantInfo(authCtx),
-		Draft: agentports.AIProviderRoutingDraft{
+		Draft: aiproviderports.AIProviderRoutingDraft{
 			ID:                  providerID,
 			Name:                draft.Name,
 			Kind:                draft.Kind,
@@ -140,7 +140,7 @@ func (r *AIProviderResolver) APIKey(ctx context.Context, obj *aiprovider.Provide
 	return obj.KeyInfo(timeutils.NowUnix()), nil
 }
 
-func (r *MutationResolver) TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*agentports.TestAIProviderResult, error) {
+func (r *MutationResolver) TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*aiproviderports.TestAIProviderResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (r *MutationResolver) TestAIProviderDraft(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	req := &agentports.TestAIProviderDraftRequest{
+	req := &aiproviderports.TestAIProviderDraftRequest{
 		TenantInfo:          base.TenantInfo(authCtx),
 		Endpoint:            endpoint,
 		Model:               input.Model,
@@ -180,7 +180,7 @@ func (r *MutationResolver) ReorderAIProviders(ctx context.Context, ids []string)
 		return nil, err
 	}
 
-	return r.AiProviderService.Reorder(ctx, &agentports.ReorderAIProvidersRequest{
+	return r.AiProviderService.Reorder(ctx, &aiproviderports.ReorderAIProvidersRequest{
 		TenantInfo:  base.TenantInfo(authCtx),
 		ProviderIDs: providerIDs,
 	}, actorutil.FromAuthContext(authCtx))
@@ -219,7 +219,7 @@ func (r *QueryResolver) AiProviderModels(ctx context.Context, input gqlmodel.AIP
 		return nil, err
 	}
 
-	models, err := r.AiProviderService.ListModels(ctx, &agentports.ListAIProviderModelsRequest{
+	models, err := r.AiProviderService.ListModels(ctx, &aiproviderports.ListAIProviderModelsRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Endpoint:   endpoint,
 	})
@@ -245,7 +245,7 @@ func (r *MutationResolver) RouteAITask(ctx context.Context, task aiprovider.Task
 		return nil, err
 	}
 
-	return r.AiProviderService.RouteTask(ctx, &agentports.RouteAIProviderTaskRequest{
+	return r.AiProviderService.RouteTask(ctx, &aiproviderports.RouteAIProviderTaskRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ProviderID: id,
 		Task:       task,

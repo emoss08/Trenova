@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,7 +31,7 @@ type meetingConversations struct {
 
 func (m *meetingConversations) ListMessages(
 	ctx context.Context,
-	req agentports.ListMessagesRequest,
+	req assistantports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	close(m.listing)
 	m.listSawCount.Store(waitFor(ctx, m.counting))
@@ -41,7 +41,7 @@ func (m *meetingConversations) ListMessages(
 
 func (m *meetingConversations) CountMessages(
 	ctx context.Context,
-	req agentports.CountMessagesRequest,
+	req assistantports.CountMessagesRequest,
 ) (int, error) {
 	close(m.counting)
 	m.countSawList.Store(waitFor(ctx, m.listing))
@@ -68,7 +68,7 @@ func TestPrepareTurn_ReadsTheHistoryWhileTheRoomIsCounted(t *testing.T) {
 	svc.conversations = meeting
 	actor := testActor()
 
-	plan, err := svc.PrepareTurn(t.Context(), &agentports.SendMessageRequest{
+	plan, err := svc.PrepareTurn(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Where is S1?",
 		TenantInfo: actor.TenantInfo(),
@@ -91,7 +91,7 @@ func TestPrepareTurn_ReportsTheFirstFailingCheckInItsOldOrder(t *testing.T) {
 	conversations.count = maxThreadMessages
 	actor := testActor()
 
-	_, err := svc.PrepareTurn(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.PrepareTurn(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Where is S1?",
 		TenantInfo: actor.TenantInfo(),
@@ -157,7 +157,7 @@ func TestPrepareTurn_ReadsAttachedFilesTogether(t *testing.T) {
 	})
 	svc.documents = documents
 
-	plan, err := svc.PrepareTurn(t.Context(), &agentports.SendMessageRequest{
+	plan, err := svc.PrepareTurn(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:              conversations.thread.ID,
 		Content:               "Compare these",
 		TenantInfo:            actor.TenantInfo(),
@@ -189,7 +189,7 @@ func TestPrepareTurn_AnswersAPaletteQuestionInline(t *testing.T) {
 		conversations.thread.Origin = tc.origin
 		actor := testActor()
 
-		plan, runReq, err := svc.prepareTurn(t.Context(), &agentports.SendMessageRequest{
+		plan, runReq, err := svc.prepareTurn(t.Context(), &assistantports.SendMessageRequest{
 			ThreadID:   conversations.thread.ID,
 			Content:    "What shipment types do we have?",
 			TenantInfo: actor.TenantInfo(),

@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -46,7 +46,7 @@ func provideDraftEDIConnectionTool(
 	drafts ediports.EDIConnectionDraftService,
 	documents documentports.DocumentRepository,
 	contents documentports.DocumentContentService,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newDraftEDIConnectionTool(drafts, edispec.NewDocumentReader(documents, contents))
 }
 
@@ -58,7 +58,7 @@ type draftEDIConnectionTool struct {
 func newDraftEDIConnectionTool(
 	drafts connectionDraftPlanner,
 	documents specDocumentReader,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &draftEDIConnectionTool{drafts: drafts, documents: documents}
 }
 
@@ -88,7 +88,7 @@ func (t *draftEDIConnectionTool) ParamSchema() map[string]any {
 	return edispec.ParamSchema(false)
 }
 
-func (t *draftEDIConnectionTool) Policy() agentports.ToolPolicy {
+func (t *draftEDIConnectionTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:        permission.ResourceEDI,
 		reads:           agent.ExternalReadAlways,
@@ -109,7 +109,7 @@ type connectionDraftView struct {
 
 func (t *draftEDIConnectionTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

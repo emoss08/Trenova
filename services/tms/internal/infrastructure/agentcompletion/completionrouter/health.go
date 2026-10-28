@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -46,7 +46,7 @@ type providerHealth struct {
 	clock   func() time.Time
 	entries map[pulid.ID]*healthEntry
 
-	shared      agentports.ProviderBreakerRepository
+	shared      llmports.ProviderBreakerRepository
 	logger      *zap.Logger
 	sharedAfter time.Time
 	sharedDown  bool
@@ -70,7 +70,7 @@ func newProviderHealth(clock func() time.Time) *providerHealth {
 }
 
 func (h *providerHealth) share(
-	store agentports.ProviderBreakerRepository,
+	store llmports.ProviderBreakerRepository,
 	logger *zap.Logger,
 ) *providerHealth {
 	h.shared = store

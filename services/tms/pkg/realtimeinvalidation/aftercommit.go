@@ -3,7 +3,7 @@ package realtimeinvalidation
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -60,7 +60,7 @@ func (c *RecordChange) params() *PublishParams {
 
 func PublishAfterCommit(
 	ctx context.Context,
-	realtime agentports.RealtimeService,
+	realtime realtimeports.RealtimeService,
 	logger *zap.Logger,
 	change *RecordChange,
 ) {

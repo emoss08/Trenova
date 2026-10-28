@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
@@ -77,11 +77,11 @@ func alertRecord(subscription *tablechangealert.TCASubscription) toolpreview.Rec
 	}
 }
 
-func targetAlert(params map[string]any) (agentports.ToolTarget, bool) {
+func targetAlert(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, ParamAlertID, permission.ResourceTableChangeAlert)
 }
 
-func alertIDRequest(params *agentports.ToolExecuteParams) (pulid.ID, error) {
+func alertIDRequest(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
 	return common.RequirePulid(params.Params, ParamAlertID)
 }
 
@@ -90,7 +90,7 @@ type alertEdit struct {
 	values map[string]any
 }
 
-func alertEditFrom(params *agentports.ToolExecuteParams) (*alertEdit, error) {
+func alertEditFrom(params *agenttoolports.ToolExecuteParams) (*alertEdit, error) {
 	id, err := common.RequirePulid(params.Params, ParamAlertID)
 	if err != nil {
 		return nil, err
@@ -153,7 +153,7 @@ func (e *alertEdit) apply(subscription *tablechangealert.TCASubscription) error 
 func (e *alertEdit) Build(
 	ctx context.Context,
 	alerts AlertKeeper,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*tablechangealert.TCASubscription, error) {
 	stored, err := alerts.GetSubscriptionByID(
 		ctx,
@@ -176,7 +176,7 @@ func (e *alertEdit) Build(
 	return &changed, nil
 }
 
-func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agentports.AgentTool {
+func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool {
 	properties := alertProperties(common.KeepWhenLeftOut)
 	properties[ParamAlertID] = agenttoolschema.RecordIDText(
 		permission.ResourceTableChangeAlert, alertSupplier,
@@ -207,7 +207,7 @@ func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			edit *alertEdit,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*kernelports.RecordChange[tablechangealert.TCASubscription], error) {
 			entity, err := edit.Build(ctx, alerts, params)
 			if err != nil {
@@ -234,7 +234,7 @@ func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			edit *alertEdit,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			entity, err := edit.Build(ctx, alerts, params)
 			if err != nil {
@@ -260,7 +260,7 @@ type alertStatusChange struct {
 	status tablechangealert.SubscriptionStatus
 }
 
-func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agentports.AgentTool {
+func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
 		Name: "report_set_table_change_alert_status",
 		Description: "Pause one of the person's change alerts so it stops notifying them, or " +
@@ -286,7 +286,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agentports.AgentTool {
 		SearchTerms: []string{"pause alert", "resume alert", "mute notification"},
 		Target:      targetAlert,
 	}, common.ReceivablePlan[*alertStatusChange, *kernelports.RecordChange[tablechangealert.TCASubscription]]{
-		Request: func(params *agentports.ToolExecuteParams) (*alertStatusChange, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*alertStatusChange, error) {
 			id, err := alertIDRequest(params)
 			if err != nil {
 				return nil, err
@@ -305,7 +305,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			change *alertStatusChange,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*kernelports.RecordChange[tablechangealert.TCASubscription], error) {
 			return alerts.PlanSetSubscriptionStatus(ctx, change.id, common.TenantFrom(*params),
 				change.status)
@@ -330,7 +330,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			change *alertStatusChange,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			set := alerts.ResumeSubscription
 			if change.status == tablechangealert.SubscriptionStatusPaused {
@@ -351,7 +351,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agentports.AgentTool {
 	})
 }
 
-func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agentports.AgentTool {
+func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
 		Name:        "report_delete_table_change_alert",
 		Description: "Delete one of the person's change alerts they no longer want.",
@@ -373,7 +373,7 @@ func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*tablechangealert.TCASubscription, error) {
 			return alerts.PlanDeleteSubscription(ctx, id, common.TenantFrom(*params))
 		},
@@ -394,7 +394,7 @@ func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if err := alerts.DeleteSubscription(ctx, id, common.TenantFrom(*params)); err != nil {
 				return nil, err

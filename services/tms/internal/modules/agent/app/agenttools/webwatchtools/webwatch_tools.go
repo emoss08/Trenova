@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -48,8 +48,8 @@ var (
 // that goes on: it sends the search to the organization's vendor, spends on
 // its account and reaches nobody, so it runs on its own; a turn that read
 // outside content still proposes it, as every later write.
-func watchPolicy(name, rationale string) agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func watchPolicy(name, rationale string) agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          name,
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceWebResearch,
@@ -77,7 +77,7 @@ func NewWatchWebTool(
 	watches agentextensionports.WebWatcher,
 	waits agentextensionports.WebWatchWaits,
 	logger *zap.Logger,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
@@ -133,7 +133,7 @@ func (t *WatchWebTool) ParamSchema() map[string]any {
 	}, paramPurpose, paramQuery)
 }
 
-func (t *WatchWebTool) Policy() agentports.ToolPolicy {
+func (t *WatchWebTool) Policy() agenttoolports.ToolPolicy {
 	return watchPolicy(t.Name(), "Sets a scheduled search on the organization's web research "+
 		"vendor for the person; it changes no record, reaches nobody, and ends on its own or "+
 		"when stopped.")
@@ -147,7 +147,7 @@ func (t *WatchWebTool) SearchTerms() []string {
 }
 
 func (t *WatchWebTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentextensionports.WebWatchRequest, error) {
 	purpose, err := common.RequireString(params.Params, paramPurpose)
 	if err != nil {
@@ -181,7 +181,7 @@ func (t *WatchWebTool) request(
 
 func (t *WatchWebTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -203,7 +203,7 @@ func (t *WatchWebTool) Validate(
 // vendor.
 func (t *WatchWebTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := common.GuardPreview(t, &params); err != nil {
 		return nil, err
@@ -246,7 +246,7 @@ func endDay(at int64) string {
 
 func (t *WatchWebTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -258,7 +258,7 @@ func (t *WatchWebTool) Execute(
 // one, and it would bill for nothing.
 func (t *WatchWebTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return nil, err
@@ -327,7 +327,7 @@ type StopWebWatchTool struct {
 func NewStopWebWatchTool(
 	watches agentextensionports.WebWatcher,
 	waits agentextensionports.WebWatchWaits,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &StopWebWatchTool{watches: watches, waits: waits}
 }
 
@@ -351,7 +351,7 @@ func (t *StopWebWatchTool) ParamSchema() map[string]any {
 	}, paramWatchID)
 }
 
-func (t *StopWebWatchTool) Policy() agentports.ToolPolicy {
+func (t *StopWebWatchTool) Policy() agenttoolports.ToolPolicy {
 	return watchPolicy(t.Name(), "Stops a scheduled search the person set; it changes no "+
 		"record and reaches nobody.")
 }
@@ -361,7 +361,7 @@ func (t *StopWebWatchTool) SearchTerms() []string {
 }
 
 func (t *StopWebWatchTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentextensionports.StopWebWatchRequest, error) {
 	watchID, err := common.RequirePulid(params.Params, paramWatchID)
 	if err != nil {
@@ -378,7 +378,7 @@ func (t *StopWebWatchTool) request(
 
 func (t *StopWebWatchTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -390,7 +390,7 @@ func (t *StopWebWatchTool) Validate(
 
 func (t *StopWebWatchTool) Preview(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := common.GuardPreview(t, &params); err != nil {
 		return nil, err
@@ -405,7 +405,7 @@ func (t *StopWebWatchTool) Preview(
 
 func (t *StopWebWatchTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -414,7 +414,7 @@ func (t *StopWebWatchTool) Execute(
 
 func (t *StopWebWatchTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return nil, err

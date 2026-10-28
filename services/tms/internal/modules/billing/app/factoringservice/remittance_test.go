@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -179,7 +179,10 @@ func (f *fakeRemittances) GetProfile(
 	return f.profile, nil
 }
 
-func (f *fakeRemittances) SaveProfile(_ context.Context, profile *factoring.RemittanceProfile) error {
+func (f *fakeRemittances) SaveProfile(
+	_ context.Context,
+	profile *factoring.RemittanceProfile,
+) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.saved = append(f.saved, profile)
@@ -215,7 +218,10 @@ func (f *fakeLedger) PlanFunding(
 		}
 		plan.FundedCount++
 		plan.AdvanceMinor += *item.AdvanceMinor
-		plan.Movements = append(plan.Movements, &factoringports.PlannedMovement{ItemID: item.ItemID})
+		plan.Movements = append(
+			plan.Movements,
+			&factoringports.PlannedMovement{ItemID: item.ItemID},
+		)
 	}
 	return plan, nil
 }
@@ -244,7 +250,10 @@ func (f *fakeLedger) RecordFunding(
 			})
 		}
 	}
-	return &factoringports.FundingResult{Submission: f.bump(req.SubmissionID), Entries: entries}, nil
+	return &factoringports.FundingResult{
+		Submission: f.bump(req.SubmissionID),
+		Entries:    entries,
+	}, nil
 }
 
 func (f *fakeLedger) ReleaseReserve(
@@ -778,7 +787,12 @@ func TestRemittanceIngestEmailFindsTheFactorAndIsIdempotent(t *testing.T) {
 
 	again, err := h.svc.IngestEmail(t.Context(), req)
 	require.NoError(t, err)
-	assert.Equal(t, ingested.RemittanceIDs, again.RemittanceIDs, "a retried message opens nothing twice")
+	assert.Equal(
+		t,
+		ingested.RemittanceIDs,
+		again.RemittanceIDs,
+		"a retried message opens nothing twice",
+	)
 }
 
 type fakeRemitContent struct {
@@ -801,17 +815,17 @@ func (f *fakeRemitContent) GetContent(
 }
 
 type fakeRemitCompletion struct {
-	agentports.CompletionService
+	llmports.CompletionService
 	reply string
-	req   *agentports.StructuredCompletionRequest
+	req   *llmports.StructuredCompletionRequest
 }
 
 func (f *fakeRemitCompletion) CompleteStructured(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	f.req = req
-	return &agentports.StructuredCompletionResult{Text: f.reply}, nil
+	return &llmports.StructuredCompletionResult{Text: f.reply}, nil
 }
 
 type fakeStageStarter struct {

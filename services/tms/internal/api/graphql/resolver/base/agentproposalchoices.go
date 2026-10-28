@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"go.uber.org/zap"
@@ -26,7 +26,7 @@ func (r *Core) SubsetChoices(
 
 	labelled := *field
 	labelled.Choices = slices.Clone(field.Choices)
-	agentports.LabelSubsetChoices(&labelled, r.subsetLabels(ctx, field))
+	agentruntimeports.LabelSubsetChoices(&labelled, r.subsetLabels(ctx, field))
 
 	out := make([]*toolschema.Choice, len(labelled.Choices))
 	for idx := range labelled.Choices {
@@ -43,7 +43,7 @@ func (r *Core) SubsetChoices(
 func (r *Core) subsetLabels(
 	ctx context.Context,
 	field *toolschema.Field,
-) agentports.RecordLabels {
+) agentruntimeports.RecordLabels {
 	if len(field.Choices) == 0 || field.Resource == "" {
 		return nil
 	}

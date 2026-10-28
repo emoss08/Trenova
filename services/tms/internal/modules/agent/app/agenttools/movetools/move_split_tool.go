@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -39,7 +39,7 @@ type moveSplitter interface {
 	) (*shipmentports.MoveSplitPlan, error)
 }
 
-func NewSplitMoveTool(moves moveSplitter) agentports.AgentTool {
+func NewSplitMoveTool(moves moveSplitter) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
 		Name:     "dispatch_split_move",
 		Artifact: common.ShipmentRecordEntity,
@@ -90,7 +90,7 @@ func NewSplitMoveTool(moves moveSplitter) agentports.AgentTool {
 		Required: []string{
 			ParamMoveID, ParamNewDeliveryLocationID, ParamRelayPickupStart, ParamNewDeliveryStart,
 		},
-		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
+		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return common.TargetOf(params, ParamMoveID, permission.ResourceShipmentMove)
 		},
 	}, common.ReceivablePlan[*shipmentports.SplitMoveRequest, *shipmentports.MoveSplitPlan]{
@@ -98,7 +98,7 @@ func NewSplitMoveTool(moves moveSplitter) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *shipmentports.SplitMoveRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*shipmentports.MoveSplitPlan, error) {
 			return moves.PreviewSplitMove(ctx, req)
 		},
@@ -109,7 +109,7 @@ func NewSplitMoveTool(moves moveSplitter) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *shipmentports.SplitMoveRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			response, err := moves.SplitMove(ctx, req)
 			if err != nil {
@@ -129,7 +129,7 @@ func NewSplitMoveTool(moves moveSplitter) agentports.AgentTool {
 }
 
 func splitMoveRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentports.SplitMoveRequest, error) {
 	moveID, err := common.RequirePulid(params.Params, ParamMoveID)
 	if err != nil {

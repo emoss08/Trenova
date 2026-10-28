@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,7 +21,7 @@ type selfScopedAction struct {
 	*agenttest.StubActionTool
 }
 
-func (a selfScopedAction) Policy() agentports.ToolPolicy {
+func (a selfScopedAction) Policy() agenttoolports.ToolPolicy {
 	policy := a.StubActionTool.Policy()
 	policy.Scope = agent.ToolScopeSelf
 	policy.Egress = []agent.EgressClass{agent.EgressPersonal}
@@ -33,7 +35,7 @@ func selfScopedRuntime(
 	permissions := &agenttest.StubPermissions{Denied: map[string]bool{
 		string(permission.ResourceHomeLayoutPreset) + ":" + string(permission.OpUpdate): true,
 	}}
-	action := &stubActionRegistry{Tools: []agentports.AgentTool{
+	action := &stubActionRegistry{Tools: []agenttoolports.AgentTool{
 		selfScopedAction{actionTool("home_add_widget", agent.TierPropose, nil)},
 	}}
 	action.Tools[0].(selfScopedAction).Resource = permission.ResourceHomeLayoutPreset
@@ -50,17 +52,17 @@ sent as the owner is replaced by who is actually in the conversation.
 func TestRun_OffersASelfScopedToolToThePersonWithoutAGrant(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("home_add_widget", map[string]any{
-			"key":                          "kpi",
-			agentports.SelfScopeOwnerParam: pulid.MustNew("usr_").String(),
+			"key":                              "kpi",
+			agenttoolports.SelfScopeOwnerParam: pulid.MustNew("usr_").String(),
 		}),
 		textTurn("Proposed."),
 	}}
 	service, permissions := selfScopedRuntime(completion)
 	actor := testActor()
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("home_add_widget"),
 		Actor:      actor,
 		Input:      "put on-time on my dashboard",
@@ -70,7 +72,7 @@ func TestRun_OffersASelfScopedToolToThePersonWithoutAGrant(t *testing.T) {
 	assert.Contains(t, requestTools(completion.Requests[0]), "home_add_widget")
 	require.Len(t, result.Actions, 1)
 	assert.Equal(t, actor.UserID.String(),
-		result.Actions[0].Arguments[agentports.SelfScopeOwnerParam],
+		result.Actions[0].Arguments[agenttoolports.SelfScopeOwnerParam],
 		"the owner is the person in the conversation, whatever the model wrote")
 	for _, request := range permissions.Requests {
 		assert.NotEqual(t, string(permission.ResourceHomeLayoutPreset), request.Resource)
@@ -81,13 +83,13 @@ func TestRun_OffersASelfScopedToolToThePersonWithoutAGrant(t *testing.T) {
 func TestRun_WithholdsASelfScopedToolFromARunNobodyIsWatching(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("home_add_widget", map[string]any{"key": "kpi"}),
 		textTurn("done"),
 	}}
 	service, _ := selfScopedRuntime(completion)
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("home_add_widget"),
 		Actor:      testActor(),
 		Input:      "tidy the home page",
@@ -103,14 +105,14 @@ func TestRun_WithholdsASelfScopedToolFromARunNobodyIsWatching(t *testing.T) {
 func TestRun_WithholdsASelfScopedToolFromAnAgentPrincipal(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		textTurn("done"),
 	}}
 	service, _ := selfScopedRuntime(completion)
 	actor := testActor()
 	actor.PrincipalType = permissionports.PrincipalTypeAgent
 
-	_, err := service.Run(t.Context(), &agentports.RunRequest{
+	_, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("home_add_widget"),
 		Actor:      actor,
 		Input:      "tidy the home page",

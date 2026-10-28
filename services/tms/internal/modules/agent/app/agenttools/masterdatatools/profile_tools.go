@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -64,7 +64,7 @@ type GuideProfileTool struct {
 	profiles profileGuide
 }
 
-func NewGuideProfileTool(profiles agentprofileports.Service) agentports.AgentTool {
+func NewGuideProfileTool(profiles agentprofileports.Service) agenttoolports.AgentTool {
 	return &GuideProfileTool{profiles: profiles}
 }
 
@@ -110,8 +110,8 @@ func (t *GuideProfileTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *GuideProfileTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *GuideProfileTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:                t.Name(),
 		Kind:                agent.ToolKindAction,
 		Resource:            permission.ResourceAssistant,
@@ -126,11 +126,11 @@ func (t *GuideProfileTool) Policy() agentports.ToolPolicy {
 		Reversible:          true,
 		ReadsExternal:       agent.ExternalReadNever,
 		CarriesTaint:        true,
-		TaintHold: &agentports.TaintHold{
+		TaintHold: &agenttoolports.TaintHold{
 			Description: "Guidance recorded after the run read text from outside the " +
 				"organization waits for a person's approval, because every later prompt is " +
 				"written from it.",
-			Applies: func(agentports.ToolExecuteParams) bool { return true },
+			Applies: func(agenttoolports.ToolExecuteParams) bool { return true },
 		},
 		Rationale: "Adds a line every later write-up of a profile honours. Guidance about the " +
 			"person's own work reaches only their conversations; guidance about the " +
@@ -142,20 +142,20 @@ func (t *GuideProfileTool) Policy() agentports.ToolPolicy {
 // shapes only the profile their own conversations read. Guidance about the
 // organization shapes every conversation, so it is internal.
 func classifyGuideProfile(
-	params agentports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
-) agentports.CallPolicy {
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+) agenttoolports.CallPolicy {
 	actor := params.Actor
 	if common.OptionalString(params.Params, fieldProfileAbout) != profileAboutMe ||
 		actor == nil || actor.PrincipalType != permissionports.PrincipalTypeUser ||
 		actor.UserID.IsNil() {
-		return agentports.CallPolicy{Egress: agent.EgressInternal}
+		return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
 	}
 
-	return agentports.CallPolicy{Egress: agent.EgressPersonal}
+	return agenttoolports.CallPolicy{Egress: agent.EgressPersonal}
 }
 
 func (t *GuideProfileTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentprofileports.AddGuidanceRequest, error) {
 	person := params.Actor.PersonUserID()
 	if person.IsNil() {
@@ -208,7 +208,7 @@ func guidanceActor(
 
 func (t *GuideProfileTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the Tool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the Tool interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -226,7 +226,7 @@ var guidanceLabels = map[string]string{"subject": "About", common.FieldContent: 
 
 func (t *GuideProfileTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
@@ -277,7 +277,7 @@ func guidanceSummary(req *agentprofileports.AddGuidanceRequest, offered bool) st
 
 func (t *GuideProfileTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return common.PreviewValidates(ctx, t, &params)
 }

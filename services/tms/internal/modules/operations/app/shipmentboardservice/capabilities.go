@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -82,10 +82,13 @@ func (s *Service) anyAITask(
 	tasks []aiprovider.Task,
 ) (bool, error) {
 	for _, task := range tasks {
-		providers, err := s.aiProviders.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
-			Task:       task,
-			TenantInfo: tenantInfo,
-		})
+		providers, err := s.aiProviders.ListForTask(
+			ctx,
+			aiproviderports.ListAIProvidersForTaskRequest{
+				Task:       task,
+				TenantInfo: tenantInfo,
+			},
+		)
 		if err != nil {
 			return false, err
 		}

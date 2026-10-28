@@ -7,16 +7,21 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func paymentTurns(count int) []*agentports.ChatCompletionResult {
-	turns := make([]*agentports.ChatCompletionResult, 0, count)
+func paymentTurns(count int) []*llmports.ChatCompletionResult {
+	turns := make([]*llmports.ChatCompletionResult, 0, count)
 	for range count {
-		turns = append(turns, toolTurn("apply_payment", map[string]any{"invoiceId": pulid.MustNew("inv_").String()}))
+		turns = append(
+			turns,
+			toolTurn("apply_payment", map[string]any{"invoiceId": pulid.MustNew("inv_").String()}),
+		)
 	}
 
 	return turns
@@ -29,12 +34,15 @@ func tenPaymentLimits() agent.MoneyLimits {
 	return limits
 }
 
-func delegatedPayments(definition *agentdefinition.Definition, spent agent.MoneyUse) *agentports.RunRequest {
-	return &agentports.RunRequest{
+func delegatedPayments(
+	definition *agentdefinition.Definition,
+	spent agent.MoneyUse,
+) *agentruntimeports.RunRequest {
+	return &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "Apply one more payment.",
-		Delegation: &agentports.Delegation{
+		Delegation: &agentruntimeports.Delegation{
 			ParentAgentID:   pulid.MustNew("agdef_"),
 			ParentAgentName: "Billing",
 			CallID:          "call_delegate",
@@ -45,11 +53,11 @@ func delegatedPayments(definition *agentdefinition.Definition, spent agent.Money
 	}
 }
 
-func executedPayments(count int, amountMinor int64) []agentports.PendingAction {
-	actions := make([]agentports.PendingAction, 0, count)
+func executedPayments(count int, amountMinor int64) []agentruntimeports.PendingAction {
+	actions := make([]agentruntimeports.PendingAction, 0, count)
 	for range count {
 		amount := amountMinor
-		actions = append(actions, agentports.PendingAction{
+		actions = append(actions, agentruntimeports.PendingAction{
 			ToolName:      "apply_payment",
 			Tier:          agent.TierAutoExecute,
 			Executed:      true,
@@ -71,7 +79,7 @@ func TestRun_TheDelegateIsHandedWhatTheTurnHasAlreadyMoved(t *testing.T) {
 		textTurn("Done."))
 	pay := moneyTool()
 	rt := newRuntime(&scriptedCompletion{Turns: turns}, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	rt.budgets = &moneyBudgets{Limits: tenPaymentLimits()}
 
 	req := delegatingRequest(builder)
@@ -90,12 +98,12 @@ func TestRun_ADelegateHandedTenPaymentsIsHeldAtTheEleventh(t *testing.T) {
 	t.Parallel()
 
 	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_11"}),
 		textTurn("Filed."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	budgets := &moneyBudgets{Limits: tenPaymentLimits()}
 	rt.budgets = budgets
 
@@ -115,12 +123,12 @@ func TestRun_ADelegateIsHeldWhereTheTurnAndItTogetherPassTheRunTotal(t *testing.
 	t.Parallel()
 
 	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
 		textTurn("Filed."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	limits := roomyMoneyLimits()
 	limits.RunAmountMinor = 50_000
 	rt.budgets = &moneyBudgets{Limits: limits}
@@ -140,11 +148,11 @@ func TestRun_WhatADelegateMovedCountsAgainstTheTurnAfterIt(t *testing.T) {
 
 	builder := reportBuilder()
 	pay := moneyTool()
-	rt := newRuntime(&scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	rt := newRuntime(&scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		delegateTurn(builder.ID, "Apply ten payments."),
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_11"}),
 		textTurn("Filed the last one."),
-	}}, &stubQueryRegistry{}, &stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+	}}, &stubQueryRegistry{}, &stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	budgets := &moneyBudgets{Limits: tenPaymentLimits()}
 	rt.budgets = budgets
 
@@ -168,19 +176,19 @@ func TestRun_AFailedMoneyWriteMovedNothingAndCountsAgainstNothing(t *testing.T) 
 
 	failing := moneyTool()
 	failing.Err = errors.New("the invoice is closed")
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_2"}),
 		textTurn("Tried twice."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{failing}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{failing}}, nil)
 	limits := roomyMoneyLimits()
 	limits.RunCalls = 1
 	budgets := &moneyBudgets{Limits: limits}
 	rt.budgets = budgets
 
-	run := runTainted(t, rt, &agentports.RunRequest{
+	run := runTainted(t, rt, &agentruntimeports.RunRequest{
 		Definition: autoDefinition("apply_payment"),
 		Actor:      testActor(),
 		Input:      "Apply both payments.",
@@ -197,20 +205,20 @@ func TestRun_ASimulatedRunIsHeldWhereTheRealRunWouldBe(t *testing.T) {
 	t.Parallel()
 
 	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_2"}),
 		textTurn("Simulated."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	limits := roomyMoneyLimits()
 	limits.RunCalls = 1
 	rt.budgets = &moneyBudgets{Limits: limits}
 
 	definition := autoDefinition("apply_payment")
 	definition.SimulationMode = true
-	run := runTainted(t, rt, &agentports.RunRequest{
+	run := runTainted(t, rt, &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "Apply both payments.",

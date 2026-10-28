@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -59,7 +59,7 @@ func (s *Service) wordSuggestions(
 		ctx,
 		s.completion,
 		s.l,
-		&agentports.StructuredCompletionRequest{
+		&llmports.StructuredCompletionRequest{
 			TenantInfo:   tenantInfo,
 			Task:         aiprovider.TaskOperationalInsights,
 			System:       wordingSystemPrompt,
@@ -79,7 +79,7 @@ func (s *Service) wordSuggestions(
 
 func wordingContext(
 	items []*shipmentsuggestionports.ShipmentSuggestion,
-) agentports.DelimitedContext {
+) llmports.DelimitedContext {
 	var builder strings.Builder
 	for _, item := range items {
 		builder.WriteString("key: ")
@@ -95,8 +95,8 @@ func wordingContext(
 		builder.WriteString("\n\n")
 	}
 
-	return agentports.DelimitedContext{
-		Sections: []agentports.ContextSection{{
+	return llmports.DelimitedContext{
+		Sections: []llmports.ContextSection{{
 			Title:   "Suggested actions",
 			Trusted: false,
 			Content: builder.String(),

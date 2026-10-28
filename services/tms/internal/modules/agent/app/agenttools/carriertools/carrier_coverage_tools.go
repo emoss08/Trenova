@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -71,7 +71,7 @@ type AssignMoveToCarrierTool struct {
 	carriers carrierCoverage
 }
 
-func NewAssignMoveToCarrierTool(carriers carrierCoverage) agentports.AgentTool {
+func NewAssignMoveToCarrierTool(carriers carrierCoverage) agenttoolports.AgentTool {
 	return &AssignMoveToCarrierTool{carriers: carriers}
 }
 
@@ -153,8 +153,8 @@ func (t *AssignMoveToCarrierTool) ParamSchema() map[string]any {
 	}, common.PreviewFieldShipmentMoveID, common.FieldCarrierID, fieldRateMethod, fieldBaseRate)
 }
 
-func (t *AssignMoveToCarrierTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *AssignMoveToCarrierTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
@@ -166,7 +166,7 @@ func (t *AssignMoveToCarrierTool) Policy() agentports.ToolPolicy {
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,
-		Condition: &agentports.TierCondition{
+		Condition: &agenttoolports.TierCondition{
 			Description: "Replacing a carrier already on the move, or overriding the new " +
 				"carrier's insurance warning, is a proposal a person decides; any other " +
 				"assignment runs once a person approves it.",
@@ -180,7 +180,7 @@ func (t *AssignMoveToCarrierTool) Policy() agentports.ToolPolicy {
 
 func carrierAssignmentTierLimit(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	if common.OptionalBool(params.Params, fieldReplace) ||
 		common.OptionalBool(params.Params, fieldOverrideInsuranceWarning) {
@@ -192,7 +192,7 @@ func carrierAssignmentTierLimit(
 
 func (t *AssignMoveToCarrierTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -207,7 +207,7 @@ func (t *AssignMoveToCarrierTool) Validate(
 
 func (t *AssignMoveToCarrierTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -233,7 +233,7 @@ type carrierAccessorialParam struct {
 // carrier's contract here: contract pricing saves a quote as it prices, so a
 // proposal could not show the pay a person is approving.
 func (t *AssignMoveToCarrierTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentports.AssignMoveToCarrierRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -294,7 +294,7 @@ func (t *AssignMoveToCarrierTool) request(
 	}, nil
 }
 
-func (t *AssignMoveToCarrierTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *AssignMoveToCarrierTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(
 		params,
 		common.PreviewFieldShipmentMoveID,
@@ -308,7 +308,7 @@ type CancelCarrierAssignmentTool struct {
 	carriers carrierCoverage
 }
 
-func NewCancelCarrierAssignmentTool(carriers carrierCoverage) agentports.AgentTool {
+func NewCancelCarrierAssignmentTool(carriers carrierCoverage) agenttoolports.AgentTool {
 	return &CancelCarrierAssignmentTool{carriers: carriers}
 }
 
@@ -338,8 +338,8 @@ func (t *CancelCarrierAssignmentTool) ParamSchema() map[string]any {
 	}, common.PreviewFieldShipmentMoveID, common.FieldReason)
 }
 
-func (t *CancelCarrierAssignmentTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *CancelCarrierAssignmentTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
@@ -350,7 +350,7 @@ func (t *CancelCarrierAssignmentTool) Policy() agentports.ToolPolicy {
 		Egress:        []agent.EgressClass{agent.EgressMoney},
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
-		Condition: &agentports.TierCondition{
+		Condition: &agenttoolports.TierCondition{
 			Description: "Taking off a carrier who has confirmed the rate breaks an executed " +
 				"agreement, so it is a proposal a person decides, as is one the service " +
 				"would refuse or that cannot be read; a carrier who has not confirmed comes " +
@@ -365,7 +365,7 @@ func (t *CancelCarrierAssignmentTool) Policy() agentports.ToolPolicy {
 
 func (t *CancelCarrierAssignmentTool) tierLimit(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	request, err := t.request(&params)
 	if err != nil {
@@ -383,7 +383,7 @@ func (t *CancelCarrierAssignmentTool) tierLimit(
 
 func (t *CancelCarrierAssignmentTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -398,7 +398,7 @@ func (t *CancelCarrierAssignmentTool) Validate(
 
 func (t *CancelCarrierAssignmentTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -413,7 +413,7 @@ func (t *CancelCarrierAssignmentTool) Execute(
 }
 
 func (t *CancelCarrierAssignmentTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentports.CancelCarrierAssignmentRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -437,7 +437,7 @@ func (t *CancelCarrierAssignmentTool) request(
 
 func (t *CancelCarrierAssignmentTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(
 		params,
 		common.PreviewFieldShipmentMoveID,

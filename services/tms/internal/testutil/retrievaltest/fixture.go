@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -40,13 +41,13 @@ func EmbeddingInputs(
 	documents, inbox, memories *agentevalgate.RetrievalSuite,
 ) agentevalgate.EmbeddingInputs {
 	inputs := agentevalgate.EmbeddingInputs{
-		Documents: make([]agentports.EmbeddingCatalogItem, 0, 64),
+		Documents: make([]retrievalports.EmbeddingCatalogItem, 0, 64),
 		Queries:   make([]string, 0, 64),
 	}
 
 	add := func(key string, chunks []retrievalservice.Chunk) {
 		for _, chunk := range chunks {
-			inputs.Documents = append(inputs.Documents, agentports.EmbeddingCatalogItem{
+			inputs.Documents = append(inputs.Documents, retrievalports.EmbeddingCatalogItem{
 				Key:         key + "#" + strconv.Itoa(chunk.Index),
 				Text:        chunk.Text,
 				ContentHash: chunk.Hash,
@@ -82,19 +83,19 @@ type FixtureVectorizer struct {
 	ModelKey string
 }
 
-var _ agentports.QueryVectorizer = FixtureVectorizer{}
+var _ retrievalports.QueryVectorizer = FixtureVectorizer{}
 
 func (v FixtureVectorizer) Vectorize(
 	_ context.Context,
-	req *agentports.QueryVectorRequest,
-) (agentports.QueryVector, error) {
+	req *retrievalports.QueryVectorRequest,
+) (retrievalports.QueryVector, error) {
 	vector, ok := v.Fixture.Query(req.Text)
 	if !ok {
-		return agentports.QueryVector{}, fmt.Errorf(
+		return retrievalports.QueryVector{}, fmt.Errorf(
 			"no recorded vector for query %q; re-record with:\n  %s", req.Text, RecordCommand)
 	}
 
-	return agentports.QueryVector{
+	return retrievalports.QueryVector{
 		Available:  true,
 		Vector:     vector,
 		ModelKey:   v.ModelKey,
@@ -115,10 +116,10 @@ type Access struct {
 	Registry   *permission.Registry
 	Tenant     pagination.TenantInfo
 	UserID     pulid.ID
-	Threads    agentports.ThreadOwnerRepository
+	Threads    assistantports.ThreadOwnerRepository
 }
 
-var _ agentports.RetrievalAccess = Access{}
+var _ retrievalports.RetrievalAccess = Access{}
 
 func (a Access) MayReadResource(_ context.Context, resource permission.Resource) bool {
 	return !a.Unreadable[resource]
@@ -135,7 +136,7 @@ func (a Access) ReadableDocuments(
 	var owners map[pulid.ID]pulid.ID
 	if ids := document.ConversationIDs(docs); len(ids) > 0 && a.Threads != nil &&
 		a.UserID.IsNotNil() {
-		found, err := a.Threads.ThreadOwners(ctx, agentports.ThreadOwnersRequest{
+		found, err := a.Threads.ThreadOwners(ctx, assistantports.ThreadOwnersRequest{
 			TenantInfo: a.Tenant,
 			ThreadIDs:  ids,
 		})

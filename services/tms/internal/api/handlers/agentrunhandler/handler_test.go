@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -44,14 +44,14 @@ func (e *grantEngine) Check(
 }
 
 type stubTranscripts struct {
-	requests []agentports.GetAgentRunByIDRequest
+	requests []agentruntimeports.GetAgentRunByIDRequest
 	scopes   []dbscope.Tenant
 	err      error
 }
 
 func (s *stubTranscripts) RunTranscript(
 	ctx context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*kernelports.TranscriptFile, error) {
 	s.requests = append(s.requests, req)
 	if tenant, ok := dbscope.TenantFrom(ctx); ok {
@@ -141,7 +141,7 @@ func TestDownloadTranscript_HandsTheRunOverAsMarkdownUnderTheCallersTenant(t *te
 	require.NotNil(t, request.TenantInfo)
 	assert.Equal(t, tc.orgID, request.TenantInfo.OrgID)
 	assert.Equal(t, tc.buID, request.TenantInfo.BuID)
-	assert.Equal(t, agentports.PersonRunRead(tc.userID), request.Reader,
+	assert.Equal(t, agentruntimeports.PersonRunRead(tc.userID), request.Reader,
 		"a run on another person's conversation reads as missing")
 
 	require.Len(t, tc.transcripts.scopes, 1)

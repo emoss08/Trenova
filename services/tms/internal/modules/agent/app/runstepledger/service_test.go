@@ -1,12 +1,12 @@
 package runstepledger
 
 import (
-	"errors"
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ import (
 
 type fakeStepRepo struct {
 	claimed []*agent.AgentRunStep
-	settled []agentports.SettleAgentRunStepRequest
+	settled []agentruntimeports.SettleAgentRunStepRequest
 	rows    []*agent.AgentRunStep
 }
 
@@ -29,7 +29,10 @@ func (f *fakeStepRepo) Claim(
 	return step, nil
 }
 
-func (f *fakeStepRepo) Settle(_ context.Context, req agentports.SettleAgentRunStepRequest) error {
+func (f *fakeStepRepo) Settle(
+	_ context.Context,
+	req agentruntimeports.SettleAgentRunStepRequest,
+) error {
 	f.settled = append(f.settled, req)
 
 	return nil
@@ -39,19 +42,22 @@ func (f *fakeStepRepo) Record(context.Context, *agent.AgentRunStep) error { retu
 
 func (f *fakeStepRepo) List(
 	context.Context,
-	agentports.ListAgentRunStepsRequest,
+	agentruntimeports.ListAgentRunStepsRequest,
 ) ([]*agent.AgentRunStep, error) {
 	return f.rows, nil
 }
 
 func (f *fakeStepRepo) Get(
 	context.Context,
-	*agentports.GetAgentRunStepRequest,
+	*agentruntimeports.GetAgentRunStepRequest,
 ) (*agent.AgentRunStep, error) {
 	return nil, errors.New("not used")
 }
 
-func (f *fakeStepRepo) Prune(context.Context, agentports.PruneAgentRunStepsRequest) (int, error) {
+func (f *fakeStepRepo) Prune(
+	context.Context,
+	agentruntimeports.PruneAgentRunStepsRequest,
+) (int, error) {
 	return 0, nil
 }
 
@@ -64,10 +70,10 @@ func TestClaim_WritesWhereAndAsWhomTheStepRan(t *testing.T) {
 	definitionID := pulid.MustNew("agdef_")
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-	verdict, err := ledger.Claim(t.Context(), tenant, agentports.RunStep{
-		OwnerKind:         agentports.RunStepOwnerAssistantTurn,
+	verdict, err := ledger.Claim(t.Context(), tenant, agentruntimeports.RunStep{
+		OwnerKind:         agentruntimeports.RunStepOwnerAssistantTurn,
 		OwnerID:           pulid.MustNew("atrn_"),
-		Kind:              agentports.RunStepTool,
+		Kind:              agentruntimeports.RunStepTool,
 		Key:               "step-1",
 		ToolName:          "dispatch_assign_move",
 		TraceID:           "4bf92f3577b34da6a3ce929d0e0e4736",
@@ -77,7 +83,7 @@ func TestClaim_WritesWhereAndAsWhomTheStepRan(t *testing.T) {
 		DelegateCallID:    "call_1",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, agentports.StepFresh, verdict.State)
+	assert.Equal(t, agentruntimeports.StepFresh, verdict.State)
 
 	require.Len(t, repo.claimed, 1)
 	row := repo.claimed[0]
@@ -97,17 +103,20 @@ func TestSettle_KeepsTheVerdictAndWhyACallWasRefused(t *testing.T) {
 	repo := &fakeStepRepo{}
 	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
 
-	require.NoError(t, ledger.Settle(t.Context(), pagination.TenantInfo{}, agentports.RunStep{
-		OwnerID: pulid.MustNew("ar_"),
-		Key:     "step-2",
-		Status:  agentports.RunStepFailed,
-		Outcome: agentports.RunStepOutcome{
-			Content: "Tool \"dispatch_assign_move\" is not permitted.",
-			Failed:  true,
-			Reason:  "lacks update access to shipment_move",
-			Verdict: "denied",
-		},
-	}))
+	require.NoError(
+		t,
+		ledger.Settle(t.Context(), pagination.TenantInfo{}, agentruntimeports.RunStep{
+			OwnerID: pulid.MustNew("ar_"),
+			Key:     "step-2",
+			Status:  agentruntimeports.RunStepFailed,
+			Outcome: agentruntimeports.RunStepOutcome{
+				Content: "Tool \"dispatch_assign_move\" is not permitted.",
+				Failed:  true,
+				Reason:  "lacks update access to shipment_move",
+				Verdict: "denied",
+			},
+		}),
+	)
 
 	require.Len(t, repo.settled, 1)
 	assert.Equal(t, "lacks update access to shipment_move", repo.settled[0].Outcome["reason"])
@@ -119,10 +128,10 @@ func TestLoaded_ReadsTheProvenanceBack(t *testing.T) {
 
 	version := int64(4)
 	repo := &fakeStepRepo{rows: []*agent.AgentRunStep{{
-		OwnerKind:              string(agentports.RunStepOwnerAgentRun),
+		OwnerKind:              string(agentruntimeports.RunStepOwnerAgentRun),
 		OwnerID:                pulid.MustNew("ar_"),
-		Kind:                   string(agentports.RunStepTool),
-		Status:                 string(agentports.RunStepCompleted),
+		Kind:                   string(agentruntimeports.RunStepTool),
+		Status:                 string(agentruntimeports.RunStepCompleted),
 		StepKey:                "step-3",
 		TraceID:                "4bf92f3577b34da6a3ce929d0e0e4736",
 		SpanID:                 "00f067aa0ba902b7",
@@ -133,7 +142,11 @@ func TestLoaded_ReadsTheProvenanceBack(t *testing.T) {
 	}}}
 	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
 
-	steps, err := ledger.Loaded(t.Context(), pagination.TenantInfo{}, agentports.RunStepOwner{})
+	steps, err := ledger.Loaded(
+		t.Context(),
+		pagination.TenantInfo{},
+		agentruntimeports.RunStepOwner{},
+	)
 	require.NoError(t, err)
 	require.Len(t, steps, 1)
 	assert.Equal(t, "00f067aa0ba902b7", steps[0].SpanID)

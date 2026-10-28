@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -60,7 +60,7 @@ type fingerprintToolSet struct {
 	Tools   []fingerprintTool `json:"tools"`
 }
 
-func projectPolicy(policy agentports.ToolPolicy) *fingerprintPolicy {
+func projectPolicy(policy agenttoolports.ToolPolicy) *fingerprintPolicy {
 	projected := &fingerprintPolicy{
 		Kind:                policy.Kind,
 		Resource:            policy.Resource,

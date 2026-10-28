@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -40,7 +41,7 @@ const (
 
 func (s *Service) StartThread(
 	ctx context.Context,
-	req *agentports.StartThreadRequest,
+	req *assistantports.StartThreadRequest,
 	actor *permissionports.RequestActor,
 ) (*conversation.Thread, error) {
 	definition, err := s.definitions.GetByID(
@@ -141,8 +142,8 @@ func (s *Service) assertWithinBudget(
 
 func (s *Service) ListThreads(
 	ctx context.Context,
-	req agentports.ListThreadsRequest,
-) (*agentports.ThreadPage, error) {
+	req assistantports.ListThreadsRequest,
+) (*assistantports.ThreadPage, error) {
 	multiErr := errortypes.NewMultiError()
 	req.Validate(multiErr)
 	if multiErr.HasErrors() {
@@ -172,8 +173,8 @@ func (s *Service) ListThreads(
 
 func (s *Service) CountThreadShelves(
 	ctx context.Context,
-	req *agentports.CountThreadShelvesRequest,
-) (*agentports.ThreadShelfCounts, error) {
+	req *assistantports.CountThreadShelvesRequest,
+) (*assistantports.ThreadShelfCounts, error) {
 	multiErr := errortypes.NewMultiError()
 	req.Validate(multiErr)
 	if multiErr.HasErrors() {
@@ -198,7 +199,7 @@ func (s *Service) markAttention(
 		ids = append(ids, thread.ID)
 	}
 
-	rows, err := s.conversations.ListThreadAttention(ctx, agentports.ListThreadAttentionRequest{
+	rows, err := s.conversations.ListThreadAttention(ctx, assistantports.ListThreadAttentionRequest{
 		ThreadIDs:  ids,
 		UserID:     userID,
 		TenantInfo: tenant,
@@ -233,8 +234,8 @@ func (s *Service) markAttention(
 	return nil
 }
 
-func (s *Service) MarkThreadRead(ctx context.Context, req agentports.GetThreadRequest) error {
-	return s.conversations.MarkThreadRead(ctx, agentports.MarkThreadReadRequest{
+func (s *Service) MarkThreadRead(ctx context.Context, req assistantports.GetThreadRequest) error {
+	return s.conversations.MarkThreadRead(ctx, assistantports.MarkThreadReadRequest{
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -244,7 +245,7 @@ func (s *Service) MarkThreadRead(ctx context.Context, req agentports.GetThreadRe
 
 func (s *Service) GetThread(
 	ctx context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	thread, err := s.conversations.GetThread(ctx, req)
 	if err != nil {
@@ -276,8 +277,8 @@ func (s *Service) markCases(
 
 func (s *Service) ListMessages(
 	ctx context.Context,
-	req agentports.ListThreadMessagesRequest,
-) (*agentports.ThreadMessagesPage, error) {
+	req assistantports.ListThreadMessagesRequest,
+) (*assistantports.ThreadMessagesPage, error) {
 	// Reading the thread first is the authorization check: it is scoped by user,
 	// so a thread belonging to someone else is not found rather than returned.
 	if _, err := s.conversations.GetThread(ctx, req.Thread); err != nil {
@@ -288,7 +289,7 @@ func (s *Service) ListMessages(
 
 	// One more than the page says whether there is a page above it without
 	// a second query for the count of what is left.
-	messages, err := s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
+	messages, err := s.conversations.ListMessages(ctx, assistantports.ListMessagesRequest{
 		ThreadID:       req.Thread.ID,
 		TenantInfo:     req.Thread.TenantInfo,
 		Limit:          limit + 1,
@@ -303,7 +304,7 @@ func (s *Service) ListMessages(
 		messages = messages[len(messages)-limit:]
 	}
 
-	total, err := s.conversations.CountMessages(ctx, agentports.CountMessagesRequest{
+	total, err := s.conversations.CountMessages(ctx, assistantports.CountMessagesRequest{
 		ThreadID:   req.Thread.ID,
 		TenantInfo: req.Thread.TenantInfo,
 	})
@@ -315,7 +316,7 @@ func (s *Service) ListMessages(
 	s.nameDelegatedSteps(ctx, req.Thread.TenantInfo, messages)
 	s.describeMemories(ctx, req.Thread.TenantInfo, req.Thread.UserID, messages)
 
-	return &agentports.ThreadMessagesPage{
+	return &assistantports.ThreadMessagesPage{
 		Results: messages,
 		HasMore: hasMore,
 		Total:   total,
@@ -344,7 +345,7 @@ func (s *Service) assertRoom(
 	thread *conversation.Thread,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	count, err := s.conversations.CountMessages(ctx, agentports.CountMessagesRequest{
+	count, err := s.conversations.CountMessages(ctx, assistantports.CountMessagesRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -366,10 +367,10 @@ func (s *Service) assertRoom(
 // is not found rather than renamed.
 func (s *Service) UpdateThread(
 	ctx context.Context,
-	req *agentports.UpdateThreadRequest,
+	req *assistantports.UpdateThreadRequest,
 	actor *permissionports.RequestActor,
 ) (*conversation.Thread, error) {
-	thread, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, assistantports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -421,7 +422,7 @@ func (s *Service) UpdateThread(
 // a slot or the hourly reconcile to find them missing.
 func (s *Service) DeleteThread(
 	ctx context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 ) error {
 	schedules := s.threadSchedules(ctx, req)
 	if err := s.conversations.DeleteThread(ctx, req); err != nil {
@@ -440,7 +441,7 @@ func (s *Service) DeleteThread(
 // with the conversation, and a slot or the reconcile removes what is left.
 func (s *Service) threadSchedules(
 	ctx context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 ) []*conversationschedule.Schedule {
 	if s.schedules == nil {
 		return nil

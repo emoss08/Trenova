@@ -5,14 +5,15 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,26 +26,26 @@ import (
 )
 
 type fakeRuns struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 	run *agent.AgentRun
 }
 
 func (f *fakeRuns) GetByID(
 	_ context.Context,
-	_ agentports.GetAgentRunByIDRequest,
+	_ agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return f.run, nil
 }
 
 type fakeConversations struct {
-	agentports.ConversationRepository
+	assistantports.ConversationRepository
 	thread *conversation.Thread
-	asked  []agentports.GetThreadOwnedRequest
+	asked  []assistantports.GetThreadOwnedRequest
 }
 
 func (f *fakeConversations) GetThreadOwned(
 	_ context.Context,
-	req agentports.GetThreadOwnedRequest,
+	req assistantports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	f.asked = append(f.asked, req)
 
@@ -185,7 +186,7 @@ func TestFollowUp_ReportsTheDecisionInTheConversationAsItsOwner(t *testing.T) {
 	f := newFixture(agent.SubjectAssistantThread)
 	proposalID := pulid.MustNew("aprop_")
 
-	f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		ProposalID: proposalID,
@@ -216,7 +217,7 @@ func TestFollowUp_ReportsAPlanByItsID(t *testing.T) {
 	f := newFixture(agent.SubjectAssistantThread)
 	planID := pulid.MustNew("apl_")
 
-	f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		PlanID:     planID,
@@ -234,7 +235,7 @@ func TestFollowUp_LeavesDecisionsOutsideAConversationAlone(t *testing.T) {
 
 	f := newFixture(agent.SubjectShipment)
 
-	f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		ProposalID: pulid.MustNew("aprop_"),
@@ -253,7 +254,7 @@ func TestFollowUp_DoesNotInterruptAConversationMidReply(t *testing.T) {
 	f := newFixture(agent.SubjectAssistantThread)
 	f.turns.startErr = errors.New("already working on a reply")
 
-	f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		ProposalID: pulid.MustNew("aprop_"),
@@ -270,11 +271,11 @@ func TestFollowUp_RefusesARequestThatNamesNoSingleDecision(t *testing.T) {
 
 	f := newFixture(agent.SubjectAssistantThread)
 
-	f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 	})
-	f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		ProposalID: pulid.MustNew("aprop_"),
@@ -311,7 +312,7 @@ func TestFollowUp_SkipsWhenTheOwnerMayNoLongerUseTheAgent(t *testing.T) {
 			f := newFixture(agent.SubjectAssistantThread)
 			change(f)
 
-			f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
+			f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
 				TenantInfo: f.tenant,
 				RunID:      f.runs.run.ID,
 				ProposalID: pulid.MustNew("aprop_"),
@@ -331,7 +332,7 @@ func TestFollowUp_ReportsWhenTheOwnersRoleIsGrantedTheAgent(t *testing.T) {
 	f.agent.AccessMode = agentdefinition.AccessRoles
 	f.permissions.GrantedAgents = []pulid.ID{f.agent.ID}
 
-	f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		ProposalID: pulid.MustNew("aprop_"),

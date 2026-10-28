@@ -7,27 +7,28 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy/registered"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"go.uber.org/zap"
 )
 
 type Kit struct {
-	Queries agentports.AgentQueryToolRegistry
-	Actions agentports.AgentToolRegistry
-	Runtime agentports.RuntimeToolPolicies
+	Queries agenttoolports.AgentQueryToolRegistry
+	Actions agenttoolports.AgentToolRegistry
+	Runtime agenttoolports.RuntimeToolPolicies
 	Catalog *agenttoolcatalog.Catalog
 }
 
 type RuntimeParams struct {
-	Completion  agentports.CompletionService
+	Completion  llmports.CompletionService
 	Permissions permissionports.PermissionEngine
 	Extensions  agentextensionports.AgentExtensionGate
 	// Scripts are the chat providers' script settings, which decide whether
 	// a red-team case's model may answer with a script.
-	Scripts agentports.ScriptProviders
+	Scripts llmports.ScriptProviders
 	// Versions pins the record a proposal would change, as the API does.
-	Versions agentports.RecordVersionReader
+	Versions agenttoolports.RecordVersionReader
 }
 
 func NewKit() (*Kit, error) {
@@ -40,9 +41,9 @@ func NewKit() (*Kit, error) {
 }
 
 func FromTools(
-	queries []agentports.AgentQueryTool,
-	actions []agentports.AgentTool,
-	runtime agentports.RuntimeToolPolicies,
+	queries []agenttoolports.AgentQueryTool,
+	actions []agenttoolports.AgentTool,
+	runtime agenttoolports.RuntimeToolPolicies,
 ) *Kit {
 	queryRegistry := agentquerytoolservice.NewRegistry(
 		agentquerytoolservice.RegistryParams{Tools: queries},

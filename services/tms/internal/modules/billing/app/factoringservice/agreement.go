@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -36,7 +36,7 @@ type AgreementParams struct {
 	Accounts  glaccountports.GLAccountRepository `optional:"true"`
 	Requester factoringports.EvaluationRequester `optional:"true"`
 	Audit     auditports.AuditService
-	Realtime  agentports.RealtimeService `optional:"true"`
+	Realtime  realtimeports.RealtimeService `optional:"true"`
 	Logger    *zap.Logger
 }
 

@@ -21,7 +21,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -49,19 +50,19 @@ type Params struct {
 	fx.In
 
 	Logger  *zap.Logger
-	Repo    agentports.AgentRunEventRepository
+	Repo    agentruntimeports.AgentRunEventRepository
 	Metrics *metrics.Registry `optional:"true"`
 }
 
 type Service struct {
 	l       *zap.Logger
-	repo    agentports.AgentRunEventRepository
+	repo    agentruntimeports.AgentRunEventRepository
 	metrics *metrics.Assistant
 }
 
-var _ agentports.AgentRunEventRecorder = (*Service)(nil)
+var _ agentruntimeports.AgentRunEventRecorder = (*Service)(nil)
 
-func New(p Params) agentports.AgentRunEventRecorder {
+func New(p Params) agentruntimeports.AgentRunEventRecorder {
 	service := &Service{
 		l:    p.Logger.Named("service.agentrunevent"),
 		repo: p.Repo,
@@ -82,8 +83,8 @@ func New(p Params) agentports.AgentRunEventRecorder {
 func (s *Service) Recorder(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	owner agentports.RunStepOwner,
-) agentports.AgentRunEventWriter {
+	owner agentruntimeports.RunStepOwner,
+) agentruntimeports.AgentRunEventWriter {
 	next, err := s.repo.NextSequence(ctx, tenantInfo, string(owner.Kind), owner.ID)
 	if err != nil {
 		// A recorder that cannot find its place still accepts events and drops
@@ -107,7 +108,7 @@ func (s *Service) Recorder(
 type writer struct {
 	service  *Service
 	tenant   pagination.TenantInfo
-	owner    agentports.RunStepOwner
+	owner    agentruntimeports.RunStepOwner
 	disabled bool
 
 	mu       sync.Mutex
@@ -153,7 +154,7 @@ func (w *writer) Flush(ctx context.Context) {
 		return
 	}
 
-	err := w.service.repo.Append(ctx, agentports.AppendAgentRunEventsRequest{
+	err := w.service.repo.Append(ctx, agentruntimeports.AppendAgentRunEventsRequest{
 		TenantInfo: w.tenant,
 		Events:     pending,
 	})
@@ -235,13 +236,13 @@ func encodePayload(data any) (map[string]any, bool) {
 // start and finish can be found without opening the payload.
 func callIDOf(data any) string {
 	switch typed := data.(type) {
-	case agentports.AssistantToolStartedEvent:
+	case assistantports.AssistantToolStartedEvent:
 		return typed.CallID
-	case *agentports.AssistantToolStartedEvent:
+	case *assistantports.AssistantToolStartedEvent:
 		return typed.CallID
-	case agentports.AssistantToolFinishedEvent:
+	case assistantports.AssistantToolFinishedEvent:
 		return typed.CallID
-	case *agentports.AssistantToolFinishedEvent:
+	case *assistantports.AssistantToolFinishedEvent:
 		return typed.CallID
 	default:
 		return ""

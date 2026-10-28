@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -22,7 +23,7 @@ type recordingTool struct {
 	operation   permission.Operation
 	err         error
 	calls       int
-	lastParams  agentports.ToolExecuteParams
+	lastParams  agenttoolports.ToolExecuteParams
 	requiresKey bool
 }
 
@@ -30,8 +31,8 @@ func (t *recordingTool) Name() string                { return t.name }
 func (t *recordingTool) Description() string         { return "recording tool" }
 func (t *recordingTool) ParamSchema() map[string]any { return map[string]any{} }
 
-func (t *recordingTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *recordingTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.name,
 		Kind:          agent.ToolKindAction,
 		Resource:      t.resource,
@@ -48,16 +49,16 @@ func (t *recordingTool) Policy() agentports.ToolPolicy {
 	}
 }
 
-func (t *recordingTool) Execute(_ context.Context, params agentports.ToolExecuteParams) error {
+func (t *recordingTool) Execute(_ context.Context, params agenttoolports.ToolExecuteParams) error {
 	t.calls++
 	t.lastParams = params
 
 	return t.err
 }
 
-type fakeRegistry struct{ tools []agentports.AgentTool }
+type fakeRegistry struct{ tools []agenttoolports.AgentTool }
 
-func (r fakeRegistry) Get(name string) (agentports.AgentTool, bool) {
+func (r fakeRegistry) Get(name string) (agenttoolports.AgentTool, bool) {
 	for _, tool := range r.tools {
 		if tool.Name() == name {
 			return tool, true
@@ -67,8 +68,8 @@ func (r fakeRegistry) Get(name string) (agentports.AgentTool, bool) {
 	return nil, false
 }
 
-func (r fakeRegistry) All() []agentports.AgentTool                   { return r.tools }
-func (r fakeRegistry) Descriptors() []agentports.AgentToolDescriptor { return nil }
+func (r fakeRegistry) All() []agenttoolports.AgentTool                   { return r.tools }
+func (r fakeRegistry) Descriptors() []agenttoolports.AgentToolDescriptor { return nil }
 
 type recordedExecution struct {
 	status     agent.ProposalStatus
@@ -128,11 +129,11 @@ func (noopAudit) LogAction(_ *auditports.LogActionParams, _ ...auditports.LogOpt
 }
 
 func newExecutor(
-	tool agentports.AgentTool,
+	tool agenttoolports.AgentTool,
 	repo *fakeProposalRepo,
 	perms *fakePermissions,
 ) *Service {
-	tools := []agentports.AgentTool{}
+	tools := []agenttoolports.AgentTool{}
 	if tool != nil {
 		tools = append(tools, tool)
 	}

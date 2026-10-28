@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -65,9 +65,9 @@ func (h *Handler) studioAvailable(c *gin.Context) bool {
 	return false
 }
 
-func (r *formulaDraftRequest) toDraft() (agentports.FormulaStudioDraft, error) {
+func (r *formulaDraftRequest) toDraft() (formulastudioports.FormulaStudioDraft, error) {
 	multiErr := errortypes.NewMultiError()
-	draft := agentports.FormulaStudioDraft{
+	draft := formulastudioports.FormulaStudioDraft{
 		Name:        strings.TrimSpace(r.Name),
 		Description: strings.TrimSpace(r.Description),
 		Source:      r.Source,
@@ -152,12 +152,16 @@ func (h *Handler) explainFormula(c *gin.Context) {
 		shipmentID = *shipment
 	}
 
-	resp, err := h.studio.ExplainFormula(c.Request.Context(), &agentports.ExplainFormulaRequest{
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-		Draft:      draft,
-		Inputs:     req.Inputs,
-		ShipmentID: shipmentID,
-	}, h.studioActor(authCtx))
+	resp, err := h.studio.ExplainFormula(
+		c.Request.Context(),
+		&formulastudioports.ExplainFormulaRequest{
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+			Draft:      draft,
+			Inputs:     req.Inputs,
+			ShipmentID: shipmentID,
+		},
+		h.studioActor(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -201,7 +205,7 @@ func (h *Handler) describeInputs(c *gin.Context) {
 
 	resp, err := h.studio.DescribeInputs(
 		c.Request.Context(),
-		&agentports.DescribeFormulaInputsRequest{
+		&formulastudioports.DescribeFormulaInputsRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			Draft:      draft,
 		},
@@ -250,7 +254,7 @@ func (h *Handler) suggestTests(c *gin.Context) {
 
 	resp, err := h.studio.SuggestTests(
 		c.Request.Context(),
-		&agentports.SuggestFormulaTestsRequest{
+		&formulastudioports.SuggestFormulaTestsRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			Draft:      draft,
 		},
@@ -308,7 +312,7 @@ func (h *Handler) explainTest(c *gin.Context) {
 
 	resp, err := h.studio.ExplainTest(
 		c.Request.Context(),
-		&agentports.ExplainFormulaTestRequest{
+		&formulastudioports.ExplainFormulaTestRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			Draft:      draft,
 			TestName:   name,
@@ -352,7 +356,7 @@ func (h *Handler) reviewNote(c *gin.Context) {
 
 	resp, err := h.studio.DraftReviewNote(
 		c.Request.Context(),
-		&agentports.DraftFormulaReviewNoteRequest{
+		&formulastudioports.DraftFormulaReviewNoteRequest{
 			TenantInfo:      pagination.FromAuthAsUser(authCtx),
 			TemplateID:      templateID,
 			IncludeBacktest: h.mayReadShipments(c, authCtx),

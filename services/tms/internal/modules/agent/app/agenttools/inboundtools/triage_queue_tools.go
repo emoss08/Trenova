@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -46,11 +46,11 @@ var (
 	)
 )
 
-func NewAssignInboundMessagesTool(p triageToolParams) agentports.AgentTool {
+func NewAssignInboundMessagesTool(p triageToolParams) agenttoolports.AgentTool {
 	return newAssignInboundMessagesTool(p.Inbox)
 }
 
-func newAssignInboundMessagesTool(queue triageQueue) agentports.AgentTool {
+func newAssignInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_assign_inbound_message",
@@ -72,9 +72,11 @@ func newAssignInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 				paramMessageIDs: messageIDsProperty(
 					"The messages, from inbox_list_inbound_messages, newest first or by query.",
 				),
-				paramOwnerID: agenttoolschema.RecordIDText(permission.ResourceUser,
+				paramOwnerID: agenttoolschema.RecordIDText(
+					permission.ResourceUser,
 					"The person to give them to, from inbox_list_triage_assignees. Leave it out to "+
-						"take them off whoever has them."),
+						"take them off whoever has them.",
+				),
 			},
 			Required:    []string{paramMessageIDs},
 			SearchTerms: []string{"give to", "triage owner", "unassign", "take it"},
@@ -85,7 +87,7 @@ func newAssignInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 			*inboundmessageservice.QueuePlan,
 		]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*inboundmessageservice.AssignRequest, error) {
 				selection, err := triageSelection(params)
 				if err != nil {
@@ -107,7 +109,7 @@ func newAssignInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				req *inboundmessageservice.AssignRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*inboundmessageservice.QueuePlan, error) {
 				return queue.PlanAssign(ctx, req)
 			},
@@ -133,7 +135,7 @@ func newAssignInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				req *inboundmessageservice.AssignRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				result, err := queue.Assign(ctx, req)
 				if err != nil {
@@ -146,11 +148,11 @@ func newAssignInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 	)
 }
 
-func NewReopenInboundMessagesTool(p triageToolParams) agentports.AgentTool {
+func NewReopenInboundMessagesTool(p triageToolParams) agenttoolports.AgentTool {
 	return newReopenInboundMessagesTool(p.Inbox)
 }
 
-func newReopenInboundMessagesTool(queue triageQueue) agentports.AgentTool {
+func newReopenInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_reopen_inbound_message",
@@ -181,7 +183,7 @@ func newReopenInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 			*inboundmessageservice.QueuePlan,
 		]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*inboundmessageservice.ReopenRequest, error) {
 				selection, err := triageSelection(params)
 				if err != nil {
@@ -197,7 +199,7 @@ func newReopenInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				req *inboundmessageservice.ReopenRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*inboundmessageservice.QueuePlan, error) {
 				return queue.PlanReopen(ctx, req)
 			},
@@ -216,7 +218,7 @@ func newReopenInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				req *inboundmessageservice.ReopenRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				result, err := queue.Reopen(ctx, req)
 				if err != nil {
@@ -229,11 +231,11 @@ func newReopenInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 	)
 }
 
-func NewSnoozeInboundMessagesTool(p triageToolParams) agentports.AgentTool {
+func NewSnoozeInboundMessagesTool(p triageToolParams) agenttoolports.AgentTool {
 	return newSnoozeInboundMessagesTool(p.Inbox)
 }
 
-func newSnoozeInboundMessagesTool(queue triageQueue) agentports.AgentTool {
+func newSnoozeInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_snooze_inbound_message",
@@ -285,7 +287,7 @@ func newSnoozeInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				req *inboundmessageservice.SnoozeRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*inboundmessageservice.QueuePlan, error) {
 				return queue.PlanSnooze(ctx, req)
 			},
@@ -310,7 +312,7 @@ func newSnoozeInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				req *inboundmessageservice.SnoozeRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				result, err := queue.Snooze(ctx, req)
 				if err != nil {
@@ -324,7 +326,7 @@ func newSnoozeInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 }
 
 func snoozeRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*inboundmessageservice.SnoozeRequest, error) {
 	selection, err := triageSelection(params)
 	if err != nil {
@@ -362,11 +364,11 @@ func snoozeRequest(
 	return req, nil
 }
 
-func NewWakeInboundMessageTool(p triageToolParams) agentports.AgentTool {
+func NewWakeInboundMessageTool(p triageToolParams) agenttoolports.AgentTool {
 	return newWakeInboundMessageTool(p.Inbox)
 }
 
-func newWakeInboundMessageTool(queue triageQueue) agentports.AgentTool {
+func newWakeInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_wake_inbound_message",
@@ -400,7 +402,7 @@ func newWakeInboundMessageTool(queue triageQueue) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				req *inboundmessageservice.MessageActionRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*inboundmessageservice.QueuePlan, error) {
 				parked, err := parkedAs(ctx, queue, req)
 				if err != nil {
@@ -435,7 +437,7 @@ func newWakeInboundMessageTool(queue triageQueue) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				req *inboundmessageservice.MessageActionRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				parked, err := parkedAs(ctx, queue, req)
 				if err != nil {
@@ -477,11 +479,11 @@ func parkedAs(
 	return message.Parked, nil
 }
 
-func NewWaitForInboundReplyTool(p triageToolParams) agentports.AgentTool {
+func NewWaitForInboundReplyTool(p triageToolParams) agenttoolports.AgentTool {
 	return newWaitForInboundReplyTool(p.Inbox)
 }
 
-func newWaitForInboundReplyTool(queue triageQueue) agentports.AgentTool {
+func newWaitForInboundReplyTool(queue triageQueue) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_await_reply",
@@ -518,7 +520,7 @@ func newWaitForInboundReplyTool(queue triageQueue) agentports.AgentTool {
 			*inboundmessageservice.QueuePlan,
 		]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*inboundmessageservice.WaitForReplyRequest, error) {
 				action, err := messageAction(params)
 				if err != nil {
@@ -540,7 +542,7 @@ func newWaitForInboundReplyTool(queue triageQueue) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				req *inboundmessageservice.WaitForReplyRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*inboundmessageservice.QueuePlan, error) {
 				return queue.PlanWaitForReply(ctx, req)
 			},
@@ -560,7 +562,7 @@ func newWaitForInboundReplyTool(queue triageQueue) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				req *inboundmessageservice.WaitForReplyRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				message, err := queue.WaitForReply(ctx, req)
 				if err != nil {
@@ -573,11 +575,11 @@ func newWaitForInboundReplyTool(queue triageQueue) agentports.AgentTool {
 	)
 }
 
-func NewUnlinkInboundMessageTool(p triageToolParams) agentports.AgentTool {
+func NewUnlinkInboundMessageTool(p triageToolParams) agenttoolports.AgentTool {
 	return newUnlinkInboundMessageTool(p.Inbox)
 }
 
-func newUnlinkInboundMessageTool(queue triageQueue) agentports.AgentTool {
+func newUnlinkInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_unlink_inbound_message",
@@ -614,7 +616,7 @@ func newUnlinkInboundMessageTool(queue triageQueue) agentports.AgentTool {
 			*inboundmessageservice.QueuePlan,
 		]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*inboundmessageservice.UnlinkRequest, error) {
 				action, err := messageAction(params)
 				if err != nil {
@@ -636,7 +638,7 @@ func newUnlinkInboundMessageTool(queue triageQueue) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				req *inboundmessageservice.UnlinkRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*inboundmessageservice.QueuePlan, error) {
 				return queue.PlanUnlink(ctx, req)
 			},
@@ -655,7 +657,7 @@ func newUnlinkInboundMessageTool(queue triageQueue) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				req *inboundmessageservice.UnlinkRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				message, err := queue.Unlink(ctx, req)
 				if err != nil {
@@ -668,11 +670,11 @@ func newUnlinkInboundMessageTool(queue triageQueue) agentports.AgentTool {
 	)
 }
 
-func NewHandOffTriageTool(p triageToolParams) agentports.AgentTool {
+func NewHandOffTriageTool(p triageToolParams) agenttoolports.AgentTool {
 	return newHandOffTriageTool(p.Inbox)
 }
 
-func newHandOffTriageTool(queue triageQueue) agentports.AgentTool {
+func newHandOffTriageTool(queue triageQueue) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_assign_queue",
@@ -703,7 +705,7 @@ func newHandOffTriageTool(queue triageQueue) agentports.AgentTool {
 			*inboundmessageservice.QueuePlan,
 		]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*inboundmessageservice.HandOffRequest, error) {
 				to, err := common.RequirePulid(params.Params, paramToUserID)
 				if err != nil {
@@ -719,7 +721,7 @@ func newHandOffTriageTool(queue triageQueue) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				req *inboundmessageservice.HandOffRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*inboundmessageservice.QueuePlan, error) {
 				return queue.PlanHandOff(ctx, req)
 			},
@@ -741,7 +743,7 @@ func newHandOffTriageTool(queue triageQueue) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				req *inboundmessageservice.HandOffRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				result, err := queue.HandOff(ctx, req)
 				if err != nil {

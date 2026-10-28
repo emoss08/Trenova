@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -70,7 +70,11 @@ func (f *fakeLedger) planned(kind factoring.ReserveEntryKind) *factoringports.Pl
 		Lines: []factoringports.PlannedLine{
 			{Role: factoring.AccountRoleCash, AccountID: pulid.MustNew("gla_"), Debit: 88_000},
 			{Role: factoring.AccountRoleFeeExpense, AccountID: pulid.MustNew("gla_"), Debit: 2_500},
-			{Role: factoring.AccountRoleDueFromFactor, AccountID: pulid.MustNew("gla_"), Debit: 9_500},
+			{
+				Role:      factoring.AccountRoleDueFromFactor,
+				AccountID: pulid.MustNew("gla_"),
+				Debit:     9_500,
+			},
 			{Role: factoring.AccountRoleAR, AccountID: pulid.MustNew("gla_"), Credit: 100_000},
 		},
 		RequestedDate:    1_800_000_000,
@@ -174,7 +178,7 @@ func (f *fakeLedger) RecordChargeback(
 	return &factoringports.ReserveMovementResult{Submission: f.sub}, nil
 }
 
-func fundingParams(f *fakeLedger, items ...any) agentports.ToolExecuteParams {
+func fundingParams(f *fakeLedger, items ...any) agenttoolports.ToolExecuteParams {
 	return toolParams(map[string]any{
 		paramSubmissionID: f.sub.ID.String(),
 		paramVersion:      float64(f.sub.Version),
@@ -188,7 +192,7 @@ func TestLedgerToolPolicies_AreMoneyAndProposeOnly(t *testing.T) {
 	t.Parallel()
 
 	ledger := newFakeLedger()
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		NewRecordFactoringFundingTool(ledger, nil),
 		NewReleaseFactoringReserveTool(ledger, nil),
 		NewRecordFactoringChargebackTool(ledger, nil),
@@ -216,9 +220,13 @@ func TestRecordFactoringFunding_PreviewsTheJournalAndRunsOnlyWhenApproved(t *tes
 		paramFee:     "25",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &ledger.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&ledger.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	require.Len(t, preview.Changes, 2)
 	assert.Equal(t, permission.ResourceFactoringSubmission, preview.Changes[0].Resource)
 	assert.Equal(t, permission.ResourceJournalEntry, preview.Changes[1].Resource)
@@ -247,13 +255,21 @@ func TestRecordFactoringFunding_RefusesBadItems(t *testing.T) {
 
 	ledger := newFakeLedger()
 	tool := NewRecordFactoringFundingTool(ledger, nil)
-	validator := tool.(agentports.ToolValidator)
+	validator := tool.(agenttoolports.ToolValidator)
 
 	cases := map[string][]any{
-		"no items":         {},
-		"unknown outcome":  {map[string]any{paramItemID: ledger.item.ID.String(), paramOutcome: "Paid"}},
-		"negative advance": {map[string]any{paramItemID: ledger.item.ID.String(), paramOutcome: "Funded", paramAdvance: "-1"}},
-		"not an object":    {"funded"},
+		"no items": {},
+		"unknown outcome": {
+			map[string]any{paramItemID: ledger.item.ID.String(), paramOutcome: "Paid"},
+		},
+		"negative advance": {
+			map[string]any{
+				paramItemID:  ledger.item.ID.String(),
+				paramOutcome: "Funded",
+				paramAdvance: "-1",
+			},
+		},
+		"not an object": {"funded"},
 	}
 	for name, items := range cases {
 		err := validator.Validate(t.Context(), fundingParams(ledger, items...))
@@ -272,11 +288,11 @@ func TestRecordFactoringChargeback_NeedsAReason(t *testing.T) {
 		paramVersion:      float64(ledger.sub.Version),
 		paramOccurred:     "2026-10-20",
 	})
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 
 	params.Params[paramReason] = "Customer filed for bankruptcy"
 	params.Params[paramCash] = "930.00"
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "chargeback of invoice INV-7")
 
@@ -299,7 +315,7 @@ func TestReleaseFactoringReserve_SaysWhenNothingIsBooked(t *testing.T) {
 		paramVersion:      float64(ledger.sub.Version),
 		paramOccurred:     "2026-10-20",
 	})
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Len(t, preview.Changes, 1)
 	assert.Contains(t, preview.Summary, "Nothing is booked")

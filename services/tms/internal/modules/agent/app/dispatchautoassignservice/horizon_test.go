@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -345,7 +345,7 @@ func TestSolveImmediate_IgnoresHorizonConfiguration(t *testing.T) {
 	svc := &Service{candidates: &dispatchcandidateservice.Service{}}
 	_, policy := horizonControls()
 
-	build := func(control *dispatchcontrol.DispatchControl) *agentports.DispatchPlan {
+	build := func(control *dispatchcontrol.DispatchControl) *dispatchconsoleports.DispatchPlan {
 		return svc.solve(&solveParams{
 			Moves: []*shipmentports.BoardMove{horizonMove("P1"), horizonMove("P2")},
 			Snapshot: &dispatchcandidateservice.FleetSnapshot{

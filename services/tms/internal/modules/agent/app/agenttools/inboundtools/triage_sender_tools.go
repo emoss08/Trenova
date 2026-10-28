@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -63,11 +63,11 @@ func mailboxSendersChange(plan *triageworkservice.SenderPlan) (*agent.RecordChan
 	)
 }
 
-func NewBlockInboundSenderTool(p triageToolParams) agentports.AgentTool {
+func NewBlockInboundSenderTool(p triageToolParams) agenttoolports.AgentTool {
 	return newBlockInboundSenderTool(p.Work)
 }
 
-func newBlockInboundSenderTool(senders triageSenders) agentports.AgentTool {
+func newBlockInboundSenderTool(senders triageSenders) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_block_sender",
@@ -98,7 +98,7 @@ func newBlockInboundSenderTool(senders triageSenders) agentports.AgentTool {
 		},
 		common.ReceivablePlan[*triageworkservice.BlockSenderRequest, *triageworkservice.SenderPlan]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*triageworkservice.BlockSenderRequest, error) {
 				messageID, err := common.RequirePulid(params.Params, paramMessageID)
 				if err != nil {
@@ -114,7 +114,7 @@ func newBlockInboundSenderTool(senders triageSenders) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				req *triageworkservice.BlockSenderRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*triageworkservice.SenderPlan, error) {
 				return senders.PlanBlockSender(ctx, req)
 			},
@@ -147,7 +147,7 @@ func newBlockInboundSenderTool(senders triageSenders) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				req *triageworkservice.BlockSenderRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				message, err := senders.BlockSender(ctx, req)
 				if err != nil {
@@ -160,14 +160,14 @@ func newBlockInboundSenderTool(senders triageSenders) agentports.AgentTool {
 	)
 }
 
-func NewUnblockInboundSenderTool(p triageToolParams) agentports.AgentTool {
+func NewUnblockInboundSenderTool(p triageToolParams) agenttoolports.AgentTool {
 	return newUnblockInboundSenderTool(p.Inbox, p.Work)
 }
 
 func newUnblockInboundSenderTool(
 	inbox inboundMessageReader,
 	senders triageSenders,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_unblock_sender",
@@ -205,7 +205,7 @@ func newUnblockInboundSenderTool(
 			Plan: func(
 				ctx context.Context,
 				req *inboundmessageservice.MessageActionRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*triageworkservice.SenderPlan, error) {
 				unblock, err := unblockRequest(ctx, inbox, req)
 				if err != nil {
@@ -221,7 +221,7 @@ func newUnblockInboundSenderTool(
 			Run: func(
 				ctx context.Context,
 				req *inboundmessageservice.MessageActionRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				unblock, err := unblockRequest(ctx, inbox, req)
 				if err != nil {

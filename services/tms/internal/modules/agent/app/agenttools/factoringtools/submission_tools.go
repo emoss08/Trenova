@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -70,7 +70,7 @@ func submissionVersionParam() map[string]any {
 }
 
 func submissionActionRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.SubmissionActionRequest, error) {
 	id, err := common.RequirePulid(params.Params, paramSubmissionID)
 	if err != nil {
@@ -93,7 +93,7 @@ type SubmitInvoicesToFactorTool struct {
 
 func NewSubmitInvoicesToFactorTool(
 	submissions factoringports.SubmissionService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &SubmitInvoicesToFactorTool{submissions: submissions}
 }
 
@@ -128,7 +128,7 @@ func (t *SubmitInvoicesToFactorTool) ParamSchema() map[string]any {
 	}, paramFactorID, paramInvoiceIDs)
 }
 
-func (t *SubmitInvoicesToFactorTool) Policy() agentports.ToolPolicy {
+func (t *SubmitInvoicesToFactorTool) Policy() agenttoolports.ToolPolicy {
 	return policy(t.Name(), &policySpec{
 		resource:    permission.ResourceFactoringSubmission,
 		operation:   permission.OpSubmit,
@@ -141,12 +141,14 @@ func (t *SubmitInvoicesToFactorTool) Policy() agentports.ToolPolicy {
 	})
 }
 
-func (t *SubmitInvoicesToFactorTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *SubmitInvoicesToFactorTool) Target(
+	params map[string]any,
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramFactorID, permission.ResourceFactoringCompany)
 }
 
 func (t *SubmitInvoicesToFactorTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.PlanSubmissionRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -173,7 +175,7 @@ func (t *SubmitInvoicesToFactorTool) request(
 
 func (t *SubmitInvoicesToFactorTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -185,7 +187,7 @@ func (t *SubmitInvoicesToFactorTool) Validate(
 
 func (t *SubmitInvoicesToFactorTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -197,7 +199,7 @@ func (t *SubmitInvoicesToFactorTool) Execute(
 
 func (t *SubmitInvoicesToFactorTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const summary = "Would send a schedule of accounts to the factor."
 	req, err := t.request(&params)
@@ -293,7 +295,7 @@ type RetryFactoringSubmissionTool struct {
 
 func NewRetryFactoringSubmissionTool(
 	submissions factoringports.SubmissionService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &RetryFactoringSubmissionTool{submissions: submissions}
 }
 
@@ -323,7 +325,7 @@ func (t *RetryFactoringSubmissionTool) ParamSchema() map[string]any {
 	}, paramSubmissionID, paramVersion)
 }
 
-func (t *RetryFactoringSubmissionTool) Policy() agentports.ToolPolicy {
+func (t *RetryFactoringSubmissionTool) Policy() agenttoolports.ToolPolicy {
 	return policy(t.Name(), &policySpec{
 		resource:    permission.ResourceFactoringSubmission,
 		operation:   permission.OpUpdate,
@@ -335,12 +337,14 @@ func (t *RetryFactoringSubmissionTool) Policy() agentports.ToolPolicy {
 	})
 }
 
-func (t *RetryFactoringSubmissionTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *RetryFactoringSubmissionTool) Target(
+	params map[string]any,
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramSubmissionID, permission.ResourceFactoringSubmission)
 }
 
 func (t *RetryFactoringSubmissionTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.SubmissionActionRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -350,7 +354,7 @@ func (t *RetryFactoringSubmissionTool) request(
 
 func (t *RetryFactoringSubmissionTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -362,7 +366,7 @@ func (t *RetryFactoringSubmissionTool) Validate(
 
 func (t *RetryFactoringSubmissionTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -374,7 +378,7 @@ func (t *RetryFactoringSubmissionTool) Execute(
 
 func (t *RetryFactoringSubmissionTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const summary = "Would send the failed schedule to the factor again."
 	req, err := t.request(&params)
@@ -408,7 +412,7 @@ type CancelFactoringSubmissionTool struct {
 
 func NewCancelFactoringSubmissionTool(
 	submissions factoringports.SubmissionService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &CancelFactoringSubmissionTool{submissions: submissions}
 }
 
@@ -438,7 +442,7 @@ func (t *CancelFactoringSubmissionTool) ParamSchema() map[string]any {
 	}, paramSubmissionID, paramVersion, paramReason)
 }
 
-func (t *CancelFactoringSubmissionTool) Policy() agentports.ToolPolicy {
+func (t *CancelFactoringSubmissionTool) Policy() agenttoolports.ToolPolicy {
 	return policy(t.Name(), &policySpec{
 		resource:    permission.ResourceFactoringSubmission,
 		operation:   permission.OpCancel,
@@ -450,12 +454,12 @@ func (t *CancelFactoringSubmissionTool) Policy() agentports.ToolPolicy {
 
 func (t *CancelFactoringSubmissionTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramSubmissionID, permission.ResourceFactoringSubmission)
 }
 
 func (t *CancelFactoringSubmissionTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.SubmissionActionRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -474,7 +478,7 @@ func (t *CancelFactoringSubmissionTool) request(
 
 func (t *CancelFactoringSubmissionTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -486,7 +490,7 @@ func (t *CancelFactoringSubmissionTool) Validate(
 
 func (t *CancelFactoringSubmissionTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -498,7 +502,7 @@ func (t *CancelFactoringSubmissionTool) Execute(
 
 func (t *CancelFactoringSubmissionTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const summary = "Would cancel the failed schedule and release its invoices."
 	req, err := t.request(&params)

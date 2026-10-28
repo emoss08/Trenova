@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -260,14 +261,14 @@ func (r *stubRepo) ListReadItemIDs(
 }
 
 type stubRunRepo struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 
 	runs map[pulid.ID]*agent.AgentRun
 }
 
 func (r *stubRunRepo) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	run, ok := r.runs[req.ID]
 	if !ok {

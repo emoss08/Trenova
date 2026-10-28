@@ -8,7 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,7 +42,7 @@ func TestForProposal_PreviewsInAReadOnlySnapshotAndDigestsWhatWasShown(t *testin
 	f := newFixture()
 	proposal := f.proposal(f.cancelParams())
 
-	preview, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	preview, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
 		Viewer:   f.viewer(),
 	})
@@ -65,14 +66,14 @@ func TestForProposal_PreviewsInAReadOnlySnapshotAndDigestsWhatWasShown(t *testin
 	assert.Equal(t, "New", status.Before)
 	assert.Equal(t, "Cancelled", status.After)
 
-	again, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	again, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
 		Viewer:   f.viewer(),
 	})
 	require.NoError(t, err)
 	assert.Equal(t, preview.Digest, again.Digest, "the same world digests alike")
 
-	modified, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	modified, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal:      proposal,
 		Modifications: map[string]any{"status": "Hold"},
 		Viewer:        f.viewer(),
@@ -92,7 +93,7 @@ func TestForProposal_RefusesAReaderFromAnotherTenant(t *testing.T) {
 	viewer := f.viewer()
 	viewer.Actor.OrganizationID = pulid.MustNew("org_")
 
-	_, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	_, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: f.proposal(f.cancelParams()),
 		Viewer:   viewer,
 	})
@@ -110,7 +111,7 @@ func TestForProposal_LabelsTheRecordsItNames(t *testing.T) {
 	params := f.cancelParams()
 	params["customerId"] = other.String()
 
-	preview, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	preview, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: f.proposal(params),
 		Viewer:   f.viewer(),
 	})
@@ -209,7 +210,7 @@ func TestForProposal_WithheldValuesAreNotInTheDigest(t *testing.T) {
 
 	f := newFixture()
 	proposal := f.proposal(f.cancelParams())
-	open, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	open, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
 		Viewer:   f.viewer(),
 	})
@@ -219,7 +220,7 @@ func TestForProposal_WithheldValuesAreNotInTheDigest(t *testing.T) {
 	narrow.Ceilings = fakeCeilings{levels: map[permission.Resource]permission.FieldSensitivity{
 		permission.ResourceShipment: permission.SensitivityPublic,
 	}}
-	hidden, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	hidden, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
 		Viewer:   narrow,
 	})
@@ -249,7 +250,7 @@ func TestForProposal_IsStaleWhenThePinnedRecordMoved(t *testing.T) {
 		}}},
 	}}
 
-	preview, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	preview, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
 		Viewer:   f.viewer(),
 	})
@@ -272,7 +273,7 @@ func TestForProposal_IsStaleWhenThePinnedRecordIsGone(t *testing.T) {
 	f := newFixture()
 	f.versions.missing[f.tool.state.ID] = true
 
-	preview, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	preview, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: f.proposal(f.cancelParams()),
 		Viewer:   f.viewer(),
 	})
@@ -294,7 +295,7 @@ func TestForProposal_FallsBackToTheParametersWhenAToolCannotSay(t *testing.T) {
 	proposal := f.proposal(map[string]any{"shipmentId": f.tool.state.ID.String(), "status": "x"})
 	proposal.ToolName = plain.name
 
-	preview, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	preview, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
 		Viewer:   f.viewer(),
 	})
@@ -317,7 +318,7 @@ func TestForProposal_APreviewThatRunsOutOfTimeIsUnavailable(t *testing.T) {
 	f.tool.block = true
 
 	started := time.Now()
-	preview, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	preview, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: f.proposal(f.cancelParams()),
 		Viewer:   f.viewer(),
 	})
@@ -341,7 +342,7 @@ func TestForProposal_AFailingValidationIsAWarning(t *testing.T) {
 	proposal := f.proposal(f.cancelParams())
 	proposal.ToolName = failing.name
 
-	preview, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	preview, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
 		Viewer:   f.viewer(),
 	})
@@ -357,7 +358,7 @@ func TestForProposal_RefusesChangesThatCouldNotRun(t *testing.T) {
 	refusal := errortypes.NewValidationError("shipmentId", errortypes.ErrForbidden, "no")
 	f.checker.err = refusal
 
-	_, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	_, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal:      f.proposal(f.cancelParams()),
 		Modifications: map[string]any{"shipmentId": pulid.MustNew("shp_").String()},
 		Viewer:        f.viewer(),
@@ -378,19 +379,19 @@ func TestForProposal_ASelfScopedPreviewIsTheOwnersAlone(t *testing.T) {
 	personal.state = f.tool.state
 	viewer := f.viewer()
 	proposal := f.proposal(map[string]any{
-		agentports.SelfScopeOwnerParam: pulid.MustNew("usr_").String(),
-		"status":                       "Cancelled",
+		agenttoolports.SelfScopeOwnerParam: pulid.MustNew("usr_").String(),
+		"status":                           "Cancelled",
 	})
 	proposal.ToolName = personal.name
 
-	_, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	_, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
 		Viewer:   viewer,
 	})
 	require.True(t, errortypes.IsNotFoundError(err))
 
-	proposal.ToolParams[agentports.SelfScopeOwnerParam] = viewer.Actor.UserID.String()
-	_, err = f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	proposal.ToolParams[agenttoolports.SelfScopeOwnerParam] = viewer.Actor.UserID.String()
+	_, err = f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
 		Viewer:   viewer,
 	})
@@ -426,7 +427,7 @@ func TestForProposal_ReturnsTheRecordedPreviewOnceDecided(t *testing.T) {
 		PreviewDigest:  "d1",
 	}}
 
-	preview, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	preview, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
 		Viewer:   f.viewer(),
 	})
@@ -439,7 +440,7 @@ func TestForProposal_ReturnsTheRecordedPreviewOnceDecided(t *testing.T) {
 	narrow.Ceilings = fakeCeilings{levels: map[permission.Resource]permission.FieldSensitivity{
 		permission.ResourceShipment: permission.SensitivityPublic,
 	}}
-	filtered, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	filtered, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
 		Viewer:   narrow,
 	})
@@ -458,7 +459,7 @@ func TestForProposal_NamesTheRecordsARecordedPreviewLeftUnlabelled(t *testing.T)
 	f := newFixture()
 	biller := pulid.MustNew("usr_")
 	item := pulid.MustNew("bqi_")
-	f.labeler.labels = agentports.RecordLabels{
+	f.labeler.labels = agentruntimeports.RecordLabels{
 		permission.ResourceUser:         {biller: "Avery Biller"},
 		permission.ResourceBillingQueue: {item: "INV2610000079"},
 	}
@@ -488,7 +489,7 @@ func TestForProposal_NamesTheRecordsARecordedPreviewLeftUnlabelled(t *testing.T)
 		PreviewDigest:  "d1",
 	}}
 
-	preview, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	preview, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
 		Viewer:   f.viewer(),
 	})
@@ -501,7 +502,7 @@ func TestForProposal_NamesTheRecordsARecordedPreviewLeftUnlabelled(t *testing.T)
 
 	narrow := f.viewer()
 	narrow.Reads = fakeReads{denied: map[permission.Resource]bool{permission.ResourceUser: true}}
-	hidden, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	hidden, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
 		Viewer:   narrow,
 	})
@@ -525,7 +526,7 @@ func TestForPlan_ProjectsLaterStepsFromEarlierOnes(t *testing.T) {
 	second.PlanID, second.PlanStep = &plan.ID, 2
 	f.steps.steps = []*agent.AgentProposal{second, first}
 
-	preview, err := f.svc.ForPlan(t.Context(), &agentports.PlanPreviewRequest{
+	preview, err := f.svc.ForPlan(t.Context(), &agentruntimeports.PlanPreviewRequest{
 		Plan:   plan,
 		Viewer: f.viewer(),
 	})
@@ -546,7 +547,7 @@ func TestForPlan_ProjectsLaterStepsFromEarlierOnes(t *testing.T) {
 	assert.False(t, preview.Stale)
 
 	f.versions.versions[f.tool.state.ID] = 9
-	stale, err := f.svc.ForPlan(t.Context(), &agentports.PlanPreviewRequest{
+	stale, err := f.svc.ForPlan(t.Context(), &agentruntimeports.PlanPreviewRequest{
 		Plan:   plan,
 		Viewer: f.viewer(),
 	})
@@ -559,10 +560,10 @@ func TestBaseline_PinsAndKeepsWhatTheWriteWouldDo(t *testing.T) {
 
 	f := newFixture()
 	proposalID := pulid.MustNew("ap_")
-	result := f.svc.Baseline(t.Context(), &agentports.ProposalBaselineRequest{
+	result := f.svc.Baseline(t.Context(), &agentruntimeports.ProposalBaselineRequest{
 		ProposalID: proposalID,
 		Tool:       f.tool,
-		Params: agentports.ToolExecuteParams{
+		Params: agenttoolports.ToolExecuteParams{
 			OrganizationID: f.org,
 			BusinessUnitID: f.bu,
 			Params:         f.cancelParams(),
@@ -583,10 +584,10 @@ func TestBaseline_PinsAndKeepsWhatTheWriteWouldDo(t *testing.T) {
 	require.Len(t, f.db.opts, 1)
 	assert.True(t, f.db.opts[0].ReadOnly)
 
-	evaluation := f.svc.Baseline(t.Context(), &agentports.ProposalBaselineRequest{
+	evaluation := f.svc.Baseline(t.Context(), &agentruntimeports.ProposalBaselineRequest{
 		ProposalID: pulid.MustNew("ap_"),
 		Tool:       f.tool,
-		Params: agentports.ToolExecuteParams{
+		Params: agenttoolports.ToolExecuteParams{
 			OrganizationID: f.org,
 			BusinessUnitID: f.bu,
 			Params:         f.cancelParams(),
@@ -602,10 +603,10 @@ func TestBaseline_NeverFailsTheProposal(t *testing.T) {
 	f := newFixture()
 	f.tool.failErr = errors.New("boom")
 
-	result := f.svc.Baseline(t.Context(), &agentports.ProposalBaselineRequest{
+	result := f.svc.Baseline(t.Context(), &agentruntimeports.ProposalBaselineRequest{
 		ProposalID: pulid.MustNew("ap_"),
 		Tool:       f.tool,
-		Params: agentports.ToolExecuteParams{
+		Params: agenttoolports.ToolExecuteParams{
 			OrganizationID: f.org,
 			BusinessUnitID: f.bu,
 			Params:         f.cancelParams(),
@@ -625,11 +626,11 @@ func statusRefusal() error {
 	return multiErr
 }
 
-func baselineRequest(f *fixture) *agentports.ProposalBaselineRequest {
-	return &agentports.ProposalBaselineRequest{
+func baselineRequest(f *fixture) *agentruntimeports.ProposalBaselineRequest {
+	return &agentruntimeports.ProposalBaselineRequest{
 		ProposalID: pulid.MustNew("ap_"),
 		Tool:       f.tool,
-		Params: agentports.ToolExecuteParams{
+		Params: agenttoolports.ToolExecuteParams{
 			OrganizationID: f.org,
 			BusinessUnitID: f.bu,
 			Params:         f.cancelParams(),
@@ -644,7 +645,7 @@ func TestForProposal_AWouldFailNamesTheParameterEachReasonIsAbout(t *testing.T) 
 	f := newFixture()
 	f.tool.refusal = statusRefusal()
 
-	preview, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	preview, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: f.proposal(f.cancelParams()),
 		Viewer:   f.viewer(),
 	})
@@ -673,7 +674,7 @@ func TestForProposal_AFailingValidationNamesItsReasons(t *testing.T) {
 	proposal := f.proposal(f.cancelParams())
 	proposal.ToolName = failing.name
 
-	preview, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	preview, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
 		Viewer:   f.viewer(),
 	})
@@ -740,7 +741,9 @@ func TestSettleParams_ReadsValuesAsTheExecutorWill(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture()
-	tool := &enumStatusTool{baseTool: &baseTool{name: "set_status", resource: permission.ResourceShipment}}
+	tool := &enumStatusTool{
+		baseTool: &baseTool{name: "set_status", resource: permission.ResourceShipment},
+	}
 	proposal := f.proposal(map[string]any{
 		"shipmentId": f.tool.state.ID.String(),
 		"status":     "cancelled",
@@ -755,7 +758,12 @@ func TestSettleParams_ReadsValuesAsTheExecutorWill(t *testing.T) {
 	assert.Empty(t, warnings)
 	assert.Equal(t, "Cancelled", stored["status"])
 	assert.Equal(t, float64(3), stored["limit"])
-	assert.Equal(t, "cancelled", proposal.ToolParams["status"], "the proposal itself is not rewritten")
+	assert.Equal(
+		t,
+		"cancelled",
+		proposal.ToolParams["status"],
+		"the proposal itself is not rewritten",
+	)
 
 	typed, _, err := f.svc.settleParams(t.Context(), tool, &draftInput{
 		proposal: proposal,
@@ -774,7 +782,7 @@ func TestForProposal_SaysWhetherAnApprovalOfWhatItShowsNeedsItsDigest(t *testing
 		f.checker.review = review
 		modifications := map[string]any{"reason": "Customer asked"}
 
-		preview, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+		preview, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 			Proposal:      f.proposal(f.cancelParams()),
 			Modifications: modifications,
 			Viewer:        f.viewer(),
@@ -799,7 +807,10 @@ func TestForPlan_EachStepSaysWhetherItMustBeReviewed(t *testing.T) {
 	money.PlanID, money.PlanStep, money.EgressClass = &plan.ID, 2, agent.EgressMoney
 	f.steps.steps = []*agent.AgentProposal{internal, money}
 
-	preview, err := f.svc.ForPlan(t.Context(), &agentports.PlanPreviewRequest{Plan: plan, Viewer: f.viewer()})
+	preview, err := f.svc.ForPlan(
+		t.Context(),
+		&agentruntimeports.PlanPreviewRequest{Plan: plan, Viewer: f.viewer()},
+	)
 	require.NoError(t, err)
 
 	require.Len(t, preview.Steps, 2)

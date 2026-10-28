@@ -59,7 +59,7 @@ operation-cost budget, which the screen is.
 model call ──▶ agentruntime.dispatch ──▶ graphQL read tool (agent module)
                                             │  typed params → variables (generated)
                                             ▼
-                                agentports.GraphQLReader (port, agent module)
+                                graphqlreadports.GraphQLReader (port, agent module)
                                             │
                                             ▼
                       internal/api/graphql/agentread (adapter, API package)
@@ -219,7 +219,7 @@ The rule, for each listed tool:
 1. **Root field to record kind.** A Query root field returning `XConnection` (a list) or `X` with
    an `id` argument (a get) reads the record kind the permission registry maps `X` to
    ([record-kinds.md](record-kinds.md)). A type no kind claims gets no tool.
-2. **Record kind to tool.** The tool is `agentports.ToolNameFor("list_" + plural(kind))` or
+2. **Record kind to tool.** The tool is `agenttoolports.ToolNameFor("list_" + plural(kind))` or
    `ToolNameFor("get_" + kind)`. This is the reading-order rule the conventions already use, so
    `tractors` becomes `equipment_list_tractors` and `customer` becomes `customer_get`. A listed
    tool no root field is named for fails generation.

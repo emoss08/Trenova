@@ -4,9 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
@@ -15,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -692,12 +691,12 @@ func (r *fakeShipmentEventRepository) Insert(
 }
 
 type fakeRealtimeService struct {
-	published []*agentports.PublishResourceInvalidationRequest
+	published []*realtimeports.PublishResourceInvalidationRequest
 }
 
 func (s *fakeRealtimeService) PublishResourceInvalidation(
 	_ context.Context,
-	req *agentports.PublishResourceInvalidationRequest,
+	req *realtimeports.PublishResourceInvalidationRequest,
 ) error {
 	s.published = append(s.published, req)
 	return nil

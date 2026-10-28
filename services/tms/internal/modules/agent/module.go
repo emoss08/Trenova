@@ -40,12 +40,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/analysisrunrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantartifactrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantcaserepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantchapterrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantqueuerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantturnrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/briefingrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/casechecklistrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
-	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantchapterrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationschedulerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/exceptionsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/insightrepository"
@@ -112,8 +112,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/analysisrunservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/approvalwindow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantcaseservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantfollowupservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantchapterservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantfollowupservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistanthandoffservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantqueueservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
@@ -151,11 +151,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"go.uber.org/fx"
@@ -190,8 +197,8 @@ func SharedOptions() fx.Option {
 			approvalwindow.New,
 			assistantcontract.NewTurnCanceller,
 			completioncontract.NewDispatcher,
-			func(d *completioncontract.Dispatcher) agentports.StructuredCompleter { return d },
-			func(d *completioncontract.Dispatcher) agentports.AIProviderTester { return d },
+			func(d *completioncontract.Dispatcher) llmports.StructuredCompleter { return d },
+			func(d *completioncontract.Dispatcher) aiproviderports.AIProviderTester { return d },
 			func(d *completioncontract.Dispatcher) briefingports.BriefingDayWriter { return d },
 			assistantqueuerepository.New,
 			agentwaitrepository.New,
@@ -216,10 +223,10 @@ func SharedOptions() fx.Option {
 			agentqualityrepository.NewControls,
 			fx.Annotate(
 				airetrievalrepository.New,
-				fx.As(new(agentports.AIRetrievalRepository)),
-				fx.As(new(agentports.AIEmbeddingRepository)),
-				fx.As(new(agentports.AIIndexEntryRepository)),
-				fx.As(new(agentports.AIRetrievalSettingsRepository)),
+				fx.As(new(retrievalports.AIRetrievalRepository)),
+				fx.As(new(retrievalports.AIEmbeddingRepository)),
+				fx.As(new(retrievalports.AIIndexEntryRepository)),
+				fx.As(new(retrievalports.AIRetrievalSettingsRepository)),
 			),
 			agentproposalbaselinerepository.New,
 			recordlabelrepository.New,
@@ -227,7 +234,7 @@ func SharedOptions() fx.Option {
 			fx.Annotate(
 				boardcardservice.New,
 				fx.As(fx.Self()),
-				fx.As(new(agentports.BoardFiller)),
+				fx.As(new(assistantports.BoardFiller)),
 			),
 			aiusagerepository.New,
 			aiauditrepository.New,
@@ -300,11 +307,11 @@ func SharedOptions() fx.Option {
 			agentaccessservice.New,
 			agentsafetyservice.New,
 			agenttoolruleservice.New,
-			func(s *agenttoolruleservice.Service) agentports.AgentToolRuleService { return s },
+			func(s *agenttoolruleservice.Service) agenttoolports.AgentToolRuleService { return s },
 			aiproviderservice.NewModelPriceReference,
 			aiproviderservice.NewProber,
 			aiproviderservice.New,
-			func(s *aiproviderservice.Service) agentports.AIProviderService { return s },
+			func(s *aiproviderservice.Service) aiproviderports.AIProviderService { return s },
 			agentshadowservice.New,
 			func(s *agentshadowservice.Service) agentshadowports.AgentShadowService { return s },
 			aicontrolsummaryservice.New,
@@ -317,7 +324,7 @@ func SharedOptions() fx.Option {
 			func(s *aianalyticsservice.Service) aianalyticsports.AnalyticsService { return s },
 			agenttestpromptservice.New,
 			func(s *agenttestpromptservice.Service) agentdefinitionports.AgentTestPromptService { return s },
-			func(s *aiproviderservice.Service) agentports.AIProviderProbe { return s },
+			func(s *aiproviderservice.Service) aiproviderports.AIProviderProbe { return s },
 			aiusageservice.New,
 			agentrunservice.New,
 			agentsubjectservice.New,
@@ -379,7 +386,7 @@ func SharedOptions() fx.Option {
 			agentqualityservice.AsEvaluationBudget,
 			fx.Annotate(
 				dispatchautoassignservice.New,
-				fx.As(new(agentports.DispatchAutoAssignService)),
+				fx.As(new(dispatchconsoleports.DispatchAutoAssignService)),
 			),
 			recordanchorservice.New,
 			shipmentbriefingservice.New,
@@ -423,7 +430,7 @@ func APIOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(fx.Annotate(
 			formulastudioservice.New,
-			fx.As(new(agentports.FormulaStudioAssist)),
+			fx.As(new(formulastudioports.FormulaStudioAssist)),
 		)),
 	)
 }

@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -90,7 +90,7 @@ func ForDelegate(ownerID pulid.ID, delegateCallID string) Anchor {
 	return AnchorFor(AnchorDelegate, ownerID.String()+delegateKeySep+delegateCallID)
 }
 
-func ForRun(owner agentports.RunStepOwner, delegation *agentports.Delegation) Anchor {
+func ForRun(owner agentruntimeports.RunStepOwner, delegation *agentruntimeports.Delegation) Anchor {
 	callID := ""
 	if delegation != nil {
 		callID = delegation.CallID
@@ -107,7 +107,7 @@ func ForAttribution(attribution *aiusageports.AIUsageAttribution) Anchor {
 		return forOwner(attribution.OwnerKind, attribution.OwnerID, attribution.DelegateCallID)
 	}
 	if attribution.RunID.IsNotNil() {
-		return forOwner(agentports.RunStepOwnerAgentRun, attribution.RunID, "")
+		return forOwner(agentruntimeports.RunStepOwnerAgentRun, attribution.RunID, "")
 	}
 
 	return Anchor{}
@@ -122,12 +122,12 @@ func forOwner(kind kernelports.RunStepOwnerKind, id pulid.ID, delegateCallID str
 	}
 
 	switch kind {
-	case agentports.RunStepOwnerAgentRun:
+	case agentruntimeports.RunStepOwnerAgentRun:
 		if id.Prefix() == agent.EvaluationIDPrefix {
 			return AnchorFor(AnchorEvaluation, id.String())
 		}
 		return AnchorFor(AnchorAgentRun, id.String())
-	case agentports.RunStepOwnerAssistantTurn:
+	case agentruntimeports.RunStepOwnerAssistantTurn:
 		return AnchorFor(AnchorAssistantTurn, id.String())
 	}
 

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -71,7 +71,7 @@ func heldOccurrence(status detention.OccurrenceStatus) *detention.DetentionOccur
 	}
 }
 
-func approveParams(occurrenceID pulid.ID) agentports.ToolExecuteParams {
+func approveParams(occurrenceID pulid.ID) agenttoolports.ToolExecuteParams {
 	params := agenttoolstest.DeskParams(map[string]any{
 		"occurrenceId": occurrenceID.String(),
 		"evidence": " Arrival 08:02 and departure 12:40 on the ELD; notice sent 09:55, " +
@@ -89,9 +89,9 @@ func TestApproveDetention_ApprovesAsThePersonWhoApprovedTheProposal(t *testing.T
 	tool := NewApproveDetentionTool(stub)
 	params := approveParams(stub.occurrence.ID)
 
-	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.NoError(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, stub.approved, "a preview must not approve")
 	assert.Contains(t, preview.Summary, "425.00 USD")
@@ -126,7 +126,7 @@ func TestApproveDetention_RefusesAnythingButAPendingCharge(t *testing.T) {
 		tool := NewApproveDetentionTool(stub)
 		params := approveParams(stub.occurrence.ID)
 
-		err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
+		err := tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
 		require.Error(t, err, status)
 		assert.Contains(t, err.Error(), "only a pending charge can be approved", status)
 		assert.Contains(t, err.Error(), string(status), status)

@@ -6,7 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,7 +17,7 @@ import (
 func attachmentRuntime() *Service {
 	return newRuntime(
 		&scriptedCompletion{},
-		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			queryTool(agentdefinition.CoreToolReadAttachment, nil, nil),
 		}},
 		&stubActionRegistry{},
@@ -27,7 +29,7 @@ func TestOpenTurn_PutsTheFilesOnTheMessageTheyCameWith(t *testing.T) {
 	t.Parallel()
 
 	documentID := pulid.MustNew("doc_").String()
-	turn := attachmentRuntime().OpenTurn(t.Context(), &agentports.RunRequest{
+	turn := attachmentRuntime().OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Here it is",
@@ -54,14 +56,14 @@ func TestOpenTurn_PutsTheFilesOnTheMessageTheyCameWith(t *testing.T) {
 func TestOpenTurn_ReadsAttachmentsOnlyInAConversationWithFiles(t *testing.T) {
 	t.Parallel()
 
-	turn := attachmentRuntime().OpenTurn(t.Context(), &agentports.RunRequest{
+	turn := attachmentRuntime().OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "What is due today?",
 	})
 	assert.False(t, turn.tools.offers(agentdefinition.CoreToolReadAttachment))
 
-	turn = attachmentRuntime().OpenTurn(t.Context(), &agentports.RunRequest{
+	turn = attachmentRuntime().OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Build the shipment from it",
@@ -113,7 +115,7 @@ func TestReplayHistory_NamesTheFilesAnEarlierMessageCarried(t *testing.T) {
 func TestOpenTurn_CountsEarlierFilesAsWhatTheTurnMayCite(t *testing.T) {
 	t.Parallel()
 
-	turn := attachmentRuntime().OpenTurn(t.Context(), &agentports.RunRequest{
+	turn := attachmentRuntime().OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Approved. Continue.",
@@ -141,7 +143,9 @@ func TestReplayHistory_ShowsARecentFileWithItsTextAndAnOldOneByName(t *testing.T
 		{Role: conversation.RoleUser, Content: "three"},
 		{Role: conversation.RoleAssistant, Content: "ok"},
 		{Role: conversation.RoleUser, Content: "build this one",
-			Attachments: []conversation.MessageAttachment{{DocumentID: recent, FileName: "new.pdf"}}},
+			Attachments: []conversation.MessageAttachment{
+				{DocumentID: recent, FileName: "new.pdf"},
+			}},
 		{Role: conversation.RoleAssistant, Content: "Proposed the customer."},
 	}
 	files := map[string]string{
@@ -170,7 +174,7 @@ func TestOpenTurn_CarriesEachFileAndWhereItsEntryStands(t *testing.T) {
 	photo := pulid.MustNew("doc_").String()
 	definition := testDefinition()
 	definition.ContextProviders = append(definition.ContextProviders, agentdefinition.ContextClock)
-	turn := attachmentRuntime().OpenTurn(t.Context(), &agentports.RunRequest{
+	turn := attachmentRuntime().OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "Check these",
@@ -199,7 +203,7 @@ func TestOpenTurn_CarriesEachFileAndWhereItsEntryStands(t *testing.T) {
 
 	asked := turn.messages[len(turn.messages)-1]
 	require.Len(t, asked.Files, 2)
-	assert.Equal(t, agentports.MessageFile{
+	assert.Equal(t, llmports.MessageFile{
 		DocumentID:  pdf,
 		FileName:    "ratecon.pdf",
 		ContentType: "application/pdf",
@@ -211,10 +215,23 @@ func TestOpenTurn_CarriesEachFileAndWhereItsEntryStands(t *testing.T) {
 	}, asked.Files[0])
 	for _, file := range asked.Files {
 		entry := asked.Content[file.EntryStart:file.EntryEnd]
-		assert.True(t, strings.HasPrefix(entry, agentdefinition.AttachmentEntryLead(file.DocumentID)))
-		assert.True(t, strings.HasPrefix(file.NativeEntry, agentdefinition.AttachmentEntryLead(file.DocumentID)))
+		assert.True(
+			t,
+			strings.HasPrefix(entry, agentdefinition.AttachmentEntryLead(file.DocumentID)),
+		)
+		assert.True(
+			t,
+			strings.HasPrefix(
+				file.NativeEntry,
+				agentdefinition.AttachmentEntryLead(file.DocumentID),
+			),
+		)
 	}
-	assert.Contains(t, asked.Content[asked.Files[0].EntryStart:asked.Files[0].EntryEnd], "Linehaul $2,400.")
+	assert.Contains(
+		t,
+		asked.Content[asked.Files[0].EntryStart:asked.Files[0].EntryEnd],
+		"Linehaul $2,400.",
+	)
 	assert.Positive(t, asked.Files[0].EntryStart, "the clock line stands ahead of the block")
 }
 
@@ -222,11 +239,11 @@ func TestOpenTurn_CarriesEachFileAndWhereItsEntryStands(t *testing.T) {
 func TestOpenTurn_GivesADelegatedTaskNoFiles(t *testing.T) {
 	t.Parallel()
 
-	turn := attachmentRuntime().OpenTurn(t.Context(), &agentports.RunRequest{
+	turn := attachmentRuntime().OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Summarize the rate",
-		Delegation: &agentports.Delegation{CallID: "call_1", StepScope: "scope"},
+		Delegation: &agentruntimeports.Delegation{CallID: "call_1", StepScope: "scope"},
 		Context: agentdefinition.RuntimeContext{
 			Attachments: []agentdefinition.RuntimeAttachment{{
 				DocumentID:  pulid.MustNew("doc_").String(),

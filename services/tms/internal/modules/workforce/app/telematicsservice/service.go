@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -33,7 +33,7 @@ type Params struct {
 	Repo                telematicsports.TelematicsRepository
 	ProviderFactory     telematicsports.TelematicsProviderFactory
 	IntegrationService  *integrationservice.Service
-	RealtimeService     agentports.RealtimeService
+	RealtimeService     realtimeports.RealtimeService
 	Notifications       *notificationservice.Service
 	DriverNotify        *drivernotificationservice.Service `optional:"true"`
 	AssignmentRepo      shipmentports.AssignmentRepository
@@ -52,7 +52,7 @@ type Service struct {
 	repo                telematicsports.TelematicsRepository
 	providerFactory     telematicsports.TelematicsProviderFactory
 	integrationService  *integrationservice.Service
-	realtimeService     agentports.RealtimeService
+	realtimeService     realtimeports.RealtimeService
 	notifications       *notificationservice.Service
 	driverNotify        *drivernotificationservice.Service
 	assignmentRepo      shipmentports.AssignmentRepository
@@ -108,7 +108,7 @@ func (s *Service) publishInvalidation(
 	}
 	err := s.realtimeService.PublishResourceInvalidation(
 		ctx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			Resource:       resource,

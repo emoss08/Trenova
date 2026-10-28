@@ -9,13 +9,6 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype/accounttypedb"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal/journalreversaldb"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
-
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -31,13 +24,19 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalreversalservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/manualjournalservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype/accounttypedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal/journalreversaldb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -73,7 +72,9 @@ func ledgerResolvers(conn *postgres.Connection) agentread.ResolverParams {
 	logger := zap.NewNop()
 	entries := journalentryrepository.New(journalentryrepository.Params{DB: conn, Logger: logger})
 	periods := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: logger})
-	journals := manualjournalrepository.New(manualjournalrepository.Params{DB: conn, Logger: logger})
+	journals := manualjournalrepository.New(
+		manualjournalrepository.Params{DB: conn, Logger: logger},
+	)
 	reversals := journalreversalrepository.New(
 		journalreversalrepository.Params{DB: conn, Logger: logger})
 	sources := journalsourcerepository.New(journalsourcerepository.Params{DB: conn, Logger: logger})
@@ -98,8 +99,10 @@ func ledgerResolvers(conn *postgres.Connection) agentread.ResolverParams {
 			Journals:  journals,
 			Sources:   sources,
 			Reversals: reversals,
-			Accounts:  glaccountrepository.New(glaccountrepository.Params{DB: conn, Logger: logger}),
-			Periods:   periods,
+			Accounts: glaccountrepository.New(
+				glaccountrepository.Params{DB: conn, Logger: logger},
+			),
+			Periods: periods,
 			Controls: accountingcontrolrepository.New(
 				accountingcontrolrepository.Params{DB: conn, Logger: logger}),
 			Users: userrepository.New(userrepository.Params{DB: conn, Logger: logger}),
@@ -118,7 +121,12 @@ func ledgerResolvers(conn *postgres.Connection) agentread.ResolverParams {
 // line on the first entry and the first journal so a card has an account.
 //
 //nolint:funlen // one tenant's books, written in the order the keys need
-func writeBooks(t *testing.T, admin *keel.DB, tenant *agentreadtest.Tenant, label string) *ledgerBooks {
+func writeBooks(
+	t *testing.T,
+	admin *keel.DB,
+	tenant *agentreadtest.Tenant,
+	label string,
+) *ledgerBooks {
 	t.Helper()
 
 	ctx := t.Context()
@@ -149,9 +157,14 @@ func writeBooks(t *testing.T, admin *keel.DB, tenant *agentreadtest.Tenant, labe
 		}
 	}
 
-	_, err = keel.Exec(ctx, admin,
+	_, err = keel.Exec(
+		ctx,
+		admin,
 		"INSERT INTO accounting_controls (id, organization_id, business_unit_id) VALUES ($1, $2, $3)",
-		pulid.MustNew("ac_").String(), org.String(), bu.String())
+		pulid.MustNew("ac_").String(),
+		org.String(),
+		bu.String(),
+	)
 	require.NoError(t, err)
 
 	kind := &accounttype.AccountType{
@@ -196,11 +209,17 @@ func writeBooks(t *testing.T, admin *keel.DB, tenant *agentreadtest.Tenant, labe
 		}
 		if idx == 0 {
 			books.entry = entry.ID.String()
-			must(journalentrydb.JournalEntryLines.Create(writeCtx, admin, &journalentry.JournalEntryLine{
-				ID: pulid.MustNew("jel_"), OrganizationID: org, BusinessUnitID: bu,
-				JournalEntryID: entry.ID, GLAccountID: account.ID, LineNumber: 1,
-				Description: "Diesel", DebitAmount: 5000, NetAmount: 5000,
-			}))
+			must(
+				journalentrydb.JournalEntryLines.Create(
+					writeCtx,
+					admin,
+					&journalentry.JournalEntryLine{
+						ID: pulid.MustNew("jel_"), OrganizationID: org, BusinessUnitID: bu,
+						JournalEntryID: entry.ID, GLAccountID: account.ID, LineNumber: 1,
+						Description: "Diesel", DebitAmount: 5000, NetAmount: 5000,
+					},
+				),
+			)
 		}
 
 		journalStatus := manualjournal.StatusDraft
@@ -263,14 +282,14 @@ var ledgerMarked = map[string]map[string]any{
 func atCeiling(
 	t *testing.T,
 	ctx context.Context,
-	tool agentports.AgentQueryTool,
+	tool agenttoolports.AgentQueryTool,
 	actor *agentreadtest.Tenant,
 	args map[string]any,
 	ceiling permission.FieldSensitivity,
 ) (map[string]any, error) {
 	t.Helper()
 
-	data, err := tool.Query(ctx, &agentports.QueryToolParams{
+	data, err := tool.Query(ctx, &agenttoolports.QueryToolParams{
 		OrganizationID:    actor.Actor.OrganizationID,
 		BusinessUnitID:    actor.Actor.BusinessUnitID,
 		Actor:             actor.Actor,
@@ -294,7 +313,10 @@ func TestConvertedLedgerReads_ReadTheTenantsBooksUnderRowLevelSecurity(t *testin
 	services := ledgerResolvers(conn)
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
-	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: services})
+	public := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: &publicRole{}, Resolvers: services},
+	)
 	accountant := agentreadtest.NewReader(t, agentreadtest.Options{
 		Engine: &restrictedRole{}, Resolvers: services,
 	})
@@ -322,22 +344,25 @@ func TestConvertedLedgerReads_ReadTheTenantsBooksUnderRowLevelSecurity(t *testin
 				assert.ElementsMatch(t, ours.marked[name], ids)
 			})
 
-			t.Run("what the repository tool withheld stays withheld at Internal", func(t *testing.T) {
-				page, err := atCeiling(t, ours.ctx, converted, ours.tenant,
-					map[string]any{"limit": 50}, permission.SensitivityInternal)
-				require.NoError(t, err)
-				items, _ := page["items"].([]any)
-				require.Len(t, items, len(ours.rows[name]))
-				for _, item := range items {
-					row, _ := item.(map[string]any)
-					for _, field := range oldGated[name] {
-						assert.NotContains(t, row, field)
+			t.Run(
+				"what the repository tool withheld stays withheld at Internal",
+				func(t *testing.T) {
+					page, err := atCeiling(t, ours.ctx, converted, ours.tenant,
+						map[string]any{"limit": 50}, permission.SensitivityInternal)
+					require.NoError(t, err)
+					items, _ := page["items"].([]any)
+					require.Len(t, items, len(ours.rows[name]))
+					for _, item := range items {
+						row, _ := item.(map[string]any)
+						for _, field := range oldGated[name] {
+							assert.NotContains(t, row, field)
+						}
 					}
-				}
-				for _, field := range oldGated[name] {
-					assert.Contains(t, page["withheldByAccess"], field)
-				}
-			})
+					for _, field := range oldGated[name] {
+						assert.Contains(t, page["withheldByAccess"], field)
+					}
+				},
+			)
 
 			t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
 				hidden, err := agentquerytoolservice.ConvertedListTool(name, public, &publicRole{})
@@ -401,7 +426,11 @@ func TestConvertedLedgerReads_ReadTheTenantsBooksUnderRowLevelSecurity(t *testin
 				assert.Contains(t, card["withheldByAccess"], path, name)
 			}
 
-			reaching, err := agentquerytoolservice.ConvertedGetTool(name, accountant, &restrictedRole{})
+			reaching, err := agentquerytoolservice.ConvertedGetTool(
+				name,
+				accountant,
+				&restrictedRole{},
+			)
 			require.NoError(t, err)
 			whole, err := atCeiling(t, ours.ctx, reaching, ours.tenant, map[string]any{param: c.id},
 				permission.SensitivityRestricted)

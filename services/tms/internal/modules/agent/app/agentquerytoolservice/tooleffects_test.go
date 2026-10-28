@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,6 +27,6 @@ func TestDeclaredToolEffects(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		assert.Equal(t, tc.want, agentports.EffectOf(tc.tool))
+		assert.Equal(t, tc.want, agenttoolports.EffectOf(tc.tool))
 	}
 }

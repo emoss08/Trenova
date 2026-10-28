@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -190,11 +190,11 @@ func iftaInternalSpec(spec *common.ReceivableSpec) *common.ReceivableSpec {
 	return common.FuelInternalSpec(spec)
 }
 
-func targetIFTAReturn(params map[string]any) (agentports.ToolTarget, bool) {
+func targetIFTAReturn(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramIFTAReturnID, permission.ResourceIFTAReturn)
 }
 
-func iftaPeriodFrom(params *agentports.ToolExecuteParams) (ifta.Period, error) {
+func iftaPeriodFrom(params *agenttoolports.ToolExecuteParams) (ifta.Period, error) {
 	year, err := common.RequireIntInRange(params.Params, paramYear, minIFTAYear, maxIFTAYear)
 	if err != nil {
 		return ifta.Period{}, err
@@ -214,7 +214,7 @@ func iftaPeriodProperties() map[string]any {
 	}
 }
 
-func NewGenerateIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
+func NewGenerateIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
 		Name: "fuel_generate_ifta_return",
 		Description: "Generate a quarter's IFTA fuel tax return as a draft, computed from " +
@@ -230,7 +230,7 @@ func NewGenerateIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 		Required:    []string{paramYear, paramQuarter},
 		SearchTerms: []string{searchTermIFTA, "fuel tax", "quarterly return", "quarter"},
 	}), common.ReceivablePlan[*iftaservice.GenerateReturnRequest, *ifta.Return]{
-		Request: func(params *agentports.ToolExecuteParams) (*iftaservice.GenerateReturnRequest, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*iftaservice.GenerateReturnRequest, error) {
 			period, err := iftaPeriodFrom(params)
 			if err != nil {
 				return nil, err
@@ -245,7 +245,7 @@ func NewGenerateIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *iftaservice.GenerateReturnRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*ifta.Return, error) {
 			return returns.PlanGenerate(ctx, req)
 		},
@@ -272,7 +272,7 @@ func NewGenerateIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *iftaservice.GenerateReturnRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := returns.Generate(ctx, req)
 
@@ -284,7 +284,7 @@ func NewGenerateIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 func returnActionRequest(
 	ctx context.Context,
 	returns IftaReturnKeeper,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	id pulid.ID,
 ) (*iftaservice.ReturnActionRequest, error) {
 	stored, err := returns.Get(ctx, common.TenantFrom(*params), id)
@@ -300,11 +300,11 @@ func returnActionRequest(
 	}, nil
 }
 
-func iftaReturnIDFrom(params *agentports.ToolExecuteParams) (pulid.ID, error) {
+func iftaReturnIDFrom(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
 	return common.RequirePulid(params.Params, paramIFTAReturnID)
 }
 
-func NewRecomputeIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
+func NewRecomputeIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
 		Name:        "fuel_recalculate_ifta_return",
 		Recipe:      []string{"fuel_list_ifta_returns", "fuel_recalculate_ifta_return"},
@@ -332,7 +332,7 @@ func NewRecomputeIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*iftaservice.ReturnChange, error) {
 			req, err := returnActionRequest(ctx, returns, params, id)
 			if err != nil {
@@ -362,7 +362,7 @@ func NewRecomputeIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := returnActionRequest(ctx, returns, params, id)
 			if err != nil {
@@ -375,7 +375,7 @@ func NewRecomputeIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 	})
 }
 
-func NewAmendIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
+func NewAmendIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
 		Name: "fuel_amend_ifta_return",
 		Description: "Propose opening an amendment of a filed IFTA return, with the reason: " +
@@ -398,7 +398,7 @@ func NewAmendIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 		Required: []string{paramIFTAReturnID, common.ParamReason},
 		Target:   targetIFTAReturn,
 	}), common.ReceivablePlan[*iftaservice.AmendReturnRequest, *iftaservice.ReturnAmendment]{
-		Request: func(params *agentports.ToolExecuteParams) (*iftaservice.AmendReturnRequest, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*iftaservice.AmendReturnRequest, error) {
 			id, err := common.RequirePulid(params.Params, paramIFTAReturnID)
 			if err != nil {
 				return nil, err
@@ -422,7 +422,7 @@ func NewAmendIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *iftaservice.AmendReturnRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*iftaservice.ReturnAmendment, error) {
 			return returns.PlanAmend(ctx, req)
 		},
@@ -451,7 +451,7 @@ func NewAmendIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *iftaservice.AmendReturnRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := returns.Amend(ctx, req)
 
@@ -460,7 +460,7 @@ func NewAmendIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 	})
 }
 
-func NewDeleteIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
+func NewDeleteIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
 		Name: "fuel_delete_ifta_return",
 		Description: "Delete a draft IFTA return, such as one generated for the wrong " +
@@ -481,7 +481,7 @@ func NewDeleteIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*ifta.Return, error) {
 			req, err := returnActionRequest(ctx, returns, params, id)
 			if err != nil {
@@ -506,7 +506,7 @@ func NewDeleteIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := returnActionRequest(ctx, returns, params, id)
 			if err != nil {
@@ -655,7 +655,7 @@ type labelledMileage struct {
 	jurisdiction string
 }
 
-func NewRecordIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTool {
+func NewRecordIFTAMileageEntryTool(entries IftaMileageKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
 		Name: "fuel_record_ifta_mileage_entry",
 		Description: "Record miles a tractor drove in one state or province that no routed " +
@@ -676,7 +676,7 @@ func NewRecordIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTo
 		},
 		SearchTerms: []string{searchTermIFTA, "miles", "trip sheet", "state miles", "jurisdiction"},
 	}), common.ReceivablePlan[*ifta.JurisdictionMileageEntry, *labelledMileage]{
-		Request: func(params *agentports.ToolExecuteParams) (*ifta.JurisdictionMileageEntry, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*ifta.JurisdictionMileageEntry, error) {
 			entry := &ifta.JurisdictionMileageEntry{
 				OrganizationID: params.OrganizationID,
 				BusinessUnitID: params.BusinessUnitID,
@@ -692,7 +692,7 @@ func NewRecordIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTo
 		Plan: func(
 			ctx context.Context,
 			entry *ifta.JurisdictionMileageEntry,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*labelledMileage, error) {
 			planned, err := entries.PlanCreateMileageEntry(ctx, entry, params.Actor.UserID)
 			if err != nil {
@@ -731,7 +731,7 @@ func NewRecordIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTo
 		Run: func(
 			ctx context.Context,
 			entry *ifta.JurisdictionMileageEntry,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := entries.CreateMileageEntry(ctx, entry, params.Actor.UserID)
 
@@ -740,7 +740,7 @@ func NewRecordIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTo
 	})
 }
 
-func targetIFTAMileage(params map[string]any) (agentports.ToolTarget, bool) {
+func targetIFTAMileage(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(
 		params,
 		paramIFTAMileageEntryID,
@@ -756,7 +756,7 @@ type mileageCorrection struct {
 func (c *mileageCorrection) entry(
 	ctx context.Context,
 	entries IftaMileageKeeper,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*ifta.JurisdictionMileageEntry, error) {
 	stored, err := entries.GetMileageEntry(ctx, common.TenantFrom(*params), c.id)
 	if err != nil {
@@ -780,7 +780,7 @@ type labelledMileageChange struct {
 	after  string
 }
 
-func NewCorrectIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTool {
+func NewCorrectIFTAMileageEntryTool(entries IftaMileageKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
 		Name:        "fuel_correct_ifta_mileage_entry",
 		SearchTerms: []string{"fix mileage entry", "wrong jurisdiction miles", "correct miles"},
@@ -797,7 +797,7 @@ func NewCorrectIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentT
 		Required:   []string{paramIFTAMileageEntryID},
 		Target:     targetIFTAMileage,
 	}), common.ReceivablePlan[*mileageCorrection, *labelledMileageChange]{
-		Request: func(params *agentports.ToolExecuteParams) (*mileageCorrection, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*mileageCorrection, error) {
 			id, err := common.RequirePulid(params.Params, paramIFTAMileageEntryID)
 			if err != nil {
 				return nil, err
@@ -817,7 +817,7 @@ func NewCorrectIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentT
 		Plan: func(
 			ctx context.Context,
 			correction *mileageCorrection,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*labelledMileageChange, error) {
 			entry, err := correction.entry(ctx, entries, params)
 			if err != nil {
@@ -860,7 +860,7 @@ func NewCorrectIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentT
 		Run: func(
 			ctx context.Context,
 			correction *mileageCorrection,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			entry, err := correction.entry(ctx, entries, params)
 			if err != nil {
@@ -876,7 +876,7 @@ func NewCorrectIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentT
 func deleteMileageRequest(
 	ctx context.Context,
 	entries IftaMileageKeeper,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	id pulid.ID,
 ) (*iftaservice.DeleteMileageEntryRequest, error) {
 	stored, err := entries.GetMileageEntry(ctx, common.TenantFrom(*params), id)
@@ -892,7 +892,7 @@ func deleteMileageRequest(
 	}, nil
 }
 
-func NewDeleteIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTool {
+func NewDeleteIFTAMileageEntryTool(entries IftaMileageKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
 		Name:        "fuel_delete_ifta_mileage_entry",
 		SearchTerms: []string{"remove mileage entry", "duplicate mileage entry"},
@@ -911,13 +911,13 @@ func NewDeleteIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTo
 		Required: []string{paramIFTAMileageEntryID},
 		Target:   targetIFTAMileage,
 	}), common.ReceivablePlan[pulid.ID, *labelledMileage]{
-		Request: func(params *agentports.ToolExecuteParams) (pulid.ID, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
 			return common.RequirePulid(params.Params, paramIFTAMileageEntryID)
 		},
 		Plan: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*labelledMileage, error) {
 			req, err := deleteMileageRequest(ctx, entries, params, id)
 			if err != nil {
@@ -954,7 +954,7 @@ func NewDeleteIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTo
 		Run: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := deleteMileageRequest(ctx, entries, params, id)
 			if err != nil {
@@ -967,7 +967,7 @@ func NewDeleteIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTo
 }
 
 func moveJurisdictionRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (shipmentports.RecalculateMoveJurisdictionMilesRequest, error) {
 	moveID, err := common.RequirePulid(params.Params, common.ParamShipmentMoveID)
 	if err != nil {
@@ -981,7 +981,9 @@ func moveJurisdictionRequest(
 	}, nil
 }
 
-func NewRecalculateMoveJurisdictionMilesTool(router JurisdictionMileRouter) agentports.AgentTool {
+func NewRecalculateMoveJurisdictionMilesTool(
+	router JurisdictionMileRouter,
+) agenttoolports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
 		Name:        "fuel_recalculate_jurisdiction_miles",
 		SearchTerms: []string{"move jurisdiction miles"},
@@ -1002,7 +1004,7 @@ func NewRecalculateMoveJurisdictionMilesTool(router JurisdictionMileRouter) agen
 			),
 		},
 		Required: []string{common.ParamShipmentMoveID},
-		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
+		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return common.TargetOf(
 				params,
 				common.ParamShipmentMoveID,
@@ -1014,7 +1016,7 @@ func NewRecalculateMoveJurisdictionMilesTool(router JurisdictionMileRouter) agen
 		Plan: func(
 			ctx context.Context,
 			req shipmentports.RecalculateMoveJurisdictionMilesRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*shipmentports.MoveJurisdictionMilesPlan, error) {
 			return router.PlanMoveJurisdictionMiles(ctx, &req)
 		},
@@ -1035,7 +1037,7 @@ func NewRecalculateMoveJurisdictionMilesTool(router JurisdictionMileRouter) agen
 		Run: func(
 			ctx context.Context,
 			req shipmentports.RecalculateMoveJurisdictionMilesRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := router.RecalculateMoveJurisdictionMiles(ctx, req)
 
@@ -1052,7 +1054,7 @@ type backfillRequest struct {
 func (b *backfillRequest) service(
 	ctx context.Context,
 	returns IftaReturnKeeper,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	dryRun bool,
 ) (shipmentports.BackfillJurisdictionMilesRequest, error) {
 	info, err := returns.PeriodInfo(
@@ -1078,7 +1080,7 @@ func (b *backfillRequest) service(
 func NewBackfillJurisdictionMilesTool(
 	returns IftaReturnKeeper,
 	router JurisdictionMileRouter,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	properties := iftaPeriodProperties()
 	properties[paramMaxMoves] = common.IntegerProperty("The most moves to route in this run. "+
 		"Defaults to 2000; each is a billable distance request.", 1, maxBackfillMoves)
@@ -1096,7 +1098,7 @@ func NewBackfillJurisdictionMilesTool(
 		Properties: properties,
 		Required:   []string{paramYear, paramQuarter},
 	}), common.ReceivablePlan[*backfillRequest, *shipmentports.BackfillJurisdictionMilesResult]{
-		Request: func(params *agentports.ToolExecuteParams) (*backfillRequest, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*backfillRequest, error) {
 			period, err := iftaPeriodFrom(params)
 			if err != nil {
 				return nil, err
@@ -1118,7 +1120,7 @@ func NewBackfillJurisdictionMilesTool(
 		Plan: func(
 			ctx context.Context,
 			req *backfillRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*shipmentports.BackfillJurisdictionMilesResult, error) {
 			dry, err := req.service(ctx, returns, params, true)
 			if err != nil {
@@ -1152,7 +1154,7 @@ func NewBackfillJurisdictionMilesTool(
 		Run: func(
 			ctx context.Context,
 			req *backfillRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			started, err := req.service(ctx, returns, params, false)
 			if err != nil {

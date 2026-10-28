@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -47,9 +48,9 @@ type Params struct {
 	Carriers           carrierports.CarrierRepository
 	Accessorials       accessorialchargeports.AccessorialChargeRepository
 	AuditService       auditports.AuditService
-	Completion         agentports.CompletionService                       `optional:"true"`
+	Completion         llmports.CompletionService                         `optional:"true"`
 	Refresher          accountingsyncports.AccountingReferenceRefresher   `optional:"true"`
-	Realtime           agentports.RealtimeService                         `optional:"true"`
+	Realtime           realtimeports.RealtimeService                      `optional:"true"`
 	SyncRecords        accountingsyncports.AccountingSyncRecordRepository `optional:"true"`
 	Dispatcher         accountingsyncports.AccountingSyncDispatcher       `optional:"true"`
 	Workers            workerports.WorkerRepository                       `optional:"true"`
@@ -72,9 +73,9 @@ type Service struct {
 	carriers           carrierports.CarrierRepository
 	accessorials       accessorialchargeports.AccessorialChargeRepository
 	audit              auditports.AuditService
-	completion         agentports.CompletionService
+	completion         llmports.CompletionService
 	refresher          accountingsyncports.AccountingReferenceRefresher
-	realtime           agentports.RealtimeService
+	realtime           realtimeports.RealtimeService
 	syncRecords        accountingsyncports.AccountingSyncRecordRepository
 	dispatcher         accountingsyncports.AccountingSyncDispatcher
 	workers            workerports.WorkerRepository

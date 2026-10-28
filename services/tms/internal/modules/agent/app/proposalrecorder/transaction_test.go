@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -148,7 +149,7 @@ func recordInTx(
 			PromptVersion:    "v1",
 			InputContextHash: "hash",
 		},
-		Actions: []agentports.PendingAction{
+		Actions: []agentruntimeports.PendingAction{
 			pendingAction("dispatch_assign_move"),
 			pendingAction("worker_send_message"),
 			pendingAction("shipment_add_comment"),

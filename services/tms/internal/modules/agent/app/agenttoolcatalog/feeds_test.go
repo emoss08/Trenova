@@ -3,7 +3,7 @@ package agenttoolcatalog
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,7 +12,7 @@ import (
 func TestFeedsNamesTheToolsARecipeStepLeadsTo(t *testing.T) {
 	t.Parallel()
 
-	catalog := New([]agentports.AgentToolDescriptor{
+	catalog := New([]agenttoolports.AgentToolDescriptor{
 		{Name: "shipment_create", Recipe: []string{"shipment_match_records", "shipment_create"}},
 		{
 			Name:   "shipment_reschedule_stop",

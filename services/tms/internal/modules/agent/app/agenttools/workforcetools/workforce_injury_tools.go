@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -300,7 +300,7 @@ func injuryDaysFrom(params map[string]any, req *workerinjuryservice.UpdateInjury
 	return nil
 }
 
-func newRecordWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
+func newRecordWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 	properties := injuryDetailProperties()
 	properties[common.ParamWorkerID] = common.WorkerProperty()
 	properties[wfParamOccurred] = agenttoolschema.DateTime("When it happened.")
@@ -322,7 +322,7 @@ func newRecordWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		spec,
 		common.ReceivablePlan[*worker.WorkerInjury, *worker.WorkerInjury]{
-			Request: func(params *agentports.ToolExecuteParams) (*worker.WorkerInjury, error) {
+			Request: func(params *agenttoolports.ToolExecuteParams) (*worker.WorkerInjury, error) {
 				workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
 				if err != nil {
 					return nil, err
@@ -350,7 +350,7 @@ func newRecordWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				entity *worker.WorkerInjury,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*worker.WorkerInjury, error) {
 				return injuries.PlanRecordInjury(ctx, entity, params.Actor.UserID)
 			},
@@ -372,7 +372,7 @@ func newRecordWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				entity *worker.WorkerInjury,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				created, err := injuries.RecordInjury(ctx, entity, params.Actor.UserID)
 				if err != nil {
@@ -385,7 +385,7 @@ func newRecordWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 	)
 }
 
-func newUpdateWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
+func newUpdateWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 	properties := injuryDetailProperties()
 	properties[paramInjuryID] = injuryIDProperty()
 	properties[paramInjuryStatus] = agenttoolschema.Enum("Open or Closed.", injuryStatuses)
@@ -411,7 +411,7 @@ func newUpdateWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 		*workerinjuryservice.UpdateInjuryRequest, *workerinjuryservice.InjuryChange,
 	]{
 		Request: func(
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*workerinjuryservice.UpdateInjuryRequest, error) {
 			id, err := common.RequirePulid(params.Params, paramInjuryID)
 			if err != nil {
@@ -433,7 +433,7 @@ func newUpdateWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *workerinjuryservice.UpdateInjuryRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*workerinjuryservice.InjuryChange, error) {
 			return injuries.PlanUpdateInjury(ctx, req)
 		},
@@ -455,7 +455,7 @@ func newUpdateWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *workerinjuryservice.UpdateInjuryRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := injuries.UpdateInjury(ctx, req)
 			if err != nil {
@@ -467,7 +467,7 @@ func newUpdateWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 	})
 }
 
-func newDeleteWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
+func newDeleteWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"worker_delete_injury",
 		"Delete an injury case entered on the log in error, such as a duplicate. Its case "+
@@ -489,7 +489,7 @@ func newDeleteWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				req *recordDelete,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*worker.WorkerInjury, error) {
 				return injuries.PlanDeleteInjury(ctx, req.tenant, req.id)
 			},
@@ -507,7 +507,7 @@ func newDeleteWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				req *recordDelete,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				return nil, injuries.DeleteInjury(ctx, req.tenant, req.id, req.userID)
 			},
@@ -515,14 +515,14 @@ func newDeleteWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 	)
 }
 
-func provideRecordWorkerInjuryTool(s *workerinjuryservice.Service) agentports.AgentTool {
+func provideRecordWorkerInjuryTool(s *workerinjuryservice.Service) agenttoolports.AgentTool {
 	return newRecordWorkerInjuryTool(s)
 }
 
-func provideUpdateWorkerInjuryTool(s *workerinjuryservice.Service) agentports.AgentTool {
+func provideUpdateWorkerInjuryTool(s *workerinjuryservice.Service) agenttoolports.AgentTool {
 	return newUpdateWorkerInjuryTool(s)
 }
 
-func provideDeleteWorkerInjuryTool(s *workerinjuryservice.Service) agentports.AgentTool {
+func provideDeleteWorkerInjuryTool(s *workerinjuryservice.Service) agenttoolports.AgentTool {
 	return newDeleteWorkerInjuryTool(s)
 }

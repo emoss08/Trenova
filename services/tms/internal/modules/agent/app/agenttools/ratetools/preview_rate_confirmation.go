@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -17,7 +17,7 @@ import (
 
 func (t *GenerateRateConfirmationTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	moveID, err := t.moveID(&params)
 	if err != nil {
@@ -90,7 +90,7 @@ func (t *GenerateRateConfirmationTool) Preview(
 
 func (t *SendRateConfirmationTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	id, err := rateConfirmationArg(t, &params)
 	if err != nil {
@@ -140,7 +140,7 @@ func (t *SendRateConfirmationTool) Preview(
 
 func (t *VoidRateConfirmationTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	id, reason, err := t.arguments(&params)
 	if err != nil {
@@ -192,7 +192,7 @@ func (t *VoidRateConfirmationTool) Preview(
 
 func (t *RecordRateConfirmationConfirmedTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	id, name, err := t.arguments(&params)
 	if err != nil {

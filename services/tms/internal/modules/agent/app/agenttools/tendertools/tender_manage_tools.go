@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
@@ -80,7 +80,7 @@ type CancelTenderTool struct {
 	tenders tenderManager
 }
 
-func NewCancelTenderTool(tenders tenderManager) agentports.AgentTool {
+func NewCancelTenderTool(tenders tenderManager) agenttoolports.AgentTool {
 	return &CancelTenderTool{tenders: tenders}
 }
 
@@ -110,8 +110,8 @@ func (t *CancelTenderTool) ParamSchema() map[string]any {
 	}, fieldTenderID, common.FieldReason)
 }
 
-func (t *CancelTenderTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *CancelTenderTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceTender,
@@ -122,7 +122,7 @@ func (t *CancelTenderTool) Policy() agentports.ToolPolicy {
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
-		Condition: &agentports.TierCondition{
+		Condition: &agenttoolports.TierCondition{
 			Description: "A tender waiting on review holds a carrier's acceptance, so " +
 				"withdrawing it is a proposal a person decides, as is one the service would " +
 				"refuse or that cannot be read; an active tender is withdrawn once a person " +
@@ -137,7 +137,7 @@ func (t *CancelTenderTool) Policy() agentports.ToolPolicy {
 
 func (t *CancelTenderTool) tierLimit(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	request, err := t.request(&params)
 	if err != nil {
@@ -154,7 +154,7 @@ func (t *CancelTenderTool) tierLimit(
 
 func (t *CancelTenderTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -169,7 +169,7 @@ func (t *CancelTenderTool) Validate(
 
 func (t *CancelTenderTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -184,7 +184,7 @@ func (t *CancelTenderTool) Execute(
 }
 
 func (t *CancelTenderTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*tenderservice.CancelTenderRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -206,7 +206,7 @@ func (t *CancelTenderTool) request(
 	}, nil
 }
 
-func (t *CancelTenderTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *CancelTenderTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, fieldTenderID, permission.ResourceTender)
 }
 
@@ -223,7 +223,7 @@ type RecordTenderResponseTool struct {
 	tenders tenderManager
 }
 
-func NewRecordTenderResponseTool(tenders tenderManager) agentports.AgentTool {
+func NewRecordTenderResponseTool(tenders tenderManager) agenttoolports.AgentTool {
 	return &RecordTenderResponseTool{tenders: tenders}
 }
 
@@ -273,8 +273,8 @@ func (t *RecordTenderResponseTool) ParamSchema() map[string]any {
 	}, fieldOfferID, fieldAction)
 }
 
-func (t *RecordTenderResponseTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *RecordTenderResponseTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:      t.Name(),
 		Kind:      agent.ToolKindAction,
 		Resource:  permission.ResourceTender,
@@ -291,7 +291,7 @@ func (t *RecordTenderResponseTool) Policy() agentports.ToolPolicy {
 		Classify:      classifyTenderResponse,
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
-		Condition: &agentports.TierCondition{
+		Condition: &agenttoolports.TierCondition{
 			Description: "Recording an acceptance, a counter or a carrier backing out moves " +
 				"money or the carrier off the move, so it is a proposal a person decides; a " +
 				"decline runs once a person approves it.",
@@ -308,18 +308,18 @@ func (t *RecordTenderResponseTool) Policy() agentports.ToolPolicy {
 // anything else sends the next offer. An answer that cannot be read is taken
 // as the one that reaches furthest.
 func classifyTenderResponse(
-	params agentports.ToolExecuteParams, //nolint:gocritic // a policy's Classify passes params by value
-) agentports.CallPolicy {
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a policy's Classify passes params by value
+) agenttoolports.CallPolicy {
 	if tenderAnswer(common.OptionalString(params.Params, fieldAction)) == answerDecline {
-		return agentports.CallPolicy{Egress: agent.EgressExternalRecipient}
+		return agenttoolports.CallPolicy{Egress: agent.EgressExternalRecipient}
 	}
 
-	return agentports.CallPolicy{Egress: agent.EgressMoney}
+	return agenttoolports.CallPolicy{Egress: agent.EgressMoney}
 }
 
 func tenderResponseTierLimit(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	if tenderAnswer(common.OptionalString(params.Params, fieldAction)) == answerDecline {
 		return agent.TierActWithApproval
@@ -330,7 +330,7 @@ func tenderResponseTierLimit(
 
 func (t *RecordTenderResponseTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	if bounce, err := t.bounceRequest(&params); bounce != nil || err != nil {
 		if err != nil {
@@ -348,7 +348,7 @@ func (t *RecordTenderResponseTool) Validate(
 
 func (t *RecordTenderResponseTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -373,7 +373,7 @@ func (t *RecordTenderResponseTool) Execute(
 // request is the console's manual response: the source is always Manual,
 // since the answer arrived outside the offer's own channels.
 func (t *RecordTenderResponseTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*tenderports.TenderResponseRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -416,7 +416,7 @@ func (t *RecordTenderResponseTool) request(
 // bounceRequest is a carrier backing out of its acceptance, read from the
 // offer it had accepted; any other answer returns nil.
 func (t *RecordTenderResponseTool) bounceRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*tenderservice.BounceTenderRequest, error) {
 	if tenderAnswer(common.OptionalString(params.Params, fieldAction)) != answerBackedOut {
 		return nil, nil //nolint:nilnil // not a bounce is not an error
@@ -446,7 +446,7 @@ func (t *RecordTenderResponseTool) bounceRequest(
 	}, nil
 }
 
-func answerReason(params *agentports.ToolExecuteParams, allowed bool) (string, error) {
+func answerReason(params *agenttoolports.ToolExecuteParams, allowed bool) (string, error) {
 	reason := strings.TrimSpace(common.OptionalString(params.Params, fieldDeclineReason))
 	if reason != "" && !allowed {
 		return "", fmt.Errorf(
@@ -463,7 +463,7 @@ func answerReason(params *agentports.ToolExecuteParams, allowed bool) (string, e
 }
 
 func counterTerms(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	counter bool,
 ) (decimal.Decimal, string, error) {
 	rawRate := strings.TrimSpace(common.OptionalString(params.Params, fieldCounterRate))

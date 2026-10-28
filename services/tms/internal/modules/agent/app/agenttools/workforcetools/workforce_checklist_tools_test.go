@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -175,9 +175,13 @@ func TestStartWorkerChecklist_SaysWhenOneIsAlreadyOpen(t *testing.T) {
 		"startedAt":            "2026-09-21",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, checklists.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		checklists.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "with 1 item(s)")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, checklists.started)
@@ -185,9 +189,13 @@ func TestStartWorkerChecklist_SaysWhenOneIsAlreadyOpen(t *testing.T) {
 		checklists.started.StartedAt)
 
 	checklists.existing = true
-	preview = agenttoolstest.PreviewWithoutWrites(t, checklists.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview = agenttoolstest.PreviewWithoutWrites(
+		t,
+		checklists.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "already open")
 	assert.Empty(t, preview.Changes)
 }
@@ -203,21 +211,25 @@ func TestUpdateWorkerChecklistItem_RoutesEachMove(t *testing.T) {
 		common.FieldNote:     "Passed with the safety manager",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, checklists.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), complete)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		checklists.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), complete)
+		},
+	)
 	assert.Contains(t, preview.Summary, `complete "Road test" on Driver onboarding`)
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), complete)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), complete)
 	require.NoError(t, err)
 	assert.Equal(t, "completed", result.Action)
 	assert.Equal(t, checklists.item.ID.String(), result.IDs[paramChecklistItemID])
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			paramChecklistItemID: checklists.item.ID.String(),
 			paramItemMove:        "Skip",
 		})), "skipping needs a note")
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			paramChecklistItemID: checklists.item.ID.String(),
 			paramItemMove:        "Reopen",
@@ -242,14 +254,22 @@ func TestCancelWorkerChecklist_KeepsTheReason(t *testing.T) {
 		common.FieldReason: "Hire withdrawn",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, checklists.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		checklists.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Equal(t, "Would cancel Driver onboarding.", preview.Summary)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, checklists.cancelled)
 	assert.Equal(t, "Hire withdrawn", checklists.cancelled.Reason)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{paramChecklistID: checklists.checklist.ID.String()})))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{paramChecklistID: checklists.checklist.ID.String()},
+		),
+	))
 }

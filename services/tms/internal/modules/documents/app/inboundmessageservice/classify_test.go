@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,22 +17,22 @@ import (
 )
 
 type stubCompletion struct {
-	agentports.CompletionService
+	llmports.CompletionService
 
 	reply string
 	err   error
-	got   *agentports.StructuredCompletionRequest
+	got   *llmports.StructuredCompletionRequest
 }
 
 func (s *stubCompletion) CompleteStructured(
-	_ context.Context, req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	_ context.Context, req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	s.got = req
 	if s.err != nil {
 		return nil, s.err
 	}
 
-	return &agentports.StructuredCompletionResult{
+	return &llmports.StructuredCompletionResult{
 		Text:            s.reply,
 		ModelIdentifier: "test-model",
 	}, nil
@@ -335,8 +335,16 @@ func TestClassify_PassesTheSendersHintsAsTrustedContext(t *testing.T) {
 		`{"classification":"Invoice","confidence":0.8,"reasoning":"x","facts":[]}`, nil,
 	)
 	hints := &stubHints{hints: []*triage.SenderHint{
-		{SenderDomain: "drivers.trenova.example", Classification: inboundmessage.ClassificationInvoice, Corrections: 3},
-		{SenderDomain: "drivers.trenova.example", Classification: inboundmessage.Classification("Bogus"), Corrections: 9},
+		{
+			SenderDomain:   "drivers.trenova.example",
+			Classification: inboundmessage.ClassificationInvoice,
+			Corrections:    3,
+		},
+		{
+			SenderDomain:   "drivers.trenova.example",
+			Classification: inboundmessage.Classification("Bogus"),
+			Corrections:    9,
+		},
 	}}
 	svc.hints = hints
 
@@ -350,7 +358,11 @@ func TestClassify_PassesTheSendersHintsAsTrustedContext(t *testing.T) {
 		}
 	}
 	require.Len(t, trusted, 1)
-	assert.Equal(t, "People corrected mail from drivers.trenova.example to Invoice 3 times.", trusted[0])
+	assert.Equal(
+		t,
+		"People corrected mail from drivers.trenova.example to Invoice 3 times.",
+		trusted[0],
+	)
 }
 
 func TestClassify_NoHintsNoTrustedSection(t *testing.T) {

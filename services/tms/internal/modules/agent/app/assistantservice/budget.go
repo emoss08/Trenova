@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,13 +22,13 @@ const budgetNearShare = 0.9
 // not found.
 func (s *Service) ThreadBudget(
 	ctx context.Context,
-	req agentports.GetThreadRequest,
-) (*agentports.ThreadBudget, error) {
+	req assistantports.GetThreadRequest,
+) (*assistantports.ThreadBudget, error) {
 	thread, err := s.conversations.GetThread(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	out := &agentports.ThreadBudget{}
+	out := &assistantports.ThreadBudget{}
 	if out.Person, err = s.personAllowance(
 		ctx,
 		req.UserID,

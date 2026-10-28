@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -33,22 +33,22 @@ one condition the person cared about is the one that went missing.
 */
 
 type stubCompletion struct {
-	agentports.CompletionService
+	llmports.CompletionService
 	reply string
 	err   error
-	saw   *agentports.StructuredCompletionRequest
+	saw   *llmports.StructuredCompletionRequest
 }
 
 func (s *stubCompletion) CompleteStructured(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	s.saw = req
 	if s.err != nil {
 		return nil, s.err
 	}
 
-	return &agentports.StructuredCompletionResult{Text: s.reply, ModelIdentifier: "stub"}, nil
+	return &llmports.StructuredCompletionResult{Text: s.reply, ModelIdentifier: "stub"}, nil
 }
 
 type stubPermissions struct {
@@ -317,7 +317,7 @@ func TestCompose_ShowsTheModelTheCatalogueAndFencesTheQuestion(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, completion.saw)
 
-	sections := map[string]agentports.ContextSection{}
+	sections := map[string]llmports.ContextSection{}
 	for _, section := range completion.saw.Context.Sections {
 		sections[section.Title] = section
 	}

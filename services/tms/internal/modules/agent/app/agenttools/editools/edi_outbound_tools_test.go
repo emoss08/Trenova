@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -99,9 +99,13 @@ func TestSendEDILoadTender_PreviewsTheTenderAndTheShipmentThenSendsOnlyWhenAppro
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceShipment, target.Resource)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, tenders.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		tenders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+		},
+	)
 	sent := agenttoolstest.PreviewChange(t, preview, 0)
 	require.NotNil(t, sent.Message)
 	assert.Equal(t, agent.MessageChannelEDI, sent.Message.Channel)
@@ -114,7 +118,11 @@ func TestSendEDILoadTender_PreviewsTheTenderAndTheShipmentThenSendsOnlyWhenAppro
 	assert.Equal(t, "Tendered", agenttoolstest.FieldByPath(t, marked, "tenderStatus").After)
 
 	require.NoError(t, tool.Validate(t.Context(), agenttoolstest.AgentParamsFor(args)))
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)), ErrEDIDecisionNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)),
+		ErrEDIDecisionNeedsAPerson,
+	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(args)))
 	require.NotNil(t, tenders.submitted)
 	assert.Equal(t, partnerID, tenders.submitted.EDIPartnerID)
@@ -133,9 +141,13 @@ func TestSendEDILoadTender_WarnsWhenTheReceiverMustMapItFirst(t *testing.T) {
 		common.FieldShipmentID: tenders.plan.SourceShipment.ID.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, tenders.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), args)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		tenders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), args)
+		},
+	)
 	assert.Contains(t, preview.Summary, "map")
 
 	tenders.err = errortypes.NewValidationError(
@@ -143,9 +155,13 @@ func TestSendEDILoadTender_WarnsWhenTheReceiverMustMapItFirst(t *testing.T) {
 		"Only New shipments without an active or accepted tender can be tendered.",
 	)
 	require.Error(t, tool.Validate(t.Context(), args))
-	refused := agenttoolstest.PreviewWithoutWrites(t, tenders.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), args)
-	})
+	refused := agenttoolstest.PreviewWithoutWrites(
+		t,
+		tenders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), args)
+		},
+	)
 	agenttoolstest.RequireWarning(t, refused, agent.PreviewWarningWouldFail)
 }
 
@@ -207,9 +223,13 @@ func TestSendEDIStatusUpdate_PreviewsTheRenderedStatusAndNeverTakesAPayload(t *t
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
 	assert.NotContains(t, tool.ParamSchema()["properties"], "payload")
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, documents.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		documents.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+		},
+	)
 	sent := agenttoolstest.PreviewChange(t, preview, 0)
 	require.NotNil(t, sent.Message)
 	assert.Contains(t, sent.Message.Body, "B10*PRO-88")
@@ -224,7 +244,11 @@ func TestSendEDIStatusUpdate_PreviewsTheRenderedStatusAndNeverTakesAPayload(t *t
 	assert.Equal(t, edi.TransactionSet214, documents.planned.TransactionSet)
 	assert.Equal(t, edi.DocumentDirectionOutbound, documents.planned.Direction)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)), ErrEDIDecisionNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)),
+		ErrEDIDecisionNeedsAPerson,
+	)
 	approved := agenttoolstest.ApprovedParams(args)
 	require.NoError(t, tool.Execute(t.Context(), approved))
 	require.NotNil(t, documents.generated)
@@ -237,7 +261,7 @@ func TestSendEDIStatusUpdate_TakesExactlyOneSourceRecord(t *testing.T) {
 	t.Parallel()
 
 	tool := NewSendEDIStatusUpdateTool(&fakeDocuments{guard: &agenttoolstest.WriteGuard{}})
-	validator := tool.(agentports.ToolValidator)
+	validator := tool.(agenttoolports.ToolValidator)
 	partner := pulid.MustNew("edip_").String()
 
 	none := agenttoolstest.AgentParamsFor(map[string]any{paramEDIPartnerID: partner})

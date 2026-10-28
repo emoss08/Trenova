@@ -8,14 +8,16 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/recordids"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const maxRationaleChars = 600
 
-func toToolCallRecords(calls []agentports.ToolCall) []conversation.ToolCallRecord {
+func toToolCallRecords(calls []llmports.ToolCall) []conversation.ToolCallRecord {
 	if len(calls) == 0 {
 		return nil
 	}
@@ -34,14 +36,14 @@ func toToolCallRecords(calls []agentports.ToolCall) []conversation.ToolCallRecor
 	return records
 }
 
-func fromToolCallRecords(records []conversation.ToolCallRecord) []agentports.ToolCall {
+func fromToolCallRecords(records []conversation.ToolCallRecord) []llmports.ToolCall {
 	if len(records) == 0 {
 		return nil
 	}
 
-	calls := make([]agentports.ToolCall, 0, len(records))
+	calls := make([]llmports.ToolCall, 0, len(records))
 	for _, record := range records {
-		calls = append(calls, agentports.ToolCall{
+		calls = append(calls, llmports.ToolCall{
 			ID:           record.ID,
 			Name:         record.Name,
 			Arguments:    record.Arguments,
@@ -70,8 +72,8 @@ const wholeToolResultBudget = 48_000
 
 func toAdapterMessages(
 	history []conversation.Message,
-	outcomes []agentports.ProposalOutcome,
-) []agentports.Message {
+	outcomes []agentruntimeports.ProposalOutcome,
+) []llmports.Message {
 	messages, _ := replayHistory(history, outcomes)
 
 	return messages
@@ -83,20 +85,20 @@ func toAdapterMessages(
 // out.
 func replayHistory(
 	history []conversation.Message,
-	outcomes []agentports.ProposalOutcome,
-) (messages []agentports.Message, shortened []string) {
+	outcomes []agentruntimeports.ProposalOutcome,
+) (messages []llmports.Message, shortened []string) {
 	return replayHistoryWithFiles(history, outcomes, nil)
 }
 
 func replayHistoryWithFiles(
 	history []conversation.Message,
-	outcomes []agentports.ProposalOutcome,
+	outcomes []agentruntimeports.ProposalOutcome,
 	files map[string]string,
-) (messages []agentports.Message, shortened []string) {
+) (messages []llmports.Message, shortened []string) {
 	// A compacted conversation is read from its latest summary, which stands
 	// in for everything before the turns it kept whole.
 	history = conversation.ReplayOrder(history)
-	messages = make([]agentports.Message, 0, len(history)+1)
+	messages = make([]llmports.Message, 0, len(history)+1)
 	ledger := newProposalLedger(outcomes)
 
 	// The history is the newest N messages of the thread, and that cut lands
@@ -140,8 +142,8 @@ func replayHistoryWithFiles(
 			// The ledger counts the calls as they were made, so a proposal's
 			// ordinal is not shifted by a call that was left out.
 			ledger.noteCalls(msg)
-			messages = append(messages, agentports.Message{
-				Role:          agentports.RoleAssistant,
+			messages = append(messages, llmports.Message{
+				Role:          llmports.RoleAssistant,
 				Content:       msg.Content,
 				ToolCalls:     fromToolCallRecords(calls),
 				Reasoning:     msg.Reasoning,
@@ -164,12 +166,12 @@ func replayHistoryWithFiles(
 				continue
 			}
 			if msg.Kind == conversation.MessageKindWorldChange {
-				messages = append(messages, agentports.NoticeMessage(msg.Content))
+				messages = append(messages, llmports.NoticeMessage(msg.Content))
 				continue
 			}
 			messages = append(messages, replayUserMessage(&history[idx], files, idx >= recent))
 			if msg.Kind == conversation.MessageKindSteer {
-				messages = append(messages, agentports.NoticeMessage(steerNotice))
+				messages = append(messages, llmports.NoticeMessage(steerNotice))
 			}
 		}
 	}
@@ -181,7 +183,7 @@ func replayUserMessage(
 	msg *conversation.Message,
 	files map[string]string,
 	recent bool,
-) agentports.Message {
+) llmports.Message {
 	content := msg.Content
 	switch {
 	case msg.Compacted():
@@ -195,8 +197,8 @@ func replayUserMessage(
 	}
 	attachments := earlierAttachments(msg.Attachments, files)
 	rendered := agentdefinition.RenderAttachments(attachments, budget)
-	replayed := agentports.Message{
-		Role:    agentports.RoleUser,
+	replayed := llmports.Message{
+		Role:    llmports.RoleUser,
 		Content: rendered.Block + content,
 	}
 	if recent {
@@ -216,7 +218,7 @@ func unreadFiles(
 	content string,
 	attachments []agentdefinition.RuntimeAttachment,
 	rendered *agentdefinition.RenderedAttachments,
-) []agentports.MessageFile {
+) []llmports.MessageFile {
 	files := messageFiles(content, attachments, rendered)
 	unread := make(map[string]bool, len(attachments))
 	for idx := range attachments {
@@ -224,7 +226,7 @@ func unreadFiles(
 			unread[attachments[idx].DocumentID] = true
 		}
 	}
-	files = slices.DeleteFunc(files, func(file agentports.MessageFile) bool {
+	files = slices.DeleteFunc(files, func(file llmports.MessageFile) bool {
 		return !unread[file.DocumentID]
 	})
 	if len(files) == 0 {
@@ -250,7 +252,7 @@ func replayToolResult(
 	msg *conversation.Message,
 	ledger *proposalLedger,
 	keep bool,
-) (replayed agentports.Message, original string) {
+) (replayed llmports.Message, original string) {
 	content, current := ledger.currentContent(*msg)
 	if !current && !keep {
 		content = compactToolResult(content)
@@ -262,8 +264,8 @@ func replayToolResult(
 		original = msg.Content
 	}
 
-	return agentports.Message{
-		Role:       agentports.RoleTool,
+	return llmports.Message{
+		Role:       llmports.RoleTool,
 		Content:    content,
 		ToolCallID: msg.ToolCallID,
 		ToolName:   msg.ToolName,
@@ -459,7 +461,7 @@ func proposalRationale(in rationaleInput) string {
 	if trimmed := strings.TrimSpace(in.Input); trimmed != "" {
 		prefix := fmt.Sprintf(
 			"Asked to %s in reply to: \u201c",
-			stringutils.HumanizeSnakeCase(agentports.ReadingOrder(in.ToolName)),
+			stringutils.HumanizeSnakeCase(agenttoolports.ReadingOrder(in.ToolName)),
 		)
 		room := maxRationaleChars - len([]rune(prefix)) - 1
 
@@ -520,18 +522,18 @@ func messageFiles(
 	content string,
 	attachments []agentdefinition.RuntimeAttachment,
 	rendered *agentdefinition.RenderedAttachments,
-) []agentports.MessageFile {
+) []llmports.MessageFile {
 	if len(attachments) == 0 || len(rendered.Entries) != len(attachments) {
 		return nil
 	}
 
-	files := make([]agentports.MessageFile, 0, len(attachments))
+	files := make([]llmports.MessageFile, 0, len(attachments))
 	for idx := range attachments {
 		attachment := &attachments[idx]
 		if attachment.DocumentID == "" {
 			continue
 		}
-		file := agentports.MessageFile{
+		file := llmports.MessageFile{
 			DocumentID:  attachment.DocumentID,
 			FileName:    attachment.FileName,
 			ContentType: attachment.ContentType,

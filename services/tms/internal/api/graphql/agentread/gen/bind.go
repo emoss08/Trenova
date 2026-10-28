@@ -11,7 +11,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/selfscoped"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/vektah/gqlparser/v2"
@@ -293,7 +293,7 @@ func rootReads(schema *ast.Schema) []rootRead {
 			verb:     verb,
 			node:     node,
 			resource: resource,
-			tool:     agentports.ToolNameFor(verb + readingSplit + noun),
+			tool:     agenttoolports.ToolNameFor(verb + readingSplit + noun),
 		})
 	}
 
@@ -807,7 +807,7 @@ func namedBinding(r read, chosen *operation) (b *binding, problem string) {
 		return nil, fmt.Sprintf("%s: %s is not a Query field", r.Tool, chosen.Roots[0])
 	}
 	verb, node, ok := readShape(boundSchema, field)
-	want, _, _ := strings.Cut(agentports.ReadingOrder(r.Tool), readingSplit)
+	want, _, _ := strings.Cut(agenttoolports.ReadingOrder(r.Tool), readingSplit)
 	if ok && want == verbGet && keyedWhole(field) {
 		want = verbList
 	}

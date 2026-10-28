@@ -5,24 +5,26 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // readingTurn is a request that has read results, one call and its answer
 // after another, each result of size characters, fenced as a tool's are.
-func readingTurn(results, size int) *agentports.ChatCompletionRequest {
-	messages := []agentports.Message{{Role: agentports.RoleUser, Content: "Which loads are late?"}}
+func readingTurn(results, size int) *llmports.ChatCompletionRequest {
+	messages := []llmports.Message{{Role: llmports.RoleUser, Content: "Which loads are late?"}}
 	for idx := range results {
 		callID := fmt.Sprintf("call_%d", idx)
 		messages = append(messages,
-			agentports.Message{
-				Role:      agentports.RoleAssistant,
-				ToolCalls: []agentports.ToolCall{{ID: callID, Name: "shipment_list"}},
+			llmports.Message{
+				Role:      llmports.RoleAssistant,
+				ToolCalls: []llmports.ToolCall{{ID: callID, Name: "shipment_list"}},
 			},
-			agentports.Message{
-				Role:       agentports.RoleTool,
+			llmports.Message{
+				Role:       llmports.RoleTool,
 				ToolCallID: callID,
 				ToolName:   "shipment_list",
 				Content:    FenceToolResult("shipment_list", strings.Repeat("r", size)),
@@ -30,7 +32,7 @@ func readingTurn(results, size int) *agentports.ChatCompletionRequest {
 		)
 	}
 
-	return &agentports.ChatCompletionRequest{System: "Help dispatch.", Messages: messages}
+	return &llmports.ChatCompletionRequest{System: "Help dispatch.", Messages: messages}
 }
 
 /*
@@ -52,7 +54,11 @@ func TestFitWindow_ShortensTheOldestResultsAndKeepsTheNewestWhole(t *testing.T) 
 
 	require.Len(t, req.Messages, len(original))
 	oldest := req.Messages[2].Content
-	assert.Contains(t, oldest, "was shortened to keep the request inside the model's context window")
+	assert.Contains(
+		t,
+		oldest,
+		"was shortened to keep the request inside the model's context window",
+	)
 	assert.Contains(t, oldest, "call shipment_list again")
 	assert.Less(t, len(oldest), 2_500)
 	assert.Equal(t, original[4].Content, req.Messages[4].Content,
@@ -61,8 +67,12 @@ func TestFitWindow_ShortensTheOldestResultsAndKeepsTheNewestWhole(t *testing.T) 
 		"the result the model has not answered yet is never cut")
 	assert.LessOrEqual(t, requestTokens(req), int(float64(window)*turnWindowShare))
 
-	assert.Len(t, original[2].Content, len(FenceToolResult("shipment_list", strings.Repeat("r", 10_000))),
-		"the turn's own messages are copied, not cut")
+	assert.Len(
+		t,
+		original[2].Content,
+		len(FenceToolResult("shipment_list", strings.Repeat("r", 10_000))),
+		"the turn's own messages are copied, not cut",
+	)
 	tool, payload, fenced := UnfenceToolResult(oldest)
 	assert.True(t, fenced, "the shortened result is still fenced, with the note outside the fence")
 	assert.Equal(t, "shipment_list", tool)
@@ -120,7 +130,7 @@ func TestRun_ShortensEarlierReadsWhenTheTurnOutgrowsTheWindow(t *testing.T) {
 	t.Parallel()
 
 	tool := queryTool("shipment_get", map[string]any{"notes": strings.Repeat("n", 9_000)}, nil)
-	read := func(id string) *agentports.ChatCompletionResult {
+	read := func(id string) *llmports.ChatCompletionResult {
 		turn := toolTurn("shipment_get", map[string]any{"shipmentId": id})
 		turn.ContextWindow = 4_096
 
@@ -128,13 +138,13 @@ func TestRun_ShortensEarlierReadsWhenTheTurnOutgrowsTheWindow(t *testing.T) {
 	}
 	answer := textTurn("Those loads are running late.")
 	answer.ContextWindow = 4_096
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		read("shp_1"), read("shp_2"), read("shp_3"), answer,
 	}}
-	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{tool}},
+	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{tool}},
 		&stubActionRegistry{}, nil)
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Which of these are late?",
@@ -146,7 +156,7 @@ func TestRun_ShortensEarlierReadsWhenTheTurnOutgrowsTheWindow(t *testing.T) {
 	last := completion.Requests[3].Messages
 	var results []string
 	for _, message := range last {
-		if message.Role == agentports.RoleTool {
+		if message.Role == llmports.RoleTool {
 			results = append(results, message.Content)
 		}
 	}
@@ -167,7 +177,7 @@ func TestRun_ShortensEarlierReadsWhenTheTurnOutgrowsTheWindow(t *testing.T) {
 func TestTurnWindow_IsTheAnsweringProvidersWindow(t *testing.T) {
 	t.Parallel()
 
-	turn := &Turn{result: &agentports.RunResult{}}
+	turn := &Turn{result: &agentruntimeports.RunResult{}}
 	assert.Zero(t, turn.window())
 
 	turn.result.Model = "claude-sonnet-4-5"

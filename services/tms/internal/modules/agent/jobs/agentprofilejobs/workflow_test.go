@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentprofilejobs/agentprofilecontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +41,7 @@ func readyPlan(req *agentprofileports.GenerateRequest) *agentprofileports.Genera
 		Ref:     req.Ref,
 		Trigger: req.Trigger,
 		Digest:  "digest",
-		Request: &agentports.StructuredCompletionRequest{TenantInfo: req.Ref.Tenant()},
+		Request: &llmports.StructuredCompletionRequest{TenantInfo: req.Ref.Tenant()},
 	}
 }
 
@@ -63,9 +63,10 @@ func TestRequestWorkflow_APersonAskingWritesAtOnce(t *testing.T) {
 		Return(func(_ context.Context, req *agentprofileports.GenerateRequest) (*agentprofileports.GenerationPlan, error) {
 			preparedAt = env.Now()
 			return readyPlan(req), nil
-		}).Once()
+		}).
+		Once()
 	env.OnActivity(a.ProfileModelActivity, mock.Anything, mock.Anything).
-		Return(&ModelReply{Result: &agentports.StructuredCompletionResult{Text: "{}"}}, nil).Once()
+		Return(&ModelReply{Result: &llmports.StructuredCompletionResult{Text: "{}"}}, nil).Once()
 	env.OnActivity(a.FinishProfileActivity, mock.Anything, mock.Anything).
 		Return(written(), nil).Once()
 	env.OnActivity(a.PruneProfileActivity, mock.Anything, mock.Anything).Return(nil).Once()
@@ -96,19 +97,23 @@ func TestRequestWorkflow_GuidanceWaitsForQuietAndCostsOneWrite(t *testing.T) {
 	var preparedAt time.Time
 
 	env.RegisterDelayedCallback(func() {
-		env.SignalWorkflow(agentprofilecontract.RequestedSignalName, agentprofileports.GenerateRequest{
-			Ref:     orgRef(),
-			Trigger: agentprofile.TriggerGuidance,
-		})
+		env.SignalWorkflow(
+			agentprofilecontract.RequestedSignalName,
+			agentprofileports.GenerateRequest{
+				Ref:     orgRef(),
+				Trigger: agentprofile.TriggerGuidance,
+			},
+		)
 	}, time.Minute)
 
 	env.OnActivity(a.PrepareProfileActivity, mock.Anything, mock.Anything).
 		Return(func(_ context.Context, req *agentprofileports.GenerateRequest) (*agentprofileports.GenerationPlan, error) {
 			preparedAt = env.Now()
 			return readyPlan(req), nil
-		}).Once()
+		}).
+		Once()
 	env.OnActivity(a.ProfileModelActivity, mock.Anything, mock.Anything).
-		Return(&ModelReply{Result: &agentports.StructuredCompletionResult{Text: "{}"}}, nil).Once()
+		Return(&ModelReply{Result: &llmports.StructuredCompletionResult{Text: "{}"}}, nil).Once()
 	env.OnActivity(a.FinishProfileActivity, mock.Anything, mock.Anything).
 		Return(written(), nil).Once()
 	env.OnActivity(a.PruneProfileActivity, mock.Anything, mock.Anything).Return(nil).Once()
@@ -138,7 +143,8 @@ func TestProfileWorkflow_NoProviderWritesNothingAndFailsNothing(t *testing.T) {
 	env.OnActivity(a.PrepareProfileActivity, mock.Anything, mock.Anything).
 		Return(func(_ context.Context, req *agentprofileports.GenerateRequest) (*agentprofileports.GenerationPlan, error) {
 			return readyPlan(req), nil
-		}).Once()
+		}).
+		Once()
 	env.OnActivity(a.ProfileModelActivity, mock.Anything, mock.Anything).
 		Return(&ModelReply{NoProvider: true}, nil).Once()
 
@@ -163,7 +169,8 @@ func TestProfileWorkflow_AModelThatKeepsFailingIsRecorded(t *testing.T) {
 	env.OnActivity(a.PrepareProfileActivity, mock.Anything, mock.Anything).
 		Return(func(_ context.Context, req *agentprofileports.GenerateRequest) (*agentprofileports.GenerationPlan, error) {
 			return readyPlan(req), nil
-		}).Once()
+		}).
+		Once()
 	env.OnActivity(a.ProfileModelActivity, mock.Anything, mock.Anything).
 		Return(nil, temporal.NewNonRetryableApplicationError("refused", "ModelRefused", errors.New("refused")))
 	env.OnActivity(a.FinishProfileActivity, mock.Anything, mock.Anything).
@@ -173,7 +180,8 @@ func TestProfileWorkflow_AModelThatKeepsFailingIsRecorded(t *testing.T) {
 				ProfileID: pulid.ID("aprf_f"),
 				Status:    agentprofile.StatusFailed,
 			}, nil
-		}).Once()
+		}).
+		Once()
 	env.OnActivity(a.PruneProfileActivity, mock.Anything, mock.Anything).Return(nil).Once()
 
 	env.ExecuteWorkflow(ProfileWorkflow, &agentprofileports.GenerateRequest{Ref: orgRef()})
@@ -210,7 +218,10 @@ func TestMerge_APersonAskingOutranksGuidance(t *testing.T) {
 	t.Parallel()
 
 	person := pulid.ID("usr_a")
-	merged := agentprofileports.GenerateRequest{Ref: orgRef(), Trigger: agentprofile.TriggerGuidance}
+	merged := agentprofileports.GenerateRequest{
+		Ref:     orgRef(),
+		Trigger: agentprofile.TriggerGuidance,
+	}
 	merge(&merged, &agentprofileports.GenerateRequest{
 		Ref: orgRef(), Trigger: agentprofile.TriggerRequested, RequestedByID: person,
 	})
@@ -243,9 +254,10 @@ func TestRequestWorkflow_TheRequestThatStartedItIsHeardOnce(t *testing.T) {
 	env.OnActivity(a.PrepareProfileActivity, mock.Anything, mock.Anything).
 		Return(func(_ context.Context, req *agentprofileports.GenerateRequest) (*agentprofileports.GenerationPlan, error) {
 			return readyPlan(req), nil
-		}).Once()
+		}).
+		Once()
 	env.OnActivity(a.ProfileModelActivity, mock.Anything, mock.Anything).
-		Return(&ModelReply{Result: &agentports.StructuredCompletionResult{Text: "{}"}}, nil).Once()
+		Return(&ModelReply{Result: &llmports.StructuredCompletionResult{Text: "{}"}}, nil).Once()
 	env.OnActivity(a.FinishProfileActivity, mock.Anything, mock.Anything).
 		Return(written(), nil).Once()
 	env.OnActivity(a.PruneProfileActivity, mock.Anything, mock.Anything).Return(nil).Once()
@@ -272,14 +284,18 @@ func TestOrganizationWorkflow_TheOrganizationsFailureIsNotItsPeoples(t *testing.
 	env.OnActivity(a.PrepareProfileActivity, mock.Anything, mock.Anything).
 		Return(func(_ context.Context, req *agentprofileports.GenerateRequest) (*agentprofileports.GenerationPlan, error) {
 			if req.Ref.Subject == agentprofile.SubjectOrganization {
-				return nil, temporal.NewNonRetryableApplicationError("facts", "Broken", errors.New("facts"))
+				return nil, temporal.NewNonRetryableApplicationError(
+					"facts",
+					"Broken",
+					errors.New("facts"),
+				)
 			}
 			return readyPlan(req), nil
 		})
 	env.OnActivity(a.ListActiveUsersActivity, mock.Anything, mock.Anything).
 		Return([]pulid.ID{person}, nil).Once()
 	env.OnActivity(a.ProfileModelActivity, mock.Anything, mock.Anything).
-		Return(&ModelReply{Result: &agentports.StructuredCompletionResult{Text: "{}"}}, nil).Once()
+		Return(&ModelReply{Result: &llmports.StructuredCompletionResult{Text: "{}"}}, nil).Once()
 	env.OnActivity(a.FinishProfileActivity, mock.Anything, mock.Anything).
 		Return(written(), nil).Once()
 	env.OnActivity(a.PruneProfileActivity, mock.Anything, mock.Anything).Return(nil).Once()

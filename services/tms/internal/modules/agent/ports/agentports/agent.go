@@ -8,6 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -67,18 +70,18 @@ type AgentRunService interface {
 	) (*agent.AgentRun, error)
 	ListConnection(
 		ctx context.Context,
-		req *ListAgentRunConnectionRequest,
+		req *agentruntimeports.ListAgentRunConnectionRequest,
 	) (*pagination.CursorListResult[*agent.AgentRun], error)
 	GetByID(
 		ctx context.Context,
-		req GetAgentRunByIDRequest,
+		req agentruntimeports.GetAgentRunByIDRequest,
 	) (*agent.AgentRun, error)
 }
 
 type AgentRunTranscriptService interface {
 	RunTranscript(
 		ctx context.Context,
-		req GetAgentRunByIDRequest,
+		req agentruntimeports.GetAgentRunByIDRequest,
 	) (*kernelports.TranscriptFile, error)
 }
 
@@ -199,7 +202,7 @@ type AgentPlanService interface {
 		ctx context.Context,
 		tenant pagination.TenantInfo,
 		plans []*agent.AgentPlan,
-	) (map[pulid.ID]*ProposalHold, error)
+	) (map[pulid.ID]*assistantports.ProposalHold, error)
 	// AssertOwnPlan refuses a plan not raised in one of the actor's own
 	// conversations, or by an agent they may no longer use, as not found.
 	AssertOwnPlan(
@@ -286,7 +289,7 @@ type AgentTrustService interface {
 	RecordExecutionFailure(ctx context.Context, proposal *agent.AgentProposal) error
 	ListForDefinition(
 		ctx context.Context,
-		req ListToolTrustRequest,
+		req agenttoolports.ListToolTrustRequest,
 	) ([]*agent.ToolTrust, error)
 }
 
@@ -550,7 +553,7 @@ type PendingDecision struct {
 	Proposal  *agent.AgentProposal
 	Plan      *agent.AgentPlan
 	CreatedAt int64
-	Hold      *ProposalHold
+	Hold      *assistantports.ProposalHold
 	// Cursor is where a page continues from after this entry.
 	Cursor string
 }

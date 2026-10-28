@@ -11,8 +11,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/evalsplit"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
@@ -283,22 +283,22 @@ type callWriter struct {
 }
 
 type callFile struct {
-	Seq              int                                     `json:"seq"`
-	Kind             ModelCallKind                           `json:"kind"`
-	StartedAt        time.Time                               `json:"startedAt"`
-	FinishedAt       time.Time                               `json:"finishedAt"`
-	Attribution      aiusageports.AIUsageAttribution         `json:"attribution"`
-	SystemFile       string                                  `json:"systemFile,omitempty"`
-	SystemStable     int                                     `json:"systemStable,omitempty"`
-	ToolsFile        string                                  `json:"toolsFile,omitempty"`
-	ToolNames        []string                                `json:"toolNames,omitempty"`
-	MaxTokens        int                                     `json:"maxTokens,omitempty"`
-	Messages         []agentports.Message                    `json:"messages,omitempty"`
-	Structured       *agentports.StructuredCompletionRequest `json:"structured,omitempty"`
-	ChatResult       *agentports.ChatCompletionResult        `json:"chatResult,omitempty"`
-	StructuredResult *agentports.StructuredCompletionResult  `json:"structuredResult,omitempty"`
-	Retries          []agentports.ChatRetryNotice            `json:"retries,omitempty"`
-	Error            string                                  `json:"error,omitempty"`
+	Seq              int                                   `json:"seq"`
+	Kind             ModelCallKind                         `json:"kind"`
+	StartedAt        time.Time                             `json:"startedAt"`
+	FinishedAt       time.Time                             `json:"finishedAt"`
+	Attribution      aiusageports.AIUsageAttribution       `json:"attribution"`
+	SystemFile       string                                `json:"systemFile,omitempty"`
+	SystemStable     int                                   `json:"systemStable,omitempty"`
+	ToolsFile        string                                `json:"toolsFile,omitempty"`
+	ToolNames        []string                              `json:"toolNames,omitempty"`
+	MaxTokens        int                                   `json:"maxTokens,omitempty"`
+	Messages         []llmports.Message                    `json:"messages,omitempty"`
+	Structured       *llmports.StructuredCompletionRequest `json:"structured,omitempty"`
+	ChatResult       *llmports.ChatCompletionResult        `json:"chatResult,omitempty"`
+	StructuredResult *llmports.StructuredCompletionResult  `json:"structuredResult,omitempty"`
+	Retries          []llmports.ChatRetryNotice            `json:"retries,omitempty"`
+	Error            string                                `json:"error,omitempty"`
 }
 
 func (w *callWriter) writeCase(result *CaseResult) error {

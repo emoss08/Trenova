@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -308,7 +308,7 @@ func readRebillStrategy(fields map[string]any) (invoiceadjustment.RebillStrategy
 	return strategy, nil
 }
 
-func adjustmentKey(params *agentports.ToolExecuteParams) string {
+func adjustmentKey(params *agenttoolports.ToolExecuteParams) string {
 	key := strings.TrimSpace(params.IdempotencyKey)
 	if key == "" {
 		key = "preview"
@@ -356,7 +356,7 @@ type submissionPlan struct {
 	figures []*invoiceadjustmentports.InvoiceAdjustmentPreview
 }
 
-func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agentports.AgentTool {
+func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
 		Name:        "invoice_submit_adjustment",
 		Recipe:      []string{toolInvoiceGet, "invoice_submit_adjustment"},
@@ -414,7 +414,7 @@ func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agentports.Agen
 		Plan: func(
 			ctx context.Context,
 			req *adjustmentSubmission,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*submissionPlan, error) {
 			return planSubmission(ctx, adjustments, req, params)
 		},
@@ -431,36 +431,36 @@ func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agentports.Agen
 		Run: func(
 			ctx context.Context,
 			req *adjustmentSubmission,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			return runSubmission(ctx, adjustments, req, params)
 		},
 	})
 }
 
-func targetAdjustment(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, ParamAdjustmentID, agentports.RecordInvoiceAdjustment)
+func targetAdjustment(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return common.TargetOf(params, ParamAdjustmentID, agenttoolports.RecordInvoiceAdjustment)
 }
 
-func targetSubmittedInvoice(params map[string]any) (agentports.ToolTarget, bool) {
+func targetSubmittedInvoice(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	if target, ok := common.TargetOf(
-		params, ParamDraftAdjustmentID, agentports.RecordInvoiceAdjustment,
+		params, ParamDraftAdjustmentID, agenttoolports.RecordInvoiceAdjustment,
 	); ok {
 		return target, true
 	}
 	items, _ := params[paramAdjustments].([]any)
 	if len(items) != 1 {
-		return agentports.ToolTarget{}, false
+		return agenttoolports.ToolTarget{}, false
 	}
 	fields, ok := items[0].(map[string]any)
 	if !ok {
-		return agentports.ToolTarget{}, false
+		return agenttoolports.ToolTarget{}, false
 	}
 
 	return common.TargetOf(fields, common.ParamInvoiceID, permission.ResourceInvoice)
 }
 
-func submissionRequest(params *agentports.ToolExecuteParams) (*adjustmentSubmission, error) {
+func submissionRequest(params *agenttoolports.ToolExecuteParams) (*adjustmentSubmission, error) {
 	draftID, hasDraft, err := common.OptionalPulid(params.Params, ParamDraftAdjustmentID)
 	if err != nil {
 		return nil, fmt.Errorf("parameter %q is not a valid id: %w", ParamDraftAdjustmentID, err)
@@ -549,7 +549,7 @@ func planSubmission(
 	ctx context.Context,
 	adjustments invoiceAdjuster,
 	req *adjustmentSubmission,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*submissionPlan, error) {
 	var (
 		plan *submissionPlan
@@ -575,7 +575,7 @@ func planDraftSubmission(
 	ctx context.Context,
 	adjustments invoiceAdjuster,
 	req *adjustmentSubmission,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*submissionPlan, error) {
 	detail := &invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 		AdjustmentID: req.draftID,
@@ -608,7 +608,7 @@ func planBulkSubmission(
 	ctx context.Context,
 	adjustments invoiceAdjuster,
 	req *adjustmentSubmission,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*submissionPlan, error) {
 	figures, err := adjustments.BulkPreview(
 		ctx,
@@ -630,7 +630,7 @@ func runSubmission(
 	ctx context.Context,
 	adjustments invoiceAdjuster,
 	req *adjustmentSubmission,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*agent.ToolExecutionResult, error) {
 	switch {
 	case req.draftID.IsNotNil():
@@ -689,7 +689,7 @@ func adjustmentResult(adjustment *invoiceadjustment.InvoiceAdjustment) *agent.To
 	}
 }
 
-func NewSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) agentports.AgentTool {
+func NewSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
 		Name: "invoice_save_adjustment_draft",
 		Description: "Save a draft credit, rebill, reversal or write-off on a posted invoice for " +
@@ -728,14 +728,14 @@ func NewSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) agentports.A
 		Settle: func(
 			ctx context.Context,
 			req *invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) error {
 			return draftOnInvoice(ctx, adjustments, req)
 		},
 		Plan: func(
 			ctx context.Context,
 			req *invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*invoiceadjustmentports.InvoiceAdjustmentDraftPreview, error) {
 			return adjustments.PreviewSaveDraft(ctx, req, params.Actor)
 		},
@@ -746,7 +746,7 @@ func NewSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) agentports.A
 		Run: func(
 			ctx context.Context,
 			req *invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			saved, err := adjustments.SaveDraft(ctx, req, params.Actor)
 			if err != nil {
@@ -766,7 +766,7 @@ func NewSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) agentports.A
 }
 
 func draftRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest, error) {
 	adjustmentID, _, err := common.OptionalPulid(params.Params, ParamAdjustmentID)
 	if err != nil {
@@ -857,7 +857,7 @@ type adjustmentDecision struct {
 	approve      bool
 }
 
-func NewApproveInvoiceAdjustmentTool(adjustments invoiceAdjuster) agentports.AgentTool {
+func NewApproveInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.AgentTool {
 	return newDecisionTool(adjustments, true, &common.ReceivableSpec{
 		Name: "invoice_approve_adjustment",
 		Description: "Propose approving an invoice adjustment that waits for approval, which " +
@@ -878,7 +878,7 @@ func NewApproveInvoiceAdjustmentTool(adjustments invoiceAdjuster) agentports.Age
 	})
 }
 
-func NewRejectInvoiceAdjustmentTool(adjustments invoiceAdjuster) agentports.AgentTool {
+func NewRejectInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.AgentTool {
 	return newDecisionTool(adjustments, false, &common.ReceivableSpec{
 		Name:        "invoice_reject_adjustment",
 		SearchTerms: []string{"deny adjustment", "decline adjustment"},
@@ -909,11 +909,11 @@ func newDecisionTool(
 	adjustments invoiceAdjuster,
 	approve bool,
 	spec *common.ReceivableSpec,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return common.NewReceivableTool(
 		spec,
 		common.ReceivablePlan[*adjustmentDecision, *invoiceadjustmentports.InvoiceAdjustmentDecisionPreview]{
-			Request: func(params *agentports.ToolExecuteParams) (*adjustmentDecision, error) {
+			Request: func(params *agenttoolports.ToolExecuteParams) (*adjustmentDecision, error) {
 				id, err := common.RequirePulid(params.Params, ParamAdjustmentID)
 				if err != nil {
 					return nil, err
@@ -931,7 +931,7 @@ func newDecisionTool(
 			Plan: func(
 				ctx context.Context,
 				req *adjustmentDecision,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*invoiceadjustmentports.InvoiceAdjustmentDecisionPreview, error) {
 				plan, err := adjustments.PreviewDecision(
 					ctx,
@@ -963,7 +963,7 @@ func newDecisionTool(
 			Run: func(
 				ctx context.Context,
 				req *adjustmentDecision,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				var err error
 				if req.approve {

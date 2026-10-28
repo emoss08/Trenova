@@ -3,7 +3,7 @@ package shipmentholdservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -33,7 +33,7 @@ type Params struct {
 	HoldReasonRepo holdreasonports.HoldReasonRepository
 	AuditService   auditports.AuditService
 	EventService   shipmenteventports.ShipmentEventService
-	Realtime       agentports.RealtimeService
+	Realtime       realtimeports.RealtimeService
 }
 
 type service struct {
@@ -43,7 +43,7 @@ type service struct {
 	holdReasonRepo holdreasonports.HoldReasonRepository
 	auditService   auditports.AuditService
 	eventService   shipmenteventports.ShipmentEventService
-	realtime       agentports.RealtimeService
+	realtime       realtimeports.RealtimeService
 }
 
 //nolint:gocritic // service constructor

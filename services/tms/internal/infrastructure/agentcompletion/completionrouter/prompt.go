@@ -3,8 +3,8 @@ package completionrouter
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 )
 
 var _ aicorrectionports.StructuredPromptRenderer = PromptRenderer{}
@@ -14,7 +14,7 @@ type PromptRenderer struct{}
 func NewPromptRenderer() aicorrectionports.StructuredPromptRenderer { return PromptRenderer{} }
 
 func (PromptRenderer) RenderStructuredPrompt(
-	req *agentports.StructuredCompletionRequest,
+	req *llmports.StructuredCompletionRequest,
 	mode aiprovider.StructuredOutputMode,
 ) aicorrectionports.RenderedPrompt {
 	run := structuredRun(req)
@@ -28,7 +28,7 @@ func (PromptRenderer) RenderStructuredPrompt(
 	}
 }
 
-func structuredRun(req *agentports.StructuredCompletionRequest) *runRequest {
+func structuredRun(req *llmports.StructuredCompletionRequest) *runRequest {
 	task := req.Task
 	if task == "" {
 		task = aiprovider.TaskGeneral

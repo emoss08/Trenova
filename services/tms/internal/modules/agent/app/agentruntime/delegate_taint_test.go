@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +20,7 @@ func taintOf(marks ...agent.TaintMark) *agent.RunTaint {
 }
 
 func delegatingTurnScript(delegateID string) *scriptedCompletion {
-	return &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	return &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn(delegateTaskName, map[string]any{
 			"agentId": delegateID,
 			"task":    "Create the report and return its id.",
@@ -82,9 +83,9 @@ func TestDelegate_FoldsTheDelegatesTaintBackUp(t *testing.T) {
 	assert.Equal(t, []agent.TaintMark{document}, result.Delegations[0].Taint.Marks,
 		"the delegate's proposals carry its own turn's taint")
 
-	var announced []agentports.AssistantRunTaintedEvent
+	var announced []assistantports.AssistantRunTaintedEvent
 	for _, event := range fx.events {
-		if data, ok := event.Data.(agentports.AssistantRunTaintedEvent); ok {
+		if data, ok := event.Data.(assistantports.AssistantRunTaintedEvent); ok {
 			announced = append(announced, data)
 		}
 	}
@@ -97,14 +98,21 @@ func TestDelegate_AnOverflowedDelegateTaintOverflowsTheTurn(t *testing.T) {
 
 	delegate := reportBuilder()
 	run := scriptedDelegateRun(delegate)
-	run.Result.Taint = &agent.RunTaint{Seen: []agent.TaintSource{agent.TaintSourceWeb}, Overflowed: true}
+	run.Result.Taint = &agent.RunTaint{
+		Seen:       []agent.TaintSource{agent.TaintSourceWeb},
+		Overflowed: true,
+	}
 	rt := newRuntime(delegatingTurnScript(delegate.ID.String()),
 		&stubQueryRegistry{}, &stubActionRegistry{}, nil)
 
 	result := driveWith(t, rt, delegatingRequest(delegate), &delegateRecorder{run: run})
 
 	assert.True(t, result.Taint.Overflowed)
-	assert.True(t, result.Taint.Has(agent.TaintSourceWeb), "a source past the delegate's marks is kept")
+	assert.True(
+		t,
+		result.Taint.Has(agent.TaintSourceWeb),
+		"a source past the delegate's marks is kept",
+	)
 }
 
 func TestDelegate_AMarkTheTurnAlreadyHadIsNotAnnouncedAgain(t *testing.T) {
@@ -127,7 +135,7 @@ func TestDelegate_AMarkTheTurnAlreadyHadIsNotAnnouncedAgain(t *testing.T) {
 	result := driveWith(t, rt, req, fx)
 
 	assert.Len(t, result.Taint.Marks, 1)
-	assert.NotContains(t, fx.eventNames(), agentports.AssistantEventRunTainted)
+	assert.NotContains(t, fx.eventNames(), assistantports.AssistantEventRunTainted)
 }
 
 func TestDelegate_ADelegateOfUnknownTaintLeavesTheTurnUnknown(t *testing.T) {

@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,14 +25,14 @@ func findContent(
 }
 
 type fixedVectorizer struct {
-	vector agentports.QueryVector
-	calls  []agentports.QueryVectorRequest
+	vector retrievalports.QueryVector
+	calls  []retrievalports.QueryVectorRequest
 }
 
 func (v *fixedVectorizer) Vectorize(
 	_ context.Context,
-	req *agentports.QueryVectorRequest,
-) (agentports.QueryVector, error) {
+	req *retrievalports.QueryVectorRequest,
+) (retrievalports.QueryVector, error) {
 	v.calls = append(v.calls, *req)
 
 	return v.vector, nil
@@ -46,24 +47,24 @@ func (v *fixedVectorizer) Availability(
 
 type fixedSimilarities struct {
 	byKey    map[string]float64
-	requests []agentports.CatalogSimilarityRequest
+	requests []retrievalports.CatalogSimilarityRequest
 }
 
 func (f *fixedSimilarities) Similarities(
 	_ context.Context,
-	req *agentports.CatalogSimilarityRequest,
-) (agentports.CatalogSimilarities, error) {
+	req *retrievalports.CatalogSimilarityRequest,
+) (retrievalports.CatalogSimilarities, error) {
 	f.requests = append(f.requests, *req)
 
-	return agentports.CatalogSimilarities{Available: true, ByKey: f.byKey}, nil
+	return retrievalports.CatalogSimilarities{Available: true, ByKey: f.byKey}, nil
 }
 
-func usableQuery() agentports.QueryVector {
+func usableQuery() retrievalports.QueryVector {
 	vector := make([]float32, airetrieval.Dimensions768)
 	vector[0] = 1
 	vector[767] = 0.5
 
-	return agentports.QueryVector{
+	return retrievalports.QueryVector{
 		Available:  true,
 		Vector:     vector,
 		ModelKey:   "localhost/nomic-embed-text@768",
@@ -73,7 +74,7 @@ func usableQuery() agentports.QueryVector {
 
 func semanticRuntime(
 	t *testing.T,
-	query agentports.QueryVector,
+	query retrievalports.QueryVector,
 	similarity map[string]float64,
 ) (*Service, []string, *fixedVectorizer, *fixedSimilarities) {
 	t.Helper()
@@ -146,7 +147,12 @@ func TestCarryOver_SearchesAgainForAResultRecordedBeforeNamesWereKept(t *testing
 
 	require.True(t, set.disclosed)
 	sent := specNames(set.specs)
-	assert.Contains(t, sent, "equipment_list_trailers", "an older result is answered by searching again")
+	assert.Contains(
+		t,
+		sent,
+		"equipment_list_trailers",
+		"an older result is answered by searching again",
+	)
 	assert.NotContains(t, sent, "worker_list")
 }
 
@@ -186,7 +192,7 @@ func TestRun_RecordsWhatFindToolsFoundOnItsResult(t *testing.T) {
 		textTurn("Two cards are due."),
 	)
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(names...),
 		Actor:      testActor(),
 		Input:      "say hello",
@@ -204,7 +210,7 @@ func TestNewToolSet_KeywordRankingIsUnchangedWithoutAVector(t *testing.T) {
 	keyword, names := wideRuntime(t)
 	unavailable, _, vectorizer, similarities := semanticRuntime(
 		t,
-		agentports.UnavailableQueryVector(airetrieval.UnavailableReasonNotIndexed),
+		retrievalports.UnavailableQueryVector(airetrieval.UnavailableReasonNotIndexed),
 		map[string]float64{"carrier_list": 0.99},
 	)
 
@@ -212,7 +218,7 @@ func TestNewToolSet_KeywordRankingIsUnchangedWithoutAVector(t *testing.T) {
 		definition: testDefinition(names...),
 		actor:      testActor(),
 		input:      "which trailers are due inspection",
-		query: agentports.QueryVectorRequest{
+		query: retrievalports.QueryVectorRequest{
 			TenantInfo: testActor().TenantInfo(),
 			Text:       "which trailers are due inspection",
 		},
@@ -240,7 +246,7 @@ func TestNewToolSet_PreselectsByMeaningWhenAVectorIsAvailable(t *testing.T) {
 		definition: testDefinition(names...),
 		actor:      testActor(),
 		input:      "whose paperwork is going stale",
-		query: agentports.QueryVectorRequest{
+		query: retrievalports.QueryVectorRequest{
 			TenantInfo: testActor().TenantInfo(),
 			Text:       "whose paperwork is going stale",
 		},
@@ -276,7 +282,7 @@ func TestFindFor_SearchesByMeaningWithTheTurnsVector(t *testing.T) {
 		definition: testDefinition(names...),
 		actor:      testActor(),
 		input:      "say hello",
-		query: agentports.QueryVectorRequest{
+		query: retrievalports.QueryVectorRequest{
 			TenantInfo: testActor().TenantInfo(),
 			Text:       "say hello",
 		},
@@ -288,7 +294,7 @@ func TestFindFor_SearchesByMeaningWithTheTurnsVector(t *testing.T) {
 	}
 	callsAtOpen := len(vectorizer.calls)
 
-	found := service.FindFor(t.Context(), &agentports.RunRequest{
+	found := service.FindFor(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(names...),
 		Actor:      testActor(),
 	}, set.state(), map[string]any{"need": "who is off this week"})
@@ -317,13 +323,13 @@ func TestFindFor_ReturnsNothingForNonsenseBelowTheFloor(t *testing.T) {
 		definition: testDefinition(names...),
 		actor:      testActor(),
 		input:      "say hello",
-		query: agentports.QueryVectorRequest{
+		query: retrievalports.QueryVectorRequest{
 			TenantInfo: testActor().TenantInfo(),
 			Text:       "say hello",
 		},
 	})
 
-	found := service.FindFor(t.Context(), &agentports.RunRequest{
+	found := service.FindFor(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(names...),
 		Actor:      testActor(),
 	}, set.state(), map[string]any{"need": "zzzz qqqq"})

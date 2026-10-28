@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsearch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/productguideports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/rankfusion"
@@ -19,11 +20,11 @@ const (
 	minVectorCandidates   = 24
 )
 
-func CatalogItems(catalog *productguide.Catalog) []agentports.EmbeddingCatalogItem {
-	items := make([]agentports.EmbeddingCatalogItem, 0, len(catalog.Pages))
+func CatalogItems(catalog *productguide.Catalog) []retrievalports.EmbeddingCatalogItem {
+	items := make([]retrievalports.EmbeddingCatalogItem, 0, len(catalog.Pages))
 	for i := range catalog.Pages {
 		page := &catalog.Pages[i]
-		items = append(items, agentports.NewEmbeddingCatalogItem(page.Path, PageText(page)))
+		items = append(items, retrievalports.NewEmbeddingCatalogItem(page.Path, PageText(page)))
 	}
 
 	return items
@@ -78,7 +79,7 @@ func NewOffline(catalog *productguide.Catalog) *Service {
 
 func (s *Service) RankPaths(
 	query string,
-	similarities agentports.CatalogSimilarities,
+	similarities retrievalports.CatalogSimilarities,
 	limit int,
 ) []string {
 	candidates := s.ranked(query, "", similarities, limit)
@@ -93,7 +94,7 @@ func (s *Service) RankPaths(
 func (s *Service) ranked(
 	query string,
 	onlyPage string,
-	similarities agentports.CatalogSimilarities,
+	similarities retrievalports.CatalogSimilarities,
 	limit int,
 ) []scored {
 	if limit <= 0 {
@@ -115,15 +116,15 @@ func (s *Service) ranked(
 
 func (s *Service) similarities(
 	ctx context.Context,
-	req *agentports.ProductGuideSearchRequest,
-) agentports.CatalogSimilarities {
+	req *productguideports.ProductGuideSearchRequest,
+) retrievalports.CatalogSimilarities {
 	if s.vectorizer == nil || s.vectors == nil || len(s.items) == 0 ||
 		strings.TrimSpace(req.Query) == "" ||
 		req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
-		return agentports.CatalogSimilarities{}
+		return retrievalports.CatalogSimilarities{}
 	}
 
-	query, err := s.vectorizer.Vectorize(ctx, &agentports.QueryVectorRequest{
+	query, err := s.vectorizer.Vectorize(ctx, &retrievalports.QueryVectorRequest{
 		TenantInfo:  req.TenantInfo,
 		Text:        req.Query,
 		Attribution: req.Attribution,
@@ -131,13 +132,13 @@ func (s *Service) similarities(
 	if err != nil {
 		s.l.Warn("could not embed a product guide question; searching by keyword",
 			zap.String("organization", req.TenantInfo.OrgID.String()), zap.Error(err))
-		return agentports.CatalogSimilarities{}
+		return retrievalports.CatalogSimilarities{}
 	}
 	if !query.Usable() {
-		return agentports.CatalogSimilarities{}
+		return retrievalports.CatalogSimilarities{}
 	}
 
-	found, err := s.vectors.Similarities(ctx, &agentports.CatalogSimilarityRequest{
+	found, err := s.vectors.Similarities(ctx, &retrievalports.CatalogSimilarityRequest{
 		TenantInfo: req.TenantInfo,
 		Corpus:     airetrieval.CatalogCorpusProductGuide,
 		Items:      s.items,
@@ -146,10 +147,10 @@ func (s *Service) similarities(
 	if err != nil {
 		s.l.Warn("could not compare the product guide with a question; searching by keyword",
 			zap.String("organization", req.TenantInfo.OrgID.String()), zap.Error(err))
-		return agentports.CatalogSimilarities{}
+		return retrievalports.CatalogSimilarities{}
 	}
 	if !found.Available {
-		return agentports.CatalogSimilarities{}
+		return retrievalports.CatalogSimilarities{}
 	}
 
 	return found
@@ -158,7 +159,7 @@ func (s *Service) similarities(
 func (s *Service) fuse(
 	keyword []scored,
 	terms map[string]struct{},
-	similarities agentports.CatalogSimilarities,
+	similarities retrievalports.CatalogSimilarities,
 	limit int,
 ) []scored {
 	similarity := similarities.ByKey

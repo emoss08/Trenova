@@ -19,6 +19,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -65,11 +67,11 @@ type Params struct {
 	// DB holds a tier change and the ledger's record of it in one
 	// transaction, so neither lands without the other.
 	DB           kernelports.Transactor
-	Trust        agentports.AgentToolTrustRepository
+	Trust        agenttoolports.AgentToolTrustRepository
 	Definitions  agentdefinitionports.AgentDefinitionRepository
 	Controls     tenantports.AgentControlRepository
-	Runs         agentports.AgentRunRepository
-	Tools        agentports.AgentToolRegistry
+	Runs         agentruntimeports.AgentRunRepository
+	Tools        agenttoolports.AgentToolRegistry
 	AuditService auditports.AuditService
 	// Notifications is optional so the ledger still counts where nothing can
 	// be told about a change; the audit line is the durable record either way.
@@ -79,11 +81,11 @@ type Params struct {
 type Service struct {
 	l             *zap.Logger
 	db            kernelports.Transactor
-	trust         agentports.AgentToolTrustRepository
+	trust         agenttoolports.AgentToolTrustRepository
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	controls      tenantports.AgentControlRepository
-	runs          agentports.AgentRunRepository
-	tools         agentports.AgentToolRegistry
+	runs          agentruntimeports.AgentRunRepository
+	tools         agenttoolports.AgentToolRegistry
 	audit         actionLogger
 	notifications notifier
 }
@@ -137,7 +139,7 @@ func (s *Service) RecordExecutionFailure(ctx context.Context, proposal *agent.Ag
 
 func (s *Service) ListForDefinition(
 	ctx context.Context,
-	req agentports.ListToolTrustRequest,
+	req agenttoolports.ListToolTrustRequest,
 ) ([]*agent.ToolTrust, error) {
 	return s.trust.ListByDefinition(ctx, req)
 }
@@ -153,7 +155,7 @@ func (s *Service) record(
 		BuID:  proposal.BusinessUnitID,
 	}
 
-	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         proposal.RunID,
 		TenantInfo: &tenantInfo,
 	})
@@ -166,7 +168,7 @@ func (s *Service) record(
 	}
 
 	now := timeutils.NowUnix()
-	row, err := s.trust.Record(ctx, agentports.RecordToolTrustRequest{
+	row, err := s.trust.Record(ctx, agenttoolports.RecordToolTrustRequest{
 		TenantInfo:        tenantInfo,
 		AgentDefinitionID: run.AgentDefinitionID,
 		ToolName:          proposal.ToolName,
@@ -266,7 +268,7 @@ func (s *Service) promote(
 		title: fmt.Sprintf(
 			"%s now runs %s at \"%s\"",
 			change.definition.Name,
-			stringutils.HumanizeSnakeCase(agentports.ReadingOrder(change.row.ToolName)),
+			stringutils.HumanizeSnakeCase(agenttoolports.ReadingOrder(change.row.ToolName)),
 			next.Label(),
 		),
 		message: fmt.Sprintf(
@@ -305,7 +307,7 @@ func (s *Service) demote(ctx context.Context, change tierChange) error {
 			"%s lost \"%s\" on %s",
 			change.definition.Name,
 			change.current.Label(),
-			stringutils.HumanizeSnakeCase(agentports.ReadingOrder(change.row.ToolName)),
+			stringutils.HumanizeSnakeCase(agenttoolports.ReadingOrder(change.row.ToolName)),
 		),
 		message: fmt.Sprintf(
 			"The tier was earned from a streak of approvals, and a rejection or a failed run ended the streak. "+
@@ -333,7 +335,7 @@ func (s *Service) moveTier(
 	to agent.AutonomyTier,
 	promoted bool,
 ) (bool, error) {
-	mark := agentports.MarkToolTierChangeRequest{
+	mark := agenttoolports.MarkToolTierChangeRequest{
 		ID:         change.row.ID,
 		TenantInfo: change.tenant,
 		Version:    change.row.Version,
@@ -407,13 +409,13 @@ func (s *Service) promotable(toolName string) agent.AutonomyTier {
 	return agenttoolpolicy.Promotable(policy)
 }
 
-func (s *Service) policyOf(toolName string) (agentports.ToolPolicy, bool) {
+func (s *Service) policyOf(toolName string) (agenttoolports.ToolPolicy, bool) {
 	if s.tools == nil {
-		return agentports.ToolPolicy{}, false
+		return agenttoolports.ToolPolicy{}, false
 	}
 	tool, ok := s.tools.Get(toolName)
 	if !ok {
-		return agentports.ToolPolicy{}, false
+		return agenttoolports.ToolPolicy{}, false
 	}
 
 	return tool.Policy(), true

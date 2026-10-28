@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -33,7 +34,7 @@ type Params struct {
 
 	Logger      *zap.Logger
 	Scorecards  agentports.AgentScorecardRepository
-	Trust       agentports.AgentToolTrustRepository
+	Trust       agenttoolports.AgentToolTrustRepository
 	Definitions agentdefinitionports.AgentDefinitionRepository
 	Permissions permissionports.PermissionEngine
 }
@@ -41,7 +42,7 @@ type Params struct {
 type Service struct {
 	l           *zap.Logger
 	scorecards  agentports.AgentScorecardRepository
-	trust       agentports.AgentToolTrustRepository
+	trust       agenttoolports.AgentToolTrustRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
 	permissions permissionports.PermissionEngine
 	now         func() int64
@@ -114,7 +115,7 @@ func (s *Service) Get(
 		return nil, err
 	}
 
-	ladder, err := s.trust.ListByDefinition(ctx, agentports.ListToolTrustRequest{
+	ladder, err := s.trust.ListByDefinition(ctx, agenttoolports.ListToolTrustRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: definition.ID,
 	})

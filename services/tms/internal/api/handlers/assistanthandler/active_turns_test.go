@@ -9,10 +9,10 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -24,16 +24,16 @@ import (
 // liveRecords is a person's replies in progress. Anything else asked of it
 // panics, which is how a test learns the route went somewhere it should not.
 type liveRecords struct {
-	agentports.AssistantTurnRepository
+	assistantports.AssistantTurnRepository
 
-	live  []*agentports.LiveAssistantTurn
-	asked *agentports.ListLiveAssistantTurnsRequest
+	live  []*assistantports.LiveAssistantTurn
+	asked *assistantports.ListLiveAssistantTurnsRequest
 }
 
 func (r *liveRecords) ListLive(
 	_ context.Context,
-	req agentports.ListLiveAssistantTurnsRequest,
-) ([]*agentports.LiveAssistantTurn, error) {
+	req assistantports.ListLiveAssistantTurnsRequest,
+) ([]*assistantports.LiveAssistantTurn, error) {
 	r.asked = &req
 
 	return r.live, nil
@@ -97,7 +97,7 @@ func TestActiveTurns_ListsTheCallersRepliesInProgress(t *testing.T) {
 		Status:    conversation.AssistantTurnStatusRunning,
 		StartedAt: 1_700_000_000,
 	}
-	records := &liveRecords{live: []*agentports.LiveAssistantTurn{{
+	records := &liveRecords{live: []*assistantports.LiveAssistantTurn{{
 		AssistantTurn: turn,
 		ThreadTitle:   "Late loads this week",
 	}}}

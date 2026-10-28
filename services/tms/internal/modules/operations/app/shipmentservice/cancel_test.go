@@ -3,19 +3,18 @@ package shipmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,7 +29,7 @@ func TestServiceCancel_Success(t *testing.T) {
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	continuityRepo := equipmentcontinuityportsmock.NewMockEquipmentContinuityRepository(t)
 
 	shipmentID := pulid.MustNew("shp_")
@@ -86,7 +85,7 @@ func TestServiceCancel_Success(t *testing.T) {
 		Return(nil).
 		Once()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" && req.Action == "canceled" &&
 				req.RecordID == shipmentID
 		})).
@@ -138,7 +137,7 @@ func TestServiceCancel_RejectsAlreadyCanceledShipment(t *testing.T) {
 		repo:         repo,
 		validator:    newTestValidator(t),
 		auditService: auditportsmock.NewMockAuditService(t),
-		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
+		invalidator:  newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -160,7 +159,7 @@ func TestServiceUncancel_Success(t *testing.T) {
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 
 	shipmentID := pulid.MustNew("shp_")
 	orgID := pulid.MustNew("org_")
@@ -204,7 +203,7 @@ func TestServiceUncancel_Success(t *testing.T) {
 		Return(nil).
 		Once()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" && req.Action == "uncanceled" &&
 				req.RecordID == shipmentID
 		})).
@@ -254,7 +253,7 @@ func TestServiceUncancel_RejectsNonCanceledShipment(t *testing.T) {
 		repo:         repo,
 		validator:    newTestValidator(t),
 		auditService: auditportsmock.NewMockAuditService(t),
-		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
+		invalidator:  newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -308,7 +307,7 @@ func TestServiceCancel_RefusesLockedShipments(t *testing.T) {
 				repo:         repo,
 				validator:    newTestValidator(t),
 				auditService: auditportsmock.NewMockAuditService(t),
-				invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
+				invalidator:  newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 				eventService: noopShipmentEventService{},
 				coordinator:  newStateCoordinator(),
 			}

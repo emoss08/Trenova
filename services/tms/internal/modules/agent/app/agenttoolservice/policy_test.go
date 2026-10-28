@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/workforcetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,7 +23,7 @@ import (
 func TestEgressTools_NeverRunWithoutAPerson(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		&operationstools.EmailCustomerTool{},
 		&operationstools.SendDetentionNoticeTool{},
 		&operationstools.NotifyDriverTool{},
@@ -67,7 +67,7 @@ func TestAddShipmentComment_HoldsANoteOutsidersReadForApproval(t *testing.T) {
 		"Driver":     {class: agent.EgressDriverVisible, limit: agent.TierActWithApproval},
 	}
 	for visibility, want := range cases {
-		params := agentports.ToolExecuteParams{Params: map[string]any{"visibility": visibility}}
+		params := agenttoolports.ToolExecuteParams{Params: map[string]any{"visibility": visibility}}
 		call := policy.Classified(params)
 		assert.Equal(t, want.class, call.Egress, visibility)
 		assert.Equal(t, want.limit, agenttoolstest.CallLimit(call), visibility)

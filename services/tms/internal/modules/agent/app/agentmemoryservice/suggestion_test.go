@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,15 +15,15 @@ import (
 )
 
 type suggestionRepo struct {
-	agentports.AgentMemoryRepository
+	agentmemoryports.AgentMemoryRepository
 	memory   *agent.Memory
-	resolved []agentports.ResolveAgentMemorySuggestionRequest
-	statuses []agentports.SetAgentMemoryStatusQuery
+	resolved []agentmemoryports.ResolveAgentMemorySuggestionRequest
+	statuses []agentmemoryports.SetAgentMemoryStatusQuery
 }
 
 func (f *suggestionRepo) GetByID(
 	context.Context,
-	agentports.GetAgentMemoryByIDRequest,
+	agentmemoryports.GetAgentMemoryByIDRequest,
 ) (*agent.Memory, error) {
 	if f.memory == nil {
 		return nil, errortypes.NewNotFoundError("AgentMemory not found")
@@ -41,7 +41,7 @@ func (f *suggestionRepo) Update(_ context.Context, entity *agent.Memory) (*agent
 
 func (f *suggestionRepo) ResolveSuggestion(
 	_ context.Context,
-	req agentports.ResolveAgentMemorySuggestionRequest,
+	req agentmemoryports.ResolveAgentMemorySuggestionRequest,
 ) (*agent.Memory, error) {
 	f.resolved = append(f.resolved, req)
 	resolved := *f.memory
@@ -57,7 +57,7 @@ func (f *suggestionRepo) ResolveSuggestion(
 
 func (f *suggestionRepo) SetStatus(
 	_ context.Context,
-	req agentports.SetAgentMemoryStatusQuery,
+	req agentmemoryports.SetAgentMemoryStatusQuery,
 ) (*agent.Memory, error) {
 	f.statuses = append(f.statuses, req)
 	updated := *f.memory
@@ -105,14 +105,14 @@ func TestSetStatus_ASharedMemoryIsAnAdministratorsToRetire(t *testing.T) {
 	repo := &suggestionRepo{memory: shared}
 	svc := &Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: false}}
 
-	_, err := svc.SetStatus(t.Context(), agentports.SetAgentMemoryStatusRequest{
+	_, err := svc.SetStatus(t.Context(), agentmemoryports.SetAgentMemoryStatusRequest{
 		ID: shared.ID, TenantInfo: tenant(), Status: agent.MemoryStatusRetired,
 	}, userActor())
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthorizationError(err))
 	assert.Empty(t, repo.statuses)
 
-	_, err = svc.SetStatus(t.Context(), agentports.SetAgentMemoryStatusRequest{
+	_, err = svc.SetStatus(t.Context(), agentmemoryports.SetAgentMemoryStatusRequest{
 		ID: shared.ID, TenantInfo: tenant(), Status: agent.MemoryStatusRetired,
 	}, agentActor())
 	require.Error(t, err, "a run with nobody in it never retires what others read")
@@ -125,13 +125,13 @@ func TestSetStatus_ASharedMemoryIsAnAdministratorsToRetire(t *testing.T) {
 	repo = &suggestionRepo{memory: own}
 	svc = &Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: false}}
 
-	updated, err := svc.SetStatus(t.Context(), agentports.SetAgentMemoryStatusRequest{
+	updated, err := svc.SetStatus(t.Context(), agentmemoryports.SetAgentMemoryStatusRequest{
 		ID: own.ID, TenantInfo: tenant(), Status: agent.MemoryStatusRetired,
 	}, owner)
 	require.NoError(t, err)
 	assert.Equal(t, agent.MemoryStatusRetired, updated.Status)
 
-	_, err = svc.SetStatus(t.Context(), agentports.SetAgentMemoryStatusRequest{
+	_, err = svc.SetStatus(t.Context(), agentmemoryports.SetAgentMemoryStatusRequest{
 		ID: own.ID, TenantInfo: tenant(), Status: agent.MemoryStatusRetired,
 	}, userActor())
 	require.Error(t, err, "another person's own memory is not theirs")
@@ -143,7 +143,7 @@ func TestSetStatus_RefusesASuggestedMemory(t *testing.T) {
 	repo := &suggestionRepo{memory: suggestion()}
 	svc := suggestionService(repo)
 
-	_, err := svc.SetStatus(t.Context(), agentports.SetAgentMemoryStatusRequest{
+	_, err := svc.SetStatus(t.Context(), agentmemoryports.SetAgentMemoryStatusRequest{
 		ID:         repo.memory.ID,
 		TenantInfo: tenant(),
 		Status:     agent.MemoryStatusActive,
@@ -152,7 +152,7 @@ func TestSetStatus_RefusesASuggestedMemory(t *testing.T) {
 	assert.Empty(t, repo.statuses, "a suggestion is never activated by a status change")
 
 	repo.memory.Status = agent.MemoryStatusDismissed
-	_, err = svc.SetStatus(t.Context(), agentports.SetAgentMemoryStatusRequest{
+	_, err = svc.SetStatus(t.Context(), agentmemoryports.SetAgentMemoryStatusRequest{
 		ID:         repo.memory.ID,
 		TenantInfo: tenant(),
 		Status:     agent.MemoryStatusActive,
@@ -168,7 +168,9 @@ func TestSetStatus_RefusesToMakeAMemorySuggested(t *testing.T) {
 	memory.Status = agent.MemoryStatusActive
 	repo := &suggestionRepo{memory: memory}
 
-	_, err := suggestionService(repo).SetStatus(t.Context(), agentports.SetAgentMemoryStatusRequest{
+	_, err := suggestionService(
+		repo,
+	).SetStatus(t.Context(), agentmemoryports.SetAgentMemoryStatusRequest{
 		ID:         memory.ID,
 		TenantInfo: tenant(),
 		Status:     agent.MemoryStatusSuggested,
@@ -186,7 +188,7 @@ func TestSetStatus_StillRetiresAnActiveMemory(t *testing.T) {
 
 	updated, err := suggestionService(repo).SetStatus(
 		t.Context(),
-		agentports.SetAgentMemoryStatusRequest{
+		agentmemoryports.SetAgentMemoryStatusRequest{
 			ID:         memory.ID,
 			TenantInfo: tenant(),
 			Status:     agent.MemoryStatusRetired,
@@ -206,7 +208,7 @@ func TestApproveSuggestion_MakesTheEditedTextActive(t *testing.T) {
 
 	approved, err := suggestionService(repo).ApproveSuggestion(
 		t.Context(),
-		&agentports.ApproveAgentMemorySuggestionRequest{
+		&agentmemoryports.ApproveAgentMemorySuggestionRequest{
 			ID:         repo.memory.ID,
 			TenantInfo: tenant(),
 			Content:    "  State only rates a tool returned.  ",
@@ -220,7 +222,12 @@ func TestApproveSuggestion_MakesTheEditedTextActive(t *testing.T) {
 	require.Len(t, repo.resolved, 1)
 	resolved := repo.resolved[0]
 	assert.Equal(t, agent.MemoryStatusActive, resolved.Status)
-	assert.Equal(t, agent.MemoryKindCorrection, resolved.Kind, "the kind defaults to the suggestion's")
+	assert.Equal(
+		t,
+		agent.MemoryKindCorrection,
+		resolved.Kind,
+		"the kind defaults to the suggestion's",
+	)
 	assert.Equal(t, actor.UserID, resolved.ByUserID)
 	assert.Equal(t, int64(2), resolved.Version)
 }
@@ -243,7 +250,7 @@ func TestApproveSuggestion_KeepsAPersonsOfferForTheirTeam(t *testing.T) {
 
 	approved, err := suggestionService(repo).ApproveSuggestion(
 		t.Context(),
-		&agentports.ApproveAgentMemorySuggestionRequest{
+		&agentmemoryports.ApproveAgentMemorySuggestionRequest{
 			ID:         offer.ID,
 			TenantInfo: tenant(),
 			Content:    offer.Content,
@@ -267,7 +274,7 @@ func TestApproveSuggestion_KeepsAPersonsOfferForTheirTeam(t *testing.T) {
 	repo = &suggestionRepo{memory: forEveryone}
 	_, err = suggestionService(repo).ApproveSuggestion(
 		t.Context(),
-		&agentports.ApproveAgentMemorySuggestionRequest{
+		&agentmemoryports.ApproveAgentMemorySuggestionRequest{
 			ID: forEveryone.ID, TenantInfo: tenant(), Content: forEveryone.Content, Version: 2,
 		},
 		userActor(),
@@ -284,7 +291,7 @@ func TestApproveSuggestion_RefusesEmptyText(t *testing.T) {
 
 	_, err := suggestionService(repo).ApproveSuggestion(
 		t.Context(),
-		&agentports.ApproveAgentMemorySuggestionRequest{
+		&agentmemoryports.ApproveAgentMemorySuggestionRequest{
 			ID:         repo.memory.ID,
 			TenantInfo: tenant(),
 			Content:    "   ",
@@ -304,21 +311,29 @@ func TestApproveSuggestion_OnlyASuggestionAndOnlyByAPerson(t *testing.T) {
 	repo := &suggestionRepo{memory: memory}
 	svc := suggestionService(repo)
 
-	_, err := svc.ApproveSuggestion(t.Context(), &agentports.ApproveAgentMemorySuggestionRequest{
-		ID:         memory.ID,
-		TenantInfo: tenant(),
-		Content:    "Anything",
-		Version:    2,
-	}, userActor())
+	_, err := svc.ApproveSuggestion(
+		t.Context(),
+		&agentmemoryports.ApproveAgentMemorySuggestionRequest{
+			ID:         memory.ID,
+			TenantInfo: tenant(),
+			Content:    "Anything",
+			Version:    2,
+		},
+		userActor(),
+	)
 	require.Error(t, err, "an active memory is not approved again")
 
 	repo.memory.Status = agent.MemoryStatusSuggested
-	_, err = svc.ApproveSuggestion(t.Context(), &agentports.ApproveAgentMemorySuggestionRequest{
-		ID:         memory.ID,
-		TenantInfo: tenant(),
-		Content:    "Anything",
-		Version:    2,
-	}, &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeAgent})
+	_, err = svc.ApproveSuggestion(
+		t.Context(),
+		&agentmemoryports.ApproveAgentMemorySuggestionRequest{
+			ID:         memory.ID,
+			TenantInfo: tenant(),
+			Content:    "Anything",
+			Version:    2,
+		},
+		&permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeAgent},
+	)
 	require.Error(t, err, "an agent never approves what it will read")
 	assert.Empty(t, repo.resolved)
 }
@@ -331,7 +346,7 @@ func TestDismissSuggestion_RecordsWhoDismissedIt(t *testing.T) {
 
 	dismissed, err := suggestionService(repo).DismissSuggestion(
 		t.Context(),
-		agentports.DismissAgentMemorySuggestionRequest{
+		agentmemoryports.DismissAgentMemorySuggestionRequest{
 			ID:         repo.memory.ID,
 			TenantInfo: tenant(),
 			Version:    2,
@@ -358,7 +373,7 @@ func TestUpdate_ASharedMemoryIsAnAdministratorsToRewrite(t *testing.T) {
 	shared.AgentDefinitionID = nil
 	shared.Evidence = nil
 	shared.SetAudience(agent.MemoryScopeOrganization, pulid.Nil, pulid.Nil)
-	req := &agentports.UpdateAgentMemoryRequest{
+	req := &agentmemoryports.UpdateAgentMemoryRequest{
 		ID:         shared.ID,
 		TenantInfo: tenant(),
 		Kind:       agent.MemoryKindInstruction,

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -38,7 +38,11 @@ func TestDeskBoardCardRefusesSomeoneWhoMayNotUseTheDesk(t *testing.T) {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	})
 
-	_, err := resolver.DeskBoardCard(ctx, pulid.MustNew("thr_").String(), pulid.MustNew("art_").String())
+	_, err := resolver.DeskBoardCard(
+		ctx,
+		pulid.MustNew("thr_").String(),
+		pulid.MustNew("art_").String(),
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthorizationError(err))
 }
@@ -47,7 +51,7 @@ func TestBoardCardToModelCarriesEveryBlockAsTheServerFilledIt(t *testing.T) {
 	t.Parallel()
 
 	shipment := pulid.MustNew("shp_")
-	card := &agentports.BoardCard{
+	card := &assistantports.BoardCard{
 		ArtifactID: pulid.MustNew("art_"),
 		ThreadID:   pulid.MustNew("thr_"),
 		Title:      "Late loads",
@@ -55,21 +59,32 @@ func TestBoardCardToModelCarriesEveryBlockAsTheServerFilledIt(t *testing.T) {
 		AnsweredAt: 1_793_000_000,
 		Markdown:   "# Late loads\n",
 		Filled: &board.Filled{
-			Title:   "Late loads",
-			ReadAt:  1_793_000_600,
-			Verdict: []board.FilledSegment{{Text: "One is "}, {Text: "late", Numeral: 1, Tone: board.ToneWarn}},
+			Title:  "Late loads",
+			ReadAt: 1_793_000_600,
+			Verdict: []board.FilledSegment{
+				{Text: "One is "},
+				{Text: "late", Numeral: 1, Tone: board.ToneWarn},
+			},
 			Blocks: []board.FilledBlock{{
 				Type: board.BlockRecords, Numeral: 1, State: board.StateReady, Tone: board.ToneWarn,
 				Measure: board.MeasureLateness,
-				Source:  board.Source{Kind: board.SourceRecords, Resource: permission.ResourceShipment, Count: 2, Readable: 1},
+				Source: board.Source{
+					Kind:     board.SourceRecords,
+					Resource: permission.ResourceShipment,
+					Count:    2,
+					Readable: 1,
+				},
 				Rows: []board.Row{
 					{
 						Resource: permission.ResourceShipment, ID: shipment, Readable: true,
 						Label: "S2610-0412", Status: "Delayed",
 						Measure: &board.RowMeasure{
 							Measure: board.MeasureLateness, State: board.MeasureLate, At: 1_792_994_000,
-							Tone:  board.ToneWarn,
-							Value: board.Value{Kind: board.ValueDuration, Number: decimal.NewFromInt(6000)},
+							Tone: board.ToneWarn,
+							Value: board.Value{
+								Kind:   board.ValueDuration,
+								Number: decimal.NewFromInt(6000),
+							},
 						},
 					},
 					{Resource: permission.ResourceShipment, ID: pulid.MustNew("shp_")},

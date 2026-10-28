@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,8 +15,8 @@ import (
 func TestReplyFailure(t *testing.T) {
 	t.Parallel()
 
-	exhausted := &agentports.ChatProvidersFailedError{
-		Failures: []agentports.ChatProviderFailure{{
+	exhausted := &llmports.ChatProvidersFailedError{
+		Failures: []llmports.ChatProviderFailure{{
 			Name: "Anthropic", Model: "claude-sonnet", Vendor: "anthropic",
 			Status: "Overloaded", Detail: "Anthropic returned 529 twice",
 		}},

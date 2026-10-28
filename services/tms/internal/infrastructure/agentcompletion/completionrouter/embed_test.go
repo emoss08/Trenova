@@ -16,8 +16,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -257,7 +257,10 @@ func TestEmbed_BatchesAndKeepsInputOrder(t *testing.T) {
 
 	endpoint := newEmbeddingEndpoint(t)
 	svc := newEmbeddingService(t)
-	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
+	withProviders(
+		svc,
+		embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10),
+	)
 
 	inputs := numberedInputs(200)
 	result, err := svc.Embed(t.Context(), &aiusageports.EmbedRequest{
@@ -276,7 +279,14 @@ func TestEmbed_BatchesAndKeepsInputOrder(t *testing.T) {
 	require.Len(t, result.Vectors, len(inputs))
 	for idx, vector := range result.Vectors {
 		require.Len(t, vector, testEmbeddingDimensions)
-		assert.InDelta(t, float64(idx), float64(vector[0]), 0.0001, "vector %d is out of order", idx)
+		assert.InDelta(
+			t,
+			float64(idx),
+			float64(vector[0]),
+			0.0001,
+			"vector %d is out of order",
+			idx,
+		)
 	}
 	assert.Equal(t, testEmbeddingDimensions, result.Dimensions)
 	assert.Equal(t, 2000, result.InputTokens)
@@ -374,7 +384,7 @@ func TestEmbed_PinnedModelKeyWithNoProviderIsNotConfigured(t *testing.T) {
 		ModelKey:   "retired.example/old@1536",
 	})
 	require.Error(t, err)
-	assert.ErrorIs(t, err, agentports.ErrNoProviderConfigured)
+	assert.ErrorIs(t, err, llmports.ErrNoProviderConfigured)
 	assert.Zero(t, endpoint.calls.Load())
 }
 
@@ -399,7 +409,7 @@ func TestEmbed_NeverRoutesToAProtocolWithoutEmbeddings(t *testing.T) {
 		Inputs:     []string{"text"},
 	})
 	require.Error(t, err)
-	assert.ErrorIs(t, err, agentports.ErrNoProviderConfigured)
+	assert.ErrorIs(t, err, llmports.ErrNoProviderConfigured)
 }
 
 func TestEmbed_WrongDimensionIsNotRetried(t *testing.T) {
@@ -408,7 +418,10 @@ func TestEmbed_WrongDimensionIsNotRetried(t *testing.T) {
 	endpoint := newEmbeddingEndpoint(t)
 	endpoint.dims = 1024
 	svc := newEmbeddingService(t)
-	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
+	withProviders(
+		svc,
+		embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10),
+	)
 
 	_, err := svc.Embed(t.Context(), &aiusageports.EmbedRequest{
 		TenantInfo: embedTenant(),
@@ -427,7 +440,10 @@ func TestEmbed_ScrubsDocumentsButNotQueries(t *testing.T) {
 
 	endpoint := newEmbeddingEndpoint(t)
 	svc := newEmbeddingService(t)
-	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
+	withProviders(
+		svc,
+		embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10),
+	)
 
 	_, err := svc.Embed(t.Context(), &aiusageports.EmbedRequest{
 		TenantInfo: embedTenant(),
@@ -456,7 +472,10 @@ func TestEmbed_QueryGivesUpAtItsDeadline(t *testing.T) {
 	endpoint := newEmbeddingEndpoint(t)
 	endpoint.delay = 2 * time.Second
 	svc := newEmbeddingService(t)
-	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
+	withProviders(
+		svc,
+		embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10),
+	)
 
 	started := time.Now()
 	_, err := svc.Embed(t.Context(), &aiusageports.EmbedRequest{
@@ -483,7 +502,10 @@ func TestEmbed_RefusesAnEmptyOrBlankRequest(t *testing.T) {
 
 	endpoint := newEmbeddingEndpoint(t)
 	svc := newEmbeddingService(t)
-	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
+	withProviders(
+		svc,
+		embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10),
+	)
 
 	for name, req := range map[string]*aiusageports.EmbedRequest{
 		"no inputs": {Purpose: aiusageports.EmbeddingPurposeDocument},
@@ -572,7 +594,10 @@ func TestEmbed_DocumentUsageIsIndexingAndUnpricedStaysUnknown(t *testing.T) {
 	usage := &fakeUsage{}
 	svc := newEmbeddingService(t)
 	svc.usage = usage
-	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
+	withProviders(
+		svc,
+		embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10),
+	)
 
 	result, err := svc.Embed(t.Context(), &aiusageports.EmbedRequest{
 		TenantInfo: embedTenant(),
@@ -602,5 +627,5 @@ func TestConfiguredModelKey(t *testing.T) {
 
 	withProviders(svc)
 	_, err = svc.ConfiguredModelKey(t.Context(), embedTenant())
-	assert.ErrorIs(t, err, agentports.ErrNoProviderConfigured)
+	assert.ErrorIs(t, err, llmports.ErrNoProviderConfigured)
 }

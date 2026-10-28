@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -98,31 +99,31 @@ func (f *judgedCases) GetByID(
 }
 
 type askedJudge struct {
-	agentports.CompletionService
-	asked []*agentports.StructuredCompletionRequest
+	llmports.CompletionService
+	asked []*llmports.StructuredCompletionRequest
 }
 
 func (f *askedJudge) CompleteStructured(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	f.asked = append(f.asked, req)
 
-	return &agentports.StructuredCompletionResult{Text: judgeReply, ModelIdentifier: "judge"}, nil
+	return &llmports.StructuredCompletionResult{Text: judgeReply, ModelIdentifier: "judge"}, nil
 }
 
 type batchedJudge struct {
-	submitted []*agentports.BatchCompletionRequest
+	submitted []*llmports.BatchCompletionRequest
 	take      int
 	err       error
-	results   map[string]agentports.BatchItemResult
+	results   map[string]llmports.BatchItemResult
 	reads     int
 }
 
 func (f *batchedJudge) SubmitBatch(
 	_ context.Context,
-	req *agentports.BatchCompletionRequest,
-) (*agentports.BatchHandle, error) {
+	req *llmports.BatchCompletionRequest,
+) (*llmports.BatchHandle, error) {
 	f.submitted = append(f.submitted, req)
 	if f.err != nil {
 		return nil, f.err
@@ -137,7 +138,7 @@ func (f *batchedJudge) SubmitBatch(
 		ids = append(ids, item.CustomID)
 	}
 
-	return &agentports.BatchHandle{
+	return &llmports.BatchHandle{
 		ProviderID:       pulid.ID("aiprv_judge"),
 		BatchID:          "msgbatch_1",
 		CustomIDs:        ids,
@@ -148,15 +149,15 @@ func (f *batchedJudge) SubmitBatch(
 
 func (f *batchedJudge) BatchStatus(
 	context.Context,
-	*agentports.BatchStatusRequest,
-) (*agentports.BatchStatus, error) {
-	return &agentports.BatchStatus{Ended: true}, nil
+	*llmports.BatchStatusRequest,
+) (*llmports.BatchStatus, error) {
+	return &llmports.BatchStatus{Ended: true}, nil
 }
 
 func (f *batchedJudge) BatchResults(
 	context.Context,
-	*agentports.BatchResultsRequest,
-) (map[string]agentports.BatchItemResult, error) {
+	*llmports.BatchResultsRequest,
+) (map[string]llmports.BatchItemResult, error) {
 	f.reads++
 
 	return f.results, nil
@@ -316,7 +317,7 @@ func TestSubmitJudgeBatch_JudgesOneAtATimeWhenTheProviderCannotBatch(t *testing.
 	t.Parallel()
 
 	f := newJudgeFixture(t, 2)
-	f.batches.err = agentports.ErrBatchUnsupported
+	f.batches.err = llmports.ErrBatchUnsupported
 
 	batch := f.submit(t, "0")
 	assert.False(t, batch.Batched())
@@ -352,10 +353,10 @@ func TestCollectJudgeBatch_RecordsEachJudgementOnceAndRetriesTheRest(t *testing.
 	t.Parallel()
 
 	f := newJudgeFixture(t, 3)
-	f.batches.results = map[string]agentports.BatchItemResult{
+	f.batches.results = map[string]llmports.BatchItemResult{
 		f.ids[0].String(): {
 			CustomID: f.ids[0].String(),
-			Result: &agentports.StructuredCompletionResult{
+			Result: &llmports.StructuredCompletionResult{
 				Text:            judgeReply,
 				ModelIdentifier: "claude-sonnet-5-5",
 			},

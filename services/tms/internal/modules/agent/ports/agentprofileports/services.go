@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -51,9 +51,9 @@ type GenerationPlan struct {
 	CurrentID     pulid.ID             `json:"currentId,omitempty"`
 	// VersionID is the id the version will be kept under, chosen when the
 	// plan is made, so a Finish run twice keeps one version.
-	VersionID        pulid.ID                                `json:"versionId,omitempty"`
-	OrganizationName string                                  `json:"organizationName,omitempty"`
-	Request          *agentports.StructuredCompletionRequest `json:"request,omitempty"`
+	VersionID        pulid.ID                              `json:"versionId,omitempty"`
+	OrganizationName string                                `json:"organizationName,omitempty"`
+	Request          *llmports.StructuredCompletionRequest `json:"request,omitempty"`
 }
 
 func (p *GenerationPlan) Ready() bool {
@@ -61,9 +61,9 @@ func (p *GenerationPlan) Ready() bool {
 }
 
 type FinishGenerationRequest struct {
-	Plan   *GenerationPlan                        `json:"plan"`
-	Result *agentports.StructuredCompletionResult `json:"result,omitempty"`
-	Error  string                                 `json:"error,omitempty"`
+	Plan   *GenerationPlan                      `json:"plan"`
+	Result *llmports.StructuredCompletionResult `json:"result,omitempty"`
+	Error  string                               `json:"error,omitempty"`
 }
 
 type GenerationOutcome struct {

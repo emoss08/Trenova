@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -666,7 +667,7 @@ func (b *Bench) loadRun(
 	session *Session,
 	runID pulid.ID,
 ) (*agent.AgentRun, error) {
-	return b.RunRecords.GetByID(session.Context(ctx), agentports.GetAgentRunByIDRequest{
+	return b.RunRecords.GetByID(session.Context(ctx), agentruntimeports.GetAgentRunByIDRequest{
 		ID:         runID,
 		TenantInfo: &session.Tenant,
 	})
@@ -679,7 +680,7 @@ func (b *Bench) loadTranscript(
 ) (*agent.RunTranscript, error) {
 	runs, err := b.RunRecords.ListTranscriptsByIDs(
 		session.Context(ctx),
-		agentports.ListAgentRunsByIDsRequest{
+		agentruntimeports.ListAgentRunsByIDsRequest{
 			IDs:        []pulid.ID{runID},
 			TenantInfo: session.Tenant,
 		},
@@ -800,10 +801,13 @@ func (b *Bench) proposalRecord(
 		return record
 	}
 
-	preview, err := b.Previews.ForProposal(session.Context(ctx), &agentports.ProposalPreviewRequest{
-		Proposal: proposal,
-		Viewer:   &agentports.PreviewViewer{Actor: &session.Actor},
-	})
+	preview, err := b.Previews.ForProposal(
+		session.Context(ctx),
+		&agentruntimeports.ProposalPreviewRequest{
+			Proposal: proposal,
+			Viewer:   &agentruntimeports.PreviewViewer{Actor: &session.Actor},
+		},
+	)
 	if err != nil {
 		record.Error = joinErrors(record.Error, "preview: "+err.Error())
 		return record

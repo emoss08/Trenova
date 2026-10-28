@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -287,14 +287,22 @@ func TestOpenWorkerSafetyEvent_TakesTheHouseScaleForPoints(t *testing.T) {
 		paramFineAmount:         "250.00",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, events.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		events.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 	assert.Contains(t, preview.Summary, "major accident")
 
-	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	require.NoError(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, events.created)
 	assert.Equal(t, worker.DefaultSafetyPoints(worker.SafetyEventAccident,
@@ -323,7 +331,7 @@ func TestOpenWorkerSafetyEvent_TakesTheHouseScaleForPoints(t *testing.T) {
 			common.FieldDescription: "x",
 		},
 	} {
-		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+		require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 			agenttoolstest.ExecuteParams(raw)), name)
 	}
 }
@@ -338,16 +346,29 @@ func TestUpdateWorkerSafetyEvent_ChangesOnlyWhatIsNamed(t *testing.T) {
 		paramPoints:        float64(5),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, events.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.InDelta(t, 5, agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), paramPoints).After, 0)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		events.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.InDelta(
+		t,
+		5,
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			paramPoints,
+		).After,
+		0,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, events.updated)
 	assert.Equal(t, int32(5), events.updated.Points)
 	assert.Equal(t, events.event.Description, events.updated.Description)
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceWorkerSafetyEvent, target.Resource)
 }
@@ -357,7 +378,7 @@ func TestChangeWorkerSafetyEventStatus_ClosingNeedsAResolution(t *testing.T) {
 
 	events := newFakeSafety()
 	tool := newChangeWorkerSafetyEventStatusTool(events)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			paramSafetyEventID: events.event.ID.String(),
 			paramEventMove:     "Close",
@@ -368,11 +389,22 @@ func TestChangeWorkerSafetyEventStatus_ClosingNeedsAResolution(t *testing.T) {
 		paramEventMove:      "Close",
 		paramResolutionText: "Brakes adjusted and re-inspected",
 	})
-	preview := agenttoolstest.PreviewWithoutWrites(t, events.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, string(worker.SafetyEventStatusClosed),
-		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), common.FieldStatus).After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		events.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		string(worker.SafetyEventStatusClosed),
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			common.FieldStatus,
+		).After,
+	)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.Len(t, events.moved, 1)
 	assert.Equal(t, permission.OpClose, tool.Policy().Operation)
@@ -389,17 +421,27 @@ func TestDeleteWorkerSafetyEvent_RefusesAClosedEvent(t *testing.T) {
 
 	events := newFakeSafety()
 	tool := newDeleteWorkerSafetyEventTool(events)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramSafetyEventID: events.event.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramSafetyEventID: events.event.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, events.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, agent.PreviewOperationDelete, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		events.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationDelete,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 	assert.False(t, tool.Policy().Reversible)
 
 	events.event.Status = worker.SafetyEventStatusClosed
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 	assert.Empty(t, events.deleted)
 }
 
@@ -415,9 +457,13 @@ func TestGiveWorkerRecognition_TellsTheDriver(t *testing.T) {
 		common.FieldMessage:  "Thank you for every one of them.",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, events.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		events.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "told in Dash")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, events.given)
@@ -436,9 +482,13 @@ func TestSafetyViolationTools_KeepWhatIsNotNamed(t *testing.T) {
 		common.FieldDescription: "Inoperative marker lamp",
 		paramSeverityWeight:     float64(2),
 	})
-	preview := agenttoolstest.PreviewWithoutWrites(t, events.guard, func() (*agent.ToolPreview, error) {
-		return record.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		events.guard,
+		func() (*agent.ToolPreview, error) {
+			return record.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "severity weight 2")
 	require.NoError(t, record.Execute(t.Context(), params))
 	require.NotNil(t, events.cited)
@@ -454,7 +504,7 @@ func TestSafetyViolationTools_KeepWhatIsNotNamed(t *testing.T) {
 	assert.Equal(t, events.violation.Description, events.corrected.Description)
 	assert.Equal(t, events.violation.Code, events.corrected.Code)
 
-	require.Error(t, record.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, record.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			paramSafetyEventID:      events.event.ID.String(),
 			common.FieldDescription: "x",

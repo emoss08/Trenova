@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +37,7 @@ func readyPlan() *agentports.ReflectionPlan {
 		TenantInfo:   tenant(),
 		ReflectionID: pulid.ID("arfl_a"),
 		Subject:      agent.ReflectionSubjectThread,
-		Request:      &agentports.StructuredCompletionRequest{TenantInfo: tenant()},
+		Request:      &llmports.StructuredCompletionRequest{TenantInfo: tenant()},
 	}
 }
 
@@ -58,7 +59,7 @@ func TestThreadReflectionWorkflow_WaitsForTheConversationToGoQuiet(t *testing.T)
 		}).
 		Once()
 	env.OnActivity(a.ReflectionModelActivity, mock.Anything, mock.Anything).
-		Return(&agentports.StructuredCompletionResult{Text: `{"lessons":[],"notes":""}`}, nil).
+		Return(&llmports.StructuredCompletionResult{Text: `{"lessons":[],"notes":""}`}, nil).
 		Once()
 	env.OnActivity(a.FinishReflectionActivity, mock.Anything, mock.Anything).
 		Return(&agentports.ReflectionOutcome{Kept: 1}, nil).Once()

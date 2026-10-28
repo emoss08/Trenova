@@ -2,7 +2,7 @@ package agentquerytoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
@@ -19,8 +19,8 @@ type readSpec struct {
 	rationale       string
 }
 
-func readPolicy(name string, spec readSpec) agentports.ToolPolicy {
-	policy := agentports.ToolPolicy{
+func readPolicy(name string, spec readSpec) agenttoolports.ToolPolicy {
+	policy := agenttoolports.ToolPolicy{
 		Name:            name,
 		Kind:            agent.ToolKindQuery,
 		Resource:        spec.resource,

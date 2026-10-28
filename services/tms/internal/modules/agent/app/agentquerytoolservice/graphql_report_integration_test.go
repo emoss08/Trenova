@@ -8,19 +8,18 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
-
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/reportrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -118,10 +117,12 @@ func writeReportRows(
 			CronExpression: "0 7 * * 1",
 			Timezone:       "America/Chicago",
 			Formats:        []string{string(report.FormatCSV)},
-			Delivery:       &report.ScheduleDelivery{EmailRecipients: []string{"ops@" + label + ".test"}},
-			Enabled:        enabled,
-			RunAsID:        runAs,
-			NextRunAt:      now + 3600,
+			Delivery: &report.ScheduleDelivery{
+				EmailRecipients: []string{"ops@" + label + ".test"},
+			},
+			Enabled:   enabled,
+			RunAsID:   runAs,
+			NextRunAt: now + 3600,
 		}
 		require.NoError(t, reportdb.ReportSchedules.Create(writeCtx, admin, entity))
 
@@ -136,14 +137,14 @@ func writeReportRows(
 func readAt(
 	t *testing.T,
 	ctx context.Context,
-	tool agentports.AgentQueryTool,
+	tool agenttoolports.AgentQueryTool,
 	actor *permissionports.RequestActor,
 	args map[string]any,
 	ceiling permission.FieldSensitivity,
 ) map[string]any {
 	t.Helper()
 
-	data, err := tool.Query(ctx, &agentports.QueryToolParams{
+	data, err := tool.Query(ctx, &agenttoolports.QueryToolParams{
 		OrganizationID: actor.OrganizationID, BusinessUnitID: actor.BusinessUnitID,
 		Actor: actor, Timezone: "America/Chicago", Params: args,
 		DataAccessCeiling: ceiling,
@@ -197,7 +198,10 @@ func TestConvertedLists_ReportReadsUnderRowLevelSecurity(t *testing.T) {
 	})
 	require.NoError(t, err)
 	resolvers := agentread.ResolverParams{ReportingService: reportingService}
-	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
+	reader := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: engine, Resolvers: resolvers},
+	)
 	public := agentreadtest.NewReader(t, agentreadtest.Options{
 		Engine: &publicRole{}, Resolvers: resolvers,
 	})

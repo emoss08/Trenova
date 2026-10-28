@@ -16,6 +16,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -49,15 +54,15 @@ type deps struct {
 	Config           *config.Config
 	Logger           *zap.Logger
 	DB               *postgres.Connection
-	Assistant        agentports.AssistantService
-	Pages            agentports.PageAssistant
+	Assistant        assistantports.AssistantService
+	Pages            assistantports.PageAssistant
 	AgentDefinitions agentdefinitionports.AgentDefinitionService
 	Turns            *assistantturnservice.Service
 	Users            tenantports.UserRepository
 	Definitions      agentdefinitionports.AgentDefinitionRepository
-	Providers        agentports.AIProviderRepository
+	Providers        aiproviderports.AIProviderRepository
 	Proposals        agentports.AgentProposalRepository
-	Previews         agentports.ProposalPreviewService
+	Previews         agentruntimeports.ProposalPreviewService
 	Decisions        agentports.AgentDecisionService
 	Plans            agentports.AgentPlanService
 	Committer        agentports.ApprovalCommitter
@@ -65,9 +70,9 @@ type deps struct {
 	Contents         documentports.DocumentContentService
 	Recommender      agentports.AgentRecommender
 	Runs             agentports.AgentRunService
-	RunRecords       agentports.AgentRunRepository
-	PriceReference   agentports.ModelPriceReference `optional:"true"`
-	ActionTools      agentports.AgentToolRegistry
+	RunRecords       agentruntimeports.AgentRunRepository
+	PriceReference   aiproviderports.ModelPriceReference `optional:"true"`
+	ActionTools      agenttoolports.AgentToolRegistry
 	Shipments        shipmentports.ShipmentService
 }
 
@@ -148,14 +153,14 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 
 			return isolated
 		}),
-		fx.Decorate(func(inner agentports.CompletionService) agentports.CompletionService {
+		fx.Decorate(func(inner llmports.CompletionService) llmports.CompletionService {
 			bench.recorder = NewRecorder(inner)
 			return bench.recorder
 		}),
 		fx.Decorate(func(agentports.AgentReflectionScheduler) agentports.AgentReflectionScheduler {
 			return unlearned{}
 		}),
-		fx.Decorate(func(agentports.ChapterScheduler) agentports.ChapterScheduler {
+		fx.Decorate(func(assistantports.ChapterScheduler) assistantports.ChapterScheduler {
 			return unchaptered{}
 		}),
 		fx.Decorate(func(inner agentports.AgentTrustService) agentports.AgentTrustService {
@@ -173,7 +178,7 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 			bench.watcher = NewTurnWatcher(inner)
 			return bench.watcher
 		}),
-		fx.Provide(func() agentports.ToolDisclosureObserver { return bench.disclosures }),
+		fx.Provide(func() agenttoolports.ToolDisclosureObserver { return bench.disclosures }),
 		benchAgentScope(opts.WithoutBenchAgents),
 		fx.Invoke(func(d deps) {
 			bench.deps = d

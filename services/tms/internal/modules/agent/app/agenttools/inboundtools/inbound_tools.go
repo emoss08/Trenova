@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -82,7 +82,7 @@ type inboundMessageDesk interface {
 func loadInboundMessage(
 	ctx context.Context,
 	desk inboundMessageReader,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (*inboundmessage.InboundMessage, error) {
 	messageID, err := common.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
@@ -103,7 +103,7 @@ func loadInboundMessage(
 func inboundTierLimit(
 	ctx context.Context,
 	desk inboundMessageReader,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	message, err := loadInboundMessage(ctx, desk, params)
 	if err != nil || message.Mailbox == nil ||
@@ -115,14 +115,14 @@ func inboundTierLimit(
 	return agent.TierAutoExecute
 }
 
-func inboundCondition(desk inboundMessageReader) *agentports.TierCondition {
-	return &agentports.TierCondition{
+func inboundCondition(desk inboundMessageReader) *agenttoolports.TierCondition {
+	return &agenttoolports.TierCondition{
 		Description: "A call on an inbound message runs only as far as its mailbox allows: " +
 			"a classified message the mailbox handles without review may run on its own, " +
 			"and anything held, quarantined, settled or unreadable waits for a person.",
 		Limit: func(
 			ctx context.Context,
-			params agentports.ToolExecuteParams,
+			params agenttoolports.ToolExecuteParams,
 		) agent.AutonomyTier {
 			return inboundTierLimit(ctx, desk, params)
 		},
@@ -142,7 +142,7 @@ type LinkInboundMessageTool struct {
 	inbox inboundMessageDesk
 }
 
-func NewLinkInboundMessageTool(inbox inboundMessageDesk) agentports.AgentTool {
+func NewLinkInboundMessageTool(inbox inboundMessageDesk) agenttoolports.AgentTool {
 	return &LinkInboundMessageTool{inbox: inbox}
 }
 
@@ -185,8 +185,8 @@ func (t *LinkInboundMessageTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *LinkInboundMessageTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *LinkInboundMessageTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceInboundMessage,
@@ -204,12 +204,12 @@ func (t *LinkInboundMessageTool) Policy() agentports.ToolPolicy {
 	}
 }
 
-func (t *LinkInboundMessageTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *LinkInboundMessageTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
 }
 
 func (t *LinkInboundMessageTool) request(
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (inboundmessageservice.LinkRequest, error) {
 	messageID, err := common.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
@@ -240,7 +240,7 @@ func (t *LinkInboundMessageTool) request(
 
 func (t *LinkInboundMessageTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	req, err := t.request(params)
 	if err != nil {
@@ -255,7 +255,7 @@ func (t *LinkInboundMessageTool) Validate(
 
 func (t *LinkInboundMessageTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -275,7 +275,7 @@ type MarkInboundMessageTool struct {
 	inbox inboundMessageDesk
 }
 
-func NewMarkInboundMessageTool(inbox inboundMessageDesk) agentports.AgentTool {
+func NewMarkInboundMessageTool(inbox inboundMessageDesk) agenttoolports.AgentTool {
 	return &MarkInboundMessageTool{inbox: inbox}
 }
 
@@ -319,8 +319,8 @@ func (t *MarkInboundMessageTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *MarkInboundMessageTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *MarkInboundMessageTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceInboundMessage,
@@ -337,12 +337,12 @@ func (t *MarkInboundMessageTool) Policy() agentports.ToolPolicy {
 	}
 }
 
-func (t *MarkInboundMessageTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *MarkInboundMessageTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
 }
 
 func (t *MarkInboundMessageTool) arguments(
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (inboundmessage.Status, string, error) {
 	status := inboundmessage.Status(common.OptionalString(params.Params, "status"))
 	if status != inboundmessage.StatusActioned && status != inboundmessage.StatusIgnored {
@@ -366,7 +366,7 @@ func (t *MarkInboundMessageTool) arguments(
 
 func (t *MarkInboundMessageTool) settle(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (*inboundmessage.InboundMessage, inboundmessage.Status, string, error) {
 	status, note, err := t.arguments(params)
 	if err != nil {
@@ -385,7 +385,7 @@ func (t *MarkInboundMessageTool) settle(
 
 func (t *MarkInboundMessageTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	_, _, _, err := t.settle(ctx, params)
 
@@ -394,7 +394,7 @@ func (t *MarkInboundMessageTool) Validate(
 
 func (t *MarkInboundMessageTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -411,7 +411,7 @@ func (t *MarkInboundMessageTool) Execute(
 }
 
 func reviewRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	message *inboundmessage.InboundMessage,
 	status inboundmessage.Status,
 	note string,
@@ -456,7 +456,7 @@ type ReplyToInboundMessageTool struct {
 	deps  inboundReplier
 }
 
-func NewReplyToInboundMessageTool(p replyToInboundMessageParams) agentports.AgentTool {
+func NewReplyToInboundMessageTool(p replyToInboundMessageParams) agenttoolports.AgentTool {
 	return &ReplyToInboundMessageTool{
 		inbox: p.Inbox,
 		deps: inboundReplier{
@@ -517,8 +517,8 @@ func (t *ReplyToInboundMessageTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *ReplyToInboundMessageTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *ReplyToInboundMessageTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceCustomerCommunication,
@@ -535,7 +535,9 @@ func (t *ReplyToInboundMessageTool) Policy() agentports.ToolPolicy {
 	}
 }
 
-func (t *ReplyToInboundMessageTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *ReplyToInboundMessageTool) Target(
+	params map[string]any,
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
 }
 
@@ -548,7 +550,7 @@ type inboundReply struct {
 
 func (t *ReplyToInboundMessageTool) prepare(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (*inboundReply, error) {
 	profileID, err := common.OptionalID(params.Params, "profileId")
 	if err != nil {
@@ -602,7 +604,7 @@ func replyable(message *inboundmessage.InboundMessage) error {
 
 func (t *ReplyToInboundMessageTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.prepare(ctx, params)
 
@@ -611,7 +613,7 @@ func (t *ReplyToInboundMessageTool) Validate(
 
 func (t *ReplyToInboundMessageTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	composed, err := t.compose(ctx, &params)
 	if err != nil {

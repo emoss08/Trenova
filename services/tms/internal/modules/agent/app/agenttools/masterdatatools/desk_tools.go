@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -67,7 +67,7 @@ type EscalateDetentionTool struct {
 	detention detentionEscalator
 }
 
-func NewEscalateDetentionTool(escalator detentionEscalator) agentports.AgentTool {
+func NewEscalateDetentionTool(escalator detentionEscalator) agenttoolports.AgentTool {
 	return &EscalateDetentionTool{detention: escalator}
 }
 
@@ -105,8 +105,8 @@ func (t *EscalateDetentionTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *EscalateDetentionTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *EscalateDetentionTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDetention,
@@ -123,7 +123,7 @@ func (t *EscalateDetentionTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *EscalateDetentionTool) arguments(
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return "", "", err
@@ -143,7 +143,7 @@ func (t *EscalateDetentionTool) arguments(
 
 func (t *EscalateDetentionTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	occurrenceID, _, err := t.arguments(params)
 	if err != nil {
@@ -161,7 +161,7 @@ func (t *EscalateDetentionTool) Validate(
 func (t *EscalateDetentionTool) occurrence(
 	ctx context.Context,
 	occurrenceID pulid.ID,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (*detention.DetentionOccurrence, error) {
 	detail, err := t.detention.GetOccurrenceDetail(
 		ctx,
@@ -179,7 +179,7 @@ func (t *EscalateDetentionTool) occurrence(
 
 func (t *EscalateDetentionTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	occurrenceID, reason, err := t.arguments(params)
 	if err != nil {
@@ -196,7 +196,7 @@ func (t *EscalateDetentionTool) Execute(
 	return err
 }
 
-func (t *EscalateDetentionTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *EscalateDetentionTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, "occurrenceId", permission.ResourceDetention)
 }
 
@@ -219,7 +219,7 @@ type ApproveDetentionTool struct {
 	detention detentionApprover
 }
 
-func NewApproveDetentionTool(approver detentionApprover) agentports.AgentTool {
+func NewApproveDetentionTool(approver detentionApprover) agenttoolports.AgentTool {
 	return &ApproveDetentionTool{detention: approver}
 }
 
@@ -265,8 +265,8 @@ func (t *ApproveDetentionTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *ApproveDetentionTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *ApproveDetentionTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDetention,
@@ -283,7 +283,7 @@ func (t *ApproveDetentionTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *ApproveDetentionTool) arguments(
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return "", "", err
@@ -304,7 +304,7 @@ func (t *ApproveDetentionTool) arguments(
 func (t *ApproveDetentionTool) pending(
 	ctx context.Context,
 	occurrenceID pulid.ID,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (*detentionservice.OccurrenceDetail, error) {
 	detail, err := t.detention.GetOccurrenceDetail(
 		ctx,
@@ -329,7 +329,7 @@ func (t *ApproveDetentionTool) pending(
 
 func (t *ApproveDetentionTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	occurrenceID, _, err := t.arguments(params)
 	if err != nil {
@@ -346,7 +346,7 @@ func (t *ApproveDetentionTool) Validate(
 // as its note.
 func (t *ApproveDetentionTool) request(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (detentionservice.ApproveParams, *detentionservice.OccurrenceDetail, error) {
 	occurrenceID, evidence, err := t.arguments(params)
 	if err != nil {
@@ -368,7 +368,7 @@ func (t *ApproveDetentionTool) request(
 
 func (t *ApproveDetentionTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if _, _, err := t.arguments(params); err != nil {
 		return err
@@ -387,7 +387,7 @@ func (t *ApproveDetentionTool) Execute(
 	return err
 }
 
-func (t *ApproveDetentionTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *ApproveDetentionTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, "occurrenceId", permission.ResourceDetention)
 }
 
@@ -403,7 +403,7 @@ type RequestCredentialRenewalTool struct {
 	credentials credentialActor
 }
 
-func NewRequestCredentialRenewalTool(credentials credentialActor) agentports.AgentTool {
+func NewRequestCredentialRenewalTool(credentials credentialActor) agenttoolports.AgentTool {
 	return &RequestCredentialRenewalTool{credentials: credentials}
 }
 
@@ -454,8 +454,8 @@ func (t *RequestCredentialRenewalTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *RequestCredentialRenewalTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *RequestCredentialRenewalTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceWorkerCredential,
@@ -472,7 +472,7 @@ func (t *RequestCredentialRenewalTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *RequestCredentialRenewalTool) arguments(
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (workercredentialservice.RenewalRequest, error) {
 	var out workercredentialservice.RenewalRequest
 	if err := common.GuardExecute(t, params); err != nil {
@@ -523,7 +523,7 @@ func (t *RequestCredentialRenewalTool) arguments(
 
 func (t *RequestCredentialRenewalTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.arguments(params)
 
@@ -532,7 +532,7 @@ func (t *RequestCredentialRenewalTool) Validate(
 
 func (t *RequestCredentialRenewalTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	request, err := t.arguments(params)
 	if err != nil {
@@ -544,7 +544,7 @@ func (t *RequestCredentialRenewalTool) Execute(
 
 func (t *RequestCredentialRenewalTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, common.ParamWorkerID, permission.ResourceWorker)
 }
 
@@ -560,7 +560,7 @@ type PlaceWorkerDispatchHoldTool struct {
 	workers workerHolder
 }
 
-func NewPlaceWorkerDispatchHoldTool(workers workerHolder) agentports.AgentTool {
+func NewPlaceWorkerDispatchHoldTool(workers workerHolder) agenttoolports.AgentTool {
 	return &PlaceWorkerDispatchHoldTool{workers: workers}
 }
 
@@ -600,8 +600,8 @@ func (t *PlaceWorkerDispatchHoldTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *PlaceWorkerDispatchHoldTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *PlaceWorkerDispatchHoldTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceWorkerDispatchHold,
@@ -618,7 +618,7 @@ func (t *PlaceWorkerDispatchHoldTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *PlaceWorkerDispatchHoldTool) arguments(
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (workerservice.DispatchHoldRequest, error) {
 	var out workerservice.DispatchHoldRequest
 	if err := common.GuardExecute(t, params); err != nil {
@@ -645,7 +645,7 @@ func (t *PlaceWorkerDispatchHoldTool) arguments(
 
 func (t *PlaceWorkerDispatchHoldTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	request, err := t.arguments(params)
 	if err != nil {
@@ -668,7 +668,7 @@ func (t *PlaceWorkerDispatchHoldTool) Validate(
 
 func (t *PlaceWorkerDispatchHoldTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	request, err := t.arguments(params)
 	if err != nil {
@@ -682,7 +682,7 @@ func (t *PlaceWorkerDispatchHoldTool) Execute(
 
 func (t *PlaceWorkerDispatchHoldTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, common.ParamWorkerID, permission.ResourceWorker)
 }
 
@@ -715,13 +715,13 @@ type AcknowledgeCarrierIntelEventTool struct{ carrierIntelEventTool }
 
 type ResolveCarrierIntelEventTool struct{ carrierIntelEventTool }
 
-func NewAcknowledgeCarrierIntelEventTool(intel carrierIntelActor) agentports.AgentTool {
+func NewAcknowledgeCarrierIntelEventTool(intel carrierIntelActor) agenttoolports.AgentTool {
 	return &AcknowledgeCarrierIntelEventTool{
 		carrierIntelEventTool{intel: intel},
 	}
 }
 
-func NewResolveCarrierIntelEventTool(intel carrierIntelActor) agentports.AgentTool {
+func NewResolveCarrierIntelEventTool(intel carrierIntelActor) agenttoolports.AgentTool {
 	return &ResolveCarrierIntelEventTool{
 		carrierIntelEventTool{intel: intel, resolves: true},
 	}
@@ -757,13 +757,13 @@ func (t *ResolveCarrierIntelEventTool) SearchTerms() []string {
 	return []string{"carrier finding", "insurance lapse", "finding resolved"}
 }
 
-func (t *carrierIntelEventTool) Policy() agentports.ToolPolicy {
+func (t *carrierIntelEventTool) Policy() agenttoolports.ToolPolicy {
 	rationale := "Acknowledges a carrier finding inside Trenova."
 	if t.resolves {
 		rationale = "Closes a carrier finding inside Trenova."
 	}
 
-	return agentports.ToolPolicy{
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceCarrierIntelligence,
@@ -833,7 +833,7 @@ func (t *carrierIntelEventTool) required() []string {
 }
 
 func (t *carrierIntelEventTool) arguments(
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (*carrierintelservice.ResolveEventRequest, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return nil, err
@@ -872,7 +872,7 @@ func (t *carrierIntelEventTool) arguments(
 
 func (t *carrierIntelEventTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	request, err := t.arguments(params)
 	if err != nil {
@@ -892,7 +892,7 @@ func (t *carrierIntelEventTool) Validate(
 
 func (t *carrierIntelEventTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	request, err := t.arguments(params)
 	if err != nil {
@@ -910,6 +910,6 @@ func (t *carrierIntelEventTool) Execute(
 	return err
 }
 
-func (t *carrierIntelEventTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *carrierIntelEventTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, "eventId", permission.ResourceCarrierIntelligence)
 }

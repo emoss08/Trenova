@@ -4,8 +4,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -30,7 +30,7 @@ type Params struct {
 	Storage       kernelports.Client
 	Workflows     kernelports.WorkflowStarter
 	Notifications *notificationservice.Service
-	Realtime      agentports.RealtimeService `optional:"true"`
+	Realtime      realtimeports.RealtimeService `optional:"true"`
 	Audit         auditports.AuditService
 	Metrics       *metrics.Registry `optional:"true"`
 	Config        *config.Config

@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/rateimport"
-
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -40,12 +41,12 @@ type RemittanceParams struct {
 	Factors     factoringcompanyports.FactoringCompanyRepository
 	Documents   documentports.InvoiceDocumentService
 	Content     documentports.DocumentContentService  `optional:"true"`
-	Completion  agentports.CompletionService          `optional:"true"`
+	Completion  llmports.CompletionService            `optional:"true"`
 	Starter     factoringports.RemittanceStageStarter `optional:"true"`
 	Events      agentports.AgentEventPublisher        `optional:"true"`
 	Audit       auditports.AuditService
-	Realtime    agentports.RealtimeService `optional:"true"`
-	SheetLimits rateimport.Limits          `optional:"true"`
+	Realtime    realtimeports.RealtimeService `optional:"true"`
+	SheetLimits rateimport.Limits             `optional:"true"`
 	Logger      *zap.Logger
 }
 
@@ -57,7 +58,7 @@ type RemittanceService struct {
 	factors     factoringcompanyports.FactoringCompanyRepository
 	documents   documentports.InvoiceDocumentService
 	content     documentports.DocumentContentService
-	completion  agentports.CompletionService
+	completion  llmports.CompletionService
 	starter     factoringports.RemittanceStageStarter
 	events      agentports.AgentEventPublisher
 	rec         recorder

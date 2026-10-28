@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -59,15 +61,15 @@ func countedRuntime(
 func TestRun_CountsEveryToolCallByToolAndVerdict(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		callsTurn(
-			agentports.ToolCall{ID: "invented", Name: "delete_everything"},
-			agentports.ToolCall{
+			llmports.ToolCall{ID: "invented", Name: "delete_everything"},
+			llmports.ToolCall{
 				ID:        "ran",
 				Name:      "shipment_get",
 				Arguments: map[string]any{"id": "shp_1"},
 			},
-			agentports.ToolCall{
+			llmports.ToolCall{
 				ID:             "cut_off",
 				Name:           "shipment_get",
 				Arguments:      map[string]any{},
@@ -77,10 +79,10 @@ func TestRun_CountsEveryToolCallByToolAndVerdict(t *testing.T) {
 		textTurn("Done."),
 	}}
 	rt, registry := countedRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
+		Tools: []agenttoolports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
 	})
 
-	_, err := rt.Run(t.Context(), &agentports.RunRequest{
+	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Look it up.",
@@ -106,14 +108,14 @@ func (*replayingEffects) Replaying() bool { return true }
 func TestDrive_DoesNotCountCallsWhileReplaying(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("shipment_get", map[string]any{"id": "shp_1"}),
 		textTurn("Done."),
 	}}
 	rt, registry := countedRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
+		Tools: []agenttoolports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
 	})
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Look it up.",
@@ -134,7 +136,7 @@ func TestRestoreTurn_KeepsTheProviderKindItsOutcomesAreLabelledWith(t *testing.T
 	t.Parallel()
 
 	rt, _ := countedRuntime(&scriptedCompletion{}, &stubQueryRegistry{})
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Look it up.",

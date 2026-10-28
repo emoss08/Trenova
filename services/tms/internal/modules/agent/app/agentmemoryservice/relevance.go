@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsearch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -57,7 +57,7 @@ type queryWord struct {
 // words, and the one before it only when the message is too short to say
 // what it is about. With neither a vector nor a word to go on, nothing is
 // judged and every candidate bears.
-func Relevance(focus, text string, ranked agentports.RankedMemories) agent.MemoryRelevance {
+func Relevance(focus, text string, ranked agentmemoryports.RankedMemories) agent.MemoryRelevance {
 	words := turnWords(focus, text)
 	if !ranked.Semantic && len(words) == 0 {
 		return agent.MemoryRelevance{}

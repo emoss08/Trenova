@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -37,7 +38,7 @@ func loadAgentRun(ctx context.Context, runID pulid.ID) (*agent.AgentRun, error) 
 	return run, nil
 }
 
-func pendingDecisionHold(hold *agentports.ProposalHold) *gqlmodel.PendingDecisionHold {
+func pendingDecisionHold(hold *assistantports.ProposalHold) *gqlmodel.PendingDecisionHold {
 	if hold == nil {
 		return nil
 	}

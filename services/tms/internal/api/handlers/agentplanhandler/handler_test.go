@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,12 +47,12 @@ func (p *recordingPlans) GetByID(
 }
 
 type planPreviews struct {
-	agentports.ProposalPreviewService
+	agentruntimeports.ProposalPreviewService
 }
 
 func (planPreviews) ForPlan(
 	_ context.Context,
-	req *agentports.PlanPreviewRequest,
+	req *agentruntimeports.PlanPreviewRequest,
 ) (*agent.PlanPreview, error) {
 	return &agent.PlanPreview{PlanID: req.Plan.ID, Digest: strings.Repeat("c", 64)}, nil
 }

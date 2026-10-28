@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/collection"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -64,8 +64,8 @@ type Params struct {
 	Repo          collectionports.Repository
 	Customers     customerports.CustomerRepository
 	Users         tenantports.UserRepository
-	Notifications *notificationservice.Service `optional:"true"`
-	Realtime      agentports.RealtimeService   `optional:"true"`
+	Notifications *notificationservice.Service  `optional:"true"`
+	Realtime      realtimeports.RealtimeService `optional:"true"`
 	Logger        *zap.Logger
 }
 
@@ -75,7 +75,7 @@ type Service struct {
 	customers customerports.CustomerRepository
 	users     members
 	notifier  notifier
-	realtime  agentports.RealtimeService
+	realtime  realtimeports.RealtimeService
 	now       func() int64
 	l         *zap.Logger
 }

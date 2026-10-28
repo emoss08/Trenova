@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
@@ -104,11 +104,11 @@ func Classify(err error) error {
 			})
 	}
 
-	if errors.Is(err, agentports.ErrNoProviderConfigured) {
+	if errors.Is(err, llmports.ErrNoProviderConfigured) {
 		return fail(ErrTypeNoProviderConfigured, true, 0)
 	}
 
-	if errors.Is(err, agentports.ErrProvidersResting) {
+	if errors.Is(err, llmports.ErrProvidersResting) {
 		return fail(ErrTypeProvidersResting, false, restingBackoff)
 	}
 
@@ -123,7 +123,7 @@ func Classify(err error) error {
 		return fail(ErrTypeModelRejected, true, 0)
 	}
 
-	var failure agentports.ProviderFailure
+	var failure llmports.ProviderFailure
 	if errors.As(err, &failure) && !retryableStatus(failure.ProviderStatus()) {
 		return fail(ErrTypeModelRejected, true, 0)
 	}
@@ -154,7 +154,7 @@ func retryableStatus(status int) bool {
 // providerBackoff is how long the provider asked to be left alone, capped.
 // Zero leaves the wait to the retry policy's own backoff.
 func providerBackoff(err error) time.Duration {
-	var backoff agentports.ProviderBackoff
+	var backoff llmports.ProviderBackoff
 	if !errors.As(err, &backoff) {
 		return 0
 	}

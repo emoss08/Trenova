@@ -11,8 +11,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -33,7 +33,10 @@ func (c *embedCapture) snapshot() (string, string, map[string]any) {
 	return c.path, c.auth, c.body
 }
 
-func embedServer(t *testing.T, reply func(body map[string]any) any) (*httptest.Server, *embedCapture) {
+func embedServer(
+	t *testing.T,
+	reply func(body map[string]any) any,
+) (*httptest.Server, *embedCapture) {
 	t.Helper()
 
 	capture := &embedCapture{}
@@ -175,7 +178,10 @@ func TestOpenAIChatEmbed_SendsVoyageInputTypeAndOutputDimension(t *testing.T) {
 	})
 
 	provider := embeddingProvider(
-		aiprovider.KindOpenAIChat, server.URL+"/v1", 8, aiprovider.EmbeddingInputStyleVoyageInputType,
+		aiprovider.KindOpenAIChat,
+		server.URL+"/v1",
+		8,
+		aiprovider.EmbeddingInputStyleVoyageInputType,
 	)
 	adapter := NewOpenAIChatAdapter().(Embedder)
 
@@ -186,7 +192,12 @@ func TestOpenAIChatEmbed_SendsVoyageInputTypeAndOutputDimension(t *testing.T) {
 	require.NoError(t, err)
 
 	path, _, body := capture.snapshot()
-	assert.Equal(t, "/v1/embeddings", path, "the OpenAI-compatible base already carries its version")
+	assert.Equal(
+		t,
+		"/v1/embeddings",
+		path,
+		"the OpenAI-compatible base already carries its version",
+	)
 	assert.Equal(t, "document", body["input_type"])
 	assert.EqualValues(t, 8, body["output_dimension"])
 	assert.NotContains(t, body, "dimensions", "Voyage names the size output_dimension")
@@ -334,7 +345,7 @@ func TestRegistry_HasNoEmbedderForAnthropic(t *testing.T) {
 
 	_, err := registry.Embedder(aiprovider.KindAnthropicMessages)
 	require.Error(t, err)
-	assert.ErrorIs(t, err, agentports.ErrNoProviderConfigured)
+	assert.ErrorIs(t, err, llmports.ErrNoProviderConfigured)
 
 	for _, kind := range []aiprovider.Kind{
 		aiprovider.KindOpenAIResponses,

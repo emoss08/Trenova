@@ -9,7 +9,9 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,8 +30,8 @@ type withdrawingCompletion struct {
 
 func (c *withdrawingCompletion) CompleteChat(
 	ctx context.Context,
-	req *agentports.ChatCompletionRequest,
-) (*agentports.ChatCompletionResult, error) {
+	req *llmports.ChatCompletionRequest,
+) (*llmports.ChatCompletionResult, error) {
 	if c.CallCount != c.withdrawAt {
 		return c.scriptedCompletion.CompleteChat(ctx, req)
 	}
@@ -50,9 +52,9 @@ func (c *withdrawingCompletion) CompleteChat(
 
 func (c *withdrawingCompletion) StreamChat(
 	ctx context.Context,
-	req *agentports.ChatCompletionRequest,
-	_ agentports.ChatStreamSink,
-) (*agentports.ChatCompletionResult, error) {
+	req *llmports.ChatCompletionRequest,
+	_ llmports.ChatStreamSink,
+) (*llmports.ChatCompletionResult, error) {
 	return c.CompleteChat(ctx, req)
 }
 
@@ -64,7 +66,7 @@ func proposingRuntime(completion *scriptedCompletion) *Service {
 	}
 
 	return newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
-		Tools: []agentports.AgentTool{tool},
+		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
 }
 
@@ -75,8 +77,8 @@ func withdrawingRuntime(completion *withdrawingCompletion) *Service {
 	return rt
 }
 
-func proposingRequest() *agentports.RunRequest {
-	return &agentports.RunRequest{
+func proposingRequest() *agentruntimeports.RunRequest {
+	return &agentruntimeports.RunRequest{
 		Definition: testDefinition("shipment_create"),
 		Actor:      testActor(),
 		Input:      "enter the acme load",
@@ -95,7 +97,7 @@ func TestWithdrawProposal_TakesBackTheProposalALaterOneReplaced(t *testing.T) {
 	t.Parallel()
 
 	completion := &withdrawingCompletion{
-		scriptedCompletion: &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		scriptedCompletion: &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 			toolTurn("shipment_create", map[string]any{
 				"customerId": "cus_1", "notes": "with a tractor type",
 			}),
@@ -144,13 +146,13 @@ func TestWithdrawProposal_RefusesWhatThisTurnDidNotFile(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+			completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 				toolTurn("shipment_create", map[string]any{"customerId": "cus_1"}),
 				toolTurn(withdrawProposalName, map[string]any{"proposalId": tc.id}),
 				textTurn("Done."),
 			}}
 			req := proposingRequest()
-			req.Proposals = []agentports.ProposalOutcome{earlier}
+			req.Proposals = []agentruntimeports.ProposalOutcome{earlier}
 
 			result, err := proposingRuntime(completion).Run(t.Context(), req)
 			require.NoError(t, err)
@@ -167,7 +169,7 @@ func TestWithdrawProposal_RefusesWhatThisTurnDidNotFile(t *testing.T) {
 func TestWithdrawProposal_IsRefusedUntilTheTurnHasFiledOne(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn(withdrawProposalName, map[string]any{"proposalId": pulid.MustNew("ap_").String()}),
 		textTurn("Nothing to take back."),
 	}}
@@ -184,14 +186,14 @@ func TestWithdrawProposal_IsRefusedUntilTheTurnHasFiledOne(t *testing.T) {
 func TestWithdrawProposal_IsNotDeclaredWhereNothingCanBeProposed(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		textTurn("Nothing to do."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
+		Tools: []agenttoolports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
 	}, &stubActionRegistry{}, nil)
 
-	_, err := rt.Run(t.Context(), &agentports.RunRequest{
+	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "where is S-1",
@@ -204,7 +206,7 @@ func TestTurn_SendsTheSameToolsOnEveryModelCall(t *testing.T) {
 	t.Parallel()
 
 	completion := &withdrawingCompletion{
-		scriptedCompletion: &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		scriptedCompletion: &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 			toolTurn("shipment_create", map[string]any{"customerId": "cus_1", "notes": "a"}),
 			toolTurn("shipment_create", map[string]any{"customerId": "cus_1"}),
 			nil,
@@ -219,7 +221,7 @@ func TestTurn_SendsTheSameToolsOnEveryModelCall(t *testing.T) {
 	assertSameToolsEveryCall(t, completion.Requests)
 }
 
-func assertSameToolsEveryCall(t *testing.T, requests []*agentports.ChatCompletionRequest) {
+func assertSameToolsEveryCall(t *testing.T, requests []*llmports.ChatCompletionRequest) {
 	t.Helper()
 
 	require.NotEmpty(t, requests)
@@ -235,12 +237,12 @@ func assertSameToolsEveryCall(t *testing.T, requests []*agentports.ChatCompletio
 func TestWithdrawProposal_IsNeverOfferedToADelegate(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("shipment_create", map[string]any{"customerId": "cus_1"}),
 		textTurn("Proposed."),
 	}}
 	req := proposingRequest()
-	req.Delegation = &agentports.Delegation{CallID: "call_parent", StepScope: "d1"}
+	req.Delegation = &agentruntimeports.Delegation{CallID: "call_parent", StepScope: "d1"}
 
 	_, err := proposingRuntime(completion).Run(t.Context(), req)
 	require.NoError(t, err)
@@ -255,7 +257,7 @@ func TestWithdrawProposal_AWithdrawnProposalIsNoDuplicateOfItsReplacement(t *tes
 
 	same := map[string]any{"customerId": "cus_1"}
 	completion := &withdrawingCompletion{
-		scriptedCompletion: &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		scriptedCompletion: &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 			toolTurn("shipment_create", same),
 			nil,
 			toolTurn("shipment_create", same),

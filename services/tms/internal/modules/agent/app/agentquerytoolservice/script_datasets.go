@@ -19,7 +19,7 @@ import (
 	"github.com/emoss08/keel/analytics/table"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/scriptports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -119,7 +119,7 @@ type resolvedDatasets struct {
 
 func (d *scriptDatasets) resolve(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	requests []datasetRequest,
 ) (*resolvedDatasets, error) {
 	resolved := &resolvedDatasets{
@@ -204,7 +204,7 @@ func (d *scriptDatasets) authorizeReports(
 // by their labels, as report_run showed them. Totals are left out.
 func (d *scriptDatasets) reportDataset(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	person pulid.ID,
 	request *datasetRequest,
 ) (*scriptports.Dataset, int, error) {
@@ -360,7 +360,7 @@ func rawValue(cell string, column *table.Column, location *time.Location) any {
 // row, or a text file as its text.
 func (d *scriptDatasets) fileDataset(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 	person pulid.ID,
 	request *datasetRequest,
 ) (*scriptports.Dataset, int, error) {

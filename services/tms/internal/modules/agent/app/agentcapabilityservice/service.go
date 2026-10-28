@@ -23,6 +23,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -39,23 +41,23 @@ type Params struct {
 	Logger      *zap.Logger
 	Definitions agentdefinitionports.AgentDefinitionRepository
 	Agents      agentdefinitionports.AgentDefinitionService
-	Tools       agentports.AgentToolRegistry
-	QueryTools  agentports.AgentQueryToolRegistry
+	Tools       agenttoolports.AgentToolRegistry
+	QueryTools  agenttoolports.AgentQueryToolRegistry
 	Permissions permissionports.PermissionEngine
-	Budgets     agentports.AgentBudgetService   `optional:"true"`
-	Providers   agentports.AIProviderRepository `optional:"true"`
-	Users       tenantports.UserRepository      `optional:"true"`
+	Budgets     agentports.AgentBudgetService        `optional:"true"`
+	Providers   aiproviderports.AIProviderRepository `optional:"true"`
+	Users       tenantports.UserRepository           `optional:"true"`
 }
 
 type Service struct {
 	l           *zap.Logger
 	definitions agentdefinitionports.AgentDefinitionRepository
 	agents      agentdefinitionports.AgentDefinitionService
-	tools       agentports.AgentToolRegistry
-	queryTools  agentports.AgentQueryToolRegistry
+	tools       agenttoolports.AgentToolRegistry
+	queryTools  agenttoolports.AgentQueryToolRegistry
 	permissions permissionports.PermissionEngine
 	budgets     agentports.AgentBudgetService
-	providers   agentports.AIProviderRepository
+	providers   aiproviderports.AIProviderRepository
 	users       tenantports.UserRepository
 }
 
@@ -282,7 +284,7 @@ func (s *Service) companionWrites(definition *agentdefinition.Definition) []stri
 		if !ok {
 			continue
 		}
-		bringer, brings := tool.(agentports.CompanionTool)
+		bringer, brings := tool.(agenttoolports.CompanionTool)
 		if !brings {
 			continue
 		}
@@ -341,7 +343,7 @@ func (s *Service) row(
 // Allowed is not among them when it is not.
 func WriteModes(
 	definition *agentdefinition.Definition,
-	policy agentports.ToolPolicy,
+	policy agenttoolports.ToolPolicy,
 ) ([]agentports.AgentCapabilityMode, string) {
 	all := []agentports.AgentCapabilityMode{
 		agentports.AgentCapabilityAllowed,
@@ -386,7 +388,7 @@ func (s *Service) prerequisiteReads(definition *agentdefinition.Definition) map[
 		if !ok {
 			continue
 		}
-		dependent, depends := tool.(agentports.PrerequisiteTool)
+		dependent, depends := tool.(agenttoolports.PrerequisiteTool)
 		if !depends {
 			continue
 		}
@@ -524,7 +526,7 @@ func (s *Service) modelName(
 	if s.providers == nil {
 		return ""
 	}
-	providers, err := s.providers.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
+	providers, err := s.providers.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
 		Task:       aiprovider.TaskAssistantChat,
 		TenantInfo: tenant,
 	})
@@ -679,7 +681,7 @@ func (s *Service) limits(
 // Label is a tool's name as a person reads it, in reading order:
 // invoice_post is "Post invoice".
 func Label(name string) string {
-	words := strings.FieldsFunc(agentports.ReadingOrder(name), func(r rune) bool {
+	words := strings.FieldsFunc(agenttoolports.ReadingOrder(name), func(r rune) bool {
 		return r == '_' || r == '-' || r == '.'
 	})
 	if len(words) == 0 {

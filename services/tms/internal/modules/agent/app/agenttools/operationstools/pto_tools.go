@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 )
@@ -17,7 +17,7 @@ type ApproveWorkerPTOTool struct {
 	pto common.PtoApprover
 }
 
-func NewApproveWorkerPTOTool(pto common.PtoApprover) agentports.AgentTool {
+func NewApproveWorkerPTOTool(pto common.PtoApprover) agenttoolports.AgentTool {
 	return &ApproveWorkerPTOTool{pto: pto}
 }
 
@@ -59,8 +59,8 @@ func (t *ApproveWorkerPTOTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *ApproveWorkerPTOTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *ApproveWorkerPTOTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceWorkerPTO,
@@ -79,7 +79,7 @@ func (t *ApproveWorkerPTOTool) Policy() agentports.ToolPolicy {
 
 func (t *ApproveWorkerPTOTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -99,7 +99,7 @@ type RejectWorkerPTOTool struct {
 	pto ptoRejecter
 }
 
-func NewRejectWorkerPTOTool(pto ptoRejecter) agentports.AgentTool {
+func NewRejectWorkerPTOTool(pto ptoRejecter) agenttoolports.AgentTool {
 	return &RejectWorkerPTOTool{pto: pto}
 }
 
@@ -134,8 +134,8 @@ func (t *RejectWorkerPTOTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *RejectWorkerPTOTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *RejectWorkerPTOTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceWorkerPTO,
@@ -152,7 +152,7 @@ func (t *RejectWorkerPTOTool) Policy() agentports.ToolPolicy {
 
 func (t *RejectWorkerPTOTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -165,7 +165,7 @@ func (t *RejectWorkerPTOTool) Execute(
 }
 
 func (t *RejectWorkerPTOTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*workerports.UpdatePTOStatusRequest, error) {
 	return ptoDecisionRequest(t, params)
 }
@@ -174,7 +174,7 @@ type CancelWorkerPTOTool struct {
 	pto ptoRejecter
 }
 
-func NewCancelWorkerPTOTool(pto ptoRejecter) agentports.AgentTool {
+func NewCancelWorkerPTOTool(pto ptoRejecter) agenttoolports.AgentTool {
 	return &CancelWorkerPTOTool{pto: pto}
 }
 
@@ -208,8 +208,8 @@ func (t *CancelWorkerPTOTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *CancelWorkerPTOTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *CancelWorkerPTOTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceWorkerPTO,
@@ -227,7 +227,7 @@ func (t *CancelWorkerPTOTool) Policy() agentports.ToolPolicy {
 
 func (t *CancelWorkerPTOTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -240,7 +240,7 @@ func (t *CancelWorkerPTOTool) Execute(
 }
 
 func (t *CancelWorkerPTOTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*workerports.UpdatePTOStatusRequest, error) {
 	return ptoDecisionRequest(t, params)
 }
@@ -249,8 +249,8 @@ func (t *CancelWorkerPTOTool) request(
 // service refuses an empty reason too; failing here names the parameter the
 // model left out, which is the correction it can act on.
 func ptoDecisionRequest(
-	tool agentports.AgentTool,
-	params *agentports.ToolExecuteParams,
+	tool agenttoolports.AgentTool,
+	params *agenttoolports.ToolExecuteParams,
 ) (*workerports.UpdatePTOStatusRequest, error) {
 	if err := common.GuardExecute(tool, *params); err != nil {
 		return nil, err
@@ -275,7 +275,7 @@ func ptoDecisionRequest(
 // to know a version. Leaving it out is the honest thing; inventing one would
 // defeat the concurrency check it exists to run.
 func ptoStatusRequest(
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (*workerports.UpdatePTOStatusRequest, error) {
 	id, err := common.RequirePulid(params.Params, paramPTOID)
 	if err != nil {
@@ -292,18 +292,18 @@ func ptoStatusRequest(
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *ApproveWorkerPTOTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *ApproveWorkerPTOTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramPTOID, permission.ResourceWorkerPTO)
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *RejectWorkerPTOTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *RejectWorkerPTOTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramPTOID, permission.ResourceWorkerPTO)
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *CancelWorkerPTOTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *CancelWorkerPTOTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramPTOID, permission.ResourceWorkerPTO)
 }

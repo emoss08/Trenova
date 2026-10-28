@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -177,7 +177,7 @@ func publishOutcome(arguments map[string]any) toolOutcome {
 
 	return toolOutcome{
 		publishes: true,
-		data: agentports.PublishedDocument{
+		data: agentruntimeports.PublishedDocument{
 			Title:      title,
 			Body:       body,
 			ArtifactID: revises,
@@ -191,7 +191,7 @@ func publishOutcome(arguments map[string]any) toolOutcome {
 
 // publishedSources reads the sources a document cites. A source without a
 // number or a label cannot be shown, and is a problem the model can fix.
-func publishedSources(raw any) ([]agentports.PublishedSource, []string) {
+func publishedSources(raw any) ([]agentruntimeports.PublishedSource, []string) {
 	entries, ok := raw.([]any)
 	if !ok || len(entries) == 0 {
 		return nil, nil
@@ -200,7 +200,7 @@ func publishedSources(raw any) ([]agentports.PublishedSource, []string) {
 		return nil, []string{fmt.Sprintf("at most %d sources", maxDocumentSources)}
 	}
 
-	sources := make([]agentports.PublishedSource, 0, len(entries))
+	sources := make([]agentruntimeports.PublishedSource, 0, len(entries))
 	seen := map[int]bool{}
 	for _, entry := range entries {
 		fields, isObject := entry.(map[string]any)
@@ -221,7 +221,7 @@ func publishedSources(raw any) ([]agentports.PublishedSource, []string) {
 			return nil, []string{fmt.Sprintf("source %d is listed twice", int(n))}
 		}
 		seen[int(n)] = true
-		source := agentports.PublishedSource{
+		source := agentruntimeports.PublishedSource{
 			N:      int(n),
 			Tool:   clipRunes(stringArg(fields, "tool"), maxSourceTextRunes),
 			Label:  label,
@@ -273,7 +273,7 @@ func clipRunes(text string, most int) string {
 }
 
 // publishedContent is what the model reads after its document was kept.
-func publishedContent(shown *agentports.ShownArtifact) string {
+func publishedContent(shown *agentruntimeports.ShownArtifact) string {
 	encoded := fmt.Sprintf(`{"artifactId":%q,"title":%q,"status":"published"}`,
 		shown.ID.String(), shown.Title)
 
@@ -290,7 +290,7 @@ func publishedContent(shown *agentports.ShownArtifact) string {
 // again one by one. A ranking is pointed to however short it is: the Desk
 // rewrote five ranked drivers as its own table and linked nothing, and the
 // dispatcher lost the findings and the driver links the table carries.
-func shownNote(shown *agentports.ShownArtifact) string {
+func shownNote(shown *agentruntimeports.ShownArtifact) string {
 	if shown.Written != "" {
 		return WrittenNote(shown)
 	}
@@ -371,7 +371,7 @@ func shownNote(shown *agentports.ShownArtifact) string {
 		artifactNoun(shown.Kind), shown.Title, artifactRefNote(shown))
 }
 
-func foldedNote(table *agentports.ShownArtifact) string {
+func foldedNote(table *agentruntimeports.ShownArtifact) string {
 	return fmt.Sprintf("\n\n[This record is now one row of %s titled %q beside the "+
 		"conversation, with the others of its kind read in this step; there is no record card "+
 		"of its own. Point to that table once, where you say what it holds.]",
@@ -382,7 +382,7 @@ func foldedNote(table *agentports.ShownArtifact) string {
 // that short is answered in the reply and not kept, unless the reply ranks or
 // compares its rows; a longer one is kept and pointed to, and its rows are
 // not repeated. One or the other, never both.
-const InlineRows = agentports.InlineTableRows
+const InlineRows = agentruntimeports.InlineTableRows
 
 func artifactNoun(kind string) string {
 	switch kind {
@@ -412,7 +412,7 @@ func artifactNoun(kind string) string {
 const unpublishableRefusal = "There is nowhere to publish a document from here. Put the text " +
 	"in your reply instead."
 
-func WrittenNote(shown *agentports.ShownArtifact) string {
+func WrittenNote(shown *agentruntimeports.ShownArtifact) string {
 	return fmt.Sprintf("\n\n[The record this %s is shown beside the conversation as %q, read "+
 		"again just now. Point to it in the sentence that says what was done, and do not read "+
 		"it again to show it.%s]", shown.Written, shown.Title, artifactRefNote(shown))

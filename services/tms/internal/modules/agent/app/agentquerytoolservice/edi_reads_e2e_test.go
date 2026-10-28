@@ -8,7 +8,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -355,7 +356,7 @@ func ediReader(
 	t *testing.T,
 	fakes *ediFakes,
 	engine permissionports.PermissionEngine,
-) agentports.GraphQLReader {
+) graphqlreadports.GraphQLReader {
 	t.Helper()
 
 	logger := zap.NewNop()
@@ -384,7 +385,11 @@ func ediReader(
 	})
 }
 
-func ediTool(t *testing.T, name string, reader agentports.GraphQLReader) agentports.AgentQueryTool {
+func ediTool(
+	t *testing.T,
+	name string,
+	reader graphqlreadports.GraphQLReader,
+) agenttoolports.AgentQueryTool {
 	t.Helper()
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
@@ -407,7 +412,7 @@ func ediTool(t *testing.T, name string, reader agentports.GraphQLReader) agentpo
 	return nil
 }
 
-func ediCall(params map[string]any) (context.Context, *agentports.QueryToolParams) {
+func ediCall(params map[string]any) (context.Context, *agenttoolports.QueryToolParams) {
 	call := keyedCall(params)
 	call.DataAccessCeiling = permission.SensitivityInternal
 
@@ -704,7 +709,9 @@ func TestEDIReads_AReaderWhoCannotReadEDIIsRefused(t *testing.T) {
 	t.Parallel()
 
 	fakes := &ediFakes{}
-	engine := &mocks.DenyResourcesPermissionEngine{Denied: []string{permission.ResourceEDI.String()}}
+	engine := &mocks.DenyResourcesPermissionEngine{
+		Denied: []string{permission.ResourceEDI.String()},
+	}
 	reader := ediReader(t, fakes, engine)
 	for name, params := range map[string]map[string]any{
 		"edi_list_partners":  {},
@@ -713,7 +720,7 @@ func TestEDIReads_AReaderWhoCannotReadEDIIsRefused(t *testing.T) {
 	} {
 		ctx, call := ediCall(params)
 		_, err := ediTool(t, name, reader).Query(ctx, call)
-		var refused *agentports.ReadRefusedError
+		var refused *graphqlreadports.ReadRefusedError
 		require.ErrorAs(t, err, &refused, name)
 	}
 	assert.Nil(t, fakes.partners)

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,7 +26,7 @@ func TestForProposal_PreviewsInTheTenantsTimezone(t *testing.T) {
 	f := newFixture()
 	f.svc.zones = stubZones{zone: "America/Chicago"}
 
-	_, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	_, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: f.proposal(f.cancelParams()),
 		Viewer:   f.viewer(),
 	})
@@ -43,7 +43,7 @@ func TestForProposal_SaysWhenTheTimezoneCannotBeRead(t *testing.T) {
 	f := newFixture()
 	f.svc.zones = stubZones{err: errors.New("database is down")}
 
-	_, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+	_, err := f.svc.ForProposal(t.Context(), &agentruntimeports.ProposalPreviewRequest{
 		Proposal: f.proposal(f.cancelParams()),
 		Viewer:   f.viewer(),
 	})

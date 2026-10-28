@@ -9,7 +9,9 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/numberguard"
@@ -122,7 +124,7 @@ type schemaLabel struct {
 func (s *Service) reground(
 	t *Turn,
 	fx TurnEffects,
-	completion *agentports.ChatCompletionResult,
+	completion *llmports.ChatCompletionResult,
 	state *groundingState,
 ) bool {
 	if completion == nil {
@@ -138,29 +140,29 @@ func (s *Service) reground(
 		state.rewritten = true
 		reason := finding.retryReason()
 		fx.Emit(kernelports.StreamEvent{
-			Event: agentports.AssistantEventRetrying,
-			Data: agentports.AssistantRetryingEvent{
+			Event: assistantports.AssistantEventRetrying,
+			Data: assistantports.AssistantRetryingEvent{
 				Attempt: 1,
 				Reason:  reason,
-				Kind:    agentports.RetryKindRestart,
+				Kind:    llmports.RetryKindRestart,
 			},
 		})
-		fx.Emit(regroundedEvent(agentports.RegroundRewrite, finding, reason))
+		fx.Emit(regroundedEvent(assistantports.RegroundRewrite, finding, reason))
 		t.messages = append(t.messages,
-			agentports.Message{
-				Role:          agentports.RoleAssistant,
+			llmports.Message{
+				Role:          llmports.RoleAssistant,
 				Content:       completion.Text,
 				ReplyID:       completion.ProviderMessageID,
 				ReplyProvider: completion.ProviderID,
 			},
-			agentports.NoticeMessage(finding.correction()),
+			llmports.NoticeMessage(finding.correction()),
 		)
 
 		return true
 	}
 
 	note := finding.note()
-	fx.Emit(regroundedEvent(agentports.RegroundNote, finding, finding.noteReason()))
+	fx.Emit(regroundedEvent(assistantports.RegroundNote, finding, finding.noteReason()))
 	completion.Text += note
 	fx.Emit(deltaEvent(note))
 
@@ -275,8 +277,8 @@ func (t *Turn) readAnything() bool {
 		return true
 	}
 
-	return slices.ContainsFunc(t.messages, func(message agentports.Message) bool {
-		return message.Role == agentports.RoleTool
+	return slices.ContainsFunc(t.messages, func(message llmports.Message) bool {
+		return message.Role == llmports.RoleTool
 	})
 }
 
@@ -285,7 +287,7 @@ func (t *Turn) readAnything() bool {
 // itself. A figure from a scanned rate confirmation is not invented because
 // the guard never saw the page.
 func (t *Turn) readUnseenFiles() bool {
-	return slices.ContainsFunc(t.messages, func(message agentports.Message) bool {
+	return slices.ContainsFunc(t.messages, func(message llmports.Message) bool {
 		return len(message.Files) > 0
 	})
 }
@@ -372,13 +374,13 @@ func (f groundingFinding) note() string {
 }
 
 func regroundedEvent(
-	action agentports.RegroundAction,
+	action assistantports.RegroundAction,
 	finding groundingFinding,
 	reason string,
 ) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
-		Event: agentports.AssistantEventReplyRegrounded,
-		Data: agentports.AssistantReplyRegroundedEvent{
+		Event: assistantports.AssistantEventReplyRegrounded,
+		Data: assistantports.AssistantReplyRegroundedEvent{
 			Action:  action,
 			Figures: finding.figures,
 			Fields:  finding.fields,
@@ -521,7 +523,7 @@ func (t *Turn) groundingTexts() []string {
 	texts = append(texts, t.system)
 	for idx := range t.messages {
 		message := &t.messages[idx]
-		if message.Role == agentports.RoleAssistant || isGroundingCorrection(message.Content) {
+		if message.Role == llmports.RoleAssistant || isGroundingCorrection(message.Content) {
 			continue
 		}
 		texts = append(texts, message.Content)
@@ -535,7 +537,7 @@ func (t *Turn) groundingTexts() []string {
 	return texts
 }
 
-func filedTools(actions []agentports.PendingAction) []string {
+func filedTools(actions []agentruntimeports.PendingAction) []string {
 	tools := make([]string, 0, len(actions))
 	for idx := range actions {
 		if actions[idx].Withdrawn {
@@ -559,7 +561,7 @@ func (t *Turn) readResults() readResults {
 	reads := make(readResults, 0, 4)
 	for idx := range t.messages {
 		message := &t.messages[idx]
-		if message.Role != agentports.RoleTool || message.IsError || filed[message.ToolCallID] {
+		if message.Role != llmports.RoleTool || message.IsError || filed[message.ToolCallID] {
 			continue
 		}
 		reads = append(reads, strings.ToLower(message.Content))

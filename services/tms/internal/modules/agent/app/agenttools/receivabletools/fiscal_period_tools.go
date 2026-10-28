@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -167,7 +167,7 @@ func (m *fiscalPeriodMove) required() []string {
 }
 
 func (m *fiscalPeriodMove) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*fiscalperiodservice.TransitionRequest, error) {
 	id, err := common.RequirePulid(params.Params, paramFiscalPeriodID)
 	if err != nil {
@@ -245,7 +245,7 @@ func fiscalMoveVerb(transition fiscalperiodservice.Transition) string {
 func newFiscalPeriodTool(
 	periods FiscalPeriodKeeper,
 	move *fiscalPeriodMove,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return common.NewReceivableTool(common.LedgerMoneySpec(&common.ReceivableSpec{
 		Name:        move.name,
 		Recipe:      move.recipe,
@@ -255,7 +255,7 @@ func newFiscalPeriodTool(
 		Rationale:   move.rationale,
 		Properties:  move.properties(),
 		Required:    move.required(),
-		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
+		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return common.TargetOf(params, paramFiscalPeriodID, permission.ResourceFiscalPeriod)
 		},
 	}), common.ReceivablePlan[*fiscalperiodservice.TransitionRequest, *fiscalperiodservice.TransitionPlan]{
@@ -263,7 +263,7 @@ func newFiscalPeriodTool(
 		Plan: func(
 			ctx context.Context,
 			req *fiscalperiodservice.TransitionRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*fiscalperiodservice.TransitionPlan, error) {
 			return periods.PlanTransition(ctx, req, params.Actor.UserID)
 		},
@@ -275,7 +275,7 @@ func newFiscalPeriodTool(
 		Run: func(
 			ctx context.Context,
 			req *fiscalperiodservice.TransitionRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := periods.Transition(ctx, req, params.Actor.UserID)
 
@@ -284,22 +284,22 @@ func newFiscalPeriodTool(
 	})
 }
 
-func ProvideCloseFiscalPeriodTool(periods *fiscalperiodservice.Service) agentports.AgentTool {
+func ProvideCloseFiscalPeriodTool(periods *fiscalperiodservice.Service) agenttoolports.AgentTool {
 	return newFiscalPeriodTool(periods, closeFiscalPeriodMove())
 }
 
-func ProvideLockFiscalPeriodTool(periods *fiscalperiodservice.Service) agentports.AgentTool {
+func ProvideLockFiscalPeriodTool(periods *fiscalperiodservice.Service) agenttoolports.AgentTool {
 	return newFiscalPeriodTool(periods, lockFiscalPeriodMove())
 }
 
-func ProvideUnlockFiscalPeriodTool(periods *fiscalperiodservice.Service) agentports.AgentTool {
+func ProvideUnlockFiscalPeriodTool(periods *fiscalperiodservice.Service) agenttoolports.AgentTool {
 	return newFiscalPeriodTool(periods, unlockFiscalPeriodMove())
 }
 
-func ProvideReopenFiscalPeriodTool(periods *fiscalperiodservice.Service) agentports.AgentTool {
+func ProvideReopenFiscalPeriodTool(periods *fiscalperiodservice.Service) agenttoolports.AgentTool {
 	return newFiscalPeriodTool(periods, reopenFiscalPeriodMove())
 }
 
-func ProvideOpenFiscalPeriodTool(periods *fiscalperiodservice.Service) agentports.AgentTool {
+func ProvideOpenFiscalPeriodTool(periods *fiscalperiodservice.Service) agenttoolports.AgentTool {
 	return newFiscalPeriodTool(periods, openFiscalPeriodMove())
 }

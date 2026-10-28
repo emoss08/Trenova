@@ -157,8 +157,8 @@ import (
 	accountingsyncports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	journalentryports "github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	briefingports "github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	customerpaymentports "github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	factoringports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	invoiceadjustmentports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -285,8 +285,8 @@ type ResolverParams struct {
 	DashControlService           *dashcontrolservice.Service
 	DetentionPolicyService       *detentionpolicyservice.Service
 	DetentionService             *detentionservice.Service
-	DispatchAutoAssignService    agentports.DispatchAutoAssignService
-	DispatchConsoleService       agentports.DispatchConsoleService
+	DispatchAutoAssignService    dispatchconsoleports.DispatchAutoAssignService
+	DispatchConsoleService       dispatchconsoleports.DispatchConsoleService
 	DistanceCalculationService   shipmentports.DistanceCalculationService `optional:"true"`
 	DocumentTypeService          *documenttypeservice.Service
 	DriverPayService             *driverpayservice.Service

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -191,7 +191,7 @@ func verificationEmployerProperties() map[string]any {
 	}
 }
 
-func newRecordEmploymentVerificationTool(dqf VerificationKeeper) agentports.AgentTool {
+func newRecordEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.AgentTool {
 	properties := verificationEmployerProperties()
 	properties[common.ParamWorkerID] = common.WorkerProperty()
 	spec := withSchema(wfSpec(
@@ -212,7 +212,7 @@ func newRecordEmploymentVerificationTool(dqf VerificationKeeper) agentports.Agen
 		*worker.WorkerEmploymentVerification, *worker.WorkerEmploymentVerification,
 	]{
 		Request: func(
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*worker.WorkerEmploymentVerification, error) {
 			workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
 			if err != nil {
@@ -237,7 +237,7 @@ func newRecordEmploymentVerificationTool(dqf VerificationKeeper) agentports.Agen
 		Plan: func(
 			ctx context.Context,
 			entity *worker.WorkerEmploymentVerification,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*worker.WorkerEmploymentVerification, error) {
 			return dqf.PlanRecordVerification(ctx, entity, params.Actor.UserID)
 		},
@@ -261,7 +261,7 @@ func newRecordEmploymentVerificationTool(dqf VerificationKeeper) agentports.Agen
 		Run: func(
 			ctx context.Context,
 			entity *worker.WorkerEmploymentVerification,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := dqf.RecordVerification(ctx, entity, params.Actor.UserID)
 			if err != nil {
@@ -397,7 +397,7 @@ func applyVerificationResponse(
 	return nil
 }
 
-func newUpdateEmploymentVerificationTool(dqf VerificationKeeper) agentports.AgentTool {
+func newUpdateEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.AgentTool {
 	properties := verificationEmployerProperties()
 	properties[paramVerificationID] = verificationIDProperty()
 	properties[paramVerifyStatus] = agenttoolschema.Enum("Where the request stands.",
@@ -432,7 +432,7 @@ func newUpdateEmploymentVerificationTool(dqf VerificationKeeper) agentports.Agen
 		*workerdqfservice.UpdateVerificationRequest, *workerdqfservice.VerificationChange,
 	]{
 		Request: func(
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*workerdqfservice.UpdateVerificationRequest, error) {
 			id, err := common.RequirePulid(params.Params, paramVerificationID)
 			if err != nil {
@@ -451,7 +451,7 @@ func newUpdateEmploymentVerificationTool(dqf VerificationKeeper) agentports.Agen
 		Plan: func(
 			ctx context.Context,
 			req *workerdqfservice.UpdateVerificationRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*workerdqfservice.VerificationChange, error) {
 			return dqf.PlanUpdateVerification(ctx, req)
 		},
@@ -473,7 +473,7 @@ func newUpdateEmploymentVerificationTool(dqf VerificationKeeper) agentports.Agen
 		Run: func(
 			ctx context.Context,
 			req *workerdqfservice.UpdateVerificationRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := dqf.UpdateVerification(ctx, req)
 			if err != nil {
@@ -492,7 +492,7 @@ type verificationRequestLog struct {
 	userID pulid.ID
 }
 
-func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agentports.AgentTool {
+func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agenttoolports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"worker_record_employment_verification_request",
 		"Record that a previous employer was asked for the driver's safety performance "+
@@ -516,7 +516,7 @@ func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agentports.
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
 		*verificationRequestLog, *workerdqfservice.VerificationChange,
 	]{
-		Request: func(params *agentports.ToolExecuteParams) (*verificationRequestLog, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*verificationRequestLog, error) {
 			id, err := common.RequirePulid(params.Params, paramVerificationID)
 			if err != nil {
 				return nil, err
@@ -532,7 +532,7 @@ func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agentports.
 		Plan: func(
 			ctx context.Context,
 			log *verificationRequestLog,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*workerdqfservice.VerificationChange, error) {
 			if log.move == verificationRequested {
 				return dqf.PlanMarkRequested(ctx, log.tenant, log.id)
@@ -571,7 +571,7 @@ func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agentports.
 		Run: func(
 			ctx context.Context,
 			log *verificationRequestLog,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			var saved *worker.WorkerEmploymentVerification
 			var err error
@@ -591,7 +591,7 @@ func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agentports.
 	})
 }
 
-func newDeleteEmploymentVerificationTool(dqf VerificationKeeper) agentports.AgentTool {
+func newDeleteEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"worker_delete_employment_verification",
 		"Remove a previous employer filed on the qualification file in error, such as a "+
@@ -613,7 +613,7 @@ func newDeleteEmploymentVerificationTool(dqf VerificationKeeper) agentports.Agen
 			Plan: func(
 				ctx context.Context,
 				req *recordDelete,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*worker.WorkerEmploymentVerification, error) {
 				return dqf.PlanDeleteVerification(ctx, req.tenant, req.id)
 			},
@@ -635,7 +635,7 @@ func newDeleteEmploymentVerificationTool(dqf VerificationKeeper) agentports.Agen
 			Run: func(
 				ctx context.Context,
 				req *recordDelete,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				return nil, dqf.DeleteVerification(ctx, req.tenant, req.id, req.userID)
 			},
@@ -643,20 +643,20 @@ func newDeleteEmploymentVerificationTool(dqf VerificationKeeper) agentports.Agen
 	)
 }
 
-func provideRecordEmploymentVerificationTool(s *workerdqfservice.Service) agentports.AgentTool {
+func provideRecordEmploymentVerificationTool(s *workerdqfservice.Service) agenttoolports.AgentTool {
 	return newRecordEmploymentVerificationTool(s)
 }
 
-func provideUpdateEmploymentVerificationTool(s *workerdqfservice.Service) agentports.AgentTool {
+func provideUpdateEmploymentVerificationTool(s *workerdqfservice.Service) agenttoolports.AgentTool {
 	return newUpdateEmploymentVerificationTool(s)
 }
 
 func provideLogEmploymentVerificationRequestTool(
 	s *workerdqfservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newLogEmploymentVerificationRequestTool(s)
 }
 
-func provideDeleteEmploymentVerificationTool(s *workerdqfservice.Service) agentports.AgentTool {
+func provideDeleteEmploymentVerificationTool(s *workerdqfservice.Service) agenttoolports.AgentTool {
 	return newDeleteEmploymentVerificationTool(s)
 }

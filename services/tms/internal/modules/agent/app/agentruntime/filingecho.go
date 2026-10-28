@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -22,7 +22,7 @@ const (
 		"they hold; anything else is not part of the proposal."
 )
 
-func filingEcho(baseline *agentports.ProposalBaselineResult, args map[string]any) string {
+func filingEcho(baseline *agentruntimeports.ProposalBaselineResult, args map[string]any) string {
 	if baseline != nil && baseline.Preview != nil &&
 		strings.TrimSpace(baseline.Preview.Summary) != "" {
 		var b strings.Builder

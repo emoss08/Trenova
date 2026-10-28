@@ -8,7 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -150,7 +150,7 @@ func (s *Service) classify(
 		return fallback, nil
 	}
 
-	result, err := s.completion.CompleteStructured(ctx, &agentports.StructuredCompletionRequest{
+	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
 		TenantInfo:   tenantInfo,
 		Task:         aiprovider.TaskInboundClassification,
 		System:       classifierSystemPrompt,
@@ -333,9 +333,9 @@ func matchable(text string) string {
 func classifierContext(
 	message *inboundmessage.InboundMessage,
 	hints []*triage.SenderHint,
-) agentports.DelimitedContext {
-	delimited := agentports.DelimitedContext{
-		Sections: []agentports.ContextSection{
+) llmports.DelimitedContext {
+	delimited := llmports.DelimitedContext{
+		Sections: []llmports.ContextSection{
 			{
 				Title:   "Sender",
 				Trusted: false,
@@ -363,7 +363,7 @@ func classifierContext(
 	}
 
 	if text := hintText(message, hints); text != "" {
-		delimited.Sections = append(delimited.Sections, agentports.ContextSection{
+		delimited.Sections = append(delimited.Sections, llmports.ContextSection{
 			Title:   "Corrections people here made for this sender",
 			Trusted: true,
 			Content: text,

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
 // validateExempt lists the action tools that do not check a call before it
@@ -39,7 +39,7 @@ func TestEveryActionToolValidatesBeforeFiling(t *testing.T) {
 		if tool.Policy().Kind != agent.ToolKindAction {
 			continue
 		}
-		_, validates := tool.(agentports.ToolValidator)
+		_, validates := tool.(agenttoolports.ToolValidator)
 		reason, exempt := validateExempt[tool.Name()]
 		seen[tool.Name()] = true
 

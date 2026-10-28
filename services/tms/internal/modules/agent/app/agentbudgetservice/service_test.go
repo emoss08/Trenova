@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,7 +39,7 @@ type fakeRuns struct {
 
 func (f *fakeRuns) CountSince(
 	_ context.Context,
-	req agentports.CountAgentRunsSinceRequest,
+	req agentruntimeports.CountAgentRunsSinceRequest,
 ) (int, error) {
 	f.since = req.Since
 
@@ -173,16 +174,26 @@ func TestCheckRun_RefusesTheRunPastTheDailyLimit(t *testing.T) {
 func TestCheckTool_CountsOnlyToolsWithACap(t *testing.T) {
 	t.Parallel()
 
-	svc := newService(&fakeCost{}, &fakeRuns{}, &fakeTools{used: map[string]int{"dispatch_assign_move": 5}})
+	svc := newService(
+		&fakeCost{},
+		&fakeRuns{},
+		&fakeTools{used: map[string]int{"dispatch_assign_move": 5}},
+	)
 	d := definition()
 	d.ToolDailyLimits = map[string]int{"dispatch_assign_move": 5}
 
-	refusal, err := svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{Definition: d, ToolName: "dispatch_assign_move"})
+	refusal, err := svc.CheckTool(
+		t.Context(),
+		agentports.CheckToolBudgetRequest{Definition: d, ToolName: "dispatch_assign_move"},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, agentports.BudgetCapTool, refusal.Cap)
 	assert.Equal(t, "dispatch_assign_move", refusal.Tool)
 
-	refusal, err = svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{Definition: d, ToolName: "shipment_cancel"})
+	refusal, err = svc.CheckTool(
+		t.Context(),
+		agentports.CheckToolBudgetRequest{Definition: d, ToolName: "shipment_cancel"},
+	)
 	require.NoError(t, err)
 	assert.False(t, refusal.Refused())
 }
@@ -192,7 +203,11 @@ func TestCheckTool_CountsOnlyToolsWithACap(t *testing.T) {
 func TestCheckTool_CountsWritesThisTurnHasNotRecordedYet(t *testing.T) {
 	t.Parallel()
 
-	svc := newService(&fakeCost{}, &fakeRuns{}, &fakeTools{used: map[string]int{"dispatch_assign_move": 3}})
+	svc := newService(
+		&fakeCost{},
+		&fakeRuns{},
+		&fakeTools{used: map[string]int{"dispatch_assign_move": 3}},
+	)
 	d := definition()
 	d.ToolDailyLimits = map[string]int{"dispatch_assign_move": 5}
 

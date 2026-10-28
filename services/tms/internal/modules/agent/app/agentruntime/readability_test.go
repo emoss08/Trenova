@@ -6,7 +6,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -155,7 +157,7 @@ func TestDistinctCallIDs_ReplacesAnIDTheConversationAlreadyUsed(t *testing.T) {
 		Role:      conversation.RoleAssistant,
 		ToolCalls: []conversation.ToolCallRecord{{ID: "call_0", Name: "shipment_list"}},
 	}})
-	completion := &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
+	completion := &llmports.ChatCompletionResult{ToolCalls: []llmports.ToolCall{
 		{ID: "call_0", Name: "shipment_get"},
 		{ID: "", Name: "customer_get"},
 		{ID: "toolu_unique", Name: "worker_get"},
@@ -186,7 +188,7 @@ func TestDistinctCallIDs_AlwaysReplacesASynthesizedID(t *testing.T) {
 	t.Parallel()
 
 	minted := 0
-	current := &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
+	current := &llmports.ChatCompletionResult{ToolCalls: []llmports.ToolCall{
 		{ID: "call_0", SynthesizedID: true, Name: "shipment_get"},
 		{ID: "call_1", SynthesizedID: true, Name: "customer_get"},
 		{ID: "toolu_unique", Name: "worker_get"},
@@ -202,7 +204,7 @@ func TestDistinctCallIDs_AlwaysReplacesASynthesizedID(t *testing.T) {
 	assert.False(t, current.ToolCalls[0].SynthesizedID, "a minted id is the loop's own")
 	assert.Equal(t, "toolu_unique", current.ToolCalls[2].ID, "a provider's own id is kept")
 
-	plain := &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
+	plain := &llmports.ChatCompletionResult{ToolCalls: []llmports.ToolCall{
 		{ID: "toolu_1", Name: "worker_get"},
 	}}
 	distinctCallIDs(plain, map[string]struct{}{}, func() string {
@@ -219,9 +221,9 @@ still its own in the transcript, and in what its artifacts are keyed on.
 func TestRun_GivesSynthesizedCallIDsOfEachTurnTheirOwnID(t *testing.T) {
 	t.Parallel()
 
-	synthesized := func() *agentports.ChatCompletionResult {
-		return &agentports.ChatCompletionResult{
-			ToolCalls: []agentports.ToolCall{{
+	synthesized := func() *llmports.ChatCompletionResult {
+		return &llmports.ChatCompletionResult{
+			ToolCalls: []llmports.ToolCall{{
 				ID:            "call_0",
 				SynthesizedID: true,
 				Name:          "worker_list",
@@ -231,20 +233,20 @@ func TestRun_GivesSynthesizedCallIDsOfEachTurnTheirOwnID(t *testing.T) {
 		}
 	}
 	tool := queryTool("worker_list", map[string]any{"results": []any{}}, nil)
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		synthesized(),
 		synthesized(),
 		textTurn("Nobody by that name."),
 	}}
-	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{tool}},
+	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{tool}},
 		&stubActionRegistry{}, nil)
 
 	var observed []string
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("worker_list"),
 		Actor:      testActor(),
 		Input:      "Who is Maria?",
-		ToolObserver: func(observation agentports.ToolObservation) (*agentports.ShownArtifact, error) {
+		ToolObserver: func(observation agentruntimeports.ToolObservation) (*agentruntimeports.ShownArtifact, error) {
 			observed = append(observed, observation.Call.ID)
 			return nil, nil
 		},

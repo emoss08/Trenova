@@ -13,7 +13,7 @@ package workerdqfservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -78,7 +78,7 @@ type Params struct {
 	Documents     PacketSummarizer
 	DrugAlcohol   DrugAlcoholStander
 	AuditService  auditports.AuditService
-	Realtime      agentports.RealtimeService `optional:"true"`
+	Realtime      realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
@@ -90,7 +90,7 @@ type Service struct {
 	documents     PacketSummarizer
 	drugAlcohol   DrugAlcoholStander
 	auditService  auditports.AuditService
-	realtime      agentports.RealtimeService
+	realtime      realtimeports.RealtimeService
 }
 
 func New(p Params) *Service {

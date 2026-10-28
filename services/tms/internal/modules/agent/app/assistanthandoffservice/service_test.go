@@ -11,8 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,17 +23,17 @@ import (
 )
 
 type fakeConversations struct {
-	agentports.ConversationRepository
+	assistantports.ConversationRepository
 
 	threads  map[pulid.ID]*conversation.Thread
 	history  []conversation.Message
 	appended map[pulid.ID][]conversation.Message
-	listed   []agentports.ListMessagesRequest
+	listed   []assistantports.ListMessagesRequest
 }
 
 func (f *fakeConversations) GetThread(
 	_ context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	thread, ok := f.threads[req.ID]
 	if !ok || thread.UserID != req.UserID {
@@ -44,7 +45,7 @@ func (f *fakeConversations) GetThread(
 
 func (f *fakeConversations) ListMessages(
 	_ context.Context,
-	req agentports.ListMessagesRequest,
+	req assistantports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	f.listed = append(f.listed, req)
 
@@ -53,7 +54,7 @@ func (f *fakeConversations) ListMessages(
 
 func (f *fakeConversations) AppendTurn(
 	_ context.Context,
-	req agentports.AppendTurnRequest,
+	req assistantports.AppendTurnRequest,
 ) ([]conversation.Message, error) {
 	f.appended[req.ThreadID] = append(f.appended[req.ThreadID], req.Messages...)
 
@@ -110,15 +111,15 @@ func (f *fakeArtifacts) Upsert(
 }
 
 type fakeAssistant struct {
-	agentports.AssistantService
+	assistantports.AssistantService
 
-	started *agentports.StartThreadRequest
+	started *assistantports.StartThreadRequest
 	refuse  error
 }
 
 func (f *fakeAssistant) StartThread(
 	_ context.Context,
-	req *agentports.StartThreadRequest,
+	req *assistantports.StartThreadRequest,
 	actor *permissionports.RequestActor,
 ) (*conversation.Thread, error) {
 	if f.refuse != nil {
@@ -138,19 +139,19 @@ func (f *fakeAssistant) StartThread(
 type fakeCompleter struct {
 	text string
 	err  error
-	req  *agentports.StructuredCompletionRequest
+	req  *llmports.StructuredCompletionRequest
 }
 
 func (f *fakeCompleter) CompleteStructured(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	f.req = req
 	if f.err != nil {
 		return nil, f.err
 	}
 
-	return &agentports.StructuredCompletionResult{Text: f.text}, nil
+	return &llmports.StructuredCompletionResult{Text: f.text}, nil
 }
 
 type handoffFixture struct {
@@ -193,7 +194,9 @@ func newHandoffFixture() *handoffFixture {
 		{ID: pulid.MustNew("art_"), Kind: "record", Title: "INV-1"},
 	}}
 	assistant := &fakeAssistant{}
-	completer := &fakeCompleter{text: `{"summary":"The person is chasing two unpaid Acme invoices."}`}
+	completer := &fakeCompleter{
+		text: `{"summary":"The person is chasing two unpaid Acme invoices."}`,
+	}
 
 	svc := New(Params{
 		Logger:        zap.NewNop(),
@@ -213,10 +216,13 @@ func newHandoffFixture() *handoffFixture {
 	}
 }
 
-func (f *handoffFixture) handoff(t *testing.T, facts ...string) (*agentports.HandoffThreadResult, error) {
+func (f *handoffFixture) handoff(
+	t *testing.T,
+	facts ...string,
+) (*assistantports.HandoffThreadResult, error) {
 	t.Helper()
 
-	return f.svc.Handoff(t.Context(), &agentports.HandoffThreadRequest{
+	return f.svc.Handoff(t.Context(), &assistantports.HandoffThreadRequest{
 		ThreadID:          f.origin.ID,
 		AgentDefinitionID: f.target.ID,
 		Facts:             facts,
@@ -294,7 +300,7 @@ func TestHandoff_RefusedWritesNothing(t *testing.T) {
 		t.Parallel()
 
 		f := newHandoffFixture()
-		_, err := f.svc.Handoff(t.Context(), &agentports.HandoffThreadRequest{
+		_, err := f.svc.Handoff(t.Context(), &assistantports.HandoffThreadRequest{
 			ThreadID:          f.origin.ID,
 			AgentDefinitionID: f.target.ID,
 		}, &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser, UserID: pulid.MustNew("usr_")})
@@ -318,7 +324,7 @@ func TestHandoff_RefusedWritesNothing(t *testing.T) {
 		t.Parallel()
 
 		f := newHandoffFixture()
-		_, err := f.svc.Handoff(t.Context(), &agentports.HandoffThreadRequest{
+		_, err := f.svc.Handoff(t.Context(), &assistantports.HandoffThreadRequest{
 			ThreadID:          f.origin.ID,
 			AgentDefinitionID: f.origin.AgentDefinitionID,
 		}, &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser, UserID: f.user})
@@ -356,8 +362,18 @@ func TestLatestVersions_KeepsTheNewestOfEachLineage(t *testing.T) {
 	t.Parallel()
 
 	lineage := pulid.MustNew("art_")
-	first := &assistantartifact.Artifact{ID: lineage, LineageID: lineage, LineageSeq: 1, Title: "Brief"}
-	second := &assistantartifact.Artifact{ID: pulid.MustNew("art_"), LineageID: lineage, LineageSeq: 2, Title: "Brief, revised"}
+	first := &assistantartifact.Artifact{
+		ID:         lineage,
+		LineageID:  lineage,
+		LineageSeq: 1,
+		Title:      "Brief",
+	}
+	second := &assistantartifact.Artifact{
+		ID:         pulid.MustNew("art_"),
+		LineageID:  lineage,
+		LineageSeq: 2,
+		Title:      "Brief, revised",
+	}
 	other := &assistantartifact.Artifact{ID: pulid.MustNew("art_"), Title: "Table"}
 
 	got := latestVersions([]*assistantartifact.Artifact{first, other, second})

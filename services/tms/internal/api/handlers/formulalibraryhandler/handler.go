@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
@@ -26,7 +26,7 @@ type Params struct {
 	fx.In
 
 	Service              *formulalibraryservice.Service
-	PageAssistant        agentports.PageAssistant `optional:"true"`
+	PageAssistant        assistantports.PageAssistant `optional:"true"`
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	PermissionEngine     permissionports.PermissionEngine
@@ -34,7 +34,7 @@ type Params struct {
 
 type Handler struct {
 	service       *formulalibraryservice.Service
-	pageAssistant agentports.PageAssistant
+	pageAssistant assistantports.PageAssistant
 	eh            *helpers.ErrorHandler
 	pm            *middleware.PermissionMiddleware
 	permEngine    permissionports.PermissionEngine

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -26,7 +26,7 @@ type TransitionToInReviewTool struct {
 	billing common.BillingQueueDecider
 }
 
-func NewTransitionToInReviewTool(billing common.BillingQueueDecider) agentports.AgentTool {
+func NewTransitionToInReviewTool(billing common.BillingQueueDecider) agenttoolports.AgentTool {
 	return &TransitionToInReviewTool{billing: billing}
 }
 
@@ -57,8 +57,8 @@ func (t *TransitionToInReviewTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *TransitionToInReviewTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *TransitionToInReviewTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceBillingQueue,
@@ -70,7 +70,7 @@ func (t *TransitionToInReviewTool) Policy() agentports.ToolPolicy {
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,
-		Condition: &agentports.TierCondition{
+		Condition: &agenttoolports.TierCondition{
 			Description: inReviewConditionDescription,
 			Limit:       t.tierLimit,
 		},
@@ -85,7 +85,7 @@ const inReviewConditionDescription = "An item on hold was held there by a person
 
 func (t *TransitionToInReviewTool) tierLimit(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	if params.Actor == nil {
 		return agent.TierPropose
@@ -117,7 +117,7 @@ func (t *TransitionToInReviewTool) tierFor(
 	return agent.TierAutoExecute
 }
 
-func (t *TransitionToInReviewTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *TransitionToInReviewTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, common.ParamBillingQueueItemID, permission.ResourceBillingQueue)
 }
 
@@ -165,7 +165,7 @@ func (m *reviewMove) plan(
 
 func (t *TransitionToInReviewTool) move(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*reviewMove, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -204,7 +204,7 @@ func (t *TransitionToInReviewTool) move(
 
 func (t *TransitionToInReviewTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	move, err := t.move(ctx, &params)
 	if err != nil {
@@ -217,7 +217,7 @@ func (t *TransitionToInReviewTool) Validate(
 
 func (t *TransitionToInReviewTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err

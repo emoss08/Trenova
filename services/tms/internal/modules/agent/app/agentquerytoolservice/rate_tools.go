@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -65,7 +65,7 @@ func newExplainRateTool(
 	quotes ratequoteports.RateQuoteRepository,
 	shipments shipmentports.ShipmentRepository,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &explainRateTool{
 		quotes:    quotes,
 		shipments: shipments,
@@ -105,7 +105,7 @@ func (t *explainRateTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *explainRateTool) Policy() agentports.ToolPolicy {
+func (t *explainRateTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceRateMatrix,
 	})
@@ -205,7 +205,7 @@ type rateTotalsRow struct {
 
 func (t *explainRateTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

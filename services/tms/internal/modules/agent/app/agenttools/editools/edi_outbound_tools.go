@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -53,7 +53,7 @@ type ediDocumentGenerator interface {
 	) (*edi.EDIMessage, error)
 }
 
-func ediCreatePolicy(name, rationale string) agentports.ToolPolicy {
+func ediCreatePolicy(name, rationale string) agenttoolports.ToolPolicy {
 	policy := ediOutboundPolicy(name, rationale)
 	policy.Operation = permission.OpCreate
 
@@ -64,7 +64,7 @@ type SendEDILoadTenderTool struct {
 	tenders loadTenderSubmitter
 }
 
-func NewSendEDILoadTenderTool(tenders loadTenderSubmitter) agentports.AgentTool {
+func NewSendEDILoadTenderTool(tenders loadTenderSubmitter) agenttoolports.AgentTool {
 	return &SendEDILoadTenderTool{tenders: tenders}
 }
 
@@ -101,18 +101,18 @@ func (t *SendEDILoadTenderTool) ParamSchema() map[string]any {
 	}, common.FieldShipmentID)
 }
 
-func (t *SendEDILoadTenderTool) Policy() agentports.ToolPolicy {
+func (t *SendEDILoadTenderTool) Policy() agenttoolports.ToolPolicy {
 	return ediCreatePolicy(t.Name(),
 		"Offers a load to another organization, which may accept it and haul it on the "+
 			"terms tendered; a tender is withdrawn, never recalled.")
 }
 
-func (t *SendEDILoadTenderTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *SendEDILoadTenderTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, common.FieldShipmentID, permission.ResourceShipment)
 }
 
 func (t *SendEDILoadTenderTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*ediservice.SubmitLoadTenderRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -136,7 +136,7 @@ func (t *SendEDILoadTenderTool) request(
 
 func (t *SendEDILoadTenderTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -150,7 +150,7 @@ func (t *SendEDILoadTenderTool) Validate(
 
 func (t *SendEDILoadTenderTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -173,7 +173,7 @@ type SendEDIStatusUpdateTool struct {
 	documents ediDocumentGenerator
 }
 
-func NewSendEDIStatusUpdateTool(documents ediDocumentGenerator) agentports.AgentTool {
+func NewSendEDIStatusUpdateTool(documents ediDocumentGenerator) agenttoolports.AgentTool {
 	return &SendEDIStatusUpdateTool{documents: documents}
 }
 
@@ -202,14 +202,14 @@ func (t *SendEDIStatusUpdateTool) ParamSchema() map[string]any {
 	}, paramEDIPartnerID)
 }
 
-func (t *SendEDIStatusUpdateTool) Policy() agentports.ToolPolicy {
+func (t *SendEDIStatusUpdateTool) Policy() agenttoolports.ToolPolicy {
 	return ediCreatePolicy(t.Name(),
 		"Sends a trading partner a shipment status they act on and pass to their own "+
 			"customers; a document sent cannot be recalled.")
 }
 
 func (t *SendEDIStatusUpdateTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*ediservice.GenerateEDIDocumentRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -250,7 +250,7 @@ func (t *SendEDIStatusUpdateTool) request(
 
 func (t *SendEDIStatusUpdateTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -264,7 +264,7 @@ func (t *SendEDIStatusUpdateTool) Validate(
 
 func (t *SendEDIStatusUpdateTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err

@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
@@ -35,7 +36,7 @@ type ContextRequest struct {
 	// History is the conversation as it is read for the next turn: from its
 	// latest summary on.
 	History   []conversation.Message
-	Proposals []agentports.ProposalOutcome
+	Proposals []agentruntimeports.ProposalOutcome
 	// Model is the model the conversation is answered by, whose window the
 	// use is measured against. Window is the window its provider is
 	// configured with, which wins over the one Model names; zero reads it
@@ -67,7 +68,7 @@ func MeasureContext(req ContextRequest) conversation.ContextUsage {
 	for idx := range messages {
 		message := &messages[idx]
 		switch message.Role {
-		case agentports.RoleTool:
+		case llmports.RoleTool:
 			if _, file := fileTools[message.ToolName]; file {
 				usage.Files += dataTokens(message.Content)
 			} else {
@@ -117,11 +118,11 @@ func SplitForCompaction(
 	return older, older[len(older)-1].Sequence
 }
 
-func replayTokens(messages []agentports.Message) int {
+func replayTokens(messages []llmports.Message) int {
 	total := 0
 	for idx := range messages {
 		message := &messages[idx]
-		if message.Role == agentports.RoleTool {
+		if message.Role == llmports.RoleTool {
 			total += dataTokens(message.Content)
 			continue
 		}
@@ -142,7 +143,7 @@ func dataTokens(text string) int {
 	return (len(text) + 2) / 3
 }
 
-func callTokens(calls []agentports.ToolCall) int {
+func callTokens(calls []llmports.ToolCall) int {
 	total := 0
 	for idx := range calls {
 		encoded, err := json.Marshal(calls[idx].Arguments)

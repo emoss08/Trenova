@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -53,7 +53,7 @@ func newScriptBatch() *scriptBatch {
 func (b *scriptBatch) preview(t *testing.T) *agent.PlanPreview {
 	t.Helper()
 
-	preview, err := b.f.svc.ForPlan(t.Context(), &agentports.PlanPreviewRequest{
+	preview, err := b.f.svc.ForPlan(t.Context(), &agentruntimeports.PlanPreviewRequest{
 		Plan:   b.plan,
 		Viewer: b.f.viewer(),
 	})
@@ -77,7 +77,11 @@ func TestForPlan_AnUnchangedScriptBatchPreviewsTheSameEachTime(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, want, decided.Digest, "the batch's digest covers every step's")
 	for _, step := range decided.Steps {
-		assert.Zero(t, changeOf(t, step.Preview).DependsOnStep, "each intent stands on its own record")
+		assert.Zero(
+			t,
+			changeOf(t, step.Preview).DependsOnStep,
+			"each intent stands on its own record",
+		)
 	}
 }
 

@@ -7,7 +7,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 )
 
 // classifierSystemPrompt is owned by Trenova and is never composed from tenant
@@ -113,15 +113,15 @@ func (s *Service) Classify(
 		return &cached, nil
 	}
 
-	sections := make([]agentports.ContextSection, 0, 2)
+	sections := make([]llmports.ContextSection, 0, 2)
 	if conversation != "" {
-		sections = append(sections, agentports.ContextSection{
+		sections = append(sections, llmports.ContextSection{
 			Title:   "Earlier in this conversation, for reference only",
 			Trusted: false,
 			Content: conversation,
 		})
 	}
-	sections = append(sections, agentports.ContextSection{
+	sections = append(sections, llmports.ContextSection{
 		Title:   "Request to classify",
 		Trusted: false,
 		Content: req.Input,
@@ -129,11 +129,11 @@ func (s *Service) Classify(
 
 	result, err := s.completion.CompleteStructured(
 		ctx,
-		&agentports.StructuredCompletionRequest{
+		&llmports.StructuredCompletionRequest{
 			TenantInfo:   req.TenantInfo,
 			Task:         aiprovider.TaskScopeClassification,
 			System:       classifierSystemPrompt,
-			Context:      agentports.DelimitedContext{Sections: sections},
+			Context:      llmports.DelimitedContext{Sections: sections},
 			OutputSchema: classifierSchema(),
 			SchemaName:   "scope_classification",
 			MaxTokens:    classifierMaxTokens,

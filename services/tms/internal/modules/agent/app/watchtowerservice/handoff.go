@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -106,7 +107,7 @@ func (s *Service) assertNoAgentWorking(
 		return nil
 	}
 
-	run, err := s.runRepo.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runRepo.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         item.AgentRunID,
 		TenantInfo: &tenant,
 	})

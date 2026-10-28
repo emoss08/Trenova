@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
@@ -52,7 +52,7 @@ type IssuePayAdvanceTool struct {
 	Advances payAdvanceIssuer `json:"-"`
 }
 
-func ProvideIssuePayAdvanceTool(s *driverpayservice.Service) agentports.AgentTool {
+func ProvideIssuePayAdvanceTool(s *driverpayservice.Service) agenttoolports.AgentTool {
 	return &IssuePayAdvanceTool{Advances: s}
 }
 
@@ -83,7 +83,7 @@ func (t *IssuePayAdvanceTool) ParamSchema() map[string]any {
 	}, common.ParamWorkerID, common.ParamDriverPayAmount, ParamAdvanceSource)
 }
 
-func (t *IssuePayAdvanceTool) Policy() agentports.ToolPolicy {
+func (t *IssuePayAdvanceTool) Policy() agenttoolports.ToolPolicy {
 	return (&common.PersonOnlyPolicy{
 		Name:      t.Name(),
 		Resource:  permission.ResourcePayAdvance,
@@ -94,7 +94,7 @@ func (t *IssuePayAdvanceTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *IssuePayAdvanceTool) entity(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*driverpay.PayAdvance, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -159,7 +159,7 @@ func (t *IssuePayAdvanceTool) entity(
 
 func (t *IssuePayAdvanceTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	entity, err := t.entity(&params)
 	if err != nil {
@@ -171,7 +171,7 @@ func (t *IssuePayAdvanceTool) Validate(
 
 func (t *IssuePayAdvanceTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -190,7 +190,7 @@ func (t *IssuePayAdvanceTool) Execute(
 
 func (t *IssuePayAdvanceTool) Preview(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	entity, err := t.entity(&params)
 	if err != nil {
@@ -252,7 +252,7 @@ type WriteOffPayAdvanceTool struct {
 	Advances payAdvanceWriter `json:"-"`
 }
 
-func ProvideWriteOffPayAdvanceTool(s *driverpayservice.Service) agentports.AgentTool {
+func ProvideWriteOffPayAdvanceTool(s *driverpayservice.Service) agenttoolports.AgentTool {
 	return &WriteOffPayAdvanceTool{Advances: s}
 }
 
@@ -278,7 +278,7 @@ func (t *WriteOffPayAdvanceTool) ParamSchema() map[string]any {
 	}, ParamAdvanceID, ParamWriteOffReason)
 }
 
-func (t *WriteOffPayAdvanceTool) Policy() agentports.ToolPolicy {
+func (t *WriteOffPayAdvanceTool) Policy() agenttoolports.ToolPolicy {
 	return (&common.PersonOnlyPolicy{
 		Name:      t.Name(),
 		Resource:  permission.ResourcePayAdvance,
@@ -288,7 +288,7 @@ func (t *WriteOffPayAdvanceTool) Policy() agentports.ToolPolicy {
 	}).Policy()
 }
 
-func (t *WriteOffPayAdvanceTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *WriteOffPayAdvanceTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, ParamAdvanceID, permission.ResourcePayAdvance)
 }
 
@@ -301,7 +301,7 @@ type writeOffPlan struct {
 
 func (t *WriteOffPayAdvanceTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*writeOffPlan, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -334,7 +334,7 @@ func (t *WriteOffPayAdvanceTool) plan(
 
 func (t *WriteOffPayAdvanceTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -346,7 +346,7 @@ func (t *WriteOffPayAdvanceTool) Validate(
 
 func (t *WriteOffPayAdvanceTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -371,7 +371,7 @@ func (t *WriteOffPayAdvanceTool) Execute(
 
 func (t *WriteOffPayAdvanceTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {

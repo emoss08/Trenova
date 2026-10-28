@@ -3,7 +3,8 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -15,8 +16,8 @@ import (
 func reportTool(
 	t *testing.T,
 	name string,
-	reader agentports.GraphQLReader,
-) agentports.AgentQueryTool {
+	reader graphqlreadports.GraphQLReader,
+) agenttoolports.AgentQueryTool {
 	t.Helper()
 
 	for _, spec := range reportReadSpecs() {
@@ -41,7 +42,7 @@ func runNode(id string, status report.RunStatus, stored bool) map[string]any {
 func TestReportRuns_SayWhichRunsCanBeCompared(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskReportRuns": {Data: connectionPage("reportRuns",
 			runNode("rrun_1", report.RunStatusSucceeded, true),
 			runNode("rrun_2", report.RunStatusSucceeded, false),
@@ -94,7 +95,7 @@ func TestReportRuns_LeaveAWithheldRunUnjudged(t *testing.T) {
 func TestReportSchedules_SendTheCallsArguments(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskReportSchedules": {Data: map[string]any{"reportSchedules": []any{
 			map[string]any{"id": "rsch_1", "mine": true, "enabled": true},
 		}}},
@@ -146,7 +147,7 @@ func TestTableChangeAlerts_CountOnlyTheConditionsTheyShow(t *testing.T) {
 func TestTableChangeAlerts_RefuseAQueryOverHiddenNames(t *testing.T) {
 	t.Parallel()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &keyedReader{answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskTableChangeAlerts": {Data: connectionPage("tcaSubscriptions",
 			map[string]any{"id": "tcas_1", "status": "Active"},
 		)},

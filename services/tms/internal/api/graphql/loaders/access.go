@@ -4,22 +4,21 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -39,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -736,10 +736,14 @@ func AgentsPaused(ctx context.Context, orgID string) (bool, error) {
 	})
 }
 
-func AgentPlanHold(ctx context.Context, planID string) (*agentports.ProposalHold, error) {
-	return load(ctx, planID, func(s *set) *dataloadgen.Loader[string, *agentports.ProposalHold] {
-		return s.agentPlanHold
-	})
+func AgentPlanHold(ctx context.Context, planID string) (*assistantports.ProposalHold, error) {
+	return load(
+		ctx,
+		planID,
+		func(s *set) *dataloadgen.Loader[string, *assistantports.ProposalHold] {
+			return s.agentPlanHold
+		},
+	)
 }
 
 func (f *AgentPlanHoldLoaderFactory) Attach(
@@ -1412,8 +1416,8 @@ func (f *AuditEntriesByAIAuditEventIDLoaderFactory) Attach(
 	})
 }
 
-func SubsetLabels(ctx context.Context, key string) (agentports.RecordLabels, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, agentports.RecordLabels] {
+func SubsetLabels(ctx context.Context, key string) (agentruntimeports.RecordLabels, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, agentruntimeports.RecordLabels] {
 		return s.subsetLabels
 	})
 }

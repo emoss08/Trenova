@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -66,7 +66,7 @@ func inboundLabel(change *accountingsync.AccountingInboundChange) string {
 }
 
 func inboundRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.GetAccountingInboundChangeRequest, error) {
 	id, err := common.RequirePulid(params.Params, paramInboundChangeID)
 	if err != nil {
@@ -82,13 +82,15 @@ type ApplyAccountingInboundChangeTool struct {
 	inbound accountingInboundOperator
 }
 
-func newApplyAccountingInboundChangeTool(inbound accountingInboundOperator) agentports.AgentTool {
+func newApplyAccountingInboundChangeTool(
+	inbound accountingInboundOperator,
+) agenttoolports.AgentTool {
 	return &ApplyAccountingInboundChangeTool{inbound: inbound}
 }
 
 func ProvideApplyAccountingInboundChangeTool(
 	inbound accountingsyncports.AccountingInboundService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newApplyAccountingInboundChangeTool(inbound)
 }
 
@@ -125,8 +127,8 @@ func (t *ApplyAccountingInboundChangeTool) ParamSchema() map[string]any {
 	}, paramInboundChangeID)
 }
 
-func (t *ApplyAccountingInboundChangeTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *ApplyAccountingInboundChangeTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceAccountingSync,
@@ -146,13 +148,13 @@ func (t *ApplyAccountingInboundChangeTool) Policy() agentports.ToolPolicy {
 // payment was applied, ignored or voided before it was approved.
 func (t *ApplyAccountingInboundChangeTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramInboundChangeID, permission.ResourceAccountingSync)
 }
 
 func (t *ApplyAccountingInboundChangeTool) PlanPreview(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.AccountingInboundApplyPreview, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -177,7 +179,7 @@ func (t *ApplyAccountingInboundChangeTool) PlanPreview(
 
 func (t *ApplyAccountingInboundChangeTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.PlanPreview(ctx, &params)
 	return err
@@ -185,7 +187,7 @@ func (t *ApplyAccountingInboundChangeTool) Validate(
 
 func (t *ApplyAccountingInboundChangeTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if _, err := t.PlanPreview(ctx, &params); err != nil {
 		return err
@@ -207,13 +209,13 @@ type IgnoreAccountingInboundChangeTool struct {
 
 func newIgnoreAccountingInboundChangeTool(
 	inbound accountingInboundOperator,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &IgnoreAccountingInboundChangeTool{inbound: inbound}
 }
 
 func ProvideIgnoreAccountingInboundChangeTool(
 	inbound accountingsyncports.AccountingInboundService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newIgnoreAccountingInboundChangeTool(inbound)
 }
 
@@ -247,7 +249,7 @@ func (t *IgnoreAccountingInboundChangeTool) ParamSchema() map[string]any {
 	}, paramInboundChangeID, paramInboundNote)
 }
 
-func (t *IgnoreAccountingInboundChangeTool) Policy() agentports.ToolPolicy {
+func (t *IgnoreAccountingInboundChangeTool) Policy() agenttoolports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:  permission.ResourceAccountingSync,
 		operation: permission.OpUpdate,
@@ -259,13 +261,13 @@ func (t *IgnoreAccountingInboundChangeTool) Policy() agentports.ToolPolicy {
 
 func (t *IgnoreAccountingInboundChangeTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramInboundChangeID, permission.ResourceAccountingSync)
 }
 
 func (t *IgnoreAccountingInboundChangeTool) request(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.DecideAccountingInboundChangeRequest, *accountingsync.AccountingInboundChange, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
@@ -306,7 +308,7 @@ func (t *IgnoreAccountingInboundChangeTool) request(
 
 func (t *IgnoreAccountingInboundChangeTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, _, err := t.request(ctx, &params)
 	return err
@@ -314,7 +316,7 @@ func (t *IgnoreAccountingInboundChangeTool) Validate(
 
 func (t *IgnoreAccountingInboundChangeTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, _, err := t.request(ctx, &params)
 	if err != nil {

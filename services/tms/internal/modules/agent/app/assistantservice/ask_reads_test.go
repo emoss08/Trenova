@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +16,7 @@ import (
 func TestUsableDefinition_AQuickQuestionHoldsEveryReadButExtensions(t *testing.T) {
 	t.Parallel()
 
-	queries := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+	queries := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 		&agenttest.StubQueryTool{ToolName: "shipment_get"},
 		&agenttest.StubQueryTool{ToolName: "customer_get"},
 		&agenttest.StubQueryTool{ToolName: agentextension.ToolWebSearch},
@@ -25,7 +26,7 @@ func TestUsableDefinition_AQuickQuestionHoldsEveryReadButExtensions(t *testing.T
 	general := chatDefinition("Help", agentdefinition.TemplateGeneralAssistant)
 	svc.definitions = &stubDefinitionList{definitions: []*agentdefinition.Definition{general}}
 	actor := testActor()
-	req := &agentports.SendMessageRequest{TenantInfo: actor.TenantInfo()}
+	req := &assistantports.SendMessageRequest{TenantInfo: actor.TenantInfo()}
 
 	asked, err := svc.usableDefinition(t.Context(), &conversation.Thread{
 		AgentDefinitionID: general.ID,

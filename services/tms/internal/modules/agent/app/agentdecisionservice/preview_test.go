@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -17,16 +18,16 @@ import (
 // fakePreviews answers as the preview service would: stale when the pinned
 // record has moved, and with the digest of what it shows.
 type fakePreviews struct {
-	agentports.ProposalPreviewService
+	agentruntimeports.ProposalPreviewService
 
 	stale  bool
 	digest string
-	asked  []*agentports.ProposalPreviewRequest
+	asked  []*agentruntimeports.ProposalPreviewRequest
 }
 
 func (f *fakePreviews) ForProposal(
 	_ context.Context,
-	req *agentports.ProposalPreviewRequest,
+	req *agentruntimeports.ProposalPreviewRequest,
 ) (*agent.ProposalPreview, error) {
 	f.asked = append(f.asked, req)
 	version := int64(3)

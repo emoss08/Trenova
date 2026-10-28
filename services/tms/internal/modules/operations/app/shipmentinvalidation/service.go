@@ -3,7 +3,7 @@ package shipmentinvalidation
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"go.uber.org/fx"
@@ -15,13 +15,13 @@ const Resource = "shipments"
 type Params struct {
 	fx.In
 
-	Realtime agentports.RealtimeService
+	Realtime realtimeports.RealtimeService
 	Epochs   shipmentports.ShipmentBoardEpochBumper
 	Logger   *zap.Logger
 }
 
 type Service struct {
-	realtime agentports.RealtimeService
+	realtime realtimeports.RealtimeService
 	epochs   shipmentports.ShipmentBoardEpochBumper
 	l        *zap.Logger
 }
@@ -33,7 +33,7 @@ func New(p Params) shipmentports.ShipmentInvalidator {
 }
 
 func NewWithDependencies(
-	realtime agentports.RealtimeService,
+	realtime realtimeports.RealtimeService,
 	epochs shipmentports.ShipmentBoardEpochBumper,
 	logger *zap.Logger,
 ) *Service {

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -24,10 +24,13 @@ func failedSyncRecord(
 	return record
 }
 
-func retryPinner(t *testing.T, tool agentports.AgentTool) agentports.ToolProposalSelectionResolver {
+func retryPinner(
+	t *testing.T,
+	tool agenttoolports.AgentTool,
+) agenttoolports.ToolProposalSelectionResolver {
 	t.Helper()
 
-	pinner, pins := tool.(agentports.ToolProposalSelectionResolver)
+	pinner, pins := tool.(agenttoolports.ToolProposalSelectionResolver)
 	require.True(t, pins, "a proposed retry pins the records its categories name")
 
 	return pinner
@@ -48,7 +51,7 @@ func pinnedIDs(t *testing.T, params map[string]any) []string {
 	return ids
 }
 
-func approvedFrom(params agentports.ToolExecuteParams) agentports.ToolExecuteParams {
+func approvedFrom(params agenttoolports.ToolExecuteParams) agenttoolports.ToolExecuteParams {
 	params.ProposalID = pulid.MustNew("ap_")
 	return params
 }
@@ -56,9 +59,18 @@ func approvedFrom(params agentports.ToolExecuteParams) agentports.ToolExecutePar
 func TestRetryAccountingSync_PinsTheRecordsItsCategoriesNameWhenProposed(t *testing.T) {
 	t.Parallel()
 
-	dead := failedSyncRecord(accountingsync.SyncStatusDeadLettered, accountingsync.SyncErrorTransient)
-	limited := failedSyncRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorRateLimited)
-	retrying := failedSyncRecord(accountingsync.SyncStatusRetrying, accountingsync.SyncErrorTransient)
+	dead := failedSyncRecord(
+		accountingsync.SyncStatusDeadLettered,
+		accountingsync.SyncErrorTransient,
+	)
+	limited := failedSyncRecord(
+		accountingsync.SyncStatusBlocked,
+		accountingsync.SyncErrorRateLimited,
+	)
+	retrying := failedSyncRecord(
+		accountingsync.SyncStatusRetrying,
+		accountingsync.SyncErrorTransient,
+	)
 	mapping := failedSyncRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorMapping)
 	synced := failedSyncRecord(accountingsync.SyncStatusSynced, accountingsync.SyncErrorTransient)
 	operator := newSyncOperator(dead, limited, retrying, mapping, synced)
@@ -100,21 +112,30 @@ func TestRetryAccountingSync_PinsTheRecordsItsCategoriesNameWhenProposed(t *test
 func TestRetryAccountingSync_PreviewShowsThePinnedRecordsAndRunsOnlyThose(t *testing.T) {
 	t.Parallel()
 
-	dead := failedSyncRecord(accountingsync.SyncStatusDeadLettered, accountingsync.SyncErrorTransient)
+	dead := failedSyncRecord(
+		accountingsync.SyncStatusDeadLettered,
+		accountingsync.SyncErrorTransient,
+	)
 	blocked := failedSyncRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorTransient)
 	operator := newSyncOperator(dead, blocked)
 	tool := newRetryAccountingSyncTool(operator)
 
 	pinned, err := retryPinner(t, tool).ResolveProposalSelection(
 		t.Context(),
-		syncParams(map[string]any{"system": "QuickBooksOnline", "errorCategories": []any{"Transient"}}),
+		syncParams(
+			map[string]any{"system": "QuickBooksOnline", "errorCategories": []any{"Transient"}},
+		),
 	)
 	require.NoError(t, err)
 	approved := approvedFrom(syncParams(pinned))
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), approved)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&operator.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), approved)
+		},
+	)
 	assert.Empty(t, preview.Warnings)
 	assert.False(t, preview.Partial, "every record that failed that way is pinned")
 	assert.Contains(t, preview.Summary, "Would send 2 documents to QuickBooks Online again")
@@ -122,7 +143,10 @@ func TestRetryAccountingSync_PreviewShowsThePinnedRecordsAndRunsOnlyThose(t *tes
 	previewed := []pulid.ID{preview.Changes[0].EntityID, preview.Changes[1].EntityID}
 	assert.ElementsMatch(t, []pulid.ID{dead.ID, blocked.ID}, previewed)
 
-	late := failedSyncRecord(accountingsync.SyncStatusDeadLettered, accountingsync.SyncErrorTransient)
+	late := failedSyncRecord(
+		accountingsync.SyncStatusDeadLettered,
+		accountingsync.SyncErrorTransient,
+	)
 	operator.records[late.ID] = late
 
 	require.NoError(t, tool.Execute(t.Context(), approved))
@@ -138,24 +162,38 @@ func TestRetryAccountingSync_CapsAPinnedSelectionAndSaysWhatIsLeft(t *testing.T)
 
 	records := make([]*accountingsync.AccountingSyncRecord, 0, maxSyncRetryIDs+2)
 	for range maxSyncRetryIDs + 2 {
-		records = append(records,
-			failedSyncRecord(accountingsync.SyncStatusDeadLettered, accountingsync.SyncErrorTransient))
+		records = append(
+			records,
+			failedSyncRecord(
+				accountingsync.SyncStatusDeadLettered,
+				accountingsync.SyncErrorTransient,
+			),
+		)
 	}
 	operator := newSyncOperator(records...)
 	tool := newRetryAccountingSyncTool(operator)
 
 	pinned, err := retryPinner(t, tool).ResolveProposalSelection(
 		t.Context(),
-		syncParams(map[string]any{"system": "QuickBooksOnline", "errorCategories": []any{"Transient"}}),
+		syncParams(
+			map[string]any{"system": "QuickBooksOnline", "errorCategories": []any{"Transient"}},
+		),
 	)
 	require.NoError(t, err)
 	require.Len(t, pinnedIDs(t, pinned), maxSyncRetryIDs)
-	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), syncParams(pinned)),
-		"a pinned selection is a call the tool takes")
+	require.NoError(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(t.Context(), syncParams(pinned)),
+		"a pinned selection is a call the tool takes",
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), syncParams(pinned))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&operator.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), syncParams(pinned))
+		},
+	)
 	assert.True(t, preview.Partial, "the selection was cut to what one retry takes")
 	assert.Contains(t, preview.Summary, "Would send 50 documents to QuickBooks Online again")
 	assert.Contains(t, preview.Summary, "2 other records that last failed as Transient")
@@ -173,7 +211,9 @@ func TestRetryAccountingSync_RefusesToPinASelectionOfNothing(t *testing.T) {
 
 	_, err := retryPinner(t, tool).ResolveProposalSelection(
 		t.Context(),
-		syncParams(map[string]any{"system": "QuickBooksOnline", "errorCategories": []any{"Transient"}}),
+		syncParams(
+			map[string]any{"system": "QuickBooksOnline", "errorCategories": []any{"Transient"}},
+		),
 	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
@@ -187,7 +227,7 @@ func TestRetryAccountingSync_LeavesNamedRecordsAndUnpinnableCallsAsTheyAre(t *te
 	operator := newSyncOperator(blocked)
 	tool := newRetryAccountingSyncTool(operator)
 	pinner := retryPinner(t, tool)
-	validator := tool.(agentports.ToolValidator)
+	validator := tool.(agenttoolports.ToolValidator)
 
 	for _, params := range []map[string]any{
 		{"system": "QuickBooksOnline", "syncRecordIds": []any{blocked.ID.String()}},
@@ -221,7 +261,10 @@ func TestRetryAccountingSync_LeavesNamedRecordsAndUnpinnableCallsAsTheyAre(t *te
 func TestRetryAccountingSync_AnApprovalRunsOnlyOnRecordsItNames(t *testing.T) {
 	t.Parallel()
 
-	dead := failedSyncRecord(accountingsync.SyncStatusDeadLettered, accountingsync.SyncErrorTransient)
+	dead := failedSyncRecord(
+		accountingsync.SyncStatusDeadLettered,
+		accountingsync.SyncErrorTransient,
+	)
 	operator := newSyncOperator(dead)
 	tool := newRetryAccountingSyncTool(operator)
 	unpinned := approvedFrom(syncParams(map[string]any{
@@ -234,7 +277,7 @@ func TestRetryAccountingSync_AnApprovalRunsOnlyOnRecordsItNames(t *testing.T) {
 	assert.Contains(t, err.Error(), "propose it again")
 	assert.Nil(t, operator.retried)
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), unpinned)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), unpinned)
 	require.NoError(t, err)
 	require.NotEmpty(t, preview.Warnings)
 	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
@@ -243,7 +286,10 @@ func TestRetryAccountingSync_AnApprovalRunsOnlyOnRecordsItNames(t *testing.T) {
 func TestRetryAccountingSync_ANamedRecordThatNoLongerFailedThatWayIsNotShown(t *testing.T) {
 	t.Parallel()
 
-	transient := failedSyncRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorTransient)
+	transient := failedSyncRecord(
+		accountingsync.SyncStatusBlocked,
+		accountingsync.SyncErrorTransient,
+	)
 	moved := failedSyncRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorMapping)
 	operator := newSyncOperator(transient, moved)
 	tool := newRetryAccountingSyncTool(operator)
@@ -253,9 +299,13 @@ func TestRetryAccountingSync_ANamedRecordThatNoLongerFailedThatWayIsNotShown(t *
 		"errorCategories": []any{"Transient"},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&operator.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	require.Len(t, preview.Changes, 1)
 	assert.Equal(t, transient.ID, preview.Changes[0].EntityID)
 
@@ -270,7 +320,7 @@ func TestRetryAccountingSync_DeclaresItsRecordsASubsetAPersonMayNarrow(t *testin
 	tool := newRetryAccountingSyncTool(newSyncOperator())
 	proposed := []any{pulid.MustNew("acctsr_").String(), pulid.MustNew("acctsr_").String()}
 
-	fields := agentports.ProposalFields(tool, map[string]any{
+	fields := agenttoolports.ProposalFields(tool, map[string]any{
 		"system":           "QuickBooksOnline",
 		ParamSyncRecordIDs: proposed,
 	})

@@ -7,8 +7,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/pkg/factoringremit"
 	"github.com/emoss08/trenova/pkg/rateimport"
@@ -51,12 +51,12 @@ func (s *RemittanceService) extractPdf(
 	documentID pulid.ID,
 	text string,
 ) (*rateimport.Sheet, error) {
-	result, err := s.completion.CompleteStructured(ctx, &agentports.StructuredCompletionRequest{
+	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
 		TenantInfo: remittanceTenant(rem),
 		Task:       aiprovider.TaskRemittanceExtraction,
 		System:     remittanceSystemPrompt,
-		Context: agentports.DelimitedContext{
-			Sections: []agentports.ContextSection{{
+		Context: llmports.DelimitedContext{
+			Sections: []llmports.ContextSection{{
 				Title:   "Remittance report",
 				Trusted: false,
 				Content: stringutils.TruncateRunes(text, remittanceModelMaxRunes),
@@ -74,7 +74,7 @@ func (s *RemittanceService) extractPdf(
 		},
 	})
 	if err != nil {
-		if errors.Is(err, agentports.ErrNoProviderConfigured) {
+		if errors.Is(err, llmports.ErrNoProviderConfigured) {
 			return nil, &pdfProblemError{message: problemNoPdfModel}
 		}
 		return nil, err

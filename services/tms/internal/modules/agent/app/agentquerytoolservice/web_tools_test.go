@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -60,7 +60,12 @@ func TestWebSearchReturnsSourcesTheModelCanCite(t *testing.T) {
 				PublishedDate: "2024-03-01",
 				Excerpts:      []string{"11-Hour Driving Limit"},
 			},
-			{Ref: "zyxw9876ZYXW5432", Title: "Blog", URL: "https://blog.example.com/hos", Site: "blog.example.com"},
+			{
+				Ref:   "zyxw9876ZYXW5432",
+				Title: "Blog",
+				URL:   "https://blog.example.com/hos",
+				Site:  "blog.example.com",
+			},
 		},
 	}}
 	params := testParams(map[string]any{
@@ -94,7 +99,9 @@ func TestWebSearchSaysSoWhenNothingMatched(t *testing.T) {
 	t.Parallel()
 
 	research := &stubResearcher{outcome: &agentextensionports.WebSearchOutcome{}}
-	result, err := newWebSearchTool(research).Query(t.Context(), testParams(map[string]any{"query": "xyzzy"}))
+	result, err := newWebSearchTool(
+		research,
+	).Query(t.Context(), testParams(map[string]any{"query": "xyzzy"}))
 	require.NoError(t, err)
 
 	answer, ok := result.(webSearchAnswer)
@@ -113,7 +120,9 @@ func TestWebSearchNeedsAQueryAndPassesRefusalsOn(t *testing.T) {
 
 	refusal := errors.New("this organization has used its daily limit")
 	research.err = refusal
-	_, err = newWebSearchTool(research).Query(t.Context(), testParams(map[string]any{"query": "irp"}))
+	_, err = newWebSearchTool(
+		research,
+	).Query(t.Context(), testParams(map[string]any{"query": "irp"}))
 	require.ErrorIs(t, err, refusal)
 }
 
@@ -176,7 +185,7 @@ func TestWebReadNeedsAURLAndARef(t *testing.T) {
 func TestWebToolsAreGatedOnWebResearch(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []agentports.AgentQueryTool{newWebSearchTool(nil), newWebReadTool(nil)} {
+	for _, tool := range []agenttoolports.AgentQueryTool{newWebSearchTool(nil), newWebReadTool(nil)} {
 		policy := tool.Policy()
 		assert.Equal(t, permission.ResourceWebResearch, policy.Resource, tool.Name())
 		assert.Equal(t, agent.ExternalReadAlways, policy.ReadsExternal, tool.Name())

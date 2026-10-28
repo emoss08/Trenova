@@ -15,8 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice/briefingfacts"
 	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice/briefingwriter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -49,7 +49,7 @@ type Params struct {
 	Organization tenantports.OrganizationRepository
 	Writer       *briefingwriter.Service
 	Permissions  permissionports.PermissionEngine
-	Realtime     agentports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService `optional:"true"`
 	// Days writes a page a person asked for again, on a worker.
 	Days    briefingports.BriefingDayWriter
 	Sources briefingfacts.Sources
@@ -63,7 +63,7 @@ type Service struct {
 	facts        *briefingfacts.Builder
 	writer       *briefingwriter.Service
 	permissions  permissionports.PermissionEngine
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 	days         briefingports.BriefingDayWriter
 	plans        platformplanports.PlanService
 	now          func() int64

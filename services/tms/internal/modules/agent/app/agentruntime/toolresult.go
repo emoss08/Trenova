@@ -5,8 +5,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -358,7 +357,7 @@ const (
 
 // listFields are the columns a call named for the model to read.
 func listFields(arguments map[string]any) []string {
-	raw, _ := arguments[agentports.ListFieldsParam].([]any)
+	raw, _ := arguments[agenttoolports.ListFieldsParam].([]any)
 	fields := make([]string, 0, len(raw))
 	for _, entry := range raw {
 		if name, ok := entry.(string); ok && name != "" {

@@ -10,7 +10,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -32,7 +32,7 @@ type Masker interface {
 
 // ToolPolicies names what a tool acts on, by its name.
 type ToolPolicies interface {
-	Get(name string) (agentports.ToolPolicy, bool)
+	Get(name string) (agenttoolports.ToolPolicy, bool)
 }
 
 // Redactor is what the trail keeps of an argument map: confidential fields
@@ -62,9 +62,9 @@ type RedactedArguments struct {
 }
 
 // Policy is a tool's policy, when the tool is still registered.
-func (r *Redactor) Policy(toolName string) (agentports.ToolPolicy, bool) {
+func (r *Redactor) Policy(toolName string) (agenttoolports.ToolPolicy, bool) {
 	if r.policies == nil || toolName == "" {
-		return agentports.ToolPolicy{}, false
+		return agenttoolports.ToolPolicy{}, false
 	}
 
 	return r.policies.Get(toolName)
@@ -123,8 +123,8 @@ func (r *Redactor) Arguments(toolName string, args map[string]any) (*RedactedArg
 // dropsParameter reports a parameter the runtime writes for itself rather
 // than the model: the owner a self-scoped call is about. An unknown tool's
 // is dropped too, since nothing can say it was the model's.
-func dropsParameter(policy *agentports.ToolPolicy, known bool, key string) bool {
-	if key != agentports.SelfScopeOwnerParam {
+func dropsParameter(policy *agenttoolports.ToolPolicy, known bool, key string) bool {
+	if key != agenttoolports.SelfScopeOwnerParam {
 		return false
 	}
 

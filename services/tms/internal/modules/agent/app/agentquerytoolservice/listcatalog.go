@@ -7,31 +7,30 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/pkg/listquery"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -110,7 +109,7 @@ type workerRow struct {
 func newListWorkersTool(
 	repo workerports.WorkerRepository,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolWorkerList,
 		entityPlural: "workers",
@@ -432,7 +431,7 @@ func equipmentFields() []listField {
 func newListTractorsTool(
 	repo tractorports.TractorRepository,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolListTractors,
 		entityPlural: pluralTractors,
@@ -490,7 +489,7 @@ func newListTractorsTool(
 	})
 }
 
-func newListTrailersTool(repo trailerports.TrailerRepository) agentports.AgentQueryTool {
+func newListTrailersTool(repo trailerports.TrailerRepository) agenttoolports.AgentQueryTool {
 	fields := append(equipmentFields(), listField{
 		Name:     "lastInspectionDate",
 		Kind:     filterDate,
@@ -554,7 +553,7 @@ type customerRow struct {
 	MCNumber  string `json:"mcNumber,omitempty"`
 }
 
-func newListCustomersTool(repo customerports.CustomerRepository) agentports.AgentQueryTool {
+func newListCustomersTool(repo customerports.CustomerRepository) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolCustomerList,
 		entityPlural: pluralCustomers,
@@ -600,7 +599,7 @@ type locationRow struct {
 	City    string `json:"city,omitempty"`
 }
 
-func newListLocationsTool(repo locationports.LocationRepository) agentports.AgentQueryTool {
+func newListLocationsTool(repo locationports.LocationRepository) agenttoolports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolLocationList,
 		entityPlural: pluralLocations,
@@ -670,7 +669,7 @@ func listCatalogSpecs() []listSpec {
 	}
 }
 
-func specOf(tool agentports.AgentQueryTool) listSpec {
+func specOf(tool agenttoolports.AgentQueryTool) listSpec {
 	return tool.(*listTool).spec //nolint:errcheck,forcetypeassert // constructed above
 }
 

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -25,8 +25,8 @@ func setupQueryVectorCache(t *testing.T) *queryVectorCache {
 	return &queryVectorCache{client: client, l: zap.NewNop()}
 }
 
-func queryVectorKey() *agentports.QueryVectorCacheKey {
-	return &agentports.QueryVectorCacheKey{
+func queryVectorKey() *retrievalports.QueryVectorCacheKey {
+	return &retrievalports.QueryVectorCacheKey{
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		ModelKey:   "nomic-embed-text",
 		TextHash:   "abc123",
@@ -43,7 +43,7 @@ func unitVector(dimensions int) []float32 {
 func TestQueryVectorCache_RoundTripsAVector_Integration(t *testing.T) {
 	cache := setupQueryVectorCache(t)
 	key := queryVectorKey()
-	vector := agentports.QueryVector{
+	vector := retrievalports.QueryVector{
 		Available:  true,
 		Vector:     unitVector(airetrieval.Dimensions768),
 		ModelKey:   key.ModelKey,
@@ -61,7 +61,7 @@ func TestQueryVectorCache_RoundTripsAVector_Integration(t *testing.T) {
 func TestQueryVectorCache_KeepsTenantsApart_Integration(t *testing.T) {
 	cache := setupQueryVectorCache(t)
 	key := queryVectorKey()
-	require.NoError(t, cache.Set(t.Context(), key, agentports.QueryVector{
+	require.NoError(t, cache.Set(t.Context(), key, retrievalports.QueryVector{
 		Available:  true,
 		Vector:     unitVector(airetrieval.Dimensions768),
 		ModelKey:   key.ModelKey,
@@ -92,7 +92,7 @@ func TestQueryVectorCache_StoresNothingUnusable_Integration(t *testing.T) {
 	cache := setupQueryVectorCache(t)
 	key := queryVectorKey()
 
-	require.NoError(t, cache.Set(t.Context(), key, agentports.QueryVector{}, time.Minute))
+	require.NoError(t, cache.Set(t.Context(), key, retrievalports.QueryVector{}, time.Minute))
 
 	assert.Zero(t, cache.client.Exists(t.Context(), cache.key(key)).Val())
 }

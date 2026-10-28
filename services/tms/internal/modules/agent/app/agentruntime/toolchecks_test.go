@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +24,7 @@ func TestOpenTurn_ReadsTheOrganizationsExtensionsOnce(t *testing.T) {
 	gate := webGate(agentextension.AvailabilitySelectedAgents)
 	rt := newRuntime(
 		&scriptedCompletion{},
-		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			queryTool(agentextension.ToolWebSearch, map[string]any{}, nil),
 		}},
 		&stubActionRegistry{},
@@ -31,7 +32,7 @@ func TestOpenTurn_ReadsTheOrganizationsExtensionsOnce(t *testing.T) {
 	)
 	rt.extensions = gate
 
-	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(agentextension.ToolWebSearch),
 		Actor:      testActor(),
 		Input:      "What changed in the ELD rules?",
@@ -84,7 +85,7 @@ func TestPermittedTools_ChecksDistinctPermissionsTogetherAndAnswersTheSame(t *te
 	}
 	rt := newRuntime(
 		&scriptedCompletion{},
-		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			queryTool("shipment_get", map[string]any{}, nil),
 			queryTool("shipment_list", map[string]any{}, nil),
 			&agenttest.StubQueryTool{

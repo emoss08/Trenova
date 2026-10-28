@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
@@ -20,8 +20,12 @@ func longConversation(turns int) []conversation.Message {
 	history := make([]conversation.Message, 0, turns*4)
 	for turn := range turns {
 		callID := fmt.Sprintf("call_%d", turn)
-		history = append(history,
-			conversation.Message{Role: conversation.RoleUser, Content: fmt.Sprintf("Which loads for customer %d?", turn)},
+		history = append(
+			history,
+			conversation.Message{
+				Role:    conversation.RoleUser,
+				Content: fmt.Sprintf("Which loads for customer %d?", turn),
+			},
 			conversation.Message{
 				Role:      conversation.RoleAssistant,
 				ToolCalls: []conversation.ToolCallRecord{{ID: callID, Name: "shipment_list"}},
@@ -33,8 +37,14 @@ func longConversation(turns int) []conversation.Message {
 				Content:    strings.Repeat(`{"pro":"S-1001","status":"InTransit"},`, 800),
 			},
 			conversation.Message{
-				Role:    conversation.RoleAssistant,
-				Content: fmt.Sprintf("Customer %d has 40 loads. ", turn) + strings.Repeat("Most are on time. ", 120),
+				Role: conversation.RoleAssistant,
+				Content: fmt.Sprintf(
+					"Customer %d has 40 loads. ",
+					turn,
+				) + strings.Repeat(
+					"Most are on time. ",
+					120,
+				),
 			},
 		)
 	}
@@ -51,7 +61,10 @@ func TestPrepareCompaction_SummarizesEverythingBeforeTheLatestTurns(t *testing.T
 
 	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
 	conversations.messages = longConversation(12)
-	conversations.thread.ContextUsage = &conversation.ContextUsage{Instructions: 6200, Model: "claude-sonnet-4-5"}
+	conversations.thread.ContextUsage = &conversation.ContextUsage{
+		Instructions: 6200,
+		Model:        "claude-sonnet-4-5",
+	}
 	actor := testActor()
 
 	plan, err := svc.PrepareCompaction(t.Context(), &CompactRequest{
@@ -96,7 +109,11 @@ func TestPrepareCompaction_RefusesAConversationWithNothingToCompact(t *testing.T
 	}, actor)
 
 	require.Error(t, err)
-	assert.True(t, errortypes.IsBusinessError(err), "the person is told there is nothing to compact")
+	assert.True(
+		t,
+		errortypes.IsBusinessError(err),
+		"the person is told there is nothing to compact",
+	)
 }
 
 /*
@@ -110,7 +127,10 @@ func TestFinishCompaction_SavesTheSummaryOnceAndMeasuresTheConversationAfter(t *
 
 	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
 	conversations.messages = longConversation(12)
-	conversations.thread.ContextUsage = &conversation.ContextUsage{Instructions: 6200, Model: "claude-sonnet-4-5"}
+	conversations.thread.ContextUsage = &conversation.ContextUsage{
+		Instructions: 6200,
+		Model:        "claude-sonnet-4-5",
+	}
 	actor := testActor()
 
 	plan, err := svc.PrepareCompaction(t.Context(), &CompactRequest{
@@ -120,7 +140,10 @@ func TestFinishCompaction_SavesTheSummaryOnceAndMeasuresTheConversationAfter(t *
 	}, actor)
 	require.NoError(t, err)
 
-	reply := &CompactionReply{Summary: "- Customer 0 to 9 each had 40 loads.", Model: "claude-sonnet-4-5"}
+	reply := &CompactionReply{
+		Summary: "- Customer 0 to 9 each had 40 loads.",
+		Model:   "claude-sonnet-4-5",
+	}
 	result, err := svc.FinishCompaction(t.Context(), plan, reply, actor)
 	require.NoError(t, err)
 
@@ -164,7 +187,11 @@ func TestFinishCompaction_RefusesAnEmptySummary(t *testing.T) {
 
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
-	assert.Empty(t, conversations.appended, "nothing replaces the conversation when nothing came back")
+	assert.Empty(
+		t,
+		conversations.appended,
+		"nothing replaces the conversation when nothing came back",
+	)
 }
 
 /*
@@ -192,8 +219,8 @@ func TestMeasureAfterTurn_KeepsTheMeasureAndTellsTheReader(t *testing.T) {
 	require.Len(t, conversations.contexts, 1)
 
 	require.Len(t, events, 1)
-	assert.Equal(t, agentports.AssistantEventContext, events[0].Event)
-	data, ok := events[0].Data.(agentports.AssistantContextEvent)
+	assert.Equal(t, assistantports.AssistantEventContext, events[0].Event)
+	data, ok := events[0].Data.(assistantports.AssistantContextEvent)
 	require.True(t, ok)
 	assert.Equal(t, conversations.thread.ID, data.ThreadID)
 	assert.Equal(t, usage.Total(), data.Usage.Total())
@@ -214,7 +241,15 @@ func TestMeasureAfterTurn_KeepsTheProvidersConfiguredWindow(t *testing.T) {
 	plan := &TurnPlan{Turn: agentruntime.TurnState{System: "Help dispatch."}}
 	saved := []conversation.Message{{Role: conversation.RoleAssistant, Model: "qwen2.5-coder:32b"}}
 
-	svc.measureAfterTurn(t.Context(), conversations.thread, plan, saved, 131_072, actor.TenantInfo(), nil)
+	svc.measureAfterTurn(
+		t.Context(),
+		conversations.thread,
+		plan,
+		saved,
+		131_072,
+		actor.TenantInfo(),
+		nil,
+	)
 
 	require.NotNil(t, conversations.thread.ContextUsage)
 	assert.Equal(t, 131_072, conversations.thread.ContextUsage.Window,

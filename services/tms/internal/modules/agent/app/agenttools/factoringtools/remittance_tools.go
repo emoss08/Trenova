@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -95,7 +95,7 @@ func remittanceVersionParam() map[string]any {
 }
 
 func remittanceVersionRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	key string,
 ) (*factoringports.RemittanceVersionRequest, error) {
 	id, err := common.RequirePulid(params.Params, key)
@@ -119,7 +119,7 @@ type ResolveFactoringRemittanceLineTool struct {
 
 func NewResolveFactoringRemittanceLineTool(
 	remittances factoringports.RemittanceService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &ResolveFactoringRemittanceLineTool{remittances: remittances}
 }
 
@@ -169,7 +169,7 @@ func (t *ResolveFactoringRemittanceLineTool) ParamSchema() map[string]any {
 	}, paramRemittanceID, paramVersion, paramLineID, paramLineAction)
 }
 
-func (t *ResolveFactoringRemittanceLineTool) Policy() agentports.ToolPolicy {
+func (t *ResolveFactoringRemittanceLineTool) Policy() agenttoolports.ToolPolicy {
 	return policy(t.Name(), &policySpec{
 		resource:    permission.ResourceFactoringRemittance,
 		operation:   permission.OpUpdate,
@@ -183,12 +183,12 @@ func (t *ResolveFactoringRemittanceLineTool) Policy() agentports.ToolPolicy {
 
 func (t *ResolveFactoringRemittanceLineTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramRemittanceID, permission.ResourceFactoringRemittance)
 }
 
 func (t *ResolveFactoringRemittanceLineTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.UpdateRemittanceLineRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -237,7 +237,7 @@ func (t *ResolveFactoringRemittanceLineTool) request(
 
 func (t *ResolveFactoringRemittanceLineTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -249,7 +249,7 @@ func (t *ResolveFactoringRemittanceLineTool) Validate(
 
 func (t *ResolveFactoringRemittanceLineTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -261,7 +261,7 @@ func (t *ResolveFactoringRemittanceLineTool) Execute(
 
 func (t *ResolveFactoringRemittanceLineTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const summary = "Would change how a remittance line is matched."
 	req, err := t.request(&params)
@@ -303,7 +303,7 @@ type RematchFactoringRemittanceTool struct {
 
 func NewRematchFactoringRemittanceTool(
 	remittances factoringports.RemittanceService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &RematchFactoringRemittanceTool{remittances: remittances}
 }
 
@@ -330,7 +330,7 @@ func (t *RematchFactoringRemittanceTool) ParamSchema() map[string]any {
 	}, paramRemittanceID2, paramVersion)
 }
 
-func (t *RematchFactoringRemittanceTool) Policy() agentports.ToolPolicy {
+func (t *RematchFactoringRemittanceTool) Policy() agenttoolports.ToolPolicy {
 	return policy(t.Name(), &policySpec{
 		resource:    permission.ResourceFactoringRemittance,
 		operation:   permission.OpUpdate,
@@ -345,12 +345,12 @@ func (t *RematchFactoringRemittanceTool) Policy() agentports.ToolPolicy {
 
 func (t *RematchFactoringRemittanceTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramRemittanceID2, permission.ResourceFactoringRemittance)
 }
 
 func (t *RematchFactoringRemittanceTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.RemittanceVersionRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -360,7 +360,7 @@ func (t *RematchFactoringRemittanceTool) request(
 
 func (t *RematchFactoringRemittanceTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -378,7 +378,7 @@ func (t *RematchFactoringRemittanceTool) Validate(
 
 func (t *RematchFactoringRemittanceTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -390,7 +390,7 @@ func (t *RematchFactoringRemittanceTool) Execute(
 
 func (t *RematchFactoringRemittanceTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const summary = "Would match the remittance's open lines again."
 	if err := t.Validate(ctx, params); err != nil {
@@ -408,7 +408,7 @@ func NewApplyFactoringRemittanceTool(
 	remittances factoringports.RemittanceService,
 	ledger factoringports.LedgerService,
 	accounts glaccountports.GLAccountRepository,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &ApplyFactoringRemittanceTool{
 		ledgerTool:  ledgerTool{ledger: ledger, accounts: accounts},
 		remittances: remittances,
@@ -439,7 +439,7 @@ func (t *ApplyFactoringRemittanceTool) ParamSchema() map[string]any {
 	}, paramRemittanceID2, paramVersion)
 }
 
-func (t *ApplyFactoringRemittanceTool) Policy() agentports.ToolPolicy {
+func (t *ApplyFactoringRemittanceTool) Policy() agenttoolports.ToolPolicy {
 	return policy(t.Name(), &policySpec{
 		resource:    permission.ResourceFactoringRemittance,
 		operation:   permission.OpImport,
@@ -454,12 +454,12 @@ func (t *ApplyFactoringRemittanceTool) Policy() agentports.ToolPolicy {
 
 func (t *ApplyFactoringRemittanceTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramRemittanceID2, permission.ResourceFactoringRemittance)
 }
 
 func (t *ApplyFactoringRemittanceTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.RemittanceVersionRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -469,7 +469,7 @@ func (t *ApplyFactoringRemittanceTool) request(
 
 func (t *ApplyFactoringRemittanceTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -481,7 +481,7 @@ func (t *ApplyFactoringRemittanceTool) Validate(
 
 func (t *ApplyFactoringRemittanceTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := requireApproval(t.Name(), &params); err != nil {
 		return err
@@ -496,7 +496,7 @@ func (t *ApplyFactoringRemittanceTool) Execute(
 
 func (t *ApplyFactoringRemittanceTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const summary = "Would book the remittance's matched lines to the ledger."
 	req, err := t.request(&params)
@@ -546,7 +546,7 @@ type DiscardFactoringRemittanceTool struct {
 
 func NewDiscardFactoringRemittanceTool(
 	remittances factoringports.RemittanceService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &DiscardFactoringRemittanceTool{remittances: remittances}
 }
 
@@ -577,7 +577,7 @@ func (t *DiscardFactoringRemittanceTool) ParamSchema() map[string]any {
 	}, paramRemittanceID2, paramVersion, paramReason)
 }
 
-func (t *DiscardFactoringRemittanceTool) Policy() agentports.ToolPolicy {
+func (t *DiscardFactoringRemittanceTool) Policy() agenttoolports.ToolPolicy {
 	return policy(t.Name(), &policySpec{
 		resource:    permission.ResourceFactoringRemittance,
 		operation:   permission.OpCancel,
@@ -589,12 +589,12 @@ func (t *DiscardFactoringRemittanceTool) Policy() agentports.ToolPolicy {
 
 func (t *DiscardFactoringRemittanceTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramRemittanceID2, permission.ResourceFactoringRemittance)
 }
 
 func (t *DiscardFactoringRemittanceTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.DiscardRemittanceRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -617,7 +617,7 @@ func (t *DiscardFactoringRemittanceTool) request(
 
 func (t *DiscardFactoringRemittanceTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -629,7 +629,7 @@ func (t *DiscardFactoringRemittanceTool) Validate(
 
 func (t *DiscardFactoringRemittanceTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -641,7 +641,7 @@ func (t *DiscardFactoringRemittanceTool) Execute(
 
 func (t *DiscardFactoringRemittanceTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const summary = "Would discard the remittance."
 	req, err := t.request(&params)

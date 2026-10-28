@@ -3,13 +3,13 @@ package billingqueueservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
-
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -62,7 +62,7 @@ type Params struct {
 	Generator            seqgen.Generator
 	SequenceFormats      seqgen.FormatProvider `optional:"true"`
 	AuditService         auditports.AuditService
-	Realtime             agentports.RealtimeService
+	Realtime             realtimeports.RealtimeService
 	Validator            *Validator
 	OrderDerivation      orderports.OrderDerivationService
 	DetentionBilling     detentionports.DetentionBillingService
@@ -97,7 +97,7 @@ type service struct {
 	generator            seqgen.Generator
 	sequenceFormats      seqgen.FormatProvider
 	auditService         auditports.AuditService
-	realtime             agentports.RealtimeService
+	realtime             realtimeports.RealtimeService
 	validator            *Validator
 	orderDerivation      orderports.OrderDerivationService
 	detentionBilling     detentionports.DetentionBillingService

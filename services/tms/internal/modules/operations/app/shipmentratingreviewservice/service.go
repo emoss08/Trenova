@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -27,7 +27,7 @@ type Params struct {
 	DB           kernelports.Transactor
 	Repo         shipmentports.RatingReviewRepository
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
@@ -35,7 +35,7 @@ type Service struct {
 	db           kernelports.Transactor
 	repo         shipmentports.RatingReviewRepository
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 	now          func() int64
 }
 

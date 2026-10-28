@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -40,10 +42,10 @@ func newDecisionFixture(t *testing.T, stored ...*agent.AgentProposal) decisionFi
 	}
 }
 
-func requested(id pulid.ID) agentports.ToolObservation {
-	return agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: "call_decide", Name: "request_decision"},
-		Data: agentports.DecisionRequest{ProposalID: id},
+func requested(id pulid.ID) agentruntimeports.ToolObservation {
+	return agentruntimeports.ToolObservation{
+		Call: llmports.ToolCall{ID: "call_decide", Name: "request_decision"},
+		Data: agentruntimeports.DecisionRequest{ProposalID: id},
 	}
 }
 
@@ -142,9 +144,9 @@ func TestDecisionStatus_FollowsTheProposal(t *testing.T) {
 	assert.Equal(t, assistantartifact.StatusFailed, decisionStatus(agent.ProposalStatusRejected))
 }
 
-func requestedMany(request agentports.DecisionRequest) agentports.ToolObservation {
-	return agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: "call_decide", Name: "request_decision"},
+func requestedMany(request agentruntimeports.DecisionRequest) agentruntimeports.ToolObservation {
+	return agentruntimeports.ToolObservation{
+		Call: llmports.ToolCall{ID: "call_decide", Name: "request_decision"},
 		Data: request,
 	}
 }
@@ -159,7 +161,7 @@ func TestRequestDecision_KeepsOneCardForAWaitingPlan(t *testing.T) {
 	first.PlanStep, second.PlanStep = 2, 1
 	fixture := newDecisionFixture(t, first, second)
 
-	shown, err := fixture.recorder.observe(requestedMany(agentports.DecisionRequest{
+	shown, err := fixture.recorder.observe(requestedMany(agentruntimeports.DecisionRequest{
 		PlanID: planID,
 	}))
 	require.NoError(t, err)
@@ -182,7 +184,7 @@ func TestRequestDecision_KeepsOneCardForSeveralProposalsOfOneTool(t *testing.T) 
 		waitingProposal(agent.ProposalStatusPending)
 	fixture := newDecisionFixture(t, first, second)
 
-	_, err := fixture.recorder.observe(requestedMany(agentports.DecisionRequest{
+	_, err := fixture.recorder.observe(requestedMany(agentruntimeports.DecisionRequest{
 		ProposalID:  first.ID,
 		ProposalIDs: []pulid.ID{first.ID, second.ID},
 	}))
@@ -204,17 +206,17 @@ func TestRequestDecision_RefusesABunchThatCannotShareACard(t *testing.T) {
 	decided := waitingProposal(agent.ProposalStatusExecuted)
 	fixture := newDecisionFixture(t, first, other, decided)
 
-	_, err := fixture.recorder.observe(requestedMany(agentports.DecisionRequest{
+	_, err := fixture.recorder.observe(requestedMany(agentruntimeports.DecisionRequest{
 		ProposalID: first.ID, ProposalIDs: []pulid.ID{first.ID, other.ID},
 	}))
 	require.ErrorIs(t, err, errMixedTools)
 
-	_, err = fixture.recorder.observe(requestedMany(agentports.DecisionRequest{
+	_, err = fixture.recorder.observe(requestedMany(agentruntimeports.DecisionRequest{
 		ProposalID: first.ID, ProposalIDs: []pulid.ID{first.ID, decided.ID},
 	}))
 	require.ErrorIs(t, err, errProposalDecided)
 
-	_, err = fixture.recorder.observe(requestedMany(agentports.DecisionRequest{
+	_, err = fixture.recorder.observe(requestedMany(agentruntimeports.DecisionRequest{
 		PlanID: pulid.MustNew("apl_"),
 	}))
 	require.ErrorIs(t, err, errUnknownPlan)

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -30,19 +30,47 @@ func TestTouchedRecords_CollectsWhatTheTurnWasAbout(t *testing.T) {
 		{Role: conversation.RoleUser, Content: "where is it"},
 		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{
 			{ID: "c1", Name: "invoice_get", Arguments: map[string]any{"invoiceId": read.String()}},
-			{ID: "c2", Name: "equipment_get_tractor", Arguments: map[string]any{"tractorId": failed.String()}},
-			{ID: "c3", Name: "shipment_list", Arguments: map[string]any{"customerId": wrote.String()}},
+			{
+				ID:        "c2",
+				Name:      "equipment_get_tractor",
+				Arguments: map[string]any{"tractorId": failed.String()},
+			},
+			{
+				ID:        "c3",
+				Name:      "shipment_list",
+				Arguments: map[string]any{"customerId": wrote.String()},
+			},
 		}},
 		{Role: conversation.RoleTool, ToolCallID: "c1", ToolSummary: "INV-7"},
 		{Role: conversation.RoleTool, ToolCallID: "c2", ToolFailed: true},
 		{Role: conversation.RoleTool, ToolCallID: "c3"},
-		{Role: conversation.RoleAssistant, Kind: conversation.MessageKindDelegated, ToolCalls: []conversation.ToolCallRecord{
-			{ID: "d1", Name: "equipment_get_trailer", Arguments: map[string]any{"trailerId": delegated.String()}},
-		}},
+		{
+			Role: conversation.RoleAssistant,
+			Kind: conversation.MessageKindDelegated,
+			ToolCalls: []conversation.ToolCallRecord{
+				{
+					ID:        "d1",
+					Name:      "equipment_get_trailer",
+					Arguments: map[string]any{"trailerId": delegated.String()},
+				},
+			},
+		},
 	}
-	actions := []agentports.PendingAction{
-		{Executed: true, Target: &agentports.ProposalTarget{Resource: permission.ResourceCustomer, ID: wrote}},
-		{Executed: false, Target: &agentports.ProposalTarget{Resource: permission.ResourceCustomer, ID: pulid.MustNew("cus_")}},
+	actions := []agentruntimeports.PendingAction{
+		{
+			Executed: true,
+			Target: &agentruntimeports.ProposalTarget{
+				Resource: permission.ResourceCustomer,
+				ID:       wrote,
+			},
+		},
+		{
+			Executed: false,
+			Target: &agentruntimeports.ProposalTarget{
+				Resource: permission.ResourceCustomer,
+				ID:       pulid.MustNew("cus_"),
+			},
+		},
 	}
 
 	touched := touchedRecords(&workingTurn{
@@ -117,21 +145,28 @@ func TestTouchedRecords_KeepsWhatAnApprovedOrAutomaticWriteMade(t *testing.T) {
 		thread: &conversation.Thread{WorkingSet: []conversation.WorkingRecord{
 			{Kind: "customer", ID: pulid.MustNew("cus_").String(), TouchedAt: 1_500},
 		}},
-		plan: &TurnPlan{FollowUp: true, Proposals: []agentports.ProposalOutcome{
+		plan: &TurnPlan{FollowUp: true, Proposals: []agentruntimeports.ProposalOutcome{
 			{
-				Status:          agent.ProposalStatusExecuted,
-				ExecutedAt:      &later,
-				ExecutionResult: &agent.ToolExecutionResult{Name: "S2610", Record: &agent.RecordRef{EntityType: "shipment", ID: approved}},
+				Status:     agent.ProposalStatusExecuted,
+				ExecutedAt: &later,
+				ExecutionResult: &agent.ToolExecutionResult{
+					Name:   "S2610",
+					Record: &agent.RecordRef{EntityType: "shipment", ID: approved},
+				},
 			},
 			{
-				Status:          agent.ProposalStatusExecuted,
-				ExecutedAt:      &earlier,
-				ExecutionResult: &agent.ToolExecutionResult{Record: &agent.RecordRef{EntityType: "shipment", ID: older}},
+				Status:     agent.ProposalStatusExecuted,
+				ExecutedAt: &earlier,
+				ExecutionResult: &agent.ToolExecutionResult{
+					Record: &agent.RecordRef{EntityType: "shipment", ID: older},
+				},
 			},
 		}},
-		actions: []agentports.PendingAction{{
-			Executed:        true,
-			ExecutionResult: &agent.ToolExecutionResult{Record: &agent.RecordRef{EntityType: "location", ID: automatic}},
+		actions: []agentruntimeports.PendingAction{{
+			Executed: true,
+			ExecutionResult: &agent.ToolExecutionResult{
+				Record: &agent.RecordRef{EntityType: "location", ID: automatic},
+			},
 		}},
 		at: 2_100,
 	}

@@ -13,7 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -115,7 +116,8 @@ func (s *AgentRunWorkflowTestSuite) stubPrepare(result *PrepareRunResult) {
 		Return(func(_ context.Context, payload *agentcontract.AgentRunPayload) (*PrepareRunResult, error) {
 			s.Equal(s.payload.RunID, payload.RunID)
 			return result, nil
-		}).Once()
+		}).
+		Once()
 }
 
 // stubOpen opens the run as a real runtime turn, so the loop in workflow code
@@ -125,7 +127,7 @@ func (s *AgentRunWorkflowTestSuite) stubOpen() {
 	s.env.OnActivity(a.OpenRunActivity, mock.Anything, mock.Anything).
 		Return(func(ctx context.Context, input *OpenRunInput) (*OpenRunResult, error) {
 			s.opened = input
-			req := &agentports.RunRequest{
+			req := &agentruntimeports.RunRequest{
 				Definition: input.Definition,
 				Actor:      agentActor(input.Payload.TenantInfo()),
 				Input:      "A scheduled run.",
@@ -145,7 +147,7 @@ func (s *AgentRunWorkflowTestSuite) stubAnswer(text string) {
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).Return(
 		func(_ context.Context, in *agentflow.ModelCallInput) (*agentruntime.ModelReply, error) {
 			s.False(in.Stream, "nobody watches a background run, so nothing is streamed")
-			return &agentruntime.ModelReply{Completion: &agentports.ChatCompletionResult{
+			return &agentruntime.ModelReply{Completion: &llmports.ChatCompletionResult{
 				Text:            text,
 				ModelIdentifier: "test-model",
 			}}, nil

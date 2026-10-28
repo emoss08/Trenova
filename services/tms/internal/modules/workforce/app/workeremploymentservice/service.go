@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
@@ -111,9 +111,9 @@ type Params struct {
 	PTOLedger     *ptoledgerservice.Service
 	DriverPay     *driverpayservice.Service
 	AuditService  auditports.AuditService
-	Realtime      agentports.RealtimeService   `optional:"true"`
-	Checklists    workerports.ChecklistSpawner `optional:"true"`
-	Training      workerports.TrainingAssigner `optional:"true"`
+	Realtime      realtimeports.RealtimeService `optional:"true"`
+	Checklists    workerports.ChecklistSpawner  `optional:"true"`
+	Training      workerports.TrainingAssigner  `optional:"true"`
 }
 
 type Service struct {
@@ -129,7 +129,7 @@ type Service struct {
 	ptoLedger     PTOSettler
 	driverPay     PayAssignmentManager
 	auditService  auditports.AuditService
-	realtime      agentports.RealtimeService
+	realtime      realtimeports.RealtimeService
 	checklists    workerports.ChecklistSpawner
 	training      workerports.TrainingAssigner
 	portal        workerports.PortalAccessRevoker
@@ -169,7 +169,7 @@ type Deps struct {
 	PTOLedger     PTOSettler
 	DriverPay     PayAssignmentManager
 	AuditService  auditports.AuditService
-	Realtime      agentports.RealtimeService
+	Realtime      realtimeports.RealtimeService
 	Checklists    workerports.ChecklistSpawner
 	Training      workerports.TrainingAssigner
 	Portal        workerports.PortalAccessRevoker

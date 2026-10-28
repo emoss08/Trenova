@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -35,7 +35,7 @@ type requestMissingDocsParams struct {
 	Senders   emailports.EmailSenderResolver `optional:"true"`
 }
 
-func NewRequestMissingDocsTool(p requestMissingDocsParams) agentports.AgentTool {
+func NewRequestMissingDocsTool(p requestMissingDocsParams) agenttoolports.AgentTool {
 	return &RequestMissingDocsTool{
 		email:     p.Email,
 		templates: p.Templates,
@@ -103,8 +103,8 @@ func (t *RequestMissingDocsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *RequestMissingDocsTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *RequestMissingDocsTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceCustomerCommunication,
@@ -122,7 +122,7 @@ func (t *RequestMissingDocsTool) Policy() agentports.ToolPolicy {
 
 func (t *RequestMissingDocsTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	composed, err := t.compose(ctx, &params)
 	if err != nil {

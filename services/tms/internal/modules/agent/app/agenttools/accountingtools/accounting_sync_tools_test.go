@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -277,7 +277,7 @@ func newSyncOperator(records ...*accountingsync.AccountingSyncRecord) *fakeSyncO
 	return operator
 }
 
-func syncParams(params map[string]any) agentports.ToolExecuteParams {
+func syncParams(params map[string]any) agenttoolports.ToolExecuteParams {
 	out := agenttoolstest.ExecuteParams(params)
 	out.IdempotencyKey = "call-1"
 	out.Actor.PrincipalType = permissionports.PrincipalTypeUser
@@ -296,9 +296,13 @@ func TestRetryAccountingSync_RetriesNamedRecordsAsTheActor(t *testing.T) {
 		"syncRecordIds": []any{blocked.ID.String(), dead.ID.String(), blocked.ID.String()},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&operator.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Empty(t, preview.Warnings)
 	assert.Contains(t, preview.Summary, "Would send 2 documents to QuickBooks Online again")
 	require.Len(t, preview.Changes, 2)
@@ -314,7 +318,12 @@ func TestRetryAccountingSync_RetriesNamedRecordsAsTheActor(t *testing.T) {
 	assert.Equal(t, params.OrganizationID, operator.retried.TenantInfo.OrgID)
 	assert.Equal(t, integration.TypeQuickBooksOnline, operator.retried.IntegrationType)
 	require.Len(t, operator.savedRecords, 2)
-	agenttoolstest.RequireUpdateParity(t, first, blocked, operator.savedRecords[0], syncRecordOptions()...)
+	agenttoolstest.RequireUpdateParity(
+		t,
+		first,
+		blocked,
+		operator.savedRecords[0],
+		syncRecordOptions()...)
 	agenttoolstest.RequireUpdateParity(
 		t,
 		agenttoolstest.PreviewChange(t, preview, 1),
@@ -334,9 +343,13 @@ func TestRetryAccountingSync_RetriesByErrorCategory(t *testing.T) {
 		"errorCategories": []any{"Transient", "RateLimited"},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&operator.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Transient or RateLimited")
 	assert.Contains(t, preview.Summary, "5 are blocked")
 	assert.True(t, preview.Partial, "the records a category names are not listed")
@@ -373,7 +386,11 @@ func TestRetryAccountingSync_RefusesWhatItCannotRetry(t *testing.T) {
 		{"system": "QuickBooksOnline", "syncRecordIds": []any{held.ID.String()}},
 		{"system": "QuickBooksOnline", "syncRecordIds": []any{pulid.MustNew("acctsr_").String()}},
 	} {
-		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), syncParams(params)), params)
+		require.Error(
+			t,
+			tool.(agenttoolports.ToolValidator).Validate(t.Context(), syncParams(params)),
+			params,
+		)
 	}
 
 	operator.summary.Connection.SyncEnabledAt = nil
@@ -401,9 +418,13 @@ func TestSkipAccountingSync_SkipsWithTheReasonAndNamesItsTarget(t *testing.T) {
 		"reason":       "  Entered by hand in QuickBooks\n on the 3rd.  ",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&operator.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Entered by hand in QuickBooks on the 3rd.")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	status := agenttoolstest.FieldByPath(t, change, "status")
@@ -420,11 +441,16 @@ func TestSkipAccountingSync_SkipsWithTheReasonAndNamesItsTarget(t *testing.T) {
 	assert.Equal(t, "Entered by hand in QuickBooks on the 3rd.", operator.skipped.Reason)
 	assert.Equal(t, params.Actor.UserID, operator.skipped.UserID)
 	require.Len(t, operator.savedRecords, 1)
-	agenttoolstest.RequireUpdateParity(t, change, blocked, operator.savedRecords[0], syncRecordOptions()...)
+	agenttoolstest.RequireUpdateParity(
+		t,
+		change,
+		blocked,
+		operator.savedRecords[0],
+		syncRecordOptions()...)
 
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
-	assert.Equal(t, agentports.ToolTarget{
+	assert.Equal(t, agenttoolports.ToolTarget{
 		Resource: permission.ResourceAccountingSync,
 		ID:       blocked.ID,
 	}, target)
@@ -461,9 +487,13 @@ func TestRedateAccountingSync_SendsOnTheFirstOpenDayAndNamesItsTarget(t *testing
 	tool := newRedateAccountingSyncTool(operator)
 	params := syncParams(map[string]any{"syncRecordId": held.ID.String()})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&operator.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "first open day")
 	assert.Contains(t, preview.Summary, timeutils.FormatCalendarDate(syncEnabledDay, nil))
 	change := agenttoolstest.PreviewChange(t, preview, 0)
@@ -480,11 +510,16 @@ func TestRedateAccountingSync_SendsOnTheFirstOpenDayAndNamesItsTarget(t *testing
 	require.Len(t, operator.savedRecords, 1)
 	require.NotNil(t, operator.savedRecords[0].RedatedTo)
 	assert.Equal(t, syncEnabledDay, *operator.savedRecords[0].RedatedTo)
-	agenttoolstest.RequireUpdateParity(t, change, held, operator.savedRecords[0], syncRecordOptions()...)
+	agenttoolstest.RequireUpdateParity(
+		t,
+		change,
+		held,
+		operator.savedRecords[0],
+		syncRecordOptions()...)
 
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
-	assert.Equal(t, agentports.ToolTarget{
+	assert.Equal(t, agenttoolports.ToolTarget{
 		Resource: permission.ResourceAccountingSync,
 		ID:       held.ID,
 	}, target)
@@ -518,7 +553,10 @@ func TestPauseAccountingSync_PausesWithAReason(t *testing.T) {
 	operator := newSyncOperator()
 	tool := newPauseAccountingSyncTool(operator)
 
-	require.Error(t, tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})))
+	require.Error(
+		t,
+		tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})),
+	)
 	assert.Nil(t, operator.paused)
 
 	params := syncParams(map[string]any{
@@ -526,9 +564,13 @@ func TestPauseAccountingSync_PausesWithAReason(t *testing.T) {
 		"reason": "QuickBooks is down for maintenance until 6pm.",
 	})
 	before := *operator.summary.Connection
-	preview := agenttoolstest.PreviewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&operator.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "9 documents waiting")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceAccountingIntegration, change.Resource)
@@ -570,9 +612,13 @@ func TestResumeAccountingSync_OnlyResumesWhatIsPaused(t *testing.T) {
 	operator.summary.Connection.PausedAt = &paused
 	operator.summary.Connection.PausedReason = "Month-end close"
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&operator.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "9 documents queued")
 	assert.Contains(t, preview.Summary, "Month-end close")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
@@ -599,9 +645,13 @@ func TestRequestAccountingBackfill_SendsTheRangeAPersonAskedFor(t *testing.T) {
 		"documentTypes": []any{"Invoice", "CustomerPayment"},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&operator.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "2026-01-15 to 2026-02-10")
 	assert.Contains(t, preview.Summary, "arrive twice")
 	created := agenttoolstest.PreviewChange(t, preview, 0)
@@ -627,7 +677,10 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 	operator := newSyncOperator()
 	tool := newRequestAccountingBackfillTool(operator)
 
-	require.NoError(t, tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})))
+	require.NoError(
+		t,
+		tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})),
+	)
 	require.NotNil(t, operator.backfilled)
 	assert.Equal(t, syncStartDay, *operator.backfilled.RangeStart)
 	assert.Equal(t, syncEnabledDay, *operator.backfilled.RangeEnd)
@@ -643,7 +696,10 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 
 	settlementsOn := int64(1_772_000_000)
 	operator.summary.Connection.DriverSettlementsEnabledAt = &settlementsOn
-	require.NoError(t, tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})))
+	require.NoError(
+		t,
+		tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})),
+	)
 	assert.Equal(t, []accountingsync.SyncObjectType{
 		accountingsync.SyncObjectInvoice,
 		accountingsync.SyncObjectDebitMemo,
@@ -658,9 +714,16 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 
 	operator.summary.Connection.SyncMode = accountingsync.SyncModeLedger
 	operator.summary.Connection.LedgerGranularity = accountingsync.LedgerDailySummary
-	require.NoError(t, tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})))
-	assert.Equal(t, []accountingsync.SyncObjectType{accountingsync.SyncObjectJournalSummary},
-		operator.backfilled.ObjectTypes, "a ledger connection backfills journal days, never documents")
+	require.NoError(
+		t,
+		tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})),
+	)
+	assert.Equal(
+		t,
+		[]accountingsync.SyncObjectType{accountingsync.SyncObjectJournalSummary},
+		operator.backfilled.ObjectTypes,
+		"a ledger connection backfills journal days, never documents",
+	)
 	operator.summary.Connection.SyncMode = accountingsync.SyncModeDocument
 	operator.summary.Connection.LedgerGranularity = ""
 
@@ -670,10 +733,13 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	operator.summary.Connection.DriverSettlementsEnabledAt = nil
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), syncParams(map[string]any{
-		"system":        "QuickBooksOnline",
-		"documentTypes": []any{"DriverBill"},
-	}))
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(
+		t.Context(),
+		syncParams(map[string]any{
+			"system":        "QuickBooksOnline",
+			"documentTypes": []any{"DriverBill"},
+		}),
+	)
 	require.NoError(t, err)
 	assert.Empty(t, preview.Changes)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
@@ -697,7 +763,10 @@ func TestRequestAccountingBackfill_RefusesWhatCannotBeBackfilled(t *testing.T) {
 	operator.summary.ActiveBackfill = &accountingsync.AccountingBackfill{
 		Status: accountingsync.BackfillStatusRunning,
 	}
-	require.Error(t, tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})))
+	require.Error(
+		t,
+		tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})),
+	)
 	operator.summary.ActiveBackfill = nil
 
 	agentParams := syncParams(map[string]any{"system": "QuickBooksOnline"})
@@ -711,7 +780,7 @@ func TestAccountingSyncTools_CarryTheirSafetyTiers(t *testing.T) {
 
 	operator := newSyncOperator()
 	cases := []struct {
-		tool       agentports.AgentTool
+		tool       agenttoolports.AgentTool
 		resource   permission.Resource
 		operation  permission.Operation
 		tier       agent.AutonomyTier
@@ -749,7 +818,10 @@ func TestAccountingSyncTools_CarryTheirSafetyTiers(t *testing.T) {
 		assert.Equal(t, []agent.EgressClass{agent.EgressInternal}, policy.Egress, tc.tool.Name())
 	}
 	assert.True(t, newRetryAccountingSyncTool(operator).Policy().Idempotent)
-	assert.True(t, permission.IsAgentAllowed(permission.ResourceAccountingSync, permission.OpUpdate))
+	assert.True(
+		t,
+		permission.IsAgentAllowed(permission.ResourceAccountingSync, permission.OpUpdate),
+	)
 	assert.False(t,
 		permission.IsAgentAllowed(permission.ResourceAccountingIntegration, permission.OpManage),
 		"backfilling stays with a person who manages the integration",

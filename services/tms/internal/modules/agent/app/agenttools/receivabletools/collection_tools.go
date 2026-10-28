@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/collection"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -136,7 +136,7 @@ func collectionCustomerProperty() map[string]any {
 			"receivable_get_aging or customer_list. Never guess one.")
 }
 
-func collectionTarget(params map[string]any) (agentports.ToolTarget, bool) {
+func collectionTarget(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, common.ParamCustomerID, permission.ResourceCustomer)
 }
 
@@ -222,7 +222,7 @@ func customerRecord(customerID pulid.ID) *agent.RecordRef {
 	return &agent.RecordRef{EntityType: common.CustomerRecordEntity, ID: customerID.String()}
 }
 
-func NewLogCollectionActivityTool(collections collectionports.Service) agentports.AgentTool {
+func NewLogCollectionActivityTool(collections collectionports.Service) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name: toolLogCollectionActivity,
@@ -292,7 +292,7 @@ func NewLogCollectionActivityTool(collections collectionports.Service) agentport
 			Plan: func(
 				ctx context.Context,
 				req *collectionports.LogActivityRequest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*collectionports.AccountChangePlan, error) {
 				return collections.PlanLogActivity(ctx, req, params.Actor)
 			},
@@ -310,7 +310,7 @@ func NewLogCollectionActivityTool(collections collectionports.Service) agentport
 			Run: func(
 				ctx context.Context,
 				req *collectionports.LogActivityRequest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				view, err := collections.LogActivity(ctx, req, params.Actor)
 				if err != nil {
@@ -323,7 +323,7 @@ func NewLogCollectionActivityTool(collections collectionports.Service) agentport
 }
 
 func logActivityRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*collectionports.LogActivityRequest, error) {
 	customerID, err := common.RequirePulid(params.Params, common.ParamCustomerID)
 	if err != nil {
@@ -407,7 +407,7 @@ func activityNoun(kind collection.ActivityKind) string {
 	}
 }
 
-func NewAssignCollectorTool(collections collectionports.Service) agentports.AgentTool {
+func NewAssignCollectorTool(collections collectionports.Service) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:   toolAssignCollector,
@@ -445,7 +445,7 @@ func NewAssignCollectorTool(collections collectionports.Service) agentports.Agen
 			*collectionports.AccountChangePlan,
 		]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*collectionports.AssignCollectorRequest, error) {
 				customerID, err := common.RequirePulid(params.Params, common.ParamCustomerID)
 				if err != nil {
@@ -467,7 +467,7 @@ func NewAssignCollectorTool(collections collectionports.Service) agentports.Agen
 			Plan: func(
 				ctx context.Context,
 				req *collectionports.AssignCollectorRequest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*collectionports.AccountChangePlan, error) {
 				return collections.PlanAssignCollector(ctx, req, params.Actor)
 			},
@@ -499,7 +499,7 @@ func NewAssignCollectorTool(collections collectionports.Service) agentports.Agen
 			Run: func(
 				ctx context.Context,
 				req *collectionports.AssignCollectorRequest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				view, err := collections.AssignCollector(ctx, req, params.Actor)
 				if err != nil {
@@ -511,7 +511,9 @@ func NewAssignCollectorTool(collections collectionports.Service) agentports.Agen
 	)
 }
 
-func NewScheduleCollectionFollowUpTool(collections collectionports.Service) agentports.AgentTool {
+func NewScheduleCollectionFollowUpTool(
+	collections collectionports.Service,
+) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:   toolScheduleCollectionFollowUp,
@@ -549,7 +551,7 @@ func NewScheduleCollectionFollowUpTool(collections collectionports.Service) agen
 			*collectionports.AccountChangePlan,
 		]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*collectionports.ScheduleFollowUpRequest, error) {
 				customerID, err := common.RequirePulid(params.Params, common.ParamCustomerID)
 				if err != nil {
@@ -577,7 +579,7 @@ func NewScheduleCollectionFollowUpTool(collections collectionports.Service) agen
 			Plan: func(
 				ctx context.Context,
 				req *collectionports.ScheduleFollowUpRequest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*collectionports.AccountChangePlan, error) {
 				return collections.PlanScheduleFollowUp(ctx, req, params.Actor)
 			},
@@ -599,7 +601,7 @@ func NewScheduleCollectionFollowUpTool(collections collectionports.Service) agen
 			Run: func(
 				ctx context.Context,
 				req *collectionports.ScheduleFollowUpRequest,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				view, err := collections.ScheduleFollowUp(ctx, req, params.Actor)
 				if err != nil {

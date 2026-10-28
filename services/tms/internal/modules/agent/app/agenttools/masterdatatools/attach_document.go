@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -38,7 +38,7 @@ type AttachDocumentTool struct {
 	documents documentAttacher
 }
 
-func NewAttachDocumentTool(documents documentAttacher) agentports.AgentTool {
+func NewAttachDocumentTool(documents documentAttacher) agenttoolports.AgentTool {
 	return &AttachDocumentTool{documents: documents}
 }
 
@@ -76,8 +76,8 @@ func (t *AttachDocumentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *AttachDocumentTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *AttachDocumentTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDocument,
@@ -96,13 +96,13 @@ func (t *AttachDocumentTool) Policy() agentports.ToolPolicy {
 // Target names the record this changes, so the proposal is pinned to the
 // document's version and a file somebody moved in the meantime cannot be moved
 // again on stale information.
-func (t *AttachDocumentTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *AttachDocumentTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, "documentId", permission.ResourceDocument)
 }
 
 func (t *AttachDocumentTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	return t.validateArgs(params.Params)
 }
@@ -120,7 +120,7 @@ func (t *AttachDocumentTool) validateArgs(params map[string]any) error {
 
 func (t *AttachDocumentTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -144,7 +144,7 @@ func (t *AttachDocumentTool) Execute(
 }
 
 func (t *AttachDocumentTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*documentservice.AttachLineageRequest, error) {
 	documentID, err := common.RequirePulid(params.Params, "documentId")
 	if err != nil {

@@ -7,6 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,17 +22,17 @@ func TestRun_AMoneyWritePastTheCeilingIsFiledNamingTheBound(t *testing.T) {
 	t.Parallel()
 
 	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
 		textTurn("Filed."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	limits := roomyMoneyLimits()
 	limits.CallCeilingMinor = 9_999
 	rt.budgets = &moneyBudgets{Limits: limits}
 
-	run := runTainted(t, rt, &agentports.RunRequest{
+	run := runTainted(t, rt, &agentruntimeports.RunRequest{
 		Definition: autoDefinition("apply_payment"),
 		Actor:      testActor(),
 		Input:      "Apply the payment.",
@@ -48,19 +51,19 @@ func TestRun_WritesEarlierInTheTurnCountAgainstTheRunCap(t *testing.T) {
 	t.Parallel()
 
 	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_2"}),
 		textTurn("Applied one."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	limits := roomyMoneyLimits()
 	limits.RunCalls = 1
 	budgets := &moneyBudgets{Limits: limits}
 	rt.budgets = budgets
 
-	run := runTainted(t, rt, &agentports.RunRequest{
+	run := runTainted(t, rt, &agentruntimeports.RunRequest{
 		Definition: autoDefinition("apply_payment"),
 		Actor:      testActor(),
 		Input:      "Apply both payments.",
@@ -86,15 +89,15 @@ func TestRun_MoneyLimitsThatCannotBeReadHoldTheWrite(t *testing.T) {
 			t.Parallel()
 
 			pay := moneyTool()
-			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+			completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 				toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
 				textTurn("Filed."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{},
-				&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+				&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 			rt.budgets = budgets
 
-			run := runTainted(t, rt, &agentports.RunRequest{
+			run := runTainted(t, rt, &agentruntimeports.RunRequest{
 				Definition: autoDefinition("apply_payment"),
 				Actor:      testActor(),
 				Input:      "Apply the payment.",
@@ -112,15 +115,15 @@ func TestRun_AMoneyToolThatProvesNothingAsksFirst(t *testing.T) {
 
 	pay := moneyTool()
 	pay.MoneyMinor = nil
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
 		textTurn("Filed."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	rt.budgets = &moneyBudgets{Limits: roomyMoneyLimits()}
 
-	run := runTainted(t, rt, &agentports.RunRequest{
+	run := runTainted(t, rt, &agentruntimeports.RunRequest{
 		Definition: autoDefinition("apply_payment"),
 		Actor:      testActor(),
 		Input:      "Apply the payment.",

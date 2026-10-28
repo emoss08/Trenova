@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingtransferjobs/billingtransfercontract"
@@ -42,7 +42,7 @@ type ActivitiesParams struct {
 	Transfers           *billingtransferservice.Service
 	ShipmentService     shipmentports.ShipmentService
 	NotificationService *notificationservice.Service
-	RealtimeService     agentports.RealtimeService `optional:"true"`
+	RealtimeService     realtimeports.RealtimeService `optional:"true"`
 	Logger              *zap.Logger
 }
 
@@ -53,7 +53,7 @@ type Activities struct {
 	transfers    *billingtransferservice.Service
 	shipments    shipmentports.ShipmentService
 	notification *notificationservice.Service
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 	l            *zap.Logger
 }
 
@@ -567,7 +567,7 @@ func (a *Activities) publishRunChanged(
 
 	if err := a.realtime.PublishResourceInvalidation(
 		ctx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: run.OrganizationID,
 			BusinessUnitID: run.BusinessUnitID,
 			Resource:       invalidationResource,

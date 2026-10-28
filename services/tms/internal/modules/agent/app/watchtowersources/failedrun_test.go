@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -13,14 +13,14 @@ import (
 )
 
 type recordingFailedRuns struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 
-	requests []*agentports.ListAgentRunRequest
+	requests []*agentruntimeports.ListAgentRunRequest
 }
 
 func (r *recordingFailedRuns) List(
 	_ context.Context,
-	req *agentports.ListAgentRunRequest,
+	req *agentruntimeports.ListAgentRunRequest,
 ) (*pagination.ListResult[*agent.AgentRun], error) {
 	r.requests = append(r.requests, req)
 
@@ -40,7 +40,7 @@ func TestFailedRunSource_LeavesConversationRunsOffTheSharedTower(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, runs.requests, 1)
-	assert.Equal(t, agentports.PersonRunRead(pulid.Nil), runs.requests[0].Reader,
+	assert.Equal(t, agentruntimeports.PersonRunRead(pulid.Nil), runs.requests[0].Reader,
 		"a failed run's summary can repeat a private conversation, and the tower is "+
 			"read by everyone who may read agent runs")
 }

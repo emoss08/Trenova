@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,7 +14,7 @@ func TestMemoryNote_CarriesWhyAndWhatItReplaced(t *testing.T) {
 	t.Parallel()
 
 	old := pulid.MustNew("amem_")
-	note := memoryNote(&agentports.DeskMemory{
+	note := memoryNote(&agentmemoryports.DeskMemory{
 		Memory: &agent.Memory{
 			ID:       pulid.MustNew("amem_"),
 			Kind:     agent.MemoryKindProcedure,
@@ -24,7 +24,7 @@ func TestMemoryNote_CarriesWhyAndWhatItReplaced(t *testing.T) {
 			Content:  "Read the move before assigning it.",
 			Evidence: &agent.MemoryEvidence{Reason: "Assigning failed until the move was read."},
 		},
-		Replaces: &agentports.DeskMemoryLink{
+		Replaces: &agentmemoryports.DeskMemoryLink{
 			ID:      old,
 			Content: "Assign the move straight away.",
 			Status:  agent.MemoryStatusRetired,
@@ -42,7 +42,7 @@ func TestMemoryNote_CarriesWhyAndWhatItReplaced(t *testing.T) {
 func TestMemoryNote_AMemoryWithoutEvidenceHasNoWhy(t *testing.T) {
 	t.Parallel()
 
-	note := memoryNote(&agentports.DeskMemory{
+	note := memoryNote(&agentmemoryports.DeskMemory{
 		Memory: &agent.Memory{ID: pulid.MustNew("amem_"), Source: agent.MemorySourceUser},
 	})
 

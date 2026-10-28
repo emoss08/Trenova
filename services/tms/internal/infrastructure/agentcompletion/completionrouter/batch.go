@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,12 +29,12 @@ const (
 	batchFailedPrefix = "batch item ended "
 )
 
-var _ agentports.BatchCompletionService = (*Service)(nil)
+var _ llmports.BatchCompletionService = (*Service)(nil)
 
 func (s *Service) SubmitBatch(
 	ctx context.Context,
-	req *agentports.BatchCompletionRequest,
-) (*agentports.BatchHandle, error) {
+	req *llmports.BatchCompletionRequest,
+) (*llmports.BatchHandle, error) {
 	if !s.ai.AIEnabled() {
 		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
@@ -52,12 +53,12 @@ func (s *Service) SubmitBatch(
 	provider := usable[0]
 	runner, ok := s.batchRunner(provider)
 	if !ok {
-		return nil, fmt.Errorf("%s: %w", provider.Name, agentports.ErrBatchUnsupported)
+		return nil, fmt.Errorf("%s: %w", provider.Name, llmports.ErrBatchUnsupported)
 	}
 
 	included, estimate := affordable(provider, req, runs)
 	if len(included) == 0 {
-		return nil, fmt.Errorf("%s: %w", provider.Name, agentports.ErrBatchOverBudget)
+		return nil, fmt.Errorf("%s: %w", provider.Name, llmports.ErrBatchOverBudget)
 	}
 
 	var submitted *modeladapter.BatchSubmission
@@ -92,7 +93,7 @@ func (s *Service) SubmitBatch(
 		customIDs = append(customIDs, req.Items[idx].CustomID)
 	}
 
-	return &agentports.BatchHandle{
+	return &llmports.BatchHandle{
 		ProviderID:       provider.ID,
 		BatchID:          submitted.ID,
 		Model:            provider.Model,
@@ -102,7 +103,7 @@ func (s *Service) SubmitBatch(
 	}, nil
 }
 
-func batchRuns(req *agentports.BatchCompletionRequest) ([]*runRequest, error) {
+func batchRuns(req *llmports.BatchCompletionRequest) ([]*runRequest, error) {
 	if len(req.Items) == 0 {
 		return nil, errortypes.NewBusinessError("A batch needs at least one request")
 	}
@@ -142,7 +143,7 @@ func batchRuns(req *agentports.BatchCompletionRequest) ([]*runRequest, error) {
 
 func affordable(
 	provider *aiprovider.Provider,
-	req *agentports.BatchCompletionRequest,
+	req *llmports.BatchCompletionRequest,
 	runs []*runRequest,
 ) ([]int, decimal.Decimal) {
 	included := make([]int, 0, len(runs))
@@ -239,7 +240,7 @@ func (s *Service) batchProvider(
 		return nil, nil, errortypes.NewBusinessError("A batch id is required")
 	}
 
-	provider, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	provider, err := s.repo.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenant,
 	})
@@ -258,7 +259,7 @@ func (s *Service) batchProvider(
 	}
 	runner, ok := adapter.(modeladapter.BatchRunner)
 	if !ok {
-		return nil, nil, fmt.Errorf("%s: %w", provider.Name, agentports.ErrBatchUnsupported)
+		return nil, nil, fmt.Errorf("%s: %w", provider.Name, llmports.ErrBatchUnsupported)
 	}
 
 	return provider, runner, nil
@@ -266,8 +267,8 @@ func (s *Service) batchProvider(
 
 func (s *Service) BatchStatus(
 	ctx context.Context,
-	req *agentports.BatchStatusRequest,
-) (*agentports.BatchStatus, error) {
+	req *llmports.BatchStatusRequest,
+) (*llmports.BatchStatus, error) {
 	provider, runner, err := s.batchProvider(ctx, req.TenantInfo, req.ProviderID, req.BatchID)
 	if err != nil {
 		return nil, err
@@ -289,7 +290,7 @@ func (s *Service) BatchStatus(
 		return nil, fmt.Errorf("read batch %s from %s: %w", req.BatchID, provider.Name, err)
 	}
 
-	return &agentports.BatchStatus{
+	return &llmports.BatchStatus{
 		Ended:      progress.Ended,
 		RawStatus:  progress.RawStatus,
 		Processing: progress.Processing,
@@ -302,8 +303,8 @@ func (s *Service) BatchStatus(
 
 func (s *Service) BatchResults(
 	ctx context.Context,
-	req *agentports.BatchResultsRequest,
-) (map[string]agentports.BatchItemResult, error) {
+	req *llmports.BatchResultsRequest,
+) (map[string]llmports.BatchItemResult, error) {
 	provider, runner, err := s.batchProvider(ctx, req.TenantInfo, req.ProviderID, req.BatchID)
 	if err != nil {
 		return nil, err
@@ -344,18 +345,18 @@ type batchReader struct {
 	service  *Service
 	provider *aiprovider.Provider
 	task     aiprovider.Task
-	req      *agentports.BatchResultsRequest
-	results  map[string]agentports.BatchItemResult
+	req      *llmports.BatchResultsRequest
+	results  map[string]llmports.BatchItemResult
 	rows     []*aiusage.AIUsageRecord
 }
 
 func (r *batchReader) reset() {
-	r.results = make(map[string]agentports.BatchItemResult)
+	r.results = make(map[string]llmports.BatchItemResult)
 	r.rows = r.rows[:0]
 }
 
 func (r *batchReader) read(ctx context.Context, item *modeladapter.BatchItem) {
-	result := agentports.BatchItemResult{
+	result := llmports.BatchItemResult{
 		CustomID:       item.CustomID,
 		FailureCode:    item.FailureCode,
 		FailureMessage: item.FailureMessage,
@@ -372,7 +373,7 @@ func (r *batchReader) read(ctx context.Context, item *modeladapter.BatchItem) {
 			stringutils.FirstNonEmpty(item.FailureMessage, "no reason given"))
 	}
 	if outcome != nil && failure == nil {
-		result.Result = &agentports.StructuredCompletionResult{
+		result.Result = &llmports.StructuredCompletionResult{
 			Text:             outcome.Text,
 			ModelIdentifier:  outcome.Model,
 			InputTokens:      outcome.InputTokens,

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -232,7 +232,7 @@ func getCapacity(keeper CapacityKeeper) func(
 func NewCreateCarrierCapacityPostingTool(
 	keeper CapacityKeeper,
 	states StateLookup,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[carriercapacity.Posting]{
 		record: capacityRecord,
 		name:   "carrier_create_capacity_posting",
@@ -272,7 +272,7 @@ func NewCreateCarrierCapacityPostingTool(
 func NewUpdateCarrierCapacityPostingTool(
 	keeper CapacityKeeper,
 	states StateLookup,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[carriercapacity.Posting]{
 		record: capacityRecord,
 		name:   "carrier_update_capacity_posting",
@@ -290,7 +290,7 @@ func NewUpdateCarrierCapacityPostingTool(
 	})
 }
 
-func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agentports.AgentTool {
+func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agenttoolports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
 		Name:        "carrier_delete_capacity_posting",
 		Description: "Remove a carrier capacity posting the carrier withdrew or that was entered by mistake.",
@@ -312,13 +312,13 @@ func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agentports.Agent
 		Prerequisites: []string{capacityRecord.lister},
 		Target:        capacityRecord.target,
 	}, common.ReceivablePlan[pulid.ID, *carriercapacity.Posting]{
-		Request: func(params *agentports.ToolExecuteParams) (pulid.ID, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
 			return common.RequirePulid(params.Params, paramPostingID)
 		},
 		Plan: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*carriercapacity.Posting, error) {
 			return keeper.PlanDelete(ctx, &carriercapacityports.DeleteCarrierCapacityPostingRequest{
 				ID:         id,
@@ -339,7 +339,7 @@ func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agentports.Agent
 		Run: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			tenant := common.TenantFrom(*params)
 			current, err := keeper.Get(ctx, &carriercapacityports.GetCarrierCapacityPostingRequest{

@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -42,9 +43,9 @@ func queuePage(from, count int, more map[string]any) map[string]any {
 	return page
 }
 
-func pageRead(callID string, arguments, data map[string]any) agentports.ToolObservation {
-	return agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: callID, Name: pagedTool, Arguments: arguments},
+func pageRead(callID string, arguments, data map[string]any) agentruntimeports.ToolObservation {
+	return agentruntimeports.ToolObservation{
+		Call: llmports.ToolCall{ID: callID, Name: pagedTool, Arguments: arguments},
 		Data: data,
 	}
 }
@@ -230,9 +231,9 @@ func TestArtifactRecorder_ALastPageOfOneRecordStaysInItsTable(t *testing.T) {
 	template := func(id, name string) map[string]any {
 		return map[string]any{"id": id, "name": name, "status": "Active"}
 	}
-	read := func(callID string, arguments, data map[string]any) agentports.ToolObservation {
-		return agentports.ToolObservation{
-			Call: agentports.ToolCall{
+	read := func(callID string, arguments, data map[string]any) agentruntimeports.ToolObservation {
+		return agentruntimeports.ToolObservation{
+			Call: llmports.ToolCall{
 				ID: callID, Name: "formula_list_templates", Arguments: arguments,
 			},
 			Data: data,
@@ -418,8 +419,8 @@ func TestArtifactRecorder_AReportRunNamesTheAgentThatRanIt(t *testing.T) {
 	repo := &stubArtifactRepo{}
 	recorder := newReaderRecorder(t, repo, agents, agentID)
 
-	_, err := recorder.observe(agentports.ToolObservation{
-		Call: agentports.ToolCall{
+	_, err := recorder.observe(agentruntimeports.ToolObservation{
+		Call: llmports.ToolCall{
 			ID:        "call_run",
 			Name:      toolRunReport,
 			Arguments: map[string]any{"reportKey": "revenue-by-customer"},

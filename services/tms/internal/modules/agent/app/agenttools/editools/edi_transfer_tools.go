@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -128,8 +128,8 @@ func (t *EdiTransferDecisionTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(properties, required...)
 }
 
-func (t *EdiTransferDecisionTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *EdiTransferDecisionTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceEDI,
@@ -144,12 +144,12 @@ func (t *EdiTransferDecisionTool) Policy() agentports.ToolPolicy {
 	}
 }
 
-func (t *EdiTransferDecisionTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *EdiTransferDecisionTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramEDITransferID, permission.ResourceEDI)
 }
 
 func (t *EdiTransferDecisionTool) call(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*tenderCall, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -187,7 +187,7 @@ func (t *EdiTransferDecisionTool) call(
 
 func (t *EdiTransferDecisionTool) outcome(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*tenderCall, *tenderOutcome, error) {
 	call, err := t.call(params)
 	if err != nil {
@@ -204,7 +204,7 @@ func (t *EdiTransferDecisionTool) outcome(
 
 func (t *EdiTransferDecisionTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	_, outcome, err := t.outcome(ctx, &params)
 	if err != nil {
@@ -216,7 +216,7 @@ func (t *EdiTransferDecisionTool) Validate(
 
 func (t *EdiTransferDecisionTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -339,7 +339,7 @@ func planExpireTender(
 	}.settle(ctx, decider, call)
 }
 
-func NewAcceptEDILoadTenderTool(decider ediTransferDecider) agentports.AgentTool {
+func NewAcceptEDILoadTenderTool(decider ediTransferDecider) agenttoolports.AgentTool {
 	return &EdiTransferDecisionTool{edi: decider, decision: transferDecision{
 		name: "edi_accept_tender",
 		recipe: []string{
@@ -372,7 +372,7 @@ func NewAcceptEDILoadTenderTool(decider ediTransferDecider) agentports.AgentTool
 	}}
 }
 
-func NewDeclineEDILoadTenderTool(decider ediTransferDecider) agentports.AgentTool {
+func NewDeclineEDILoadTenderTool(decider ediTransferDecider) agenttoolports.AgentTool {
 	return &EdiTransferDecisionTool{edi: decider, decision: transferDecision{
 		name:   "edi_decline_tender",
 		recipe: []string{toolEDIListTransfers, "edi_get_transfer", "edi_decline_tender"},
@@ -398,7 +398,7 @@ func NewDeclineEDILoadTenderTool(decider ediTransferDecider) agentports.AgentToo
 	}}
 }
 
-func NewCancelEDILoadTenderTool(decider ediTransferDecider) agentports.AgentTool {
+func NewCancelEDILoadTenderTool(decider ediTransferDecider) agenttoolports.AgentTool {
 	return &EdiTransferDecisionTool{edi: decider, decision: transferDecision{
 		name:        "edi_cancel_tender",
 		recipe:      []string{toolEDIListTransfers, "edi_cancel_tender"},
@@ -422,7 +422,7 @@ func NewCancelEDILoadTenderTool(decider ediTransferDecider) agentports.AgentTool
 	}}
 }
 
-func NewExpireEDILoadTenderTool(decider ediTransferDecider) agentports.AgentTool {
+func NewExpireEDILoadTenderTool(decider ediTransferDecider) agenttoolports.AgentTool {
 	return &EdiTransferDecisionTool{edi: decider, decision: transferDecision{
 		name:   "edi_expire_tender",
 		recipe: []string{toolEDIListTransfers, "edi_expire_tender"},

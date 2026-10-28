@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 )
 
 // unregisteredToolLabel is the tool a call is counted under when it names
@@ -70,7 +70,7 @@ func (s *Service) reask(
 	t *Turn,
 	fx TurnEffects,
 	guard string,
-	completion *agentports.ChatCompletionResult,
+	completion *llmports.ChatCompletionResult,
 ) {
 	t.reask = guard
 	if aware, ok := fx.(ReplayAware); ok && aware.Replaying() {

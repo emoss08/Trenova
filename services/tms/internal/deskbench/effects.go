@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/jackc/pgx/v5"
 )
@@ -397,12 +397,15 @@ func (b *Bench) isWriteTool(name string) bool {
 
 func (b *Bench) escalates(name string) bool {
 	if tool, ok := b.ActionTools.Get(name); ok {
-		if policy, has := agentports.PolicyOf(tool); has {
+		if policy, has := agenttoolports.PolicyOf(tool); has {
 			return policy.Escalates
 		}
 	}
 	policies := agentruntime.RuntimePolicies()
-	at := slices.IndexFunc(policies, func(p agentports.ToolPolicy) bool { return p.Name == name })
+	at := slices.IndexFunc(
+		policies,
+		func(p agenttoolports.ToolPolicy) bool { return p.Name == name },
+	)
 
 	return at >= 0 && policies[at].Escalates
 }

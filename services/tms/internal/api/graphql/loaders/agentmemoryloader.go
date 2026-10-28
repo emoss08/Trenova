@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -14,14 +14,14 @@ import (
 type agentMemoriesByIDsLister interface {
 	ListByIDs(
 		ctx context.Context,
-		req agentports.ListAgentMemoriesByIDsRequest,
+		req agentmemoryports.ListAgentMemoriesByIDsRequest,
 	) ([]*agent.Memory, error)
 }
 
 type AgentMemoryByIDLoaderFactoryParams struct {
 	fx.In
 
-	Memories agentports.AgentMemoryRepository
+	Memories agentmemoryports.AgentMemoryRepository
 }
 
 type AgentMemoryByIDLoaderFactory struct {
@@ -39,7 +39,7 @@ func newAgentMemoryByIDLoader(f *AgentMemoryByIDLoaderFactory,
 ) *dataloadgen.Loader[string, *agent.Memory] {
 	return newLoader(batchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*agent.Memory, error) {
-			return f.memories.ListByIDs(ctx, agentports.ListAgentMemoriesByIDsRequest{
+			return f.memories.ListByIDs(ctx, agentmemoryports.ListAgentMemoriesByIDsRequest{
 				TenantInfo: tenantInfo,
 				IDs:        ids,
 			})
@@ -51,14 +51,14 @@ func newAgentMemoryByIDLoader(f *AgentMemoryByIDLoaderFactory,
 type agentMemoryReplacementsLister interface {
 	ListReplacements(
 		ctx context.Context,
-		req agentports.ListAgentMemoryReplacementsRequest,
+		req agentmemoryports.ListAgentMemoryReplacementsRequest,
 	) ([]*agent.Memory, error)
 }
 
 type AgentMemoryReplacementLoaderFactoryParams struct {
 	fx.In
 
-	Memories agentports.AgentMemoryRepository
+	Memories agentmemoryports.AgentMemoryRepository
 }
 
 type AgentMemoryReplacementLoaderFactory struct {
@@ -92,7 +92,7 @@ func batchReplacementFunc(
 
 		replacements, err := memories.ListReplacements(
 			ctx,
-			agentports.ListAgentMemoryReplacementsRequest{
+			agentmemoryports.ListAgentMemoryReplacementsRequest{
 				TenantInfo:  tenantInfo,
 				ReplacedIDs: ids,
 			},

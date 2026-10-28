@@ -5,7 +5,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -81,9 +82,9 @@ func ConvertedListResource(name string) permission.Resource {
 // ConvertedListTool is the registered converted list of that name.
 func ConvertedListTool(
 	name string,
-	reader agentports.GraphQLReader,
+	reader graphqlreadports.GraphQLReader,
 	permissions permissionports.PermissionEngine,
-) (agentports.AgentQueryTool, error) {
+) (agenttoolports.AgentQueryTool, error) {
 	specs := convertedListSpecs()
 	for idx := range specs {
 		if specs[idx].name == name {
@@ -125,7 +126,7 @@ func ConvertedGetResource(name string) permission.Resource {
 }
 
 // ConvertedGetCall is the call a converted get takes for that id.
-func ConvertedGetCall(tool agentports.AgentQueryTool, id pulid.ID) map[string]any {
+func ConvertedGetCall(tool agenttoolports.AgentQueryTool, id pulid.ID) map[string]any {
 	get, ok := tool.(*graphQLGetTool)
 	if !ok {
 		return nil
@@ -162,9 +163,9 @@ func requiredCall(params []graphQLParam, required []string) map[string]any {
 // ConvertedGetTool is the registered converted get of that name.
 func ConvertedGetTool(
 	name string,
-	reader agentports.GraphQLReader,
+	reader graphqlreadports.GraphQLReader,
 	permissions permissionports.PermissionEngine,
-) (agentports.AgentQueryTool, error) {
+) (agenttoolports.AgentQueryTool, error) {
 	specs := graphQLGetSpecs()
 	for idx := range specs {
 		if specs[idx].name == name {
@@ -177,7 +178,7 @@ func ConvertedGetTool(
 
 // MinimalCall is the smallest call a converted list takes: a page of five,
 // or, for a list keyed by a record, that record's id.
-func MinimalCall(tool agentports.AgentQueryTool) map[string]any {
+func MinimalCall(tool agenttoolports.AgentQueryTool) map[string]any {
 	if list, isList := tool.(*graphQLListTool); isList {
 		call := requiredCall(list.params, list.required)
 		call["limit"] = 5
@@ -213,7 +214,7 @@ func requiredID(param graphQLParam) any {
 // ExpectedMention is how a converted list's description must name one of its
 // parameters, and whether it must name it at all: a parameter whose field is
 // hidden at the default data access, or a range's upper end, it need not.
-func ExpectedMention(tool agentports.AgentQueryTool, name string) (string, bool) {
+func ExpectedMention(tool agenttoolports.AgentQueryTool, name string) (string, bool) {
 	list, ok := tool.(*graphQLListTool)
 	if !ok {
 		return "", false
@@ -239,8 +240,8 @@ func ExpectedMention(tool agentports.AgentQueryTool, name string) (string, bool)
 // RunView reads a composed view through a list tool, as compose does.
 func RunView(
 	ctx context.Context,
-	tool agentports.AgentQueryTool,
-	params *agentports.QueryToolParams,
+	tool agenttoolports.AgentQueryTool,
+	params *agenttoolports.QueryToolParams,
 	filters []domaintypes.FieldFilter,
 	sorting []domaintypes.SortField,
 ) error {

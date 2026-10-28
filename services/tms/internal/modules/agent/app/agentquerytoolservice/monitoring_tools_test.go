@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
@@ -492,7 +492,7 @@ func TestListWeatherAlerts_KeepsSevereAndWorseByDefault(t *testing.T) {
 func TestMonitoringTools_RejectAMismatchedActor(t *testing.T) {
 	t.Parallel()
 
-	tools := []agentports.AgentQueryTool{
+	tools := []agenttoolports.AgentQueryTool{
 		newGetShipmentTrackingTool(
 			&fakeTrackingShipments{},
 			&fakeBoardMoves{},

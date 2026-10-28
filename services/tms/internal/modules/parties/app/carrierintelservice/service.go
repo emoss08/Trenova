@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
@@ -61,14 +62,14 @@ type Params struct {
 	CarrierService *carrierservice.Service
 	Notifications  *notificationservice.Service
 	AuditService   auditports.AuditService
-	Realtime       agentports.RealtimeService
+	Realtime       realtimeports.RealtimeService
 	// Watchtower puts a change on a carrier's authority, insurance or
 	// safety record on the feed and takes it off once it is resolved.
-	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector `                                                          optional:"true"`
 	// Publisher wakes whichever agent covers carrier risk on a finding the
 	// tower would show a person.
-	Publisher agentports.AgentEventPublisher `optional:"true"`
-	Plans     platformplanports.PlanService  `optional:"true"`
+	Publisher agentports.AgentEventPublisher `                                                          optional:"true"`
+	Plans     platformplanports.PlanService  `                                                          optional:"true"`
 }
 
 type Service struct {
@@ -93,7 +94,7 @@ type Service struct {
 	carrierService  CarrierWriter
 	notifications   NotificationSender
 	auditService    auditports.AuditService
-	realtime        agentports.RealtimeService
+	realtime        realtimeports.RealtimeService
 	watchtower      watchtowerports.WatchtowerProjector
 	publisher       agentports.AgentEventPublisher
 	interactiveWait time.Duration

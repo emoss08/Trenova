@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
@@ -48,7 +48,7 @@ type Params struct {
 	WorkflowStarter kernelports.WorkflowStarter
 	AuditService    auditports.AuditService
 	DriverNotify    *drivernotificationservice.Service `optional:"true"`
-	Realtime        agentports.RealtimeService         `optional:"true"`
+	Realtime        realtimeports.RealtimeService      `optional:"true"`
 	Plans           platformplanports.PlanService      `optional:"true"`
 }
 
@@ -62,7 +62,7 @@ type Service struct {
 	workflowStarter kernelports.WorkflowStarter
 	auditService    auditports.AuditService
 	driverNotify    *drivernotificationservice.Service
-	realtime        agentports.RealtimeService
+	realtime        realtimeports.RealtimeService
 	plans           platformplanports.PlanService
 }
 

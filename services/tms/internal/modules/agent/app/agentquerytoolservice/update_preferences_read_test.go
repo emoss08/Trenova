@@ -3,7 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,8 +14,8 @@ import (
 func preferencesAnswer(
 	preference, recipients any,
 	withheld ...string,
-) map[string]*agentports.GraphQLReadResult {
-	return map[string]*agentports.GraphQLReadResult{"DeskCustomerUpdatePreferences": {
+) map[string]*graphqlreadports.GraphQLReadResult {
+	return map[string]*graphqlreadports.GraphQLReadResult{"DeskCustomerUpdatePreferences": {
 		Data: map[string]any{"customer": map[string]any{
 			"id": "cus_1", "name": "FreshHaul", "statusUpdatePreference": preference,
 			"statusUpdateRecipients": recipients,
@@ -29,7 +29,7 @@ func preferencesAnswer(
 
 func readPreferences(
 	t *testing.T,
-	answers map[string]*agentports.GraphQLReadResult,
+	answers map[string]*graphqlreadports.GraphQLReadResult,
 ) (map[string]any, *keyedReader) {
 	t.Helper()
 

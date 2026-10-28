@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -28,20 +29,20 @@ type ReflectionSubjectRef struct {
 }
 
 type ReflectionPlan struct {
-	TenantInfo        pagination.TenantInfo        `json:"tenantInfo"`
-	ReflectionID      pulid.ID                     `json:"reflectionId"`
-	Subject           agent.ReflectionSubject      `json:"subject"`
-	AgentDefinitionID pulid.ID                     `json:"agentDefinitionId"`
-	ThreadID          pulid.ID                     `json:"threadId,omitempty"`
-	RunID             pulid.ID                     `json:"runId,omitempty"`
-	PersonUserID      pulid.ID                     `json:"personUserId,omitempty"`
-	ReplyMessageID    pulid.ID                     `json:"replyMessageId,omitempty"`
-	Taint             *agent.RunTaint              `json:"taint,omitempty"`
-	Signals           agent.ReflectionSignals      `json:"signals"`
-	Subjects          []ReflectionSubjectRef       `json:"subjects,omitempty"`
-	ToolNames         []string                     `json:"toolNames,omitempty"`
-	KnownMemoryIDs    []pulid.ID                   `json:"knownMemoryIds,omitempty"`
-	Request           *StructuredCompletionRequest `json:"request,omitempty"`
+	TenantInfo        pagination.TenantInfo                 `json:"tenantInfo"`
+	ReflectionID      pulid.ID                              `json:"reflectionId"`
+	Subject           agent.ReflectionSubject               `json:"subject"`
+	AgentDefinitionID pulid.ID                              `json:"agentDefinitionId"`
+	ThreadID          pulid.ID                              `json:"threadId,omitempty"`
+	RunID             pulid.ID                              `json:"runId,omitempty"`
+	PersonUserID      pulid.ID                              `json:"personUserId,omitempty"`
+	ReplyMessageID    pulid.ID                              `json:"replyMessageId,omitempty"`
+	Taint             *agent.RunTaint                       `json:"taint,omitempty"`
+	Signals           agent.ReflectionSignals               `json:"signals"`
+	Subjects          []ReflectionSubjectRef                `json:"subjects,omitempty"`
+	ToolNames         []string                              `json:"toolNames,omitempty"`
+	KnownMemoryIDs    []pulid.ID                            `json:"knownMemoryIds,omitempty"`
+	Request           *llmports.StructuredCompletionRequest `json:"request,omitempty"`
 }
 
 func (p *ReflectionPlan) Ready() bool {
@@ -71,7 +72,7 @@ type AgentReflectionService interface {
 	Finish(
 		ctx context.Context,
 		plan *ReflectionPlan,
-		result *StructuredCompletionResult,
+		result *llmports.StructuredCompletionResult,
 	) (*ReflectionOutcome, error)
 	Fail(ctx context.Context, req *FailReflectionRequest) error
 	ListConnection(

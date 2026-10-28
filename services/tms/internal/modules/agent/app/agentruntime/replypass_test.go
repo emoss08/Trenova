@@ -6,20 +6,23 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func keptShipments(rows int) agentports.ShownArtifact {
+func keptShipments(rows int) agentruntimeports.ShownArtifact {
 	labels := make([]string, 0, rows)
 	for idx := range rows {
 		labels = append(labels, fmt.Sprintf("PRO-%d", idx+1))
 	}
 
-	return agentports.ShownArtifact{
+	return agentruntimeports.ShownArtifact{
 		ID:     pulid.MustNew("art_"),
 		Kind:   "table_view",
 		Title:  "Late shipments",
@@ -46,7 +49,7 @@ func TestPointToTables_ReplacesAReprintWithAPointer(t *testing.T) {
 
 	kept := keptShipments(25)
 
-	got, table := pointToTables(markdownReprint(8), []agentports.ShownArtifact{kept})
+	got, table := pointToTables(markdownReprint(8), []agentruntimeports.ShownArtifact{kept})
 
 	require.NotNil(t, table)
 	assert.Equal(t, kept.ID, table.ID)
@@ -62,18 +65,18 @@ func TestPointToTables_LeavesWhatIsNotAReprint(t *testing.T) {
 	kept := keptShipments(25)
 
 	short := markdownReprint(minReprintRows - 1)
-	got, table := pointToTables(short, []agentports.ShownArtifact{kept})
+	got, table := pointToTables(short, []agentruntimeports.ShownArtifact{kept})
 	assert.Equal(t, short, got)
 	assert.Nil(t, table)
 
 	other := "By customer:\n| Customer | Shipments |\n| --- | --- |\n" +
 		strings.Repeat("| Acme | 3 |\n", 7)
-	got, table = pointToTables(other, []agentports.ShownArtifact{kept})
+	got, table = pointToTables(other, []agentruntimeports.ShownArtifact{kept})
 	assert.Equal(t, other, got, "a per-customer summary is not the shipments table")
 	assert.Nil(t, table)
 
 	linked := "See " + ArtifactRef(&kept) + ".\n" + markdownReprint(8)
-	got, table = pointToTables(linked, []agentports.ShownArtifact{kept})
+	got, table = pointToTables(linked, []agentruntimeports.ShownArtifact{kept})
 	assert.Equal(t, linked, got)
 	assert.Nil(t, table)
 }
@@ -87,30 +90,30 @@ func TestPointToTables_RecognisesAReprintByItsTitle(t *testing.T) {
 	reply := "The late shipments:\n| Shipment | Status |\n| --- | --- |\n" +
 		strings.Repeat("| X | Late |\n", 7)
 
-	_, table := pointToTables(reply, []agentports.ShownArtifact{kept})
+	_, table := pointToTables(reply, []agentruntimeports.ShownArtifact{kept})
 
 	require.NotNil(t, table)
 	assert.Equal(t, kept.ID, table.ID)
 }
 
-func passRun(t *testing.T, reply string, shown *agentports.ShownArtifact) (
-	*agentports.RunResult,
+func passRun(t *testing.T, reply string, shown *agentruntimeports.ShownArtifact) (
+	*agentruntimeports.RunResult,
 	*[]kernelports.StreamEvent,
 ) {
 	t.Helper()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("shipment_list", map[string]any{}),
 		textTurn(reply),
 	}}
-	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 		queryTool("shipment_list", map[string]any{"items": []any{}}, nil),
 	}}, &stubActionRegistry{}, nil)
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: testDefinition("shipment_list"),
 		Actor:      testActor(),
 		Input:      "Which loads are late?",
-		ToolObserver: func(agentports.ToolObservation) (*agentports.ShownArtifact, error) {
+		ToolObserver: func(agentruntimeports.ToolObservation) (*agentruntimeports.ShownArtifact, error) {
 			return shown, nil
 		},
 	}
@@ -122,10 +125,10 @@ func passRun(t *testing.T, reply string, shown *agentports.ShownArtifact) (
 	return result, events
 }
 
-func regroundedActions(events *[]kernelports.StreamEvent) []agentports.RegroundAction {
-	actions := make([]agentports.RegroundAction, 0, 2)
+func regroundedActions(events *[]kernelports.StreamEvent) []assistantports.RegroundAction {
+	actions := make([]assistantports.RegroundAction, 0, 2)
 	for _, event := range *events {
-		if data, ok := event.Data.(agentports.AssistantReplyRegroundedEvent); ok {
+		if data, ok := event.Data.(assistantports.AssistantReplyRegroundedEvent); ok {
 			actions = append(actions, data.Action)
 		}
 	}
@@ -148,9 +151,9 @@ func TestDrive_PassesOverTheFinalReply(t *testing.T) {
 	assert.NotContains(t, result.Reply, "| --- |")
 	assert.Contains(t, result.Reply, ArtifactRef(&kept))
 	assert.Equal(t, result.Reply, result.Messages[len(result.Messages)-1].Content)
-	assert.Equal(t, []agentports.RegroundAction{
-		agentports.RegroundStripIDs,
-		agentports.RegroundPointToTable,
+	assert.Equal(t, []assistantports.RegroundAction{
+		assistantports.RegroundStripIDs,
+		assistantports.RegroundPointToTable,
 	}, regroundedActions(events))
 
 	assertReplacedWithoutRestart(t, *events, result.Reply, replyPassReplacedReason)
@@ -166,18 +169,18 @@ func assertReplacedWithoutRestart(
 ) {
 	t.Helper()
 
-	var replaced []agentports.AssistantReplyReplacedEvent
+	var replaced []assistantports.AssistantReplyReplacedEvent
 	afterReplaced := 0
 	for _, event := range events {
-		assert.NotEqual(t, agentports.AssistantEventRetrying, event.Event,
+		assert.NotEqual(t, assistantports.AssistantEventRetrying, event.Event,
 			"a correction the model was not asked for is not a retry")
-		if data, ok := event.Data.(agentports.AssistantReplyReplacedEvent); ok {
-			assert.Equal(t, agentports.AssistantEventReplyReplaced, event.Event)
+		if data, ok := event.Data.(assistantports.AssistantReplyReplacedEvent); ok {
+			assert.Equal(t, assistantports.AssistantEventReplyReplaced, event.Event)
 			replaced = append(replaced, data)
 			afterReplaced = 0
 			continue
 		}
-		if _, ok := event.Data.(agentports.AssistantDeltaEvent); ok && len(replaced) > 0 {
+		if _, ok := event.Data.(assistantports.AssistantDeltaEvent); ok && len(replaced) > 0 {
 			afterReplaced++
 		}
 	}
@@ -199,8 +202,8 @@ func TestDrive_LeavesACleanReplyAlone(t *testing.T) {
 	assert.Equal(t, reply, result.Reply)
 	assert.Empty(t, regroundedActions(events))
 	for _, event := range *events {
-		assert.NotEqual(t, agentports.AssistantEventReplyReplaced, event.Event)
-		assert.NotEqual(t, agentports.AssistantEventRetrying, event.Event)
+		assert.NotEqual(t, assistantports.AssistantEventReplyReplaced, event.Event)
+		assert.NotEqual(t, assistantports.AssistantEventRetrying, event.Event)
 	}
 }
 
@@ -210,7 +213,7 @@ func TestPointToTables_PointsEveryReprintToItsOwnTable(t *testing.T) {
 	t.Parallel()
 
 	late := keptShipments(25)
-	carriers := agentports.ShownArtifact{
+	carriers := agentruntimeports.ShownArtifact{
 		ID:     pulid.MustNew("art_"),
 		Kind:   "table_view",
 		Title:  "Carriers to call",
@@ -224,7 +227,7 @@ func TestPointToTables_PointsEveryReprintToItsOwnTable(t *testing.T) {
 	}
 	reply := markdownReprint(8) + "\n\n" + carrierRows.String() + "\nThat is all."
 
-	got, first := pointToTables(reply, []agentports.ShownArtifact{late, carriers})
+	got, first := pointToTables(reply, []agentruntimeports.ShownArtifact{late, carriers})
 
 	require.NotNil(t, first)
 	assert.Equal(t, late.ID, first.ID, "the first table pointed to is reported")
@@ -240,9 +243,17 @@ func TestPointToTables_PointsEveryReprintToItsOwnTable(t *testing.T) {
 func TestFoldReplaced_PointsAnUnreadResultAtTheTableItsCardWentInto(t *testing.T) {
 	t.Parallel()
 
-	read := &agentports.ShownArtifact{ID: pulid.MustNew("art_"), Kind: "entity_card", Title: "Driver settlement"}
-	unread := &agentports.ShownArtifact{ID: pulid.MustNew("art_"), Kind: "entity_card", Title: "Driver settlement"}
-	table := &agentports.ShownArtifact{
+	read := &agentruntimeports.ShownArtifact{
+		ID:    pulid.MustNew("art_"),
+		Kind:  "entity_card",
+		Title: "Driver settlement",
+	}
+	unread := &agentruntimeports.ShownArtifact{
+		ID:    pulid.MustNew("art_"),
+		Kind:  "entity_card",
+		Title: "Driver settlement",
+	}
+	table := &agentruntimeports.ShownArtifact{
 		ID:       pulid.MustNew("art_"),
 		Kind:     "table_view",
 		Title:    "Driver settlements (3)",
@@ -253,13 +264,13 @@ func TestFoldReplaced_PointsAnUnreadResultAtTheTableItsCardWentInto(t *testing.T
 	unreadContent := "Sarah Williams's settlement" + shownNote(unread)
 
 	turn := &Turn{
-		messages: []agentports.Message{
-			{Role: agentports.RoleTool, ToolCallID: "call_read", Content: readContent},
-			{Role: agentports.RoleAssistant},
-			{Role: agentports.RoleTool, ToolCallID: "call_unread", Content: unreadContent},
+		messages: []llmports.Message{
+			{Role: llmports.RoleTool, ToolCallID: "call_read", Content: readContent},
+			{Role: llmports.RoleAssistant},
+			{Role: llmports.RoleTool, ToolCallID: "call_unread", Content: unreadContent},
 		},
-		artifacts: []agentports.ShownArtifact{*read, *unread, *table},
-		result: &agentports.RunResult{Messages: []conversation.Message{
+		artifacts: []agentruntimeports.ShownArtifact{*read, *unread, *table},
+		result: &agentruntimeports.RunResult{Messages: []conversation.Message{
 			{Role: conversation.RoleTool, ToolCallID: "call_unread", Content: unreadContent},
 		}},
 	}

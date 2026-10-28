@@ -5,38 +5,41 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeRecall struct {
-	agentports.AgentMemoryService
-	captured agentports.RecallAgentMemoriesRequest
+	agentmemoryports.AgentMemoryService
+	captured agentmemoryports.RecallAgentMemoriesRequest
 	items    []*agent.Memory
 	used     []pulid.ID
 }
 
 func (f *fakeRecall) Recall(
 	_ context.Context,
-	req agentports.RecallAgentMemoriesRequest,
-) ([]agentports.RecalledMemory, error) {
+	req agentmemoryports.RecallAgentMemoriesRequest,
+) ([]agentmemoryports.RecalledMemory, error) {
 	f.captured = req
 
 	var match agent.MemoryMatch
 	if req.Query != "" {
 		match = agent.MemoryMatchWords
 	}
-	recalled := make([]agentports.RecalledMemory, 0, len(f.items))
+	recalled := make([]agentmemoryports.RecalledMemory, 0, len(f.items))
 	for _, item := range f.items {
-		recalled = append(recalled, agentports.RecalledMemory{Memory: item, Match: match})
+		recalled = append(recalled, agentmemoryports.RecalledMemory{Memory: item, Match: match})
 	}
 
 	return recalled, nil
 }
 
-func (f *fakeRecall) RecordUse(_ context.Context, req agentports.RecordMemoryUseRequest) error {
+func (f *fakeRecall) RecordUse(
+	_ context.Context,
+	req agentmemoryports.RecordMemoryUseRequest,
+) error {
 	f.used = append(f.used, req.IDs...)
 
 	return nil
@@ -237,7 +240,7 @@ func TestRecallMemory_ReadsForThePersonAndNamesWhatItUsed(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, params.Actor.PersonUserID(), recall.captured.ReaderUserID)
-	used, ok := result.(agentports.MemoryRecall)
+	used, ok := result.(agentmemoryports.MemoryRecall)
 	require.True(t, ok, "the runtime reads which memories a recall used")
 	assert.Equal(t, []pulid.ID{first, second}, used.RecalledMemoryIDs())
 	assert.Equal(t, []pulid.ID{first, second}, recall.used)

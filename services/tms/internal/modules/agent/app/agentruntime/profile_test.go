@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -21,7 +23,7 @@ import (
 func profileRuntime(t *testing.T, agents ...*agentdefinition.Definition) *Service {
 	t.Helper()
 
-	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+	query := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 		&agenttest.StubQueryTool{
 			ToolName: "shipment_list",
 			Desc:     "List shipments by status or dates.",
@@ -33,7 +35,7 @@ func profileRuntime(t *testing.T, agents ...*agentdefinition.Definition) *Servic
 			Resource: permission.ResourceInvoice,
 		},
 	}}
-	action := &stubActionRegistry{Tools: []agentports.AgentTool{
+	action := &stubActionRegistry{Tools: []agenttoolports.AgentTool{
 		&agenttest.StubActionTool{ToolName: "invoice_post", Tier: agent.TierAutoExecute},
 		&agenttest.StubActionTool{ToolName: "dispatch_assign_move", Tier: agent.TierAutoExecute},
 	}}
@@ -55,8 +57,8 @@ func profileRuntime(t *testing.T, agents ...*agentdefinition.Definition) *Servic
 	}
 }
 
-func conversationRequest(definition *agentdefinition.Definition) *agentports.RunRequest {
-	return &agentports.RunRequest{
+func conversationRequest(definition *agentdefinition.Definition) *agentruntimeports.RunRequest {
+	return &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		ThreadID:   pulid.MustNew("athr_"),
@@ -133,13 +135,13 @@ func TestProfile_OnlyAConversationWithAPersonReachesBeyondItsAgent(t *testing.T)
 	billing := agentHolding("Billing helper", "invoice_list")
 	service := profileRuntime(t, dispatch, billing)
 
-	cases := map[string]func(*agentports.RunRequest){
-		"unattended": func(req *agentports.RunRequest) { req.Unattended = true },
-		"delegated": func(req *agentports.RunRequest) {
-			req.Delegation = &agentports.Delegation{ParentAgentID: billing.ID}
+	cases := map[string]func(*agentruntimeports.RunRequest){
+		"unattended": func(req *agentruntimeports.RunRequest) { req.Unattended = true },
+		"delegated": func(req *agentruntimeports.RunRequest) {
+			req.Delegation = &agentruntimeports.Delegation{ParentAgentID: billing.ID}
 		},
-		"inline":    func(req *agentports.RunRequest) { req.Inline = true },
-		"no thread": func(req *agentports.RunRequest) { req.ThreadID = pulid.Nil },
+		"inline":    func(req *agentruntimeports.RunRequest) { req.Inline = true },
+		"no thread": func(req *agentruntimeports.RunRequest) { req.ThreadID = pulid.Nil },
 	}
 	for name, change := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -159,7 +161,10 @@ func TestProfile_ALookupHandedOutHoldsOnlyWhatReads(t *testing.T) {
 	billing := agentHolding("Billing helper", "invoice_list", "invoice_post")
 	service := profileRuntime(t, billing)
 	req := conversationRequest(billing)
-	req.Delegation = &agentports.Delegation{ParentAgentID: pulid.MustNew("agdef_"), ReadOnly: true}
+	req.Delegation = &agentruntimeports.Delegation{
+		ParentAgentID: pulid.MustNew("agdef_"),
+		ReadOnly:      true,
+	}
 
 	profile := service.profileFor(t.Context(), req, nil)
 
@@ -176,7 +181,7 @@ func TestProfile_ATaskThePersonDirectedKeepsItsWrites(t *testing.T) {
 	billing := agentHolding("Billing helper", "invoice_list", "invoice_post")
 	service := profileRuntime(t, billing)
 	req := conversationRequest(billing)
-	req.Delegation = &agentports.Delegation{ParentAgentID: pulid.MustNew("agdef_")}
+	req.Delegation = &agentruntimeports.Delegation{ParentAgentID: pulid.MustNew("agdef_")}
 
 	profile := service.profileFor(t.Context(), req, nil)
 
@@ -197,10 +202,10 @@ func TestOpenTurn_AReachedWriteIsDecidedUnderItsHoldersCeiling(t *testing.T) {
 	turn := service.OpenTurn(t.Context(), conversationRequest(dispatch))
 
 	require.True(t, turn.holds("invoice_post"))
-	call := turn.dispatchCall(&agentports.ToolCall{ID: "call_1", Name: "invoice_post"}, "")
+	call := turn.dispatchCall(&llmports.ToolCall{ID: "call_1", Name: "invoice_post"}, "")
 	assert.Equal(t, agent.TierPropose, call.Beyond)
 	assert.Empty(t, turn.dispatchCall(
-		&agentports.ToolCall{ID: "call_2", Name: "shipment_list"}, "",
+		&llmports.ToolCall{ID: "call_2", Name: "shipment_list"}, "",
 	).Beyond, "a tool the agent holds is decided as its own")
 
 	decision := agenttoolpolicy.Decide(t.Context(), agenttoolpolicy.DecideInput{
@@ -235,7 +240,7 @@ func TestDispatchStep_RunsAReachedWriteUnderItsHoldersCeiling(t *testing.T) {
 	service := profileRuntime(t)
 	service.arguments = toolschema.NewValidator()
 	req := conversationRequest(dispatch)
-	call := agentports.ToolCall{ID: "call_1", Name: "invoice_post", Arguments: map[string]any{}}
+	call := llmports.ToolCall{ID: "call_1", Name: "invoice_post", Arguments: map[string]any{}}
 
 	refused := service.DispatchStep(t.Context(), req, DispatchCall{Call: call})
 	reached := service.DispatchStep(t.Context(), req, DispatchCall{
@@ -265,13 +270,13 @@ func TestProfile_OnlyAPersonsConversationHoldsTheScheduleTool(t *testing.T) {
 	held := service.profileFor(t.Context(), conversationRequest(billing), nil).held
 	assert.Contains(t, held, agentdefinition.CoreToolSchedule)
 
-	cases := map[string]func(*agentports.RunRequest){
-		"unattended": func(req *agentports.RunRequest) { req.Unattended = true },
-		"delegated": func(req *agentports.RunRequest) {
-			req.Delegation = &agentports.Delegation{ParentAgentID: pulid.MustNew("agdef_")}
+	cases := map[string]func(*agentruntimeports.RunRequest){
+		"unattended": func(req *agentruntimeports.RunRequest) { req.Unattended = true },
+		"delegated": func(req *agentruntimeports.RunRequest) {
+			req.Delegation = &agentruntimeports.Delegation{ParentAgentID: pulid.MustNew("agdef_")}
 		},
-		"no thread": func(req *agentports.RunRequest) { req.ThreadID = pulid.Nil },
-		"no person": func(req *agentports.RunRequest) {
+		"no thread": func(req *agentruntimeports.RunRequest) { req.ThreadID = pulid.Nil },
+		"no person": func(req *agentruntimeports.RunRequest) {
 			req.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 		},
 	}

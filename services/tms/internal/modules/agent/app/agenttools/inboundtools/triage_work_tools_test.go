@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
@@ -22,12 +22,12 @@ import (
 
 func previewOf(
 	t *testing.T,
-	tool agentports.AgentTool,
-	params agentports.ToolExecuteParams,
+	tool agenttoolports.AgentTool,
+	params agenttoolports.ToolExecuteParams,
 ) *agent.ToolPreview {
 	t.Helper()
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 
 	return preview
@@ -184,7 +184,7 @@ func TestCreateInboundLoad_CreatesFromTheCheckedFieldsOnce(t *testing.T) {
 	assert.Equal(t, permission.ResourceShipment, created.Resource)
 	assert.Empty(t, f.written)
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.NotEmpty(t, result.IDs["shipmentId"])
 	req := f.written[0].(*triageworkservice.CreateLoadRequest)
@@ -280,7 +280,7 @@ func TestFileInboundAttachment_ReadsEachPageRange(t *testing.T) {
 	t.Parallel()
 
 	documentType := pulid.MustNew("dt_")
-	call, err := fileRequest(&agentports.ToolExecuteParams{
+	call, err := fileRequest(&agenttoolports.ToolExecuteParams{
 		Actor: agenttoolstest.DeskParams(nil).Actor,
 		Params: map[string]any{
 			"messageId":    pulid.MustNew("imsg_").String(),
@@ -298,7 +298,7 @@ func TestFileInboundAttachment_ReadsEachPageRange(t *testing.T) {
 		{FromPage: 3, ToPage: 3, DocumentTypeID: documentType},
 	}, call.file.Pages)
 
-	_, err = fileRequest(&agentports.ToolExecuteParams{
+	_, err = fileRequest(&agenttoolports.ToolExecuteParams{
 		Actor: agenttoolstest.DeskParams(nil).Actor,
 		Params: map[string]any{
 			"messageId":    pulid.MustNew("imsg_").String(),

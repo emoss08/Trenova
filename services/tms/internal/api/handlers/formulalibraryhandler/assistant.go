@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
@@ -87,7 +87,7 @@ func (h *Handler) openAssistantThread(c *gin.Context) {
 
 	opened, err := h.pageAssistant.OpenPageThread(
 		c.Request.Context(),
-		&agentports.OpenPageThreadRequest{
+		&assistantports.OpenPageThreadRequest{
 			TenantInfo:  tenant,
 			Origin:      conversation.ThreadOriginFormula,
 			SubjectType: agent.SubjectFormulaLibrary,

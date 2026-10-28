@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -63,7 +63,7 @@ func onePlannedChange(
 }
 
 type triageToolCase struct {
-	build     func(f *fakeTriage) agentports.AgentTool
+	build     func(f *fakeTriage) agenttoolports.AgentTool
 	name      string
 	required  []string
 	resource  permission.Resource
@@ -75,7 +75,7 @@ type triageToolCase struct {
 
 var triageToolCases = []triageToolCase{
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newAssignInboundMessagesTool(f)
 		},
 		name:     "inbox_assign_inbound_message",
@@ -84,7 +84,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierActWithApproval,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newReopenInboundMessagesTool(f)
 		},
 		name:     "inbox_reopen_inbound_message",
@@ -93,7 +93,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierActWithApproval,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newSnoozeInboundMessagesTool(f)
 		},
 		name:     "inbox_snooze_inbound_message",
@@ -102,7 +102,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierActWithApproval,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newWakeInboundMessageTool(f)
 		},
 		name:     "inbox_wake_inbound_message",
@@ -111,7 +111,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierAutoExecute,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newWaitForInboundReplyTool(f)
 		},
 		name:     "inbox_await_reply",
@@ -120,7 +120,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierActWithApproval,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newUnlinkInboundMessageTool(f)
 		},
 		name:     "inbox_unlink_inbound_message",
@@ -129,7 +129,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierAutoExecute, condition: true,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newHandOffTriageTool(f)
 		},
 		name:     "inbox_assign_queue",
@@ -138,7 +138,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierActWithApproval,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newBlockInboundSenderTool(f)
 		},
 		name:     "inbox_block_sender",
@@ -147,7 +147,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierActWithApproval,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newUnblockInboundSenderTool(f, f)
 		},
 		name:     "inbox_unblock_sender",
@@ -156,7 +156,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierActWithApproval,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newDraftInboundReplyTool(f, f)
 		},
 		name:     "inbox_draft_reply",
@@ -165,7 +165,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierAutoExecute, condition: true,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newDiscardInboundReplyDraftTool(f)
 		},
 		name:     "inbox_discard_reply_draft",
@@ -174,7 +174,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierActWithApproval,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newDraftInboundLoadTool(f, f)
 		},
 		name:     "inbox_draft_load",
@@ -183,7 +183,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierAutoExecute, condition: true,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newCreateInboundLoadTool(f)
 		},
 		name:     "inbox_create_load",
@@ -192,7 +192,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierActWithApproval,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newDiscardInboundLoadTool(f, f)
 		},
 		name:     "inbox_discard_load",
@@ -201,7 +201,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierAutoExecute, condition: true,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newFileInboundAttachmentTool(f, f)
 		},
 		name:     "inbox_file_attachment",
@@ -210,7 +210,7 @@ var triageToolCases = []triageToolCase{
 		egress: agent.EgressInternal, maxTier: agent.TierAutoExecute, condition: true,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newUnfileInboundAttachmentTool(f, f)
 		},
 		name:     "inbox_unfile_attachment",
@@ -219,7 +219,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierActWithApproval,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newLogInboundExceptionTool(f, f)
 		},
 		name:     "inbox_record_discrepancy",
@@ -228,7 +228,7 @@ var triageToolCases = []triageToolCase{
 		egress: agent.EgressInternal, maxTier: agent.TierAutoExecute, condition: true,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newSettleDetentionDisputeTool(f, f)
 		},
 		name:     "detention_resolve_dispute",
@@ -237,7 +237,7 @@ var triageToolCases = []triageToolCase{
 		maxTier: agent.TierPropose,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newResolveInboundConflictTool(fakeConflictDesk{f})
 		},
 		name:     "inbox_resolve_conflict",
@@ -246,7 +246,7 @@ var triageToolCases = []triageToolCase{
 		egress: agent.EgressInternal, maxTier: agent.TierActWithApproval,
 	},
 	{
-		build: func(f *fakeTriage) agentports.AgentTool {
+		build: func(f *fakeTriage) agenttoolports.AgentTool {
 			return newReopenInboundConflictTool(f, fakeConflictDesk{f})
 		},
 		name:     "inbox_reopen_conflict",
@@ -286,9 +286,9 @@ func TestTriageTools_DeclareTheirSchemaAndPolicy(t *testing.T) {
 			assert.NotEmpty(t, policy.Rationale)
 			assert.NotEmpty(t, policy.Artifact, "a tool that reports its result names its record")
 
-			_, previews := tool.(agentports.ToolPreviewer)
+			_, previews := tool.(agenttoolports.ToolPreviewer)
 			assert.True(t, previews, "every write previews what it would do")
-			_, reports := tool.(agentports.ToolResultReporter)
+			_, reports := tool.(agenttoolports.ToolResultReporter)
 			assert.True(t, reports)
 		})
 	}
@@ -304,7 +304,7 @@ func TestTriageTools_KeepTheirCaps(t *testing.T) {
 	t.Parallel()
 
 	f := newFakeTriage()
-	policies := make(map[string]agentports.ToolPolicy, len(triageToolCases))
+	policies := make(map[string]agenttoolports.ToolPolicy, len(triageToolCases))
 	for _, tc := range triageToolCases {
 		tool := tc.build(f)
 		policies[tool.Name()] = tool.Policy()
@@ -368,11 +368,15 @@ func TestTriageTools_NameTheMessageTheyChange(t *testing.T) {
 			continue
 		}
 		id := pulid.MustNew("imsg_")
-		target, ok := tool.(agentports.TargetedTool).
+		target, ok := tool.(agenttoolports.TargetedTool).
 			Target(map[string]any{"messageId": id.String()})
 		require.Truef(t, ok, "%s names no target", tc.name)
-		assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceInboundMessage, ID: id},
-			target, tc.name)
+		assert.Equal(
+			t,
+			agenttoolports.ToolTarget{Resource: permission.ResourceInboundMessage, ID: id},
+			target,
+			tc.name,
+		)
 	}
 }
 
@@ -390,7 +394,7 @@ func TestAssignInboundMessages_GivesTheSelectionToTheOwner(t *testing.T) {
 		"ownerId":    owner.String(),
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Empty(t, f.written, "a preview writes nothing")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
@@ -400,7 +404,7 @@ func TestAssignInboundMessages_GivesTheSelectionToTheOwner(t *testing.T) {
 	assert.Equal(t, permission.ResourceUser, field.AfterRef.Resource)
 	assert.Equal(t, owner, field.AfterRef.ID)
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, "assigned", result.Action)
 	require.Len(t, f.written, 1)
@@ -419,7 +423,7 @@ func TestQueueTools_WarnWhenNothingWouldChange(t *testing.T) {
 
 	f := newFakeTriage()
 	f.queuePlan = &inboundmessageservice.QueuePlan{Unchanged: 1}
-	preview, err := newReopenInboundMessagesTool(f).(agentports.ToolPreviewer).Preview(
+	preview, err := newReopenInboundMessagesTool(f).(agenttoolports.ToolPreviewer).Preview(
 		t.Context(),
 		agenttoolstest.DeskParams(map[string]any{
 			"messageIds": agenttoolstest.IdList([]pulid.ID{f.message.ID}),
@@ -434,7 +438,7 @@ func TestQueueTools_RefuseASelectionPastTheBound(t *testing.T) {
 	t.Parallel()
 
 	f := newFakeTriage()
-	err := newReopenInboundMessagesTool(f).(agentports.ToolValidator).Validate(
+	err := newReopenInboundMessagesTool(f).(agenttoolports.ToolValidator).Validate(
 		t.Context(),
 		agenttoolstest.DeskParams(map[string]any{
 			"messageIds": agenttoolstest.ManyIDs(maxTriageSelection + 1),
@@ -504,7 +508,7 @@ func TestWakeInboundMessage_CallsTheWakeThatFitsHowItIsParked(t *testing.T) {
 	assert.True(t, stopped, "a message waiting on a reply stops waiting")
 
 	f.message.Parked = ""
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 	require.ErrorIs(t, tool.Execute(t.Context(), params), errInboundNotParked)
@@ -562,13 +566,13 @@ func TestHandOffTriage_SaysWhenTheQueueIsLargerThanThePreview(t *testing.T) {
 	tool := newHandOffTriageTool(f)
 	params := agenttoolstest.DeskParams(map[string]any{"toUserId": to.String()})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.True(t, preview.Partial)
 	assert.Contains(t, preview.Summary, "at least")
 	assert.Empty(t, f.written)
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, 3, result.Total)
 	assert.Equal(t, to, f.written[0].(*inboundmessageservice.HandOffRequest).ToUserID)
@@ -591,7 +595,7 @@ func TestBlockInboundSender_PreviewsTheSourceAndTheMessage(t *testing.T) {
 	tool := newBlockInboundSenderTool(f)
 	params := agenttoolstest.DeskParams(map[string]any{"messageId": f.message.ID.String()})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Empty(t, f.written)
 	require.Len(t, preview.Changes, 2)
@@ -616,7 +620,7 @@ func TestUnblockInboundSender_NamesTheSenderByTheirMessage(t *testing.T) {
 	tool := newUnblockInboundSenderTool(f, f)
 	params := agenttoolstest.DeskParams(map[string]any{"messageId": f.message.ID.String()})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 	require.ErrorIs(t, tool.Execute(t.Context(), params), errSenderNotBlocked)

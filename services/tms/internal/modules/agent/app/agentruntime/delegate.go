@@ -14,7 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -148,7 +150,7 @@ func delegateTaskSpec(delegates []agentdefinition.RuntimeDelegate) kernelports.T
 
 // DelegateCall is one task the loop has decided to hand to another agent.
 type DelegateCall struct {
-	Call     agentports.ToolCall             `json:"call"`
+	Call     llmports.ToolCall               `json:"call"`
 	Delegate agentdefinition.RuntimeDelegate `json:"delegate"`
 	Task     string                          `json:"task"`
 	// StepScope separates the delegate's steps from this turn's in the
@@ -227,7 +229,7 @@ type DelegateRun struct {
 	Definition *agentdefinition.Definition `json:"definition,omitempty"`
 	// Result is everything the delegate's turn did, including when it ended
 	// before it finished.
-	Result *agentports.RunResult `json:"result,omitempty"`
+	Result *agentruntimeports.RunResult `json:"result,omitempty"`
 	// Declined is why the delegate could not be asked at all, in words the
 	// delegating agent can pass on.
 	Declined string `json:"declined,omitempty"`
@@ -236,7 +238,7 @@ type DelegateRun struct {
 	Failure string `json:"failure,omitempty"`
 	Stopped bool   `json:"stopped,omitempty"`
 	// Documents are what it kept beside the conversation.
-	Documents []agentports.DelegateDocument `json:"documents,omitempty"`
+	Documents []assistantports.DelegateDocument `json:"documents,omitempty"`
 	// ExternalContent says the delegate read content from outside the
 	// organization, which now reaches this turn through its answer.
 	ExternalContent bool `json:"externalContent,omitempty"`
@@ -245,7 +247,7 @@ type DelegateRun struct {
 // delegate hands one task to another agent and answers the call with what it
 // did. The delegate's steps are folded into the turn's own record, tagged, and
 // its writes are kept apart so they are recorded as its own.
-func (s *Service) delegate(t *Turn, fx TurnEffects, call agentports.ToolCall) toolOutcome {
+func (s *Service) delegate(t *Turn, fx TurnEffects, call llmports.ToolCall) toolOutcome {
 	task, refusal := s.prepareDelegation(t, &call)
 	if task == nil {
 		return refusal
@@ -257,7 +259,7 @@ func (s *Service) delegate(t *Turn, fx TurnEffects, call agentports.ToolCall) to
 
 func (s *Service) prepareDelegation(
 	t *Turn,
-	call *agentports.ToolCall,
+	call *llmports.ToolCall,
 ) (*handedTask, toolOutcome) {
 	if t.req.Delegation != nil {
 		return nil, failedOutcome("%s", delegatedRefusal)
@@ -291,13 +293,13 @@ func (s *Service) prepareDelegation(
 func (s *Service) fanOut(
 	t *Turn,
 	fx TurnEffects,
-	calls []agentports.ToolCall,
+	calls []llmports.ToolCall,
 	used, budget int,
 ) map[string]toolOutcome {
 	if !t.holds(delegateTaskName) || t.req.Delegation != nil {
 		return nil
 	}
-	eligible := make([]agentports.ToolCall, 0, len(calls))
+	eligible := make([]llmports.ToolCall, 0, len(calls))
 	for idx, call := range calls {
 		if call.Name == delegateTaskName && call.ArgumentsError == "" && used+idx < budget {
 			eligible = append(eligible, call)
@@ -331,7 +333,7 @@ func (s *Service) fanOut(
 // handedTask is one task on its way to another agent, already checked as one
 // the turn may hand out.
 type handedTask struct {
-	call     agentports.ToolCall
+	call     llmports.ToolCall
 	delegate agentdefinition.RuntimeDelegate
 	task     string
 	handed   *DelegateContext
@@ -347,7 +349,7 @@ func (s *Service) handTask(
 	t *Turn,
 	fx TurnEffects,
 	h *handedTask,
-) (toolOutcome, agentports.AssistantDelegateFinishedEvent) {
+) (toolOutcome, assistantports.AssistantDelegateFinishedEvent) {
 	call := s.startTask(t, fx, h)
 	runs := fx.Delegate(t, []DelegateCall{call})
 
@@ -388,8 +390,8 @@ func (s *Service) startTask(t *Turn, fx TurnEffects, h *handedTask) DelegateCall
 	}
 
 	fx.Emit(kernelports.StreamEvent{
-		Event: agentports.AssistantEventDelegateStarted,
-		Data: agentports.AssistantDelegateStartedEvent{
+		Event: assistantports.AssistantEventDelegateStarted,
+		Data: assistantports.AssistantDelegateStartedEvent{
 			DelegateCallID: call.ID,
 			AgentID:        delegate.ID,
 			AgentName:      delegate.Name,
@@ -420,7 +422,7 @@ func (s *Service) settleTask(
 	fx TurnEffects,
 	h *handedTask,
 	run *DelegateRun,
-) (outcome toolOutcome, report agentports.AssistantDelegateFinishedEvent) {
+) (outcome toolOutcome, report assistantports.AssistantDelegateFinishedEvent) {
 	call, delegate := h.call, h.delegate
 	report = delegateReport(delegate, call.ID, *run)
 	if run.ExternalContent {
@@ -436,7 +438,7 @@ func (s *Service) settleTask(
 		t.inheritDelegateTaint(fx, run.Result)
 	}
 	if run.Definition != nil && run.Result != nil {
-		t.result.Delegations = append(t.result.Delegations, agentports.DelegatedRun{
+		t.result.Delegations = append(t.result.Delegations, agentruntimeports.DelegatedRun{
 			Definition: run.Definition,
 			CallID:     call.ID,
 			Actions:    run.Result.Actions,
@@ -449,7 +451,7 @@ func (s *Service) settleTask(
 	}
 
 	fx.Emit(kernelports.StreamEvent{
-		Event: agentports.AssistantEventDelegateFinished,
+		Event: assistantports.AssistantEventDelegateFinished,
 		Data:  report,
 	})
 
@@ -678,20 +680,20 @@ func delegateReport(
 	delegate agentdefinition.RuntimeDelegate,
 	callID string,
 	run DelegateRun,
-) agentports.AssistantDelegateFinishedEvent {
-	report := agentports.AssistantDelegateFinishedEvent{
+) assistantports.AssistantDelegateFinishedEvent {
+	report := assistantports.AssistantDelegateFinishedEvent{
 		DelegateCallID: callID,
 		AgentID:        delegate.ID,
 		AgentName:      delegate.Name,
 		Icon:           delegate.Icon,
 		Accent:         delegate.Accent,
-		Made:           []agentports.DelegateWrite{},
-		Awaiting:       []agentports.DelegateWrite{},
+		Made:           []assistantports.DelegateWrite{},
+		Awaiting:       []assistantports.DelegateWrite{},
 		Published:      slices.Clone(run.Documents),
 		Findings:       []conversation.DelegateFinding{},
 	}
 	if report.Published == nil {
-		report.Published = []agentports.DelegateDocument{}
+		report.Published = []assistantports.DelegateDocument{}
 	}
 
 	result := run.Result
@@ -703,7 +705,7 @@ func delegateReport(
 			if action.Withdrawn {
 				continue
 			}
-			write := agentports.DelegateWrite{
+			write := assistantports.DelegateWrite{
 				ToolName:   action.ToolName,
 				CallID:     action.ToolCallID,
 				Tier:       action.Tier,
@@ -723,24 +725,24 @@ func delegateReport(
 
 	switch {
 	case run.Declined != "":
-		report.Status = agentports.DelegateStatusDeclined
+		report.Status = assistantports.DelegateStatusDeclined
 		report.Reason = run.Declined
 	case run.Stopped:
-		report.Status = agentports.DelegateStatusStopped
+		report.Status = assistantports.DelegateStatusStopped
 		report.Reason = "The person stopped the reply before " + delegate.Name + " finished."
 	case run.Failure != "":
-		report.Status = agentports.DelegateStatusFailed
+		report.Status = assistantports.DelegateStatusFailed
 		report.Reason = run.Failure
 	case result == nil:
-		report.Status = agentports.DelegateStatusFailed
+		report.Status = assistantports.DelegateStatusFailed
 		report.Reason = delegate.Name + " did not report back."
 	case result.Exhausted:
-		report.Status = agentports.DelegateStatusExhausted
+		report.Status = assistantports.DelegateStatusExhausted
 		report.Reply = result.Reply
 		report.Reason = delegate.Name + " used every tool call its settings allow before it " +
 			"finished."
 	default:
-		report.Status = agentports.DelegateStatusCompleted
+		report.Status = assistantports.DelegateStatusCompleted
 		report.Reply = result.Reply
 	}
 
@@ -751,7 +753,10 @@ func delegateReport(
 // that ended partway is a failed call whose writes are still named: they
 // happened, and what else the delegate may have begun is unconfirmed rather
 // than undone, so nothing here says a change did not happen.
-func delegateOutcome(report *agentports.AssistantDelegateFinishedEvent, lookup bool) toolOutcome {
+func delegateOutcome(
+	report *assistantports.AssistantDelegateFinishedEvent,
+	lookup bool,
+) toolOutcome {
 	encoded := encodedReport(report)
 
 	outcome := toolOutcome{
@@ -763,22 +768,22 @@ func delegateOutcome(report *agentports.AssistantDelegateFinishedEvent, lookup b
 	}
 
 	switch report.Status {
-	case agentports.DelegateStatusDeclined:
+	case assistantports.DelegateStatusDeclined:
 		declined := failedOutcome("Tool %q was not run: %s", delegateTaskName, report.Reason)
 		declined.delegateReport = outcome.delegateReport
 
 		return declined
-	case agentports.DelegateStatusFailed, agentports.DelegateStatusStopped:
+	case assistantports.DelegateStatusFailed, assistantports.DelegateStatusStopped:
 		outcome.failed = true
-	case agentports.DelegateStatusCompleted,
-		agentports.DelegateStatusExhausted,
-		agentports.DelegateStatusRefused:
+	case assistantports.DelegateStatusCompleted,
+		assistantports.DelegateStatusExhausted,
+		assistantports.DelegateStatusRefused:
 	}
 
 	return outcome
 }
 
-func encodedReport(report *agentports.AssistantDelegateFinishedEvent) string {
+func encodedReport(report *assistantports.AssistantDelegateFinishedEvent) string {
 	for {
 		encoded, err := delegateJSON.MarshalToString(report)
 		if err != nil {
@@ -793,17 +798,17 @@ func encodedReport(report *agentports.AssistantDelegateFinishedEvent) string {
 }
 
 // delegateNote tells the delegating model how to read the account above it.
-func delegateNote(report *agentports.AssistantDelegateFinishedEvent, lookup bool) string {
+func delegateNote(report *assistantports.AssistantDelegateFinishedEvent, lookup bool) string {
 	name := report.AgentName
 	if lookup {
 		return lookupNote(report)
 	}
 	switch report.Status {
-	case agentports.DelegateStatusFailed, agentports.DelegateStatusStopped:
+	case assistantports.DelegateStatusFailed, assistantports.DelegateStatusStopped:
 		return "[" + name + " stopped before it finished. Everything under made happened. " +
 			"Anything else it may have begun is unconfirmed: tell the person plainly, and do " +
 			"not claim it happened or that it did not.]"
-	case agentports.DelegateStatusRefused:
+	case assistantports.DelegateStatusRefused:
 		return "[" + name + "'s answer was withheld. Everything under made happened and " +
 			"everything under awaiting is waiting on the person; tell them so, without the " +
 			"withheld answer.]"
@@ -817,18 +822,18 @@ func delegateNote(report *agentports.AssistantDelegateFinishedEvent, lookup bool
 	}
 }
 
-func lookupNote(report *agentports.AssistantDelegateFinishedEvent) string {
+func lookupNote(report *assistantports.AssistantDelegateFinishedEvent) string {
 	name := report.AgentName
 	switch report.Status {
-	case agentports.DelegateStatusFailed, agentports.DelegateStatusStopped:
+	case assistantports.DelegateStatusFailed, assistantports.DelegateStatusStopped:
 		return "[" + name + " stopped before it finished and changed nothing. Work from the " +
 			"findings it did return, and tell the person plainly what is still unknown.]"
-	case agentports.DelegateStatusRefused:
+	case assistantports.DelegateStatusRefused:
 		return "[" + name + "'s answer was withheld. It changed nothing; work from its " +
 			"findings without the withheld answer.]"
-	case agentports.DelegateStatusCompleted,
-		agentports.DelegateStatusExhausted,
-		agentports.DelegateStatusDeclined:
+	case assistantports.DelegateStatusCompleted,
+		assistantports.DelegateStatusExhausted,
+		assistantports.DelegateStatusDeclined:
 	}
 	more := ""
 	if report.MoreFindings > 0 {

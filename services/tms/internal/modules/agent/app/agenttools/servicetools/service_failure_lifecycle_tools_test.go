@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -88,7 +88,10 @@ func (f *fakeFailureLifecycle) PreviewUpdate(
 	_ context.Context,
 	req *servicefailureports.UpdateServiceFailureRequest,
 ) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
-	return &servicefailureports.ServiceFailureLifecyclePreview{Before: f.current, After: f.apply(req)}, nil
+	return &servicefailureports.ServiceFailureLifecyclePreview{
+		Before: f.current,
+		After:  f.apply(req),
+	}, nil
 }
 
 func (f *fakeFailureLifecycle) Review(
@@ -117,7 +120,10 @@ func (f *fakeFailureLifecycle) PreviewReview(
 	reason := req.ReasonCodeID
 	after.ReasonCodeID = &reason
 
-	return &servicefailureports.ServiceFailureLifecyclePreview{Before: f.current, After: &after}, nil
+	return &servicefailureports.ServiceFailureLifecyclePreview{
+		Before: f.current,
+		After:  &after,
+	}, nil
 }
 
 func (f *fakeFailureLifecycle) Void(
@@ -163,9 +169,13 @@ func TestUpdateServiceFailure_ChangesOnlyWhatIsSent(t *testing.T) {
 		common.ParamNote:               "Consignee closed early",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, failures.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		failures.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "AX", agenttoolstest.FieldByPath(t, change, paramX12Status).After)
 	assert.Contains(t, preview.Summary, "SF-0042")
@@ -180,7 +190,7 @@ func TestUpdateServiceFailure_ChangesOnlyWhatIsSent(t *testing.T) {
 	policy := tool.Policy()
 	assert.Equal(t, permission.ResourceServiceFailure, policy.Resource)
 	assert.Equal(t, permission.OpUpdate, policy.Operation)
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceServiceFailure, target.Resource)
 
@@ -196,7 +206,7 @@ func TestUpdateServiceFailure_ChangesOnlyWhatIsSent(t *testing.T) {
 			paramX12Reason:                 "ABCD",
 		},
 	} {
-		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+		require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 			agenttoolstest.ExecuteParams(raw)), name)
 	}
 }
@@ -212,11 +222,22 @@ func TestReviewServiceFailure_IsAPersonsAndAWouldFailWhenRefused(t *testing.T) {
 		common.FieldReasonCodeID:       reason.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, failures.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, string(servicefailure.StatusReviewed),
-		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), common.FieldStatus).After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		failures.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		string(servicefailure.StatusReviewed),
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			common.FieldStatus,
+		).After,
+	)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
 	approved := agenttoolstest.ApprovedParams(params.Params)
@@ -226,10 +247,10 @@ func TestReviewServiceFailure_IsAPersonsAndAWouldFailWhenRefused(t *testing.T) {
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 
 	failures.refusal = errortypes.NewBusinessError("a reason code is required")
-	refused, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	refused, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, refused, agent.PreviewWarningWouldFail)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestVoidServiceFailure_NeedsAReasonAndShowsThe214(t *testing.T) {
@@ -242,9 +263,13 @@ func TestVoidServiceFailure_NeedsAReasonAndShowsThe214(t *testing.T) {
 		common.ParamNote:               "The appointment window was keyed wrong",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, failures.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		failures.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	require.Len(t, preview.Changes, 2)
 	message := agenttoolstest.PreviewChange(t, preview, 1).Message
 	require.NotNil(t, message)
@@ -254,8 +279,12 @@ func TestVoidServiceFailure_NeedsAReasonAndShowsThe214(t *testing.T) {
 	assert.Equal(t, "The appointment window was keyed wrong", failures.voided.Notes)
 	assert.Equal(t, permission.OpArchive, tool.Policy().Operation)
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{editools.ParamServiceFailureID: failures.current.ID.String()})))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{editools.ParamServiceFailureID: failures.current.ID.String()},
+		),
+	))
 }
 
 func TestEvaluateServiceFailures_OneStopOrSeveralShipments(t *testing.T) {
@@ -289,7 +318,7 @@ func TestEvaluateServiceFailures_OneStopOrSeveralShipments(t *testing.T) {
 		"a bad stop":         {"shipmentId": shipmentID.String(), "stopId": "stop-1"},
 		"too many shipments": {"shipmentIds": agenttoolstest.ManyIDs(operationstools.MaxBulkEvaluationShipments + 1)},
 	} {
-		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+		require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 			agenttoolstest.ExecuteParams(raw)), name)
 	}
 }
@@ -305,9 +334,13 @@ func TestDisputeDetention_HoldsTheChargeFromBilling(t *testing.T) {
 		common.ParamNote:                  "Customer says the truck arrived after the appointment",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, detentions.Guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		detentions.Guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "disputed")
 	assert.Contains(t, preview.Summary, "PRO-3001")
 
@@ -320,7 +353,11 @@ func TestDisputeDetention_HoldsTheChargeFromBilling(t *testing.T) {
 	assert.Equal(t, permission.ResourceDetention, policy.Resource)
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{receivabletools.ParamOccurrenceID: occurrenceID.String()})))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{receivabletools.ParamOccurrenceID: occurrenceID.String()},
+		),
+	))
 	var _ common.DetentionDisputer = (*detentionservice.Service)(nil)
 }

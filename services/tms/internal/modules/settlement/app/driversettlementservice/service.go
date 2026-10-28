@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -61,7 +61,7 @@ type Params struct {
 	Generator           seqgen.Generator
 	PayService          *driverpayservice.Service
 	AuditService        auditports.AuditService
-	Realtime            agentports.RealtimeService
+	Realtime            realtimeports.RealtimeService
 	DriverNotify        *drivernotificationservice.Service
 	NotificationService *notificationservice.Service
 	Sync                accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
@@ -92,7 +92,7 @@ type Service struct {
 	generator           seqgen.Generator
 	payService          *driverpayservice.Service
 	auditService        auditports.AuditService
-	realtime            agentports.RealtimeService
+	realtime            realtimeports.RealtimeService
 	driverNotify        *drivernotificationservice.Service
 	notificationService *notificationservice.Service
 	sync                accountingsyncports.AccountingSyncEnqueuer

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
@@ -27,14 +27,14 @@ func (r *recordingNotifier) NotifyPermitted(
 }
 
 type recordingRealtime struct {
-	agentports.RealtimeService
+	realtimeports.RealtimeService
 
-	published []*agentports.PublishResourceInvalidationRequest
+	published []*realtimeports.PublishResourceInvalidationRequest
 }
 
 func (r *recordingRealtime) PublishResourceInvalidation(
 	_ context.Context,
-	req *agentports.PublishResourceInvalidationRequest,
+	req *realtimeports.PublishResourceInvalidationRequest,
 ) error {
 	r.published = append(r.published, req)
 	return nil

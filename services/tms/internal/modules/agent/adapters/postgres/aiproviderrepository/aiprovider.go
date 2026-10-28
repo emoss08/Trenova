@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -32,7 +32,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.AIProviderRepository {
+func New(p Params) aiproviderports.AIProviderRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.aiprovider-repository"),
@@ -41,7 +41,7 @@ func New(p Params) agentports.AIProviderRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *agentports.ListAIProviderRequest,
+	req *aiproviderports.ListAIProviderRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	return dbtx.Read(
 		ctx,
@@ -69,7 +69,7 @@ func (r *repository) List(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *agentports.ListAIProviderConnectionRequest,
+	req *aiproviderports.ListAIProviderConnectionRequest,
 ) (*pagination.CursorListResult[*aiprovider.Provider], error) {
 	return dbtx.Read(
 		ctx,
@@ -97,7 +97,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req agentports.GetAIProviderByIDRequest,
+	req aiproviderports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiprovider.Provider, error) {
 		entity, err := aiproviderdb.Providers.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -114,7 +114,7 @@ func (r *repository) GetByID(
 // stable across calls and visible in the query plan.
 func (r *repository) ListForTask(
 	ctx context.Context,
-	req agentports.ListAIProvidersForTaskRequest,
+	req aiproviderports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiprovider.Provider, error) {
 		entities, err := providersForTaskQuery(req.Task).All(ctx, r.db.Keel(ctx))
@@ -165,7 +165,7 @@ func (r *repository) ListOrdered(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *agentports.AIProviderSelectOptionsRequest,
+	req *aiproviderports.AIProviderSelectOptionsRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	return dbtx.Read(
 		ctx,
@@ -259,7 +259,7 @@ func (r *repository) Update(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req agentports.DeleteAIProviderRequest,
+	req aiproviderports.DeleteAIProviderRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		p := aiproviderdb.Providers
@@ -280,7 +280,7 @@ func untouched() []keel.Assignment {
 
 func (r *repository) MarkTested(
 	ctx context.Context,
-	req agentports.MarkAIProviderTestedRequest,
+	req aiproviderports.MarkAIProviderTestedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		p := aiproviderdb.Providers

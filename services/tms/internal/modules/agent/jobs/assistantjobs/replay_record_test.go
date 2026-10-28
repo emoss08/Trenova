@@ -21,12 +21,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/stretchr/testify/require"
 	enumspb "go.temporal.io/api/enums/v1"
@@ -111,8 +112,8 @@ func registerTurnStandIns(
 	)
 
 	replies := []*agentruntime.ModelReply{
-		{Completion: &agentports.ChatCompletionResult{
-			ToolCalls: []agentports.ToolCall{{
+		{Completion: &llmports.ChatCompletionResult{
+			ToolCalls: []llmports.ToolCall{{
 				ID:        "call_recorded_1",
 				Name:      replayToolName,
 				Arguments: map[string]any{"proNumber": "12345"},
@@ -121,7 +122,7 @@ func registerTurnStandIns(
 			InputTokens:     1200,
 			OutputTokens:    40,
 		}},
-		{Completion: &agentports.ChatCompletionResult{
+		{Completion: &llmports.ChatCompletionResult{
 			Text:            "Load 12345 is in Memphis.",
 			ModelIdentifier: "recorded-model",
 			InputTokens:     1300,
@@ -157,7 +158,7 @@ func registerTurnStandIns(
 					Status: string(conversation.AssistantTurnStatusCompleted),
 				},
 				Event: temporaltype.StreamItem{
-					Event: agentports.AssistantEventDone,
+					Event: assistantports.AssistantEventDone,
 					Data:  map[string]any{"turnId": in.Payload.TurnID.String()},
 				},
 			}, nil
@@ -169,9 +170,12 @@ func registerTurnStandIns(
 		return nil
 	}, activity.RegisterOptions{Name: "NotifyUnseenTurnActivity"})
 
-	w.RegisterActivityWithOptions(func(context.Context, *assistantcontract.AssistantTurnPayload, string) error {
-		return nil
-	}, activity.RegisterOptions{Name: "CloseTurnActivity"})
+	w.RegisterActivityWithOptions(
+		func(context.Context, *assistantcontract.AssistantTurnPayload, string) error {
+			return nil
+		},
+		activity.RegisterOptions{Name: "CloseTurnActivity"},
+	)
 }
 
 func writeTurnHistory(t *testing.T, c client.Client, run client.WorkflowRun, path string) {

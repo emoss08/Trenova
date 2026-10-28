@@ -4,12 +4,12 @@ package aiproviderresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 )
 
 type Deps struct {
 	*base.Core
-	AiProviderService agentports.AIProviderService
+	AiProviderService aiproviderports.AIProviderService
 }
 
 type AIProviderKeyInfoResolver struct{ *Deps }

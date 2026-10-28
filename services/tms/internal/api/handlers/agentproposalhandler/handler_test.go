@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -60,14 +61,14 @@ func (p *storedProposals) GetByID(
 }
 
 type digestPreviews struct {
-	agentports.ProposalPreviewService
+	agentruntimeports.ProposalPreviewService
 
-	asked *agentports.ProposalPreviewRequest
+	asked *agentruntimeports.ProposalPreviewRequest
 }
 
 func (p *digestPreviews) ForProposal(
 	_ context.Context,
-	req *agentports.ProposalPreviewRequest,
+	req *agentruntimeports.ProposalPreviewRequest,
 ) (*agent.ProposalPreview, error) {
 	p.asked = req
 
@@ -81,7 +82,7 @@ func (p *digestPreviews) ForProposal(
 func newHandler(
 	decisions agentports.AgentDecisionService,
 	proposals agentports.AgentProposalService,
-	previews agentports.ProposalPreviewService,
+	previews agentruntimeports.ProposalPreviewService,
 ) *agentproposalhandler.Handler {
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 		Logger: zap.NewNop(),
@@ -221,7 +222,11 @@ func TestPreview_ReturnsTheDigestToEcho(t *testing.T) {
 	require.NotNil(t, previews.asked)
 	assert.Equal(t, map[string]any{"memo": "Short paid"}, previews.asked.Modifications)
 	require.NotNil(t, previews.asked.Viewer)
-	assert.NotNil(t, previews.asked.Viewer.Actor, "the preview is for the caller, as the decision is")
+	assert.NotNil(
+		t,
+		previews.asked.Viewer.Actor,
+		"the preview is for the caller, as the decision is",
+	)
 }
 
 func TestPreview_RefusesModificationsThatAreNotAnObject(t *testing.T) {

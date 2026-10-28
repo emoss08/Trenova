@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -87,7 +88,7 @@ type irreversibleTool struct {
 	*agenttest.StubActionTool
 }
 
-func (t irreversibleTool) Policy() agentports.ToolPolicy {
+func (t irreversibleTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.StubActionTool.Policy()
 	policy.Reversible = false
 
@@ -143,14 +144,14 @@ func newFixture() *fixture {
 		Logger:      zap.NewNop(),
 		Definitions: definitions,
 		Agents:      agents,
-		Tools: &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
+		Tools: &agenttest.StubActionRegistry{Tools: []agenttoolports.AgentTool{
 			&agenttest.StubActionTool{ToolName: "assign_biller", Tier: agent.TierActWithApproval},
 			irreversibleTool{&agenttest.StubActionTool{
 				ToolName: "invoice_post", Tier: agent.TierActWithApproval,
 			}},
 			&agenttest.StubActionTool{ToolName: "invoice_void", Tier: agent.TierActWithApproval},
 		}},
-		QueryTools: &agenttest.StubQueryRegistry{Tools: []agentports.AgentQueryTool{
+		QueryTools: &agenttest.StubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			&agenttest.StubQueryTool{ToolName: "invoice_list"},
 		}},
 		Permissions: permissions,
@@ -217,7 +218,12 @@ func TestGet_MapsTiersToTheModesAPersonReads(t *testing.T) {
 	assert.NotContains(t, post.AllowedModes, agentports.AgentCapabilityAllowed)
 
 	void := toolByKey(caps.WriteTools, "invoice_void")
-	assert.Equal(t, agentports.AgentCapabilityOff, void.Mode, "a switched-off tool is still offered")
+	assert.Equal(
+		t,
+		agentports.AgentCapabilityOff,
+		void.Mode,
+		"a switched-off tool is still offered",
+	)
 
 	require.Len(t, caps.Handoffs, 1)
 	assert.Equal(t, "People records and pay", caps.Handoffs[0].Topic,
@@ -260,7 +266,9 @@ func TestGet_ReadOnlyWithoutPermissionToUpdateAgents(t *testing.T) {
 
 	_, err := f.svc.Update(t.Context(), &agentports.UpdateAgentCapabilitiesRequest{
 		AgentID: f.agent.ID,
-		Tools:   []agentports.AgentCapabilityToolChange{{Key: "assign_biller", Mode: agentports.AgentCapabilityOff}},
+		Tools: []agentports.AgentCapabilityToolChange{
+			{Key: "assign_biller", Mode: agentports.AgentCapabilityOff},
+		},
 	}, f.actor())
 	require.Error(t, err)
 	assert.Zero(t, f.agents.patches, "nothing is saved for a reader")
@@ -313,11 +321,20 @@ func TestUpdate_RefusesAModeTheRowDoesNotOffer(t *testing.T) {
 		change agentports.AgentCapabilityToolChange
 	}{
 		{"a locked write cannot be allowed",
-			agentports.AgentCapabilityToolChange{Key: "invoice_post", Mode: agentports.AgentCapabilityAllowed}},
+			agentports.AgentCapabilityToolChange{
+				Key:  "invoice_post",
+				Mode: agentports.AgentCapabilityAllowed,
+			}},
 		{"a read cannot ask first",
-			agentports.AgentCapabilityToolChange{Key: "invoice_list", Mode: agentports.AgentCapabilityAskFirst}},
+			agentports.AgentCapabilityToolChange{
+				Key:  "invoice_list",
+				Mode: agentports.AgentCapabilityAskFirst,
+			}},
 		{"a tool the agent never had",
-			agentports.AgentCapabilityToolChange{Key: "delete_everything", Mode: agentports.AgentCapabilityAllowed}},
+			agentports.AgentCapabilityToolChange{
+				Key:  "delete_everything",
+				Mode: agentports.AgentCapabilityAllowed,
+			}},
 		{"a mode that does not exist",
 			agentports.AgentCapabilityToolChange{Key: "assign_biller", Mode: "Sometimes"}},
 	}
@@ -360,7 +377,7 @@ func TestGet_ListsTheWritesAHeldToolBrings(t *testing.T) {
 	f := newFixture()
 	f.agent.ToolNames = []string{"shipment_create"}
 	f.agent.DisabledToolNames = []string{"masterdata_create_commodity"}
-	f.svc.tools = &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
+	f.svc.tools = &agenttest.StubActionRegistry{Tools: []agenttoolports.AgentTool{
 		bringingTool{
 			StubActionTool: &agenttest.StubActionTool{
 				ToolName: "shipment_create", Tier: agent.TierPropose,
@@ -378,5 +395,9 @@ func TestGet_ListsTheWritesAHeldToolBrings(t *testing.T) {
 	assert.Equal(t, agentports.AgentCapabilityAskFirst, customer.Mode)
 	assert.Contains(t, customer.AllowedModes, agentports.AgentCapabilityOff,
 		"a companion can be switched off")
-	assert.Equal(t, agentports.AgentCapabilityOff, toolByKey(writes, "masterdata_create_commodity").Mode)
+	assert.Equal(
+		t,
+		agentports.AgentCapabilityOff,
+		toolByKey(writes, "masterdata_create_commodity").Mode,
+	)
 }

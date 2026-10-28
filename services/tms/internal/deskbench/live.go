@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -150,24 +150,24 @@ func (t *liveTurn) flush() {
 	t.mode = ""
 }
 
-func (t *liveTurn) frame(frame agentports.TurnStreamFrame) {
+func (t *liveTurn) frame(frame assistantports.TurnStreamFrame) {
 	if t == nil {
 		return
 	}
 
 	switch frame.Event {
-	case agentports.AssistantEventDelta, agentports.AssistantEventDelegateDelta:
+	case assistantports.AssistantEventDelta, assistantports.AssistantEventDelegateDelta:
 		t.stream(liveModeText, frameText(frame.Data))
-	case agentports.AssistantEventReasoning, agentports.AssistantEventDelegateReasoning:
+	case assistantports.AssistantEventReasoning, assistantports.AssistantEventDelegateReasoning:
 		t.stream(liveModeThinking, frameText(frame.Data))
-	case agentports.AssistantEventToolStarted:
-		var started agentports.AssistantToolStartedEvent
+	case assistantports.AssistantEventToolStarted:
+		var started assistantports.AssistantToolStartedEvent
 		if sonic.Unmarshal(frame.Data, &started) == nil {
 			t.line("-> %s%s %s", started.Name, delegateTag(started.DelegateCallID),
 				stringutils.Ellipsize(compactJSON(started.Arguments, liveArgsLimit), liveArgsLimit))
 		}
-	case agentports.AssistantEventToolFinished:
-		var finished agentports.AssistantToolFinishedEvent
+	case assistantports.AssistantEventToolFinished:
+		var finished assistantports.AssistantToolFinishedEvent
 		if sonic.Unmarshal(frame.Data, &finished) == nil {
 			record := ToolCallRecord{
 				Verdict:  finished.Verdict,
@@ -181,10 +181,10 @@ func (t *liveTurn) frame(frame agentports.TurnStreamFrame) {
 			t.line("<- %s%s %s · %s", finished.Name, delegateTag(finished.DelegateCallID),
 				verdictLabel(&record), stringutils.Ellipsize(detail, liveSummaryLimit))
 		}
-	case agentports.AssistantEventMessage, agentports.AssistantEventDone,
-		agentports.AssistantEventAccepted, agentports.AssistantEventTurn,
-		agentports.AssistantEventThread, agentports.AssistantEventContext,
-		agentports.AssistantEventArtifact:
+	case assistantports.AssistantEventMessage, assistantports.AssistantEventDone,
+		assistantports.AssistantEventAccepted, assistantports.AssistantEventTurn,
+		assistantports.AssistantEventThread, assistantports.AssistantEventContext,
+		assistantports.AssistantEventArtifact:
 		t.flush()
 	default:
 		t.line(

@@ -6,7 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -51,8 +53,12 @@ func shipmentEntrySchema() map[string]any {
 												"type": "string",
 												"enum": []string{"Pickup", "Delivery"},
 											},
-											"sequence":             map[string]any{"type": "integer"},
-											"scheduledWindowStart": map[string]any{"type": "integer"},
+											"sequence": map[string]any{
+												"type": "integer",
+											},
+											"scheduledWindowStart": map[string]any{
+												"type": "integer",
+											},
 										},
 										"required": []string{
 											"locationId", "type", "sequence", "scheduledWindowStart",
@@ -142,7 +148,7 @@ func TestContractArguments_AnOpenSchemaAcceptsAnything(t *testing.T) {
 	t.Parallel()
 
 	got, _, err := contractArguments(nil, "stub", map[string]any{"type": "object"},
-		map[string]any{"anything": 1, agentports.SelfScopeOwnerParam: "usr_x"})
+		map[string]any{"anything": 1, agenttoolports.SelfScopeOwnerParam: "usr_x"})
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{"anything": 1}, got,
 		"the owner key is set aside whatever the schema says")
@@ -171,18 +177,18 @@ func TestRun_StripsTheOwnerTheModelSentAndStampsThePerson(t *testing.T) {
 	stub.Resource = permission.ResourceHomeLayoutPreset
 	stub.Schema = closedSchema("key")
 	tool := selfScopedAction{stub}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("home_add_widget", map[string]any{
-			"key":                          "kpi",
-			agentports.SelfScopeOwnerParam: pulid.MustNew("usr_").String(),
+			"key":                              "kpi",
+			agenttoolports.SelfScopeOwnerParam: pulid.MustNew("usr_").String(),
 		}),
 		textTurn("Proposed."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 	actor := testActor()
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("home_add_widget"),
 		Actor:      actor,
 		Input:      "put on-time on my dashboard",
@@ -191,8 +197,8 @@ func TestRun_StripsTheOwnerTheModelSentAndStampsThePerson(t *testing.T) {
 
 	require.Len(t, result.Actions, 1, "the call fit the schema once the owner was set aside")
 	assert.Equal(t, map[string]any{
-		"key":                          "kpi",
-		agentports.SelfScopeOwnerParam: actor.UserID.String(),
+		"key":                              "kpi",
+		agenttoolports.SelfScopeOwnerParam: actor.UserID.String(),
 	}, result.Actions[0].Arguments)
 }
 
@@ -207,14 +213,14 @@ func TestRun_ValidatesAQueryToolsArguments(t *testing.T) {
 		Result:   map[string]any{"items": []any{}},
 		Schema:   closedSchema("status"),
 	}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("shipment_list", map[string]any{"status": "New", "customer": "Acme"}),
 		textTurn("I could not list them."),
 	}}
-	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{tool}},
+	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{tool}},
 		&stubActionRegistry{}, nil)
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition("shipment_list"),
 		Actor:      testActor(),
 		Input:      "Acme's new loads",

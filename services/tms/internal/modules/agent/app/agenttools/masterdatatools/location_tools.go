@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -66,7 +66,7 @@ type CreateLocationToolParams struct {
 	Places     placeFinder
 }
 
-func NewCreateLocationTool(p CreateLocationToolParams) agentports.AgentTool {
+func NewCreateLocationTool(p CreateLocationToolParams) agenttoolports.AgentTool {
 	return &CreateLocationTool{
 		locations:  p.Locations,
 		states:     p.States,
@@ -113,8 +113,8 @@ func (t *CreateLocationTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *CreateLocationTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *CreateLocationTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceLocation,
@@ -194,7 +194,7 @@ func readLocationDraft(params map[string]any) (*locationDraft, error) {
 
 func (t *CreateLocationTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -203,7 +203,7 @@ func (t *CreateLocationTool) Execute(
 
 func (t *CreateLocationTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (*agent.ToolExecutionResult, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return nil, err
@@ -239,7 +239,7 @@ type locationPlan struct {
 
 func (t *CreateLocationTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*locationPlan, error) {
 	draft, err := readLocationDraft(params.Params)
 	if err != nil {
@@ -305,7 +305,7 @@ func (t *CreateLocationTool) Build(
 
 func (t *CreateLocationTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	if params.Actor == nil {
 		return common.ErrMissingActor

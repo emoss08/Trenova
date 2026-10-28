@@ -14,8 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/keelkinds"
@@ -28,9 +29,9 @@ import (
 // step (a refusal before anything was claimed) and the edges of a delegated
 // task.
 var projectedEventKinds = []string{
-	agentports.AssistantEventToolFinished,
-	agentports.AssistantEventDelegateStarted,
-	agentports.AssistantEventDelegateFinished,
+	assistantports.AssistantEventToolFinished,
+	assistantports.AssistantEventDelegateStarted,
+	assistantports.AssistantEventDelegateFinished,
 }
 
 type sourceRepository struct {
@@ -129,7 +130,7 @@ func (r *sourceRepository) ListSteps(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunStep, error) {
 		step := agentdb.AgentRunSteps
 		rows, err := keyset(
-			step.Where(step.Kind.Eq(string(agentports.RunStepTool))),
+			step.Where(step.Kind.Eq(string(agentruntimeports.RunStepTool))),
 			step.UpdatedAt, step.ID, page,
 		).List(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -383,8 +384,8 @@ func (r *sourceRepository) StartedToolSteps(
 				step.OrganizationID.Eq(tenantInfo.OrgID),
 				step.BusinessUnitID.Eq(tenantInfo.BuID),
 				step.OwnerID.In(ownerIDs...),
-				step.Kind.Eq(string(agentports.RunStepTool)),
-				step.Status.Eq(string(agentports.RunStepStarted)),
+				step.Kind.Eq(string(agentruntimeports.RunStepTool)),
+				step.Status.Eq(string(agentruntimeports.RunStepStarted)),
 			).
 			All(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -426,7 +427,7 @@ func (r *sourceRepository) ToolStepCalls(
 				Where(
 					step.OwnerID.In(owners...),
 					step.CallID.In(callIDs...),
-					step.Kind.Eq(string(agentports.RunStepTool)),
+					step.Kind.Eq(string(agentruntimeports.RunStepTool)),
 				).
 				Pick(step.OwnerID, step.CallID))
 			if err != nil {

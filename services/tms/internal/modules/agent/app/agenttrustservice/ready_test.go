@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +20,7 @@ type readyTrustRepo struct {
 
 func (r readyTrustRepo) ListReady(
 	_ context.Context,
-	req agentports.ListReadyToolTrustRequest,
+	req agenttoolports.ListReadyToolTrustRequest,
 ) ([]*agent.ToolTrust, error) {
 	if r.row.Streak < req.MinStreak {
 		return nil, nil

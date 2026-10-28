@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -103,8 +103,8 @@ type accountingSyncPolicySpec struct {
 	rationale  string
 }
 
-func accountingSyncPolicy(name string, spec accountingSyncPolicySpec) agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func accountingSyncPolicy(name string, spec accountingSyncPolicySpec) agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          name,
 		Kind:          agent.ToolKindAction,
 		Resource:      spec.resource,
@@ -214,13 +214,13 @@ type RetryAccountingSyncTool struct {
 	sync accountingSyncOperator
 }
 
-func newRetryAccountingSyncTool(sync accountingSyncOperator) agentports.AgentTool {
+func newRetryAccountingSyncTool(sync accountingSyncOperator) agenttoolports.AgentTool {
 	return &RetryAccountingSyncTool{sync: sync}
 }
 
 func ProvideRetryAccountingSyncTool(
 	sync accountingsyncports.AccountingSyncService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newRetryAccountingSyncTool(sync)
 }
 
@@ -278,7 +278,7 @@ func (t *RetryAccountingSyncTool) ParamSchema() map[string]any {
 	}, ParamAccountingSystem)
 }
 
-func (t *RetryAccountingSyncTool) Policy() agentports.ToolPolicy {
+func (t *RetryAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:   permission.ResourceAccountingSync,
 		operation:  permission.OpUpdate,
@@ -298,7 +298,7 @@ type retryPlan struct {
 
 func (t *RetryAccountingSyncTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*retryPlan, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -377,7 +377,7 @@ func (t *RetryAccountingSyncTool) plan(
 
 func (t *RetryAccountingSyncTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.plan(ctx, &params)
 	return err
@@ -385,7 +385,7 @@ func (t *RetryAccountingSyncTool) Validate(
 
 func (t *RetryAccountingSyncTool) ResolveProposalSelection(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolProposalSelectionResolver interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolProposalSelectionResolver interface passes params by value
 ) (map[string]any, error) {
 	if _, named := params.Params[ParamSyncRecordIDs]; named {
 		return params.Params, nil
@@ -473,7 +473,7 @@ func joinCategories(categories []accountingsync.SyncErrorCategory) string {
 
 func (t *RetryAccountingSyncTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -490,13 +490,13 @@ type SkipAccountingSyncTool struct {
 	sync accountingSyncOperator
 }
 
-func newSkipAccountingSyncTool(sync accountingSyncOperator) agentports.AgentTool {
+func newSkipAccountingSyncTool(sync accountingSyncOperator) agenttoolports.AgentTool {
 	return &SkipAccountingSyncTool{sync: sync}
 }
 
 func ProvideSkipAccountingSyncTool(
 	sync accountingsyncports.AccountingSyncService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newSkipAccountingSyncTool(sync)
 }
 
@@ -532,7 +532,7 @@ func (t *SkipAccountingSyncTool) ParamSchema() map[string]any {
 	}, paramSyncRecordID, paramSyncReason)
 }
 
-func (t *SkipAccountingSyncTool) Policy() agentports.ToolPolicy {
+func (t *SkipAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:  permission.ResourceAccountingSync,
 		operation: permission.OpUpdate,
@@ -544,13 +544,13 @@ func (t *SkipAccountingSyncTool) Policy() agentports.ToolPolicy {
 
 // Target names the record this call would change, so a proposal to skip it is
 // refused if the record moved on, such as being sent, before it is approved.
-func (t *SkipAccountingSyncTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *SkipAccountingSyncTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramSyncRecordID, permission.ResourceAccountingSync)
 }
 
 func (t *SkipAccountingSyncTool) request(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.SkipAccountingSyncRequest, *accountingsync.AccountingSyncRecord, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
@@ -587,7 +587,7 @@ func (t *SkipAccountingSyncTool) request(
 
 func (t *SkipAccountingSyncTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, _, err := t.request(ctx, &params)
 	return err
@@ -595,7 +595,7 @@ func (t *SkipAccountingSyncTool) Validate(
 
 func (t *SkipAccountingSyncTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, _, err := t.request(ctx, &params)
 	if err != nil {
@@ -609,13 +609,13 @@ type redateAccountingSyncTool struct {
 	sync accountingSyncOperator
 }
 
-func newRedateAccountingSyncTool(sync accountingSyncOperator) agentports.AgentTool {
+func newRedateAccountingSyncTool(sync accountingSyncOperator) agenttoolports.AgentTool {
 	return &redateAccountingSyncTool{sync: sync}
 }
 
 func ProvideRedateAccountingSyncTool(
 	sync accountingsyncports.AccountingSyncService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newRedateAccountingSyncTool(sync)
 }
 
@@ -648,7 +648,7 @@ func (t *redateAccountingSyncTool) ParamSchema() map[string]any {
 	}, paramSyncRecordID)
 }
 
-func (t *redateAccountingSyncTool) Policy() agentports.ToolPolicy {
+func (t *redateAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:  permission.ResourceAccountingSync,
 		operation: permission.OpUpdate,
@@ -658,13 +658,13 @@ func (t *redateAccountingSyncTool) Policy() agentports.ToolPolicy {
 	})
 }
 
-func (t *redateAccountingSyncTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *redateAccountingSyncTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramSyncRecordID, permission.ResourceAccountingSync)
 }
 
 func (t *redateAccountingSyncTool) request(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.RedateAccountingSyncRequest, *accountingsyncports.AccountingSyncRedatePlan, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
@@ -687,7 +687,7 @@ func (t *redateAccountingSyncTool) request(
 
 func (t *redateAccountingSyncTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, _, err := t.request(ctx, &params)
 	return err
@@ -695,7 +695,7 @@ func (t *redateAccountingSyncTool) Validate(
 
 func (t *redateAccountingSyncTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, _, err := t.request(ctx, &params)
 	if err != nil {
@@ -709,13 +709,13 @@ type PauseAccountingSyncTool struct {
 	sync accountingSyncOperator
 }
 
-func newPauseAccountingSyncTool(sync accountingSyncOperator) agentports.AgentTool {
+func newPauseAccountingSyncTool(sync accountingSyncOperator) agenttoolports.AgentTool {
 	return &PauseAccountingSyncTool{sync: sync}
 }
 
 func ProvidePauseAccountingSyncTool(
 	sync accountingsyncports.AccountingSyncService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newPauseAccountingSyncTool(sync)
 }
 
@@ -746,7 +746,7 @@ func (t *PauseAccountingSyncTool) ParamSchema() map[string]any {
 	}, ParamAccountingSystem, paramSyncReason)
 }
 
-func (t *PauseAccountingSyncTool) Policy() agentports.ToolPolicy {
+func (t *PauseAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:   permission.ResourceAccountingSync,
 		operation:  permission.OpUpdate,
@@ -759,7 +759,7 @@ func (t *PauseAccountingSyncTool) Policy() agentports.ToolPolicy {
 
 func (t *PauseAccountingSyncTool) request(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.PauseAccountingSyncRequest, *accountingsyncports.AccountingSyncSummary, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
@@ -799,7 +799,7 @@ func (t *PauseAccountingSyncTool) request(
 
 func (t *PauseAccountingSyncTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, _, err := t.request(ctx, &params)
 	return err
@@ -807,7 +807,7 @@ func (t *PauseAccountingSyncTool) Validate(
 
 func (t *PauseAccountingSyncTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, _, err := t.request(ctx, &params)
 	if err != nil {
@@ -821,13 +821,13 @@ type ResumeAccountingSyncTool struct {
 	sync accountingSyncOperator
 }
 
-func newResumeAccountingSyncTool(sync accountingSyncOperator) agentports.AgentTool {
+func newResumeAccountingSyncTool(sync accountingSyncOperator) agenttoolports.AgentTool {
 	return &ResumeAccountingSyncTool{sync: sync}
 }
 
 func ProvideResumeAccountingSyncTool(
 	sync accountingsyncports.AccountingSyncService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newResumeAccountingSyncTool(sync)
 }
 
@@ -859,7 +859,7 @@ func (t *ResumeAccountingSyncTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *ResumeAccountingSyncTool) Policy() agentports.ToolPolicy {
+func (t *ResumeAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:  permission.ResourceAccountingSync,
 		operation: permission.OpUpdate,
@@ -872,7 +872,7 @@ func (t *ResumeAccountingSyncTool) Policy() agentports.ToolPolicy {
 
 func (t *ResumeAccountingSyncTool) request(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.PauseAccountingSyncRequest, *accountingsyncports.AccountingSyncSummary, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
@@ -903,7 +903,7 @@ func (t *ResumeAccountingSyncTool) request(
 
 func (t *ResumeAccountingSyncTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, _, err := t.request(ctx, &params)
 	return err
@@ -911,7 +911,7 @@ func (t *ResumeAccountingSyncTool) Validate(
 
 func (t *ResumeAccountingSyncTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, _, err := t.request(ctx, &params)
 	if err != nil {
@@ -925,13 +925,13 @@ type RequestAccountingBackfillTool struct {
 	sync accountingSyncOperator
 }
 
-func newRequestAccountingBackfillTool(sync accountingSyncOperator) agentports.AgentTool {
+func newRequestAccountingBackfillTool(sync accountingSyncOperator) agenttoolports.AgentTool {
 	return &RequestAccountingBackfillTool{sync: sync}
 }
 
 func ProvideRequestAccountingBackfillTool(
 	sync accountingsyncports.AccountingSyncService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newRequestAccountingBackfillTool(sync)
 }
 
@@ -971,7 +971,7 @@ func (t *RequestAccountingBackfillTool) ParamSchema() map[string]any {
 	}, ParamAccountingSystem)
 }
 
-func (t *RequestAccountingBackfillTool) Policy() agentports.ToolPolicy {
+func (t *RequestAccountingBackfillTool) Policy() agenttoolports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:  permission.ResourceAccountingIntegration,
 		operation: permission.OpManage,
@@ -1013,7 +1013,7 @@ type backfillPlan struct {
 
 func (t *RequestAccountingBackfillTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*backfillPlan, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -1108,7 +1108,7 @@ func (t *RequestAccountingBackfillTool) plan(
 
 func (t *RequestAccountingBackfillTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.plan(ctx, &params)
 	return err
@@ -1116,7 +1116,7 @@ func (t *RequestAccountingBackfillTool) Validate(
 
 func (t *RequestAccountingBackfillTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {

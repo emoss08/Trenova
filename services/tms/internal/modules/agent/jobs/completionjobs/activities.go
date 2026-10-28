@@ -5,22 +5,23 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/completionjobs/completioncontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"go.uber.org/fx"
 )
 
 type ActivitiesParams struct {
 	fx.In
 
-	Completion agentports.CompletionService
-	Providers  agentports.AIProviderProbe
+	Completion llmports.CompletionService
+	Providers  aiproviderports.AIProviderProbe
 	Briefings  briefingports.BriefingService
 }
 
 type Activities struct {
-	completion agentports.CompletionService
-	providers  agentports.AIProviderProbe
+	completion llmports.CompletionService
+	providers  aiproviderports.AIProviderProbe
 	briefings  briefingports.BriefingService
 }
 
@@ -35,8 +36,8 @@ func NewActivities(p ActivitiesParams) *Activities {
 // CompleteStructuredActivity asks the model one structured question.
 func (a *Activities) CompleteStructuredActivity(
 	ctx context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
@@ -55,7 +56,7 @@ func (a *Activities) CompleteStructuredActivity(
 func (a *Activities) TestAIProviderActivity(
 	ctx context.Context,
 	payload *completioncontract.TestAIProviderPayload,
-) (*agentports.TestAIProviderResult, error) {
+) (*aiproviderports.TestAIProviderResult, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
@@ -66,7 +67,7 @@ func (a *Activities) TestAIProviderActivity(
 func (a *Activities) ListAIProviderModelsActivity(
 	ctx context.Context,
 	payload *completioncontract.ListAIProviderModelsPayload,
-) ([]agentports.AIProviderModelOption, error) {
+) ([]aiproviderports.AIProviderModelOption, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
@@ -83,7 +84,7 @@ func (a *Activities) ListAIProviderModelsActivity(
 func (a *Activities) TestAIProviderDraftActivity(
 	ctx context.Context,
 	payload *completioncontract.TestAIProviderDraftPayload,
-) (*agentports.AIProviderDraftTestResult, error) {
+) (*aiproviderports.AIProviderDraftTestResult, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 

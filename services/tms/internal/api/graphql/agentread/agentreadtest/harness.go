@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/readscope"
@@ -76,13 +76,13 @@ func NewReader(t testing.TB, opts Options) *agentread.Reader {
 // carries, at the given data access ceiling.
 func Read(
 	ctx context.Context,
-	reader agentports.GraphQLReader,
+	reader graphqlreadports.GraphQLReader,
 	actor *permissionports.RequestActor,
 	operation string,
 	variables map[string]any,
 	ceiling permission.FieldSensitivity,
-) (*agentports.GraphQLReadResult, error) {
-	return reader.Read(readscope.With(ctx, nil), &agentports.GraphQLReadRequest{
+) (*graphqlreadports.GraphQLReadResult, error) {
+	return reader.Read(readscope.With(ctx, nil), &graphqlreadports.GraphQLReadRequest{
 		Actor:             actor,
 		Operation:         operation,
 		Variables:         variables,

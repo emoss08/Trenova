@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 )
 
 // systemPrompt tells the model what job it has, which is smaller than it
@@ -30,7 +30,7 @@ Rules:
 // carry their already-rendered values so the figures the model is shown are
 // exactly the figures the guard will accept back. The section is marked
 // untrusted because customer and location names pass through it.
-func buildContext(req *Request) agentports.DelimitedContext {
+func buildContext(req *Request) llmports.DelimitedContext {
 	var builder strings.Builder
 
 	builder.WriteString("Company: ")
@@ -43,8 +43,8 @@ func buildContext(req *Request) agentports.DelimitedContext {
 		writeSection(&builder, section)
 	}
 
-	return agentports.DelimitedContext{
-		Sections: []agentports.ContextSection{{
+	return llmports.DelimitedContext{
+		Sections: []llmports.ContextSection{{
 			Title:   "Today",
 			Trusted: false,
 			Content: builder.String(),

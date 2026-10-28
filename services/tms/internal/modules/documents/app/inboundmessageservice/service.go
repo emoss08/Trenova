@@ -8,6 +8,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
@@ -75,7 +78,7 @@ type Params struct {
 	// with no provider configured. Mail lands and waits for a person instead of
 	// being classified, which is the behaviour a mailbox on AlwaysReview has
 	// anyway.
-	Completion agentports.CompletionService `optional:"true"`
+	Completion llmports.CompletionService `optional:"true"`
 	// Workflows is optional so an installation without a worker still receives
 	// mail. It lands at Received and waits, which is what a mailbox on
 	// AlwaysReview does with every message anyway.
@@ -100,9 +103,9 @@ type Params struct {
 	// Realtime keeps an open inbox current, and Notifications tells the people
 	// who read the inbox that a message is waiting on them. Both optional: the
 	// inbox is still right on the next load without either.
-	Realtime      agentports.RealtimeService   `optional:"true"`
-	Notifications *notificationservice.Service `optional:"true"`
-	Indexer       agentports.RetrievalIndexer  `optional:"true"`
+	Realtime      realtimeports.RealtimeService   `optional:"true"`
+	Notifications *notificationservice.Service    `optional:"true"`
+	Indexer       retrievalports.RetrievalIndexer `optional:"true"`
 	// ContentFetcher reads what a metadata-only webhook leaves out. Without it
 	// a Resend message lands with its sender, recipients and subject and is
 	// sent to review saying its content could not be read.
@@ -144,7 +147,7 @@ type Service struct {
 	messageRepo inboundmessageports.InboundMessageRepository
 	storage     kernelports.Client
 	encryption  secretKeeper
-	completion  agentports.CompletionService
+	completion  llmports.CompletionService
 	workflows   kernelports.WorkflowStarter
 	shipments   ShipmentFinder
 	parties     PartyFinder
@@ -153,9 +156,9 @@ type Service struct {
 	watchtower  watchtowerports.WatchtowerProjector
 	events      agentports.AgentEventPublisher
 	audit       auditports.AuditService
-	realtime    agentports.RealtimeService
+	realtime    realtimeports.RealtimeService
 	notifier    reviewNotifier
-	indexer     agentports.RetrievalIndexer
+	indexer     retrievalports.RetrievalIndexer
 	fetcher     inboundmessageports.InboundContentFetcher
 	remittances inboundmessageports.RemittanceIntake
 

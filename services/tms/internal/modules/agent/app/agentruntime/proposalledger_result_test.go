@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +19,7 @@ turn now reads the report's name and the id to use.
 func TestProposalOutcomeText_NamesWhatAnExecutedWriteMade(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("report_create", agentports.ProposalOutcome{
+	text := proposalOutcomeText("report_create", agentruntimeports.ProposalOutcome{
 		Status: agent.ProposalStatusExecuted,
 		ExecutionResult: &agent.ToolExecutionResult{
 			Action: "created",
@@ -41,11 +41,12 @@ func TestProposalOutcomeText_NamesWhatAnExecutedWriteMade(t *testing.T) {
 func TestProposalOutcomeText_ReadsAsBeforeWithoutAResult(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("report_create_dashboard", agentports.ProposalOutcome{
+	text := proposalOutcomeText("report_create_dashboard", agentruntimeports.ProposalOutcome{
 		Status: agent.ProposalStatusExecuted,
 	})
 
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		`The person approved the proposal to run "report_create_dashboard" and it ran successfully. `+
 			`The change has been made; do not propose it again.`,
 		text,
@@ -58,7 +59,7 @@ func TestProposalOutcomeText_ReadsAsBeforeWithoutAResult(t *testing.T) {
 func TestProposalOutcomeText_DoesNotCallAnAutomaticWriteApproved(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("report_create", agentports.ProposalOutcome{
+	text := proposalOutcomeText("report_create", agentruntimeports.ProposalOutcome{
 		Status:       agent.ProposalStatusExecuted,
 		AutonomyTier: agent.TierAutoExecute,
 		ExecutionResult: &agent.ToolExecutionResult{
@@ -77,7 +78,7 @@ func TestProposalOutcomeText_DoesNotCallAnAutomaticWriteApproved(t *testing.T) {
 		text,
 	)
 
-	failed := proposalOutcomeText("report_create", agentports.ProposalOutcome{
+	failed := proposalOutcomeText("report_create", agentruntimeports.ProposalOutcome{
 		Status:         agent.ProposalStatusExecutionFailed,
 		AutonomyTier:   agent.TierAutoExecute,
 		ExecutionError: "name taken",

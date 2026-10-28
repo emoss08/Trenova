@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -70,7 +71,7 @@ type unreported struct {
 // that keeps a follow-up from starting. One follow-up is started at a time;
 // when it ends it asks again, so decisions made in a burst are reported in
 // the order they were made.
-func (s *Service) ResumeFollowUps(ctx context.Context, req agentports.ResumeFollowUpsRequest) {
+func (s *Service) ResumeFollowUps(ctx context.Context, req assistantports.ResumeFollowUpsRequest) {
 	if !s.decided.ready() || req.ThreadID.IsNil() {
 		return
 	}
@@ -90,7 +91,7 @@ func (s *Service) ResumeFollowUps(ctx context.Context, req agentports.ResumeFoll
 		return
 	}
 
-	s.FollowUp(ctx, agentports.DecisionFollowUpRequest{
+	s.FollowUp(ctx, assistantports.DecisionFollowUpRequest{
 		TenantInfo: tenant,
 		RunID:      next.runID,
 		ProposalID: next.proposalID,
@@ -132,7 +133,7 @@ func (s *Service) oldestUnreported(
 		return nil, nil
 	}
 
-	notes, err := s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
+	notes, err := s.conversations.ListMessages(ctx, assistantports.ListMessagesRequest{
 		ThreadID:   threadID,
 		TenantInfo: tenant,
 		Kinds:      []conversation.MessageKind{conversation.MessageKindDecisionNote},

@@ -5,16 +5,16 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documenttypeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/prometheus/client_golang/prometheus"
@@ -117,7 +117,7 @@ type signatureFixture struct {
 	activities *Activities
 	docRepo    *documentportsmock.MockDocumentRepository
 	typeRepo   *documenttypeportsmock.MockDocumentTypeRepository
-	realtime   *agentportsmock.MockRealtimeService
+	realtime   *realtimeportsmock.MockRealtimeService
 	doc        *document.Document
 	tenant     pagination.TenantInfo
 }
@@ -130,7 +130,7 @@ func newSignatureFixture(t *testing.T, requiresSignature bool) *signatureFixture
 	typeID := pulid.MustNew("dt_")
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
 	typeRepo := documenttypeportsmock.NewMockDocumentTypeRepository(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID}
 
 	typeRepo.EXPECT().
@@ -190,7 +190,7 @@ func TestRecordDetectedSignatureWritesAConfidentReadingAndSignalsTheChange(t *te
 	fx.realtime.EXPECT().
 		PublishResourceInvalidation(
 			mock.Anything,
-			mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+			mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 				return req.Resource == permission.ResourceDocument.String() &&
 					req.RecordID == fx.doc.ID
 			}),

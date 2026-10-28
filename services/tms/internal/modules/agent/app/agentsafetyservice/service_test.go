@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -20,12 +20,12 @@ import (
 )
 
 type fakePolicies struct {
-	byName map[string]agentports.ToolPolicy
+	byName map[string]agenttoolports.ToolPolicy
 	order  []string
 }
 
-func newFakePolicies(policies ...agentports.ToolPolicy) *fakePolicies {
-	out := &fakePolicies{byName: make(map[string]agentports.ToolPolicy, len(policies))}
+func newFakePolicies(policies ...agenttoolports.ToolPolicy) *fakePolicies {
+	out := &fakePolicies{byName: make(map[string]agenttoolports.ToolPolicy, len(policies))}
 	for _, policy := range policies {
 		out.byName[policy.Name] = policy
 		out.order = append(out.order, policy.Name)
@@ -34,14 +34,14 @@ func newFakePolicies(policies ...agentports.ToolPolicy) *fakePolicies {
 	return out
 }
 
-func (f *fakePolicies) Get(name string) (agentports.ToolPolicy, bool) {
+func (f *fakePolicies) Get(name string) (agenttoolports.ToolPolicy, bool) {
 	policy, ok := f.byName[name]
 
 	return policy, ok
 }
 
-func (f *fakePolicies) All() []agentports.ToolPolicy {
-	out := make([]agentports.ToolPolicy, 0, len(f.order))
+func (f *fakePolicies) All() []agenttoolports.ToolPolicy {
+	out := make([]agenttoolports.ToolPolicy, 0, len(f.order))
 	for _, name := range f.order {
 		out = append(out, f.byName[name])
 	}
@@ -119,8 +119,12 @@ func (f *fakeControls) GetOrCreate(
 	return f.control, nil
 }
 
-func policy(name string, kind agent.ToolKind, egress ...agent.EgressClass) agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func policy(
+	name string,
+	kind agent.ToolKind,
+	egress ...agent.EgressClass,
+) agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          name,
 		Kind:          kind,
 		Scope:         agent.ToolScopeTenant,
@@ -196,12 +200,12 @@ func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
 	open := agentWith("Dispatcher", "shipment_get", "dispatch_assign_move", "customer_send_email")
 
-	answers := svc.Assess(t.Context(), &agentports.AssessAgentSafetyRequest{
-		Subject: &agentports.AgentSafetySubject{Agent: open, Control: &tenant.AgentControl{}},
+	answers := svc.Assess(t.Context(), &agenttoolports.AssessAgentSafetyRequest{
+		Subject: &agenttoolports.AgentSafetySubject{Agent: open, Control: &tenant.AgentControl{}},
 	})
 	require.Len(t, answers, 3)
 
-	byName := make(map[string]agentports.AgentToolSafety, len(answers))
+	byName := make(map[string]agenttoolports.AgentToolSafety, len(answers))
 	for _, answer := range answers {
 		byName[answer.PolicyName] = answer
 	}
@@ -215,17 +219,22 @@ func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 
 	simulated := agentWith("Rehearsal", "dispatch_assign_move", "shipment_get")
 	simulated.SimulationMode = true
-	rehearsal := svc.Assess(t.Context(), &agentports.AssessAgentSafetyRequest{
-		Subject: &agentports.AgentSafetySubject{Agent: simulated, Control: &tenant.AgentControl{}},
+	rehearsal := svc.Assess(t.Context(), &agenttoolports.AssessAgentSafetyRequest{
+		Subject: &agenttoolports.AgentSafetySubject{
+			Agent:   simulated,
+			Control: &tenant.AgentControl{},
+		},
 	})
 	require.Len(t, rehearsal, 2)
 	assert.Equal(t, agent.AutonomySimulated, rehearsal[0].Clean.Answer)
 	assert.Equal(t, agent.AutonomyRunsOnItsOwn, rehearsal[1].Clean.Answer)
 
 	earner := agentWith("Earner", "dispatch_assign_move")
-	earner.ToolTiers = map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierActWithApproval}
-	earned := svc.Assess(t.Context(), &agentports.AssessAgentSafetyRequest{
-		Subject: &agentports.AgentSafetySubject{
+	earner.ToolTiers = map[string]agent.AutonomyTier{
+		"dispatch_assign_move": agent.TierActWithApproval,
+	}
+	earned := svc.Assess(t.Context(), &agenttoolports.AssessAgentSafetyRequest{
+		Subject: &agenttoolports.AgentSafetySubject{
 			Agent:   earner,
 			Control: &tenant.AgentControl{EarnedAutonomy: true, PromotionThreshold: 4},
 		},
@@ -249,8 +258,8 @@ func TestReachWarnsAboutAnOpenAgentWithSensitiveToolsAndAnAgentNobodyCanUse(t *t
 	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
 
 	open := agentWith("Customer desk", "dispatch_assign_move", "customer_send_email")
-	warnings := svc.ReachWarnings(&agentports.AgentReachRequest{
-		Subject: &agentports.AgentSafetySubject{Agent: open},
+	warnings := svc.ReachWarnings(&agenttoolports.AgentReachRequest{
+		Subject: &agenttoolports.AgentSafetySubject{Agent: open},
 	})
 	require.Len(t, warnings, 1)
 	assert.Equal(t, agentdefinition.ReachOpenWithSensitiveTools, warnings[0].Kind)
@@ -258,15 +267,15 @@ func TestReachWarnsAboutAnOpenAgentWithSensitiveToolsAndAnAgentNobodyCanUse(t *t
 
 	restricted := agentWith("Customer desk", "customer_send_email")
 	restricted.AccessMode = agentdefinition.AccessRoles
-	assert.Equal(t, []agentports.AgentReachWarning{{
+	assert.Equal(t, []agenttoolports.AgentReachWarning{{
 		Kind:  agentdefinition.ReachNoAudience,
 		Tools: []string{},
-	}}, svc.ReachWarnings(&agentports.AgentReachRequest{
-		Subject: &agentports.AgentSafetySubject{Agent: restricted},
+	}}, svc.ReachWarnings(&agenttoolports.AgentReachRequest{
+		Subject: &agenttoolports.AgentSafetySubject{Agent: restricted},
 	}))
 
-	assert.Empty(t, svc.ReachWarnings(&agentports.AgentReachRequest{
-		Subject:      &agentports.AgentSafetySubject{Agent: restricted},
+	assert.Empty(t, svc.ReachWarnings(&agenttoolports.AgentReachRequest{
+		Subject:      &agenttoolports.AgentSafetySubject{Agent: restricted},
 		GrantedRoles: 2,
 	}))
 }
@@ -282,20 +291,20 @@ func TestListSubjectsReadsEveryAgentOrTheOnesNamed(t *testing.T) {
 	control := &tenant.AgentControl{ShadowMode: true}
 	svc := testService(defs, control)
 
-	subjects, err := svc.ListSubjects(t.Context(), &agentports.ListAgentSafetyRequest{})
+	subjects, err := svc.ListSubjects(t.Context(), &agenttoolports.ListAgentSafetyRequest{})
 	require.NoError(t, err)
 	assert.Len(t, subjects, 150)
 	assert.Equal(t, 2, defs.pages)
 	assert.Same(t, control, subjects[0].Control)
 
-	named, err := svc.ListSubjects(t.Context(), &agentports.ListAgentSafetyRequest{
+	named, err := svc.ListSubjects(t.Context(), &agenttoolports.ListAgentSafetyRequest{
 		AgentIDs: []pulid.ID{all[3].ID, all[3].ID},
 	})
 	require.NoError(t, err)
 	require.Len(t, named, 1)
 	assert.Equal(t, all[3].ID, named[0].Agent.ID)
 
-	none, err := svc.ListSubjects(t.Context(), &agentports.ListAgentSafetyRequest{
+	none, err := svc.ListSubjects(t.Context(), &agenttoolports.ListAgentSafetyRequest{
 		AgentIDs: []pulid.ID{},
 	})
 	require.NoError(t, err)
@@ -305,10 +314,13 @@ func TestListSubjectsReadsEveryAgentOrTheOnesNamed(t *testing.T) {
 	for range MaxAgentIDs + 1 {
 		tooMany = append(tooMany, pulid.MustNew("agdef_"))
 	}
-	_, err = svc.ListSubjects(t.Context(), &agentports.ListAgentSafetyRequest{AgentIDs: tooMany})
+	_, err = svc.ListSubjects(
+		t.Context(),
+		&agenttoolports.ListAgentSafetyRequest{AgentIDs: tooMany},
+	)
 	require.Error(t, err)
 
-	_, err = svc.ListSubjects(t.Context(), &agentports.ListAgentSafetyRequest{
+	_, err = svc.ListSubjects(t.Context(), &agenttoolports.ListAgentSafetyRequest{
 		AgentIDs: []pulid.ID{pulid.Nil},
 	})
 	require.Error(t, err)

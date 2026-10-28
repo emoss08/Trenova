@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
@@ -29,7 +29,7 @@ func (s *Service) ReadRecord(
 		return nil, false
 	}
 
-	name := agentports.ToolNameFor(recordReadPrefix + ref.EntityType)
+	name := agenttoolports.ToolNameFor(recordReadPrefix + ref.EntityType)
 	if _, ok := s.queryTools.Get(name); !ok {
 		name = recordReadPrefix + ref.EntityType
 	}
@@ -58,7 +58,7 @@ func (s *Service) ReadRecordWith(
 	}
 
 	params := map[string]any{param: recordIDArgument(schema, param, id)}
-	data, err := tool.Query(ctx, &agentports.QueryToolParams{
+	data, err := tool.Query(ctx, &agenttoolports.QueryToolParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		Actor:          actor,

@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -253,7 +254,7 @@ func (fakeAccountingConnections) Status(
 
 func accountingReader(t *testing.T, drift *fakeAccountingDrift,
 	ledger *fakeAccountingSync, engine permissionports.PermissionEngine,
-) agentports.GraphQLReader {
+) graphqlreadports.GraphQLReader {
 	t.Helper()
 
 	return accountingReaderWith(t, drift, ledger, &fakeAccountingMappings{}, engine)
@@ -262,7 +263,7 @@ func accountingReader(t *testing.T, drift *fakeAccountingDrift,
 func accountingReaderWith(t *testing.T, drift *fakeAccountingDrift,
 	ledger *fakeAccountingSync, mappings *fakeAccountingMappings,
 	engine permissionports.PermissionEngine,
-) agentports.GraphQLReader {
+) graphqlreadports.GraphQLReader {
 	t.Helper()
 
 	return agentreadtest.NewReader(t, agentreadtest.Options{
@@ -292,7 +293,7 @@ func (publicCeiling) GetResourcePermissions(
 	}, nil
 }
 
-func accountingCall(params map[string]any) (context.Context, *agentports.QueryToolParams) {
+func accountingCall(params map[string]any) (context.Context, *agenttoolports.QueryToolParams) {
 	return readscope.With(context.Background(), nil), keyedCall(params)
 }
 

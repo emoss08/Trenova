@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -32,7 +32,11 @@ func TestTargetOf_NamesTheRecordFromItsArgument(t *testing.T) {
 	)
 
 	require.True(t, ok)
-	assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceShipment, ID: id}, target)
+	assert.Equal(
+		t,
+		agenttoolports.ToolTarget{Resource: permission.ResourceShipment, ID: id},
+		target,
+	)
 }
 
 // A missing or malformed id yields no target and the call is still made: the
@@ -61,7 +65,7 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 
 	id := pulid.MustNew("x_")
 	cases := []struct {
-		tool     agentports.AgentTool
+		tool     agenttoolports.AgentTool
 		key      string
 		resource permission.Resource
 	}{
@@ -77,7 +81,11 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 		{&operationstools.ApproveWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
 		{&operationstools.RejectWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
 		{&operationstools.CancelWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
-		{&invoicetools.CorrectChargeCodeTool{}, "billingQueueItemId", permission.ResourceBillingQueue},
+		{
+			&invoicetools.CorrectChargeCodeTool{},
+			"billingQueueItemId",
+			permission.ResourceBillingQueue,
+		},
 		{&masterdatatools.AddDashboardTileTool{}, "dashboardId", permission.ResourceDashboard},
 		{&alerttools.ScheduleReportTool{}, "definitionId", permission.ResourceReport},
 		{&inboundtools.LinkInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
@@ -85,14 +93,34 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 		// The message, not a new record: a reply to a message somebody has
 		// since settled or relinked must be refused as stale.
 		{&inboundtools.ReplyToInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
-		{&carriertools.AssignMoveToCarrierTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
-		{&carriertools.CancelCarrierAssignmentTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
+		{
+			&carriertools.AssignMoveToCarrierTool{},
+			"shipmentMoveId",
+			permission.ResourceShipmentMove,
+		},
+		{
+			&carriertools.CancelCarrierAssignmentTool{},
+			"shipmentMoveId",
+			permission.ResourceShipmentMove,
+		},
 		// The tender, whose version moves as it advances or ends, so a
 		// withdrawal proposed against a tender that has since moved is stale.
 		{&tendertools.CancelTenderTool{}, "tenderId", permission.ResourceTender},
-		{&ratetools.GenerateRateConfirmationTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
-		{&ratetools.SendRateConfirmationTool{}, "rateConfirmationId", permission.ResourceRateConfirmation},
-		{&ratetools.VoidRateConfirmationTool{}, "rateConfirmationId", permission.ResourceRateConfirmation},
+		{
+			&ratetools.GenerateRateConfirmationTool{},
+			"shipmentMoveId",
+			permission.ResourceShipmentMove,
+		},
+		{
+			&ratetools.SendRateConfirmationTool{},
+			"rateConfirmationId",
+			permission.ResourceRateConfirmation,
+		},
+		{
+			&ratetools.VoidRateConfirmationTool{},
+			"rateConfirmationId",
+			permission.ResourceRateConfirmation,
+		},
 		{
 			&ratetools.RecordRateConfirmationConfirmedTool{},
 			"rateConfirmationId",
@@ -101,7 +129,7 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		targeted, ok := tc.tool.(agentports.TargetedTool)
+		targeted, ok := tc.tool.(agenttoolports.TargetedTool)
 		require.True(t, ok, "%T names no target", tc.tool)
 		target, found := targeted.Target(map[string]any{tc.key: id.String()})
 		require.True(t, found, "%T", tc.tool)

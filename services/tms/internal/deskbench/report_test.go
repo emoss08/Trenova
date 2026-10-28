@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/evalsplit"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -158,12 +158,18 @@ func TestScoreRetrieval_AgainstTheToolsThePassingTrialUsed(t *testing.T) {
 	t.Parallel()
 
 	turn := toolTurnRecord(
-		"find_tools", "shipment_get", "equipment_list_trailers", "shipment_add_comment", "customer_get",
+		"find_tools",
+		"shipment_get",
+		"equipment_list_trailers",
+		"shipment_add_comment",
+		"customer_get",
 	)
-	turn.ModelCalls = []*ModelCall{{Chat: &agentports.ChatCompletionRequest{Tools: []kernelports.ToolSpec{
-		{Name: "shipment_get"}, {Name: "shipment_add_comment"}, {Name: "customer_get"},
-		{Name: "find_tools"},
-	}}}}
+	turn.ModelCalls = []*ModelCall{
+		{Chat: &llmports.ChatCompletionRequest{Tools: []kernelports.ToolSpec{
+			{Name: "shipment_get"}, {Name: "shipment_add_comment"}, {Name: "customer_get"},
+			{Name: "find_tools"},
+		}}},
+	}
 	turn.Disclosures = []Disclosure{
 		{Kind: DisclosurePreselected, Ranked: []string{"shipment_get", "shipment_add_comment"}},
 		{Kind: DisclosureFound, Need: "trailers", Ranked: []string{"equipment_list_trailers"}},

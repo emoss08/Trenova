@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -138,7 +138,7 @@ func watchArgs() map[string]any {
 	}
 }
 
-func personParams(args map[string]any) agentports.ToolExecuteParams {
+func personParams(args map[string]any) agenttoolports.ToolExecuteParams {
 	params := agenttoolstest.DeskParams(args)
 	params.ThreadID = pulid.MustNew("athr_")
 

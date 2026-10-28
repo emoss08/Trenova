@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -63,7 +65,8 @@ func (r *stubArtifactRepo) LatestInLineage(
 ) (*assistantartifact.Artifact, error) {
 	var latest *assistantartifact.Artifact
 	for _, artifact := range r.upserts {
-		if artifact.LineageKey == req.LineageKey && artifact.SourceToolCallID != req.ExceptToolCall {
+		if artifact.LineageKey == req.LineageKey &&
+			artifact.SourceToolCallID != req.ExceptToolCall {
 			latest = artifact
 		}
 	}
@@ -156,9 +159,9 @@ func (r *stubArtifactRepo) TurnQuestions(
 	return out, nil
 }
 
-func observation(name string, data any) agentports.ToolObservation {
-	return agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: "call_" + name, Name: name},
+func observation(name string, data any) agentruntimeports.ToolObservation {
+	return agentruntimeports.ToolObservation{
+		Call: llmports.ToolCall{ID: "call_" + name, Name: name},
 		Data: data,
 	}
 }
@@ -262,8 +265,8 @@ func TestArtifactFromObservation_RecordsBecomeCardsAndViewsDoNot(t *testing.T) {
 		"moves": []any{},
 	})), "a board is not a record")
 	assert.Nil(t, artifactFromObservation(observation("shipment_list", map[string]any{"id": "x"})))
-	assert.Nil(t, artifactFromObservation(agentports.ToolObservation{
-		Call:   agentports.ToolCall{ID: "call_x", Name: "shipment_get"},
+	assert.Nil(t, artifactFromObservation(agentruntimeports.ToolObservation{
+		Call:   llmports.ToolCall{ID: "call_x", Name: "shipment_get"},
 		Failed: true,
 	}))
 	assert.Nil(t, artifactFromObservation(observation("shipment_get", nil)))
@@ -374,8 +377,8 @@ func TestArtifactRecorder_KeepsAndAnnouncesWhatATurnProduced(t *testing.T) {
 	assert.Equal(t, thread.ID, repo.upserts[0].ThreadID)
 	assert.Equal(t, tenant.OrgID, repo.upserts[0].OrganizationID)
 	require.Len(t, events, 1)
-	assert.Equal(t, agentports.AssistantEventArtifact, events[0].Event)
-	announced, ok := events[0].Data.(agentports.AssistantArtifactEvent)
+	assert.Equal(t, assistantports.AssistantEventArtifact, events[0].Event)
+	announced, ok := events[0].Data.(assistantports.AssistantArtifactEvent)
 	require.True(t, ok)
 	assert.Equal(t, assistantartifact.KindEntityCard, announced.Kind)
 	assert.Equal(t, "call_customer_get", announced.SourceToolCallID)
@@ -401,23 +404,31 @@ func TestArtifactRecorder_AnnouncesWhereANavigationGoes(t *testing.T) {
 	svc := &Service{logger: zap.NewNop(), artifacts: repo}
 	thread := &conversation.Thread{ID: pulid.MustNew("thr_")}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	recorder := svc.newArtifactRecorder(t.Context(), thread, tenant, testActor(), func(event kernelports.StreamEvent) {
-		events = append(events, event)
-	})
+	recorder := svc.newArtifactRecorder(
+		t.Context(),
+		thread,
+		tenant,
+		testActor(),
+		func(event kernelports.StreamEvent) {
+			events = append(events, event)
+		},
+	)
 
 	recorder.observe(observation("agent_open_page", map[string]any{
 		"path": "/billing/invoices",
 		"name": "Invoices",
 	}))
-	recorder.observe(observation("shipment_get", map[string]any{"id": "shp_1", "proNumber": "PRO-1"}))
+	recorder.observe(
+		observation("shipment_get", map[string]any{"id": "shp_1", "proNumber": "PRO-1"}),
+	)
 
 	require.Len(t, events, 2)
-	moved, ok := events[0].Data.(agentports.AssistantArtifactEvent)
+	moved, ok := events[0].Data.(assistantports.AssistantArtifactEvent)
 	require.True(t, ok)
 	assert.Equal(t, assistantartifact.KindNavigation, moved.Kind)
 	assert.Equal(t, "/billing/invoices", moved.Path)
 
-	card, ok := events[1].Data.(agentports.AssistantArtifactEvent)
+	card, ok := events[1].Data.(assistantports.AssistantArtifactEvent)
 	require.True(t, ok)
 	assert.Empty(t, card.Path)
 	// The move is announced and not kept: only the card was saved.
@@ -489,8 +500,8 @@ func TestListThreadArtifacts_DraftStatusFollowsTheProposal(t *testing.T) {
 
 	page, err := svc.ListThreadArtifacts(
 		t.Context(),
-		agentports.GetThreadRequest{ID: thread.ID},
-		agentports.ListArtifactsOptions{},
+		assistantports.GetThreadRequest{ID: thread.ID},
+		assistantports.ListArtifactsOptions{},
 	)
 	require.NoError(t, err)
 	listed := page.Results
@@ -713,7 +724,9 @@ func TestArtifactFromObservation_OnlyTheSoleRecordOfACardedKindIsItsCard(t *test
 			tool: "masterdata_list_commodities",
 			result: map[string]any{
 				"count": float64(1), "columns": columns,
-				"items": []any{map[string]any{"id": "com_01JPAPER000000000000000", "name": "Paper"}},
+				"items": []any{
+					map[string]any{"id": "com_01JPAPER000000000000000", "name": "Paper"},
+				},
 			},
 		},
 	}
@@ -936,8 +949,18 @@ func TestArtifactFromObservation_ADescribedViewIsAViewToOpen(t *testing.T) {
 		"countCapped": true,
 		"columns":     []any{"proNumber", "customer", "status"},
 		"items": []any{
-			map[string]any{"id": "shp_1", "proNumber": "P1", "customer": "Acme", "status": "InTransit"},
-			map[string]any{"id": "shp_2", "proNumber": "P2", "customer": "Globex", "status": "InTransit"},
+			map[string]any{
+				"id":        "shp_1",
+				"proNumber": "P1",
+				"customer":  "Acme",
+				"status":    "InTransit",
+			},
+			map[string]any{
+				"id":        "shp_2",
+				"proNumber": "P2",
+				"customer":  "Globex",
+				"status":    "InTransit",
+			},
 		},
 	}))
 
@@ -1018,7 +1041,11 @@ func TestArtifactFromObservation_ARankingBecomesARankedTable(t *testing.T) {
 				"minutesOfSlack":      float64(240),
 				"driveRemainingHours": 9.333333,
 				"findings": []any{
-					map[string]any{"code": "home_time", "severity": "Info", "message": "Home Friday"},
+					map[string]any{
+						"code":     "home_time",
+						"severity": "Info",
+						"message":  "Home Friday",
+					},
 				},
 			},
 			map[string]any{
@@ -1030,7 +1057,11 @@ func TestArtifactFromObservation_ARankingBecomesARankedTable(t *testing.T) {
 				"minutesOfSlack":      float64(45),
 				"driveRemainingHours": float64(3),
 				"findings": []any{
-					map[string]any{"code": "slack", "severity": "Warn", "message": "45 minutes of slack"},
+					map[string]any{
+						"code":     "slack",
+						"severity": "Warn",
+						"message":  "45 minutes of slack",
+					},
 				},
 			},
 		},
@@ -1177,7 +1208,9 @@ func TestArtifactRecorder_ReadingTheSameSourceAgainMakesANewVersion(t *testing.T
 		nil,
 	)
 	rows := map[string]any{
-		"items":   []any{map[string]any{"id": "bqi_1", "number": "BQ-1", "status": "ReadyForReview"}},
+		"items": []any{
+			map[string]any{"id": "bqi_1", "number": "BQ-1", "status": "ReadyForReview"},
+		},
 		"columns": []any{"number", "status"},
 		"count":   1,
 	}
@@ -1189,9 +1222,9 @@ func TestArtifactRecorder_ReadingTheSameSourceAgainMakesANewVersion(t *testing.T
 		"columns": []any{"number", "status"},
 		"count":   1,
 	}
-	read := func(callID string, status string, data map[string]any) agentports.ToolObservation {
-		return agentports.ToolObservation{
-			Call: agentports.ToolCall{
+	read := func(callID string, status string, data map[string]any) agentruntimeports.ToolObservation {
+		return agentruntimeports.ToolObservation{
+			Call: llmports.ToolCall{
 				ID:        callID,
 				Name:      "billing_list_queue_items",
 				Arguments: map[string]any{"status": status},

@@ -5,7 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,17 +14,17 @@ import (
 
 type recordedDisclosures struct {
 	mu          sync.Mutex
-	preselected []agentports.ToolDisclosure
-	found       []agentports.ToolDisclosure
+	preselected []agenttoolports.ToolDisclosure
+	found       []agenttoolports.ToolDisclosure
 }
 
-func (r *recordedDisclosures) Preselected(_ context.Context, d *agentports.ToolDisclosure) {
+func (r *recordedDisclosures) Preselected(_ context.Context, d *agenttoolports.ToolDisclosure) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.preselected = append(r.preselected, *d)
 }
 
-func (r *recordedDisclosures) Found(_ context.Context, d *agentports.ToolDisclosure) {
+func (r *recordedDisclosures) Found(_ context.Context, d *agenttoolports.ToolDisclosure) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.found = append(r.found, *d)
@@ -41,7 +42,7 @@ func TestRun_ReportsTheOpeningRankingAndEachSearch(t *testing.T) {
 	service.disclosures = observed
 	threadID := pulid.MustNew("athr_")
 
-	_, err := service.Run(t.Context(), &agentports.RunRequest{
+	_, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(names...),
 		Actor:      testActor(),
 		Input:      "say hello",
@@ -75,7 +76,7 @@ func TestRun_SendsEveryHeldToolBelowTheConfiguredThreshold(t *testing.T) {
 	observed := &recordedDisclosures{}
 	service.disclosures = observed
 
-	_, err := service.Run(t.Context(), &agentports.RunRequest{
+	_, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: testDefinition(names...),
 		Actor:      testActor(),
 		Input:      "say hello",

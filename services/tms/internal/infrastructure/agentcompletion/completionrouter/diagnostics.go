@@ -3,7 +3,7 @@ package completionrouter
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"go.uber.org/zap"
 )
 
@@ -13,7 +13,7 @@ import (
 // such; a call with nothing to compare against is logged only for debugging.
 func (s *Service) noteCacheDiagnosis(
 	provider *aiprovider.Provider,
-	req *agentports.ChatCompletionRequest,
+	req *llmports.ChatCompletionRequest,
 	resp *modeladapter.Response,
 ) {
 	diagnosis := resp.CacheDiagnosis

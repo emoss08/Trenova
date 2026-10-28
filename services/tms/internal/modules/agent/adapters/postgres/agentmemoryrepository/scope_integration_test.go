@@ -5,9 +5,9 @@ package agentmemoryrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -67,7 +67,7 @@ func TestMemoryReaders_ScopeAMemoryKeptForOneAgentToThatAgent(t *testing.T) {
 	require.NoError(t, err)
 
 	read := func(agentID pulid.ID) []pulid.ID {
-		listed, listErr := repo.ListActive(ctx, agentports.ListActiveAgentMemoriesRequest{
+		listed, listErr := repo.ListActive(ctx, agentmemoryports.ListActiveAgentMemoriesRequest{
 			TenantInfo:        tenant,
 			AgentDefinitionID: agentID,
 			Now:               now,
@@ -86,7 +86,7 @@ func TestMemoryReaders_ScopeAMemoryKeptForOneAgentToThatAgent(t *testing.T) {
 	assert.ElementsMatch(t, []pulid.ID{organization.ID, written.ID}, read(pulid.Nil),
 		"a prompt for no agent in particular reads only the organization's")
 
-	recalled, err := repo.Search(ctx, agentports.SearchAgentMemoriesRequest{
+	recalled, err := repo.Search(ctx, agentmemoryports.SearchAgentMemoriesRequest{
 		TenantInfo:        tenant,
 		AgentDefinitionID: dispatch,
 		Now:               now,
@@ -94,7 +94,7 @@ func TestMemoryReaders_ScopeAMemoryKeptForOneAgentToThatAgent(t *testing.T) {
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []pulid.ID{organization.ID, written.ID}, memoryIDs(recalled))
 
-	stored, err := repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+	stored, err := repo.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID:         written.ID,
 		TenantInfo: tenant,
 	})
@@ -118,7 +118,7 @@ func TestResolveSuggestion_ApprovesForTheScopeAsked(t *testing.T) {
 		require.NoError(t, err)
 
 		resolved, err := repo.ResolveSuggestion(ctx,
-			agentports.ResolveAgentMemorySuggestionRequest{
+			agentmemoryports.ResolveAgentMemorySuggestionRequest{
 				ID:         created.ID,
 				TenantInfo: tenant,
 				Status:     agent.MemoryStatusActive,
@@ -157,7 +157,7 @@ func TestResolveSuggestion_RecordsAReviewOnlyWhenAPersonApproves(t *testing.T) {
 		require.NoError(t, err)
 
 		resolved, err := repo.ResolveSuggestion(ctx,
-			agentports.ResolveAgentMemorySuggestionRequest{
+			agentmemoryports.ResolveAgentMemorySuggestionRequest{
 				ID:         created.ID,
 				TenantInfo: tenant,
 				Status:     agent.MemoryStatusActive,
@@ -169,7 +169,7 @@ func TestResolveSuggestion_RecordsAReviewOnlyWhenAPersonApproves(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		stored, err := repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+		stored, err := repo.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 			ID:         resolved.ID,
 			TenantInfo: tenant,
 		})

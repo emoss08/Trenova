@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -71,13 +73,13 @@ func testDefinition(tools ...string) *agentdefinition.Definition {
 	return d
 }
 
-func textTurn(text string) *agentports.ChatCompletionResult {
-	return &agentports.ChatCompletionResult{Text: text, ModelIdentifier: "test-model"}
+func textTurn(text string) *llmports.ChatCompletionResult {
+	return &llmports.ChatCompletionResult{Text: text, ModelIdentifier: "test-model"}
 }
 
-func toolTurn(name string, args map[string]any) *agentports.ChatCompletionResult {
-	return &agentports.ChatCompletionResult{
-		ToolCalls: []agentports.ToolCall{
+func toolTurn(name string, args map[string]any) *llmports.ChatCompletionResult {
+	return &llmports.ChatCompletionResult{
+		ToolCalls: []llmports.ToolCall{
 			{ID: "call_1", Name: name, Arguments: args},
 		},
 		ModelIdentifier: "test-model",
@@ -87,7 +89,7 @@ func toolTurn(name string, args map[string]any) *agentports.ChatCompletionResult
 func TestRun_AnswersAnInScopeQuestion(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		textTurn("Load 12345 is with Maria Ortiz."),
 	}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
@@ -112,7 +114,7 @@ func TestRun_AnswersAnInScopeQuestion(t *testing.T) {
 func TestRun_RefusesBeforeCallingTheChatModel(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		textTurn("should never be reached"),
 	}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
@@ -141,11 +143,11 @@ func TestRun_RunsAnEnabledQueryToolAndAnswersFromIt(t *testing.T) {
 		ToolName: "shipment_get",
 		Result:   map[string]any{"proNumber": "S12345", "status": "InTransit"},
 	}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
 		textTurn("S12345 is in transit."),
 	}}
-	svc := newService(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{tool}},
+	svc := newService(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{tool}},
 		&stubActionRegistry{})
 
 	result, err := svc.run(t.Context(), &TurnRequest{
@@ -166,12 +168,12 @@ func TestRun_TurnsAWriteToolIntoAnAction(t *testing.T) {
 	t.Parallel()
 
 	action := &agenttest.StubActionTool{ToolName: "reassign_move"}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("reassign_move", map[string]any{"moveId": "mv_1"}),
 		textTurn("I have proposed reassigning the move."),
 	}}
 	svc := newService(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{action}})
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{action}})
 
 	result, err := svc.run(t.Context(), &TurnRequest{
 		Definition: testDefinition("reassign_move"),
@@ -193,11 +195,11 @@ func TestRun_ReportsToolFailureToTheModel(t *testing.T) {
 		ToolName: "shipment_get",
 		Err:      errors.New("shipment not found"),
 	}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("shipment_get", map[string]any{"shipmentId": "bogus"}),
 		textTurn("I could not find that shipment."),
 	}}
-	svc := newService(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{tool}},
+	svc := newService(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{tool}},
 		&stubActionRegistry{})
 
 	result, err := svc.run(t.Context(), &TurnRequest{
@@ -218,7 +220,7 @@ func TestRun_ReportsToolFailureToTheModel(t *testing.T) {
 func TestRun_TakesCodeOutOfAReply(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		textTurn("Load 12345 is in transit.\n```python\nprint('hi')\n```"),
 	}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
@@ -252,15 +254,15 @@ func TestRunObserved_ReportsTheTurnInOrder(t *testing.T) {
 		ToolName: "shipment_get",
 		Result:   map[string]any{"proNumber": "S12345"},
 	}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		{
 			Text:            "Let me check.",
-			ToolCalls:       []agentports.ToolCall{{ID: "call_1", Name: "shipment_get"}},
+			ToolCalls:       []llmports.ToolCall{{ID: "call_1", Name: "shipment_get"}},
 			ModelIdentifier: "test-model",
 		},
 		textTurn("S12345 is in transit."),
 	}}
-	svc := newService(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{tool}},
+	svc := newService(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{tool}},
 		&stubActionRegistry{})
 
 	var names []string
@@ -270,7 +272,7 @@ func TestRunObserved_ReportsTheTurnInOrder(t *testing.T) {
 		Input:      "Where is S12345?",
 	}, func(event kernelports.StreamEvent) {
 		if len(names) > 0 && names[len(names)-1] == event.Event &&
-			event.Event == agentports.AssistantEventDelta {
+			event.Event == assistantports.AssistantEventDelta {
 			return
 		}
 		names = append(names, event.Event)
@@ -279,19 +281,19 @@ func TestRunObserved_ReportsTheTurnInOrder(t *testing.T) {
 	assert.Equal(t, "S12345 is in transit.", result.Reply)
 
 	assert.Equal(t, []string{
-		agentports.AssistantEventAccepted,
-		agentports.AssistantEventDelta,
-		agentports.AssistantEventMessage,
-		agentports.AssistantEventToolStarted,
-		agentports.AssistantEventToolFinished,
-		agentports.AssistantEventDelta,
+		assistantports.AssistantEventAccepted,
+		assistantports.AssistantEventDelta,
+		assistantports.AssistantEventMessage,
+		assistantports.AssistantEventToolStarted,
+		assistantports.AssistantEventToolFinished,
+		assistantports.AssistantEventDelta,
 	}, names)
 }
 
 func TestRunObserved_ReportsARefusalAndNothingElse(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		textTurn("never"),
 	}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
@@ -305,6 +307,6 @@ func TestRunObserved_ReportsARefusalAndNothingElse(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, events, 1)
-	assert.Equal(t, agentports.AssistantEventRefused, events[0].Event)
+	assert.Equal(t, assistantports.AssistantEventRefused, events[0].Event)
 	assert.Zero(t, completion.CallCount)
 }

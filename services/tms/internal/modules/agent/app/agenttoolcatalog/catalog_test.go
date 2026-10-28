@@ -3,13 +3,13 @@ package agenttoolcatalog
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func descriptor(name, description string) agentports.AgentToolDescriptor {
-	return agentports.AgentToolDescriptor{
+func descriptor(name, description string) agenttoolports.AgentToolDescriptor {
+	return agenttoolports.AgentToolDescriptor{
 		Name:        name,
 		Description: description,
 		Parameters:  map[string]any{"type": "object"},
@@ -17,7 +17,7 @@ func descriptor(name, description string) agentports.AgentToolDescriptor {
 }
 
 func testCatalog() *Catalog {
-	return New([]agentports.AgentToolDescriptor{
+	return New([]agenttoolports.AgentToolDescriptor{
 		descriptor(
 			"worker_list",
 			"List workers (drivers) narrowed by status, employment type or fleet.",
@@ -45,7 +45,7 @@ func testCatalog() *Catalog {
 	})
 }
 
-func names(entries []agentports.AgentToolDescriptor) []string {
+func names(entries []agenttoolports.AgentToolDescriptor) []string {
 	out := make([]string, 0, len(entries))
 	for _, entry := range entries {
 		out = append(out, entry.Name)
@@ -221,7 +221,7 @@ on the word "list", and a small model picked from all of them.
 func TestFind_KeepsOnlyTheToolsThatMatchedAboutAsWellAsTheBest(t *testing.T) {
 	t.Parallel()
 
-	catalog := New([]agentports.AgentToolDescriptor{
+	catalog := New([]agenttoolports.AgentToolDescriptor{
 		descriptor("equipment_list_trailers", "List trailers by status or inspection date."),
 		descriptor("worker_list", "List workers by status."),
 		descriptor("equipment_list_tractors", "List tractors by status."),
@@ -231,7 +231,11 @@ func TestFind_KeepsOnlyTheToolsThatMatchedAboutAsWellAsTheBest(t *testing.T) {
 
 	found := names(catalog.Find(nil, "list trailers", 6))
 
-	assert.ElementsMatch(t, []string{"equipment_list_trailers", "equipment_set_trailer_status"}, found)
+	assert.ElementsMatch(
+		t,
+		[]string{"equipment_list_trailers", "equipment_set_trailer_status"},
+		found,
+	)
 }
 
 // A tool's own search terms count as its name. Nobody says "home layout";
@@ -241,7 +245,7 @@ func TestFind_MatchesAToolsSearchTermsAsItsName(t *testing.T) {
 
 	home := descriptor("home_get_layout", "Read the widgets on the person's home page.")
 	home.SearchTerms = []string{"homepage", "landing page", "widgets"}
-	catalog := New([]agentports.AgentToolDescriptor{
+	catalog := New([]agenttoolports.AgentToolDescriptor{
 		home,
 		descriptor("report_list_dashboards", "List the report dashboards on the Reports page."),
 		descriptor("worker_list", "List workers by status."),
@@ -269,7 +273,7 @@ func TestFind_ReachesAToolThroughItsParameters(t *testing.T) {
 			},
 		},
 	}
-	catalog := New([]agentports.AgentToolDescriptor{
+	catalog := New([]agenttoolports.AgentToolDescriptor{
 		shipments,
 		descriptor("customer_list", "List customers by status or city."),
 		descriptor("worker_list", "List workers by status."),
@@ -287,7 +291,7 @@ func TestPrerequisitesAndQuery_ComeFromTheDescriptor(t *testing.T) {
 	dashboard.Prerequisites = []string{"report_list"}
 	reports := descriptor("report_list", "List reports.")
 	reports.Query = true
-	catalog := New([]agentports.AgentToolDescriptor{dashboard, reports})
+	catalog := New([]agenttoolports.AgentToolDescriptor{dashboard, reports})
 
 	assert.Equal(t, []string{"report_list"}, catalog.Prerequisites("report_create_dashboard"))
 	assert.Nil(t, catalog.Prerequisites("missing"))
@@ -296,7 +300,7 @@ func TestPrerequisitesAndQuery_ComeFromTheDescriptor(t *testing.T) {
 }
 
 func reportFamilyCatalog() *Catalog {
-	return New([]agentports.AgentToolDescriptor{
+	return New([]agenttoolports.AgentToolDescriptor{
 		descriptor("report_run", "Start a report run."),
 		descriptor("report_list", "List the reports this organization can run."),
 		descriptor("report_get", "Show what a report contains."),
@@ -354,7 +358,7 @@ func TestRank_DoesNotBringAlongFamilies(t *testing.T) {
 }
 
 func parameterOnlyCatalog() *Catalog {
-	return New([]agentports.AgentToolDescriptor{
+	return New([]agenttoolports.AgentToolDescriptor{
 		{
 			Name:        "shipment_list",
 			Description: "List shipments narrowed by status or dates.",
@@ -422,7 +426,10 @@ func TestStrongScore(t *testing.T) {
 
 	catalog := parameterOnlyCatalog()
 
-	assert.Positive(t, catalog.StrongScore("masterdata_list_commodities", "which commodity is hazmat"))
+	assert.Positive(
+		t,
+		catalog.StrongScore("masterdata_list_commodities", "which commodity is hazmat"),
+	)
 	assert.Greater(
 		t,
 		catalog.StrongScore("masterdata_list_commodities", "which commodity is hazmat"),
@@ -461,7 +468,7 @@ func TestMatch_FindsNothingForWordsNoToolCarries(t *testing.T) {
 func TestMatch_GivesToolsThatMatchEquallyTheSameScore(t *testing.T) {
 	t.Parallel()
 
-	catalog := New([]agentports.AgentToolDescriptor{
+	catalog := New([]agenttoolports.AgentToolDescriptor{
 		{Name: "shipment_create", Description: "Create a shipment."},
 		{Name: "shipment_get", Description: "Retrieve one shipment."},
 	})
@@ -476,7 +483,7 @@ func TestMatch_GivesToolsThatMatchEquallyTheSameScore(t *testing.T) {
 func TestMatch_KeepsATieWhenEmbeddingsJoinTheRanking(t *testing.T) {
 	t.Parallel()
 
-	catalog := New([]agentports.AgentToolDescriptor{
+	catalog := New([]agenttoolports.AgentToolDescriptor{
 		{Name: "shipment_create", Description: "Create a shipment."},
 		{Name: "shipment_get", Description: "Retrieve one shipment."},
 		{Name: "invoice_list", Description: "List invoices."},
@@ -504,7 +511,7 @@ func TestMatch_KeepsATieWhenEmbeddingsJoinTheRanking(t *testing.T) {
 func TestMentionsAny_FindsAQuestionThatNamesSomethingAToolDoes(t *testing.T) {
 	t.Parallel()
 
-	catalog := New([]agentports.AgentToolDescriptor{
+	catalog := New([]agenttoolports.AgentToolDescriptor{
 		{Name: "invoice_list", Description: "List invoices by status."},
 	})
 
@@ -516,7 +523,7 @@ func TestMentionsAny_FindsAQuestionThatNamesSomethingAToolDoes(t *testing.T) {
 func TestMentionsAny_LooksOnlyAtTheToolsAllowed(t *testing.T) {
 	t.Parallel()
 
-	catalog := New([]agentports.AgentToolDescriptor{
+	catalog := New([]agenttoolports.AgentToolDescriptor{
 		{Name: "invoice_list", Description: "List invoices by status."},
 		{Name: "shipment_get", Description: "Get a shipment by its number."},
 	})

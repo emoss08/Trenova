@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
@@ -20,42 +20,42 @@ import (
 var ErrNeedsAPersonsApproval = errors.New("this runs only once a person approves the proposal")
 
 type ReceivableSpec struct {
-	Name        string                                                   `json:"-"`
-	Description string                                                   `json:"-"`
-	Resource    permission.Resource                                      `json:"-"`
-	Operation   permission.Operation                                     `json:"-"`
-	Egress      agent.EgressClass                                        `json:"-"`
-	AlsoEgress  []agent.EgressClass                                      `json:"-"`
-	Classify    func(agentports.ToolExecuteParams) agentports.CallPolicy `json:"-"`
-	DefaultTier agent.AutonomyTier                                       `json:"-"`
-	MaxTier     agent.AutonomyTier                                       `json:"-"`
-	PersonOnly  bool                                                     `json:"-"`
-	Reversible  bool                                                     `json:"-"`
-	Idempotent  bool                                                     `json:"-"`
-	TaintHold   string                                                   `json:"-"`
-	Condition   *agentports.TierCondition                                `json:"-"`
-	Artifact    string                                                   `json:"-"`
-	Rationale   string                                                   `json:"-"`
-	Properties  map[string]any                                           `json:"-"`
-	Required    []string                                                 `json:"-"`
-	SearchTerms []string                                                 `json:"-"`
+	Name        string                                                           `json:"-"`
+	Description string                                                           `json:"-"`
+	Resource    permission.Resource                                              `json:"-"`
+	Operation   permission.Operation                                             `json:"-"`
+	Egress      agent.EgressClass                                                `json:"-"`
+	AlsoEgress  []agent.EgressClass                                              `json:"-"`
+	Classify    func(agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy `json:"-"`
+	DefaultTier agent.AutonomyTier                                               `json:"-"`
+	MaxTier     agent.AutonomyTier                                               `json:"-"`
+	PersonOnly  bool                                                             `json:"-"`
+	Reversible  bool                                                             `json:"-"`
+	Idempotent  bool                                                             `json:"-"`
+	TaintHold   string                                                           `json:"-"`
+	Condition   *agenttoolports.TierCondition                                    `json:"-"`
+	Artifact    string                                                           `json:"-"`
+	Rationale   string                                                           `json:"-"`
+	Properties  map[string]any                                                   `json:"-"`
+	Required    []string                                                         `json:"-"`
+	SearchTerms []string                                                         `json:"-"`
 	// prerequisites and recipe are the lookups the tool's ids come from and
 	// the order a task with it is done in; see serviceports.RecipeTool.
-	Prerequisites []string                                                  `json:"-"`
-	Recipe        []string                                                  `json:"-"`
-	Target        func(params map[string]any) (agentports.ToolTarget, bool) `json:"-"`
+	Prerequisites []string                                                      `json:"-"`
+	Recipe        []string                                                      `json:"-"`
+	Target        func(params map[string]any) (agenttoolports.ToolTarget, bool) `json:"-"`
 }
 
 type ReceivablePlan[R, P any] struct {
-	Request func(params *agentports.ToolExecuteParams) (R, error)                             `json:"-"`
-	Settle  func(ctx context.Context, req R, params *agentports.ToolExecuteParams) error      `json:"-"`
-	Plan    func(ctx context.Context, req R, params *agentports.ToolExecuteParams) (P, error) `json:"-"`
-	Refused func(req R) string                                                                `json:"-"`
-	Render  func(req R, plan P) (*agent.ToolPreview, error)                                   `json:"-"`
+	Request func(params *agenttoolports.ToolExecuteParams) (R, error)                             `json:"-"`
+	Settle  func(ctx context.Context, req R, params *agenttoolports.ToolExecuteParams) error      `json:"-"`
+	Plan    func(ctx context.Context, req R, params *agenttoolports.ToolExecuteParams) (P, error) `json:"-"`
+	Refused func(req R) string                                                                    `json:"-"`
+	Render  func(req R, plan P) (*agent.ToolPreview, error)                                       `json:"-"`
 	Run     func(
 		ctx context.Context,
 		req R,
-		params *agentports.ToolExecuteParams,
+		params *agenttoolports.ToolExecuteParams,
 	) (*agent.ToolExecutionResult, error) `json:"-"`
 }
 
@@ -105,8 +105,8 @@ func (t *ReceivableTool[R, P]) ParamSchema() map[string]any {
 	return schema
 }
 
-func (t *ReceivableTool[R, P]) Policy() agentports.ToolPolicy {
-	policy := agentports.ToolPolicy{
+func (t *ReceivableTool[R, P]) Policy() agenttoolports.ToolPolicy {
+	policy := agenttoolports.ToolPolicy{
 		Name:          t.spec.Name,
 		Kind:          agent.ToolKindAction,
 		Resource:      t.spec.Resource,
@@ -125,24 +125,24 @@ func (t *ReceivableTool[R, P]) Policy() agentports.ToolPolicy {
 		Classify:      t.spec.Classify,
 	}
 	if t.spec.TaintHold != "" {
-		policy.TaintHold = &agentports.TaintHold{
+		policy.TaintHold = &agenttoolports.TaintHold{
 			Description: t.spec.TaintHold,
-			Applies:     func(agentports.ToolExecuteParams) bool { return true },
+			Applies:     func(agenttoolports.ToolExecuteParams) bool { return true },
 		}
 	}
 
 	return policy
 }
 
-func (t *ReceivableTool[R, P]) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *ReceivableTool[R, P]) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	if t.spec.Target == nil {
-		return agentports.ToolTarget{}, false
+		return agenttoolports.ToolTarget{}, false
 	}
 
 	return t.spec.Target(params)
 }
 
-func (t *ReceivableTool[R, P]) request(params *agentports.ToolExecuteParams) (R, error) {
+func (t *ReceivableTool[R, P]) request(params *agenttoolports.ToolExecuteParams) (R, error) {
 	if err := GuardPreview(t, params); err != nil {
 		var zero R
 		return zero, err
@@ -154,7 +154,7 @@ func (t *ReceivableTool[R, P]) request(params *agentports.ToolExecuteParams) (R,
 func (t *ReceivableTool[R, P]) settled(
 	ctx context.Context,
 	req R,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	if t.steps.Settle == nil {
 		return nil
@@ -165,7 +165,7 @@ func (t *ReceivableTool[R, P]) settled(
 
 func (t *ReceivableTool[R, P]) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -181,7 +181,7 @@ func (t *ReceivableTool[R, P]) Validate(
 
 func (t *ReceivableTool[R, P]) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
@@ -201,7 +201,7 @@ func (t *ReceivableTool[R, P]) Preview(
 
 func (t *ReceivableTool[R, P]) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.execute(ctx, &params)
 
@@ -210,7 +210,7 @@ func (t *ReceivableTool[R, P]) Execute(
 
 func (t *ReceivableTool[R, P]) execute(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*agent.ToolExecutionResult, error) {
 	if t.spec.PersonOnly && !params.ApprovedFromProposal() {
 		return nil, fmt.Errorf("%s: %w", t.spec.Name, ErrNeedsAPersonsApproval)
@@ -232,12 +232,12 @@ func (t *ReceivableTool[R, P]) execute(
 
 func (t ReportingReceivableTool[R, P]) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	return t.execute(ctx, &params)
 }
 
-func TargetInvoice(params map[string]any) (agentports.ToolTarget, bool) {
+func TargetInvoice(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return TargetOf(params, ParamInvoiceID, permission.ResourceInvoice)
 }
 

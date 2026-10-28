@@ -1,16 +1,17 @@
 package dispatchjobs
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchconsoleportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -61,7 +62,7 @@ func coverageActivities(
 	activities := NewActivities(ActivitiesParams{
 		DispatchControlRepo: controls,
 		ProposalRepo:        new(stubProposalRepo),
-		AutoAssign:          agentportsmock.NewMockDispatchAutoAssignService(t),
+		AutoAssign:          dispatchconsoleportsmock.NewMockDispatchAutoAssignService(t),
 		Watchtower:          projector,
 		Publisher:           publisher,
 		Logger:              zap.NewNop(),
@@ -71,8 +72,8 @@ func coverageActivities(
 	return activities, publisher, projector
 }
 
-func uncoveredAt(hoursOut int64) *agentports.DispatchUncoveredMove {
-	return &agentports.DispatchUncoveredMove{
+func uncoveredAt(hoursOut int64) *dispatchconsoleports.DispatchUncoveredMove {
+	return &dispatchconsoleports.DispatchUncoveredMove{
 		MoveID:    pulid.MustNew("mov_"),
 		ProNumber: "PRO-1",
 		Reason:    "No eligible driver was available for this move",
@@ -126,7 +127,7 @@ func TestRaiseCoverageRisk_OnlyMovesInsideTheWindow(t *testing.T) {
 			t.Parallel()
 
 			activities, publisher, projector := coverageActivities(t, tc.window)
-			moves := make([]*agentports.DispatchUncoveredMove, 0, len(tc.hoursOut))
+			moves := make([]*dispatchconsoleports.DispatchUncoveredMove, 0, len(tc.hoursOut))
 			for _, hours := range tc.hoursOut {
 				moves = append(moves, uncoveredAt(hours))
 			}
@@ -155,7 +156,7 @@ func TestRaiseCoverageRisk_LeavesUndatedMovesAlone(t *testing.T) {
 	raised := activities.raiseCoverageRisk(
 		t.Context(),
 		tenant(),
-		[]*agentports.DispatchUncoveredMove{
+		[]*dispatchconsoleports.DispatchUncoveredMove{
 			nil,
 			{MoveID: pulid.MustNew("mov_"), StartsAt: 0},
 		},
@@ -174,7 +175,7 @@ func TestRaiseCoverageRisk_SeverityRisesAsTheMoveNears(t *testing.T) {
 	raised := activities.raiseCoverageRisk(
 		t.Context(),
 		tenant(),
-		[]*agentports.DispatchUncoveredMove{
+		[]*dispatchconsoleports.DispatchUncoveredMove{
 			uncoveredAt(2),
 			uncoveredAt(10),
 		},

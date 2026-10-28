@@ -2,7 +2,7 @@ package agenttoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
-var _ agentports.ToolSelectionResolver = (*operationstools.EvaluateServiceFailuresTool)(nil)
+var _ agenttoolports.ToolSelectionResolver = (*operationstools.EvaluateServiceFailuresTool)(nil)

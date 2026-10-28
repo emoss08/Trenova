@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -26,10 +27,10 @@ func documentRecorder(
 	return svc.newArtifactRecorder(t.Context(), thread, tenant, testActor(), nil), thread
 }
 
-func published(title, body string, revises pulid.ID) agentports.ToolObservation {
-	return agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: "call_publish", Name: "publish_artifact"},
-		Data: agentports.PublishedDocument{Title: title, Body: body, ArtifactID: revises},
+func published(title, body string, revises pulid.ID) agentruntimeports.ToolObservation {
+	return agentruntimeports.ToolObservation{
+		Call: llmports.ToolCall{ID: "call_publish", Name: "publish_artifact"},
+		Data: agentruntimeports.PublishedDocument{Title: title, Body: body, ArtifactID: revises},
 	}
 }
 
@@ -140,7 +141,7 @@ func TestArtifactRecorder_PublishesTheAnalysesADocumentNames(t *testing.T) {
 	}
 	repo.stored = map[pulid.ID]*assistantartifact.Artifact{kept.ID: kept}
 	document := published("Lane brief", "Revenue is spread thin.", pulid.Nil)
-	brief, ok := document.Data.(agentports.PublishedDocument)
+	brief, ok := document.Data.(agentruntimeports.PublishedDocument)
 	require.True(t, ok)
 	brief.Analyses = []pulid.ID{kept.ID}
 	document.Data = brief
@@ -171,7 +172,7 @@ func TestArtifactRecorder_RefusesAnAnalysisFromElsewhere(t *testing.T) {
 
 	for _, target := range []pulid.ID{elsewhere.ID, table.ID, pulid.MustNew("art_")} {
 		document := published("Brief", "# Brief", pulid.Nil)
-		brief, ok := document.Data.(agentports.PublishedDocument)
+		brief, ok := document.Data.(agentruntimeports.PublishedDocument)
 		require.True(t, ok)
 		brief.Analyses = []pulid.ID{target}
 		document.Data = brief

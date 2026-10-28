@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -51,7 +51,7 @@ func TestMeasureCase_CountsTheCacheReadOfEveryCallButATurnsFirst(t *testing.T) {
 func TestOpeningTools_LeavesOutWhatIsDeclaredDeferred(t *testing.T) {
 	t.Parallel()
 
-	turn := &TurnRecord{ModelCalls: []*ModelCall{{Chat: &agentports.ChatCompletionRequest{
+	turn := &TurnRecord{ModelCalls: []*ModelCall{{Chat: &llmports.ChatCompletionRequest{
 		Tools: []kernelports.ToolSpec{
 			{Name: "find_tools"},
 			{Name: "shipment_get"},

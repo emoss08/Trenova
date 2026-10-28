@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
@@ -127,7 +127,7 @@ func messageIDProperty(description string) map[string]any {
 }
 
 func triageSelection(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (inboundmessageservice.Selection, error) {
 	ids, err := common.RequirePulidSlice(params.Params, paramMessageIDs, maxTriageSelection)
 	if err != nil {
@@ -137,20 +137,20 @@ func triageSelection(
 	return inboundmessageservice.Selection{IDs: ids}, nil
 }
 
-func targetMessage(params map[string]any) (agentports.ToolTarget, bool) {
+func targetMessage(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
 }
 
-func tenantOnly(params *agentports.ToolExecuteParams) pagination.TenantInfo {
+func tenantOnly(params *agenttoolports.ToolExecuteParams) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: params.OrganizationID, BuID: params.BusinessUnitID}
 }
 
-func actorOf(params *agentports.ToolExecuteParams) pulid.ID {
+func actorOf(params *agenttoolports.ToolExecuteParams) pulid.ID {
 	return params.Actor.UserID
 }
 
 func messageAction(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*inboundmessageservice.MessageActionRequest, error) {
 	messageID, err := common.RequirePulid(params.Params, paramMessageID)
 	if err != nil {

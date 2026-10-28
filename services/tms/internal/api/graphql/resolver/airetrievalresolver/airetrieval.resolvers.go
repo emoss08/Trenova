@@ -12,11 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
-func (r *MutationResolver) UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*agentports.AIRetrievalStatus, error) {
+func (r *MutationResolver) UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*retrievalports.AIRetrievalStatus, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -31,20 +31,20 @@ func (r *MutationResolver) UpdateAIRetrievalSettings(ctx context.Context, input 
 	return r.AiRetrievalStatusService.UpdateSettings(ctx, req)
 }
 
-func (r *MutationResolver) ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*agentports.AIRetrievalStatus, error) {
+func (r *MutationResolver) ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*retrievalports.AIRetrievalStatus, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.AiRetrievalStatusService.Reindex(ctx, &agentports.ReindexAIRetrievalSourceRequest{
+	return r.AiRetrievalStatusService.Reindex(ctx, &retrievalports.ReindexAIRetrievalSourceRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		SourceType: sourceType,
 		Actor:      actorutil.FromAuthContext(authCtx),
 	})
 }
 
-func (r *QueryResolver) AiRetrievalStatus(ctx context.Context) (*agentports.AIRetrievalStatus, error) {
+func (r *QueryResolver) AiRetrievalStatus(ctx context.Context) (*retrievalports.AIRetrievalStatus, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func (r *QueryResolver) AiRetrievalStatus(ctx context.Context) (*agentports.AIRe
 	return r.AiRetrievalStatusService.Status(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*agentports.AIRetrievalReindexEstimate, error) {
+func (r *QueryResolver) AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*retrievalports.AIRetrievalReindexEstimate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (r *QueryResolver) AiRetrievalFailedEntryConnection(ctx context.Context, so
 		return nil, err
 	}
 
-	req := &agentports.ListAIRetrievalFailedEntriesRequest{
+	req := &retrievalports.ListAIRetrievalFailedEntriesRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Table:      base.MemtableRequestFromGraphQL(ctx, &input),
 	}

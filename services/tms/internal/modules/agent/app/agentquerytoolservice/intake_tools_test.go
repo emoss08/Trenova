@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -196,7 +196,9 @@ func TestQuoteShipment_BuildsTheLaneFromLocationsAndNeverPersists(t *testing.T) 
 	quoter := &fakeQuoter{miles: 240, rated: &ratequoteports.RatedShipment{
 		Amount: decimal.NewFromInt(1450), Total: decimal.NewFromInt(1450), Currency: "USD",
 		Outcome: ratequote.OutcomeRated, AgreementID: &agreementID,
-		TariffInputs: tarifftypes.Inputs{"rate": rules.QuantityValue(decimal.RequireFromString("2.9"), "$/mi")},
+		TariffInputs: tarifftypes.Inputs{
+			"rate": rules.QuantityValue(decimal.RequireFromString("2.9"), "$/mi"),
+		},
 	}}
 	tool := newQuoteShipmentTool(quoter, &fakeLocations{byID: map[pulid.ID]*location.Location{
 		origin.ID: origin, destination.ID: destination,
@@ -355,8 +357,16 @@ func TestShopCarriers_RanksOptionsWithMarginAndPassesTheShortlist(t *testing.T) 
 	carrierB := pulid.MustNew("carr_")
 	shopper := &fakeShopper{result: shopResultWithMargin(carrierA, carrierB)}
 	tool := newShopCarriersTool(shopper, &shopCarriers{carriers: []*carrier.Carrier{
-		{ID: carrierA, Status: carrier.StatusActive, ComplianceStatus: carrier.ComplianceStatusQualified},
-		{ID: carrierB, Status: carrier.StatusActive, ComplianceStatus: carrier.ComplianceStatusPending},
+		{
+			ID:               carrierA,
+			Status:           carrier.StatusActive,
+			ComplianceStatus: carrier.ComplianceStatusQualified,
+		},
+		{
+			ID:               carrierB,
+			Status:           carrier.StatusActive,
+			ComplianceStatus: carrier.ComplianceStatusPending,
+		},
 	}}, marginsReader())
 
 	shipmentID := pulid.MustNew("shp_")
@@ -424,7 +434,7 @@ func TestShopCarriers_ShowsNoMarginToAPersonWithoutTheMarginsGroup(t *testing.T)
 func TestShopCarriers_HoldsAnAgentToItsDataAccess(t *testing.T) {
 	t.Parallel()
 
-	shopFor := func() agentports.AgentQueryTool {
+	shopFor := func() agenttoolports.AgentQueryTool {
 		shopper := &fakeShopper{
 			result: shopResultWithMargin(pulid.MustNew("carr_"), pulid.MustNew("carr_")),
 		}

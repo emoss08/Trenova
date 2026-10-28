@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,7 +41,7 @@ func TestApplyAccountingInboundChange_PreviewShowsWhatItPosts(t *testing.T) {
 	tool := newApplyAccountingInboundChangeTool(operator)
 	params := syncParams(map[string]any{"inboundChangeId": change.ID.String()})
 
-	previewer, ok := tool.(agentports.ToolPreviewer)
+	previewer, ok := tool.(agenttoolports.ToolPreviewer)
 	require.True(t, ok)
 	preview, err := previewer.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -68,7 +68,7 @@ func TestApplyAccountingInboundChange_PreviewWarnsWhenItNoLongerMatches(t *testi
 	tool := newApplyAccountingInboundChangeTool(operator)
 	params := syncParams(map[string]any{"inboundChangeId": change.ID.String()})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.NotEmpty(t, preview.Warnings)
 	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
@@ -86,7 +86,7 @@ func TestIgnoreAccountingInboundChange_PreviewShowsTheNote(t *testing.T) {
 		"note":            "Keyed in Trenova by the AR team.",
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Len(t, preview.Changes, 1)
 	status, ok := previewField(&preview.Changes[0], "status")
@@ -109,7 +109,7 @@ func TestIgnoreAccountingInboundChange_PreviewWarnsOnAClosedPayment(t *testing.T
 		"note":            "duplicate",
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.NotEmpty(t, preview.Warnings)
 	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)

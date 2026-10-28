@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -22,18 +23,18 @@ import (
 )
 
 type pagingListTool struct {
-	agentports.AgentQueryTool
+	agenttoolports.AgentQueryTool
 
 	properties map[string]any
 	result     map[string]any
 	err        error
-	calls      []agentports.QueryToolParams
+	calls      []agenttoolports.QueryToolParams
 }
 
 func (t *pagingListTool) Name() string { return "shipment_list" }
 
-func (t *pagingListTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{Resource: permission.ResourceShipment}
+func (t *pagingListTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{Resource: permission.ResourceShipment}
 }
 
 func (t *pagingListTool) ParamSchema() map[string]any {
@@ -42,7 +43,7 @@ func (t *pagingListTool) ParamSchema() map[string]any {
 
 func (t *pagingListTool) Query(
 	_ context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	t.calls = append(t.calls, *params)
 	if t.err != nil {
@@ -53,12 +54,12 @@ func (t *pagingListTool) Query(
 }
 
 type pagingTools struct {
-	agentports.AgentQueryToolRegistry
+	agenttoolports.AgentQueryToolRegistry
 
 	tool *pagingListTool
 }
 
-func (r pagingTools) Get(name string) (agentports.AgentQueryTool, bool) {
+func (r pagingTools) Get(name string) (agenttoolports.AgentQueryTool, bool) {
 	if name != r.tool.Name() {
 		return nil, false
 	}
@@ -135,10 +136,10 @@ func newRowsFixture(t *testing.T, engine permissionports.PermissionEngine) *rows
 	}
 }
 
-func (f *rowsFixture) request() agentports.GetThreadRequest {
+func (f *rowsFixture) request() assistantports.GetThreadRequest {
 	user := pulid.MustNew("usr_")
 
-	return agentports.GetThreadRequest{
+	return assistantports.GetThreadRequest{
 		ID:     f.thread.ID,
 		UserID: user,
 		TenantInfo: pagination.TenantInfo{
@@ -153,14 +154,19 @@ func TestArtifactRows_ReadsTheNextPageWithThePersonsAccess(t *testing.T) {
 	f := newRowsFixture(t, &mocks.AllowAllPermissionEngine{})
 	req := f.request()
 
-	rows, err := f.svc.ArtifactRows(t.Context(), req, f.artifact.ID, &agentports.ArtifactRowsQuery{
-		After:         "c-1",
-		Limit:         25,
-		Query:         "dallas",
-		SortBy:        "customer",
-		SortDirection: "DESC",
-		IncludeTotal:  true,
-	})
+	rows, err := f.svc.ArtifactRows(
+		t.Context(),
+		req,
+		f.artifact.ID,
+		&assistantports.ArtifactRowsQuery{
+			After:         "c-1",
+			Limit:         25,
+			Query:         "dallas",
+			SortBy:        "customer",
+			SortDirection: "DESC",
+			IncludeTotal:  true,
+		},
+	)
 	require.NoError(t, err)
 
 	require.Len(t, f.tool.calls, 1)
@@ -199,7 +205,7 @@ func TestArtifactRows_ATableAlreadySearchedCannotBeSearchedAgain(t *testing.T) {
 	f.artifact.Payload[payloadReadWith].(map[string]any)["query"] = "acme"
 
 	rows, err := f.svc.ArtifactRows(
-		t.Context(), f.request(), f.artifact.ID, &agentports.ArtifactRowsQuery{Limit: 25},
+		t.Context(), f.request(), f.artifact.ID, &assistantports.ArtifactRowsQuery{Limit: 25},
 	)
 	require.NoError(t, err)
 	assert.False(t, rows.Searchable)
@@ -207,7 +213,7 @@ func TestArtifactRows_ATableAlreadySearchedCannotBeSearchedAgain(t *testing.T) {
 
 	_, err = f.svc.ArtifactRows(
 		t.Context(), f.request(), f.artifact.ID,
-		&agentports.ArtifactRowsQuery{Limit: 25, Query: "dallas"},
+		&assistantports.ArtifactRowsQuery{Limit: 25, Query: "dallas"},
 	)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
@@ -222,7 +228,7 @@ func TestArtifactRows_RefusesAPersonWhoCannotReadTheList(t *testing.T) {
 	})
 
 	_, err := f.svc.ArtifactRows(
-		t.Context(), f.request(), f.artifact.ID, &agentports.ArtifactRowsQuery{Limit: 25},
+		t.Context(), f.request(), f.artifact.ID, &assistantports.ArtifactRowsQuery{Limit: 25},
 	)
 	var refused *errortypes.AuthorizationError
 	require.ErrorAs(t, err, &refused)
@@ -236,7 +242,7 @@ func TestArtifactRows_OnlyAListTableIsPaged(t *testing.T) {
 	f.artifact.Kind = assistantartifact.KindReportPreview
 
 	_, err := f.svc.ArtifactRows(
-		t.Context(), f.request(), f.artifact.ID, &agentports.ArtifactRowsQuery{Limit: 25},
+		t.Context(), f.request(), f.artifact.ID, &assistantports.ArtifactRowsQuery{Limit: 25},
 	)
 	require.ErrorIs(t, err, errNotPageable)
 	assert.Empty(t, f.tool.calls)
@@ -249,7 +255,7 @@ func TestArtifactRows_AnotherConversationsTableIsNotFound(t *testing.T) {
 	f.artifact.ThreadID = pulid.MustNew("athr_")
 
 	_, err := f.svc.ArtifactRows(
-		t.Context(), f.request(), f.artifact.ID, &agentports.ArtifactRowsQuery{Limit: 25},
+		t.Context(), f.request(), f.artifact.ID, &assistantports.ArtifactRowsQuery{Limit: 25},
 	)
 	var missing *errortypes.NotFoundError
 	require.ErrorAs(t, err, &missing)
@@ -261,51 +267,54 @@ func TestRowsArguments(t *testing.T) {
 
 	sortable := map[string]string{"customer": "customer.name"}
 	cases := map[string]struct {
-		query      agentports.ArtifactRowsQuery
+		query      assistantports.ArtifactRowsQuery
 		searchable bool
 		want       map[string]any
 		refused    string
 	}{
 		"a first page of the default size": {
-			query: agentports.ArtifactRowsQuery{},
+			query: assistantports.ArtifactRowsQuery{},
 			want:  map[string]any{argLimit: 25},
 		},
 		"a page larger than any list hands back": {
-			query: agentports.ArtifactRowsQuery{Limit: 500},
+			query: assistantports.ArtifactRowsQuery{Limit: 500},
 			want:  map[string]any{argLimit: 100},
 		},
 		"an offset": {
-			query: agentports.ArtifactRowsQuery{Limit: 50, Offset: 50},
+			query: assistantports.ArtifactRowsQuery{Limit: 50, Offset: 50},
 			want:  map[string]any{argLimit: 50, argOffset: 50},
 		},
 		"a sort with no direction is ascending": {
-			query: agentports.ArtifactRowsQuery{Limit: 25, SortBy: "customer"},
+			query: assistantports.ArtifactRowsQuery{Limit: 25, SortBy: "customer"},
 			want: map[string]any{
 				argLimit: 25, argSortBy: "customer.name", argSortDirection: "asc",
 			},
 		},
 		"a cursor and an offset": {
-			query:   agentports.ArtifactRowsQuery{After: "c-1", Offset: 25},
+			query:   assistantports.ArtifactRowsQuery{After: "c-1", Offset: 25},
 			refused: argOffset,
 		},
 		"a negative offset": {
-			query:   agentports.ArtifactRowsQuery{Offset: -1},
+			query:   assistantports.ArtifactRowsQuery{Offset: -1},
 			refused: argOffset,
 		},
 		"a column the list cannot sort by": {
-			query:   agentports.ArtifactRowsQuery{SortBy: "freightCharge"},
+			query:   assistantports.ArtifactRowsQuery{SortBy: "freightCharge"},
 			refused: argSortBy,
 		},
 		"a direction that is neither": {
-			query:   agentports.ArtifactRowsQuery{SortBy: "customer", SortDirection: "sideways"},
+			query: assistantports.ArtifactRowsQuery{
+				SortBy:        "customer",
+				SortDirection: "sideways",
+			},
 			refused: argSortDirection,
 		},
 		"a search of a list that takes none": {
-			query:   agentports.ArtifactRowsQuery{Query: "dallas"},
+			query:   assistantports.ArtifactRowsQuery{Query: "dallas"},
 			refused: argQuery,
 		},
 		"a search of a list that takes one": {
-			query:      agentports.ArtifactRowsQuery{Query: "  dallas "},
+			query:      assistantports.ArtifactRowsQuery{Query: "  dallas "},
 			searchable: true,
 			want:       map[string]any{argLimit: 25, argQuery: "dallas"},
 		},
@@ -335,7 +344,7 @@ func TestArtifactRows_AStaleCursorIsRefusedAsThePageNotAFault(t *testing.T) {
 	f.tool.err = fmt.Errorf("read shipments: %w", agentquerytoolservice.ErrStaleCursor)
 
 	_, err := f.svc.ArtifactRows(
-		t.Context(), f.request(), f.artifact.ID, &agentports.ArtifactRowsQuery{After: "c-1"},
+		t.Context(), f.request(), f.artifact.ID, &assistantports.ArtifactRowsQuery{After: "c-1"},
 	)
 	require.ErrorIs(t, err, errStalePage)
 }
@@ -347,7 +356,7 @@ func TestArtifactRows_ATableThatDoesNotSayHowItWasReadIsNotReadAgain(t *testing.
 	delete(f.artifact.Payload, payloadReadWith)
 
 	_, err := f.svc.ArtifactRows(
-		t.Context(), f.request(), f.artifact.ID, &agentports.ArtifactRowsQuery{Limit: 25},
+		t.Context(), f.request(), f.artifact.ID, &assistantports.ArtifactRowsQuery{Limit: 25},
 	)
 	require.ErrorIs(t, err, errNotReread)
 	assert.Empty(t, f.tool.calls)

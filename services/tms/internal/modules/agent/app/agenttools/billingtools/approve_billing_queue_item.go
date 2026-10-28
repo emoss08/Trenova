@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -26,7 +26,7 @@ type ApproveBillingQueueItemTool struct {
 func NewApproveBillingQueueItemTool(
 	billing common.BillingQueueDecider,
 	invoices common.ApprovalInvoicePlanner,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &ApproveBillingQueueItemTool{
 		invoices: invoices,
 		BillingQueueDecisionTool: &BillingQueueDecisionTool{
@@ -63,7 +63,7 @@ func NewApproveBillingQueueItemTool(
 	}
 }
 
-func (t *ApproveBillingQueueItemTool) Policy() agentports.ToolPolicy {
+func (t *ApproveBillingQueueItemTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.BillingQueueDecisionTool.Policy()
 	policy.Artifact = common.InvoiceRecordEntity
 
@@ -71,7 +71,7 @@ func (t *ApproveBillingQueueItemTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *ApproveBillingQueueItemTool) draftRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*invoiceports.CreateInvoiceFromBillingQueueRequest, error) {
 	req, err := t.request(params)
 	if err != nil {
@@ -87,7 +87,7 @@ func (t *ApproveBillingQueueItemTool) draftRequest(
 
 func (t *ApproveBillingQueueItemTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, item, err := t.planned(ctx, &params)
 	if err != nil {
@@ -144,7 +144,7 @@ func (t *ApproveBillingQueueItemTool) Preview(
 // and names the invoice approval made, which invoice_post takes next.
 func (t *ApproveBillingQueueItemTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := t.BillingQueueDecisionTool.Execute(ctx, params); err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func (t *ApproveBillingQueueItemTool) ExecuteWithResult(
 
 func (t *ApproveBillingQueueItemTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 

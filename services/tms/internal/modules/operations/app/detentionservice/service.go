@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -66,7 +67,7 @@ type Params struct {
 	Publisher agentports.AgentEventPublisher `optional:"true"`
 	// Realtime refreshes the billing queue when a charge starts or stops
 	// holding its shipment off an invoice.
-	Realtime agentports.RealtimeService `optional:"true"`
+	Realtime realtimeports.RealtimeService `optional:"true"`
 	// Senders names who a notice would go out as, for its preview.
 	Senders       emailports.EmailSenderResolver   `optional:"true"`
 	DocumentStore documentports.DocumentStore      `optional:"true"`
@@ -96,7 +97,7 @@ type Service struct {
 	auditService      auditports.AuditService
 	watchtower        watchtowerports.WatchtowerProjector
 	publisher         agentports.AgentEventPublisher
-	realtime          agentports.RealtimeService
+	realtime          realtimeports.RealtimeService
 	senders           emailports.EmailSenderResolver
 	documentStore     documentports.DocumentStore
 	documents         documentports.DocumentRepository

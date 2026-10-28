@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
@@ -49,24 +49,24 @@ type sharedLinkView struct {
 // an address outside the organization.
 //
 //nolint:gocritic // the Classify hook passes params by value
-func classifyShareLink(params agentports.ToolExecuteParams) agentports.CallPolicy {
+func classifyShareLink(params agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
 	if common.OptionalString(params.Params, paramRecipientEmail) != "" {
-		return agentports.CallPolicy{Egress: agent.EgressExternalRecipient}
+		return agenttoolports.CallPolicy{Egress: agent.EgressExternalRecipient}
 	}
-	return agentports.CallPolicy{Egress: agent.EgressCustomerVisible}
+	return agenttoolports.CallPolicy{Egress: agent.EgressCustomerVisible}
 }
 
-func shipmentTarget(params map[string]any) (agentports.ToolTarget, bool) {
+func shipmentTarget(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
 }
 
 func NewShareCustomerTrackingLinkTool(
 	tracking customertrackingports.CustomerTrackingService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newShareCustomerTrackingLinkTool(tracking)
 }
 
-func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agentports.AgentTool {
+func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttoolports.AgentTool {
 	return common.NewReceivableTool(
 		&common.ReceivableSpec{
 			Name:   toolShareCustomerTrackingLink,
@@ -97,7 +97,7 @@ func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agentport
 			Required: []string{common.ParamShipmentID},
 		},
 		common.ReceivablePlan[*customertrackingports.IssueLinkRequest, *customertrackingports.LinkPreview]{
-			Request: func(params *agentports.ToolExecuteParams) (*customertrackingports.IssueLinkRequest, error) {
+			Request: func(params *agenttoolports.ToolExecuteParams) (*customertrackingports.IssueLinkRequest, error) {
 				shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 				if err != nil {
 					return nil, err
@@ -113,7 +113,7 @@ func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agentport
 			Plan: func(
 				ctx context.Context,
 				req *customertrackingports.IssueLinkRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*customertrackingports.LinkPreview, error) {
 				return tracking.PreviewIssueLink(ctx, req)
 			},
@@ -124,7 +124,7 @@ func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agentport
 			Run: func(
 				ctx context.Context,
 				req *customertrackingports.IssueLinkRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				return shareLink(ctx, tracking, req)
 			},
@@ -192,11 +192,11 @@ type revokedLinksView struct {
 
 func NewRevokeCustomerTrackingLinkTool(
 	tracking customertrackingports.CustomerTrackingService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newRevokeCustomerTrackingLinkTool(tracking)
 }
 
-func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agentports.AgentTool {
+func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttoolports.AgentTool {
 	return common.NewReceivableTool(
 		&common.ReceivableSpec{
 			Name:   toolRevokeCustomerTrackingLink,
@@ -220,7 +220,7 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agentpor
 			Required: []string{common.ParamShipmentID},
 		},
 		common.ReceivablePlan[*customertrackingports.RevokeLinkRequest, []*customertracking.Link]{
-			Request: func(params *agentports.ToolExecuteParams) (*customertrackingports.RevokeLinkRequest, error) {
+			Request: func(params *agenttoolports.ToolExecuteParams) (*customertrackingports.RevokeLinkRequest, error) {
 				shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 				if err != nil {
 					return nil, err
@@ -235,7 +235,7 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agentpor
 			Plan: func(
 				ctx context.Context,
 				req *customertrackingports.RevokeLinkRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) ([]*customertracking.Link, error) {
 				return tracking.PreviewRevokeLink(ctx, req)
 			},
@@ -268,7 +268,7 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agentpor
 			Run: func(
 				ctx context.Context,
 				req *customertrackingports.RevokeLinkRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				revoked, err := tracking.RevokeLink(ctx, req)
 				if err != nil {

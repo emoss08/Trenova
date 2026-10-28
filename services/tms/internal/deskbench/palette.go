@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 )
 
 func (s *Session) OpenPalette(
@@ -14,7 +14,7 @@ func (s *Session) OpenPalette(
 ) (*Conversation, error) {
 	ctx = s.Context(ctx)
 
-	thread, err := s.bench.Assistant.StartAsk(ctx, &agentports.AskRequest{
+	thread, err := s.bench.Assistant.StartAsk(ctx, &assistantports.AskRequest{
 		Content:    question,
 		TenantInfo: s.Tenant,
 	}, &s.Actor)
@@ -23,7 +23,7 @@ func (s *Session) OpenPalette(
 	}
 
 	benchTitle := benchTitlePrefix + strings.TrimSpace(title)
-	thread, err = s.bench.Assistant.UpdateThread(ctx, &agentports.UpdateThreadRequest{
+	thread, err = s.bench.Assistant.UpdateThread(ctx, &assistantports.UpdateThreadRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: s.Tenant,
 		Title:      &benchTitle,

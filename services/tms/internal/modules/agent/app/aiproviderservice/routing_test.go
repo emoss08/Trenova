@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +16,10 @@ type routingRepo struct {
 	enabled []*aiprovider.Provider
 }
 
-func (r *routingRepo) ListEnabled(context.Context, pagination.TenantInfo) ([]*aiprovider.Provider, error) {
+func (r *routingRepo) ListEnabled(
+	context.Context,
+	pagination.TenantInfo,
+) ([]*aiprovider.Provider, error) {
 	return r.enabled, nil
 }
 
@@ -29,10 +32,13 @@ func TestRoutePreviewEditsTheStoredProvider(t *testing.T) {
 	stored.Tasks = []aiprovider.Task{aiprovider.TaskAssistantChat}
 	dims := 1536
 	stored.EmbeddingDimensions = &dims
-	svc.repo = &routingRepo{fakeProviderRepo: fakeProviderRepo{provider: stored}, enabled: []*aiprovider.Provider{stored}}
+	svc.repo = &routingRepo{
+		fakeProviderRepo: fakeProviderRepo{provider: stored},
+		enabled:          []*aiprovider.Provider{stored},
+	}
 
-	routes, err := svc.RoutePreview(t.Context(), &agentports.AIProviderRoutePreviewRequest{
-		Draft: agentports.AIProviderRoutingDraft{
+	routes, err := svc.RoutePreview(t.Context(), &aiproviderports.AIProviderRoutePreviewRequest{
+		Draft: aiproviderports.AIProviderRoutingDraft{
 			ID:      stored.ID,
 			Name:    stored.Name,
 			Kind:    stored.Kind,

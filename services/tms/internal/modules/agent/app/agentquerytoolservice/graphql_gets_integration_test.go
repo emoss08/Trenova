@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/carrierintelrepository"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
@@ -106,9 +106,11 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 	})
 	draws := workerdrugalcoholrepository.New(
 		workerdrugalcoholrepository.Params{DB: conn, Logger: logger})
-	services.WorkerDrugAlcoholService = workerdrugalcoholservice.New(workerdrugalcoholservice.Params{
-		Logger: logger, Repo: draws, WorkerRepo: workers,
-	})
+	services.WorkerDrugAlcoholService = workerdrugalcoholservice.New(
+		workerdrugalcoholservice.Params{
+			Logger: logger, Repo: draws, WorkerRepo: workers,
+		},
+	)
 	hours := telematicsrepository.New(telematicsrepository.Params{DB: conn, Logger: logger})
 	services.TelematicsService = telematicsservice.New(telematicsservice.Params{
 		Repo: hours, Logger: logger,
@@ -253,7 +255,10 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
-	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: services})
+	public := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: &publicRole{}, Resolvers: services},
+	)
 
 	env := &convertedListEnv{
 		engine: engine,
@@ -272,7 +277,7 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 			actor := env.mine.Actor
 			param := get.ParamSchema()["required"].([]string)[0]
 			atInternal := func(id string) map[string]any {
-				data, queryErr := get.Query(ours.ctx, &agentports.QueryToolParams{
+				data, queryErr := get.Query(ours.ctx, &agenttoolports.QueryToolParams{
 					OrganizationID:    actor.OrganizationID,
 					BusinessUnitID:    actor.BusinessUnitID,
 					Actor:             actor,
@@ -292,22 +297,25 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 				}
 			})
 
-			t.Run("at the default agent data access only what stays Restricted is withheld", func(t *testing.T) {
-				record := atInternal(ours.rows[0])
-				withheld, _ := record["withheldByAccess"].([]any)
-				names := make([]string, 0, len(withheld))
-				for _, field := range withheld {
-					names = append(names, field.(string))
-				}
-				assert.Subset(t, c.internal, names, "nothing Internal is withheld")
-				assert.Subset(t, names, c.newly, "what stays Restricted is withheld")
-				for _, field := range names {
-					assert.NotContains(t, record, field)
-				}
-			})
+			t.Run(
+				"at the default agent data access only what stays Restricted is withheld",
+				func(t *testing.T) {
+					record := atInternal(ours.rows[0])
+					withheld, _ := record["withheldByAccess"].([]any)
+					names := make([]string, 0, len(withheld))
+					for _, field := range withheld {
+						names = append(names, field.(string))
+					}
+					assert.Subset(t, c.internal, names, "nothing Internal is withheld")
+					assert.Subset(t, names, c.newly, "what stays Restricted is withheld")
+					for _, field := range names {
+						assert.NotContains(t, record, field)
+					}
+				},
+			)
 
 			t.Run("another tenant's record is not ours to read", func(t *testing.T) {
-				data, queryErr := get.Query(ours.ctx, &agentports.QueryToolParams{
+				data, queryErr := get.Query(ours.ctx, &agenttoolports.QueryToolParams{
 					OrganizationID: actor.OrganizationID,
 					BusinessUnitID: actor.BusinessUnitID,
 					Actor:          actor,
@@ -327,7 +335,11 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 			})
 
 			t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
-				hidden, hiddenErr := agentquerytoolservice.ConvertedGetTool(name, env.public, &publicRole{})
+				hidden, hiddenErr := agentquerytoolservice.ConvertedGetTool(
+					name,
+					env.public,
+					&publicRole{},
+				)
 				require.NoError(t, hiddenErr)
 				record := callTool(t, ours.ctx, hidden, actor, map[string]any{param: ours.rows[0]})
 				withheld, _ := record["withheldByAccess"].([]any)
@@ -406,22 +418,25 @@ func checkConvertedGet(
 		}
 	})
 
-	t.Run("only what is gated past Internal is withheld at the default agent data access", func(t *testing.T) {
-		data, err := get.Query(ours.ctx, &agentports.QueryToolParams{
-			OrganizationID:    actor.OrganizationID,
-			BusinessUnitID:    actor.BusinessUnitID,
-			Actor:             actor,
-			Timezone:          "America/Chicago",
-			Params:            call(ours.rows[0]),
-			DataAccessCeiling: permission.SensitivityInternal,
-			RunID:             pulid.MustNew("ar_"),
-		})
-		require.NoError(t, err)
-		assertWithheldAtInternal(t, asMap(t, data), c.withheldAtInternal)
-	})
+	t.Run(
+		"only what is gated past Internal is withheld at the default agent data access",
+		func(t *testing.T) {
+			data, err := get.Query(ours.ctx, &agenttoolports.QueryToolParams{
+				OrganizationID:    actor.OrganizationID,
+				BusinessUnitID:    actor.BusinessUnitID,
+				Actor:             actor,
+				Timezone:          "America/Chicago",
+				Params:            call(ours.rows[0]),
+				DataAccessCeiling: permission.SensitivityInternal,
+				RunID:             pulid.MustNew("ar_"),
+			})
+			require.NoError(t, err)
+			assertWithheldAtInternal(t, asMap(t, data), c.withheldAtInternal)
+		},
+	)
 
 	t.Run("another tenant's record is not found", func(t *testing.T) {
-		_, err := get.Query(ours.ctx, &agentports.QueryToolParams{
+		_, err := get.Query(ours.ctx, &agenttoolports.QueryToolParams{
 			OrganizationID: actor.OrganizationID,
 			BusinessUnitID: actor.BusinessUnitID,
 			Actor:          actor,

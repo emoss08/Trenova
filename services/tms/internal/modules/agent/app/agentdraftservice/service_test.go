@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,20 +28,20 @@ type stubCompleter struct {
 	reply string
 	err   error
 	calls int
-	saw   *agentports.StructuredCompletionRequest
+	saw   *llmports.StructuredCompletionRequest
 }
 
 func (s *stubCompleter) CompleteStructured(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	s.calls++
 	s.saw = req
 	if s.err != nil {
 		return nil, s.err
 	}
 
-	return &agentports.StructuredCompletionResult{Text: s.reply, ModelIdentifier: "stub"}, nil
+	return &llmports.StructuredCompletionResult{Text: s.reply, ModelIdentifier: "stub"}, nil
 }
 
 type stubDefinitions struct {
@@ -87,7 +89,7 @@ func (s *stubDefinitions) Draft(
 }
 
 type stubProviders struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 	providers []*aiprovider.Provider
 	err       error
 	asked     aiprovider.Task
@@ -95,7 +97,7 @@ type stubProviders struct {
 
 func (s *stubProviders) ListForTask(
 	_ context.Context,
-	req agentports.ListAIProvidersForTaskRequest,
+	req aiproviderports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
 	s.asked = req.Task
 	if s.err != nil {
@@ -256,7 +258,7 @@ func TestDraftFromDescriptionPassesOnTheRoutersError(t *testing.T) {
 	t.Parallel()
 
 	routerErr := errortypes.NewBusinessError("No AI provider is configured for AssistantChat").
-		WithInternal(agentports.ErrNoProviderConfigured)
+		WithInternal(llmports.ErrNoProviderConfigured)
 	service := newTestService(&stubCompleter{err: routerErr}, &stubDefinitions{}, &stubProviders{})
 
 	_, err := service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
@@ -264,13 +266,15 @@ func TestDraftFromDescriptionPassesOnTheRoutersError(t *testing.T) {
 		Description: "Watch for late loads.",
 	})
 
-	require.ErrorIs(t, err, agentports.ErrNoProviderConfigured)
+	require.ErrorIs(t, err, llmports.ErrNoProviderConfigured)
 }
 
 func TestTightenInstructionsKeepsPlaceholdersAndAsksTheChatProviders(t *testing.T) {
 	t.Parallel()
 
-	completer := &stubCompleter{reply: `{"instructions":"Help {{user.name}}. Look loads up first."}`}
+	completer := &stubCompleter{
+		reply: `{"instructions":"Help {{user.name}}. Look loads up first."}`,
+	}
 	service := newTestService(completer, &stubDefinitions{}, &stubProviders{})
 
 	result, err := service.TightenInstructions(
@@ -315,7 +319,10 @@ func TestTightenInstructionsRefusesEmptyAndOverlongInstructions(t *testing.T) {
 	for _, text := range []string{" ", strings.Repeat("x", agentdefinition.MaxInstructionsRunes+1)} {
 		_, err := service.TightenInstructions(
 			t.Context(),
-			&agentports.TightenAgentInstructionsRequest{TenantInfo: testTenant(), Instructions: text},
+			&agentports.TightenAgentInstructionsRequest{
+				TenantInfo:   testTenant(),
+				Instructions: text,
+			},
 		)
 		require.Error(t, err)
 	}

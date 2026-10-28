@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,15 +20,15 @@ import (
 )
 
 type transcriptRuns struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 
 	runs     map[pulid.ID]*agent.AgentRun
-	requests []agentports.ListAgentRunsByIDsRequest
+	requests []agentruntimeports.ListAgentRunsByIDsRequest
 }
 
 func (f *transcriptRuns) ListTranscriptsByIDs(
 	_ context.Context,
-	req agentports.ListAgentRunsByIDsRequest,
+	req agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	f.requests = append(f.requests, req)
 	found := make([]*agent.AgentRun, 0, len(req.IDs))

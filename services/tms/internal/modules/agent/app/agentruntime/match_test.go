@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -30,7 +31,7 @@ func recommendationRuntime(
 ) *Service {
 	t.Helper()
 
-	return runtimeWithTools(t, permissions, []agentports.AgentQueryTool{
+	return runtimeWithTools(t, permissions, []agenttoolports.AgentQueryTool{
 		&agenttest.StubQueryTool{
 			ToolName: "shipment_list",
 			Desc:     "List shipments by status, billing state or dates.",
@@ -62,7 +63,7 @@ func recommendationRuntime(
 func runtimeWithTools(
 	t *testing.T,
 	permissions *agenttest.StubPermissions,
-	tools []agentports.AgentQueryTool,
+	tools []agenttoolports.AgentQueryTool,
 	agents ...*agentdefinition.Definition,
 ) *Service {
 	t.Helper()
@@ -201,7 +202,9 @@ func TestMatchAgent_SaysNoAgentCanHelpWhenThePersonMayNotRunTheTool(t *testing.T
 
 	compliance := agentHolding("Compliance assistant", "worker_list_credentials")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{
-		Denied: map[string]bool{permission.ResourceWorker.String() + ":" + string(permission.OpRead): true},
+		Denied: map[string]bool{
+			permission.ResourceWorker.String() + ":" + string(permission.OpRead): true,
+		},
 	}, compliance)
 
 	found := match(t, service, "driver medical card expiry", pulid.Nil)
@@ -231,7 +234,7 @@ func TestMatchAgent_SaysNoAgentWhenOnlyALesserToolIsHeld(t *testing.T) {
 	t.Parallel()
 
 	ledger := agentHolding("Ledger helper", "summarize_ledger")
-	service := runtimeWithTools(t, &agenttest.StubPermissions{}, []agentports.AgentQueryTool{
+	service := runtimeWithTools(t, &agenttest.StubPermissions{}, []agenttoolports.AgentQueryTool{
 		&agenttest.StubQueryTool{
 			ToolName: "invoice_list",
 			Desc:     "List invoices by status or due date.",
@@ -255,7 +258,7 @@ func TestMatchAgent_SaysNoAgentWhenOnlyALesserToolIsHeld(t *testing.T) {
 func TestMatchAgent_FindsTheAgentWhoseToolTiesBeyondTheFirstFewMatches(t *testing.T) {
 	t.Parallel()
 
-	tools := make([]agentports.AgentQueryTool, 0, recommendationToolLimit+2)
+	tools := make([]agenttoolports.AgentQueryTool, 0, recommendationToolLimit+2)
 	for idx := range recommendationToolLimit + 2 {
 		tools = append(tools, &agenttest.StubQueryTool{
 			ToolName: fmt.Sprintf("invoice_report_%02d", idx),
@@ -278,7 +281,7 @@ func TestMatchAgent_FindsTheAgentWhoseToolTiesBeyondTheFirstFewMatches(t *testin
 func TestMatchAgent_SaysNoAgentWhenEveryHeldToolRanksBelowTheFirstFewMatches(t *testing.T) {
 	t.Parallel()
 
-	tools := make([]agentports.AgentQueryTool, 0, recommendationToolLimit+1)
+	tools := make([]agenttoolports.AgentQueryTool, 0, recommendationToolLimit+1)
 	for idx := range recommendationToolLimit {
 		tools = append(tools, &agenttest.StubQueryTool{
 			ToolName: fmt.Sprintf("invoice_report_%02d", idx),
@@ -341,7 +344,12 @@ func TestMatchAgent_LeavesOutDisabledAndUnconversationalAgentsByAskingForChatAge
 func TestMatchAgent_PrefersTheFocusedAgentOnATie(t *testing.T) {
 	t.Parallel()
 
-	generalist := agentHolding("Operations helper", "invoice_list", "shipment_list", "customer_list")
+	generalist := agentHolding(
+		"Operations helper",
+		"invoice_list",
+		"shipment_list",
+		"customer_list",
+	)
 	specialist := agentHolding("Billing assistant", "invoice_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, generalist, specialist)
 
@@ -483,7 +491,14 @@ func TestMatchAgent_IgnoresAKindOfRecordItDoesNotKnow(t *testing.T) {
 	billing := agentHolding("Billing assistant", "invoice_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, billing)
 
-	found := match(t, service, "which invoices are past due?", billing.ID, "spaceship", "assistant_thread")
+	found := match(
+		t,
+		service,
+		"which invoices are past due?",
+		billing.ID,
+		"spaceship",
+		"assistant_thread",
+	)
 
 	assert.Equal(t, agentsuggestion.MatchCurrentAgent, found.Outcome,
 		"a page the server cannot place is a hint to drop, not a reason to refuse the match")
@@ -532,7 +547,7 @@ func greetingRuntime(t *testing.T) (*Service, *agentdefinition.Definition) {
 
 	dispatch := agentHolding("Dispatch helper", "shipment_list")
 	reports := agentHolding("Report analyst", "report_create_schedule")
-	service := runtimeWithTools(t, &agenttest.StubPermissions{}, []agentports.AgentQueryTool{
+	service := runtimeWithTools(t, &agenttest.StubPermissions{}, []agenttoolports.AgentQueryTool{
 		&agenttest.StubQueryTool{
 			ToolName: "shipment_list",
 			Desc:     "List shipments by status, billing state or dates.",
@@ -819,7 +834,16 @@ func TestBestCandidate_WeighsToolsTiedOnScoreEqually(t *testing.T) {
 	current := agentHolding("Fleet helper", "equipment_list_tractors")
 	builder := agentHolding("Shipment builder", "shipment_create")
 	reader := agentHolding("Dispatch reader", "shipment_get", "shipment_list")
-	ranked := ranking("shipment_create", 4, "shipment_get", 4, "shipment_list", 4, "equipment_list_tractors", 1)
+	ranked := ranking(
+		"shipment_create",
+		4,
+		"shipment_get",
+		4,
+		"shipment_list",
+		4,
+		"equipment_list_tractors",
+		1,
+	)
 
 	best := bestCandidate(
 		[]*agentdefinition.Definition{builder, reader, current},

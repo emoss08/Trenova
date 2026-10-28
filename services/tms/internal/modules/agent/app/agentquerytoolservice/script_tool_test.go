@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/scriptports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -43,11 +43,18 @@ func (s *stubScriptRunner) Run(
 
 type stubScriptBroker struct{}
 
-func (stubScriptBroker) Index() []codemode.Read                             { return nil }
-func (stubScriptBroker) Bound(*codemode.Limits)                             {}
-func (stubScriptBroker) Read(context.Context, codemode.Call) codemode.Reply { return codemode.Reply{} }
-func (stubScriptBroker) NoteReply(int, int64)                               {}
-func (stubScriptBroker) Summary() codemode.Summary                          { return codemode.Summary{} }
+func (stubScriptBroker) Index() []codemode.Read { return nil }
+func (stubScriptBroker) Bound(*codemode.Limits) {}
+
+func (stubScriptBroker) Read(
+	context.Context,
+	codemode.Call,
+) codemode.Reply {
+	return codemode.Reply{}
+}
+func (stubScriptBroker) NoteReply(int, int64) {}
+
+func (stubScriptBroker) Summary() codemode.Summary { return codemode.Summary{} }
 
 type stubAnalysisRecorder struct {
 	recorded *analysis.Run
@@ -83,7 +90,7 @@ type scriptHarness struct {
 	files    *stubConversationFiles
 	perms    *fakePermissions
 	analyses *stubAnalysisRecorder
-	params   *agentports.QueryToolParams
+	params   *agenttoolports.QueryToolParams
 }
 
 func newScriptHarness() *scriptHarness {

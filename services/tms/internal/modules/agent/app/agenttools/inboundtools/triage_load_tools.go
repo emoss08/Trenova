@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -94,7 +94,7 @@ func loadDraftRecord(message *inboundmessage.InboundMessage) toolpreview.Record 
 	}
 }
 
-func loadRequest(params *agentports.ToolExecuteParams) (*triageworkservice.LoadRequest, error) {
+func loadRequest(params *agenttoolports.ToolExecuteParams) (*triageworkservice.LoadRequest, error) {
 	messageID, err := common.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
 		return nil, err
@@ -107,11 +107,14 @@ func loadRequest(params *agentports.ToolExecuteParams) (*triageworkservice.LoadR
 	}, nil
 }
 
-func NewDraftInboundLoadTool(p triageToolParams) agentports.AgentTool {
+func NewDraftInboundLoadTool(p triageToolParams) agenttoolports.AgentTool {
 	return newDraftInboundLoadTool(p.Inbox, p.Work)
 }
 
-func newDraftInboundLoadTool(inbox inboundMessageReader, loads triageLoads) agentports.AgentTool {
+func newDraftInboundLoadTool(
+	inbox inboundMessageReader,
+	loads triageLoads,
+) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_draft_load",
@@ -145,7 +148,7 @@ func newDraftInboundLoadTool(inbox inboundMessageReader, loads triageLoads) agen
 			Plan: func(
 				ctx context.Context,
 				req *triageworkservice.LoadRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*triageworkservice.LoadDraftPlan, error) {
 				return loads.PlanDraftLoad(ctx, req)
 			},
@@ -185,7 +188,7 @@ func newDraftInboundLoadTool(inbox inboundMessageReader, loads triageLoads) agen
 			Run: func(
 				ctx context.Context,
 				req *triageworkservice.LoadRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				message, err := loads.DraftLoad(ctx, req)
 				if err != nil {
@@ -198,11 +201,11 @@ func newDraftInboundLoadTool(inbox inboundMessageReader, loads triageLoads) agen
 	)
 }
 
-func NewCreateInboundLoadTool(p triageToolParams) agentports.AgentTool {
+func NewCreateInboundLoadTool(p triageToolParams) agenttoolports.AgentTool {
 	return newCreateInboundLoadTool(p.Work)
 }
 
-func newCreateInboundLoadTool(loads triageLoads) agentports.AgentTool {
+func newCreateInboundLoadTool(loads triageLoads) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name: "inbox_create_load",
@@ -260,7 +263,7 @@ func newCreateInboundLoadTool(loads triageLoads) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				req *triageworkservice.CreateLoadRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*triageworkservice.CreateLoadPlan, error) {
 				return loads.PlanCreateLoad(ctx, req)
 			},
@@ -271,7 +274,7 @@ func newCreateInboundLoadTool(loads triageLoads) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				req *triageworkservice.CreateLoadRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				plan, err := loads.PlanCreateLoad(ctx, req)
 				if err != nil {
@@ -310,7 +313,7 @@ func errLoadAlreadyCreated(message *inboundmessage.InboundMessage) error {
 }
 
 func createLoadRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*triageworkservice.CreateLoadRequest, error) {
 	messageID, err := common.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
@@ -379,11 +382,14 @@ func renderCreateLoad(
 	return toolpreview.Build(summary+". The message records the shipment it made.", shipment), nil
 }
 
-func NewDiscardInboundLoadTool(p triageToolParams) agentports.AgentTool {
+func NewDiscardInboundLoadTool(p triageToolParams) agenttoolports.AgentTool {
 	return newDiscardInboundLoadTool(p.Inbox, p.Work)
 }
 
-func newDiscardInboundLoadTool(inbox inboundMessageReader, loads triageLoads) agentports.AgentTool {
+func newDiscardInboundLoadTool(
+	inbox inboundMessageReader,
+	loads triageLoads,
+) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_discard_load",
@@ -415,7 +421,7 @@ func newDiscardInboundLoadTool(inbox inboundMessageReader, loads triageLoads) ag
 			Plan: func(
 				ctx context.Context,
 				req *triageworkservice.LoadRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*triageworkservice.LoadDiscardPlan, error) {
 				return loads.PlanDiscardLoad(ctx, req)
 			},
@@ -445,7 +451,7 @@ func newDiscardInboundLoadTool(inbox inboundMessageReader, loads triageLoads) ag
 			Run: func(
 				ctx context.Context,
 				req *triageworkservice.LoadRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				plan, err := loads.PlanDiscardLoad(ctx, req)
 				if err != nil {

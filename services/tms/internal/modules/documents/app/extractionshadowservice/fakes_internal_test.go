@@ -7,12 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -38,7 +38,11 @@ func testTenant() pagination.TenantInfo {
 }
 
 func testActor() *permissionports.RequestActor {
-	return &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser, PrincipalID: testUser, UserID: testUser}
+	return &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
+		PrincipalID:   testUser,
+		UserID:        testUser,
+	}
 }
 
 type settingsStore struct {
@@ -191,7 +195,10 @@ func (f *resultStore) TotalsByStatus(
 		}
 		total, ok := byStatus[item.Status]
 		if !ok {
-			total = &extractionshadowports.ExtractionShadowStatusTotal{Status: item.Status, CostUSD: decimal.Zero}
+			total = &extractionshadowports.ExtractionShadowStatusTotal{
+				Status:  item.Status,
+				CostUSD: decimal.Zero,
+			}
 			byStatus[item.Status] = total
 			order = append(order, item.Status)
 		}
@@ -274,14 +281,14 @@ func (f *contentStore) GetByDocumentID(
 }
 
 type providerStore struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 	providers map[pulid.ID]*aiprovider.Provider
 	err       error
 }
 
 func (f *providerStore) GetByID(
 	_ context.Context,
-	req agentports.GetAIProviderByIDRequest,
+	req aiproviderports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	if f.err != nil {
 		return nil, f.err

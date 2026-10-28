@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
@@ -19,7 +21,7 @@ type workingTurn struct {
 	thread  *conversation.Thread
 	plan    *TurnPlan
 	saved   []conversation.Message
-	actions []agentports.PendingAction
+	actions []agentruntimeports.PendingAction
 	at      int64
 }
 
@@ -128,7 +130,7 @@ func (s *Service) keepWorkingSet(
 	}
 
 	next := conversation.Touch(turn.thread.WorkingSet, touched...)
-	if err := s.conversations.UpdateThreadContext(ctx, agentports.UpdateThreadContextRequest{
+	if err := s.conversations.UpdateThreadContext(ctx, assistantports.UpdateThreadContextRequest{
 		ThreadID:   turn.thread.ID,
 		TenantInfo: tenant,
 		WorkingSet: &next,

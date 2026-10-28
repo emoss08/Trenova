@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/paytools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
@@ -50,7 +50,7 @@ func TestDriverPayTools_AreAlwaysAPersonsDecision(t *testing.T) {
 		assert.Equal(t, agent.TierPropose, policy.DefaultTier, tool.Name())
 		assert.Equal(t, agent.TierPropose, policy.MaxTier, tool.Name())
 		assert.True(t, policy.HasEgress(agent.EgressMoney), tool.Name())
-		_, previews := tool.(agentports.ToolPreviewer)
+		_, previews := tool.(agenttoolports.ToolPreviewer)
 		assert.True(t, previews, tool.Name())
 	}
 }
@@ -117,7 +117,11 @@ func TestIssuePayAdvance_RecordsOnlyOnceAPersonApproves(t *testing.T) {
 	require.NotNil(t, change.Money)
 	assert.True(t, change.Money.TotalAfter.Decimal.Equal(decimal.NewFromInt(300)))
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)), common.ErrDriverPayNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)),
+		common.ErrDriverPayNeedsAPerson,
+	)
 	assert.Nil(t, advances.issued)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
@@ -174,7 +178,11 @@ func TestWriteOffPayAdvance_ShowsWhatIsForgiven(t *testing.T) {
 	assert.True(t, change.Money.Delta.Decimal.Equal(decimal.NewFromInt(-200)))
 	assert.Equal(t, driverpay.AdvanceStatusPartiallyRecovered, advance.Status)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)), common.ErrDriverPayNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)),
+		common.ErrDriverPayNeedsAPerson,
+	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
 	assert.Equal(t, advance.ID, advances.writtenOff)
 	assert.Equal(t, "Driver left the company", advances.writeReason)
@@ -299,7 +307,11 @@ func TestOpenEscrowAccount_OneActiveAccountPerDriver(t *testing.T) {
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "a 2500.00 USD target, earning 2.5% a year")
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
 	assert.Equal(t, int64(250000), escrow.opened.TargetAmountMinor)
@@ -321,8 +333,12 @@ func TestUpdateEscrowAccount_ChangesOnlyTheTerms(t *testing.T) {
 	tool := &UpdateEscrowAccountTool{escrow: escrow}
 	id := escrow.account.ID.String()
 
-	require.ErrorIs(t, tool.Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{paramEscrowAccountID: id})), common.ErrNothingToChange)
+	require.ErrorIs(t, tool.Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{paramEscrowAccountID: id},
+		),
+	), common.ErrNothingToChange)
 
 	raw := map[string]any{paramEscrowAccountID: id, paramEscrowTarget: "3000"}
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
@@ -390,7 +406,11 @@ func TestCloseEscrowAccount_RefundsWhatRemains(t *testing.T) {
 	require.NotNil(t, change.Money)
 	assert.True(t, change.Money.TotalAfter.Decimal.IsZero())
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)), common.ErrDriverPayNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)),
+		common.ErrDriverPayNeedsAPerson,
+	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
 	assert.Equal(t, escrow.account.ID, escrow.closed)
 

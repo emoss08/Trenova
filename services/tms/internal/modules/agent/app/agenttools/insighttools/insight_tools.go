@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,7 +32,7 @@ type DismissInsightTool struct {
 	insights insightDismisser
 }
 
-func NewDismissInsightTool(insights insightDismisser) agentports.AgentTool {
+func NewDismissInsightTool(insights insightDismisser) agenttoolports.AgentTool {
 	return &DismissInsightTool{insights: insights}
 }
 
@@ -70,8 +70,8 @@ func (t *DismissInsightTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *DismissInsightTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *DismissInsightTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceInsight,
@@ -87,18 +87,18 @@ func (t *DismissInsightTool) Policy() agentports.ToolPolicy {
 	}
 }
 
-func (t *DismissInsightTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *DismissInsightTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	id, err := common.RequirePulid(params, "insightId")
 	if err != nil {
-		return agentports.ToolTarget{}, false
+		return agenttoolports.ToolTarget{}, false
 	}
 
-	return agentports.ToolTarget{Resource: permission.ResourceInsight, ID: id}, true
+	return agenttoolports.ToolTarget{Resource: permission.ResourceInsight, ID: id}, true
 }
 
 func (t *DismissInsightTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	request, err := t.request(params)
 	if err != nil {
@@ -111,7 +111,7 @@ func (t *DismissInsightTool) Execute(
 }
 
 func (t *DismissInsightTool) request(
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (insightports.DismissInsightRequest, error) {
 	id, reason, err := t.arguments(params)
 	if err != nil {
@@ -127,7 +127,7 @@ func (t *DismissInsightTool) request(
 }
 
 func (t *DismissInsightTool) arguments(
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return "", "", err

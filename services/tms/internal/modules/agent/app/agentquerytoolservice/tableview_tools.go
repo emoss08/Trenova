@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -63,7 +63,7 @@ type composeTableViewTool struct {
 func newComposeTableViewTool(
 	composer *tablequeryservice.Service,
 	catalog *filtercatalog.Catalog,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &composeTableViewTool{composer: composer, catalog: catalog}
 }
 
@@ -110,7 +110,7 @@ func (t *composeTableViewTool) entities() []string {
 	return names
 }
 
-func (t *composeTableViewTool) Policy() agentports.ToolPolicy {
+func (t *composeTableViewTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
 		effect:   agent.ToolEffectPresent,
@@ -159,7 +159,7 @@ type unresolvedTermRow struct {
 
 func (t *composeTableViewTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -287,7 +287,7 @@ type dashboardLister interface {
 	) ([]*report.Dashboard, error)
 }
 
-func newListDashboardsTool(dashboards *reporting.Service) agentports.AgentQueryTool {
+func newListDashboardsTool(dashboards *reporting.Service) agenttoolports.AgentQueryTool {
 	return &listDashboardsTool{dashboards: dashboards}
 }
 
@@ -317,7 +317,7 @@ func (t *listDashboardsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listDashboardsTool) Policy() agentports.ToolPolicy {
+func (t *listDashboardsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceDashboard,
 	})
@@ -352,7 +352,7 @@ type dashboardTileRow struct {
 
 func (t *listDashboardsTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -110,21 +111,21 @@ func (h *Handler) start(c *gin.Context) {
 	helpers.JSON(c, http.StatusAccepted, run)
 }
 
-func runRequest(c *gin.Context) (agentports.GetAgentRunByIDRequest, error) {
+func runRequest(c *gin.Context) (agentruntimeports.GetAgentRunByIDRequest, error) {
 	runID, err := pulid.Parse(c.Param("runID"))
 	if err != nil {
-		return agentports.GetAgentRunByIDRequest{}, err
+		return agentruntimeports.GetAgentRunByIDRequest{}, err
 	}
 
 	authCtx := authctx.GetAuthContext(c)
 
-	return agentports.GetAgentRunByIDRequest{
+	return agentruntimeports.GetAgentRunByIDRequest{
 		ID: runID,
 		TenantInfo: &pagination.TenantInfo{
 			OrgID: authCtx.OrganizationID,
 			BuID:  authCtx.BusinessUnitID,
 		},
-		Reader: agentports.PersonRunRead(authCtx.UserID),
+		Reader: agentruntimeports.PersonRunRead(authCtx.UserID),
 	}, nil
 }
 

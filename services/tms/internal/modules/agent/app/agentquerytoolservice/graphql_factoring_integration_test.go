@@ -7,17 +7,16 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
-
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
@@ -248,7 +247,10 @@ func postFactoredInvoice(
 		BillToCustomerID: customerID, Number: number, Status: billingqueue.StatusPosted,
 		BillType: billingqueue.BillTypeInvoice,
 	}
-	require.NoError(t, billingqueuedb.BillingQueueItems.Create(tenant.Ctx(t.Context()), admin, queue))
+	require.NoError(
+		t,
+		billingqueuedb.BillingQueueItems.Create(tenant.Ctx(t.Context()), admin, queue),
+	)
 
 	amount := decimal.New(100_00, -2)
 	posted := timeutils.NowUnix()
@@ -277,7 +279,7 @@ func postFactoredInvoice(
 func walkByKey(
 	t *testing.T,
 	ctx context.Context,
-	tool agentports.AgentQueryTool,
+	tool agenttoolports.AgentQueryTool,
 	actor *permissionports.RequestActor,
 	args map[string]any,
 	key string,
@@ -378,7 +380,7 @@ func TestConvertedLists_FactoringReadsUnderRowLevelSecurity(t *testing.T) {
 			assert.ElementsMatch(t, c.narrowed, narrowed)
 
 			if c.money != "" {
-				data, queryErr := converted.Query(ours.ctx, &agentports.QueryToolParams{
+				data, queryErr := converted.Query(ours.ctx, &agenttoolports.QueryToolParams{
 					OrganizationID: actor.OrganizationID, BusinessUnitID: actor.BusinessUnitID,
 					Actor: actor, Timezone: "America/Chicago", Params: map[string]any{},
 					DataAccessCeiling: permission.SensitivityInternal,
@@ -456,7 +458,7 @@ func TestConvertedLists_FactoringReadsUnderRowLevelSecurity(t *testing.T) {
 			record := callTool(t, ours.ctx, get, actor, g.call(g.ours))
 			assert.Equal(t, g.ours, record["id"])
 
-			_, err = get.Query(ours.ctx, &agentports.QueryToolParams{
+			_, err = get.Query(ours.ctx, &agenttoolports.QueryToolParams{
 				OrganizationID: actor.OrganizationID, BusinessUnitID: actor.BusinessUnitID,
 				Actor: actor, Timezone: "America/Chicago", Params: g.call(g.other),
 				RunID: pulid.MustNew("ar_"),
@@ -490,7 +492,7 @@ func TestConvertedLists_FactoringReadsUnderRowLevelSecurity(t *testing.T) {
 		assert.Equal(t, ours.invoices[0], record["invoiceId"])
 		assert.NotEmpty(t, record["verdict"])
 
-		_, err = get.Query(ours.ctx, &agentports.QueryToolParams{
+		_, err = get.Query(ours.ctx, &agenttoolports.QueryToolParams{
 			OrganizationID: actor.OrganizationID, BusinessUnitID: actor.BusinessUnitID,
 			Actor: actor, Timezone: "America/Chicago",
 			Params: map[string]any{"invoiceId": other.invoices[0]},

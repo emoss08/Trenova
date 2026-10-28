@@ -4,7 +4,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
@@ -16,8 +17,8 @@ type Params struct {
 	fx.In
 
 	Service              *formulatemplateservice.Service
-	PageAssistant        agentports.PageAssistant       `optional:"true"`
-	StudioAssist         agentports.FormulaStudioAssist `optional:"true"`
+	PageAssistant        assistantports.PageAssistant           `optional:"true"`
+	StudioAssist         formulastudioports.FormulaStudioAssist `optional:"true"`
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	PermissionEngine     permissionports.PermissionEngine
@@ -25,8 +26,8 @@ type Params struct {
 
 type Handler struct {
 	service       *formulatemplateservice.Service
-	pageAssistant agentports.PageAssistant
-	studio        agentports.FormulaStudioAssist
+	pageAssistant assistantports.PageAssistant
+	studio        formulastudioports.FormulaStudioAssist
 	eh            *helpers.ErrorHandler
 	pm            *middleware.PermissionMiddleware
 	permEngine    permissionports.PermissionEngine

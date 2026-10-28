@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/schedulingrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerdrugalcoholrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
@@ -75,7 +75,13 @@ func writeProgramme(
 		require.NoError(t, templateErr)
 		return row
 	}
-	early, late := template("E", domaintypes.StatusActive), template("R", domaintypes.StatusInactive)
+	early, late := template(
+		"E",
+		domaintypes.StatusActive,
+	), template(
+		"R",
+		domaintypes.StatusInactive,
+	)
 	out.active, out.retired = early.ID.String(), late.ID.String()
 	ended := now - 86400*10
 	for _, assignment := range []*worker.WorkerShiftAssignment{
@@ -153,7 +159,9 @@ func rowIDs(t *testing.T, raw any) []string {
 	return out
 }
 
-func TestConvertedLists_SchedulingAndRandomTestingReadTheTenantsOwnUnderRowLevelSecurity(t *testing.T) {
+func TestConvertedLists_SchedulingAndRandomTestingReadTheTenantsOwnUnderRowLevelSecurity(
+	t *testing.T,
+) {
 	_, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
@@ -173,14 +181,20 @@ func TestConvertedLists_SchedulingAndRandomTestingReadTheTenantsOwnUnderRowLevel
 		workerdrugalcoholservice.Params{Logger: logger, Repo: draws, WorkerRepo: workers})
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
-	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
-	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: resolvers})
+	reader := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: engine, Resolvers: resolvers},
+	)
+	public := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: &publicRole{}, Resolvers: resolvers},
+	)
 	mine := agentreadtest.SeedTenant(t, admin, "A")
 	theirs := agentreadtest.SeedTenant(t, admin, "B")
 	ours := writeProgramme(t, mine, workers, schedules, draws, "A")
 	other := writeProgramme(t, theirs, workers, schedules, draws, "B")
 	actor := mine.Actor
-	tool := func(name string) agentports.AgentQueryTool {
+	tool := func(name string) agenttoolports.AgentQueryTool {
 		converted, err := agentquerytoolservice.ConvertedListTool(name, reader, engine)
 		require.NoError(t, err)
 		return converted

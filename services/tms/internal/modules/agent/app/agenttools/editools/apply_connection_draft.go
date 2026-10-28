@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
@@ -50,7 +50,7 @@ type ApplyConnectionDraftTool struct {
 func NewApplyConnectionDraftTool(
 	drafts connectionDrafts,
 	documents specReader,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &ApplyConnectionDraftTool{drafts: drafts, documents: documents}
 }
 
@@ -87,8 +87,8 @@ func (t *ApplyConnectionDraftTool) ParamSchema() map[string]any {
 	return edispec.ParamSchema(true)
 }
 
-func (t *ApplyConnectionDraftTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *ApplyConnectionDraftTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceEDI,
@@ -109,7 +109,7 @@ func (t *ApplyConnectionDraftTool) Policy() agentports.ToolPolicy {
 
 func (t *ApplyConnectionDraftTool) input(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*edispec.Input, error) {
 	input, err := edispec.Parse(params.Params, common.TenantFrom(*params))
 	if err != nil {
@@ -132,7 +132,7 @@ func (t *ApplyConnectionDraftTool) input(
 
 func (t *ApplyConnectionDraftTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*edispec.Input, *ediports.ConnectionDraftPlan, error) {
 	input, err := t.input(ctx, params)
 	if err != nil {
@@ -157,14 +157,14 @@ func readiness(input *edispec.Input, draft *ediports.ConnectionDraft) error {
 
 func (t *ApplyConnectionDraftTool) ResolveSelection(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
 ) (map[string]any, error) {
 	return edispec.RedactQuotes(params.Params), nil
 }
 
 func (t *ApplyConnectionDraftTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	if err := common.GuardPreview(t, &params); err != nil {
 		return err
@@ -178,7 +178,7 @@ func (t *ApplyConnectionDraftTool) Validate(
 
 func (t *ApplyConnectionDraftTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 	return err
@@ -186,7 +186,7 @@ func (t *ApplyConnectionDraftTool) Execute(
 
 func (t *ApplyConnectionDraftTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return nil, err

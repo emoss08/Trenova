@@ -15,7 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -115,7 +117,7 @@ type toolSetRequest struct {
 	actor  *permissionports.RequestActor
 	input  string
 	need   string
-	query  agentports.QueryVectorRequest
+	query  retrievalports.QueryVectorRequest
 	// history is the replayed conversation. The tools the model used or
 	// loaded in its recent turns are loaded again, so a follow-up like "yes,
 	// do it" does not reopen with a toolbox that has forgotten the work.
@@ -157,7 +159,7 @@ type toolSet struct {
 	// usable answers whether the person may use a tool at all, for naming
 	// what exists beyond the agent's configuration.
 	usable func(name string) bool
-	query  agentports.QueryVector
+	query  retrievalports.QueryVector
 	// self is the agent the turn runs as, left out when naming another of
 	// the person's agents that holds a tool.
 	self        pulid.ID
@@ -482,7 +484,7 @@ func (s *Service) carryOver(set *toolSet, history []conversation.Message) {
 	}
 }
 
-func frameNeed(req *agentports.RunRequest) string {
+func frameNeed(req *agentruntimeports.RunRequest) string {
 	if req.Context.Frame == nil {
 		return ""
 	}
@@ -490,8 +492,8 @@ func frameNeed(req *agentports.RunRequest) string {
 	return strings.TrimSpace(req.Context.Frame.Need)
 }
 
-func turnQuery(req *agentports.RunRequest) agentports.QueryVectorRequest {
-	query := agentports.TurnQueryRequest(req)
+func turnQuery(req *agentruntimeports.RunRequest) retrievalports.QueryVectorRequest {
+	query := agentruntimeports.TurnQueryRequest(req)
 	if need := frameNeed(req); need != "" && req.Actor != nil {
 		query.Text = need + "\n" + req.Input
 	}
@@ -502,7 +504,7 @@ func turnQuery(req *agentports.RunRequest) agentports.QueryVectorRequest {
 // rankingText is what preselection ranks against: the request, and the one
 // before it. "Yes, do that" names nothing; the message it answers does.
 func rankingText(input string, history []conversation.Message) string {
-	return agentports.TurnQueryText(input, history)
+	return retrievalports.TurnQueryText(input, history)
 }
 
 // resolveFind answers a find_tools call and reports what it loaded.
@@ -541,8 +543,8 @@ func (s *Service) resolveFind(
 		SkipSemantic: set.loaded,
 	}))
 	names := make([]string, 0, len(found))
-	callable := make([]agentports.AgentToolDescriptor, 0, len(found))
-	added := make([]agentports.AgentToolDescriptor, 0, len(found))
+	callable := make([]agenttoolports.AgentToolDescriptor, 0, len(found))
+	added := make([]agenttoolports.AgentToolDescriptor, 0, len(found))
 	alongside := make([]string, 0, 4)
 	for _, descriptor := range found {
 		names = append(names, descriptor.Name)
@@ -612,7 +614,7 @@ func (s *Service) reachBeyond(
 	actor *permissionports.RequestActor,
 	need string,
 	ownScore int,
-) []agentports.AgentToolDescriptor {
+) []agenttoolports.AgentToolDescriptor {
 	if len(set.beyond) == 0 {
 		return nil
 	}
@@ -623,7 +625,7 @@ func (s *Service) reachBeyond(
 		Semantic:   s.toolSemantic(ctx, actorTenant(actor), set.query),
 		StrongOnly: true,
 	}))
-	reached := make([]agentports.AgentToolDescriptor, 0, len(found))
+	reached := make([]agenttoolports.AgentToolDescriptor, 0, len(found))
 	for idx := range found {
 		if ownScore > 0 && s.catalog.StrongScore(found[idx].Name, need) <= ownScore {
 			continue
@@ -638,7 +640,7 @@ func (s *Service) reachBeyond(
 
 func (s *Service) strongestMatch(
 	need string,
-	matches ...[]agentports.AgentToolDescriptor,
+	matches ...[]agenttoolports.AgentToolDescriptor,
 ) int {
 	strongest := 0
 	for _, descriptors := range matches {
@@ -656,12 +658,12 @@ func (s *Service) strongestMatch(
 func (s *Service) withNamedTools(
 	allowed []string,
 	need string,
-	found []agentports.AgentToolDescriptor,
-) []agentports.AgentToolDescriptor {
-	named := make([]agentports.AgentToolDescriptor, 0, 4)
+	found []agenttoolports.AgentToolDescriptor,
+) []agenttoolports.AgentToolDescriptor {
+	named := make([]agenttoolports.AgentToolDescriptor, 0, 4)
 	for _, word := range strings.FieldsFunc(need, notToolNameRune) {
 		if !slices.Contains(allowed, word) ||
-			slices.ContainsFunc(named, func(d agentports.AgentToolDescriptor) bool {
+			slices.ContainsFunc(named, func(d agenttoolports.AgentToolDescriptor) bool {
 				return d.Name == word
 			}) {
 			continue
@@ -679,7 +681,7 @@ func (s *Service) withNamedTools(
 		if len(named) >= limit {
 			break
 		}
-		if !slices.ContainsFunc(named, func(d agentports.AgentToolDescriptor) bool {
+		if !slices.ContainsFunc(named, func(d agenttoolports.AgentToolDescriptor) bool {
 			return d.Name == descriptor.Name
 		}) {
 			named = append(named, descriptor)
@@ -696,7 +698,7 @@ func notToolNameRune(r rune) bool {
 // writeToolLines names each tool by its first sentence, and for one done
 // as a sequence, the order of the tools around it, so the model does not
 // search again for the lookup it needs next.
-func writeToolLines(b *strings.Builder, descriptors []agentports.AgentToolDescriptor) {
+func writeToolLines(b *strings.Builder, descriptors []agenttoolports.AgentToolDescriptor) {
 	for _, descriptor := range descriptors {
 		fmt.Fprintf(
 			b,
@@ -744,7 +746,7 @@ func (s *Service) unheldRefusal(set *toolSet, name string, exists bool) string {
 		fmt.Fprintf(&b, "There is no tool named %q.", name)
 	}
 
-	var nearest []agentports.AgentToolDescriptor
+	var nearest []agenttoolports.AgentToolDescriptor
 	if s.catalog != nil {
 		nearest = s.catalog.Find(set.allowed, strings.ReplaceAll(name, "_", " "), 3)
 	}
@@ -865,7 +867,7 @@ func (s *Service) nothingLoaded(
 	need string,
 ) (string, []pulid.ID) {
 	unheld := s.unheldStrongMatches(set, need)
-	elsewhere := make([]agentports.AgentToolDescriptor, 0, len(unheld))
+	elsewhere := make([]agenttoolports.AgentToolDescriptor, 0, len(unheld))
 	for _, name := range unheld {
 		if set.usable != nil && !set.usable(name) {
 			continue
@@ -950,7 +952,7 @@ func (s *Service) permittedWith(
 		// A self-scoped tool touches only the person's own records, which any
 		// signed-in person may arrange; it needs no grant, and nobody but a
 		// person has records of that kind.
-		if agentports.IsSelfScoped(s.toolNamed(name)) {
+		if agenttoolports.IsSelfScoped(s.toolNamed(name)) {
 			if actor.PrincipalType == permissionports.PrincipalTypeUser {
 				permitted = append(permitted, name)
 			}
@@ -989,7 +991,7 @@ func (s *Service) toolVerdicts(
 	checks := make([]toolGateCheck, 0, len(names))
 	seen := make(map[string]struct{}, len(names))
 	for _, name := range names {
-		if agentports.IsSelfScoped(s.toolNamed(name)) {
+		if agenttoolports.IsSelfScoped(s.toolNamed(name)) {
 			continue
 		}
 		resource, operation, ok := s.toolGate(name)
@@ -1102,7 +1104,7 @@ func coreOf(names []string) []string {
 	return core
 }
 
-func toSpec(descriptor agentports.AgentToolDescriptor) kernelports.ToolSpec {
+func toSpec(descriptor agenttoolports.AgentToolDescriptor) kernelports.ToolSpec {
 	return kernelports.ToolSpec{
 		Name:        descriptor.Name,
 		Description: descriptor.Description,
@@ -1115,7 +1117,7 @@ func toSpec(descriptor agentports.AgentToolDescriptor) kernelports.ToolSpec {
 func (s *Service) withoutSelfScoped(names []string) []string {
 	kept := make([]string, 0, len(names))
 	for _, name := range names {
-		if !agentports.IsSelfScoped(s.toolNamed(name)) {
+		if !agenttoolports.IsSelfScoped(s.toolNamed(name)) {
 			kept = append(kept, name)
 		}
 	}
@@ -1140,12 +1142,16 @@ func (s *Service) toolThreshold() int {
 	return *s.threshold
 }
 
-func (s *Service) notePreselected(ctx context.Context, req *agentports.RunRequest, set *toolSet) {
+func (s *Service) notePreselected(
+	ctx context.Context,
+	req *agentruntimeports.RunRequest,
+	set *toolSet,
+) {
 	if s.disclosures == nil || !set.disclosed {
 		return
 	}
 
-	s.disclosures.Preselected(ctx, &agentports.ToolDisclosure{
+	s.disclosures.Preselected(ctx, &agenttoolports.ToolDisclosure{
 		Attribution: turnAttribution(req),
 		Disclosed:   true,
 		Held:        set.held,
@@ -1155,7 +1161,7 @@ func (s *Service) notePreselected(ctx context.Context, req *agentports.RunReques
 
 func (s *Service) noteFound(
 	ctx context.Context,
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 	set *toolSet,
 	arguments map[string]any,
 	answer *FindAnswer,
@@ -1165,7 +1171,7 @@ func (s *Service) noteFound(
 	}
 	need, _ := arguments["need"].(string)
 
-	s.disclosures.Found(ctx, &agentports.ToolDisclosure{
+	s.disclosures.Found(ctx, &agenttoolports.ToolDisclosure{
 		Attribution: turnAttribution(req),
 		Disclosed:   set.disclosed,
 		Held:        set.held,

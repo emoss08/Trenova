@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 )
@@ -16,7 +16,7 @@ const ParamOccurrenceID = "occurrenceId"
 
 const kindDetention = "detention occurrence"
 
-func NewDisputeDetentionTool(detentions common.DetentionDisputer) agentports.AgentTool {
+func NewDisputeDetentionTool(detentions common.DetentionDisputer) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
 		Name:     "detention_open_dispute",
 		Artifact: common.DetentionRecordEntity,
@@ -45,11 +45,11 @@ func NewDisputeDetentionTool(detentions common.DetentionDisputer) agentports.Age
 			),
 		},
 		Required: []string{ParamOccurrenceID, common.ParamNote},
-		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
+		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return common.TargetOf(params, ParamOccurrenceID, permission.ResourceDetention)
 		},
 	}, common.ReceivablePlan[*detentionservice.DisputeParams, *detentionservice.OccurrenceChange]{
-		Request: func(params *agentports.ToolExecuteParams) (*detentionservice.DisputeParams, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*detentionservice.DisputeParams, error) {
 			occurrenceID, err := common.RequirePulid(params.Params, ParamOccurrenceID)
 			if err != nil {
 				return nil, err
@@ -73,7 +73,7 @@ func NewDisputeDetentionTool(detentions common.DetentionDisputer) agentports.Age
 		Plan: func(
 			ctx context.Context,
 			req *detentionservice.DisputeParams,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*detentionservice.OccurrenceChange, error) {
 			return detentions.PreviewDispute(ctx, req)
 		},
@@ -97,7 +97,7 @@ func NewDisputeDetentionTool(detentions common.DetentionDisputer) agentports.Age
 		Run: func(
 			ctx context.Context,
 			req *detentionservice.DisputeParams,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			saved, err := detentions.Dispute(ctx, *req)
 			if err != nil {

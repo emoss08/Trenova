@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentaccessservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -28,7 +28,7 @@ type fakeTrust struct {
 
 func (f *fakeTrust) ListByDefinitionIDs(
 	_ context.Context,
-	req agentports.ListToolTrustByDefinitionsRequest,
+	req agenttoolports.ListToolTrustByDefinitionsRequest,
 ) (map[pulid.ID][]*agent.ToolTrust, error) {
 	f.calls++
 	out := make(map[pulid.ID][]*agent.ToolTrust, len(req.AgentDefinitionIDs))
@@ -42,7 +42,7 @@ func (f *fakeTrust) ListByDefinitionIDs(
 }
 
 func manyPoliciesService(count int, defs *fakeDefinitions) *Service {
-	policies := make([]agentports.ToolPolicy, 0, count)
+	policies := make([]agenttoolports.ToolPolicy, 0, count)
 	for idx := count - 1; idx >= 0; idx-- {
 		policies = append(policies, policy(
 			fmt.Sprintf("tool_%03d", idx),
@@ -82,7 +82,7 @@ func surveyService(defs *fakeDefinitions, trust *fakeTrust) *Service {
 	})
 }
 
-func pageNames(page *agentports.AgentToolPolicyPage) []string {
+func pageNames(page *agenttoolports.AgentToolPolicyPage) []string {
 	out := make([]string, 0, len(page.Edges))
 	for _, edge := range page.Edges {
 		out = append(out, edge.View.Policy.Name)
@@ -99,10 +99,10 @@ func listRules(
 	t *testing.T,
 	svc *Service,
 	table memtable.Request,
-) *agentports.AgentToolPolicyPage {
+) *agenttoolports.AgentToolPolicyPage {
 	t.Helper()
 
-	page, err := svc.ListToolPolicies(t.Context(), &agentports.ListAgentToolPoliciesRequest{
+	page, err := svc.ListToolPolicies(t.Context(), &agenttoolports.ListAgentToolPoliciesRequest{
 		Table: table,
 	})
 	require.NoError(t, err)
@@ -317,7 +317,7 @@ func TestListToolPoliciesFiltersByWhatRunsWithoutAPerson(t *testing.T) {
 	assert.Equal(t, listed, defs.pages, "no agent is read when nobody asked")
 	assert.Nil(t, unasked.Edges[0].RunsWithoutPerson)
 
-	shown, err := svc.ListToolPolicies(t.Context(), &agentports.ListAgentToolPoliciesRequest{
+	shown, err := svc.ListToolPolicies(t.Context(), &agenttoolports.ListAgentToolPoliciesRequest{
 		WithAttendance: true,
 	})
 	require.NoError(t, err)
@@ -355,13 +355,13 @@ func TestListToolPoliciesRejectsABadCursorAndBadFilters(t *testing.T) {
 		},
 		"search too long": {Query: string(make([]byte, memtable.MaxQueryLength+1))},
 	} {
-		_, err := svc.ListToolPolicies(t.Context(), &agentports.ListAgentToolPoliciesRequest{
+		_, err := svc.ListToolPolicies(t.Context(), &agenttoolports.ListAgentToolPoliciesRequest{
 			Table: table,
 		})
 		require.Error(t, err, name)
 	}
 
-	_, err := svc.ListToolPolicies(t.Context(), &agentports.ListAgentToolPoliciesRequest{
+	_, err := svc.ListToolPolicies(t.Context(), &agenttoolports.ListAgentToolPoliciesRequest{
 		Table: memtable.Request{After: "%%%"},
 	})
 	var validation *errortypes.Error
@@ -394,9 +394,9 @@ func TestListAgentToolsListsEveryPickedAgentsTools(t *testing.T) {
 	defs := &fakeDefinitions{all: []*agentdefinition.Definition{dispatcher, auditor}}
 	svc := surveyService(defs, &fakeTrust{})
 
-	list := func(table memtable.Request) *agentports.AgentToolSafetyPage {
+	list := func(table memtable.Request) *agenttoolports.AgentToolSafetyPage {
 		t.Helper()
-		page, err := svc.ListAgentTools(t.Context(), &agentports.ListAgentToolSafetyRequest{
+		page, err := svc.ListAgentTools(t.Context(), &agenttoolports.ListAgentToolSafetyRequest{
 			AgentIDs: []pulid.ID{dispatcher.ID, auditor.ID},
 			Table:    table,
 		})
@@ -404,7 +404,7 @@ func TestListAgentToolsListsEveryPickedAgentsTools(t *testing.T) {
 
 		return page
 	}
-	rows := func(page *agentports.AgentToolSafetyPage) []string {
+	rows := func(page *agenttoolports.AgentToolSafetyPage) []string {
 		out := make([]string, 0, len(page.Edges))
 		for _, edge := range page.Edges {
 			out = append(out, edge.Node.AgentName+"/"+edge.Node.PolicyName)
@@ -414,8 +414,13 @@ func TestListAgentToolsListsEveryPickedAgentsTools(t *testing.T) {
 	}
 
 	all := list(memtable.Request{IncludeTotalCount: true})
-	assert.Equal(t,
-		[]string{"Auditor/dispatch_assign_move", "Dispatcher/shipment_get", "Dispatcher/customer_send_email"},
+	assert.Equal(
+		t,
+		[]string{
+			"Auditor/dispatch_assign_move",
+			"Dispatcher/shipment_get",
+			"Dispatcher/customer_send_email",
+		},
 		rows(all),
 	)
 	require.NotNil(t, all.TotalCount)
@@ -447,19 +452,19 @@ func TestListAgentToolsNamesBetweenOneAndTenAgents(t *testing.T) {
 
 	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
 
-	_, err := svc.ListAgentTools(t.Context(), &agentports.ListAgentToolSafetyRequest{})
+	_, err := svc.ListAgentTools(t.Context(), &agenttoolports.ListAgentToolSafetyRequest{})
 	require.Error(t, err)
 
 	tooMany := make([]pulid.ID, 0, MaxComparedAgents+1)
 	for range MaxComparedAgents + 1 {
 		tooMany = append(tooMany, pulid.MustNew("agdef_"))
 	}
-	_, err = svc.ListAgentTools(t.Context(), &agentports.ListAgentToolSafetyRequest{
+	_, err = svc.ListAgentTools(t.Context(), &agenttoolports.ListAgentToolSafetyRequest{
 		AgentIDs: tooMany,
 	})
 	require.Error(t, err)
 
-	page, err := svc.ListAgentTools(t.Context(), &agentports.ListAgentToolSafetyRequest{
+	page, err := svc.ListAgentTools(t.Context(), &agenttoolports.ListAgentToolSafetyRequest{
 		AgentIDs: []pulid.ID{pulid.MustNew("agdef_")},
 		Table:    memtable.Request{IncludeTotalCount: true},
 	})
@@ -487,7 +492,12 @@ func TestSummaryCountsOverEveryToolAndAgent(t *testing.T) {
 	summary, err := svc.Summary(t.Context(), pagination.TenantInfo{})
 	require.NoError(t, err)
 	assert.Equal(t, 4, summary.ToolCount)
-	assert.Equal(t, 1, summary.RunWithoutPerson, "dispatch_assign_move runs unattended on Back office")
+	assert.Equal(
+		t,
+		1,
+		summary.RunWithoutPerson,
+		"dispatch_assign_move runs unattended on Back office",
+	)
 	assert.Equal(t, 1, summary.LeaveOrganization)
 	assert.Equal(t, 2, summary.OpenWithSensitive)
 	assert.Equal(t, []string{GeneralResource, permission.ResourceShipment.String()},

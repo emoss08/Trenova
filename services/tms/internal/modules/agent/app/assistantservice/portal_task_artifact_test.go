@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +27,9 @@ func portalReadResult() map[string]any {
 func TestArtifactFromObservation_APortalReadIsAPortalTask(t *testing.T) {
 	t.Parallel()
 
-	artifact := artifactFromObservation(observation(agentextension.ToolReadPortal, portalReadResult()))
+	artifact := artifactFromObservation(
+		observation(agentextension.ToolReadPortal, portalReadResult()),
+	)
 
 	require.NotNil(t, artifact)
 	assert.Equal(t, assistantartifact.KindPortalTask, artifact.Kind)
@@ -101,6 +103,6 @@ func TestAWriteToAnotherRecordIsNotAPortalTask(t *testing.T) {
 func TestAPortalTaskMustBeNamedInTheReply(t *testing.T) {
 	t.Parallel()
 
-	shown := agentports.ShownArtifact{Kind: string(assistantartifact.KindPortalTask)}
+	shown := agentruntimeports.ShownArtifact{Kind: string(assistantartifact.KindPortalTask)}
 	assert.True(t, shown.MustBeLinked())
 }

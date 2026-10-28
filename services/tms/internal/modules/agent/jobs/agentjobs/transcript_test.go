@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -33,14 +34,14 @@ func (filedProposals) ListByRun(
 }
 
 type settledRuns struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 
 	updated []*agent.AgentRun
 }
 
 func (r *settledRuns) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return &agent.AgentRun{ID: req.ID, Status: agent.RunStatusDiagnosing}, nil
 }
@@ -64,7 +65,7 @@ func settle(t *testing.T, messages []conversation.Message) *agent.AgentRun {
 			},
 			RunID: pulid.MustNew("arun_"),
 		},
-		Outcome: &agentports.RunResult{Reply: "Filed.", Messages: messages},
+		Outcome: &agentruntimeports.RunResult{Reply: "Filed.", Messages: messages},
 	})
 	require.NoError(t, err)
 	require.Len(t, runs.updated, 1)
@@ -141,8 +142,12 @@ func TestSettleRun_BoundsALongRunsTranscript(t *testing.T) {
 	assert.True(t, last.Omitted, "a message over the bound keeps only who said it")
 	assert.Empty(t, last.Content)
 	assert.Equal(t, "report_run", last.ToolName)
-	assert.Equal(t, kept[run.Transcript.OmittedAt-1].CreatedAt+int64(run.Transcript.OmittedMessages)+1,
-		kept[run.Transcript.OmittedAt].CreatedAt, "the gap is counted where it fell")
+	assert.Equal(
+		t,
+		kept[run.Transcript.OmittedAt-1].CreatedAt+int64(run.Transcript.OmittedMessages)+1,
+		kept[run.Transcript.OmittedAt].CreatedAt,
+		"the gap is counted where it fell",
+	)
 }
 
 func TestSettleRun_LeavesNoTranscriptForARunThatSaidNothing(t *testing.T) {

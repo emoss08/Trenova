@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -106,8 +106,8 @@ func subjectService(
 	}, conversations, permissions
 }
 
-func workerThread() *agentports.StartThreadRequest {
-	return &agentports.StartThreadRequest{
+func workerThread() *assistantports.StartThreadRequest {
+	return &assistantports.StartThreadRequest{
 		AgentDefinitionID: pulid.MustNew("agdef_"),
 		SubjectType:       agent.SubjectWorker,
 		SubjectID:         pulid.MustNew("wrk_"),
@@ -153,7 +153,7 @@ func TestStartThread_NeedsNoGrantWithoutARecord(t *testing.T) {
 
 	svc, _, permissions := subjectService(chatDefinition("Dispatch", ""))
 
-	_, err := startAs(t, svc, &agentports.StartThreadRequest{
+	_, err := startAs(t, svc, &assistantports.StartThreadRequest{
 		AgentDefinitionID: pulid.MustNew("agdef_"),
 	}, testActor())
 
@@ -170,7 +170,7 @@ func TestStartThread_RefusesAnAgentThatRunsOnItsOwn(t *testing.T) {
 	desk.TriggerMode = agentdefinition.TriggerEvent
 	svc, conversations, _ := subjectService(desk)
 
-	_, err := startAs(t, svc, &agentports.StartThreadRequest{
+	_, err := startAs(t, svc, &assistantports.StartThreadRequest{
 		AgentDefinitionID: desk.ID,
 	}, testActor())
 
@@ -209,4 +209,4 @@ func TestDescribeSubject_WithholdsARecordThePersonCanNoLongerRead(t *testing.T) 
 	assert.Equal(t, 1, subjects.described)
 }
 
-var _ agentports.ConversationRepository = (*creatingConversations)(nil)
+var _ assistantports.ConversationRepository = (*creatingConversations)(nil)

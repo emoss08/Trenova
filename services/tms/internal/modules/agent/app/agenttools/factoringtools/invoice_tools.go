@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -45,7 +45,7 @@ type SetInvoiceFactoringOverrideTool struct {
 
 func NewSetInvoiceFactoringOverrideTool(
 	readiness factoringports.ReadinessService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &SetInvoiceFactoringOverrideTool{readiness: readiness}
 }
 
@@ -84,7 +84,7 @@ func (t *SetInvoiceFactoringOverrideTool) ParamSchema() map[string]any {
 	}, paramInvoiceID, paramOverride)
 }
 
-func (t *SetInvoiceFactoringOverrideTool) Policy() agentports.ToolPolicy {
+func (t *SetInvoiceFactoringOverrideTool) Policy() agenttoolports.ToolPolicy {
 	return policy(t.Name(), &policySpec{
 		resource:    permission.ResourceInvoice,
 		operation:   permission.OpUpdate,
@@ -99,12 +99,12 @@ func (t *SetInvoiceFactoringOverrideTool) Policy() agentports.ToolPolicy {
 
 func (t *SetInvoiceFactoringOverrideTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramInvoiceID, permission.ResourceInvoice)
 }
 
 func (t *SetInvoiceFactoringOverrideTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.SetOverrideRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -127,7 +127,7 @@ func (t *SetInvoiceFactoringOverrideTool) request(
 
 func (t *SetInvoiceFactoringOverrideTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -139,7 +139,7 @@ func (t *SetInvoiceFactoringOverrideTool) Validate(
 
 func (t *SetInvoiceFactoringOverrideTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -151,7 +151,7 @@ func (t *SetInvoiceFactoringOverrideTool) Execute(
 
 func (t *SetInvoiceFactoringOverrideTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const summary = "Would change whether the invoice is factored."
 	req, err := t.request(&params)
@@ -209,7 +209,7 @@ type RequestMissingFactoringDocumentTool struct {
 func NewRequestMissingFactoringDocumentTool(
 	readiness factoringports.ReadinessService,
 	senders emailports.EmailSenderResolver,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &RequestMissingFactoringDocumentTool{readiness: readiness, senders: senders}
 }
 
@@ -254,7 +254,7 @@ func (t *RequestMissingFactoringDocumentTool) ParamSchema() map[string]any {
 	}, paramInvoiceID)
 }
 
-func (t *RequestMissingFactoringDocumentTool) Policy() agentports.ToolPolicy {
+func (t *RequestMissingFactoringDocumentTool) Policy() agenttoolports.ToolPolicy {
 	return policy(t.Name(), &policySpec{
 		resource:    permission.ResourceCustomerCommunication,
 		operation:   permission.OpCreate,
@@ -268,12 +268,12 @@ func (t *RequestMissingFactoringDocumentTool) Policy() agentports.ToolPolicy {
 
 func (t *RequestMissingFactoringDocumentTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, paramInvoiceID, permission.ResourceInvoice)
 }
 
 func (t *RequestMissingFactoringDocumentTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.RequestMissingDocumentsRequest, error) {
 	if err := common.GuardExecute(t, *params); err != nil {
 		return nil, err
@@ -304,7 +304,7 @@ func (t *RequestMissingFactoringDocumentTool) request(
 
 func (t *RequestMissingFactoringDocumentTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -316,7 +316,7 @@ func (t *RequestMissingFactoringDocumentTool) Validate(
 
 func (t *RequestMissingFactoringDocumentTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -328,7 +328,7 @@ func (t *RequestMissingFactoringDocumentTool) Execute(
 
 func (t *RequestMissingFactoringDocumentTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const summary = "Would email a request for the invoice's missing documents."
 	req, err := t.request(&params)

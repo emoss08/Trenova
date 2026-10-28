@@ -7,7 +7,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,26 +20,26 @@ import (
 type Params struct {
 	fx.In
 
-	Chapters      agentports.ChapterRepository
-	Conversations agentports.ConversationRepository
-	Turns         agentports.AssistantTurnRepository
+	Chapters      assistantports.ChapterRepository
+	Conversations assistantports.ConversationRepository
+	Turns         assistantports.AssistantTurnRepository
 	Controls      tenantports.AgentControlRepository
-	Scheduler     agentports.ChapterScheduler `optional:"true"`
-	Realtime      agentports.RealtimeService  `optional:"true"`
+	Scheduler     assistantports.ChapterScheduler `optional:"true"`
+	Realtime      realtimeports.RealtimeService   `optional:"true"`
 	Logger        *zap.Logger
 }
 
 type Service struct {
-	chapters      agentports.ChapterRepository
-	conversations agentports.ConversationRepository
-	turns         agentports.AssistantTurnRepository
+	chapters      assistantports.ChapterRepository
+	conversations assistantports.ConversationRepository
+	turns         assistantports.AssistantTurnRepository
 	controls      tenantports.AgentControlRepository
-	scheduler     agentports.ChapterScheduler
-	realtime      agentports.RealtimeService
+	scheduler     assistantports.ChapterScheduler
+	realtime      realtimeports.RealtimeService
 	l             *zap.Logger
 }
 
-func New(p Params) agentports.AssistantChapterService {
+func New(p Params) assistantports.AssistantChapterService {
 	return &Service{
 		chapters:      p.Chapters,
 		conversations: p.Conversations,
@@ -52,13 +53,13 @@ func New(p Params) agentports.AssistantChapterService {
 
 func (s *Service) List(
 	ctx context.Context,
-	req agentports.ThreadChaptersRequest,
+	req assistantports.ThreadChaptersRequest,
 ) ([]*conversation.Chapter, error) {
 	if err := s.owned(ctx, req.ThreadID, req.UserID, req.TenantInfo); err != nil {
 		return nil, err
 	}
 
-	return s.chapters.List(ctx, agentports.ListChaptersRequest{
+	return s.chapters.List(ctx, assistantports.ListChaptersRequest{
 		ThreadID:   req.ThreadID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -66,13 +67,13 @@ func (s *Service) List(
 
 func (s *Service) Open(
 	ctx context.Context,
-	req agentports.OpenChapterRequest,
+	req assistantports.OpenChapterRequest,
 ) (*conversation.Chapter, error) {
 	if err := s.owned(ctx, req.ThreadID, req.UserID, req.TenantInfo); err != nil {
 		return nil, err
 	}
 
-	turnID, err := s.chapters.TurnOfMessage(ctx, agentports.TurnOfMessageRequest{
+	turnID, err := s.chapters.TurnOfMessage(ctx, assistantports.TurnOfMessageRequest{
 		ThreadID:   req.ThreadID,
 		MessageID:  req.MessageID,
 		TenantInfo: req.TenantInfo,
@@ -86,7 +87,7 @@ func (s *Service) Open(
 		)
 	}
 
-	if existing, fErr := s.chapters.ForTurn(ctx, agentports.ChapterForTurnRequest{
+	if existing, fErr := s.chapters.ForTurn(ctx, assistantports.ChapterForTurnRequest{
 		ThreadID:   req.ThreadID,
 		TurnID:     turnID,
 		TenantInfo: req.TenantInfo,
@@ -96,7 +97,7 @@ func (s *Service) Open(
 		return existing, nil
 	}
 
-	count, err := s.chapters.Count(ctx, agentports.ListChaptersRequest{
+	count, err := s.chapters.Count(ctx, assistantports.ListChaptersRequest{
 		ThreadID:   req.ThreadID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -133,17 +134,17 @@ func (s *Service) Open(
 
 func (s *Service) nameQuestionChapters(
 	ctx context.Context,
-	req agentports.OpenChapterRequest,
+	req assistantports.OpenChapterRequest,
 	opened *conversation.Chapter,
 ) {
-	turn := &agentports.ChapterTurnRequest{
+	turn := &assistantports.ChapterTurnRequest{
 		TenantInfo: req.TenantInfo,
 		ThreadID:   req.ThreadID,
 		UserID:     req.UserID,
 	}
 	s.cueNaming(ctx, turn, opened.TurnID)
 
-	chapters, err := s.chapters.List(ctx, agentports.ListChaptersRequest{
+	chapters, err := s.chapters.List(ctx, assistantports.ListChaptersRequest{
 		ThreadID:   req.ThreadID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -162,24 +163,24 @@ func (s *Service) nameQuestionChapters(
 
 func (s *Service) cueNaming(
 	ctx context.Context,
-	turn *agentports.ChapterTurnRequest,
+	turn *assistantports.ChapterTurnRequest,
 	turnID pulid.ID,
 ) {
 	if s.scheduler == nil || turnID.IsNil() {
 		return
 	}
-	s.scheduler.Cue(ctx, &agentports.ChapterTurnRequest{
+	s.scheduler.Cue(ctx, &assistantports.ChapterTurnRequest{
 		TenantInfo: turn.TenantInfo,
 		ThreadID:   turn.ThreadID,
 		UserID:     turn.UserID,
 		TurnID:     turnID,
-		Phase:      agentports.ChapterPhaseRequested,
+		Phase:      assistantports.ChapterPhaseRequested,
 	})
 }
 
 func (s *Service) Rename(
 	ctx context.Context,
-	req agentports.RenameChapterRequest,
+	req assistantports.RenameChapterRequest,
 ) (*conversation.Chapter, error) {
 	if err := s.owned(ctx, req.ThreadID, req.UserID, req.TenantInfo); err != nil {
 		return nil, err
@@ -192,7 +193,7 @@ func (s *Service) Rename(
 		return nil, me
 	}
 
-	chapter, err := s.chapters.Retitle(ctx, agentports.RetitleChapterRequest{
+	chapter, err := s.chapters.Retitle(ctx, assistantports.RetitleChapterRequest{
 		ID:          req.ID,
 		ThreadID:    req.ThreadID,
 		TenantInfo:  req.TenantInfo,
@@ -208,12 +209,12 @@ func (s *Service) Rename(
 	return chapter, nil
 }
 
-func (s *Service) Remove(ctx context.Context, req agentports.RemoveChapterRequest) error {
+func (s *Service) Remove(ctx context.Context, req assistantports.RemoveChapterRequest) error {
 	if err := s.owned(ctx, req.ThreadID, req.UserID, req.TenantInfo); err != nil {
 		return err
 	}
 
-	removed, err := s.chapters.Delete(ctx, agentports.DeleteChapterRequest{
+	removed, err := s.chapters.Delete(ctx, assistantports.DeleteChapterRequest{
 		ID:         req.ID,
 		ThreadID:   req.ThreadID,
 		TenantInfo: req.TenantInfo,
@@ -231,9 +232,9 @@ func (s *Service) Remove(ctx context.Context, req agentports.RemoveChapterReques
 
 func (s *Service) Span(
 	ctx context.Context,
-	req agentports.ChapterSpanRequest,
-) (*agentports.ChapterSpan, error) {
-	chapters, err := s.List(ctx, agentports.ThreadChaptersRequest{
+	req assistantports.ChapterSpanRequest,
+) (*assistantports.ChapterSpan, error) {
+	chapters, err := s.List(ctx, assistantports.ThreadChaptersRequest{
 		ThreadID:   req.ThreadID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -245,7 +246,7 @@ func (s *Service) Span(
 	return SpanOf(chapters, req.ID)
 }
 
-func SpanOf(chapters []*conversation.Chapter, id pulid.ID) (*agentports.ChapterSpan, error) {
+func SpanOf(chapters []*conversation.Chapter, id pulid.ID) (*assistantports.ChapterSpan, error) {
 	idx := slices.IndexFunc(chapters, func(c *conversation.Chapter) bool { return c.ID == id })
 	if idx < 0 {
 		return nil, errortypes.NewNotFoundError("Chapter not found in this conversation")
@@ -257,7 +258,7 @@ func SpanOf(chapters []*conversation.Chapter, id pulid.ID) (*agentports.ChapterS
 		)
 	}
 
-	span := &agentports.ChapterSpan{Chapter: chapter, From: int(*chapter.StartSequence)}
+	span := &assistantports.ChapterSpan{Chapter: chapter, From: int(*chapter.StartSequence)}
 	for _, next := range chapters[idx+1:] {
 		if next.StartSequence != nil && int(*next.StartSequence) > span.From {
 			through := int(*next.StartSequence) - 1
@@ -275,7 +276,7 @@ func (s *Service) owned(
 	threadID, userID pulid.ID,
 	tenant pagination.TenantInfo,
 ) error {
-	if _, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
+	if _, err := s.conversations.GetThread(ctx, assistantports.GetThreadRequest{
 		ID:         threadID,
 		UserID:     userID,
 		TenantInfo: tenant,
@@ -309,7 +310,7 @@ func (s *Service) turnText(
 	threadID, turnID pulid.ID,
 	tenant pagination.TenantInfo,
 ) (question, reply string, err error) {
-	messages, err := s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
+	messages, err := s.conversations.ListMessages(ctx, assistantports.ListMessagesRequest{
 		ThreadID:     threadID,
 		TenantInfo:   tenant,
 		TurnID:       turnID,
@@ -342,11 +343,11 @@ func (s *Service) announce(
 	}
 	if err := s.realtime.PublishResourceInvalidation(
 		context.WithoutCancel(ctx),
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: tenant.OrgID,
 			BusinessUnitID: tenant.BuID,
 			AudienceUserID: userID,
-			Resource:       agentports.ChaptersResource,
+			Resource:       assistantports.ChaptersResource,
 			Action:         "updated",
 			RecordID:       threadID,
 			Entity:         map[string]string{"threadId": threadID.String()},

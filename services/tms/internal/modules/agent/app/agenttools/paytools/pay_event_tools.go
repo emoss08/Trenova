@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
@@ -63,11 +63,11 @@ type PayEventHoldTool struct {
 	hold   bool
 }
 
-func ProvideHoldDriverPayEventTool(s *driversettlementservice.Service) agentports.AgentTool {
+func ProvideHoldDriverPayEventTool(s *driversettlementservice.Service) agenttoolports.AgentTool {
 	return &PayEventHoldTool{events: s, hold: true}
 }
 
-func ProvideReleaseDriverPayEventTool(s *driversettlementservice.Service) agentports.AgentTool {
+func ProvideReleaseDriverPayEventTool(s *driversettlementservice.Service) agenttoolports.AgentTool {
 	return &PayEventHoldTool{events: s}
 }
 
@@ -118,8 +118,8 @@ func (t *PayEventHoldTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *PayEventHoldTool) Policy() agentports.ToolPolicy {
-	policy := agentports.ToolPolicy{
+func (t *PayEventHoldTool) Policy() agenttoolports.ToolPolicy {
+	policy := agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDriverSettlement,
@@ -151,7 +151,7 @@ type payEventHoldRequest struct {
 }
 
 func (t *PayEventHoldTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*payEventHoldRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func (t *PayEventHoldTool) request(
 
 func (t *PayEventHoldTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*driversettlementservice.PayEventPlan, error) {
 	req, err := t.request(params)
 	if err != nil {
@@ -189,7 +189,7 @@ func (t *PayEventHoldTool) plan(
 
 func (t *PayEventHoldTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -201,7 +201,7 @@ func (t *PayEventHoldTool) Validate(
 
 func (t *PayEventHoldTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -244,7 +244,7 @@ func payEventDriver(event *driversettlement.PayEvent) string {
 
 func (t *PayEventHoldTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -325,11 +325,11 @@ type PayEventTransferTool struct {
 	detach bool
 }
 
-func ProvideAttachPayEventsTool(s *driversettlementservice.Service) agentports.AgentTool {
+func ProvideAttachPayEventsTool(s *driversettlementservice.Service) agenttoolports.AgentTool {
 	return &PayEventTransferTool{events: s}
 }
 
-func ProvideDetachPayEventTool(s *driversettlementservice.Service) agentports.AgentTool {
+func ProvideDetachPayEventTool(s *driversettlementservice.Service) agenttoolports.AgentTool {
 	return &PayEventTransferTool{events: s, detach: true}
 }
 
@@ -387,8 +387,8 @@ func (t *PayEventTransferTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *PayEventTransferTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *PayEventTransferTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDriverSettlement,
@@ -405,12 +405,12 @@ func (t *PayEventTransferTool) Policy() agentports.ToolPolicy {
 	}
 }
 
-func (t *PayEventTransferTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *PayEventTransferTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, common.ParamSettlementID, permission.ResourceDriverSettlement)
 }
 
 func (t *PayEventTransferTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*driversettlementservice.EventTransferRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -446,7 +446,7 @@ func (t *PayEventTransferTool) request(
 
 func (t *PayEventTransferTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -462,7 +462,7 @@ func (t *PayEventTransferTool) Validate(
 
 func (t *PayEventTransferTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -495,7 +495,7 @@ func (t *PayEventTransferTool) Execute(
 
 func (t *PayEventTransferTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {

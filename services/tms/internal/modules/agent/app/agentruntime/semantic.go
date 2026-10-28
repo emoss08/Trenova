@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,7 +36,7 @@ type QueryVectorState struct {
 	Vector     []byte `json:"vector"`
 }
 
-func packQueryVector(query agentports.QueryVector) *QueryVectorState {
+func packQueryVector(query retrievalports.QueryVector) *QueryVectorState {
 	if !query.Usable() {
 		return nil
 	}
@@ -47,17 +48,17 @@ func packQueryVector(query agentports.QueryVector) *QueryVectorState {
 	}
 }
 
-func (q *QueryVectorState) unpack() agentports.QueryVector {
+func (q *QueryVectorState) unpack() retrievalports.QueryVector {
 	if q == nil || q.ModelKey == "" || !airetrieval.IsAllowedDimension(q.Dimensions) {
-		return agentports.QueryVector{}
+		return retrievalports.QueryVector{}
 	}
 
 	vector, err := vectorutils.Unpack(q.Vector)
 	if err != nil || len(vector) != q.Dimensions {
-		return agentports.QueryVector{}
+		return retrievalports.QueryVector{}
 	}
 
-	return agentports.QueryVector{
+	return retrievalports.QueryVector{
 		Available:  true,
 		Vector:     vector,
 		ModelKey:   q.ModelKey,
@@ -67,33 +68,33 @@ func (q *QueryVectorState) unpack() agentports.QueryVector {
 
 func (s *Service) TurnQueryVector(
 	ctx context.Context,
-	req *agentports.RunRequest,
-) agentports.QueryVector {
-	query := agentports.TurnQueryRequest(req)
+	req *agentruntimeports.RunRequest,
+) retrievalports.QueryVector {
+	query := agentruntimeports.TurnQueryRequest(req)
 
 	return s.vectorize(ctx, &query)
 }
 
 func (s *Service) vectorize(
 	ctx context.Context,
-	req *agentports.QueryVectorRequest,
-) agentports.QueryVector {
+	req *retrievalports.QueryVectorRequest,
+) retrievalports.QueryVector {
 	if s.vectorizer == nil || req == nil || strings.TrimSpace(req.Text) == "" ||
 		req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
-		return agentports.QueryVector{}
+		return retrievalports.QueryVector{}
 	}
 
 	query, err := s.vectorizer.Vectorize(ctx, req)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
-			return agentports.QueryVector{}
+			return retrievalports.QueryVector{}
 		}
 		s.logger.Warn("could not embed the turn's request; ranking tools by keyword",
 			zap.String("organization", req.TenantInfo.OrgID.String()),
 			zap.Error(err),
 		)
 
-		return agentports.QueryVector{}
+		return retrievalports.QueryVector{}
 	}
 
 	return query
@@ -102,14 +103,14 @@ func (s *Service) vectorize(
 func (s *Service) toolSemantic(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	query agentports.QueryVector,
+	query retrievalports.QueryVector,
 ) *agenttoolcatalog.Semantic {
 	if s.vectors == nil || s.catalog == nil || !query.Usable() ||
 		tenant.OrgID.IsNil() || tenant.BuID.IsNil() {
 		return nil
 	}
 
-	similarities, err := s.vectors.Similarities(ctx, &agentports.CatalogSimilarityRequest{
+	similarities, err := s.vectors.Similarities(ctx, &retrievalports.CatalogSimilarityRequest{
 		TenantInfo: tenant,
 		Corpus:     airetrieval.CatalogCorpusTools,
 		Items:      s.catalog.Items(),

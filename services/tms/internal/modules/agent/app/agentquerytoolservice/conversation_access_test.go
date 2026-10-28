@@ -5,9 +5,11 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,12 +20,12 @@ import (
 type fakeThreadOwners struct {
 	owners   map[pulid.ID]pulid.ID
 	err      error
-	requests []agentports.ThreadOwnersRequest
+	requests []assistantports.ThreadOwnersRequest
 }
 
 func (f *fakeThreadOwners) ThreadOwners(
 	_ context.Context,
-	req agentports.ThreadOwnersRequest,
+	req assistantports.ThreadOwnersRequest,
 ) (map[pulid.ID]pulid.ID, error) {
 	f.requests = append(f.requests, req)
 	if f.err != nil {
@@ -50,7 +52,7 @@ func conversationDocument(threadID pulid.ID) *document.Document {
 	}
 }
 
-func personParams(principal kernelports.PrincipalType) *agentports.QueryToolParams {
+func personParams(principal kernelports.PrincipalType) *agenttoolports.QueryToolParams {
 	params := testParams(map[string]any{})
 	params.Actor.PrincipalType = principal
 
@@ -59,8 +61,8 @@ func personParams(principal kernelports.PrincipalType) *agentports.QueryToolPara
 
 func conversationSummaryTool(
 	doc *document.Document,
-	threads agentports.ThreadOwnerRepository,
-) agentports.AgentQueryTool {
+	threads assistantports.ThreadOwnerRepository,
+) agenttoolports.AgentQueryTool {
 	return newGetDocumentSummaryTool(
 		&stubDocumentRepo{doc: doc},
 		&stubContentReader{content: &documentcontent.Content{
@@ -222,7 +224,7 @@ func TestSearchDocuments_HandsTheSearcherConversationOwnership(t *testing.T) {
 		mineID:   params.Actor.UserID,
 		theirsID: pulid.MustNew("usr_"),
 	}}
-	searcher := &fakeRetrievalSearcher{documents: &agentports.DocumentSearchResult{}}
+	searcher := &fakeRetrievalSearcher{documents: &retrievalports.DocumentSearchResult{}}
 
 	_, err := newSearchDocumentsTool(searcher, &fakePermissions{allowed: true}, threads).
 		Query(t.Context(), params)

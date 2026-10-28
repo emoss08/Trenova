@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -59,7 +60,7 @@ type Params struct {
 	Connectors    accountingsyncports.AccountingConnectorRegistry
 	Encryption    *encryptionservice.Service
 	AuditService  auditports.AuditService
-	Realtime      agentports.RealtimeService                                  `optional:"true"`
+	Realtime      realtimeports.RealtimeService                               `optional:"true"`
 	Watchtower    watchtowerports.WatchtowerProjector                         `optional:"true"`
 	Publisher     agentports.AgentEventPublisher                              `optional:"true"`
 	Refresher     accountingsyncports.AccountingReferenceRefresher            `optional:"true"`
@@ -80,7 +81,7 @@ type Service struct {
 	connectors    accountingsyncports.AccountingConnectorRegistry
 	encryption    *encryptionservice.Service
 	audit         auditports.AuditService
-	realtime      agentports.RealtimeService
+	realtime      realtimeports.RealtimeService
 	watchtower    watchtowerports.WatchtowerProjector
 	publisher     agentports.AgentEventPublisher
 	refresher     accountingsyncports.AccountingReferenceRefresher

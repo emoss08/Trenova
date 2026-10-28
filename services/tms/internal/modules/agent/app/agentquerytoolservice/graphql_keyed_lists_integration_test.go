@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/performancereviewrepository"
@@ -119,16 +119,24 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				return created(row, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
-				rows, err := services.checklistService.ListForWorker(ctx, tenant, workerID, includeClosed)
+				rows, err := services.checklistService.ListForWorker(
+					ctx,
+					tenant,
+					workerID,
+					includeClosed,
+				)
 				return idsOf(rows, err)
 			},
 			templates: func(ctx context.Context, tenant *agentreadtest.Tenant, _ pulid.ID, label string) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				manual, err := services.checklists.CreateTemplate(ctx, &worker.WorkerChecklistTemplate{
-					BusinessUnitID: bu, OrganizationID: org, Code: "M" + label, Name: "Manual " + label,
-					Kind: worker.ChecklistKindCustom, Trigger: worker.ChecklistTriggerManual,
-					Status: domaintypes.StatusActive,
-				})
+				manual, err := services.checklists.CreateTemplate(
+					ctx,
+					&worker.WorkerChecklistTemplate{
+						BusinessUnitID: bu, OrganizationID: org, Code: "M" + label, Name: "Manual " + label,
+						Kind: worker.ChecklistKindCustom, Trigger: worker.ChecklistTriggerManual,
+						Status: domaintypes.StatusActive,
+					},
+				)
 				if err != nil {
 					return pulid.Nil, err
 				}
@@ -167,7 +175,12 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				return created(row, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
-				rows, err := services.trainingService.ListForWorker(ctx, tenant, workerID, includeClosed)
+				rows, err := services.trainingService.ListForWorker(
+					ctx,
+					tenant,
+					workerID,
+					includeClosed,
+				)
 				return idsOf(rows, err)
 			},
 		},
@@ -175,7 +188,10 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			tool: "worker_list_performance_reviews", key: "templates",
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, _ bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				template, err := services.reviews.CreateTemplate(ctx, reviewTemplate(tenant, "W"+label, domaintypes.StatusActive))
+				template, err := services.reviews.CreateTemplate(
+					ctx,
+					reviewTemplate(tenant, "W"+label, domaintypes.StatusActive),
+				)
 				if err != nil {
 					return pulid.Nil, err
 				}
@@ -192,7 +208,10 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				return idsOf(rows, err)
 			},
 			templates: func(ctx context.Context, tenant *agentreadtest.Tenant, _ pulid.ID, label string) (pulid.ID, error) {
-				active, err := services.reviews.CreateTemplate(ctx, reviewTemplate(tenant, "A"+label, domaintypes.StatusActive))
+				active, err := services.reviews.CreateTemplate(
+					ctx,
+					reviewTemplate(tenant, "A"+label, domaintypes.StatusActive),
+				)
 				if err != nil {
 					return pulid.Nil, err
 				}
@@ -222,9 +241,12 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				return created(row, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
-				rows, err := services.injuryService.ListInjuries(ctx, &workerports.ListWorkerInjuriesRequest{
-					TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
-				})
+				rows, err := services.injuryService.ListInjuries(
+					ctx,
+					&workerports.ListWorkerInjuriesRequest{
+						TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
+					},
+				)
 				return idsOf(rows, err)
 			},
 		},
@@ -246,9 +268,12 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				return created(row, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
-				rows, err := services.testService.ListTests(ctx, &workerports.ListWorkerDOTTestsRequest{
-					TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
-				})
+				rows, err := services.testService.ListTests(
+					ctx,
+					&workerports.ListWorkerDOTTestsRequest{
+						TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
+					},
+				)
 				return idsOf(rows, err)
 			},
 		},
@@ -270,9 +295,12 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				return created(row, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
-				rows, err := services.leaveService.ListCases(ctx, &workerports.ListLeaveCasesRequest{
-					TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
-				})
+				rows, err := services.leaveService.ListCases(
+					ctx,
+					&workerports.ListLeaveCasesRequest{
+						TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
+					},
+				)
 				return idsOf(rows, err)
 			},
 		},
@@ -286,13 +314,16 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				if closed {
 					status, received = worker.VerificationReceived, &now
 				}
-				row, err := services.dqf.CreateVerification(ctx, &worker.WorkerEmploymentVerification{
-					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
-					EmployerName: "Prior Freight " + label, WasDOTRegulated: true, Status: status,
-					Method: worker.VerificationByEmail, Findings: "No accidents reported " + label,
-					RequestedAt: &now, ResponseReceivedAt: received,
-					ContactPhone: "555-0100",
-				})
+				row, err := services.dqf.CreateVerification(
+					ctx,
+					&worker.WorkerEmploymentVerification{
+						BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
+						EmployerName: "Prior Freight " + label, WasDOTRegulated: true, Status: status,
+						Method: worker.VerificationByEmail, Findings: "No accidents reported " + label,
+						RequestedAt: &now, ResponseReceivedAt: received,
+						ContactPhone: "555-0100",
+					},
+				)
 				return created(row, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
@@ -331,9 +362,12 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				return created(event, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
-				rows, err := services.safetyService.ListEvents(ctx, &workerports.ListWorkerSafetyEventsRequest{
-					TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
-				})
+				rows, err := services.safetyService.ListEvents(
+					ctx,
+					&workerports.ListWorkerSafetyEventsRequest{
+						TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
+					},
+				)
 				return idsOf(rows, err)
 			},
 			templates: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string) (pulid.ID, error) {
@@ -357,7 +391,10 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			},
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				kind, err := services.credentials.CreateType(ctx, credentialType(bu, org, "K"+label))
+				kind, err := services.credentials.CreateType(
+					ctx,
+					credentialType(bu, org, "K"+label),
+				)
 				if err != nil {
 					return pulid.Nil, err
 				}
@@ -366,25 +403,34 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				if closed {
 					status, archivedAt = worker.CredentialStatusArchived, &now
 				}
-				row, err := services.credentials.Create(ctx, &workerports.CreateWorkerCredentialRequest{
-					Entity: &worker.WorkerCredential{
-						BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
-						CredentialTypeID: kind.ID, Status: status, Number: "D-" + label,
-						IssuingAuthority: "IL", IssuedAt: &issued, ExpiresAt: &expires,
-						ArchivedAt: archivedAt, Notes: "Renewal booked " + label,
+				row, err := services.credentials.Create(
+					ctx,
+					&workerports.CreateWorkerCredentialRequest{
+						Entity: &worker.WorkerCredential{
+							BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
+							CredentialTypeID: kind.ID, Status: status, Number: "D-" + label,
+							IssuingAuthority: "IL", IssuedAt: &issued, ExpiresAt: &expires,
+							ArchivedAt: archivedAt, Notes: "Renewal booked " + label,
+						},
 					},
-				})
+				)
 				return created(row, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeArchived bool) ([]string, error) {
-				rows, err := services.credentialService.List(ctx, &workercredentialservice.ListRequest{
-					TenantInfo: tenant, WorkerIDs: []pulid.ID{workerID}, IncludeArchived: includeArchived,
-				})
+				rows, err := services.credentialService.List(
+					ctx,
+					&workercredentialservice.ListRequest{
+						TenantInfo: tenant, WorkerIDs: []pulid.ID{workerID}, IncludeArchived: includeArchived,
+					},
+				)
 				return idsOf(rows, err)
 			},
 			templates: func(ctx context.Context, tenant *agentreadtest.Tenant, _ pulid.ID, label string) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				kind, err := services.credentials.CreateType(ctx, credentialType(bu, org, "T"+label))
+				kind, err := services.credentials.CreateType(
+					ctx,
+					credentialType(bu, org, "T"+label),
+				)
 				return created(kind, err)
 			},
 			activeTemplates: func(ctx context.Context, tenant pagination.TenantInfo) (int, error) {
@@ -412,7 +458,11 @@ func waivedReason(closed bool) string {
 	return ""
 }
 
-func reviewTemplate(tenant *agentreadtest.Tenant, code string, status domaintypes.Status) *worker.PerformanceReviewTemplate {
+func reviewTemplate(
+	tenant *agentreadtest.Tenant,
+	code string,
+	status domaintypes.Status,
+) *worker.PerformanceReviewTemplate {
 	return &worker.PerformanceReviewTemplate{
 		BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 		Code: code, Name: "Template " + code, Status: status,
@@ -458,7 +508,10 @@ type agentreadServices struct {
 type (
 	workerChecklistRepo = interface {
 		Create(context.Context, *worker.WorkerChecklist) (*worker.WorkerChecklist, error)
-		CreateTemplate(context.Context, *worker.WorkerChecklistTemplate) (*worker.WorkerChecklistTemplate, error)
+		CreateTemplate(
+			context.Context,
+			*worker.WorkerChecklistTemplate,
+		) (*worker.WorkerChecklistTemplate, error)
 	}
 	workerTrainingRepo = interface {
 		Create(context.Context, *worker.WorkerTrainingRecord) (*worker.WorkerTrainingRecord, error)
@@ -480,7 +533,10 @@ type (
 	}
 	reviewRepo = interface {
 		CreateReview(context.Context, *worker.PerformanceReview) (*worker.PerformanceReview, error)
-		CreateTemplate(context.Context, *worker.PerformanceReviewTemplate) (*worker.PerformanceReviewTemplate, error)
+		CreateTemplate(
+			context.Context,
+			*worker.PerformanceReviewTemplate,
+		) (*worker.PerformanceReviewTemplate, error)
 	}
 )
 
@@ -531,7 +587,9 @@ func writeKeyedRows(
 	return out
 }
 
-func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *testing.T) {
+func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(
+	t *testing.T,
+) {
 	_, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
@@ -539,16 +597,24 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 	logger := zap.NewNop()
 	_, resolvers := convertedListCases(conn, admin)
 	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: logger})
-	checklists := workerchecklistrepository.New(workerchecklistrepository.Params{DB: conn, Logger: logger})
-	training := workertrainingrepository.New(workertrainingrepository.Params{DB: conn, Logger: logger})
-	reviews := performancereviewrepository.New(performancereviewrepository.Params{DB: conn, Logger: logger})
+	checklists := workerchecklistrepository.New(
+		workerchecklistrepository.Params{DB: conn, Logger: logger},
+	)
+	training := workertrainingrepository.New(
+		workertrainingrepository.Params{DB: conn, Logger: logger},
+	)
+	reviews := performancereviewrepository.New(
+		performancereviewrepository.Params{DB: conn, Logger: logger},
+	)
 	services := &agentreadServices{
 		checklists: checklists, training: training, reviews: reviews,
 		checklistService: workerchecklistservice.New(workerchecklistservice.Params{
 			Logger: logger, Repo: checklists, WorkerRepo: workers,
 			CredentialRepo: workercredentialrepository.New(
 				workercredentialrepository.Params{DB: conn, Logger: logger}),
-			DocumentRepo: documentrepository.New(documentrepository.Params{DB: conn, Logger: logger}),
+			DocumentRepo: documentrepository.New(
+				documentrepository.Params{DB: conn, Logger: logger},
+			),
 		}),
 		trainingService: resolvers.WorkerTrainingService,
 		reviewService: performancereviewservice.New(performancereviewservice.Params{
@@ -556,7 +622,9 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 		}),
 	}
 	injuries := workerinjuryrepository.New(workerinjuryrepository.Params{DB: conn, Logger: logger})
-	tests := workerdrugalcoholrepository.New(workerdrugalcoholrepository.Params{DB: conn, Logger: logger})
+	tests := workerdrugalcoholrepository.New(
+		workerdrugalcoholrepository.Params{DB: conn, Logger: logger},
+	)
 	services.injuries, services.tests = injuries, tests
 	services.injuryService = workerinjuryservice.New(workerinjuryservice.Params{
 		Logger: logger, Repo: injuries, WorkerRepo: workers,
@@ -579,7 +647,9 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 	resolvers.WorkerDQFService = services.dqfService
 	resolvers.WorkerInjuryService = services.injuryService
 	resolvers.WorkerDrugAlcoholService = services.testService
-	services.safety = workersafetyrepository.New(workersafetyrepository.Params{DB: conn, Logger: logger})
+	services.safety = workersafetyrepository.New(
+		workersafetyrepository.Params{DB: conn, Logger: logger},
+	)
 	services.safetyService = workersafetyservice.New(workersafetyservice.Params{
 		Logger: logger, Repo: services.safety, WorkerRepo: workers,
 	})
@@ -592,8 +662,14 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 	resolvers.WorkerCredentialService = services.credentialService
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
-	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
-	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: resolvers})
+	reader := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: engine, Resolvers: resolvers},
+	)
+	public := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: &publicRole{}, Resolvers: resolvers},
+	)
 	mine := agentreadtest.SeedTenant(t, admin, "A")
 	theirs := agentreadtest.SeedTenant(t, admin, "B")
 
@@ -608,18 +684,26 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 				return callTool(t, ours.ctx, converted, actor, args)
 			}
 
-			t.Run("what a call reads by default, as the repository tool read it", func(t *testing.T) {
-				page := call(c.withWorker(ours.workerID, nil))
-				want := ours.all
-				if c.defaultOpen {
-					want = ours.open
-				}
-				before, beforeErr := c.before(ours.ctx, ours.info, ours.workerID, !c.defaultOpen)
-				require.NoError(t, beforeErr)
-				assert.ElementsMatch(t, want, itemIDs(page))
-				assert.ElementsMatch(t, before, itemIDs(page))
-				assert.NotContains(t, page, "hasMore", "an unpaged list never pages")
-			})
+			t.Run(
+				"what a call reads by default, as the repository tool read it",
+				func(t *testing.T) {
+					page := call(c.withWorker(ours.workerID, nil))
+					want := ours.all
+					if c.defaultOpen {
+						want = ours.open
+					}
+					before, beforeErr := c.before(
+						ours.ctx,
+						ours.info,
+						ours.workerID,
+						!c.defaultOpen,
+					)
+					require.NoError(t, beforeErr)
+					assert.ElementsMatch(t, want, itemIDs(page))
+					assert.ElementsMatch(t, before, itemIDs(page))
+					assert.NotContains(t, page, "hasMore", "an unpaged list never pages")
+				},
+			)
 
 			if c.openArgs != nil {
 				t.Run("the open records, and every record", func(t *testing.T) {
@@ -643,44 +727,63 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 			})
 
 			if c.orgWide {
-				t.Run("no worker reads every worker's, and nothing of another tenant", func(t *testing.T) {
-					page := call(c.withWorker(pulid.Nil, c.allArgs))
-					assert.ElementsMatch(t, ours.all, itemIDs(page))
-					if c.keyed {
-						assert.NotContains(t, page, c.key, "a read keyed by the worker needs one")
-					}
-				})
+				t.Run(
+					"no worker reads every worker's, and nothing of another tenant",
+					func(t *testing.T) {
+						page := call(c.withWorker(pulid.Nil, c.allArgs))
+						assert.ElementsMatch(t, ours.all, itemIDs(page))
+						if c.keyed {
+							assert.NotContains(
+								t,
+								page,
+								c.key,
+								"a read keyed by the worker needs one",
+							)
+						}
+					},
+				)
 
 			}
 
 			if c.templates != nil {
-				t.Run("what is read alongside is ours alone, and only what it should be", func(t *testing.T) {
-					page := call(c.withWorker(ours.workerID, nil))
-					listed := page[c.key].([]any)
-					ids := make([]string, 0, len(listed))
-					for _, row := range listed {
-						ids = append(ids, row.(map[string]any)["id"].(string))
-					}
-					assert.Contains(t, ids, ours.template.String())
-					assert.NotContains(t, ids, other.template.String())
-					want := 1 + keyedTemplatesFor(c.tool)
-					if c.activeTemplates != nil {
-						var countErr error
-						want, countErr = c.activeTemplates(ours.ctx, ours.info)
-						require.NoError(t, countErr)
-					}
-					assert.Len(t, ids, want, "only the active ones")
-				})
+				t.Run(
+					"what is read alongside is ours alone, and only what it should be",
+					func(t *testing.T) {
+						page := call(c.withWorker(ours.workerID, nil))
+						listed := page[c.key].([]any)
+						ids := make([]string, 0, len(listed))
+						for _, row := range listed {
+							ids = append(ids, row.(map[string]any)["id"].(string))
+						}
+						assert.Contains(t, ids, ours.template.String())
+						assert.NotContains(t, ids, other.template.String())
+						want := 1 + keyedTemplatesFor(c.tool)
+						if c.activeTemplates != nil {
+							var countErr error
+							want, countErr = c.activeTemplates(ours.ctx, ours.info)
+							require.NoError(t, countErr)
+						}
+						assert.Len(t, ids, want, "only the active ones")
+					},
+				)
 			}
 
 			if c.openByDefaultUnscoped {
-				t.Run("no worker reads only the open records by default, and nothing of another tenant", func(t *testing.T) {
-					page := call(map[string]any{})
-					assert.ElementsMatch(t, ours.open, itemIDs(page))
-					if c.key != "" && !c.keyed {
-						assert.NotContains(t, page, c.key, "what is read beside one worker's needs one")
-					}
-				})
+				t.Run(
+					"no worker reads only the open records by default, and nothing of another tenant",
+					func(t *testing.T) {
+						page := call(map[string]any{})
+						assert.ElementsMatch(t, ours.open, itemIDs(page))
+						if c.key != "" && !c.keyed {
+							assert.NotContains(
+								t,
+								page,
+								c.key,
+								"what is read beside one worker's needs one",
+							)
+						}
+					},
+				)
 			}
 
 			if c.tool == "worker_list_credentials" {
@@ -712,54 +815,64 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 			}
 
 			if len(c.internal) > 0 {
-				t.Run("what is Internal reaches an agent at the default data access", func(t *testing.T) {
-					data, queryErr := converted.Query(ours.ctx, &agentports.QueryToolParams{
-						OrganizationID:    actor.OrganizationID,
-						BusinessUnitID:    actor.BusinessUnitID,
-						Actor:             actor,
-						Timezone:          "America/Chicago",
-						Params:            c.withWorker(ours.workerID, c.allArgs),
-						RunID:             pulid.MustNew("ar_"),
-						DataAccessCeiling: permission.SensitivityInternal,
-					})
-					require.NoError(t, queryErr)
-					items, _ := asMap(t, data)["items"].([]any)
-					require.Len(t, items, len(ours.all))
-					for _, item := range items {
-						for _, field := range c.internal {
-							assert.Contains(t, item.(map[string]any), field)
+				t.Run(
+					"what is Internal reaches an agent at the default data access",
+					func(t *testing.T) {
+						data, queryErr := converted.Query(ours.ctx, &agenttoolports.QueryToolParams{
+							OrganizationID:    actor.OrganizationID,
+							BusinessUnitID:    actor.BusinessUnitID,
+							Actor:             actor,
+							Timezone:          "America/Chicago",
+							Params:            c.withWorker(ours.workerID, c.allArgs),
+							RunID:             pulid.MustNew("ar_"),
+							DataAccessCeiling: permission.SensitivityInternal,
+						})
+						require.NoError(t, queryErr)
+						items, _ := asMap(t, data)["items"].([]any)
+						require.Len(t, items, len(ours.all))
+						for _, item := range items {
+							for _, field := range c.internal {
+								assert.Contains(t, item.(map[string]any), field)
+							}
 						}
-					}
-				})
+					},
+				)
 			}
 
 			if len(c.restricted) > 0 {
-				t.Run("what stays Restricted never reaches an agent at Internal", func(t *testing.T) {
-					data, queryErr := converted.Query(ours.ctx, &agentports.QueryToolParams{
-						OrganizationID:    actor.OrganizationID,
-						BusinessUnitID:    actor.BusinessUnitID,
-						Actor:             actor,
-						Timezone:          "America/Chicago",
-						Params:            c.withWorker(ours.workerID, c.allArgs),
-						RunID:             pulid.MustNew("ar_"),
-						DataAccessCeiling: permission.SensitivityInternal,
-					})
-					require.NoError(t, queryErr)
-					page := asMap(t, data)
-					withheld, _ := page["withheldByAccess"].([]any)
-					items, _ := page["items"].([]any)
-					require.Len(t, items, len(ours.all))
-					for _, field := range c.restricted {
-						assert.Contains(t, withheld, field)
-						for _, item := range items {
-							assert.NotContains(t, item.(map[string]any), field)
+				t.Run(
+					"what stays Restricted never reaches an agent at Internal",
+					func(t *testing.T) {
+						data, queryErr := converted.Query(ours.ctx, &agenttoolports.QueryToolParams{
+							OrganizationID:    actor.OrganizationID,
+							BusinessUnitID:    actor.BusinessUnitID,
+							Actor:             actor,
+							Timezone:          "America/Chicago",
+							Params:            c.withWorker(ours.workerID, c.allArgs),
+							RunID:             pulid.MustNew("ar_"),
+							DataAccessCeiling: permission.SensitivityInternal,
+						})
+						require.NoError(t, queryErr)
+						page := asMap(t, data)
+						withheld, _ := page["withheldByAccess"].([]any)
+						items, _ := page["items"].([]any)
+						require.Len(t, items, len(ours.all))
+						for _, field := range c.restricted {
+							assert.Contains(t, withheld, field)
+							for _, item := range items {
+								assert.NotContains(t, item.(map[string]any), field)
+							}
 						}
-					}
-				})
+					},
+				)
 			}
 
 			t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
-				hidden, hiddenErr := agentquerytoolservice.ConvertedListTool(c.tool, public, &publicRole{})
+				hidden, hiddenErr := agentquerytoolservice.ConvertedListTool(
+					c.tool,
+					public,
+					&publicRole{},
+				)
 				require.NoError(t, hiddenErr)
 				page := callTool(t, ours.ctx, hidden, actor, c.withWorker(ours.workerID, c.allArgs))
 				withheld, _ := page["withheldByAccess"].([]any)

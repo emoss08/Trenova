@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,7 +20,10 @@ func TestSummaryCountsChangesByAudienceAndNamesWhatRunsAndWhoIsOpen(t *testing.T
 	open := agentWith("Customer desk", "customer_send_email", "dispatch_assign_move")
 	restricted := agentWith("Billing desk", "customer_send_email")
 	restricted.AccessMode = agentdefinition.AccessRoles
-	svc := testService(&fakeDefinitions{all: []*agentdefinition.Definition{open, restricted}}, &tenant.AgentControl{})
+	svc := testService(
+		&fakeDefinitions{all: []*agentdefinition.Definition{open, restricted}},
+		&tenant.AgentControl{},
+	)
 
 	summary, err := svc.Summary(t.Context(), pagination.TenantInfo{
 		OrgID: pulid.MustNew("org_"),
@@ -28,7 +31,7 @@ func TestSummaryCountsChangesByAudienceAndNamesWhatRunsAndWhoIsOpen(t *testing.T
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, []agentports.AgentEgressCount{
+	assert.Equal(t, []agenttoolports.AgentEgressCount{
 		{Egress: agent.EgressNone, Count: 1},
 		{Egress: agent.EgressPersonal, Count: 1},
 		{Egress: agent.EgressInternal, Count: 1},
@@ -47,7 +50,10 @@ func TestToolHoldersListsEachAgentOnceUnderEveryToolItHolds(t *testing.T) {
 
 	first := agentWith("Customer desk", "customer_send_email", "dispatch_assign_move")
 	second := agentWith("Billing desk", "customer_send_email")
-	svc := testService(&fakeDefinitions{all: []*agentdefinition.Definition{first, second}}, &tenant.AgentControl{})
+	svc := testService(
+		&fakeDefinitions{all: []*agentdefinition.Definition{first, second}},
+		&tenant.AgentControl{},
+	)
 
 	holders, err := svc.ToolHolders(t.Context(), pagination.TenantInfo{
 		OrgID: pulid.MustNew("org_"),
@@ -69,18 +75,38 @@ type fakeRules struct {
 	rules map[string]*agent.ToolRuleOverride
 }
 
-func (f *fakeRules) For(context.Context, pagination.TenantInfo) (map[string]*agent.ToolRuleOverride, error) {
+func (f *fakeRules) For(
+	context.Context,
+	pagination.TenantInfo,
+) (map[string]*agent.ToolRuleOverride, error) {
 	return f.rules, nil
 }
 
 func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 	t.Parallel()
 
-	held := &agent.ToolRuleOverride{ToolName: "dispatch_assign_move", MaxTier: agent.TierPropose, Reason: "hold", Version: 3}
-	reset := &agent.ToolRuleOverride{ToolName: "customer_send_email", Reason: "released", Version: 2}
+	held := &agent.ToolRuleOverride{
+		ToolName: "dispatch_assign_move",
+		MaxTier:  agent.TierPropose,
+		Reason:   "hold",
+		Version:  3,
+	}
+	reset := &agent.ToolRuleOverride{
+		ToolName: "customer_send_email",
+		Reason:   "released",
+		Version:  2,
+	}
 	desk := agentWith("Dispatch desk", "dispatch_assign_move", "customer_send_email")
-	svc := testService(&fakeDefinitions{all: []*agentdefinition.Definition{desk}}, &tenant.AgentControl{})
-	svc.rules = &fakeRules{rules: map[string]*agent.ToolRuleOverride{"dispatch_assign_move": held, "customer_send_email": reset}}
+	svc := testService(
+		&fakeDefinitions{all: []*agentdefinition.Definition{desk}},
+		&tenant.AgentControl{},
+	)
+	svc.rules = &fakeRules{
+		rules: map[string]*agent.ToolRuleOverride{
+			"dispatch_assign_move": held,
+			"customer_send_email":  reset,
+		},
+	}
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	desk.OrganizationID, desk.BusinessUnitID = tenantInfo.OrgID, tenantInfo.BuID
 
@@ -88,11 +114,19 @@ func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 	require.NoError(t, err)
 	assign, ok := svc.ToolPolicy("dispatch_assign_move")
 	require.True(t, ok)
-	assert.NotContains(t, summary.UnattendedTools, assign.Title, "a tool held to proposals never runs alone")
+	assert.NotContains(
+		t,
+		summary.UnattendedTools,
+		assign.Title,
+		"a tool held to proposals never runs alone",
+	)
 
-	page, err := svc.ListToolPolicies(t.Context(), &agentports.ListAgentToolPoliciesRequest{TenantInfo: tenantInfo})
+	page, err := svc.ListToolPolicies(
+		t.Context(),
+		&agenttoolports.ListAgentToolPoliciesRequest{TenantInfo: tenantInfo},
+	)
 	require.NoError(t, err)
-	views := make(map[string]agentports.AgentToolPolicyView, len(page.Edges))
+	views := make(map[string]agenttoolports.AgentToolPolicyView, len(page.Edges))
 	for _, edge := range page.Edges {
 		views[edge.View.Policy.Name] = edge.View
 	}
@@ -100,12 +134,17 @@ func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 	require.NotNil(t, views["dispatch_assign_move"].Declared)
 	assert.Equal(t, agent.TierAutoExecute, views["dispatch_assign_move"].Declared.MaxTier)
 	assert.Same(t, held, views["dispatch_assign_move"].Override)
-	assert.Same(t, reset, views["customer_send_email"].Override, "a reset rule keeps its version for the next edit")
+	assert.Same(
+		t,
+		reset,
+		views["customer_send_email"].Override,
+		"a reset rule keeps its version for the next edit",
+	)
 	assert.Equal(t, agent.TierAutoExecute, views["customer_send_email"].Policy.MaxTier)
 	assert.Nil(t, views["shipment_get"].Override)
 
-	assessed := svc.Assess(t.Context(), &agentports.AssessAgentSafetyRequest{
-		Subject: &agentports.AgentSafetySubject{Agent: desk, Control: &tenant.AgentControl{}},
+	assessed := svc.Assess(t.Context(), &agenttoolports.AssessAgentSafetyRequest{
+		Subject: &agenttoolports.AgentSafetySubject{Agent: desk, Control: &tenant.AgentControl{}},
 	})
 	for _, tool := range assessed {
 		if tool.PolicyName == "dispatch_assign_move" {
@@ -115,11 +154,15 @@ func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 		}
 	}
 
-	impacts, err := svc.RuleImpact(t.Context(), &agentports.RuleImpactRequest{
+	impacts, err := svc.RuleImpact(t.Context(), &agenttoolports.RuleImpactRequest{
 		TenantInfo: tenantInfo,
 		ToolName:   "customer_send_email",
-		Before:     policy("customer_send_email", agent.ToolKindAction, agent.EgressExternalRecipient),
-		After: func() agentports.ToolPolicy {
+		Before: policy(
+			"customer_send_email",
+			agent.ToolKindAction,
+			agent.EgressExternalRecipient,
+		),
+		After: func() agenttoolports.ToolPolicy {
 			p := policy("customer_send_email", agent.ToolKindAction, agent.EgressExternalRecipient)
 			p.MaxTier, p.DefaultTier = agent.TierPropose, agent.TierPropose
 			return p

@@ -7,20 +7,20 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
 
-func escalationPolicies() map[string]agentports.ToolPolicy {
-	return map[string]agentports.ToolPolicy{
+func escalationPolicies() map[string]agenttoolports.ToolPolicy {
+	return map[string]agenttoolports.ToolPolicy{
 		"agent_raise_exception": (&receivabletools.RaiseExceptionTool{}).Policy(),
 	}
 }
 
-func unattendedCall() agentports.ToolExecuteParams {
-	return agentports.ToolExecuteParams{
+func unattendedCall() agenttoolports.ToolExecuteParams {
+	return agenttoolports.ToolExecuteParams{
 		Actor: &permissionports.RequestActor{
 			PrincipalType: permissionports.PrincipalTypeAgent,
 			PrincipalID:   pulid.MustNew("agdef_"),

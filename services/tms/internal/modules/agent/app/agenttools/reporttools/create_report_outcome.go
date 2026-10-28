@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 )
@@ -14,8 +14,8 @@ import (
 // definition, which opens on the report explorer.
 const reportRecordEntity = "report"
 
-func classifyReportVisibility(params agentports.ToolExecuteParams) agentports.CallPolicy {
-	shared := agentports.CallPolicy{
+func classifyReportVisibility(params agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+	shared := agenttoolports.CallPolicy{
 		Egress:  agent.EgressInternal,
 		MaxTier: agent.TierActWithApproval,
 	}
@@ -34,7 +34,7 @@ func classifyReportVisibility(params agentports.ToolExecuteParams) agentports.Ca
 		return shared
 	}
 
-	return agentports.CallPolicy{Egress: agent.EgressPersonal}
+	return agenttoolports.CallPolicy{Egress: agent.EgressPersonal}
 }
 
 // ExecuteWithResult saves the report and names it by the id report_get,
@@ -42,7 +42,7 @@ func classifyReportVisibility(params agentports.ToolExecuteParams) agentports.Ca
 // can use it next.
 func (t *CreateReportTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (*agent.ToolExecutionResult, error) {
 	save, err := t.prepare(params)
 	if err != nil {

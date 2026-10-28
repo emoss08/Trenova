@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -37,7 +38,7 @@ type threadRun struct {
 
 func (r threadRun) GetByID(
 	context.Context,
-	agentports.GetAgentRunByIDRequest,
+	agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return r.run, nil
 }
@@ -93,7 +94,7 @@ func TestApplyConnectionDraft_ProposesItsArgumentsWithSecretsRedacted(t *testing
 	t.Parallel()
 
 	tool := NewApplyConnectionDraftTool(&fakeConnectionDrafts{plan: readyPlan()}, &fakeSpecReader{})
-	resolver, resolves := tool.(agentports.ToolSelectionResolver)
+	resolver, resolves := tool.(agenttoolports.ToolSelectionResolver)
 	require.True(t, resolves, "the runtime settles the arguments before the proposal is stored")
 
 	args := draftArgs(pulid.MustNew("doc_"))
@@ -119,28 +120,42 @@ func TestApplyConnectionDraft_ReportsWhatItSavedAndWhatIsLeftToEnter(t *testing.
 	plan := readyPlan()
 	partnerID := pulid.MustNew("edip_")
 	write := func(record, label string) ediports.DraftWrite {
-		return ediports.DraftWrite{Record: record, ID: pulid.MustNew("edidp_"), Action: "Created", Label: label}
+		return ediports.DraftWrite{
+			Record: record,
+			ID:     pulid.MustNew("edidp_"),
+			Action: "Created",
+			Label:  label,
+		}
 	}
-	drafts := &fakeConnectionDrafts{plan: plan, guard: &agenttoolstest.WriteGuard{}, result: &ediports.AppliedConnectionDraft{
-		PartnerID: partnerID,
-		Created:   true,
-		Writes: []ediports.DraftWrite{
-			write("Partner", "Acme Retail Group"),
-			write("Communication profile", "Acme Retail Group AS2"),
-			write("Document profile", "Acme 204 inbound"),
-			write("Document profile", "Acme 990 outbound"),
-			write("Document profile", "Acme 214 outbound"),
-			write("Document profile", "Acme 210 outbound"),
-			write("Control number", "ISA from 1000"),
+	drafts := &fakeConnectionDrafts{
+		plan:  plan,
+		guard: &agenttoolstest.WriteGuard{},
+		result: &ediports.AppliedConnectionDraft{
+			PartnerID: partnerID,
+			Created:   true,
+			Writes: []ediports.DraftWrite{
+				write("Partner", "Acme Retail Group"),
+				write("Communication profile", "Acme Retail Group AS2"),
+				write("Document profile", "Acme 204 inbound"),
+				write("Document profile", "Acme 990 outbound"),
+				write("Document profile", "Acme 214 outbound"),
+				write("Document profile", "Acme 210 outbound"),
+				write("Control number", "ISA from 1000"),
+			},
+			Draft: plan.Draft,
 		},
-		Draft: plan.Draft,
-	}}
+	}
 	tool := NewApplyConnectionDraftTool(drafts, &fakeSpecReader{})
-	reporter, reports := tool.(agentports.ToolResultReporter)
+	reporter, reports := tool.(agenttoolports.ToolResultReporter)
 	require.True(t, reports, "the agent is told what the approval saved")
 
-	result, err := reporter.ExecuteWithResult(t.Context(),
-		onThread(agenttoolstest.ApprovedParams(draftArgs(pulid.MustNew("doc_"))), pulid.MustNew("ath_")))
+	result, err := reporter.ExecuteWithResult(
+		t.Context(),
+		onThread(
+			agenttoolstest.ApprovedParams(draftArgs(pulid.MustNew("doc_"))),
+			pulid.MustNew("ath_"),
+		),
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, "created", result.Action)
@@ -160,17 +175,31 @@ func TestApplyConnectionDraft_ReportsThatAnExistingPartnerKeepsItsStatus(t *test
 
 	plan := readyPlan()
 	plan.Draft.Transport.Credentials = nil
-	drafts := &fakeConnectionDrafts{plan: plan, guard: &agenttoolstest.WriteGuard{}, result: &ediports.AppliedConnectionDraft{
-		PartnerID: pulid.MustNew("edip_"),
-		Writes: []ediports.DraftWrite{
-			{Record: "Partner", ID: pulid.MustNew("edip_"), Action: "Updated", Label: "Acme Retail Group"},
+	drafts := &fakeConnectionDrafts{
+		plan:  plan,
+		guard: &agenttoolstest.WriteGuard{},
+		result: &ediports.AppliedConnectionDraft{
+			PartnerID: pulid.MustNew("edip_"),
+			Writes: []ediports.DraftWrite{
+				{
+					Record: "Partner",
+					ID:     pulid.MustNew("edip_"),
+					Action: "Updated",
+					Label:  "Acme Retail Group",
+				},
+			},
+			Draft: plan.Draft,
 		},
-		Draft: plan.Draft,
-	}}
-	reporter := NewApplyConnectionDraftTool(drafts, &fakeSpecReader{}).(agentports.ToolResultReporter)
+	}
+	reporter := NewApplyConnectionDraftTool(drafts, &fakeSpecReader{}).(agenttoolports.ToolResultReporter)
 
-	result, err := reporter.ExecuteWithResult(t.Context(),
-		onThread(agenttoolstest.ApprovedParams(draftArgs(pulid.MustNew("doc_"))), pulid.MustNew("ath_")))
+	result, err := reporter.ExecuteWithResult(
+		t.Context(),
+		onThread(
+			agenttoolstest.ApprovedParams(draftArgs(pulid.MustNew("doc_"))),
+			pulid.MustNew("ath_"),
+		),
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, "updated", result.Action)

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
@@ -363,9 +363,13 @@ func TestCreateOrder_PreviewsTheDraftAndCreates(t *testing.T) {
 		paramCurrencyCode:      "cad",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		orders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
 	assert.Equal(t, "PO-77", agenttoolstest.FieldByPath(t, change, paramPONumber).After)
@@ -397,7 +401,7 @@ func TestCreateOrder_RefusesBadArguments(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+			require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 				agenttoolstest.ExecuteParams(raw)))
 		})
 	}
@@ -413,9 +417,13 @@ func TestUpdateOrder_ChangesOnlyWhatIsSentAndIsMoneyOnlyForAmounts(t *testing.T)
 		common.FieldBol:     "BOL-9",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		orders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "BOL-9", agenttoolstest.FieldByPath(t, change, common.FieldBol).After)
 
@@ -429,12 +437,16 @@ func TestUpdateOrder_ChangesOnlyWhatIsSentAndIsMoneyOnlyForAmounts(t *testing.T)
 	assert.Equal(t, agent.EgressMoney, policy.Classify(agenttoolstest.ExecuteParams(map[string]any{
 		paramBaseAmount: "10",
 	})).Egress)
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceOrder, target.Resource)
 
-	require.ErrorIs(t, tool.(agentports.ToolValidator).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{common.ParamOrderID: orders.current.ID.String()})),
+	require.ErrorIs(t, tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{common.ParamOrderID: orders.current.ID.String()},
+		),
+	),
 		common.ErrNothingToChange)
 }
 
@@ -449,9 +461,13 @@ func TestAttachOrderShipments_ShowsOnlyTheShipmentsThatMove(t *testing.T) {
 		common.ParamShipmentIDs: ids,
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		orders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	require.Len(t, preview.Changes, 1)
 	assert.Contains(t, preview.Summary, "1 named are already on it")
 	assert.Contains(t, preview.Summary, "1 other order")
@@ -476,10 +492,18 @@ func TestDetachOrderShipment_ShowsTheOrderItMovesTo(t *testing.T) {
 		common.ParamShipmentID: shipmentID.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		orders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 	assert.Contains(t, preview.Summary, "PRO-9")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -491,13 +515,23 @@ func TestCloseOrder_IsAPersonsAndRefusesAnOrderNotBilled(t *testing.T) {
 
 	orders := newFakeOrders()
 	tool := NewCloseOrderTool(orders)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamOrderID: orders.current.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{common.ParamOrderID: orders.current.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, string(order.StatusClosed), agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0),
-		common.FieldStatus).After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		orders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		string(order.StatusClosed),
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0),
+			common.FieldStatus).After,
+	)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(params.Params)))
@@ -508,10 +542,10 @@ func TestCloseOrder_IsAPersonsAndRefusesAnOrderNotBilled(t *testing.T) {
 	refused.refusal = errortypes.NewValidationError("orderId", errortypes.ErrInvalidOperation,
 		"Only a Billed order can be closed")
 	closer := NewCloseOrderTool(refused)
-	refusedPreview, err := closer.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	refusedPreview, err := closer.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, refusedPreview, agent.PreviewWarningWouldFail)
-	require.Error(t, closer.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, closer.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestCancelOrder_NamesEveryLiveShipmentAndNeedsAReason(t *testing.T) {
@@ -528,9 +562,13 @@ func TestCancelOrder_NamesEveryLiveShipmentAndNeedsAReason(t *testing.T) {
 		common.ParamReason:  "Customer canceled the PO",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		orders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	require.Len(t, preview.Changes, 2)
 	assert.Contains(t, preview.Summary, "2 live shipments")
 
@@ -538,8 +576,12 @@ func TestCancelOrder_NamesEveryLiveShipmentAndNeedsAReason(t *testing.T) {
 	assert.Equal(t, "Customer canceled the PO", orders.canceled)
 	assert.Equal(t, []agent.EgressClass{agent.EgressExternalRecipient}, tool.Policy().Egress)
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{common.ParamOrderID: orders.current.ID.String()})))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{common.ParamOrderID: orders.current.ID.String()},
+		),
+	))
 }
 
 func TestAddOrderCharge_ShowsTheMoneyAndReadsTheSplit(t *testing.T) {
@@ -553,16 +595,26 @@ func TestAddOrderCharge_ShowsTheMoneyAndReadsTheSplit(t *testing.T) {
 		common.FieldDescription: "Lumper",
 		common.ParamAmount:      "200.00",
 		common.ParamAllocations: []any{
-			map[string]any{common.ParamBillToCustomer: payerA.String(), common.ParamAllocMethod: "Percent",
-				common.ParamAllocPercent: "60"},
-			map[string]any{common.ParamBillToCustomer: payerB.String(), common.ParamAllocMethod: "Percent",
-				common.ParamAllocPercent: "40"},
+			map[string]any{
+				common.ParamBillToCustomer: payerA.String(),
+				common.ParamAllocMethod:    "Percent",
+				common.ParamAllocPercent:   "60",
+			},
+			map[string]any{
+				common.ParamBillToCustomer: payerB.String(),
+				common.ParamAllocMethod:    "Percent",
+				common.ParamAllocPercent:   "40",
+			},
 		},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		orders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
 	require.NotNil(t, change.Money)
@@ -573,7 +625,11 @@ func TestAddOrderCharge_ShowsTheMoneyAndReadsTheSplit(t *testing.T) {
 	require.Len(t, orders.added.Allocations, 2)
 	assert.Equal(t, payerB, orders.added.Allocations[1].BillToCustomerID)
 	assert.Equal(t, int16(1), orders.added.Allocations[1].Sequence)
-	assert.Equal(t, shipment.ChargeAllocationKindOrderCharge, orders.added.Allocations[0].ChargeKind)
+	assert.Equal(
+		t,
+		shipment.ChargeAllocationKindOrderCharge,
+		orders.added.Allocations[0].ChargeKind,
+	)
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, tool.Policy().Egress)
 }
 
@@ -601,7 +657,7 @@ func TestAddOrderCharge_RefusesASplitThatDoesNotSayHow(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+			require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 				agenttoolstest.ExecuteParams(raw)))
 		})
 	}
@@ -622,9 +678,13 @@ func TestUpdateOrderCharge_KeepsWhatIsNotSentAndThePayersRow(t *testing.T) {
 		}},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		orders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	require.NotNil(t, agenttoolstest.PreviewChange(t, preview, 0).Money)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -636,7 +696,7 @@ func TestUpdateOrderCharge_KeepsWhatIsNotSentAndThePayersRow(t *testing.T) {
 	assert.Equal(t, orders.charge.Allocations[0].ID, orders.edited.Allocations[0].ID)
 	assert.Equal(t, int64(3), orders.edited.Allocations[0].Version)
 
-	require.ErrorIs(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.ErrorIs(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			common.ParamOrderID: orders.current.ID.String(),
 			paramChargeID:       orders.charge.ID.String(),
@@ -654,9 +714,13 @@ func TestSetOrderChargeAllocations_AnEmptySplitBillsTheOrdersCustomer(t *testing
 		common.ParamAllocations: []any{},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		orders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Equal(t, "Billed to the order's customer",
 		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "split").After)
 
@@ -676,10 +740,18 @@ func TestRemoveOrderCharge_PreviewsTheDeletion(t *testing.T) {
 		paramChargeID:       orders.charge.ID.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	assert.Equal(t, agent.PreviewOperationDelete, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		orders.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	assert.Equal(
+		t,
+		agent.PreviewOperationDelete,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, orders.charge.ID, orders.removed)

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/etaprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -263,7 +263,7 @@ func (s *Service) announce(
 	for _, id := range changed {
 		err := s.realtime.PublishResourceInvalidation(
 			ctx,
-			&agentports.PublishResourceInvalidationRequest{
+			&realtimeports.PublishResourceInvalidationRequest{
 				OrganizationID: tenantInfo.OrgID,
 				BusinessUnitID: tenantInfo.BuID,
 				Resource:       RealtimeResource,

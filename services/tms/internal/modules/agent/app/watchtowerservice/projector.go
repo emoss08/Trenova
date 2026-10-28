@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -26,7 +27,7 @@ type ProjectorParams struct {
 	Repo          watchtowerports.WatchtowerRepository
 	Router        *Router
 	Permissions   permissionports.PermissionEngine `optional:"true"`
-	Realtime      agentports.RealtimeService       `optional:"true"`
+	Realtime      realtimeports.RealtimeService    `optional:"true"`
 	Notifications *notificationservice.Service     `optional:"true"`
 }
 
@@ -48,7 +49,7 @@ type Projector struct {
 	repo          watchtowerports.WatchtowerRepository
 	router        *Router
 	access        kindAccess
-	realtime      agentports.RealtimeService
+	realtime      realtimeports.RealtimeService
 	notifications *notificationservice.Service
 	now           func() int64
 }

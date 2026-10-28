@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -19,14 +19,14 @@ import (
 func TestToolPolicyViewToModel(t *testing.T) {
 	t.Parallel()
 
-	condition := &agentports.TierCondition{
+	condition := &agenttoolports.TierCondition{
 		Description: "Runs only as far as its mailbox allows.",
-		Limit: func(context.Context, agentports.ToolExecuteParams) agent.AutonomyTier {
+		Limit: func(context.Context, agenttoolports.ToolExecuteParams) agent.AutonomyTier {
 			return agent.TierPropose
 		},
 	}
-	view := agentports.AgentToolPolicyView{
-		Policy: agentports.ToolPolicy{
+	view := agenttoolports.AgentToolPolicyView{
+		Policy: agenttoolports.ToolPolicy{
 			Name:          "inbox_send_reply",
 			Kind:          agent.ToolKindAction,
 			Scope:         agent.ToolScopeTenant,
@@ -40,7 +40,7 @@ func TestToolPolicyViewToModel(t *testing.T) {
 			Rationale:     "A reply reaches the sender.",
 		},
 		Title: "Reply to inbound message",
-		Needs: &agentports.ToolGrant{
+		Needs: &agenttoolports.ToolGrant{
 			Resource:  permission.ResourceInboundMessage,
 			Operation: permission.OpUpdate,
 		},
@@ -70,8 +70,8 @@ func TestToolPolicyViewToModel(t *testing.T) {
 	assert.Equal(t, agent.EgressExternalRecipient, model.Egress[0],
 		"the model keeps its own copy of the classes")
 
-	selfScoped := ToolPolicyViewToModel(&agentports.AgentToolPolicyView{
-		Policy: agentports.ToolPolicy{Name: "home_add_widget", Kind: agent.ToolKindAction},
+	selfScoped := ToolPolicyViewToModel(&agenttoolports.AgentToolPolicyView{
+		Policy: agenttoolports.ToolPolicy{Name: "home_add_widget", Kind: agent.ToolKindAction},
 	})
 	assert.Nil(t, selfScoped.Needs)
 	assert.Nil(t, selfScoped.Source)

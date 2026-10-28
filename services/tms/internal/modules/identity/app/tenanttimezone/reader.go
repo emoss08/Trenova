@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -29,7 +29,7 @@ type Reader struct {
 	users         userReader
 }
 
-func New(p Params) agentports.TenantTimezoneReader {
+func New(p Params) agenttoolports.TenantTimezoneReader {
 	return &Reader{organizations: p.Organizations, users: p.Users}
 }
 

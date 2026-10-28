@@ -18,20 +18,26 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/boardcardservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsuggestionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
@@ -284,8 +290,8 @@ type Params struct {
 	FiscalPeriodRepo             fiscalperiodports.FiscalPeriodRepository
 	EmailService                 *emailservice.Service
 	TelematicsService            *telematicsservice.Service
-	DispatchConsoleService       agentports.DispatchConsoleService
-	DispatchAutoAssignService    agentports.DispatchAutoAssignService
+	DispatchConsoleService       dispatchconsoleports.DispatchConsoleService
+	DispatchAutoAssignService    dispatchconsoleports.DispatchAutoAssignService
 	AssignmentService            shipmentports.AssignmentService
 	DocumentPacketRuleService    *documentpacketruleservice.Service
 	DocumentTemplateService      *documenttemplateservice.Service
@@ -327,12 +333,12 @@ type Params struct {
 	AITuneUpService              aituneupports.AITuneUpService
 	AIAnalyticsService           aianalyticsports.AnalyticsService
 	AgentRosterService           agentrosterports.AgentRosterService
-	AIProviderService            agentports.AIProviderService
+	AIProviderService            aiproviderports.AIProviderService
 	AIUsageService               aiusageports.AIUsageService
-	AIRetrievalStatusService     agentports.AIRetrievalStatusService
+	AIRetrievalStatusService     retrievalports.AIRetrievalStatusService
 	AgentProposalService         agentports.AgentProposalService
 	AgentPlanService             agentports.AgentPlanService
-	AgentMemoryService           agentports.AgentMemoryService
+	AgentMemoryService           agentmemoryports.AgentMemoryService
 	AgentReflectionService       agentports.AgentReflectionService
 	AIFeedbackService            aifeedbackports.AIFeedbackService
 	AgentSuggestionService       agentsuggestionports.AgentSuggestionService
@@ -349,8 +355,8 @@ type Params struct {
 	AgentDecisionQueueService    agentports.AgentDecisionQueueService
 	ApprovalCommitter            agentports.ApprovalCommitter
 	AgentAccessService           agentdefinitionports.AgentAccessService
-	AgentSafetyService           agentports.AgentSafetyService
-	AgentToolRuleService         agentports.AgentToolRuleService
+	AgentSafetyService           agenttoolports.AgentSafetyService
+	AgentToolRuleService         agenttoolports.AgentToolRuleService
 	WatchtowerService            watchtowerports.WatchtowerService
 	WatchtowerExceptions         watchtowerports.ExceptionService
 	InboundMessageService        *inboundmessageservice.Service
@@ -364,13 +370,13 @@ type Params struct {
 	CaptureService               *captureservice.Service
 	CaptureReleaseService        *capturereleaseservice.Service
 	AgentScorecardService        agentports.AgentScorecardService
-	AgentRunEventRepo            agentports.AgentRunEventRepository
+	AgentRunEventRepo            agentruntimeports.AgentRunEventRepository
 	AIAuditService               aiauditports.AIAuditService
 	BriefingService              briefingports.BriefingService
 	AgentProfileService          agentprofileports.Service
-	AgentTools                   agentports.AgentToolRegistry
+	AgentTools                   agenttoolports.AgentToolRegistry
 	AgentControlService          agentports.AgentControlService
-	ProposalPreviewService       agentports.ProposalPreviewService `optional:"true"`
+	ProposalPreviewService       agentruntimeports.ProposalPreviewService `optional:"true"`
 	IAMService                   iamports.IAMService
 	RoleService                  *roleservice.Service
 	PageAccessService            *pageaccessservice.Service
@@ -521,8 +527,8 @@ type Services struct {
 	FiscalPeriodRepo             fiscalperiodports.FiscalPeriodRepository
 	EmailService                 *emailservice.Service
 	TelematicsService            *telematicsservice.Service
-	DispatchConsoleService       agentports.DispatchConsoleService
-	DispatchAutoAssignService    agentports.DispatchAutoAssignService
+	DispatchConsoleService       dispatchconsoleports.DispatchConsoleService
+	DispatchAutoAssignService    dispatchconsoleports.DispatchAutoAssignService
 	AssignmentService            shipmentports.AssignmentService
 	DocumentPacketRuleService    *documentpacketruleservice.Service
 	DocumentTemplateService      *documenttemplateservice.Service
@@ -564,12 +570,12 @@ type Services struct {
 	AiTuneUpService              aituneupports.AITuneUpService
 	AiAnalyticsService           aianalyticsports.AnalyticsService
 	AgentRosterService           agentrosterports.AgentRosterService
-	AiProviderService            agentports.AIProviderService
+	AiProviderService            aiproviderports.AIProviderService
 	AiUsageService               aiusageports.AIUsageService
-	AiRetrievalStatusService     agentports.AIRetrievalStatusService
+	AiRetrievalStatusService     retrievalports.AIRetrievalStatusService
 	AgentProposalService         agentports.AgentProposalService
 	AgentPlanService             agentports.AgentPlanService
-	AgentMemoryService           agentports.AgentMemoryService
+	AgentMemoryService           agentmemoryports.AgentMemoryService
 	AgentReflectionService       agentports.AgentReflectionService
 	AiFeedbackService            aifeedbackports.AIFeedbackService
 	AgentSuggestionService       agentsuggestionports.AgentSuggestionService
@@ -586,8 +592,8 @@ type Services struct {
 	AgentDecisionQueueService    agentports.AgentDecisionQueueService
 	ApprovalCommitter            agentports.ApprovalCommitter
 	AgentAccessService           agentdefinitionports.AgentAccessService
-	AgentSafetyService           agentports.AgentSafetyService
-	AgentToolRuleService         agentports.AgentToolRuleService
+	AgentSafetyService           agenttoolports.AgentSafetyService
+	AgentToolRuleService         agenttoolports.AgentToolRuleService
 	WatchtowerService            watchtowerports.WatchtowerService
 	WatchtowerExceptions         watchtowerports.ExceptionService
 	InboundMessageService        *inboundmessageservice.Service
@@ -601,13 +607,13 @@ type Services struct {
 	CaptureService               *captureservice.Service
 	CaptureReleaseService        *capturereleaseservice.Service
 	AgentScorecardService        agentports.AgentScorecardService
-	AgentRunEventRepo            agentports.AgentRunEventRepository
+	AgentRunEventRepo            agentruntimeports.AgentRunEventRepository
 	AiAuditService               aiauditports.AIAuditService
 	BriefingService              briefingports.BriefingService
 	AgentProfileService          agentprofileports.Service
-	AgentTools                   agentports.AgentToolRegistry
+	AgentTools                   agenttoolports.AgentToolRegistry
 	AgentControlService          agentports.AgentControlService
-	ProposalPreviewService       agentports.ProposalPreviewService
+	ProposalPreviewService       agentruntimeports.ProposalPreviewService
 	IamService                   iamports.IAMService
 	RoleService                  *roleservice.Service
 	PageAccessService            *pageaccessservice.Service

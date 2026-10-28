@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -31,7 +31,7 @@ type x12Inspector interface {
 	) (*edix12inspect.InspectX12Result, error)
 }
 
-func provideInspectX12Tool(ediSvc *ediservice.Service) agentports.AgentQueryTool {
+func provideInspectX12Tool(ediSvc *ediservice.Service) agenttoolports.AgentQueryTool {
 	return newInspectX12Tool(ediSvc)
 }
 
@@ -39,7 +39,7 @@ type inspectX12Tool struct {
 	inspector x12Inspector
 }
 
-func newInspectX12Tool(inspector x12Inspector) agentports.AgentQueryTool {
+func newInspectX12Tool(inspector x12Inspector) agenttoolports.AgentQueryTool {
 	return &inspectX12Tool{inspector: inspector}
 }
 
@@ -75,7 +75,7 @@ func (t *inspectX12Tool) ParamSchema() map[string]any {
 	}, paramX12Content)
 }
 
-func (t *inspectX12Tool) Policy() agentports.ToolPolicy {
+func (t *inspectX12Tool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:        permission.ResourceEDI,
 		reads:           agent.ExternalReadAlways,
@@ -99,7 +99,7 @@ type inspectX12View struct {
 
 func (t *inspectX12Tool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

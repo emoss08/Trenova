@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
@@ -72,7 +72,7 @@ type invoiceSharer interface {
 	) (*invoiceports.InvoiceSharePreview, error)
 }
 
-func NewAssessLateChargesTool(charges lateChargeAssessor) agentports.AgentTool {
+func NewAssessLateChargesTool(charges lateChargeAssessor) agenttoolports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
 		Name:        "receivable_assess_late_charges",
 		SearchTerms: []string{"late fees", "finance charge"},
@@ -105,7 +105,7 @@ func NewAssessLateChargesTool(charges lateChargeAssessor) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *latechargeports.LateChargeAssessmentRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*latechargeports.LateChargeAssessmentResult, error) {
 			result, err := charges.PlanAssess(ctx, req, params.Actor)
 			if err != nil {
@@ -123,7 +123,7 @@ func NewAssessLateChargesTool(charges lateChargeAssessor) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *latechargeports.LateChargeAssessmentRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := charges.Assess(ctx, req, params.Actor)
 			return nil, err
@@ -132,7 +132,7 @@ func NewAssessLateChargesTool(charges lateChargeAssessor) agentports.AgentTool {
 }
 
 func lateChargeRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*latechargeports.LateChargeAssessmentRequest, error) {
 	asOf, err := common.RequireUTCDay(params.Params, paramAsOfDate)
 	if err != nil {
@@ -219,7 +219,7 @@ func renderLateCharges(
 	return toolpreview.Build(common.WithNotes(summary, notes), changes...), nil
 }
 
-func NewShareInvoiceTool(shares invoiceSharer) agentports.AgentTool {
+func NewShareInvoiceTool(shares invoiceSharer) agenttoolports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
 		Name:        "invoice_share",
 		Recipe:      []string{"invoice_list_share_candidates", "invoice_share"},
@@ -256,7 +256,7 @@ func NewShareInvoiceTool(shares invoiceSharer) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *invoiceports.ShareInvoiceRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*invoiceports.InvoiceSharePreview, error) {
 			return shares.PreviewShare(ctx, req, params.Actor)
 		},
@@ -268,7 +268,7 @@ func NewShareInvoiceTool(shares invoiceSharer) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *invoiceports.ShareInvoiceRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := shares.Share(ctx, req, params.Actor)
 			return nil, err
@@ -277,7 +277,7 @@ func NewShareInvoiceTool(shares invoiceSharer) agentports.AgentTool {
 }
 
 func shareRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*invoiceports.ShareInvoiceRequest, error) {
 	invoiceID, err := common.RequirePulid(params.Params, common.ParamInvoiceID)
 	if err != nil {

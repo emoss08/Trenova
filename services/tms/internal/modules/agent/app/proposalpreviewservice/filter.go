@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -18,10 +18,10 @@ import (
 // they may read each resource at all.
 type readerAccess struct {
 	ceilings aiauditports.FieldCeilings
-	reads    agentports.ResourceReadAccess
+	reads    agentruntimeports.ResourceReadAccess
 }
 
-func (s *Service) accessFor(viewer *agentports.PreviewViewer) readerAccess {
+func (s *Service) accessFor(viewer *agentruntimeports.PreviewViewer) readerAccess {
 	a := readerAccess{}
 	actor := viewerActor(viewer)
 	if viewer != nil {

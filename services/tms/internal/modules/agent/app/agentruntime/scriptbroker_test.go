@@ -20,7 +20,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -75,30 +77,38 @@ func (s *stubScripts) ScriptSettings(
 
 type syncLedger struct {
 	mu    sync.Mutex
-	steps map[string]agentports.RunStep
+	steps map[string]agentruntimeports.RunStep
 }
 
 func newSyncLedger() *syncLedger {
-	return &syncLedger{steps: map[string]agentports.RunStep{}}
+	return &syncLedger{steps: map[string]agentruntimeports.RunStep{}}
 }
 
 func (l *syncLedger) Claim(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step agentports.RunStep,
-) (agentports.StepVerdict, error) {
+	step agentruntimeports.RunStep,
+) (agentruntimeports.StepVerdict, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	if recorded, seen := l.steps[step.Key]; seen && recorded.Status == agentports.RunStepCompleted {
-		return agentports.StepVerdict{State: agentports.StepCompleted, Outcome: recorded.Outcome}, nil
+	if recorded, seen := l.steps[step.Key]; seen &&
+		recorded.Status == agentruntimeports.RunStepCompleted {
+		return agentruntimeports.StepVerdict{
+			State:   agentruntimeports.StepCompleted,
+			Outcome: recorded.Outcome,
+		}, nil
 	}
 	l.steps[step.Key] = step
 
-	return agentports.StepVerdict{State: agentports.StepFresh}, nil
+	return agentruntimeports.StepVerdict{State: agentruntimeports.StepFresh}, nil
 }
 
-func (l *syncLedger) Settle(_ context.Context, _ pagination.TenantInfo, step agentports.RunStep) error {
+func (l *syncLedger) Settle(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	step agentruntimeports.RunStep,
+) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -107,23 +117,27 @@ func (l *syncLedger) Settle(_ context.Context, _ pagination.TenantInfo, step age
 	return nil
 }
 
-func (l *syncLedger) Record(context.Context, pagination.TenantInfo, agentports.RunStep) error {
+func (l *syncLedger) Record(
+	context.Context,
+	pagination.TenantInfo,
+	agentruntimeports.RunStep,
+) error {
 	return nil
 }
 
 func (l *syncLedger) Loaded(
 	context.Context,
 	pagination.TenantInfo,
-	agentports.RunStepOwner,
-) ([]agentports.RunStep, error) {
+	agentruntimeports.RunStepOwner,
+) ([]agentruntimeports.RunStep, error) {
 	return nil, nil
 }
 
-func (l *syncLedger) byCallID() map[string]agentports.RunStep {
+func (l *syncLedger) byCallID() map[string]agentruntimeports.RunStep {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	steps := make(map[string]agentports.RunStep, len(l.steps))
+	steps := make(map[string]agentruntimeports.RunStep, len(l.steps))
 	for _, step := range l.steps {
 		steps[step.CallID] = step
 	}
@@ -154,8 +168,8 @@ func (t *stubScriptTool) Name() string                { return codemode.ToolRunS
 func (t *stubScriptTool) Description() string         { return "Run a read-only script." }
 func (t *stubScriptTool) ParamSchema() map[string]any { return map[string]any{"type": "object"} }
 
-func (t *stubScriptTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *stubScriptTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          codemode.ToolRunScript,
 		Kind:          agent.ToolKindQuery,
 		Resource:      permission.ResourceCodeMode,
@@ -167,12 +181,15 @@ func (t *stubScriptTool) Policy() agentports.ToolPolicy {
 		Effect:        agent.ToolEffectLookup,
 		ReadsExternal: agent.ExternalReadMarked,
 		Source:        agent.TaintSourceRecordNote,
-		Script:        agentports.ScriptRunner,
+		Script:        agenttoolports.ScriptRunner,
 		Rationale:     "A stub script runner.",
 	}
 }
 
-func (t *stubScriptTool) Query(ctx context.Context, params *agentports.QueryToolParams) (any, error) {
+func (t *stubScriptTool) Query(
+	ctx context.Context,
+	params *agenttoolports.QueryToolParams,
+) (any, error) {
 	t.calls++
 	if params.Broker == nil {
 		return nil, errors.New("no broker")
@@ -199,21 +216,21 @@ func read(seq int, tool string, args map[string]any) scriptStep {
 
 type scriptHarness struct {
 	rt     *Service
-	req    *agentports.RunRequest
+	req    *agentruntimeports.RunRequest
 	ledger *syncLedger
 	script *stubScriptTool
 }
 
 func newScriptHarness(
 	t *testing.T,
-	reads []agentports.AgentQueryTool,
-	actions []agentports.AgentTool,
+	reads []agenttoolports.AgentQueryTool,
+	actions []agenttoolports.AgentTool,
 	permissions *stubPermissions,
 ) *scriptHarness {
 	t.Helper()
 
 	script := &stubScriptTool{}
-	tools := append([]agentports.AgentQueryTool{script}, reads...)
+	tools := append([]agenttoolports.AgentQueryTool{script}, reads...)
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{Tools: tools},
 		&stubActionRegistry{Tools: actions}, permissions)
 	rt.extensions = noExtensions{}
@@ -233,13 +250,13 @@ func newScriptHarness(
 
 	return &scriptHarness{
 		rt: rt,
-		req: &agentports.RunRequest{
+		req: &agentruntimeports.RunRequest{
 			Definition: definition,
 			Actor:      testActor(),
 			Input:      "go through every late load",
 			Steps:      ledger,
-			StepOwner: agentports.RunStepOwner{
-				Kind: agentports.RunStepOwnerAssistantTurn,
+			StepOwner: agentruntimeports.RunStepOwner{
+				Kind: agentruntimeports.RunStepOwnerAssistantTurn,
 				ID:   pulid.MustNew("atrn_"),
 			},
 			Attempt: 1,
@@ -253,7 +270,7 @@ func (h *scriptHarness) run(ctx context.Context, steps ...scriptStep) ToolOutcom
 	h.script.steps = steps
 
 	return h.rt.DispatchStep(ctx, h.req, DispatchCall{
-		Call: agentports.ToolCall{
+		Call: llmports.ToolCall{
 			ID:        "call_script",
 			Name:      codemode.ToolRunScript,
 			Arguments: map[string]any{},
@@ -266,9 +283,13 @@ func (h *scriptHarness) run(ctx context.Context, steps ...scriptStep) ToolOutcom
 	})
 }
 
-func (h *scriptHarness) discrete(ctx context.Context, name string, args map[string]any) ToolOutcome {
+func (h *scriptHarness) discrete(
+	ctx context.Context,
+	name string,
+	args map[string]any,
+) ToolOutcome {
 	return h.rt.DispatchStep(ctx, h.req, DispatchCall{
-		Call:  agentports.ToolCall{ID: "call_" + name, Name: name, Arguments: args},
+		Call:  llmports.ToolCall{ID: "call_" + name, Name: name, Arguments: args},
 		Taint: &agent.RunTaint{},
 	})
 }
@@ -281,8 +302,10 @@ func TestBrokerRefusesWhereTheToolRefuses(t *testing.T) {
 		Result:   map[string]any{"name": "Acme"},
 		Resource: permission.ResourceCustomer,
 	}
-	h := newScriptHarness(t, []agentports.AgentQueryTool{customer}, nil, &stubPermissions{
-		Denied: map[string]bool{permission.ResourceCustomer.String() + ":" + string(permission.OpRead): true},
+	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{customer}, nil, &stubPermissions{
+		Denied: map[string]bool{
+			permission.ResourceCustomer.String() + ":" + string(permission.OpRead): true,
+		},
 	})
 
 	discrete := h.discrete(t.Context(), "customer_get", map[string]any{})
@@ -299,7 +322,7 @@ func TestBrokerRefusesAWriteWhenTheModelMayNotWrite(t *testing.T) {
 	t.Parallel()
 
 	void := actionTool("invoice_void", agent.TierAutoExecute, nil)
-	h := newScriptHarness(t, nil, []agentports.AgentTool{void}, nil)
+	h := newScriptHarness(t, nil, []agenttoolports.AgentTool{void}, nil)
 
 	h.run(t.Context(), read(1, "invoice_void", map[string]any{"invoiceIds": []any{"inv_1"}}))
 	require.Len(t, h.script.replies, 1)
@@ -317,8 +340,10 @@ func TestBrokerRefusesAReadTheTurnDoesNotHold(t *testing.T) {
 
 	held := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
 	unheld := queryTool("worker_get", map[string]any{"name": "Sam"}, nil)
-	h := newScriptHarness(t, []agentports.AgentQueryTool{held}, nil, nil)
-	h.rt.queryTools = &stubQueryRegistry{Tools: []agentports.AgentQueryTool{h.script, held, unheld}}
+	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{held}, nil, nil)
+	h.rt.queryTools = &stubQueryRegistry{
+		Tools: []agenttoolports.AgentQueryTool{h.script, held, unheld},
+	}
 
 	h.run(t.Context(), read(1, "worker_get", map[string]any{}))
 	assert.Equal(t, codemode.CallRefused, h.script.replies[0].Status)
@@ -328,8 +353,12 @@ func TestBrokerRefusesAReadTheTurnDoesNotHold(t *testing.T) {
 func TestBrokerHandsTheReadTheActorTenantAndCeilingTheToolGets(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("shipment_list", map[string]any{"items": []any{map[string]any{"pro": "P1"}}}, nil)
-	h := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	tool := queryTool(
+		"shipment_list",
+		map[string]any{"items": []any{map[string]any{"pro": "P1"}}},
+		nil,
+	)
+	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	h.req.Definition.DataAccessCeiling = agentdefinition.DataAccessRestricted
 	tenant := h.req.Actor.DBTenant()
 	ctx := dbscope.WithTenant(t.Context(), tenant)
@@ -355,7 +384,10 @@ type ceilingTool struct {
 	*agenttest.StubQueryTool
 }
 
-func (c *ceilingTool) Query(ctx context.Context, params *agentports.QueryToolParams) (any, error) {
+func (c *ceilingTool) Query(
+	ctx context.Context,
+	params *agenttoolports.QueryToolParams,
+) (any, error) {
 	_, _ = c.StubQueryTool.Query(ctx, params)
 	worker := map[string]any{"name": "Sam"}
 	answer := map[string]any{"workers": []any{worker}}
@@ -372,7 +404,7 @@ func TestBrokerWithholdsWhatTheToolWithholds(t *testing.T) {
 	t.Parallel()
 
 	tool := &ceilingTool{queryTool("worker_list", nil, nil)}
-	h := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	h.req.Definition.DataAccessCeiling = agentdefinition.DataAccessInternal
 
 	discrete := h.discrete(t.Context(), "worker_list", map[string]any{})
@@ -382,7 +414,12 @@ func TestBrokerWithholdsWhatTheToolWithholds(t *testing.T) {
 	outcome := h.run(t.Context(), read(1, "worker_list", map[string]any{}))
 	require.False(t, outcome.Failed)
 	reply := h.script.replies[0]
-	assert.NotContains(t, string(reply.Data), "555-0100", "a withheld field never enters the sandbox")
+	assert.NotContains(
+		t,
+		string(reply.Data),
+		"555-0100",
+		"a withheld field never enters the sandbox",
+	)
 	assert.Contains(t, string(reply.Data), "worker.phone")
 }
 
@@ -408,7 +445,7 @@ func TestScriptCannotClearTaint(t *testing.T) {
 		t.Run(label, func(t *testing.T) {
 			t.Parallel()
 
-			h := newScriptHarness(t, []agentports.AgentQueryTool{inbound}, nil, nil)
+			h := newScriptHarness(t, []agenttoolports.AgentQueryTool{inbound}, nil, nil)
 			arrange(h)
 			outcome := h.run(t.Context(),
 				read(1, "inbound_get_message", map[string]any{"taint": []any{}}),
@@ -433,7 +470,7 @@ func TestBrokerHoldsTheScriptToItsLimits(t *testing.T) {
 		rows = append(rows, map[string]any{"n": idx})
 	}
 	wide := queryTool("shipment_list", map[string]any{"items": rows}, nil)
-	h := newScriptHarness(t, []agentports.AgentQueryTool{wide}, nil, nil)
+	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{wide}, nil, nil)
 
 	broker := h.rt.newScriptBroker(t.Context(), &scriptBrokerParams{
 		req: h.req, parentKey: "parent", parentCallID: "call_script", taint: &agent.RunTaint{},
@@ -458,15 +495,29 @@ func TestBrokerHoldsTheScriptToItsLimits(t *testing.T) {
 	small := h.rt.newScriptBroker(t.Context(), &scriptBrokerParams{
 		req: h.req, parentKey: "other", parentCallID: "call_other", taint: &agent.RunTaint{},
 	})
-	small.Bound(&codemode.Limits{Calls: 10, Rows: 100_000, Bytes: 1 << 30, CallBytes: 1024, Concurrent: 8})
+	small.Bound(
+		&codemode.Limits{Calls: 10, Rows: 100_000, Bytes: 1 << 30, CallBytes: 1024, Concurrent: 8},
+	)
 	assert.Equal(t, codemode.LimitCall,
 		small.Read(t.Context(), codemode.Call{Seq: 1, Tool: "shipment_list"}).Limit)
 
 	totals := h.rt.newScriptBroker(t.Context(), &scriptBrokerParams{
 		req: h.req, parentKey: "totals", parentCallID: "call_totals", taint: &agent.RunTaint{},
 	})
-	totals.Bound(&codemode.Limits{Calls: 10, Rows: 100_000, Bytes: 60_000, CallBytes: 1 << 20, Concurrent: 8})
-	assert.Equal(t, codemode.CallOK, totals.Read(t.Context(), codemode.Call{Seq: 1, Tool: "shipment_list"}).Status)
+	totals.Bound(
+		&codemode.Limits{
+			Calls:      10,
+			Rows:       100_000,
+			Bytes:      60_000,
+			CallBytes:  1 << 20,
+			Concurrent: 8,
+		},
+	)
+	assert.Equal(
+		t,
+		codemode.CallOK,
+		totals.Read(t.Context(), codemode.Call{Seq: 1, Tool: "shipment_list"}).Status,
+	)
 	assert.Equal(t, codemode.LimitBytes,
 		totals.Read(t.Context(), codemode.Call{Seq: 2, Tool: "shipment_list"}).Limit)
 }
@@ -478,7 +529,7 @@ type slowTool struct {
 	calls  atomic.Int32
 }
 
-func (s *slowTool) Query(context.Context, *agentports.QueryToolParams) (any, error) {
+func (s *slowTool) Query(context.Context, *agenttoolports.QueryToolParams) (any, error) {
 	now := s.active.Add(1)
 	defer s.active.Add(-1)
 	s.calls.Add(1)
@@ -497,7 +548,7 @@ func TestBrokerSemaphoreBoundsConcurrentDispatches(t *testing.T) {
 	t.Parallel()
 
 	tool := &slowTool{StubQueryTool: queryTool("shipment_get", nil, nil)}
-	h := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	broker := h.rt.newScriptBroker(t.Context(), &scriptBrokerParams{
 		req: h.req, parentKey: "parent", parentCallID: "call_script", taint: &agent.RunTaint{},
 	})
@@ -524,11 +575,11 @@ func TestScriptToolIsGatedPerProvider(t *testing.T) {
 	t.Parallel()
 
 	tool := queryTool("shipment_list", map[string]any{}, nil)
-	h := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 
 	h.script.steps = []scriptStep{read(1, "shipment_list", nil)}
 	denied := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
-		Call:     agentports.ToolCall{ID: "call_haiku", Name: codemode.ToolRunScript},
+		Call:     llmports.ToolCall{ID: "call_haiku", Name: codemode.ToolRunScript},
 		Taint:    &agent.RunTaint{},
 		Model:    "claude-haiku-5-5",
 		Provider: aiprovider.KindAnthropicMessages,
@@ -544,7 +595,7 @@ func TestScriptToolIsGatedPerProvider(t *testing.T) {
 	h.req.CodeMode = codemode.OverrideDefault
 
 	fourth := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
-		Call:           agentports.ToolCall{ID: "call_fourth", Name: codemode.ToolRunScript},
+		Call:           llmports.ToolCall{ID: "call_fourth", Name: codemode.ToolRunScript},
 		Taint:          &agent.RunTaint{},
 		Model:          scriptModel,
 		Provider:       aiprovider.KindAnthropicMessages,
@@ -554,17 +605,17 @@ func TestScriptToolIsGatedPerProvider(t *testing.T) {
 	assert.True(t, fourth.Failed)
 	assert.Contains(t, fourth.Content, "at most 3 scripts")
 
-	shipped := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	shipped := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	shipped.rt.scripts = scriptsOn(aiprovider.ScriptSettings{})
 	refused := shipped.run(t.Context(), read(1, "shipment_list", nil))
 	assert.True(t, refused.Failed, "a provider ships with scripts off")
 
-	unwired := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	unwired := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	unwired.rt.scripts = nil
 	assert.True(t, unwired.run(t.Context(), read(1, "shipment_list", nil)).Failed,
 		"without the providers' settings no script runs")
 
-	forced := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	forced := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	forced.rt.codeMode = codemode.Gate{Forced: true}
 	forced.req.CodeMode = codemode.OverrideOn
 	assert.False(t, forced.run(t.Context(), read(1, "shipment_list", nil)).Failed,
@@ -575,7 +626,7 @@ func TestOpenTurnOffersTheScriptToolOnlyWhileTheGateIsOpen(t *testing.T) {
 	t.Parallel()
 
 	tool := queryTool("shipment_list", map[string]any{}, nil)
-	h := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	scripts := scriptsOn(aiprovider.ScriptSettings{})
 	h.rt.scripts = scripts
 
@@ -593,7 +644,7 @@ func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 	t.Parallel()
 
 	tool := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
-	h := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	scripts := scriptsOn(aiprovider.ScriptSettings{Scripts: true})
 	h.rt.scripts = scripts
 
@@ -602,7 +653,7 @@ func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 	scripts.set(aiprovider.ScriptSettings{})
 	h.script.steps = []scriptStep{read(1, "shipment_list", nil)}
 	turnedOff := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
-		Call:           agentports.ToolCall{ID: "call_second", Name: codemode.ToolRunScript},
+		Call:           llmports.ToolCall{ID: "call_second", Name: codemode.ToolRunScript},
 		Taint:          &agent.RunTaint{},
 		Ordinal:        1,
 		Model:          scriptModel,
@@ -615,7 +666,7 @@ func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 
 	scripts.set(aiprovider.ScriptSettings{Scripts: true})
 	failover := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
-		Call:           agentports.ToolCall{ID: "call_failover", Name: codemode.ToolRunScript},
+		Call:           llmports.ToolCall{ID: "call_failover", Name: codemode.ToolRunScript},
 		Taint:          &agent.RunTaint{},
 		Model:          "claude-haiku-5-5",
 		Provider:       aiprovider.KindAnthropicMessages,
@@ -633,13 +684,13 @@ func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 func TestATurnContinuesAScriptThatShowedNothingOnce(t *testing.T) {
 	t.Parallel()
 
-	earlier := agentports.ToolCall{
+	earlier := llmports.ToolCall{
 		ID:        "call_printed",
 		Name:      codemode.ToolRunScript,
 		Arguments: map[string]any{"code": "total = len(lanes)"},
 	}
-	continuation := func(id string) agentports.ToolCall {
-		return agentports.ToolCall{
+	continuation := func(id string) llmports.ToolCall {
+		return llmports.ToolCall{
 			ID:   id,
 			Name: codemode.ToolRunScript,
 			Arguments: map[string]any{
@@ -649,7 +700,7 @@ func TestATurnContinuesAScriptThatShowedNothingOnce(t *testing.T) {
 		}
 	}
 	shows, again := continuation("call_shows"), continuation("call_again")
-	asked := func(call agentports.ToolCall) conversation.Message {
+	asked := func(call llmports.ToolCall) conversation.Message {
 		return conversation.Message{
 			Role: conversation.RoleAssistant,
 			ToolCalls: []conversation.ToolCallRecord{
@@ -657,7 +708,7 @@ func TestATurnContinuesAScriptThatShowedNothingOnce(t *testing.T) {
 			},
 		}
 	}
-	turn := &Turn{result: &agentports.RunResult{Messages: []conversation.Message{
+	turn := &Turn{result: &agentruntimeports.RunResult{Messages: []conversation.Message{
 		asked(earlier), asked(shows), asked(again),
 	}}}
 
@@ -665,7 +716,12 @@ func TestATurnContinuesAScriptThatShowedNothingOnce(t *testing.T) {
 
 	turn.noteContinuable(&earlier, &toolOutcome{continuation: codemode.ContinueFree})
 	assert.Equal(t, earlier.Arguments, turn.continueScript(&shows))
-	assert.Equal(t, earlier.Arguments, turn.continueScript(&shows), "asking again is the same claim")
+	assert.Equal(
+		t,
+		earlier.Arguments,
+		turn.continueScript(&shows),
+		"asking again is the same claim",
+	)
 	assert.Equal(t, 1, turn.scriptPosition(&shows), "the continuation is not counted")
 
 	assert.Nil(t, turn.continueScript(&again), "a script is continued once")
@@ -678,8 +734,8 @@ func TestATurnContinuesAScriptThatShowedNothingOnce(t *testing.T) {
 func TestATurnCountsAContinuationThatAddsAndChainsItsCode(t *testing.T) {
 	t.Parallel()
 
-	script := func(id string, arguments map[string]any) agentports.ToolCall {
-		return agentports.ToolCall{ID: id, Name: codemode.ToolRunScript, Arguments: arguments}
+	script := func(id string, arguments map[string]any) llmports.ToolCall {
+		return llmports.ToolCall{ID: id, Name: codemode.ToolRunScript, Arguments: arguments}
 	}
 	shown := script("call_shown", map[string]any{
 		"title": "Lanes", "code": "rows = lanes", "datasets": []any{"lanes"},
@@ -690,7 +746,7 @@ func TestATurnCountsAContinuationThatAddsAndChainsItsCode(t *testing.T) {
 	more := script("call_more", map[string]any{
 		codemode.ParamScriptContinues: "call_adds", "code": "show_table(rows)",
 	})
-	asked := func(call agentports.ToolCall) conversation.Message {
+	asked := func(call llmports.ToolCall) conversation.Message {
 		return conversation.Message{
 			Role: conversation.RoleAssistant,
 			ToolCalls: []conversation.ToolCallRecord{
@@ -698,7 +754,7 @@ func TestATurnCountsAContinuationThatAddsAndChainsItsCode(t *testing.T) {
 			},
 		}
 	}
-	turn := &Turn{result: &agentports.RunResult{Messages: []conversation.Message{
+	turn := &Turn{result: &agentruntimeports.RunResult{Messages: []conversation.Message{
 		asked(shown), asked(adds), asked(more),
 	}}}
 
@@ -743,10 +799,10 @@ func TestScriptToolRefusesAContinuationOfNothingItMayContinue(t *testing.T) {
 	t.Parallel()
 
 	tool := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
-	h := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 
 	refused := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
-		Call: agentports.ToolCall{
+		Call: llmports.ToolCall{
 			ID:        "call_continues",
 			Name:      codemode.ToolRunScript,
 			Arguments: map[string]any{codemode.ParamScriptContinues: "call_unknown"},
@@ -767,7 +823,7 @@ func TestScriptTraceAndSteps(t *testing.T) {
 	aitracetest.Install()
 
 	tool := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
-	h := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 
 	outcome := h.run(t.Context(),
 		read(1, "shipment_list", map[string]any{"status": []any{"Delayed"}}),
@@ -779,13 +835,13 @@ func TestScriptTraceAndSteps(t *testing.T) {
 	steps := h.ledger.byCallID()
 	script, ok := steps["call_script"]
 	require.True(t, ok, "the script is a step")
-	assert.Equal(t, agentports.RunStepCompleted, script.Status)
+	assert.Equal(t, agentruntimeports.RunStepCompleted, script.Status)
 	keys := map[string]bool{script.Key: true}
 	for seq := 1; seq <= 3; seq++ {
 		step, found := steps[ScriptCallID("call_script", seq)]
 		require.Truef(t, found, "read %d is a step", seq)
 		assert.Equal(t, "shipment_list", step.ToolName)
-		assert.Equal(t, agentports.RunStepCompleted, step.Status)
+		assert.Equal(t, agentruntimeports.RunStepCompleted, step.Status)
 		assert.Falsef(t, keys[step.Key], "read %d has its own key", seq)
 		keys[step.Key] = true
 	}
@@ -821,7 +877,7 @@ func TestScriptIndexListsOnlyHeldReadsAScriptMayCall(t *testing.T) {
 		Result:   map[string]any{},
 		Resource: permission.ResourceWebResearch,
 	}
-	h := newScriptHarness(t, []agentports.AgentQueryTool{held, external}, nil, nil)
+	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{held, external}, nil, nil)
 
 	broker := h.rt.newScriptBroker(t.Context(), &scriptBrokerParams{
 		req: h.req, parentKey: "p", parentCallID: "c", taint: &agent.RunTaint{},
@@ -841,7 +897,7 @@ func TestEveryAgentThatHoldsAReadHoldsTheScriptTool(t *testing.T) {
 	t.Parallel()
 
 	tool := queryTool("shipment_list", map[string]any{}, nil)
-	h := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	require.NotContains(t, h.req.Definition.ToolNames, codemode.ToolRunScript)
 
 	assert.Contains(t, h.rt.heldTools(h.req.Definition), codemode.ToolRunScript,
@@ -874,6 +930,9 @@ func TestATurnThatNarrowsItsToolsStillCarriesTheScriptTool(t *testing.T) {
 	})
 
 	require.True(t, set.disclosed)
-	assert.True(t, set.offers(codemode.ToolRunScript),
-		"a fan-out question shows itself only after the first read, so the tool is there from the start")
+	assert.True(
+		t,
+		set.offers(codemode.ToolRunScript),
+		"a fan-out question shows itself only after the first read, so the tool is there from the start",
+	)
 }

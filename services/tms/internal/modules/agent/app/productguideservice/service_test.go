@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/productguideports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -159,10 +159,10 @@ func actor() *permissionports.RequestActor {
 	}
 }
 
-func (h *harness) search(t *testing.T, query string) []agentports.ProductGuideMatch {
+func (h *harness) search(t *testing.T, query string) []productguideports.ProductGuideMatch {
 	t.Helper()
 
-	matches, err := h.service.Search(t.Context(), &agentports.ProductGuideSearchRequest{
+	matches, err := h.service.Search(t.Context(), &productguideports.ProductGuideSearchRequest{
 		Actor:      actor(),
 		TenantInfo: pagination.TenantInfo{},
 		Query:      query,
@@ -256,7 +256,7 @@ func TestSearch_AnswersFromOnePageWhenAskedAboutIt(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, "rate_matrix:read", "shipment:read")
-	matches, err := h.service.Search(t.Context(), &agentports.ProductGuideSearchRequest{
+	matches, err := h.service.Search(t.Context(), &productguideports.ProductGuideSearchRequest{
 		Actor: actor(),
 		Query: "retire",
 		Page:  "/billing/configuration-files/rate-matrices",
@@ -272,7 +272,10 @@ func TestSearch_RefusesToAnswerForNobody(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	_, err := h.service.Search(t.Context(), &agentports.ProductGuideSearchRequest{Query: "shipments"})
+	_, err := h.service.Search(
+		t.Context(),
+		&productguideports.ProductGuideSearchRequest{Query: "shipments"},
+	)
 
 	require.Error(t, err)
 }
@@ -282,29 +285,42 @@ func TestDestination_OpensAPageTheCreateFormOrARecord(t *testing.T) {
 
 	h := newHarness(t, "rate_matrix:read", "shipment:read")
 
-	page, err := h.service.Destination(t.Context(), &agentports.ProductGuideDestinationRequest{
-		Actor: actor(),
-		Page:  "/billing/configuration-files/rate-matrices",
-	})
+	page, err := h.service.Destination(
+		t.Context(),
+		&productguideports.ProductGuideDestinationRequest{
+			Actor: actor(),
+			Page:  "/billing/configuration-files/rate-matrices",
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "/billing/configuration-files/rate-matrices", page.Path)
 	assert.Equal(t, "Rate matrices", page.Label)
 
-	create, err := h.service.Destination(t.Context(), &agentports.ProductGuideDestinationRequest{
-		Actor:  actor(),
-		Page:   "/billing/configuration-files/rate-matrices",
-		Create: true,
-	})
+	create, err := h.service.Destination(
+		t.Context(),
+		&productguideports.ProductGuideDestinationRequest{
+			Actor:  actor(),
+			Page:   "/billing/configuration-files/rate-matrices",
+			Create: true,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "/billing/configuration-files/rate-matrices?panelType=create", create.Path)
 
-	record, err := h.service.Destination(t.Context(), &agentports.ProductGuideDestinationRequest{
-		Actor:    actor(),
-		Entity:   "shipment",
-		RecordID: "shp_1",
-	})
+	record, err := h.service.Destination(
+		t.Context(),
+		&productguideports.ProductGuideDestinationRequest{
+			Actor:    actor(),
+			Entity:   "shipment",
+			RecordID: "shp_1",
+		},
+	)
 	require.NoError(t, err)
-	assert.Equal(t, "/shipment-management/shipments?panelEntityId=shp_1&panelType=edit", record.Path)
+	assert.Equal(
+		t,
+		"/shipment-management/shipments?panelEntityId=shp_1&panelType=edit",
+		record.Path,
+	)
 	assert.Equal(t, "/shipment-management/shipments", record.Page.Path)
 }
 
@@ -315,21 +331,24 @@ func TestDestination_RefusesWhatItCannotOrMayNotOpen(t *testing.T) {
 
 	tests := []struct {
 		name string
-		req  agentports.ProductGuideDestinationRequest
+		req  productguideports.ProductGuideDestinationRequest
 	}{
-		{name: "nowhere", req: agentports.ProductGuideDestinationRequest{}},
-		{name: "a page that does not exist", req: agentports.ProductGuideDestinationRequest{
+		{name: "nowhere", req: productguideports.ProductGuideDestinationRequest{}},
+		{name: "a page that does not exist", req: productguideports.ProductGuideDestinationRequest{
 			Page: "/billing/made-up",
 		}},
-		{name: "a create form the page does not have", req: agentports.ProductGuideDestinationRequest{
-			Page:   "/shipment-management/shipments",
-			Create: true,
-		}},
-		{name: "a record kind with no page", req: agentports.ProductGuideDestinationRequest{
+		{
+			name: "a create form the page does not have",
+			req: productguideports.ProductGuideDestinationRequest{
+				Page:   "/shipment-management/shipments",
+				Create: true,
+			},
+		},
+		{name: "a record kind with no page", req: productguideports.ProductGuideDestinationRequest{
 			Entity:   "unicorn",
 			RecordID: "uni_1",
 		}},
-		{name: "a record with no id", req: agentports.ProductGuideDestinationRequest{
+		{name: "a record with no id", req: productguideports.ProductGuideDestinationRequest{
 			Entity: "shipment",
 		}},
 	}
@@ -346,7 +365,7 @@ func TestDestination_RefusesWhatItCannotOrMayNotOpen(t *testing.T) {
 		})
 	}
 
-	_, err := h.service.Destination(t.Context(), &agentports.ProductGuideDestinationRequest{
+	_, err := h.service.Destination(t.Context(), &productguideports.ProductGuideDestinationRequest{
 		Actor: actor(),
 		Page:  "/billing/configuration-files/rate-matrices",
 	})
@@ -390,11 +409,14 @@ func TestSearch_DoesNotMatchAPageOnTheProductsOwnName(t *testing.T) {
 		Organizations: &stubOrganizations{},
 	}, catalog)
 
-	search := func(query string) []agentports.ProductGuideMatch {
-		matches, searchErr := service.Search(t.Context(), &agentports.ProductGuideSearchRequest{
-			Actor: actor(),
-			Query: query,
-		})
+	search := func(query string) []productguideports.ProductGuideMatch {
+		matches, searchErr := service.Search(
+			t.Context(),
+			&productguideports.ProductGuideSearchRequest{
+				Actor: actor(),
+				Query: query,
+			},
+		)
 		require.NoError(t, searchErr)
 
 		return matches

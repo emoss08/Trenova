@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -156,7 +156,7 @@ func TestResolveAccountingDrift_PreviewsThenFixesAsTheApprover(t *testing.T) {
 		"direction": "AdjustTrenova",
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "Would post a credit memo of 50.00 USD")
 	require.Len(t, preview.Changes, 1)
@@ -168,9 +168,13 @@ func TestResolveAccountingDrift_PreviewsThenFixesAsTheApprover(t *testing.T) {
 	assert.Equal(t, accountingsync.DriftAdjustTrenova, operator.resolved.Direction)
 	assert.Equal(t, params.Actor.UserID, operator.lastActor.UserID)
 
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
-	assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceAccountingSync, ID: finding.ID}, target)
+	assert.Equal(
+		t,
+		agenttoolports.ToolTarget{Resource: permission.ResourceAccountingSync, ID: finding.ID},
+		target,
+	)
 }
 
 func TestResolveAccountingDrift_RefusesAnUnknownDirectionOrARefusedFix(t *testing.T) {
@@ -192,7 +196,7 @@ func TestResolveAccountingDrift_RefusesAnUnknownDirectionOrARefusedFix(t *testin
 		"direction": "PushTrenovaValue",
 	})
 	require.Error(t, tool.Execute(t.Context(), params))
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err, "a refusal previews as a warning")
 	assert.NotEmpty(t, preview.Warnings)
 	assert.Nil(t, operator.resolved)
@@ -209,14 +213,19 @@ func TestDismissAccountingDrift_DismissesWithTheNoteAsTheAgent(t *testing.T) {
 		"note":      "  Rounding on the\n customer's side.  ",
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "Rounding on the customer's side.")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, operator.dismissed)
 	assert.Equal(t, "Rounding on the customer's side.", operator.dismissed.Note)
-	assert.Same(t, params.Actor, operator.lastActor, "the service decides what an agent may dismiss")
+	assert.Same(
+		t,
+		params.Actor,
+		operator.lastActor,
+		"the service decides what an agent may dismiss",
+	)
 
 	require.Error(t, tool.Execute(t.Context(), syncParams(map[string]any{
 		"findingId": finding.ID.String(),
@@ -231,7 +240,7 @@ func TestCheckAccountingDrift_StartsTheCheck(t *testing.T) {
 	tool := newCheckAccountingDriftTool(operator)
 	params := syncParams(map[string]any{"system": "QuickBooksOnline"})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "QuickBooks Online")
 	assert.Empty(t, operator.checked)
@@ -244,14 +253,14 @@ func TestAccountingDriftTools_AskAPersonFirst(t *testing.T) {
 	t.Parallel()
 
 	operator := &fakeDriftOperator{}
-	resolve := newResolveAccountingDriftTool(operator).(agentports.ToolPolicyDeclarer).Policy()
+	resolve := newResolveAccountingDriftTool(operator).(agenttoolports.ToolPolicyDeclarer).Policy()
 	assert.Equal(t, agent.TierActWithApproval, resolve.MaxTier)
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, resolve.Egress)
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		newDismissAccountingDriftTool(operator),
 		newCheckAccountingDriftTool(operator),
 	} {
-		policy := tool.(agentports.ToolPolicyDeclarer).Policy()
+		policy := tool.(agenttoolports.ToolPolicyDeclarer).Policy()
 		assert.Equal(t, agent.TierActWithApproval, policy.MaxTier, policy.Name)
 		assert.Equal(t, permission.ResourceAccountingSync, policy.Resource, policy.Name)
 	}

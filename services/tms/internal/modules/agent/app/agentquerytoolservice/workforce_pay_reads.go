@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -91,7 +91,7 @@ func stateLabel(state *usstate.UsState) string {
 func newListShipmentPermitsTool(
 	permits wfPermitReader,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &workforceRead{
 		name: "shipment_list_permits",
 		description: "List an oversize or overweight shipment's state permit requirements " +
@@ -110,7 +110,7 @@ func newListShipmentPermitsTool(
 		access:   newFieldAccess(permissions),
 		run: func(
 			ctx context.Context,
-			params *agentports.QueryToolParams,
+			params *agenttoolports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
 			shipmentID, err := requirePulid(params.Params, paramShipmentID)
@@ -181,7 +181,7 @@ type payrollExportRow struct {
 func newListPayrollExportsTool(
 	exports wfPayrollReader,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return &workforceRead{
 		name: "settlement_list_payroll_exports",
 		description: "List payroll runs, newest first. Each shows the pay period it " +
@@ -193,7 +193,7 @@ func newListPayrollExportsTool(
 		access:     newFieldAccess(permissions),
 		run: func(
 			ctx context.Context,
-			params *agentports.QueryToolParams,
+			params *agenttoolports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
 			runs, err := exports.ListExports(ctx, &workerports.ListPayrollExportsRequest{
@@ -230,13 +230,13 @@ func newListPayrollExportsTool(
 func provideListShipmentPermitsTool(
 	permits permitports.PermitService,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListShipmentPermitsTool(permits, permissions)
 }
 
 func provideListPayrollExportsTool(
 	s *timesheetservice.Service,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
+) agenttoolports.AgentQueryTool {
 	return newListPayrollExportsTool(s, permissions)
 }

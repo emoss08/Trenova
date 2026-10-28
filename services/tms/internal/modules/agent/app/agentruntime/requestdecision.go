@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -67,7 +68,7 @@ func requestDecisionSpec() kernelports.ToolSpec {
 	}
 }
 
-func pendingDecisions(proposals []agentports.ProposalOutcome) bool {
+func pendingDecisions(proposals []agentruntimeports.ProposalOutcome) bool {
 	for idx := range proposals {
 		if proposals[idx].Pending() && proposals[idx].ProposalID.IsNotNil() {
 			return true
@@ -174,7 +175,9 @@ func (t *Turn) requestProposalDecision(id pulid.ID) toolOutcome {
 	}
 	t.decisions[id] = struct{}{}
 
-	return decisionOutcome(agentports.DecisionRequest{ProposalID: id, ToolName: outcome.ToolName})
+	return decisionOutcome(
+		agentruntimeports.DecisionRequest{ProposalID: id, ToolName: outcome.ToolName},
+	)
 }
 
 func (t *Turn) filedThisTurn(id pulid.ID) (toolOutcome, bool) {
@@ -214,7 +217,7 @@ func (t *Turn) requestPlanDecision(planID pulid.ID) toolOutcome {
 	}
 	t.decisions[planID] = struct{}{}
 
-	return decisionOutcome(agentports.DecisionRequest{
+	return decisionOutcome(agentruntimeports.DecisionRequest{
 		ProposalID:  steps[0],
 		ProposalIDs: steps,
 		PlanID:      planID,
@@ -263,7 +266,7 @@ func (t *Turn) requestBunchDecision(ids []pulid.ID) toolOutcome {
 		t.decisions[id] = struct{}{}
 	}
 
-	return decisionOutcome(agentports.DecisionRequest{
+	return decisionOutcome(agentruntimeports.DecisionRequest{
 		ProposalID:  ids[0],
 		ProposalIDs: ids,
 		ToolName:    tool,
@@ -271,19 +274,19 @@ func (t *Turn) requestBunchDecision(ids []pulid.ID) toolOutcome {
 }
 
 func proposalOutcome(
-	proposals []agentports.ProposalOutcome,
+	proposals []agentruntimeports.ProposalOutcome,
 	id pulid.ID,
-) (agentports.ProposalOutcome, bool) {
+) (agentruntimeports.ProposalOutcome, bool) {
 	for idx := range proposals {
 		if proposals[idx].ProposalID == id {
 			return proposals[idx], true
 		}
 	}
 
-	return agentports.ProposalOutcome{}, false
+	return agentruntimeports.ProposalOutcome{}, false
 }
 
-func decisionOutcome(request agentports.DecisionRequest) toolOutcome {
+func decisionOutcome(request agentruntimeports.DecisionRequest) toolOutcome {
 	return toolOutcome{publishes: true, data: request}
 }
 
@@ -293,28 +296,30 @@ func decisionStepOutcome(arguments map[string]any) toolOutcome {
 		return failedOutcome("%s", refusal)
 	}
 	if request.planID.IsNotNil() {
-		return decisionOutcome(agentports.DecisionRequest{PlanID: request.planID})
+		return decisionOutcome(agentruntimeports.DecisionRequest{PlanID: request.planID})
 	}
 	if len(request.proposalIDs) == 1 {
-		return decisionOutcome(agentports.DecisionRequest{ProposalID: request.proposalIDs[0]})
+		return decisionOutcome(
+			agentruntimeports.DecisionRequest{ProposalID: request.proposalIDs[0]},
+		)
 	}
 
-	return decisionOutcome(agentports.DecisionRequest{
+	return decisionOutcome(agentruntimeports.DecisionRequest{
 		ProposalID:  request.proposalIDs[0],
 		ProposalIDs: request.proposalIDs,
 	})
 }
 
 func decisionRequested(
-	observe agentports.ToolObserver,
-	call *agentports.ToolCall,
-	request agentports.DecisionRequest,
+	observe agentruntimeports.ToolObserver,
+	call *llmports.ToolCall,
+	request agentruntimeports.DecisionRequest,
 ) toolOutcome {
 	if observe == nil {
 		return failedOutcome("%s", undecidableRefusal)
 	}
 
-	shown, err := observe(agentports.ToolObservation{Call: *call, Data: request})
+	shown, err := observe(agentruntimeports.ToolObservation{Call: *call, Data: request})
 	switch {
 	case err != nil:
 		return failedOutcome("Proposal %s could not be opened in the approval box: %s. Tell "+

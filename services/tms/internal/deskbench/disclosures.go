@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -39,15 +39,15 @@ func NewDisclosureLog() *DisclosureLog {
 	return &DisclosureLog{entries: make([]*Disclosure, 0, 64)}
 }
 
-func (l *DisclosureLog) Preselected(_ context.Context, disclosure *agentports.ToolDisclosure) {
+func (l *DisclosureLog) Preselected(_ context.Context, disclosure *agenttoolports.ToolDisclosure) {
 	l.add(DisclosurePreselected, disclosure)
 }
 
-func (l *DisclosureLog) Found(_ context.Context, disclosure *agentports.ToolDisclosure) {
+func (l *DisclosureLog) Found(_ context.Context, disclosure *agenttoolports.ToolDisclosure) {
 	l.add(DisclosureFound, disclosure)
 }
 
-func (l *DisclosureLog) add(kind DisclosureKind, disclosure *agentports.ToolDisclosure) {
+func (l *DisclosureLog) add(kind DisclosureKind, disclosure *agenttoolports.ToolDisclosure) {
 	if disclosure == nil {
 		return
 	}

@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
@@ -31,8 +31,8 @@ const (
 type MoneyAllowanceReader func(context.Context) (agent.MoneyAllowance, error)
 
 type DecideInput struct {
-	Policy          agentports.ToolPolicy
-	Params          agentports.ToolExecuteParams
+	Policy          agenttoolports.ToolPolicy
+	Params          agenttoolports.ToolExecuteParams
 	Definition      *agentdefinition.Definition
 	HolderCeiling   agent.AutonomyTier
 	Unattended      bool
@@ -120,7 +120,7 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 	return decision
 }
 
-func Escalates(definition *agentdefinition.Definition, policy *agentports.ToolPolicy) bool {
+func Escalates(definition *agentdefinition.Definition, policy *agenttoolports.ToolPolicy) bool {
 	if !policy.Escalates {
 		return false
 	}
@@ -128,7 +128,7 @@ func Escalates(definition *agentdefinition.Definition, policy *agentports.ToolPo
 	return definition == nil || !definition.SetsToolTier(policy.Name)
 }
 
-func Promotable(policy agentports.ToolPolicy) agent.AutonomyTier {
+func Promotable(policy agenttoolports.ToolPolicy) agent.AutonomyTier {
 	return maxTier(policy).AtMost(policy.EgressCeiling())
 }
 
@@ -141,7 +141,7 @@ func Promotable(policy agentports.ToolPolicy) agent.AutonomyTier {
 // condition or what it reached held for a person contradicted it.
 func AlwaysProposes(
 	definition *agentdefinition.Definition,
-	policy agentports.ToolPolicy,
+	policy agenttoolports.ToolPolicy,
 ) bool {
 	if Escalates(definition, &policy) {
 		return false
@@ -158,7 +158,7 @@ func AlwaysProposes(
 
 func StaticTier(
 	definition *agentdefinition.Definition,
-	policy agentports.ToolPolicy,
+	policy agenttoolports.ToolPolicy,
 ) agent.AutonomyTier {
 	if Escalates(definition, &policy) {
 		return agent.TierAutoExecute
@@ -167,7 +167,7 @@ func StaticTier(
 	return effectiveTier(definition, policy).AtMost(maxTier(policy))
 }
 
-func ExplainTier(policy agentports.ToolPolicy) string {
+func ExplainTier(policy agenttoolports.ToolPolicy) string {
 	parts := make([]string, 0, 6)
 	if limit := Promotable(policy); limit != agent.TierAutoExecute {
 		parts = append(parts, fmt.Sprintf(
@@ -242,7 +242,7 @@ func (d *Decision) boundMoney(ctx context.Context, in *DecideInput, taintHolds b
 	return taintHolds
 }
 
-func moneyHeld(ctx context.Context, in *DecideInput) (string, agentports.MoneyBound) {
+func moneyHeld(ctx context.Context, in *DecideInput) (string, agenttoolports.MoneyBound) {
 	check, proven := provenBound(ctx, in)
 	if !proven {
 		return agent.HeldByMoneyUnproven, check
@@ -265,10 +265,13 @@ func moneyHeld(ctx context.Context, in *DecideInput) (string, agentports.MoneyBo
 	return allowance.Exceeded(check.AmountMinor, check.Currency), check
 }
 
-func provenBound(ctx context.Context, in *DecideInput) (bound agentports.MoneyBound, proven bool) {
+func provenBound(
+	ctx context.Context,
+	in *DecideInput,
+) (bound agenttoolports.MoneyBound, proven bool) {
 	defer func() {
 		if recover() != nil {
-			bound, proven = agentports.MoneyBound{}, false
+			bound, proven = agenttoolports.MoneyBound{}, false
 		}
 	}()
 
@@ -309,11 +312,11 @@ func SeeksPersonalExemption(in DecideInput) bool {
 	return personalCall(in, in.Policy.Classified(in.Params))
 }
 
-func runsUnasked(in DecideInput, call agentports.CallPolicy) bool {
+func runsUnasked(in DecideInput, call agenttoolports.CallPolicy) bool {
 	return personalCall(in, call) && !in.TierSetByPerson
 }
 
-func personalCall(in DecideInput, call agentports.CallPolicy) bool {
+func personalCall(in DecideInput, call agenttoolports.CallPolicy) bool {
 	actor := in.Params.Actor
 
 	return in.Policy.PersonalRunsUnasked &&
@@ -325,7 +328,7 @@ func personalCall(in DecideInput, call agentports.CallPolicy) bool {
 
 func toolTier(
 	definition *agentdefinition.Definition,
-	policy agentports.ToolPolicy,
+	policy agenttoolports.ToolPolicy,
 ) agent.AutonomyTier {
 	requested := policy.DefaultTier
 	if definition != nil {
@@ -342,7 +345,7 @@ func toolTier(
 
 func effectiveTier(
 	definition *agentdefinition.Definition,
-	policy agentports.ToolPolicy,
+	policy agenttoolports.ToolPolicy,
 ) agent.AutonomyTier {
 	if definition == nil {
 		return toolTier(nil, policy)
@@ -351,7 +354,7 @@ func effectiveTier(
 	return definition.EffectiveTier(policy.Name, policy.DefaultTier)
 }
 
-func maxTier(policy agentports.ToolPolicy) agent.AutonomyTier {
+func maxTier(policy agenttoolports.ToolPolicy) agent.AutonomyTier {
 	if policy.MaxTier.IsValid() {
 		return policy.MaxTier
 	}
@@ -361,8 +364,8 @@ func maxTier(policy agentports.ToolPolicy) agent.AutonomyTier {
 
 func conditionLimit(
 	ctx context.Context,
-	condition *agentports.TierCondition,
-	params agentports.ToolExecuteParams,
+	condition *agenttoolports.TierCondition,
+	params agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	limit := condition.Limit(ctx, params)
 	if !limit.IsValid() {

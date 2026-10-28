@@ -17,7 +17,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -28,12 +28,12 @@ import (
 type RegistryParams struct {
 	fx.In
 
-	Tools []agentports.AgentQueryTool `group:"agent_query_tools"`
+	Tools []agenttoolports.AgentQueryTool `group:"agent_query_tools"`
 }
 
 type registry struct {
-	byName  map[string]agentports.AgentQueryTool
-	ordered []agentports.AgentQueryTool
+	byName  map[string]agenttoolports.AgentQueryTool
+	ordered []agenttoolports.AgentQueryTool
 }
 
 // legacyToolNames maps a name an agent may still have saved to the tool that
@@ -52,9 +52,9 @@ var legacyToolNames = map[string]string{
 	"search_workers": "worker_list",
 }
 
-func NewRegistry(p RegistryParams) agentports.AgentQueryToolRegistry {
-	byName := make(map[string]agentports.AgentQueryTool, len(p.Tools))
-	ordered := make([]agentports.AgentQueryTool, 0, len(p.Tools))
+func NewRegistry(p RegistryParams) agenttoolports.AgentQueryToolRegistry {
+	byName := make(map[string]agenttoolports.AgentQueryTool, len(p.Tools))
+	ordered := make([]agenttoolports.AgentQueryTool, 0, len(p.Tools))
 
 	for _, tool := range p.Tools {
 		if _, exists := byName[tool.Name()]; exists {
@@ -83,7 +83,7 @@ func NewRegistry(p RegistryParams) agentports.AgentQueryToolRegistry {
 type viewRunner interface {
 	runView(
 		ctx context.Context,
-		params *agentports.QueryToolParams,
+		params *agenttoolports.QueryToolParams,
 		query string,
 		filters []domaintypes.FieldFilter,
 		sorting []domaintypes.SortField,
@@ -95,7 +95,7 @@ type viewRunner interface {
 // it composes is counted and previewed through the same fetch that listing
 // the table uses. It is wired here because both are tools the registry
 // collects; neither can be handed the other when it is built.
-func linkViewsToLists(tools []agentports.AgentQueryTool) {
+func linkViewsToLists(tools []agenttoolports.AgentQueryTool) {
 	lists := make(map[permission.Resource]viewRunner)
 	link := func(resource permission.Resource, list viewRunner) {
 		if _, taken := lists[resource]; !taken {
@@ -117,18 +117,18 @@ func linkViewsToLists(tools []agentports.AgentQueryTool) {
 	}
 }
 
-func (r *registry) Get(name string) (agentports.AgentQueryTool, bool) {
+func (r *registry) Get(name string) (agenttoolports.AgentQueryTool, bool) {
 	tool, ok := r.byName[name]
 	return tool, ok
 }
 
-func (r *registry) All() []agentports.AgentQueryTool { return r.ordered }
+func (r *registry) All() []agenttoolports.AgentQueryTool { return r.ordered }
 
-func (r *registry) Descriptors() []agentports.AgentToolDescriptor {
-	descriptors := make([]agentports.AgentToolDescriptor, 0, len(r.ordered))
+func (r *registry) Descriptors() []agenttoolports.AgentToolDescriptor {
+	descriptors := make([]agenttoolports.AgentToolDescriptor, 0, len(r.ordered))
 
 	for _, tool := range r.ordered {
-		descriptors = append(descriptors, agentports.DescribeTool(tool, "", true))
+		descriptors = append(descriptors, agenttoolports.DescribeTool(tool, "", true))
 	}
 
 	return descriptors
@@ -142,7 +142,7 @@ var (
 // guardQuery repeats the tenant check the write tools make. The tenant comes
 // from the actor rather than from the model either way, but asserting it here
 // means a future caller that builds params by hand cannot skip it silently.
-func guardQuery(params *agentports.QueryToolParams) error {
+func guardQuery(params *agenttoolports.QueryToolParams) error {
 	if params == nil || params.Actor == nil {
 		return ErrMissingActor
 	}

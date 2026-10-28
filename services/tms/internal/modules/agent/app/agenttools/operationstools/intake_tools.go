@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -71,7 +71,7 @@ type CreateShipmentDeps struct {
 	Logger    *zap.Logger
 }
 
-func NewCreateShipmentTool(deps CreateShipmentDeps) agentports.AgentTool {
+func NewCreateShipmentTool(deps CreateShipmentDeps) agenttoolports.AgentTool {
 	logger := deps.Logger
 	if logger == nil {
 		logger = zap.NewNop()
@@ -367,8 +367,8 @@ func chargeLineDraftSchema() map[string]any {
 	}
 }
 
-func (t *CreateShipmentTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *CreateShipmentTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipment,
@@ -388,7 +388,7 @@ func (t *CreateShipmentTool) Policy() agentports.ToolPolicy {
 
 func (t *CreateShipmentTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -397,7 +397,7 @@ func (t *CreateShipmentTool) Execute(
 
 func (t *CreateShipmentTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return nil, err
@@ -435,14 +435,14 @@ func (t *CreateShipmentTool) ExecuteWithResult(
 // is refused to the model before it is proposed to a person.
 func (t *CreateShipmentTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return common.PreviewValidates(ctx, t, &params)
 }
 
 func (t *CreateShipmentTool) Draft(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*shipment.Shipment, error) {
 	draft := new(shipmenttools.ShipmentDraft)
 	if err := common.DecodeParam(params.Params, "shipment", draft); err != nil {
@@ -547,7 +547,7 @@ type UpdateShipmentTool struct {
 func NewUpdateShipmentTool(
 	shipments common.ShipmentWriter,
 	partners common.ShipmentPartnerNotices,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &UpdateShipmentTool{shipments: shipments, partners: partners}
 }
 
@@ -618,8 +618,8 @@ func (t *UpdateShipmentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *UpdateShipmentTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *UpdateShipmentTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipment,
@@ -659,7 +659,7 @@ func (p shipmentPatch) empty() bool {
 
 func (t *UpdateShipmentTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	_, entity, err := t.plan(ctx, &params)
 	if err != nil {
@@ -675,7 +675,7 @@ func (t *UpdateShipmentTool) Execute(
 // and as the write would save it.
 func (t *UpdateShipmentTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (before, after *shipment.Shipment, err error) {
 	if err = common.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
@@ -780,6 +780,6 @@ func placeholderTemperatures(entity *shipment.Shipment, patch shipmentPatch) err
 	return nil
 }
 
-func (t *UpdateShipmentTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *UpdateShipmentTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
 }

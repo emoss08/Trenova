@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
@@ -92,7 +92,7 @@ type MatchBankReceiptTool struct {
 	receipts bankReceiptMatcher
 }
 
-func NewMatchBankReceiptTool(receipts bankReceiptMatcher) agentports.AgentTool {
+func NewMatchBankReceiptTool(receipts bankReceiptMatcher) agenttoolports.AgentTool {
 	return &MatchBankReceiptTool{receipts: receipts}
 }
 
@@ -134,8 +134,8 @@ func (t *MatchBankReceiptTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *MatchBankReceiptTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *MatchBankReceiptTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:        t.Name(),
 		Kind:        agent.ToolKindAction,
 		Resource:    permission.ResourceBankReceipt,
@@ -144,7 +144,7 @@ func (t *MatchBankReceiptTool) Policy() agentports.ToolPolicy {
 		DefaultTier: agent.TierActWithApproval,
 		MaxTier:     agent.TierAutoExecute,
 		Egress:      []agent.EgressClass{agent.EgressMoney},
-		Condition: &agentports.TierCondition{
+		Condition: &agenttoolports.TierCondition{
 			Description: matchReceiptBoundText,
 			Bounds:      t.withinBounds,
 			Vouches:     []agent.TaintSource{agent.TaintSourceBankReceipt},
@@ -155,18 +155,18 @@ func (t *MatchBankReceiptTool) Policy() agentports.ToolPolicy {
 	}
 }
 
-func (t *MatchBankReceiptTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *MatchBankReceiptTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	id, err := common.RequirePulid(params, "bankReceiptId")
 	if err != nil {
-		return agentports.ToolTarget{}, false
+		return agenttoolports.ToolTarget{}, false
 	}
 
-	return agentports.ToolTarget{Resource: permission.ResourceBankReceipt, ID: id}, true
+	return agenttoolports.ToolTarget{Resource: permission.ResourceBankReceipt, ID: id}, true
 }
 
 func (t *MatchBankReceiptTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	request, err := t.request(params)
 	if err != nil {
@@ -179,7 +179,7 @@ func (t *MatchBankReceiptTool) Execute(
 }
 
 func (t *MatchBankReceiptTool) request(
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (*bankreceiptports.MatchBankReceiptRequest, error) {
 	receiptID, paymentID, err := t.arguments(params)
 	if err != nil {
@@ -194,7 +194,7 @@ func (t *MatchBankReceiptTool) request(
 }
 
 func (t *MatchBankReceiptTool) arguments(
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (pulid.ID, pulid.ID, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return "", "", err
@@ -227,7 +227,7 @@ func NewPostCustomerPaymentTool(
 	payments customerPaymentPoster,
 	receipts bankReceiptMatcher,
 	permissions permissionports.PermissionEngine,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &PostCustomerPaymentTool{
 		payments:    payments,
 		receipts:    receipts,
@@ -324,8 +324,8 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *PostCustomerPaymentTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *PostCustomerPaymentTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:        t.Name(),
 		Kind:        agent.ToolKindAction,
 		Resource:    permission.ResourceCustomerPayment,
@@ -334,7 +334,7 @@ func (t *PostCustomerPaymentTool) Policy() agentports.ToolPolicy {
 		DefaultTier: agent.TierActWithApproval,
 		MaxTier:     agent.TierAutoExecute,
 		Egress:      []agent.EgressClass{agent.EgressMoney},
-		Condition: &agentports.TierCondition{
+		Condition: &agenttoolports.TierCondition{
 			Description: postPaymentBoundText,
 			Bounds:      t.withinBounds,
 			Vouches:     []agent.TaintSource{agent.TaintSourceBankReceipt},
@@ -347,13 +347,13 @@ func (t *PostCustomerPaymentTool) Policy() agentports.ToolPolicy {
 	}
 }
 
-func (t *PostCustomerPaymentTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *PostCustomerPaymentTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	id, err := common.RequirePulid(params, "bankReceiptId")
 	if err != nil {
-		return agentports.ToolTarget{}, false
+		return agenttoolports.ToolTarget{}, false
 	}
 
-	return agentports.ToolTarget{Resource: permission.ResourceBankReceipt, ID: id}, true
+	return agenttoolports.ToolTarget{Resource: permission.ResourceBankReceipt, ID: id}, true
 }
 
 type postPaymentArgs struct {
@@ -364,7 +364,7 @@ type postPaymentArgs struct {
 
 func (t *PostCustomerPaymentTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -377,7 +377,7 @@ func (t *PostCustomerPaymentTool) Execute(
 // say nothing moved, and a retry would post the payment again.
 func (t *PostCustomerPaymentTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	args, err := t.arguments(ctx, params)
 	if err != nil {
@@ -433,7 +433,7 @@ func (t *PostCustomerPaymentTool) ExecuteWithResult(
 
 func (t *PostCustomerPaymentTool) arguments(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (postPaymentArgs, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return postPaymentArgs{}, err
@@ -600,7 +600,7 @@ type ResolveBankReceiptWorkItemTool struct {
 	items workItemResolver
 }
 
-func NewResolveBankReceiptWorkItemTool(items workItemResolver) agentports.AgentTool {
+func NewResolveBankReceiptWorkItemTool(items workItemResolver) agenttoolports.AgentTool {
 	return &ResolveBankReceiptWorkItemTool{items: items}
 }
 
@@ -643,8 +643,8 @@ func (t *ResolveBankReceiptWorkItemTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *ResolveBankReceiptWorkItemTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *ResolveBankReceiptWorkItemTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceBankReceiptWorkItem,
@@ -662,13 +662,13 @@ func (t *ResolveBankReceiptWorkItemTool) Policy() agentports.ToolPolicy {
 
 func (t *ResolveBankReceiptWorkItemTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	id, err := common.RequirePulid(params, "workItemId")
 	if err != nil {
-		return agentports.ToolTarget{}, false
+		return agenttoolports.ToolTarget{}, false
 	}
 
-	return agentports.ToolTarget{Resource: permission.ResourceBankReceiptWorkItem, ID: id}, true
+	return agenttoolports.ToolTarget{Resource: permission.ResourceBankReceiptWorkItem, ID: id}, true
 }
 
 type resolveWorkItemArgs struct {
@@ -679,7 +679,7 @@ type resolveWorkItemArgs struct {
 
 func (t *ResolveBankReceiptWorkItemTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	args, err := t.arguments(params)
 	if err != nil {
@@ -724,7 +724,7 @@ func (a resolveWorkItemArgs) resolved(
 }
 
 func (t *ResolveBankReceiptWorkItemTool) arguments(
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) (resolveWorkItemArgs, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return resolveWorkItemArgs{}, err

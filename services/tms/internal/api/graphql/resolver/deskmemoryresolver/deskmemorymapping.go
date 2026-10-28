@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -19,13 +19,13 @@ import (
 func (r *Deps) deskActor(
 	ctx context.Context,
 	operation permission.Operation,
-) (*agentports.DeskMemoryActor, error) {
+) (*agentmemoryports.DeskMemoryActor, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, operation)
 	if err != nil {
 		return nil, err
 	}
 
-	return &agentports.DeskMemoryActor{
+	return &agentmemoryports.DeskMemoryActor{
 		Actor: actorutil.FromAuthContext(authCtx),
 		MayManageShared: r.HasPermission(
 			ctx,
@@ -53,7 +53,7 @@ func idString(id *pulid.ID) *string {
 	return &value
 }
 
-func deskMemoryToModel(memory *agentports.DeskMemory) *gqlmodel.DeskMemory {
+func deskMemoryToModel(memory *agentmemoryports.DeskMemory) *gqlmodel.DeskMemory {
 	entity := memory.Memory
 	out := &gqlmodel.DeskMemory{
 		ID:          entity.ID.String(),
@@ -89,7 +89,7 @@ func deskEvidence(evidence *agent.MemoryEvidence) (string, []string) {
 	return evidence.Reason, evidence.Quotes
 }
 
-func deskLinkToModel(link *agentports.DeskMemoryLink) *gqlmodel.DeskMemoryLink {
+func deskLinkToModel(link *agentmemoryports.DeskMemoryLink) *gqlmodel.DeskMemoryLink {
 	if link == nil {
 		return nil
 	}
@@ -101,7 +101,7 @@ func deskLinkToModel(link *agentports.DeskMemoryLink) *gqlmodel.DeskMemoryLink {
 	}
 }
 
-func deskPageToModel(page *agentports.DeskMemoryPage) *gqlmodel.DeskMemoryPage {
+func deskPageToModel(page *agentmemoryports.DeskMemoryPage) *gqlmodel.DeskMemoryPage {
 	out := &gqlmodel.DeskMemoryPage{
 		Items:  make([]*gqlmodel.DeskMemory, 0, len(page.Items)),
 		All:    page.All,
@@ -126,7 +126,9 @@ func deskPageToModel(page *agentports.DeskMemoryPage) *gqlmodel.DeskMemoryPage {
 	return out
 }
 
-func deskSettingsToModel(settings *agentports.DeskMemorySettings) *gqlmodel.DeskMemorySettings {
+func deskSettingsToModel(
+	settings *agentmemoryports.DeskMemorySettings,
+) *gqlmodel.DeskMemorySettings {
 	out := &gqlmodel.DeskMemorySettings{
 		SavingMode:               settings.SavingMode,
 		Roles:                    make([]*gqlmodel.DeskMemoryRole, 0, len(settings.Roles)),

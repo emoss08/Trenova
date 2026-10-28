@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
@@ -109,7 +109,7 @@ type GenerateDriverSettlementTool struct {
 
 func ProvideGenerateDriverSettlementTool(
 	s *driversettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &GenerateDriverSettlementTool{settlements: s}
 }
 
@@ -140,8 +140,8 @@ func (t *GenerateDriverSettlementTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *GenerateDriverSettlementTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *GenerateDriverSettlementTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDriverSettlement,
@@ -161,7 +161,7 @@ func (t *GenerateDriverSettlementTool) Policy() agentports.ToolPolicy {
 
 func (t *GenerateDriverSettlementTool) request(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*driversettlementservice.GenerateForWorkerRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -211,7 +211,7 @@ func (t *GenerateDriverSettlementTool) request(
 
 func (t *GenerateDriverSettlementTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*driversettlementservice.GenerateForWorkerRequest, *driversettlementservice.GenerationPlan, error) {
 	req, err := t.request(ctx, params)
 	if err != nil {
@@ -240,7 +240,7 @@ func generationRefusal(plan *driversettlementservice.GenerationPlan) error {
 
 func (t *GenerateDriverSettlementTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	_, plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -252,7 +252,7 @@ func (t *GenerateDriverSettlementTool) Validate(
 
 func (t *GenerateDriverSettlementTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := common.GuardExecute(t, params); err != nil {
 		return nil, err
@@ -274,7 +274,7 @@ func (t *GenerateDriverSettlementTool) ExecuteWithResult(
 
 func (t *GenerateDriverSettlementTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -283,7 +283,7 @@ func (t *GenerateDriverSettlementTool) Execute(
 
 func (t *GenerateDriverSettlementTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -337,8 +337,8 @@ func batchSchema() map[string]any {
 	}
 }
 
-func batchPolicy(text batchText) agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func batchPolicy(text batchText) agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          text.name,
 		Kind:          agent.ToolKindAction,
 		Resource:      text.resource,
@@ -394,7 +394,7 @@ type GenerateDriverBatchTool struct {
 
 func ProvideGenerateDriverSettlementBatchTool(
 	s *driversettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &GenerateDriverBatchTool{settlements: s}
 }
 
@@ -428,12 +428,12 @@ func (t *GenerateDriverBatchTool) ParamSchema() map[string]any {
 	return batchSchema()
 }
 
-func (t *GenerateDriverBatchTool) Policy() agentports.ToolPolicy {
+func (t *GenerateDriverBatchTool) Policy() agenttoolports.ToolPolicy {
 	return batchPolicy(driverBatchText())
 }
 
 func (t *GenerateDriverBatchTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*driversettlementservice.GenerateBatchRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -454,7 +454,7 @@ func (t *GenerateDriverBatchTool) request(
 
 func (t *GenerateDriverBatchTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -470,7 +470,7 @@ func (t *GenerateDriverBatchTool) Validate(
 
 func (t *GenerateDriverBatchTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -495,7 +495,7 @@ type plannedWorkerSettlement struct {
 
 func (t *GenerateDriverBatchTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
@@ -603,7 +603,7 @@ type GenerateCarrierBatchTool struct {
 
 func ProvideGenerateCarrierSettlementBatchTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &GenerateCarrierBatchTool{settlements: s}
 }
 
@@ -628,12 +628,12 @@ func (t *GenerateCarrierBatchTool) ParamSchema() map[string]any {
 	return batchSchema()
 }
 
-func (t *GenerateCarrierBatchTool) Policy() agentports.ToolPolicy {
+func (t *GenerateCarrierBatchTool) Policy() agenttoolports.ToolPolicy {
 	return batchPolicy(carrierBatchText())
 }
 
 func (t *GenerateCarrierBatchTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*carriersettlementservice.GenerateBatchRequest, error) {
 	if err := common.GuardPreview(t, params); err != nil {
 		return nil, err
@@ -654,7 +654,7 @@ func (t *GenerateCarrierBatchTool) request(
 
 func (t *GenerateCarrierBatchTool) planned(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*carriersettlementservice.BatchPlan, error) {
 	req, err := t.request(params)
 	if err != nil {
@@ -669,7 +669,7 @@ func (t *GenerateCarrierBatchTool) planned(
 
 func (t *GenerateCarrierBatchTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
@@ -681,7 +681,7 @@ func (t *GenerateCarrierBatchTool) Validate(
 
 func (t *GenerateCarrierBatchTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -697,7 +697,7 @@ func (t *GenerateCarrierBatchTool) Execute(
 
 func (t *GenerateCarrierBatchTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {

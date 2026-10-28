@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -98,11 +98,11 @@ func renderConflictPlan(
 	return toolpreview.Build(summary, change), nil
 }
 
-func NewResolveInboundConflictTool(p triageToolParams) agentports.AgentTool {
+func NewResolveInboundConflictTool(p triageToolParams) agenttoolports.AgentTool {
 	return newResolveInboundConflictTool(p.Conflicts)
 }
 
-func newResolveInboundConflictTool(conflicts triageConflicts) agentports.AgentTool {
+func newResolveInboundConflictTool(conflicts triageConflicts) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_resolve_conflict",
@@ -144,7 +144,7 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agentports.AgentTo
 			*triageconflictservice.ConflictPlan,
 		]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*triageconflictservice.ResolveRequest, error) {
 				messageID, err := common.RequirePulid(params.Params, paramMessageID)
 				if err != nil {
@@ -172,7 +172,7 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agentports.AgentTo
 			Plan: func(
 				ctx context.Context,
 				req *triageconflictservice.ResolveRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*triageconflictservice.ConflictPlan, error) {
 				return conflicts.PlanResolve(ctx, req)
 			},
@@ -192,7 +192,7 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agentports.AgentTo
 			Run: func(
 				ctx context.Context,
 				req *triageconflictservice.ResolveRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				message, err := conflicts.Resolve(ctx, req)
 				if err != nil {
@@ -205,14 +205,14 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agentports.AgentTo
 	)
 }
 
-func NewReopenInboundConflictTool(p triageToolParams) agentports.AgentTool {
+func NewReopenInboundConflictTool(p triageToolParams) agenttoolports.AgentTool {
 	return newReopenInboundConflictTool(p.Inbox, p.Conflicts)
 }
 
 func newReopenInboundConflictTool(
 	inbox inboundMessageReader,
 	conflicts triageConflicts,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "inbox_reopen_conflict",
@@ -249,7 +249,7 @@ func newReopenInboundConflictTool(
 			*triageconflictservice.ConflictPlan,
 		]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*triageconflictservice.ReopenRequest, error) {
 				messageID, err := common.RequirePulid(params.Params, paramMessageID)
 				if err != nil {
@@ -271,7 +271,7 @@ func newReopenInboundConflictTool(
 			Plan: func(
 				ctx context.Context,
 				req *triageconflictservice.ReopenRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*triageconflictservice.ConflictPlan, error) {
 				return conflicts.PlanReopen(ctx, req)
 			},
@@ -292,7 +292,7 @@ func newReopenInboundConflictTool(
 			Run: func(
 				ctx context.Context,
 				req *triageconflictservice.ReopenRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				message, err := conflicts.Reopen(ctx, req)
 				if err != nil {

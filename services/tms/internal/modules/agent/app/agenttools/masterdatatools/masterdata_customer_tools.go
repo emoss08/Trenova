@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -163,7 +163,7 @@ func customerPolicy() masterPolicy {
 	return policy
 }
 
-func NewCreateCustomerTool(customers CustomerKeeper, states StateLookup) agentports.AgentTool {
+func NewCreateCustomerTool(customers CustomerKeeper, states StateLookup) agenttoolports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[customer.Customer]{
 		record: customerRecord,
 		name:   agentdefinition.ToolCreateCustomer,
@@ -193,7 +193,7 @@ func NewCreateCustomerTool(customers CustomerKeeper, states StateLookup) agentpo
 	})
 }
 
-func NewUpdateCustomerTool(customers CustomerKeeper, states StateLookup) agentports.AgentTool {
+func NewUpdateCustomerTool(customers CustomerKeeper, states StateLookup) agenttoolports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[customer.Customer]{
 		record: customerRecord,
 		name:   "customer_update",
@@ -225,7 +225,7 @@ func NewUpdateCustomerTool(customers CustomerKeeper, states StateLookup) agentpo
 func NewUpdateCustomerStatusTool(
 	customers CustomerKeeper,
 	states StateLookup,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newMasterStatusTool(&masterStatusSpec[customer.Customer, domaintypes.Status]{
 		record: customerRecord,
 		name:   "customer_set_status",

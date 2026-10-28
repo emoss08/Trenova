@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
@@ -147,7 +147,7 @@ func permitSpec(
 	return spec
 }
 
-func newRecordShipmentPermitTool(permits permitports.PermitService) agentports.AgentTool {
+func newRecordShipmentPermitTool(permits permitports.PermitService) agenttoolports.AgentTool {
 	properties := permitFactProperties()
 	properties[common.ParamShipmentID] = common.ShipmentIDProperty("The shipment the permit covers")
 	spec := targeting(withSchema(permitSpec(
@@ -166,7 +166,7 @@ func newRecordShipmentPermitTool(permits permitports.PermitService) agentports.A
 	return common.NewReportingReceivableTool(
 		spec,
 		common.ReceivablePlan[*permit.Permit, *permit.Permit]{
-			Request: func(params *agentports.ToolExecuteParams) (*permit.Permit, error) {
+			Request: func(params *agenttoolports.ToolExecuteParams) (*permit.Permit, error) {
 				shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 				if err != nil {
 					return nil, err
@@ -182,7 +182,7 @@ func newRecordShipmentPermitTool(permits permitports.PermitService) agentports.A
 			Plan: func(
 				ctx context.Context,
 				entity *permit.Permit,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*permit.Permit, error) {
 				planned := *entity
 				return permits.PlanCreatePermit(ctx, &planned)
@@ -200,7 +200,7 @@ func newRecordShipmentPermitTool(permits permitports.PermitService) agentports.A
 			Run: func(
 				ctx context.Context,
 				entity *permit.Permit,
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				created, err := permits.CreatePermit(ctx, entity, params.Actor)
 				if err != nil {
@@ -215,7 +215,7 @@ func newRecordShipmentPermitTool(permits permitports.PermitService) agentports.A
 type permitEdit struct {
 	shipmentID pulid.ID
 	permitID   pulid.ID
-	params     *agentports.ToolExecuteParams
+	params     *agenttoolports.ToolExecuteParams
 }
 
 func (e *permitEdit) entity(
@@ -240,7 +240,7 @@ func (e *permitEdit) entity(
 		e.permitID.String())
 }
 
-func newUpdateShipmentPermitTool(permits permitports.PermitService) agentports.AgentTool {
+func newUpdateShipmentPermitTool(permits permitports.PermitService) agenttoolports.AgentTool {
 	properties := permitFactProperties()
 	properties[common.ParamShipmentID] = common.ShipmentIDProperty("The shipment the permit covers")
 	properties[paramPermitID] = agenttoolschema.RecordIDText(permission.ResourcePermit,
@@ -258,7 +258,7 @@ func newUpdateShipmentPermitTool(permits permitports.PermitService) agentports.A
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
 		*permitEdit, *kernelports.RecordChange[permit.Permit],
 	]{
-		Request: func(params *agentports.ToolExecuteParams) (*permitEdit, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*permitEdit, error) {
 			shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 			if err != nil {
 				return nil, err
@@ -272,7 +272,7 @@ func newUpdateShipmentPermitTool(permits permitports.PermitService) agentports.A
 		Plan: func(
 			ctx context.Context,
 			edit *permitEdit,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*kernelports.RecordChange[permit.Permit], error) {
 			entity, err := edit.entity(ctx, permits)
 			if err != nil {
@@ -296,7 +296,7 @@ func newUpdateShipmentPermitTool(permits permitports.PermitService) agentports.A
 		Run: func(
 			ctx context.Context,
 			edit *permitEdit,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			entity, err := edit.entity(ctx, permits)
 			if err != nil {
@@ -311,10 +311,10 @@ func newUpdateShipmentPermitTool(permits permitports.PermitService) agentports.A
 	})
 }
 
-func provideRecordShipmentPermitTool(permits permitports.PermitService) agentports.AgentTool {
+func provideRecordShipmentPermitTool(permits permitports.PermitService) agenttoolports.AgentTool {
 	return newRecordShipmentPermitTool(permits)
 }
 
-func provideUpdateShipmentPermitTool(permits permitports.PermitService) agentports.AgentTool {
+func provideUpdateShipmentPermitTool(permits permitports.PermitService) agenttoolports.AgentTool {
 	return newUpdateShipmentPermitTool(permits)
 }

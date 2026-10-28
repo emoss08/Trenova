@@ -8,15 +8,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/shared/reflectutils"
 )
 
 type Tools struct {
-	Queries []agentports.AgentQueryTool
-	Actions []agentports.AgentTool
-	Runtime agentports.RuntimeToolPolicies
+	Queries []agenttoolports.AgentQueryTool
+	Actions []agenttoolports.AgentTool
+	Runtime agenttoolports.RuntimeToolPolicies
 }
 
 func Build() (Tools, error) {
@@ -31,8 +31,8 @@ func Build() (Tools, error) {
 		agenttoolservice.ToolProviders()...,
 	)
 	out := Tools{
-		Queries: make([]agentports.AgentQueryTool, 0, len(providers)),
-		Actions: make([]agentports.AgentTool, 0, len(providers)),
+		Queries: make([]agenttoolports.AgentQueryTool, 0, len(providers)),
+		Actions: make([]agenttoolports.AgentTool, 0, len(providers)),
 		Runtime: agentruntime.RuntimePolicies(),
 	}
 	for _, provider := range providers {
@@ -42,9 +42,9 @@ func Build() (Tools, error) {
 		}
 
 		switch tool := built.(type) {
-		case agentports.AgentQueryTool:
+		case agenttoolports.AgentQueryTool:
 			out.Queries = append(out.Queries, tool)
-		case agentports.AgentTool:
+		case agenttoolports.AgentTool:
 			out.Actions = append(out.Actions, tool)
 		default:
 			return Tools{}, fmt.Errorf("%T builds neither a query nor an action tool", provider)

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -127,7 +127,7 @@ func reviewRecord(review *worker.PerformanceReview) toolpreview.Record {
 	return wfRecord(permission.ResourcePerformanceReview, review.ID, review.Title, review.Version)
 }
 
-func newStartPerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
+func newStartPerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentTool {
 	spec := withSchema(wfSpec(
 		"worker_start_performance_review",
 		"Open a draft performance review for a worker from a review template. It covers "+
@@ -157,7 +157,7 @@ func newStartPerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 		*performancereviewservice.CreateReviewRequest, *worker.PerformanceReview,
 	]{
 		Request: func(
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*performancereviewservice.CreateReviewRequest, error) {
 			workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
 			if err != nil {
@@ -192,7 +192,7 @@ func newStartPerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			req *performancereviewservice.CreateReviewRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*worker.PerformanceReview, error) {
 			return reviews.PlanCreateReview(ctx, req)
 		},
@@ -216,7 +216,7 @@ func newStartPerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *performancereviewservice.CreateReviewRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := reviews.CreateReview(ctx, req)
 			if err != nil {
@@ -242,7 +242,7 @@ type reviewGoalParam struct {
 
 type reviewDraft struct {
 	id     pulid.ID
-	params *agentports.ToolExecuteParams
+	params *agenttoolports.ToolExecuteParams
 }
 
 func (d *reviewDraft) request(
@@ -414,7 +414,7 @@ func reviewDraftProperties() map[string]any {
 	}
 }
 
-func newDraftPerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
+func newDraftPerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"worker_update_performance_review",
 		"Fill in a draft performance review: score its items 1 to 5 with a comment each, "+
@@ -434,7 +434,7 @@ func newDraftPerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
 		*reviewDraft, *performancereviewservice.ReviewChange,
 	]{
-		Request: func(params *agentports.ToolExecuteParams) (*reviewDraft, error) {
+		Request: func(params *agenttoolports.ToolExecuteParams) (*reviewDraft, error) {
 			id, err := common.RequirePulid(params.Params, paramReviewID)
 			if err != nil {
 				return nil, err
@@ -444,7 +444,7 @@ func newDraftPerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 		Plan: func(
 			ctx context.Context,
 			draft *reviewDraft,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*performancereviewservice.ReviewChange, error) {
 			req, err := draft.request(ctx, reviews)
 			if err != nil {
@@ -468,7 +468,7 @@ func newDraftPerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			draft *reviewDraft,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := draft.request(ctx, reviews)
 			if err != nil {
@@ -483,7 +483,7 @@ func newDraftPerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 	})
 }
 
-func newDeletePerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
+func newDeletePerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"worker_delete_performance_review",
 		"Delete a draft performance review started in error. A submitted review is part "+
@@ -503,7 +503,7 @@ func newDeletePerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 			Plan: func(
 				ctx context.Context,
 				req *recordDelete,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*worker.PerformanceReview, error) {
 				return reviews.PlanDeleteReview(ctx, req.tenant, req.id)
 			},
@@ -520,7 +520,7 @@ func newDeletePerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 			Run: func(
 				ctx context.Context,
 				req *recordDelete,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				return nil, reviews.DeleteReview(ctx, req.tenant, req.id, req.userID)
 			},
@@ -530,18 +530,18 @@ func newDeletePerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 
 func provideStartPerformanceReviewTool(
 	s *performancereviewservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newStartPerformanceReviewTool(s)
 }
 
 func provideDraftPerformanceReviewTool(
 	s *performancereviewservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newDraftPerformanceReviewTool(s)
 }
 
 func provideDeletePerformanceReviewTool(
 	s *performancereviewservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newDeletePerformanceReviewTool(s)
 }

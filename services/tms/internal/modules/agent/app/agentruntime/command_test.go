@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -89,7 +91,7 @@ func newCommandRuntime(
 	t *testing.T,
 	gate *stubExtensionGate,
 	permissions *stubPermissions,
-	turns ...*agentports.ChatCompletionResult,
+	turns ...*llmports.ChatCompletionResult,
 ) commandRuntime {
 	t.Helper()
 
@@ -128,7 +130,7 @@ func newCommandRuntime(
 			Resource: permission.ResourceWebResearch,
 		},
 	)}
-	action := &stubActionRegistry{Tools: []agentports.AgentTool{
+	action := &stubActionRegistry{Tools: []agenttoolports.AgentTool{
 		&agenttest.StubActionTool{
 			ToolName:  agentextension.ToolWatchWeb,
 			Tier:      agent.TierAutoExecute,
@@ -165,7 +167,10 @@ func newCommandRuntime(
 	}
 }
 
-func (r commandRuntime) run(t *testing.T, req *agentports.RunRequest) *agentports.RunResult {
+func (r commandRuntime) run(
+	t *testing.T,
+	req *agentruntimeports.RunRequest,
+) *agentruntimeports.RunResult {
 	t.Helper()
 
 	if req.Actor == nil {
@@ -177,7 +182,7 @@ func (r commandRuntime) run(t *testing.T, req *agentports.RunRequest) *agentport
 	return result
 }
 
-func askedOf(req *agentports.ChatCompletionRequest) string {
+func askedOf(req *llmports.ChatCompletionRequest) string {
 	asked := lastUserMessage(req)
 	if strings.HasPrefix(asked, "Now: ") {
 		_, asked, _ = strings.Cut(asked, "\n\n")
@@ -225,7 +230,7 @@ func TestRun_ACommandTurnOffersItsToolsAndAsksForItsExtension(t *testing.T) {
 				toolTurn(tc.call, map[string]any{"query": "the question"}),
 				textTurn("Here is the answer."),
 			)
-			result := rt.run(t, &agentports.RunRequest{
+			result := rt.run(t, &agentruntimeports.RunRequest{
 				Definition: testDefinition(rt.held...),
 				Input:      tc.ask,
 				Command:    tc.command,
@@ -265,7 +270,7 @@ func TestRun_ACommandTurnThatAnswersWithoutItsExtensionIsSentBackToIt(t *testing
 				toolTurn(tc.call, map[string]any{"query": "the question"}),
 				textTurn("The source says yes."),
 			)
-			result := rt.run(t, &agentports.RunRequest{
+			result := rt.run(t, &agentruntimeports.RunRequest{
 				Definition: testDefinition(tc.held...),
 				Input:      tc.ask,
 				Command:    tc.command,
@@ -293,7 +298,7 @@ func TestRun_ACommandTurnIsNotSatisfiedByAnotherExtension(t *testing.T) {
 				toolTurn(tc.call, map[string]any{"query": "the question"}),
 				textTurn("The source says yes."),
 			)
-			result := rt.run(t, &agentports.RunRequest{
+			result := rt.run(t, &agentruntimeports.RunRequest{
 				Definition: testDefinition(append(tc.held, tc.other)...),
 				Input:      tc.ask,
 				Command:    tc.command,
@@ -316,7 +321,7 @@ func TestRun_AWatchTurnIsNotSatisfiedByASearchAlone(t *testing.T) {
 		toolTurn(agentextension.ToolListWebWatches, map[string]any{}),
 		textTurn("I am watching for it."),
 	)
-	result := rt.run(t, &agentports.RunRequest{
+	result := rt.run(t, &agentruntimeports.RunRequest{
 		Definition: testDefinition(),
 		Input:      "/watch FMCSA finalizing the broker transparency rule",
 		Command:    agentextension.CommandWatch,
@@ -343,7 +348,7 @@ func TestRun_ACommandTurnIsSentBackOnlyOnce(t *testing.T) {
 				textTurn("I cannot reach it for this."),
 				textTurn("There is nothing there for this."),
 			)
-			result := rt.run(t, &agentports.RunRequest{
+			result := rt.run(t, &agentruntimeports.RunRequest{
 				Definition: testDefinition(),
 				Input:      tc.ask,
 				Command:    tc.command,
@@ -368,7 +373,7 @@ func TestRun_AnOrdinaryTurnIsNotHeldToAnExtension(t *testing.T) {
 				nil,
 				textTurn("The answer is yes."),
 			)
-			rt.run(t, &agentports.RunRequest{
+			rt.run(t, &agentruntimeports.RunRequest{
 				Definition: testDefinition(rt.held...),
 				Input:      tc.ask,
 			})
@@ -389,7 +394,7 @@ func TestRun_ACommandTurnWithoutItsToolsIsAnsweredAsAsked(t *testing.T) {
 			rt := newCommandRuntime(t, &stubExtensionGate{active: agentextension.Active{}}, nil,
 				textTurn("I have nothing to use for that."),
 			)
-			rt.run(t, &agentports.RunRequest{
+			rt.run(t, &agentruntimeports.RunRequest{
 				Definition: testDefinition(tc.held...),
 				Input:      tc.ask,
 				Command:    tc.command,
@@ -522,7 +527,7 @@ func TestCommandTurn_KeepsBeingHeldAfterARestore(t *testing.T) {
 				everyCapabilityGate(agentextension.AvailabilityAllAgents),
 				nil,
 			)
-			req := &agentports.RunRequest{
+			req := &agentruntimeports.RunRequest{
 				Definition: testDefinition(),
 				Actor:      testActor(),
 				Input:      tc.ask,

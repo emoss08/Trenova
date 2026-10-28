@@ -7,8 +7,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -43,9 +44,9 @@ type bunchParts struct {
 }
 
 func (r *artifactRecorder) bunch(
-	observation *agentports.ToolObservation,
+	observation *agentruntimeports.ToolObservation,
 	card *assistantartifact.Artifact,
-) (*agentports.ShownArtifact, error) {
+) (*agentruntimeports.ShownArtifact, error) {
 	earlier, err := r.repo.ListByToolCalls(
 		r.ctx,
 		&assistantartifactports.ListArtifactsByToolCallsRequest{
@@ -87,7 +88,7 @@ func (r *artifactRecorder) bunch(
 
 func (r *artifactRecorder) keep(
 	artifact *assistantartifact.Artifact,
-) (*agentports.ShownArtifact, error) {
+) (*agentruntimeports.ShownArtifact, error) {
 	saved, err := r.save(artifact)
 	if err != nil {
 		return nil, err
@@ -121,8 +122,8 @@ func (r *artifactRecorder) retire(cards []*assistantartifact.Artifact) {
 	for _, id := range ids {
 		r.forget(id)
 		r.emit(kernelports.StreamEvent{
-			Event: agentports.AssistantEventArtifactRemoved,
-			Data:  agentports.AssistantArtifactRemovedEvent{ID: id},
+			Event: assistantports.AssistantEventArtifactRemoved,
+			Data:  assistantports.AssistantArtifactRemovedEvent{ID: id},
 		})
 	}
 }

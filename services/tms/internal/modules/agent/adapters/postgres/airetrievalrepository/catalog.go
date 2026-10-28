@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/pgvector/pgvector-go"
 )
@@ -58,7 +58,7 @@ func catalogScope(
 
 func (r *repository) GetCatalogEmbeddings(
 	ctx context.Context,
-	req agentports.GetCatalogEmbeddingsRequest,
+	req retrievalports.GetCatalogEmbeddingsRequest,
 ) ([]*airetrieval.CatalogEmbedding, error) {
 	return dbtx.Write(
 		ctx,
@@ -98,7 +98,7 @@ func (r *repository) GetCatalogEmbeddings(
 
 func (r *repository) PutCatalogEmbeddings(
 	ctx context.Context,
-	req agentports.PutCatalogEmbeddingsRequest,
+	req retrievalports.PutCatalogEmbeddingsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if err := validateCatalogScope(req.ModelKey, req.Corpus); err != nil {
@@ -159,7 +159,7 @@ func (r *repository) PutCatalogEmbeddings(
 
 func (r *repository) PruneCatalogEmbeddings(
 	ctx context.Context,
-	req agentports.PruneCatalogEmbeddingsRequest,
+	req retrievalports.PruneCatalogEmbeddingsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if err := validateCatalogScope(req.ModelKey, req.Corpus); err != nil {

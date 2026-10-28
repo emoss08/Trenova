@@ -9,7 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
@@ -20,7 +21,7 @@ import (
 func FromBaseline(
 	toolName string,
 	params map[string]any,
-	baseline *agentports.ProposalBaselineResult,
+	baseline *agentruntimeports.ProposalBaselineResult,
 ) *agent.ToolSimulation {
 	if baseline == nil {
 		return Describe(toolName, params)
@@ -41,8 +42,8 @@ func FromBaseline(
 func InSnapshot(
 	ctx context.Context,
 	db kernelports.Transactor,
-	tool agentports.AgentTool,
-	params *agentports.ToolExecuteParams,
+	tool agenttoolports.AgentTool,
+	params *agenttoolports.ToolExecuteParams,
 ) *agent.ToolSimulation {
 	if db == nil {
 		return Simulate(ctx, tool, params)
@@ -75,10 +76,10 @@ func InSnapshot(
 // more could be said.
 func Simulate(
 	ctx context.Context,
-	tool agentports.AgentTool,
-	params *agentports.ToolExecuteParams,
+	tool agenttoolports.AgentTool,
+	params *agenttoolports.ToolExecuteParams,
 ) *agent.ToolSimulation {
-	previewer, ok := tool.(agentports.ToolPreviewer)
+	previewer, ok := tool.(agenttoolports.ToolPreviewer)
 	if !ok {
 		return Describe(tool.Name(), params.Params)
 	}

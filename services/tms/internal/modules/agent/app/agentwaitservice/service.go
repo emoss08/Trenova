@@ -23,7 +23,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -68,7 +71,7 @@ type Params struct {
 
 	Logger        *zap.Logger
 	Waits         agentwaitports.AgentWaitRepository
-	Runs          agentports.AgentRunRepository
+	Runs          agentruntimeports.AgentRunRepository
 	Moves         shipmentports.ShipmentMoveRepository
 	Assignments   shipmentports.AssignmentRepository
 	Occurrences   detentionports.DetentionOccurrenceRepository
@@ -76,11 +79,11 @@ type Params struct {
 	Carriers      carrierports.CarrierRepository
 	Customers     customerports.CustomerRepository
 	Subjects      agentports.AgentSubjectRepository
-	Conversations agentports.ConversationRepository
+	Conversations assistantports.ConversationRepository
 	Turns         *assistantturnservice.Service
 	RunService    agentports.AgentRunService
 	Workflows     kernelports.WorkflowStarter
-	Realtime      agentports.RealtimeService                     `optional:"true"`
+	Realtime      realtimeports.RealtimeService                  `optional:"true"`
 	PortalRuns    agentextensionports.PortalRunRepository        `optional:"true"`
 	WebWatches    agentextensionports.WebWatchRepository         `optional:"true"`
 	Documents     documentports.DocumentRepository               `optional:"true"`
@@ -90,7 +93,7 @@ type Params struct {
 type turnStarter interface {
 	Active(
 		ctx context.Context,
-		req agentports.ActiveAssistantTurnRequest,
+		req assistantports.ActiveAssistantTurnRequest,
 	) (*conversation.AssistantTurn, error)
 	StartTurn(
 		ctx context.Context,
@@ -110,13 +113,13 @@ type runStarter interface {
 type Service struct {
 	l             *zap.Logger
 	waits         agentwaitports.AgentWaitRepository
-	runs          agentports.AgentRunRepository
+	runs          agentruntimeports.AgentRunRepository
 	facts         *facts
-	conversations agentports.ConversationRepository
+	conversations assistantports.ConversationRepository
 	turns         turnStarter
 	runService    runStarter
 	workflows     kernelports.WorkflowStarter
-	realtime      agentports.RealtimeService
+	realtime      realtimeports.RealtimeService
 	now           func() int64
 }
 
@@ -243,7 +246,7 @@ func (s *Service) draft(
 		wait.UserID = req.Actor.UserID
 	case req.RunID.IsNotNil():
 		tenant := pagination.TenantInfo{OrgID: wait.OrganizationID, BuID: wait.BusinessUnitID}
-		run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+		run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 			ID:         req.RunID,
 			TenantInfo: &tenant,
 		})
@@ -377,7 +380,7 @@ func (s *Service) List(
 	ctx context.Context,
 	req *agentwaitports.ListThreadWaitsRequest,
 ) ([]*agentwait.Wait, error) {
-	if _, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
+	if _, err := s.conversations.GetThread(ctx, assistantports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -735,7 +738,7 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 		BuID:   wait.BusinessUnitID,
 		UserID: wait.UserID,
 	}
-	thread, err := s.conversations.GetThreadOwned(ctx, agentports.GetThreadOwnedRequest{
+	thread, err := s.conversations.GetThreadOwned(ctx, assistantports.GetThreadOwnedRequest{
 		ID:         wait.ThreadID,
 		TenantInfo: tenant,
 	})
@@ -746,7 +749,7 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 		return err
 	}
 
-	active, err := s.turns.Active(ctx, agentports.ActiveAssistantTurnRequest{
+	active, err := s.turns.Active(ctx, assistantports.ActiveAssistantTurnRequest{
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,
@@ -807,7 +810,7 @@ func (s *Service) wakeCase(
 	if !thread.Snooze().Set() {
 		return
 	}
-	if _, err := s.conversations.WakeThread(ctx, &agentports.WakeThreadRequest{
+	if _, err := s.conversations.WakeThread(ctx, &assistantports.WakeThreadRequest{
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,
@@ -878,7 +881,7 @@ func (s *Service) announce(ctx context.Context, wait *agentwait.Wait) {
 	}
 	if err := s.realtime.PublishResourceInvalidation(
 		context.WithoutCancel(ctx),
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: wait.OrganizationID,
 			BusinessUnitID: wait.BusinessUnitID,
 			AudienceUserID: wait.UserID,

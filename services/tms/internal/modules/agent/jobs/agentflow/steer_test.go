@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -34,9 +36,9 @@ func TestRunReadsASteerAtItsNextStep(t *testing.T) {
 		ToolName: "shipment_get",
 		Result:   map[string]any{"status": "InTransit"},
 	}
-	h := newHarness(t, harnessParams{query: []agentports.AgentQueryTool{lookup}})
+	h := newHarness(t, harnessParams{query: []agenttoolports.AgentQueryTool{lookup}})
 
-	var asked []*agentports.ChatCompletionRequest
+	var asked []*llmports.ChatCompletionRequest
 	h.env.OnActivity(h.activities.ModelCallActivity, mock.Anything, mock.Anything).
 		Return(func(_ context.Context, in *ModelCallInput) (*agentruntime.ModelReply, error) {
 			asked = append(asked, in.Request)
@@ -62,11 +64,11 @@ func TestRunReadsASteerAtItsNextStep(t *testing.T) {
 	require.Len(t, asked, 2)
 	messages := asked[1].Messages
 	words, notice := messages[len(messages)-2], messages[len(messages)-1]
-	assert.Equal(t, agentports.RoleUser, words.Role,
+	assert.Equal(t, llmports.RoleUser, words.Role,
 		"the steer is read after the step's results and before the next model call")
 	assert.Contains(t, words.Content, "Actually the carrier is Werner, not JB Hunt.")
 	assert.Contains(t, words.Content, "car_01J9WERNERWERNERWERNER000")
-	assert.Equal(t, agentports.RoleSystem, notice.Role,
+	assert.Equal(t, llmports.RoleSystem, notice.Role,
 		"what to make of the person's words comes from the system, not from them")
 
 	assert.Equal(t, []pulid.ID{"aqm_01J9STEERSTEERSTEERSTEER00"}, result.Outcome.Steered,
@@ -75,14 +77,17 @@ func TestRunReadsASteerAtItsNextStep(t *testing.T) {
 	require.Len(t, saved, 1)
 	assert.Equal(t, "Actually the carrier is Werner, not JB Hunt.", saved[0].Content,
 		"the conversation keeps the person's words, not the prompt around them")
-	assert.Contains(t, eventNames(result.Outcome), agentports.AssistantEventSteered)
+	assert.Contains(t, eventNames(result.Outcome), assistantports.AssistantEventSteered)
 }
 
 func TestRunReadsTheSameSteerOnce(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, harnessParams{})
-	steer := agentruntime.Steer{ID: pulid.ID("aqm_01J9ONCEONCEONCEONCEONCE0"), Content: "Use the later slot."}
+	steer := agentruntime.Steer{
+		ID:      pulid.ID("aqm_01J9ONCEONCEONCEONCEONCE0"),
+		Content: "Use the later slot.",
+	}
 	h.env.RegisterDelayedCallback(func() {
 		h.env.SignalWorkflow(agentflowcontract.SteerSignal, steer)
 		h.env.SignalWorkflow(agentflowcontract.SteerSignal, steer)

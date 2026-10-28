@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -66,7 +67,7 @@ type Params struct {
 	Dispatcher        accountingsyncports.AccountingSyncDispatcher `optional:"true"`
 	Publisher         agentports.AgentEventPublisher               `optional:"true"`
 	Watchtower        watchtowerports.WatchtowerProjector          `optional:"true"`
-	Realtime          agentports.RealtimeService                   `optional:"true"`
+	Realtime          realtimeports.RealtimeService                `optional:"true"`
 }
 
 type Service struct {
@@ -93,7 +94,7 @@ type Service struct {
 	dispatcher     accountingsyncports.AccountingSyncDispatcher
 	publisher      agentports.AgentEventPublisher
 	watchtower     watchtowerports.WatchtowerProjector
-	realtime       agentports.RealtimeService
+	realtime       realtimeports.RealtimeService
 }
 
 var _ accountingsyncports.AccountingSyncService = (*Service)(nil)

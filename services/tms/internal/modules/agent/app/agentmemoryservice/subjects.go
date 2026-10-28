@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -13,10 +13,10 @@ import (
 const maxSubjectHops = 3
 
 type SubjectResolver struct {
-	links agentports.AgentMemorySubjectRepository
+	links agentmemoryports.AgentMemorySubjectRepository
 }
 
-func NewSubjectResolver(links agentports.AgentMemorySubjectRepository) SubjectResolver {
+func NewSubjectResolver(links agentmemoryports.AgentMemorySubjectRepository) SubjectResolver {
 	return SubjectResolver{links: links}
 }
 
@@ -76,8 +76,8 @@ func (r SubjectResolver) linksOf(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	frontier []agent.MemoryRecordRef,
-) (map[agent.MemoryRecordRef][]agentports.MemoryRecordLink, error) {
-	named := make(map[agent.MemoryRecordRef][]agentports.MemoryRecordLink, len(frontier))
+) (map[agent.MemoryRecordRef][]agentmemoryports.MemoryRecordLink, error) {
+	named := make(map[agent.MemoryRecordRef][]agentmemoryports.MemoryRecordLink, len(frontier))
 	if r.links == nil {
 		return named, nil
 	}
@@ -92,7 +92,7 @@ func (r SubjectResolver) linksOf(
 	}
 
 	for _, kind := range kinds {
-		links, err := r.links.ListRecordLinks(ctx, &agentports.ListMemoryRecordLinksRequest{
+		links, err := r.links.ListRecordLinks(ctx, &agentmemoryports.ListMemoryRecordLinksRequest{
 			TenantInfo: tenant,
 			Kind:       kind,
 			IDs:        byKind[kind],
@@ -111,14 +111,14 @@ func (r SubjectResolver) linksOf(
 
 type subjectSet struct {
 	limit    int
-	seen     map[agentports.MemorySubjectRef]struct{}
+	seen     map[agentmemoryports.MemorySubjectRef]struct{}
 	subjects []agent.MemorySubject
 }
 
 func newSubjectSet(limit int) *subjectSet {
 	return &subjectSet{
 		limit:    limit,
-		seen:     make(map[agentports.MemorySubjectRef]struct{}, limit),
+		seen:     make(map[agentmemoryports.MemorySubjectRef]struct{}, limit),
 		subjects: make([]agent.MemorySubject, 0, limit),
 	}
 }
@@ -133,7 +133,7 @@ func (s *subjectSet) add(
 	if id.IsNil() || s.full() {
 		return
 	}
-	key := agentports.MemorySubjectRef{Type: subjectType, ID: id}
+	key := agentmemoryports.MemorySubjectRef{Type: subjectType, ID: id}
 	if _, ok := s.seen[key]; ok {
 		return
 	}
@@ -147,10 +147,10 @@ func (s *subjectSet) add(
 
 func (s *subjectSet) list() []agent.MemorySubject { return s.subjects }
 
-func subjectRefs(subjects []agent.MemorySubject) []agentports.MemorySubjectRef {
-	refs := make([]agentports.MemorySubjectRef, 0, len(subjects))
+func subjectRefs(subjects []agent.MemorySubject) []agentmemoryports.MemorySubjectRef {
+	refs := make([]agentmemoryports.MemorySubjectRef, 0, len(subjects))
 	for _, subject := range subjects {
-		refs = append(refs, agentports.MemorySubjectRef{Type: subject.Type, ID: subject.ID})
+		refs = append(refs, agentmemoryports.MemorySubjectRef{Type: subject.Type, ID: subject.ID})
 	}
 
 	return refs

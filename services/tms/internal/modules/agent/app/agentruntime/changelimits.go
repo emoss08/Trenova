@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
@@ -70,7 +70,7 @@ func distinctIDs(value any) int {
 // nothing is silently left out, and the model is told to split it: each part
 // is then proposed, and approved, on its own.
 func oversizedChange(
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 	toolName string,
 	schema map[string]any,
 	arguments map[string]any,
@@ -100,7 +100,7 @@ func oversizedChange(
 // is: a person deciding outside the window is their call to make.
 func (s *Service) heldForBusinessHours(
 	ctx context.Context,
-	req *agentports.RunRequest,
+	req *agentruntimeports.RunRequest,
 	tier agent.AutonomyTier,
 ) (agent.AutonomyTier, bool) {
 	if tier != agent.TierAutoExecute || !req.Definition.BusinessHoursOnly || s.budgets == nil {

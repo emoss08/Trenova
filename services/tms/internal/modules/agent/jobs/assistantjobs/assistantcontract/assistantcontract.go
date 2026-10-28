@@ -5,15 +5,14 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -257,8 +256,8 @@ func (p *AssistantTurnPayload) TenantInfo() pagination.TenantInfo {
 	}
 }
 
-func (p *AssistantTurnPayload) SendRequest() *agentports.SendMessageRequest {
-	return &agentports.SendMessageRequest{
+func (p *AssistantTurnPayload) SendRequest() *assistantports.SendMessageRequest {
+	return &assistantports.SendMessageRequest{
 		ThreadID:              p.ThreadID,
 		Content:               p.Content,
 		Page:                  p.Request.Page,
@@ -319,6 +318,6 @@ type AssistantTurnResult struct {
 	Refused bool   `json:"refused"`
 	// Result is the saved turn, when it finished. A turn that failed or was
 	// stopped has Message instead, written for the person who asked.
-	Result  *agentports.SendMessageResult `json:"result,omitempty"`
-	Message string                        `json:"message,omitempty"`
+	Result  *assistantports.SendMessageResult `json:"result,omitempty"`
+	Message string                            `json:"message,omitempty"`
 }

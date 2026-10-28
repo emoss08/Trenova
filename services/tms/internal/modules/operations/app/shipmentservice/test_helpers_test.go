@@ -3,7 +3,7 @@ package shipmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentinvalidation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
@@ -32,6 +32,6 @@ func newTestCommercialCalculator(
 	})
 }
 
-func newTestInvalidator(realtime agentports.RealtimeService) shipmentports.ShipmentInvalidator {
+func newTestInvalidator(realtime realtimeports.RealtimeService) shipmentports.ShipmentInvalidator {
 	return shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop())
 }

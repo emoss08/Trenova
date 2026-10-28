@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -80,13 +80,13 @@ func (s *stubBasis) Prepare(
 }
 
 type stubAI struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 	tasks map[aiprovider.Task]bool
 }
 
 func (s *stubAI) ListForTask(
 	_ context.Context,
-	req agentports.ListAIProvidersForTaskRequest,
+	req aiproviderports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
 	if s.tasks[req.Task] {
 		return []*aiprovider.Provider{{}}, nil
@@ -137,7 +137,9 @@ func scopeRequest(filters ...shipment.QuickFilterSpec) *shipmentports.ShipmentBo
 	}
 }
 
-func scopeWithoutMargins(filters ...shipment.QuickFilterSpec) *shipmentports.ShipmentBoardScopeRequest {
+func scopeWithoutMargins(
+	filters ...shipment.QuickFilterSpec,
+) *shipmentports.ShipmentBoardScopeRequest {
 	req := scopeRequest(filters...)
 	req.Margins = false
 	return req

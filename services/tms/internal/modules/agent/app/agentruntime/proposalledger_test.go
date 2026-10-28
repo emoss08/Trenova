@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,7 +63,7 @@ func TestToAdapterMessages_ReplaysWhatBecameOfEachProposal(t *testing.T) {
 		},
 		{Role: conversation.RoleAssistant, Content: "Proposed two updates."},
 	}
-	outcomes := []agentports.ProposalOutcome{
+	outcomes := []agentruntimeports.ProposalOutcome{
 		{
 			SourceMessageID: sourceID,
 			ToolName:        "report_update",
@@ -108,7 +110,7 @@ func TestToAdapterMessages_TellsTheModelAPendingProposalIsStillWaiting(t *testin
 			Content:    "Recorded a proposal",
 		},
 	}
-	outcomes := []agentports.ProposalOutcome{
+	outcomes := []agentruntimeports.ProposalOutcome{
 		{SourceMessageID: sourceID, ToolName: "report_fork", Status: agent.ProposalStatusPending},
 	}
 
@@ -148,20 +150,20 @@ func TestRun_DoesNotProposeWhatIsAlreadyPending(t *testing.T) {
 
 	action := actionTool("report_update", agent.TierActWithApproval, nil)
 	args := map[string]any{"definitionId": "rd_1", "name": "Readable"}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("report_update", args),
 		textTurn("It is waiting on your card."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{action}}, nil)
 	definition := testDefinition("report_update")
 	definition.AutonomyCeiling = agent.TierActWithApproval
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "yes",
-		Proposals: []agentports.ProposalOutcome{{
+		Proposals: []agentruntimeports.ProposalOutcome{{
 			SourceMessageID: pulid.MustNew("amsg_"),
 			ToolName:        "report_update",
 			ToolParams:      map[string]any{"name": "Readable", "definitionId": "rd_1"},
@@ -180,20 +182,20 @@ func TestRun_StillProposesWhenTheEarlierOneWasDecided(t *testing.T) {
 
 	action := actionTool("report_update", agent.TierActWithApproval, nil)
 	args := map[string]any{"definitionId": "rd_1"}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("report_update", args),
 		textTurn("Proposed again."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{action}}, nil)
 	definition := testDefinition("report_update")
 	definition.AutonomyCeiling = agent.TierActWithApproval
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "try again",
-		Proposals: []agentports.ProposalOutcome{{
+		Proposals: []agentruntimeports.ProposalOutcome{{
 			ToolName:   "report_update",
 			ToolParams: args,
 			Status:     agent.ProposalStatusRejected,
@@ -208,9 +210,9 @@ func TestRun_DoesNotProposeTheSameWriteTwiceInOneTurn(t *testing.T) {
 
 	action := actionTool("report_update", agent.TierActWithApproval, nil)
 	args := map[string]any{"definitionId": "rd_1"}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		{
-			ToolCalls: []agentports.ToolCall{
+			ToolCalls: []llmports.ToolCall{
 				{ID: "call_1", Name: "report_update", Arguments: args},
 				{
 					ID:        "call_2",
@@ -223,11 +225,11 @@ func TestRun_DoesNotProposeTheSameWriteTwiceInOneTurn(t *testing.T) {
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{action}}, nil)
 	definition := testDefinition("report_update")
 	definition.AutonomyCeiling = agent.TierActWithApproval
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "update",
@@ -246,17 +248,17 @@ for.
 func TestPendingDuplicate_NeverMatchesArgumentsThatCannotBeEncoded(t *testing.T) {
 	t.Parallel()
 
-	call := agentports.ToolCall{
+	call := llmports.ToolCall{
 		ID:        "call_2",
 		Name:      "report_update",
 		Arguments: map[string]any{"definitionId": "rd_2", "cycle": make(chan int)},
 	}
-	earlier := []agentports.ProposalOutcome{{
+	earlier := []agentruntimeports.ProposalOutcome{{
 		ToolName:   "report_update",
 		Status:     agent.ProposalStatusPending,
 		ToolParams: map[string]any{"definitionId": "rd_1", "cycle": make(chan int)},
 	}}
-	thisTurn := []agentports.PendingAction{{
+	thisTurn := []agentruntimeports.PendingAction{{
 		ToolName:  "report_update",
 		Arguments: map[string]any{"definitionId": "rd_1", "cycle": make(chan int)},
 	}}
@@ -274,14 +276,14 @@ type validatingActionTool struct {
 
 	invalid  error
 	checked  int
-	lastSeen agentports.ToolExecuteParams
+	lastSeen agenttoolports.ToolExecuteParams
 }
 
 type stubActionToolAlias = agenttest.StubActionTool
 
 func (t *validatingActionTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams,
 ) error {
 	t.checked++
 	t.lastSeen = params
@@ -301,17 +303,17 @@ func TestRun_RefusesAProposalItsToolSaysWouldFail(t *testing.T) {
 			"unknown field \"assignment.primaryWorker.firstName\" on entity \"shipment_move\"",
 		),
 	}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
 		textTurn("I will fix the column."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 	definition := testDefinition("report_update")
 	definition.AutonomyCeiling = agent.TierActWithApproval
 	actor := testActor()
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      actor,
 		Input:      "update",
@@ -326,15 +328,15 @@ func TestRun_RefusesAProposalItsToolSaysWouldFail(t *testing.T) {
 	assert.Contains(t, result.Messages[2].Content, "unknown field")
 
 	tool.invalid = nil
-	completion = &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion = &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		toolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
 		textTurn("Proposed."),
 	}}
 	rt = newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 	result, err = rt.Run(
 		t.Context(),
-		&agentports.RunRequest{Definition: definition, Actor: actor, Input: "update"},
+		&agentruntimeports.RunRequest{Definition: definition, Actor: actor, Input: "update"},
 	)
 	require.NoError(t, err)
 	assert.Len(t, result.Actions, 1)
@@ -346,7 +348,7 @@ func TestRun_RefusesAProposalItsToolSaysWouldFail(t *testing.T) {
 func TestProposalOutcomeText_SaysWhatTheApproverChanged(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("worker_send_message", agentports.ProposalOutcome{
+	text := proposalOutcomeText("worker_send_message", agentruntimeports.ProposalOutcome{
 		Status:        agent.ProposalStatusExecuted,
 		Modifications: map[string]any{"priority": "high", "message": "Call dispatch now"},
 	})
@@ -356,7 +358,7 @@ func TestProposalOutcomeText_SaysWhatTheApproverChanged(t *testing.T) {
 
 	plain := proposalOutcomeText(
 		"worker_send_message",
-		agentports.ProposalOutcome{Status: agent.ProposalStatusExecuted},
+		agentruntimeports.ProposalOutcome{Status: agent.ProposalStatusExecuted},
 	)
 	assert.NotContains(t, plain, "after changing")
 }
@@ -376,9 +378,14 @@ func TestReplayHistory_KeepsTheFiguresOfAProposalsResultAsRead(t *testing.T) {
 			Role:      conversation.RoleAssistant,
 			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "shipment_create"}},
 		},
-		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "shipment_create", Content: filed},
+		{
+			Role:       conversation.RoleTool,
+			ToolCallID: "c1",
+			ToolName:   "shipment_create",
+			Content:    filed,
+		},
 	}
-	outcomes := []agentports.ProposalOutcome{{
+	outcomes := []agentruntimeports.ProposalOutcome{{
 		SourceMessageID: sourceID,
 		ToolName:        "shipment_create",
 		Status:          agent.ProposalStatusPending,

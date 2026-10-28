@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -161,7 +161,7 @@ func pendingTenderChange(orgID, buID pulid.ID) *edi.TenderChange {
 func TestEDIChangeReviews_ArePersonOnlyProposalsTargetingTheChange(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		NewReviewEDITenderChangeTool(nil),
 		NewReviewEDITransferChangeTool(nil),
 	} {
@@ -177,11 +177,11 @@ func TestEDIChangeReviews_ArePersonOnlyProposalsTargetingTheChange(t *testing.T)
 		)
 
 		id := pulid.MustNew("editcg_")
-		target, ok := tool.(agentports.TargetedTool).Target(
+		target, ok := tool.(agenttoolports.TargetedTool).Target(
 			map[string]any{paramEDIChangeID: id.String()},
 		)
 		require.True(t, ok, tool.Name())
-		assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceEDI, ID: id}, target)
+		assert.Equal(t, agenttoolports.ToolTarget{Resource: permission.ResourceEDI, ID: id}, target)
 	}
 }
 
@@ -204,9 +204,13 @@ func TestReviewEDITenderChange_PreviewsWhatTheTenderNowSaysAndAppliesOnlyWhenApp
 	proposing := params
 	proposing.ProposalID = pulid.Nil
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, changes.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), proposing)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		changes.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), proposing)
+		},
+	)
 	status := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, changes.change.ID, status.EntityID)
 	require.NotNil(t, status.Version)
@@ -255,9 +259,13 @@ func TestReviewEDITenderChange_RefusesWhatTheServiceRefuses(t *testing.T) {
 			}
 
 			require.Error(t, tool.Validate(t.Context(), call))
-			preview := agenttoolstest.PreviewWithoutWrites(t, fake.guard, func() (*agent.ToolPreview, error) {
-				return tool.Preview(t.Context(), call)
-			})
+			preview := agenttoolstest.PreviewWithoutWrites(
+				t,
+				fake.guard,
+				func() (*agent.ToolPreview, error) {
+					return tool.Preview(t.Context(), call)
+				},
+			)
 			agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 		})
 	}
@@ -291,10 +299,18 @@ func TestReviewEDITransferChange_PreviewsTheShipmentStatusItWouldSet(t *testing.
 		paramEDIReviewDecision: reviewApply,
 	}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, changes.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
-	})
-	assert.Equal(t, "Applied", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		changes.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+		},
+	)
+	assert.Equal(
+		t,
+		"Applied",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
+	)
 	moved := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, permission.ResourceShipment, moved.Resource)
 	assert.Equal(t, shipmentID, moved.EntityID)
@@ -305,9 +321,13 @@ func TestReviewEDITransferChange_PreviewsTheShipmentStatusItWouldSet(t *testing.
 		paramEDIReviewDecision: reviewReject,
 		common.FieldReason:     "The partner's 214 contradicts the driver's arrival",
 	})
-	rejectPreview := agenttoolstest.PreviewWithoutWrites(t, changes.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), rejected)
-	})
+	rejectPreview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		changes.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), rejected)
+		},
+	)
 	require.Len(t, rejectPreview.Changes, 1, "a rejection leaves the shipment alone")
 
 	approved := rejected
@@ -323,10 +343,13 @@ func TestReviewEDIChanges_RefuseAnUnknownDecision(t *testing.T) {
 	tool := NewReviewEDITransferChangeTool(&fakeTransferChanges{
 		change: &edi.TransferChange{ID: pulid.MustNew("editc_")},
 	})
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.AgentParamsFor(map[string]any{
-		paramEDIChangeID:       pulid.MustNew("editc_").String(),
-		paramEDIReviewDecision: "Approve",
-	}))
+	err := tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.AgentParamsFor(map[string]any{
+			paramEDIChangeID:       pulid.MustNew("editc_").String(),
+			paramEDIReviewDecision: "Approve",
+		}),
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Apply or Reject")
 }

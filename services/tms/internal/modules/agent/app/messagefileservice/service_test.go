@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -51,8 +51,8 @@ func reader(probeErr error) (*Service, *pdfFiles, *imagingfake.Fake) {
 	return svc, files, imaging
 }
 
-func request() *agentports.ReadMessageFileRequest {
-	return &agentports.ReadMessageFileRequest{
+func request() *assistantports.ReadMessageFileRequest {
+	return &assistantports.ReadMessageFileRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		DocumentID: pulid.MustNew("doc_"),
 	}

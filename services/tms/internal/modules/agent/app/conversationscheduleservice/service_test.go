@@ -13,8 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -168,7 +169,7 @@ type fakeThreads struct {
 
 func (f *fakeThreads) GetThread(
 	_ context.Context,
-	req agentports.GetThreadRequest,
+	req assistantports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if req.ID != f.thread.ID || req.UserID != f.thread.UserID {
 		return nil, errortypes.NewNotFoundError("Thread not found within your organization")
@@ -179,7 +180,7 @@ func (f *fakeThreads) GetThread(
 
 func (f *fakeThreads) GetThreadOwned(
 	_ context.Context,
-	req agentports.GetThreadOwnedRequest,
+	req assistantports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	if req.ID != f.thread.ID {
 		return nil, errortypes.NewNotFoundError("Thread not found within your organization")
@@ -243,7 +244,7 @@ func (f *fakeTurns) StartTurn(
 
 func (f *fakeTurns) Active(
 	_ context.Context,
-	_ agentports.ActiveAssistantTurnRequest,
+	_ assistantports.ActiveAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	return f.active, nil
 }
@@ -285,12 +286,12 @@ func (f *fakeSyncer) Remove(_ context.Context, scheduleID pulid.ID) {
 }
 
 type fakeRealtime struct {
-	published []*agentports.PublishResourceInvalidationRequest
+	published []*realtimeports.PublishResourceInvalidationRequest
 }
 
 func (f *fakeRealtime) PublishResourceInvalidation(
 	_ context.Context,
-	req *agentports.PublishResourceInvalidationRequest,
+	req *realtimeports.PublishResourceInvalidationRequest,
 ) error {
 	f.published = append(f.published, req)
 
@@ -420,7 +421,11 @@ func TestCreate_KeepsTheScheduleItsCardAndItsTemporalSchedule(t *testing.T) {
 	assert.Equal(t, schedule.ID, f.syncer.synced[0].ID)
 	assert.Empty(t, f.turns.started, "creating a schedule asks nothing yet")
 	require.Len(t, f.realtime.published, 1)
-	assert.Equal(t, conversationscheduleports.ConversationSchedulesResource, f.realtime.published[0].Resource)
+	assert.Equal(
+		t,
+		conversationscheduleports.ConversationSchedulesResource,
+		f.realtime.published[0].Resource,
+	)
 	assert.Equal(t, f.thread.UserID, f.realtime.published[0].AudienceUserID)
 }
 
@@ -683,7 +688,12 @@ func TestPauseResumeAndDeleteFollowTheTemporalSchedule(t *testing.T) {
 	require.Len(t, f.syncer.synced, 3)
 	assert.True(t, f.syncer.synced[2].Enabled)
 	require.NotNil(t, resumed.NextRunAt)
-	assert.Greater(t, *resumed.NextRunAt, f.now, "the slot that passed while paused is not run late")
+	assert.Greater(
+		t,
+		*resumed.NextRunAt,
+		f.now,
+		"the slot that passed while paused is not run late",
+	)
 
 	require.NoError(t, f.service.Delete(t.Context(), f.request(created.ID)))
 	assert.Equal(t, []pulid.ID{created.ID}, f.syncer.removed)
@@ -854,11 +864,17 @@ func TestFire_AsksTheRequestInItsConversationAsTheOwner(t *testing.T) {
 	created := f.create(t, "every weekday at 7:30am, what's blocking the billing queue?").Schedule
 	f.now = 1791203400 // Monday 7:30 in Chicago.
 
-	result, err := f.service.Fire(t.Context(), conversationscheduleports.FireConversationScheduleRequest{
-		ScheduleID: created.ID,
-		TenantInfo: pagination.TenantInfo{OrgID: created.OrganizationID, BuID: created.BusinessUnitID},
-		FiredAt:    f.now,
-	})
+	result, err := f.service.Fire(
+		t.Context(),
+		conversationscheduleports.FireConversationScheduleRequest{
+			ScheduleID: created.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: created.OrganizationID,
+				BuID:  created.BusinessUnitID,
+			},
+			FiredAt: f.now,
+		},
+	)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Empty(t, result.Skipped)
@@ -886,11 +902,17 @@ func TestFire_AsksTheRequestInItsConversationAsTheOwner(t *testing.T) {
 	assert.Equal(t, f.now+24*60*60, *row.NextRunAt, "Tuesday at the same time")
 
 	// A retried attempt for the same slot starts no second turn.
-	again, err := f.service.Fire(t.Context(), conversationscheduleports.FireConversationScheduleRequest{
-		ScheduleID: created.ID,
-		TenantInfo: pagination.TenantInfo{OrgID: created.OrganizationID, BuID: created.BusinessUnitID},
-		FiredAt:    f.now,
-	})
+	again, err := f.service.Fire(
+		t.Context(),
+		conversationscheduleports.FireConversationScheduleRequest{
+			ScheduleID: created.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: created.OrganizationID,
+				BuID:  created.BusinessUnitID,
+			},
+			FiredAt: f.now,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, SkipAlreadyRan, again.Skipped)
 	assert.Len(t, f.turns.started, 1)
@@ -900,11 +922,17 @@ func TestFire_StartsNothingItShouldNot(t *testing.T) {
 	t.Parallel()
 
 	fire := func(f *fixture, id pulid.ID) (*conversationscheduleports.FireConversationScheduleResult, error) {
-		return f.service.Fire(context.Background(), conversationscheduleports.FireConversationScheduleRequest{
-			ScheduleID: id,
-			TenantInfo: pagination.TenantInfo{OrgID: f.thread.OrganizationID, BuID: f.thread.BusinessUnitID},
-			FiredAt:    f.now,
-		})
+		return f.service.Fire(
+			context.Background(),
+			conversationscheduleports.FireConversationScheduleRequest{
+				ScheduleID: id,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: f.thread.OrganizationID,
+					BuID:  f.thread.BusinessUnitID,
+				},
+				FiredAt: f.now,
+			},
+		)
 	}
 
 	t.Run("a deleted schedule is reported gone", func(t *testing.T) {

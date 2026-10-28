@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -56,7 +57,7 @@ func followUpWithNote(
 	svc.decisions = &stubDecisionRepo{decisions: decisions}
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:           conversations.thread.ID,
 		FollowUpProposalID: proposal.ID,
 		TenantInfo:         actor.TenantInfo(),
@@ -172,11 +173,15 @@ func TestFollowUp_ReadsAPlansNoteFromItsSteps(t *testing.T) {
 		StepCount: 2,
 	}
 	first := &agent.AgentProposal{
-		ID: pulid.MustNew("ap_"), ToolName: "dispatch_assign_move", Status: agent.ProposalStatusRejected,
+		ID: pulid.MustNew(
+			"ap_",
+		), ToolName: "dispatch_assign_move", Status: agent.ProposalStatusRejected,
 		PlanID: &plan.ID, PlanStep: 1,
 	}
 	second := &agent.AgentProposal{
-		ID: pulid.MustNew("ap_"), ToolName: "dispatch_assign_move", Status: agent.ProposalStatusRejected,
+		ID: pulid.MustNew(
+			"ap_",
+		), ToolName: "dispatch_assign_move", Status: agent.ProposalStatusRejected,
 		PlanID: &plan.ID, PlanStep: 2,
 	}
 	svc, conversations, completion := followUpService(t, first)
@@ -189,7 +194,7 @@ func TestFollowUp_ReadsAPlansNoteFromItsSteps(t *testing.T) {
 	svc.decisions = decisions
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:       conversations.thread.ID,
 		FollowUpPlanID: plan.ID,
 		TenantInfo:     actor.TenantInfo(),
@@ -232,7 +237,10 @@ func TestListThreadProposals_SaysWhoDecidedEachAndWhatTheyWrote(t *testing.T) {
 	)
 	svc.decisions = &stubDecisionRepo{decisions: []*agent.AgentDecision{latest, older}}
 
-	result, err := svc.ListThreadProposals(t.Context(), agentports.GetThreadRequest{ID: threadID})
+	result, err := svc.ListThreadProposals(
+		t.Context(),
+		assistantports.GetThreadRequest{ID: threadID},
+	)
 	require.NoError(t, err)
 	require.Len(t, result, 2)
 
