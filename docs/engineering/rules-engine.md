@@ -1701,8 +1701,8 @@ compiles while it streams, and it is dropped when a release no longer ships it. 
 the files the worker caches at install, since the page loads it on idle.
 
 **Hosting.** The page's Content-Security-Policy needs `'wasm-unsafe-eval'` in `script-src`. It
-does not depend on `'unsafe-eval'`, which can then be removed. `connect-src 'self'` covers the
-fetch. The file must be served as `application/wasm`:
+does not depend on `'unsafe-eval'`, which the self-hosted Caddy CSP does not allow.
+`connect-src 'self'` covers the fetch. The file must be served as `application/wasm`:
 
 - Caddy does from Go's MIME table (`deploy/Caddyfile`, which has the CSP);
 - the Vite dev server does;

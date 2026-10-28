@@ -154,7 +154,10 @@ other upload when a session ends. A session the server refuses on a page load
 
 **Operating it.** `/sw.js` must be revalidated on every check: Caddy sends `no-cache` for
 everything outside `assets/`, and Cloudflare's static assets send
-`public, max-age=0, must-revalidate`. The CSP must allow `worker-src 'self'`. To withdraw the
+`public, max-age=0, must-revalidate`. The CSP must allow `worker-src 'self'`. Its `script-src`
+allows neither `'unsafe-eval'` nor `'unsafe-inline'`, and a window or frame the app opens
+inherits it: nothing may evaluate a string or write an inline script, so a printed page goes
+through `printDocument` (`lib/data-table-print.ts`) and carries no script of its own. To withdraw the
 worker, build with `VITE_SERVICE_WORKER=off`: the app registers nothing, and the `sw.js` it
 ships deletes the worker's caches, unregisters it and reloads the pages it controlled, in every
 browser that installed it. A path on the app's origin that the server answers itself (not the
